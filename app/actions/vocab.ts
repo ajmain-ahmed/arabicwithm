@@ -8,7 +8,7 @@ export async function fetchVocab() {
     process.env.SUPABASE_SERVICE_KEY!
   )
 
-  const { data, error } = await supabase.from("vocab").select("*").order("idx")
+  const { data, error } = await supabase.from("vocab").select("*").order("id")
   if (error) throw new Error(error.message)
   return data
 }

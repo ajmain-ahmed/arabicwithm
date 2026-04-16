@@ -1,8 +1,8 @@
+//store/vocabStore.ts
 import { create } from "zustand"
 import { fetchVocab } from "@/app/actions/vocab"
 
 export type Vocab = {
-  idx: number
   id: number
   word: string
   word_diacritic: string

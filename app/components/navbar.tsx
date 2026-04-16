@@ -25,6 +25,16 @@ const NAV_ROUTES: Record<string, string> = {
     'Contact': '/contact',
 };
 
+const SLUG_MAP: Record<string, string> = {
+    'beginner': 'beginner',
+    'a1': 'elementary',
+    'a2': 'intermediate',
+    'b1': 'upper-intermediate',
+    'b2': 'upper-intermediate',
+    'c1': 'intermediate',
+    'c2': 'intermediate',
+}
+
 const MOBILE_ITEMS = ['Sign In', 'Learning', 'My Progress', 'Settings'] as const;
 const MOBILE_SECONDARY = ['About', 'Contact', 'FAQ'] as const;
 
@@ -122,7 +132,7 @@ export default function Navbar() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [learnMenuOpen, setLearnMenuOpen] = useState(false);
     const [mobileLearnOpen, setMobileLearnOpen] = useState(false);
-    
+
     // Refs for hover delay logic
     const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
     const menuContainerRef = useRef<HTMLDivElement>(null);
@@ -264,56 +274,53 @@ export default function Navbar() {
         }}>
             {MEGA_MENU_ITEMS.map((section) => (
                 <Box key={section.header} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 1, 
-                        mb: 0.5,
-                        pb: 1,
-                        borderBottom: '1px solid rgba(184,134,11,0.1)'
+                    <Box sx={{
+                        display: 'flex', alignItems: 'center', gap: 1, mb: 0.5,
+                        pb: 1, borderBottom: '1px solid rgba(184,134,11,0.1)'
                     }}>
                         {!isMobile && section.icon}
                         <Typography sx={{
                             fontFamily: '"EB Garamond", serif',
                             fontSize: isMobile ? '1.1rem' : '1.2rem',
-                            fontWeight: 700,
-                            color: 'var(--bark)',
-                            letterSpacing: '0.02em'
+                            fontWeight: 700, color: 'var(--bark)', letterSpacing: '0.02em'
                         }}>
                             {section.header}
                         </Typography>
                     </Box>
-                    <Box sx={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
+                    <Box sx={{
+                        display: 'flex', flexDirection: 'column',
                         gap: isMobile ? 0.5 : 0.75,
-                        pl: isMobile ? 4 : 0 
+                        pl: isMobile ? 4 : 0
                     }}>
-                        {section.items.map((item) => (
-                            <Typography
-                                key={item}
-                                className="mega-menu-item"
-                                onClick={() => {
-                                    router.push(`/learn/${section.header.toLowerCase()}/${item.toLowerCase().replace(/\s+/g, '-')}`);
-                                    setLearnMenuOpen(false);
-                                    setDrawerOpen(false);
-                                }}
-                                sx={{
-                                    fontFamily: 'Jost, sans-serif',
-                                    fontSize: isMobile ? '0.9rem' : '0.9rem',
-                                    color: 'var(--muted)',
-                                    cursor: 'pointer',
-                                    width: 'fit-content'
-                                }}
-                            >
-                                {item}
-                            </Typography>
-                        ))}
+                        {section.items.map((item) => {
+                            const key = item.toLowerCase().replace(/\s+/g, '-')
+                            const href = section.header === 'Flashcards'
+                                ? `/flashcards/${SLUG_MAP[key] ?? key}`
+                                : `/learn/${section.header.toLowerCase()}/${key}`
+                            return (
+                                <Typography
+                                    key={item}
+                                    className="mega-menu-item"
+                                    onClick={() => {
+                                        router.push(href)
+                                        setLearnMenuOpen(false)
+                                        setDrawerOpen(false)
+                                    }}
+                                    sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '0.9rem', color: 'var(--muted)',
+                                        cursor: 'pointer', width: 'fit-content'
+                                    }}
+                                >
+                                    {item}
+                                </Typography>
+                            )
+                        })}
                     </Box>
                 </Box>
             ))}
         </Box>
-    );
+    )
 
     // ── renders ──────────────────────────────────────────────────────────
     const renderMobileDrawer = () => (
@@ -353,7 +360,7 @@ export default function Navbar() {
                     <Close sx={{ fontSize: 18 }} />
                 </IconButton>
             </Box>
-            
+
             {/* Mobile Learn Accordion */}
             <List disablePadding>
                 <ListItem disablePadding>
@@ -380,9 +387,9 @@ export default function Navbar() {
                     </Box>
                 </Collapse>
             </List>
-            
+
             <GoldLine />
-            
+
             <List disablePadding>
                 {MOBILE_ITEMS.map((text, i) => {
                     const icons = [<Person key="1" />, <VolunteerActivismSharp key="2" />, <ManageSearchSharp key="3" />, <SettingsApplicationsSharp key="4" />];
@@ -740,8 +747,8 @@ export default function Navbar() {
                             initial={{ opacity: 0, y: -20, height: 0 }}
                             animate={{ opacity: 1, y: 0, height: 'auto' }}
                             exit={{ opacity: 0, y: -10, height: 0 }}
-                            transition={{ 
-                                duration: 0.3, 
+                            transition={{
+                                duration: 0.3,
                                 ease: [0.22, 1, 0.36, 1],
                                 opacity: { duration: 0.2 }
                             }}

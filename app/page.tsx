@@ -351,16 +351,16 @@ function fmtInterval(days: number): string {
 const DEMO_COUNT = 10;
 
 const FALLBACK_VOCAB: Vocab[] = [
-  { idx: 0, id: 1, word: "أبدا", word_diacritic: "أَبَداً", transliteration: "abadan", definition: "never", level: "A0", type: "adv", root: "أ-ب-د" },
-  { idx: 1, id: 2, word: "أحيانًا", word_diacritic: "أَحْيَاناً", transliteration: "ahyanan", definition: "sometimes", level: "A0", type: "adv", root: "ح-ي-ن" },
-  { idx: 2, id: 3, word: "أين", word_diacritic: "أَيْنَ", transliteration: "ayna", definition: "where", level: "A0", type: "adv", root: "أ-ي-ن" },
-  { idx: 3, id: 4, word: "بيت", word_diacritic: "بَيْت", transliteration: "bayt", definition: "house", level: "A0", type: "noun", root: "ب-ي-ت" },
-  { idx: 4, id: 5, word: "كتب", word_diacritic: "كَتَبَ", transliteration: "kataba", definition: "he wrote", level: "A1", type: "verb", root: "ك-ت-ب" },
-  { idx: 5, id: 6, word: "قرأ", word_diacritic: "قَرَأَ", transliteration: "qara'a", definition: "he read", level: "A1", type: "verb", root: "ق-ر-أ" },
-  { idx: 6, id: 7, word: "جميل", word_diacritic: "جَمِيل", transliteration: "jameel", definition: "beautiful", level: "A1", type: "adj", root: "ج-م-ل" },
-  { idx: 7, id: 8, word: "سعيد", word_diacritic: "سَعِيد", transliteration: "sa'eed", definition: "happy", level: "A1", type: "adj", root: "س-ع-د" },
-  { idx: 8, id: 9, word: "ذهب", word_diacritic: "ذَهَبَ", transliteration: "dhahaba", definition: "he went", level: "A2", type: "verb", root: "ذ-ه-ب" },
-  { idx: 9, id: 10, word: "كلام", word_diacritic: "كَلَام", transliteration: "kalaam", definition: "speech", level: "A2", type: "noun", root: "ك-ل-م" },
+  { id: 1, word: "أبدا", word_diacritic: "أَبَداً", transliteration: "abadan", definition: "never", level: "A0", type: "adv", root: "أ-ب-د" },
+  { id: 2, word: "أحيانًا", word_diacritic: "أَحْيَاناً", transliteration: "ahyanan", definition: "sometimes", level: "A0", type: "adv", root: "ح-ي-ن" },
+  { id: 3, word: "أين", word_diacritic: "أَيْنَ", transliteration: "ayna", definition: "where", level: "A0", type: "adv", root: "أ-ي-ن" },
+  { id: 4, word: "بيت", word_diacritic: "بَيْت", transliteration: "bayt", definition: "house", level: "A0", type: "noun", root: "ب-ي-ت" },
+  { id: 5, word: "كتب", word_diacritic: "كَتَبَ", transliteration: "kataba", definition: "he wrote", level: "A1", type: "verb", root: "ك-ت-ب" },
+  { id: 6, word: "قرأ", word_diacritic: "قَرَأَ", transliteration: "qara'a", definition: "he read", level: "A1", type: "verb", root: "ق-ر-أ" },
+  { id: 7, word: "جميل", word_diacritic: "جَمِيل", transliteration: "jameel", definition: "beautiful", level: "A1", type: "adj", root: "ج-م-ل" },
+  { id: 8, word: "سعيد", word_diacritic: "سَعِيد", transliteration: "sa'eed", definition: "happy", level: "A1", type: "adj", root: "س-ع-د" },
+  { id: 9, word: "ذهب", word_diacritic: "ذَهَبَ", transliteration: "dhahaba", definition: "he went", level: "A2", type: "verb", root: "ذ-ه-ب" },
+  { id: 10, word: "كلام", word_diacritic: "كَلَام", transliteration: "kalaam", definition: "speech", level: "A2", type: "noun", root: "ك-ل-م" },
 ];
 
 function FlashcardDemo() {
@@ -749,61 +749,6 @@ export default function HomePage() {
               }} />
             </Box>
           </motion.div>
-        </Box>
-
-        {/* ── FLASHCARD DEMO SECTION ── */}
-        <Box sx={{ background: 'var(--cream)', py: { xs: 10, md: 14 } }}>
-          <Container maxWidth="sm">
-
-            {/* section label */}
-            <Box sx={{ textAlign: 'center', mb: 6 }}>
-              <Typography sx={{
-                fontFamily: 'Jost, sans-serif',
-                fontSize: '0.7rem', fontWeight: 600,
-                letterSpacing: '0.22em', color: 'var(--gold)',
-                textTransform: 'uppercase', mb: 1.5,
-              }}>
-                Try it now
-              </Typography>
-              <Typography sx={{
-                fontFamily: '"EB Garamond", serif',
-                fontSize: { xs: '2.4rem', md: '3.2rem' },
-                fontWeight: 700, color: 'var(--bark)', lineHeight: 1.1, mb: 2,
-              }}>
-                Vocabulary that <em>sticks</em>
-              </Typography>
-              <Typography sx={{
-                fontFamily: 'Jost, sans-serif',
-                FontSize: '0.95rem', color: 'var(--muted)',
-                lineHeight: 1.8, maxWidth: 400, mx: 'auto',
-              }}>
-                Spaced repetition shows you each word at the exact moment you're about to forget it.
-              </Typography>
-            </Box>
-
-            {/* the card */}
-            <FlashcardDemo />
-
-            {/* caption */}
-            <Typography sx={{
-              fontFamily: 'Jost, sans-serif',
-              fontSize: '0.75rem', color: 'var(--muted)',
-              textAlign: 'center', mt: 2.5, opacity: 0.7,
-            }}>
-              Ratings use the SM-2 algorithm — the same one that powers Anki.
-            </Typography>
-
-          </Container>
-        </Box>
-
-        {/* ── FOOTER ── */}
-        <Box sx={{
-          py: 4, borderTop: '1px solid rgba(184,134,11,0.1)',
-          background: 'var(--cream)', textAlign: 'center',
-        }}>
-          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: 'var(--muted)' }}>
-            © {new Date().getFullYear()} ArabicWithM. All rights reserved.
-          </Typography>
         </Box>
 
       </Box>
