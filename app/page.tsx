@@ -26,6 +26,7 @@ const PAGE_CSS = `
   }
 
   html, body { background: var(--cream); margin: 0; }
+  
 
   /* ── hero strips ── */
   .strip-wrap {
@@ -649,7 +650,7 @@ export default function HomePage() {
             </Typography>
 
             {/* Animated second line */}
-            <Box sx={{ height: { xs: '80px', md: '100px' }, position: 'relative', width: '100%', mb: 4 }}>
+            <Box sx={{ height: { xs: '80px', md: '100px' }, position: 'relative', width: '100%', mb: 3 }}>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={subIndex}
@@ -693,7 +694,7 @@ export default function HomePage() {
                 lineHeight: 1.7, maxWidth: 800, mx: 'auto', mb: 5,
                 textShadow: '0 2px 10px rgba(0,0,0,0.3)',
               }}>
-                Master Arabic through the shows you already love, from SpongeBob to Gumball.
+                CEFR based flashcards, worksheets, subbed animations and more!    
               </Typography>
             </motion.div>
 
