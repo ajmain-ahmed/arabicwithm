@@ -1,11 +1,10 @@
 'use client'
 
-// app/flashcards/[slug]/page.tsx
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
-    Box, Button, Container, Typography, Collapse, Fade, Grow, Slide,
+    Box, Button, Container, Typography, Collapse, Fade, Grow,
+    Card, CardContent, CardMedia, CardActionArea, LinearProgress,
 } from '@mui/material'
 import {
     ArrowBackSharp, ArrowForwardSharp, LockOpenSharp,
@@ -31,53 +30,6 @@ const PAGE_CSS = `
   }
 
   html, body { background: var(--cream); margin: 0; }
-
-  /* ── day grid cards ── */
-  .day-card {
-    border: 1px solid rgba(184,134,11,0.18);
-    border-radius: 6px;
-    background: #fff;
-    padding: 0.75rem 0.5rem;
-    cursor: pointer;
-    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-  }
-  .day-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(184,134,11,0.04) 0%, transparent 60%);
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-  .day-card:hover {
-    border-color: rgba(184,134,11,0.45);
-    box-shadow: 0 4px 20px rgba(184,134,11,0.1);
-    transform: translateY(-2px);
-  }
-  .day-card:hover::before { opacity: 1; }
-  .day-card.active {
-    border-color: var(--gold);
-    box-shadow: 0 0 0 2px rgba(184,134,11,0.15);
-  }
-
-  /* ── mobile day selector collapse ── */
-  .day-selector-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    user-select: none;
-  }
-  .day-selector-chevron {
-    transition: transform 0.25s ease;
-    color: var(--gold);
-  }
-  .day-selector-chevron.expanded {
-    transform: rotate(180deg);
-  }
 
   /* ── flashcard shell ── */
   .fc-shell {
@@ -322,6 +274,23 @@ const PAGE_CSS = `
   }
   .fc-stat-pill.again  { border-color: rgba(198,40,40,0.2);  color: #c62828; }
   .fc-stat-pill.done   { border-color: rgba(46,125,50,0.2);   color: #2e7d32; }
+
+  /* ── theme cards ── */
+  .theme-card {
+    border: 1px solid rgba(184,134,11,0.15);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .theme-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(44,26,14,0.08);
+  }
+  .theme-card.active {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px rgba(184,134,11,0.12);
+  }
 `
 
 /* ─────────────────────────────────────────────
@@ -351,7 +320,17 @@ function applyGrade(c: CardState, g: 0 | 1 | 2 | 3): CardState {
 /* ─────────────────────────────────────────────
    Constants
 ───────────────────────────────────────────── */
-const WORDS_PER_DAY = 20
+const THEMES = [
+    'Basics & Greetings',
+    'Colours',
+    'Numbers & Time',
+    'Food & Drink',
+    'People & Family',
+    'Places & Home',
+    'Travel & Nature',
+    'Adjectives & Feelings',
+    'Actions (Verbs)',
+] as const
 
 const LEVEL_MAP: Record<string, string[]> = {
     beginner: ['A0'],
@@ -402,10 +381,12 @@ function FlashcardQuiz({
     words,
     showDiacritics,
     onComplete,
+    themeLabel,
 }: {
     words: Vocab[]
     showDiacritics: boolean
     onComplete: () => void
+    themeLabel: string
 }) {
     const [queue, setQueue] = useState<CardState[]>(() => words.map(initCard))
     const [current, setCurrent] = useState<CardState | null>(() => words.length ? initCard(words[0]) : null)
@@ -464,7 +445,7 @@ function FlashcardQuiz({
                         color: 'var(--bark)', 
                         mb: 0.75 
                     }}>
-                        Day complete!
+                        {themeLabel} complete!
                     </Typography>
                     <Typography sx={{ 
                         fontFamily: 'Jost, sans-serif', 
@@ -474,7 +455,7 @@ function FlashcardQuiz({
                         lineHeight: 1.7, 
                         px: 2 
                     }}>
-                        You reviewed all {words.length} words for this session.
+                        You reviewed all {words.length} words in this theme.
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
                         <Button
@@ -502,7 +483,7 @@ function FlashcardQuiz({
                                 '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: 'var(--gold)' },
                             }}
                         >
-                            Restart day
+                            Restart theme
                         </Button>
                         <Button
                             variant="contained" 
@@ -523,7 +504,7 @@ function FlashcardQuiz({
                                 '&:hover': { background: 'var(--gold-lt)' },
                             }}
                         >
-                            Next day
+                            Back to themes
                         </Button>
                     </Box>
                 </Box>
@@ -602,130 +583,113 @@ function FlashcardQuiz({
 }
 
 /* ─────────────────────────────────────────────
-   Day selector (collapsible on mobile)
+   Theme Card Component
 ───────────────────────────────────────────── */
-function DaySelector({
-    totalDays,
-    selectedDay,
-    onSelect,
+function ThemeCard({
+    theme,
+    wordCount,
+    progress,
+    isActive,
+    onClick,
 }: {
-    totalDays: number
-    selectedDay: number
-    onSelect: (d: number) => void
+    theme: string
+    wordCount: number
+    progress: number
+    isActive: boolean
+    onClick: () => void
 }) {
-    const [expanded, setExpanded] = useState(false)
-    const [isMobile, setIsMobile] = useState(false)
-
-    useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 900)
-        checkMobile()
-        window.addEventListener('resize', checkMobile)
-        return () => window.removeEventListener('resize', checkMobile)
-    }, [])
-
-    const dayGrid = (
-        <Box
-            sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: 'repeat(5, 1fr)', sm: 'repeat(6, 1fr)', lg: 'repeat(5, 1fr)' },
-                gap: { xs: 1, sm: 1.5, md: 2 },
+    return (
+        <Card 
+            className={`theme-card${isActive ? ' active' : ''}`}
+            sx={{ 
+                maxWidth: 345, 
+                width: '100%',
+                background: '#fff',
             }}
         >
-            {Array.from({ length: totalDays }, (_, i) => i + 1).map(day => (
-                <Box
-                    key={day}
-                    sx={{ width: '100%' }}
-                >
-                    <Box
-                        className={`day-card${selectedDay === day ? ' active' : ''}`}
-                        onClick={() => onSelect(day)}
-                        sx={{ 
-                            width: '100%', 
-                            boxSizing: 'border-box',
-                            transition: 'transform 0.15s, box-shadow 0.2s',
-                            '&:hover': { transform: 'scale(1.04)' },
-                            '&:active': { transform: 'scale(0.97)' },
+            <CardActionArea onClick={onClick}>
+                <CardMedia
+                    component="img"
+                    height="140"
+                    image="/awm1.png"
+                    alt={theme}
+                    sx={{
+                        objectFit: 'cover',
+                        borderBottom: '1px solid rgba(184,134,11,0.1)',
+                    }}
+                />
+                <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
+                    <Typography
+                        gutterBottom
+                        sx={{
+                            fontFamily: '"EB Garamond", serif',
+                            fontSize: { xs: '1.1rem', sm: '1.25rem', md: '1.4rem' },
+                            fontWeight: 700,
+                            color: 'var(--bark)',
+                            lineHeight: 1.2,
                         }}
                     >
-                        <Typography sx={{
+                        {theme}
+                    </Typography>
+                    
+                    <Typography
+                        sx={{
                             fontFamily: 'Jost, sans-serif',
-                            fontSize: { xs: '0.6rem', sm: '0.65rem', md: '0.75rem' }, 
-                            fontWeight: 600,
-                            letterSpacing: '0.1em', 
-                            textTransform: 'uppercase',
-                            color: 'var(--muted)', 
-                            mb: 0.25,
+                            fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.9rem' },
+                            color: 'var(--muted)',
+                            mb: 1.5,
+                        }}
+                    >
+                        {wordCount} words
+                    </Typography>
+
+                    <Box sx={{ width: '100%' }}>
+                        <Box sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            mb: 0.75,
                         }}>
-                            Day
-                        </Typography>
-                        <Typography sx={{
-                            fontFamily: '"EB Garamond", serif',
-                            fontSize: { xs: '1.1rem', sm: '1.4rem', md: '1.6rem' }, 
-                            fontWeight: 700,
-                            color: selectedDay === day ? 'var(--gold)' : 'var(--bark)',
-                            lineHeight: 1,
-                        }}>
-                            {day}
-                        </Typography>
+                            <Typography
+                                sx={{
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 600,
+                                    letterSpacing: '0.08em',
+                                    textTransform: 'uppercase',
+                                    color: 'var(--gold)',
+                                }}
+                            >
+                                Progress
+                            </Typography>
+                            <Typography
+                                sx={{
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 600,
+                                    color: 'var(--bark)',
+                                }}
+                            >
+                                {Math.round(progress)}%
+                            </Typography>
+                        </Box>
+                        <LinearProgress
+                            variant="determinate"
+                            value={progress}
+                            sx={{
+                                height: 6,
+                                borderRadius: 3,
+                                backgroundColor: 'rgba(184,134,11,0.1)',
+                                '& .MuiLinearProgress-bar': {
+                                    background: 'linear-gradient(90deg, var(--gold) 0%, var(--gold-lt) 100%)',
+                                    borderRadius: 3,
+                                },
+                            }}
+                        />
                     </Box>
-                </Box>
-            ))}
-        </Box>
-    )
-
-    if (!isMobile) {
-        return (
-            <Box>
-                <Typography sx={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: { xs: '0.65rem', sm: '0.68rem', md: '0.8rem' }, 
-                    fontWeight: 600,
-                    letterSpacing: '0.16em', 
-                    textTransform: 'uppercase',
-                    color: 'var(--gold)', 
-                    mb: { xs: 1.5, sm: 2, md: 2.5 },
-                }}>
-                    Choose a Day
-                </Typography>
-                {dayGrid}
-            </Box>
-        )
-    }
-
-    return (
-        <Box>
-            <Box 
-                className="day-selector-header"
-                onClick={() => setExpanded(!expanded)}
-                sx={{ mb: expanded ? 1.5 : 0 }}
-            >
-                <Typography sx={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.65rem', 
-                    fontWeight: 600,
-                    letterSpacing: '0.16em', 
-                    textTransform: 'uppercase',
-                    color: 'var(--gold)',
-                }}>
-                    Choose a Day
-                </Typography>
-                <Box 
-                    className={`day-selector-chevron ${expanded ? 'expanded' : ''}`}
-                    sx={{ 
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                </Box>
-            </Box>
-            <Collapse in={expanded} timeout={250}>
-                {dayGrid}
-            </Collapse>
-        </Box>
+                </CardContent>
+            </CardActionArea>
+        </Card>
     )
 }
 
@@ -741,7 +705,7 @@ export default function FlashcardSlugPage() {
     const isLoading = useVocabStore(s => s.isLoading)
     const fetchVocab = useVocabStore(s => s.fetch)
 
-    const [selectedDay, setSelectedDay] = useState(1)
+    const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
     const [showDiacritics, setShowDiacritics] = useState(true)
     const [quizKey, setQuizKey] = useState(0)
 
@@ -751,24 +715,49 @@ export default function FlashcardSlugPage() {
     const label = SLUG_LABELS[slug] ?? slug
 
     const filteredVocab = useMemo(
-        () => storeVocab.filter(v => levels.includes(v.level)).sort((a, b) => a.id - b.id),
+        () => storeVocab.filter(v => levels.includes(v.level)),
         [storeVocab, slug]
     )
 
-    const totalDays = Math.ceil(filteredVocab.length / WORDS_PER_DAY) || 1
+    // Group vocab by theme
+    const themeWords = useMemo(() => {
+        const grouped: Record<string, Vocab[]> = {}
+        THEMES.forEach(theme => {
+            grouped[theme] = filteredVocab.filter(v => v.theme === theme)
+        })
+        return grouped
+    }, [filteredVocab])
 
-    const dayWords = useMemo(() => {
-        const start = (selectedDay - 1) * WORDS_PER_DAY
-        return filteredVocab.slice(start, start + WORDS_PER_DAY)
-    }, [filteredVocab, selectedDay])
+    // Calculate theme progress (placeholder — will be wired to real progress later)
+    const themeProgress = useMemo(() => {
+        const progress: Record<string, number> = {}
+        THEMES.forEach(theme => {
+            // Placeholder: random progress for visual demonstration
+            // In production, this comes from user progress tracking
+            progress[theme] = Math.random() * 100
+        })
+        return progress
+    }, [filteredVocab])
 
-    const handleDaySelect = (day: number) => {
-        setSelectedDay(day)
+    // Overall level progress
+    const overallProgress = useMemo(() => {
+        const totalWords = filteredVocab.length
+        if (totalWords === 0) return 0
+        const totalProgress = THEMES.reduce((sum, theme) => {
+            return sum + (themeProgress[theme] / 100) * (themeWords[theme]?.length ?? 0)
+        }, 0)
+        return (totalProgress / totalWords) * 100
+    }, [filteredVocab, themeProgress, themeWords])
+
+    const activeWords = selectedTheme ? (themeWords[selectedTheme] ?? []) : []
+
+    const handleThemeSelect = (theme: string) => {
+        setSelectedTheme(theme)
         setQuizKey(k => k + 1)
     }
 
-    const handleNextDay = () => {
-        if (selectedDay < totalDays) handleDaySelect(selectedDay + 1)
+    const handleBackToThemes = () => {
+        setSelectedTheme(null)
     }
 
     return (
@@ -780,6 +769,7 @@ export default function FlashcardSlugPage() {
                 component="main"
                 sx={{ background: 'var(--cream)', minHeight: '100vh' }}
             >
+                {/* ── Header ── */}
                 <Box sx={{
                     background: 'linear-gradient(135deg, var(--forest) 0%, #071a0f 100%)',
                     pt: { xs: 10, sm: 12, md: 14 },
@@ -830,6 +820,47 @@ export default function FlashcardSlugPage() {
                         }}>
                             {label} Flashcards
                         </Typography>
+                        
+                        {/* Overall progress */}
+                        <Box sx={{ maxWidth: 400, mb: 2 }}>
+                            <Box sx={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center',
+                                mb: 1,
+                            }}>
+                                <Typography sx={{
+                                    fontFamily: 'Jost, sans-serif', 
+                                    fontSize: { xs: '0.75rem', sm: '0.85rem', md: '1rem' },
+                                    color: 'rgba(245,237,224,0.7)',
+                                    fontWeight: 500,
+                                }}>
+                                    Overall Progress
+                                </Typography>
+                                <Typography sx={{
+                                    fontFamily: 'Jost, sans-serif', 
+                                    fontSize: { xs: '0.75rem', sm: '0.85rem', md: '1rem' },
+                                    color: 'var(--gold-lt)',
+                                    fontWeight: 600,
+                                }}>
+                                    {Math.round(overallProgress)}%
+                                </Typography>
+                            </Box>
+                            <LinearProgress
+                                variant="determinate"
+                                value={overallProgress}
+                                sx={{
+                                    height: 8,
+                                    borderRadius: 4,
+                                    backgroundColor: 'rgba(255,255,255,0.1)',
+                                    '& .MuiLinearProgress-bar': {
+                                        background: 'linear-gradient(90deg, var(--gold) 0%, var(--gold-lt) 100%)',
+                                        borderRadius: 4,
+                                    },
+                                }}
+                            />
+                        </Box>
+
                         <Typography sx={{
                             fontFamily: 'Jost, sans-serif',
                             fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1.1rem' }, 
@@ -837,68 +868,76 @@ export default function FlashcardSlugPage() {
                             lineHeight: 1.7, 
                             maxWidth: 500,
                         }}>
-                            {filteredVocab.length} words split across {totalDays} days · {WORDS_PER_DAY} words per session
+                            {filteredVocab.length} words across {THEMES.length} themes
                         </Typography>
                     </Container>
                 </Box>
 
                 <Container maxWidth="xl" sx={{ py: { xs: 3, sm: 4, md: 6 } }}>
-
-                    <Box sx={{
-                        display: 'flex', 
-                        alignItems: 'center',
-                        justifyContent: 'space-between', 
-                        flexWrap: 'wrap',
-                        gap: 2, 
-                        mb: { xs: 2, sm: 3, md: 4 },
-                    }}>
-                        <Typography sx={{
-                            fontFamily: '"EB Garamond", serif',
-                            fontSize: { xs: '1.2rem', sm: '1.5rem', md: '2rem' }, 
-                            fontWeight: 700, 
-                            color: 'var(--bark)',
-                        }}>
-                            Day {selectedDay}
-                            <Typography component="span" sx={{
-                                fontFamily: 'Jost, sans-serif', 
-                                fontSize: { xs: '0.7rem', sm: '0.8rem', md: '1rem' },
-                                color: 'var(--muted)', 
-                                ml: 1.5, 
-                                fontWeight: 400,
-                            }}>
-                                words {(selectedDay - 1) * WORDS_PER_DAY + 1}–{Math.min(selectedDay * WORDS_PER_DAY, filteredVocab.length)}
-                            </Typography>
-                        </Typography>
-
-                        <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={showDiacritics ? <VisibilityOffSharp sx={{ fontSize: { xs: 16, md: 20 } }} /> : <VisibilitySharp sx={{ fontSize: { xs: 16, md: 20 } }} />}
-                            onClick={() => setShowDiacritics(p => !p)}
-                            sx={{
-                                borderColor: 'rgba(184,134,11,0.3)',
-                                color: showDiacritics ? 'var(--gold)' : 'var(--muted)',
-                                fontFamily: 'Jost, sans-serif', 
-                                fontWeight: 500,
-                                fontSize: { xs: '0.72rem', sm: '0.78rem', md: '0.95rem' }, 
-                                textTransform: 'none', 
-                                borderRadius: '6px',
-                                px: { xs: 1.5, md: 2 },
-                                py: { md: 0.5 },
-                                '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: 'var(--gold)' },
-                            }}
-                        >
-                            {showDiacritics ? 'Hide diacritics' : 'Show diacritics'}
-                        </Button>
-                    </Box>
-
-                    <Box sx={{
-                        display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', lg: '1fr 340px', xl: '1fr 420px' },
-                        gap: { xs: 3, sm: 4, md: 6 },
-                        alignItems: 'start',
-                    }}>
+                    
+                    {selectedTheme ? (
+                        /* ── Flashcard Quiz View ── */
                         <Box>
+                            <Box sx={{
+                                display: 'flex', 
+                                alignItems: 'center',
+                                justifyContent: 'space-between', 
+                                flexWrap: 'wrap',
+                                gap: 2, 
+                                mb: { xs: 2, sm: 3, md: 4 },
+                            }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        startIcon={<ArrowBackSharp sx={{ fontSize: { xs: 16, md: 20 } }} />}
+                                        onClick={handleBackToThemes}
+                                        sx={{
+                                            borderColor: 'rgba(184,134,11,0.3)',
+                                            color: 'var(--bark)',
+                                            fontFamily: 'Jost, sans-serif', 
+                                            fontWeight: 500,
+                                            fontSize: { xs: '0.72rem', sm: '0.78rem', md: '0.9rem' }, 
+                                            textTransform: 'none', 
+                                            borderRadius: '6px',
+                                            px: { xs: 1.5, md: 2 },
+                                            '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: 'var(--gold)' },
+                                        }}
+                                    >
+                                        Themes
+                                    </Button>
+                                    <Typography sx={{
+                                        fontFamily: '"EB Garamond", serif',
+                                        fontSize: { xs: '1.2rem', sm: '1.5rem', md: '2rem' }, 
+                                        fontWeight: 700, 
+                                        color: 'var(--bark)',
+                                    }}>
+                                        {selectedTheme}
+                                    </Typography>
+                                </Box>
+
+                                <Button
+                                    variant="outlined"
+                                    size="small"
+                                    startIcon={showDiacritics ? <VisibilityOffSharp sx={{ fontSize: { xs: 16, md: 20 } }} /> : <VisibilitySharp sx={{ fontSize: { xs: 16, md: 20 } }} />}
+                                    onClick={() => setShowDiacritics(p => !p)}
+                                    sx={{
+                                        borderColor: 'rgba(184,134,11,0.3)',
+                                        color: showDiacritics ? 'var(--gold)' : 'var(--muted)',
+                                        fontFamily: 'Jost, sans-serif', 
+                                        fontWeight: 500,
+                                        fontSize: { xs: '0.72rem', sm: '0.78rem', md: '0.95rem' }, 
+                                        textTransform: 'none', 
+                                        borderRadius: '6px',
+                                        px: { xs: 1.5, md: 2 },
+                                        py: { md: 0.5 },
+                                        '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: 'var(--gold)' },
+                                    }}
+                                >
+                                    {showDiacritics ? 'Hide diacritics' : 'Show diacritics'}
+                                </Button>
+                            </Box>
+
                             {isLoading ? (
                                 <Box className="fc-shell" sx={{ gap: 2 }}>
                                     <Box className="fc-skeleton" sx={{ height: 2, width: '100%', mb: 2 }} />
@@ -907,64 +946,63 @@ export default function FlashcardSlugPage() {
                                     <Box className="fc-skeleton" sx={{ height: 32, width: '30%', mx: 'auto' }} />
                                     <Box className="fc-skeleton" sx={{ height: 44, width: '100%', mt: 'auto' }} />
                                 </Box>
-                            ) : dayWords.length === 0 ? (
+                            ) : activeWords.length === 0 ? (
                                 <Box className="fc-shell" sx={{ alignItems: 'center', justifyContent: 'center' }}>
                                     <Typography sx={{ 
                                         fontFamily: 'Jost, sans-serif', 
                                         color: 'var(--muted)', 
                                         fontSize: { xs: '0.85rem', sm: '0.9rem', md: '1.1rem' } 
                                     }}>
-                                        No words found for this level.
+                                        No words found for this theme.
                                     </Typography>
                                 </Box>
                             ) : (
                                 <FlashcardQuiz
                                     key={quizKey}
-                                    words={dayWords}
+                                    words={activeWords}
                                     showDiacritics={showDiacritics}
-                                    onComplete={handleNextDay}
+                                    onComplete={handleBackToThemes}
+                                    themeLabel={selectedTheme}
                                 />
                             )}
                         </Box>
-
-                        <Box sx={{
-                            background: '#fff',
-                            border: '1px solid rgba(184,134,11,0.15)',
-                            borderRadius: '8px',
-                            p: { xs: 2, sm: 2.5, md: 3 },
-                            width: '100%',
-                            boxSizing: 'border-box',
-                        }}>
-                            <DaySelector
-                                totalDays={totalDays}
-                                selectedDay={selectedDay}
-                                onSelect={handleDaySelect}
-                            />
-                            <Box sx={{
-                                mt: { xs: 2, sm: 2.5, md: 3 }, 
-                                pt: { xs: 1.5, sm: 2 },
-                                borderTop: '1px solid rgba(184,134,11,0.1)',
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                justifyContent: 'space-between',
+                    ) : (
+                        /* ── Theme Grid View ── */
+                        <Box>
+                            <Typography sx={{
+                                fontFamily: '"EB Garamond", serif',
+                                fontSize: { xs: '1.3rem', sm: '1.6rem', md: '2rem' }, 
+                                fontWeight: 700, 
+                                color: 'var(--bark)',
+                                mb: { xs: 2, sm: 3, md: 4 },
                             }}>
-                                <Typography sx={{
-                                    fontFamily: 'Jost, sans-serif', 
-                                    fontSize: { xs: '0.72rem', sm: '0.78rem', md: '0.9rem' }, 
-                                    color: 'var(--muted)',
-                                }}>
-                                    {filteredVocab.length} total words
-                                </Typography>
-                                <Typography sx={{
-                                    fontFamily: 'Jost, sans-serif', 
-                                    fontSize: { xs: '0.72rem', sm: '0.78rem', md: '0.9rem' }, 
-                                    color: 'var(--muted)',
-                                }}>
-                                    {WORDS_PER_DAY} per day
-                                </Typography>
+                                Select a Theme
+                            </Typography>
+
+                            <Box sx={{
+                                display: 'grid',
+                                gridTemplateColumns: { 
+                                    xs: '1fr', 
+                                    sm: 'repeat(2, 1fr)', 
+                                    md: 'repeat(3, 1fr)',
+                                    lg: 'repeat(3, 1fr)',
+                                    xl: 'repeat(4, 1fr)',
+                                },
+                                gap: { xs: 2, sm: 3, md: 4 },
+                            }}>
+                                {THEMES.map((theme) => (
+                                    <ThemeCard
+                                        key={theme}
+                                        theme={theme}
+                                        wordCount={themeWords[theme]?.length ?? 0}
+                                        progress={themeProgress[theme] ?? 0}
+                                        isActive={selectedTheme === theme}
+                                        onClick={() => handleThemeSelect(theme)}
+                                    />
+                                ))}
                             </Box>
                         </Box>
-                    </Box>
+                    )}
 
                 </Container>
             </Box>

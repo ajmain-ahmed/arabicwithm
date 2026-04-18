@@ -11,6 +11,7 @@ export type Vocab = {
   level: string
   type: string
   root: string
+  theme: string
 }
 
 interface VocabStore {
