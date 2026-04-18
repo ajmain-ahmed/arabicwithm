@@ -5,10 +5,13 @@ import { useParams, useRouter } from 'next/navigation'
 import {
     Box, Button, Container, Typography, Collapse, Fade, Grow,
     Card, CardContent, CardMedia, CardActionArea, LinearProgress,
+    CircularProgress,
 } from '@mui/material'
 import {
-    ArrowBackSharp, ArrowForwardSharp, LockOpenSharp,
-    VisibilitySharp, VisibilityOffSharp,
+    ArrowBackSharp, ArrowForwardSharp, SkipNextSharp,
+    BookmarkAddSharp, CheckCircleSharp, ArrowBackIosSharp,
+    VisibilityOffSharp,
+    VisibilitySharp,
 } from '@mui/icons-material'
 import Navbar from '@/app/components/navbar'
 import { useVocabStore, type Vocab } from '@/store/vocabStore'
@@ -162,7 +165,41 @@ const PAGE_CSS = `
     }
   }
 
-  /* ── grade buttons ── */
+  /* ── example sentences ── */
+  .fc-examples {
+    background: rgba(245,237,224,0.5);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-left: 3px solid var(--gold);
+  }
+  @media (max-width: 600px) {
+    .fc-examples {
+      padding: 0.75rem;
+      margin: 0.75rem 0;
+    }
+  }
+  .fc-example-item {
+    font-family: 'EB Garamond', serif;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    color: var(--bark);
+    direction: rtl;
+    text-align: right;
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+  }
+  .fc-example-translation {
+    font-family: 'Jost', sans-serif;
+    font-size: clamp(0.75rem, 1.5vw, 0.9rem);
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 0.75rem;
+  }
+  .fc-example-item:last-child {
+    margin-bottom: 0;
+  }
+
+  /* ── new action buttons ── */
   .fc-btn-row {
     display: grid; grid-template-columns: repeat(4,1fr);
     gap: 8px; margin-top: 1.25rem;
@@ -179,38 +216,45 @@ const PAGE_CSS = `
       margin-top: 0.875rem;
     }
   }
-  .fc-grade-btn {
+  .fc-action-btn {
     display: flex; flex-direction: column; align-items: center; gap: 4px;
     padding: 0.75rem 0.5rem;
     border-radius: 6px; border: 1px solid;
     background: transparent;
     font-family: 'Jost', sans-serif;
-    font-size: clamp(0.8rem, 1.5vw, 1rem); 
+    font-size: clamp(0.75rem, 1.5vw, 0.9rem); 
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
+    transition: background 0.15s, transform 0.1s, border-color 0.15s;
   }
   @media (max-width: 600px) {
-    .fc-grade-btn {
-      font-size: 0.7rem;
-      padding: 0.4rem 0.15rem;
+    .fc-action-btn {
+      font-size: 0.65rem;
+      padding: 0.5rem 0.25rem;
       gap: 2px;
+    }
+    .fc-action-btn svg {
+      font-size: 1rem !important;
     }
   }
   @media (min-width: 900px) {
-    .fc-grade-btn {
+    .fc-action-btn {
       padding: 1rem 0.75rem;
     }
   }
-  .fc-grade-btn:active { transform: scale(0.97); }
-  .fc-btn-again { border-color: #c62828; color: #c62828; }
-  .fc-btn-again:hover { background: rgba(198,40,40,0.06); }
-  .fc-btn-hard  { border-color: #e65100; color: #e65100; }
-  .fc-btn-hard:hover  { background: rgba(230,81,0,0.06); }
-  .fc-btn-good  { border-color: #2e7d32; color: #2e7d32; }
-  .fc-btn-good:hover  { background: rgba(46,125,50,0.06); }
-  .fc-btn-easy  { border-color: #1565c0; color: #1565c0; }
-  .fc-btn-easy:hover  { background: rgba(21,101,192,0.06); }
+  .fc-action-btn:active { transform: scale(0.97); }
+  
+  .fc-btn-back { border-color: var(--muted); color: var(--muted); }
+  .fc-btn-back:hover { background: rgba(122,110,101,0.08); }
+  
+  .fc-btn-skip { border-color: #ff9800; color: #ff9800; }
+  .fc-btn-skip:hover { background: rgba(255,152,0,0.08); }
+  
+  .fc-btn-revision { border-color: #1565c0; color: #1565c0; }
+  .fc-btn-revision:hover { background: rgba(21,101,192,0.08); }
+  
+  .fc-btn-complete { border-color: #2e7d32; color: #2e7d32; }
+  .fc-btn-complete:hover { background: rgba(46,125,50,0.08); }
 
   .fc-show-btn {
     width: 100%; 
@@ -272,7 +316,7 @@ const PAGE_CSS = `
     padding: 4px 12px; border-radius: 999px;
     border: 1px solid rgba(122,110,101,0.2); color: var(--muted);
   }
-  .fc-stat-pill.again  { border-color: rgba(198,40,40,0.2);  color: #c62828; }
+  .fc-stat-pill.revision { border-color: rgba(21,101,192,0.2); color: #1565c0; }
   .fc-stat-pill.done   { border-color: rgba(46,125,50,0.2);   color: #2e7d32; }
 
   /* ── theme cards ── */
@@ -294,69 +338,122 @@ const PAGE_CSS = `
 `
 
 /* ─────────────────────────────────────────────
-   SM-2 types & helpers
+   Types & Interfaces
 ───────────────────────────────────────────── */
-type CardState = Vocab & {
+
+// Extended Vocab with example fields from your DB schema
+type VocabWithExamples = Vocab & {
+    ex_ar: string | null
+    ex_di: string | null
+    ex_en: string | null
+}
+
+type CardState = VocabWithExamples & {
     interval: number
     easeFactor: number
     repetitions: number
     due: number
+    status: 'new' | 'learning' | 'review' | 'complete'
 }
 
-function initCard(v: Vocab): CardState {
-    return { ...v, interval: 0, easeFactor: 2.5, repetitions: 0, due: 0 }
-}
-
-function applyGrade(c: CardState, g: 0 | 1 | 2 | 3): CardState {
-    const efDeltas = [-0.8, -0.15, 0, 0.15]
-    return {
-        ...c,
-        easeFactor: Math.max(1.3, c.easeFactor + efDeltas[g]),
-        repetitions: g === 0 ? 0 : c.repetitions + 1,
-        due: Date.now() + (g === 0 ? 60000 : g === 1 ? 300000 : g === 2 ? 600000 : 86400000),
-    }
+type ExampleItem = {
+    arabic: string
+    diacritic: string
+    english: string
 }
 
 /* ─────────────────────────────────────────────
-   Constants
+   Card State Helpers
 ───────────────────────────────────────────── */
-const THEMES = [
-    'Basics & Greetings',
-    'Colours',
-    'Numbers & Time',
-    'Food & Drink',
-    'People & Family',
-    'Places & Home',
-    'Travel & Nature',
-    'Adjectives & Feelings',
-    'Actions (Verbs)',
-] as const
-
-const LEVEL_MAP: Record<string, string[]> = {
-    beginner: ['A0'],
-    elementary: ['A1'],
-    intermediate: ['A2'],
-    'upper-intermediate': ['B1'],
+function initCard(v: VocabWithExamples): CardState {
+    return {
+        ...v,
+        interval: 0,
+        easeFactor: 2.5,
+        repetitions: 0,
+        due: 0,
+        status: 'new'
+    }
 }
 
-const SLUG_LABELS: Record<string, string> = {
-    beginner: 'Beginner',
-    elementary: 'Elementary',
-    intermediate: 'Intermediate',
-    'upper-intermediate': 'Upper Intermediate',
+function parseExamples(card: CardState): ExampleItem[] {
+    if (!card.ex_ar || !card.ex_en) return []
+
+    const ar = card.ex_ar.split(';').map(s => s.trim())
+    const di = card.ex_di ? card.ex_di.split(';').map(s => s.trim()) : ar
+    const en = card.ex_en.split(';').map(s => s.trim())
+
+    const count = Math.min(ar.length, en.length)
+    const items: ExampleItem[] = []
+
+    for (let i = 0; i < count; i++) {
+        items.push({
+            arabic: ar[i] || '',
+            diacritic: di[i] || ar[i] || '',
+            english: en[i] || '',
+        })
+    }
+
+    return items
+}
+
+/* ─────────────────────────────────────────────
+   Example Sentences (from DB fields)
+───────────────────────────────────────────── */
+function ExampleSentences({
+    card,
+    revealed,
+    showDiacritics,
+}: {
+    card: CardState
+    revealed: boolean
+    showDiacritics: boolean
+}) {
+    const examples = useMemo(() => parseExamples(card), [card])
+
+    if (!revealed || examples.length === 0) return null
+
+    return (
+        <Collapse in={revealed} timeout={300}>
+            <Box className="fc-examples">
+                <Typography sx={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
+                    fontWeight: 600,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: 'var(--gold)',
+                    mb: 1,
+                }}>
+                    Example Sentences
+                </Typography>
+
+                {examples.map((ex, idx) => (
+                    <Box key={idx} sx={{ mb: idx < examples.length - 1 ? 1.5 : 0 }}>
+                        <Box className="fc-example-item">
+                            {showDiacritics ? ex.diacritic : ex.arabic}
+                        </Box>
+                        <Box className="fc-example-translation">
+                            {ex.english}
+                        </Box>
+                    </Box>
+                ))}
+            </Box>
+        </Collapse>
+    )
 }
 
 /* ─────────────────────────────────────────────
    Animated Arabic Word Component (MUI Fade)
 ───────────────────────────────────────────── */
-function AnimatedArabicWord({ 
-    word, 
-    wordDiacritic, 
-    showDiacritics 
-}: { 
+function AnimatedArabicWord({
+    word,
+    wordDiacritic,
+    showDiacritics
+}: {
     word: string
     wordDiacritic: string
-    showDiacritics: boolean 
+    showDiacritics: boolean
 }) {
     return (
         <Box className="fc-arabic-wrapper">
@@ -383,7 +480,7 @@ function FlashcardQuiz({
     onComplete,
     themeLabel,
 }: {
-    words: Vocab[]
+    words: VocabWithExamples[]
     showDiacritics: boolean
     onComplete: () => void
     themeLabel: string
@@ -394,6 +491,7 @@ function FlashcardQuiz({
     const [doneCount, setDoneCount] = useState(0)
     const [isDone, setIsDone] = useState(false)
     const [cardKey, setCardKey] = useState(0)
+    const [revisionCount, setRevisionCount] = useState(0)
 
     useEffect(() => {
         const deck = words.map(initCard)
@@ -402,64 +500,107 @@ function FlashcardQuiz({
         setRevealed(false)
         setDoneCount(0)
         setIsDone(false)
+        setRevisionCount(0)
         setCardKey(k => k + 1)
     }, [words])
 
-    const grade = useCallback((g: 0 | 1 | 2 | 3) => {
+    // Action handlers
+    const handleBack = useCallback(() => {
+        onComplete()
+    }, [onComplete])
+
+    const handleSkip = useCallback(() => {
         if (!current) return
-        const graded = applyGrade(current, g)
-
         setQueue(prev => {
-            const next = [...prev]
-            if (g === 0) next.splice(Math.min(4, next.length), 0, graded)
-
+            const next = [...prev, { ...current, status: 'learning' as const }]
             if (next.length === 0) {
                 setIsDone(true)
                 setCurrent(null)
-                if (g > 0) setDoneCount(d => d + 1)
                 return []
             }
-
             const [nextCard, ...rest] = next
             setCurrent(nextCard)
             setRevealed(false)
             setCardKey(k => k + 1)
-            if (g > 0) setDoneCount(d => d + 1)
+            return rest
+        })
+    }, [current])
+
+    const handleAddToRevision = useCallback(() => {
+        if (!current) return
+        setRevisionCount(c => c + 1)
+        setQueue(prev => {
+            const insertIndex = Math.min(3, prev.length)
+            const next = [...prev]
+            next.splice(insertIndex, 0, { ...current, status: 'review' as const })
+
+            if (next.length === 0) {
+                setIsDone(true)
+                setCurrent(null)
+                return []
+            }
+            const [nextCard, ...rest] = next
+            setCurrent(nextCard)
+            setRevealed(false)
+            setCardKey(k => k + 1)
+            return rest
+        })
+    }, [current])
+
+    const handleComplete = useCallback(() => {
+        if (!current) return
+        setDoneCount(d => d + 1)
+        setQueue(prev => {
+            const next = prev.filter(c => c.id !== current.id)
+            if (next.length === 0) {
+                setIsDone(true)
+                setCurrent(null)
+                return []
+            }
+            const [nextCard, ...rest] = next
+            setCurrent(nextCard)
+            setRevealed(false)
+            setCardKey(k => k + 1)
             return rest
         })
     }, [current])
 
     const progressPct = isDone ? 100 : Math.round((doneCount / words.length) * 100)
-    const dueCount = queue.filter(c => c.repetitions > 0 && c.due <= Date.now()).length
-    const newCount = current ? queue.filter(c => c.repetitions === 0).length + 1 : 0
+    const newCount = current ? queue.filter(c => c.status === 'new').length + 1 : 0
+    const reviewCount = queue.filter(c => c.status === 'review').length
 
     if (isDone) return (
         <Grow in={true} timeout={500}>
             <Box className="fc-shell" sx={{ alignItems: 'center', justifyContent: 'center' }}>
                 <Box sx={{ textAlign: 'center', padding: '1.5rem 0' }}>
                     <Box className="fc-done-circle">✓</Box>
-                    <Typography sx={{ 
-                        fontFamily: '"EB Garamond", serif', 
-                        fontSize: { xs: '1.6rem', sm: '2rem', md: '2.5rem' }, 
-                        fontWeight: 700, 
-                        color: 'var(--bark)', 
-                        mb: 0.75 
+                    <Typography sx={{
+                        fontFamily: '"EB Garamond", serif',
+                        fontSize: { xs: '1.6rem', sm: '2rem', md: '2.5rem' },
+                        fontWeight: 700,
+                        color: 'var(--bark)',
+                        mb: 0.75
                     }}>
                         {themeLabel} complete!
                     </Typography>
-                    <Typography sx={{ 
-                        fontFamily: 'Jost, sans-serif', 
-                        fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1.1rem' }, 
-                        color: 'var(--muted)', 
-                        mb: 3.5, 
-                        lineHeight: 1.7, 
-                        px: 2 
+                    <Typography sx={{
+                        fontFamily: 'Jost, sans-serif',
+                        fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1.1rem' },
+                        color: 'var(--muted)',
+                        mb: 3.5,
+                        lineHeight: 1.7,
+                        px: 2
                     }}>
                         You reviewed all {words.length} words in this theme.
+                        {revisionCount > 0 && (
+                            <Box component="span" sx={{ display: 'block', mt: 1, color: '#1565c0' }}>
+                                {revisionCount} words added to revision list
+                            </Box>
+                        )}
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
                         <Button
-                            variant="outlined" 
+                            variant="outlined"
                             size="small"
                             onClick={() => {
                                 const deck = words.map(initCard)
@@ -468,15 +609,16 @@ function FlashcardQuiz({
                                 setRevealed(false)
                                 setDoneCount(0)
                                 setIsDone(false)
+                                setRevisionCount(0)
                                 setCardKey(k => k + 1)
                             }}
                             sx={{
-                                borderColor: 'rgba(184,134,11,0.35)', 
+                                borderColor: 'rgba(184,134,11,0.35)',
                                 color: 'var(--bark)',
-                                fontFamily: 'Jost, sans-serif', 
+                                fontFamily: 'Jost, sans-serif',
                                 fontWeight: 500,
-                                fontSize: { xs: '0.75rem', sm: '0.85rem', md: '1rem' }, 
-                                textTransform: 'none', 
+                                fontSize: { xs: '0.75rem', sm: '0.85rem', md: '1rem' },
+                                textTransform: 'none',
                                 borderRadius: '6px',
                                 px: { xs: 2, sm: 2.5, md: 3 },
                                 py: { md: 1 },
@@ -486,19 +628,19 @@ function FlashcardQuiz({
                             Restart theme
                         </Button>
                         <Button
-                            variant="contained" 
+                            variant="contained"
                             size="small"
                             onClick={onComplete}
                             endIcon={<ArrowForwardSharp sx={{ fontSize: { xs: 16, md: 20 } }} />}
                             sx={{
                                 background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
                                 color: 'var(--bark)',
-                                fontFamily: 'Jost, sans-serif', 
+                                fontFamily: 'Jost, sans-serif',
                                 fontWeight: 600,
-                                fontSize: { xs: '0.75rem', sm: '0.85rem', md: '1rem' }, 
-                                textTransform: 'none', 
+                                fontSize: { xs: '0.75rem', sm: '0.85rem', md: '1rem' },
+                                textTransform: 'none',
                                 borderRadius: '6px',
-                                px: { xs: 2, sm: 2.5, md: 3 }, 
+                                px: { xs: 2, sm: 2.5, md: 3 },
                                 py: { md: 1 },
                                 boxShadow: '0 4px 16px rgba(184,134,11,0.3)',
                                 '&:hover': { background: 'var(--gold-lt)' },
@@ -523,7 +665,7 @@ function FlashcardQuiz({
 
                 <Box sx={{ display: 'flex', gap: 1.5, mb: { xs: 1.5, sm: 2, md: 3 }, flexWrap: 'wrap' }}>
                     <span className="fc-stat-pill">{newCount} new</span>
-                    <span className={`fc-stat-pill${dueCount > 0 ? ' again' : ''}`}>{dueCount} due</span>
+                    <span className={`fc-stat-pill${reviewCount > 0 ? ' revision' : ''}`}>{reviewCount} revision</span>
                     <span className={`fc-stat-pill${doneCount > 0 ? ' done' : ''}`}>{doneCount} done</span>
                 </Box>
 
@@ -532,7 +674,7 @@ function FlashcardQuiz({
                         <span className={`fc-level-badge fc-badge-${current.level}`}>{current.level}</span>
                     </Box>
 
-                    <AnimatedArabicWord 
+                    <AnimatedArabicWord
                         word={current.word}
                         wordDiacritic={current.word_diacritic}
                         showDiacritics={showDiacritics}
@@ -551,17 +693,47 @@ function FlashcardQuiz({
                             <Box className="fc-root">root · {current.root}</Box>
                         )}
 
+                        {/* Example Sentences from DB */}
+                        <ExampleSentences
+                            card={current}
+                            revealed={revealed}
+                            showDiacritics={showDiacritics}
+                        />
+
+                        {/* New Action Buttons */}
                         <Box className="fc-btn-row">
-                            {[
-                                { label: 'Again', cls: 'fc-btn-again', g: 0 },
-                                { label: 'Hard', cls: 'fc-btn-hard', g: 1 },
-                                { label: 'Good', cls: 'fc-btn-good', g: 2 },
-                                { label: 'Easy', cls: 'fc-btn-easy', g: 3 },
-                            ].map(({ label, cls, g }) => (
-                                <button key={label} className={`fc-grade-btn ${cls}`} onClick={() => grade(g as 0 | 1 | 2 | 3)}>
-                                    {label}
-                                </button>
-                            ))}
+                            <button
+                                className="fc-action-btn fc-btn-back"
+                                onClick={handleBack}
+                                title="Back to themes"
+                            >
+                                <ArrowBackIosSharp sx={{ fontSize: { xs: 18, md: 22 } }} />
+                                Back
+                            </button>
+                            <button
+                                className="fc-action-btn fc-btn-skip"
+                                onClick={handleSkip}
+                                title="Skip to later"
+                            >
+                                <SkipNextSharp sx={{ fontSize: { xs: 18, md: 22 } }} />
+                                Skip
+                            </button>
+                            <button
+                                className="fc-action-btn fc-btn-revision"
+                                onClick={handleAddToRevision}
+                                title="Add to revision list"
+                            >
+                                <BookmarkAddSharp sx={{ fontSize: { xs: 18, md: 22 } }} />
+                                Revision
+                            </button>
+                            <button
+                                className="fc-action-btn fc-btn-complete"
+                                onClick={handleComplete}
+                                title="Mark as complete"
+                            >
+                                <CheckCircleSharp sx={{ fontSize: { xs: 18, md: 22 } }} />
+                                Complete
+                            </button>
                         </Box>
                     </Collapse>
 
@@ -599,10 +771,10 @@ function ThemeCard({
     onClick: () => void
 }) {
     return (
-        <Card 
+        <Card
             className={`theme-card${isActive ? ' active' : ''}`}
-            sx={{ 
-                maxWidth: 345, 
+            sx={{
+                maxWidth: 345,
                 width: '100%',
                 background: '#fff',
             }}
@@ -631,7 +803,7 @@ function ThemeCard({
                     >
                         {theme}
                     </Typography>
-                    
+
                     <Typography
                         sx={{
                             fontFamily: 'Jost, sans-serif',
@@ -644,9 +816,9 @@ function ThemeCard({
                     </Typography>
 
                     <Box sx={{ width: '100%' }}>
-                        <Box sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
+                        <Box sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
                             alignItems: 'center',
                             mb: 0.75,
                         }}>
@@ -714,26 +886,25 @@ export default function FlashcardSlugPage() {
     const levels = LEVEL_MAP[slug] ?? ['A0']
     const label = SLUG_LABELS[slug] ?? slug
 
+    // Cast vocab to include example fields
     const filteredVocab = useMemo(
-        () => storeVocab.filter(v => levels.includes(v.level)),
+        () => (storeVocab as VocabWithExamples[]).filter(v => levels.includes(v.level)),
         [storeVocab, slug]
     )
 
     // Group vocab by theme
     const themeWords = useMemo(() => {
-        const grouped: Record<string, Vocab[]> = {}
+        const grouped: Record<string, VocabWithExamples[]> = {}
         THEMES.forEach(theme => {
             grouped[theme] = filteredVocab.filter(v => v.theme === theme)
         })
         return grouped
     }, [filteredVocab])
 
-    // Calculate theme progress (placeholder — will be wired to real progress later)
+    // Calculate theme progress (placeholder)
     const themeProgress = useMemo(() => {
         const progress: Record<string, number> = {}
         THEMES.forEach(theme => {
-            // Placeholder: random progress for visual demonstration
-            // In production, this comes from user progress tracking
             progress[theme] = Math.random() * 100
         })
         return progress
@@ -774,17 +945,17 @@ export default function FlashcardSlugPage() {
                     background: 'linear-gradient(135deg, var(--forest) 0%, #071a0f 100%)',
                     pt: { xs: 10, sm: 12, md: 14 },
                     pb: { xs: 4, md: 6 },
-                    position: 'relative', 
+                    position: 'relative',
                     overflow: 'hidden',
                 }}>
                     <Typography aria-hidden="true" sx={{
-                        position: 'absolute', 
-                        top: -30, 
+                        position: 'absolute',
+                        top: -30,
                         right: -10,
-                        fontFamily: '"EB Garamond", serif', 
+                        fontFamily: '"EB Garamond", serif',
                         fontStyle: 'italic',
-                        fontSize: { xs: '8rem', sm: '10rem', md: '14rem' }, 
-                        color: 'rgba(255,255,255,0.03)', 
+                        fontSize: { xs: '8rem', sm: '10rem', md: '14rem' },
+                        color: 'rgba(255,255,255,0.03)',
                         userSelect: 'none',
                         lineHeight: 1,
                     }}>
@@ -794,13 +965,13 @@ export default function FlashcardSlugPage() {
                         <Box
                             onClick={() => router.push('/learn')}
                             sx={{
-                                display: 'inline-flex', 
-                                alignItems: 'center', 
+                                display: 'inline-flex',
+                                alignItems: 'center',
                                 gap: 0.75,
-                                fontFamily: 'Jost, sans-serif', 
+                                fontFamily: 'Jost, sans-serif',
                                 fontSize: { xs: '0.7rem', sm: '0.78rem', md: '0.9rem' },
-                                color: 'rgba(245,237,224,0.45)', 
-                                cursor: 'pointer', 
+                                color: 'rgba(245,237,224,0.45)',
+                                cursor: 'pointer',
                                 mb: { xs: 1.5, sm: 2 },
                                 '&:hover': { color: 'var(--gold-lt)' },
                                 transition: 'color 0.2s',
@@ -813,24 +984,24 @@ export default function FlashcardSlugPage() {
                         <Typography sx={{
                             fontFamily: '"EB Garamond", serif',
                             fontSize: { xs: '1.8rem', sm: '2.4rem', md: '3.5rem' },
-                            fontWeight: 700, 
-                            color: 'var(--sand)', 
-                            lineHeight: 1.1, 
+                            fontWeight: 700,
+                            color: 'var(--sand)',
+                            lineHeight: 1.1,
                             mb: 1,
                         }}>
                             {label} Flashcards
                         </Typography>
-                        
+
                         {/* Overall progress */}
                         <Box sx={{ maxWidth: 400, mb: 2 }}>
-                            <Box sx={{ 
-                                display: 'flex', 
-                                justifyContent: 'space-between', 
+                            <Box sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
                                 alignItems: 'center',
                                 mb: 1,
                             }}>
                                 <Typography sx={{
-                                    fontFamily: 'Jost, sans-serif', 
+                                    fontFamily: 'Jost, sans-serif',
                                     fontSize: { xs: '0.75rem', sm: '0.85rem', md: '1rem' },
                                     color: 'rgba(245,237,224,0.7)',
                                     fontWeight: 500,
@@ -838,7 +1009,7 @@ export default function FlashcardSlugPage() {
                                     Overall Progress
                                 </Typography>
                                 <Typography sx={{
-                                    fontFamily: 'Jost, sans-serif', 
+                                    fontFamily: 'Jost, sans-serif',
                                     fontSize: { xs: '0.75rem', sm: '0.85rem', md: '1rem' },
                                     color: 'var(--gold-lt)',
                                     fontWeight: 600,
@@ -863,9 +1034,9 @@ export default function FlashcardSlugPage() {
 
                         <Typography sx={{
                             fontFamily: 'Jost, sans-serif',
-                            fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1.1rem' }, 
+                            fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1.1rem' },
                             color: 'rgba(245,237,224,0.55)',
-                            lineHeight: 1.7, 
+                            lineHeight: 1.7,
                             maxWidth: 500,
                         }}>
                             {filteredVocab.length} words across {THEMES.length} themes
@@ -874,16 +1045,16 @@ export default function FlashcardSlugPage() {
                 </Box>
 
                 <Container maxWidth="xl" sx={{ py: { xs: 3, sm: 4, md: 6 } }}>
-                    
+
                     {selectedTheme ? (
                         /* ── Flashcard Quiz View ── */
                         <Box>
                             <Box sx={{
-                                display: 'flex', 
+                                display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'space-between', 
+                                justifyContent: 'space-between',
                                 flexWrap: 'wrap',
-                                gap: 2, 
+                                gap: 2,
                                 mb: { xs: 2, sm: 3, md: 4 },
                             }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -895,10 +1066,10 @@ export default function FlashcardSlugPage() {
                                         sx={{
                                             borderColor: 'rgba(184,134,11,0.3)',
                                             color: 'var(--bark)',
-                                            fontFamily: 'Jost, sans-serif', 
+                                            fontFamily: 'Jost, sans-serif',
                                             fontWeight: 500,
-                                            fontSize: { xs: '0.72rem', sm: '0.78rem', md: '0.9rem' }, 
-                                            textTransform: 'none', 
+                                            fontSize: { xs: '0.72rem', sm: '0.78rem', md: '0.9rem' },
+                                            textTransform: 'none',
                                             borderRadius: '6px',
                                             px: { xs: 1.5, md: 2 },
                                             '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: 'var(--gold)' },
@@ -908,8 +1079,8 @@ export default function FlashcardSlugPage() {
                                     </Button>
                                     <Typography sx={{
                                         fontFamily: '"EB Garamond", serif',
-                                        fontSize: { xs: '1.2rem', sm: '1.5rem', md: '2rem' }, 
-                                        fontWeight: 700, 
+                                        fontSize: { xs: '1.2rem', sm: '1.5rem', md: '2rem' },
+                                        fontWeight: 700,
                                         color: 'var(--bark)',
                                     }}>
                                         {selectedTheme}
@@ -924,10 +1095,10 @@ export default function FlashcardSlugPage() {
                                     sx={{
                                         borderColor: 'rgba(184,134,11,0.3)',
                                         color: showDiacritics ? 'var(--gold)' : 'var(--muted)',
-                                        fontFamily: 'Jost, sans-serif', 
+                                        fontFamily: 'Jost, sans-serif',
                                         fontWeight: 500,
-                                        fontSize: { xs: '0.72rem', sm: '0.78rem', md: '0.95rem' }, 
-                                        textTransform: 'none', 
+                                        fontSize: { xs: '0.72rem', sm: '0.78rem', md: '0.95rem' },
+                                        textTransform: 'none',
                                         borderRadius: '6px',
                                         px: { xs: 1.5, md: 2 },
                                         py: { md: 0.5 },
@@ -948,10 +1119,10 @@ export default function FlashcardSlugPage() {
                                 </Box>
                             ) : activeWords.length === 0 ? (
                                 <Box className="fc-shell" sx={{ alignItems: 'center', justifyContent: 'center' }}>
-                                    <Typography sx={{ 
-                                        fontFamily: 'Jost, sans-serif', 
-                                        color: 'var(--muted)', 
-                                        fontSize: { xs: '0.85rem', sm: '0.9rem', md: '1.1rem' } 
+                                    <Typography sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        color: 'var(--muted)',
+                                        fontSize: { xs: '0.85rem', sm: '0.9rem', md: '1.1rem' }
                                     }}>
                                         No words found for this theme.
                                     </Typography>
@@ -971,8 +1142,8 @@ export default function FlashcardSlugPage() {
                         <Box>
                             <Typography sx={{
                                 fontFamily: '"EB Garamond", serif',
-                                fontSize: { xs: '1.3rem', sm: '1.6rem', md: '2rem' }, 
-                                fontWeight: 700, 
+                                fontSize: { xs: '1.3rem', sm: '1.6rem', md: '2rem' },
+                                fontWeight: 700,
                                 color: 'var(--bark)',
                                 mb: { xs: 2, sm: 3, md: 4 },
                             }}>
@@ -981,14 +1152,16 @@ export default function FlashcardSlugPage() {
 
                             <Box sx={{
                                 display: 'grid',
-                                gridTemplateColumns: { 
-                                    xs: '1fr', 
-                                    sm: 'repeat(2, 1fr)', 
+                                gridTemplateColumns: {
+                                    xs: '1fr',
+                                    sm: 'repeat(2, 1fr)',
                                     md: 'repeat(3, 1fr)',
                                     lg: 'repeat(3, 1fr)',
                                     xl: 'repeat(4, 1fr)',
                                 },
                                 gap: { xs: 2, sm: 3, md: 4 },
+                                placeItems: 'center',
+                                width: '100%',
                             }}>
                                 {THEMES.map((theme) => (
                                     <ThemeCard
@@ -1008,4 +1181,30 @@ export default function FlashcardSlugPage() {
             </Box>
         </>
     )
+}
+
+const THEMES = [
+    'Basics & Greetings',
+    'Colours',
+    'Numbers & Time',
+    'Food & Drink',
+    'People & Family',
+    'Places & Home',
+    'Travel & Nature',
+    'Adjectives & Feelings',
+    'Actions (Verbs)',
+] as const
+
+const LEVEL_MAP: Record<string, string[]> = {
+    beginner: ['A0'],
+    elementary: ['A1'],
+    intermediate: ['A2'],
+    'upper-intermediate': ['B1'],
+}
+
+const SLUG_LABELS: Record<string, string> = {
+    beginner: 'Beginner',
+    elementary: 'Elementary',
+    intermediate: 'Intermediate',
+    'upper-intermediate': 'Upper Intermediate',
 }

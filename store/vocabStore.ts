@@ -12,6 +12,9 @@ export type Vocab = {
   type: string
   root: string
   theme: string
+  ex_ar: String
+  ex_di: String
+  ex_en: String
 }
 
 interface VocabStore {
