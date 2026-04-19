@@ -713,7 +713,7 @@ function ThemeCard({ theme, isActive, onClick }: {
     const progress = theme.total_words > 0 ? Math.round((theme.completed_count / theme.total_words) * 100) : 0
     return (
         <Card sx={{
-            maxWidth: 345, width: '100%', border: '1px solid rgba(184,134,11,0.15)',
+            width: '100%', border: '1px solid rgba(184,134,11,0.15)',
             borderRadius: '8px', overflow: 'hidden', background: '#fff',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
             ...(isActive && { borderColor: '#b8860b', boxShadow: '0 0 0 2px rgba(184,134,11,0.12)' }),
@@ -963,9 +963,6 @@ export default function FlashcardSlugPage() {
                         </Box>
                     ) : (
                         <Box>
-                            <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { xs: '1.3rem', sm: '1.6rem', md: '2rem' }, fontWeight: 700, color: '#2c1a0e', mb: { xs: 2, sm: 3, md: 4 } }}>
-                                Select a Theme
-                            </Typography>
                             {themesLoading ? (
                                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,1fr)', md: 'repeat(3,1fr)', xl: 'repeat(4,1fr)' }, gap: { xs: 2, sm: 3, md: 4 }, placeItems: 'center' }}>
                                     {[...Array(6)].map((_, i) => (
