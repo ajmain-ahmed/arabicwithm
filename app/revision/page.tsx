@@ -1,4 +1,3 @@
-// app/revision/page.tsx
 'use client'
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
@@ -32,16 +31,12 @@ interface SessionCard {
 
 /* ─────────────────────────────────────────────
    Classify a raw DB card into its initial queue
-   new:      repetitions=0 and never reviewed
-   review:   graduated (interval_days >= 1)
-   learning: anything in between
 ───────────────────────────────────────────── */
 function classifyCard(card: RevisionCard): Queue {
-    const rep = (card as any).repetitions as number | null | undefined
-    const lastReview = (card as any).last_review_at as string | null | undefined
-    const intervalDays = (card as any).interval_days as number | null | undefined
+    const rep = card.repetitions as number | null | undefined
+    const lastReview = card.last_review_at as string | null | undefined
     if ((rep == null || rep === 0) && !lastReview) return 'new'
-    if ((intervalDays ?? 0) >= 1) return 'review'
+    if ((rep ?? 0) > 0) return 'review'        // <-- changed from interval_days >= 1
     return 'learning'
 }
 
@@ -78,23 +73,45 @@ const ANSWER_BUTTONS: { label: string; value: Answer; color: string; hoverBg: st
 ]
 
 /* ─────────────────────────────────────────────
+   Countdown Timer Component
+───────────────────────────────────────────── */
+function CountdownTimer({ targetTime }: { targetTime: string }) {
+    const [remaining, setRemaining] = useState<number>(() => {
+        const diff = new Date(targetTime).getTime() - Date.now()
+        return Math.max(0, Math.floor(diff / 1000))
+    })
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const diff = new Date(targetTime).getTime() - Date.now()
+            setRemaining(Math.max(0, Math.floor(diff / 1000)))
+        }, 500)
+        return () => clearInterval(interval)
+    }, [targetTime])
+
+    if (remaining <= 0) return null
+    const minutes = Math.floor(remaining / 60)
+    const seconds = remaining % 60
+    return (
+        <Typography sx={{
+            fontFamily: 'Jost, sans-serif',
+            fontSize: '0.9rem',
+            color: '#c13a00',
+            textAlign: 'center',
+            mt: 1,
+        }}>
+            Available in {minutes}:{seconds.toString().padStart(2, '0')}
+        </Typography>
+    )
+}
+
+/* ─────────────────────────────────────────────
    useAnkiQueue
-   ─────────────────────────────────────────────
-   The deck is an ordered list. deck[0] is always shown.
-
-   On "again":  card moves ~3 positions ahead in the deck,
-                queue flips to 'learning'. It will come back.
-
-   On any other answer: card is removed (done for this session).
-
-   Counts = cards remaining in deck right now (countdown like Anki).
-   Progress bar uses (totalEver - remaining) / totalEver.
 ───────────────────────────────────────────── */
 function useAnkiQueue(initial: SessionCard[]) {
     const [deck, setDeck] = useState<SessionCard[]>(initial)
     const totalEver = useRef(initial.length)
 
-    // When new cards are loaded (initial changes), reset the queue
     useEffect(() => {
         setDeck(initial)
         totalEver.current = initial.length
@@ -330,8 +347,13 @@ function AnimatedArabicWord({ word, wordDiacritic, showDiacritics }: {
    CardFace
 ───────────────────────────────────────────── */
 function CardFace({
-    sessionCard, counts, doneCount, totalCount,
-    showDiacritics, onAnswer, submitting,
+    sessionCard,
+    counts,
+    doneCount,
+    totalCount,
+    showDiacritics,
+    onAnswer,
+    submitting,
 }: {
     sessionCard: SessionCard
     counts: Record<Queue, number>
@@ -345,6 +367,7 @@ function CardFace({
     const card = sessionCard.data
     const examples = parseExamples(card)
     const progress = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0
+    const isDue = card.isDue
 
     return (
         <Box sx={{
@@ -409,28 +432,51 @@ function CardFace({
                         </Box>
                     )}
 
-                    {/* Answer buttons */}
+                    {/* Answer section */}
                     <Box sx={{ mt: { xs: '1.25rem', md: '1.5rem' } }}>
-                        {/* Desktop */}
-                        <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                            {ANSWER_BUTTONS.map(btn => (
-                                <Button key={btn.value} variant="outlined" disabled={submitting} onClick={() => onAnswer(btn.value)} sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', textTransform: 'none', borderRadius: '6px', padding: '0.6rem 0.5rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color }, '&:disabled': { opacity: 0.45 } }}>
-                                    {btn.label}
-                                </Button>
-                            ))}
-                        </Box>
-                        {/* Mobile */}
-                        <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: '7px', justifyContent: 'center' }}>
-                            {ANSWER_BUTTONS.map(btn => (
-                                <Button key={btn.value} variant="outlined" disabled={submitting} onClick={() => onAnswer(btn.value)} sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.78rem', textTransform: 'none', borderRadius: '20px', padding: '4px 10px', minWidth: 0, lineHeight: 1.4, border: `1.5px solid ${btn.border}`, background: 'transparent', flexShrink: 1, '&:hover': { background: btn.hoverBg, borderColor: btn.color }, '&:disabled': { opacity: 0.45 } }}>
-                                    {btn.label}
-                                </Button>
-                            ))}
-                        </Box>
+                        {isDue ? (
+                            <>
+                                {/* Desktop answer buttons */}
+                                <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                                    {ANSWER_BUTTONS.map(btn => (
+                                        <Button key={btn.value} variant="outlined" disabled={submitting} onClick={() => onAnswer(btn.value)} sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', textTransform: 'none', borderRadius: '6px', padding: '0.6rem 0.5rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color }, '&:disabled': { opacity: 0.45 } }}>
+                                            {btn.label}
+                                        </Button>
+                                    ))}
+                                </Box>
+                                {/* Mobile answer buttons */}
+                                <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: '7px', justifyContent: 'center' }}>
+                                    {ANSWER_BUTTONS.map(btn => (
+                                        <Button key={btn.value} variant="outlined" disabled={submitting} onClick={() => onAnswer(btn.value)} sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.78rem', textTransform: 'none', borderRadius: '20px', padding: '4px 10px', minWidth: 0, lineHeight: 1.4, border: `1.5px solid ${btn.border}`, background: 'transparent', flexShrink: 1, '&:hover': { background: btn.hoverBg, borderColor: btn.color }, '&:disabled': { opacity: 0.45 } }}>
+                                            {btn.label}
+                                        </Button>
+                                    ))}
+                                </Box>
+                            </>
+                        ) : (
+                            // Card not due yet – show countdown and disabled buttons
+                            <Box sx={{ textAlign: 'center' }}>
+                                <CountdownTimer targetTime={card.next_review_at!} />
+                                <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', mt: 2, opacity: 0.5 }}>
+                                    {ANSWER_BUTTONS.map(btn => (
+                                        <Button key={btn.value} variant="outlined" disabled sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', textTransform: 'none', borderRadius: '6px', padding: '0.6rem 0.5rem', border: `1.5px solid ${btn.border}`, background: 'transparent' }}>
+                                            {btn.label}
+                                        </Button>
+                                    ))}
+                                </Box>
+                                <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: '7px', justifyContent: 'center', mt: 2, opacity: 0.5 }}>
+                                    {ANSWER_BUTTONS.map(btn => (
+                                        <Button key={btn.value} variant="outlined" disabled sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.78rem', textTransform: 'none', borderRadius: '20px', padding: '4px 10px', minWidth: 0, lineHeight: 1.4, border: `1.5px solid ${btn.border}`, background: 'transparent', flexShrink: 1 }}>
+                                            {btn.label}
+                                        </Button>
+                                    ))}
+                                </Box>
+                            </Box>
+                        )}
                     </Box>
                 </Collapse>
 
-                {/* Show answer */}
+                {/* Show answer button */}
                 {!revealed && (
                     <Box sx={{ mt: 'auto', pt: { xs: 0, md: 4 }, width: '100%' }}>
                         <Button fullWidth variant="outlined" onClick={() => setRevealed(true)} sx={{ padding: '0.875rem', border: '1px solid rgba(184,134,11,0.3)', borderRadius: '6px', color: '#2c1a0e', fontFamily: 'Jost, sans-serif', fontSize: { xs: 'clamp(1rem, 1.6vw, 1.2rem)' }, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'none', transition: 'background 0.15s, border-color 0.15s, transform 0.2s', '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: 'rgba(184,134,11,0.5)', transform: 'translateY(-1px)' } }}>
@@ -456,12 +502,13 @@ export default function RevisionPage() {
     const [sessionStarted, setSessionStarted] = useState(false)
 
     const initialDeck = useMemo<SessionCard[]>(() => rawCards.map(card => ({
-        data: card, queue: classifyCard(card), lapses: 0,
+        data: card,
+        queue: classifyCard(card),
+        lapses: 0,
     })), [rawCards])
 
     const { deck, currentCard, counts, doneCount, totalEver, isComplete, answer } = useAnkiQueue(initialDeck)
 
-    // Remount CardFace whenever the card at the top of the deck changes
     const cardKeyRef = useRef(0)
     const prevCardId = useRef<string | number | null>(null)
     const currentId = currentCard ? ((currentCard.data as any).id ?? currentCard.data.word) : null
@@ -487,6 +534,8 @@ export default function RevisionPage() {
 
     const handleAnswer = useCallback(async (ans: Answer) => {
         if (!currentCard || submitting) return
+        // Prevent answering if card is not due yet
+        if (!currentCard.data.isDue) return
         setSubmitting(true)
         try {
             await submitRevisionAnswer(currentCard.data.progress_word_id, ans, 0)
