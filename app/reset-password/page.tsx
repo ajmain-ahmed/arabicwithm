@@ -113,13 +113,15 @@ export default function ResetPasswordPage() {
               value={password}
               disabled={loading}
               onChange={e => setPassword(e.target.value)}
-              InputProps={{
-                disableUnderline: true,
-                endAdornment: (
-                  <IconButton size="small" onClick={() => setShowPw(p => !p)} sx={{ color: 'var(--muted)', mr: -0.5 }}>
-                    {showPw ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
-                  </IconButton>
-                ),
+              slotProps={{
+                input: {
+                  disableUnderline: true,
+                  endAdornment: (
+                    <IconButton size="small" onClick={() => setShowPw(p => !p)} sx={{ color: 'var(--muted)', mr: -0.5 }}>
+                      {showPw ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
+                    </IconButton>
+                  ),
+                },
               }}
             />
 
@@ -134,7 +136,11 @@ export default function ResetPasswordPage() {
               disabled={loading}
               onChange={e => setConfirm(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleReset() }}
-              InputProps={{ disableUnderline: true }}
+              slotProps={{
+                input: {
+                  disableUnderline: true,
+                },
+              }}
             />
 
             <Button
