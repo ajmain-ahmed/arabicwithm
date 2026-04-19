@@ -1,5 +1,3 @@
-// arabicwithm navbar
-
 'use client'
 
 import {
@@ -7,6 +5,7 @@ import {
     ManageSearchSharp, MenuOutlined, Person,
     VolunteerActivismSharp,
     ExpandMore, ExpandLess, School, Movie, MenuBook, LibraryBooks,
+    InfoOutlined,
 } from "@mui/icons-material";
 import {
     AppBar, Avatar, Box, Button, Container, Dialog,
@@ -27,22 +26,11 @@ import AuthDialog from './AuthDialog';
 // ─── constants ────────────────────────────────────────────────────────────────
 const NAV_ITEMS = ['Learn', 'About', 'Contact'] as const;
 const NAV_ROUTES: Record<string, string> = {
-    'Learn': '/learn',
     'About': '/about',
     'Contact': '/contact',
 };
 
-const SLUG_MAP: Record<string, string> = {
-    'beginner': 'beginner',
-    'a1': 'elementary',
-    'a2': 'intermediate',
-    'b1': 'upper-intermediate',
-    'b2': 'upper-intermediate',
-    'c1': 'intermediate',
-    'c2': 'intermediate',
-}
-
-const MOBILE_SECONDARY = ['About', 'Contact', 'FAQ'] as const;
+const MOBILE_SECONDARY = ['FAQ'] as const;
 
 const MEGA_MENU_ITEMS = [
     {
@@ -131,7 +119,6 @@ export default function Navbar() {
     const { user, loading: authLoading } = useAuth();
     const isLoggedIn = Boolean(user);
 
-    // Track if the logo animation has already played
     const hasAnimatedRef = useRef(false);
 
     // State
@@ -139,7 +126,15 @@ export default function Navbar() {
     const [contactOpen, setContactOpen] = useState(false);
     const [authDialogOpen, setAuthDialogOpen] = useState(false);
     const [learnMenuOpen, setLearnMenuOpen] = useState(false);
-    const [mobileLearnOpen, setMobileLearnOpen] = useState(false);
+
+    // Mobile accordion states (one per section)
+    const [mobileOpenSections, setMobileOpenSections] = useState<Record<string, boolean>>({
+        Study: false,
+        Cartoons: false,
+        Literature: false,
+        Stories: false,
+    });
+
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
 
     // Refs for hover delay logic
@@ -172,8 +167,11 @@ export default function Navbar() {
         router.push('/');
     };
 
-    // Derive display initial from email
     const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M';
+
+    const toggleMobileSection = (section: string) => {
+        setMobileOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
 
     // ── Components ─────────────────────────────────────────────────────────────
 
@@ -243,7 +241,54 @@ export default function Navbar() {
         }} />
     );
 
-    const MegaMenuContent = ({ isMobile = false }: { isMobile?: boolean }) => (
+    const DropdownContent = ({ section, isMobile = false }: { section: typeof MEGA_MENU_ITEMS[0], isMobile?: boolean }) => {
+        const handleItemClick = (item: string) => {
+            const key = item.toLowerCase().replace(/\s+/g, '-');
+            // Special case: "Revision" under Study goes to /revision
+            if (section.header === 'Study' && item === 'Revision') {
+                router.push('/revision');
+            } else {
+                const href = section.header === 'Study'
+                    ? `/flashcards/${key}`
+                    : `/learn/${section.header.toLowerCase()}/${key}`;
+                router.push(href);
+            }
+            setLearnMenuOpen(false);
+            setDrawerOpen(false);
+        };
+
+        return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Box sx={{
+                    display: 'flex', alignItems: 'center', gap: 1, mb: 0.5,
+                    pb: 1, borderBottom: '1px solid rgba(184,134,11,0.1)'
+                }}>
+                    {!isMobile && section.icon}
+                    <Typography sx={{
+                        fontFamily: '"EB Garamond", serif',
+                        fontSize: isMobile ? '1.1rem' : '1.2rem',
+                        fontWeight: 700, color: 'var(--bark)', letterSpacing: '0.02em'
+                    }}>
+                        {section.header}
+                    </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 0.5 : 0.75, pl: isMobile ? 4 : 0 }}>
+                    {section.items.map((item) => (
+                        <Typography
+                            key={item}
+                            className="mega-menu-item"
+                            onClick={() => handleItemClick(item)}
+                            sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--muted)', cursor: 'pointer', width: 'fit-content' }}
+                        >
+                            {item}
+                        </Typography>
+                    ))}
+                </Box>
+            </Box>
+        );
+    };
+
+    const MegaMenuGrid = ({ isMobile = false }: { isMobile?: boolean }) => (
         <Box sx={{
             display: 'grid',
             gridTemplateColumns: isMobile ? '1fr' : { xs: '1fr 1fr', md: 'repeat(4, 1fr)' },
@@ -252,40 +297,7 @@ export default function Navbar() {
             px: isMobile ? 0 : 2,
         }}>
             {MEGA_MENU_ITEMS.map((section) => (
-                <Box key={section.header} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    <Box sx={{
-                        display: 'flex', alignItems: 'center', gap: 1, mb: 0.5,
-                        pb: 1, borderBottom: '1px solid rgba(184,134,11,0.1)'
-                    }}>
-                        {!isMobile && section.icon}
-                        <Typography sx={{
-                            fontFamily: '"EB Garamond", serif',
-                            fontSize: isMobile ? '1.1rem' : '1.2rem',
-                            fontWeight: 700, color: 'var(--bark)', letterSpacing: '0.02em'
-                        }}>
-                            {section.header}
-                        </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 0.5 : 0.75, pl: isMobile ? 4 : 0 }}>
-                        {section.items.map((item) => {
-                            const key = item.toLowerCase().replace(/\s+/g, '-')
-                            // Study section routes to /flashcards/*, everything else stays on /learn/*
-                            const href = section.header === 'Study'
-                                ? `/flashcards/${key}`
-                                : `/learn/${section.header.toLowerCase()}/${key}`
-                            return (
-                                <Typography
-                                    key={item}
-                                    className="mega-menu-item"
-                                    onClick={() => { router.push(href); setLearnMenuOpen(false); setDrawerOpen(false); }}
-                                    sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--muted)', cursor: 'pointer', width: 'fit-content' }}
-                                >
-                                    {item}
-                                </Typography>
-                            )
-                        })}
-                    </Box>
-                </Box>
+                <DropdownContent key={section.header} section={section} isMobile={isMobile} />
             ))}
         </Box>
     );
@@ -311,7 +323,6 @@ export default function Navbar() {
                 }
             }}
         >
-            {/* User info header */}
             <Box sx={{ px: 2, py: 1.5, background: 'rgba(14,46,31,0.03)' }}>
                 <Typography sx={{
                     fontFamily: '"EB Garamond", serif',
@@ -332,6 +343,16 @@ export default function Navbar() {
                 </Typography>
             </Box>
             <Box sx={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(184,134,11,0.3), transparent)' }} />
+            {/* ─── Revision Link (Desktop) ─── */}
+            <MenuItem
+                onClick={() => { setUserMenuAnchor(null); router.push('/revision'); }}
+                sx={{ py: 1.2, gap: 1.5, '&:hover': { background: 'rgba(184,134,11,0.06)' } }}
+            >
+                <School sx={{ fontSize: 18, color: 'var(--forest)' }} />
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.88rem', color: 'var(--bark)' }}>
+                    Revision
+                </Typography>
+            </MenuItem>
             <MenuItem
                 onClick={() => { setUserMenuAnchor(null); router.push('/profile'); }}
                 sx={{ py: 1.2, gap: 1.5, '&:hover': { background: 'rgba(184,134,11,0.06)' } }}
@@ -354,7 +375,7 @@ export default function Navbar() {
         </Menu>
     );
 
-    // ── renders ──────────────────────────────────────────────────────────
+    // ── Mobile Drawer (unchanged, still has separate accordions) ────────────────
     const renderMobileDrawer = () => (
         <Drawer
             open={drawerOpen}
@@ -369,7 +390,7 @@ export default function Navbar() {
                 }
             }}
         >
-            {/* ── Drawer Header ── */}
+            {/* Header */}
             {isLoggedIn ? (
                 <Box sx={{
                     px: 3, py: 3,
@@ -415,15 +436,6 @@ export default function Navbar() {
                     background: 'rgba(14,46,31,0.03)',
                     borderBottom: '1px solid rgba(184,134,11,0.15)',
                 }}>
-                    <Typography sx={{
-                        fontFamily: '"EB Garamond", serif',
-                        fontSize: '1.1rem',
-                        fontWeight: 700,
-                        color: 'var(--bark)',
-                        textAlign: 'center',
-                    }}>
-                        Welcome
-                    </Typography>
                     <Button
                         onClick={() => { setAuthDialogOpen(true); setDrawerOpen(false); }}
                         variant="outlined"
@@ -449,32 +461,79 @@ export default function Navbar() {
                 </Box>
             )}
 
-            {/* ── Navigation List ── */}
             <List disablePadding>
-                {/* Learn Accordion */}
+                {MEGA_MENU_ITEMS.map((section) => (
+                    <React.Fragment key={section.header}>
+                        <ListItem disablePadding>
+                            <ListItemButton onClick={() => toggleMobileSection(section.header)}
+                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
+                                <ListItemIcon sx={{ color: 'var(--forest)' }}>
+                                    {section.icon}
+                                </ListItemIcon>
+                                <ListItemText primary={
+                                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
+                                        {section.header}
+                                    </Typography>
+                                } />
+                                {mobileOpenSections[section.header] ? <ExpandLess sx={{ color: 'var(--muted)' }} /> : <ExpandMore sx={{ color: 'var(--muted)' }} />}
+                            </ListItemButton>
+                        </ListItem>
+                        <Collapse in={mobileOpenSections[section.header]} timeout="auto" unmountOnExit>
+                            <Box sx={{ px: 3, pb: 2 }}>
+                                <DropdownContent section={section} isMobile={true} />
+                            </Box>
+                        </Collapse>
+                    </React.Fragment>
+                ))}
+
                 <ListItem disablePadding>
-                    <ListItemButton onClick={() => setMobileLearnOpen(!mobileLearnOpen)}
+                    <ListItemButton className="mobile-list-btn"
+                        onClick={() => { router.push('/about'); setDrawerOpen(false); }}
                         sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
-                        <ListItemIcon sx={{ color: 'var(--forest)' }}>
-                            <School sx={{ fontSize: 20 }} />
+                        <ListItemIcon sx={{ color: 'var(--gold)' }}>
+                            <InfoOutlined sx={{ fontSize: 20 }} />
                         </ListItemIcon>
                         <ListItemText primary={
                             <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
-                                Learn
+                                About
                             </Typography>
                         } />
-                        {mobileLearnOpen ? <ExpandLess sx={{ color: 'var(--muted)' }} /> : <ExpandMore sx={{ color: 'var(--muted)' }} />}
                     </ListItemButton>
                 </ListItem>
-                <Collapse in={mobileLearnOpen} timeout="auto" unmountOnExit>
-                    <Box sx={{ px: 3, pb: 2 }}>
-                        <MegaMenuContent isMobile={true} />
-                    </Box>
-                </Collapse>
 
-                {/* Logged-in links */}
+                <ListItem disablePadding>
+                    <ListItemButton className="mobile-list-btn"
+                        onClick={() => { setContactOpen(true); setDrawerOpen(false); }}
+                        sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
+                        <ListItemIcon sx={{ color: 'var(--gold)' }}>
+                            <EmailSharp sx={{ fontSize: 20 }} />
+                        </ListItemIcon>
+                        <ListItemText primary={
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
+                                Contact
+                            </Typography>
+                        } />
+                    </ListItemButton>
+                </ListItem>
+
+                <ListItem disablePadding>
+                    <ListItemButton className="mobile-list-btn"
+                        onClick={() => { router.push('/faq'); setDrawerOpen(false); }}
+                        sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
+                        <ListItemIcon sx={{ color: 'var(--gold)' }}>
+                            <HelpSharp sx={{ fontSize: 20 }} />
+                        </ListItemIcon>
+                        <ListItemText primary={
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
+                                FAQ
+                            </Typography>
+                        } />
+                    </ListItemButton>
+                </ListItem>
+
                 {isLoggedIn && (
                     <>
+                        <GoldLine />
                         <ListItem disablePadding>
                             <ListItemButton className="mobile-list-btn"
                                 onClick={() => { router.push('/profile'); setDrawerOpen(false); }}
@@ -505,6 +564,22 @@ export default function Navbar() {
                             </ListItemButton>
                         </ListItem>
 
+                        {/* ─── Revision Link (Mobile) ─── */}
+                        <ListItem disablePadding>
+                            <ListItemButton className="mobile-list-btn"
+                                onClick={() => { router.push('/revision'); setDrawerOpen(false); }}
+                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
+                                <ListItemIcon sx={{ color: 'var(--forest)' }}>
+                                    <School sx={{ fontSize: 20 }} />
+                                </ListItemIcon>
+                                <ListItemText primary={
+                                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
+                                        Revision
+                                    </Typography>
+                                } />
+                            </ListItemButton>
+                        </ListItem>
+
                         <ListItem disablePadding>
                             <ListItemButton className="mobile-list-btn"
                                 onClick={() => { handleLogout(); setDrawerOpen(false); }}
@@ -521,34 +596,6 @@ export default function Navbar() {
                         </ListItem>
                     </>
                 )}
-            </List>
-
-            <GoldLine />
-
-            <List disablePadding>
-                {MOBILE_SECONDARY.map((text, i) => {
-                    const icons = [<VolunteerActivismSharp key="1" />, <EmailSharp key="2" />, <HelpSharp key="3" />];
-                    return (
-                        <ListItem key={text} disablePadding>
-                            <ListItemButton className="mobile-list-btn"
-                                onClick={() => {
-                                    if (text === 'Contact') setContactOpen(true);
-                                    else router.push(NAV_ROUTES[text] || '/');
-                                    setDrawerOpen(false);
-                                }}
-                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
-                                <ListItemIcon sx={{ color: 'var(--gold)' }}>
-                                    {React.cloneElement(icons[i], { sx: { fontSize: 20 } })}
-                                </ListItemIcon>
-                                <ListItemText primary={
-                                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
-                                        {text}
-                                    </Typography>
-                                } />
-                            </ListItemButton>
-                        </ListItem>
-                    );
-                })}
             </List>
         </Drawer>
     );
@@ -616,7 +663,6 @@ export default function Navbar() {
             {renderContactDialog()}
             {renderUserMenu()}
 
-            {/* Auth dialog — global, sits outside AppBar */}
             <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
 
             <AppBar position="fixed" elevation={0} sx={{
@@ -751,7 +797,7 @@ export default function Navbar() {
                             }}
                         >
                             <Container maxWidth="xl">
-                                <MegaMenuContent />
+                                <MegaMenuGrid />
                             </Container>
                         </motion.div>
                     )}

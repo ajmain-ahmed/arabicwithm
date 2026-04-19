@@ -1,8 +1,6 @@
-'use client'
+// app/flashcards/[slug]/page.tsx
 
-// ─── INSTALL THESE PACKAGES ─────────────────────────────────────
-// npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
-// ─────────────────────────────────────────────────────────────────
+'use client'
 
 import React, { useState, useEffect, useMemo, useCallback, useTransition } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -396,7 +394,7 @@ function InteractiveSentenceBuilder({
         // Shuffle
         for (let i = initialOrder.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1))
-            ;[initialOrder[i], initialOrder[j]] = [initialOrder[j], initialOrder[i]]
+                ;[initialOrder[i], initialOrder[j]] = [initialOrder[j], initialOrder[i]]
         }
         setOrder(initialOrder)
         setFeedback(null)
@@ -428,7 +426,7 @@ function InteractiveSentenceBuilder({
         const newOrder = [...order]
         for (let i = newOrder.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1))
-            ;[newOrder[i], newOrder[j]] = [newOrder[j], newOrder[i]]
+                ;[newOrder[i], newOrder[j]] = [newOrder[j], newOrder[i]]
         }
         setOrder(newOrder)
         setFeedback(null)
@@ -727,16 +725,24 @@ function StatusChips({
 }
 
 /* ─────────────────────────────────────────────
-   FlashcardQuiz (no done screen)
+   FlashcardQuiz (fixed counts: revision + completed independent)
 ───────────────────────────────────────────── */
 function FlashcardQuiz({
-    initialQueue, themeId, showDiacritics, alwaysShow,
-    onComplete, themeLabel,
+    initialQueue,
+    themeId,
+    showDiacritics,
+    alwaysShow,
+    onComplete,
+    themeLabel,
 }: {
-    initialQueue: CardState[]; themeId: number
-    showDiacritics: boolean; alwaysShow: boolean
-    onComplete: () => void; themeLabel: string
-    totalInTheme: number; alreadyCompletedCount: number
+    initialQueue: CardState[]
+    themeId: number
+    showDiacritics: boolean
+    alwaysShow: boolean
+    onComplete: () => void
+    themeLabel: string
+    totalInTheme: number
+    alreadyCompletedCount: number
 }) {
     const updateLocalProgress = useVocabStore(s => s.updateLocalProgress)
     const [, startTransition] = useTransition()
@@ -746,11 +752,24 @@ function FlashcardQuiz({
     const [revealed, setRevealed] = useState(alwaysShow)
     const [cardKey, setCardKey] = useState(0)
 
-    useEffect(() => { if (alwaysShow) setRevealed(true) }, [alwaysShow])
+    useEffect(() => {
+        if (alwaysShow) setRevealed(true)
+    }, [alwaysShow])
 
-    const filteredCards = useMemo(() => filter === 'all' ? allCards : allCards.filter(c => c.status === filter), [allCards, filter])
-    useEffect(() => { if (filter !== 'all' && filteredCards.length === 0) setFilter('all') }, [filter, filteredCards.length])
+    // Derived filtered cards based on the current filter.
+    const filteredCards = useMemo(
+        () => (filter === 'all' ? allCards : allCards.filter(c => c.status === filter)),
+        [allCards, filter]
+    )
 
+    // If the current filter yields no cards, reset the filter to 'all'.
+    useEffect(() => {
+        if (filter !== 'all' && filteredCards.length === 0) {
+            setFilter('all')
+        }
+    }, [filter, filteredCards.length])
+
+    // Start index: first 'new' card if available, otherwise 0.
     const startIndex = useMemo(() => {
         const idx = filteredCards.findIndex(c => c.status === 'new')
         return idx === -1 ? 0 : idx
@@ -761,71 +780,111 @@ function FlashcardQuiz({
     const canGoBack = currentIndex > 0
     const canGoForward = currentIndex < filteredCards.length - 1
 
-    const newCount = allCards.filter(c => c.status === 'new').length
-    const revisionCount = allCards.filter(c => c.status === 'revision').length
-    const completedCount = allCards.filter(c => c.status === 'completed').length
+    // Counts based on boolean flags (independent)
+    const newCount = allCards.filter(c => !c.isCompleted && !c.isInRevision).length
+    const revisionCount = allCards.filter(c => c.isInRevision).length
+    const completedCount = allCards.filter(c => c.isCompleted).length
     const progressPct = allCards.length > 0 ? Math.round((completedCount / allCards.length) * 100) : 0
 
-    const persist = useCallback((card: CardState, isCompleted: boolean, isInRevision: boolean) => {
-        updateLocalProgress(themeId, card.id, { is_completed: isCompleted, is_in_revision: isInRevision })
-        startTransition(() => { upsertWordProgress({ wordId: card.id, isCompleted, isInRevision }).catch(console.error) })
-    }, [themeId, updateLocalProgress])
+    const persist = useCallback(
+        (card: CardState, isCompleted: boolean, isInRevision: boolean) => {
+            updateLocalProgress(themeId, card.id, {
+                is_completed: isCompleted,
+                is_in_revision: isInRevision,
+            })
+            startTransition(() => {
+                upsertWordProgress({ wordId: card.id, isCompleted, isInRevision }).catch(
+                    console.error
+                )
+            })
+        },
+        [themeId, updateLocalProgress]
+    )
 
-    const updateCardStatus = useCallback((cardId: number, newStatus: CardStatus, opts?: { isCompleted?: boolean; isInRevision?: boolean }) => {
-        setAllCards(prev => prev.map(c => {
-            if (c.id !== cardId) return c
-            const isCompleted = opts?.isCompleted ?? c.isCompleted
-            const isInRevision = opts?.isInRevision ?? c.isInRevision
-            let status: CardStatus = 'new'
-            if (isCompleted) status = 'completed'
-            else if (isInRevision) status = 'revision'
-            return { ...c, status, isCompleted, isInRevision }
-        }))
-        if (opts) {
-            const card = allCards.find(c => c.id === cardId)
-            if (card) {
-                const isCompleted = opts.isCompleted ?? card.isCompleted
-                const isInRevision = opts.isInRevision ?? card.isInRevision
-                persist(card, isCompleted, isInRevision)
+    const updateCardStatus = useCallback(
+        (
+            cardId: number,
+            newStatus: CardStatus,
+            opts?: { isCompleted?: boolean; isInRevision?: boolean }
+        ) => {
+            setAllCards(prev =>
+                prev.map(c => {
+                    if (c.id !== cardId) return c
+                    const isCompleted = opts?.isCompleted ?? c.isCompleted
+                    const isInRevision = opts?.isInRevision ?? c.isInRevision
+                    let status: CardStatus = 'new'
+                    if (isCompleted) status = 'completed'
+                    else if (isInRevision) status = 'revision'
+                    return { ...c, status, isCompleted, isInRevision }
+                })
+            )
+            if (opts) {
+                const card = allCards.find(c => c.id === cardId)
+                if (card) {
+                    const isCompleted = opts.isCompleted ?? card.isCompleted
+                    const isInRevision = opts.isInRevision ?? card.isInRevision
+                    persist(card, isCompleted, isInRevision)
+                }
             }
-        }
-    }, [allCards, persist])
+        },
+        [allCards, persist]
+    )
 
-    const goToIndex = useCallback((newIndex: number) => {
-        if (newIndex >= 0 && newIndex < filteredCards.length) {
-            setCurrentIndex(newIndex)
-            if (!alwaysShow) setRevealed(false)
-            setCardKey(k => k + 1)
-        }
-    }, [filteredCards.length, alwaysShow])
+    const goToIndex = useCallback(
+        (newIndex: number) => {
+            if (newIndex >= 0 && newIndex < filteredCards.length) {
+                setCurrentIndex(newIndex)
+                if (!alwaysShow) setRevealed(false)
+                setCardKey(k => k + 1)
+            }
+        },
+        [filteredCards.length, alwaysShow]
+    )
 
-    const handlePrevious = useCallback(() => { if (currentIndex > 0) goToIndex(currentIndex - 1) }, [currentIndex, goToIndex])
-    const handleNext = useCallback(() => { if (canGoForward) goToIndex(currentIndex + 1) }, [canGoForward, goToIndex])
+    const handlePrevious = useCallback(() => {
+        if (currentIndex > 0) goToIndex(currentIndex - 1)
+    }, [currentIndex, goToIndex])
+
+    const handleNext = useCallback(() => {
+        if (canGoForward) goToIndex(currentIndex + 1)
+    }, [canGoForward, currentIndex, goToIndex])
 
     const toggleRevision = useCallback(() => {
         if (!current) return
         const toRevision = !current.isInRevision
-        updateCardStatus(current.id, toRevision ? 'revision' : 'new', { isInRevision: toRevision })
+        updateCardStatus(current.id, toRevision ? 'revision' : 'new', {
+            isInRevision: toRevision,
+        })
+        // Filter remains completely unchanged – only the card's status changes.
     }, [current, updateCardStatus])
 
     const toggleComplete = useCallback(() => {
         if (!current) return
         if (current.isCompleted) {
-            updateCardStatus(current.id, current.isInRevision ? 'revision' : 'new', { isCompleted: false })
+            updateCardStatus(current.id, current.isInRevision ? 'revision' : 'new', {
+                isCompleted: false,
+            })
         } else {
             updateCardStatus(current.id, 'completed', { isCompleted: true })
-            if (canGoForward) goToIndex(currentIndex + 1)
+            if (canGoForward) {
+                goToIndex(currentIndex + 1)
+            }
         }
+        // Filter remains unchanged.
     }, [current, currentIndex, canGoForward, updateCardStatus, goToIndex])
 
-    const handleFilterChange = useCallback((newFilter: FilterType) => {
-        setFilter(newFilter)
-        const next = newFilter === 'all' ? allCards : allCards.filter(c => c.status === newFilter)
-        const idx = next.findIndex(c => c.status === 'new')
-        setCurrentIndex(idx === -1 ? 0 : idx)
-        if (!alwaysShow) setRevealed(false)
-        setCardKey(k => k + 1)
-    }, [allCards, alwaysShow])
+    const handleFilterChange = useCallback(
+        (newFilter: FilterType) => {
+            // This is the ONLY place the filter changes.
+            setFilter(newFilter)
+            const next = newFilter === 'all' ? allCards : allCards.filter(c => c.status === newFilter)
+            const idx = next.findIndex(c => c.status === 'new')
+            setCurrentIndex(idx === -1 ? 0 : idx)
+            if (!alwaysShow) setRevealed(false)
+            setCardKey(k => k + 1)
+        },
+        [allCards, alwaysShow]
+    )
 
     if (!current) return null
 
@@ -846,78 +905,351 @@ function FlashcardQuiz({
     }
 
     return (
-        <Fade in key={cardKey} timeout={400}>
-            <Box sx={{
-                background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px',
-                padding: { xs: '1.25rem 0.875rem', md: '2rem 1.5rem 1.75rem' },
-                minHeight: { xs: '300px', md: '340px' }, display: 'flex', flexDirection: 'column',
-            }}>
-                <Box sx={{ height: '2px', background: 'rgba(184,134,11,0.1)', borderRadius: '999px', mb: '1.25rem', overflow: 'hidden' }}>
-                    <Box sx={{ height: '100%', background: 'linear-gradient(90deg, #b8860b, #d4a843)', borderRadius: '999px', transition: 'width 0.4s ease', width: `${progressPct}%` }} />
+        <Fade in key={`${cardKey}-${current.id}`} timeout={400}>
+            <Box
+                sx={{
+                    background: '#fff',
+                    border: '1px solid rgba(184,134,11,0.2)',
+                    borderRadius: '10px',
+                    padding: { xs: '1.25rem 0.875rem', md: '2rem 1.5rem 1.75rem' },
+                    minHeight: { xs: '300px', md: '340px' },
+                    display: 'flex',
+                    flexDirection: 'column',
+                }}
+            >
+                <Box
+                    sx={{
+                        height: '2px',
+                        background: 'rgba(184,134,11,0.1)',
+                        borderRadius: '999px',
+                        mb: '1.25rem',
+                        overflow: 'hidden',
+                    }}
+                >
+                    <Box
+                        sx={{
+                            height: '100%',
+                            background: 'linear-gradient(90deg, #b8860b, #d4a843)',
+                            borderRadius: '999px',
+                            transition: 'width 0.4s ease',
+                            width: `${progressPct}%`,
+                        }}
+                    />
                 </Box>
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 1.5,
+                    }}
+                >
                     <StatusChips
-                        newCount={newCount} revisionCount={revisionCount} completedCount={completedCount}
-                        filter={filter} currentStatus={current?.status ?? null} onFilterChange={handleFilterChange}
+                        newCount={newCount}
+                        revisionCount={revisionCount}
+                        completedCount={completedCount}
+                        filter={filter}
+                        currentStatus={current?.status ?? null}
+                        onFilterChange={handleFilterChange}
                     />
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 600, color: '#b8860b', flexShrink: 0, ml: 1 }}>
+                    <Typography
+                        sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            color: '#b8860b',
+                            flexShrink: 0,
+                            ml: 1,
+                        }}
+                    >
                         {progressPct}%
                     </Typography>
                 </Box>
 
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <Box sx={{ pt: { xs: 3 } }}>
-                        <AnimatedArabicWord word={current.word} wordDiacritic={current.word_diacritic} showDiacritics={showDiacritics} />
+                        <AnimatedArabicWord
+                            word={current.word}
+                            wordDiacritic={current.word_diacritic}
+                            showDiacritics={showDiacritics}
+                        />
                     </Box>
 
                     <Collapse in={revealed} timeout={300}>
                         <Box sx={{ borderTop: '1px solid rgba(184,134,11,0.1)', margin: '1rem 0' }} />
 
                         <Box sx={{ textAlign: 'center', mb: { xs: 0.5, md: 1 } }}>
-                            <Box sx={{
-                                display: 'inline-flex', alignItems: 'center', fontFamily: 'Jost, sans-serif',
-                                fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase',
-                                padding: '3px 10px', borderRadius: '999px', background: 'rgba(122,110,101,0.08)', color: '#7a6e65',
-                            }}>
+                            <Box
+                                sx={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontSize: '11px',
+                                    fontWeight: 500,
+                                    letterSpacing: '0.06em',
+                                    textTransform: 'uppercase',
+                                    padding: '3px 10px',
+                                    borderRadius: '999px',
+                                    background: 'rgba(122,110,101,0.08)',
+                                    color: '#7a6e65',
+                                }}
+                            >
                                 {current.type}
                             </Box>
                         </Box>
 
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: 'clamp(1.1rem, 2.2vw, 1.45rem)' }, fontStyle: 'italic', color: '#b8860b', textAlign: 'center', letterSpacing: '0.05em', mt: { xs: 1, md: 1.5 } }}>
+                        <Typography
+                            sx={{
+                                fontFamily: 'Jost, sans-serif',
+                                fontSize: { xs: 'clamp(1.1rem, 2.2vw, 1.45rem)' },
+                                fontStyle: 'italic',
+                                color: '#b8860b',
+                                textAlign: 'center',
+                                letterSpacing: '0.05em',
+                                mt: { xs: 1, md: 1.5 },
+                            }}
+                        >
                             {current.transliteration}
                         </Typography>
-                        <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { xs: 'clamp(1.8rem, 4.5vw, 2.8rem)' }, fontWeight: 700, color: '#2c1a0e', textAlign: 'center', margin: '0.25rem 0' }}>
+                        <Typography
+                            sx={{
+                                fontFamily: "'EB Garamond', serif",
+                                fontSize: { xs: 'clamp(1.8rem, 4.5vw, 2.8rem)' },
+                                fontWeight: 700,
+                                color: '#2c1a0e',
+                                textAlign: 'center',
+                                margin: '0.25rem 0',
+                            }}
+                        >
                             {current.definition}
                         </Typography>
                         {current.root && current.root !== '-' && (
-                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: 'clamp(0.9rem, 1.6vw, 1.2rem)' }, color: '#7a6e65', textAlign: 'center', direction: 'rtl', opacity: 0.75, mb: 0.5, letterSpacing: '0.04em' }}>
+                            <Typography
+                                sx={{
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontSize: { xs: 'clamp(0.9rem, 1.6vw, 1.2rem)' },
+                                    color: '#7a6e65',
+                                    textAlign: 'center',
+                                    direction: 'rtl',
+                                    opacity: 0.75,
+                                    mb: 0.5,
+                                    letterSpacing: '0.04em',
+                                }}
+                            >
                                 {current.root}
                             </Typography>
                         )}
 
-                        <ExampleSentences card={current} revealed={revealed} showDiacritics={showDiacritics} />
+                        <ExampleSentences
+                            card={current}
+                            revealed={revealed}
+                            showDiacritics={showDiacritics}
+                        />
 
                         {/* Desktop buttons */}
-                        <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', mt: '1.25rem' }}>
-                            <Button variant="outlined" size="small" onClick={handlePrevious} disabled={!canGoBack} startIcon={<NavigateBefore sx={{ fontSize: '1.1rem !important' }} />} sx={{ borderColor: '#7a6e65', color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px', textTransform: 'none', '&:hover': { background: 'rgba(122,110,101,0.08)' }, '&:disabled': { opacity: 0.4 } }}>Back</Button>
-                            <Button variant={current.isInRevision ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} startIcon={current.isInRevision ? <BookmarkAdded sx={{ fontSize: '1.1rem !important' }} /> : <Bookmark sx={{ fontSize: '1.1rem !important' }} />} sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>Revision</Button>
-                            <Button variant={current.isCompleted ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} startIcon={current.isCompleted ? <DoneAll sx={{ fontSize: '1.1rem !important' }} /> : <Check sx={{ fontSize: '1.1rem !important' }} />} sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>{current.isCompleted ? 'Completed' : 'Complete'}</Button>
-                            <Button variant="outlined" color="warning" size="small" onClick={handleNext} disabled={!canGoForward} endIcon={<NavigateNext sx={{ fontSize: '1.1rem !important' }} />} sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px', opacity: canGoForward ? 1 : 0.5 }}>Next</Button>
+                        <Box
+                            sx={{
+                                display: { xs: 'none', sm: 'grid' },
+                                gridTemplateColumns: 'repeat(4, 1fr)',
+                                gap: '8px',
+                                mt: '1.25rem',
+                            }}
+                        >
+                            <Button
+                                variant="outlined"
+                                size="small"
+                                onClick={handlePrevious}
+                                disabled={!canGoBack}
+                                startIcon={<NavigateBefore sx={{ fontSize: '1.1rem !important' }} />}
+                                sx={{
+                                    borderColor: '#7a6e65',
+                                    color: '#7a6e65',
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontWeight: 500,
+                                    fontSize: '0.9rem',
+                                    padding: '0.6rem 0.5rem',
+                                    borderRadius: '6px',
+                                    textTransform: 'none',
+                                    '&:hover': { background: 'rgba(122,110,101,0.08)' },
+                                    '&:disabled': { opacity: 0.4 },
+                                }}
+                            >
+                                Back
+                            </Button>
+                            <Button
+                                variant={current.isInRevision ? 'contained' : 'outlined'}
+                                color="primary"
+                                size="small"
+                                onClick={toggleRevision}
+                                startIcon={
+                                    current.isInRevision ? (
+                                        <BookmarkAdded sx={{ fontSize: '1.1rem !important' }} />
+                                    ) : (
+                                        <Bookmark sx={{ fontSize: '1.1rem !important' }} />
+                                    )
+                                }
+                                sx={{
+                                    textTransform: 'none',
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontWeight: 500,
+                                    fontSize: '0.9rem',
+                                    padding: '0.6rem 0.5rem',
+                                    borderRadius: '6px',
+                                }}
+                            >
+                                Revision
+                            </Button>
+                            <Button
+                                variant={current.isCompleted ? 'contained' : 'outlined'}
+                                color="success"
+                                size="small"
+                                onClick={toggleComplete}
+                                startIcon={
+                                    current.isCompleted ? (
+                                        <DoneAll sx={{ fontSize: '1.1rem !important' }} />
+                                    ) : (
+                                        <Check sx={{ fontSize: '1.1rem !important' }} />
+                                    )
+                                }
+                                sx={{
+                                    textTransform: 'none',
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontWeight: 500,
+                                    fontSize: '0.9rem',
+                                    padding: '0.6rem 0.5rem',
+                                    borderRadius: '6px',
+                                }}
+                            >
+                                {current.isCompleted ? 'Completed' : 'Complete'}
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                color="warning"
+                                size="small"
+                                onClick={handleNext}
+                                disabled={!canGoForward}
+                                endIcon={<NavigateNext sx={{ fontSize: '1.1rem !important' }} />}
+                                sx={{
+                                    textTransform: 'none',
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontWeight: 500,
+                                    fontSize: '0.9rem',
+                                    padding: '0.6rem 0.5rem',
+                                    borderRadius: '6px',
+                                    opacity: canGoForward ? 1 : 0.5,
+                                }}
+                            >
+                                Next
+                            </Button>
                         </Box>
 
                         {/* Mobile buttons */}
-                        <Box sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', justifyContent: 'center', gap: '10px', mt: '1rem' }}>
-                            <IconButton onClick={handlePrevious} disabled={!canGoBack} sx={{ width: 40, height: 40, border: '1px solid', borderColor: canGoBack ? 'rgba(122,110,101,0.4)' : 'rgba(122,110,101,0.15)', color: canGoBack ? '#7a6e65' : 'rgba(122,110,101,0.3)', borderRadius: '50%', flexShrink: 0, transition: 'all 0.15s', '&:hover': { background: 'rgba(122,110,101,0.08)' }, '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(122,110,101,0.15)' } }}><NavigateBefore sx={{ fontSize: '1.35rem' }} /></IconButton>
-                            <Button variant={current.isInRevision ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} startIcon={current.isInRevision ? <BookmarkAdded /> : <Bookmark />} sx={mobileActionBtnSx}>Revision</Button>
-                            <Button variant={current.isCompleted ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} startIcon={current.isCompleted ? <DoneAll /> : <Check />} sx={mobileActionBtnSx}>{current.isCompleted ? 'Completed' : 'Complete'}</Button>
-                            <IconButton onClick={handleNext} disabled={!canGoForward} sx={{ width: 40, height: 40, border: '1px solid', borderColor: canGoForward ? 'rgba(184,134,11,0.45)' : 'rgba(184,134,11,0.15)', color: canGoForward ? '#b8860b' : 'rgba(184,134,11,0.3)', borderRadius: '50%', flexShrink: 0, transition: 'all 0.15s', '&:hover': { background: 'rgba(184,134,11,0.06)' }, '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(184,134,11,0.15)' } }}><NavigateNext sx={{ fontSize: '1.35rem' }} /></IconButton>
+                        <Box
+                            sx={{
+                                display: { xs: 'flex', sm: 'none' },
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '10px',
+                                mt: '1rem',
+                            }}
+                        >
+                            <IconButton
+                                onClick={handlePrevious}
+                                disabled={!canGoBack}
+                                sx={{
+                                    width: 40,
+                                    height: 40,
+                                    border: '1px solid',
+                                    borderColor: canGoBack
+                                        ? 'rgba(122,110,101,0.4)'
+                                        : 'rgba(122,110,101,0.15)',
+                                    color: canGoBack ? '#7a6e65' : 'rgba(122,110,101,0.3)',
+                                    borderRadius: '50%',
+                                    flexShrink: 0,
+                                    transition: 'all 0.15s',
+                                    '&:hover': { background: 'rgba(122,110,101,0.08)' },
+                                    '&.Mui-disabled': {
+                                        opacity: 0.35,
+                                        border: '1px solid rgba(122,110,101,0.15)',
+                                    },
+                                }}
+                            >
+                                <NavigateBefore sx={{ fontSize: '1.35rem' }} />
+                            </IconButton>
+                            <Button
+                                variant={current.isInRevision ? 'contained' : 'outlined'}
+                                color="primary"
+                                size="small"
+                                onClick={toggleRevision}
+                                startIcon={current.isInRevision ? <BookmarkAdded /> : <Bookmark />}
+                                sx={mobileActionBtnSx}
+                            >
+                                Revision
+                            </Button>
+                            <Button
+                                variant={current.isCompleted ? 'contained' : 'outlined'}
+                                color="success"
+                                size="small"
+                                onClick={toggleComplete}
+                                startIcon={current.isCompleted ? <DoneAll /> : <Check />}
+                                sx={mobileActionBtnSx}
+                            >
+                                {current.isCompleted ? 'Completed' : 'Complete'}
+                            </Button>
+                            <IconButton
+                                onClick={handleNext}
+                                disabled={!canGoForward}
+                                sx={{
+                                    width: 40,
+                                    height: 40,
+                                    border: '1px solid',
+                                    borderColor: canGoForward
+                                        ? 'rgba(184,134,11,0.45)'
+                                        : 'rgba(184,134,11,0.15)',
+                                    color: canGoForward ? '#b8860b' : 'rgba(184,134,11,0.3)',
+                                    borderRadius: '50%',
+                                    flexShrink: 0,
+                                    transition: 'all 0.15s',
+                                    '&:hover': { background: 'rgba(184,134,11,0.06)' },
+                                    '&.Mui-disabled': {
+                                        opacity: 0.35,
+                                        border: '1px solid rgba(184,134,11,0.15)',
+                                    },
+                                }}
+                            >
+                                <NavigateNext sx={{ fontSize: '1.35rem' }} />
+                            </IconButton>
                         </Box>
                     </Collapse>
 
                     {!revealed && (
                         <Box sx={{ mt: 'auto', pt: { xs: 0, sm: 0, md: 4 }, width: '100%' }}>
-                            <Button fullWidth variant="outlined" onClick={() => setRevealed(true)} sx={{ padding: '0.875rem', border: '1px solid rgba(184,134,11,0.3)', borderRadius: '6px', color: '#2c1a0e', fontFamily: 'Jost, sans-serif', fontSize: { xs: 'clamp(1rem, 1.6vw, 1.2rem)' }, fontWeight: 500, letterSpacing: '0.04em', textTransform: 'none', transition: 'background 0.15s, border-color 0.15s, transform 0.2s', '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: 'rgba(184,134,11,0.5)', transform: 'translateY(-1px)' } }}>Show answer</Button>
+                            <Button
+                                fullWidth
+                                variant="outlined"
+                                onClick={() => setRevealed(true)}
+                                sx={{
+                                    padding: '0.875rem',
+                                    border: '1px solid rgba(184,134,11,0.3)',
+                                    borderRadius: '6px',
+                                    color: '#2c1a0e',
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontSize: { xs: 'clamp(1rem, 1.6vw, 1.2rem)' },
+                                    fontWeight: 500,
+                                    letterSpacing: '0.04em',
+                                    textTransform: 'none',
+                                    transition:
+                                        'background 0.15s, border-color 0.15s, transform 0.2s',
+                                    '&:hover': {
+                                        background: 'rgba(184,134,11,0.05)',
+                                        borderColor: 'rgba(184,134,11,0.5)',
+                                        transform: 'translateY(-1px)',
+                                    },
+                                }}
+                            >
+                                Show answer
+                            </Button>
                         </Box>
                     )}
                 </Box>
