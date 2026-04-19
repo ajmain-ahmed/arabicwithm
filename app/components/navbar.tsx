@@ -1,21 +1,28 @@
+// arabicwithm navbar
+
 'use client'
 
 import {
-    Close, EmailSharp, HelpSharp, LogoutSharp,
+    AccountCircle, Close, EmailSharp, HelpSharp, LogoutSharp,
     ManageSearchSharp, MenuOutlined, Person,
-    SettingsApplicationsSharp, VolunteerActivismSharp,
-    ExpandMore, ExpandLess, School, Movie, MenuBook, LibraryBooks
+    VolunteerActivismSharp,
+    ExpandMore, ExpandLess, School, Movie, MenuBook, LibraryBooks,
 } from "@mui/icons-material";
 import {
     AppBar, Avatar, Box, Button, Container, Dialog,
     Drawer, IconButton, List, ListItem, ListItemButton,
     ListItemIcon, ListItemText, Toolbar, Typography,
-    Collapse, useMediaQuery
+    Collapse, useMediaQuery,
+    Menu,
+    MenuItem
 } from "@mui/material";
 import { useTheme } from '@mui/material/styles';
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
+import { useAuth } from '../AuthContext';
+import { supabase } from '../lib/supabase/client';
+import AuthDialog from './AuthDialog';
 
 // ─── constants ────────────────────────────────────────────────────────────────
 const NAV_ITEMS = ['Learn', 'About', 'Contact'] as const;
@@ -35,14 +42,13 @@ const SLUG_MAP: Record<string, string> = {
     'c2': 'intermediate',
 }
 
-const MOBILE_ITEMS = ['Sign In', 'Learning', 'My Progress', 'Settings'] as const;
 const MOBILE_SECONDARY = ['About', 'Contact', 'FAQ'] as const;
 
 const MEGA_MENU_ITEMS = [
     {
-        header: 'Flashcards',
+        header: 'Study',
         icon: <School sx={{ fontSize: 20, color: 'var(--forest)' }} />,
-        items: ['Beginner', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+        items: ['Beginner', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'Revision']
     },
     {
         header: 'Cartoons',
@@ -122,6 +128,8 @@ export default function Navbar() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const router = useRouter();
+    const { user, loading: authLoading } = useAuth();
+    const isLoggedIn = Boolean(user);
 
     // Track if the logo animation has already played
     const hasAnimatedRef = useRef(false);
@@ -129,37 +137,43 @@ export default function Navbar() {
     // State
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [contactOpen, setContactOpen] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [authDialogOpen, setAuthDialogOpen] = useState(false);
     const [learnMenuOpen, setLearnMenuOpen] = useState(false);
     const [mobileLearnOpen, setMobileLearnOpen] = useState(false);
+    const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
 
     // Refs for hover delay logic
     const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
     const menuContainerRef = useRef<HTMLDivElement>(null);
 
-    // Set animation as "complete" after the first mount
     useEffect(() => {
         hasAnimatedRef.current = true;
     }, []);
 
-    // Clean up timer on unmount
     useEffect(() => {
         return () => {
             if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
         };
     }, []);
 
-    // Delayed close handler
     const scheduleClose = useCallback(() => {
         if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
         closeTimerRef.current = setTimeout(() => {
             setLearnMenuOpen(false);
-        }, 150); // 150ms delay allows moving mouse from trigger to menu
+        }, 150);
     }, []);
 
     const cancelClose = useCallback(() => {
         if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
     }, []);
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.push('/');
+    };
+
+    // Derive display initial from email
+    const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M';
 
     // ── Components ─────────────────────────────────────────────────────────────
 
@@ -172,56 +186,25 @@ export default function Navbar() {
             hidden: { opacity: 1 },
             visible: {
                 opacity: 1,
-                transition: {
-                    staggerChildren: 0.08,
-                    delayChildren: 0.1
-                }
+                transition: { staggerChildren: 0.08, delayChildren: 0.1 }
             }
         };
 
         const letterVariants: Variants = {
-            hidden: {
-                opacity: 0,
-                y: 10,
-                rotate: -5,
-                scale: 0.8
-            },
+            hidden: { opacity: 0, y: 10, rotate: -5, scale: 0.8 },
             visible: {
-                opacity: 1,
-                y: 0,
-                rotate: 0,
-                scale: 1,
-                transition: {
-                    type: "spring" as const,
-                    damping: 20,
-                    stiffness: 300
-                }
+                opacity: 1, y: 0, rotate: 0, scale: 1,
+                transition: { type: "spring" as const, damping: 20, stiffness: 300 }
             }
         };
 
         return (
             <Box
-                onClick={() => {
-                    router.push('/');
-                    setDrawerOpen(false);
-                    setLearnMenuOpen(false);
-                }}
-                sx={{
-                    mr: 0.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 0.5,
-                    cursor: 'pointer',
-                    py: 0.5
-                }}
+                onClick={() => { router.push('/'); setDrawerOpen(false); setLearnMenuOpen(false); }}
+                sx={{ mr: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, cursor: 'pointer', py: 0.5 }}
             >
-                <Box
-                    component="img"
-                    src="/arabicwithm-notext.png"
-                    alt="Logo"
-                    sx={{ height: isMobile ? 28 : 45, width: 'auto', objectFit: 'contain' }}
-                />
+                <Box component="img" src="/arabicwithm-notext.png" alt="Logo"
+                    sx={{ height: isMobile ? 28 : 45, width: 'auto', objectFit: 'contain' }} />
                 <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                     <motion.div
                         variants={containerVariants}
@@ -242,11 +225,7 @@ export default function Navbar() {
                         }}
                     >
                         {letters.map((letter, index) => (
-                            <motion.span
-                                key={index}
-                                variants={letterVariants}
-                                style={{ display: 'inline-block' }}
-                            >
+                            <motion.span key={index} variants={letterVariants} style={{ display: 'inline-block' }}>
                                 {letter}
                             </motion.span>
                         ))}
@@ -287,30 +266,19 @@ export default function Navbar() {
                             {section.header}
                         </Typography>
                     </Box>
-                    <Box sx={{
-                        display: 'flex', flexDirection: 'column',
-                        gap: isMobile ? 0.5 : 0.75,
-                        pl: isMobile ? 4 : 0
-                    }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 0.5 : 0.75, pl: isMobile ? 4 : 0 }}>
                         {section.items.map((item) => {
                             const key = item.toLowerCase().replace(/\s+/g, '-')
-                            const href = section.header === 'Flashcards'
-                                ? `/flashcards/${SLUG_MAP[key] ?? key}`
+                            // Study section routes to /flashcards/*, everything else stays on /learn/*
+                            const href = section.header === 'Study'
+                                ? `/flashcards/${key}`
                                 : `/learn/${section.header.toLowerCase()}/${key}`
                             return (
                                 <Typography
                                     key={item}
                                     className="mega-menu-item"
-                                    onClick={() => {
-                                        router.push(href)
-                                        setLearnMenuOpen(false)
-                                        setDrawerOpen(false)
-                                    }}
-                                    sx={{
-                                        fontFamily: 'Jost, sans-serif',
-                                        fontSize: '0.9rem', color: 'var(--muted)',
-                                        cursor: 'pointer', width: 'fit-content'
-                                    }}
+                                    onClick={() => { router.push(href); setLearnMenuOpen(false); setDrawerOpen(false); }}
+                                    sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--muted)', cursor: 'pointer', width: 'fit-content' }}
                                 >
                                     {item}
                                 </Typography>
@@ -320,7 +288,71 @@ export default function Navbar() {
                 </Box>
             ))}
         </Box>
-    )
+    );
+
+    // ── User menu popper ───────────────────────────────────────────────────────
+    const renderUserMenu = () => (
+        <Menu
+            anchorEl={userMenuAnchor}
+            open={Boolean(userMenuAnchor)}
+            onClose={() => setUserMenuAnchor(null)}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            slotProps={{
+                paper: {
+                    sx: {
+                        mt: 1,
+                        borderRadius: '4px',
+                        border: '1px solid rgba(184,134,11,0.15)',
+                        boxShadow: '0 12px 40px rgba(44,26,14,0.12)',
+                        minWidth: 200,
+                        overflow: 'hidden',
+                    }
+                }
+            }}
+        >
+            {/* User info header */}
+            <Box sx={{ px: 2, py: 1.5, background: 'rgba(14,46,31,0.03)' }}>
+                <Typography sx={{
+                    fontFamily: '"EB Garamond", serif',
+                    fontSize: '1.05rem',
+                    fontWeight: 700,
+                    color: 'var(--bark)',
+                    lineHeight: 1.2,
+                }}>
+                    {user?.email?.split('@')[0]}
+                </Typography>
+                <Typography sx={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: '0.75rem',
+                    color: 'var(--muted)',
+                    mt: 0.2,
+                }}>
+                    {user?.email}
+                </Typography>
+            </Box>
+            <Box sx={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(184,134,11,0.3), transparent)' }} />
+            <MenuItem
+                onClick={() => { setUserMenuAnchor(null); router.push('/profile'); }}
+                sx={{ py: 1.2, gap: 1.5, '&:hover': { background: 'rgba(184,134,11,0.06)' } }}
+            >
+                <AccountCircle sx={{ fontSize: 18, color: 'var(--forest)' }} />
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.88rem', color: 'var(--bark)' }}>
+                    My Profile
+                </Typography>
+            </MenuItem>
+            <Box sx={{ height: '1px', background: 'rgba(44,26,14,0.07)', mx: 2 }} />
+            <MenuItem
+                onClick={() => { setUserMenuAnchor(null); handleLogout(); }}
+                sx={{ py: 1.2, gap: 1.5, '&:hover': { background: 'rgba(192,57,43,0.06)' } }}
+            >
+                <LogoutSharp sx={{ fontSize: 18, color: '#c0392b' }} />
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.88rem', color: '#c0392b' }}>
+                    Sign Out
+                </Typography>
+            </MenuItem>
+        </Menu>
+    );
 
     // ── renders ──────────────────────────────────────────────────────────
     const renderMobileDrawer = () => (
@@ -337,47 +369,100 @@ export default function Navbar() {
                 }
             }}
         >
-            <Box sx={{
-                px: 3,
-                py: 3,
-                background: '#ffffff',
-                borderBottom: '1px solid rgba(184,134,11,0.15)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative'
-            }}>
-                <BrandLogo />
-                <IconButton
-                    onClick={() => setDrawerOpen(false)}
-                    size="small"
-                    sx={{
-                        color: 'var(--muted)',
-                        position: 'absolute',
-                        right: 12
-                    }}
-                >
-                    <Close sx={{ fontSize: 18 }} />
-                </IconButton>
-            </Box>
-
-            {/* Mobile Learn Accordion */}
-            <List disablePadding>
-                <ListItem disablePadding>
-                    <ListItemButton
-                        onClick={() => setMobileLearnOpen(!mobileLearnOpen)}
-                        sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
+            {/* ── Drawer Header ── */}
+            {isLoggedIn ? (
+                <Box sx={{
+                    px: 3, py: 3,
+                    display: 'flex', alignItems: 'center', gap: 2,
+                    background: 'rgba(14,46,31,0.03)',
+                    borderBottom: '1px solid rgba(184,134,11,0.15)',
+                }}>
+                    <Avatar sx={{
+                        width: 44, height: 44,
+                        background: 'linear-gradient(135deg, #b8860b, #d4a843)',
+                        color: 'var(--forest)',
+                        fontFamily: 'Jost, sans-serif',
+                        fontWeight: 700,
+                        fontSize: '1rem',
+                        flexShrink: 0,
+                    }}>
+                        {userInitial}
+                    </Avatar>
+                    <Box sx={{ overflow: 'hidden', minWidth: 0 }}>
+                        <Typography sx={{
+                            fontFamily: '"EB Garamond", serif',
+                            fontSize: '1.05rem', fontWeight: 700,
+                            color: 'var(--bark)', lineHeight: 1.2,
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>
+                            {user?.email?.split('@')[0]}
+                        </Typography>
+                        <Typography sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: '0.75rem', color: 'var(--muted)',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>
+                            {user?.email}
+                        </Typography>
+                    </Box>
+                </Box>
+            ) : (
+                <Box sx={{
+                    px: 3, py: 3,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 1.5,
+                    background: 'rgba(14,46,31,0.03)',
+                    borderBottom: '1px solid rgba(184,134,11,0.15)',
+                }}>
+                    <Typography sx={{
+                        fontFamily: '"EB Garamond", serif',
+                        fontSize: '1.1rem',
+                        fontWeight: 700,
+                        color: 'var(--bark)',
+                        textAlign: 'center',
+                    }}>
+                        Welcome
+                    </Typography>
+                    <Button
+                        onClick={() => { setAuthDialogOpen(true); setDrawerOpen(false); }}
+                        variant="outlined"
+                        fullWidth
+                        startIcon={<Person sx={{ fontSize: 18 }} />}
+                        sx={{
+                            borderColor: 'rgba(184,134,11,0.4)',
+                            color: 'var(--forest)',
+                            fontFamily: 'Jost, sans-serif',
+                            fontWeight: 500,
+                            fontSize: '0.85rem',
+                            textTransform: 'none',
+                            borderRadius: '2px',
+                            py: 0.8,
+                            '&:hover': {
+                                borderColor: 'var(--gold-lt)',
+                                background: 'rgba(184,134,11,0.06)'
+                            }
+                        }}
                     >
+                        Register / Login
+                    </Button>
+                </Box>
+            )}
+
+            {/* ── Navigation List ── */}
+            <List disablePadding>
+                {/* Learn Accordion */}
+                <ListItem disablePadding>
+                    <ListItemButton onClick={() => setMobileLearnOpen(!mobileLearnOpen)}
+                        sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
                         <ListItemIcon sx={{ color: 'var(--forest)' }}>
                             <School sx={{ fontSize: 20 }} />
                         </ListItemIcon>
-                        <ListItemText
-                            primary={
-                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
-                                    Learn
-                                </Typography>
-                            }
-                        />
+                        <ListItemText primary={
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
+                                Learn
+                            </Typography>
+                        } />
                         {mobileLearnOpen ? <ExpandLess sx={{ color: 'var(--muted)' }} /> : <ExpandMore sx={{ color: 'var(--muted)' }} />}
                     </ListItemButton>
                 </ListItem>
@@ -386,66 +471,80 @@ export default function Navbar() {
                         <MegaMenuContent isMobile={true} />
                     </Box>
                 </Collapse>
-            </List>
 
-            <GoldLine />
-
-            <List disablePadding>
-                {MOBILE_ITEMS.map((text, i) => {
-                    const icons = [<Person key="1" />, <VolunteerActivismSharp key="2" />, <ManageSearchSharp key="3" />, <SettingsApplicationsSharp key="4" />];
-                    return (
-                        <ListItem key={text} disablePadding>
-                            <ListItemButton
-                                className="mobile-list-btn"
-                                onClick={() => {
-                                    if (i === 0) setIsLoggedIn(!isLoggedIn);
-                                    if (i === 1) router.push('/learning');
-                                    if (i === 2) router.push('/progress');
-                                    if (i === 3) router.push('/settings');
-                                    setDrawerOpen(false);
-                                }}
-                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
-                            >
+                {/* Logged-in links */}
+                {isLoggedIn && (
+                    <>
+                        <ListItem disablePadding>
+                            <ListItemButton className="mobile-list-btn"
+                                onClick={() => { router.push('/profile'); setDrawerOpen(false); }}
+                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
                                 <ListItemIcon sx={{ color: 'var(--forest)' }}>
-                                    {React.cloneElement(icons[i], { sx: { fontSize: 20 } })}
+                                    <AccountCircle sx={{ fontSize: 20 }} />
                                 </ListItemIcon>
-                                <ListItemText
-                                    primary={
-                                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
-                                            {text}
-                                        </Typography>
-                                    }
-                                />
+                                <ListItemText primary={
+                                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
+                                        Profile
+                                    </Typography>
+                                } />
                             </ListItemButton>
                         </ListItem>
-                    );
-                })}
+
+                        <ListItem disablePadding>
+                            <ListItemButton className="mobile-list-btn"
+                                onClick={() => { router.push('/progress'); setDrawerOpen(false); }}
+                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
+                                <ListItemIcon sx={{ color: 'var(--forest)' }}>
+                                    <ManageSearchSharp sx={{ fontSize: 20 }} />
+                                </ListItemIcon>
+                                <ListItemText primary={
+                                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
+                                        Progress
+                                    </Typography>
+                                } />
+                            </ListItemButton>
+                        </ListItem>
+
+                        <ListItem disablePadding>
+                            <ListItemButton className="mobile-list-btn"
+                                onClick={() => { handleLogout(); setDrawerOpen(false); }}
+                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
+                                <ListItemIcon sx={{ color: '#c0392b' }}>
+                                    <LogoutSharp sx={{ fontSize: 20 }} />
+                                </ListItemIcon>
+                                <ListItemText primary={
+                                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: '#c0392b' }}>
+                                        Log Out
+                                    </Typography>
+                                } />
+                            </ListItemButton>
+                        </ListItem>
+                    </>
+                )}
             </List>
+
             <GoldLine />
+
             <List disablePadding>
                 {MOBILE_SECONDARY.map((text, i) => {
                     const icons = [<VolunteerActivismSharp key="1" />, <EmailSharp key="2" />, <HelpSharp key="3" />];
                     return (
                         <ListItem key={text} disablePadding>
-                            <ListItemButton
-                                className="mobile-list-btn"
+                            <ListItemButton className="mobile-list-btn"
                                 onClick={() => {
                                     if (text === 'Contact') setContactOpen(true);
                                     else router.push(NAV_ROUTES[text] || '/');
                                     setDrawerOpen(false);
                                 }}
-                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
-                            >
+                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
                                 <ListItemIcon sx={{ color: 'var(--gold)' }}>
                                     {React.cloneElement(icons[i], { sx: { fontSize: 20 } })}
                                 </ListItemIcon>
-                                <ListItemText
-                                    primary={
-                                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
-                                            {text}
-                                        </Typography>
-                                    }
-                                />
+                                <ListItemText primary={
+                                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
+                                        {text}
+                                    </Typography>
+                                } />
                             </ListItemButton>
                         </ListItem>
                     );
@@ -472,93 +571,35 @@ export default function Navbar() {
             }}
         >
             <Box sx={{ position: 'relative', pt: 4, pb: 4, px: 3.5 }}>
-                <IconButton
-                    onClick={() => setContactOpen(false)}
-                    size="small"
-                    sx={{
-                        position: 'absolute',
-                        top: 12,
-                        right: 12,
-                        color: 'rgba(245,237,224,0.4)',
-                        '&:hover': { color: 'var(--gold-lt)' }
-                    }}
-                >
+                <IconButton onClick={() => setContactOpen(false)} size="small"
+                    sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(245,237,224,0.4)', '&:hover': { color: 'var(--gold-lt)' } }}>
                     <Close sx={{ fontSize: 18 }} />
                 </IconButton>
                 <Box sx={{ mb: 3, textAlign: 'center' }}>
-                    <Typography sx={{
-                        fontFamily: '"EB Garamond", serif',
-                        fontSize: '2.2rem',
-                        fontWeight: 700,
-                        color: '#f5ede0',
-                        lineHeight: 1.1,
-                        mb: 1
-                    }}>
+                    <Typography sx={{ fontFamily: '"EB Garamond", serif', fontSize: '2.2rem', fontWeight: 700, color: '#f5ede0', lineHeight: 1.1, mb: 1 }}>
                         Get in Touch
                     </Typography>
-                    <Box sx={{
-                        height: '1px',
-                        width: 60,
-                        background: 'linear-gradient(90deg, transparent, var(--gold-lt), transparent)',
-                        mx: 'auto',
-                        mb: 1.5
-                    }} />
-                    <Typography sx={{
-                        fontFamily: 'Jost, sans-serif',
-                        fontSize: '0.83rem',
-                        color: 'rgba(245,237,224,0.5)',
-                        lineHeight: 1.7
-                    }}>
+                    <Box sx={{ height: '1px', width: 60, background: 'linear-gradient(90deg, transparent, var(--gold-lt), transparent)', mx: 'auto', mb: 1.5 }} />
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.83rem', color: 'rgba(245,237,224,0.5)', lineHeight: 1.7 }}>
                         Have questions about learning Arabic? Reach out anytime.
                     </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    <Box
-                        component="a"
-                        href="mailto:hello@arabicwithm.com"
+                    <Box component="a" href="mailto:hello@arabicwithm.com"
                         sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 2,
-                            p: 1.8,
-                            border: '1px solid rgba(212,168,67,0.15)',
-                            borderRadius: '3px',
-                            background: 'rgba(255,255,255,0.03)',
-                            textDecoration: 'none',
-                            cursor: 'pointer',
-                            '&:hover': {
-                                background: 'rgba(212,168,67,0.08)',
-                                borderColor: 'rgba(212,168,67,0.35)'
-                            }
-                        }}
-                    >
-                        <Box sx={{
-                            flexShrink: 0,
-                            width: 36,
-                            height: 36,
-                            borderRadius: '2px',
-                            background: 'rgba(212,168,67,0.1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
+                            display: 'flex', alignItems: 'center', gap: 2, p: 1.8,
+                            border: '1px solid rgba(212,168,67,0.15)', borderRadius: '3px',
+                            background: 'rgba(255,255,255,0.03)', textDecoration: 'none', cursor: 'pointer',
+                            '&:hover': { background: 'rgba(212,168,67,0.08)', borderColor: 'rgba(212,168,67,0.35)' }
                         }}>
+                        <Box sx={{ flexShrink: 0, width: 36, height: 36, borderRadius: '2px', background: 'rgba(212,168,67,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <EmailSharp sx={{ fontSize: 20, color: 'var(--gold-lt)' }} />
                         </Box>
                         <Box>
-                            <Typography sx={{
-                                fontFamily: 'Jost, sans-serif',
-                                fontSize: '0.88rem',
-                                fontWeight: 600,
-                                color: '#f5ede0',
-                                lineHeight: 1.2
-                            }}>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.88rem', fontWeight: 600, color: '#f5ede0', lineHeight: 1.2 }}>
                                 Email Us
                             </Typography>
-                            <Typography sx={{
-                                fontFamily: 'Jost, sans-serif',
-                                fontSize: '0.76rem',
-                                color: 'rgba(245,237,224,0.45)'
-                            }}>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.76rem', color: 'rgba(245,237,224,0.45)' }}>
                                 hello@arabicwithm.com
                             </Typography>
                         </Box>
@@ -573,115 +614,71 @@ export default function Navbar() {
             <style>{NAV_CSS}</style>
             {renderMobileDrawer()}
             {renderContactDialog()}
+            {renderUserMenu()}
 
-            <AppBar
-                position="fixed"
-                elevation={0}
-                sx={{
-                    background: '#ffffff',
-                    backdropFilter: 'blur(16px)',
-                    borderBottom: `1px solid rgba(184,134,11,0.15)`,
-                    boxShadow: '0 4px 24px rgba(44,26,14,0.08)',
-                    zIndex: 1200
-                }}
-            >
+            {/* Auth dialog — global, sits outside AppBar */}
+            <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
+
+            <AppBar position="fixed" elevation={0} sx={{
+                background: '#ffffff',
+                backdropFilter: 'blur(16px)',
+                borderBottom: `1px solid rgba(184,134,11,0.15)`,
+                boxShadow: '0 4px 24px rgba(44,26,14,0.08)',
+                zIndex: 1200
+            }}>
                 <Container maxWidth="xl">
                     <Toolbar disableGutters sx={{ py: { xs: 0.5, md: 1 }, minHeight: { xs: 56, md: 64 } }}>
                         {isMobile ? (
-                            <Box sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                width: '100%'
-                            }}>
-                                <IconButton
-                                    onClick={() => setDrawerOpen(true)}
-                                    sx={{ color: 'var(--forest)' }}
-                                >
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                <IconButton onClick={() => setDrawerOpen(true)} sx={{ color: 'var(--forest)' }}>
                                     <MenuOutlined />
                                 </IconButton>
 
                                 <BrandLogo />
 
                                 {isLoggedIn ? (
-                                    <IconButton
-                                        onClick={() => router.push('/profile')}
-                                        size="small"
-                                    >
+                                    <IconButton onClick={e => setUserMenuAnchor(e.currentTarget)} size="small">
                                         <Avatar sx={{
-                                            width: 32,
-                                            height: 32,
+                                            width: 30,
+                                            height: 30,
                                             background: 'linear-gradient(135deg, #b8860b, #d4a843)',
                                             color: 'var(--forest)',
                                             fontFamily: 'Jost, sans-serif',
                                             fontWeight: 700,
-                                            fontSize: '0.85rem'
+                                            fontSize: '0.85rem',
                                         }}>
-                                            M
+                                            {userInitial}
                                         </Avatar>
                                     </IconButton>
                                 ) : (
-                                    <IconButton
-                                        onClick={() => setIsLoggedIn(true)}
-                                        sx={{ color: 'var(--forest)' }}
-                                    >
+                                    <IconButton onClick={() => setAuthDialogOpen(true)} sx={{ color: 'var(--forest)' }}>
                                         <Person />
                                     </IconButton>
                                 )}
                             </Box>
                         ) : (
-                            <Box sx={{
-                                display: 'grid',
-                                gridTemplateColumns: '1fr auto 1fr',
-                                width: '100%',
-                                alignItems: 'center'
-                            }}>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', width: '100%', alignItems: 'center' }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                     {NAV_ITEMS.map(item => (
-                                        <Box
-                                            key={item}
-                                            sx={{ position: 'relative' }}
-                                        >
+                                        <Box key={item} sx={{ position: 'relative' }}>
                                             {item === 'Learn' ? (
-                                                // Learn with Mega Menu
                                                 <Box
                                                     className="learn-trigger"
-                                                    onMouseEnter={() => {
-                                                        cancelClose();
-                                                        setLearnMenuOpen(true);
-                                                    }}
+                                                    onMouseEnter={() => { cancelClose(); setLearnMenuOpen(true); }}
                                                     onMouseLeave={scheduleClose}
                                                 >
-                                                    <Typography
-                                                        className="nav-link"
-                                                        sx={{
-                                                            fontFamily: 'Jost, sans-serif',
-                                                            fontSize: '0.85rem',
-                                                            fontWeight: 500,
-                                                            letterSpacing: '0.06em',
-                                                            color: 'var(--forest)',
-                                                            cursor: 'pointer',
-                                                            py: 2,
-                                                            display: 'inline-block'
-                                                        }}
-                                                    >
+                                                    <Typography className="nav-link" sx={{
+                                                        fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', fontWeight: 500,
+                                                        letterSpacing: '0.06em', color: 'var(--forest)', cursor: 'pointer',
+                                                        py: 2, display: 'inline-block'
+                                                    }}>
                                                         {item}
                                                     </Typography>
                                                 </Box>
                                             ) : (
-                                                <Typography
-                                                    className="nav-link"
+                                                <Typography className="nav-link"
                                                     onClick={() => item === 'Contact' ? setContactOpen(true) : router.push(NAV_ROUTES[item])}
-                                                    sx={{
-                                                        fontFamily: 'Jost, sans-serif',
-                                                        fontSize: '0.85rem',
-                                                        fontWeight: 500,
-                                                        letterSpacing: '0.06em',
-                                                        color: 'var(--forest)',
-                                                        cursor: 'pointer',
-                                                        py: 2
-                                                    }}
-                                                >
+                                                    sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', fontWeight: 500, letterSpacing: '0.06em', color: 'var(--forest)', cursor: 'pointer', py: 2 }}>
                                                     {item}
                                                 </Typography>
                                             )}
@@ -693,10 +690,7 @@ export default function Navbar() {
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                                     {isLoggedIn ? (
-                                        <IconButton
-                                            onClick={() => router.push('/profile')}
-                                            size="small"
-                                        >
+                                        <IconButton onClick={e => setUserMenuAnchor(e.currentTarget)} size="small">
                                             <Avatar sx={{
                                                 width: 32,
                                                 height: 32,
@@ -704,14 +698,14 @@ export default function Navbar() {
                                                 color: 'var(--forest)',
                                                 fontFamily: 'Jost, sans-serif',
                                                 fontWeight: 700,
-                                                fontSize: '0.85rem'
+                                                fontSize: '0.85rem',
                                             }}>
-                                                M
+                                                {userInitial}
                                             </Avatar>
                                         </IconButton>
                                     ) : (
                                         <Button
-                                            onClick={() => setIsLoggedIn(true)}
+                                            onClick={() => setAuthDialogOpen(true)}
                                             variant="outlined"
                                             size="small"
                                             startIcon={<Person sx={{ fontSize: 16 }} />}
@@ -724,10 +718,7 @@ export default function Navbar() {
                                                 textTransform: 'none',
                                                 borderRadius: '2px',
                                                 px: 1.8,
-                                                '&:hover': {
-                                                    borderColor: 'var(--gold-lt)',
-                                                    background: 'rgba(184,134,11,0.06)'
-                                                }
+                                                '&:hover': { borderColor: 'var(--gold-lt)', background: 'rgba(184,134,11,0.06)' }
                                             }}
                                         >
                                             Sign In
@@ -739,7 +730,7 @@ export default function Navbar() {
                     </Toolbar>
                 </Container>
 
-                {/* Desktop Mega Menu - Slide Transition */}
+                {/* Desktop Mega Menu */}
                 <AnimatePresence>
                     {learnMenuOpen && !isMobile && (
                         <motion.div
@@ -747,25 +738,16 @@ export default function Navbar() {
                             initial={{ opacity: 0, y: -20, height: 0 }}
                             animate={{ opacity: 1, y: 0, height: 'auto' }}
                             exit={{ opacity: 0, y: -10, height: 0 }}
-                            transition={{
-                                duration: 0.3,
-                                ease: [0.22, 1, 0.36, 1],
-                                opacity: { duration: 0.2 }
-                            }}
+                            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1], opacity: { duration: 0.2 } }}
                             onMouseEnter={cancelClose}
                             onMouseLeave={scheduleClose}
                             style={{
-                                position: 'absolute',
-                                top: '100%',
-                                left: 0,
-                                right: 0,
+                                position: 'absolute', top: '100%', left: 0, right: 0,
                                 background: 'rgba(255, 255, 255, 0.98)',
                                 backdropFilter: 'blur(20px)',
                                 borderBottom: '1px solid rgba(184,134,11,0.15)',
                                 boxShadow: '0 20px 40px rgba(44,26,14,0.08)',
-                                zIndex: 1199,
-                                overflow: 'hidden',
-                                transformOrigin: 'top'
+                                zIndex: 1199, overflow: 'hidden', transformOrigin: 'top'
                             }}
                         >
                             <Container maxWidth="xl">

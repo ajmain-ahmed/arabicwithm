@@ -1,10 +1,9 @@
+// app/components/VocabInitialiser.tsx
+
 "use client"
 
-import { useEffect } from "react"
-import { useVocabStore } from "@/store/vocabStore"
-
 export default function VocabInitializer() {
-  const fetch = useVocabStore((s) => s.fetch)
-  useEffect(() => { fetch() }, [])
+  // Vocab is now fetched per-theme via server actions.
+  // This component is kept as a layout placeholder for future preloading.
   return null
 }

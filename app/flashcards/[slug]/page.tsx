@@ -1,441 +1,324 @@
 'use client'
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useTransition } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
     Box, Button, Container, Typography, Collapse, Fade, Grow,
-    Card, CardContent, CardMedia, CardActionArea, LinearProgress,
-    CircularProgress,
+    Card, CardContent, CardMedia, CardActionArea, LinearProgress, Skeleton,
+    IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material'
 import {
-    ArrowBackSharp, ArrowForwardSharp, SkipNextSharp,
-    BookmarkAddSharp, CheckCircleSharp, ArrowBackIosSharp,
-    VisibilityOffSharp,
-    VisibilitySharp,
+    ArrowBackSharp,
+    Bookmark, BookmarkAdded, Check, DoneAll, NavigateNext, NavigateBefore,
+    Settings, Close,
 } from '@mui/icons-material'
 import Navbar from '@/app/components/navbar'
-import { useVocabStore, type Vocab } from '@/store/vocabStore'
+import { useVocabStore } from '@/store/vocabStore'
+import type { VocabRow, WordProgress, ThemeProgress } from '@/app/actions/vocab'
+import {
+    fetchThemesWithProgress,
+    upsertWordProgress,
+} from '@/app/actions/vocab'
 
 /* ─────────────────────────────────────────────
-   CSS
+   Slug → level mapping
 ───────────────────────────────────────────── */
-const PAGE_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&family=Jost:wght@300;400;500;600&display=swap');
-
-  :root {
-    --sand:   #f5ede0;
-    --cream:  #faf7f2;
-    --bark:   #2c1a0e;
-    --forest: #0e2e1f;
-    --gold:   #b8860b;
-    --gold-lt:#d4a843;
-    --muted:  #7a6e65;
-  }
-
-  html, body { background: var(--cream); margin: 0; }
-
-  /* ── flashcard shell ── */
-  .fc-shell {
-    background: #fff;
-    border: 1px solid rgba(184,134,11,0.2);
-    border-radius: 10px;
-    padding: 2rem 1.5rem 1.75rem;
-    transition: border-color 0.2s;
-    min-height: 320px;
-    display: flex;
-    flex-direction: column;
-  }
-  @media (max-width: 600px) {
-    .fc-shell {
-      padding: 1.5rem 1rem 1.5rem;
-      min-height: 280px;
-    }
-  }
-
-  /* ── progress bar ── */
-  .fc-progress-bg {
-    height: 2px;
-    background: rgba(184,134,11,0.1);
-    border-radius: 999px;
-    margin-bottom: 1.25rem;
-    overflow: hidden;
-  }
-  .fc-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--gold), var(--gold-lt));
-    border-radius: 999px;
-    transition: width 0.4s ease;
-  }
-
-  /* ── badges ── */
-  .fc-level-badge {
-    display: inline-flex; align-items: center;
-    font-family: 'Jost', sans-serif;
-    font-size: 10px; font-weight: 600;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    padding: 3px 10px; border-radius: 999px;
-  }
-  .fc-badge-A0 { background: rgba(14,46,31,0.08); color: var(--forest); }
-  .fc-badge-A1 { background: rgba(184,134,11,0.1); color: var(--gold); }
-  .fc-badge-A2 { background: rgba(44,26,14,0.08); color: var(--bark); }
-
-  .fc-type-badge {
-    display: inline-flex; align-items: center;
-    font-family: 'Jost', sans-serif;
-    font-size: 10px; font-weight: 500;
-    letter-spacing: 0.06em; text-transform: uppercase;
-    padding: 3px 10px; border-radius: 999px;
-    background: rgba(122,110,101,0.08); color: var(--muted);
-    margin-left: 6px;
-  }
-
-  /* ── arabic text ── */
-  .fc-arabic-wrapper {
-    position: relative;
-    text-align: center;
-    margin: 0.5rem 0 1.5rem;
-    height: clamp(3.5rem, 10vw, 7rem);
-  }
-  @media (max-width: 600px) {
-    .fc-arabic-wrapper {
-      margin: 0.5rem 0 1rem;
-      height: clamp(3rem, 12vw, 4rem);
-    }
-  }
-  .fc-arabic {
-    font-family: 'EB Garamond', serif;
-    font-size: clamp(3rem, 10vw, 5.5rem);
-    font-weight: 700;
-    direction: rtl; text-align: center;
-    color: var(--bark); line-height: 1.2;
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-  }
-  @media (max-width: 600px) {
-    .fc-arabic {
-      font-size: clamp(2.2rem, 12vw, 3.5rem);
-    }
-  }
-
-  /* ── revealed section ── */
-  .fc-divider {
-    border: none; border-top: 1px solid rgba(184,134,11,0.1);
-    margin: 1rem 0 1rem;
-  }
-  @media (min-width: 900px) {
-    .fc-divider {
-      margin: 1.5rem 0 1.25rem;
-    }
-  }
-  .fc-transliteration {
-    font-family: 'Jost', sans-serif; 
-    font-size: clamp(1rem, 2vw, 1.35rem);
-    font-style: italic; color: var(--gold);
-    text-align: center; letter-spacing: 0.05em;
-  }
-  @media (max-width: 600px) {
-    .fc-transliteration {
-      font-size: clamp(0.85rem, 3vw, 1rem);
-    }
-  }
-  .fc-definition {
-    font-family: 'EB Garamond', serif;
-    font-size: clamp(1.6rem, 4vw, 2.6rem);
-    font-weight: 700; color: var(--bark);
-    text-align: center; margin: 0.25rem 0;
-  }
-  @media (max-width: 600px) {
-    .fc-definition {
-      font-size: clamp(1.3rem, 5vw, 1.8rem);
-    }
-  }
-  .fc-root {
-    font-family: 'Jost', sans-serif; 
-    font-size: clamp(0.85rem, 1.5vw, 1.1rem);
-    color: var(--muted); text-align: center;
-    direction: rtl; opacity: 0.75;
-    margin-bottom: 0.5rem;
-    letter-spacing: 0.04em;
-  }
-  @media (max-width: 600px) {
-    .fc-root {
-      font-size: clamp(0.75rem, 2.5vw, 0.9rem);
-    }
-  }
-
-  /* ── example sentences ── */
-  .fc-examples {
-    background: rgba(245,237,224,0.5);
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 1rem 0;
-    border-left: 3px solid var(--gold);
-  }
-  @media (max-width: 600px) {
-    .fc-examples {
-      padding: 0.75rem;
-      margin: 0.75rem 0;
-    }
-  }
-  .fc-example-item {
-    font-family: 'EB Garamond', serif;
-    font-size: clamp(0.9rem, 2vw, 1.1rem);
-    color: var(--bark);
-    direction: rtl;
-    text-align: right;
-    margin-bottom: 0.5rem;
-    line-height: 1.5;
-  }
-  .fc-example-translation {
-    font-family: 'Jost', sans-serif;
-    font-size: clamp(0.75rem, 1.5vw, 0.9rem);
-    color: var(--muted);
-    font-style: italic;
-    margin-bottom: 0.75rem;
-  }
-  .fc-example-item:last-child {
-    margin-bottom: 0;
-  }
-
-  /* ── new action buttons ── */
-  .fc-btn-row {
-    display: grid; grid-template-columns: repeat(4,1fr);
-    gap: 8px; margin-top: 1.25rem;
-  }
-  @media (min-width: 900px) {
-    .fc-btn-row {
-      gap: 12px;
-      margin-top: 1.5rem;
-    }
-  }
-  @media (max-width: 600px) {
-    .fc-btn-row {
-      gap: 4px;
-      margin-top: 0.875rem;
-    }
-  }
-  .fc-action-btn {
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    padding: 0.75rem 0.5rem;
-    border-radius: 6px; border: 1px solid;
-    background: transparent;
-    font-family: 'Jost', sans-serif;
-    font-size: clamp(0.75rem, 1.5vw, 0.9rem); 
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s, border-color 0.15s;
-  }
-  @media (max-width: 600px) {
-    .fc-action-btn {
-      font-size: 0.65rem;
-      padding: 0.5rem 0.25rem;
-      gap: 2px;
-    }
-    .fc-action-btn svg {
-      font-size: 1rem !important;
-    }
-  }
-  @media (min-width: 900px) {
-    .fc-action-btn {
-      padding: 1rem 0.75rem;
-    }
-  }
-  .fc-action-btn:active { transform: scale(0.97); }
-  
-  .fc-btn-back { border-color: var(--muted); color: var(--muted); }
-  .fc-btn-back:hover { background: rgba(122,110,101,0.08); }
-  
-  .fc-btn-skip { border-color: #ff9800; color: #ff9800; }
-  .fc-btn-skip:hover { background: rgba(255,152,0,0.08); }
-  
-  .fc-btn-revision { border-color: #1565c0; color: #1565c0; }
-  .fc-btn-revision:hover { background: rgba(21,101,192,0.08); }
-  
-  .fc-btn-complete { border-color: #2e7d32; color: #2e7d32; }
-  .fc-btn-complete:hover { background: rgba(46,125,50,0.08); }
-
-  .fc-show-btn {
-    width: 100%; 
-    padding: 0.875rem;
-    background: transparent;
-    border: 1px solid rgba(184,134,11,0.3);
-    border-radius: 6px; color: var(--bark);
-    font-family: 'Jost', sans-serif;
-    font-size: clamp(0.9rem, 1.5vw, 1.1rem); 
-    font-weight: 500;
-    letter-spacing: 0.04em; cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, transform 0.2s;
-  }
-  @media (min-width: 900px) {
-    .fc-show-btn {
-      padding: 1.25rem;
-    }
-  }
-  @media (max-width: 600px) {
-    .fc-show-btn {
-      padding: 0.75rem;
-      font-size: 0.85rem;
-    }
-  }
-  .fc-show-btn:hover {
-    background: rgba(184,134,11,0.05);
-    border-color: rgba(184,134,11,0.5);
-    transform: translateY(-1px);
-  }
-
-  /* ── done state ── */
-  .fc-done-circle {
-    width: 72px; height: 72px; border-radius: 50%;
-    border: 2px solid rgba(14,46,31,0.2);
-    display: flex; align-items: center; justify-content: center;
-    margin: 0 auto 1.25rem; color: var(--forest); font-size: 2rem;
-  }
-  @media (max-width: 600px) {
-    .fc-done-circle {
-      width: 56px; height: 56px;
-      font-size: 1.5rem;
-    }
-  }
-
-  /* ── skeleton ── */
-  .fc-skeleton {
-    background: linear-gradient(90deg,rgba(184,134,11,0.06) 25%,rgba(184,134,11,0.12) 50%,rgba(184,134,11,0.06) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: 6px;
-  }
-  @keyframes shimmer { to { background-position: -200% 0; } }
-
-  /* ── stat pills ── */
-  .fc-stat-pill {
-    font-family: 'Jost', sans-serif; 
-    font-size: clamp(11px, 1.2vw, 14px); 
-    font-weight: 500;
-    padding: 4px 12px; border-radius: 999px;
-    border: 1px solid rgba(122,110,101,0.2); color: var(--muted);
-  }
-  .fc-stat-pill.revision { border-color: rgba(21,101,192,0.2); color: #1565c0; }
-  .fc-stat-pill.done   { border-color: rgba(46,125,50,0.2);   color: #2e7d32; }
-
-  /* ── theme cards ── */
-  .theme-card {
-    border: 1px solid rgba(184,134,11,0.15);
-    border-radius: 8px;
-    overflow: hidden;
-    background: #fff;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .theme-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 30px rgba(44,26,14,0.08);
-  }
-  .theme-card.active {
-    border-color: var(--gold);
-    box-shadow: 0 0 0 2px rgba(184,134,11,0.12);
-  }
-`
-
-/* ─────────────────────────────────────────────
-   Types & Interfaces
-───────────────────────────────────────────── */
-
-// Extended Vocab with example fields from your DB schema
-type VocabWithExamples = Vocab & {
-    ex_ar: string | null
-    ex_di: string | null
-    ex_en: string | null
+const SLUG_TO_LEVEL: Record<string, string> = {
+    beginner: 'A0',
+    elementary: 'A1',
+    intermediate: 'A2',
+    'upper-intermediate': 'B1',
 }
-
-type CardState = VocabWithExamples & {
-    interval: number
-    easeFactor: number
-    repetitions: number
-    due: number
-    status: 'new' | 'learning' | 'review' | 'complete'
-}
-
-type ExampleItem = {
-    arabic: string
-    diacritic: string
-    english: string
+const SLUG_LABELS: Record<string, string> = {
+    beginner: 'Beginner',
+    elementary: 'Elementary',
+    intermediate: 'Intermediate',
+    'upper-intermediate': 'Upper Intermediate',
 }
 
 /* ─────────────────────────────────────────────
-   Card State Helpers
+   Types
 ───────────────────────────────────────────── */
-function initCard(v: VocabWithExamples): CardState {
-    return {
-        ...v,
-        interval: 0,
-        easeFactor: 2.5,
-        repetitions: 0,
-        due: 0,
-        status: 'new'
-    }
+type CardStatus = 'new' | 'revision' | 'completed'
+type FilterType = 'all' | 'new' | 'revision' | 'completed'
+
+type CardState = VocabRow & {
+    status: CardStatus
+    isCompleted: boolean
+    isInRevision: boolean
 }
 
-function parseExamples(card: CardState): ExampleItem[] {
+type ExampleItem = { arabic: string; diacritic: string; english: string }
+
+/* ─────────────────────────────────────────────
+   Helpers
+───────────────────────────────────────────── */
+function parseExamples(card: VocabRow): ExampleItem[] {
     if (!card.ex_ar || !card.ex_en) return []
-
     const ar = card.ex_ar.split(';').map(s => s.trim())
     const di = card.ex_di ? card.ex_di.split(';').map(s => s.trim()) : ar
     const en = card.ex_en.split(';').map(s => s.trim())
-
     const count = Math.min(ar.length, en.length)
     const items: ExampleItem[] = []
-
     for (let i = 0; i < count; i++) {
-        items.push({
-            arabic: ar[i] || '',
-            diacritic: di[i] || ar[i] || '',
-            english: en[i] || '',
-        })
+        items.push({ arabic: ar[i] || '', diacritic: di[i] || ar[i] || '', english: en[i] || '' })
     }
-
     return items
 }
 
+function buildQueue(vocab: VocabRow[], progress: WordProgress[]): CardState[] {
+    const progressMap = new Map(progress.map(p => [p.word_id, p]))
+    const cards: CardState[] = []
+    for (const v of vocab) {
+        const p = progressMap.get(v.id)
+        const isCompleted = p?.is_completed ?? false
+        const isInRevision = p?.is_in_revision ?? false
+
+        let status: CardStatus = 'new'
+        if (isCompleted) {
+            status = 'completed'
+        } else if (isInRevision) {
+            status = 'revision'
+        }
+
+        cards.push({ ...v, status, isCompleted, isInRevision })
+    }
+    return cards
+}
+
 /* ─────────────────────────────────────────────
-   Example Sentences (from DB fields)
+   PillToggle
 ───────────────────────────────────────────── */
-function ExampleSentences({
-    card,
-    revealed,
-    showDiacritics,
+function PillToggle({
+    enabled, onToggle, label, activeColor = '#b8860b',
 }: {
-    card: CardState
-    revealed: boolean
-    showDiacritics: boolean
+    enabled: boolean; onToggle: () => void; label: string; activeColor?: string
+}) {
+    return (
+        <Box
+            onClick={onToggle}
+            sx={{
+                display: 'inline-flex', alignItems: 'center', gap: 1,
+                cursor: 'pointer', userSelect: 'none',
+                padding: '5px 12px 5px 6px', borderRadius: '999px',
+                border: '1px solid',
+                borderColor: enabled ? activeColor : 'rgba(122,110,101,0.25)',
+                background: enabled ? `${activeColor}14` : 'transparent',
+                transition: 'all 0.15s',
+                '&:hover': { borderColor: activeColor, background: `${activeColor}0d` },
+            }}
+        >
+            <Box sx={{
+                width: 28, height: 16, borderRadius: '999px',
+                background: enabled ? activeColor : 'rgba(122,110,101,0.2)',
+                position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+            }}>
+                <Box sx={{
+                    position: 'absolute', top: '2px',
+                    left: enabled ? '14px' : '2px',
+                    width: 12, height: 12, borderRadius: '50%',
+                    background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    transition: 'left 0.18s cubic-bezier(0.4,0,0.2,1)',
+                }} />
+            </Box>
+            <Typography sx={{
+                fontFamily: 'Jost, sans-serif',
+                fontSize: { xs: '0.72rem', sm: '0.78rem', md: '0.85rem' },
+                fontWeight: 500, color: enabled ? activeColor : '#7a6e65',
+                whiteSpace: 'nowrap', lineHeight: 1, transition: 'color 0.15s',
+            }}>
+                {label}
+            </Typography>
+        </Box>
+    )
+}
+
+/* ─────────────────────────────────────────────
+   SettingsDialog (mobile only)
+───────────────────────────────────────────── */
+function SettingsDialog({
+    open, onClose,
+    showDiacritics, onToggleDiacritics,
+    alwaysShow, onToggleAlwaysShow,
+}: {
+    open: boolean; onClose: () => void
+    showDiacritics: boolean; onToggleDiacritics: () => void
+    alwaysShow: boolean; onToggleAlwaysShow: () => void
+}) {
+    const ToggleRow = ({
+        label, description, enabled, onToggle, activeColor,
+    }: {
+        label: string; description: string; enabled: boolean; onToggle: () => void; activeColor: string
+    }) => (
+        <Box
+            onClick={onToggle}
+            sx={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                cursor: 'pointer', py: 1.25, px: 1.5, borderRadius: '10px',
+                border: '1px solid',
+                borderColor: enabled ? `${activeColor}55` : 'rgba(122,110,101,0.15)',
+                background: enabled ? `${activeColor}08` : 'rgba(122,110,101,0.03)',
+                transition: 'all 0.15s', userSelect: 'none',
+                '&:hover': { borderColor: `${activeColor}88`, background: `${activeColor}0d` },
+            }}
+        >
+            <Box sx={{ pr: 2 }}>
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 600, color: '#2c1a0e', lineHeight: 1.2 }}>
+                    {label}
+                </Typography>
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#7a6e65', mt: 0.3, lineHeight: 1.4 }}>
+                    {description}
+                </Typography>
+            </Box>
+            {/* Toggle track */}
+            <Box sx={{
+                width: 38, height: 22, borderRadius: '999px', flexShrink: 0,
+                background: enabled ? activeColor : 'rgba(122,110,101,0.22)',
+                position: 'relative', transition: 'background 0.2s',
+            }}>
+                <Box sx={{
+                    position: 'absolute', top: '3px',
+                    left: enabled ? '19px' : '3px',
+                    width: 16, height: 16, borderRadius: '50%',
+                    background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.22)',
+                    transition: 'left 0.18s cubic-bezier(0.4,0,0.2,1)',
+                }} />
+            </Box>
+        </Box>
+    )
+
+    return (
+        <Dialog
+            open={open}
+            onClose={onClose}
+            PaperProps={{
+                sx: {
+                    borderRadius: '16px', width: '100%', maxWidth: 340, m: 2,
+                    overflow: 'hidden', boxShadow: '0 24px 64px rgba(44,26,14,0.2)',
+                },
+            }}
+        >
+            <DialogTitle sx={{
+                fontFamily: "'EB Garamond', serif", fontSize: '1.4rem', fontWeight: 700,
+                color: '#2c1a0e', pb: 0.5, pt: 2.5, px: 2.5,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+                Settings
+                <IconButton onClick={onClose} size="small" sx={{ color: '#7a6e65', mr: -0.5 }}>
+                    <Close sx={{ fontSize: '1.1rem' }} />
+                </IconButton>
+            </DialogTitle>
+
+            <DialogContent sx={{ px: 2.5, pt: 1.5, pb: 2 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    <ToggleRow
+                        label="Show Diacritics"
+                        description="Display vowel marks on Arabic words"
+                        enabled={showDiacritics}
+                        onToggle={onToggleDiacritics}
+                        activeColor="#b8860b"
+                    />
+                    <ToggleRow
+                        label="Always Show Card"
+                        description="Never hide the answer side"
+                        enabled={alwaysShow}
+                        onToggle={onToggleAlwaysShow}
+                        activeColor="#0e2e1f"
+                    />
+                </Box>
+            </DialogContent>
+
+            <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5 }}>
+                <Button
+                    fullWidth variant="contained" onClick={onClose} disableElevation
+                    sx={{
+                        background: '#2c1a0e', color: '#f5ede0',
+                        fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.9rem',
+                        textTransform: 'none', borderRadius: '10px', py: 1.1,
+                        '&:hover': { background: '#1a0f08' },
+                    }}
+                >
+                    Done
+                </Button>
+            </DialogActions>
+        </Dialog>
+    )
+}
+
+/* ─────────────────────────────────────────────
+   AnimatedArabicWord
+───────────────────────────────────────────── */
+function AnimatedArabicWord({ word, wordDiacritic, showDiacritics }: {
+    word: string; wordDiacritic: string; showDiacritics: boolean
+}) {
+    return (
+        <Box sx={{
+            position: 'relative', textAlign: 'center',
+            margin: '0.5rem 0 1.5rem',
+            height: { xs: 'clamp(3rem, 12vw, 4rem)', md: 'clamp(3.5rem, 10vw, 7rem)' },
+        }}>
+            <Fade in={!showDiacritics} timeout={300} unmountOnExit>
+                <Typography sx={{
+                    fontFamily: "'EB Garamond', serif",
+                    fontSize: { xs: 'clamp(2.2rem, 12vw, 3.5rem)', md: 'clamp(3rem, 10vw, 5.5rem)' },
+                    fontWeight: 700, direction: 'rtl', textAlign: 'center',
+                    color: '#2c1a0e', lineHeight: 1.2,
+                    position: 'absolute', top: 0, left: 0, right: 0,
+                }}>
+                    {word}
+                </Typography>
+            </Fade>
+            <Fade in={showDiacritics} timeout={300} unmountOnExit>
+                <Typography sx={{
+                    fontFamily: "'EB Garamond', serif",
+                    fontSize: { xs: 'clamp(2.2rem, 12vw, 3.5rem)', md: 'clamp(3rem, 10vw, 5.5rem)' },
+                    fontWeight: 700, direction: 'rtl', textAlign: 'center',
+                    color: '#0e2e1f', lineHeight: 1.2,
+                    position: 'absolute', top: 0, left: 0, right: 0,
+                }}>
+                    {wordDiacritic}
+                </Typography>
+            </Fade>
+        </Box>
+    )
+}
+
+/* ─────────────────────────────────────────────
+   ExampleSentences
+───────────────────────────────────────────── */
+function ExampleSentences({ card, revealed, showDiacritics }: {
+    card: VocabRow; revealed: boolean; showDiacritics: boolean
 }) {
     const examples = useMemo(() => parseExamples(card), [card])
-
     if (!revealed || examples.length === 0) return null
 
     return (
         <Collapse in={revealed} timeout={300}>
-            <Box className="fc-examples">
+            <Box sx={{
+                background: 'rgba(245,237,224,0.5)', borderRadius: '8px',
+                padding: '1.25rem', margin: '1.25rem 0', borderLeft: '3px solid #b8860b',
+            }}>
                 <Typography sx={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
-                    fontWeight: 600,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: 'var(--gold)',
-                    mb: 1,
+                    fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.85rem' },
+                    fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase',
+                    color: '#b8860b', mb: 1.25,
                 }}>
                     Example Sentences
                 </Typography>
-
                 {examples.map((ex, idx) => (
-                    <Box key={idx} sx={{ mb: idx < examples.length - 1 ? 1.5 : 0 }}>
-                        <Box className="fc-example-item">
+                    <Box key={idx} sx={{ mb: idx < examples.length - 1 ? 2 : 0 }}>
+                        <Typography sx={{
+                            fontFamily: "'EB Garamond', serif", fontSize: { xs: 'clamp(1.25rem, 2.8vw, 1.75rem)' },
+                            color: '#2c1a0e', direction: 'rtl', textAlign: 'right', lineHeight: 1.5, mb: 0.35,
+                        }}>
                             {showDiacritics ? ex.diacritic : ex.arabic}
-                        </Box>
-                        <Box className="fc-example-translation">
+                        </Typography>
+                        <Typography sx={{
+                            fontFamily: 'Jost, sans-serif', fontSize: { xs: 'clamp(1rem, 1.8vw, 1.2rem)' },
+                            color: '#7a6e65', fontStyle: 'italic', textAlign: 'left', mb: 1, lineHeight: 1.5,
+                        }}>
                             {ex.english}
-                        </Box>
+                        </Typography>
                     </Box>
                 ))}
             </Box>
@@ -444,308 +327,369 @@ function ExampleSentences({
 }
 
 /* ─────────────────────────────────────────────
-   Animated Arabic Word Component (MUI Fade)
+   StatusChips
 ───────────────────────────────────────────── */
-function AnimatedArabicWord({
-    word,
-    wordDiacritic,
-    showDiacritics
+const STATUS_CHIP_COLORS: Record<CardStatus, { activeBg: string; activeColor: string; border: string }> = {
+    new: { activeBg: 'rgba(122,110,101,0.12)', activeColor: '#4a3d35', border: 'rgba(122,110,101,0.35)' },
+    revision: { activeBg: 'rgba(21,101,192,0.1)', activeColor: '#0d47a1', border: 'rgba(21,101,192,0.35)' },
+    completed: { activeBg: 'rgba(46,125,50,0.1)', activeColor: '#1b5e20', border: 'rgba(46,125,50,0.35)' },
+}
+
+function StatusChips({
+    newCount, revisionCount, completedCount, filter, currentStatus, onFilterChange,
 }: {
-    word: string
-    wordDiacritic: string
-    showDiacritics: boolean
+    newCount: number; revisionCount: number; completedCount: number
+    filter: FilterType; currentStatus: CardStatus | null
+    onFilterChange: (f: FilterType) => void
 }) {
+    const chips: { type: CardStatus; count: number }[] = [
+        { type: 'new', count: newCount },
+        { type: 'revision', count: revisionCount },
+        { type: 'completed', count: completedCount },
+    ]
     return (
-        <Box className="fc-arabic-wrapper">
-            <Fade in={!showDiacritics} timeout={300} unmountOnExit>
-                <Box className="fc-arabic">
-                    {word}
-                </Box>
-            </Fade>
-            <Fade in={showDiacritics} timeout={300} unmountOnExit>
-                <Box className="fc-arabic" sx={{ color: 'var(--forest)' }}>
-                    {wordDiacritic}
-                </Box>
-            </Fade>
+        <Box sx={{ display: 'flex', gap: { xs: 0.75, sm: 1.5 }, flexWrap: 'wrap' }}>
+            {chips.map(({ type, count }) => {
+                const colors = STATUS_CHIP_COLORS[type]
+                const isFilterActive = filter === type
+                const isCurrentCard = currentStatus === type
+                const isHighlighted = isFilterActive || isCurrentCard
+                return (
+                    <Box
+                        key={type}
+                        onClick={() => onFilterChange(filter === type ? 'all' : type)}
+                        sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: { xs: '11px', sm: '12px', md: '13px' },
+                            fontWeight: isHighlighted ? 700 : 500,
+                            padding: { xs: '3px 9px', sm: '4px 12px' },
+                            borderRadius: '999px',
+                            border: `${isHighlighted ? 2 : 1}px solid`,
+                            borderColor: isHighlighted ? colors.border : 'rgba(122,110,101,0.18)',
+                            color: isHighlighted ? colors.activeColor : '#7a6e65',
+                            background: isHighlighted ? colors.activeBg : 'transparent',
+                            cursor: 'pointer', transition: 'all 0.15s', userSelect: 'none',
+                            outline: isCurrentCard && !isFilterActive ? `2px solid ${colors.border}` : 'none',
+                            outlineOffset: '1px',
+                            '&:hover': { background: colors.activeBg, borderColor: colors.border, color: colors.activeColor },
+                        }}
+                    >
+                        {count} {type}
+                    </Box>
+                )
+            })}
         </Box>
     )
 }
 
 /* ─────────────────────────────────────────────
-   Flashcard quiz component
+   FlashcardQuiz
 ───────────────────────────────────────────── */
 function FlashcardQuiz({
-    words,
-    showDiacritics,
-    onComplete,
-    themeLabel,
+    initialQueue, themeId, showDiacritics, alwaysShow,
+    onComplete, themeLabel,
 }: {
-    words: VocabWithExamples[]
-    showDiacritics: boolean
-    onComplete: () => void
-    themeLabel: string
+    initialQueue: CardState[]; themeId: number
+    showDiacritics: boolean; alwaysShow: boolean
+    onComplete: () => void; themeLabel: string
+    totalInTheme: number; alreadyCompletedCount: number
 }) {
-    const [queue, setQueue] = useState<CardState[]>(() => words.map(initCard))
-    const [current, setCurrent] = useState<CardState | null>(() => words.length ? initCard(words[0]) : null)
-    const [revealed, setRevealed] = useState(false)
-    const [doneCount, setDoneCount] = useState(0)
+    const updateLocalProgress = useVocabStore(s => s.updateLocalProgress)
+    const invalidateTheme = useVocabStore(s => s.invalidateTheme)
+    const [, startTransition] = useTransition()
+
+    const [allCards, setAllCards] = useState<CardState[]>(initialQueue)
+    const [filter, setFilter] = useState<FilterType>('all')
+    const [revealed, setRevealed] = useState(alwaysShow)
     const [isDone, setIsDone] = useState(false)
     const [cardKey, setCardKey] = useState(0)
-    const [revisionCount, setRevisionCount] = useState(0)
 
-    useEffect(() => {
-        const deck = words.map(initCard)
-        setQueue(deck.slice(1))
-        setCurrent(deck[0] ?? null)
-        setRevealed(false)
-        setDoneCount(0)
-        setIsDone(false)
-        setRevisionCount(0)
+    useEffect(() => { if (alwaysShow) setRevealed(true) }, [alwaysShow])
+
+    const filteredCards = useMemo(() => filter === 'all' ? allCards : allCards.filter(c => c.status === filter), [allCards, filter])
+    useEffect(() => { if (filter !== 'all' && filteredCards.length === 0) setFilter('all') }, [filter, filteredCards.length])
+
+    const startIndex = useMemo(() => {
+        const idx = filteredCards.findIndex(c => c.status === 'new')
+        return idx === -1 ? 0 : idx
+    }, [filteredCards])
+
+    const [currentIndex, setCurrentIndex] = useState<number>(startIndex)
+    const current = filteredCards[currentIndex] ?? null
+    const canGoBack = currentIndex > 0
+    const canGoForward = currentIndex < filteredCards.length - 1
+
+    const newCount = allCards.filter(c => c.status === 'new').length
+    const revisionCount = allCards.filter(c => c.status === 'revision').length
+    const completedCount = allCards.filter(c => c.status === 'completed').length
+    const progressPct = allCards.length > 0 ? Math.round((completedCount / allCards.length) * 100) : 0
+
+    const persist = useCallback((card: CardState, isCompleted: boolean, isInRevision: boolean) => {
+        updateLocalProgress(themeId, card.id, { is_completed: isCompleted, is_in_revision: isInRevision })
+        startTransition(() => { upsertWordProgress({ wordId: card.id, isCompleted, isInRevision }).catch(console.error) })
+    }, [themeId, updateLocalProgress])
+
+    const updateCardStatus = useCallback((cardId: number, newStatus: CardStatus, opts?: { isCompleted?: boolean; isInRevision?: boolean }) => {
+        setAllCards(prev => prev.map(c => {
+            if (c.id !== cardId) return c
+            const isCompleted = opts?.isCompleted ?? c.isCompleted
+            const isInRevision = opts?.isInRevision ?? c.isInRevision
+            let status: CardStatus = 'new'
+            if (isCompleted) status = 'completed'
+            else if (isInRevision) status = 'revision'
+            return { ...c, status, isCompleted, isInRevision }
+        }))
+        if (opts) {
+            const card = allCards.find(c => c.id === cardId)
+            if (card) {
+                const isCompleted = opts.isCompleted ?? card.isCompleted
+                const isInRevision = opts.isInRevision ?? card.isInRevision
+                persist(card, isCompleted, isInRevision)
+            }
+        }
+    }, [allCards, persist])
+
+    const goToIndex = useCallback((newIndex: number) => {
+        if (newIndex >= 0 && newIndex < filteredCards.length) {
+            setCurrentIndex(newIndex)
+            if (!alwaysShow) setRevealed(false)
+            setCardKey(k => k + 1)
+        } else setIsDone(true)
+    }, [filteredCards.length, alwaysShow])
+
+    const handlePrevious = useCallback(() => { if (currentIndex > 0) goToIndex(currentIndex - 1) }, [currentIndex, goToIndex])
+    const handleNext = useCallback(() => { if (canGoForward) goToIndex(currentIndex + 1); else setIsDone(true) }, [currentIndex, canGoForward, goToIndex])
+
+    const toggleRevision = useCallback(() => {
+        if (!current) return
+        const toRevision = !current.isInRevision
+        updateCardStatus(current.id, toRevision ? 'revision' : 'new', { isInRevision: toRevision })
+    }, [current, updateCardStatus])
+
+    const toggleComplete = useCallback(() => {
+        if (!current) return
+        if (current.isCompleted) {
+            updateCardStatus(current.id, current.isInRevision ? 'revision' : 'new', { isCompleted: false })
+        } else {
+            updateCardStatus(current.id, 'completed', { isCompleted: true })
+            if (canGoForward) goToIndex(currentIndex + 1)
+            else setIsDone(true)
+        }
+    }, [current, currentIndex, canGoForward, updateCardStatus, goToIndex])
+
+    const handleFilterChange = useCallback((newFilter: FilterType) => {
+        setFilter(newFilter)
+        const next = newFilter === 'all' ? allCards : allCards.filter(c => c.status === newFilter)
+        const idx = next.findIndex(c => c.status === 'new')
+        setCurrentIndex(idx === -1 ? 0 : idx)
+        if (!alwaysShow) setRevealed(false)
         setCardKey(k => k + 1)
-    }, [words])
+        setIsDone(false)
+    }, [allCards, alwaysShow])
 
-    // Action handlers
-    const handleBack = useCallback(() => {
-        onComplete()
-    }, [onComplete])
-
-    const handleSkip = useCallback(() => {
-        if (!current) return
-        setQueue(prev => {
-            const next = [...prev, { ...current, status: 'learning' as const }]
-            if (next.length === 0) {
-                setIsDone(true)
-                setCurrent(null)
-                return []
-            }
-            const [nextCard, ...rest] = next
-            setCurrent(nextCard)
-            setRevealed(false)
-            setCardKey(k => k + 1)
-            return rest
-        })
-    }, [current])
-
-    const handleAddToRevision = useCallback(() => {
-        if (!current) return
-        setRevisionCount(c => c + 1)
-        setQueue(prev => {
-            const insertIndex = Math.min(3, prev.length)
-            const next = [...prev]
-            next.splice(insertIndex, 0, { ...current, status: 'review' as const })
-
-            if (next.length === 0) {
-                setIsDone(true)
-                setCurrent(null)
-                return []
-            }
-            const [nextCard, ...rest] = next
-            setCurrent(nextCard)
-            setRevealed(false)
-            setCardKey(k => k + 1)
-            return rest
-        })
-    }, [current])
-
-    const handleComplete = useCallback(() => {
-        if (!current) return
-        setDoneCount(d => d + 1)
-        setQueue(prev => {
-            const next = prev.filter(c => c.id !== current.id)
-            if (next.length === 0) {
-                setIsDone(true)
-                setCurrent(null)
-                return []
-            }
-            const [nextCard, ...rest] = next
-            setCurrent(nextCard)
-            setRevealed(false)
-            setCardKey(k => k + 1)
-            return rest
-        })
-    }, [current])
-
-    const progressPct = isDone ? 100 : Math.round((doneCount / words.length) * 100)
-    const newCount = current ? queue.filter(c => c.status === 'new').length + 1 : 0
-    const reviewCount = queue.filter(c => c.status === 'review').length
-
-    if (isDone) return (
-        <Grow in={true} timeout={500}>
-            <Box className="fc-shell" sx={{ alignItems: 'center', justifyContent: 'center' }}>
-                <Box sx={{ textAlign: 'center', padding: '1.5rem 0' }}>
-                    <Box className="fc-done-circle">✓</Box>
-                    <Typography sx={{
-                        fontFamily: '"EB Garamond", serif',
-                        fontSize: { xs: '1.6rem', sm: '2rem', md: '2.5rem' },
-                        fontWeight: 700,
-                        color: 'var(--bark)',
-                        mb: 0.75
-                    }}>
-                        {themeLabel} complete!
-                    </Typography>
-                    <Typography sx={{
-                        fontFamily: 'Jost, sans-serif',
-                        fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1.1rem' },
-                        color: 'var(--muted)',
-                        mb: 3.5,
-                        lineHeight: 1.7,
-                        px: 2
-                    }}>
-                        You reviewed all {words.length} words in this theme.
-                        {revisionCount > 0 && (
-                            <Box component="span" sx={{ display: 'block', mt: 1, color: '#1565c0' }}>
-                                {revisionCount} words added to revision list
-                            </Box>
-                        )}
-                    </Typography>
-                    <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+    /* Done screen */
+    if (isDone || filteredCards.length === 0) {
+        return (
+            <Grow in timeout={500}>
+                <Box sx={{
+                    background: '#fff', border: '1px solid rgba(184,134,11,0.2)',
+                    borderRadius: '10px', padding: { xs: '1.5rem 1rem', md: '2rem 1.5rem 1.75rem' },
+                    minHeight: { xs: '280px', md: '320px' },
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                }}>
+                    <Box sx={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                        <Box sx={{
+                            width: 60, height: 60, borderRadius: '50%', background: 'rgba(184,134,11,0.1)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: '2rem', color: '#b8860b', margin: '0 auto 1rem',
+                        }}>✓</Box>
+                        <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { xs: '1.6rem', sm: '2rem', md: '2.5rem' }, fontWeight: 700, color: '#2c1a0e', mb: 0.75 }}>
+                            {themeLabel} complete!
+                        </Typography>
+                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1.1rem' }, color: '#7a6e65', mb: 3.5, lineHeight: 1.7, px: 2 }}>
+                            You&apos;ve gone through all cards in this theme.
+                        </Typography>
                         <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => {
-                                const deck = words.map(initCard)
-                                setQueue(deck.slice(1))
-                                setCurrent(deck[0] ?? null)
-                                setRevealed(false)
-                                setDoneCount(0)
-                                setIsDone(false)
-                                setRevisionCount(0)
-                                setCardKey(k => k + 1)
-                            }}
+                            variant="outlined" size="small"
+                            onClick={() => { invalidateTheme(themeId); onComplete() }}
                             sx={{
-                                borderColor: 'rgba(184,134,11,0.35)',
-                                color: 'var(--bark)',
-                                fontFamily: 'Jost, sans-serif',
-                                fontWeight: 500,
-                                fontSize: { xs: '0.75rem', sm: '0.85rem', md: '1rem' },
-                                textTransform: 'none',
-                                borderRadius: '6px',
-                                px: { xs: 2, sm: 2.5, md: 3 },
-                                py: { md: 1 },
-                                '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: 'var(--gold)' },
-                            }}
-                        >
-                            Restart theme
-                        </Button>
-                        <Button
-                            variant="contained"
-                            size="small"
-                            onClick={onComplete}
-                            endIcon={<ArrowForwardSharp sx={{ fontSize: { xs: 16, md: 20 } }} />}
-                            sx={{
-                                background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
-                                color: 'var(--bark)',
-                                fontFamily: 'Jost, sans-serif',
-                                fontWeight: 600,
-                                fontSize: { xs: '0.75rem', sm: '0.85rem', md: '1rem' },
-                                textTransform: 'none',
-                                borderRadius: '6px',
-                                px: { xs: 2, sm: 2.5, md: 3 },
-                                py: { md: 1 },
-                                boxShadow: '0 4px 16px rgba(184,134,11,0.3)',
-                                '&:hover': { background: 'var(--gold-lt)' },
+                                borderColor: 'rgba(184,134,11,0.35)', color: '#2c1a0e',
+                                fontFamily: 'Jost, sans-serif', fontWeight: 500, textTransform: 'none', borderRadius: '6px',
+                                '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: '#b8860b' },
                             }}
                         >
                             Back to themes
                         </Button>
                     </Box>
                 </Box>
-            </Box>
-        </Grow>
-    )
+            </Grow>
+        )
+    }
 
     if (!current) return null
 
+    /* Shared button styles for mobile Revision / Complete */
+    const mobileActionBtnSx = {
+        textTransform: 'none' as const,
+        fontFamily: 'Jost, sans-serif',
+        fontWeight: 500,
+        fontSize: '0.78rem',
+        px: '11px',
+        py: '5px',
+        borderRadius: '20px',
+        whiteSpace: 'nowrap' as const,
+        flexShrink: 0,
+        minWidth: 0,
+        lineHeight: 1.4,
+        '& .MuiButton-startIcon': { mr: '4px', ml: 0 },
+        '& .MuiButton-startIcon svg': { fontSize: '0.85rem !important' },
+    }
+
     return (
-        <Fade in={true} key={cardKey} timeout={400}>
-            <Box className="fc-shell">
-                <Box className="fc-progress-bg">
-                    <Box className="fc-progress-fill" sx={{ width: `${progressPct}%` }} />
+        <Fade in key={cardKey} timeout={400}>
+            <Box sx={{
+                background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px',
+                padding: { xs: '1.25rem 0.875rem', md: '2rem 1.5rem 1.75rem' },
+                minHeight: { xs: '280px', md: '320px' }, display: 'flex', flexDirection: 'column',
+            }}>
+                {/* Progress bar */}
+                <Box sx={{ height: '2px', background: 'rgba(184,134,11,0.1)', borderRadius: '999px', mb: '1.25rem', overflow: 'hidden' }}>
+                    <Box sx={{ height: '100%', background: 'linear-gradient(90deg, #b8860b, #d4a843)', borderRadius: '999px', transition: 'width 0.4s ease', width: `${progressPct}%` }} />
                 </Box>
 
-                <Box sx={{ display: 'flex', gap: 1.5, mb: { xs: 1.5, sm: 2, md: 3 }, flexWrap: 'wrap' }}>
-                    <span className="fc-stat-pill">{newCount} new</span>
-                    <span className={`fc-stat-pill${reviewCount > 0 ? ' revision' : ''}`}>{reviewCount} revision</span>
-                    <span className={`fc-stat-pill${doneCount > 0 ? ' done' : ''}`}>{doneCount} done</span>
+                {/* Filter chips + % */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                    <StatusChips
+                        newCount={newCount} revisionCount={revisionCount} completedCount={completedCount}
+                        filter={filter} currentStatus={current?.status ?? null} onFilterChange={handleFilterChange}
+                    />
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: '#b8860b', flexShrink: 0, ml: 1 }}>
+                        {progressPct}%
+                    </Typography>
                 </Box>
 
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <Box sx={{ textAlign: 'center', mb: { xs: 0.5, md: 1 } }}>
-                        <span className={`fc-level-badge fc-badge-${current.level}`}>{current.level}</span>
+                    <Box sx={{ pt: { xs: 3 } }}>
+                        <AnimatedArabicWord word={current.word} wordDiacritic={current.word_diacritic} showDiacritics={showDiacritics} />
                     </Box>
 
-                    <AnimatedArabicWord
-                        word={current.word}
-                        wordDiacritic={current.word_diacritic}
-                        showDiacritics={showDiacritics}
-                    />
-
                     <Collapse in={revealed} timeout={300}>
-                        <hr className="fc-divider" />
+                        <Box sx={{ borderTop: '1px solid rgba(184,134,11,0.1)', margin: '1rem 0' }} />
+
                         <Box sx={{ textAlign: 'center', mb: { xs: 0.5, md: 1 } }}>
-                            <span className="fc-type-badge">{current.type}</span>
+                            <Box sx={{
+                                display: 'inline-flex', alignItems: 'center', fontFamily: 'Jost, sans-serif',
+                                fontSize: '10px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase',
+                                padding: '3px 10px', borderRadius: '999px', background: 'rgba(122,110,101,0.08)', color: '#7a6e65',
+                            }}>
+                                {current.type}
+                            </Box>
                         </Box>
-                        <Box className="fc-transliteration" sx={{ mt: { xs: 1, md: 1.5 } }}>
+
+                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: 'clamp(1rem, 2vw, 1.35rem)' }, fontStyle: 'italic', color: '#b8860b', textAlign: 'center', letterSpacing: '0.05em', mt: { xs: 1, md: 1.5 } }}>
                             {current.transliteration}
-                        </Box>
-                        <Box className="fc-definition">{current.definition}</Box>
+                        </Typography>
+                        <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { xs: 'clamp(1.6rem, 4vw, 2.6rem)' }, fontWeight: 700, color: '#2c1a0e', textAlign: 'center', margin: '0.25rem 0' }}>
+                            {current.definition}
+                        </Typography>
                         {current.root && current.root !== '-' && (
-                            <Box className="fc-root">root · {current.root}</Box>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: 'clamp(0.85rem, 1.5vw, 1.1rem)' }, color: '#7a6e65', textAlign: 'center', direction: 'rtl', opacity: 0.75, mb: 0.5, letterSpacing: '0.04em' }}>
+                                {current.root}
+                            </Typography>
                         )}
 
-                        {/* Example Sentences from DB */}
-                        <ExampleSentences
-                            card={current}
-                            revealed={revealed}
-                            showDiacritics={showDiacritics}
-                        />
+                        <ExampleSentences card={current} revealed={revealed} showDiacritics={showDiacritics} />
 
-                        {/* New Action Buttons */}
-                        <Box className="fc-btn-row">
-                            <button
-                                className="fc-action-btn fc-btn-back"
-                                onClick={handleBack}
-                                title="Back to themes"
+                        {/* ── Desktop buttons (4-col grid) ── */}
+                        <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', mt: '1.25rem' }}>
+                            <Button
+                                variant="outlined" size="small" onClick={handlePrevious} disabled={!canGoBack}
+                                startIcon={<NavigateBefore sx={{ fontSize: '1rem !important' }} />}
+                                sx={{ borderColor: '#7a6e65', color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.85rem', padding: '0.6rem 0.5rem', borderRadius: '6px', textTransform: 'none', '&:hover': { background: 'rgba(122,110,101,0.08)' }, '&:disabled': { opacity: 0.4 } }}
+                            >Back</Button>
+                            <Button
+                                variant={current.isInRevision ? 'contained' : 'outlined'}
+                                color="primary" size="small" onClick={toggleRevision}
+                                startIcon={current.isInRevision ? <BookmarkAdded sx={{ fontSize: '1rem !important' }} /> : <Bookmark sx={{ fontSize: '1rem !important' }} />}
+                                sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.85rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}
+                            >Revision</Button>
+                            <Button
+                                variant={current.isCompleted ? 'contained' : 'outlined'}
+                                color="success" size="small" onClick={toggleComplete}
+                                startIcon={current.isCompleted ? <DoneAll sx={{ fontSize: '1rem !important' }} /> : <Check sx={{ fontSize: '1rem !important' }} />}
+                                sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.85rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}
+                            >{current.isCompleted ? 'Completed' : 'Complete'}</Button>
+                            <Button
+                                variant="outlined" color="warning" size="small" onClick={handleNext} disabled={!canGoForward}
+                                endIcon={<NavigateNext sx={{ fontSize: '1rem !important' }} />}
+                                sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.85rem', padding: '0.6rem 0.5rem', borderRadius: '6px', opacity: canGoForward ? 1 : 0.5 }}
+                            >Next</Button>
+                        </Box>
+
+                        {/* ── Mobile buttons: circular Back/Next, pill Revision/Complete, all centered ── */}
+                        <Box sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', justifyContent: 'center', gap: '10px', mt: '1rem' }}>
+                            {/* Circular back */}
+                            <IconButton
+                                onClick={handlePrevious} disabled={!canGoBack}
+                                sx={{
+                                    width: 38, height: 38, border: '1px solid',
+                                    borderColor: canGoBack ? 'rgba(122,110,101,0.4)' : 'rgba(122,110,101,0.15)',
+                                    color: canGoBack ? '#7a6e65' : 'rgba(122,110,101,0.3)',
+                                    borderRadius: '50%', flexShrink: 0, transition: 'all 0.15s',
+                                    '&:hover': { background: 'rgba(122,110,101,0.08)' },
+                                    '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(122,110,101,0.15)' },
+                                }}
                             >
-                                <ArrowBackIosSharp sx={{ fontSize: { xs: 18, md: 22 } }} />
-                                Back
-                            </button>
-                            <button
-                                className="fc-action-btn fc-btn-skip"
-                                onClick={handleSkip}
-                                title="Skip to later"
+                                <NavigateBefore sx={{ fontSize: '1.25rem' }} />
+                            </IconButton>
+
+                            {/* Revision pill */}
+                            <Button
+                                variant={current.isInRevision ? 'contained' : 'outlined'}
+                                color="primary" size="small" onClick={toggleRevision}
+                                startIcon={current.isInRevision ? <BookmarkAdded /> : <Bookmark />}
+                                sx={mobileActionBtnSx}
+                            >Revision</Button>
+
+                            {/* Complete pill */}
+                            <Button
+                                variant={current.isCompleted ? 'contained' : 'outlined'}
+                                color="success" size="small" onClick={toggleComplete}
+                                startIcon={current.isCompleted ? <DoneAll /> : <Check />}
+                                sx={mobileActionBtnSx}
+                            >{current.isCompleted ? 'Completed' : 'Complete'}</Button>
+
+                            {/* Circular next */}
+                            <IconButton
+                                onClick={handleNext} disabled={!canGoForward}
+                                sx={{
+                                    width: 38, height: 38, border: '1px solid',
+                                    borderColor: canGoForward ? 'rgba(184,134,11,0.45)' : 'rgba(184,134,11,0.15)',
+                                    color: canGoForward ? '#b8860b' : 'rgba(184,134,11,0.3)',
+                                    borderRadius: '50%', flexShrink: 0, transition: 'all 0.15s',
+                                    '&:hover': { background: 'rgba(184,134,11,0.06)' },
+                                    '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(184,134,11,0.15)' },
+                                }}
                             >
-                                <SkipNextSharp sx={{ fontSize: { xs: 18, md: 22 } }} />
-                                Skip
-                            </button>
-                            <button
-                                className="fc-action-btn fc-btn-revision"
-                                onClick={handleAddToRevision}
-                                title="Add to revision list"
-                            >
-                                <BookmarkAddSharp sx={{ fontSize: { xs: 18, md: 22 } }} />
-                                Revision
-                            </button>
-                            <button
-                                className="fc-action-btn fc-btn-complete"
-                                onClick={handleComplete}
-                                title="Mark as complete"
-                            >
-                                <CheckCircleSharp sx={{ fontSize: { xs: 18, md: 22 } }} />
-                                Complete
-                            </button>
+                                <NavigateNext sx={{ fontSize: '1.25rem' }} />
+                            </IconButton>
                         </Box>
                     </Collapse>
 
+                    {/* Show answer */}
                     {!revealed && (
-                        <Box sx={{ mt: { xs: 2, sm: 3, md: 4 }, width: '100%', marginTop: 'auto' }}>
-                            <button
-                                className="fc-show-btn"
-                                style={{ width: '100%' }}
-                                onClick={() => setRevealed(true)}
-                            >
-                                Show answer
-                            </button>
+                        <Box sx={{ mt: 'auto', pt: { xs: 0, sm: 0, md: 4 }, width: '100%' }}>
+                            <Button
+                                fullWidth variant="outlined" onClick={() => setRevealed(true)}
+                                sx={{
+                                    padding: '0.875rem', border: '1px solid rgba(184,134,11,0.3)',
+                                    borderRadius: '6px', color: '#2c1a0e', fontFamily: 'Jost, sans-serif',
+                                    fontSize: { xs: 'clamp(0.9rem, 1.5vw, 1.1rem)' }, fontWeight: 500,
+                                    letterSpacing: '0.04em', textTransform: 'none',
+                                    transition: 'background 0.15s, border-color 0.15s, transform 0.2s',
+                                    '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: 'rgba(184,134,11,0.5)', transform: 'translateY(-1px)' },
+                                }}
+                            >Show answer</Button>
                         </Box>
                     )}
                 </Box>
@@ -755,109 +699,42 @@ function FlashcardQuiz({
 }
 
 /* ─────────────────────────────────────────────
-   Theme Card Component
+   ThemeCard
 ───────────────────────────────────────────── */
-function ThemeCard({
-    theme,
-    wordCount,
-    progress,
-    isActive,
-    onClick,
-}: {
-    theme: string
-    wordCount: number
-    progress: number
-    isActive: boolean
-    onClick: () => void
+function ThemeCard({ theme, isActive, onClick }: {
+    theme: ThemeProgress; isActive: boolean; onClick: () => void
 }) {
+    const progress = theme.total_words > 0 ? Math.round((theme.completed_count / theme.total_words) * 100) : 0
     return (
-        <Card
-            className={`theme-card${isActive ? ' active' : ''}`}
-            sx={{
-                maxWidth: 345,
-                width: '100%',
-                background: '#fff',
-            }}
-        >
+        <Card sx={{
+            maxWidth: 345, width: '100%', border: '1px solid rgba(184,134,11,0.15)',
+            borderRadius: '8px', overflow: 'hidden', background: '#fff',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+            ...(isActive && { borderColor: '#b8860b', boxShadow: '0 0 0 2px rgba(184,134,11,0.12)' }),
+            '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 8px 30px rgba(44,26,14,0.08)' },
+        }}>
             <CardActionArea onClick={onClick}>
-                <CardMedia
-                    component="img"
-                    height="140"
-                    image="/awm1.png"
-                    alt={theme}
-                    sx={{
-                        objectFit: 'cover',
-                        borderBottom: '1px solid rgba(184,134,11,0.1)',
-                    }}
-                />
+                <CardMedia component="img" height="140" image="/awm1.png" alt={theme.display_name}
+                    sx={{ objectFit: 'cover', borderBottom: '1px solid rgba(184,134,11,0.1)' }} />
                 <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
-                    <Typography
-                        gutterBottom
-                        sx={{
-                            fontFamily: '"EB Garamond", serif',
-                            fontSize: { xs: '1.1rem', sm: '1.25rem', md: '1.4rem' },
-                            fontWeight: 700,
-                            color: 'var(--bark)',
-                            lineHeight: 1.2,
-                        }}
-                    >
-                        {theme}
+                    <Typography gutterBottom sx={{ fontFamily: "'EB Garamond', serif", fontSize: { xs: '1.1rem', sm: '1.25rem', md: '1.4rem' }, fontWeight: 700, color: '#2c1a0e', lineHeight: 1.2 }}>
+                        {theme.display_name}
                     </Typography>
-
-                    <Typography
-                        sx={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.9rem' },
-                            color: 'var(--muted)',
-                            mb: 1.5,
-                        }}
-                    >
-                        {wordCount} words
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.9rem' }, color: '#7a6e65', mb: 1.5 }}>
+                        {theme.total_words} words
+                        {theme.revision_count > 0 && (
+                            <Box component="span" sx={{ ml: 1.5, color: '#1565c0' }}>· {theme.revision_count} in revision</Box>
+                        )}
                     </Typography>
-
                     <Box sx={{ width: '100%' }}>
-                        <Box sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            mb: 0.75,
-                        }}>
-                            <Typography
-                                sx={{
-                                    fontFamily: 'Jost, sans-serif',
-                                    fontSize: '0.7rem',
-                                    fontWeight: 600,
-                                    letterSpacing: '0.08em',
-                                    textTransform: 'uppercase',
-                                    color: 'var(--gold)',
-                                }}
-                            >
-                                Progress
-                            </Typography>
-                            <Typography
-                                sx={{
-                                    fontFamily: 'Jost, sans-serif',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 600,
-                                    color: 'var(--bark)',
-                                }}
-                            >
-                                {Math.round(progress)}%
-                            </Typography>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#b8860b' }}>Progress</Typography>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: '#2c1a0e' }}>{progress}%</Typography>
                         </Box>
-                        <LinearProgress
-                            variant="determinate"
-                            value={progress}
-                            sx={{
-                                height: 6,
-                                borderRadius: 3,
-                                backgroundColor: 'rgba(184,134,11,0.1)',
-                                '& .MuiLinearProgress-bar': {
-                                    background: 'linear-gradient(90deg, var(--gold) 0%, var(--gold-lt) 100%)',
-                                    borderRadius: 3,
-                                },
-                            }}
-                        />
+                        <LinearProgress variant="determinate" value={progress} sx={{
+                            height: 6, borderRadius: 3, backgroundColor: 'rgba(184,134,11,0.1)',
+                            '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, #b8860b 0%, #d4a843 100%)', borderRadius: 3 },
+                        }} />
                     </Box>
                 </CardContent>
             </CardActionArea>
@@ -872,339 +749,243 @@ export default function FlashcardSlugPage() {
     const params = useParams()
     const router = useRouter()
     const slug = (params?.slug as string) ?? 'beginner'
-
-    const storeVocab = useVocabStore(s => s.vocab)
-    const isLoading = useVocabStore(s => s.isLoading)
-    const fetchVocab = useVocabStore(s => s.fetch)
-
-    const [selectedTheme, setSelectedTheme] = useState<string | null>(null)
-    const [showDiacritics, setShowDiacritics] = useState(true)
-    const [quizKey, setQuizKey] = useState(0)
-
-    useEffect(() => { fetchVocab() }, [fetchVocab])
-
-    const levels = LEVEL_MAP[slug] ?? ['A0']
+    const level = SLUG_TO_LEVEL[slug] ?? 'A0'
     const label = SLUG_LABELS[slug] ?? slug
 
-    // Cast vocab to include example fields
-    const filteredVocab = useMemo(
-        () => (storeVocab as VocabWithExamples[]).filter(v => levels.includes(v.level)),
-        [storeVocab, slug]
-    )
+    const fetchTheme = useVocabStore(s => s.fetchTheme)
+    const loadingThemeId = useVocabStore(s => s.loadingThemeId)
 
-    // Group vocab by theme
-    const themeWords = useMemo(() => {
-        const grouped: Record<string, VocabWithExamples[]> = {}
-        THEMES.forEach(theme => {
-            grouped[theme] = filteredVocab.filter(v => v.theme === theme)
-        })
-        return grouped
-    }, [filteredVocab])
+    const [themes, setThemes] = useState<ThemeProgress[]>([])
+    const [themesLoading, setThemesLoading] = useState(true)
+    const [selectedTheme, setSelectedTheme] = useState<ThemeProgress | null>(null)
+    const [activeQueue, setActiveQueue] = useState<CardState[]>([])
+    const [showDiacritics, setShowDiacritics] = useState(true)
+    const [alwaysShow, setAlwaysShow] = useState(false)
+    const [quizKey, setQuizKey] = useState(0)
+    const [settingsOpen, setSettingsOpen] = useState(false)
 
-    // Calculate theme progress (placeholder)
-    const themeProgress = useMemo(() => {
-        const progress: Record<string, number> = {}
-        THEMES.forEach(theme => {
-            progress[theme] = Math.random() * 100
-        })
-        return progress
-    }, [filteredVocab])
-
-    // Overall level progress
-    const overallProgress = useMemo(() => {
-        const totalWords = filteredVocab.length
-        if (totalWords === 0) return 0
-        const totalProgress = THEMES.reduce((sum, theme) => {
-            return sum + (themeProgress[theme] / 100) * (themeWords[theme]?.length ?? 0)
-        }, 0)
-        return (totalProgress / totalWords) * 100
-    }, [filteredVocab, themeProgress, themeWords])
-
-    const activeWords = selectedTheme ? (themeWords[selectedTheme] ?? []) : []
-
-    const handleThemeSelect = (theme: string) => {
-        setSelectedTheme(theme)
-        setQuizKey(k => k + 1)
-    }
-
-    const handleBackToThemes = () => {
+    useEffect(() => {
+        let cancelled = false
+        setThemesLoading(true)
         setSelectedTheme(null)
-    }
+        fetchThemesWithProgress(level)
+            .then(data => { if (!cancelled) setThemes(data) })
+            .catch(err => { console.error(err); if (!cancelled) setThemes([]) })
+            .finally(() => { if (!cancelled) setThemesLoading(false) })
+        return () => { cancelled = true }
+    }, [slug, level])
+
+    const handleThemeSelect = useCallback(async (theme: ThemeProgress) => {
+        if (!theme?.theme_id || Number.isNaN(theme.theme_id)) return
+        setSelectedTheme(theme)
+        try {
+            const { vocab, progress } = await fetchTheme(theme.theme_id)
+            setActiveQueue(buildQueue(vocab, progress))
+            setQuizKey(k => k + 1)
+        } catch (err) {
+            console.error(err)
+            setActiveQueue([])
+        }
+    }, [fetchTheme])
+
+    const handleBackToThemes = useCallback(() => {
+        fetchThemesWithProgress(level).then(setThemes).catch(console.error)
+        setSelectedTheme(null)
+        setActiveQueue([])
+    }, [level])
+
+    const overallProgress = useMemo(() => {
+        const total = themes.reduce((s, t) => s + t.total_words, 0)
+        if (total === 0) return 0
+        return Math.round(themes.reduce((s, t) => s + t.completed_count, 0) / total * 100)
+    }, [themes])
+
+    const isLoadingVocab = selectedTheme != null && loadingThemeId === selectedTheme.theme_id
+    const validThemes = themes.filter(t => t.theme_id != null && !Number.isNaN(t.theme_id))
 
     return (
         <>
-            <style>{PAGE_CSS}</style>
             <Navbar />
 
-            <Box
-                component="main"
-                sx={{ background: 'var(--cream)', minHeight: '100vh' }}
-            >
-                {/* ── Header ── */}
+            {/* Mobile settings dialog */}
+            <SettingsDialog
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+                showDiacritics={showDiacritics}
+                onToggleDiacritics={() => setShowDiacritics(p => !p)}
+                alwaysShow={alwaysShow}
+                onToggleAlwaysShow={() => setAlwaysShow(p => !p)}
+            />
+
+            <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh' }}>
+                {/* Hero banner — desktop always, mobile only when NOT in flashcard */}
                 <Box sx={{
-                    background: 'linear-gradient(135deg, var(--forest) 0%, #071a0f 100%)',
-                    pt: { xs: 10, sm: 12, md: 14 },
-                    pb: { xs: 4, md: 6 },
-                    position: 'relative',
-                    overflow: 'hidden',
+                    display: { xs: selectedTheme ? 'none' : 'block', sm: 'block' },
+                    background: 'linear-gradient(135deg, #0e2e1f 0%, #071a0f 100%)',
+                    pt: { xs: 10, sm: 12, md: 14 }, pb: { xs: 3, sm: 4, md: 6 },
+                    position: 'relative', overflow: 'hidden',
                 }}>
                     <Typography aria-hidden="true" sx={{
-                        position: 'absolute',
-                        top: -30,
-                        right: -10,
-                        fontFamily: '"EB Garamond", serif',
-                        fontStyle: 'italic',
-                        fontSize: { xs: '8rem', sm: '10rem', md: '14rem' },
-                        color: 'rgba(255,255,255,0.03)',
-                        userSelect: 'none',
-                        lineHeight: 1,
-                    }}>
-                        أ
-                    </Typography>
-                    <Container maxWidth="xl">
-                        <Box
-                            onClick={() => router.push('/learn')}
-                            sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: 0.75,
-                                fontFamily: 'Jost, sans-serif',
-                                fontSize: { xs: '0.7rem', sm: '0.78rem', md: '0.9rem' },
-                                color: 'rgba(245,237,224,0.45)',
-                                cursor: 'pointer',
-                                mb: { xs: 1.5, sm: 2 },
-                                '&:hover': { color: 'var(--gold-lt)' },
-                                transition: 'color 0.2s',
-                            }}
-                        >
-                            <ArrowBackSharp sx={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
-                            Back to Learn
-                        </Box>
-
-                        <Typography sx={{
-                            fontFamily: '"EB Garamond", serif',
-                            fontSize: { xs: '1.8rem', sm: '2.4rem', md: '3.5rem' },
-                            fontWeight: 700,
-                            color: 'var(--sand)',
-                            lineHeight: 1.1,
-                            mb: 1,
-                        }}>
-                            {label} Flashcards
+                        position: 'absolute', top: -30, right: -10,
+                        fontFamily: "'EB Garamond', serif", fontStyle: 'italic',
+                        fontSize: { xs: '6rem', sm: '10rem', md: '14rem' },
+                        color: 'rgba(255,255,255,0.03)', userSelect: 'none', lineHeight: 1,
+                    }}>أ</Typography>
+                    <Container maxWidth="lg">
+                        <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { xs: '1.8rem', sm: '2.4rem', md: '3.5rem' }, fontWeight: 700, color: '#f5ede0', lineHeight: 1.1, mb: 2 }}>
+                            {label}
                         </Typography>
-
-                        {/* Overall progress */}
                         <Box sx={{ maxWidth: 400, mb: 2 }}>
-                            <Box sx={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                mb: 1,
-                            }}>
-                                <Typography sx={{
-                                    fontFamily: 'Jost, sans-serif',
-                                    fontSize: { xs: '0.75rem', sm: '0.85rem', md: '1rem' },
-                                    color: 'rgba(245,237,224,0.7)',
-                                    fontWeight: 500,
-                                }}>
-                                    Overall Progress
-                                </Typography>
-                                <Typography sx={{
-                                    fontFamily: 'Jost, sans-serif',
-                                    fontSize: { xs: '0.75rem', sm: '0.85rem', md: '1rem' },
-                                    color: 'var(--gold-lt)',
-                                    fontWeight: 600,
-                                }}>
-                                    {Math.round(overallProgress)}%
-                                </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.8rem', sm: '0.85rem', md: '1rem' }, color: 'rgba(245,237,224,0.7)', fontWeight: 500 }}>Overall Progress</Typography>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.8rem', sm: '0.85rem', md: '1rem' }, color: '#d4a843', fontWeight: 600 }}>{themesLoading ? '—' : `${overallProgress}%`}</Typography>
                             </Box>
                             <LinearProgress
-                                variant="determinate"
-                                value={overallProgress}
-                                sx={{
-                                    height: 8,
-                                    borderRadius: 4,
-                                    backgroundColor: 'rgba(255,255,255,0.1)',
-                                    '& .MuiLinearProgress-bar': {
-                                        background: 'linear-gradient(90deg, var(--gold) 0%, var(--gold-lt) 100%)',
-                                        borderRadius: 4,
-                                    },
-                                }}
+                                variant={themesLoading ? 'indeterminate' : 'determinate'} value={overallProgress}
+                                sx={{ height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.1)', '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, #b8860b 0%, #d4a843 100%)', borderRadius: 4 } }}
                             />
                         </Box>
-
-                        <Typography sx={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1.1rem' },
-                            color: 'rgba(245,237,224,0.55)',
-                            lineHeight: 1.7,
-                            maxWidth: 500,
-                        }}>
-                            {filteredVocab.length} words across {THEMES.length} themes
+                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.85rem', sm: '0.9rem', md: '1.1rem' }, color: 'rgba(245,237,224,0.55)', lineHeight: 1.7, maxWidth: 500 }}>
+                            {themesLoading ? '…' : `${themes.reduce((s, t) => s + t.total_words, 0)} words across ${themes.length} themes`}
                         </Typography>
                     </Container>
                 </Box>
 
-                <Container maxWidth="xl" sx={{ py: { xs: 3, sm: 4, md: 6 } }}>
-
+                <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 4, md: 6 }, pt: { xs: selectedTheme ? 10 : 4, sm: 4, md: 6 } }}>
                     {selectedTheme ? (
-                        /* ── Flashcard Quiz View ── */
                         <Box>
+                            {/* ── Desktop header ── */}
                             <Box sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                flexWrap: 'wrap',
-                                gap: 2,
-                                mb: { xs: 2, sm: 3, md: 4 },
+                                display: { xs: 'none', sm: 'flex' },
+                                alignItems: 'center', justifyContent: 'space-between',
+                                flexWrap: 'wrap', gap: 2, mb: { sm: 3, md: 4 },
                             }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
                                     <Button
-                                        variant="outlined"
-                                        size="small"
-                                        startIcon={<ArrowBackSharp sx={{ fontSize: { xs: 16, md: 20 } }} />}
+                                        variant="outlined" size="small"
+                                        startIcon={<ArrowBackSharp sx={{ fontSize: { sm: 14, md: 18 } }} />}
                                         onClick={handleBackToThemes}
                                         sx={{
-                                            borderColor: 'rgba(184,134,11,0.3)',
-                                            color: 'var(--bark)',
-                                            fontFamily: 'Jost, sans-serif',
-                                            fontWeight: 500,
-                                            fontSize: { xs: '0.72rem', sm: '0.78rem', md: '0.9rem' },
-                                            textTransform: 'none',
-                                            borderRadius: '6px',
-                                            px: { xs: 1.5, md: 2 },
-                                            '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: 'var(--gold)' },
+                                            borderColor: 'rgba(184,134,11,0.3)', color: '#2c1a0e',
+                                            fontFamily: 'Jost, sans-serif', fontWeight: 500,
+                                            fontSize: { sm: '0.78rem', md: '0.85rem' },
+                                            textTransform: 'none', borderRadius: '6px',
+                                            px: { sm: 1.5, md: 2 }, flexShrink: 0,
+                                            '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: '#b8860b' },
                                         }}
-                                    >
-                                        Themes
-                                    </Button>
-                                    <Typography sx={{
-                                        fontFamily: '"EB Garamond", serif',
-                                        fontSize: { xs: '1.2rem', sm: '1.5rem', md: '2rem' },
-                                        fontWeight: 700,
-                                        color: 'var(--bark)',
-                                    }}>
-                                        {selectedTheme}
+                                    >Themes</Button>
+                                    <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { sm: '1.5rem', md: '2rem' }, fontWeight: 700, color: '#2c1a0e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {selectedTheme.display_name}
                                     </Typography>
                                 </Box>
-
-                                <Button
-                                    variant="outlined"
-                                    size="small"
-                                    startIcon={showDiacritics ? <VisibilityOffSharp sx={{ fontSize: { xs: 16, md: 20 } }} /> : <VisibilitySharp sx={{ fontSize: { xs: 16, md: 20 } }} />}
-                                    onClick={() => setShowDiacritics(p => !p)}
-                                    sx={{
-                                        borderColor: 'rgba(184,134,11,0.3)',
-                                        color: showDiacritics ? 'var(--gold)' : 'var(--muted)',
-                                        fontFamily: 'Jost, sans-serif',
-                                        fontWeight: 500,
-                                        fontSize: { xs: '0.72rem', sm: '0.78rem', md: '0.95rem' },
-                                        textTransform: 'none',
-                                        borderRadius: '6px',
-                                        px: { xs: 1.5, md: 2 },
-                                        py: { md: 0.5 },
-                                        '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: 'var(--gold)' },
-                                    }}
-                                >
-                                    {showDiacritics ? 'Hide diacritics' : 'Show diacritics'}
-                                </Button>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
+                                    <PillToggle enabled={alwaysShow} onToggle={() => setAlwaysShow(p => !p)} label="Always show card" activeColor="#0e2e1f" />
+                                    <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics(p => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
+                                </Box>
                             </Box>
 
-                            {isLoading ? (
-                                <Box className="fc-shell" sx={{ gap: 2 }}>
-                                    <Box className="fc-skeleton" sx={{ height: 2, width: '100%', mb: 2 }} />
-                                    <Box className="fc-skeleton" sx={{ height: 20, width: 80, mx: 'auto' }} />
-                                    <Box className="fc-skeleton" sx={{ height: 88, width: '55%', mx: 'auto', mt: 1 }} />
-                                    <Box className="fc-skeleton" sx={{ height: 32, width: '30%', mx: 'auto' }} />
-                                    <Box className="fc-skeleton" sx={{ height: 44, width: '100%', mt: 'auto' }} />
+                            {/* ── Mobile header ── */}
+                            <Box sx={{
+                                display: { xs: 'flex', sm: 'none' },
+                                flexDirection: 'column', alignItems: 'center', gap: 1.25, mb: 2,
+                            }}>
+                                {/* Theme name centered */}
+                                <Typography sx={{
+                                    fontFamily: "'EB Garamond', serif", fontSize: '1.3rem',
+                                    fontWeight: 700, color: '#2c1a0e', textAlign: 'center',
+                                }}>
+                                    {selectedTheme.display_name}
+                                </Typography>
+
+                                {/* Back to Themes + Settings icon, centered */}
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                                    <Button
+                                        variant="outlined" size="small"
+                                        startIcon={<ArrowBackSharp sx={{ fontSize: 13 }} />}
+                                        onClick={handleBackToThemes}
+                                        sx={{
+                                            borderColor: 'rgba(184,134,11,0.3)', color: '#2c1a0e',
+                                            fontFamily: 'Jost, sans-serif', fontWeight: 500,
+                                            fontSize: '0.72rem', textTransform: 'none',
+                                            borderRadius: '20px', px: 1.5, py: '4px',
+                                            '&:hover': { background: 'rgba(184,134,11,0.05)', borderColor: '#b8860b' },
+                                        }}
+                                    >Back to Themes</Button>
+
+                                    <IconButton
+                                        onClick={() => setSettingsOpen(true)} size="small"
+                                        sx={{
+                                            width: 30, height: 30,
+                                            border: '1px solid rgba(122,110,101,0.3)', borderRadius: '50%',
+                                            color: '#7a6e65',
+                                            '&:hover': { background: 'rgba(122,110,101,0.08)', borderColor: 'rgba(122,110,101,0.5)' },
+                                        }}
+                                    >
+                                        <Settings sx={{ fontSize: '0.9rem' }} />
+                                    </IconButton>
                                 </Box>
-                            ) : activeWords.length === 0 ? (
-                                <Box className="fc-shell" sx={{ alignItems: 'center', justifyContent: 'center' }}>
-                                    <Typography sx={{
-                                        fontFamily: 'Jost, sans-serif',
-                                        color: 'var(--muted)',
-                                        fontSize: { xs: '0.85rem', sm: '0.9rem', md: '1.1rem' }
-                                    }}>
-                                        No words found for this theme.
-                                    </Typography>
+                            </Box>
+
+                            {/* Quiz / loading skeleton */}
+                            {isLoadingVocab ? (
+                                <Box sx={{
+                                    background: '#fff', border: '1px solid rgba(184,134,11,0.2)',
+                                    borderRadius: '10px', padding: { xs: '1.5rem 1rem', md: '2rem 1.5rem 1.75rem' },
+                                    minHeight: { xs: '280px', md: '320px' }, display: 'flex', flexDirection: 'column', gap: 2,
+                                }}>
+                                    <Skeleton variant="rounded" height={2} sx={{ mb: 2 }} />
+                                    <Skeleton variant="text" width={80} sx={{ mx: 'auto' }} />
+                                    <Skeleton variant="rounded" height={88} width="55%" sx={{ mx: 'auto', mt: 1 }} />
+                                    <Skeleton variant="rounded" height={32} width="30%" sx={{ mx: 'auto' }} />
+                                    <Skeleton variant="rounded" height={44} width="100%" sx={{ mt: 'auto' }} />
                                 </Box>
                             ) : (
                                 <FlashcardQuiz
                                     key={quizKey}
-                                    words={activeWords}
+                                    initialQueue={activeQueue}
+                                    themeId={selectedTheme.theme_id}
                                     showDiacritics={showDiacritics}
+                                    alwaysShow={alwaysShow}
                                     onComplete={handleBackToThemes}
-                                    themeLabel={selectedTheme}
+                                    themeLabel={selectedTheme.display_name}
+                                    totalInTheme={selectedTheme.total_words}
+                                    alreadyCompletedCount={selectedTheme.completed_count}
                                 />
                             )}
                         </Box>
                     ) : (
-                        /* ── Theme Grid View ── */
                         <Box>
-                            <Typography sx={{
-                                fontFamily: '"EB Garamond", serif',
-                                fontSize: { xs: '1.3rem', sm: '1.6rem', md: '2rem' },
-                                fontWeight: 700,
-                                color: 'var(--bark)',
-                                mb: { xs: 2, sm: 3, md: 4 },
-                            }}>
+                            <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { xs: '1.3rem', sm: '1.6rem', md: '2rem' }, fontWeight: 700, color: '#2c1a0e', mb: { xs: 2, sm: 3, md: 4 } }}>
                                 Select a Theme
                             </Typography>
-
-                            <Box sx={{
-                                display: 'grid',
-                                gridTemplateColumns: {
-                                    xs: '1fr',
-                                    sm: 'repeat(2, 1fr)',
-                                    md: 'repeat(3, 1fr)',
-                                    lg: 'repeat(3, 1fr)',
-                                    xl: 'repeat(4, 1fr)',
-                                },
-                                gap: { xs: 2, sm: 3, md: 4 },
-                                placeItems: 'center',
-                                width: '100%',
-                            }}>
-                                {THEMES.map((theme) => (
-                                    <ThemeCard
-                                        key={theme}
-                                        theme={theme}
-                                        wordCount={themeWords[theme]?.length ?? 0}
-                                        progress={themeProgress[theme] ?? 0}
-                                        isActive={selectedTheme === theme}
-                                        onClick={() => handleThemeSelect(theme)}
-                                    />
-                                ))}
-                            </Box>
+                            {themesLoading ? (
+                                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,1fr)', md: 'repeat(3,1fr)', xl: 'repeat(4,1fr)' }, gap: { xs: 2, sm: 3, md: 4 }, placeItems: 'center' }}>
+                                    {[...Array(6)].map((_, i) => (
+                                        <Box key={i} sx={{ width: '100%', maxWidth: 345, height: 280, borderRadius: '8px', overflow: 'hidden' }}>
+                                            <Skeleton variant="rounded" height={140} width="100%" />
+                                            <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                                                <Skeleton variant="text" width="70%" height={22} />
+                                                <Skeleton variant="text" width="40%" height={14} />
+                                                <Skeleton variant="rounded" height={6} width="100%" sx={{ borderRadius: 3, mt: 1 }} />
+                                            </Box>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            ) : (
+                                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,1fr)', md: 'repeat(3,1fr)', xl: 'repeat(4,1fr)' }, gap: { xs: 2, sm: 3, md: 4 }, placeItems: 'center', width: '100%' }}>
+                                    {validThemes.map((theme) => (
+                                        <ThemeCard
+                                            key={theme.theme_id} theme={theme}
+                                            isActive={selectedTheme?.theme_id === theme.theme_id}
+                                            onClick={() => handleThemeSelect(theme)}
+                                        />
+                                    ))}
+                                </Box>
+                            )}
                         </Box>
                     )}
-
                 </Container>
             </Box>
         </>
     )
-}
-
-const THEMES = [
-    'Basics & Greetings',
-    'Colours',
-    'Numbers & Time',
-    'Food & Drink',
-    'People & Family',
-    'Places & Home',
-    'Travel & Nature',
-    'Adjectives & Feelings',
-    'Actions (Verbs)',
-] as const
-
-const LEVEL_MAP: Record<string, string[]> = {
-    beginner: ['A0'],
-    elementary: ['A1'],
-    intermediate: ['A2'],
-    'upper-intermediate': ['B1'],
-}
-
-const SLUG_LABELS: Record<string, string> = {
-    beginner: 'Beginner',
-    elementary: 'Elementary',
-    intermediate: 'Intermediate',
-    'upper-intermediate': 'Upper Intermediate',
 }
