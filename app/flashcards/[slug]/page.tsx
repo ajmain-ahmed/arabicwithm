@@ -191,10 +191,16 @@ function SettingsDialog({
         <Dialog
             open={open}
             onClose={onClose}
-            PaperProps={{
-                sx: {
-                    borderRadius: '16px', width: '100%', maxWidth: 340, m: 2,
-                    overflow: 'hidden', boxShadow: '0 24px 64px rgba(44,26,14,0.2)',
+            slotProps={{
+                paper: {
+                    sx: {
+                        borderRadius: '16px',
+                        width: '100%',
+                        maxWidth: 340,
+                        m: 2,
+                        overflow: 'hidden',
+                        boxShadow: '0 24px 64px rgba(44,26,14,0.2)',
+                    },
                 },
             }}
         >
@@ -755,9 +761,9 @@ export default function FlashcardSlugPage() {
     const fetchTheme = useVocabStore(s => s.fetchTheme)
     const loadingThemeId = useVocabStore(s => s.loadingThemeId)
 
-    const [themes, setThemes] = useState<ThemeProgress[]>([])
+    const [themes, setThemes] = useState<any[]>([])
     const [themesLoading, setThemesLoading] = useState(true)
-    const [selectedTheme, setSelectedTheme] = useState<ThemeProgress | null>(null)
+    const [selectedTheme, setSelectedTheme] = useState<any>(null)
     const [activeQueue, setActiveQueue] = useState<CardState[]>([])
     const [showDiacritics, setShowDiacritics] = useState(true)
     const [alwaysShow, setAlwaysShow] = useState(false)
@@ -801,7 +807,9 @@ export default function FlashcardSlugPage() {
     }, [themes])
 
     const isLoadingVocab = selectedTheme != null && loadingThemeId === selectedTheme.theme_id
-    const validThemes = themes.filter(t => t.theme_id != null && !Number.isNaN(t.theme_id))
+    const validThemes = themes.filter((t): t is ThemeProgress =>
+        t.theme_id != null && !Number.isNaN(t.theme_id)
+    )
 
     return (
         <>
@@ -973,7 +981,7 @@ export default function FlashcardSlugPage() {
                                 </Box>
                             ) : (
                                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,1fr)', md: 'repeat(3,1fr)', xl: 'repeat(4,1fr)' }, gap: { xs: 2, sm: 3, md: 4 }, placeItems: 'center', width: '100%' }}>
-                                    {validThemes.map((theme) => (
+                                    {validThemes.map((theme: ThemeProgress) => (
                                         <ThemeCard
                                             key={theme.theme_id} theme={theme}
                                             isActive={selectedTheme?.theme_id === theme.theme_id}

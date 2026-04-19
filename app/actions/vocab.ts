@@ -56,7 +56,7 @@ export type Theme = {
 }
 
 export type ThemeProgress = {
-  theme_id: number           // keep as theme_id for existing usage
+  theme_id: number          
   display_name: string
   total_words: number
   completed_count: number
