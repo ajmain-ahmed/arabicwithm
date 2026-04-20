@@ -5,7 +5,6 @@ import { Box, Typography, Paper } from '@mui/material'
 import { PlayCircleOutlineSharp } from '@mui/icons-material'
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined'
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined'
-import { motion } from 'framer-motion'
 
 const FEATURES = [
   {
@@ -25,13 +24,6 @@ const FEATURES = [
   },
 ]
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 20 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: '-60px' },
-  transition: { duration: 0.6, delay },
-})
-
 const WORKSHEET_SHEETS = [
   { src: '/worksheets/transcript-1.avif', alt: 'Transcript worksheet', left: '2%', rotate: '-10deg', zIndex: 1 },
   { src: '/worksheets/worksheet-2.avif', alt: 'Comprehension worksheet', left: '12%', rotate: '0deg', zIndex: 2 },
@@ -43,8 +35,8 @@ function WorksheetFan() {
     <Box
       sx={{
         position: 'relative',
-        width: { xs: 320, sm: 380, md: 440, lg: 500 },
-        height: { xs: 320, sm: 380, md: 440, lg: 500 },
+        width: { xs: 360, sm: 400, md: 440, lg: 500 },
+        height: { xs: 360, sm: 400, md: 440, lg: 500 },
         flexShrink: 0,
       }}
     >
@@ -81,7 +73,7 @@ function VideoEmbed() {
     <Box
       sx={{
         width: '100%',
-        maxWidth: { xs: 280, sm: 320, md: 300, lg: 340 },
+        maxWidth: { xs: 360, sm: 360, md: 300, lg: 340 },
         borderRadius: '16px',
         overflow: 'hidden',
         boxShadow: '0 24px 64px rgba(44,26,14,0.2)',
@@ -156,14 +148,14 @@ function FeatureCard() {
 function SheetsWithCard({ cardSx }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', position: 'relative' }}>
-      <motion.div {...fadeUp(0.1)} style={{ position: 'relative', zIndex: 1 }}>
+      <Box sx={{ position: 'relative', zIndex: 1 }}>
         <WorksheetFan />
-      </motion.div>
-      <motion.div {...fadeUp(0.25)} style={{ position: 'relative', zIndex: 10, width: '100%', display: 'flex', justifyContent: 'center' }}>
+      </Box>
+      <Box sx={{ position: 'relative', zIndex: 10, width: '100%', display: 'flex', justifyContent: 'center' }}>
         <Box sx={cardSx}>
           <FeatureCard />
         </Box>
-      </motion.div>
+      </Box>
     </Box>
   )
 }
@@ -179,7 +171,7 @@ export default function CartoonSection() {
       }}
     >
       {/* Header */}
-      <motion.div {...fadeUp()}>
+      <Box>
         <Typography
           component="h2"
           sx={{
@@ -211,7 +203,7 @@ export default function CartoonSection() {
           Watch subtitled animations, then test yourself with printable worksheets
           and interactive quizzes, graded to your CEFR level.
         </Typography>
-      </motion.div>
+      </Box>
 
       {/* Mobile layout */}
       <Box
@@ -222,12 +214,12 @@ export default function CartoonSection() {
           width: '100%',
         }}
       >
-        <SheetsWithCard cardSx={{ mt: { xs: '-180px', sm: '-200px' }, width: '100%', maxWidth: 400, px: 2 }} />
-        <motion.div {...fadeUp(0.3)} style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <SheetsWithCard cardSx={{ mt: { xs: '-180px', sm: '-200px' }, width: '100%', maxWidth: 460, px: 2 }} />
+        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
           <Box sx={{ mt: 5, width: '100%', display: 'flex', justifyContent: 'center' }}>
             <VideoEmbed />
           </Box>
-        </motion.div>
+        </Box>
       </Box>
 
       {/* Desktop layout */}
@@ -243,15 +235,9 @@ export default function CartoonSection() {
           mx: 'auto',
         }}
       >
-        <motion.div
-          initial={{ opacity: 0, x: -40 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.7 }}
-          style={{ display: 'flex', justifyContent: 'center', width: '100%' }}
-        >
+        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
           <VideoEmbed />
-        </motion.div>
+        </Box>
         <SheetsWithCard cardSx={{ mt: { md: '-260px', lg: '-280px' }, width: '100%', maxWidth: { md: 420, lg: 460 } }} />
       </Box>
     </Box>
