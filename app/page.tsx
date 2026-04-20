@@ -1,11 +1,12 @@
 'use client'
 
-import { ArrowForwardSharp } from "@mui/icons-material";
+import { ArrowForwardSharp, ArticleOutlined, PlayCircleFilledSharp, QuizOutlined } from "@mui/icons-material";
 import { Box, Button, Typography } from "@mui/material";
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useEffect } from "react";
 import Navbar from "./components/navbar";
+import CartoonSection from "./components/CartoonSection";
 
 /* ─────────────────────────────────────────────
    Global CSS — system fonts only
@@ -53,9 +54,9 @@ export default function HomePage() {
   }, []);
 
   const textVariants = {
-    initial: { opacity: 0, y: 16,  filter: 'blur(8px)' },
-    animate: { opacity: 1, y: 0,   filter: 'blur(0px)' },
-    exit:    { opacity: 0, y: -16, filter: 'blur(8px)' },
+    initial: { opacity: 0, y: 16, filter: 'blur(8px)' },
+    animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
+    exit: { opacity: 0, y: -16, filter: 'blur(8px)' },
   };
 
   return (
@@ -268,7 +269,7 @@ export default function HomePage() {
           </Box>
         </Box>
 
-        {/* Page content below hero… */}
+        <CartoonSection />
 
       </Box>
     </>

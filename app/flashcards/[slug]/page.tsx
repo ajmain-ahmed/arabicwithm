@@ -1274,7 +1274,7 @@ function ThemeCard({ theme, isActive, onClick }: {
             '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 8px 30px rgba(44,26,14,0.08)' },
         }}>
             <CardActionArea onClick={onClick}>
-                <CardMedia component="img" height="140" image="/awm1.png" alt={theme.display_name} sx={{ objectFit: 'cover', borderBottom: '1px solid rgba(184,134,11,0.1)' }} />
+                <CardMedia component="img" image="/awm1.png" alt={theme.display_name} sx={{ objectFit: 'cover', borderBottom: '1px solid rgba(184,134,11,0.1)' }} />
                 <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
                     <Typography gutterBottom sx={{ fontFamily: "'EB Garamond', serif", fontSize: { xs: '1.2rem', sm: '1.35rem', md: '1.5rem' }, fontWeight: 700, color: '#2c1a0e', lineHeight: 1.2 }}>
                         {theme.display_name}
@@ -1365,7 +1365,7 @@ export default function FlashcardSlugPage() {
             <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh' }}>
                 <Box sx={{ display: { xs: selectedTheme ? 'none' : 'block', sm: 'block' }, background: 'linear-gradient(135deg, #0e2e1f 0%, #071a0f 100%)', pt: { xs: 10, sm: 12, md: 12 }, pb: { xs: 3, sm: 4, md: 4 }, position: 'relative', overflow: 'hidden' }}>
                     <Typography aria-hidden="true" sx={{ position: 'absolute', top: -30, right: -10, fontFamily: "'EB Garamond', serif", fontStyle: 'italic', fontSize: { xs: '6.5rem', sm: '11rem', md: '15rem' }, color: 'rgba(255,255,255,0.03)', userSelect: 'none', lineHeight: 1 }}>أ</Typography>
-                    <Container maxWidth="lg">
+                    <Container maxWidth="xl">
                         <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { xs: '2rem', sm: '2.6rem', md: '3.8rem' }, fontWeight: 700, color: '#f5ede0', lineHeight: 1.1, mb: 2 }}>{label}</Typography>
                         <Box sx={{ width: '100%', maxWidth: { xs: '100%', sm: 400 }, mb: 2 }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
@@ -1378,7 +1378,7 @@ export default function FlashcardSlugPage() {
                     </Container>
                 </Box>
 
-                <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 4, md: 6 }, pt: { xs: selectedTheme ? 10 : 4, sm: 4, md: 6 } }}>
+                <Container maxWidth="xl" sx={{ py: { xs: 3, sm: 4, md: 6 }, pt: { xs: selectedTheme ? 10 : 4, sm: 4, md: 6 } }}>
                     {selectedTheme ? (
                         <Box>
                             <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: { sm: 3, md: 4 } }}>
