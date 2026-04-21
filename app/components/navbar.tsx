@@ -36,7 +36,7 @@ const MEGA_MENU_ITEMS = [
     {
         header: 'Study',
         icon: <School sx={{ fontSize: 20, color: 'var(--forest)' }} />,
-        items: ['Beginner', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'Revision']
+        items: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'Revision']
     },
     {
         header: 'Cartoons',
@@ -57,7 +57,6 @@ const MEGA_MENU_ITEMS = [
 
 // ─── Study level → slug mapping ───────────────────────────────────────────────
 const STUDY_LEVEL_MAP: Record<string, string> = {
-    'Beginner': 'Beginner',
     'A1': 'Apprentice',
     'A2': 'Competent',
     'B1': 'Proficient',

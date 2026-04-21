@@ -46,7 +46,6 @@ import {
    DB expects:   A0,       A1,         A2,           B1,                 B2, C1, C2
 ───────────────────────────────────────────── */
 const SLUG_TO_LEVEL: Record<string, string> = {
-    Beginner: 'A0',
     Apprentice: 'A1',
     Competent: 'A2',
     Proficient: 'B1',
@@ -56,7 +55,6 @@ const SLUG_TO_LEVEL: Record<string, string> = {
 }
 
 const SLUG_LABELS: Record<string, string> = {
-    Beginner: 'Beginner',
     Apprentice: 'Apprentice | A1',
     Competent: 'Competent | A2',
     Proficient: 'Proficient | B1',
@@ -1099,8 +1097,12 @@ export default function FlashcardSlugPage() {
                                     </Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
-                                    <PillToggle enabled={alwaysShow} onToggle={() => setAlwaysShow(p => !p)} label="Always show card" activeColor="#0e2e1f" />
-                                    <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics(p => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
+                                    <Box sx={{ minWidth: 170 }}>
+                                        <PillToggle enabled={alwaysShow} onToggle={() => setAlwaysShow(p => !p)} label="Always show card" activeColor="#0e2e1f" />
+                                    </Box>
+                                    <Box sx={{ minWidth: 170 }}>
+                                        <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics(p => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
+                                    </Box>
                                 </Box>
                             </Box>
 
