@@ -125,6 +125,7 @@ export async function fetchThemesWithProgress(level: string): Promise<ThemeProgr
         .from("vocab")
         .select("id", { count: "exact", head: true })
         .eq("theme_id", t.id)
+        .eq("level", level)
 
       return {
         theme_id: Number(t.id),
