@@ -55,6 +55,17 @@ const MEGA_MENU_ITEMS = [
     }
 ];
 
+// ─── Study level → slug mapping ───────────────────────────────────────────────
+const STUDY_LEVEL_MAP: Record<string, string> = {
+    'Beginner': 'Beginner',
+    'A1': 'Apprentice',
+    'A2': 'Competent',
+    'B1': 'Proficient',
+    'B2': 'Highly-Proficient',
+    'C1': 'Expert',
+    'C2': 'Native',
+};
+
 // ─── styles ───────────────────────────────────────────────────────────────────
 const NAV_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Cookie&family=EB+Garamond:ital,wght@0,700;1,700&family=Jost:wght@300;400;500;600&display=swap');
@@ -243,15 +254,15 @@ export default function Navbar() {
 
     const DropdownContent = ({ section, isMobile = false }: { section: typeof MEGA_MENU_ITEMS[0], isMobile?: boolean }) => {
         const handleItemClick = (item: string) => {
-            const key = item.toLowerCase().replace(/\s+/g, '-');
-            // Special case: "Revision" under Study goes to /revision
             if (section.header === 'Study' && item === 'Revision') {
                 router.push('/revision');
+            } else if (section.header === 'Study') {
+                // Use the STUDY_LEVEL_MAP to get the correct slug
+                const slug = STUDY_LEVEL_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-');
+                router.push(`/flashcards/${slug}`);
             } else {
-                const href = section.header === 'Study'
-                    ? `/flashcards/${key}`
-                    : `/learn/${section.header.toLowerCase()}/${key}`;
-                router.push(href);
+                const key = item.toLowerCase().replace(/\s+/g, '-');
+                router.push(`/learn/${section.header.toLowerCase()}/${key}`);
             }
             setLearnMenuOpen(false);
             setDrawerOpen(false);
@@ -343,7 +354,6 @@ export default function Navbar() {
                 </Typography>
             </Box>
             <Box sx={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(184,134,11,0.3), transparent)' }} />
-            {/* ─── Revision Link (Desktop) ─── */}
             <MenuItem
                 onClick={() => { setUserMenuAnchor(null); router.push('/revision'); }}
                 sx={{ py: 1.2, gap: 1.5, '&:hover': { background: 'rgba(184,134,11,0.06)' } }}
@@ -375,7 +385,7 @@ export default function Navbar() {
         </Menu>
     );
 
-    // ── Mobile Drawer (unchanged, still has separate accordions) ────────────────
+    // ── Mobile Drawer ──────────────────────────────────────────────────────────
     const renderMobileDrawer = () => (
         <Drawer
             open={drawerOpen}
@@ -390,7 +400,6 @@ export default function Navbar() {
                 }
             }}
         >
-            {/* Header */}
             {isLoggedIn ? (
                 <Box sx={{
                     px: 3, py: 3,
@@ -564,7 +573,6 @@ export default function Navbar() {
                             </ListItemButton>
                         </ListItem>
 
-                        {/* ─── Revision Link (Mobile) ─── */}
                         <ListItem disablePadding>
                             <ListItemButton className="mobile-list-btn"
                                 onClick={() => { router.push('/revision'); setDrawerOpen(false); }}

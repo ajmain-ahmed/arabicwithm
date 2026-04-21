@@ -55,8 +55,14 @@ export type Theme = {
   slug: string
 }
 
+export type Example = {
+  ar: string;   // Arabic sentence
+  di: string;   // Diacritic version
+  en: string;   // English translation
+}
+
 export type ThemeProgress = {
-  theme_id: number          
+  theme_id: number
   display_name: string
   total_words: number
   completed_count: number
@@ -72,9 +78,7 @@ export type VocabRow = {
   level: string
   type: string
   root: string | null
-  ex_ar: string | null
-  ex_di: string | null
-  ex_en: string | null
+  ex: Example[] | null   // JSONB column, parsed to array of objects
   theme_id: number
 }
 
