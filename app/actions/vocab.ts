@@ -55,10 +55,14 @@ export type Theme = {
   slug: string
 }
 
-export type Example = {
-  ar: string;   // Arabic sentence
-  di: string;   // Diacritic version
-  en: string;   // English translation
+export type ExampleRow = {
+  id: number           // vocab word id (foreign key)
+  ex_ar: string
+  ex_di: string
+  ex_en: string
+  ex_tr: string         // transliteration of the example sentence
+  difficulty: number
+  interactive: boolean
 }
 
 export type ThemeProgress = {
@@ -78,7 +82,6 @@ export type VocabRow = {
   level: string
   type: string
   root: string | null
-  ex: Example[] | null   // JSONB column, parsed to array of objects
   theme_id: number
 }
 
@@ -102,7 +105,7 @@ export async function fetchThemesWithProgress(level: string): Promise<ThemeProgr
     if (error) throw new Error(error.message)
 
     return (data ?? []).map((row: any) => ({
-      theme_id: Number(row.id),          // RPC returns 'id', map to 'theme_id'
+      theme_id: Number(row.id),
       display_name: row.display_name,
       total_words: Number(row.total_words ?? 0),
       completed_count: Number(row.completed_count ?? 0),
@@ -150,7 +153,7 @@ export async function fetchThemeVocabWithProgress(themeId: number): Promise<{
 
   const { data: vocab, error: vocabError } = await serviceClient
     .from("vocab")
-    .select("*")
+    .select("id, word, word_diacritic, transliteration, definition, level, type, root, theme_id")
     .eq("theme_id", themeId)
     .order("id")
 
@@ -163,7 +166,6 @@ export async function fetchThemeVocabWithProgress(themeId: number): Promise<{
   const wordIds = (vocab ?? []).map((v) => v.id)
   if (wordIds.length === 0) return { vocab: [], progress: [] }
 
-  // Progress now only has user_id and word_id (theme_id removed)
   const { data: progressData, error: progressError } = await serviceClient
     .from("progress")
     .select("word_id, is_completed, is_in_revision")
@@ -176,6 +178,22 @@ export async function fetchThemeVocabWithProgress(themeId: number): Promise<{
     vocab: vocab ?? [],
     progress: (progressData ?? []) as WordProgress[],
   }
+}
+
+// ─── fetchExamplesForTheme ────────────────────────────────────────────────────
+
+export async function fetchExamplesForTheme(wordIds: number[]): Promise<ExampleRow[]> {
+  if (wordIds.length === 0) return []
+
+  const { data, error } = await serviceClient
+    .from("examples")
+    .select("id, ex_ar, ex_di, ex_en, ex_tr, difficulty, interactive")  // ← added ex_tr
+    .in("id", wordIds)
+    .order("id")
+    .order("difficulty")
+
+  if (error) throw new Error(error.message)
+  return (data ?? []) as ExampleRow[]
 }
 
 // ─── upsertWordProgress ───────────────────────────────────────────────────────
@@ -200,7 +218,7 @@ export async function upsertWordProgress({
       is_in_revision: isInRevision,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "user_id,word_id" }   // adjust if composite PK exists
+    { onConflict: "user_id,word_id" }
   )
 
   if (error) throw new Error(error.message)

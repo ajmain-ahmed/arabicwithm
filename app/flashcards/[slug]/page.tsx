@@ -9,6 +9,8 @@ import {
     Card, CardContent, CardMedia, CardActionArea, LinearProgress, Skeleton,
     IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
     ToggleButton, ToggleButtonGroup, useMediaQuery,
+    Badge,
+    Slider,
 } from '@mui/material'
 import {
     ArrowBackSharp,
@@ -34,7 +36,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import Navbar from '@/app/components/navbar'
 import { useVocabStore } from '@/store/vocabStore'
-import type { VocabRow, WordProgress, ThemeProgress } from '@/app/actions/vocab'
+import type { VocabRow, WordProgress, ThemeProgress, ExampleRow } from '@/app/actions/vocab'
 import {
     fetchThemesWithProgress,
     upsertWordProgress,
@@ -42,8 +44,6 @@ import {
 
 /* ─────────────────────────────────────────────
    Slug → DB level mapping
-   Navbar sends: beginner, elementary, intermediate, upper-intermediate, b2, c1, c2
-   DB expects:   A0,       A1,         A2,           B1,                 B2, C1, C2
 ───────────────────────────────────────────── */
 const SLUG_TO_LEVEL: Record<string, string> = {
     Apprentice: 'A1',
@@ -75,17 +75,6 @@ type CardState = VocabRow & {
     isInRevision: boolean
 }
 
-type ExampleItem = { arabic: string; diacritic: string; english: string }
-
-function parseExamples(card: VocabRow): ExampleItem[] {
-    if (!card.ex || !Array.isArray(card.ex)) return []
-    return card.ex.map(ex => ({
-        arabic: ex.ar,
-        diacritic: ex.di,
-        english: ex.en,
-    }))
-}
-
 function buildQueue(vocab: VocabRow[], progress: WordProgress[]): CardState[] {
     const progressMap = new Map(progress.map(p => [p.word_id, p]))
     const cards: CardState[] = []
@@ -95,11 +84,8 @@ function buildQueue(vocab: VocabRow[], progress: WordProgress[]): CardState[] {
         const isInRevision = p?.is_in_revision ?? false
 
         let status: CardStatus = 'new'
-        if (isCompleted) {
-            status = 'completed'
-        } else if (isInRevision) {
-            status = 'revision'
-        }
+        if (isCompleted) status = 'completed'
+        else if (isInRevision) status = 'revision'
 
         cards.push({ ...v, status, isCompleted, isInRevision })
     }
@@ -154,16 +140,67 @@ function PillToggle({
 }
 
 /* ─────────────────────────────────────────────
+   Desktop Text Scale Slider (inline, no dialog)
+───────────────────────────────────────────── */
+function DesktopTextScaleSlider({ textScale, onChange }: { textScale: number; onChange: (v: number) => void }) {
+    return (
+        <Box
+            sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                px: 1.5,
+                py: 0.5,
+                borderRadius: '999px',
+                border: '1px solid rgba(122,110,101,0.2)',
+                background: 'rgba(122,110,101,0.02)',
+                minWidth: 160,
+            }}
+        >
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: '#7a6e65', flexShrink: 0 }}>
+                A
+            </Typography>
+            <Slider
+                value={textScale}
+                min={0.8}
+                max={1.4}
+                step={0.1}
+                size="small"
+                onChange={(_, v) => onChange(v as number)}
+                sx={{
+                    color: '#b8860b',
+                    flex: 1,
+                    '& .MuiSlider-thumb': { width: 14, height: 14 },
+                }}
+            />
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>
+                A
+            </Typography>
+        </Box>
+    )
+}
+
+/* ─────────────────────────────────────────────
    SettingsDialog (mobile only)
 ───────────────────────────────────────────── */
 function SettingsDialog({
-    open, onClose,
-    showDiacritics, onToggleDiacritics,
-    alwaysShow, onToggleAlwaysShow,
+    open,
+    onClose,
+    showDiacritics,
+    onToggleDiacritics,
+    alwaysShow,
+    onToggleAlwaysShow,
+    textScale,
+    onTextScaleChange,
 }: {
-    open: boolean; onClose: () => void
-    showDiacritics: boolean; onToggleDiacritics: () => void
-    alwaysShow: boolean; onToggleAlwaysShow: () => void
+    open: boolean
+    onClose: () => void
+    showDiacritics: boolean
+    onToggleDiacritics: () => void
+    alwaysShow: boolean
+    onToggleAlwaysShow: () => void
+    textScale: number
+    onTextScaleChange: (v: number) => void
 }) {
     const ToggleRow = ({
         label, description, enabled, onToggle, activeColor,
@@ -215,7 +252,7 @@ function SettingsDialog({
                     sx: {
                         borderRadius: '16px',
                         width: '100%',
-                        maxWidth: 340,
+                        maxWidth: 360,
                         m: 2,
                         overflow: 'hidden',
                         boxShadow: '0 24px 64px rgba(44,26,14,0.2)',
@@ -250,6 +287,95 @@ function SettingsDialog({
                         onToggle={onToggleAlwaysShow}
                         activeColor="#0e2e1f"
                     />
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            py: 1.25,
+                            px: 1.5,
+                            borderRadius: '10px',
+                            border: '1px solid rgba(122,110,101,0.15)',
+                            background: 'rgba(122,110,101,0.03)',
+                            gap: 2,
+                        }}
+                    >
+                        <Box sx={{ pr: 2, flex: '0 0 auto' }}>
+                            <Typography
+                                sx={{
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontSize: '0.95rem',
+                                    fontWeight: 600,
+                                    color: '#2c1a0e',
+                                }}
+                            >
+                                Text Size
+                            </Typography>
+                            <Typography
+                                sx={{
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontSize: '0.78rem',
+                                    color: '#7a6e65',
+                                    mt: 0.3,
+                                }}
+                            >
+                                Adjust flashcard content size
+                            </Typography>
+                        </Box>
+
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                flex: 1,
+                                minWidth: 0,
+                            }}
+                        >
+                            <Typography
+                                sx={{
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    color: '#7a6e65',
+                                    flexShrink: 0,
+                                }}
+                            >
+                                A
+                            </Typography>
+
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Slider
+                                    value={textScale}
+                                    min={0.8}
+                                    max={1.4}
+                                    step={0.1}
+                                    size="small"
+                                    onChange={(_, v) => onTextScaleChange(v as number)}
+                                    sx={{
+                                        color: '#b8860b',
+                                        width: '100%',
+                                        '& .MuiSlider-thumb': {
+                                            width: 14,
+                                            height: 14,
+                                        },
+                                    }}
+                                />
+                            </Box>
+
+                            <Typography
+                                sx={{
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontSize: '1.1rem',
+                                    fontWeight: 700,
+                                    color: '#7a6e65',
+                                    flexShrink: 0,
+                                }}
+                            >
+                                A
+                            </Typography>
+                        </Box>
+                    </Box>
                 </Box>
             </DialogContent>
 
@@ -271,21 +397,24 @@ function SettingsDialog({
 }
 
 /* ─────────────────────────────────────────────
-   AnimatedArabicWord
+   AnimatedArabicWord (with textScale)
 ───────────────────────────────────────────── */
-function AnimatedArabicWord({ word, wordDiacritic, showDiacritics }: {
-    word: string; wordDiacritic: string; showDiacritics: boolean
+function AnimatedArabicWord({ word, wordDiacritic, showDiacritics, textScale }: {
+    word: string; wordDiacritic: string; showDiacritics: boolean; textScale: number
 }) {
+    const baseSize = { xs: 2.4, sm: 3.3, md: 4.5 } // rem values approximated
+    const scaledSize = (size: number) => `${size * textScale}rem`
+
     return (
         <Box sx={{
             position: 'relative', textAlign: 'center',
             margin: '0.5rem 0 1.5rem',
-            height: { xs: 'clamp(3.2rem, 13vw, 4.5rem)', md: 'clamp(3.8rem, 11vw, 7.5rem)' },
+            height: { xs: `calc(3.2rem * ${textScale})`, md: `calc(4.5rem * ${textScale})` },
         }}>
             <Fade in={!showDiacritics} timeout={300} unmountOnExit>
                 <Typography sx={{
                     fontFamily: "'EB Garamond', serif",
-                    fontSize: { xs: 'clamp(2.4rem, 13vw, 3.8rem)', md: 'clamp(3.3rem, 11vw, 6rem)' },
+                    fontSize: { xs: scaledSize(2.4), md: scaledSize(3.8) },
                     fontWeight: 700, direction: 'rtl', textAlign: 'center',
                     color: '#2c1a0e', lineHeight: 1.2,
                     position: 'absolute', top: 0, left: 0, right: 0,
@@ -296,7 +425,7 @@ function AnimatedArabicWord({ word, wordDiacritic, showDiacritics }: {
             <Fade in={showDiacritics} timeout={300} unmountOnExit>
                 <Typography sx={{
                     fontFamily: "'EB Garamond', serif",
-                    fontSize: { xs: 'clamp(2.4rem, 13vw, 3.8rem)', md: 'clamp(3.3rem, 11vw, 6rem)' },
+                    fontSize: { xs: scaledSize(2.4), md: scaledSize(3.8) },
                     fontWeight: 700, direction: 'rtl', textAlign: 'center',
                     color: '#0e2e1f', lineHeight: 1.2,
                     position: 'absolute', top: 0, left: 0, right: 0,
@@ -308,70 +437,115 @@ function AnimatedArabicWord({ word, wordDiacritic, showDiacritics }: {
     )
 }
 
-/* ─────────────────────────────────────────────
-   Draggable Word (for the row)
-───────────────────────────────────────────── */
-function DraggableWord({ word, id }: { word: string; id: string }) {
+function DraggableWord({
+    word,
+    id,
+    slotIndex,
+    status = 'neutral',
+}: {
+    word: string
+    id: string
+    slotIndex: number
+    status?: 'correct' | 'incorrect' | 'neutral'
+}) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
 
     const style = {
         transform: CSS.Transform.toString(transform),
-        transition,
+        transition: transition ?? 'transform 200ms ease', // smooth drop animation
         opacity: isDragging ? 0.5 : 1,
-        cursor: 'grab',
+        cursor: isDragging ? 'grabbing' : 'grab',
         touchAction: 'none',
         zIndex: isDragging ? 1000 : 1,
     }
 
+    const badgeBgColor =
+        status === 'correct'
+            ? '#2e7d32'
+            : status === 'incorrect'
+                ? '#d32f2f'
+                : '#7a6e65'
+
     return (
-        <Button
-            ref={setNodeRef}
-            variant="outlined"
-            {...attributes}
-            {...listeners}
+        <Badge
+            badgeContent={slotIndex}
+            color="primary"
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             sx={{
-                fontFamily: "'EB Garamond', serif",
-                fontSize: { xs: '1.1rem', sm: '1.3rem' },
-                fontWeight: 600,
-                color: '#2c1a0e',
-                borderColor: 'rgba(184,134,11,0.4)',
-                borderRadius: '30px',
-                padding: { xs: '4px 12px', sm: '6px 16px' },
-                textTransform: 'none',
-                '&:hover': {
-                    background: 'rgba(184,134,11,0.08)',
-                    borderColor: '#b8860b',
+                '& .MuiBadge-badge': {
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    minWidth: 18,
+                    height: 18,
+                    padding: '0 4px',
+                    backgroundColor: badgeBgColor,
+                    color: '#fff',
+                    border: '2px solid #faf7f2',
+                    borderRadius: '50%',
+                    top: 4,
+                    right: 4,
+                    transform: 'scale(1) translate(50%, -50%)',
+                    transformOrigin: '100% 0%',
                 },
-                ...style,
             }}
         >
-            {word}
-        </Button>
+            <Button
+                ref={setNodeRef}
+                variant="outlined"
+                {...attributes}
+                {...listeners}
+                sx={{
+                    fontFamily: "'EB Garamond', serif",
+                    fontSize: { xs: '1.1rem', sm: '1.3rem' },
+                    fontWeight: 600,
+                    color: '#2c1a0e',
+                    borderColor: 'rgba(184,134,11,0.4)',
+                    borderRadius: '30px',
+                    padding: { xs: '4px 14px', sm: '6px 18px' },
+                    textTransform: 'none',
+                    position: 'relative',
+                    '&:hover': {
+                        background: 'rgba(184,134,11,0.08)',
+                        borderColor: '#b8860b',
+                    },
+                    ...style,
+                }}
+            >
+                {word}
+            </Button>
+        </Badge>
     )
 }
 
-/* ─────────────────────────────────────────────
-   InteractiveSentenceBuilder
-───────────────────────────────────────────────── */
 function InteractiveSentenceBuilder({
     plainWords,
     diacriticWords,
     englishTranslation,
+    transliteration,
     showDiacritics,
     resetKey,
+    textScale,
 }: {
     plainWords: string[]
     diacriticWords: string[]
     englishTranslation: string
+    transliteration: string
     showDiacritics: boolean
     resetKey: string | number
+    textScale: number
 }) {
     const [order, setOrder] = useState<number[]>([])
     const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null)
     const [checking, setChecking] = useState(false)
+    const [slotStatuses, setSlotStatuses] = useState<('correct' | 'incorrect' | 'neutral')[]>([])
 
     const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // require 8px movement before drag starts (prevents accidental drag)
+            },
+        }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     )
 
@@ -381,8 +555,7 @@ function InteractiveSentenceBuilder({
     }, [order, plainWords, diacriticWords, showDiacritics])
 
     const correctDisplayedWords = useMemo(() => {
-        const source = showDiacritics ? diacriticWords : plainWords
-        return source
+        return showDiacritics ? diacriticWords : plainWords
     }, [plainWords, diacriticWords, showDiacritics])
 
     const wordIds = useMemo(() => displayedWords.map((_, idx) => `word-${idx}`), [displayedWords])
@@ -396,6 +569,7 @@ function InteractiveSentenceBuilder({
         setOrder(initialOrder)
         setFeedback(null)
         setChecking(false)
+        setSlotStatuses(new Array(plainWords.length).fill('neutral'))
     }, [resetKey, plainWords.length])
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -406,15 +580,21 @@ function InteractiveSentenceBuilder({
         const newIndex = wordIds.indexOf(over.id as string)
         setOrder(arrayMove(order, oldIndex, newIndex))
         setFeedback(null)
+        setSlotStatuses(new Array(plainWords.length).fill('neutral'))
     }
 
     const checkOrder = () => {
         const isCorrect = displayedWords.join(' ') === correctDisplayedWords.join(' ')
         if (isCorrect) {
             setFeedback('correct')
+            setSlotStatuses(new Array(plainWords.length).fill('correct'))
         } else {
             setFeedback('incorrect')
             setChecking(true)
+            const newStatuses: ('correct' | 'incorrect')[] = displayedWords.map((word, idx) => {
+                return word === correctDisplayedWords[idx] ? 'correct' : 'incorrect'
+            })
+            setSlotStatuses(newStatuses)
             setTimeout(() => setChecking(false), 500)
         }
     }
@@ -428,7 +608,10 @@ function InteractiveSentenceBuilder({
         setOrder(newOrder)
         setFeedback(null)
         setChecking(false)
+        setSlotStatuses(new Array(plainWords.length).fill('neutral'))
     }
+
+    const translationFontSize = `calc(1rem * ${textScale})`
 
     return (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -441,44 +624,95 @@ function InteractiveSentenceBuilder({
                 </Typography>
 
                 <SortableContext items={wordIds} strategy={horizontalListSortingStrategy}>
-                    <Box dir="rtl" sx={{
-                        display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 1,
-                        justifyContent: 'center', alignItems: 'center', p: 1.5, mb: 2,
-                        border: '2px solid',
-                        borderColor: feedback === 'correct' ? '#2e7d32' : feedback === 'incorrect' ? '#d32f2f' : 'rgba(184,134,11,0.3)',
-                        borderRadius: '12px',
-                        background: feedback === 'correct' ? 'rgba(46,125,50,0.04)' : feedback === 'incorrect' ? 'rgba(211,47,47,0.04)' : 'rgba(184,134,11,0.02)',
-                        transition: 'border-color 0.3s, background 0.3s',
-                    }}>
+                    <Box
+                        dir="rtl"
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            flexWrap: 'wrap',
+                            gap: 1,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            p: 1.5,
+                            mb: 2,
+                            border: '2px solid',
+                            borderColor: feedback === 'correct' ? '#2e7d32' : feedback === 'incorrect' ? '#d32f2f' : 'rgba(184,134,11,0.3)',
+                            borderRadius: '12px',
+                            background: feedback === 'correct' ? 'rgba(46,125,50,0.04)' : feedback === 'incorrect' ? 'rgba(211,47,47,0.04)' : 'rgba(184,134,11,0.02)',
+                            transition: 'border-color 0.3s, background 0.3s',
+                        }}
+                    >
                         {displayedWords.map((word, idx) => (
-                            <DraggableWord key={idx} word={word} id={`word-${idx}`} />
+                            <DraggableWord
+                                key={wordIds[idx]}
+                                word={word}
+                                id={wordIds[idx]}
+                                slotIndex={idx + 1}
+                                status={slotStatuses[idx] || 'neutral'}
+                            />
                         ))}
                     </Box>
                 </SortableContext>
 
+                {feedback === 'correct' && (
+                    <Typography sx={{
+                        fontFamily: 'Jost, sans-serif',
+                        fontSize: `calc(0.95rem * ${textScale})`,
+                        fontStyle: 'italic',
+                        color: '#7a6e65',
+                        textAlign: 'center',
+                        mb: 1,
+                    }}>
+                        {transliteration}
+                    </Typography>
+                )}
+
                 <Typography sx={{
-                    fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.95rem', sm: '1.05rem' },
-                    fontWeight: 500, color: '#2c1a0e', textAlign: 'center', fontStyle: 'italic', mb: 2,
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: translationFontSize,
+                    fontWeight: 500,
+                    color: '#2c1a0e',
+                    textAlign: 'center',
+                    fontStyle: 'italic',
+                    mb: 2,
                 }}>
                     {englishTranslation}
                 </Typography>
 
                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5 }}>
-                    <Button variant="contained" onClick={checkOrder} disabled={feedback === 'correct' || checking}
+                    <Button
+                        variant="contained"
+                        onClick={checkOrder}
+                        disabled={feedback === 'correct' || checking}
                         sx={{
-                            fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.85rem',
-                            textTransform: 'none', borderRadius: '20px', px: 3,
-                            background: '#b8860b', '&:hover': { background: '#9a6e09' }, '&:disabled': { opacity: 0.5 },
-                        }}>
+                            fontFamily: 'Jost, sans-serif',
+                            fontWeight: 500,
+                            fontSize: '0.85rem',
+                            textTransform: 'none',
+                            borderRadius: '20px',
+                            px: 3,
+                            background: '#b8860b',
+                            '&:hover': { background: '#9a6e09' },
+                            '&:disabled': { opacity: 0.5 },
+                        }}
+                    >
                         Check
                     </Button>
-                    <Button variant="outlined" onClick={resetGame}
+                    <Button
+                        variant="outlined"
+                        onClick={resetGame}
                         sx={{
-                            fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.85rem',
-                            textTransform: 'none', borderRadius: '20px', px: 3,
-                            borderColor: 'rgba(184,134,11,0.5)', color: '#2c1a0e',
+                            fontFamily: 'Jost, sans-serif',
+                            fontWeight: 500,
+                            fontSize: '0.85rem',
+                            textTransform: 'none',
+                            borderRadius: '20px',
+                            px: 3,
+                            borderColor: 'rgba(184,134,11,0.5)',
+                            color: '#2c1a0e',
                             '&:hover': { borderColor: '#b8860b', background: 'rgba(184,134,11,0.05)' },
-                        }}>
+                        }}
+                    >
                         Reset
                     </Button>
                 </Box>
@@ -501,47 +735,42 @@ function InteractiveSentenceBuilder({
 }
 
 /* ─────────────────────────────────────────────
-   ExampleSentences
+   ExampleSentences (pass textScale down)
 ───────────────────────────────────────────── */
-function ExampleSentences({ card, revealed, showDiacritics }: {
-    card: VocabRow; revealed: boolean; showDiacritics: boolean
+function ExampleSentences({ examplesForCard, revealed, showDiacritics, textScale }: {
+    examplesForCard: ExampleRow[]
+    revealed: boolean
+    showDiacritics: boolean
+    textScale: number
 }) {
-    const examples = useMemo(() => parseExamples(card), [card])
     const [viewMode, setViewMode] = useState<'example' | 'try'>('example')
 
-    if (!revealed || examples.length === 0) return null
-
-    const firstExample = examples[0]
-    const secondExample = examples[1]
-
-    const plainSecondWords = secondExample
-        ? secondExample.arabic.split(' ').filter(w => w.trim() !== '')
-        : []
-    const diacriticSecondWords = secondExample
-        ? secondExample.diacritic.split(' ').filter(w => w.trim() !== '')
-        : []
-
-    const resetKey = card.id
-
-    const toggleButtonGroup = (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
-            <ToggleButtonGroup
-                value={viewMode} exclusive onChange={(_, val) => val && setViewMode(val)} size="small"
-                sx={{
-                    display: 'flex', gap: 2, pb: 2,
-                    '& .MuiToggleButton-root': {
-                        fontFamily: 'Jost, sans-serif', fontWeight: 500,
-                        fontSize: { xs: '0.8rem', sm: '0.85rem' }, textTransform: 'none',
-                        borderRadius: '20px', px: 2, border: '1px solid rgba(184,134,11,0.3)', color: '#2c1a0e',
-                        '&.Mui-selected': { background: 'rgba(184,134,11,0.15)', color: '#b8860b', borderColor: '#b8860b' },
-                    },
-                }}
-            >
-                <ToggleButton value="example"><MenuBook sx={{ fontSize: 16, mr: 0.5 }} />Example</ToggleButton>
-                <ToggleButton value="try"><TouchApp sx={{ fontSize: 16, mr: 0.5 }} />You Try</ToggleButton>
-            </ToggleButtonGroup>
-        </Box>
+    const displayExamples = useMemo(
+        () => examplesForCard.filter(e => !e.interactive),
+        [examplesForCard]
     )
+    const interactiveExample = useMemo(
+        () => examplesForCard.find(e => e.interactive) ?? null,
+        [examplesForCard]
+    )
+
+    const hasExamples = displayExamples.length > 0
+    const hasInteractive = interactiveExample !== null
+
+    if (!revealed || (!hasExamples && !hasInteractive)) return null
+
+    const plainWords = interactiveExample
+        ? interactiveExample.ex_ar.split(' ').filter(w => w.trim() !== '')
+        : []
+    const diacriticWords = interactiveExample
+        ? interactiveExample.ex_di.split(' ').filter(w => w.trim() !== '')
+        : []
+
+    const resetKey = examplesForCard[0]?.id ?? 0
+
+    const exampleArFontSize = `calc(1.6rem * ${textScale})`
+    const exampleEnFontSize = `calc(1.15rem * ${textScale})`
+    const transliterationFontSize = `calc(1rem * ${textScale})`
 
     return (
         <Collapse in={revealed} timeout={300}>
@@ -550,37 +779,83 @@ function ExampleSentences({ card, revealed, showDiacritics }: {
                 padding: { xs: '1rem', sm: '1.25rem' }, margin: '1.25rem 0',
                 borderLeft: '3px solid #b8860b',
             }}>
-                {toggleButtonGroup}
+                {hasExamples && hasInteractive && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
+                        <ToggleButtonGroup
+                            value={viewMode} exclusive onChange={(_, val) => val && setViewMode(val)} size="small"
+                            sx={{
+                                display: 'flex', gap: 2, pb: 2,
+                                '& .MuiToggleButton-root': {
+                                    fontFamily: 'Jost, sans-serif', fontWeight: 500,
+                                    fontSize: { xs: '0.8rem', sm: '0.85rem' }, textTransform: 'none',
+                                    borderRadius: '20px', px: 2, border: '1px solid rgba(184,134,11,0.3)', color: '#2c1a0e',
+                                    '&.Mui-selected': { background: 'rgba(184,134,11,0.15)', color: '#b8860b', borderColor: '#b8860b' },
+                                },
+                            }}
+                        >
+                            <ToggleButton value="example"><MenuBook sx={{ fontSize: 16, mr: 0.5 }} />Example</ToggleButton>
+                            <ToggleButton value="try"><TouchApp sx={{ fontSize: 16, mr: 0.5 }} />You Try</ToggleButton>
+                        </ToggleButtonGroup>
+                    </Box>
+                )}
 
-                {viewMode === 'example' ? (
-                    firstExample ? (
-                        <Box>
-                            <Typography sx={{
-                                fontFamily: "'EB Garamond', serif",
-                                fontSize: { xs: 'clamp(1.25rem, 3vw, 1.6rem)', sm: 'clamp(1.35rem, 3vw, 1.85rem)' },
-                                color: '#2c1a0e', direction: 'rtl', textAlign: 'right', lineHeight: 1.5, mb: 0.35,
-                            }}>
-                                {showDiacritics ? firstExample.diacritic : firstExample.arabic}
-                            </Typography>
-                            <Typography sx={{
-                                fontFamily: 'Jost, sans-serif',
-                                fontSize: { xs: 'clamp(0.95rem, 2vw, 1.15rem)', sm: 'clamp(1.05rem, 2vw, 1.3rem)' },
-                                color: '#7a6e65', fontStyle: 'italic', textAlign: 'left', lineHeight: 1.5,
-                            }}>
-                                {firstExample.english}
-                            </Typography>
-                        </Box>
-                    ) : (
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', textAlign: 'center', color: '#7a6e65' }}>
-                            No example available.
-                        </Typography>
-                    )
-                ) : secondExample ? (
+                {(viewMode === 'example' || !hasInteractive) && hasExamples && (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                        {displayExamples.map((ex, i) => (
+                            <Box key={i}>
+                                <Typography sx={{
+                                    fontFamily: "'EB Garamond', serif",
+                                    fontSize: exampleArFontSize,
+                                    color: '#2c1a0e', direction: 'rtl', textAlign: 'right', lineHeight: 1.5, mb: 0.35,
+                                }}>
+                                    {showDiacritics ? ex.ex_di : ex.ex_ar}
+                                </Typography>
+                                {/* Transliteration line */}
+                                {ex.ex_tr && (
+                                    <Typography sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: transliterationFontSize,
+                                        fontStyle: 'italic',
+                                        color: '#9e8a7a',
+                                        textAlign: 'left',
+                                        mb: 0.35,
+                                    }}>
+                                        {ex.ex_tr}
+                                    </Typography>
+                                )}
+                                <Typography sx={{
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontSize: exampleEnFontSize,
+                                    color: '#7a6e65', fontStyle: 'italic', textAlign: 'left', lineHeight: 1.5,
+                                }}>
+                                    {ex.ex_en}
+                                </Typography>
+                                {i < displayExamples.length - 1 && (
+                                    <Box sx={{ borderTop: '1px solid rgba(184,134,11,0.1)', mt: 1.5 }} />
+                                )}
+                            </Box>
+                        ))}
+                    </Box>
+                )}
+
+                {(viewMode === 'try' || !hasExamples) && hasInteractive && interactiveExample && (
                     <InteractiveSentenceBuilder
-                        plainWords={plainSecondWords} diacriticWords={diacriticSecondWords}
-                        englishTranslation={secondExample.english} showDiacritics={showDiacritics} resetKey={resetKey}
+                        plainWords={plainWords}
+                        diacriticWords={diacriticWords}
+                        englishTranslation={interactiveExample.ex_en}
+                        transliteration={interactiveExample.ex_tr || ''}
+                        showDiacritics={showDiacritics}
+                        resetKey={resetKey}
+                        textScale={textScale}
                     />
-                ) : (
+                )}
+
+                {viewMode === 'example' && !hasExamples && (
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', textAlign: 'center', color: '#7a6e65' }}>
+                        No example available.
+                    </Typography>
+                )}
+                {viewMode === 'try' && !hasInteractive && (
                     <Typography sx={{ fontFamily: 'Jost, sans-serif', textAlign: 'center', color: '#7a6e65' }}>
                         No interactive example available.
                     </Typography>
@@ -591,7 +866,7 @@ function ExampleSentences({ card, revealed, showDiacritics }: {
 }
 
 /* ─────────────────────────────────────────────
-   StatusChips
+   StatusChips (unchanged)
 ───────────────────────────────────────────── */
 const STATUS_CHIP_COLORS: Record<CardStatus, { activeBg: string; activeColor: string; border: string }> = {
     new: { activeBg: 'rgba(122,110,101,0.12)', activeColor: '#4a3d35', border: 'rgba(122,110,101,0.35)' },
@@ -647,19 +922,22 @@ function StatusChips({
 }
 
 /* ─────────────────────────────────────────────
-   FlashcardQuiz
+   FlashcardQuiz (with textScale applied)
 ───────────────────────────────────────────── */
 function FlashcardQuiz({
-    initialQueue, themeId, showDiacritics, alwaysShow, onComplete, themeLabel,
+    initialQueue, themeId, allExamples, showDiacritics, alwaysShow, onComplete, themeLabel,
+    totalInTheme, alreadyCompletedCount, textScale,
 }: {
     initialQueue: CardState[]
     themeId: number
+    allExamples: ExampleRow[]
     showDiacritics: boolean
     alwaysShow: boolean
     onComplete: () => void
     themeLabel: string
     totalInTheme: number
     alreadyCompletedCount: number
+    textScale: number
 }) {
     const updateLocalProgress = useVocabStore(s => s.updateLocalProgress)
     const [, startTransition] = useTransition()
@@ -696,6 +974,11 @@ function FlashcardQuiz({
     const revisionCount = allCards.filter(c => c.isInRevision).length
     const completedCount = allCards.filter(c => c.isCompleted).length
     const progressPct = allCards.length > 0 ? Math.round((completedCount / allCards.length) * 100) : 0
+
+    const currentCardExamples = useMemo(
+        () => current ? allExamples.filter(e => e.id === current.id) : [],
+        [current, allExamples]
+    )
 
     const persist = useCallback(
         (card: CardState, isCompleted: boolean, isInRevision: boolean) => {
@@ -776,6 +1059,10 @@ function FlashcardQuiz({
 
     if (!current) return null
 
+    const transliterationFontSize = `calc(1.45rem * ${textScale})`
+    const definitionFontSize = `calc(2.8rem * ${textScale})`
+    const rootFontSize = `calc(1.2rem * ${textScale})`
+
     const mobileActionBtnSx = {
         textTransform: 'none' as const,
         fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.82rem',
@@ -808,7 +1095,12 @@ function FlashcardQuiz({
 
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <Box sx={{ pt: { xs: 3 } }}>
-                        <AnimatedArabicWord word={current.word} wordDiacritic={current.word_diacritic} showDiacritics={showDiacritics} />
+                        <AnimatedArabicWord
+                            word={current.word}
+                            wordDiacritic={current.word_diacritic}
+                            showDiacritics={showDiacritics}
+                            textScale={textScale}
+                        />
                     </Box>
 
                     <Collapse in={revealed} timeout={300}>
@@ -827,21 +1119,24 @@ function FlashcardQuiz({
                         </Box>
 
                         <Typography sx={{
-                            fontFamily: 'Jost, sans-serif', fontSize: { xs: 'clamp(1.1rem, 2.2vw, 1.45rem)' },
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: transliterationFontSize,
                             fontStyle: 'italic', color: '#b8860b', textAlign: 'center',
                             letterSpacing: '0.05em', mt: { xs: 1, md: 1.5 },
                         }}>
                             {current.transliteration}
                         </Typography>
                         <Typography sx={{
-                            fontFamily: "'EB Garamond', serif", fontSize: { xs: 'clamp(1.8rem, 4.5vw, 2.8rem)' },
+                            fontFamily: "'EB Garamond', serif",
+                            fontSize: definitionFontSize,
                             fontWeight: 700, color: '#2c1a0e', textAlign: 'center', margin: '0.25rem 0',
                         }}>
                             {current.definition}
                         </Typography>
                         {current.root && current.root !== '-' && (
                             <Typography sx={{
-                                fontFamily: 'Jost, sans-serif', fontSize: { xs: 'clamp(0.9rem, 1.6vw, 1.2rem)' },
+                                fontFamily: 'Jost, sans-serif',
+                                fontSize: rootFontSize,
                                 color: '#7a6e65', textAlign: 'center', direction: 'rtl',
                                 opacity: 0.75, mb: 0.5, letterSpacing: '0.04em',
                             }}>
@@ -849,7 +1144,12 @@ function FlashcardQuiz({
                             </Typography>
                         )}
 
-                        <ExampleSentences card={current} revealed={revealed} showDiacritics={showDiacritics} />
+                        <ExampleSentences
+                            examplesForCard={currentCardExamples}
+                            revealed={revealed}
+                            showDiacritics={showDiacritics}
+                            textScale={textScale}
+                        />
 
                         {/* Desktop buttons */}
                         <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', mt: '1.25rem' }}>
@@ -927,7 +1227,7 @@ function FlashcardQuiz({
 }
 
 /* ─────────────────────────────────────────────
-   ThemeCard
+   ThemeCard (unchanged)
 ───────────────────────────────────────────── */
 function ThemeCard({ theme, isActive, onClick }: {
     theme: ThemeProgress; isActive: boolean; onClick: () => void
@@ -936,7 +1236,7 @@ function ThemeCard({ theme, isActive, onClick }: {
     return (
         <Card sx={{
             width: '100%',
-            height: '100%',                   // fill the grid cell height
+            height: '100%',
             display: 'flex',
             flexDirection: 'column',
             border: '1px solid rgba(184,134,11,0.15)',
@@ -949,12 +1249,7 @@ function ThemeCard({ theme, isActive, onClick }: {
         }}>
             <CardActionArea
                 onClick={onClick}
-                sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'stretch',
-                    flexGrow: 1,              // take all available space
-                }}
+                sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', flexGrow: 1 }}
             >
                 <CardMedia
                     component="img"
@@ -987,6 +1282,7 @@ function ThemeCard({ theme, isActive, onClick }: {
    Page
 ───────────────────────────────────────────── */
 export default function FlashcardSlugPage() {
+    const [textScale, setTextScale] = useState(1)
     const params = useParams()
     const router = useRouter()
     const slug = (params?.slug as string) ?? 'beginner'
@@ -1000,6 +1296,7 @@ export default function FlashcardSlugPage() {
     const [themesLoading, setThemesLoading] = useState(true)
     const [selectedTheme, setSelectedTheme] = useState<any>(null)
     const [activeQueue, setActiveQueue] = useState<CardState[]>([])
+    const [activeExamples, setActiveExamples] = useState<ExampleRow[]>([])
     const [showDiacritics, setShowDiacritics] = useState(true)
     const [alwaysShow, setAlwaysShow] = useState(false)
     const [quizKey, setQuizKey] = useState(0)
@@ -1020,12 +1317,14 @@ export default function FlashcardSlugPage() {
         if (!theme?.theme_id || Number.isNaN(theme.theme_id)) return
         setSelectedTheme(theme)
         try {
-            const { vocab, progress } = await fetchTheme(theme.theme_id)
+            const { vocab, progress, examples } = await fetchTheme(theme.theme_id)
             setActiveQueue(buildQueue(vocab, progress))
+            setActiveExamples(examples)
             setQuizKey(k => k + 1)
         } catch (err) {
             console.error(err)
             setActiveQueue([])
+            setActiveExamples([])
         }
     }, [fetchTheme])
 
@@ -1033,6 +1332,7 @@ export default function FlashcardSlugPage() {
         fetchThemesWithProgress(level).then(setThemes).catch(console.error)
         setSelectedTheme(null)
         setActiveQueue([])
+        setActiveExamples([])
     }, [level])
 
     const overallProgress = useMemo(() => {
@@ -1047,9 +1347,16 @@ export default function FlashcardSlugPage() {
     return (
         <>
             <Navbar />
-            <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)}
-                showDiacritics={showDiacritics} onToggleDiacritics={() => setShowDiacritics(p => !p)}
-                alwaysShow={alwaysShow} onToggleAlwaysShow={() => setAlwaysShow(p => !p)} />
+            <SettingsDialog
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+                showDiacritics={showDiacritics}
+                onToggleDiacritics={() => setShowDiacritics(p => !p)}
+                alwaysShow={alwaysShow}
+                onToggleAlwaysShow={() => setAlwaysShow(p => !p)}
+                textScale={textScale}
+                onTextScaleChange={setTextScale}
+            />
 
             <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh' }}>
                 <Box sx={{
@@ -1085,7 +1392,7 @@ export default function FlashcardSlugPage() {
                 <Container maxWidth="xl" sx={{ py: { xs: 3, sm: 4, md: 6 }, pt: { xs: selectedTheme ? 10 : 4, sm: 4, md: 6 } }}>
                     {selectedTheme ? (
                         <Box>
-                            {/* Desktop header */}
+                            {/* Desktop header with inline slider, no settings button */}
                             <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: { sm: 3, md: 4 } }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
                                     <Button variant="outlined" size="small" startIcon={<ArrowBackSharp sx={{ fontSize: { sm: 15, md: 19 } }} />} onClick={handleBackToThemes}
@@ -1096,7 +1403,9 @@ export default function FlashcardSlugPage() {
                                         {selectedTheme.display_name}
                                     </Typography>
                                 </Box>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                                    {/* Desktop inline slider */}
+                                    <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
                                     <Box sx={{ minWidth: 170 }}>
                                         <PillToggle enabled={alwaysShow} onToggle={() => setAlwaysShow(p => !p)} label="Always show card" activeColor="#0e2e1f" />
                                     </Box>
@@ -1106,7 +1415,7 @@ export default function FlashcardSlugPage() {
                                 </Box>
                             </Box>
 
-                            {/* Mobile header */}
+                            {/* Mobile header with settings button */}
                             <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', alignItems: 'center', gap: 1.25, mb: 2 }}>
                                 <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.4rem', fontWeight: 700, color: '#2c1a0e', textAlign: 'center' }}>
                                     {selectedTheme.display_name}
@@ -1133,9 +1442,16 @@ export default function FlashcardSlugPage() {
                                 </Box>
                             ) : (
                                 <FlashcardQuiz
-                                    key={quizKey} initialQueue={activeQueue} themeId={selectedTheme.theme_id}
-                                    showDiacritics={showDiacritics} alwaysShow={alwaysShow} onComplete={handleBackToThemes}
-                                    themeLabel={selectedTheme.display_name} totalInTheme={selectedTheme.total_words}
+                                    textScale={textScale}
+                                    key={quizKey}
+                                    initialQueue={activeQueue}
+                                    themeId={selectedTheme.theme_id}
+                                    allExamples={activeExamples}
+                                    showDiacritics={showDiacritics}
+                                    alwaysShow={alwaysShow}
+                                    onComplete={handleBackToThemes}
+                                    themeLabel={selectedTheme.display_name}
+                                    totalInTheme={selectedTheme.total_words}
                                     alreadyCompletedCount={selectedTheme.completed_count}
                                 />
                             )}
@@ -1160,7 +1476,7 @@ export default function FlashcardSlugPage() {
                                     display: 'grid',
                                     gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,1fr)', md: 'repeat(3,1fr)', xl: 'repeat(4,1fr)' },
                                     gap: { xs: 2, sm: 3, md: 4 },
-                                    alignItems: 'stretch',    // ensures each grid item fills the row height
+                                    alignItems: 'stretch',
                                     width: '100%',
                                 }}>
                                     {validThemes.map((theme: ThemeProgress) => (
