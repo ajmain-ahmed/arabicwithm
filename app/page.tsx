@@ -88,7 +88,7 @@ export default function HomePage() {
           {/* ── Background image ── */}
           <Box
             component="img"
-            src="/hero/hero.avif"
+            src="/homepage/hero.avif"
             alt=""
             aria-hidden="true"
             sx={{

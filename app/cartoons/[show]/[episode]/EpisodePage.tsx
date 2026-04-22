@@ -1,0 +1,1032 @@
+'use client'
+
+import React, { useState } from 'react'
+import {
+  Box,
+  Typography,
+  Tabs,
+  Tab,
+  Button,
+  Slider,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material'
+import { ArrowBack, Settings, Close } from '@mui/icons-material'
+import { useRouter } from 'next/navigation'
+import Navbar from '@/app/components/navbar'
+import { EpisodeFull } from '@/app/lib/cartoons'
+
+const PAGE_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,700;1,700&family=Jost:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bark:   #2c1a0e;
+    --forest: #0e2e1f;
+    --gold:   #b8860b;
+    --gold-lt:#d4a843;
+    --muted:  #7a6e65;
+    --cream:  #faf7f2;
+    --sand:   #f5ede0;
+    --font-serif: Georgia, "Times New Roman", serif;
+    --font-sans:  system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  html, body { background: var(--cream); margin: 0; }
+
+  .script-line {
+    transition: background 0.15s ease;
+    border-radius: 8px;
+  }
+  .script-line:hover {
+    background: rgba(184,134,11,0.06);
+  }
+
+  .arabic-line {
+    font-family: "EB Garamond", Georgia, serif;
+    direction: rtl;
+    text-align: right;
+    line-height: 1.8;
+    color: var(--bark);
+    font-weight: 700;
+  }
+
+  .english-line {
+    font-family: Jost, var(--font-sans);
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .vocab-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Jost, var(--font-sans);
+  }
+  .vocab-table th {
+    text-align: left;
+    padding: 8px 12px;
+    background: rgba(14,46,31,0.05);
+    color: var(--forest);
+    font-weight: 600;
+    font-size: 0.76rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(44,26,14,0.08);
+  }
+  .vocab-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(44,26,14,0.05);
+    color: var(--bark);
+    vertical-align: top;
+  }
+  .vocab-table tr:last-child td { border-bottom: none; }
+  .vocab-table tr:hover td { background: rgba(184,134,11,0.04); }
+  .vocab-arabic {
+    font-family: "EB Garamond", Georgia, serif;
+    font-weight: 700;
+    direction: rtl;
+    text-align: right;
+  }
+`
+
+/* ─────────────────────────────────────────────
+   Helpers
+───────────────────────────────────────────── */
+function PillToggle({
+  enabled,
+  onToggle,
+  label,
+  activeColor = '#b8860b',
+}: {
+  enabled: boolean
+  onToggle: () => void
+  label: string
+  activeColor?: string
+}) {
+  return (
+    <Box
+      onClick={onToggle}
+      sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 1,
+        cursor: 'pointer',
+        userSelect: 'none',
+        padding: '5px 12px 5px 6px',
+        borderRadius: '999px',
+        border: '1px solid',
+        borderColor: enabled ? activeColor : 'rgba(122,110,101,0.25)',
+        background: enabled ? `${activeColor}14` : 'transparent',
+        minWidth: 178,
+        transition: 'all 0.15s',
+        '&:hover': {
+          borderColor: activeColor,
+          background: `${activeColor}0d`,
+        },
+      }}
+    >
+      <Box
+        sx={{
+          width: 28,
+          height: 16,
+          borderRadius: '999px',
+          background: enabled ? activeColor : 'rgba(122,110,101,0.2)',
+          position: 'relative',
+          transition: 'background 0.2s',
+          flexShrink: 0,
+        }}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '2px',
+            left: enabled ? '14px' : '2px',
+            width: 12,
+            height: 12,
+            borderRadius: '50%',
+            background: '#fff',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            transition: 'left 0.18s cubic-bezier(0.4,0,0.2,1)',
+          }}
+        />
+      </Box>
+      <Typography
+        sx={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: { xs: '0.8rem', sm: '0.85rem', md: '0.95rem' },
+          fontWeight: 500,
+          color: enabled ? activeColor : '#7a6e65',
+          whiteSpace: 'nowrap',
+          lineHeight: 1,
+          transition: 'color 0.15s',
+        }}
+      >
+        {label}
+      </Typography>
+    </Box>
+  )
+}
+
+function DesktopTextScaleSlider({
+  textScale,
+  onChange,
+}: {
+  textScale: number
+  onChange: (v: number) => void
+}) {
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        px: 1.5,
+        py: 0.5,
+        borderRadius: '999px',
+        border: '1px solid rgba(122,110,101,0.2)',
+        background: 'rgba(122,110,101,0.02)',
+        minWidth: 160,
+      }}
+    >
+      <Typography
+        sx={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: '0.7rem',
+          fontWeight: 600,
+          color: '#7a6e65',
+          flexShrink: 0,
+        }}
+      >
+        A
+      </Typography>
+      <Slider
+        value={textScale}
+        min={0.9}
+        max={1.5}
+        step={0.1}
+        size="small"
+        onChange={(_, v) => onChange(v as number)}
+        sx={{
+          color: '#b8860b',
+          flex: 1,
+          '& .MuiSlider-thumb': { width: 14, height: 14 },
+        }}
+      />
+      <Typography
+        sx={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: '1rem',
+          fontWeight: 700,
+          color: '#7a6e65',
+          flexShrink: 0,
+        }}
+      >
+        A
+      </Typography>
+    </Box>
+  )
+}
+
+function SettingsDialog({
+  open,
+  onClose,
+  showDiacritics,
+  onToggleDiacritics,
+  textScale,
+  onTextScaleChange,
+}: {
+  open: boolean
+  onClose: () => void
+  showDiacritics: boolean
+  onToggleDiacritics: () => void
+  textScale: number
+  onTextScaleChange: (v: number) => void
+}) {
+  const ToggleRow = ({
+    label,
+    description,
+    enabled,
+    onToggle,
+    activeColor,
+  }: {
+    label: string
+    description: string
+    enabled: boolean
+    onToggle: () => void
+    activeColor: string
+  }) => (
+    <Box
+      onClick={onToggle}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        cursor: 'pointer',
+        py: 1.25,
+        px: 1.5,
+        borderRadius: '10px',
+        border: '1px solid',
+        borderColor: enabled ? `${activeColor}55` : 'rgba(122,110,101,0.15)',
+        background: enabled ? `${activeColor}08` : 'rgba(122,110,101,0.03)',
+        transition: 'all 0.15s',
+        userSelect: 'none',
+        '&:hover': {
+          borderColor: `${activeColor}88`,
+          background: `${activeColor}0d`,
+        },
+      }}
+    >
+      <Box sx={{ pr: 2 }}>
+        <Typography
+          sx={{
+            fontFamily: 'Jost, sans-serif',
+            fontSize: '0.95rem',
+            fontWeight: 600,
+            color: '#2c1a0e',
+            lineHeight: 1.2,
+          }}
+        >
+          {label}
+        </Typography>
+        <Typography
+          sx={{
+            fontFamily: 'Jost, sans-serif',
+            fontSize: '0.78rem',
+            color: '#7a6e65',
+            mt: 0.3,
+            lineHeight: 1.4,
+          }}
+        >
+          {description}
+        </Typography>
+      </Box>
+      <Box
+        sx={{
+          width: 38,
+          height: 22,
+          borderRadius: '999px',
+          flexShrink: 0,
+          background: enabled ? activeColor : 'rgba(122,110,101,0.22)',
+          position: 'relative',
+          transition: 'background 0.2s',
+        }}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '3px',
+            left: enabled ? '19px' : '3px',
+            width: 16,
+            height: 16,
+            borderRadius: '50%',
+            background: '#fff',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.22)',
+            transition: 'left 0.18s cubic-bezier(0.4,0,0.2,1)',
+          }}
+        />
+      </Box>
+    </Box>
+  )
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: 360,
+            m: 2,
+            overflow: 'hidden',
+            boxShadow: '0 24px 64px rgba(44,26,14,0.2)',
+          },
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          fontFamily: "'EB Garamond', serif",
+          fontSize: '1.5rem',
+          fontWeight: 700,
+          color: '#2c1a0e',
+          pb: 0.5,
+          pt: 2.5,
+          px: 2.5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        Settings
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{ color: '#7a6e65', mr: -0.5 }}
+        >
+          <Close sx={{ fontSize: '1.2rem' }} />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent sx={{ px: 2.5, pt: 1.5, pb: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <ToggleRow
+            label="Show Diacritics"
+            description="Display vowel marks on Arabic words"
+            enabled={showDiacritics}
+            onToggle={onToggleDiacritics}
+            activeColor="#b8860b"
+          />
+
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              py: 1.25,
+              px: 1.5,
+              borderRadius: '10px',
+              border: '1px solid rgba(122,110,101,0.15)',
+              background: 'rgba(122,110,101,0.03)',
+              gap: 2,
+            }}
+          >
+            <Box sx={{ pr: 2, flex: '0 0 auto' }}>
+              <Typography
+                sx={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  color: '#2c1a0e',
+                }}
+              >
+                Text Size
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: '0.78rem',
+                  color: '#7a6e65',
+                  mt: 0.3,
+                }}
+              >
+                Adjust Arabic text size
+              </Typography>
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  color: '#7a6e65',
+                  flexShrink: 0,
+                }}
+              >
+                A
+              </Typography>
+
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Slider
+                  value={textScale}
+                  min={0.9}
+                  max={1.5}
+                  step={0.1}
+                  size="small"
+                  onChange={(_, v) => onTextScaleChange(v as number)}
+                  sx={{
+                    color: '#b8860b',
+                    width: '100%',
+                    '& .MuiSlider-thumb': {
+                      width: 14,
+                      height: 14,
+                    },
+                  }}
+                />
+              </Box>
+
+              <Typography
+                sx={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: '1.1rem',
+                  fontWeight: 700,
+                  color: '#7a6e65',
+                  flexShrink: 0,
+                }}
+              >
+                A
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </DialogContent>
+
+      <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5 }}>
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={onClose}
+          disableElevation
+          sx={{
+            background: '#2c1a0e',
+            color: '#f5ede0',
+            fontFamily: 'Jost, sans-serif',
+            fontWeight: 600,
+            fontSize: '0.95rem',
+            textTransform: 'none',
+            borderRadius: '10px',
+            py: 1.1,
+            '&:hover': { background: '#1a0f08' },
+          }}
+        >
+          Done
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   Parser (supports 3-line script + 4-col vocab)
+───────────────────────────────────────────── */
+function parseContent(content: string) {
+  const lines = content.split('\n')
+  const scriptLines: Array<{
+    arabicDiacritic: string
+    arabicPlain: string
+    english: string
+  }> = []
+  const vocabRows: Array<{ arabic: string; plain: string; english: string }> = []
+  let inScript = false
+  let inNotes = false
+
+  let i = 0
+  while (i < lines.length) {
+    const line = lines[i].trim()
+
+    if (line === '## Script') {
+      inScript = true
+      inNotes = false
+      i++
+      continue
+    }
+    if (line === '## Notes') {
+      inScript = false
+      inNotes = true
+      i++
+      continue
+    }
+
+    if (inScript && line) {
+      const isArabic = /[\u0600-\u06FF]/.test(line)
+      if (isArabic) {
+        let j = i + 1
+        while (j < lines.length && !lines[j].trim()) j++
+        const nextLine = lines[j]?.trim() ?? ''
+        const nextIsArabic = /[\u0600-\u06FF]/.test(nextLine)
+
+        if (nextIsArabic) {
+          // New format: diacritic, plain, english
+          let k = j + 1
+          while (k < lines.length && !lines[k].trim()) k++
+          const englishLine = lines[k]?.trim() ?? ''
+          const englishIsArabic = /[\u0600-\u06FF]/.test(englishLine)
+
+          if (!englishIsArabic && englishLine && !englishLine.startsWith('#')) {
+            scriptLines.push({
+              arabicDiacritic: line,
+              arabicPlain: nextLine,
+              english: englishLine,
+            })
+            i = k + 1
+            continue
+          } else {
+            scriptLines.push({
+              arabicDiacritic: line,
+              arabicPlain: nextLine,
+              english: '',
+            })
+            i = j + 1
+            continue
+          }
+        } else {
+          // Old format: diacritic + english
+          if (nextLine && !nextLine.startsWith('#')) {
+            scriptLines.push({
+              arabicDiacritic: line,
+              arabicPlain: line,
+              english: nextLine,
+            })
+            i = j + 1
+            continue
+          } else {
+            scriptLines.push({
+              arabicDiacritic: line,
+              arabicPlain: line,
+              english: '',
+            })
+          }
+        }
+      }
+    }
+
+    if (
+      inNotes &&
+      line.startsWith('|') &&
+      !line.startsWith('|--') &&
+      !line.startsWith('| Arabic')
+    ) {
+      const cols = line
+        .split('|')
+        .map((c) => c.trim())
+        .filter(Boolean)
+
+      if (cols.length >= 4) {
+        vocabRows.push({
+          arabic: cols[0],
+          plain: cols[1],
+          english: cols[3],
+        })
+      } else if (cols.length >= 3) {
+        vocabRows.push({
+          arabic: cols[0],
+          plain: cols[0],
+          english: cols[2],
+        })
+      }
+    }
+
+    i++
+  }
+
+  return { scriptLines, vocabRows }
+}
+
+const LEVEL_COLORS: Record<string, string> = {
+  A1: '#2d6a4f',
+  A2: '#40916c',
+  B1: '#b5861a',
+  B2: '#9c6b00',
+  C1: '#6d4c9e',
+  C2: '#4a2f7a',
+}
+
+export default function EpisodePage({
+  episode,
+  showTitle,
+}: {
+  episode: EpisodeFull
+  showTitle: string
+}) {
+  const router = useRouter()
+  const [tab, setTab] = useState(0)
+  const [showDiacritics, setShowDiacritics] = useState(true)
+  const [textScale, setTextScale] = useState(1.2)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  const { scriptLines, vocabRows } = parseContent(episode.content)
+
+  const embedUrl = episode.youtubeShort
+    ? `https://www.youtube.com/embed/${episode.youtubeId}?rel=0&modestbranding=1`
+    : `https://www.youtube.com/embed/${episode.youtubeId}?rel=0&modestbranding=1`
+
+  return (
+    <>
+      <style>{PAGE_CSS}</style>
+      <Navbar />
+
+      <SettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        showDiacritics={showDiacritics}
+        onToggleDiacritics={() => setShowDiacritics((p) => !p)}
+        textScale={textScale}
+        onTextScaleChange={setTextScale}
+      />
+
+      <Box
+        component="main"
+        sx={{
+          background: 'var(--cream)',
+          pt: { xs: '80px', md: '96px' },
+          pb: { xs: 6, md: 10 },
+        }}
+      >
+        <Box
+          sx={{
+            display: { xs: 'flex', lg: 'grid' },
+            flexDirection: { xs: 'column', lg: 'unset' },
+            gridTemplateColumns: { lg: '420px 1fr' },
+            gap: { xs: 3, lg: 5 },
+            maxWidth: 1536,
+            mx: 'auto',
+            px: { xs: 2.5, md: 5, lg: 6 },
+            alignItems: { xs: 'stretch', lg: 'start' },
+          }}
+        >
+          {/* ── Left: Video + meta ── */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2.5,
+              position: { lg: 'sticky' },
+              top: { lg: 96 },
+              width: { xs: '100%', lg: 'auto' },
+              alignItems: { xs: 'center', lg: 'flex-start' },
+            }}
+          >
+            {/* Title */}
+            <Typography
+              component="h1"
+              sx={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: { xs: '1.6rem', md: '2rem' },
+                fontWeight: 700,
+                color: 'var(--bark)',
+                lineHeight: 1.15,
+                textAlign: { xs: 'center', lg: 'left' },
+              }}
+            >
+              {episode.title}
+            </Typography>
+
+            {/* Tags row — back button, level, tags, settings */}
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1,
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                justifyContent: { xs: 'center', lg: 'flex-start' },
+                width: { xs: '100%', lg: 'auto' },
+              }}
+            >
+              {/* Mobile back button */}
+              <Box
+                onClick={() => router.push(`/cartoons/${episode.show}`)}
+                sx={{
+                  display: { xs: 'inline-flex', lg: 'none' },
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  color: 'var(--muted)',
+                  background: 'rgba(44,26,14,0.04)',
+                  '&:hover': {
+                    color: 'var(--gold)',
+                    background: 'rgba(184,134,11,0.08)',
+                  },
+                  transition: 'all 0.2s',
+                }}
+              >
+                <ArrowBack sx={{ fontSize: 18 }} />
+              </Box>
+
+              <Box
+                sx={{
+                  background: LEVEL_COLORS[episode.level] ?? 'var(--forest)',
+                  color: '#fff',
+                  fontFamily: 'Jost, var(--font-sans)',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  px: 1.2,
+                  py: 0.4,
+                  borderRadius: '4px',
+                }}
+              >
+                {episode.level}
+              </Box>
+
+              {episode.tags.map((tag) => (
+                <Box
+                  key={tag}
+                  sx={{
+                    fontFamily: 'Jost, var(--font-sans)',
+                    fontSize: '0.68rem',
+                    color: 'var(--muted)',
+                    border: '1px solid rgba(122,110,101,0.25)',
+                    px: 1,
+                    py: 0.2,
+                    borderRadius: '3px',
+                  }}
+                >
+                  {tag}
+                </Box>
+              ))}
+
+              {/* Mobile settings button */}
+              <IconButton
+                onClick={() => setSettingsOpen(true)}
+                size="small"
+                sx={{
+                  display: { xs: 'inline-flex', lg: 'none' },
+                  width: 28,
+                  height: 28,
+                  border: '1px solid rgba(122,110,101,0.3)',
+                  borderRadius: '50%',
+                  color: '#7a6e65',
+                  ml: 0.5,
+                  '&:hover': {
+                    background: 'rgba(122,110,101,0.08)',
+                    borderColor: 'rgba(122,110,101,0.5)',
+                  },
+                }}
+              >
+                <Settings sx={{ fontSize: '0.9rem' }} />
+              </IconButton>
+            </Box>
+
+            {/* Video — sticky on mobile */}
+            <Box
+              sx={{
+                width: '100%',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                boxShadow: '0 12px 40px rgba(44,26,14,0.18)',
+                background: '#000',
+                aspectRatio: episode.youtubeShort ? '9/16' : '16/9',
+                maxHeight: episode.youtubeShort ? 560 : 'auto',
+                position: { xs: 'sticky', lg: 'static' },
+                top: { xs: 72 },
+                zIndex: { xs: 10 },
+              }}
+            >
+              <Box
+                component="iframe"
+                src={embedUrl}
+                title={episode.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                sx={{ width: '100%', height: '100%', border: 0, display: 'block' }}
+              />
+            </Box>
+
+            {/* Desktop-only: divider + back link */}
+            <Box
+              sx={{
+                display: { xs: 'none', lg: 'flex' },
+                flexDirection: 'column',
+                gap: 2.5,
+              }}
+            >
+              <Box
+                sx={{
+                  height: '1px',
+                  background:
+                    'linear-gradient(90deg, transparent, rgba(184,134,11,0.3), transparent)',
+                }}
+              />
+              <Button
+                startIcon={<ArrowBack sx={{ fontSize: 18 }} />}
+                onClick={() => router.push(`/cartoons/${episode.show}`)}
+                sx={{
+                  fontFamily: 'Jost, var(--font-sans)',
+                  fontSize: '0.8rem',
+                  color: 'var(--muted)',
+                  textTransform: 'none',
+                  justifyContent: 'flex-start',
+                  px: 0,
+                  py: 0.5,
+                  '&:hover': { color: 'var(--gold)', background: 'transparent' },
+                  transition: 'color 0.2s',
+                }}
+              >
+                Back to {showTitle}
+              </Button>
+            </Box>
+          </Box>
+
+          {/* ── Right: Script + Vocab ── */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            {/* Desktop controls */}
+            <Box
+              sx={{
+                display: { xs: 'none', lg: 'flex' },
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: 2,
+                mb: 2,
+              }}
+            >
+              <DesktopTextScaleSlider
+                textScale={textScale}
+                onChange={setTextScale}
+              />
+              <PillToggle
+                enabled={showDiacritics}
+                onToggle={() => setShowDiacritics((p) => !p)}
+                label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'}
+                activeColor="#b8860b"
+              />
+            </Box>
+
+            {/* Tabs */}
+            <Box
+              sx={{
+                borderBottom: '1px solid rgba(44,26,14,0.07)',
+                background: '#fff',
+                borderRadius: '12px 12px 0 0',
+                px: { xs: 2, md: 4 },
+              }}
+            >
+              <Tabs
+                value={tab}
+                onChange={(_, v) => setTab(v)}
+                sx={{
+                  '& .MuiTab-root': {
+                    fontFamily: 'Jost, var(--font-sans)',
+                    fontSize: '0.82rem',
+                    fontWeight: 500,
+                    textTransform: 'none',
+                    letterSpacing: '0.04em',
+                    color: 'var(--muted)',
+                    minWidth: 0,
+                    px: 2,
+                    py: 1.5,
+                  },
+                  '& .Mui-selected': {
+                    color: 'var(--forest) !important',
+                    fontWeight: 600,
+                  },
+                  '& .MuiTabs-indicator': {
+                    background: 'var(--gold)',
+                    height: '2px',
+                  },
+                }}
+              >
+                <Tab label="Script" />
+                <Tab label={`Vocabulary (${vocabRows.length})`} />
+              </Tabs>
+            </Box>
+
+            {/* Content */}
+            <Box
+              sx={{
+                background: '#fff',
+                borderRadius: '0 0 12px 12px',
+                px: { xs: 2, md: 4 },
+                py: { xs: 3, md: 4 },
+              }}
+            >
+              {tab === 0 && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                  {scriptLines.length === 0 ? (
+                    <Typography
+                      sx={{
+                        fontFamily: 'Jost, var(--font-sans)',
+                        color: 'var(--muted)',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      No script found in this episode file.
+                    </Typography>
+                  ) : (
+                    scriptLines.map((line, i) => (
+                      <Box
+                        key={i}
+                        className="script-line"
+                        sx={{
+                          px: 2,
+                          py: 1.5,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 0.3,
+                        }}
+                      >
+                        <Typography
+                          className="arabic-line"
+                          sx={{
+                            fontSize: `calc(1.35rem * ${textScale})`,
+                          }}
+                        >
+                          {showDiacritics
+                            ? line.arabicDiacritic
+                            : line.arabicPlain}
+                        </Typography>
+                        {line.english && (
+                          <Typography
+                            className="english-line"
+                            sx={{
+                              fontSize: `calc(0.88rem * ${textScale})`,
+                            }}
+                          >
+                            {line.english}
+                          </Typography>
+                        )}
+                      </Box>
+                    ))
+                  )}
+                </Box>
+              )}
+
+              {tab === 1 && (
+                <Box sx={{ overflowX: 'auto' }}>
+                  {vocabRows.length === 0 ? (
+                    <Typography
+                      sx={{
+                        fontFamily: 'Jost, var(--font-sans)',
+                        color: 'var(--muted)',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      No vocabulary notes found.
+                    </Typography>
+                  ) : (
+                    <table className="vocab-table">
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'right', direction: 'rtl' }}>
+                            Arabic
+                          </th>
+                          <th>English</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {vocabRows.map((row, i) => (
+                          <tr key={i}>
+                            <td
+                              className="vocab-arabic"
+                              style={{
+                                fontSize: `calc(1.1rem * ${textScale})`,
+                              }}
+                            >
+                              {showDiacritics ? row.arabic : row.plain}
+                            </td>
+                            <td
+                              style={{
+                                fontFamily: 'Jost, sans-serif',
+                                fontSize: `calc(0.88rem * ${textScale})`,
+                              }}
+                            >
+                              {row.english}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </Box>
+              )}
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </>
+  )
+}

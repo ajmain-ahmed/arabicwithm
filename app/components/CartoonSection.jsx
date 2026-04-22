@@ -25,9 +25,9 @@ const FEATURES = [
 ]
 
 const WORKSHEET_SHEETS = [
-  { src: '/worksheets/transcript-1.avif', alt: 'Transcript worksheet', left: '2%', rotate: '-10deg', zIndex: 1 },
-  { src: '/worksheets/worksheet-2.avif', alt: 'Comprehension worksheet', left: '12%', rotate: '0deg', zIndex: 2 },
-  { src: '/worksheets/worksheet.avif', alt: 'Quiz worksheet', left: '22%', rotate: '10deg', zIndex: 3 },
+  { src: '/homepage/transcript-1.avif', alt: 'Transcript worksheet', left: '2%', rotate: '-10deg', zIndex: 1 },
+  { src: '/homepage/worksheet-2.avif', alt: 'Comprehension worksheet', left: '12%', rotate: '0deg', zIndex: 2 },
+  { src: '/homepage/worksheet.avif', alt: 'Quiz worksheet', left: '22%', rotate: '10deg', zIndex: 3 },
 ]
 
 function WorksheetFan() {

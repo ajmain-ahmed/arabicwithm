@@ -30,6 +30,15 @@ const NAV_ROUTES: Record<string, string> = {
     'Contact': '/contact',
 };
 
+const CARTOON_SLUG_MAP: Record<string, string> = {
+    'Spongebob': 'spongebob',
+    'Amazing World of Gumball': 'amazing-world-of-gumball',
+    'Dragonball Z': 'dragonball-z',
+    'Yu-Gi-Oh!': 'yu-gi-oh',
+    'TMNT': 'tmnt',
+    'Others': 'others',
+};
+
 const MOBILE_SECONDARY = ['FAQ'] as const;
 
 const MEGA_MENU_ITEMS = [
@@ -211,7 +220,7 @@ export default function Navbar() {
                 onClick={() => { router.push('/'); setDrawerOpen(false); setLearnMenuOpen(false); }}
                 sx={{ mr: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, cursor: 'pointer', py: 0.5 }}
             >
-                <Box component="img" src="/arabicwithm-notext.png" alt="Logo"
+                <Box component="img" src="/homepage/arabicwithm-notext.png" alt="Logo"
                     sx={{ height: isMobile ? 28 : 45, width: 'auto', objectFit: 'contain' }} />
                 <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                     <motion.div
@@ -256,9 +265,11 @@ export default function Navbar() {
             if (section.header === 'Study' && item === 'Revision') {
                 router.push('/revision');
             } else if (section.header === 'Study') {
-                // Use the STUDY_LEVEL_MAP to get the correct slug
                 const slug = STUDY_LEVEL_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-');
                 router.push(`/flashcards/${slug}`);
+            } else if (section.header === 'Cartoons') {
+                const slug = CARTOON_SLUG_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-');
+                router.push(`/cartoons/${slug}`);
             } else {
                 const key = item.toLowerCase().replace(/\s+/g, '-');
                 router.push(`/learn/${section.header.toLowerCase()}/${key}`);
