@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   Box,
   Typography,
@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Divider,
 } from '@mui/material'
 import { ArrowBack, Settings, Close } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
@@ -37,11 +38,16 @@ const PAGE_CSS = `
   html, body { background: var(--cream); margin: 0; }
 
   .script-line {
-    transition: background 0.15s ease;
+    transition: background 0.15s ease, border-color 0.2s ease;
     border-radius: 8px;
+    border-left: 3px solid transparent;
   }
   .script-line:hover {
     background: rgba(184,134,11,0.06);
+  }
+  .script-line.active {
+    background: rgba(184,134,11,0.12);
+    border-left-color: var(--gold);
   }
 
   .arabic-line {
@@ -90,6 +96,17 @@ const PAGE_CSS = `
     text-align: right;
   }
 `
+
+/* ─────────────────────────────────────────────
+   YouTube IFrame API Types
+───────────────────────────────────────────── */
+declare global {
+  interface Window {
+    YT: any
+    onYouTubeIframeAPIReady: (() => void) | undefined
+    __ytApiReady?: boolean
+  }
+}
 
 /* ─────────────────────────────────────────────
    Helpers
@@ -391,7 +408,7 @@ function SettingsDialog({
               borderRadius: '10px',
               border: '1px solid rgba(122,110,101,0.15)',
               background: 'rgba(122,110,101,0.03)',
-              gap: 2,
+              gap:  2,
             }}
           >
             <Box sx={{ pr: 2, flex: '0 0 auto' }}>
@@ -499,11 +516,25 @@ function SettingsDialog({
 }
 
 /* ─────────────────────────────────────────────
-   Parser (supports 3-line script + 4-col vocab)
+   Timestamp Parser
+───────────────────────────────────────────── */
+function parseTimestamp(line: string): number | null {
+  const m = line.match(/^(?:(\d+):)?(\d{1,2}):(\d{2})$/)
+  if (!m) return null
+  const h = parseInt(m[1] || '0', 10)
+  const min = parseInt(m[2], 10)
+  const sec = parseInt(m[3], 10)
+  if (min > 59 || sec > 59) return null
+  return h * 3600 + min * 60 + sec
+}
+
+/* ─────────────────────────────────────────────
+   Content Parser (with timestamps)
 ───────────────────────────────────────────── */
 function parseContent(content: string) {
   const lines = content.split('\n')
   const scriptLines: Array<{
+    timestamp: number | null
     arabicDiacritic: string
     arabicPlain: string
     english: string
@@ -511,6 +542,7 @@ function parseContent(content: string) {
   const vocabRows: Array<{ arabic: string; plain: string; english: string }> = []
   let inScript = false
   let inNotes = false
+  let pendingTimestamp: number | null = null
 
   let i = 0
   while (i < lines.length) {
@@ -530,6 +562,13 @@ function parseContent(content: string) {
     }
 
     if (inScript && line) {
+      const ts = parseTimestamp(line)
+      if (ts !== null) {
+        pendingTimestamp = ts
+        i++
+        continue
+      }
+
       const isArabic = /[\u0600-\u06FF]/.test(line)
       if (isArabic) {
         let j = i + 1
@@ -538,7 +577,6 @@ function parseContent(content: string) {
         const nextIsArabic = /[\u0600-\u06FF]/.test(nextLine)
 
         if (nextIsArabic) {
-          // New format: diacritic, plain, english
           let k = j + 1
           while (k < lines.length && !lines[k].trim()) k++
           const englishLine = lines[k]?.trim() ?? ''
@@ -546,37 +584,44 @@ function parseContent(content: string) {
 
           if (!englishIsArabic && englishLine && !englishLine.startsWith('#')) {
             scriptLines.push({
+              timestamp: pendingTimestamp,
               arabicDiacritic: line,
               arabicPlain: nextLine,
               english: englishLine,
             })
+            pendingTimestamp = null
             i = k + 1
             continue
           } else {
             scriptLines.push({
+              timestamp: pendingTimestamp,
               arabicDiacritic: line,
               arabicPlain: nextLine,
               english: '',
             })
+            pendingTimestamp = null
             i = j + 1
             continue
           }
         } else {
-          // Old format: diacritic + english
           if (nextLine && !nextLine.startsWith('#')) {
             scriptLines.push({
+              timestamp: pendingTimestamp,
               arabicDiacritic: line,
               arabicPlain: line,
               english: nextLine,
             })
+            pendingTimestamp = null
             i = j + 1
             continue
           } else {
             scriptLines.push({
+              timestamp: pendingTimestamp,
               arabicDiacritic: line,
               arabicPlain: line,
               english: '',
             })
+            pendingTimestamp = null
           }
         }
       }
@@ -614,6 +659,133 @@ function parseContent(content: string) {
   return { scriptLines, vocabRows }
 }
 
+/* ─────────────────────────────────────────────
+   YouTube Player Hook (Fixed)
+───────────────────────────────────────────── */
+function useYouTubePlayer(
+  videoId: string | undefined,
+  onTimeUpdate?: (time: number) => void
+) {
+  const playerRef = useRef<any>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const intervalRef = useRef<any>(null)
+  const onTimeUpdateRef = useRef(onTimeUpdate)
+  const [isReady, setIsReady] = useState(false)
+
+  useEffect(() => {
+    onTimeUpdateRef.current = onTimeUpdate
+  }, [onTimeUpdate])
+
+  useEffect(() => {
+    if (!videoId || !wrapRef.current) return
+
+    const initPlayer = () => {
+      if (!wrapRef.current || !videoId) return
+
+      wrapRef.current.innerHTML = ''
+      const inner = document.createElement('div')
+      inner.style.width = '100%'
+      inner.style.height = '100%'
+      wrapRef.current.appendChild(inner)
+
+      try {
+        playerRef.current = new window.YT.Player(inner, {
+          videoId,
+          playerVars: {
+            rel: 0,
+            modestbranding: 1,
+            enablejsapi: 1,
+            playsinline: 1,
+            origin:
+              typeof window !== 'undefined'
+                ? window.location.origin
+                : undefined,
+          },
+          events: {
+            onReady: () => {
+              setIsReady(true)
+              intervalRef.current = setInterval(() => {
+                const t = playerRef.current?.getCurrentTime?.()
+                if (typeof t === 'number') onTimeUpdateRef.current?.(t)
+              }, 200)
+            },
+            onStateChange: (event: any) => {
+              if (event.data === window.YT.PlayerState.PLAYING) {
+                if (!intervalRef.current) {
+                  intervalRef.current = setInterval(() => {
+                    const t = playerRef.current?.getCurrentTime?.()
+                    if (typeof t === 'number') onTimeUpdateRef.current?.(t)
+                  }, 200)
+                }
+              } else {
+                clearInterval(intervalRef.current)
+                intervalRef.current = null
+              }
+            },
+            onError: (e: any) => {
+              console.error('YT Player Error:', e.data)
+            },
+          },
+        })
+      } catch (e) {
+        console.error('YT init error:', e)
+      }
+    }
+
+    const loadApi = () => {
+      if (window.YT?.Player) {
+        initPlayer()
+        return
+      }
+      if (window.__ytApiReady) {
+        initPlayer()
+        return
+      }
+
+      const prevReady = window.onYouTubeIframeAPIReady
+      window.onYouTubeIframeAPIReady = () => {
+        window.__ytApiReady = true
+        prevReady?.()
+        initPlayer()
+      }
+
+      if (!document.getElementById('youtube-iframe-api')) {
+        const tag = document.createElement('script')
+        tag.id = 'youtube-iframe-api'
+        tag.src = 'https://www.youtube.com/iframe_api'
+        document.body.appendChild(tag)
+      }
+    }
+
+    const timer = setTimeout(loadApi, 50)
+
+    return () => {
+      clearTimeout(timer)
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+      try {
+        playerRef.current?.destroy?.()
+      } catch {}
+      if (wrapRef.current) {
+        wrapRef.current.innerHTML = ''
+      }
+      setIsReady(false)
+    }
+  }, [videoId])
+
+  const seekTo = useCallback((seconds: number) => {
+    if (playerRef.current?.seekTo) {
+      playerRef.current.seekTo(seconds, true)
+      playerRef.current.playVideo?.()
+    }
+  }, [])
+
+  return { wrapRef, seekTo, isReady }
+}
+
+/* ─────────────────────────────────────────────
+   Level Colors
+───────────────────────────────────────────── */
 const LEVEL_COLORS: Record<string, string> = {
   A1: '#2d6a4f',
   A2: '#40916c',
@@ -623,6 +795,9 @@ const LEVEL_COLORS: Record<string, string> = {
   C2: '#4a2f7a',
 }
 
+/* ─────────────────────────────────────────────
+   Main Component
+───────────────────────────────────────────── */
 export default function EpisodePage({
   episode,
   showTitle,
@@ -635,12 +810,43 @@ export default function EpisodePage({
   const [showDiacritics, setShowDiacritics] = useState(true)
   const [textScale, setTextScale] = useState(1.2)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  const scriptContainerRef = useRef<HTMLDivElement>(null)
+  const activeLineRef = useRef<HTMLDivElement | null>(null)
 
-  const { scriptLines, vocabRows } = parseContent(episode.content)
+  const { scriptLines, vocabRows } = useMemo(
+    () => parseContent(episode.content),
+    [episode.content]
+  )
 
-  const embedUrl = episode.youtubeShort
-    ? `https://www.youtube.com/embed/${episode.youtubeId}?rel=0&modestbranding=1`
-    : `https://www.youtube.com/embed/${episode.youtubeId}?rel=0&modestbranding=1`
+  const handleTimeUpdate = useCallback(
+    (time: number) => {
+      let idx = -1
+      for (let i = 0; i < scriptLines.length; i++) {
+        const ts = scriptLines[i].timestamp
+        if (ts != null && ts <= time) {
+          idx = i
+        } else if (ts != null && ts > time) {
+          break
+        }
+      }
+      setActiveIndex(idx >= 0 ? idx : null)
+    },
+    [scriptLines]
+  )
+
+  const { wrapRef, seekTo, isReady } = useYouTubePlayer(
+    episode.youtubeId,
+    handleTimeUpdate
+  )
+
+  useEffect(() => {
+    if (activeIndex == null) return
+    const el = activeLineRef.current
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [activeIndex])
 
   return (
     <>
@@ -688,7 +894,6 @@ export default function EpisodePage({
               alignItems: { xs: 'center', lg: 'flex-start' },
             }}
           >
-            {/* Title */}
             <Typography
               component="h1"
               sx={{
@@ -703,7 +908,6 @@ export default function EpisodePage({
               {episode.title}
             </Typography>
 
-            {/* Tags row — back button, level, tags, settings */}
             <Box
               sx={{
                 display: 'flex',
@@ -714,7 +918,6 @@ export default function EpisodePage({
                 width: { xs: '100%', lg: 'auto' },
               }}
             >
-              {/* Mobile back button */}
               <Box
                 onClick={() => router.push(`/cartoons/${episode.show}`)}
                 sx={{
@@ -770,7 +973,6 @@ export default function EpisodePage({
                 </Box>
               ))}
 
-              {/* Mobile settings button */}
               <IconButton
                 onClick={() => setSettingsOpen(true)}
                 size="small"
@@ -792,7 +994,7 @@ export default function EpisodePage({
               </IconButton>
             </Box>
 
-            {/* Video — sticky on mobile */}
+            {/* Video player */}
             <Box
               sx={{
                 width: '100%',
@@ -808,16 +1010,14 @@ export default function EpisodePage({
               }}
             >
               <Box
-                component="iframe"
-                src={embedUrl}
-                title={episode.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                sx={{ width: '100%', height: '100%', border: 0, display: 'block' }}
+                ref={wrapRef}
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                }}
               />
             </Box>
 
-            {/* Desktop-only: divider + back link */}
             <Box
               sx={{
                 display: { xs: 'none', lg: 'flex' },
@@ -854,7 +1054,6 @@ export default function EpisodePage({
 
           {/* ── Right: Script + Vocab ── */}
           <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            {/* Desktop controls */}
             <Box
               sx={{
                 display: { xs: 'none', lg: 'flex' },
@@ -876,7 +1075,6 @@ export default function EpisodePage({
               />
             </Box>
 
-            {/* Tabs */}
             <Box
               sx={{
                 borderBottom: '1px solid rgba(44,26,14,0.07)',
@@ -915,7 +1113,6 @@ export default function EpisodePage({
               </Tabs>
             </Box>
 
-            {/* Content */}
             <Box
               sx={{
                 background: '#fff',
@@ -925,7 +1122,10 @@ export default function EpisodePage({
               }}
             >
               {tab === 0 && (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Box
+                  ref={scriptContainerRef}
+                  sx={{ display: 'flex', flexDirection: 'column' }}
+                >
                   {scriptLines.length === 0 ? (
                     <Typography
                       sx={{
@@ -937,40 +1137,82 @@ export default function EpisodePage({
                       No script found in this episode file.
                     </Typography>
                   ) : (
-                    scriptLines.map((line, i) => (
-                      <Box
-                        key={i}
-                        className="script-line"
-                        sx={{
-                          px: 2,
-                          py: 1.5,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 0.3,
-                        }}
-                      >
-                        <Typography
-                          className="arabic-line"
-                          sx={{
-                            fontSize: `calc(1.35rem * ${textScale})`,
-                          }}
-                        >
-                          {showDiacritics
-                            ? line.arabicDiacritic
-                            : line.arabicPlain}
-                        </Typography>
-                        {line.english && (
-                          <Typography
-                            className="english-line"
+                    scriptLines.map((line, i) => {
+                      const hasTimestamp = line.timestamp != null
+                      const isActive = activeIndex === i
+                      const isLast = i === scriptLines.length - 1
+
+                      return (
+                        <React.Fragment key={i}>
+                          <Box
+                            ref={isActive ? activeLineRef : undefined}
+                            className={`script-line ${isActive ? 'active' : ''}`}
+                            onClick={() =>
+                              hasTimestamp && seekTo(line.timestamp!)
+                            }
                             sx={{
-                              fontSize: `calc(0.88rem * ${textScale})`,
+                              px: 2,
+                              py: 1.5,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 0.3,
+                              cursor: hasTimestamp ? 'pointer' : 'default',
+                              opacity: hasTimestamp ? 1 : 0.75,
                             }}
                           >
-                            {line.english}
-                          </Typography>
-                        )}
-                      </Box>
-                    ))
+                            {hasTimestamp && (
+                              <Typography
+                                sx={{
+                                  fontFamily:
+                                    'ui-monospace, SFMono-Regular, Menlo, monospace',
+                                  fontSize: '0.65rem',
+                                  color: 'var(--gold)',
+                                  letterSpacing: '0.04em',
+                                  fontWeight: 600,
+                                  lineHeight: 1,
+                                }}
+                              >
+                                {(() => {
+                                  const s = line.timestamp!
+                                  const m = Math.floor(s / 60)
+                                  const sec = Math.floor(s % 60)
+                                  return `${m}:${sec.toString().padStart(2, '0')}`
+                                })()}
+                              </Typography>
+                            )}
+                            <Typography
+                              className="arabic-line"
+                              sx={{
+                                fontSize: `calc(1.35rem * ${textScale})`,
+                              }}
+                            >
+                              {showDiacritics
+                                ? line.arabicDiacritic
+                                : line.arabicPlain}
+                            </Typography>
+                            {line.english && (
+                              <Typography
+                                className="english-line"
+                                sx={{
+                                  fontSize: `calc(0.88rem * ${textScale})`,
+                                }}
+                              >
+                                {line.english}
+                              </Typography>
+                            )}
+                          </Box>
+
+                          {!isLast && (
+                            <Divider
+                              sx={{
+                                borderColor: 'rgba(44,26,14,0.06)',
+                                my: 0.5,
+                              }}
+                            />
+                          )}
+                        </React.Fragment>
+                      )
+                    })
                   )}
                 </Box>
               )}
