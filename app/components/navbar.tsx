@@ -505,6 +505,8 @@ export default function Navbar() {
                     </React.Fragment>
                 ))}
 
+                <GoldLine />
+
                 <ListItem disablePadding>
                     <ListItemButton className="mobile-list-btn"
                         onClick={() => { router.push('/about'); setDrawerOpen(false); }}
@@ -519,6 +521,7 @@ export default function Navbar() {
                         } />
                     </ListItemButton>
                 </ListItem>
+
 
                 <ListItem disablePadding>
                     <ListItemButton className="mobile-list-btn"
@@ -552,51 +555,6 @@ export default function Navbar() {
 
                 {isLoggedIn && (
                     <>
-                        <GoldLine />
-                        <ListItem disablePadding>
-                            <ListItemButton className="mobile-list-btn"
-                                onClick={() => { router.push('/profile'); setDrawerOpen(false); }}
-                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
-                                <ListItemIcon sx={{ color: 'var(--forest)' }}>
-                                    <AccountCircle sx={{ fontSize: 20 }} />
-                                </ListItemIcon>
-                                <ListItemText primary={
-                                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
-                                        Profile
-                                    </Typography>
-                                } />
-                            </ListItemButton>
-                        </ListItem>
-
-                        <ListItem disablePadding>
-                            <ListItemButton className="mobile-list-btn"
-                                onClick={() => { router.push('/progress'); setDrawerOpen(false); }}
-                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
-                                <ListItemIcon sx={{ color: 'var(--forest)' }}>
-                                    <ManageSearchSharp sx={{ fontSize: 20 }} />
-                                </ListItemIcon>
-                                <ListItemText primary={
-                                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
-                                        Progress
-                                    </Typography>
-                                } />
-                            </ListItemButton>
-                        </ListItem>
-
-                        <ListItem disablePadding>
-                            <ListItemButton className="mobile-list-btn"
-                                onClick={() => { router.push('/revision'); setDrawerOpen(false); }}
-                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
-                                <ListItemIcon sx={{ color: 'var(--forest)' }}>
-                                    <School sx={{ fontSize: 20 }} />
-                                </ListItemIcon>
-                                <ListItemText primary={
-                                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: 'var(--bark)' }}>
-                                        Revision
-                                    </Typography>
-                                } />
-                            </ListItemButton>
-                        </ListItem>
 
                         <ListItem disablePadding>
                             <ListItemButton className="mobile-list-btn"
@@ -614,6 +572,7 @@ export default function Navbar() {
                         </ListItem>
                     </>
                 )}
+
             </List>
         </Drawer>
     );
