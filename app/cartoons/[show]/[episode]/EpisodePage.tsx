@@ -37,14 +37,28 @@ const PAGE_CSS = `
 
   html, body { background: var(--cream); margin: 0; }
 
+  /*
+    Mobile sticky header.
+    Using a plain CSS class is the most reliable way to ensure
+    position:sticky works — MUI's sx prop can sometimes add
+    wrapper transforms that break stacking context.
+  */
+  @media (max-width: 1199px) {
+    .mobile-sticky-header {
+      position: sticky;
+      top: 64px;          /* match your Navbar height */
+      z-index: 20;
+      background: var(--cream);
+      box-shadow: 0 2px 16px rgba(44,26,14,0.09);
+    }
+  }
+
   .script-line {
     transition: background 0.15s ease, border-color 0.2s ease;
     border-radius: 8px;
     border-left: 3px solid transparent;
   }
-  .script-line:hover {
-    background: rgba(184,134,11,0.06);
-  }
+  .script-line:hover { background: rgba(184,134,11,0.06); }
   .script-line.active {
     background: rgba(184,134,11,0.12);
     border-left-color: var(--gold);
@@ -138,10 +152,7 @@ function PillToggle({
         background: enabled ? `${activeColor}14` : 'transparent',
         minWidth: 178,
         transition: 'all 0.15s',
-        '&:hover': {
-          borderColor: activeColor,
-          background: `${activeColor}0d`,
-        },
+        '&:hover': { borderColor: activeColor, background: `${activeColor}0d` },
       }}
     >
       <Box
@@ -207,15 +218,7 @@ function DesktopTextScaleSlider({
         minWidth: 160,
       }}
     >
-      <Typography
-        sx={{
-          fontFamily: 'Jost, sans-serif',
-          fontSize: '0.7rem',
-          fontWeight: 600,
-          color: '#7a6e65',
-          flexShrink: 0,
-        }}
-      >
+      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: '#7a6e65', flexShrink: 0 }}>
         A
       </Typography>
       <Slider
@@ -225,21 +228,9 @@ function DesktopTextScaleSlider({
         step={0.1}
         size="small"
         onChange={(_, v) => onChange(v as number)}
-        sx={{
-          color: '#b8860b',
-          flex: 1,
-          '& .MuiSlider-thumb': { width: 14, height: 14 },
-        }}
+        sx={{ color: '#b8860b', flex: 1, '& .MuiSlider-thumb': { width: 14, height: 14 } }}
       />
-      <Typography
-        sx={{
-          fontFamily: 'Jost, sans-serif',
-          fontSize: '1rem',
-          fontWeight: 700,
-          color: '#7a6e65',
-          flexShrink: 0,
-        }}
-      >
+      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>
         A
       </Typography>
     </Box>
@@ -289,60 +280,19 @@ function SettingsDialog({
         background: enabled ? `${activeColor}08` : 'rgba(122,110,101,0.03)',
         transition: 'all 0.15s',
         userSelect: 'none',
-        '&:hover': {
-          borderColor: `${activeColor}88`,
-          background: `${activeColor}0d`,
-        },
+        '&:hover': { borderColor: `${activeColor}88`, background: `${activeColor}0d` },
       }}
     >
       <Box sx={{ pr: 2 }}>
-        <Typography
-          sx={{
-            fontFamily: 'Jost, sans-serif',
-            fontSize: '0.95rem',
-            fontWeight: 600,
-            color: '#2c1a0e',
-            lineHeight: 1.2,
-          }}
-        >
+        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e', lineHeight: 1.2 }}>
           {label}
         </Typography>
-        <Typography
-          sx={{
-            fontFamily: 'Jost, sans-serif',
-            fontSize: '0.78rem',
-            color: '#7a6e65',
-            mt: 0.3,
-            lineHeight: 1.4,
-          }}
-        >
+        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#7a6e65', mt: 0.3, lineHeight: 1.4 }}>
           {description}
         </Typography>
       </Box>
-      <Box
-        sx={{
-          width: 38,
-          height: 22,
-          borderRadius: '999px',
-          flexShrink: 0,
-          background: enabled ? activeColor : 'rgba(122,110,101,0.22)',
-          position: 'relative',
-          transition: 'background 0.2s',
-        }}
-      >
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '3px',
-            left: enabled ? '19px' : '3px',
-            width: 16,
-            height: 16,
-            borderRadius: '50%',
-            background: '#fff',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.22)',
-            transition: 'left 0.18s cubic-bezier(0.4,0,0.2,1)',
-          }}
-        />
+      <Box sx={{ width: 38, height: 22, borderRadius: '999px', flexShrink: 0, background: enabled ? activeColor : 'rgba(122,110,101,0.22)', position: 'relative', transition: 'background 0.2s' }}>
+        <Box sx={{ position: 'absolute', top: '3px', left: enabled ? '19px' : '3px', width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.22)', transition: 'left 0.18s cubic-bezier(0.4,0,0.2,1)' }} />
       </Box>
     </Box>
   )
@@ -351,39 +301,11 @@ function SettingsDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: '16px',
-            width: '100%',
-            maxWidth: 360,
-            m: 2,
-            overflow: 'hidden',
-            boxShadow: '0 24px 64px rgba(44,26,14,0.2)',
-          },
-        },
-      }}
+      slotProps={{ paper: { sx: { borderRadius: '16px', width: '100%', maxWidth: 360, m: 2, overflow: 'hidden', boxShadow: '0 24px 64px rgba(44,26,14,0.2)' } } }}
     >
-      <DialogTitle
-        sx={{
-          fontFamily: "'EB Garamond', serif",
-          fontSize: '1.5rem',
-          fontWeight: 700,
-          color: '#2c1a0e',
-          pb: 0.5,
-          pt: 2.5,
-          px: 2.5,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
+      <DialogTitle sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.5rem', fontWeight: 700, color: '#2c1a0e', pb: 0.5, pt: 2.5, px: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         Settings
-        <IconButton
-          onClick={onClose}
-          size="small"
-          sx={{ color: '#7a6e65', mr: -0.5 }}
-        >
+        <IconButton onClick={onClose} size="small" sx={{ color: '#7a6e65', mr: -0.5 }}>
           <Close sx={{ fontSize: '1.2rem' }} />
         </IconButton>
       </DialogTitle>
@@ -397,117 +319,24 @@ function SettingsDialog({
             onToggle={onToggleDiacritics}
             activeColor="#b8860b"
           />
-
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              py: 1.25,
-              px: 1.5,
-              borderRadius: '10px',
-              border: '1px solid rgba(122,110,101,0.15)',
-              background: 'rgba(122,110,101,0.03)',
-              gap:  2,
-            }}
-          >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.25, px: 1.5, borderRadius: '10px', border: '1px solid rgba(122,110,101,0.15)', background: 'rgba(122,110,101,0.03)', gap: 2 }}>
             <Box sx={{ pr: 2, flex: '0 0 auto' }}>
-              <Typography
-                sx={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  color: '#2c1a0e',
-                }}
-              >
-                Text Size
-              </Typography>
-              <Typography
-                sx={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: '0.78rem',
-                  color: '#7a6e65',
-                  mt: 0.3,
-                }}
-              >
-                Adjust Arabic text size
-              </Typography>
+              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e' }}>Text Size</Typography>
+              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#7a6e65', mt: 0.3 }}>Adjust Arabic text size</Typography>
             </Box>
-
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                flex: 1,
-                minWidth: 0,
-              }}
-            >
-              <Typography
-                sx={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  color: '#7a6e65',
-                  flexShrink: 0,
-                }}
-              >
-                A
-              </Typography>
-
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
+              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Slider
-                  value={textScale}
-                  min={0.9}
-                  max={1.5}
-                  step={0.1}
-                  size="small"
-                  onChange={(_, v) => onTextScaleChange(v as number)}
-                  sx={{
-                    color: '#b8860b',
-                    width: '100%',
-                    '& .MuiSlider-thumb': {
-                      width: 14,
-                      height: 14,
-                    },
-                  }}
-                />
+                <Slider value={textScale} min={0.9} max={1.5} step={0.1} size="small" onChange={(_, v) => onTextScaleChange(v as number)} sx={{ color: '#b8860b', width: '100%', '& .MuiSlider-thumb': { width: 14, height: 14 } }} />
               </Box>
-
-              <Typography
-                sx={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: '1.1rem',
-                  fontWeight: 700,
-                  color: '#7a6e65',
-                  flexShrink: 0,
-                }}
-              >
-                A
-              </Typography>
+              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.1rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
             </Box>
           </Box>
         </Box>
       </DialogContent>
 
       <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5 }}>
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={onClose}
-          disableElevation
-          sx={{
-            background: '#2c1a0e',
-            color: '#f5ede0',
-            fontFamily: 'Jost, sans-serif',
-            fontWeight: 600,
-            fontSize: '0.95rem',
-            textTransform: 'none',
-            borderRadius: '10px',
-            py: 1.1,
-            '&:hover': { background: '#1a0f08' },
-          }}
-        >
+        <Button fullWidth variant="contained" onClick={onClose} disableElevation sx={{ background: '#2c1a0e', color: '#f5ede0', fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.95rem', textTransform: 'none', borderRadius: '10px', py: 1.1, '&:hover': { background: '#1a0f08' } }}>
           Done
         </Button>
       </DialogActions>
@@ -548,26 +377,12 @@ function parseContent(content: string) {
   while (i < lines.length) {
     const line = lines[i].trim()
 
-    if (line === '## Script') {
-      inScript = true
-      inNotes = false
-      i++
-      continue
-    }
-    if (line === '## Notes') {
-      inScript = false
-      inNotes = true
-      i++
-      continue
-    }
+    if (line === '## Script') { inScript = true; inNotes = false; i++; continue }
+    if (line === '## Notes')  { inScript = false; inNotes = true;  i++; continue }
 
     if (inScript && line) {
       const ts = parseTimestamp(line)
-      if (ts !== null) {
-        pendingTimestamp = ts
-        i++
-        continue
-      }
+      if (ts !== null) { pendingTimestamp = ts; i++; continue }
 
       const isArabic = /[\u0600-\u06FF]/.test(line)
       if (isArabic) {
@@ -581,75 +396,31 @@ function parseContent(content: string) {
           while (k < lines.length && !lines[k].trim()) k++
           const englishLine = lines[k]?.trim() ?? ''
           const englishIsArabic = /[\u0600-\u06FF]/.test(englishLine)
-
           if (!englishIsArabic && englishLine && !englishLine.startsWith('#')) {
-            scriptLines.push({
-              timestamp: pendingTimestamp,
-              arabicDiacritic: line,
-              arabicPlain: nextLine,
-              english: englishLine,
-            })
-            pendingTimestamp = null
-            i = k + 1
-            continue
+            scriptLines.push({ timestamp: pendingTimestamp, arabicDiacritic: line, arabicPlain: nextLine, english: englishLine })
+            pendingTimestamp = null; i = k + 1; continue
           } else {
-            scriptLines.push({
-              timestamp: pendingTimestamp,
-              arabicDiacritic: line,
-              arabicPlain: nextLine,
-              english: '',
-            })
-            pendingTimestamp = null
-            i = j + 1
-            continue
+            scriptLines.push({ timestamp: pendingTimestamp, arabicDiacritic: line, arabicPlain: nextLine, english: '' })
+            pendingTimestamp = null; i = j + 1; continue
           }
         } else {
           if (nextLine && !nextLine.startsWith('#')) {
-            scriptLines.push({
-              timestamp: pendingTimestamp,
-              arabicDiacritic: line,
-              arabicPlain: line,
-              english: nextLine,
-            })
-            pendingTimestamp = null
-            i = j + 1
-            continue
+            scriptLines.push({ timestamp: pendingTimestamp, arabicDiacritic: line, arabicPlain: line, english: nextLine })
+            pendingTimestamp = null; i = j + 1; continue
           } else {
-            scriptLines.push({
-              timestamp: pendingTimestamp,
-              arabicDiacritic: line,
-              arabicPlain: line,
-              english: '',
-            })
+            scriptLines.push({ timestamp: pendingTimestamp, arabicDiacritic: line, arabicPlain: line, english: '' })
             pendingTimestamp = null
           }
         }
       }
     }
 
-    if (
-      inNotes &&
-      line.startsWith('|') &&
-      !line.startsWith('|--') &&
-      !line.startsWith('| Arabic')
-    ) {
-      const cols = line
-        .split('|')
-        .map((c) => c.trim())
-        .filter(Boolean)
-
+    if (inNotes && line.startsWith('|') && !line.startsWith('|--') && !line.startsWith('| Arabic')) {
+      const cols = line.split('|').map((c) => c.trim()).filter(Boolean)
       if (cols.length >= 4) {
-        vocabRows.push({
-          arabic: cols[0],
-          plain: cols[1],
-          english: cols[3],
-        })
+        vocabRows.push({ arabic: cols[0], plain: cols[1], english: cols[3] })
       } else if (cols.length >= 3) {
-        vocabRows.push({
-          arabic: cols[0],
-          plain: cols[0],
-          english: cols[2],
-        })
+        vocabRows.push({ arabic: cols[0], plain: cols[0], english: cols[2] })
       }
     }
 
@@ -660,47 +431,31 @@ function parseContent(content: string) {
 }
 
 /* ─────────────────────────────────────────────
-   YouTube Player Hook (Fixed)
+   YouTube Player Hook
 ───────────────────────────────────────────── */
-function useYouTubePlayer(
-  videoId: string | undefined,
-  onTimeUpdate?: (time: number) => void
-) {
+function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: number) => void) {
   const playerRef = useRef<any>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const intervalRef = useRef<any>(null)
   const onTimeUpdateRef = useRef(onTimeUpdate)
   const [isReady, setIsReady] = useState(false)
 
-  useEffect(() => {
-    onTimeUpdateRef.current = onTimeUpdate
-  }, [onTimeUpdate])
+  useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
 
   useEffect(() => {
     if (!videoId || !wrapRef.current) return
 
     const initPlayer = () => {
       if (!wrapRef.current || !videoId) return
-
       wrapRef.current.innerHTML = ''
       const inner = document.createElement('div')
       inner.style.width = '100%'
       inner.style.height = '100%'
       wrapRef.current.appendChild(inner)
-
       try {
         playerRef.current = new window.YT.Player(inner, {
           videoId,
-          playerVars: {
-            rel: 0,
-            modestbranding: 1,
-            enablejsapi: 1,
-            playsinline: 1,
-            origin:
-              typeof window !== 'undefined'
-                ? window.location.origin
-                : undefined,
-          },
+          playerVars: { rel: 0, modestbranding: 1, enablejsapi: 1, playsinline: 1, origin: typeof window !== 'undefined' ? window.location.origin : undefined },
           events: {
             onReady: () => {
               setIsReady(true)
@@ -722,33 +477,16 @@ function useYouTubePlayer(
                 intervalRef.current = null
               }
             },
-            onError: (e: any) => {
-              console.error('YT Player Error:', e.data)
-            },
+            onError: (e: any) => console.error('YT Player Error:', e.data),
           },
         })
-      } catch (e) {
-        console.error('YT init error:', e)
-      }
+      } catch (e) { console.error('YT init error:', e) }
     }
 
     const loadApi = () => {
-      if (window.YT?.Player) {
-        initPlayer()
-        return
-      }
-      if (window.__ytApiReady) {
-        initPlayer()
-        return
-      }
-
+      if (window.YT?.Player || window.__ytApiReady) { initPlayer(); return }
       const prevReady = window.onYouTubeIframeAPIReady
-      window.onYouTubeIframeAPIReady = () => {
-        window.__ytApiReady = true
-        prevReady?.()
-        initPlayer()
-      }
-
+      window.onYouTubeIframeAPIReady = () => { window.__ytApiReady = true; prevReady?.(); initPlayer() }
       if (!document.getElementById('youtube-iframe-api')) {
         const tag = document.createElement('script')
         tag.id = 'youtube-iframe-api'
@@ -758,17 +496,12 @@ function useYouTubePlayer(
     }
 
     const timer = setTimeout(loadApi, 50)
-
     return () => {
       clearTimeout(timer)
       clearInterval(intervalRef.current)
       intervalRef.current = null
-      try {
-        playerRef.current?.destroy?.()
-      } catch {}
-      if (wrapRef.current) {
-        wrapRef.current.innerHTML = ''
-      }
+      try { playerRef.current?.destroy?.() } catch {}
+      if (wrapRef.current) wrapRef.current.innerHTML = ''
       setIsReady(false)
     }
   }, [videoId])
@@ -787,12 +520,8 @@ function useYouTubePlayer(
    Level Colors
 ───────────────────────────────────────────── */
 const LEVEL_COLORS: Record<string, string> = {
-  A1: '#2d6a4f',
-  A2: '#40916c',
-  B1: '#b5861a',
-  B2: '#9c6b00',
-  C1: '#6d4c9e',
-  C2: '#4a2f7a',
+  A1: '#2d6a4f', A2: '#40916c', B1: '#b5861a',
+  B2: '#9c6b00', C1: '#6d4c9e', C2: '#4a2f7a',
 }
 
 /* ─────────────────────────────────────────────
@@ -814,38 +543,26 @@ export default function EpisodePage({
   const scriptContainerRef = useRef<HTMLDivElement>(null)
   const activeLineRef = useRef<HTMLDivElement | null>(null)
 
-  const { scriptLines, vocabRows } = useMemo(
-    () => parseContent(episode.content),
-    [episode.content]
-  )
+  const { scriptLines, vocabRows } = useMemo(() => parseContent(episode.content), [episode.content])
 
   const handleTimeUpdate = useCallback(
     (time: number) => {
       let idx = -1
       for (let i = 0; i < scriptLines.length; i++) {
         const ts = scriptLines[i].timestamp
-        if (ts != null && ts <= time) {
-          idx = i
-        } else if (ts != null && ts > time) {
-          break
-        }
+        if (ts != null && ts <= time) idx = i
+        else if (ts != null && ts > time) break
       }
       setActiveIndex(idx >= 0 ? idx : null)
     },
     [scriptLines]
   )
 
-  const { wrapRef, seekTo, isReady } = useYouTubePlayer(
-    episode.youtubeId,
-    handleTimeUpdate
-  )
+  const { wrapRef, seekTo } = useYouTubePlayer(episode.youtubeId, handleTimeUpdate)
 
   useEffect(() => {
     if (activeIndex == null) return
-    const el = activeLineRef.current
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }
+    activeLineRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [activeIndex])
 
   return (
@@ -866,7 +583,7 @@ export default function EpisodePage({
         component="main"
         sx={{
           background: 'var(--cream)',
-          pt: { xs: '80px', md: '96px' },
+          pt: { xs: '64px', md: '96px' },
           pb: { xs: 6, md: 10 },
         }}
       >
@@ -875,163 +592,111 @@ export default function EpisodePage({
             display: { xs: 'flex', lg: 'grid' },
             flexDirection: { xs: 'column', lg: 'unset' },
             gridTemplateColumns: { lg: '420px 1fr' },
-            gap: { xs: 3, lg: 5 },
+            gap: { xs: 0, lg: 5 },
             maxWidth: 1536,
             mx: 'auto',
-            px: { xs: 2.5, md: 5, lg: 6 },
+            px: { xs: 0, lg: 6 },
             alignItems: { xs: 'stretch', lg: 'start' },
+            // CRITICAL: no overflow:hidden on any ancestor of a sticky element
           }}
         >
-          {/* ── Left: Video + meta ── */}
+          {/* ── Left column ── */}
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2.5,
+              // Desktop: entire left column is sticky
               position: { lg: 'sticky' },
               top: { lg: 96 },
-              width: { xs: '100%', lg: 'auto' },
-              alignItems: { xs: 'center', lg: 'flex-start' },
+              display: 'flex',
+              flexDirection: 'column',
+              gap: { lg: 2.5 },
+              width: '100%',
             }}
           >
-            <Typography
-              component="h1"
-              sx={{
-                fontFamily: 'var(--font-serif)',
-                fontSize: { xs: '1.6rem', md: '2rem' },
-                fontWeight: 700,
-                color: 'var(--bark)',
-                lineHeight: 1.15,
-                textAlign: { xs: 'center', lg: 'left' },
-              }}
-            >
-              {episode.title}
-            </Typography>
-
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 1,
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                justifyContent: { xs: 'center', lg: 'flex-start' },
-                width: { xs: '100%', lg: 'auto' },
-              }}
-            >
-              <Box
-                onClick={() => router.push(`/cartoons/${episode.show}`)}
-                sx={{
-                  display: { xs: 'inline-flex', lg: 'none' },
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 28,
-                  height: 28,
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  color: 'var(--muted)',
-                  background: 'rgba(44,26,14,0.04)',
-                  '&:hover': {
-                    color: 'var(--gold)',
-                    background: 'rgba(184,134,11,0.08)',
-                  },
-                  transition: 'all 0.2s',
-                }}
-              >
-                <ArrowBack sx={{ fontSize: 18 }} />
-              </Box>
-
+            {/*
+              .mobile-sticky-header applies position:sticky only below lg
+              via the media query in PAGE_CSS. On lg+ it's just a normal div.
+              No MUI sx position override here — the CSS class owns stickiness.
+            */}
+            <div className="mobile-sticky-header">
               <Box
                 sx={{
-                  background: LEVEL_COLORS[episode.level] ?? 'var(--forest)',
-                  color: '#fff',
-                  fontFamily: 'Jost, var(--font-sans)',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  px: 1.2,
-                  py: 0.4,
-                  borderRadius: '4px',
+                  px: { xs: 2.5, md: 5, lg: 0 },
+                  pt: { xs: 2, lg: 0 },
+                  pb: { xs: 2, lg: 0 },
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: { xs: 1.5, lg: 2.5 },
                 }}
               >
-                {episode.level}
-              </Box>
+                {/* Title row */}
+                <Box sx={{ display: 'flex', alignItems: 'center', position: 'relative', minHeight: 32 }}>
+                  {/* Back — mobile only, anchored left */}
+                  <Box
+                    onClick={() => router.push(`/cartoons/${episode.show}`)}
+                    sx={{
+                      display: { xs: 'inline-flex', lg: 'none' },
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 30,
+                      height: 30,
+                      flexShrink: 0,
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                      color: 'var(--muted)',
+                      background: 'rgba(44,26,14,0.04)',
+                      '&:hover': { color: 'var(--gold)', background: 'rgba(184,134,11,0.08)' },
+                      transition: 'all 0.2s',
+                      zIndex: 1,
+                    }}
+                  >
+                    <ArrowBack sx={{ fontSize: 18 }} />
+                  </Box>
 
-              {episode.tags.map((tag) => (
+                  {/* Title — centered on mobile, left-aligned on desktop */}
+                  <Typography
+                    component="h1"
+                    sx={{
+                      fontFamily: 'var(--font-serif)',
+                      fontWeight: 700,
+                      color: 'var(--bark)',
+                      lineHeight: 1.2,
+                      // Mobile: absolute center between the back button and edge
+                      position: { xs: 'absolute', lg: 'static' },
+                      left: { xs: '50%', lg: 'auto' },
+                      transform: { xs: 'translateX(-50%)', lg: 'none' },
+                      width: { xs: 'calc(100% - 48px)', lg: 'auto' },
+                      textAlign: { xs: 'center', lg: 'left' },
+                      fontSize: { xs: '1.15rem', md: '2rem' },
+                      // Prevent long titles from overflowing on mobile
+                      whiteSpace: { xs: 'nowrap', lg: 'normal' },
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {episode.title}
+                  </Typography>
+                </Box>
+
+                {/* Video */}
                 <Box
-                  key={tag}
                   sx={{
-                    fontFamily: 'Jost, var(--font-sans)',
-                    fontSize: '0.68rem',
-                    color: 'var(--muted)',
-                    border: '1px solid rgba(122,110,101,0.25)',
-                    px: 1,
-                    py: 0.2,
-                    borderRadius: '3px',
+                    width: '100%',
+                    borderRadius: { xs: '12px', lg: '16px' },
+                    overflow: 'hidden',
+                    boxShadow: '0 12px 40px rgba(44,26,14,0.18)',
+                    background: '#000',
+                    aspectRatio: episode.youtubeShort ? '9/16' : '16/9',
+                    maxHeight: episode.youtubeShort ? { xs: 300, sm: 400, lg: 560 } : 'auto',
                   }}
                 >
-                  {tag}
+                  <Box ref={wrapRef} sx={{ width: '100%', height: '100%' }} />
                 </Box>
-              ))}
+              </Box>
+            </div>
 
-              <IconButton
-                onClick={() => setSettingsOpen(true)}
-                size="small"
-                sx={{
-                  display: { xs: 'inline-flex', lg: 'none' },
-                  width: 28,
-                  height: 28,
-                  border: '1px solid rgba(122,110,101,0.3)',
-                  borderRadius: '50%',
-                  color: '#7a6e65',
-                  ml: 0.5,
-                  '&:hover': {
-                    background: 'rgba(122,110,101,0.08)',
-                    borderColor: 'rgba(122,110,101,0.5)',
-                  },
-                }}
-              >
-                <Settings sx={{ fontSize: '0.9rem' }} />
-              </IconButton>
-            </Box>
-
-            {/* Video player */}
-            <Box
-              sx={{
-                width: '100%',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                boxShadow: '0 12px 40px rgba(44,26,14,0.18)',
-                background: '#000',
-                aspectRatio: episode.youtubeShort ? '9/16' : '16/9',
-                maxHeight: episode.youtubeShort ? 560 : 'auto',
-                position: { xs: 'sticky', lg: 'static' },
-                top: { xs: 72 },
-                zIndex: { xs: 10 },
-              }}
-            >
-              <Box
-                ref={wrapRef}
-                sx={{
-                  width: '100%',
-                  height: '100%',
-                }}
-              />
-            </Box>
-
-            <Box
-              sx={{
-                display: { xs: 'none', lg: 'flex' },
-                flexDirection: 'column',
-                gap: 2.5,
-              }}
-            >
-              <Box
-                sx={{
-                  height: '1px',
-                  background:
-                    'linear-gradient(90deg, transparent, rgba(184,134,11,0.3), transparent)',
-                }}
-              />
+            {/* Desktop-only: divider + back button below video */}
+            <Box sx={{ display: { xs: 'none', lg: 'flex' }, flexDirection: 'column', gap: 2.5 }}>
+              <Box sx={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(184,134,11,0.3), transparent)' }} />
               <Button
                 startIcon={<ArrowBack sx={{ fontSize: 18 }} />}
                 onClick={() => router.push(`/cartoons/${episode.show}`)}
@@ -1053,20 +718,18 @@ export default function EpisodePage({
           </Box>
 
           {/* ── Right: Script + Vocab ── */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            <Box
-              sx={{
-                display: { xs: 'none', lg: 'flex' },
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-                gap: 2,
-                mb: 2,
-              }}
-            >
-              <DesktopTextScaleSlider
-                textScale={textScale}
-                onChange={setTextScale}
-              />
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              minWidth: 0,
+              px: { xs: 2.5, md: 5, lg: 0 },
+              mt: { xs: 3, lg: 0 },
+            }}
+          >
+            {/* Desktop controls */}
+            <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', justifyContent: 'flex-end', gap: 2, mb: 2 }}>
+              <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
               <PillToggle
                 enabled={showDiacritics}
                 onToggle={() => setShowDiacritics((p) => !p)}
@@ -1075,18 +738,22 @@ export default function EpisodePage({
               />
             </Box>
 
+            {/* Tab bar — settings icon lives here on mobile (far right) */}
             <Box
               sx={{
                 borderBottom: '1px solid rgba(44,26,14,0.07)',
                 background: '#fff',
                 borderRadius: '12px 12px 0 0',
-                px: { xs: 2, md: 4 },
+                px: { xs: 1, md: 4 },
+                display: 'flex',
+                alignItems: 'center',
               }}
             >
               <Tabs
                 value={tab}
                 onChange={(_, v) => setTab(v)}
                 sx={{
+                  flex: 1,
                   '& .MuiTab-root': {
                     fontFamily: 'Jost, var(--font-sans)',
                     fontSize: '0.82rem',
@@ -1098,42 +765,40 @@ export default function EpisodePage({
                     px: 2,
                     py: 1.5,
                   },
-                  '& .Mui-selected': {
-                    color: 'var(--forest) !important',
-                    fontWeight: 600,
-                  },
-                  '& .MuiTabs-indicator': {
-                    background: 'var(--gold)',
-                    height: '2px',
-                  },
+                  '& .Mui-selected': { color: 'var(--forest) !important', fontWeight: 600 },
+                  '& .MuiTabs-indicator': { background: 'var(--gold)', height: '2px' },
                 }}
               >
                 <Tab label="Script" />
                 <Tab label={`Vocabulary (${vocabRows.length})`} />
               </Tabs>
+
+              {/* Settings icon — mobile only, far right of tab bar */}
+              <IconButton
+                onClick={() => setSettingsOpen(true)}
+                size="small"
+                sx={{
+                  display: { xs: 'inline-flex', lg: 'none' },
+                  width: 32,
+                  height: 32,
+                  flexShrink: 0,
+                  mx: 0.75,
+                  color: '#7a6e65',
+                  border: '1px solid rgba(122,110,101,0.25)',
+                  borderRadius: '8px',
+                  '&:hover': { background: 'rgba(122,110,101,0.08)', borderColor: 'rgba(122,110,101,0.4)' },
+                }}
+              >
+                <Settings sx={{ fontSize: '1rem' }} />
+              </IconButton>
             </Box>
 
-            <Box
-              sx={{
-                background: '#fff',
-                borderRadius: '0 0 12px 12px',
-                px: { xs: 2, md: 4 },
-                py: { xs: 3, md: 4 },
-              }}
-            >
+            {/* Tab content */}
+            <Box sx={{ background: '#fff', borderRadius: '0 0 12px 12px', px: { xs: 2, md: 4 }, py: { xs: 3, md: 4 } }}>
               {tab === 0 && (
-                <Box
-                  ref={scriptContainerRef}
-                  sx={{ display: 'flex', flexDirection: 'column' }}
-                >
+                <Box ref={scriptContainerRef} sx={{ display: 'flex', flexDirection: 'column' }}>
                   {scriptLines.length === 0 ? (
-                    <Typography
-                      sx={{
-                        fontFamily: 'Jost, var(--font-sans)',
-                        color: 'var(--muted)',
-                        fontSize: '0.9rem',
-                      }}
-                    >
+                    <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>
                       No script found in this episode file.
                     </Typography>
                   ) : (
@@ -1147,9 +812,7 @@ export default function EpisodePage({
                           <Box
                             ref={isActive ? activeLineRef : undefined}
                             className={`script-line ${isActive ? 'active' : ''}`}
-                            onClick={() =>
-                              hasTimestamp && seekTo(line.timestamp!)
-                            }
+                            onClick={() => hasTimestamp && seekTo(line.timestamp!)}
                             sx={{
                               px: 2,
                               py: 1.5,
@@ -1163,8 +826,7 @@ export default function EpisodePage({
                             {hasTimestamp && (
                               <Typography
                                 sx={{
-                                  fontFamily:
-                                    'ui-monospace, SFMono-Regular, Menlo, monospace',
+                                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
                                   fontSize: '0.65rem',
                                   color: 'var(--gold)',
                                   letterSpacing: '0.04em',
@@ -1180,36 +842,16 @@ export default function EpisodePage({
                                 })()}
                               </Typography>
                             )}
-                            <Typography
-                              className="arabic-line"
-                              sx={{
-                                fontSize: `calc(1.35rem * ${textScale})`,
-                              }}
-                            >
-                              {showDiacritics
-                                ? line.arabicDiacritic
-                                : line.arabicPlain}
+                            <Typography className="arabic-line" sx={{ fontSize: `calc(1.35rem * ${textScale})` }}>
+                              {showDiacritics ? line.arabicDiacritic : line.arabicPlain}
                             </Typography>
                             {line.english && (
-                              <Typography
-                                className="english-line"
-                                sx={{
-                                  fontSize: `calc(0.88rem * ${textScale})`,
-                                }}
-                              >
+                              <Typography className="english-line" sx={{ fontSize: `calc(0.88rem * ${textScale})` }}>
                                 {line.english}
                               </Typography>
                             )}
                           </Box>
-
-                          {!isLast && (
-                            <Divider
-                              sx={{
-                                borderColor: 'rgba(44,26,14,0.06)',
-                                my: 0.5,
-                              }}
-                            />
-                          )}
+                          {!isLast && <Divider sx={{ borderColor: 'rgba(44,26,14,0.06)', my: 0.5 }} />}
                         </React.Fragment>
                       )
                     })
@@ -1220,42 +862,24 @@ export default function EpisodePage({
               {tab === 1 && (
                 <Box sx={{ overflowX: 'auto' }}>
                   {vocabRows.length === 0 ? (
-                    <Typography
-                      sx={{
-                        fontFamily: 'Jost, var(--font-sans)',
-                        color: 'var(--muted)',
-                        fontSize: '0.9rem',
-                      }}
-                    >
+                    <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>
                       No vocabulary notes found.
                     </Typography>
                   ) : (
                     <table className="vocab-table">
                       <thead>
                         <tr>
-                          <th style={{ textAlign: 'right', direction: 'rtl' }}>
-                            Arabic
-                          </th>
+                          <th style={{ textAlign: 'right', direction: 'rtl' }}>Arabic</th>
                           <th>English</th>
                         </tr>
                       </thead>
                       <tbody>
                         {vocabRows.map((row, i) => (
                           <tr key={i}>
-                            <td
-                              className="vocab-arabic"
-                              style={{
-                                fontSize: `calc(1.1rem * ${textScale})`,
-                              }}
-                            >
+                            <td className="vocab-arabic" style={{ fontSize: `calc(1.1rem * ${textScale})` }}>
                               {showDiacritics ? row.arabic : row.plain}
                             </td>
-                            <td
-                              style={{
-                                fontFamily: 'Jost, sans-serif',
-                                fontSize: `calc(0.88rem * ${textScale})`,
-                              }}
-                            >
+                            <td style={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.88rem * ${textScale})` }}>
                               {row.english}
                             </td>
                           </tr>

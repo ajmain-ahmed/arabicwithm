@@ -10,12 +10,12 @@ description: "Follow April and the turtles as they choose what is right over wha
 
 ## Script
 
-0:01
+0:00
 هَلْ سَتَكُونِينَ بِخَيْر؟
 هل ستكونين بخير؟
 Will you be okay?
 
-0:02
+0:01
 أَعْتَقِدُ ذَلِكَ.
 أعتقد ذلك.
 I think so.
