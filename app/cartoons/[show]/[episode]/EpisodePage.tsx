@@ -150,8 +150,9 @@ function MobileFixedHeader({
   const [mounted, setMounted] = useState(false)
   const innerRef = useRef<HTMLDivElement>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
+  // Track whether we've already moved the player so we don't re-append on every render
+  const hasMovedRef = useRef(false)
 
-  // Draggable video height state
   const [maxVideoHeight, setMaxVideoHeight] = useState<number | undefined>(
     isShort ? 300 : undefined
   )
@@ -159,7 +160,6 @@ function MobileFixedHeader({
 
   useEffect(() => { setMounted(true) }, [])
 
-  // Report height back to parent so <main> can pad itself correctly
   useEffect(() => {
     if (!innerRef.current || !onHeightChange) return
     const ro = new ResizeObserver(() => {
@@ -169,7 +169,17 @@ function MobileFixedHeader({
     return () => ro.disconnect()
   }, [mounted, onHeightChange])
 
-  // ── Drag handlers ──
+  // ── One-time video move effect ──
+  useEffect(() => {
+    if (!mounted || hasMovedRef.current) return
+    const container = videoContainerRef.current
+    const player = videoRef.current
+    if (container && player && container.children.length === 0) {
+      container.appendChild(player)
+      hasMovedRef.current = true
+    }
+  }, [mounted, videoRef])
+
   const startDrag = useCallback(
     (clientY: number) => {
       const currentHeight =
@@ -228,9 +238,7 @@ function MobileFixedHeader({
 
   const content = (
     <div id="mobile-fixed-header" ref={innerRef}>
-      {/* Title row */}
       <div style={{ display: 'flex', alignItems: 'center', position: 'relative', minHeight: 30, marginBottom: 10 }}>
-        {/* Back button — left */}
         <button
           onClick={onBack}
           style={{
@@ -253,7 +261,6 @@ function MobileFixedHeader({
           </svg>
         </button>
 
-        {/* Title — absolutely centred */}
         <span
           style={{
             position: 'absolute',
@@ -275,7 +282,6 @@ function MobileFixedHeader({
         </span>
       </div>
 
-      {/* Video — moved into the fixed header on mobile, now draggable-resizable */}
       <div
         ref={videoContainerRef}
         style={{
@@ -289,16 +295,9 @@ function MobileFixedHeader({
           position: 'relative',
         }}
       >
-        <div
-          ref={(el) => {
-            if (el && videoRef.current && el.children.length === 0) {
-              el.appendChild(videoRef.current)
-            }
-          }}
-          style={{ width: '100%', height: '100%' }}
-        />
+        {/* Empty div — the useEffect above moves the player here once */}
+        <div style={{ width: '100%', height: '100%' }} />
 
-        {/* Drag handle */}
         <div
           onMouseDown={(e) => startDrag(e.clientY)}
           onTouchStart={(e) => startDrag(e.touches[0].clientY)}
