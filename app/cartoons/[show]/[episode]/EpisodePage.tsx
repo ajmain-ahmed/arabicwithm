@@ -150,8 +150,8 @@ function MobileFixedHeader({
   const [mounted, setMounted] = useState(false)
   const innerRef = useRef<HTMLDivElement>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
-  const hasMovedRef = useRef(false)
 
+  // Draggable video height state
   const [maxVideoHeight, setMaxVideoHeight] = useState<number | undefined>(
     isShort ? 300 : undefined
   )
@@ -159,6 +159,7 @@ function MobileFixedHeader({
 
   useEffect(() => { setMounted(true) }, [])
 
+  // Report height back to parent so <main> can pad itself correctly
   useEffect(() => {
     if (!innerRef.current || !onHeightChange) return
     const ro = new ResizeObserver(() => {
@@ -168,44 +169,7 @@ function MobileFixedHeader({
     return () => ro.disconnect()
   }, [mounted, onHeightChange])
 
-  // ── One-time video move effect ──
-  // Poll until the player wrapper has a child, then move it once
-  useEffect(() => {
-    if (!mounted || hasMovedRef.current) return
-
-    const tryMove = () => {
-      const container = videoContainerRef.current
-      const player = videoRef.current
-      if (!container || !player) return false
-
-      // Only move if the player wrapper actually has content
-      if (player.childNodes.length > 0 && container.children.length === 0) {
-        container.appendChild(player)
-        hasMovedRef.current = true
-        return true
-      }
-      return false
-    }
-
-    // Try immediately
-    if (tryMove()) return
-
-    // If not ready, poll every 100ms (player init takes ~50-200ms)
-    const interval = setInterval(() => {
-      if (tryMove()) {
-        clearInterval(interval)
-      }
-    }, 100)
-
-    // Safety cleanup after 5 seconds
-    const timeout = setTimeout(() => clearInterval(interval), 5000)
-
-    return () => {
-      clearInterval(interval)
-      clearTimeout(timeout)
-    }
-  }, [mounted, videoRef])
-
+  // ── Drag handlers ──
   const startDrag = useCallback(
     (clientY: number) => {
       const currentHeight =
@@ -264,7 +228,9 @@ function MobileFixedHeader({
 
   const content = (
     <div id="mobile-fixed-header" ref={innerRef}>
+      {/* Title row */}
       <div style={{ display: 'flex', alignItems: 'center', position: 'relative', minHeight: 30, marginBottom: 10 }}>
+        {/* Back button — left */}
         <button
           onClick={onBack}
           style={{
@@ -283,10 +249,11 @@ function MobileFixedHeader({
           }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
           </svg>
         </button>
 
+        {/* Title — absolutely centred */}
         <span
           style={{
             position: 'absolute',
@@ -308,6 +275,7 @@ function MobileFixedHeader({
         </span>
       </div>
 
+      {/* Video — moved into the fixed header on mobile, now draggable-resizable */}
       <div
         ref={videoContainerRef}
         style={{
@@ -321,9 +289,16 @@ function MobileFixedHeader({
           position: 'relative',
         }}
       >
-        {/* Player gets moved here by the useEffect above */}
-        <div style={{ width: '100%', height: '100%' }} />
+        <div
+          ref={(el) => {
+            if (el && videoRef.current && el.children.length === 0) {
+              el.appendChild(videoRef.current)
+            }
+          }}
+          style={{ width: '100%', height: '100%' }}
+        />
 
+        {/* Drag handle */}
         <div
           onMouseDown={(e) => startDrag(e.clientY)}
           onTouchStart={(e) => startDrag(e.touches[0].clientY)}
@@ -408,7 +383,7 @@ function SettingsDialog({
 
   return (
     <Dialog open={open} onClose={onClose} slotProps={{ paper: { sx: { borderRadius: '16px', width: '100%', maxWidth: 360, m: 2, overflow: 'hidden', boxShadow: '0 24px 64px rgba(44,26,14,0.2)' } } }}>
-      <DialogTitle sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.5rem', fontWeight: 700, color: '#2c1a0e', pb: 2, pt: 2.5, px: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <DialogTitle sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.5rem', fontWeight: 700, color: '#2c1a0e', pb: 0.5, pt: 2.5, px: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         Settings
         <IconButton onClick={onClose} size="small" sx={{ color: '#7a6e65', mr: -0.5 }}><Close sx={{ fontSize: '1.2rem' }} /></IconButton>
       </DialogTitle>
@@ -429,7 +404,7 @@ function SettingsDialog({
         </Box>
       </DialogContent>
       <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5 }}>
-        <Button fullWidth variant="contained" onClick={onClose} disableElevation sx={{ background: '#0e2e1f', color: '#f5ede0', fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.95rem', textTransform: 'none', borderRadius: '10px', py: 1.1, '&:hover': { background: '#0e2e1f' } }}>Done</Button>
+        <Button fullWidth variant="contained" onClick={onClose} disableElevation sx={{ background: '#2c1a0e', color: '#f5ede0', fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.95rem', textTransform: 'none', borderRadius: '10px', py: 1.1, '&:hover': { background: '#1a0f08' } }}>Done</Button>
       </DialogActions>
     </Dialog>
   )
@@ -462,7 +437,7 @@ function parseContent(content: string) {
   while (i < lines.length) {
     const line = lines[i].trim()
     if (line === '## Script') { inScript = true; inNotes = false; i++; continue }
-    if (line === '## Notes') { inScript = false; inNotes = true; i++; continue }
+    if (line === '## Notes')  { inScript = false; inNotes = true; i++; continue }
 
     if (inScript && line) {
       const ts = parseTimestamp(line)
@@ -572,7 +547,7 @@ function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: num
       clearTimeout(timer)
       clearInterval(intervalRef.current)
       intervalRef.current = null
-      try { playerRef.current?.destroy?.() } catch { }
+      try { playerRef.current?.destroy?.() } catch {}
       if (wrapRef.current) wrapRef.current.innerHTML = ''
       setIsReady(false)
     }
