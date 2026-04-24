@@ -150,7 +150,6 @@ function MobileFixedHeader({
   const [mounted, setMounted] = useState(false)
   const innerRef = useRef<HTMLDivElement>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
-  // Track whether we've already moved the player so we don't re-append on every render
   const hasMovedRef = useRef(false)
 
   const [maxVideoHeight, setMaxVideoHeight] = useState<number | undefined>(
@@ -170,13 +169,40 @@ function MobileFixedHeader({
   }, [mounted, onHeightChange])
 
   // ── One-time video move effect ──
+  // Poll until the player wrapper has a child, then move it once
   useEffect(() => {
     if (!mounted || hasMovedRef.current) return
-    const container = videoContainerRef.current
-    const player = videoRef.current
-    if (container && player && container.children.length === 0) {
-      container.appendChild(player)
-      hasMovedRef.current = true
+
+    const tryMove = () => {
+      const container = videoContainerRef.current
+      const player = videoRef.current
+      if (!container || !player) return false
+
+      // Only move if the player wrapper actually has content
+      if (player.childNodes.length > 0 && container.children.length === 0) {
+        container.appendChild(player)
+        hasMovedRef.current = true
+        return true
+      }
+      return false
+    }
+
+    // Try immediately
+    if (tryMove()) return
+
+    // If not ready, poll every 100ms (player init takes ~50-200ms)
+    const interval = setInterval(() => {
+      if (tryMove()) {
+        clearInterval(interval)
+      }
+    }, 100)
+
+    // Safety cleanup after 5 seconds
+    const timeout = setTimeout(() => clearInterval(interval), 5000)
+
+    return () => {
+      clearInterval(interval)
+      clearTimeout(timeout)
     }
   }, [mounted, videoRef])
 
@@ -295,7 +321,7 @@ function MobileFixedHeader({
           position: 'relative',
         }}
       >
-        {/* Empty div — the useEffect above moves the player here once */}
+        {/* Player gets moved here by the useEffect above */}
         <div style={{ width: '100%', height: '100%' }} />
 
         <div
