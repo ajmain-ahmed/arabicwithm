@@ -97,6 +97,9 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
     const { data, error } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      },
     })
     if (error) {
       setLoading(false)
