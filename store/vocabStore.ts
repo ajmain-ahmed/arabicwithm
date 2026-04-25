@@ -2,10 +2,7 @@
 
 import { create } from "zustand"
 import type { VocabRow, WordProgress, ExampleRow } from "@/app/actions/vocab"
-import {
-  fetchThemeVocabWithProgress,
-  fetchExamplesForTheme,
-} from "@/app/actions/vocab"
+import { fetchThemeVocabWithProgress } from "@/app/actions/vocab"
 
 export type { VocabRow as Vocab }
 
@@ -20,19 +17,16 @@ interface VocabStore {
   themeCache: Record<number, ThemeCache>
   loadingThemeId: number | null
   error: string | null
-
   fetchTheme: (themeId: number) => Promise<{
     vocab: VocabRow[]
     progress: WordProgress[]
     examples: ExampleRow[]
   }>
-
   updateLocalProgress: (
     themeId: number,
     wordId: number,
     patch: Partial<WordProgress>
   ) => void
-
   invalidateTheme: (themeId: number) => void
 }
 
@@ -52,9 +46,8 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
     set({ loadingThemeId: themeId, error: null })
 
     try {
-      const { vocab, progress } = await fetchThemeVocabWithProgress(themeId)
-      const wordIds = vocab.map((v) => v.id)
-      const examples = await fetchExamplesForTheme(wordIds)
+      // Examples are now parsed out of the word JSON — single fetch, no second round-trip
+      const { vocab, progress, examples } = await fetchThemeVocabWithProgress(themeId)
 
       set((state) => ({
         themeCache: {
@@ -86,12 +79,7 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
       } else {
         newProgress = [
           ...cached.progress,
-          {
-            word_id: wordId,
-            is_completed: false,
-            is_in_revision: false,
-            ...patch,
-          },
+          { word_id: wordId, is_completed: false, is_in_revision: false, ...patch },
         ]
       }
 
