@@ -59,7 +59,6 @@ const PAGE_CSS = `
     right: 0;
     z-index: 30;
     background: var(--cream);
-    box-shadow: 0 2px 16px rgba(44,26,14,0.10);
     padding: 10px 20px 12px;
   }
   @media (min-width: 1200px) {
@@ -140,12 +139,14 @@ function MobileFixedHeader({
   videoRef,
   isShort,
   onHeightChange,
+  top,
 }: {
   title: string
   onBack: () => void
   videoRef: React.RefObject<HTMLDivElement | null>
   isShort: boolean
   onHeightChange?: (height: number) => void
+  top: number
 }) {
   const [mounted, setMounted] = useState(false)
   const innerRef = useRef<HTMLDivElement>(null)
@@ -227,7 +228,7 @@ function MobileFixedHeader({
   if (!mounted) return null
 
   const content = (
-    <div id="mobile-fixed-header" ref={innerRef}>
+    <div id="mobile-fixed-header" ref={innerRef} style={{ top: `${top}px` }}>
       {/* Title row */}
       <div style={{ display: 'flex', alignItems: 'center', position: 'relative', minHeight: 30, marginBottom: 10 }}>
         {/* Back button — left */}
@@ -249,7 +250,7 @@ function MobileFixedHeader({
           }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
           </svg>
         </button>
 
@@ -437,7 +438,7 @@ function parseContent(content: string) {
   while (i < lines.length) {
     const line = lines[i].trim()
     if (line === '## Script') { inScript = true; inNotes = false; i++; continue }
-    if (line === '## Notes')  { inScript = false; inNotes = true; i++; continue }
+    if (line === '## Notes') { inScript = false; inNotes = true; i++; continue }
 
     if (inScript && line) {
       const ts = parseTimestamp(line)
@@ -547,7 +548,7 @@ function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: num
       clearTimeout(timer)
       clearInterval(intervalRef.current)
       intervalRef.current = null
-      try { playerRef.current?.destroy?.() } catch {}
+      try { playerRef.current?.destroy?.() } catch { }
       if (wrapRef.current) wrapRef.current.innerHTML = ''
       setIsReady(false)
     }
@@ -578,20 +579,20 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
-  // ── Dynamic navbar height ──
-  const [navbarHeight, setNavbarHeight] = useState(NAVBAR_HEIGHT)
+  // Inside EpisodePage
+  const [navbarHeight, setNavbarHeight] = useState(NAVBAR_HEIGHT);
+
   useEffect(() => {
     const measure = () => {
-      const nav = document.querySelector('header, nav[role="navigation"], [role="banner"]') as HTMLElement | null
-      setNavbarHeight(nav?.offsetHeight ?? NAVBAR_HEIGHT)
-    }
-    measure()
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [])
-  useEffect(() => {
-    document.documentElement.style.setProperty('--navbar-height', `${navbarHeight}px`)
-  }, [navbarHeight])
+      const nav = document.getElementById('main-navbar');
+      if (nav) {
+        setNavbarHeight(nav.offsetHeight);
+      }
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
   // ── Mobile header height ──
   const estimatedMobileHeader = episode.youtubeShort ? 380 : 280
@@ -655,7 +656,6 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   return (
     <>
       <style>{PAGE_CSS}</style>
-      <Navbar />
 
       <SettingsDialog
         open={settingsOpen}
@@ -669,6 +669,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
       {/* ── Mobile fixed portal header ── */}
       {isMobile && (
         <MobileFixedHeader
+          top={navbarHeight}
           title={episode.title}
           onBack={() => router.push(`/cartoons/${episode.show}`)}
           videoRef={wrapRef}

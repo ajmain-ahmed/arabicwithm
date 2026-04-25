@@ -642,7 +642,7 @@ export default function Navbar() {
 
             <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
 
-            <AppBar position="fixed" elevation={0} sx={{
+            <AppBar id="main-navbar" position="fixed" elevation={0} sx={{
                 background: '#ffffff',
                 backdropFilter: 'blur(16px)',
                 borderBottom: `1px solid rgba(184,134,11,0.15)`,
