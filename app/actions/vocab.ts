@@ -6,13 +6,10 @@ import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
-// ─── Service Role Client (bypasses RLS) ─────────────────────────────────────
 const serviceUrl = process.env.SUPABASE_URL!
 const serviceKey = process.env.SUPABASE_SERVICE_KEY!
-
 const serviceClient = createServiceClient(serviceUrl, serviceKey)
 
-// ─── Auth client ─────────────────────────────────────────────────────────────
 async function getAuthClient() {
   const cookieStore = await cookies()
   return createServerClient(
@@ -39,9 +36,6 @@ async function getAuthenticatedUserId(): Promise<string | null> {
   }
 }
 
-// ─── Raw DB row (before parsing) ─────────────────────────────────────────────
-// Supabase returns jsonb columns as already-parsed JS values (not strings).
-
 type RawVocabRow = {
   id: number
   level: string
@@ -49,20 +43,18 @@ type RawVocabRow = {
   root: string | null
   pos: string
   definition: string
-  word: any // jsonb → arrives as JS array/object, not a string
+  word: any
 }
 
-// ─── Parsed types ─────────────────────────────────────────────────────────────
-
 export type WordForm = {
-  raw: string           // plain Arabic script (no diacritics)
-  dia: string           // Arabic with diacritics
-  tr: string            // transliteration
-  gen: string           // gender: "m" | "f" | "mf" | etc.
+  raw: string
+  dia: string
+  tr: string
+  gen: string
 }
 
 export type ExampleRow = {
-  vocab_id: number      // parent vocab word id
+  vocab_id: number
   ex_ar: string
   ex_di: string
   ex_en: string
@@ -76,15 +68,14 @@ export type VocabRow = {
   level: string
   theme_id: any
   root: string | null
-  pos: string           // part of speech (replaces old `type`)
+  pos: string
   definition: string
-  dialect: string       // e.g. "MSA", "EGY"
-  forms: WordForm[]     // all forms; at least one
-  // Convenience fields derived from forms[0]:
-  word: string          // forms[0].raw
-  word_diacritic: string // forms[0].dia
-  transliteration: string // forms[0].tr
-  gender: string        // forms[0].gen
+  dialect: string
+  forms: WordForm[]
+  word: string
+  word_diacritic: string
+  transliteration: string
+  gender: string
 }
 
 export type ThemeProgress = {
@@ -101,15 +92,6 @@ export type WordProgress = {
   is_in_revision: boolean
 }
 
-export type Theme = {
-  id: number
-  level: string
-  display_name: string
-  slug: string
-}
-
-// ─── JSON parser ──────────────────────────────────────────────────────────────
-
 type RawWordEntry = {
   dialect: string
   forms: Array<{ raw: string; dia: string; tr: string; gen: string }>
@@ -120,8 +102,6 @@ type RawWordEntry = {
 }
 
 function toEntries(wordField: any): RawWordEntry[] {
-  // Supabase returns jsonb already parsed — it arrives as a JS array.
-  // Guard against the edge case where it's still a string.
   if (Array.isArray(wordField)) return wordField as RawWordEntry[]
   if (typeof wordField === "string") {
     try { return JSON.parse(wordField) } catch { return [] }
@@ -132,11 +112,6 @@ function toEntries(wordField: any): RawWordEntry[] {
 
 function parseVocabRow(raw: RawVocabRow): { vocab: VocabRow; examples: ExampleRow[] } {
   const entries = toEntries(raw.word)
-
-  if (entries.length === 0) {
-    console.warn(`Empty word entries for vocab id=${raw.id}`, raw.word)
-  }
-
   const entry = entries[0] ?? { dialect: "MSA", forms: [], examples: [] }
   const form0 = entry.forms[0] ?? { raw: "", dia: "", tr: "", gen: "" }
 
@@ -168,15 +143,9 @@ function parseVocabRow(raw: RawVocabRow): { vocab: VocabRow; examples: ExampleRo
   return { vocab, examples }
 }
 
-// ─── fetchThemesWithProgress ──────────────────────────────────────────────────
-// Always fetch total_words directly from the vocab table to avoid RPC
-// breakage if the stored procedure references outdated schema.
-// The RPC is only used for completed_count / revision_count (auth users).
-
 export async function fetchThemesWithProgress(level: string): Promise<ThemeProgress[]> {
   const userId = await getAuthenticatedUserId()
 
-  // 1. Always load themes + raw word counts from the vocab table
   const { data: themes, error: themesError } = await serviceClient
     .from("themes")
     .select("id, display_name")
@@ -187,7 +156,6 @@ export async function fetchThemesWithProgress(level: string): Promise<ThemeProgr
 
   const themeList = themes ?? []
 
-  // 2. Count words per theme from vocab table
   const wordCounts = await Promise.all(
     themeList.map(async (t: any) => {
       const { count } = await serviceClient
@@ -199,7 +167,6 @@ export async function fetchThemesWithProgress(level: string): Promise<ThemeProgr
   )
   const wordCountMap = new Map(wordCounts.map(w => [w.theme_id, w.total_words]))
 
-  // 3. If authenticated, get completed + revision counts
   let completedMap = new Map<number, number>()
   let revisionMap = new Map<number, number>()
 
@@ -231,8 +198,6 @@ export async function fetchThemesWithProgress(level: string): Promise<ThemeProgr
     }
   })
 }
-
-// ─── fetchThemeVocabWithProgress ──────────────────────────────────────────────
 
 export async function fetchThemeVocabWithProgress(themeId: number): Promise<{
   vocab: VocabRow[]
@@ -275,8 +240,6 @@ export async function fetchThemeVocabWithProgress(themeId: number): Promise<{
   }
 }
 
-// ─── upsertWordProgress ───────────────────────────────────────────────────────
-
 export async function upsertWordProgress({
   wordId,
   isCompleted,
@@ -288,6 +251,19 @@ export async function upsertWordProgress({
 }): Promise<void> {
   const userId = await getAuthenticatedUserId()
   if (!userId) return
+
+  // Defensive: confirm the word exists before upserting
+  const { data: wordExists, error: checkError } = await serviceClient
+    .from("vocabulary")
+    .select("id")
+    .eq("id", wordId)
+    .single()
+
+  if (checkError || !wordExists) {
+    throw new Error(
+      `Vocab word id ${wordId} not found in 'vocabulary' table.`
+    )
+  }
 
   const { error } = await serviceClient.from("progress").upsert(
     {
