@@ -1,10 +1,6 @@
-// store/vocabStore.ts
-
 import { create } from "zustand"
 import type { VocabRow, WordProgress, ExampleRow } from "@/app/actions/vocab"
 import { fetchThemeVocabWithProgress } from "@/app/actions/vocab"
-
-export type { VocabRow as Vocab }
 
 interface ThemeCache {
   vocab: VocabRow[]
@@ -14,49 +10,47 @@ interface ThemeCache {
 }
 
 interface VocabStore {
-  themeCache: Record<number, ThemeCache>
+  themeCache: Record<string, ThemeCache>  // key = `${themeId}:${dialectCode}`
   loadingThemeId: number | null
   error: string | null
-  fetchTheme: (themeId: number) => Promise<{
+  fetchTheme: (themeId: number, dialectCode: string) => Promise<{
     vocab: VocabRow[]
     progress: WordProgress[]
     examples: ExampleRow[]
   }>
   updateLocalProgress: (
     themeId: number,
-    wordId: number,
+    dialectCode: string,
+    vocabId: number,
     patch: Partial<WordProgress>
   ) => void
-  invalidateTheme: (themeId: number) => void
+  invalidateTheme: (themeId: number, dialectCode?: string) => void
 }
 
-const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+const CACHE_TTL_MS = 5 * 60 * 1000
 
 export const useVocabStore = create<VocabStore>((set, get) => ({
   themeCache: {},
   loadingThemeId: null,
   error: null,
 
-  fetchTheme: async (themeId: number) => {
-    const cached = get().themeCache[themeId]
+  fetchTheme: async (themeId: number, dialectCode: string) => {
+    const cacheKey = `${themeId}:${dialectCode}`
+    const cached = get().themeCache[cacheKey]
     if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
       return { vocab: cached.vocab, progress: cached.progress, examples: cached.examples }
     }
 
     set({ loadingThemeId: themeId, error: null })
-
     try {
-      // Examples are now parsed out of the word JSON — single fetch, no second round-trip
-      const { vocab, progress, examples } = await fetchThemeVocabWithProgress(themeId)
-
+      const { vocab, progress, examples } = await fetchThemeVocabWithProgress(themeId, dialectCode)
       set((state) => ({
         themeCache: {
           ...state.themeCache,
-          [themeId]: { vocab, progress, examples, fetchedAt: Date.now() },
+          [cacheKey]: { vocab, progress, examples, fetchedAt: Date.now() },
         },
         loadingThemeId: null,
       }))
-
       return { vocab, progress, examples }
     } catch (err: any) {
       set({ error: err.message, loadingThemeId: null })
@@ -64,14 +58,13 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
     }
   },
 
-  updateLocalProgress: (themeId, wordId, patch) => {
+  updateLocalProgress: (themeId, dialectCode, vocabId, patch) => {
     set((state) => {
-      const cached = state.themeCache[themeId]
+      const cacheKey = `${themeId}:${dialectCode}`
+      const cached = state.themeCache[cacheKey]
       if (!cached) return state
-
-      const existingIdx = cached.progress.findIndex((p) => p.word_id === wordId)
+      const existingIdx = cached.progress.findIndex((p) => p.vocab_id === vocabId)
       let newProgress: WordProgress[]
-
       if (existingIdx >= 0) {
         newProgress = cached.progress.map((p, i) =>
           i === existingIdx ? { ...p, ...patch } : p
@@ -79,23 +72,29 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
       } else {
         newProgress = [
           ...cached.progress,
-          { word_id: wordId, is_completed: false, is_in_revision: false, ...patch },
+          { vocab_id: vocabId, is_completed: false, is_in_revision: false, ...patch },
         ]
       }
-
       return {
         themeCache: {
           ...state.themeCache,
-          [themeId]: { ...cached, progress: newProgress },
+          [cacheKey]: { ...cached, progress: newProgress },
         },
       }
     })
   },
 
-  invalidateTheme: (themeId) => {
+  invalidateTheme: (themeId, dialectCode) => {
     set((state) => {
       const next = { ...state.themeCache }
-      delete next[themeId]
+      if (dialectCode) {
+        delete next[`${themeId}:${dialectCode}`]
+      } else {
+        // Invalidate all dialects for this theme
+        Object.keys(next).forEach(k => {
+          if (k.startsWith(`${themeId}:`)) delete next[k]
+        })
+      }
       return { themeCache: next }
     })
   },

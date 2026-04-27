@@ -36,7 +36,7 @@ function classifyCard(card: RevisionCard): Queue {
     const rep = card.repetitions as number | null | undefined
     const lastReview = card.last_review_at as string | null | undefined
     if ((rep == null || rep === 0) && !lastReview) return 'new'
-    if ((rep ?? 0) > 0) return 'review'        // <-- changed from interval_days >= 1
+    if ((rep ?? 0) > 0) return 'review'
     return 'learning'
 }
 
@@ -403,9 +403,12 @@ function CardFace({
                         </Box>
                     </Box>
 
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: 'clamp(1.1rem, 2.2vw, 1.45rem)' }, fontStyle: 'italic', color: '#b8860b', textAlign: 'center', letterSpacing: '0.05em', mt: { xs: 1, md: 1.5 } }}>
-                        {card.transliteration}
-                    </Typography>
+                    {/* Transliteration — hidden if empty (new schema doesn't store it) */}
+                    {card.transliteration && (
+                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: 'clamp(1.1rem, 2.2vw, 1.45rem)' }, fontStyle: 'italic', color: '#b8860b', textAlign: 'center', letterSpacing: '0.05em', mt: { xs: 1, md: 1.5 } }}>
+                            {card.transliteration}
+                        </Typography>
+                    )}
 
                     <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { xs: 'clamp(1.8rem, 4.5vw, 2.8rem)' }, fontWeight: 700, color: '#2c1a0e', textAlign: 'center', margin: '0.25rem 0' }}>
                         {card.definition}
@@ -534,7 +537,6 @@ export default function RevisionPage() {
 
     const handleAnswer = useCallback(async (ans: Answer) => {
         if (!currentCard || submitting) return
-        // Prevent answering if card is not due yet
         if (!currentCard.data.isDue) return
         setSubmitting(true)
         try {

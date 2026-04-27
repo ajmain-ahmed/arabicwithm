@@ -16,10 +16,8 @@ async function getAuthClient() {
         process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
         {
             cookies: {
-                getAll() {
-                    return cookieStore.getAll()
-                },
-                setAll() { },
+                getAll() { return cookieStore.getAll() },
+                setAll() {},
             },
         }
     )
@@ -29,10 +27,7 @@ async function getAuthenticatedUserId(): Promise<string | null> {
     try {
         const supabase = await getAuthClient()
         const { data, error } = await supabase.auth.getUser()
-        if (error) {
-            console.error("[revision] getUser error:", error.message)
-            return null
-        }
+        if (error) { console.error("[revision] getUser error:", error.message); return null }
         return data.user?.id ?? null
     } catch (e) {
         console.error("[revision] unexpected auth error:", e)
@@ -178,15 +173,7 @@ export async function fetchDueRevisionCards(): Promise<RevisionCard[]> {
     // 1. Reviews (graduated cards that are due)
     const { data: reviews, error: reviewsError } = await serviceClient
         .from('progress')
-        .select(`
-      word_id,
-      repetitions,
-      interval_days,
-      ease_factor,
-      last_review_at,
-      next_review_at,
-      vocab (*)
-    `)
+        .select('vocabulary_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at')
         .eq('user_id', userId)
         .eq('is_in_revision', true)
         .gt('repetitions', 0)
@@ -199,15 +186,7 @@ export async function fetchDueRevisionCards(): Promise<RevisionCard[]> {
     // 2. Brand new cards (never reviewed) – limited per day
     const { data: brandNew, error: brandNewError } = await serviceClient
         .from('progress')
-        .select(`
-      word_id,
-      repetitions,
-      interval_days,
-      ease_factor,
-      last_review_at,
-      next_review_at,
-      vocab (*)
-    `)
+        .select('vocabulary_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, created_at')
         .eq('user_id', userId)
         .eq('is_in_revision', true)
         .eq('repetitions', 0)
@@ -221,15 +200,7 @@ export async function fetchDueRevisionCards(): Promise<RevisionCard[]> {
     // 3. Learning cards – ALL cards that have been seen today (still in learning phase)
     const { data: learning, error: learningError } = await serviceClient
         .from('progress')
-        .select(`
-      word_id,
-      repetitions,
-      interval_days,
-      ease_factor,
-      last_review_at,
-      next_review_at,
-      vocab (*)
-    `)
+        .select('vocabulary_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at')
         .eq('user_id', userId)
         .eq('is_in_revision', true)
         .eq('repetitions', 0)
@@ -242,21 +213,81 @@ export async function fetchDueRevisionCards(): Promise<RevisionCard[]> {
     const combined = [...(reviews ?? []), ...(brandNew ?? []), ...(learning ?? [])]
     console.log("[revision] total combined:", combined.length)
 
+    if (combined.length === 0) return []
+
+    const vocabIds = combined.map(r => r.vocabulary_id)
+
+    // Fetch vocabulary rows (requires the direct FK on level_id)
+    const { data: vocabData, error: vocabErr } = await serviceClient
+        .from('vocabulary')
+        .select('id, theme_id, level_id, word, diacritics, levels!inner(code)')
+        .in('id', vocabIds)
+
+    if (vocabErr) throw new Error(vocabErr.message)
+
+    // Fetch definitions
+    const { data: defsData } = await serviceClient
+        .from('definitions')
+        .select('vocabulary_id, definition, pos, sort_order')
+        .in('vocabulary_id', vocabIds)
+        .order('sort_order')
+
+    // Fetch examples
+    const { data: exData } = await serviceClient
+        .from('examples')
+        .select('vocabulary_id, ex_ar, ex_dia, ex_en')
+        .in('vocabulary_id', vocabIds)
+
+    // Build lookup maps
+    const vocabMap = new Map(vocabData?.map(v => [v.id, v]) ?? [])
+    const defMap = new Map<number, { definition: string; pos: string }[]>()
+    ;(defsData ?? []).forEach(d => {
+        const list = defMap.get(d.vocabulary_id) || []
+        list.push({ definition: d.definition, pos: d.pos })
+        defMap.set(d.vocabulary_id, list)
+    })
+
+    const exMap = new Map<number, { ex_ar: string; ex_dia: string; ex_en: string }[]>()
+    ;(exData ?? []).forEach(e => {
+        const list = exMap.get(e.vocabulary_id) || []
+        list.push({ ex_ar: e.ex_ar ?? '', ex_dia: e.ex_dia ?? '', ex_en: e.ex_en ?? '' })
+        exMap.set(e.vocabulary_id, list)
+    })
+
     const nowISO = new Date().toISOString()
-    return combined.map((row: any) => ({
-        ...row.vocab,
-        progress_word_id: row.word_id,
-        repetitions: row.repetitions,
-        interval_days: row.interval_days,
-        ease_factor: row.ease_factor,
-        last_review_at: row.last_review_at,
-        next_review_at: row.next_review_at,
-        isDue: row.next_review_at ? row.next_review_at <= nowISO : true,
-    }))
+
+    return combined.map((row: any) => {
+        const vocab = vocabMap.get(row.vocabulary_id)
+        const defs = defMap.get(row.vocabulary_id) ?? []
+        const primaryDef = defs[0] ?? { definition: '', pos: 'unknown' }
+        const examples = exMap.get(row.vocabulary_id) ?? []
+
+        return {
+            id: row.vocabulary_id,
+            word: vocab?.word ?? '',
+            word_diacritic: vocab?.diacritics ?? '',
+            transliteration: '', // not stored in new schema
+            definition: primaryDef.definition,
+            level: (vocab as any)?.levels?.code ?? '',
+            type: primaryDef.pos,
+            root: null, // not stored in new schema
+            ex_ar: examples.map(e => e.ex_ar).join(';') || null,
+            ex_di: examples.map(e => e.ex_dia).join(';') || null,
+            ex_en: examples.map(e => e.ex_en).join(';') || null,
+            theme_id: vocab?.theme_id ?? 0,
+            progress_word_id: row.vocabulary_id,
+            repetitions: row.repetitions,
+            interval_days: row.interval_days,
+            ease_factor: row.ease_factor,
+            last_review_at: row.last_review_at,
+            next_review_at: row.next_review_at,
+            isDue: row.next_review_at ? row.next_review_at <= nowISO : true,
+        }
+    })
 }
 
 export async function submitRevisionAnswer(
-    wordId: number,
+    vocabId: number,
     answer: Answer,
     currentStep: number = 0
 ) {
@@ -267,7 +298,7 @@ export async function submitRevisionAnswer(
         .from('progress')
         .select('repetitions, interval_days, ease_factor, last_review_at, next_review_at')
         .eq('user_id', userId)
-        .eq('word_id', wordId)
+        .eq('vocabulary_id', vocabId)
         .single()
 
     if (fetchError || !progress) throw new Error('Progress not found')
@@ -296,7 +327,6 @@ export async function submitRevisionAnswer(
         ease_factor: newEase,
         last_review_at: now,
         next_review_at: nextReview.toISOString(),
-        // Only stamp on first ever review
         ...(progress.last_review_at === null && { first_review_at: now }),
     }
 
@@ -304,7 +334,7 @@ export async function submitRevisionAnswer(
         .from('progress')
         .update(updates)
         .eq('user_id', userId)
-        .eq('word_id', wordId)
+        .eq('vocabulary_id', vocabId)
 
     if (updateError) throw new Error(updateError.message)
 
