@@ -16,7 +16,7 @@ async function getAuthClient() {
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
-        setAll() {},
+        setAll() { },
       },
     }
   )
@@ -74,6 +74,7 @@ export type ExampleRow = {
   ex_dia: string
   ex_en: string
   interactive: boolean
+  ex_tr?: string   // ✅ matches the column name and component
 }
 
 export type VocabRow = {
@@ -85,6 +86,7 @@ export type VocabRow = {
   dialect: string
   word: string
   word_diacritic: string
+  transliteration: string   // ← NEW
 }
 
 export type WordProgress = {
@@ -116,7 +118,8 @@ export async function fetchThemeVocabWithProgress(
   // 2. Fetch vocabulary — no forms column
   const { data: rawVocab, error: vocabErr } = await serviceClient
     .from("vocabulary")
-    .select(`id, theme_id, level_id, word, diacritics, levels!inner(code)`)
+    .select(`id, theme_id, level_id, word, diacritics, transliteration, levels!inner(code)`)
+    //                                        
     .eq("theme_id", themeId)
     .eq("dialect_id", dialectData.id)
     .order("id")
@@ -133,16 +136,16 @@ export async function fetchThemeVocabWithProgress(
   const [defRes, exRes] = await Promise.all([
     serviceClient.from("definitions").select("vocabulary_id, definition, pos, sort_order")
       .in("vocabulary_id", vocabIds).order("sort_order"),
-    serviceClient.from("examples").select("vocabulary_id, ex_ar, ex_dia, ex_en, interactive")
+    serviceClient.from("examples").select("vocabulary_id, ex_ar, ex_dia, ex_en, interactive, ex_tr")
       .in("vocabulary_id", vocabIds),
   ])
 
   const defMap = new Map<number, { definition: string; pos: string }[]>()
-  ;(defRes.data ?? []).forEach(d => {
-    const list = defMap.get(d.vocabulary_id) || []
-    list.push({ definition: d.definition, pos: d.pos })
-    defMap.set(d.vocabulary_id, list)
-  })
+    ; (defRes.data ?? []).forEach(d => {
+      const list = defMap.get(d.vocabulary_id) || []
+      list.push({ definition: d.definition, pos: d.pos })
+      defMap.set(d.vocabulary_id, list)
+    })
 
   const examples: ExampleRow[] = (exRes.data ?? []).map(e => ({
     vocab_id: e.vocabulary_id,
@@ -150,6 +153,7 @@ export async function fetchThemeVocabWithProgress(
     ex_dia: e.ex_dia,
     ex_en: e.ex_en,
     interactive: e.interactive,
+    ex_tr: e.ex_tr ?? '',   // ✅ matches component usage
   }))
 
   // 4. Map to VocabRow (only single word form)
@@ -166,6 +170,7 @@ export async function fetchThemeVocabWithProgress(
       dialect: dialectData.name,
       word: r.word,
       word_diacritic: r.diacritics ?? "",
+      transliteration: r.transliteration ?? "",   // ← ADD THIS
     }
   })
 

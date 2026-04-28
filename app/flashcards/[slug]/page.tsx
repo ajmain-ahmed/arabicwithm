@@ -9,7 +9,7 @@ import {
     IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
     ToggleButton, ToggleButtonGroup,
     Slider, Badge,
-    Select, MenuItem, FormControl, // <-- ADD THESE
+    Select, MenuItem, FormControl,
 } from '@mui/material'
 import {
     Bookmark, BookmarkAdded, Check, DoneAll, NavigateNext, NavigateBefore,
@@ -66,7 +66,7 @@ const SLUG_LABELS: Record<string, string> = {
 ───────────────────────────────────────────── */
 const DIALECT_OPTIONS = [
     { code: 'MSA', label: 'Modern Standard' },
-    { code: 'EG', label: 'Egyptian Arabic' },
+    { code: 'EG', label: 'Egypt' },
 ]
 
 /* ─────────────────────────────────────────────
@@ -168,9 +168,6 @@ function DesktopTextScaleSlider({ textScale, onChange }: { textScale: number; on
 /* ─────────────────────────────────────────────
    SettingsDialog (mobile + dialect)
 ───────────────────────────────────────────── */
-/* ─────────────────────────────────────────────
-   SettingsDialog (mobile + dialect)
-───────────────────────────────────────────── */
 function SettingsDialog({
     open, onClose,
     showDiacritics, onToggleDiacritics,
@@ -216,7 +213,7 @@ function SettingsDialog({
 
     return (
         <Dialog open={open} onClose={onClose} slotProps={{ paper: { sx: { borderRadius: '16px', width: '100%', maxWidth: 360, m: 2, overflow: 'hidden', boxShadow: '0 24px 64px rgba(44,26,14,0.2)' } } }}>
-            <DialogTitle sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.5rem', fontWeight: 700, color: '#2c1a0e', pb: 0.5, pt: 2.5, px: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <DialogTitle sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.5rem', fontWeight: 700, color: '#2c1a0e', pb: 2, pt: 2.5, px: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 Settings
                 <IconButton onClick={onClose} size="small" sx={{ color: '#7a6e65', mr: -0.5 }}><Close sx={{ fontSize: '1.2rem' }} /></IconButton>
             </DialogTitle>
@@ -328,8 +325,9 @@ function SettingsDialog({
         </Dialog>
     )
 }
+
 /* ─────────────────────────────────────────────
-   AnimatedArabicWord – unchanged
+   AnimatedArabicWord
 ───────────────────────────────────────────── */
 function AnimatedArabicWord({ word, wordDiacritic, showDiacritics, textScale }: {
     word: string; wordDiacritic: string; showDiacritics: boolean; textScale: number
@@ -363,7 +361,7 @@ function AnimatedArabicWord({ word, wordDiacritic, showDiacritics, textScale }: 
 }
 
 /* ─────────────────────────────────────────────
-   DraggableWord (unchanged)
+   DraggableWord
 ───────────────────────────────────────────── */
 function DraggableWord({ word, id, slotIndex, status = 'neutral', textScale = 1 }: {
     word: string; id: string; slotIndex: number; status?: 'correct' | 'incorrect' | 'neutral'; textScale?: number
@@ -390,7 +388,7 @@ function DraggableWord({ word, id, slotIndex, status = 'neutral', textScale = 1 
 }
 
 /* ─────────────────────────────────────────────
-   InteractiveSentenceBuilder (unchanged)
+   InteractiveSentenceBuilder
 ───────────────────────────────────────────── */
 function InteractiveSentenceBuilder({ plainWords, diacriticWords, englishTranslation, transliteration, showDiacritics, resetKey, textScale }: {
     plainWords: string[]; diacriticWords: string[]; englishTranslation: string; transliteration: string
@@ -500,7 +498,7 @@ function InteractiveSentenceBuilder({ plainWords, diacriticWords, englishTransla
 }
 
 /* ─────────────────────────────────────────────
-   ExampleSentences (unchanged)
+   ExampleSentences
 ───────────────────────────────────────────── */
 function ExampleSentences({ examplesForCard, revealed, showDiacritics, textScale }: {
     examplesForCard: ExampleRow[]; revealed: boolean; showDiacritics: boolean; textScale: number
@@ -563,7 +561,7 @@ function ExampleSentences({ examplesForCard, revealed, showDiacritics, textScale
 }
 
 /* ─────────────────────────────────────────────
-   StatusChips (unchanged)
+   StatusChips
 ───────────────────────────────────────────── */
 const STATUS_CHIP_COLORS: Record<CardStatus, { activeBg: string; activeColor: string; border: string }> = {
     new: { activeBg: 'rgba(122,110,101,0.12)', activeColor: '#4a3d35', border: 'rgba(122,110,101,0.35)' },
@@ -599,14 +597,13 @@ function StatusChips({ newCount, revisionCount, completedCount, filter, currentS
 }
 
 /* ─────────────────────────────────────────────
-   FlashcardQuiz – simplified, no forms
-───────────────────────────────────────────── */
-/* ─────────────────────────────────────────────
-   FlashcardQuiz – RESTORED with Examples + You Try tabs
+   FlashcardQuiz
 ───────────────────────────────────────────── */
 function FlashcardQuiz({
     initialQueue, themeId, allExamples, showDiacritics, alwaysShow, onComplete, themeLabel,
     totalInTheme, alreadyCompletedCount, textScale, initialCardIndex, flushRef,
+    dialect,
+    onThemeProgressUpdate, // ← ADDED
 }: {
     initialQueue: CardState[]
     themeId: number
@@ -620,6 +617,8 @@ function FlashcardQuiz({
     textScale: number
     initialCardIndex?: number
     flushRef?: React.MutableRefObject<(() => Promise<void>) | null>
+    dialect: string
+    onThemeProgressUpdate?: (themeId: number, progress: { completedCount: number; revisionCount: number }) => void // ← ADDED
 }) {
     const updateLocalProgress = useVocabStore(s => s.updateLocalProgress)
 
@@ -663,14 +662,13 @@ function FlashcardQuiz({
 
     const [currentIndex, setCurrentIndex] = useState(startIndex)
 
-    // CRITICAL FIX: Reset index when filtered cards change (theme switch, filter change)
     useEffect(() => {
         setCurrentIndex(startIndex)
     }, [startIndex])
 
     const current = filteredCards[currentIndex] ?? null
     const canGoBack = currentIndex > 0
-    const canGoForward = currentIndex < filteredCards.length - 1
+    const isLastCard = currentIndex >= filteredCards.length - 1
 
     const newCount = allCards.filter(c => !c.isCompleted && !c.isInRevision).length
     const revisionCount = allCards.filter(c => c.isInRevision).length
@@ -681,6 +679,30 @@ function FlashcardQuiz({
         () => current ? allExamples.filter(e => e.vocab_id === current.id) : [],
         [current, allExamples]
     )
+
+    /* ── Sync theme-level counts back to parent ── */
+    useEffect(() => {
+        if (allCards.length === 0) return
+        onThemeProgressUpdate?.(themeId, { completedCount, revisionCount })
+    }, [allCards, themeId, completedCount, revisionCount, onThemeProgressUpdate])
+
+    /* ── Auto-advance when theme fully completed ── */
+    const wasAlreadyCompleteOnMount = useRef(initialQueue.every(c => c.isCompleted))
+    const hasTriggeredAdvance = useRef(false)
+
+    useEffect(() => {
+        const everyCompleted = allCards.length > 0 && allCards.every(c => c.isCompleted)
+        if (everyCompleted && !wasAlreadyCompleteOnMount.current && !hasTriggeredAdvance.current) {
+            hasTriggeredAdvance.current = true
+            const timer = setTimeout(() => {
+                onComplete?.()
+            }, 1200)
+            return () => clearTimeout(timer)
+        }
+        if (!everyCompleted) {
+            hasTriggeredAdvance.current = false
+        }
+    }, [allCards, onComplete])
 
     const updateCardStatus = useCallback(
         (cardId: number, newStatus: CardStatus, opts?: { isCompleted?: boolean; isInRevision?: boolean }) => {
@@ -695,14 +717,17 @@ function FlashcardQuiz({
 
                     if (opts) {
                         pendingRef.current.set(cardId, { isCompleted, isInRevision })
-                        updateLocalProgress(themeId, cardId, { is_completed: isCompleted, is_in_revision: isInRevision })
+                        updateLocalProgress(themeId, dialect, cardId, {
+                            is_completed: isCompleted,
+                            is_in_revision: isInRevision,
+                        })
                     }
 
                     return { ...c, status, isCompleted, isInRevision }
                 })
             )
         },
-        [themeId, updateLocalProgress]
+        [themeId, dialect, updateLocalProgress]
     )
 
     const goToIndex = useCallback(
@@ -716,30 +741,40 @@ function FlashcardQuiz({
         [filteredCards.length, alwaysShow]
     )
 
-    // FIXED: Include currentIndex in deps so it doesn't close over stale value
     const handlePrevious = useCallback(() => {
         if (currentIndex > 0) goToIndex(currentIndex - 1)
     }, [currentIndex, goToIndex])
 
+    // NEW — paste this
     const handleNext = useCallback(() => {
-        if (currentIndex < filteredCards.length - 1) goToIndex(currentIndex + 1)
-    }, [currentIndex, filteredCards.length, goToIndex])
-
+        if (currentIndex < filteredCards.length - 1) {
+            goToIndex(currentIndex + 1)
+        } else {
+            // On last card: advance to next theme
+            onComplete?.()
+        }
+    }, [currentIndex, filteredCards.length, goToIndex, onComplete])
     const toggleRevision = useCallback(() => {
         if (!current) return
         const toRevision = !current.isInRevision
         updateCardStatus(current.id, toRevision ? 'revision' : 'new', { isInRevision: toRevision })
     }, [current, updateCardStatus])
 
+    // NEW — paste this
     const toggleComplete = useCallback(() => {
         if (!current) return
         if (current.isCompleted) {
             updateCardStatus(current.id, current.isInRevision ? 'revision' : 'new', { isCompleted: false })
         } else {
             updateCardStatus(current.id, 'completed', { isCompleted: true })
-            if (currentIndex < filteredCards.length - 1) goToIndex(currentIndex + 1)
+            if (currentIndex < filteredCards.length - 1) {
+                goToIndex(currentIndex + 1)
+            } else {
+                // Completed last card: advance to next theme
+                onComplete?.()
+            }
         }
-    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex])
+    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete])
 
     const handleFilterChange = useCallback(
         (newFilter: FilterType) => {
@@ -816,7 +851,7 @@ function FlashcardQuiz({
                             {current.definition}
                         </Typography>
 
-                        {/* ── RESTORED: Example Sentences with Examples / You Try tabs ── */}
+                        {/* Example Sentences with Examples / You Try tabs */}
                         <ExampleSentences
                             examplesForCard={currentCardExamples}
                             revealed={revealed}
@@ -832,8 +867,10 @@ function FlashcardQuiz({
                                 sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>Revision</Button>
                             <Button variant={current.isCompleted ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} startIcon={current.isCompleted ? <DoneAll sx={{ fontSize: '1.1rem !important' }} /> : <Check sx={{ fontSize: '1.1rem !important' }} />}
                                 sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>{current.isCompleted ? 'Completed' : 'Complete'}</Button>
-                            <Button variant="outlined" color="warning" size="small" onClick={handleNext} disabled={!canGoForward} endIcon={<NavigateNext sx={{ fontSize: '1.1rem !important' }} />}
-                                sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px', opacity: canGoForward ? 1 : 0.5 }}>Next</Button>
+                            <Button variant="outlined" color="warning" size="small" onClick={handleNext} endIcon={<NavigateNext sx={{ fontSize: '1.1rem !important' }} />}
+                                sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>
+                                {isLastCard ? 'Next Theme' : 'Next'}
+                            </Button>
                         </Box>
 
                         {/* Mobile action buttons */}
@@ -843,7 +880,7 @@ function FlashcardQuiz({
                             </IconButton>
                             <Button variant={current.isInRevision ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} startIcon={current.isInRevision ? <BookmarkAdded /> : <Bookmark />} sx={mobileActionBtnSx}>Revision</Button>
                             <Button variant={current.isCompleted ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} startIcon={current.isCompleted ? <DoneAll /> : <Check />} sx={mobileActionBtnSx}>{current.isCompleted ? 'Completed' : 'Complete'}</Button>
-                            <IconButton onClick={handleNext} disabled={!canGoForward} sx={{ width: 40, height: 40, border: '1px solid', borderColor: canGoForward ? 'rgba(184,134,11,0.45)' : 'rgba(184,134,11,0.15)', color: canGoForward ? '#b8860b' : 'rgba(184,134,11,0.3)', borderRadius: '50%', flexShrink: 0, transition: 'all 0.15s', '&:hover': { background: 'rgba(184,134,11,0.06)' }, '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(184,134,11,0.15)' } }}>
+                            <IconButton onClick={handleNext} sx={{ width: 40, height: 40, border: '1px solid', borderColor: 'rgba(184,134,11,0.45)', color: '#b8860b', borderRadius: '50%', flexShrink: 0, transition: 'all 0.15s', '&:hover': { background: 'rgba(184,134,11,0.06)' } }}>
                                 <NavigateNext sx={{ fontSize: '1.35rem' }} />
                             </IconButton>
                         </Box>
@@ -864,7 +901,7 @@ function FlashcardQuiz({
 }
 
 /* ─────────────────────────────────────────────
-   ThemePlaylistSidebar (unchanged)
+   ThemePlaylistSidebar
 ───────────────────────────────────────────── */
 function ThemePlaylistSidebar({
     themes, selectedTheme, onSelectTheme, label,
@@ -994,7 +1031,7 @@ export default function FlashcardSlugPage() {
     const [activeExamples, setActiveExamples] = useState<ExampleRow[]>([])
     const [initialCardIndex, setInitialCardIndex] = useState<number | undefined>(undefined)
     const [showDiacritics, setShowDiacritics] = useState(true)
-    const [alwaysShow, setAlwaysShow] = useState(false)
+    const [alwaysShow, setAlwaysShow] = useState(true)
     const [quizKey, setQuizKey] = useState(0)
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [themesOpen, setThemesOpen] = useState(false)
@@ -1072,18 +1109,151 @@ export default function FlashcardSlugPage() {
         }
     }, [fetchTheme, dialect])
 
-    const isLoadingVocab = selectedTheme != null && loadingThemeId === selectedTheme.theme_id
-    const validThemes = themes.filter((t) => t?.theme_id != null && !Number.isNaN(t.theme_id))
+    /* ── Keep sidebar counts in sync with quiz actions ── */
+    const handleThemeProgressUpdate = useCallback((themeId: number, progress: { completedCount: number; revisionCount: number }) => {
+        setThemes(prev => prev.map(t =>
+            t.theme_id === themeId
+                ? { ...t, completed_count: progress.completedCount, revision_count: progress.revisionCount }
+                : t
+        ))
+        setSelectedTheme(prev => prev && prev.theme_id === themeId
+            ? { ...prev, completed_count: progress.completedCount, revision_count: progress.revisionCount }
+            : prev
+        )
+    }, [])
 
-    const currentDialectLabel = DIALECT_OPTIONS.find(opt => opt.code === dialect)?.label ?? dialect
+    /* ── Auto-advance to next unfinished theme ── */
+    const validThemes = useMemo(() => themes.filter((t) => t?.theme_id != null && !Number.isNaN(t.theme_id)), [themes])
+
+    const handleQuizComplete = useCallback(() => {
+        if (!selectedTheme) return
+        const currentIdx = validThemes.findIndex(t => t.theme_id === selectedTheme.theme_id)
+        const nextTheme = validThemes.slice(currentIdx + 1).find(t =>
+            t.total_words === 0 || t.completed_count < t.total_words
+        )
+        if (nextTheme) {
+            handleThemeSelect(nextTheme)
+        }
+    }, [selectedTheme, validThemes, handleThemeSelect])
+
+    const advanceToNextTheme = useCallback(() => {
+        if (!selectedTheme) return
+        const currentIdx = validThemes.findIndex(t => t.theme_id === selectedTheme.theme_id)
+        const nextTheme = validThemes.slice(currentIdx + 1).find(t =>
+            t.total_words === 0 || t.completed_count < t.total_words
+        )
+        if (nextTheme) {
+            handleThemeSelect(nextTheme)
+        }
+    }, [selectedTheme, validThemes, handleThemeSelect])
+
+    const isLoadingVocab = selectedTheme != null && loadingThemeId === selectedTheme.theme_id
 
     return (
         <>
             <Navbar />
 
-            {/* Mobile themes dialog (unchanged) */}
+            {/* Mobile themes dialog */}
             <Dialog open={themesOpen} onClose={() => setThemesOpen(false)} fullScreen sx={{ display: { sm: 'none' } }} slotProps={{ paper: { sx: { background: '#faf7f2' } } }}>
-                {/* ... mobile themes content unchanged ... */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <Box sx={{
+                        background: 'linear-gradient(135deg, #0e2e1f 0%, #071a0f 100%)',
+                        px: 2.5, py: 2,
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        flexShrink: 0,
+                    }}>
+                        <Box>
+                            <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.25rem', fontWeight: 700, color: '#f5ede0', lineHeight: 1.2 }}>
+                                {label}
+                            </Typography>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', color: 'rgba(245,237,224,0.6)', fontWeight: 500, mt: 0.25 }}>
+                                {validThemes.reduce((s, t) => s + t.total_words, 0)} words · {validThemes.length} themes
+                            </Typography>
+                        </Box>
+                        <IconButton onClick={() => setThemesOpen(false)} size="small" sx={{ color: '#f5ede0', ml: 1 }}>
+                            <Close sx={{ fontSize: '1.5rem' }} />
+                        </IconButton>
+                    </Box>
+
+                    <Box sx={{ overflowY: 'auto', flex: 1, py: 0.5 }}>
+                        {validThemes.map((theme, idx) => {
+                            const progress = theme.total_words > 0
+                                ? Math.round((theme.completed_count / theme.total_words) * 100)
+                                : 0
+                            const isActive = selectedTheme?.theme_id === theme.theme_id
+                            const isComplete = progress === 100
+
+                            return (
+                                <Box
+                                    key={theme.theme_id}
+                                    onClick={() => {
+                                        handleThemeSelect(theme)
+                                        setThemesOpen(false)
+                                    }}
+                                    sx={{
+                                        display: 'flex', alignItems: 'center', gap: 1.5,
+                                        px: 2.5, py: 1.5, cursor: 'pointer',
+                                        background: isActive ? 'rgba(184,134,11,0.08)' : 'transparent',
+                                        borderLeft: isActive ? '3px solid #b8860b' : '3px solid transparent',
+                                        borderBottom: '1px solid rgba(184,134,11,0.07)',
+                                        transition: 'all 0.15s',
+                                        '&:hover': { background: isActive ? 'rgba(184,134,11,0.1)' : 'rgba(184,134,11,0.04)' },
+                                    }}
+                                >
+                                    <Box sx={{
+                                        width: 32, height: 32, flexShrink: 0,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        borderRadius: '50%',
+                                        background: isActive ? 'rgba(184,134,11,0.15)' : isComplete ? 'rgba(46,125,50,0.08)' : 'rgba(122,110,101,0.08)',
+                                    }}>
+                                        {isComplete ? <CheckCircle sx={{ fontSize: '1.1rem', color: '#2e7d32' }} />
+                                            : isActive ? <Box sx={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderLeft: '8px solid #b8860b', ml: '2px' }} />
+                                                : <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: '#7a6e65' }}>{idx + 1}</Typography>
+                                        }
+                                    </Box>
+                                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                                        <Typography sx={{
+                                            fontFamily: 'Jost, sans-serif',
+                                            fontSize: '0.95rem',
+                                            fontWeight: isActive ? 700 : 500,
+                                            color: isActive ? '#2c1a0e' : '#3d3028',
+                                            lineHeight: 1.25,
+                                        }}>
+                                            {theme.display_name}
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.4 }}>
+                                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#9e8a7a' }}>
+                                                {theme.total_words} words
+                                            </Typography>
+                                            {theme.revision_count > 0 && (
+                                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#1565c0' }}>
+                                                    · {theme.revision_count} revision
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                        <Box sx={{ mt: 0.75, height: 3, borderRadius: 2, background: 'rgba(184,134,11,0.1)', overflow: 'hidden' }}>
+                                            <Box sx={{
+                                                height: '100%', borderRadius: 2,
+                                                width: `${progress}%`,
+                                                background: isComplete ? 'linear-gradient(90deg, #2e7d32, #4caf50)' : 'linear-gradient(90deg, #b8860b, #d4a843)',
+                                                transition: 'width 0.4s ease',
+                                            }} />
+                                        </Box>
+                                    </Box>
+                                    <Typography sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '0.78rem',
+                                        fontWeight: 600,
+                                        color: isComplete ? '#2e7d32' : isActive ? '#b8860b' : '#9e8a7a',
+                                        flexShrink: 0,
+                                    }}>
+                                        {progress}%
+                                    </Typography>
+                                </Box>
+                            )
+                        })}
+                    </Box>
+                </Box>
             </Dialog>
 
             <SettingsDialog
@@ -1110,7 +1280,7 @@ export default function FlashcardSlugPage() {
                                         onChange={(e) => setDialect(e.target.value)}
                                         variant="outlined"
                                         displayEmpty
-                                        IconComponent={() => null} // we'll add a custom icon via sx instead
+                                        IconComponent={() => null}
                                         sx={{
                                             fontFamily: 'Jost, sans-serif',
                                             fontSize: '0.85rem',
@@ -1131,7 +1301,7 @@ export default function FlashcardSlugPage() {
                                             '& .MuiSelect-select': {
                                                 py: 0,
                                                 px: 2,
-                                                pr: '16px !important',        // <-- OVERRIDE MUI's default 32px
+                                                pr: '16px !important',
                                                 textAlign: 'center',
                                                 display: 'flex',
                                                 alignItems: 'center',
@@ -1189,7 +1359,7 @@ export default function FlashcardSlugPage() {
                         </Box>
                     )}
 
-                    {/* Mobile controls (unchanged) */}
+                    {/* Mobile controls */}
                     {selectedTheme && (
                         <Box sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                             <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.3rem', fontWeight: 700, color: '#2c1a0e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, mr: 1 }}>
@@ -1202,7 +1372,7 @@ export default function FlashcardSlugPage() {
                         </Box>
                     )}
 
-                    {/* Main content (skeleton or flashcard) */}
+                    {/* Main content */}
                     {themesLoading && !selectedTheme ? (
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' }, gap: { xs: 2, lg: 3 }, alignItems: 'start' }}>
                             <Box sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px', padding: { xs: '1.5rem 1rem', md: '2rem 1.5rem' }, minHeight: 340, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1236,6 +1406,7 @@ export default function FlashcardSlugPage() {
                                     </Box>
                                 ) : selectedTheme && activeQueue.length > 0 ? (
                                     <FlashcardQuiz
+                                        onComplete={advanceToNextTheme}
                                         textScale={textScale}
                                         key={quizKey}
                                         initialQueue={activeQueue}
@@ -1243,12 +1414,14 @@ export default function FlashcardSlugPage() {
                                         allExamples={activeExamples}
                                         showDiacritics={showDiacritics}
                                         alwaysShow={alwaysShow}
-                                        onComplete={() => { }}
+                                        onComplete={handleQuizComplete}
                                         themeLabel={selectedTheme.display_name}
                                         totalInTheme={selectedTheme.total_words}
                                         alreadyCompletedCount={selectedTheme.completed_count}
                                         initialCardIndex={initialCardIndex}
                                         flushRef={flushRef}
+                                        dialect={dialect}
+                                        onThemeProgressUpdate={handleThemeProgressUpdate}
                                     />
                                 ) : null}
                             </Box>
@@ -1268,4 +1441,4 @@ export default function FlashcardSlugPage() {
             </Box>
         </>
     )
-}   
+}
