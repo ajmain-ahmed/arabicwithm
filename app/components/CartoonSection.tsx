@@ -299,7 +299,7 @@ export default function CartoonSection() {
           alignItems: 'start',
           justifyItems: 'center',
           width: '100%',
-          maxWidth: 1400,
+          maxWidth: 1500,
           mx: 'auto',
         }}
       >
@@ -307,7 +307,7 @@ export default function CartoonSection() {
           <ShowImage />
         </Box>
         <SheetsWithCard
-          cardSx={{ mt: { md: '-260px', lg: '-280px' }, width: '100%', maxWidth: { md: 420, lg: 460 } }}
+          cardSx={{ mt: { md: '-260px', lg: '-280px' }, width: '100%', maxWidth: { md: 420, lg: 460 }, mb:15 }}
         />
       </Box>
     </Box>

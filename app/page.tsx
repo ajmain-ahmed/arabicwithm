@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useEffect } from "react";
 import Navbar from "./components/navbar";
 import CartoonSection from "./components/CartoonSection";
+import StudySection from "./components/StudySection";
 
 /* ─────────────────────────────────────────────
    Global CSS — system fonts only
@@ -270,6 +271,8 @@ export default function HomePage() {
         </Box>
 
         <CartoonSection />
+      
+        <StudySection />
 
       </Box>
     </>
