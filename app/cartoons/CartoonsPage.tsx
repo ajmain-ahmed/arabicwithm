@@ -1,24 +1,11 @@
 'use client'
 
-// NOTE: Because this page reads the filesystem, the actual data-fetching
-// should happen in a Server Component. See the README comments below.
-// This file is the CLIENT shell — pair it with a server component if needed,
-// or convert to a pure Server Component by removing 'use client' and router.
-
-// ─── If you want a pure Server Component (recommended for this page):
-// Remove 'use client', remove useRouter, use <Link href={}> instead.
-
 import React from 'react'
-import { Box, Typography, Chip } from '@mui/material'
+import { Box, Typography } from '@mui/material'
+import Grid from '@mui/material/Grid'
 import { useRouter } from 'next/navigation'
 import Navbar from '../components/navbar'
 import { ShowMeta } from '../lib/cartoons'
-
-/* ─────────────────────────────────────────────
-   This page receives shows as props from a
-   Server Component parent, or you can fetch
-   inline if you make this a Server Component.
-───────────────────────────────────────────── */
 
 const PAGE_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,700;1,700&family=Jost:wght@300;400;500;600&display=swap');
@@ -40,29 +27,55 @@ const PAGE_CSS = `
   .show-card {
     cursor: pointer;
     transition: transform 0.28s cubic-bezier(.22,1,.36,1), box-shadow 0.28s ease;
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
   }
   .show-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 24px 56px rgba(44,26,14,0.18) !important;
+    transform: translateY(-8px);
+    box-shadow: 0 32px 64px rgba(44,26,14,0.22) !important;
   }
   .show-card:hover .card-img {
-    transform: scale(1.04);
+    transform: scale(1.05);
   }
   .card-img {
     transition: transform 0.4s cubic-bezier(.22,1,.36,1);
   }
-`
 
-const LEVEL_COLORS: Record<string, string> = {
-  A1: '#2d6a4f',
-  A2: '#40916c',
-  B1: '#b5861a',
-  B2: '#9c6b00',
-  C1: '#6d4c9e',
-  C2: '#4a2f7a',
-}
+  .banner-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+  .banner-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(10,31,21,0.40) 0%,
+      rgba(10,31,21,0.60) 55%,
+      rgba(10,31,21,0.88) 100%
+    );
+  }
+  
+  .banner-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle,
+      rgba(0,0,0,0) 0%,
+      rgba(0,0,0,0.5) 70%,
+      rgba(0,0,0,0.8) 100%
+    );
+  }
+
+  .banner-content {
+    position: relative;
+    z-index: 1;
+  }
+`
 
 export default function CartoonsPage({ shows }: { shows: ShowMeta[] }) {
   const router = useRouter()
@@ -80,170 +93,145 @@ export default function CartoonsPage({ shows }: { shows: ShowMeta[] }) {
           pt: { xs: '56px', md: '64px' },
         }}
       >
-        {/* ── Page Header ── */}
-        <Box
-          sx={{
-            background: `linear-gradient(160deg, var(--forest) 0%, #0a1f15 100%)`,
-            borderBottom: '1px solid rgba(212,168,67,0.2)',
-            px: { xs: 3, md: 8 },
-            py: { xs: 6, md: 10 },
-            textAlign: 'center',
-          }}
-        >
-          <Typography
-            component="h1"
-            sx={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: { xs: '2.2rem', md: '3.4rem' },
-              fontWeight: 700,
-              color: '#f5ede0',
-              lineHeight: 1.1,
-              mb: 1.5,
-            }}
-          >
-            Arabic Cartoons
-          </Typography>
-
-          {/* Arabic subtitle */}
-          <Typography
-            sx={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: { xs: '1.3rem', md: '1.8rem' },
-              color: 'var(--gold-lt)',
-              mb: 2,
-              direction: 'rtl',
-            }}
-          >
-            الرسوم المتحركة بالعربية
-          </Typography>
-
+        {/* ── Page Header with banner image ── */}
           <Box
             sx={{
-              height: '1px',
-              width: 80,
-              background: 'linear-gradient(90deg, transparent, var(--gold-lt), transparent)',
-              mx: 'auto',
-              mb: 2.5,
-            }}
-          />
-
-          <Typography
-            sx={{
-              fontFamily: 'Jost, var(--font-sans)',
-              fontSize: { xs: '0.92rem', md: '1.05rem' },
-              color: 'rgba(245,237,224,0.6)',
-              maxWidth: 520,
-              mx: 'auto',
-              lineHeight: 1.7,
+              position: 'relative',
+              overflow: 'hidden',
+              borderBottom: '1px solid rgba(212,168,67,0.2)',
+              px: { xs: 3, md: 8 },
+              py: { xs: 8, md: 14 },
+              textAlign: 'center',
+              minHeight: { xs: 280, md: 380 },
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            Watch your favourite cartoons subtitled in Arabic, then test yourself
-            with worksheets and quizzes graded to your CEFR level.
-          </Typography>
-        </Box>
+            {/* Banner image */}
+            <Box
+              component="img"
+              className="banner-img"
+              src="/cartoons/cartooons.avif"
+              alt=""
+              aria-hidden="true"
+            />
+
+            {/* Dark overlay so text stays legible */}
+            <Box className="banner-overlay" />
+
+            {/* Darker vignette */}
+            <Box className="banner-vignette" />
+
+            {/* Text content sits above both */}
+            <Box className="banner-content">
+              <Typography
+                component="h1"
+                sx={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: { xs: '2.4rem', md: '3.6rem' },
+                  fontWeight: 700,
+                  color: '#f5ede0',
+                  lineHeight: 1.1,
+                  mb: 1.5,
+                }}
+              >
+                Arabic Cartoons
+              </Typography>
+
+              <Typography
+                sx={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: { xs: '1.3rem', md: '1.9rem' },
+                  color: 'var(--gold-lt)',
+                  mb: 2,
+                  direction: 'rtl',
+                }}
+              >
+                الرسوم المتحركة بالعربية
+              </Typography>
+            </Box>
+          </Box>
 
         {/* ── Shows Grid ── */}
         <Box
           sx={{
-            px: { xs: 3, sm: 5, md: 8, lg: 14 },
+            px: { xs: 2, sm: 4, md: 6, lg: 8 },
             py: { xs: 6, md: 10 },
-            maxWidth: 1200,
             mx: 'auto',
           }}
         >
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: 'repeat(2, 1fr)',
-                sm: 'repeat(2, 1fr)',
-                md: 'repeat(3, 1fr)',
-                lg: 'repeat(4, 1fr)',
-              },
-              gap: { xs: 2.5, md: 4 },
-            }}
+          <Grid
+            container
+            spacing={{ xs: 3, md: 4, lg: 5 }}
+            sx={{ justifyContent: 'center' }}
           >
             {shows.map((show) => (
-              <Box
+              <Grid
                 key={show.slug}
-                className="show-card"
-                onClick={() => router.push(`/cartoons/${show.slug}`)}
-                sx={{
-                  background: '#fff',
-                  boxShadow: '0 4px 20px rgba(44,26,14,0.10)',
-                }}
+                size={{ xs: 6, sm: 4, md: 3, lg: 2.4, xl: 2 }}
               >
-                {/* Thumbnail */}
                 <Box
+                  className="show-card"
+                  onClick={() => router.push(`/cartoons/${show.slug}`)}
                   sx={{
-                    position: 'relative',
-                    aspectRatio: '3/4',
-                    overflow: 'hidden',
-                    background: '#e8d8bf',
+                    background: '#fff',
+                    boxShadow: '0 4px 20px rgba(44,26,14,0.10)',
+                    height: '100%',
                   }}
                 >
-                  <Box
-                    component="img"
-                    className="card-img"
-                    src={show.cover}
-                    alt={show.title}
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      display: 'block',
-                    }}
-                  />
-
-                  {/* Level badge */}
+                  {/* Thumbnail */}
                   <Box
                     sx={{
-                      position: 'absolute',
-                      top: 10,
-                      left: 10,
-                      background: LEVEL_COLORS[show.level] ?? 'var(--forest)',
-                      color: '#fff',
-                      fontFamily: 'Jost, var(--font-sans)',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.08em',
-                      px: 1.2,
-                      py: 0.4,
-                      borderRadius: '4px',
+                      position: 'relative',
+                      aspectRatio: '3/4',
+                      overflow: 'hidden',
+                      background: '#e8d8bf',
                     }}
                   >
-                    {show.level}
+                    <Box
+                      component="img"
+                      className="card-img"
+                      src={show.cover}
+                      alt={show.title}
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                    />
+                  </Box>
+
+                  {/* Info */}
+                  <Box sx={{ p: { xs: 1.5, md: 2.5 } }}>
+                    <Typography
+                      sx={{
+                        fontFamily: 'var(--font-serif)',
+                        fontSize: { xs: '0.95rem', md: '1.1rem' },
+                        fontWeight: 700,
+                        color: 'var(--bark)',
+                        lineHeight: 1.25,
+                        mb: 0.5,
+                      }}
+                    >
+                      {show.title}
+                    </Typography>
+
+                    <Typography
+                      sx={{
+                        fontFamily: 'Jost, var(--font-sans)',
+                        fontSize: '0.78rem',
+                        color: 'var(--muted)',
+                      }}
+                    >
+                      {show.episodeCount} {show.episodeCount === 1 ? 'episode' : 'episodes'}
+                    </Typography>
                   </Box>
                 </Box>
-
-                {/* Info */}
-                <Box sx={{ p: { xs: 1.5, md: 2 } }}>
-                  <Typography
-                    sx={{
-                      fontFamily: 'var(--font-serif)',
-                      fontSize: { xs: '0.95rem', md: '1.05rem' },
-                      fontWeight: 700,
-                      color: 'var(--bark)',
-                      lineHeight: 1.25,
-                      mb: 0.5,
-                    }}
-                  >
-                    {show.title}
-                  </Typography>
-
-                  <Typography
-                    sx={{
-                      fontFamily: 'Jost, var(--font-sans)',
-                      fontSize: '0.76rem',
-                      color: 'var(--muted)',
-                    }}
-                  >
-                    {show.episodeCount} {show.episodeCount === 1 ? 'episode' : 'episodes'}
-                  </Typography>
-                </Box>
-              </Box>
+              </Grid>
             ))}
-          </Box>
+          </Grid>
         </Box>
       </Box>
     </>

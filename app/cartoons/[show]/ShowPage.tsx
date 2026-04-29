@@ -7,12 +7,11 @@ import {
   Button,
   Chip,
   Card,
-  CardContent,
   CardMedia,
   Container,
+  Grid,
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
-import ArrowBack from '@mui/icons-material/ArrowBack'
 import Navbar from '../../components/navbar'
 import { ShowMeta, EpisodeMeta } from '../../lib/cartoons'
 import { ArrowBackIosNewSharp } from '@mui/icons-material'
@@ -136,7 +135,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                       fontSize: { xs: '1rem', md: '1.25rem' },
                       color: 'rgba(245,237,224,0.85)',
                       lineHeight: 1.6,
-                      maxWidth: 620,
+            
                       mx: 'auto',
                       mb: 3,
                     }}
@@ -201,156 +200,146 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
               No content available yet.
             </Typography>
           ) : (
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' },
-                gap: { xs: 2, md: 2.5 },
-              }}
-            >
+            <Grid container spacing={{ xs: 2, md: 2.5 }}>
               {episodes.map((ep) => (
-                <Card
+                <Grid
                   key={ep.slug}
-                  onClick={() =>
-                    router.push(`/cartoons/${show.slug}/${ep.slug}`)
-                  }
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'stretch',
-                    background: '#fff',
-                    borderRadius: '10px',
-                    overflow: 'hidden',
-                    boxShadow: '0 2px 12px rgba(44,26,14,0.06)',
-                    cursor: 'pointer',
-                    transition:
-                      'transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 8px 24px rgba(44,26,14,0.1)',
-                    },
-                    '&:hover .MuiCardMedia-root': {
-                      transform: 'scale(1.05)',
-                    },
-                  }}
+                  size={{ xs: 12, lg: 6 }}
+                  sx={{ display: 'flex' }}
                 >
-                  {/* Content */}
-                  <Box
+                  <Card
+                    onClick={() => router.push(`/cartoons/${show.slug}/${ep.slug}`)}
                     sx={{
                       display: 'flex',
-                      flexDirection: 'column',
-                      flex: 1,
-                      minWidth: 0,
-                      py: { xs: 1.5, md: 2 },
-                      px: { xs: 2, md: 2.5 },
+                      flexDirection: 'row',
+                      alignItems: 'stretch',
+                      width: '100%',
+                      background: '#fff',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      boxShadow: '0 2px 12px rgba(44,26,14,0.06)',
+                      cursor: 'pointer',
+                      transition: 'transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 8px 24px rgba(44,26,14,0.1)',
+                      },
+                      '&:hover .MuiCardMedia-root': {
+                        transform: 'scale(1.05)',
+                      },
                     }}
                   >
+                    {/* Content */}
                     <Box
                       sx={{
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: 1.25,
-                        mb: 1,
+                        flexDirection: 'column',
+                        flex: 1,
+                        minWidth: 0,
+                        py: { xs: 1.5, md: 2 },
+                        px: { xs: 2, md: 2.5 },
                       }}
                     >
-                      <Box
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1 }}>
+                        <Box
+                          sx={{
+                            background: LEVEL_COLORS[ep.level] ?? 'var(--forest)',
+                            color: '#fff',
+                            fontFamily: 'Jost, var(--font-sans)',
+                            fontSize: '0.6rem',
+                            fontWeight: 700,
+                            letterSpacing: '0.08em',
+                            px: 0.9,
+                            py: 0.25,
+                            borderRadius: '3px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {ep.level}
+                        </Box>
+                      </Box>
+
+                      <Typography
+                        component="div"
                         sx={{
-                          background:
-                            LEVEL_COLORS[ep.level] ?? 'var(--forest)',
-                          color: '#fff',
-                          fontFamily: 'Jost, var(--font-sans)',
-                          fontSize: '0.6rem',
+                          fontFamily: 'var(--font-serif)',
+                          fontSize: { xs: '1rem', md: '1.15rem' },
                           fontWeight: 700,
-                          letterSpacing: '0.08em',
-                          px: 0.9,
-                          py: 0.25,
-                          borderRadius: '3px',
-                          textTransform: 'uppercase',
+                          color: 'var(--bark)',
+                          lineHeight: 1.3,
+                          mb: 0.75,
                         }}
                       >
-                        {ep.level}
+                        {ep.title}
+                      </Typography>
+
+                      {ep.description && (
+                        <Typography
+                          sx={{
+                            fontFamily: 'Jost, var(--font-sans)',
+                            fontSize: { xs: '0.8rem', md: '0.85rem' },
+                            color: 'var(--muted)',
+                            lineHeight: 1.5,
+                            mb: 1.25,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {ep.description}
+                        </Typography>
+                      )}
+
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.75,
+                          flexWrap: 'wrap',
+                          mt: 'auto',
+                        }}
+                      >
+                        {ep.tags.map((tag) => (
+                          <Chip
+                            key={tag}
+                            label={tag}
+                            size="small"
+                            sx={{
+                              fontFamily: 'Jost, var(--font-sans)',
+                              fontSize: '0.68rem',
+                              background: 'rgba(44,26,14,0.05)',
+                              color: 'var(--muted)',
+                              height: 22,
+                              borderRadius: '3px',
+                            }}
+                          />
+                        ))}
                       </Box>
                     </Box>
 
-                    <Typography
-                      component="div"
+                    {/* Thumbnail */}
+                    <CardMedia
+                      component="img"
+                      image={`/cartoons/${show.slug}/${ep.slug}.avif`}
+                      alt={ep.title}
                       sx={{
-                        fontFamily: 'var(--font-serif)',
-                        fontSize: { xs: '1rem', md: '1.15rem' },
-                        fontWeight: 700,
-                        color: 'var(--bark)',
-                        lineHeight: 1.3,
-                        mb: 0.75,
+                        width: { xs: 90, sm: 120, md: 150 },
+                        flexShrink: 0,
+                        objectFit: 'cover',
+                        display: 'block',
+                        background: '#e8d8bf',
+                        transition: 'transform 0.35s cubic-bezier(.22,1,.36,1)',
                       }}
-                    >
-                      {ep.title}
-                    </Typography>
-
-                    {ep.description && (
-                      <Typography
-                        sx={{
-                          fontFamily: 'Jost, var(--font-sans)',
-                          fontSize: { xs: '0.8rem', md: '0.85rem' },
-                          color: 'var(--muted)',
-                          lineHeight: 1.5,
-                          mb: 1.25,
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        {ep.description}
-                      </Typography>
-                    )}
-
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.75,
-                        flexWrap: 'wrap',
-                        mt: 'auto',
+                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                        e.currentTarget.style.display = 'none'
                       }}
-                    >
-                      {ep.tags.map((tag) => (
-                        <Chip
-                          key={tag}
-                          label={tag}
-                          size="small"
-                          sx={{
-                            fontFamily: 'Jost, var(--font-sans)',
-                            fontSize: '0.68rem',
-                            background: 'rgba(44,26,14,0.05)',
-                            color: 'var(--muted)',
-                            height: 22,
-                            borderRadius: '3px',
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  </Box>
-
-                  {/* Thumbnail */}
-                  <CardMedia
-                    component="img"
-                    image={`/cartoons/${show.slug}/${ep.slug}.avif`}
-                    alt={ep.title}
-                    sx={{
-                      width: { xs: 90, sm: 120, md: 150 },
-                      objectFit: 'cover',
-                      display: 'block',
-                      background: '#e8d8bf',
-                      transition: 'transform 0.35s cubic-bezier(.22,1,.36,1)',
-                    }}
-                    onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                      e.currentTarget.style.display = 'none'
-                    }}
-                  />
-                </Card>
+                    />
+                  </Card>
+                </Grid>
               ))}
-            </Box>
+            </Grid>
           )}
         </Container>
       </Box>

@@ -23,7 +23,6 @@ import { useAuth } from '../AuthContext';
 import { supabase } from '../lib/supabase/client';
 import AuthDialog from './AuthDialog';
 
-// ─── constants ────────────────────────────────────────────────────────────────
 const NAV_ITEMS = ['Learn', 'About', 'Contact'] as const;
 const NAV_ROUTES: Record<string, string> = {
     'About': '/about',
@@ -64,7 +63,6 @@ const MEGA_MENU_ITEMS = [
     }
 ];
 
-// ─── Study level → slug mapping ───────────────────────────────────────────────
 const STUDY_LEVEL_MAP: Record<string, string> = {
     'A1': 'Apprentice',
     'A2': 'Competent',
@@ -74,7 +72,6 @@ const STUDY_LEVEL_MAP: Record<string, string> = {
     'C2': 'Native',
 };
 
-// ─── styles ───────────────────────────────────────────────────────────────────
 const NAV_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Cookie&family=EB+Garamond:ital,wght@0,700;1,700&family=Jost:wght@300;400;500;600&display=swap');
   
@@ -129,6 +126,14 @@ const NAV_CSS = `
     background: transparent;
     z-index: 1201;
   }
+
+  .cartoon-header-link {
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  .cartoon-header-link:hover {
+    color: var(--gold) !important;
+  }
 `;
 
 export default function Navbar() {
@@ -140,13 +145,11 @@ export default function Navbar() {
 
     const hasAnimatedRef = useRef(false);
 
-    // State
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [contactOpen, setContactOpen] = useState(false);
     const [authDialogOpen, setAuthDialogOpen] = useState(false);
     const [learnMenuOpen, setLearnMenuOpen] = useState(false);
 
-    // Mobile accordion states (one per section)
     const [mobileOpenSections, setMobileOpenSections] = useState<Record<string, boolean>>({
         Study: false,
         Cartoons: false,
@@ -156,7 +159,6 @@ export default function Navbar() {
 
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
 
-    // Refs for hover delay logic
     const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
     const menuContainerRef = useRef<HTMLDivElement>(null);
 
@@ -190,6 +192,11 @@ export default function Navbar() {
 
     const toggleMobileSection = (section: string) => {
         setMobileOpenSections(prev => ({ ...prev, [section]: !prev[section] }));
+    };
+
+    const closeAll = () => {
+        setLearnMenuOpen(false);
+        setDrawerOpen(false);
     };
 
     // ── Components ─────────────────────────────────────────────────────────────
@@ -274,8 +281,14 @@ export default function Navbar() {
                 const key = item.toLowerCase().replace(/\s+/g, '-');
                 router.push(`/learn/${section.header.toLowerCase()}/${key}`);
             }
-            setLearnMenuOpen(false);
-            setDrawerOpen(false);
+            closeAll();
+        };
+
+        const handleHeaderClick = () => {
+            if (section.header === 'Cartoons') {
+                router.push('/cartoons');
+                closeAll();
+            }
         };
 
         return (
@@ -285,11 +298,18 @@ export default function Navbar() {
                     pb: 1, borderBottom: '1px solid rgba(184,134,11,0.1)'
                 }}>
                     {!isMobile && section.icon}
-                    <Typography sx={{
-                        fontFamily: '"EB Garamond", serif',
-                        fontSize: isMobile ? '1.1rem' : '1.2rem',
-                        fontWeight: 700, color: 'var(--bark)', letterSpacing: '0.02em'
-                    }}>
+                    <Typography
+                        className={section.header === 'Cartoons' ? 'cartoon-header-link' : undefined}
+                        onClick={handleHeaderClick}
+                        sx={{
+                            fontFamily: '"EB Garamond", serif',
+                            fontSize: isMobile ? '1.1rem' : '1.2rem',
+                            fontWeight: 700,
+                            color: 'var(--bark)',
+                            letterSpacing: '0.02em',
+                            cursor: section.header === 'Cartoons' ? 'pointer' : 'default',
+                        }}
+                    >
                         {section.header}
                     </Typography>
                 </Box>
@@ -323,7 +343,7 @@ export default function Navbar() {
         </Box>
     );
 
-    // ── User menu popper ───────────────────────────────────────────────────────
+    // ── User menu ──────────────────────────────────────────────────────────────
     const renderUserMenu = () => (
         <Menu
             anchorEl={userMenuAnchor}
@@ -484,8 +504,17 @@ export default function Navbar() {
                 {MEGA_MENU_ITEMS.map((section) => (
                     <React.Fragment key={section.header}>
                         <ListItem disablePadding>
-                            <ListItemButton onClick={() => toggleMobileSection(section.header)}
-                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
+                            <ListItemButton
+                                onClick={() => {
+                                    if (section.header === 'Cartoons') {
+                                        router.push('/cartoons');
+                                        setDrawerOpen(false);
+                                    } else {
+                                        toggleMobileSection(section.header);
+                                    }
+                                }}
+                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
+                            >
                                 <ListItemIcon sx={{ color: 'var(--forest)' }}>
                                     {section.icon}
                                 </ListItemIcon>
@@ -494,14 +523,42 @@ export default function Navbar() {
                                         {section.header}
                                     </Typography>
                                 } />
-                                {mobileOpenSections[section.header] ? <ExpandLess sx={{ color: 'var(--muted)' }} /> : <ExpandMore sx={{ color: 'var(--muted)' }} />}
+                                {section.header !== 'Cartoons' && (
+                                    mobileOpenSections[section.header]
+                                        ? <ExpandLess sx={{ color: 'var(--muted)' }} />
+                                        : <ExpandMore sx={{ color: 'var(--muted)' }} />
+                                )}
                             </ListItemButton>
                         </ListItem>
-                        <Collapse in={mobileOpenSections[section.header]} timeout="auto" unmountOnExit>
-                            <Box sx={{ px: 3, pb: 2 }}>
-                                <DropdownContent section={section} isMobile={true} />
-                            </Box>
-                        </Collapse>
+                        {section.header !== 'Cartoons' && (
+                            <Collapse in={mobileOpenSections[section.header]} timeout="auto" unmountOnExit>
+                                <Box sx={{ px: 3, pb: 2 }}>
+                                    <DropdownContent section={section} isMobile={true} />
+                                </Box>
+                            </Collapse>
+                        )}
+                        {section.header === 'Cartoons' && (
+                            <Collapse in={true} timeout="auto">
+                                <Box sx={{ px: 3, pb: 2 }}>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, pl: 4 }}>
+                                        {section.items.map((item) => (
+                                            <Typography
+                                                key={item}
+                                                className="mega-menu-item"
+                                                onClick={() => {
+                                                    const slug = CARTOON_SLUG_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-');
+                                                    router.push(`/cartoons/${slug}`);
+                                                    setDrawerOpen(false);
+                                                }}
+                                                sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--muted)', cursor: 'pointer', width: 'fit-content' }}
+                                            >
+                                                {item}
+                                            </Typography>
+                                        ))}
+                                    </Box>
+                                </Box>
+                            </Collapse>
+                        )}
                     </React.Fragment>
                 ))}
 
@@ -521,7 +578,6 @@ export default function Navbar() {
                         } />
                     </ListItemButton>
                 </ListItem>
-
 
                 <ListItem disablePadding>
                     <ListItemButton className="mobile-list-btn"
@@ -554,25 +610,21 @@ export default function Navbar() {
                 </ListItem>
 
                 {isLoggedIn && (
-                    <>
-
-                        <ListItem disablePadding>
-                            <ListItemButton className="mobile-list-btn"
-                                onClick={() => { handleLogout(); setDrawerOpen(false); }}
-                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
-                                <ListItemIcon sx={{ color: '#c0392b' }}>
-                                    <LogoutSharp sx={{ fontSize: 20 }} />
-                                </ListItemIcon>
-                                <ListItemText primary={
-                                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: '#c0392b' }}>
-                                        Log Out
-                                    </Typography>
-                                } />
-                            </ListItemButton>
-                        </ListItem>
-                    </>
+                    <ListItem disablePadding>
+                        <ListItemButton className="mobile-list-btn"
+                            onClick={() => { handleLogout(); setDrawerOpen(false); }}
+                            sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
+                            <ListItemIcon sx={{ color: '#c0392b' }}>
+                                <LogoutSharp sx={{ fontSize: 20 }} />
+                            </ListItemIcon>
+                            <ListItemText primary={
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: '#c0392b' }}>
+                                    Log Out
+                                </Typography>
+                            } />
+                        </ListItemButton>
+                    </ListItem>
                 )}
-
             </List>
         </Drawer>
     );
@@ -662,8 +714,7 @@ export default function Navbar() {
                                 {isLoggedIn ? (
                                     <IconButton onClick={e => setUserMenuAnchor(e.currentTarget)} size="small">
                                         <Avatar sx={{
-                                            width: 30,
-                                            height: 30,
+                                            width: 30, height: 30,
                                             background: 'linear-gradient(135deg, #b8860b, #d4a843)',
                                             color: 'var(--forest)',
                                             fontFamily: 'Jost, sans-serif',
@@ -715,8 +766,7 @@ export default function Navbar() {
                                     {isLoggedIn ? (
                                         <IconButton onClick={e => setUserMenuAnchor(e.currentTarget)} size="small">
                                             <Avatar sx={{
-                                                width: 32,
-                                                height: 32,
+                                                width: 32, height: 32,
                                                 background: 'linear-gradient(135deg, #b8860b, #d4a843)',
                                                 color: 'var(--forest)',
                                                 fontFamily: 'Jost, sans-serif',
