@@ -238,28 +238,6 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
             <Close sx={{ fontSize: 18 }} />
           </IconButton>
 
-          {/* Brand mark */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
-            <Box
-              component="img"
-              src="/arabicwithm-notext.png"
-              alt="ArabicWithM"
-              sx={{ height: 28, width: 'auto', objectFit: 'contain' }}
-            />
-            <Typography sx={{
-              fontFamily: '"Cookie", cursive',
-              fontSize: '1.6rem',
-              fontWeight: 500,
-              background: 'linear-gradient(135deg, var(--bark) 0%, var(--forest) 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              lineHeight: 1,
-              mt: '0.15em',
-            }}>
-              ArabicWithM
-            </Typography>
-          </Box>
-
           <Typography sx={{
             fontFamily: '"EB Garamond", serif',
             fontSize: '1.75rem',
