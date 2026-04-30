@@ -385,15 +385,6 @@ export default function Navbar() {
             </Box>
             <Box sx={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(184,134,11,0.3), transparent)' }} />
             <MenuItem
-                onClick={() => { setUserMenuAnchor(null); router.push('/revision'); }}
-                sx={{ py: 1.2, gap: 1.5, '&:hover': { background: 'rgba(184,134,11,0.06)' } }}
-            >
-                <School sx={{ fontSize: 18, color: 'var(--forest)' }} />
-                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.88rem', color: 'var(--bark)' }}>
-                    Revision
-                </Typography>
-            </MenuItem>
-            <MenuItem
                 onClick={() => { setUserMenuAnchor(null); router.push('/profile'); }}
                 sx={{ py: 1.2, gap: 1.5, '&:hover': { background: 'rgba(184,134,11,0.06)' } }}
             >
@@ -505,14 +496,7 @@ export default function Navbar() {
                     <React.Fragment key={section.header}>
                         <ListItem disablePadding>
                             <ListItemButton
-                                onClick={() => {
-                                    if (section.header === 'Cartoons') {
-                                        router.push('/cartoons');
-                                        setDrawerOpen(false);
-                                    } else {
-                                        toggleMobileSection(section.header);
-                                    }
-                                }}
+                                onClick={() => toggleMobileSection(section.header)}
                                 sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
                             >
                                 <ListItemIcon sx={{ color: 'var(--forest)' }}>
@@ -523,42 +507,17 @@ export default function Navbar() {
                                         {section.header}
                                     </Typography>
                                 } />
-                                {section.header !== 'Cartoons' && (
-                                    mobileOpenSections[section.header]
-                                        ? <ExpandLess sx={{ color: 'var(--muted)' }} />
-                                        : <ExpandMore sx={{ color: 'var(--muted)' }} />
-                                )}
+                                {mobileOpenSections[section.header]
+                                    ? <ExpandLess sx={{ color: 'var(--muted)' }} />
+                                    : <ExpandMore sx={{ color: 'var(--muted)' }} />
+                                }
                             </ListItemButton>
                         </ListItem>
-                        {section.header !== 'Cartoons' && (
-                            <Collapse in={mobileOpenSections[section.header]} timeout="auto" unmountOnExit>
-                                <Box sx={{ px: 3, pb: 2 }}>
-                                    <DropdownContent section={section} isMobile={true} />
-                                </Box>
-                            </Collapse>
-                        )}
-                        {section.header === 'Cartoons' && (
-                            <Collapse in={true} timeout="auto">
-                                <Box sx={{ px: 3, pb: 2 }}>
-                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, pl: 4 }}>
-                                        {section.items.map((item) => (
-                                            <Typography
-                                                key={item}
-                                                className="mega-menu-item"
-                                                onClick={() => {
-                                                    const slug = CARTOON_SLUG_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-');
-                                                    router.push(`/cartoons/${slug}`);
-                                                    setDrawerOpen(false);
-                                                }}
-                                                sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--muted)', cursor: 'pointer', width: 'fit-content' }}
-                                            >
-                                                {item}
-                                            </Typography>
-                                        ))}
-                                    </Box>
-                                </Box>
-                            </Collapse>
-                        )}
+                        <Collapse in={mobileOpenSections[section.header]} timeout="auto" unmountOnExit>
+                            <Box sx={{ px: 3, pb: 2 }}>
+                                <DropdownContent section={section} isMobile={true} />
+                            </Box>
+                        </Collapse>
                     </React.Fragment>
                 ))}
 
