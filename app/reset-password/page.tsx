@@ -73,7 +73,7 @@ export default function ResetPasswordPage() {
           {/* Header */}
           <Box sx={{ px: 4, pt: 4, pb: 3, borderBottom: '1px solid rgba(184,134,11,0.12)' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
-              <Box component="img" src="/arabicwithm-notext.png" alt="ArabicWithM"
+              <Box component="img" src="homepage/arabicwithm-notext.png" alt="ArabicWithM"
                 sx={{ height: 26, width: 'auto', objectFit: 'contain' }} />
               <Typography sx={{
                 fontFamily: '"Cookie", cursive', fontSize: '1.6rem', fontWeight: 500,
