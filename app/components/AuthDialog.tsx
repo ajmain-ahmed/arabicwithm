@@ -136,19 +136,34 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
     resetAndClose('success', 'Password reset link sent — check your inbox.')
   }
 
+  // Add this to your existing useState declarations (around line 40)
+  const [googleLoading, setGoogleLoading] = useState(false)
+
+  // Update the handleGoogleSignIn function (around line 127)
   const handleGoogleSignIn = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/` },
-    })
+    setGoogleLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
+      })
+      if (error) {
+        showSnackbar('error', error.message)
+        setGoogleLoading(false)
+      }
+      // Note: On success, page redirects, so no need to setLoading(false)
+    } catch (err) {
+      showSnackbar('error', 'Failed to sign in with Google')
+      setGoogleLoading(false)
+    }
   }
 
   const handleSubmit = () => {
     if (!formData.email) { showSnackbar('warning', 'Please enter your email.'); return }
     if (!forgotPassword && !formData.password) { showSnackbar('warning', 'Please enter your password.'); return }
-    if (forgotPassword)            handleForgotPassword()
+    if (forgotPassword) handleForgotPassword()
     else if (authMode === 'register') handleSignUp()
-    else                           handleSignIn()
+    else handleSignIn()
   }
 
   const handleClose = () => {
@@ -168,20 +183,20 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
   const title = forgotPassword
     ? 'Reset Password'
     : authMode === 'register'
-    ? 'Create Account'
-    : 'Welcome Back'
+      ? 'Create Account'
+      : 'Welcome Back'
 
   const subtitle = forgotPassword
     ? "Enter your email and we'll send a reset link."
     : authMode === 'register'
-    ? 'Join ArabicWithM and start your learning journey.'
-    : 'Sign in to continue your Arabic studies.'
+      ? 'Join ArabicWithM and start your learning journey.'
+      : 'Sign in to continue your Arabic studies.'
 
   const ctaLabel = forgotPassword
     ? 'Send Reset Link'
     : authMode === 'register'
-    ? 'Create Account'
-    : 'Sign In'
+      ? 'Create Account'
+      : 'Sign In'
 
   return (
     <>
@@ -420,6 +435,9 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
                 </Box>
 
                 <Button
+                  loading={googleLoading}  // ← Add this prop
+                  loadingPosition="start"   // ← Optional: keeps icon in place while loading
+                  disabled={loading || googleLoading}  // ← Disable while any auth is in progres
                   onClick={handleGoogleSignIn}
                   variant="outlined"
                   fullWidth
