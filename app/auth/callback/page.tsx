@@ -1,35 +1,41 @@
 // app/auth/callback/page.tsx
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/app/lib/supabase/client'
 
 export default function AuthCallback() {
     const router = useRouter()
+    const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const [status, setStatus] = useState<'loading' | 'error'>('loading')
 
     useEffect(() => {
+        let cancelled = false
+
         const handleCallback = async () => {
-            // Supabase automatically processes the OAuth code from the URL
-            // We just need to get the session and redirect
             const { data: { session }, error } = await supabase.auth.getSession()
+
+            if (cancelled) return
 
             if (error) {
                 console.error('Auth callback error:', error)
+                setStatus('error')
                 router.push('/?auth=error')
                 return
             }
 
             if (session) {
-                // Session exists, redirect to home
                 router.push('/')
             } else {
                 // Sometimes the session isn't ready immediately, try again
-                setTimeout(async () => {
+                timerRef.current = setTimeout(async () => {
                     const { data: { session: retrySession } } = await supabase.auth.getSession()
+                    if (cancelled) return
                     if (retrySession) {
                         router.push('/')
                     } else {
+                        setStatus('error')
                         router.push('/?auth=error')
                     }
                 }, 500)
@@ -37,6 +43,11 @@ export default function AuthCallback() {
         }
 
         handleCallback()
+
+        return () => {
+            cancelled = true
+            if (timerRef.current) clearTimeout(timerRef.current)
+        }
     }, [router])
 
     return (
@@ -46,7 +57,7 @@ export default function AuthCallback() {
             alignItems: 'center',
             height: '100vh'
         }}>
-            Completing sign in...
+            {status === 'error' ? 'Sign-in failed. Redirecting…' : 'Completing sign in…'}
         </div>
     )
 }

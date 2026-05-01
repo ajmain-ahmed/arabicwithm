@@ -21,11 +21,20 @@ import {
   DialogContent,
   DialogActions,
   Divider,
+  useMediaQuery,
+  Chip,
+  Drawer,
 } from '@mui/material'
+import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip'
+import { styled } from '@mui/material/styles'
+import { useTheme } from '@mui/material/styles'
 import { ArrowBack, Settings, Close } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/app/components/navbar'
-import { EpisodeFull } from '@/app/lib/cartoons'
+import { EpisodeFull, VocabEntry } from '@/app/lib/cartoons'
+import { normalizeArabicToken, stripDiacritics } from '@/app/lib/arabic'
+import { useRevisionStore } from '@/store/revisionStore'
+import { useAuth } from '@/app/AuthContext'          // ← added
 
 // ─── Fallback — used before we measure the real navbar ────────────────────────
 const NAVBAR_HEIGHT = 64 // px
@@ -122,13 +131,49 @@ const PAGE_CSS = `
 /* ─────────────────────────────────────────────
    YouTube IFrame API Types
 ───────────────────────────────────────────── */
+namespace YT {
+  export interface Player {
+    getCurrentTime(): number
+    seekTo(seconds: number, allowSeekAhead: boolean): void
+    playVideo(): void
+    destroy(): void
+  }
+}
+
 declare global {
   interface Window {
-    YT: any
+    YT: {
+      Player: new (element: HTMLElement, options: Record<string, unknown>) => YT.Player
+      PlayerState: { PLAYING: number }
+    }
     onYouTubeIframeAPIReady: (() => void) | undefined
     __ytApiReady?: boolean
   }
 }
+
+/* ─────────────────────────────────────────────
+   HtmlTooltip — desktop only
+───────────────────────────────────────────── */
+const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
+  <Tooltip {...props} classes={{ popper: className }} />
+))(({ theme }) => ({
+  [`& .${tooltipClasses.tooltip}`]: {
+    backgroundColor: '#fff',
+    color: 'var(--bark)',
+    maxWidth: 320,
+    fontSize: theme.typography.pxToRem(14),
+    border: '1px solid rgba(44,26,14,0.08)',
+    borderRadius: '12px',
+    padding: 0,
+    boxShadow: '0 12px 40px rgba(44,26,14,0.18)',
+  },
+  [`& .${tooltipClasses.arrow}`]: {
+    color: '#fff',
+    '&::before': {
+      border: '1px solid rgba(44,26,14,0.08)',
+    },
+  },
+}))
 
 /* ─────────────────────────────────────────────
    MobileFixedHeader — portal into <body>
@@ -138,6 +183,7 @@ function MobileFixedHeader({
   onBack,
   videoRef,
   isShort,
+  hasVideo,
   onHeightChange,
   top,
 }: {
@@ -145,6 +191,7 @@ function MobileFixedHeader({
   onBack: () => void
   videoRef: React.RefObject<HTMLDivElement | null>
   isShort: boolean
+  hasVideo: boolean
   onHeightChange?: (height: number) => void
   top: number
 }) {
@@ -277,48 +324,50 @@ function MobileFixedHeader({
       </div>
 
       {/* Video — moved into the fixed header on mobile, now draggable-resizable */}
-      <div
-        ref={videoContainerRef}
-        style={{
-          width: '100%',
-          borderRadius: 12,
-          overflow: 'hidden',
-          background: '#000',
-          aspectRatio: isShort ? '9/16' : '16/9',
-          maxHeight: maxVideoHeight,
-          boxShadow: '0 8px 32px rgba(44,26,14,0.18)',
-          position: 'relative',
-        }}
-      >
+      {hasVideo && (
         <div
-          ref={(el) => {
-            if (el && videoRef.current && el.children.length === 0) {
-              el.appendChild(videoRef.current)
-            }
-          }}
-          style={{ width: '100%', height: '100%' }}
-        />
-
-        {/* Drag handle */}
-        <div
-          onMouseDown={(e) => startDrag(e.clientY)}
-          onTouchStart={(e) => startDrag(e.touches[0].clientY)}
+          ref={videoContainerRef}
           style={{
-            position: 'absolute',
-            bottom: 8,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 40,
-            height: 5,
-            borderRadius: 3,
-            background: 'rgba(255,255,255,0.65)',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
-            cursor: 'ns-resize',
-            zIndex: 10,
-            touchAction: 'none',
+            width: '100%',
+            borderRadius: 12,
+            overflow: 'hidden',
+            background: '#000',
+            aspectRatio: isShort ? '9/16' : '16/9',
+            maxHeight: maxVideoHeight,
+            boxShadow: '0 8px 32px rgba(44,26,14,0.18)',
+            position: 'relative',
           }}
-        />
-      </div>
+        >
+          <div
+            ref={(el) => {
+              if (el && videoRef.current && el.children.length === 0) {
+                el.appendChild(videoRef.current)
+              }
+            }}
+            style={{ width: '100%', height: '100%' }}
+          />
+
+          {/* Drag handle */}
+          <div
+            onMouseDown={(e) => startDrag(e.clientY)}
+            onTouchStart={(e) => startDrag(e.touches[0].clientY)}
+            style={{
+              position: 'absolute',
+              bottom: 8,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 40,
+              height: 5,
+              borderRadius: 3,
+              background: 'rgba(255,255,255,0.65)',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+              cursor: 'ns-resize',
+              zIndex: 10,
+              touchAction: 'none',
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 
@@ -412,6 +461,500 @@ function SettingsDialog({
 }
 
 /* ─────────────────────────────────────────────
+   VocabDetail
+───────────────────────────────────────────── */
+function VocabDetail({
+  entry,
+  toggling,
+  inRevision,
+  onToggle,
+  textScale,
+  onClose,
+}: {
+  entry: VocabEntry
+  toggling: boolean
+  inRevision: boolean
+  onToggle: () => void
+  textScale: number
+  onClose?: () => void
+}) {
+  const { user } = useAuth()   // ← guard added
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      {/* Chips + close button row */}
+      {(entry.level || entry.theme || onClose) && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', flex: 1 }}>
+            {entry.level && (
+              <Chip
+                label={entry.level}
+                size="small"
+                sx={{
+                  background: LEVEL_COLORS[entry.level] ?? 'var(--forest)',
+                  color: '#fff',
+                  fontFamily: 'Jost, sans-serif',
+                  fontWeight: 600,
+                  fontSize: `calc(0.7rem * ${textScale})`,
+                  letterSpacing: '0.04em',
+                }}
+              />
+            )}
+            {entry.theme && (
+              <Chip
+                label={entry.theme}
+                size="small"
+                sx={{
+                  background: 'rgba(184,134,11,0.12)',
+                  color: 'var(--gold)',
+                  fontFamily: 'Jost, sans-serif',
+                  fontWeight: 600,
+                  fontSize: `calc(0.7rem * ${textScale})`,
+                  border: '1px solid rgba(184,134,11,0.25)',
+                }}
+              />
+            )}
+          </Box>
+
+          {onClose && (
+            <IconButton
+              onClick={(e) => {
+                e.stopPropagation()
+                onClose()
+              }}
+              size="small"
+              sx={{
+                color: '#7a6e65',
+                width: 26,
+                height: 26,
+                flexShrink: 0,
+              }}
+            >
+              <Close sx={{ fontSize: '0.95rem' }} />
+            </IconButton>
+          )}
+        </Box>
+      )}
+
+      <Box sx={{ textAlign: 'center' }}>
+        <Typography
+          sx={{
+            fontFamily: '"EB Garamond", Georgia, serif',
+            fontSize: `calc(1.7rem * ${textScale})`,
+            fontWeight: 700,
+            color: 'var(--bark)',
+            direction: 'rtl',
+          }}
+        >
+          {entry.word_diacritic || entry.word}
+        </Typography>
+        <Typography
+          sx={{
+            fontFamily: 'Jost, sans-serif',
+            fontSize: `calc(0.85rem * ${textScale})`,
+            color: 'var(--muted)',
+            mt: 0.5,
+          }}
+        >
+          {entry.transliteration}
+        </Typography>
+      </Box>
+
+      <Box>
+        <Typography
+          sx={{
+            fontFamily: 'Jost, sans-serif',
+            fontSize: `calc(0.75rem * ${textScale})`,
+            fontWeight: 600,
+            color: 'var(--forest)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+          }}
+        >
+          {entry.pos}
+        </Typography>
+        <Typography
+          sx={{
+            fontFamily: 'Jost, sans-serif',
+            fontSize: `calc(0.95rem * ${textScale})`,
+            color: 'var(--bark)',
+            mt: 0.5,
+          }}
+        >
+          {entry.definition}
+        </Typography>
+      </Box>
+
+      {/* ── Auth-guarded revision button ── */}
+      {user ? (
+        <Button
+          variant="contained"
+          size="small"
+          disabled={toggling}
+          onClick={onToggle}
+          sx={{
+            background: inRevision ? 'var(--gold)' : 'var(--forest)',
+            color: '#fff',
+            textTransform: 'none',
+            borderRadius: '8px',
+            fontFamily: 'Jost, sans-serif',
+            fontWeight: 600,
+            fontSize: `calc(0.9rem * ${textScale})`,
+            '&:hover': { background: inRevision ? '#9c6b00' : '#0a1f15' },
+          }}
+        >
+          {toggling ? 'Updating…' : inRevision ? 'Remove from Revision' : 'Add to Revision'}
+        </Button>
+      ) : (
+        <Typography
+          sx={{
+            fontFamily: 'Jost, sans-serif',
+            fontSize: `calc(0.78rem * ${textScale})`,
+            color: 'var(--muted)',
+            textAlign: 'center',
+            fontStyle: 'italic',
+          }}
+        >
+          Sign in to save words for revision
+        </Typography>
+      )}
+    </Box>
+  )
+}
+
+/* ─────────────────────────────────────────────
+   Global guard — disable script-line clicks while any vocab UI is open
+───────────────────────────────────────────── */
+let openVocabCount = 0
+
+function useVocabOpenTracker(isOpen: boolean) {
+  useEffect(() => {
+    if (isOpen) {
+      openVocabCount++
+      return () => { openVocabCount-- }
+    }
+  }, [isOpen])
+}
+
+/* ─────────────────────────────────────────────
+   Clitic stripping + relaxed lookup (stem ≥ 3)
+───────────────────────────────────────────── */
+const PROCLITICS = [
+  'ال', 'و', 'ف', 'ب', 'ل', 'ك', 'س', 'أ', 'سأ',
+  'وب', 'فب', 'ول', 'فل', 'وبال', 'فبال', 'ولل', 'فلل',
+  'بال', 'فال', 'وال', 'لل', 'كال', 'وس', 'فس',
+]
+
+const ENCLITICS = [
+  'ك', 'ه', 'ها', 'هم', 'هن', 'نا', 'ي', 'ن',
+  'كما', 'هما', 'تا', 'تما', 'ان', 'ين', 'ون',
+  'ات', 'تك', 'ته', 'تها', 'تهم', 'تهن', 'تنا', 'تي', 'تن',
+]
+
+function getStrippedForms(word: string): string[] {
+  const forms = new Set<string>()
+  forms.add(word)
+
+  // Ta marbuta → ه  (e.g. صديقة → صديقه)
+  if (word.endsWith('ة')) {
+    forms.add(word.slice(0, -1) + 'ه')
+  }
+
+  // Single proclitic
+  for (const p of PROCLITICS) {
+    if (word.startsWith(p) && word.length - p.length >= 3) {
+      forms.add(word.slice(p.length))
+    }
+  }
+
+  // Single enclitic
+  for (const e of ENCLITICS) {
+    if (word.endsWith(e) && word.length - e.length >= 3) {
+      forms.add(word.slice(0, -e.length))
+    }
+  }
+
+  // Proclitic + enclitic combined
+  for (const p of PROCLITICS) {
+    for (const e of ENCLITICS) {
+      if (
+        word.startsWith(p) &&
+        word.endsWith(e) &&
+        word.length - p.length - e.length >= 3
+      ) {
+        forms.add(word.slice(p.length, -e.length))
+      }
+    }
+  }
+
+  return Array.from(forms)
+}
+
+function lookupEntry(
+  part: string,
+  vocabMap: Record<string, VocabEntry>
+): VocabEntry | undefined {
+  const bare = stripDiacritics(part)
+
+  // 1. Exact bare match
+  if (vocabMap[bare]) return vocabMap[bare]
+
+  // 2. Try every stripped form (relaxed: stem can be 3+ chars)
+  for (const candidate of getStrippedForms(bare)) {
+    if (candidate !== bare && vocabMap[candidate]) {
+      return vocabMap[candidate]
+    }
+  }
+
+  // 3. Legacy fallback
+  const normalized = normalizeArabicToken(part)
+  return vocabMap[normalized]
+}
+
+/* ─────────────────────────────────────────────
+   ArabicLineText — Desktop tooltip / Mobile bottom-sheet
+───────────────────────────────────────────── */
+function ArabicLineText({
+  text,
+  vocabMap,
+  textScale,
+  showDiacritics,
+}: {
+  text: string
+  vocabMap: Record<string, VocabEntry>
+  textScale: number
+  showDiacritics: boolean
+}) {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
+  const revisionStore = useRevisionStore()
+  const isInRevision = revisionStore.isInRevision
+  const toggleRevision = revisionStore.toggleRevision
+
+  const [activeEntry, setActiveEntry] = useState<VocabEntry | null>(null)
+  const [activePartIndex, setActivePartIndex] = useState<number | null>(null)
+  const [open, setOpen] = useState(false)
+  const [toggling, setToggling] = useState(false)
+  const [entryInRevision, setEntryInRevision] = useState(false)
+
+  const childRef = useRef<HTMLSpanElement | null>(null)
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearLeaveTimer = useCallback(() => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current)
+      leaveTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleClose = useCallback(() => {
+    clearLeaveTimer()
+    leaveTimerRef.current = setTimeout(() => {
+      setOpen(false)
+      setActiveEntry(null)
+      setActivePartIndex(null)
+      childRef.current = null
+    }, 50)
+  }, [clearLeaveTimer])
+
+  const handleOpen = useCallback((entry: VocabEntry, el: HTMLSpanElement, partIndex: number) => {
+    clearLeaveTimer()
+    setActiveEntry(entry)
+    setActivePartIndex(partIndex)
+    setEntryInRevision(isInRevision(entry.id))
+    setOpen(true)
+    childRef.current = el
+  }, [isInRevision, clearLeaveTimer])
+
+  const handleClose = useCallback(() => {
+    clearLeaveTimer()
+    setOpen(false)
+    setActiveEntry(null)
+    setActivePartIndex(null)
+    childRef.current = null
+  }, [clearLeaveTimer])
+
+  const handleToggle = useCallback(async () => {
+    if (!activeEntry) return
+    setToggling(true)
+    await toggleRevision(activeEntry.id)
+    setEntryInRevision((prev) => !prev)
+    setToggling(false)
+  }, [activeEntry, toggleRevision])
+
+  useVocabOpenTracker(open)
+
+  useEffect(() => {
+    return () => {
+      clearLeaveTimer()
+    }
+  }, [clearLeaveTimer])
+
+  const parts = text.split(/([\u0600-\u06FF]+)/)
+
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (!/[\u0600-\u06FF]+/.test(part)) {
+          return <span key={i}>{part}</span>
+        }
+        const entry = lookupEntry(part, vocabMap)
+        if (!entry) {
+          return <span key={i}>{part}</span>
+        }
+
+        const isActive = activeEntry?.id === entry.id && open && activePartIndex === i
+
+        /* ── Mobile: tap word → bottom sheet ── */
+        if (isMobile) {
+          return (
+            <React.Fragment key={i}>
+              <span
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleOpen(entry, e.currentTarget, i)
+                }}
+                className="vocab-word"
+                style={{
+                  cursor: 'pointer',
+                  borderBottom: '2px dotted var(--gold)',
+                  paddingBottom: showDiacritics ? '5px' : '1px',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                {part}
+              </span>
+
+              <Drawer
+                anchor="bottom"
+                open={isActive}
+                onClose={() => handleClose()}
+                slotProps={{
+                  paper: {
+                    sx: {
+                      borderRadius: '16px 16px 0 0',
+                      bgcolor: '#fff',
+                      boxShadow: '0 -8px 32px rgba(44,26,14,0.15)',
+                    },
+                  },
+                }}
+              >
+                <Box sx={{ p: 2, pt: 1.5, position: 'relative' }}>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 4,
+                      bgcolor: 'rgba(122,110,101,0.25)',
+                      borderRadius: 2,
+                      mx: 'auto',
+                      mb: 1.5,
+                    }}
+                  />
+
+                  {activeEntry && (
+                    <VocabDetail
+                      entry={activeEntry}
+                      toggling={toggling}
+                      inRevision={entryInRevision}
+                      onToggle={handleToggle}
+                      textScale={textScale}
+                      onClose={handleClose}
+                    />
+                  )}
+                </Box>
+              </Drawer>
+            </React.Fragment>
+          )
+        }
+
+        /* ── Desktop: hover word → tooltip ── */
+        return (
+          <HtmlTooltip
+            key={i}
+            open={isActive}
+            title={
+              isActive ? (
+                <Box
+                  onMouseEnter={clearLeaveTimer}
+                  onMouseLeave={scheduleClose}
+                  sx={{ position: 'relative' }}
+                >
+                  <Box sx={{ p: 2.5 }}>
+                    <VocabDetail
+                      entry={activeEntry}
+                      toggling={toggling}
+                      inRevision={entryInRevision}
+                      onToggle={handleToggle}
+                      textScale={textScale}
+                    />
+                  </Box>
+                </Box>
+              ) : (
+                <></>
+              )
+            }
+            placement="bottom"
+            arrow
+            describeChild
+            disableHoverListener
+            disableFocusListener
+            disableTouchListener
+            slotProps={{
+              popper: {
+                modifiers: [
+                  {
+                    name: 'preventOverflow',
+                    enabled: true,
+                    options: {
+                      padding: 16,
+                      boundary: 'viewport',
+                    },
+                  },
+                  {
+                    name: 'flip',
+                    enabled: true,
+                    options: {
+                      padding: 16,
+                    },
+                  },
+                ],
+              },
+            }}
+          >
+            <span
+              onClick={(e) => e.stopPropagation()}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
+                handleOpen(entry, e.currentTarget, i)
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+                scheduleClose()
+              }}
+              className="vocab-word"
+              style={{
+                cursor: 'pointer',
+                borderBottom: '2px dotted var(--gold)',
+                paddingBottom: showDiacritics ? '5px' : '1px',
+                transition: 'background 0.15s',
+              }}
+            >
+              {part}
+            </span>
+          </HtmlTooltip>
+        )
+      })}
+    </>
+  )
+}
+
+/* ─────────────────────────────────────────────
    Timestamp Parser
 ───────────────────────────────────────────── */
 function parseTimestamp(line: string): number | null {
@@ -487,9 +1030,9 @@ function parseContent(content: string) {
    YouTube Player Hook
 ───────────────────────────────────────────── */
 function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: number) => void) {
-  const playerRef = useRef<any>(null)
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const intervalRef = useRef<any>(null)
+  const playerRef = useRef<YT.Player | null>(null)
+  const wrapRef = useRef<HTMLDivElement | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const onTimeUpdateRef = useRef(onTimeUpdate)
   const [isReady, setIsReady] = useState(false)
 
@@ -498,9 +1041,15 @@ function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: num
   useEffect(() => {
     if (!videoId || !wrapRef.current) return
 
+    const clearWrap = (el: HTMLDivElement) => {
+      while (el.firstChild) {
+        el.removeChild(el.firstChild)
+      }
+    }
+
     const initPlayer = () => {
       if (!wrapRef.current || !videoId) return
-      wrapRef.current.innerHTML = ''
+      clearWrap(wrapRef.current)
       const inner = document.createElement('div')
       inner.style.width = '100%'
       inner.style.height = '100%'
@@ -517,15 +1066,15 @@ function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: num
                 if (typeof t === 'number') onTimeUpdateRef.current?.(t)
               }, 200)
             },
-            onStateChange: (event: any) => {
+            onStateChange: (event: { data: number }) => {
               if (event.data === window.YT.PlayerState.PLAYING) {
                 if (!intervalRef.current) intervalRef.current = setInterval(() => {
                   const t = playerRef.current?.getCurrentTime?.()
                   if (typeof t === 'number') onTimeUpdateRef.current?.(t)
                 }, 200)
-              } else { clearInterval(intervalRef.current); intervalRef.current = null }
+              } else { if (intervalRef.current) clearInterval(intervalRef.current); intervalRef.current = null }
             },
-            onError: (e: any) => console.error('YT Error:', e.data),
+            onError: (e: { data: number }) => console.error('YT Error:', e.data),
           },
         })
       } catch (e) { console.error('YT init error:', e) }
@@ -546,10 +1095,10 @@ function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: num
     const timer = setTimeout(loadApi, 50)
     return () => {
       clearTimeout(timer)
-      clearInterval(intervalRef.current)
+      if (intervalRef.current) clearInterval(intervalRef.current)
       intervalRef.current = null
       try { playerRef.current?.destroy?.() } catch { }
-      if (wrapRef.current) wrapRef.current.innerHTML = ''
+      if (wrapRef.current) clearWrap(wrapRef.current)
       setIsReady(false)
     }
   }, [videoId])
@@ -579,7 +1128,6 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
-  // Inside EpisodePage
   const [navbarHeight, setNavbarHeight] = useState(NAVBAR_HEIGHT);
 
   useEffect(() => {
@@ -599,29 +1147,34 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   const [mobileHeaderHeight, setMobileHeaderHeight] = useState(estimatedMobileHeader)
   const [isMobile, setIsMobile] = useState(false)
 
-  const scriptContainerRef = useRef<HTMLDivElement>(null)
+  const scriptContainerRef = useRef<HTMLDivElement | null>(null)
   const activeLineRef = useRef<HTMLDivElement | null>(null)
   const skipInitialScroll = useRef(true)
 
-  // Live offset for the fixed header so we don't re-trigger scroll when it resizes
   const scrollOffsetRef = useRef(0)
-  scrollOffsetRef.current = navbarHeight + mobileHeaderHeight + 16 // 16px breathing room
+  useEffect(() => {
+    scrollOffsetRef.current = navbarHeight + mobileHeaderHeight + 16
+  }, [navbarHeight, mobileHeaderHeight])
 
   const { scriptLines, vocabRows } = useMemo(() => parseContent(episode.content), [episode.content])
 
   const handleTimeUpdate = useCallback((time: number) => {
-    let idx = -1
-    for (let i = 0; i < scriptLines.length; i++) {
-      const ts = scriptLines[i].timestamp
-      if (ts != null && ts <= time) idx = i
-      else if (ts != null && ts > time) break
+    let lo = 0, hi = scriptLines.length - 1, idx = -1
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1
+      const ts = scriptLines[mid].timestamp
+      if (ts != null && ts <= time) {
+        idx = mid
+        lo = mid + 1
+      } else {
+        hi = mid - 1
+      }
     }
     setActiveIndex(idx >= 0 ? idx : null)
   }, [scriptLines])
 
   const { wrapRef, seekTo } = useYouTubePlayer(episode.youtubeId, handleTimeUpdate)
 
-  // Scroll active line into view — skip the first automatic change on mount
   useEffect(() => {
     if (activeIndex == null) return
     if (skipInitialScroll.current) {
@@ -645,12 +1198,18 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
     }
   }, [activeIndex, isMobile])
 
-  // Detect mobile breakpoint
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 1200)
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  useEffect(() => {
+    const store = useRevisionStore.getState() as any
+    if (typeof store.hydrate === 'function') store.hydrate()
+    else if (typeof store.fetch === 'function') store.fetch()
+    else if (typeof store.load === 'function') store.load()
   }, [])
 
   return (
@@ -674,6 +1233,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
           onBack={() => router.push(`/cartoons/${episode.show}`)}
           videoRef={wrapRef}
           isShort={!!episode.youtubeShort}
+          hasVideo={!!episode.youtubeId}
           onHeightChange={setMobileHeaderHeight}
         />
       )}
@@ -826,7 +1386,11 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                           <Box
                             ref={isActive ? activeLineRef : undefined}
                             className={`script-line ${isActive ? 'active' : ''}`}
-                            onClick={() => hasTimestamp && seekTo(line.timestamp!)}
+                            onClick={(e) => {
+                              if (openVocabCount > 0) return
+                              if ((e.target as HTMLElement).closest('.vocab-word')) return
+                              if (hasTimestamp) seekTo(line.timestamp!)
+                            }}
                             sx={{ px: 2, py: 1.5, display: 'flex', flexDirection: 'column', gap: 0.3, cursor: hasTimestamp ? 'pointer' : 'default', opacity: hasTimestamp ? 1 : 0.75 }}
                           >
                             {hasTimestamp && (
@@ -835,7 +1399,12 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                               </Typography>
                             )}
                             <Typography className="arabic-line" sx={{ fontSize: `calc(1.35rem * ${textScale})` }}>
-                              {showDiacritics ? line.arabicDiacritic : line.arabicPlain}
+                              <ArabicLineText
+                                textScale={textScale}
+                                text={showDiacritics ? line.arabicDiacritic : line.arabicPlain}
+                                vocabMap={episode.vocabMap}
+                                showDiacritics={showDiacritics}
+                              />
                             </Typography>
                             {line.english && (
                               <Typography className="english-line" sx={{ fontSize: `calc(0.88rem * ${textScale})` }}>

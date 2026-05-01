@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowForwardSharp, ArticleOutlined, PlayCircleFilledSharp, QuizOutlined } from "@mui/icons-material";
+import { ArrowForwardSharp } from "@mui/icons-material";
 import { Box, Button, Typography } from "@mui/material";
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';

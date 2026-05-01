@@ -4,8 +4,11 @@ import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
-const serviceUrl = process.env.SUPABASE_URL!
-const serviceKey = process.env.SUPABASE_SERVICE_KEY!
+const serviceUrl = process.env.SUPABASE_URL
+const serviceKey = process.env.SUPABASE_SERVICE_KEY
+if (!serviceUrl || !serviceKey) {
+  throw new Error('Missing required env vars: SUPABASE_URL and/or SUPABASE_SERVICE_KEY')
+}
 const serviceClient = createServiceClient(serviceUrl, serviceKey)
 
 async function getAuthClient() {
@@ -47,6 +50,12 @@ export async function fetchThemesWithProgress(
   levelCode: string,
   dialectCode: string
 ): Promise<ThemeProgress[]> {
+  if (!levelCode || typeof levelCode !== 'string' || levelCode.length > 10) {
+    throw new Error('Invalid levelCode')
+  }
+  if (!dialectCode || typeof dialectCode !== 'string' || dialectCode.length > 10) {
+    throw new Error('Invalid dialectCode')
+  }
   const userId = await getAuthenticatedUserId()
 
   // Use the RPC
@@ -193,6 +202,25 @@ export async function fetchThemeVocabWithProgress(
   return { vocab, progress, examples }
 }
 
+/* ── fetch user's revision vocab ids ── */
+export async function fetchRevisionVocabIds(): Promise<number[]> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) return []
+
+  const { data, error } = await serviceClient
+    .from("progress")
+    .select("vocabulary_id")
+    .eq("user_id", userId)
+    .eq("is_in_revision", true)
+
+  if (error) {
+    console.error("[fetchRevisionVocabIds] error:", error.message)
+    return []
+  }
+
+  return (data ?? []).map((r) => Number(r.vocabulary_id))
+}
+
 /* ── upsert progress ── */
 export async function upsertWordProgress({
   vocabId,
@@ -203,6 +231,9 @@ export async function upsertWordProgress({
   isCompleted: boolean
   isInRevision: boolean
 }): Promise<void> {
+  if (!Number.isFinite(vocabId) || vocabId <= 0) {
+    throw new Error('Invalid vocabId')
+  }
   const userId = await getAuthenticatedUserId()
   if (!userId) return
 

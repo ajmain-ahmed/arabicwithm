@@ -708,12 +708,18 @@ function ProfilePageInner() {
             router.push('/')
             return
         }
+        let cancelled = false
         fetchUserProfile('MSA')
             .then((data) => {
-                if (data) setProfile(data)
+                if (!cancelled && data) setProfile(data)
             })
-            .catch(console.error)
-            .finally(() => setLoading(false))
+            .catch((err) => {
+                if (!cancelled) console.error(err)
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
+        return () => { cancelled = true }
     }, [user, authLoading, router])
 
     const globalLevel = useMemo<LevelStat | null>(() => {

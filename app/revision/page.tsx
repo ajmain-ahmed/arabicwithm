@@ -41,13 +41,13 @@ function classifyCard(card: RevisionCard): Queue {
 }
 
 function parseExamples(card: RevisionCard) {
-    const exAr = (card as any).ex_ar as string | undefined
-    const exEn = (card as any).ex_en as string | undefined
-    const exDi = (card as any).ex_di as string | undefined
+    const exAr = card.ex_ar
+    const exEn = card.ex_en
+    const exDi = card.ex_di
     if (!exAr || !exEn) return []
-    const ar = exAr.split(';').map((s: string) => s.trim())
-    const di = exDi ? exDi.split(';').map((s: string) => s.trim()) : ar
-    const en = exEn.split(';').map((s: string) => s.trim())
+    const ar = exAr.split(';').map((s) => s.trim())
+    const di = exDi ? exDi.split(';').map((s) => s.trim()) : ar
+    const en = exEn.split(';').map((s) => s.trim())
     const count = Math.min(ar.length, en.length)
     return Array.from({ length: count }, (_, i) => ({
         arabic: ar[i] || '',
@@ -514,11 +514,14 @@ export default function RevisionPage() {
 
     const cardKeyRef = useRef(0)
     const prevCardId = useRef<string | number | null>(null)
-    const currentId = currentCard ? ((currentCard.data as any).id ?? currentCard.data.word) : null
-    if (currentId !== prevCardId.current) {
-        cardKeyRef.current++
-        prevCardId.current = currentId
-    }
+
+    useEffect(() => {
+        const currentId = currentCard ? (currentCard.data.id ?? currentCard.data.word) : null
+        if (currentId !== prevCardId.current) {
+            cardKeyRef.current++
+            prevCardId.current = currentId
+        }
+    }, [currentCard])
 
     const loadCards = useCallback(async () => {
         setLoading(true)
@@ -533,7 +536,11 @@ export default function RevisionPage() {
         }
     }, [])
 
-    useEffect(() => { loadCards() }, [loadCards])
+    useEffect(() => {
+        let cancelled = false
+        loadCards()
+        return () => { cancelled = true }
+    }, [loadCards])
 
     const handleAnswer = useCallback(async (ans: Answer) => {
         if (!currentCard || submitting) return
@@ -544,6 +551,7 @@ export default function RevisionPage() {
             answer(ans)
         } catch (err) {
             console.error(err)
+            // Surface error to user – could be enhanced with a toast
         } finally {
             setSubmitting(false)
         }

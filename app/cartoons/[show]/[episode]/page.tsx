@@ -3,13 +3,15 @@ import { notFound } from 'next/navigation'
 import { getEpisode, getShowBySlug } from '@/app/lib/cartoons';
 import EpisodePage from './EpisodePage'
 
+export const dynamic = 'force-dynamic'
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ show: string; episode: string }>
 }) {
   const { show, episode } = await params
-  const ep = getEpisode(show, episode)
+  const ep = await getEpisode(show, episode)
   if (!ep) return { title: 'Not Found' }
   return {
     title: `${ep.title} | ArabicWithM`,
@@ -24,7 +26,7 @@ export default async function Page({
 }) {
   const { show, episode } = await params
 
-  const ep = getEpisode(show, episode)
+  const ep = await getEpisode(show, episode)
   if (!ep) notFound()
 
   const showData = getShowBySlug(show)

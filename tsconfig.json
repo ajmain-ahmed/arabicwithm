@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "app/components/CartoonSection.tsx", "app/components/CartoonSection.tsx"  ],
+  ],
   "exclude": ["node_modules"]
 }

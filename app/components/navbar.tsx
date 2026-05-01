@@ -159,7 +159,7 @@ export default function Navbar() {
 
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
 
-    const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const menuContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {

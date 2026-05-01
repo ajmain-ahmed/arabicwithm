@@ -39,10 +39,15 @@ export type ProfileData = {
 }
 
 export async function fetchUserProfile(dialectCode: string = 'MSA'): Promise<ProfileData | null> {
+  const supabaseUrl = process.env.SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Missing required Supabase environment variables')
+  }
   const cookieStore = await cookies()
   const authClient = createServerClient(
-    process.env.SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() { return cookieStore.getAll() },
