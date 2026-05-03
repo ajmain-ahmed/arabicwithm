@@ -9,10 +9,11 @@ import {
     ToggleButton, ToggleButtonGroup,
     Slider, Badge,
     Select, MenuItem, FormControl,
+    useMediaQuery, useTheme,
 } from '@mui/material'
 import {
     Bookmark, BookmarkAdded, Check, DoneAll, NavigateNext, NavigateBefore,
-    Settings, Close, MenuBook, TouchApp, CheckCircle,
+    Settings, Close, MenuBook, TouchApp, CheckCircle, HelpOutlineRounded,
 } from '@mui/icons-material'
 import {
     DndContext,
@@ -33,6 +34,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import Navbar from '@/app/components/navbar'
 import { useVocabStore } from '@/store/vocabStore'
+import TutorialDialog, { useTutorialSeen } from '../components/TutorialDialog'
 import type { VocabRow, WordProgress, ThemeProgress, ExampleRow } from '@/app/actions/vocab'
 import {
     fetchThemesWithProgress,
@@ -43,6 +45,7 @@ import {
    Slug → DB level mapping
 ───────────────────────────────────────────── */
 const SLUG_TO_LEVEL: Record<string, string> = {
+    Beginner: 'A0',
     Apprentice: 'A1',
     Competent: 'A2',
     Proficient: 'B1',
@@ -52,6 +55,7 @@ const SLUG_TO_LEVEL: Record<string, string> = {
 }
 
 const SLUG_LABELS: Record<string, string> = {
+    Beginner: 'Beginner | A0',
     Apprentice: 'Apprentice | A1',
     Competent: 'Competent | A2',
     Proficient: 'Proficient | B1',
@@ -173,12 +177,14 @@ function SettingsDialog({
     alwaysShow, onToggleAlwaysShow,
     textScale, onTextScaleChange,
     dialect, onDialectChange,
+    onOpenTutorial,
 }: {
     open: boolean; onClose: () => void
     showDiacritics: boolean; onToggleDiacritics: () => void
     alwaysShow: boolean; onToggleAlwaysShow: () => void
     textScale: number; onTextScaleChange: (v: number) => void
     dialect: string; onDialectChange: (v: string) => void
+    onOpenTutorial: () => void
 }) {
     const ToggleRow = ({ label, description, enabled, onToggle, activeColor }: {
         label: string; description: string; enabled: boolean; onToggle: () => void; activeColor: string
@@ -318,7 +324,11 @@ function SettingsDialog({
                     </Box>
                 </Box>
             </DialogContent>
-            <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5 }}>
+            <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5, flexDirection: 'column', gap: 1 }}>
+                <Button fullWidth variant="outlined" onClick={() => { onClose(); onOpenTutorial(); }} sx={{ borderColor: 'rgba(122,110,101,0.3)', color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.9rem', textTransform: 'none', borderRadius: '10px', py: 1, '&:hover': { borderColor: '#b8860b', color: '#b8860b', background: 'rgba(184,134,11,0.04)' } }}>
+                    <HelpOutlineRounded sx={{ fontSize: '1rem', mr: 1 }} />
+                    View Tutorial
+                </Button>
                 <Button fullWidth variant="contained" onClick={onClose} disableElevation sx={{ background: '#2c1a0e', color: '#f5ede0', fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.95rem', textTransform: 'none', borderRadius: '10px', py: 1.1, '&:hover': { background: '#1a0f08' } }}>Done</Button>
             </DialogActions>
         </Dialog>
@@ -625,6 +635,14 @@ function FlashcardQuiz({
     const [filter, setFilter] = useState<FilterType>('all')
     const [revealed, setRevealed] = useState(alwaysShow)
     const [cardKey, setCardKey] = useState(0)
+    const themeObj = useTheme()
+    const isMobile = useMediaQuery(themeObj.breakpoints.down('sm'))
+
+    /* ── swipe gesture refs ── */
+    const cardRef = useRef<HTMLDivElement | null>(null)
+    const activeElRef = useRef<HTMLDivElement | null>(null)
+    const dragState = useRef<{ startX: number; isDragging: boolean } | null>(null)
+    const SWIPE_THRESHOLD = 80
 
     const pendingRef = useRef<Map<number, { isCompleted: boolean; isInRevision: boolean }>>(new Map())
 
@@ -801,13 +819,81 @@ function FlashcardQuiz({
         '& .MuiButton-startIcon svg': { fontSize: '0.9rem !important' },
     }
 
+    /* ── swipe handlers (mobile only) ── */
+    const onSwipeStart = useCallback((e: React.TouchEvent) => {
+        if (!isMobile) return
+        const touch = e.touches[0]
+        dragState.current = { startX: touch.clientX, isDragging: true }
+        activeElRef.current = cardRef.current
+        const el = activeElRef.current
+        if (el) {
+            el.style.transition = 'none'
+            el.style.willChange = 'transform, opacity'
+        }
+    }, [isMobile])
+
+    const onSwipeMove = useCallback((e: React.TouchEvent) => {
+        if (!dragState.current?.isDragging || !activeElRef.current) return
+        const touch = e.touches[0]
+        const rawDelta = touch.clientX - dragState.current.startX
+        const resisted = rawDelta * 0.45
+        activeElRef.current.style.transform = `translateX(${resisted}px)`
+        const opacity = Math.max(0.55, 1 - Math.abs(rawDelta) / 500)
+        activeElRef.current.style.opacity = String(opacity)
+    }, [])
+
+    const onSwipeEnd = useCallback(() => {
+        if (!dragState.current?.isDragging || !activeElRef.current) return
+        const el = activeElRef.current
+        const style = el.style
+        const match = style.transform.match(/translateX\(([-\d.]+)px\)/)
+        const delta = match ? parseFloat(match[1]) : 0
+        dragState.current = null
+
+        const canSwipeRight = delta < -SWIPE_THRESHOLD && canGoBack   // right = previous
+        const canSwipeLeft  = delta > SWIPE_THRESHOLD                   // left  = next (always allowed; last card triggers next theme)
+
+        if (canSwipeRight || canSwipeLeft) {
+            const dir = canSwipeLeft ? -1 : 1
+            style.transition = 'transform 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease'
+            style.transform = `translateX(${dir * 120}%)`
+            style.opacity = '0'
+            setTimeout(() => {
+                style.willChange = ''
+                if (canSwipeLeft) handleNext()
+                else handlePrevious()
+            }, 280)
+        } else {
+            style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease'
+            style.transform = 'translateX(0px)'
+            style.opacity = '1'
+            const onDone = () => {
+                style.transition = ''
+                style.transform = ''
+                style.opacity = ''
+                style.willChange = ''
+                el.removeEventListener('transitionend', onDone)
+            }
+            el.addEventListener('transitionend', onDone)
+            // safety fallback in case transitionend doesn't fire
+            setTimeout(onDone, 450)
+        }
+    }, [canGoBack, handleNext, handlePrevious])
+
     return (
         <Fade in key={`${cardKey}-${current.id}`} timeout={400}>
-            <Box sx={{
-                background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px',
-                padding: { xs: '1.25rem 0.875rem', md: '2rem 1.5rem 1.75rem' },
-                minHeight: { xs: '300px', md: '340px' }, display: 'flex', flexDirection: 'column',
-            }}>
+            <Box
+                ref={cardRef}
+                onTouchStart={onSwipeStart}
+                onTouchMove={onSwipeMove}
+                onTouchEnd={onSwipeEnd}
+                sx={{
+                    background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px',
+                    padding: { xs: '1.25rem 0.875rem', md: '2rem 1.5rem 1.75rem' },
+                    minHeight: { xs: '300px', md: '340px' }, display: 'flex', flexDirection: 'column',
+                    touchAction: 'pan-y',
+                }}
+            >
                 {/* Progress bar */}
                 <Box sx={{ height: '2px', background: 'rgba(184,134,11,0.1)', borderRadius: '999px', mb: '1.25rem', overflow: 'hidden' }}>
                     <Box sx={{ height: '100%', background: 'linear-gradient(90deg, #b8860b, #d4a843)', borderRadius: '999px', transition: 'width 0.4s ease', width: `${progressPct}%` }} />
@@ -1035,6 +1121,16 @@ export default function FlashcardSlugPage() {
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [themesOpen, setThemesOpen] = useState(false)
 
+    const { seen: tutorialSeen, markSeen: markTutorialSeen } = useTutorialSeen()
+    const [tutorialOpen, setTutorialOpen] = useState(false)
+
+    useEffect(() => {
+        if (!tutorialSeen) {
+            const timer = setTimeout(() => setTutorialOpen(true), 800)
+            return () => clearTimeout(timer)
+        }
+    }, [tutorialSeen])
+
     const flushRef = useRef<(() => Promise<void>) | null>(null)
     const flush = useCallback(() => flushRef.current?.() ?? Promise.resolve(), [])
 
@@ -1152,6 +1248,14 @@ export default function FlashcardSlugPage() {
         <>
             <Navbar />
 
+            <TutorialDialog
+                open={tutorialOpen}
+                onClose={() => {
+                    setTutorialOpen(false)
+                    markTutorialSeen()
+                }}
+            />
+
             {/* Mobile themes dialog */}
             <Dialog open={themesOpen} onClose={() => setThemesOpen(false)} fullScreen sx={{ display: { sm: 'none' } }} slotProps={{ paper: { sx: { background: '#faf7f2' } } }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -1261,6 +1365,7 @@ export default function FlashcardSlugPage() {
                 alwaysShow={alwaysShow} onToggleAlwaysShow={() => setAlwaysShow(p => !p)}
                 textScale={textScale} onTextScaleChange={setTextScale}
                 dialect={dialect} onDialectChange={setDialect}
+                onOpenTutorial={() => setTutorialOpen(true)}
             />
 
             <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh', pt: { xs: 8, sm: 10 } }}>
@@ -1354,6 +1459,9 @@ export default function FlashcardSlugPage() {
                                 </FormControl>
                                 <PillToggle enabled={alwaysShow} onToggle={() => setAlwaysShow(p => !p)} label="Always show card" activeColor="#0e2e1f" />
                                 <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics(p => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
+                                <IconButton onClick={() => setTutorialOpen(true)} size="small" sx={{ width: 32, height: 32, border: '1px solid rgba(122,110,101,0.3)', borderRadius: '50%', color: '#7a6e65', flexShrink: 0 }}>
+                                    <HelpOutlineRounded sx={{ fontSize: '1rem' }} />
+                                </IconButton>
                             </Box>
                         </Box>
                     )}

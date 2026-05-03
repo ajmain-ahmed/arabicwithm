@@ -27,7 +27,7 @@ interface VocabStore {
   invalidateTheme: (themeId: number, dialectCode?: string) => void
 }
 
-const CACHE_TTL_MS = 5 * 60 * 1000
+const CACHE_TTL_MS = 0  // TEMP: always fetch fresh data while debugging examples
 
 export const useVocabStore = create<VocabStore>((set, get) => ({
   themeCache: {},

@@ -44,7 +44,7 @@ const MEGA_MENU_ITEMS = [
     {
         header: 'Study',
         icon: <School sx={{ fontSize: 20, color: 'var(--forest)' }} />,
-        items: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'Revision']
+        items: ['Beginner', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'Revision']
     },
     {
         header: 'Cartoons',
@@ -64,6 +64,7 @@ const MEGA_MENU_ITEMS = [
 ];
 
 const STUDY_LEVEL_MAP: Record<string, string> = {
+    'Beginner': 'Beginner',
     'A1': 'Apprentice',
     'A2': 'Competent',
     'B1': 'Proficient',
@@ -288,6 +289,9 @@ export default function Navbar() {
             if (section.header === 'Cartoons') {
                 router.push('/cartoons');
                 closeAll();
+            } else if (section.header === 'Study') {
+                router.push('/flashcards');
+                closeAll();
             }
         };
 
@@ -307,7 +311,7 @@ export default function Navbar() {
                             fontWeight: 700,
                             color: 'var(--bark)',
                             letterSpacing: '0.02em',
-                            cursor: section.header === 'Cartoons' ? 'pointer' : 'default',
+                            cursor: section.header === 'Cartoons' || section.header === 'Study' ? 'pointer' : 'default',
                         }}
                     >
                         {section.header}

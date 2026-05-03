@@ -626,12 +626,16 @@ function VocabDetail({
    Global guard — disable script-line clicks while any vocab UI is open
 ───────────────────────────────────────────── */
 let openVocabCount = 0
+let lastVocabCloseAt = 0
 
 function useVocabOpenTracker(isOpen: boolean) {
   useEffect(() => {
     if (isOpen) {
       openVocabCount++
-      return () => { openVocabCount-- }
+      return () => {
+        openVocabCount--
+        lastVocabCloseAt = Date.now()
+      }
     }
   }, [isOpen])
 }
@@ -735,7 +739,6 @@ function ArabicLineText({
   const [activePartIndex, setActivePartIndex] = useState<number | null>(null)
   const [open, setOpen] = useState(false)
   const [toggling, setToggling] = useState(false)
-  const [entryInRevision, setEntryInRevision] = useState(false)
 
   const childRef = useRef<HTMLSpanElement | null>(null)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -761,7 +764,6 @@ function ArabicLineText({
     clearLeaveTimer()
     setActiveEntry(entry)
     setActivePartIndex(partIndex)
-    setEntryInRevision(isInRevision(entry.id))
     setOpen(true)
     childRef.current = el
   }, [isInRevision, clearLeaveTimer])
@@ -772,13 +774,13 @@ function ArabicLineText({
     setActiveEntry(null)
     setActivePartIndex(null)
     childRef.current = null
+    lastVocabCloseAt = Date.now()
   }, [clearLeaveTimer])
 
   const handleToggle = useCallback(async () => {
     if (!activeEntry) return
     setToggling(true)
     await toggleRevision(activeEntry.id)
-    setEntryInRevision((prev) => !prev)
     setToggling(false)
   }, [activeEntry, toggleRevision])
 
@@ -861,7 +863,7 @@ function ArabicLineText({
                     <VocabDetail
                       entry={activeEntry}
                       toggling={toggling}
-                      inRevision={entryInRevision}
+                      inRevision={activeEntry ? isInRevision(activeEntry.id) : false}
                       onToggle={handleToggle}
                       textScale={textScale}
                       onClose={handleClose}
@@ -889,7 +891,7 @@ function ArabicLineText({
                     <VocabDetail
                       entry={activeEntry}
                       toggling={toggling}
-                      inRevision={entryInRevision}
+                      inRevision={activeEntry ? isInRevision(activeEntry.id) : false}
                       onToggle={handleToggle}
                       textScale={textScale}
                     />
@@ -1206,10 +1208,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   }, [])
 
   useEffect(() => {
-    const store = useRevisionStore.getState() as any
-    if (typeof store.hydrate === 'function') store.hydrate()
-    else if (typeof store.fetch === 'function') store.fetch()
-    else if (typeof store.load === 'function') store.load()
+    useRevisionStore.getState().init()
   }, [])
 
   return (
@@ -1388,6 +1387,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                             className={`script-line ${isActive ? 'active' : ''}`}
                             onClick={(e) => {
                               if (openVocabCount > 0) return
+                              if (Date.now() - lastVocabCloseAt < 120) return
                               if ((e.target as HTMLElement).closest('.vocab-word')) return
                               if (hasTimestamp) seekTo(line.timestamp!)
                             }}

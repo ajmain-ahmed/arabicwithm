@@ -66,7 +66,7 @@ function stripSuffix(word: string, suffix: string): string | null {
  * 5. Handling sun letters via ال removal
  */
 export function normalizeArabicToken(token: string): string {
-  let t = token.replace(DIACRITICS_AND_TATWEEL, '')
+  let t = token.normalize('NFC').replace(DIACRITICS_AND_TATWEEL, '')
 
   // Strip definite-article combinations
   let changed = true

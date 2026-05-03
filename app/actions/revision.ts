@@ -369,19 +369,22 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
     // Check if this word is already in the user's progress
     const { data: existing, error: fetchErr } = await serviceClient
         .from('progress')
-        .select('id, is_in_revision')
+        .select('is_in_revision')
         .eq('user_id', userId)
         .eq('vocabulary_id', vocabId)
         .maybeSingle()
 
     if (fetchErr) throw new Error(fetchErr.message)
 
+    const progressKey = { user_id: userId, vocabulary_id: vocabId }
+
     // If it's actively in revision, delete it (fully remove)
     if (existing?.is_in_revision) {
         const { error: delErr } = await serviceClient
             .from('progress')
             .delete()
-            .eq('id', existing.id)
+            .eq('user_id', userId)
+            .eq('vocabulary_id', vocabId)
 
         if (delErr) throw new Error(delErr.message)
         return { success: true, inRevision: false }
@@ -403,7 +406,8 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
                 first_review_at: null,
                 created_at: now,
             })
-            .eq('id', existing.id)
+            .eq('user_id', userId)
+            .eq('vocabulary_id', vocabId)
 
         if (updErr) throw new Error(updErr.message)
         return { success: true, inRevision: true }

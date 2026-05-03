@@ -3,6 +3,7 @@
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { normalizeArabicToken } from "@/app/lib/arabic"
 
 const serviceUrl = process.env.SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_KEY
@@ -141,31 +142,86 @@ export async function fetchThemeVocabWithProgress(
 
   const vocabIds = rawVocab.map(v => v.id)
 
-  // 3. Definitions & examples
-  const [defRes, exRes] = await Promise.all([
-    serviceClient.from("definitions").select("vocabulary_id, definition, pos, sort_order")
-      .in("vocabulary_id", vocabIds).order("sort_order"),
-    serviceClient.from("examples").select("vocabulary_id, ex_ar, ex_dia, ex_en, interactive, ex_tr")
-      .in("vocabulary_id", vocabIds),
-  ])
+  // 3. Definitions
+  const { data: defData, error: defErr } = await serviceClient
+    .from("definitions")
+    .select("vocabulary_id, definition, pos, sort_order")
+    .in("vocabulary_id", vocabIds)
+    .order("sort_order")
+
+  if (defErr) throw new Error(defErr.message)
 
   const defMap = new Map<number, { definition: string; pos: string }[]>()
-    ; (defRes.data ?? []).forEach(d => {
+    ; (defData ?? []).forEach(d => {
       const list = defMap.get(d.vocabulary_id) || []
       list.push({ definition: d.definition, pos: d.pos })
       defMap.set(d.vocabulary_id, list)
     })
 
-  const examples: ExampleRow[] = (exRes.data ?? []).map(e => ({
-    vocab_id: e.vocabulary_id,
-    ex_ar: e.ex_ar,
-    ex_dia: e.ex_dia,
-    ex_en: e.ex_en,
-    interactive: e.interactive,
-    ex_tr: e.ex_tr ?? '',   // ✅ matches component usage
-  }))
+  // 4. Fetch ALL examples for this level and match by normalised token
+  const levelId = rawVocab[0]?.level_id
+  let examples: ExampleRow[] = []
 
-  // 4. Map to VocabRow (only single word form)
+  if (levelId) {
+    const { data: allEx, error: exErr } = await serviceClient
+      .from("examples")
+      .select("id, ex_ar, ex_dia, ex_en, ex_tr, interactive, level_id, vocabulary_id")
+      .eq("level_id", levelId)
+
+    if (exErr) {
+      console.error("[fetchThemeVocabWithProgress] examples error:", exErr.message)
+    }
+
+    console.log(`[fetchThemeVocabWithProgress] levelId=${levelId}, examples fetched=${allEx?.length ?? 0}, vocab words=${rawVocab.length}`)
+
+    // Build map: normalised token → example rows
+    const exByNormToken = new Map<string, typeof allEx>()
+    for (const ex of allEx ?? []) {
+      const tokens = (ex.ex_ar ?? '')
+        .split(/[\s\.,،؛:!؟»«]+/)
+        .filter((t: string) => t.length > 0)
+      const seen = new Set<string>()
+      for (const token of tokens) {
+        const norm = normalizeArabicToken(token)
+        if (seen.has(norm)) continue
+        seen.add(norm)
+        const list = exByNormToken.get(norm) ?? []
+        list.push(ex)
+        exByNormToken.set(norm, list)
+      }
+    }
+
+    console.log(`[fetchThemeVocabWithProgress] indexed ${exByNormToken.size} unique normalised tokens`)
+
+    // Match each vocab word to examples (dedupe per vocab word)
+    const assigned = new Set<string>()
+    for (const v of rawVocab) {
+      const normWord = normalizeArabicToken(v.word)
+      const matches = exByNormToken.get(normWord) ?? []
+      if (matches.length > 0) {
+        console.log(`[fetchThemeVocabWithProgress] vocab "${v.word}" (norm="${normWord}") matched ${matches.length} examples`)
+      }
+      for (const ex of matches) {
+        const key = `${v.id}:${ex.id}`
+        if (assigned.has(key)) continue
+        assigned.add(key)
+        examples.push({
+          vocab_id: v.id,
+          ex_ar: ex.ex_ar,
+          ex_dia: ex.ex_dia,
+          ex_en: ex.ex_en,
+          interactive: ex.interactive,
+          ex_tr: ex.ex_tr ?? '',
+        })
+      }
+    }
+
+    console.log(`[fetchThemeVocabWithProgress] total matched examples=${examples.length}`)
+  } else {
+    console.warn("[fetchThemeVocabWithProgress] no levelId found on vocab rows")
+  }
+
+  // 5. Map to VocabRow
   const vocab: VocabRow[] = rawVocab.map((r: any) => {
     const defs = defMap.get(r.id) ?? [{ definition: "", pos: "unknown" }]
     const primaryDef = defs[0]
@@ -183,7 +239,7 @@ export async function fetchThemeVocabWithProgress(
     }
   })
 
-  // 5. Progress
+  // 6. Progress
   let progress: WordProgress[] = []
   if (userId) {
     const { data: progData } = await serviceClient
