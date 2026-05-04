@@ -10,32 +10,32 @@ interface ThemeCache {
 }
 
 interface VocabStore {
-  themeCache: Record<string, ThemeCache>  // key = `${themeId}:${dialectCode}`
+  themeCache: Record<string, ThemeCache>  // key = `${themeId}:${levelCode}`
   loadingThemeId: number | null
   error: string | null
-  fetchTheme: (themeId: number, dialectCode: string) => Promise<{
+  fetchTheme: (themeId: number, levelCode: string) => Promise<{
     vocab: VocabRow[]
     progress: WordProgress[]
     examples: ExampleRow[]
   }>
   updateLocalProgress: (
     themeId: number,
-    dialectCode: string,
+    levelCode: string,
     vocabId: number,
     patch: Partial<WordProgress>
   ) => void
-  invalidateTheme: (themeId: number, dialectCode?: string) => void
+  invalidateTheme: (themeId: number, levelCode?: string) => void
 }
 
-const CACHE_TTL_MS = 0  // TEMP: always fetch fresh data while debugging examples
+const CACHE_TTL_MS = 5 * 60 * 1000
 
 export const useVocabStore = create<VocabStore>((set, get) => ({
   themeCache: {},
   loadingThemeId: null,
   error: null,
 
-  fetchTheme: async (themeId: number, dialectCode: string) => {
-    const cacheKey = `${themeId}:${dialectCode}`
+  fetchTheme: async (themeId: number, levelCode: string) => {
+    const cacheKey = `${themeId}:${levelCode}`
     const cached = get().themeCache[cacheKey]
     if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
       return { vocab: cached.vocab, progress: cached.progress, examples: cached.examples }
@@ -43,7 +43,7 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
 
     set({ loadingThemeId: themeId, error: null })
     try {
-      const { vocab, progress, examples } = await fetchThemeVocabWithProgress(themeId, dialectCode)
+      const { vocab, progress, examples } = await fetchThemeVocabWithProgress(themeId, levelCode)
       set((state) => ({
         themeCache: {
           ...state.themeCache,
@@ -58,9 +58,9 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
     }
   },
 
-  updateLocalProgress: (themeId, dialectCode, vocabId, patch) => {
+  updateLocalProgress: (themeId, levelCode, vocabId, patch) => {
     set((state) => {
-      const cacheKey = `${themeId}:${dialectCode}`
+      const cacheKey = `${themeId}:${levelCode}`
       const cached = state.themeCache[cacheKey]
       if (!cached) return state
       const existingIdx = cached.progress.findIndex((p) => p.vocab_id === vocabId)
@@ -84,13 +84,13 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
     })
   },
 
-  invalidateTheme: (themeId, dialectCode) => {
+  invalidateTheme: (themeId, levelCode) => {
     set((state) => {
       const next = { ...state.themeCache }
-      if (dialectCode) {
-        delete next[`${themeId}:${dialectCode}`]
+      if (levelCode) {
+        delete next[`${themeId}:${levelCode}`]
       } else {
-        // Invalidate all dialects for this theme
+        // Invalidate all level codes for this theme
         Object.keys(next).forEach(k => {
           if (k.startsWith(`${themeId}:`)) delete next[k]
         })

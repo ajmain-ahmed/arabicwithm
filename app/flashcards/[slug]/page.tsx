@@ -8,7 +8,6 @@ import {
     IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
     ToggleButton, ToggleButtonGroup,
     Slider, Badge,
-    Select, MenuItem, FormControl,
     useMediaQuery, useTheme,
 } from '@mui/material'
 import {
@@ -63,14 +62,6 @@ const SLUG_LABELS: Record<string, string> = {
     Expert: 'Expert | C1',
     Native: 'Native | C2',
 }
-
-/* ─────────────────────────────────────────────
-   Dialects
-───────────────────────────────────────────── */
-const DIALECT_OPTIONS = [
-    { code: 'MSA', label: 'Modern Standard' },
-    { code: 'EG', label: 'Egypt' },
-]
 
 /* ─────────────────────────────────────────────
    Types
@@ -169,21 +160,19 @@ function DesktopTextScaleSlider({ textScale, onChange }: { textScale: number; on
 }
 
 /* ─────────────────────────────────────────────
-   SettingsDialog (mobile + dialect)
+   SettingsDialog
 ───────────────────────────────────────────── */
 function SettingsDialog({
     open, onClose,
     showDiacritics, onToggleDiacritics,
     alwaysShow, onToggleAlwaysShow,
     textScale, onTextScaleChange,
-    dialect, onDialectChange,
     onOpenTutorial,
 }: {
     open: boolean; onClose: () => void
     showDiacritics: boolean; onToggleDiacritics: () => void
     alwaysShow: boolean; onToggleAlwaysShow: () => void
     textScale: number; onTextScaleChange: (v: number) => void
-    dialect: string; onDialectChange: (v: string) => void
     onOpenTutorial: () => void
 }) {
     const ToggleRow = ({ label, description, enabled, onToggle, activeColor }: {
@@ -224,89 +213,6 @@ function SettingsDialog({
             </DialogTitle>
             <DialogContent sx={{ px: 2.5, pt: 1.5, pb: 2 }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    {/* Dialect selector */}
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e' }}>Dialect</Typography>
-                        <FormControl size="small" fullWidth>
-                            <Select
-                                value={dialect}
-                                onChange={(e) => onDialectChange(e.target.value)}
-                                variant="outlined"
-                                IconComponent={() => null}
-                                sx={{
-                                    fontFamily: 'Jost, sans-serif',
-                                    fontSize: '0.85rem',
-                                    fontWeight: 500,
-                                    borderRadius: '999px',
-                                    color: '#2c1a0e',
-                                    height: 40,
-                                    '& .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: 'rgba(184,134,11,0.3)',
-                                    },
-                                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#b8860b',
-                                    },
-                                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                        borderColor: '#b8860b',
-                                        borderWidth: '1px',
-                                    },
-                                    '& .MuiSelect-select': {
-                                        py: 0,
-                                        px: 2,
-                                        pr: '16px !important',
-                                        textAlign: 'center',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                    },
-                                }}
-                                MenuProps={{
-                                    sx: {
-                                        '& .MuiPaper-root': {
-                                            borderRadius: '12px',
-                                            mt: 1,
-                                            boxShadow: '0 12px 32px rgba(44,26,14,0.15)',
-                                            border: '1px solid rgba(184,134,11,0.12)',
-                                        },
-                                        '& .MuiMenu-list': {
-                                            py: 1,
-                                        },
-                                        '& .MuiMenuItem-root': {
-                                            fontFamily: 'Jost, sans-serif',
-                                            fontSize: '0.85rem',
-                                            color: '#2c1a0e',
-                                            py: 1,
-                                            px: 2,
-                                            mx: 0.75,
-                                            borderRadius: '8px',
-                                            '&:hover': {
-                                                background: 'rgba(184,134,11,0.08)',
-                                            },
-                                            '&.Mui-selected': {
-                                                background: 'rgba(184,134,11,0.12)',
-                                                color: '#b8860b',
-                                                fontWeight: 600,
-                                                '&:hover': {
-                                                    background: 'rgba(184,134,11,0.16)',
-                                                },
-                                            },
-                                        },
-                                    },
-                                }}
-                                renderValue={(selected) => {
-                                    const opt = DIALECT_OPTIONS.find(o => o.code === selected)
-                                    return opt?.label ?? selected
-                                }}
-                            >
-                                {DIALECT_OPTIONS.map(opt => (
-                                    <MenuItem key={opt.code} value={opt.code}>
-                                        {opt.label}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
-                    </Box>
-
                     <ToggleRow label="Show Diacritics" description="Display vowel marks on Arabic words" enabled={showDiacritics} onToggle={onToggleDiacritics} activeColor="#b8860b" />
                     <ToggleRow label="Always Show Card" description="Never hide the answer side" enabled={alwaysShow} onToggle={onToggleAlwaysShow} activeColor="#0e2e1f" />
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.25, px: 1.5, borderRadius: '10px', border: '1px solid rgba(122,110,101,0.15)', background: 'rgba(122,110,101,0.03)', gap: 2 }}>
@@ -611,8 +517,8 @@ function StatusChips({ newCount, revisionCount, completedCount, filter, currentS
 function FlashcardQuiz({
     initialQueue, themeId, allExamples, showDiacritics, alwaysShow, onComplete, themeLabel,
     totalInTheme, alreadyCompletedCount, textScale, initialCardIndex, flushRef,
-    dialect,
-    onThemeProgressUpdate, // ← ADDED
+    levelCode,
+    onThemeProgressUpdate,
 }: {
     initialQueue: CardState[]
     themeId: number
@@ -626,8 +532,8 @@ function FlashcardQuiz({
     textScale: number
     initialCardIndex?: number
     flushRef?: React.MutableRefObject<(() => Promise<void>) | null>
-    dialect: string
-    onThemeProgressUpdate?: (themeId: number, progress: { completedCount: number; revisionCount: number }) => void // ← ADDED
+    levelCode: string
+    onThemeProgressUpdate?: (themeId: number, progress: { completedCount: number; revisionCount: number }) => void
 }) {
     const updateLocalProgress = useVocabStore(s => s.updateLocalProgress)
 
@@ -734,7 +640,7 @@ function FlashcardQuiz({
 
                     if (opts) {
                         pendingRef.current.set(cardId, { isCompleted, isInRevision })
-                        updateLocalProgress(themeId, dialect, cardId, {
+                        updateLocalProgress(themeId, levelCode, cardId, {
                             is_completed: isCompleted,
                             is_in_revision: isInRevision,
                         })
@@ -744,7 +650,7 @@ function FlashcardQuiz({
                 })
             )
         },
-        [themeId, dialect, updateLocalProgress]
+        [themeId, levelCode, updateLocalProgress]
     )
 
     const goToIndex = useCallback(
@@ -762,22 +668,20 @@ function FlashcardQuiz({
         if (currentIndex > 0) goToIndex(currentIndex - 1)
     }, [currentIndex, goToIndex])
 
-    // NEW — paste this
     const handleNext = useCallback(() => {
         if (currentIndex < filteredCards.length - 1) {
             goToIndex(currentIndex + 1)
         } else {
-            // On last card: advance to next theme
             onComplete?.()
         }
     }, [currentIndex, filteredCards.length, goToIndex, onComplete])
+
     const toggleRevision = useCallback(() => {
         if (!current) return
         const toRevision = !current.isInRevision
         updateCardStatus(current.id, toRevision ? 'revision' : 'new', { isInRevision: toRevision })
     }, [current, updateCardStatus])
 
-    // NEW — paste this
     const toggleComplete = useCallback(() => {
         if (!current) return
         if (current.isCompleted) {
@@ -787,7 +691,6 @@ function FlashcardQuiz({
             if (currentIndex < filteredCards.length - 1) {
                 goToIndex(currentIndex + 1)
             } else {
-                // Completed last card: advance to next theme
                 onComplete?.()
             }
         }
@@ -819,7 +722,10 @@ function FlashcardQuiz({
         '& .MuiButton-startIcon svg': { fontSize: '0.9rem !important' },
     }
 
-    /* ── swipe handlers (mobile only) ── */
+    /* ── Tinder-style swipe (mobile only) ── */
+    const nextBadgeRef = useRef<HTMLDivElement | null>(null)
+    const backBadgeRef = useRef<HTMLDivElement | null>(null)
+
     const onSwipeStart = useCallback((e: React.TouchEvent) => {
         if (!isMobile) return
         const touch = e.touches[0]
@@ -828,18 +734,26 @@ function FlashcardQuiz({
         const el = activeElRef.current
         if (el) {
             el.style.transition = 'none'
-            el.style.willChange = 'transform, opacity'
+            el.style.willChange = 'transform'
         }
+        if (nextBadgeRef.current) nextBadgeRef.current.style.opacity = '0'
+        if (backBadgeRef.current) backBadgeRef.current.style.opacity = '0'
     }, [isMobile])
 
     const onSwipeMove = useCallback((e: React.TouchEvent) => {
         if (!dragState.current?.isDragging || !activeElRef.current) return
         const touch = e.touches[0]
         const rawDelta = touch.clientX - dragState.current.startX
-        const resisted = rawDelta * 0.45
-        activeElRef.current.style.transform = `translateX(${resisted}px)`
-        const opacity = Math.max(0.55, 1 - Math.abs(rawDelta) / 500)
-        activeElRef.current.style.opacity = String(opacity)
+        const resisted = rawDelta * 0.5
+        const rotation = resisted * 0.04
+        activeElRef.current.style.transform = `translateX(${resisted}px) rotate(${rotation}deg)`
+
+        const progress = Math.min(1, Math.abs(rawDelta) / SWIPE_THRESHOLD)
+        if (rawDelta > 0 && backBadgeRef.current) {
+            backBadgeRef.current.style.opacity = String(progress)
+        } else if (rawDelta < 0 && nextBadgeRef.current) {
+            nextBadgeRef.current.style.opacity = String(progress)
+        }
     }, [])
 
     const onSwipeEnd = useCallback(() => {
@@ -850,37 +764,42 @@ function FlashcardQuiz({
         const delta = match ? parseFloat(match[1]) : 0
         dragState.current = null
 
-        const canSwipeRight = delta < -SWIPE_THRESHOLD && canGoBack   // right = previous
-        const canSwipeLeft  = delta > SWIPE_THRESHOLD                   // left  = next (always allowed; last card triggers next theme)
+        const canSwipeRight = delta < -SWIPE_THRESHOLD && canGoBack
+        const canSwipeLeft  = delta > SWIPE_THRESHOLD
 
         if (canSwipeRight || canSwipeLeft) {
             const dir = canSwipeLeft ? -1 : 1
-            style.transition = 'transform 0.28s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease'
-            style.transform = `translateX(${dir * 120}%)`
+            style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease'
+            style.transform = `translateX(${dir * 110}%) rotate(${dir * -12}deg)`
             style.opacity = '0'
+            if (nextBadgeRef.current) nextBadgeRef.current.style.opacity = '0'
+            if (backBadgeRef.current) backBadgeRef.current.style.opacity = '0'
             setTimeout(() => {
                 style.willChange = ''
+                style.transform = ''
+                style.opacity = ''
                 if (canSwipeLeft) handleNext()
                 else handlePrevious()
-            }, 280)
+            }, 300)
         } else {
-            style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease'
-            style.transform = 'translateX(0px)'
+            style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease'
+            style.transform = 'translateX(0px) rotate(0deg)'
             style.opacity = '1'
+            if (nextBadgeRef.current) nextBadgeRef.current.style.opacity = '0'
+            if (backBadgeRef.current) backBadgeRef.current.style.opacity = '0'
             const onDone = () => {
                 style.transition = ''
                 style.transform = ''
-                style.opacity = ''
                 style.willChange = ''
                 el.removeEventListener('transitionend', onDone)
             }
             el.addEventListener('transitionend', onDone)
-            // safety fallback in case transitionend doesn't fire
             setTimeout(onDone, 450)
         }
     }, [canGoBack, handleNext, handlePrevious])
 
     return (
+        <Box sx={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
         <Fade in key={`${cardKey}-${current.id}`} timeout={400}>
             <Box
                 ref={cardRef}
@@ -891,9 +810,34 @@ function FlashcardQuiz({
                     background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px',
                     padding: { xs: '1.25rem 0.875rem', md: '2rem 1.5rem 1.75rem' },
                     minHeight: { xs: '300px', md: '340px' }, display: 'flex', flexDirection: 'column',
-                    touchAction: 'pan-y',
+                    touchAction: 'pan-y', position: 'relative',
                 }}
             >
+                {/* Swipe overlay badges */}
+                <Box ref={nextBadgeRef} sx={{
+                    position: 'absolute', top: 24, right: 24,
+                    border: '3px solid #2e7d32', color: '#2e7d32',
+                    fontFamily: 'Jost, sans-serif', fontWeight: 800, fontSize: '1.4rem',
+                    textTransform: 'uppercase', letterSpacing: '0.08em',
+                    px: 1.5, py: 0.5, borderRadius: '8px',
+                    transform: 'rotate(12deg)', opacity: 0,
+                    transition: 'opacity 0.1s', pointerEvents: 'none',
+                    zIndex: 10,
+                }}>
+                    Next
+                </Box>
+                <Box ref={backBadgeRef} sx={{
+                    position: 'absolute', top: 24, left: 24,
+                    border: '3px solid #d32f2f', color: '#d32f2f',
+                    fontFamily: 'Jost, sans-serif', fontWeight: 800, fontSize: '1.4rem',
+                    textTransform: 'uppercase', letterSpacing: '0.08em',
+                    px: 1.5, py: 0.5, borderRadius: '8px',
+                    transform: 'rotate(-12deg)', opacity: 0,
+                    transition: 'opacity 0.1s', pointerEvents: 'none',
+                    zIndex: 10,
+                }}>
+                    Back
+                </Box>
                 {/* Progress bar */}
                 <Box sx={{ height: '2px', background: 'rgba(184,134,11,0.1)', borderRadius: '999px', mb: '1.25rem', overflow: 'hidden' }}>
                     <Box sx={{ height: '100%', background: 'linear-gradient(90deg, #b8860b, #d4a843)', borderRadius: '999px', transition: 'width 0.4s ease', width: `${progressPct}%` }} />
@@ -982,6 +926,7 @@ function FlashcardQuiz({
                 </Box>
             </Box>
         </Fade>
+        </Box>
     )
 }
 
@@ -1104,13 +1049,12 @@ export default function FlashcardSlugPage() {
     const level = SLUG_TO_LEVEL[slug] ?? 'A0'
     const label = SLUG_LABELS[slug] ?? slug
 
-    const [dialect, setDialect] = useState('MSA')
-
     const fetchTheme = useVocabStore(s => s.fetchTheme)
     const loadingThemeId = useVocabStore(s => s.loadingThemeId)
 
     const [themes, setThemes] = useState<ThemeProgress[]>([])
     const [themesLoading, setThemesLoading] = useState(true)
+    const [themesError, setThemesError] = useState<string | null>(null)
     const [selectedTheme, setSelectedTheme] = useState<ThemeProgress | null>(null)
     const [activeQueue, setActiveQueue] = useState<CardState[]>([])
     const [activeExamples, setActiveExamples] = useState<ExampleRow[]>([])
@@ -1145,12 +1089,13 @@ export default function FlashcardSlugPage() {
         }
     }, [flush])
 
-    // Fetch themes whenever level or dialect changes
+    // Fetch themes whenever level changes
     useEffect(() => {
         let cancelled = false
         setThemesLoading(true)
+        setThemesError(null)
         setSelectedTheme(null)
-        fetchThemesWithProgress(level, dialect)
+        fetchThemesWithProgress(level)
             .then(async (data) => {
                 if (cancelled) return
                 setThemes(data)
@@ -1162,8 +1107,6 @@ export default function FlashcardSlugPage() {
                     (t.total_words === 0 || t.completed_count < t.total_words)
                 ) ?? data[0]
 
-                console.log('[DEBUG] First incomplete theme:', firstIncomplete)
-
                 if (firstIncomplete) {
                     await handleThemeSelect(firstIncomplete)
                 }
@@ -1173,17 +1116,18 @@ export default function FlashcardSlugPage() {
                 if (!cancelled) {
                     setThemes([])
                     setThemesLoading(false)
+                    setThemesError(err?.message ?? 'Failed to load themes')
                 }
             })
         return () => { cancelled = true }
-    }, [slug, level, dialect])
+    }, [slug, level])
 
     const handleThemeSelect = useCallback(async (theme: ThemeProgress, cardIndex?: number) => {
         if (!theme?.theme_id || Number.isNaN(theme.theme_id)) return
         await flush()
         setSelectedTheme(theme)
         try {
-            const { vocab, progress, examples } = await fetchTheme(theme.theme_id, dialect)
+            const { vocab, progress, examples } = await fetchTheme(theme.theme_id, level)
             const queue = buildQueue(vocab, progress)
             setActiveQueue(queue)
             setActiveExamples(examples)
@@ -1202,7 +1146,7 @@ export default function FlashcardSlugPage() {
             setActiveExamples([])
             setInitialCardIndex(0)
         }
-    }, [fetchTheme, dialect])
+    }, [fetchTheme, level])
 
     /* ── Keep sidebar counts in sync with quiz actions ── */
     const handleThemeProgressUpdate = useCallback((themeId: number, progress: { completedCount: number; revisionCount: number }) => {
@@ -1364,7 +1308,6 @@ export default function FlashcardSlugPage() {
                 showDiacritics={showDiacritics} onToggleDiacritics={() => setShowDiacritics(p => !p)}
                 alwaysShow={alwaysShow} onToggleAlwaysShow={() => setAlwaysShow(p => !p)}
                 textScale={textScale} onTextScaleChange={setTextScale}
-                dialect={dialect} onDialectChange={setDialect}
                 onOpenTutorial={() => setTutorialOpen(true)}
             />
 
@@ -1378,85 +1321,6 @@ export default function FlashcardSlugPage() {
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
                                 <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
-                                <FormControl size="small" sx={{ minWidth: 150 }}>
-                                    <Select
-                                        value={dialect}
-                                        onChange={(e) => setDialect(e.target.value)}
-                                        variant="outlined"
-                                        displayEmpty
-                                        IconComponent={() => null}
-                                        sx={{
-                                            fontFamily: 'Jost, sans-serif',
-                                            fontSize: '0.85rem',
-                                            fontWeight: 500,
-                                            borderRadius: '999px',
-                                            color: '#2c1a0e',
-                                            height: 36,
-                                            '& .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: 'rgba(184,134,11,0.3)',
-                                            },
-                                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: '#b8860b',
-                                            },
-                                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                                borderColor: '#b8860b',
-                                                borderWidth: '1px',
-                                            },
-                                            '& .MuiSelect-select': {
-                                                py: 0,
-                                                px: 2,
-                                                pr: '16px !important',
-                                                textAlign: 'center',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                            },
-                                        }}
-                                        MenuProps={{
-                                            sx: {
-                                                '& .MuiPaper-root': {
-                                                    borderRadius: '12px',
-                                                    mt: 1,
-                                                    boxShadow: '0 12px 32px rgba(44,26,14,0.15)',
-                                                    border: '1px solid rgba(184,134,11,0.12)',
-                                                },
-                                                '& .MuiMenu-list': {
-                                                    py: 1,
-                                                },
-                                                '& .MuiMenuItem-root': {
-                                                    fontFamily: 'Jost, sans-serif',
-                                                    fontSize: '0.85rem',
-                                                    color: '#2c1a0e',
-                                                    py: 1,
-                                                    px: 2,
-                                                    mx: 0.75,
-                                                    borderRadius: '8px',
-                                                    '&:hover': {
-                                                        background: 'rgba(184,134,11,0.08)',
-                                                    },
-                                                    '&.Mui-selected': {
-                                                        background: 'rgba(184,134,11,0.12)',
-                                                        color: '#b8860b',
-                                                        fontWeight: 600,
-                                                        '&:hover': {
-                                                            background: 'rgba(184,134,11,0.16)',
-                                                        },
-                                                    },
-                                                },
-                                            },
-                                        }}
-                                        renderValue={(selected) => {
-                                            const opt = DIALECT_OPTIONS.find(o => o.code === selected)
-                                            return opt?.label ?? selected
-                                        }}
-                                    >
-                                        {DIALECT_OPTIONS.map(opt => (
-                                            <MenuItem key={opt.code} value={opt.code}>
-                                                {opt.label}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
                                 <PillToggle enabled={alwaysShow} onToggle={() => setAlwaysShow(p => !p)} label="Always show card" activeColor="#0e2e1f" />
                                 <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics(p => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
                                 <IconButton onClick={() => setTutorialOpen(true)} size="small" sx={{ width: 32, height: 32, border: '1px solid rgba(122,110,101,0.3)', borderRadius: '50%', color: '#7a6e65', flexShrink: 0 }}>
@@ -1526,10 +1390,28 @@ export default function FlashcardSlugPage() {
                                         alreadyCompletedCount={selectedTheme.completed_count}
                                         initialCardIndex={initialCardIndex}
                                         flushRef={flushRef}
-                                        dialect={dialect}
+                                        levelCode={level}
                                         onThemeProgressUpdate={handleThemeProgressUpdate}
                                     />
-                                ) : null}
+                                ) : selectedTheme ? (
+                                    <Box sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px', padding: { xs: '2rem 1rem', md: '3rem 1.5rem' }, minHeight: 340, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center' }}>
+                                        <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.5rem', fontWeight: 700, color: '#2c1a0e' }}>
+                                            No words yet
+                                        </Typography>
+                                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', color: '#7a6e65', maxWidth: 400 }}>
+                                            This theme doesn&apos;t have any words for <strong>{label}</strong> yet.
+                                        </Typography>
+                                    </Box>
+                                ) : (
+                                    <Box sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px', padding: { xs: '2rem 1rem', md: '3rem 1.5rem' }, minHeight: 340, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center' }}>
+                                        <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.5rem', fontWeight: 700, color: '#2c1a0e' }}>
+                                            {themesError ? 'Something went wrong' : 'No themes found'}
+                                        </Typography>
+                                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', color: '#7a6e65', maxWidth: 400 }}>
+                                            {themesError ?? `There are no themes for ${label} yet.`}
+                                        </Typography>
+                                    </Box>
+                                )}
                             </Box>
                             {validThemes.length > 0 && (
                                 <Box sx={{ display: { xs: 'none', lg: 'block' }, position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)' }}>

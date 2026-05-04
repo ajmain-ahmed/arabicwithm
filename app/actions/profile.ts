@@ -38,7 +38,7 @@ export type ProfileData = {
   levels: LevelStat[]
 }
 
-export async function fetchUserProfile(dialectCode: string = 'MSA'): Promise<ProfileData | null> {
+export async function fetchUserProfile(): Promise<ProfileData | null> {
   const supabaseUrl = process.env.SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   if (!supabaseUrl || !supabaseKey) {
@@ -62,7 +62,7 @@ export async function fetchUserProfile(dialectCode: string = 'MSA'): Promise<Pro
   const levels = await Promise.all(
     LEVELS.map(async (meta) => {
       try {
-        const themes = await fetchThemesWithProgress(meta.code, dialectCode)
+        const themes = await fetchThemesWithProgress(meta.code)
 
         const totalThemes = themes.length
         const completedThemes = themes.filter(

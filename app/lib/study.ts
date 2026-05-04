@@ -40,51 +40,66 @@ const LEVEL_ORDER = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 export async function getAllLevels(): Promise<LevelMeta[]> {
   const { data: levels, error } = await serviceClient
     .from('levels')
-    .select('id, code, sort_order')
-    .order('sort_order')
+    .select('id, code')
 
   if (error) {
     console.error('[getAllLevels] error:', error.message)
     return []
   }
 
-  const levelIds = levels?.map((l) => l.id) ?? []
-  if (levelIds.length === 0) return []
+  const levelCodes = levels?.map((l) => l.code) ?? []
+  if (levelCodes.length === 0) return []
 
+  const levelIds = levels?.map(l => l.id) ?? []
+
+  // Count vocab words per level
   const { data: vocabData, error: vocabErr } = await serviceClient
-    .from('vocabulary')
+    .from('vocab')
     .select('level_id')
     .in('level_id', levelIds)
 
   if (vocabErr) {
-    console.error('[getAllLevels] vocab error:', vocabErr.message)
+    console.error('[getAllLevels] vocab count error:', vocabErr.message)
   }
 
-  const { data: themeData, error: themeErr } = await serviceClient
-    .from('themes')
-    .select('level_id')
+  const wordCountMap = new Map<string, number>()
+  for (const v of vocabData ?? []) {
+    const level = levels?.find(l => l.id === v.level_id)
+    if (level) {
+      wordCountMap.set(level.code, (wordCountMap.get(level.code) ?? 0) + 1)
+    }
+  }
+
+  // Count distinct themes per level
+  const { data: themeVocabData, error: themeVocabErr } = await serviceClient
+    .from('vocab')
+    .select('level_id, theme_id')
     .in('level_id', levelIds)
 
-  if (themeErr) {
-    console.error('[getAllLevels] theme error:', themeErr.message)
+  if (themeVocabErr) {
+    console.error('[getAllLevels] theme count error:', themeVocabErr.message)
   }
 
-  const wordCountMap = new Map<number, number>()
-  vocabData?.forEach((v) => {
-    wordCountMap.set(v.level_id, (wordCountMap.get(v.level_id) ?? 0) + 1)
-  })
-
-  const themeCountMap = new Map<number, number>()
-  themeData?.forEach((t) => {
-    themeCountMap.set(t.level_id, (themeCountMap.get(t.level_id) ?? 0) + 1)
-  })
+  const themeCountMap = new Map<string, number>()
+  const levelThemeSets = new Map<string, Set<number>>()
+  for (const v of themeVocabData ?? []) {
+    const level = levels?.find(l => l.id === v.level_id)
+    if (level) {
+      const set = levelThemeSets.get(level.code) ?? new Set<number>()
+      set.add(v.theme_id)
+      levelThemeSets.set(level.code, set)
+    }
+  }
+  for (const [code, set] of levelThemeSets) {
+    themeCountMap.set(code, set.size)
+  }
 
   const result: LevelMeta[] = (levels ?? []).map((l) => ({
     code: l.code,
     slug: SLUG_MAP[l.code] ?? l.code,
     label: LABEL_MAP[l.code] ?? l.code,
-    wordCount: wordCountMap.get(l.id) ?? 0,
-    themeCount: themeCountMap.get(l.id) ?? 0,
+    wordCount: wordCountMap.get(l.code) ?? 0,
+    themeCount: themeCountMap.get(l.code) ?? 0,
   }))
 
   result.sort((a, b) => {

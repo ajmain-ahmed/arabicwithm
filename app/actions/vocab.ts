@@ -3,7 +3,6 @@
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
-import { normalizeArabicToken } from "@/app/lib/arabic"
 
 const serviceUrl = process.env.SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_KEY
@@ -48,32 +47,105 @@ export type ThemeProgress = {
 }
 
 export async function fetchThemesWithProgress(
-  levelCode: string,
-  dialectCode: string
+  levelCode: string
 ): Promise<ThemeProgress[]> {
   if (!levelCode || typeof levelCode !== 'string' || levelCode.length > 10) {
     throw new Error('Invalid levelCode')
   }
-  if (!dialectCode || typeof dialectCode !== 'string' || dialectCode.length > 10) {
-    throw new Error('Invalid dialectCode')
-  }
   const userId = await getAuthenticatedUserId()
 
-  // Use the RPC
-  const { data, error } = await serviceClient.rpc("get_theme_progress_v2", {
-    p_user_id: userId ?? null,
-    p_level_code: levelCode,
-    p_dialect_code: dialectCode,
-  })
+  // 1. Resolve level_id from code
+  const { data: levelData, error: levelErr } = await serviceClient
+    .from("levels")
+    .select("id")
+    .eq("code", levelCode)
+    .single()
 
-  if (error) throw new Error(error.message)
+  if (levelErr || !levelData) {
+    console.error("[fetchThemesWithProgress] level not found:", levelCode, levelErr?.message)
+    return []
+  }
+  const levelId = levelData.id
 
-  return (data ?? []).map((r: any) => ({
-    theme_id: Number(r.theme_id),
-    display_name: r.display_name,
-    total_words: Number(r.total_words),
-    completed_count: Number(r.completed_count),
-    revision_count: Number(r.revision_count),
+  // 2. Get all vocab for this level
+  const { data: vocabData, error: vocabErr } = await serviceClient
+    .from("vocab")
+    .select("word_id, theme_id")
+    .eq("level_id", levelId)
+
+  if (vocabErr) {
+    console.error("[fetchThemesWithProgress] vocab error:", vocabErr.message)
+    throw new Error(vocabErr.message)
+  }
+
+  // 3. Get themes that have vocab for this level
+  const themeIds = [...new Set((vocabData ?? []).map(v => v.theme_id))]
+  if (themeIds.length === 0) return []
+
+  const { data: themesData, error: themesErr } = await serviceClient
+    .from("themes")
+    .select("id, display_name")
+    .in("id", themeIds)
+    .order("id")
+
+  if (themesErr) {
+    console.error("[fetchThemesWithProgress] themes error:", themesErr.message)
+    throw new Error(themesErr.message)
+  }
+
+  // 4. Count vocab per theme
+  const vocabPerTheme = new Map<number, number>()
+  const vocabIds: number[] = []
+  for (const v of vocabData ?? []) {
+    vocabPerTheme.set(v.theme_id, (vocabPerTheme.get(v.theme_id) ?? 0) + 1)
+    vocabIds.push(v.word_id)
+  }
+
+  // 5. Get progress for user
+  let completedSet = new Set<number>()
+  let revisionSet = new Set<number>()
+
+  if (userId && vocabIds.length > 0) {
+    const { data: progData } = await serviceClient
+      .from("progress")
+      .select("vocab_id, is_completed, is_in_revision")
+      .eq("user_id", userId)
+      .in("vocab_id", vocabIds)
+
+    for (const p of progData ?? []) {
+      if (p.is_completed) completedSet.add(p.vocab_id)
+      if (p.is_in_revision) revisionSet.add(p.vocab_id)
+    }
+  }
+
+  // 6. Map vocab_id → theme_id for progress counting
+  const vocabThemeMap = new Map<number, number>()
+  for (const v of vocabData ?? []) {
+    vocabThemeMap.set(v.word_id, v.theme_id)
+  }
+
+  const completedPerTheme = new Map<number, number>()
+  const revisionPerTheme = new Map<number, number>()
+  for (const vocabId of completedSet) {
+    const themeId = vocabThemeMap.get(vocabId)
+    if (themeId != null) {
+      completedPerTheme.set(themeId, (completedPerTheme.get(themeId) ?? 0) + 1)
+    }
+  }
+  for (const vocabId of revisionSet) {
+    const themeId = vocabThemeMap.get(vocabId)
+    if (themeId != null) {
+      revisionPerTheme.set(themeId, (revisionPerTheme.get(themeId) ?? 0) + 1)
+    }
+  }
+
+  // 7. Build ThemeProgress
+  return (themesData ?? []).map((t) => ({
+    theme_id: Number(t.id),
+    display_name: t.display_name,
+    total_words: vocabPerTheme.get(t.id) ?? 0,
+    completed_count: completedPerTheme.get(t.id) ?? 0,
+    revision_count: revisionPerTheme.get(t.id) ?? 0,
   }))
 }
 
@@ -84,7 +156,7 @@ export type ExampleRow = {
   ex_dia: string
   ex_en: string
   interactive: boolean
-  ex_tr?: string   // ✅ matches the column name and component
+  ex_tr?: string
 }
 
 export type VocabRow = {
@@ -93,10 +165,9 @@ export type VocabRow = {
   theme_id: number
   pos: string
   definition: string
-  dialect: string
   word: string
   word_diacritic: string
-  transliteration: string   // ← NEW
+  transliteration: string
 }
 
 export type WordProgress = {
@@ -105,10 +176,10 @@ export type WordProgress = {
   is_in_revision: boolean
 }
 
-/* ── fetch vocab + defs + examples ── */
+/* ── fetch vocab + defs + examples for a theme ── */
 export async function fetchThemeVocabWithProgress(
   themeId: number,
-  dialectCode: string
+  levelCode: string
 ): Promise<{
   vocab: VocabRow[]
   progress: WordProgress[]
@@ -116,140 +187,91 @@ export async function fetchThemeVocabWithProgress(
 }> {
   const userId = await getAuthenticatedUserId()
 
-  // 1. Resolve dialect id
-  const { data: dialectData, error: dialectErr } = await serviceClient
-    .from("dialects")
-    .select("id, name, code")
-    .eq("code", dialectCode)
+  // 1. Resolve level_id
+  const { data: levelData, error: levelErr } = await serviceClient
+    .from("levels")
+    .select("id")
+    .eq("code", levelCode)
     .single()
 
-  if (dialectErr || !dialectData) throw new Error("Dialect not found")
+  if (levelErr || !levelData) throw new Error("Level not found")
+  const levelId = levelData.id
 
-  // 2. Fetch vocabulary — no forms column
-  const { data: rawVocab, error: vocabErr } = await serviceClient
-    .from("vocabulary")
-    .select(`id, theme_id, level_id, word, diacritics, transliteration, levels!inner(code)`)
-    //                                        
+  // 2. Get vocab for this theme and level
+  const { data: vocabData, error: vocabErr } = await serviceClient
+    .from("vocab")
+    .select("word_id, word_ar, word_di, word_tr, theme_id, level_id")
     .eq("theme_id", themeId)
-    .eq("dialect_id", dialectData.id)
-    .order("id")
+    .eq("level_id", levelId)
+    .order("word_id")
 
   if (vocabErr) throw new Error(vocabErr.message)
-
-  if (!rawVocab || rawVocab.length === 0) {
+  if (!vocabData || vocabData.length === 0) {
     return { vocab: [], progress: [], examples: [] }
   }
 
-  const vocabIds = rawVocab.map(v => v.id)
+  const vocabIds = vocabData.map(v => v.word_id)
 
-  // 3. Definitions
+  // 3. Get definitions
   const { data: defData, error: defErr } = await serviceClient
     .from("definitions")
-    .select("vocabulary_id, definition, pos, sort_order")
-    .in("vocabulary_id", vocabIds)
-    .order("sort_order")
+    .select("vocab_id, pos, meaning")
+    .in("vocab_id", vocabIds)
 
   if (defErr) throw new Error(defErr.message)
 
-  const defMap = new Map<number, { definition: string; pos: string }[]>()
-    ; (defData ?? []).forEach(d => {
-      const list = defMap.get(d.vocabulary_id) || []
-      list.push({ definition: d.definition, pos: d.pos })
-      defMap.set(d.vocabulary_id, list)
-    })
+  // 4. Get examples
+  const { data: exData, error: exErr } = await serviceClient
+    .from("examples")
+    .select("vocab_id, ex_ar, ex_di, ex_tr, ex_en, interactive")
+    .in("vocab_id", vocabIds)
 
-  // 4. Fetch ALL examples for this level and match by normalised token
-  const levelId = rawVocab[0]?.level_id
-  let examples: ExampleRow[] = []
+  if (exErr) throw new Error(exErr.message)
 
-  if (levelId) {
-    const { data: allEx, error: exErr } = await serviceClient
-      .from("examples")
-      .select("id, ex_ar, ex_dia, ex_en, ex_tr, interactive, level_id, vocabulary_id")
-      .eq("level_id", levelId)
-
-    if (exErr) {
-      console.error("[fetchThemeVocabWithProgress] examples error:", exErr.message)
-    }
-
-    console.log(`[fetchThemeVocabWithProgress] levelId=${levelId}, examples fetched=${allEx?.length ?? 0}, vocab words=${rawVocab.length}`)
-
-    // Build map: normalised token → example rows
-    const exByNormToken = new Map<string, typeof allEx>()
-    for (const ex of allEx ?? []) {
-      const tokens = (ex.ex_ar ?? '')
-        .split(/[\s\.,،؛:!؟»«]+/)
-        .filter((t: string) => t.length > 0)
-      const seen = new Set<string>()
-      for (const token of tokens) {
-        const norm = normalizeArabicToken(token)
-        if (seen.has(norm)) continue
-        seen.add(norm)
-        const list = exByNormToken.get(norm) ?? []
-        list.push(ex)
-        exByNormToken.set(norm, list)
-      }
-    }
-
-    console.log(`[fetchThemeVocabWithProgress] indexed ${exByNormToken.size} unique normalised tokens`)
-
-    // Match each vocab word to examples (dedupe per vocab word)
-    const assigned = new Set<string>()
-    for (const v of rawVocab) {
-      const normWord = normalizeArabicToken(v.word)
-      const matches = exByNormToken.get(normWord) ?? []
-      if (matches.length > 0) {
-        console.log(`[fetchThemeVocabWithProgress] vocab "${v.word}" (norm="${normWord}") matched ${matches.length} examples`)
-      }
-      for (const ex of matches) {
-        const key = `${v.id}:${ex.id}`
-        if (assigned.has(key)) continue
-        assigned.add(key)
-        examples.push({
-          vocab_id: v.id,
-          ex_ar: ex.ex_ar,
-          ex_dia: ex.ex_dia,
-          ex_en: ex.ex_en,
-          interactive: ex.interactive,
-          ex_tr: ex.ex_tr ?? '',
-        })
-      }
-    }
-
-    console.log(`[fetchThemeVocabWithProgress] total matched examples=${examples.length}`)
-  } else {
-    console.warn("[fetchThemeVocabWithProgress] no levelId found on vocab rows")
+  // 5. Build VocabRow
+  const defMap = new Map<number, { pos: string; meaning: string }[]>()
+  for (const d of defData ?? []) {
+    const list = defMap.get(d.vocab_id) ?? []
+    list.push({ pos: d.pos, meaning: d.meaning })
+    defMap.set(d.vocab_id, list)
   }
 
-  // 5. Map to VocabRow
-  const vocab: VocabRow[] = rawVocab.map((r: any) => {
-    const defs = defMap.get(r.id) ?? [{ definition: "", pos: "unknown" }]
-    const primaryDef = defs[0]
-
+  const vocab: VocabRow[] = vocabData.map(v => {
+    const defs = defMap.get(v.word_id) ?? [{ pos: "unknown", meaning: "" }]
+    const primary = defs[0]
     return {
-      id: r.id,
-      level: r.levels.code,
-      theme_id: r.theme_id,
-      pos: primaryDef.pos,
-      definition: primaryDef.definition,
-      dialect: dialectData.name,
-      word: r.word,
-      word_diacritic: r.diacritics ?? "",
-      transliteration: r.transliteration ?? "",   // ← ADD THIS
+      id: v.word_id,
+      level: levelCode,
+      theme_id: v.theme_id,
+      pos: primary.pos,
+      definition: primary.meaning,
+      word: v.word_ar,
+      word_diacritic: v.word_di ?? "",
+      transliteration: v.word_tr ?? "",
     }
   })
 
-  // 6. Progress
+  // 6. Build ExampleRow
+  const examples: ExampleRow[] = (exData ?? []).map(e => ({
+    vocab_id: e.vocab_id,
+    ex_ar: e.ex_ar,
+    ex_dia: e.ex_di ?? "",
+    ex_en: e.ex_en ?? "",
+    interactive: e.interactive ?? false,
+    ex_tr: e.ex_tr ?? "",
+  }))
+
+  // 7. Get progress
   let progress: WordProgress[] = []
   if (userId) {
     const { data: progData } = await serviceClient
       .from("progress")
-      .select("vocabulary_id, is_completed, is_in_revision")
+      .select("vocab_id, is_completed, is_in_revision")
       .eq("user_id", userId)
-      .in("vocabulary_id", vocabIds)
+      .in("vocab_id", vocabIds)
 
     progress = (progData ?? []).map(p => ({
-      vocab_id: p.vocabulary_id,
+      vocab_id: p.vocab_id,
       is_completed: p.is_completed,
       is_in_revision: p.is_in_revision,
     }))
@@ -265,7 +287,7 @@ export async function fetchRevisionVocabIds(): Promise<number[]> {
 
   const { data, error } = await serviceClient
     .from("progress")
-    .select("vocabulary_id")
+    .select("vocab_id")
     .eq("user_id", userId)
     .eq("is_in_revision", true)
 
@@ -274,7 +296,7 @@ export async function fetchRevisionVocabIds(): Promise<number[]> {
     return []
   }
 
-  return (data ?? []).map((r) => Number(r.vocabulary_id))
+  return (data ?? []).map((r) => Number(r.vocab_id))
 }
 
 /* ── upsert progress ── */
@@ -296,12 +318,12 @@ export async function upsertWordProgress({
   const { error } = await serviceClient.from("progress").upsert(
     {
       user_id: userId,
-      vocabulary_id: vocabId,
+      vocab_id: vocabId,
       is_completed: isCompleted,
       is_in_revision: isInRevision,
       updated_at: new Date().toISOString(),
     },
-    { onConflict: "user_id,vocabulary_id" }
+    { onConflict: "user_id,vocab_id" }
   )
 
   if (error) throw new Error(error.message)

@@ -23,7 +23,7 @@ const DESKTOP_PAGES = [
   },
   {
     title: 'Reveal & Customise',
-    body: 'Press Show answer to see the full card. Use the toolbar switches to show or hide diacritics, keep answers permanently visible, change dialect, or adjust text size.',
+    body: 'Press Show answer to see the full card. Use the toolbar switches to show or hide diacritics, keep answers permanently visible, or adjust text size.',
     image: '/themes/study.avif',
   },
   {
@@ -46,7 +46,7 @@ const MOBILE_PAGES = [
   },
   {
     title: 'Reveal & Customise',
-    body: 'Press Show answer to see the full card. Tap the settings icon to adjust diacritics, text size, dialect, and more.',
+    body: 'Press Show answer to see the full card. Tap the settings icon to adjust diacritics, text size, and more.',
     image: '/themes/study.avif',
   },
   {

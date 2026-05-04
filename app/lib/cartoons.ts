@@ -161,11 +161,11 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
   let vocabMap: Record<string, VocabEntry> = {}
   if (tokenArray.length > 0) {
     try {
-      // 1. Fetch matching vocabulary rows (join levels to get CEFR code)
+      // 1. Fetch matching vocab rows
       const { data: vocabData, error: vocabErr } = await serviceClient
-        .from('vocabulary')
-        .select('id, word, diacritics, transliteration, theme_id, levels!inner(code)')
-        .in('word', tokenArray)
+        .from('vocab')
+        .select('word_id, word_ar, word_di, word_tr, level_id, theme_id')
+        .in('word_ar', tokenArray)
 
       if (vocabErr) {
         console.error(`[getEpisode] vocab query error:`, vocabErr.message)
@@ -173,76 +173,75 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
       }
 
       if (vocabData && vocabData.length > 0) {
-        const vocabIds = vocabData.map((v) => v.id)
+        const vocabIds = vocabData.map((v) => v.word_id)
 
         // 2. Fetch definitions for matched words
         const { data: defData, error: defErr } = await serviceClient
           .from('definitions')
-          .select('vocabulary_id, definition, pos, sort_order')
-          .in('vocabulary_id', vocabIds)
-          .order('sort_order')
+          .select('vocab_id, meaning, pos')
+          .in('vocab_id', vocabIds)
 
         if (defErr) {
           console.error(`[getEpisode] definitions query error:`, defErr.message)
           throw defErr
         }
 
-        const defMap = new Map<number, { definition: string; pos: string }>()
+        const defMap = new Map<number, { meaning: string; pos: string }>()
         for (const d of defData ?? []) {
-          // Keep only the first definition per vocab word
-          if (!defMap.has(d.vocabulary_id)) {
-            defMap.set(d.vocabulary_id, { definition: d.definition, pos: d.pos })
+          // Keep only the first definition per word
+          if (!defMap.has(d.vocab_id)) {
+            defMap.set(d.vocab_id, { meaning: d.meaning, pos: d.pos })
           }
         }
 
-        // 3. Fetch theme names for matched words
-        const themeIds = [...new Set((vocabData as any[]).map((v) => v.theme_id).filter(Boolean))]
-        const themeMap = new Map<number, string>()
-        if (themeIds.length > 0) {
-          const { data: themeData, error: themeErr } = await serviceClient
-            .from('themes')
-            .select('id, display_name')
-            .in('id', themeIds)
-          if (themeErr) {
-            console.error(`[getEpisode] themes query error:`, themeErr.message)
-          } else {
-            for (const t of themeData ?? []) {
-              themeMap.set(t.id, t.display_name)
-            }
-          }
-        }
+        // Fetch level codes and theme names
+        const levelIds = [...new Set(vocabData.map(v => v.level_id))]
+        const themeIds = [...new Set(vocabData.map(v => v.theme_id))]
 
-        // 4. Build vocabMap with multiple keys per entry
+        const { data: levelsData } = await serviceClient
+          .from('levels')
+          .select('id, code')
+          .in('id', levelIds)
+
+        const { data: themesData } = await serviceClient
+          .from('themes')
+          .select('id, display_name')
+          .in('id', themeIds)
+
+        const levelMap = new Map((levelsData ?? []).map(l => [l.id, l.code]))
+        const themeMap = new Map((themesData ?? []).map(t => [t.id, t.display_name]))
+
+        // 3. Build vocabMap with multiple keys per entry
         for (const row of vocabData as any[]) {
           const entry: VocabEntry = {
-            id: row.id,
-            word: row.word,
-            word_diacritic: row.diacritics ?? '',
-            definition: defMap.get(row.id)?.definition ?? '',
-            pos: defMap.get(row.id)?.pos ?? '',
-            transliteration: row.transliteration ?? '',
-            level: row.levels?.code ?? '',
+            id: row.word_id,
+            word: row.word_ar,
+            word_diacritic: row.word_di ?? '',
+            definition: defMap.get(row.word_id)?.meaning ?? '',
+            pos: defMap.get(row.word_id)?.pos ?? '',
+            transliteration: row.word_tr ?? '',
+            level: levelMap.get(row.level_id) ?? '',
             theme: themeMap.get(row.theme_id) ?? '',
           }
 
           // Key 1: exact DB word (e.g. "وداع")
-          vocabMap[row.word] = entry
+          vocabMap[row.word_ar] = entry
 
           // Key 2: canonical diacritic-free word
-          const bareKey = stripDiacritics(row.word)
-          if (bareKey && bareKey !== row.word) {
+          const bareKey = stripDiacritics(row.word_ar)
+          if (bareKey && bareKey !== row.word_ar) {
             vocabMap[bareKey] = entry
           }
 
           // Key 3: definite-article prepended (e.g. "الوداع")
           const alKey = 'ال' + bareKey
-          if (alKey !== row.word && alKey !== bareKey) {
+          if (alKey !== row.word_ar && alKey !== bareKey) {
             vocabMap[alKey] = entry
           }
 
           // Key 4: normalized legacy fallback
-          const normKey = normalizeArabicToken(row.word)
-          if (normKey && normKey !== row.word && normKey !== bareKey && normKey !== alKey) {
+          const normKey = normalizeArabicToken(row.word_ar)
+          if (normKey && normKey !== row.word_ar && normKey !== bareKey && normKey !== alKey) {
             vocabMap[normKey] = entry
           }
         }

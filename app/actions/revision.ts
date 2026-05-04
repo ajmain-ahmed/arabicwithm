@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache"
 const serviceUrl = process.env.SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_KEY
 if (!serviceUrl || !serviceKey) {
-  throw new Error('Missing required env vars: SUPABASE_URL and/or SUPABASE_SERVICE_KEY')
+    throw new Error('Missing required env vars: SUPABASE_URL and/or SUPABASE_SERVICE_KEY')
 }
 const serviceClient = createServiceClient(serviceUrl, serviceKey)
 
@@ -176,7 +176,7 @@ export async function fetchDueRevisionCards(): Promise<RevisionCard[]> {
     // 1. Reviews (graduated cards that are due)
     const { data: reviews, error: reviewsError } = await serviceClient
         .from('progress')
-        .select('vocabulary_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at')
+        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at')
         .eq('user_id', userId)
         .eq('is_in_revision', true)
         .gt('repetitions', 0)
@@ -189,7 +189,7 @@ export async function fetchDueRevisionCards(): Promise<RevisionCard[]> {
     // 2. Brand new cards (never reviewed) – limited per day
     const { data: brandNew, error: brandNewError } = await serviceClient
         .from('progress')
-        .select('vocabulary_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, created_at')
+        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, created_at')
         .eq('user_id', userId)
         .eq('is_in_revision', true)
         .eq('repetitions', 0)
@@ -203,7 +203,7 @@ export async function fetchDueRevisionCards(): Promise<RevisionCard[]> {
     // 3. Learning cards – ALL cards that have been seen today (still in learning phase)
     const { data: learning, error: learningError } = await serviceClient
         .from('progress')
-        .select('vocabulary_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at')
+        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at')
         .eq('user_id', userId)
         .eq('is_in_revision', true)
         .eq('repetitions', 0)
@@ -218,71 +218,79 @@ export async function fetchDueRevisionCards(): Promise<RevisionCard[]> {
 
     if (combined.length === 0) return []
 
-    const vocabIds = combined.map(r => r.vocabulary_id)
+    const vocabIds = combined.map(r => r.vocab_id)
 
-    // Fetch vocabulary rows (requires the direct FK on level_id)
+    // Fetch vocab rows
     const { data: vocabData, error: vocabErr } = await serviceClient
-        .from('vocabulary')
-        .select('id, theme_id, level_id, word, diacritics, levels!inner(code)')
-        .in('id', vocabIds)
+        .from('vocab')
+        .select('word_id, word_ar, word_di, word_tr, root, theme_id, level_id')
+        .in('word_id', vocabIds)
 
     if (vocabErr) throw new Error(vocabErr.message)
 
     // Fetch definitions
     const { data: defsData, error: defsErr } = await serviceClient
         .from('definitions')
-        .select('vocabulary_id, definition, pos, sort_order')
-        .in('vocabulary_id', vocabIds)
-        .order('sort_order')
+        .select('vocab_id, meaning, pos')
+        .in('vocab_id', vocabIds)
 
     if (defsErr) throw new Error(defsErr.message)
 
     // Fetch examples
     const { data: exData, error: exErr } = await serviceClient
         .from('examples')
-        .select('vocabulary_id, ex_ar, ex_dia, ex_en')
-        .in('vocabulary_id', vocabIds)
+        .select('vocab_id, ex_ar, ex_di, ex_en')
+        .in('vocab_id', vocabIds)
 
     if (exErr) throw new Error(exErr.message)
 
+    // Fetch levels for level codes
+    const levelIds = [...new Set((vocabData ?? []).map(v => v.level_id))]
+    const { data: levelsData } = await serviceClient
+        .from('levels')
+        .select('id, code')
+        .in('id', levelIds)
+
+    const levelMap = new Map((levelsData ?? []).map(l => [l.id, l.code]))
+
     // Build lookup maps
-    const vocabMap = new Map(vocabData?.map(v => [v.id, v]) ?? [])
-    const defMap = new Map<number, { definition: string; pos: string }[]>()
+    const vocabMap = new Map(vocabData?.map(v => [v.word_id, v]) ?? [])
+    const defMap = new Map<number, { meaning: string; pos: string }[]>()
     ;(defsData ?? []).forEach(d => {
-        const list = defMap.get(d.vocabulary_id) || []
-        list.push({ definition: d.definition, pos: d.pos })
-        defMap.set(d.vocabulary_id, list)
+        const list = defMap.get(d.vocab_id) || []
+        list.push({ meaning: d.meaning, pos: d.pos })
+        defMap.set(d.vocab_id, list)
     })
 
-    const exMap = new Map<number, { ex_ar: string; ex_dia: string; ex_en: string }[]>()
+    const exMap = new Map<number, { ex_ar: string; ex_di: string; ex_en: string }[]>()
     ;(exData ?? []).forEach(e => {
-        const list = exMap.get(e.vocabulary_id) || []
-        list.push({ ex_ar: e.ex_ar ?? '', ex_dia: e.ex_dia ?? '', ex_en: e.ex_en ?? '' })
-        exMap.set(e.vocabulary_id, list)
+        const list = exMap.get(e.vocab_id) || []
+        list.push({ ex_ar: e.ex_ar ?? '', ex_di: e.ex_di ?? '', ex_en: e.ex_en ?? '' })
+        exMap.set(e.vocab_id, list)
     })
 
     const nowISO = new Date().toISOString()
 
     return combined.map((row) => {
-        const vocab = vocabMap.get(row.vocabulary_id)
-        const defs = defMap.get(row.vocabulary_id) ?? []
-        const primaryDef = defs[0] ?? { definition: '', pos: 'unknown' }
-        const examples = exMap.get(row.vocabulary_id) ?? []
+        const v = vocabMap.get(row.vocab_id)
+        const defs = defMap.get(row.vocab_id) ?? []
+        const primaryDef = defs[0] ?? { meaning: '', pos: 'unknown' }
+        const examples = exMap.get(row.vocab_id) ?? []
 
         return {
-            id: row.vocabulary_id,
-            word: vocab?.word ?? '',
-            word_diacritic: vocab?.diacritics ?? '',
-            transliteration: '', // not stored in new schema
-            definition: primaryDef.definition,
-            level: (vocab as { levels?: { code: string }[] })?.levels?.[0]?.code ?? '',
+            id: row.vocab_id,
+            word: v?.word_ar ?? '',
+            word_diacritic: v?.word_di ?? '',
+            transliteration: v?.word_tr ?? '',
+            definition: primaryDef.meaning,
+            level: levelMap.get(v?.level_id) ?? '',
             type: primaryDef.pos,
-            root: null, // not stored in new schema
+            root: v?.root ?? null,
             ex_ar: examples.map(e => e.ex_ar).join(';') || null,
-            ex_di: examples.map(e => e.ex_dia).join(';') || null,
+            ex_di: examples.map(e => e.ex_di).join(';') || null,
             ex_en: examples.map(e => e.ex_en).join(';') || null,
-            theme_id: vocab?.theme_id ?? 0,
-            progress_word_id: row.vocabulary_id,
+            theme_id: v?.theme_id ?? 0,
+            progress_word_id: row.vocab_id,
             repetitions: row.repetitions,
             interval_days: row.interval_days,
             ease_factor: row.ease_factor,
@@ -314,7 +322,7 @@ export async function submitRevisionAnswer(
         .from('progress')
         .select('repetitions, interval_days, ease_factor, last_review_at, next_review_at')
         .eq('user_id', userId)
-        .eq('vocabulary_id', vocabId)
+        .eq('vocab_id', vocabId)
         .single()
 
     if (fetchError || !progress) throw new Error('Progress not found')
@@ -350,7 +358,7 @@ export async function submitRevisionAnswer(
         .from('progress')
         .update(updates)
         .eq('user_id', userId)
-        .eq('vocabulary_id', vocabId)
+        .eq('vocab_id', vocabId)
 
     if (updateError) throw new Error(updateError.message)
 
@@ -371,12 +379,10 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
         .from('progress')
         .select('is_in_revision')
         .eq('user_id', userId)
-        .eq('vocabulary_id', vocabId)
+        .eq('vocab_id', vocabId)
         .maybeSingle()
 
     if (fetchErr) throw new Error(fetchErr.message)
-
-    const progressKey = { user_id: userId, vocabulary_id: vocabId }
 
     // If it's actively in revision, delete it (fully remove)
     if (existing?.is_in_revision) {
@@ -384,7 +390,7 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
             .from('progress')
             .delete()
             .eq('user_id', userId)
-            .eq('vocabulary_id', vocabId)
+            .eq('vocab_id', vocabId)
 
         if (delErr) throw new Error(delErr.message)
         return { success: true, inRevision: false }
@@ -407,7 +413,7 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
                 created_at: now,
             })
             .eq('user_id', userId)
-            .eq('vocabulary_id', vocabId)
+            .eq('vocab_id', vocabId)
 
         if (updErr) throw new Error(updErr.message)
         return { success: true, inRevision: true }
@@ -418,7 +424,7 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
         .from('progress')
         .insert({
             user_id: userId,
-            vocabulary_id: vocabId,
+            vocab_id: vocabId,
             is_in_revision: true,
             repetitions: 0,
             interval_days: 0,

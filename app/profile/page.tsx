@@ -709,7 +709,7 @@ function ProfilePageInner() {
             return
         }
         let cancelled = false
-        fetchUserProfile('MSA')
+        fetchUserProfile()
             .then((data) => {
                 if (!cancelled && data) setProfile(data)
             })
