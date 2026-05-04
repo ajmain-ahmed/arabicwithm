@@ -747,12 +747,6 @@ function FlashcardQuiz({
     const themeObj = useTheme()
     const isMobile = useMediaQuery(themeObj.breakpoints.down('sm'))
 
-    /* ── swipe gesture refs ── */
-    const cardRef = useRef<HTMLDivElement | null>(null)
-    const activeElRef = useRef<HTMLDivElement | null>(null)
-    const dragState = useRef<{ startX: number; isDragging: boolean } | null>(null)
-    const SWIPE_THRESHOLD = 80
-
     const pendingRef = useRef<Map<number, { isCompleted: boolean; isInRevision: boolean }>>(new Map())
 
     const flushPending = useCallback(async () => {
@@ -931,82 +925,6 @@ function FlashcardQuiz({
         [allCards, alwaysShow]
     )
 
-    /* ── Tinder-style swipe refs & callbacks (must be before any early return) ── */
-    const nextBadgeRef = useRef<HTMLDivElement | null>(null)
-    const backBadgeRef = useRef<HTMLDivElement | null>(null)
-
-    const onSwipeStart = useCallback((e: React.TouchEvent) => {
-        if (!isMobile) return
-        const touch = e.touches[0]
-        dragState.current = { startX: touch.clientX, isDragging: true }
-        activeElRef.current = cardRef.current
-        const el = activeElRef.current
-        if (el) {
-            el.style.transition = 'none'
-            el.style.willChange = 'transform'
-        }
-        if (nextBadgeRef.current) nextBadgeRef.current.style.opacity = '0'
-        if (backBadgeRef.current) backBadgeRef.current.style.opacity = '0'
-    }, [isMobile])
-
-    const onSwipeMove = useCallback((e: React.TouchEvent) => {
-        if (!dragState.current?.isDragging || !activeElRef.current) return
-        const touch = e.touches[0]
-        const rawDelta = touch.clientX - dragState.current.startX
-        const resisted = rawDelta * 0.5
-        const rotation = resisted * 0.04
-        activeElRef.current.style.transform = `translateX(${resisted}px) rotate(${rotation}deg)`
-
-        const progress = Math.min(1, Math.abs(rawDelta) / SWIPE_THRESHOLD)
-        if (rawDelta > 0 && backBadgeRef.current) {
-            backBadgeRef.current.style.opacity = String(progress)
-        } else if (rawDelta < 0 && nextBadgeRef.current) {
-            nextBadgeRef.current.style.opacity = String(progress)
-        }
-    }, [])
-
-    const onSwipeEnd = useCallback(() => {
-        if (!dragState.current?.isDragging || !activeElRef.current) return
-        const el = activeElRef.current
-        const style = el.style
-        const match = style.transform.match(/translateX\(([-\d.]+)px\)/)
-        const delta = match ? parseFloat(match[1]) : 0
-        dragState.current = null
-
-        const canSwipeRight = delta < -SWIPE_THRESHOLD && canGoBack
-        const canSwipeLeft  = delta > SWIPE_THRESHOLD
-
-        if (canSwipeRight || canSwipeLeft) {
-            const dir = canSwipeLeft ? -1 : 1
-            style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease'
-            style.transform = `translateX(${dir * 110}%) rotate(${dir * -12}deg)`
-            style.opacity = '0'
-            if (nextBadgeRef.current) nextBadgeRef.current.style.opacity = '0'
-            if (backBadgeRef.current) backBadgeRef.current.style.opacity = '0'
-            setTimeout(() => {
-                style.willChange = ''
-                style.transform = ''
-                style.opacity = ''
-                if (canSwipeLeft) handleNext()
-                else handlePrevious()
-            }, 300)
-        } else {
-            style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease'
-            style.transform = 'translateX(0px) rotate(0deg)'
-            style.opacity = '1'
-            if (nextBadgeRef.current) nextBadgeRef.current.style.opacity = '0'
-            if (backBadgeRef.current) backBadgeRef.current.style.opacity = '0'
-            const onDone = () => {
-                style.transition = ''
-                style.transform = ''
-                style.willChange = ''
-                el.removeEventListener('transitionend', onDone)
-            }
-            el.addEventListener('transitionend', onDone)
-            setTimeout(onDone, 450)
-        }
-    }, [canGoBack, handleNext, handlePrevious])
-
     if (!current) return null
 
     const transliterationFontSize = `calc(1.45rem * ${textScale})`
@@ -1025,42 +943,13 @@ function FlashcardQuiz({
         <Box sx={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
         <Fade in key={`${cardKey}-${current.id}`} timeout={400}>
             <Box
-                ref={cardRef}
-                onTouchStart={onSwipeStart}
-                onTouchMove={onSwipeMove}
-                onTouchEnd={onSwipeEnd}
                 sx={{
                     background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px',
                     padding: { xs: '1.25rem 0.875rem', md: '2rem 1.5rem 1.75rem' },
                     minHeight: { xs: '300px', md: '340px' }, display: 'flex', flexDirection: 'column',
-                    touchAction: 'pan-y', position: 'relative',
+                    position: 'relative',
                 }}
             >
-                {/* Swipe overlay badges */}
-                <Box ref={nextBadgeRef} sx={{
-                    position: 'absolute', top: 24, right: 24,
-                    border: '3px solid #2e7d32', color: '#2e7d32',
-                    fontFamily: 'Jost, sans-serif', fontWeight: 800, fontSize: '1.4rem',
-                    textTransform: 'uppercase', letterSpacing: '0.08em',
-                    px: 1.5, py: 0.5, borderRadius: '8px',
-                    transform: 'rotate(12deg)', opacity: 0,
-                    transition: 'opacity 0.1s', pointerEvents: 'none',
-                    zIndex: 10,
-                }}>
-                    Next
-                </Box>
-                <Box ref={backBadgeRef} sx={{
-                    position: 'absolute', top: 24, left: 24,
-                    border: '3px solid #d32f2f', color: '#d32f2f',
-                    fontFamily: 'Jost, sans-serif', fontWeight: 800, fontSize: '1.4rem',
-                    textTransform: 'uppercase', letterSpacing: '0.08em',
-                    px: 1.5, py: 0.5, borderRadius: '8px',
-                    transform: 'rotate(-12deg)', opacity: 0,
-                    transition: 'opacity 0.1s', pointerEvents: 'none',
-                    zIndex: 10,
-                }}>
-                    Back
-                </Box>
                 {/* Progress bar */}
                 <Box sx={{ height: '2px', background: 'rgba(184,134,11,0.1)', borderRadius: '999px', mb: '1.25rem', overflow: 'hidden' }}>
                     <Box sx={{ height: '100%', background: 'linear-gradient(90deg, #b8860b, #d4a843)', borderRadius: '999px', transition: 'width 0.4s ease', width: `${progressPct}%` }} />
