@@ -159,6 +159,14 @@ export type ExampleRow = {
   ex_tr?: string
 }
 
+export type FormRow = {
+  type: string
+  con_ar: string
+  con_di: string
+  con_en: string
+  con_tr: string
+}
+
 export type VocabRow = {
   id: number
   level: string
@@ -171,6 +179,7 @@ export type VocabRow = {
   def_ar: string | null
   def_tr: string | null
   def_en: string | null
+  forms: FormRow[] | null
 }
 
 export type WordProgress = {
@@ -203,7 +212,7 @@ export async function fetchThemeVocabWithProgress(
   // 2. Get vocab for this theme and level
   const { data: vocabData, error: vocabErr } = await serviceClient
     .from("vocab")
-    .select("word_id, word_ar, word_di, word_tr, theme_id, level_id")
+    .select("word_id, word_ar, word_di, word_tr, theme_id, level_id, forms")
     .eq("theme_id", themeId)
     .eq("level_id", levelId)
     .order("word_id")
@@ -242,6 +251,17 @@ export async function fetchThemeVocabWithProgress(
   const vocab: VocabRow[] = vocabData.map(v => {
     const defs = defMap.get(v.word_id) ?? [{ pos: "unknown", meaning: "", def_ar: null, def_tr: null, def_en: null }]
     const primary = defs[0]
+    let parsedForms: FormRow[] | null = null
+    if (v.forms) {
+      try {
+        parsedForms = Array.isArray(v.forms)
+          ? (v.forms as unknown as FormRow[])
+          : JSON.parse(v.forms as string)
+      } catch {
+        parsedForms = null
+      }
+    }
+
     return {
       id: v.word_id,
       level: levelCode,
@@ -254,6 +274,7 @@ export async function fetchThemeVocabWithProgress(
       def_ar: primary.def_ar,
       def_tr: primary.def_tr,
       def_en: primary.def_en,
+      forms: parsedForms,
     }
   })
 

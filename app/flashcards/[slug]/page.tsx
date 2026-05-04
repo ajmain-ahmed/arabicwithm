@@ -36,7 +36,7 @@ import Navbar from '@/app/components/navbar'
 import { useVocabStore } from '@/store/vocabStore'
 import { useXpStore } from '@/store/xpStore'
 import TutorialDialog, { useTutorialSeen } from '../components/TutorialDialog'
-import type { VocabRow, WordProgress, ThemeProgress, ExampleRow } from '@/app/actions/vocab'
+import type { VocabRow, WordProgress, ThemeProgress, ExampleRow, FormRow } from '@/app/actions/vocab'
 import {
     fetchThemesWithProgress,
     upsertWordProgress,
@@ -612,6 +612,106 @@ function DefinitionPanel({ card, showDiacritics, textScale }: {
 }
 
 /* ─────────────────────────────────────────────
+   FormsPanel
+───────────────────────────────────────────── */
+const FORM_TYPE_LABELS: Record<string, string> = {
+    past: 'Past',
+    present: 'Present',
+    verbal_noun: 'Verbal Noun',
+    active_participle: 'Active Participle',
+    passive_participle: 'Passive Participle',
+}
+
+function FormsPanel({ forms, showDiacritics, textScale }: {
+    forms: FormRow[]
+    showDiacritics: boolean
+    textScale: number
+}) {
+    if (!forms || forms.length === 0) return null
+
+    return (
+        <Box sx={{
+            background: 'rgba(245,237,224,0.4)',
+            border: '1px solid rgba(184,134,11,0.12)',
+            borderRadius: '10px',
+            p: { xs: '1rem', md: '1.25rem 1.5rem' },
+            mb: { xs: '0.75rem', md: '0.25rem' },
+        }}>
+            <Typography sx={{
+                fontFamily: 'Jost, sans-serif',
+                fontSize: `calc(0.7rem * ${textScale})`,
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: '#b8860b',
+                mb: 1.5,
+            }}>
+                Forms
+            </Typography>
+
+            <Box sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
+                gap: 1.5,
+            }}>
+                {forms.map((form, i) => (
+                    <Box key={i} sx={{
+                        background: '#fff',
+                        border: '1px solid rgba(184,134,11,0.1)',
+                        borderRadius: '8px',
+                        p: { xs: '0.875rem', md: '1rem' },
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.5,
+                    }}>
+                        <Typography sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: `calc(0.65rem * ${textScale})`,
+                            fontWeight: 600,
+                            letterSpacing: '0.06em',
+                            textTransform: 'uppercase',
+                            color: '#9e8a7a',
+                        }}>
+                            {FORM_TYPE_LABELS[form.type] ?? form.type}
+                        </Typography>
+
+                        <Typography sx={{
+                            fontFamily: "'EB Garamond', serif",
+                            fontSize: `calc(1.5rem * ${textScale})`,
+                            fontWeight: 700,
+                            color: '#2c1a0e',
+                            direction: 'rtl',
+                            textAlign: 'right',
+                            lineHeight: 1.3,
+                        }}>
+                            {showDiacritics ? form.con_di : form.con_ar}
+                        </Typography>
+
+                        <Typography sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: `calc(0.85rem * ${textScale})`,
+                            color: '#b8860b',
+                            lineHeight: 1.3,
+                        }}>
+                            {form.con_tr}
+                        </Typography>
+
+                        <Typography sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: `calc(0.9rem * ${textScale})`,
+                            color: '#7a6e65',
+                            lineHeight: 1.3,
+                        }}>
+                            {form.con_en}
+                        </Typography>
+                    </Box>
+                ))}
+            </Box>
+        </Box>
+    )
+}
+
+/* ─────────────────────────────────────────────
    FlashcardQuiz
 ───────────────────────────────────────────── */
 function FlashcardQuiz({
@@ -643,7 +743,7 @@ function FlashcardQuiz({
     const [filter, setFilter] = useState<FilterType>('all')
     const [revealed, setRevealed] = useState(alwaysShow)
     const [cardKey, setCardKey] = useState(0)
-    const [mobileTab, setMobileTab] = useState<'definition' | 'examples'>('definition')
+    const [mobileTab, setMobileTab] = useState<'definition' | 'examples' | 'forms'>('definition')
     const themeObj = useTheme()
     const isMobile = useMediaQuery(themeObj.breakpoints.down('sm'))
 
@@ -700,6 +800,8 @@ function FlashcardQuiz({
     useEffect(() => {
         setMobileTab('definition')
     }, [current?.id])
+
+    const hasForms = current?.forms && current.forms.length > 0
 
     const newCount = allCards.filter(c => !c.isCompleted && !c.isInRevision).length
     const revisionCount = allCards.filter(c => c.isInRevision).length
@@ -793,7 +895,14 @@ function FlashcardQuiz({
         if (!current) return
         const toRevision = !current.isInRevision
         updateCardStatus(current.id, toRevision ? 'revision' : 'new', { isInRevision: toRevision })
-    }, [current, updateCardStatus])
+        if (toRevision) {
+            if (currentIndex < filteredCards.length - 1) {
+                goToIndex(currentIndex + 1)
+            } else if (filter === 'all') {
+                onComplete?.()
+            }
+        }
+    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, filter])
 
     const toggleComplete = useCallback(() => {
         if (!current) return
@@ -822,23 +931,9 @@ function FlashcardQuiz({
         [allCards, alwaysShow]
     )
 
-    /* ── Tinder-style swipe refs (must be before any early return) ── */
+    /* ── Tinder-style swipe refs & callbacks (must be before any early return) ── */
     const nextBadgeRef = useRef<HTMLDivElement | null>(null)
     const backBadgeRef = useRef<HTMLDivElement | null>(null)
-
-    if (!current) return null
-
-    const transliterationFontSize = `calc(1.45rem * ${textScale})`
-    const definitionFontSize = `calc(2.8rem * ${textScale})`
-
-    const mobileActionBtnSx = {
-        textTransform: 'none' as const,
-        fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.82rem',
-        px: '12px', py: '6px', borderRadius: '20px', whiteSpace: 'nowrap' as const,
-        flexShrink: 0, minWidth: 0, lineHeight: 1.4,
-        '& .MuiButton-startIcon': { mr: '4px', ml: 0 },
-        '& .MuiButton-startIcon svg': { fontSize: '0.9rem !important' },
-    }
 
     const onSwipeStart = useCallback((e: React.TouchEvent) => {
         if (!isMobile) return
@@ -911,6 +1006,20 @@ function FlashcardQuiz({
             setTimeout(onDone, 450)
         }
     }, [canGoBack, handleNext, handlePrevious])
+
+    if (!current) return null
+
+    const transliterationFontSize = `calc(1.45rem * ${textScale})`
+    const definitionFontSize = `calc(2.8rem * ${textScale})`
+
+    const mobileActionBtnSx = {
+        textTransform: 'none' as const,
+        fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.82rem',
+        px: '12px', py: '6px', borderRadius: '20px', whiteSpace: 'nowrap' as const,
+        flexShrink: 0, minWidth: 0, lineHeight: 1.4,
+        '& .MuiButton-startIcon': { mr: '4px', ml: 0 },
+        '& .MuiButton-startIcon svg': { fontSize: '0.9rem !important' },
+    }
 
     return (
         <Box sx={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
@@ -1007,20 +1116,9 @@ function FlashcardQuiz({
                             </Typography>
                         </Box>
 
-                        {/* Desktop: everything stacked */}
-                        <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                            <DefinitionPanel card={current} showDiacritics={showDiacritics} textScale={textScale} />
-                            <ExampleSentences
-                                examplesForCard={currentCardExamples}
-                                revealed={revealed}
-                                showDiacritics={showDiacritics}
-                                textScale={textScale}
-                            />
-                        </Box>
-
-                        {/* Mobile: tabs for Definition / Examples */}
-                        <Box sx={{ display: { xs: 'block', md: 'none' } }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 1.5 }}>
+                        {/* Tabs for Definition / Examples / Forms */}
+                        <Box sx={{ display: 'block' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
                                 <Button
                                     onClick={() => setMobileTab('definition')}
                                     sx={{
@@ -1031,7 +1129,7 @@ function FlashcardQuiz({
                                         borderRadius: '20px',
                                         px: 2,
                                         py: 0.5,
-                                        minWidth: 100,
+                                        minWidth: 80,
                                         background: mobileTab === 'definition' ? 'rgba(184,134,11,0.12)' : 'transparent',
                                         color: mobileTab === 'definition' ? '#b8860b' : '#7a6e65',
                                         border: '1px solid',
@@ -1050,7 +1148,7 @@ function FlashcardQuiz({
                                         borderRadius: '20px',
                                         px: 2,
                                         py: 0.5,
-                                        minWidth: 100,
+                                        minWidth: 80,
                                         background: mobileTab === 'examples' ? 'rgba(184,134,11,0.12)' : 'transparent',
                                         color: mobileTab === 'examples' ? '#b8860b' : '#7a6e65',
                                         border: '1px solid',
@@ -1059,6 +1157,27 @@ function FlashcardQuiz({
                                 >
                                     Examples
                                 </Button>
+                                {hasForms && (
+                                    <Button
+                                        onClick={() => setMobileTab('forms')}
+                                        sx={{
+                                            fontFamily: 'Jost, sans-serif',
+                                            fontSize: '0.8rem',
+                                            fontWeight: mobileTab === 'forms' ? 600 : 500,
+                                            textTransform: 'none',
+                                            borderRadius: '20px',
+                                            px: 2,
+                                            py: 0.5,
+                                            minWidth: 80,
+                                            background: mobileTab === 'forms' ? 'rgba(184,134,11,0.12)' : 'transparent',
+                                            color: mobileTab === 'forms' ? '#b8860b' : '#7a6e65',
+                                            border: '1px solid',
+                                            borderColor: mobileTab === 'forms' ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)',
+                                        }}
+                                    >
+                                        Forms
+                                    </Button>
+                                )}
                             </Box>
                             {mobileTab === 'definition' && (
                                 <DefinitionPanel card={current} showDiacritics={showDiacritics} textScale={textScale} />
@@ -1067,6 +1186,13 @@ function FlashcardQuiz({
                                 <ExampleSentences
                                     examplesForCard={currentCardExamples}
                                     revealed={revealed}
+                                    showDiacritics={showDiacritics}
+                                    textScale={textScale}
+                                />
+                            )}
+                            {mobileTab === 'forms' && hasForms && (
+                                <FormsPanel
+                                    forms={current.forms!}
                                     showDiacritics={showDiacritics}
                                     textScale={textScale}
                                 />
