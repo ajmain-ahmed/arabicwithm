@@ -8,7 +8,6 @@ import {
     IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
     ToggleButton, ToggleButtonGroup,
     Slider, Badge,
-    useMediaQuery, useTheme,
 } from '@mui/material'
 import {
     Bookmark, BookmarkAdded, Check, DoneAll, NavigateNext, NavigateBefore,
@@ -31,6 +30,7 @@ import {
     horizontalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 import Navbar from '@/app/components/navbar'
 import { useVocabStore } from '@/store/vocabStore'
 import TutorialDialog, { useTutorialSeen } from '../components/TutorialDialog'
@@ -39,6 +39,8 @@ import {
     fetchThemesWithProgress,
     upsertWordProgress,
 } from '@/app/actions/vocab'
+
+const MotionBox = motion.create(Box)
 
 /* ─────────────────────────────────────────────
    Slug → DB level mapping
@@ -541,14 +543,6 @@ function FlashcardQuiz({
     const [filter, setFilter] = useState<FilterType>('all')
     const [revealed, setRevealed] = useState(alwaysShow)
     const [cardKey, setCardKey] = useState(0)
-    const themeObj = useTheme()
-    const isMobile = useMediaQuery(themeObj.breakpoints.down('sm'))
-
-    /* ── swipe gesture refs ── */
-    const cardRef = useRef<HTMLDivElement | null>(null)
-    const activeElRef = useRef<HTMLDivElement | null>(null)
-    const dragState = useRef<{ startX: number; isDragging: boolean } | null>(null)
-    const SWIPE_THRESHOLD = 80
 
     const pendingRef = useRef<Map<number, { isCompleted: boolean; isInRevision: boolean }>>(new Map())
 
@@ -722,122 +716,85 @@ function FlashcardQuiz({
         '& .MuiButton-startIcon svg': { fontSize: '0.9rem !important' },
     }
 
-    /* ── Tinder-style swipe (mobile only) ── */
-    const nextBadgeRef = useRef<HTMLDivElement | null>(null)
-    const backBadgeRef = useRef<HTMLDivElement | null>(null)
+    /* ── Framer Motion swipe ── */
+    const x = useMotionValue(0)
+    const rotate = useTransform(x, [-150, 150], [-6, 6])
+    const nextBadgeOpacity = useTransform(x, [-60, -120], [0, 1])
+    const backBadgeOpacity = useTransform(x, [60, 120], [0, 1])
 
-    const onSwipeStart = useCallback((e: React.TouchEvent) => {
-        if (!isMobile) return
-        const touch = e.touches[0]
-        dragState.current = { startX: touch.clientX, isDragging: true }
-        activeElRef.current = cardRef.current
-        const el = activeElRef.current
-        if (el) {
-            el.style.transition = 'none'
-            el.style.willChange = 'transform'
-        }
-        if (nextBadgeRef.current) nextBadgeRef.current.style.opacity = '0'
-        if (backBadgeRef.current) backBadgeRef.current.style.opacity = '0'
-    }, [isMobile])
+    const onDragEnd = useCallback(
+        (_: any, info: { offset: { x: number }; velocity: { x: number } }) => {
+            const threshold = 80
+            const velocityThreshold = 400
 
-    const onSwipeMove = useCallback((e: React.TouchEvent) => {
-        if (!dragState.current?.isDragging || !activeElRef.current) return
-        const touch = e.touches[0]
-        const rawDelta = touch.clientX - dragState.current.startX
-        const resisted = rawDelta * 0.5
-        const rotation = resisted * 0.04
-        activeElRef.current.style.transform = `translateX(${resisted}px) rotate(${rotation}deg)`
-
-        const progress = Math.min(1, Math.abs(rawDelta) / SWIPE_THRESHOLD)
-        if (rawDelta > 0 && backBadgeRef.current) {
-            backBadgeRef.current.style.opacity = String(progress)
-        } else if (rawDelta < 0 && nextBadgeRef.current) {
-            nextBadgeRef.current.style.opacity = String(progress)
-        }
-    }, [])
-
-    const onSwipeEnd = useCallback(() => {
-        if (!dragState.current?.isDragging || !activeElRef.current) return
-        const el = activeElRef.current
-        const style = el.style
-        const match = style.transform.match(/translateX\(([-\d.]+)px\)/)
-        const delta = match ? parseFloat(match[1]) : 0
-        dragState.current = null
-
-        const canSwipeRight = delta < -SWIPE_THRESHOLD && canGoBack
-        const canSwipeLeft  = delta > SWIPE_THRESHOLD
-
-        if (canSwipeRight || canSwipeLeft) {
-            const dir = canSwipeLeft ? -1 : 1
-            style.transition = 'transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease'
-            style.transform = `translateX(${dir * 110}%) rotate(${dir * -12}deg)`
-            style.opacity = '0'
-            if (nextBadgeRef.current) nextBadgeRef.current.style.opacity = '0'
-            if (backBadgeRef.current) backBadgeRef.current.style.opacity = '0'
-            setTimeout(() => {
-                style.willChange = ''
-                style.transform = ''
-                style.opacity = ''
-                if (canSwipeLeft) handleNext()
-                else handlePrevious()
-            }, 300)
-        } else {
-            style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease'
-            style.transform = 'translateX(0px) rotate(0deg)'
-            style.opacity = '1'
-            if (nextBadgeRef.current) nextBadgeRef.current.style.opacity = '0'
-            if (backBadgeRef.current) backBadgeRef.current.style.opacity = '0'
-            const onDone = () => {
-                style.transition = ''
-                style.transform = ''
-                style.willChange = ''
-                el.removeEventListener('transitionend', onDone)
+            if (info.offset.x < -threshold || info.velocity.x < -velocityThreshold) {
+                if (!isLastCard) {
+                    animate(x, -window.innerWidth * 0.8, {
+                        duration: 0.3,
+                        ease: 'easeIn',
+                        onComplete: handleNext,
+                    })
+                }
+            } else if (info.offset.x > threshold || info.velocity.x > velocityThreshold) {
+                if (canGoBack) {
+                    animate(x, window.innerWidth * 0.8, {
+                        duration: 0.3,
+                        ease: 'easeIn',
+                        onComplete: handlePrevious,
+                    })
+                }
             }
-            el.addEventListener('transitionend', onDone)
-            setTimeout(onDone, 450)
-        }
-    }, [canGoBack, handleNext, handlePrevious])
+            // If neither threshold is met, dragConstraints spring it back to centre automatically
+        },
+        [isLastCard, canGoBack, handleNext, handlePrevious, x]
+    )
 
     return (
         <Box sx={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
-        <Fade in key={`${cardKey}-${current.id}`} timeout={400}>
-            <Box
-                ref={cardRef}
-                onTouchStart={onSwipeStart}
-                onTouchMove={onSwipeMove}
-                onTouchEnd={onSwipeEnd}
+            <MotionBox
+                key={`${cardKey}-${current.id}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: 'easeOut' }}
                 sx={{
                     background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px',
                     padding: { xs: '1.25rem 0.875rem', md: '2rem 1.5rem 1.75rem' },
                     minHeight: { xs: '300px', md: '340px' }, display: 'flex', flexDirection: 'column',
                     touchAction: 'pan-y', position: 'relative',
                 }}
+                style={{ x, rotate }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.15}
+                onDragEnd={onDragEnd}
             >
                 {/* Swipe overlay badges */}
-                <Box ref={nextBadgeRef} sx={{
-                    position: 'absolute', top: 24, right: 24,
-                    border: '3px solid #2e7d32', color: '#2e7d32',
-                    fontFamily: 'Jost, sans-serif', fontWeight: 800, fontSize: '1.4rem',
-                    textTransform: 'uppercase', letterSpacing: '0.08em',
-                    px: 1.5, py: 0.5, borderRadius: '8px',
-                    transform: 'rotate(12deg)', opacity: 0,
-                    transition: 'opacity 0.1s', pointerEvents: 'none',
-                    zIndex: 10,
-                }}>
+                <motion.div
+                    style={{
+                        position: 'absolute', top: 24, right: 24,
+                        border: '3px solid #2e7d32', color: '#2e7d32',
+                        fontFamily: 'Jost, sans-serif', fontWeight: 800, fontSize: '1.4rem',
+                        textTransform: 'uppercase', letterSpacing: '0.08em',
+                        padding: '0 1.5rem', borderRadius: '8px',
+                        transform: 'rotate(12deg)', opacity: nextBadgeOpacity,
+                        pointerEvents: 'none', zIndex: 10,
+                    }}
+                >
                     Next
-                </Box>
-                <Box ref={backBadgeRef} sx={{
-                    position: 'absolute', top: 24, left: 24,
-                    border: '3px solid #d32f2f', color: '#d32f2f',
-                    fontFamily: 'Jost, sans-serif', fontWeight: 800, fontSize: '1.4rem',
-                    textTransform: 'uppercase', letterSpacing: '0.08em',
-                    px: 1.5, py: 0.5, borderRadius: '8px',
-                    transform: 'rotate(-12deg)', opacity: 0,
-                    transition: 'opacity 0.1s', pointerEvents: 'none',
-                    zIndex: 10,
-                }}>
+                </motion.div>
+                <motion.div
+                    style={{
+                        position: 'absolute', top: 24, left: 24,
+                        border: '3px solid #d32f2f', color: '#d32f2f',
+                        fontFamily: 'Jost, sans-serif', fontWeight: 800, fontSize: '1.4rem',
+                        textTransform: 'uppercase', letterSpacing: '0.08em',
+                        padding: '0 1.5rem', borderRadius: '8px',
+                        transform: 'rotate(-12deg)', opacity: backBadgeOpacity,
+                        pointerEvents: 'none', zIndex: 10,
+                    }}
+                >
                     Back
-                </Box>
+                </motion.div>
                 {/* Progress bar */}
                 <Box sx={{ height: '2px', background: 'rgba(184,134,11,0.1)', borderRadius: '999px', mb: '1.25rem', overflow: 'hidden' }}>
                     <Box sx={{ height: '100%', background: 'linear-gradient(90deg, #b8860b, #d4a843)', borderRadius: '999px', transition: 'width 0.4s ease', width: `${progressPct}%` }} />
@@ -924,8 +881,7 @@ function FlashcardQuiz({
                         </Box>
                     )}
                 </Box>
-            </Box>
-        </Fade>
+            </MotionBox>
         </Box>
     )
 }
@@ -1311,7 +1267,7 @@ export default function FlashcardSlugPage() {
                 onOpenTutorial={() => setTutorialOpen(true)}
             />
 
-            <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh', pt: { xs: 8, sm: 10 } }}>
+            <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh', pt: { xs: 8, sm: 10 }, overscrollBehaviorY: 'none' }}>
                 <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
                     {/* Desktop controls */}
                     {selectedTheme && (
