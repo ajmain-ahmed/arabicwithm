@@ -168,6 +168,9 @@ export type VocabRow = {
   word: string
   word_diacritic: string
   transliteration: string
+  def_ar: string | null
+  def_tr: string | null
+  def_en: string | null
 }
 
 export type WordProgress = {
@@ -215,7 +218,7 @@ export async function fetchThemeVocabWithProgress(
   // 3. Get definitions
   const { data: defData, error: defErr } = await serviceClient
     .from("definitions")
-    .select("vocab_id, pos, meaning")
+    .select("vocab_id, pos, meaning, def_ar, def_tr, def_en")
     .in("vocab_id", vocabIds)
 
   if (defErr) throw new Error(defErr.message)
@@ -229,15 +232,15 @@ export async function fetchThemeVocabWithProgress(
   if (exErr) throw new Error(exErr.message)
 
   // 5. Build VocabRow
-  const defMap = new Map<number, { pos: string; meaning: string }[]>()
+  const defMap = new Map<number, { pos: string; meaning: string; def_ar: string | null; def_tr: string | null; def_en: string | null }[]>()
   for (const d of defData ?? []) {
     const list = defMap.get(d.vocab_id) ?? []
-    list.push({ pos: d.pos, meaning: d.meaning })
+    list.push({ pos: d.pos, meaning: d.meaning, def_ar: d.def_ar, def_tr: d.def_tr, def_en: d.def_en })
     defMap.set(d.vocab_id, list)
   }
 
   const vocab: VocabRow[] = vocabData.map(v => {
-    const defs = defMap.get(v.word_id) ?? [{ pos: "unknown", meaning: "" }]
+    const defs = defMap.get(v.word_id) ?? [{ pos: "unknown", meaning: "", def_ar: null, def_tr: null, def_en: null }]
     const primary = defs[0]
     return {
       id: v.word_id,
@@ -248,6 +251,9 @@ export async function fetchThemeVocabWithProgress(
       word: v.word_ar,
       word_diacritic: v.word_di ?? "",
       transliteration: v.word_tr ?? "",
+      def_ar: primary.def_ar,
+      def_tr: primary.def_tr,
+      def_en: primary.def_en,
     }
   })
 

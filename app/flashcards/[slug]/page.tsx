@@ -31,6 +31,7 @@ import {
     horizontalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { stripDiacritics } from '@/app/lib/arabic'
 import Navbar from '@/app/components/navbar'
 import { useVocabStore } from '@/store/vocabStore'
 import TutorialDialog, { useTutorialSeen } from '../components/TutorialDialog'
@@ -109,6 +110,7 @@ function PillToggle({
                 borderColor: enabled ? activeColor : 'rgba(122,110,101,0.25)',
                 background: enabled ? `${activeColor}14` : 'transparent',
                 transition: 'all 0.15s',
+                minWidth: 185,
                 '&:hover': { borderColor: activeColor, background: `${activeColor}0d` },
             }}
         >
@@ -150,7 +152,7 @@ function DesktopTextScaleSlider({ textScale, onChange }: { textScale: number; on
         }}>
             <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
             <Slider
-                value={textScale} min={0.8} max={1.4} step={0.1} size="small"
+                value={textScale} min={1.0} max={1.4} step={0.1} size="small"
                 onChange={(_, v) => onChange(v as number)}
                 sx={{ color: '#b8860b', flex: 1, '& .MuiSlider-thumb': { width: 14, height: 14 } }}
             />
@@ -223,7 +225,7 @@ function SettingsDialog({
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
                             <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <Slider value={textScale} min={0.8} max={1.4} step={0.1} size="small" onChange={(_, v) => onTextScaleChange(v as number)} sx={{ color: '#b8860b', width: '100%', '& .MuiSlider-thumb': { width: 14, height: 14 } }} />
+                                <Slider value={textScale} min={1.0} max={1.4} step={0.1} size="small" onChange={(_, v) => onTextScaleChange(v as number)} sx={{ color: '#b8860b', width: '100%', '& .MuiSlider-thumb': { width: 14, height: 14 } }} />
                             </Box>
                             <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.1rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
                         </Box>
@@ -512,6 +514,84 @@ function StatusChips({ newCount, revisionCount, completedCount, filter, currentS
 }
 
 /* ─────────────────────────────────────────────
+   DefinitionPanel
+───────────────────────────────────────────── */
+function DefinitionPanel({ card, showDiacritics, textScale }: {
+    card: VocabRow
+    showDiacritics: boolean
+    textScale: number
+}) {
+    const hasDef = card.def_ar || card.def_tr || card.def_en
+    if (!hasDef) return null
+
+    const defArDisplay = showDiacritics
+        ? (card.def_ar ?? '')
+        : stripDiacritics(card.def_ar ?? '')
+
+    return (
+        <Box sx={{
+            background: 'rgba(245,237,224,0.4)',
+            border: '1px solid rgba(184,134,11,0.12)',
+            borderRadius: '10px',
+            p: { xs: '1rem', md: '1.25rem 1.5rem' },
+            mb: '1.25rem',
+        }}>
+            <Typography sx={{
+                fontFamily: 'Jost, sans-serif',
+                fontSize: `calc(0.7rem * ${textScale})`,
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: '#b8860b',
+                mb: 1,
+            }}>
+                Definition
+            </Typography>
+
+            {card.def_ar && (
+                <Typography sx={{
+                    fontFamily: "'EB Garamond', serif",
+                    fontSize: `calc(1.35rem * ${textScale})`,
+                    color: '#2c1a0e',
+                    direction: 'rtl',
+                    textAlign: 'right',
+                    lineHeight: 1.5,
+                    mb: 0.5,
+                }}>
+                    {defArDisplay}
+                </Typography>
+            )}
+
+            {card.def_tr && (
+                <Typography sx={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: `calc(0.9rem * ${textScale})`,
+                    fontStyle: 'italic',
+                    color: '#9e8a7a',
+                    textAlign: 'left',
+                    lineHeight: 1.5,
+                    mb: 0.5,
+                }}>
+                    {card.def_tr}
+                </Typography>
+            )}
+
+            {card.def_en && (
+                <Typography sx={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: `calc(1rem * ${textScale})`,
+                    color: '#7a6e65',
+                    textAlign: 'left',
+                    lineHeight: 1.5,
+                }}>
+                    {card.def_en}
+                </Typography>
+            )}
+        </Box>
+    )
+}
+
+/* ─────────────────────────────────────────────
    FlashcardQuiz
 ───────────────────────────────────────────── */
 function FlashcardQuiz({
@@ -541,6 +621,7 @@ function FlashcardQuiz({
     const [filter, setFilter] = useState<FilterType>('all')
     const [revealed, setRevealed] = useState(alwaysShow)
     const [cardKey, setCardKey] = useState(0)
+    const [mobileTab, setMobileTab] = useState<'definition' | 'examples'>('definition')
     const themeObj = useTheme()
     const isMobile = useMediaQuery(themeObj.breakpoints.down('sm'))
 
@@ -592,6 +673,10 @@ function FlashcardQuiz({
     const current = filteredCards[currentIndex] ?? null
     const canGoBack = currentIndex > 0
     const isLastCard = currentIndex >= filteredCards.length - 1
+
+    useEffect(() => {
+        setMobileTab('definition')
+    }, [current?.id])
 
     const newCount = allCards.filter(c => !c.isCompleted && !c.isInRevision).length
     const revisionCount = allCards.filter(c => c.isInRevision).length
@@ -863,30 +948,88 @@ function FlashcardQuiz({
                     <Collapse in={revealed} timeout={300}>
                         <Box sx={{ borderTop: '1px solid rgba(184,134,11,0.1)', margin: '1rem 0' }} />
 
-                        {/* POS chip */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, flexWrap: 'wrap', mb: { xs: 0.75, md: 1 } }}>
+                        {/* POS chip on its own line */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: { xs: 0.5, md: 0.75 } }}>
                             <Box sx={{ display: 'inline-flex', alignItems: 'center', fontFamily: 'Jost, sans-serif', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '2px 9px', borderRadius: '999px', background: 'rgba(122,110,101,0.08)', color: '#7a6e65' }}>
                                 {current.pos}
                             </Box>
                         </Box>
 
-                        {/* Transliteration */}
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: transliterationFontSize, fontStyle: 'italic', color: '#b8860b', textAlign: 'center', letterSpacing: '0.05em', mt: { xs: 1, md: 1.5 } }}>
-                            {current.transliteration}
-                        </Typography>
+                        {/* Transliteration + definition on the same line */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap', mb: { xs: 1, md: 1.5 } }}>
+                            <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: transliterationFontSize, fontStyle: 'italic', color: '#b8860b', letterSpacing: '0.05em', lineHeight: 1 }}>
+                                {current.transliteration}
+                            </Typography>
+                            <Typography component="span" sx={{ fontFamily: "'EB Garamond', serif", fontSize: `calc(1.5rem * ${textScale})`, fontWeight: 700, color: '#2c1a0e', lineHeight: 1 }}>
+                                {current.definition}
+                            </Typography>
+                        </Box>
 
-                        {/* Definition */}
-                        <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: definitionFontSize, fontWeight: 700, color: '#2c1a0e', textAlign: 'center', margin: '0.25rem 0' }}>
-                            {current.definition}
-                        </Typography>
+                        {/* Desktop: everything stacked */}
+                        <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                            <DefinitionPanel card={current} showDiacritics={showDiacritics} textScale={textScale} />
+                            <ExampleSentences
+                                examplesForCard={currentCardExamples}
+                                revealed={revealed}
+                                showDiacritics={showDiacritics}
+                                textScale={textScale}
+                            />
+                        </Box>
 
-                        {/* Example Sentences with Examples / You Try tabs */}
-                        <ExampleSentences
-                            examplesForCard={currentCardExamples}
-                            revealed={revealed}
-                            showDiacritics={showDiacritics}
-                            textScale={textScale}
-                        />
+                        {/* Mobile: tabs for Definition / Examples */}
+                        <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 1.5 }}>
+                                <Button
+                                    onClick={() => setMobileTab('definition')}
+                                    sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '0.8rem',
+                                        fontWeight: mobileTab === 'definition' ? 600 : 500,
+                                        textTransform: 'none',
+                                        borderRadius: '20px',
+                                        px: 2,
+                                        py: 0.5,
+                                        minWidth: 100,
+                                        background: mobileTab === 'definition' ? 'rgba(184,134,11,0.12)' : 'transparent',
+                                        color: mobileTab === 'definition' ? '#b8860b' : '#7a6e65',
+                                        border: '1px solid',
+                                        borderColor: mobileTab === 'definition' ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)',
+                                    }}
+                                >
+                                    Definition
+                                </Button>
+                                <Button
+                                    onClick={() => setMobileTab('examples')}
+                                    sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '0.8rem',
+                                        fontWeight: mobileTab === 'examples' ? 600 : 500,
+                                        textTransform: 'none',
+                                        borderRadius: '20px',
+                                        px: 2,
+                                        py: 0.5,
+                                        minWidth: 100,
+                                        background: mobileTab === 'examples' ? 'rgba(184,134,11,0.12)' : 'transparent',
+                                        color: mobileTab === 'examples' ? '#b8860b' : '#7a6e65',
+                                        border: '1px solid',
+                                        borderColor: mobileTab === 'examples' ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)',
+                                    }}
+                                >
+                                    Examples
+                                </Button>
+                            </Box>
+                            {mobileTab === 'definition' && (
+                                <DefinitionPanel card={current} showDiacritics={showDiacritics} textScale={textScale} />
+                            )}
+                            {mobileTab === 'examples' && (
+                                <ExampleSentences
+                                    examplesForCard={currentCardExamples}
+                                    revealed={revealed}
+                                    showDiacritics={showDiacritics}
+                                    textScale={textScale}
+                                />
+                            )}
+                        </Box>
 
                         {/* Desktop action buttons */}
                         <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', mt: '1.25rem' }}>
@@ -1042,7 +1185,7 @@ function ThemePlaylistSidebar({
    Page
 ───────────────────────────────────────────── */
 export default function FlashcardSlugPage() {
-    const [textScale, setTextScale] = useState(1)
+    const [textScale, setTextScale] = useState(1.1)
     const params = useParams()
     const router = useRouter()
     const slug = (params?.slug as string) ?? 'beginner'

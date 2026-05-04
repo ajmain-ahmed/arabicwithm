@@ -29,6 +29,11 @@ const PAGE_CSS = `
     from { transform: scale(1.04); }
     to   { transform: scale(1); }
   }
+
+  /* Pill shape for every MUI button on this page */
+  .MuiButton-root {
+    border-radius: 9999px !important;
+  }
 `;
 
 /* ─────────────────────────────────────────────
@@ -40,7 +45,22 @@ const SUBHEADLINES = [
   "with poetry",
   "with quotes",
   "with stories",
+  "with flashcards",
 ];
+
+/* ─────────────────────────────────────────────
+   CTA config: label + route per headline
+───────────────────────────────────────────── */
+function getCtaConfig(subheadline: string) {
+  const sh = subheadline.toLowerCase();
+  if (sh.includes("movies") || sh.includes("cartoons")) {
+    return { label: "Start Watching", href: "/cartoons" };
+  }
+  if (sh.includes("flashcards")) {
+    return { label: "Start Learning", href: "/flashcards" };
+  }
+  return { label: "Start Reading", href: "/" };
+}
 
 /* ─────────────────────────────────────────────
    Main page
@@ -60,6 +80,8 @@ export default function HomePage() {
     exit: { opacity: 0, y: -16, filter: 'blur(8px)' },
   };
 
+  const { label: ctaLabel, href: ctaHref } = getCtaConfig(SUBHEADLINES[subIndex]);
+
   return (
     <>
       <style>{PAGE_CSS}</style>
@@ -69,17 +91,11 @@ export default function HomePage() {
 
         {/* ══════════════════════════════════════════════
             HERO BANNER
-            - Clears fixed navbar with margin-top
-            - Text centred with flexbox (no padding hacks)
-            - Larger mobile type scale
-            - Single concave curve at bottom only
         ══════════════════════════════════════════════ */}
         <Box
           sx={{
             position: 'relative',
-            // Clear the fixed navbar (56px mobile / 64px desktop)
             mt: { xs: '56px', md: '64px' },
-            // Full viewport minus navbar, with sensible min/max bounds
             height: { xs: 'calc(70vh - 56px)', md: 'calc(100vh - 64px)' },
             minHeight: { xs: 520, sm: 580, md: 640 },
             maxHeight: { xs: 800, md: 950 },
@@ -120,7 +136,7 @@ export default function HomePage() {
             }}
           />
 
-          {/* ── Content: dead-centre in the visible frame ── */}
+          {/* ── Content ── */}
           <Box
             sx={{
               position: 'absolute',
@@ -129,10 +145,9 @@ export default function HomePage() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',      // true vertical centre
+              justifyContent: 'center',
               px: { xs: 3, sm: 4, md: 6 },
               textAlign: 'center',
-              // Keep text clear of the curve at the bottom
               pb: { xs: 10, sm: 12, md: 14 },
             }}
           >
@@ -195,7 +210,7 @@ export default function HomePage() {
               </AnimatePresence>
             </Box>
 
-            {/* Sub-copy — bolder, more visible */}
+            {/* Sub-copy */}
             <Typography
               sx={{
                 fontFamily: 'var(--font-sans)',
@@ -213,12 +228,11 @@ export default function HomePage() {
               CEFR-based flashcards, worksheets, subbed animations and more.
             </Typography>
 
-            {/* CTA button — larger touch target on mobile */}
+            {/* CTA pill button — fixed width, dynamic label + route */}
             <Button
               variant="contained"
               size="large"
-              endIcon={<ArrowForwardSharp />}
-              onClick={() => router.push('/learn')}
+              onClick={() => router.push(ctaHref)}
               sx={{
                 background: 'linear-gradient(135deg, var(--gold) 0%, var(--gold-lt) 100%)',
                 color: '#1a0e00',
@@ -226,12 +240,15 @@ export default function HomePage() {
                 fontWeight: 700,
                 fontSize: { xs: '0.95rem', md: '1rem' },
                 textTransform: 'none',
-                borderRadius: '4px',
-                px: { xs: 4, md: 5 },
-                py: { xs: 1.7, md: 1.9 },
+                borderRadius: '9999px',
+                width: { xs: 220, sm: 230, md: 250 },
                 minHeight: { xs: 52, md: 56 },
+                px: 0,
+                py: { xs: 1.5, md: 1.7 },
                 boxShadow: '0 6px 28px rgba(184,134,11,0.45)',
                 transition: 'all 0.2s ease',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
                 '&:hover': {
                   background: 'linear-gradient(135deg, var(--gold-lt) 0%, #e6c060 100%)',
                   boxShadow: '0 10px 36px rgba(184,134,11,0.55)',
@@ -239,14 +256,29 @@ export default function HomePage() {
                 },
               }}
             >
-              Start Learning
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={ctaLabel}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.35, ease: 'easeInOut' }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    width: '100%',
+                  }}
+                >
+                  {ctaLabel}
+                  <ArrowForwardSharp fontSize="small" />
+                </motion.span>
+              </AnimatePresence>
             </Button>
           </Box>
 
-          {/* ── Concave bottom curve ───────────────────────────
-              Curve dips DOWN in the centre so the white page
-              below appears to scoop upward into the hero.
-          ─────────────────────────────────────────────────── */}
+          {/* ── Concave bottom curve ── */}
           <Box
             component="svg"
             xmlns="http://www.w3.org/2000/svg"
@@ -255,7 +287,7 @@ export default function HomePage() {
             aria-hidden="true"
             sx={{
               position: 'absolute',
-              bottom: -1,   // -1px kills sub-pixel hairline gaps
+              bottom: -1,
               left: 0,
               width: '100%',
               height: { xs: 50, sm: 70, md: 90 },
@@ -271,7 +303,6 @@ export default function HomePage() {
         </Box>
 
         <CartoonSection />
-      
         <StudySection />
 
       </Box>
