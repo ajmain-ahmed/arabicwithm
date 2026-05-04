@@ -103,26 +103,26 @@ function PillToggle({
         <Box
             onClick={onToggle}
             sx={{
-                display: 'inline-flex', alignItems: 'center', gap: 1,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 1,
                 cursor: 'pointer', userSelect: 'none',
-                padding: '5px 12px 5px 6px', borderRadius: '999px',
+                padding: '5px 10px', borderRadius: '999px',
                 border: '1px solid',
                 borderColor: enabled ? activeColor : 'rgba(122,110,101,0.25)',
                 background: enabled ? `${activeColor}14` : 'transparent',
-                transition: 'all 0.15s',
-                minWidth: 185,
+                transition: 'border-color 0.15s, background 0.15s',
+                width: 200,
                 '&:hover': { borderColor: activeColor, background: `${activeColor}0d` },
             }}
         >
             <Box sx={{
-                width: 28, height: 16, borderRadius: '999px',
+                width: 24, height: 14, borderRadius: '999px',
                 background: enabled ? activeColor : 'rgba(122,110,101,0.2)',
                 position: 'relative', transition: 'background 0.2s', flexShrink: 0,
             }}>
                 <Box sx={{
                     position: 'absolute', top: '2px',
-                    left: enabled ? '14px' : '2px',
-                    width: 12, height: 12, borderRadius: '50%',
+                    left: enabled ? '12px' : '2px',
+                    width: 10, height: 10, borderRadius: '50%',
                     background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                     transition: 'left 0.18s cubic-bezier(0.4,0,0.2,1)',
                 }} />
@@ -392,11 +392,11 @@ function InteractiveSentenceBuilder({ plainWords, diacriticWords, englishTransla
                 </SortableContext>
 
                 {feedback === 'correct' && (
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.95rem * ${textScale})`, fontStyle: 'italic', color: '#7a6e65', textAlign: 'center', mb: 1 }}>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.95rem * ${textScale})`, color: '#7a6e65', textAlign: 'center', mb: 1 }}>
                         {transliteration}
                     </Typography>
                 )}
-                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(1rem * ${textScale})`, fontWeight: 500, color: '#2c1a0e', textAlign: 'center', fontStyle: 'italic', mb: 2 }}>
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(1rem * ${textScale})`, fontWeight: 500, color: '#2c1a0e', textAlign: 'center', mb: 2 }}>
                     {englishTranslation}
                 </Typography>
 
@@ -452,10 +452,10 @@ function ExampleSentences({ examplesForCard, revealed, showDiacritics, textScale
                                 <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: `calc(1.6rem * ${textScale})`, color: '#2c1a0e', direction: 'rtl', textAlign: 'right', lineHeight: 1.5, mb: 0.35 }}>
                                     {showDiacritics ? ex.ex_dia : ex.ex_ar}
                                 </Typography>
-                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(1rem * ${textScale})`, fontStyle: 'italic', color: '#9e8a7a', textAlign: 'left', mb: 0.35 }}>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(1rem * ${textScale})`, color: '#9e8a7a', textAlign: 'left', mb: 0.35 }}>
                                     {ex.ex_tr || ''}
                                 </Typography>
-                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(1.15rem * ${textScale})`, color: '#7a6e65', fontStyle: 'italic', textAlign: 'left', lineHeight: 1.5 }}>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(1.15rem * ${textScale})`, color: '#7a6e65', textAlign: 'left', lineHeight: 1.5 }}>
                                     {ex.ex_en}
                                 </Typography>
                                 {i < displayExamples.length - 1 && <Box sx={{ borderTop: '1px solid rgba(184,134,11,0.1)', mt: 1.5 }} />}
@@ -534,7 +534,7 @@ function DefinitionPanel({ card, showDiacritics, textScale }: {
             border: '1px solid rgba(184,134,11,0.12)',
             borderRadius: '10px',
             p: { xs: '1rem', md: '1.25rem 1.5rem' },
-            mb: '1.25rem',
+            mb: { xs: '0.75rem', md: '0.25rem' },
         }}>
             <Typography sx={{
                 fontFamily: 'Jost, sans-serif',
@@ -566,7 +566,6 @@ function DefinitionPanel({ card, showDiacritics, textScale }: {
                 <Typography sx={{
                     fontFamily: 'Jost, sans-serif',
                     fontSize: `calc(0.9rem * ${textScale})`,
-                    fontStyle: 'italic',
                     color: '#9e8a7a',
                     textAlign: 'left',
                     lineHeight: 1.5,
@@ -950,14 +949,14 @@ function FlashcardQuiz({
 
                         {/* POS chip on its own line */}
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: { xs: 0.5, md: 0.75 } }}>
-                            <Box sx={{ display: 'inline-flex', alignItems: 'center', fontFamily: 'Jost, sans-serif', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '2px 9px', borderRadius: '999px', background: 'rgba(122,110,101,0.08)', color: '#7a6e65' }}>
+                            <Box sx={{ display: 'inline-flex', alignItems: 'center', fontFamily: 'Jost, sans-serif', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '8px 16px', borderRadius: '999px', background: 'rgba(122,110,101,0.08)', color: '#7a6e65' }}>
                                 {current.pos}
                             </Box>
                         </Box>
 
                         {/* Transliteration + definition on the same line */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap', mb: { xs: 1, md: 1.5 } }}>
-                            <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: transliterationFontSize, fontStyle: 'italic', color: '#b8860b', letterSpacing: '0.05em', lineHeight: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap', py: 1, mb: { xs: 1, md: 1.5} }}>
+                            <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: transliterationFontSize, color: '#b8860b', letterSpacing: '0.05em', lineHeight: 1 }}>
                                 {current.transliteration}
                             </Typography>
                             <Typography component="span" sx={{ fontFamily: "'EB Garamond', serif", fontSize: `calc(1.5rem * ${textScale})`, fontWeight: 700, color: '#2c1a0e', lineHeight: 1 }}>
