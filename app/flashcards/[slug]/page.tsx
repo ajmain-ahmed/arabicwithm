@@ -34,6 +34,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { stripDiacritics } from '@/app/lib/arabic'
 import Navbar from '@/app/components/navbar'
 import { useVocabStore } from '@/store/vocabStore'
+import { useXpStore } from '@/store/xpStore'
 import TutorialDialog, { useTutorialSeen } from '../components/TutorialDialog'
 import type { VocabRow, WordProgress, ThemeProgress, ExampleRow } from '@/app/actions/vocab'
 import {
@@ -502,9 +503,29 @@ function StatusChips({ newCount, revisionCount, completedCount, filter, currentS
                 const isFilterActive = filter === type
                 const isCurrentCard = currentStatus === type
                 const isHighlighted = isFilterActive || isCurrentCard
+                const isDisabled = count === 0
                 return (
-                    <Box key={type} onClick={() => onFilterChange(filter === type ? 'all' : type)}
-                        sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '12px', sm: '13px', md: '14px' }, fontWeight: isHighlighted ? 700 : 500, padding: { xs: '4px 10px', sm: '5px 14px' }, borderRadius: '999px', border: `${isHighlighted ? 2 : 1}px solid`, borderColor: isHighlighted ? colors.border : 'rgba(122,110,101,0.18)', color: isHighlighted ? colors.activeColor : '#7a6e65', background: isHighlighted ? colors.activeBg : 'transparent', cursor: 'pointer', transition: 'all 0.15s', userSelect: 'none', outline: isCurrentCard && !isFilterActive ? `2px solid ${colors.border}` : 'none', outlineOffset: '1px', '&:hover': { background: colors.activeBg, borderColor: colors.border, color: colors.activeColor } }}>
+                    <Box
+                        key={type}
+                        onClick={isDisabled ? undefined : () => onFilterChange(filter === type ? 'all' : type)}
+                        sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: { xs: '12px', sm: '13px', md: '14px' },
+                            fontWeight: isHighlighted ? 700 : 500,
+                            padding: { xs: '4px 10px', sm: '5px 14px' },
+                            borderRadius: '999px',
+                            border: `${isHighlighted ? 2 : 1}px solid`,
+                            borderColor: isHighlighted ? colors.border : 'rgba(122,110,101,0.18)',
+                            color: isHighlighted ? colors.activeColor : isDisabled ? 'rgba(122,110,101,0.35)' : '#7a6e65',
+                            background: isHighlighted ? colors.activeBg : 'transparent',
+                            cursor: isDisabled ? 'default' : 'pointer',
+                            transition: 'all 0.15s',
+                            userSelect: 'none',
+                            outline: isCurrentCard && !isFilterActive ? `2px solid ${colors.border}` : 'none',
+                            outlineOffset: '1px',
+                            '&:hover': isDisabled ? {} : { background: colors.activeBg, borderColor: colors.border, color: colors.activeColor },
+                        }}
+                    >
                         {count} {type}
                     </Box>
                 )
@@ -615,6 +636,8 @@ function FlashcardQuiz({
     onThemeProgressUpdate?: (themeId: number, progress: { completedCount: number; revisionCount: number }) => void
 }) {
     const updateLocalProgress = useVocabStore(s => s.updateLocalProgress)
+    const awardWord = useXpStore(s => s.awardWord)
+    const awardTheme = useXpStore(s => s.awardTheme)
 
     const [allCards, setAllCards] = useState<CardState[]>(initialQueue)
     const [filter, setFilter] = useState<FilterType>('all')
@@ -672,6 +695,7 @@ function FlashcardQuiz({
     const current = filteredCards[currentIndex] ?? null
     const canGoBack = currentIndex > 0
     const isLastCard = currentIndex >= filteredCards.length - 1
+    const isLastCardInTheme = current ? current.id === allCards[allCards.length - 1]?.id : false
 
     useEffect(() => {
         setMobileTab('definition')
@@ -696,11 +720,16 @@ function FlashcardQuiz({
     /* ── Auto-advance when theme fully completed ── */
     const wasAlreadyCompleteOnMount = useRef(initialQueue.every(c => c.isCompleted))
     const hasTriggeredAdvance = useRef(false)
+    const hasAwardedThemeBonus = useRef(false)
 
     useEffect(() => {
         const everyCompleted = allCards.length > 0 && allCards.every(c => c.isCompleted)
         if (everyCompleted && !wasAlreadyCompleteOnMount.current && !hasTriggeredAdvance.current) {
             hasTriggeredAdvance.current = true
+            if (!hasAwardedThemeBonus.current) {
+                hasAwardedThemeBonus.current = true
+                awardTheme(themeId)
+            }
             const timer = setTimeout(() => {
                 onComplete?.()
             }, 1200)
@@ -709,7 +738,7 @@ function FlashcardQuiz({
         if (!everyCompleted) {
             hasTriggeredAdvance.current = false
         }
-    }, [allCards, onComplete])
+    }, [allCards, onComplete, themeId, awardTheme])
 
     const updateCardStatus = useCallback(
         (cardId: number, newStatus: CardStatus, opts?: { isCompleted?: boolean; isInRevision?: boolean }) => {
@@ -755,10 +784,10 @@ function FlashcardQuiz({
     const handleNext = useCallback(() => {
         if (currentIndex < filteredCards.length - 1) {
             goToIndex(currentIndex + 1)
-        } else {
+        } else if (filter === 'all') {
             onComplete?.()
         }
-    }, [currentIndex, filteredCards.length, goToIndex, onComplete])
+    }, [currentIndex, filteredCards.length, goToIndex, onComplete, filter])
 
     const toggleRevision = useCallback(() => {
         if (!current) return
@@ -772,13 +801,14 @@ function FlashcardQuiz({
             updateCardStatus(current.id, current.isInRevision ? 'revision' : 'new', { isCompleted: false })
         } else {
             updateCardStatus(current.id, 'completed', { isCompleted: true })
+            awardWord(current.id)
             if (currentIndex < filteredCards.length - 1) {
                 goToIndex(currentIndex + 1)
-            } else {
+            } else if (filter === 'all') {
                 onComplete?.()
             }
         }
-    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete])
+    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, awardWord, filter])
 
     const handleFilterChange = useCallback(
         (newFilter: FilterType) => {
@@ -791,6 +821,10 @@ function FlashcardQuiz({
         },
         [allCards, alwaysShow]
     )
+
+    /* ── Tinder-style swipe refs (must be before any early return) ── */
+    const nextBadgeRef = useRef<HTMLDivElement | null>(null)
+    const backBadgeRef = useRef<HTMLDivElement | null>(null)
 
     if (!current) return null
 
@@ -805,10 +839,6 @@ function FlashcardQuiz({
         '& .MuiButton-startIcon': { mr: '4px', ml: 0 },
         '& .MuiButton-startIcon svg': { fontSize: '0.9rem !important' },
     }
-
-    /* ── Tinder-style swipe (mobile only) ── */
-    const nextBadgeRef = useRef<HTMLDivElement | null>(null)
-    const backBadgeRef = useRef<HTMLDivElement | null>(null)
 
     const onSwipeStart = useCallback((e: React.TouchEvent) => {
         if (!isMobile) return
@@ -928,10 +958,23 @@ function FlashcardQuiz({
                 </Box>
 
                 {/* Status chips + progress % */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: filter !== 'all' ? 0.5 : 1.5 }}>
                     <StatusChips newCount={newCount} revisionCount={revisionCount} completedCount={completedCount} filter={filter} currentStatus={current?.status ?? null} onFilterChange={handleFilterChange} />
                     <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 600, color: '#b8860b', flexShrink: 0, ml: 1 }}>{progressPct}%</Typography>
                 </Box>
+                {filter !== 'all' && (
+                    <Typography sx={{
+                        fontFamily: 'Jost, sans-serif',
+                        fontSize: '0.7rem',
+                        fontWeight: 500,
+                        color: '#b8860b',
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        mb: 1.5,
+                    }}>
+                        Filtered · {filteredCards.length} {filter} card{filteredCards.length !== 1 ? 's' : ''}
+                    </Typography>
+                )}
 
                 <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     {/* Arabic word */}
@@ -1038,22 +1081,24 @@ function FlashcardQuiz({
                                 sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>Revision</Button>
                             <Button variant={current.isCompleted ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} startIcon={current.isCompleted ? <DoneAll sx={{ fontSize: '1.1rem !important' }} /> : <Check sx={{ fontSize: '1.1rem !important' }} />}
                                 sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>{current.isCompleted ? 'Completed' : 'Complete'}</Button>
-                            <Button variant="outlined" color="warning" size="small" onClick={handleNext} endIcon={<NavigateNext sx={{ fontSize: '1.1rem !important' }} />}
-                                sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>
-                                {isLastCard ? 'Next Theme' : 'Next'}
+                            <Button variant="outlined" color="warning" size="small" onClick={handleNext} disabled={isLastCard && filter !== 'all'} endIcon={<NavigateNext sx={{ fontSize: '1.1rem !important' }} />}
+                                sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px', '&:disabled': { opacity: 0.4 } }}>
+                                {isLastCardInTheme && filter === 'all' ? 'Next Theme' : 'Next'}
                             </Button>
                         </Box>
 
                         {/* Mobile action buttons */}
                         <Box sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', justifyContent: 'center', gap: '10px', mt: '1rem' }}>
-                            <IconButton onClick={handlePrevious} disabled={!canGoBack} sx={{ width: 40, height: 40, border: '1px solid', borderColor: canGoBack ? 'rgba(122,110,101,0.4)' : 'rgba(122,110,101,0.15)', color: canGoBack ? '#7a6e65' : 'rgba(122,110,101,0.3)', borderRadius: '50%', flexShrink: 0, transition: 'all 0.15s', '&:hover': { background: 'rgba(122,110,101,0.08)' }, '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(122,110,101,0.15)' } }}>
-                                <NavigateBefore sx={{ fontSize: '1.35rem' }} />
-                            </IconButton>
+                            <Button variant="outlined" size="small" onClick={handlePrevious} disabled={!canGoBack}
+                                sx={{ ...mobileActionBtnSx, borderColor: canGoBack ? 'rgba(122,110,101,0.4)' : 'rgba(122,110,101,0.15)', color: canGoBack ? '#7a6e65' : 'rgba(122,110,101,0.3)', '&:hover': { background: 'rgba(122,110,101,0.08)' }, '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(122,110,101,0.15)' } }}>
+                                Prev
+                            </Button>
                             <Button variant={current.isInRevision ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} startIcon={current.isInRevision ? <BookmarkAdded /> : <Bookmark />} sx={mobileActionBtnSx}>Revision</Button>
                             <Button variant={current.isCompleted ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} startIcon={current.isCompleted ? <DoneAll /> : <Check />} sx={mobileActionBtnSx}>{current.isCompleted ? 'Completed' : 'Complete'}</Button>
-                            <IconButton onClick={handleNext} sx={{ width: 40, height: 40, border: '1px solid', borderColor: 'rgba(184,134,11,0.45)', color: '#b8860b', borderRadius: '50%', flexShrink: 0, transition: 'all 0.15s', '&:hover': { background: 'rgba(184,134,11,0.06)' } }}>
-                                <NavigateNext sx={{ fontSize: '1.35rem' }} />
-                            </IconButton>
+                            <Button variant="outlined" size="small" onClick={handleNext} disabled={isLastCard && filter !== 'all'}
+                                sx={{ ...mobileActionBtnSx, borderColor: isLastCard && filter !== 'all' ? 'rgba(184,134,11,0.15)' : 'rgba(184,134,11,0.45)', color: isLastCard && filter !== 'all' ? 'rgba(184,134,11,0.3)' : '#b8860b', '&:hover': { background: 'rgba(184,134,11,0.06)' }, '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(184,134,11,0.15)' } }}>
+                                Skip
+                            </Button>
                         </Box>
                     </Collapse>
 
