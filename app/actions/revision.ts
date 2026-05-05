@@ -304,8 +304,8 @@ export async function fetchRevisionSession(): Promise<{
         .order('created_at', { ascending: true })
         .limit(remainingNewLimit)
 
-    // Learning cards — interval_days = 0 but have been seen at least once.
-    // We do NOT filter by next_review_at here so they never disappear from the session.
+    // Learning cards — interval_days = 0 and have been seen at least once.
+    // Only include those whose next_review_at has actually arrived.
     const { data: learning } = await serviceClient
         .from('progress')
         .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, last_rating, created_at')
@@ -313,6 +313,7 @@ export async function fetchRevisionSession(): Promise<{
         .eq('is_in_revision', true)
         .eq('interval_days', 0)
         .not('last_review_at', 'is', null)
+        .lte('next_review_at', now)   // ← FIX: respect the learning step schedule
 
     const dueProgress = [...(reviews ?? []), ...(brandNew ?? []), ...(learning ?? [])]
 
