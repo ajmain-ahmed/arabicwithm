@@ -61,9 +61,23 @@ export type RevisionCard = VocabRow & {
     last_review_at: string | null
     next_review_at: string | null
     isDue: boolean
+    def_ar?: string | null
+    def_tr?: string | null
+    def_en?: string | null
+    lastRating?: Answer | null
+    theme_name?: string | null
 }
 
 export type Answer = 'again' | 'hard' | 'good' | 'easy'
+
+export type SessionLog = {
+    cardId: number | string
+    word: string
+    rating: Answer
+    timeTaken: number
+    level?: string
+    theme?: string
+}
 
 const DAILY_NEW_LIMIT = 20
 const LEARNING_STEPS = [1, 10] // minutes
@@ -148,117 +162,55 @@ function getStartOfTodayUTC(): string {
     return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString()
 }
 
-export async function fetchDueRevisionCards(): Promise<RevisionCard[]> {
-    const userId = await getAuthenticatedUserId()
-    if (process.env.NODE_ENV !== 'production') console.log("[revision] fetchDueRevisionCards – userId:", userId)
-    if (!userId) return []
+/* ─────────────────────────────────────────────
+   Build RevisionCard[] from raw progress rows
+───────────────────────────────────────────── */
+async function buildRevisionCards(
+    progressRows: any[],
+    nowISO: string
+): Promise<RevisionCard[]> {
+    if (progressRows.length === 0) return []
 
-    const now = new Date().toISOString()
-    const startOfToday = getStartOfTodayUTC()
-    if (process.env.NODE_ENV !== 'production') console.log("[revision] now:", now, "startOfToday:", startOfToday)
+    const vocabIds = progressRows.map(r => r.vocab_id)
 
-    // Count how many new cards have already been introduced today
-    const { count: introducedToday, error: countError } = await serviceClient
-        .from('progress')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .gte('first_review_at', startOfToday)
-
-    if (countError) {
-        console.error("[revision] countError:", countError.message)
-        throw new Error(countError.message)
-    }
-
-    const remainingNewLimit = Math.max(0, DAILY_NEW_LIMIT - (introducedToday ?? 0))
-    if (process.env.NODE_ENV !== 'production') console.log("[revision] introducedToday:", introducedToday, "remainingNewLimit:", remainingNewLimit)
-
-    // 1. Reviews (graduated cards that are due)
-    const { data: reviews, error: reviewsError } = await serviceClient
-        .from('progress')
-        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at')
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .gt('repetitions', 0)
-        .lte('next_review_at', now)
-        .order('next_review_at', { ascending: true })
-
-    if (reviewsError) throw new Error(reviewsError.message)
-    if (process.env.NODE_ENV !== 'production') console.log("[revision] reviews count:", reviews?.length ?? 0)
-
-    // 2. Brand new cards (never reviewed) – limited per day
-    const { data: brandNew, error: brandNewError } = await serviceClient
-        .from('progress')
-        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, created_at')
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .eq('repetitions', 0)
-        .is('last_review_at', null)
-        .order('created_at', { ascending: true })
-        .limit(remainingNewLimit)
-
-    if (brandNewError) throw new Error(brandNewError.message)
-    if (process.env.NODE_ENV !== 'production') console.log("[revision] brand new count:", brandNew?.length ?? 0)
-
-    // 3. Learning cards – ALL cards that have been seen today (still in learning phase)
-    const { data: learning, error: learningError } = await serviceClient
-        .from('progress')
-        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at')
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .eq('repetitions', 0)
-        .not('last_review_at', 'is', null)
-
-    if (learningError) throw new Error(learningError.message)
-    if (process.env.NODE_ENV !== 'production') console.log("[revision] learning count:", learning?.length ?? 0)
-
-    // Combine: reviews first, then brand new, then learning
-    const combined = [...(reviews ?? []), ...(brandNew ?? []), ...(learning ?? [])]
-    if (process.env.NODE_ENV !== 'production') console.log("[revision] total combined:", combined.length)
-
-    if (combined.length === 0) return []
-
-    const vocabIds = combined.map(r => r.vocab_id)
-
-    // Fetch vocab rows
     const { data: vocabData, error: vocabErr } = await serviceClient
         .from('vocab')
         .select('word_id, word_ar, word_di, word_tr, root, theme_id, level_id')
         .in('word_id', vocabIds)
-
     if (vocabErr) throw new Error(vocabErr.message)
 
-    // Fetch definitions
     const { data: defsData, error: defsErr } = await serviceClient
         .from('definitions')
-        .select('vocab_id, meaning, pos')
+        .select('vocab_id, meaning, pos, def_ar, def_tr, def_en')
         .in('vocab_id', vocabIds)
-
     if (defsErr) throw new Error(defsErr.message)
 
-    // Fetch examples
     const { data: exData, error: exErr } = await serviceClient
         .from('examples')
         .select('vocab_id, ex_ar, ex_di, ex_en')
         .in('vocab_id', vocabIds)
-
     if (exErr) throw new Error(exErr.message)
 
-    // Fetch levels for level codes
     const levelIds = [...new Set((vocabData ?? []).map(v => v.level_id))]
     const { data: levelsData } = await serviceClient
         .from('levels')
         .select('id, code')
         .in('id', levelIds)
 
-    const levelMap = new Map((levelsData ?? []).map(l => [l.id, l.code]))
+    const themeIds = [...new Set((vocabData ?? []).map(v => v.theme_id).filter(Boolean))]
+    const { data: themesData } = await serviceClient
+        .from('themes')
+        .select('id, name')
+        .in('id', themeIds)
 
-    // Build lookup maps
+    const levelMap = new Map((levelsData ?? []).map(l => [l.id, l.code]))
+    const themeMap = new Map((themesData ?? []).map(t => [t.id, t.name]))
     const vocabMap = new Map(vocabData?.map(v => [v.word_id, v]) ?? [])
-    const defMap = new Map<number, { meaning: string; pos: string }[]>()
+
+    const defMap = new Map<number, { meaning: string; pos: string; def_ar: string | null; def_tr: string | null; def_en: string | null }[]>()
     ;(defsData ?? []).forEach(d => {
         const list = defMap.get(d.vocab_id) || []
-        list.push({ meaning: d.meaning, pos: d.pos })
+        list.push({ meaning: d.meaning, pos: d.pos, def_ar: d.def_ar, def_tr: d.def_tr, def_en: d.def_en })
         defMap.set(d.vocab_id, list)
     })
 
@@ -269,13 +221,15 @@ export async function fetchDueRevisionCards(): Promise<RevisionCard[]> {
         exMap.set(e.vocab_id, list)
     })
 
-    const nowISO = new Date().toISOString()
-
-    return combined.map((row) => {
+    return progressRows.map((row) => {
         const v = vocabMap.get(row.vocab_id)
         const defs = defMap.get(row.vocab_id) ?? []
-        const primaryDef = defs[0] ?? { meaning: '', pos: 'unknown' }
+        const primaryDef = defs[0] ?? { meaning: '', pos: 'unknown', def_ar: null, def_tr: null, def_en: null }
         const examples = exMap.get(row.vocab_id) ?? []
+
+        const isDue = row.next_review_at
+            ? row.next_review_at <= nowISO
+            : (row.repetitions === 0 && !row.last_review_at)
 
         return {
             id: row.vocab_id,
@@ -290,17 +244,98 @@ export async function fetchDueRevisionCards(): Promise<RevisionCard[]> {
             ex_di: examples.map(e => e.ex_di).join(';') || null,
             ex_en: examples.map(e => e.ex_en).join(';') || null,
             theme_id: v?.theme_id ?? 0,
+            theme_name: themeMap.get(v?.theme_id) ?? null,
+            def_ar: primaryDef.def_ar ?? null,
+            def_tr: primaryDef.def_tr ?? null,
+            def_en: primaryDef.def_en ?? null,
             progress_word_id: row.vocab_id,
             repetitions: row.repetitions,
             interval_days: row.interval_days,
             ease_factor: row.ease_factor,
             last_review_at: row.last_review_at,
             next_review_at: row.next_review_at,
-            isDue: row.next_review_at ? row.next_review_at <= nowISO : true,
+            isDue,
+            lastRating: row.last_rating ?? null,
         }
     })
 }
 
+/* ─────────────────────────────────────────────
+   Fetch today's FULL session (due + completed)
+───────────────────────────────────────────── */
+export async function fetchRevisionSession(): Promise<{
+    dueCards: RevisionCard[]
+    completedCards: RevisionCard[]
+}> {
+    const userId = await getAuthenticatedUserId()
+    if (!userId) return { dueCards: [], completedCards: [] }
+
+    const now = new Date().toISOString()
+    const startOfToday = getStartOfTodayUTC()
+
+    // ── 1. Currently due cards ──
+    const { count: introducedToday, error: countError } = await serviceClient
+        .from('progress')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('is_in_revision', true)
+        .gte('first_review_at', startOfToday)
+    if (countError) throw new Error(countError.message)
+
+    const remainingNewLimit = Math.max(0, DAILY_NEW_LIMIT - (introducedToday ?? 0))
+
+    // Graduated review cards (interval_days > 0) that are due now
+    const { data: reviews } = await serviceClient
+        .from('progress')
+        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, last_rating, created_at')
+        .eq('user_id', userId)
+        .eq('is_in_revision', true)
+        .gt('interval_days', 0)
+        .lte('next_review_at', now)
+
+    // Brand new cards — never been reviewed
+    const { data: brandNew } = await serviceClient
+        .from('progress')
+        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, last_rating, created_at')
+        .eq('user_id', userId)
+        .eq('is_in_revision', true)
+        .eq('repetitions', 0)
+        .is('last_review_at', null)
+        .order('created_at', { ascending: true })
+        .limit(remainingNewLimit)
+
+    // Learning cards — interval_days = 0 but have been seen at least once.
+    // We do NOT filter by next_review_at here so they never disappear from the session.
+    const { data: learning } = await serviceClient
+        .from('progress')
+        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, last_rating, created_at')
+        .eq('user_id', userId)
+        .eq('is_in_revision', true)
+        .eq('interval_days', 0)
+        .not('last_review_at', 'is', null)
+
+    const dueProgress = [...(reviews ?? []), ...(brandNew ?? []), ...(learning ?? [])]
+
+    // ── 2. ALL cards reviewed today (regardless of current due status) ──
+    const { data: completedProgress, error: completedError } = await serviceClient
+        .from('progress')
+        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, last_rating, created_at')
+        .eq('user_id', userId)
+        .eq('is_in_revision', true)
+        .gte('last_review_at', startOfToday)
+        .order('last_review_at', { ascending: true })
+
+    if (completedError) throw new Error(completedError.message)
+
+    const dueCards = await buildRevisionCards(dueProgress, now)
+    const completedCards = await buildRevisionCards(completedProgress ?? [], now)
+
+    return { dueCards, completedCards }
+}
+
+/* ─────────────────────────────────────────────
+   Submit answer
+───────────────────────────────────────────── */
 export async function submitRevisionAnswer(
     vocabId: number,
     answer: Answer,
@@ -351,6 +386,7 @@ export async function submitRevisionAnswer(
         ease_factor: newEase,
         last_review_at: now,
         next_review_at: nextReview.toISOString(),
+        last_rating: answer,
         ...(progress.last_review_at === null && { first_review_at: now }),
     }
 
@@ -374,7 +410,6 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
     const userId = await getAuthenticatedUserId()
     if (!userId) throw new Error('Not authenticated')
 
-    // Check if this word is already in the user's progress
     const { data: existing, error: fetchErr } = await serviceClient
         .from('progress')
         .select('is_in_revision')
@@ -384,7 +419,6 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
 
     if (fetchErr) throw new Error(fetchErr.message)
 
-    // If it's actively in revision, delete it (fully remove)
     if (existing?.is_in_revision) {
         const { error: delErr } = await serviceClient
             .from('progress')
@@ -398,7 +432,6 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
 
     const now = new Date().toISOString()
 
-    // If row exists but was previously removed, re-enable with fresh SM-2 state
     if (existing) {
         const { error: updErr } = await serviceClient
             .from('progress')
@@ -410,6 +443,7 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
                 last_review_at: null,
                 next_review_at: null,
                 first_review_at: null,
+                last_rating: null,
                 created_at: now,
             })
             .eq('user_id', userId)
@@ -419,7 +453,6 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
         return { success: true, inRevision: true }
     }
 
-    // Fresh insert
     const { error: insErr } = await serviceClient
         .from('progress')
         .insert({
@@ -432,6 +465,7 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
             last_review_at: null,
             next_review_at: null,
             first_review_at: null,
+            last_rating: null,
             created_at: now,
         })
 
@@ -450,7 +484,7 @@ export async function getDueCounts(): Promise<{ reviews: number; new: number }> 
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('is_in_revision', true)
-        .gt('repetitions', 0)
+        .gt('interval_days', 0)
         .lte('next_review_at', now)
 
     const { count: newCount, error: newError } = await serviceClient
