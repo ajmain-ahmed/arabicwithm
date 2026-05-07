@@ -115,7 +115,7 @@ function CountdownTimer({ targetTime }: { targetTime: string }) {
 }
 
 /* ─────────────────────────────────────────────
-   useAnkiQueue
+   useAnkiQueue  (FIXED)
 ───────────────────────────────────────────── */
 interface QueueState {
     deck: SessionCard[]
@@ -124,32 +124,60 @@ interface QueueState {
     totalEver: number
 }
 
-function useAnkiQueue(initial: SessionCard[], preloadedState?: QueueState | null) {
+function useAnkiQueue(initial: SessionCard[], seedAnswered?: Map<string, string>, seedDotOrder?: string[]) {
     const [state, setState] = useState<QueueState>(() => {
-        if (preloadedState) return preloadedState
+        const initialDotIds = initial.map(c => c.dotId)
+        const mergedDotOrder = [...(seedDotOrder ?? []), ...initialDotIds]
         return {
             deck: initial,
-            answeredDots: new Map(),
-            dotOrder: initial.map(c => c.dotId),
-            totalEver: initial.length,
+            answeredDots: seedAnswered ? new Map(seedAnswered) : new Map(),
+            dotOrder: mergedDotOrder,
+            totalEver: mergedDotOrder.length,
         }
     })
 
+    // Merge new due cards from the server into the existing session
     useEffect(() => {
-        if (preloadedState) {
-            setState(preloadedState)
-        }
-    }, [preloadedState])
+        setState(prev => {
+            const existingIds = new Set(prev.deck.map(c => c.data.id))
+            const newCards = initial.filter(c => !existingIds.has(c.data.id))
 
-    useEffect(() => {
-        if (preloadedState) return
-        setState({
-            deck: initial,
-            answeredDots: new Map(),
-            dotOrder: initial.map(c => c.dotId),
-            totalEver: initial.length,
+            if (newCards.length === 0) return prev
+
+            const newDeck = [...prev.deck, ...newCards]
+            const newDotOrder = [...prev.dotOrder, ...newCards.map(c => c.dotId)]
+
+            return {
+                ...prev,
+                deck: newDeck,
+                dotOrder: newDotOrder,
+                totalEver: prev.totalEver + newCards.length,
+            }
         })
-    }, [initial, preloadedState])
+    }, [initial])
+
+    // Merge seed data (historical reviews from DB) — PREPEND so history stays behind current position
+    useEffect(() => {
+        setState(prev => {
+            const newAnswered = new Map(prev.answeredDots)
+            seedAnswered?.forEach((color, dotId) => {
+                if (!newAnswered.has(dotId)) {
+                    newAnswered.set(dotId, color)
+                }
+            })
+
+            const existingDotSet = new Set(prev.dotOrder)
+            const seedDotsToAdd = seedDotOrder?.filter(dotId => !existingDotSet.has(dotId)) ?? []
+            if (seedDotsToAdd.length === 0 && newAnswered.size === prev.answeredDots.size) return prev
+
+            return {
+                ...prev,
+                answeredDots: newAnswered,
+                dotOrder: [...seedDotsToAdd, ...prev.dotOrder],
+                totalEver: prev.totalEver + seedDotsToAdd.length,
+            }
+        })
+    }, [seedAnswered, seedDotOrder])
 
     const currentCard = state.deck[0] ?? null
     const isComplete = state.deck.length === 0
@@ -338,8 +366,8 @@ function InfoDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, mb: 2.5 }}>
                     {([
-                        { queue: 'new' as Queue, icon: '🟦', body: 'Cards you have added to Word Bank but never studied yet.' },
-                        { queue: 'learning' as Queue, icon: '🟥', body: 'Cards you answered "Again" — they failed and need to be relearned. They cycle back until you get them right.' },
+                        { queue: 'new' as Queue, icon: '🟦', body: 'Cards you have added to Word Bank but never studied yet. Max 20 per day.' },
+                        { queue: 'learning' as Queue, icon: '🟥', body: 'Cards you just saw for the first time today. They come back after 10 minutes so you can lock them in. These do NOT count against your 20 new card limit.' },
                         { queue: 'review' as Queue, icon: '🟩', body: 'Cards you learned in a previous session. Answer correctly and the interval doubles or triples. Fail and the card lapses back to Learning.' },
                     ]).map(({ queue, icon, body }) => {
                         const cfg = QUEUE_CONFIG[queue]
@@ -695,7 +723,7 @@ function IntegratedProgressDots({
 /* ─────────────────────────────────────────────
    SessionSidebar  (paginated)
 ───────────────────────────────────────────── */
-function SessionSidebar({ logs, totalCards }: { logs: SessionLog[]; totalCards: number }) {
+function SessionSidebar({ logs, doneCount, remainingCount }: { logs: SessionLog[]; doneCount: number; remainingCount: number }) {
     const [page, setPage] = useState(1)
     const totalPages = Math.max(1, Math.ceil(logs.length / SIDEBAR_PAGE_SIZE))
 
@@ -707,6 +735,7 @@ function SessionSidebar({ logs, totalCards }: { logs: SessionLog[]; totalCards: 
     const pageLogs = logs.slice(start, start + SIDEBAR_PAGE_SIZE)
 
     const answered = logs.length
+    const totalCards = doneCount + remainingCount
     const progress = totalCards > 0 ? Math.round((answered / totalCards) * 100) : 0
     const avgTime = answered > 0 ? Math.round(logs.reduce((s, l) => s + l.timeTaken, 0) / answered) : 0
     const ratingCounts = { again: 0, hard: 0, good: 0, easy: 0 }
@@ -1211,34 +1240,28 @@ export default function RevisionPage() {
         dotId: makeDotId(),
     })), [dueCards])
 
-    /* ── Pre-seed dots & sidebar from DB-completed cards ── */
-    const preloadedState = useMemo<QueueState | null>(() => {
-        if (completedCards.length === 0) return null
-
+    /* ── Seed historical dots from DB-completed cards (one-time) ──
+       FIX: Don't create seed dots for cards that are ALSO in the current
+       due deck. This prevents duplicate dots when learning cards come back.
+    ───────────────────────────────────────────── */
+    const { seedAnsweredDots, seedDotOrder } = useMemo(() => {
+        const dueIds = new Set(dueCards.map(c => c.id))
         const answeredDots = new Map<string, string>()
         const dotOrder: string[] = []
 
-        // 1. Historical dots (already answered today)
         completedCards.forEach(card => {
-            const dotId = makeDotId()
+            // Skip cards that are still due (learning cards coming back)
+            if (dueIds.has(card.id)) return
+
+            const dotId = `seed-${card.id}`
             if (card.lastRating) {
                 answeredDots.set(dotId, RATING_COLORS[card.lastRating])
             }
             dotOrder.push(dotId)
         })
 
-        // 2. Due-card dots — MUST match the dotIds inside initialDeck
-        initialDeck.forEach(sessionCard => {
-            dotOrder.push(sessionCard.dotId)
-        })
-
-        return {
-            deck: initialDeck,
-            answeredDots,
-            dotOrder,
-            totalEver: dotOrder.length,
-        }
-    }, [completedCards, initialDeck])
+        return { seedAnsweredDots: answeredDots, seedDotOrder: dotOrder }
+    }, [completedCards, dueCards])
 
     const {
         deck,
@@ -1250,7 +1273,7 @@ export default function RevisionPage() {
         answer,
         dotOrder,
         answeredDots,
-    } = useAnkiQueue(initialDeck, preloadedState)
+    } = useAnkiQueue(initialDeck, seedAnsweredDots, seedDotOrder)
 
     const againPendingIds = useMemo<Set<string>>(() => {
         const set = new Set<string>()
@@ -1293,13 +1316,31 @@ export default function RevisionPage() {
         loadCards()
     }, [loadCards])
 
+    /* ── Refetch every 30s and when deck empties to catch learning cards ── */
+    useEffect(() => {
+        if (!sessionStarted) return
+
+        // Immediate refetch when deck is empty (learning cards may have matured)
+        if (isComplete) {
+            const timeout = setTimeout(() => loadCards(), 2000)
+            return () => clearTimeout(timeout)
+        }
+
+        // Periodic refetch during active session
+        const interval = setInterval(() => {
+            loadCards()
+        }, 30000)
+
+        return () => clearInterval(interval)
+    }, [sessionStarted, isComplete, loadCards])
+
     const handleAnswer = useCallback(async (ans: Answer, timeTaken: number) => {
         if (!currentCard || submitting) return
         if (!currentCard.data.isDue) return
 
         setSubmitting(true)
         try {
-            await submitRevisionAnswer(currentCard.data.progress_word_id, ans, 0)
+            await submitRevisionAnswer(currentCard.data.progress_word_id, ans)
 
             setSessionLogs(prev => [...prev, {
                 cardId: currentCard.data.id ?? currentCard.data.progress_word_id,
@@ -1313,6 +1354,7 @@ export default function RevisionPage() {
             answer(ans)
         } catch (err) {
             console.error(err)
+            // Card stays in deck on error so user can retry
         } finally {
             setSubmitting(false)
         }
@@ -1403,7 +1445,7 @@ export default function RevisionPage() {
                         </IconButton>
                     </Box>
                     <Box sx={{ flex: 1, overflowY: 'auto' }}>
-                        <SessionSidebar logs={sessionLogs} totalCards={totalEver} />
+                        <SessionSidebar logs={sessionLogs} doneCount={doneCount} remainingCount={deck.length} />
                     </Box>
                 </Box>
             </Dialog>
@@ -1481,7 +1523,7 @@ export default function RevisionPage() {
                         </Box>
 
                         <Box sx={{ display: { xs: 'none', lg: 'block' }, position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)' }}>
-                            <SessionSidebar logs={sessionLogs} totalCards={totalEver} />
+                            <SessionSidebar logs={sessionLogs} doneCount={doneCount} remainingCount={deck.length} />
                         </Box>
                     </Box>
                 </Container>

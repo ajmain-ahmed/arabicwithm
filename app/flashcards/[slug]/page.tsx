@@ -760,9 +760,15 @@ function FlashcardQuiz({
         )
     }, [])
 
+    /* ── FIX #1: flush on unmount so Next.js navigation doesn't drop the batch ── */
     useEffect(() => {
         if (flushRef) flushRef.current = flushPending
-        return () => { if (flushRef) flushRef.current = null }
+        return () => { 
+            if (flushRef) flushRef.current = null
+            if (pendingRef.current.size > 0) {
+                flushPending()
+            }
+        }
     }, [flushRef, flushPending])
 
     useEffect(() => { if (alwaysShow) setRevealed(true) }, [alwaysShow])
@@ -885,10 +891,14 @@ function FlashcardQuiz({
         }
     }, [currentIndex, filteredCards.length, goToIndex, onComplete, filter])
 
-    const toggleRevision = useCallback(() => {
+    /* ── FIX #2: await flush so data is written before navigation ── */
+    const toggleRevision = useCallback(async () => {
         if (!current) return
         const toRevision = !current.isInRevision
         updateCardStatus(current.id, toRevision ? 'revision' : 'new', { isInRevision: toRevision })
+        
+        await flushPending()
+
         if (toRevision) {
             if (currentIndex < filteredCards.length - 1) {
                 goToIndex(currentIndex + 1)
@@ -896,22 +906,30 @@ function FlashcardQuiz({
                 onComplete?.()
             }
         }
-    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, filter])
+    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, filter, flushPending])
 
-    const toggleComplete = useCallback(() => {
+    /* ── FIX #3: await flush so data is written before navigation ── */
+    const toggleComplete = useCallback(async () => {
         if (!current) return
-        if (current.isCompleted) {
+        const wasCompleted = current.isCompleted
+
+        if (wasCompleted) {
             updateCardStatus(current.id, current.isInRevision ? 'revision' : 'new', { isCompleted: false })
         } else {
             updateCardStatus(current.id, 'completed', { isCompleted: true })
             awardWord(current.id)
+        }
+
+        await flushPending()
+
+        if (!wasCompleted) {
             if (currentIndex < filteredCards.length - 1) {
                 goToIndex(currentIndex + 1)
             } else if (filter === 'all') {
                 onComplete?.()
             }
         }
-    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, awardWord, filter])
+    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, awardWord, filter, flushPending])
 
     const handleFilterChange = useCallback(
         (newFilter: FilterType) => {

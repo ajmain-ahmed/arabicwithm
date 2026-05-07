@@ -1,3 +1,5 @@
+// app/actions/revision.ts
+
 'use server'
 
 import { createClient as createServiceClient } from "@supabase/supabase-js"
@@ -157,13 +159,10 @@ function calculateNextReview(
     return { nextReview: next, graduated: true }
 }
 
-function getStartOfTodayUTC(): string {
-    const now = new Date()
-    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).toISOString()
-}
-
 /* ─────────────────────────────────────────────
-   Build RevisionCard[] from raw progress rows
+   Build RevisionCard[] from raw rows
+   (vocab/levels/themes come from RPC; only
+    definitions & examples need extra lookups)
 ───────────────────────────────────────────── */
 async function buildRevisionCards(
     progressRows: any[],
@@ -173,56 +172,36 @@ async function buildRevisionCards(
 
     const vocabIds = progressRows.map(r => r.vocab_id)
 
-    const { data: vocabData, error: vocabErr } = await serviceClient
-        .from('vocab')
-        .select('word_id, word_ar, word_di, word_tr, root, theme_id, level_id')
-        .in('word_id', vocabIds)
-    if (vocabErr) throw new Error(vocabErr.message)
-
+    // 1. Definitions
     const { data: defsData, error: defsErr } = await serviceClient
         .from('definitions')
         .select('vocab_id, meaning, pos, def_ar, def_tr, def_en')
         .in('vocab_id', vocabIds)
     if (defsErr) throw new Error(defsErr.message)
 
+    // 2. Examples
     const { data: exData, error: exErr } = await serviceClient
         .from('examples')
         .select('vocab_id, ex_ar, ex_di, ex_en')
         .in('vocab_id', vocabIds)
     if (exErr) throw new Error(exErr.message)
 
-    const levelIds = [...new Set((vocabData ?? []).map(v => v.level_id))]
-    const { data: levelsData } = await serviceClient
-        .from('levels')
-        .select('id, code')
-        .in('id', levelIds)
-
-    const themeIds = [...new Set((vocabData ?? []).map(v => v.theme_id).filter(Boolean))]
-    const { data: themesData } = await serviceClient
-        .from('themes')
-        .select('id, name')
-        .in('id', themeIds)
-
-    const levelMap = new Map((levelsData ?? []).map(l => [l.id, l.code]))
-    const themeMap = new Map((themesData ?? []).map(t => [t.id, t.name]))
-    const vocabMap = new Map(vocabData?.map(v => [v.word_id, v]) ?? [])
-
+    // Build lookup maps
     const defMap = new Map<number, { meaning: string; pos: string; def_ar: string | null; def_tr: string | null; def_en: string | null }[]>()
-    ;(defsData ?? []).forEach(d => {
+    ;(defsData ?? []).forEach((d: any) => {
         const list = defMap.get(d.vocab_id) || []
         list.push({ meaning: d.meaning, pos: d.pos, def_ar: d.def_ar, def_tr: d.def_tr, def_en: d.def_en })
         defMap.set(d.vocab_id, list)
     })
 
     const exMap = new Map<number, { ex_ar: string; ex_di: string; ex_en: string }[]>()
-    ;(exData ?? []).forEach(e => {
+    ;(exData ?? []).forEach((e: any) => {
         const list = exMap.get(e.vocab_id) || []
         list.push({ ex_ar: e.ex_ar ?? '', ex_di: e.ex_di ?? '', ex_en: e.ex_en ?? '' })
         exMap.set(e.vocab_id, list)
     })
 
     return progressRows.map((row) => {
-        const v = vocabMap.get(row.vocab_id)
         const defs = defMap.get(row.vocab_id) ?? []
         const primaryDef = defs[0] ?? { meaning: '', pos: 'unknown', def_ar: null, def_tr: null, def_en: null }
         const examples = exMap.get(row.vocab_id) ?? []
@@ -233,18 +212,18 @@ async function buildRevisionCards(
 
         return {
             id: row.vocab_id,
-            word: v?.word_ar ?? '',
-            word_diacritic: v?.word_di ?? '',
-            transliteration: v?.word_tr ?? '',
+            word: row.word_ar ?? '',
+            word_diacritic: row.word_di ?? '',
+            transliteration: row.word_tr ?? '',
             definition: primaryDef.meaning,
-            level: levelMap.get(v?.level_id) ?? '',
+            level: row.level_code ?? '',
             type: primaryDef.pos,
-            root: v?.root ?? null,
+            root: row.root ?? null,
             ex_ar: examples.map(e => e.ex_ar).join(';') || null,
             ex_di: examples.map(e => e.ex_di).join(';') || null,
             ex_en: examples.map(e => e.ex_en).join(';') || null,
-            theme_id: v?.theme_id ?? 0,
-            theme_name: themeMap.get(v?.theme_id) ?? null,
+            theme_id: row.theme_id ?? 0,
+            theme_name: row.theme_name ?? null,
             def_ar: primaryDef.def_ar ?? null,
             def_tr: primaryDef.def_tr ?? null,
             def_en: primaryDef.def_en ?? null,
@@ -262,6 +241,8 @@ async function buildRevisionCards(
 
 /* ─────────────────────────────────────────────
    Fetch today's FULL session (due + completed)
+   Single RPC replaces 5 progress queries + 3
+   related-data lookups.
 ───────────────────────────────────────────── */
 export async function fetchRevisionSession(): Promise<{
     dueCards: RevisionCard[]
@@ -271,65 +252,19 @@ export async function fetchRevisionSession(): Promise<{
     if (!userId) return { dueCards: [], completedCards: [] }
 
     const now = new Date().toISOString()
-    const startOfToday = getStartOfTodayUTC()
 
-    // ── 1. Currently due cards ──
-    const { count: introducedToday, error: countError } = await serviceClient
-        .from('progress')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .gte('first_review_at', startOfToday)
-    if (countError) throw new Error(countError.message)
+    const { data: rpcData, error } = await serviceClient.rpc('get_revision_session', {
+        p_user_id: userId,
+    })
 
-    const remainingNewLimit = Math.max(0, DAILY_NEW_LIMIT - (introducedToday ?? 0))
+    if (error) throw new Error(error.message)
+    if (!rpcData) return { dueCards: [], completedCards: [] }
 
-    // Graduated review cards (interval_days > 0) that are due now
-    const { data: reviews } = await serviceClient
-        .from('progress')
-        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, last_rating, created_at')
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .gt('interval_days', 0)
-        .lte('next_review_at', now)
-
-    // Brand new cards — never been reviewed
-    const { data: brandNew } = await serviceClient
-        .from('progress')
-        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, last_rating, created_at')
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .eq('repetitions', 0)
-        .is('last_review_at', null)
-        .order('created_at', { ascending: true })
-        .limit(remainingNewLimit)
-
-    // Learning cards — interval_days = 0 and have been seen at least once.
-    // Only include those whose next_review_at has actually arrived.
-    const { data: learning } = await serviceClient
-        .from('progress')
-        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, last_rating, created_at')
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .eq('interval_days', 0)
-        .not('last_review_at', 'is', null)
-        .lte('next_review_at', now)   // ← FIX: respect the learning step schedule
-
-    const dueProgress = [...(reviews ?? []), ...(brandNew ?? []), ...(learning ?? [])]
-
-    // ── 2. ALL cards reviewed today (regardless of current due status) ──
-    const { data: completedProgress, error: completedError } = await serviceClient
-        .from('progress')
-        .select('vocab_id, repetitions, interval_days, ease_factor, last_review_at, next_review_at, first_review_at, last_rating, created_at')
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .gte('last_review_at', startOfToday)
-        .order('last_review_at', { ascending: true })
-
-    if (completedError) throw new Error(completedError.message)
+    const dueProgress = rpcData.due_cards ?? []
+    const completedProgress = rpcData.completed_today ?? []
 
     const dueCards = await buildRevisionCards(dueProgress, now)
-    const completedCards = await buildRevisionCards(completedProgress ?? [], now)
+    const completedCards = await buildRevisionCards(completedProgress, now)
 
     return { dueCards, completedCards }
 }

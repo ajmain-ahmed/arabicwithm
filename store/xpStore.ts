@@ -1,3 +1,5 @@
+// store/xpStore.ts
+
 import { create } from 'zustand'
 import { fetchUserStats, awardWordComplete, awardThemeBonus, type UserStats } from '@/app/actions/xp'
 import { getLevelFromXp, getRankTitle } from '@/app/lib/xp'
@@ -169,11 +171,15 @@ export const useXpStore = create<XpStore>((set, get) => ({
     const prevStats = get().stats
     get().addXp(50)
     const newStats = await awardThemeBonus(themeId)
-    if (newStats && prevStats) {
-      if (newStats.totalXp !== prevStats.totalXp + 50) {
-        set({ stats: newStats })
-        get().animateTo(newStats)
-      }
+    if (!newStats) {
+      // Theme bonus already awarded — revert optimistic update
+      set({ stats: prevStats })
+      get().animateTo(prevStats!)
+      return
+    }
+    if (prevStats && newStats.totalXp !== prevStats.totalXp + 50) {
+      set({ stats: newStats })
+      get().animateTo(newStats)
     }
   },
 }))

@@ -1,3 +1,5 @@
+// app/lib/study.ts
+
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 
 const serviceUrl = process.env.SUPABASE_URL

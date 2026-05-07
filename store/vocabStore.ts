@@ -1,3 +1,5 @@
+// store/vocabStore.ts
+
 import { create } from "zustand"
 import type { VocabRow, WordProgress, ExampleRow } from "@/app/actions/vocab"
 import { fetchThemeVocabWithProgress } from "@/app/actions/vocab"

@@ -1,3 +1,5 @@
+// app/lib/xp.ts
+
 /* ── Pure XP / Level math (shared between server & client) ─────────── */
 
 export function getLevelFromXp(totalXp: number): number {

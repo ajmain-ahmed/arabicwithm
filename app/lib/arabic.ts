@@ -1,3 +1,5 @@
+// app/lib/arabic.ts
+
 const DIACRITICS_AND_TATWEEL = /[\u0640\u064B-\u065F\u0670\u0656\u0657]/g
 
 // Definite-article combinations — safe to strip unconditionally
