@@ -56,7 +56,43 @@ export async function fetchThemesWithProgress(
   }
 
   const userId = await getAuthenticatedUserId()
-  if (!userId) return []
+
+  if (!userId) {
+    const { data: levelData, error: levelErr } = await serviceClient
+      .from('levels')
+      .select('id')
+      .eq('code', levelCode)
+      .single()
+
+    if (levelErr || !levelData) return []
+
+    const { data: vocabData } = await serviceClient
+      .from('vocab')
+      .select('theme_id')
+      .eq('level_id', levelData.id)
+
+    const themeIds = [...new Set((vocabData ?? []).map((v: any) => v.theme_id))]
+    if (themeIds.length === 0) return []
+
+    const { data: themesData } = await serviceClient
+      .from('themes')
+      .select('id, display_name')
+      .in('id', themeIds)
+      .order('id')
+
+    const countMap = new Map<number, number>()
+    for (const v of vocabData ?? []) {
+      countMap.set(v.theme_id, (countMap.get(v.theme_id) ?? 0) + 1)
+    }
+
+    return (themesData ?? []).map((t: any) => ({
+      theme_id: Number(t.id),
+      display_name: t.display_name,
+      total_words: countMap.get(t.id) ?? 0,
+      completed_count: 0,
+      revision_count: 0,
+    }))
+  }
 
   const { data, error } = await serviceClient.rpc('get_theme_progress', {
     p_user_id: userId,

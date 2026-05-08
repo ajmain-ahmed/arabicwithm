@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
     Box, Button, Container, Typography, Collapse, Fade,
-    LinearProgress, Skeleton,
+    LinearProgress, Skeleton, CircularProgress,
     IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
     ToggleButton, ToggleButtonGroup,
     Slider, Badge,
@@ -36,6 +36,8 @@ import Navbar from '@/app/components/navbar'
 import { useVocabStore } from '@/store/vocabStore'
 import { useXpStore } from '@/store/xpStore'
 import TutorialDialog, { useTutorialSeen } from '../components/TutorialDialog'
+import AuthDialog from '@/app/components/AuthDialog'
+import { useAuth } from '@/app/AuthContext'
 import type { VocabRow, WordProgress, ThemeProgress, ExampleRow, FormRow } from '@/app/actions/vocab'
 import {
     fetchThemesWithProgress,
@@ -612,6 +614,60 @@ function DefinitionPanel({ card, showDiacritics, textScale }: {
 }
 
 /* ─────────────────────────────────────────────
+   LoadingView
+───────────────────────────────────────────── */
+function LoadingView({ label, isLoading }: { label: string; isLoading: boolean }) {
+    const [progress, setProgress] = useState(0)
+    useEffect(() => {
+        if (!isLoading) {
+            setProgress(100)
+            return
+        }
+        setProgress(0)
+        const timer = setInterval(() => {
+            setProgress(prev => {
+                if (prev >= 88) return prev
+                const remaining = 88 - prev
+                const increment = Math.max(2, Math.floor(remaining / 6))
+                return Math.min(88, prev + increment)
+            })
+        }, 100)
+        return () => clearInterval(timer)
+    }, [isLoading])
+
+    return (
+        <Box sx={{
+            background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px',
+            padding: { xs: '1.5rem 1rem', md: '2rem 1.5rem' },
+            minHeight: 340, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2.5,
+        }}>
+            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                <CircularProgress variant="determinate" value={progress} size={90} thickness={2.5} sx={{ color: '#b8860b' }} />
+                <Box sx={{
+                    position: 'absolute', top: 0, left: 0, bottom: 0, right: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                    <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.6rem', fontWeight: 700, color: '#2c1a0e' }}>
+                        {progress}%
+                    </Typography>
+                </Box>
+            </Box>
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#7a6e65', letterSpacing: '0.02em' }}>
+                {label}
+            </Typography>
+            <Box sx={{ width: '100%', maxWidth: 280, height: 4, borderRadius: '999px', background: 'rgba(184,134,11,0.1)', overflow: 'hidden' }}>
+                <Box sx={{
+                    height: '100%', borderRadius: '999px',
+                    background: 'linear-gradient(90deg, #b8860b, #d4a843)',
+                    transition: 'width 0.3s ease',
+                    width: `${progress}%`,
+                }} />
+            </Box>
+        </Box>
+    )
+}
+
+/* ─────────────────────────────────────────────
    FormsPanel
 ───────────────────────────────────────────── */
 const FORM_TYPE_LABELS: Record<string, string> = {
@@ -719,6 +775,7 @@ function FlashcardQuiz({
     totalInTheme, alreadyCompletedCount, textScale, initialCardIndex, flushRef,
     levelCode,
     onThemeProgressUpdate,
+    onOpenAuthDialog,
 }: {
     initialQueue: CardState[]
     themeId: number
@@ -734,7 +791,9 @@ function FlashcardQuiz({
     flushRef?: React.MutableRefObject<(() => Promise<void>) | null>
     levelCode: string
     onThemeProgressUpdate?: (themeId: number, progress: { completedCount: number; revisionCount: number }) => void
+    onOpenAuthDialog?: () => void
 }) {
+    const { user } = useAuth()
     const updateLocalProgress = useVocabStore(s => s.updateLocalProgress)
     const awardWord = useXpStore(s => s.awardWord)
     const awardTheme = useXpStore(s => s.awardTheme)
@@ -1089,13 +1148,24 @@ function FlashcardQuiz({
                             )}
                         </Box>
 
+                        {!user && (
+                            <Box sx={{ mt: 1.5, mb: 0.5, textAlign: 'center' }}>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: '#b8860b' }}>
+                                    <Box component="span" onClick={onOpenAuthDialog} sx={{ cursor: 'pointer', textDecoration: 'underline', fontWeight: 600 }}>
+                                        Log in
+                                    </Box>
+                                    {' '}to track your progress
+                                </Typography>
+                            </Box>
+                        )}
+
                         {/* Desktop action buttons */}
                         <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', mt: '1.25rem' }}>
                             <Button variant="outlined" size="small" onClick={handlePrevious} disabled={!canGoBack} startIcon={<NavigateBefore sx={{ fontSize: '1.1rem !important' }} />}
                                 sx={{ borderColor: '#7a6e65', color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px', textTransform: 'none', '&:hover': { background: 'rgba(122,110,101,0.08)' }, '&:disabled': { opacity: 0.4 } }}>Back</Button>
-                            <Button variant={current.isInRevision ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} startIcon={current.isInRevision ? <BookmarkAdded sx={{ fontSize: '1.1rem !important' }} /> : <Bookmark sx={{ fontSize: '1.1rem !important' }} />}
+                            <Button variant={current.isInRevision ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} disabled={!user} startIcon={current.isInRevision ? <BookmarkAdded sx={{ fontSize: '1.1rem !important' }} /> : <Bookmark sx={{ fontSize: '1.1rem !important' }} />}
                                 sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>Revision</Button>
-                            <Button variant={current.isCompleted ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} startIcon={current.isCompleted ? <DoneAll sx={{ fontSize: '1.1rem !important' }} /> : <Check sx={{ fontSize: '1.1rem !important' }} />}
+                            <Button variant={current.isCompleted ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} disabled={!user} startIcon={current.isCompleted ? <DoneAll sx={{ fontSize: '1.1rem !important' }} /> : <Check sx={{ fontSize: '1.1rem !important' }} />}
                                 sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>{current.isCompleted ? 'Completed' : 'Complete'}</Button>
                             <Button variant="outlined" color="warning" size="small" onClick={handleNext} disabled={isLastCard && filter !== 'all'} endIcon={<NavigateNext sx={{ fontSize: '1.1rem !important' }} />}
                                 sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px', '&:disabled': { opacity: 0.4 } }}>
@@ -1109,8 +1179,8 @@ function FlashcardQuiz({
                                 sx={{ ...mobileActionBtnSx, borderColor: canGoBack ? 'rgba(122,110,101,0.4)' : 'rgba(122,110,101,0.15)', color: canGoBack ? '#7a6e65' : 'rgba(122,110,101,0.3)', '&:hover': { background: 'rgba(122,110,101,0.08)' }, '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(122,110,101,0.15)' } }}>
                                 Prev
                             </Button>
-                            <Button variant={current.isInRevision ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} startIcon={current.isInRevision ? <BookmarkAdded /> : <Bookmark />} sx={mobileActionBtnSx}>Revision</Button>
-                            <Button variant={current.isCompleted ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} startIcon={current.isCompleted ? <DoneAll /> : <Check />} sx={mobileActionBtnSx}>{current.isCompleted ? 'Completed' : 'Complete'}</Button>
+                            <Button variant={current.isInRevision ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} disabled={!user} startIcon={current.isInRevision ? <BookmarkAdded /> : <Bookmark />} sx={mobileActionBtnSx}>Revision</Button>
+                            <Button variant={current.isCompleted ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} disabled={!user} startIcon={current.isCompleted ? <DoneAll /> : <Check />} sx={mobileActionBtnSx}>{current.isCompleted ? 'Completed' : 'Complete'}</Button>
                             <Button variant="outlined" size="small" onClick={handleNext} disabled={isLastCard && filter !== 'all'}
                                 sx={{ ...mobileActionBtnSx, borderColor: isLastCard && filter !== 'all' ? 'rgba(184,134,11,0.15)' : 'rgba(184,134,11,0.45)', color: isLastCard && filter !== 'all' ? 'rgba(184,134,11,0.3)' : '#b8860b', '&:hover': { background: 'rgba(184,134,11,0.06)' }, '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(184,134,11,0.15)' } }}>
                                 Skip
@@ -1267,6 +1337,19 @@ export default function FlashcardSlugPage() {
     const [quizKey, setQuizKey] = useState(0)
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [themesOpen, setThemesOpen] = useState(false)
+    const [authDialogOpen, setAuthDialogOpen] = useState(false)
+
+    const [themeTransitionReady, setThemeTransitionReady] = useState(false)
+    const [vocabTransitionReady, setVocabTransitionReady] = useState(false)
+
+    useEffect(() => {
+        if (!themesLoading && selectedTheme) {
+            const timer = setTimeout(() => setThemeTransitionReady(true), 400)
+            return () => clearTimeout(timer)
+        } else {
+            setThemeTransitionReady(false)
+        }
+    }, [themesLoading, selectedTheme])
 
     const { seen: tutorialSeen, markSeen: markTutorialSeen } = useTutorialSeen()
     const [tutorialOpen, setTutorialOpen] = useState(false)
@@ -1392,6 +1475,15 @@ export default function FlashcardSlugPage() {
     }, [selectedTheme, validThemes, handleThemeSelect])
 
     const isLoadingVocab = selectedTheme != null && loadingThemeId === selectedTheme.theme_id
+
+    useEffect(() => {
+        if (!isLoadingVocab) {
+            const timer = setTimeout(() => setVocabTransitionReady(true), 400)
+            return () => clearTimeout(timer)
+        } else {
+            setVocabTransitionReady(false)
+        }
+    }, [isLoadingVocab])
 
     return (
         <>
@@ -1543,15 +1635,9 @@ export default function FlashcardSlugPage() {
                     )}
 
                     {/* Main content */}
-                    {themesLoading && !selectedTheme ? (
+                    {(themesLoading && !selectedTheme) || !themeTransitionReady ? (
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' }, gap: { xs: 2, lg: 3 }, alignItems: 'start' }}>
-                            <Box sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px', padding: { xs: '1.5rem 1rem', md: '2rem 1.5rem' }, minHeight: 340, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                <Skeleton variant="rounded" height={2} sx={{ mb: 2 }} />
-                                <Skeleton variant="text" width={80} sx={{ mx: 'auto' }} />
-                                <Skeleton variant="rounded" height={88} width="55%" sx={{ mx: 'auto', mt: 1 }} />
-                                <Skeleton variant="rounded" height={32} width="30%" sx={{ mx: 'auto' }} />
-                                <Skeleton variant="rounded" height={44} width="100%" sx={{ mt: 'auto' }} />
-                            </Box>
+                            <LoadingView label="Loading themes…" isLoading={themesLoading && !selectedTheme} />
                             <Box sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.15)', borderRadius: '10px', overflow: 'hidden', display: { xs: 'none', lg: 'block' } }}>
                                 <Skeleton variant="rounded" height={100} sx={{ borderRadius: 0 }} />
                                 {[...Array(5)].map((_, i) => (
@@ -1566,14 +1652,8 @@ export default function FlashcardSlugPage() {
                     ) : (
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' }, gap: { xs: 2, lg: 3 }, alignItems: 'start' }}>
                             <Box>
-                                {isLoadingVocab ? (
-                                    <Box sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px', padding: { xs: '1.5rem 1rem', md: '2rem 1.5rem' }, minHeight: 340, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                        <Skeleton variant="rounded" height={2} sx={{ mb: 2 }} />
-                                        <Skeleton variant="text" width={80} sx={{ mx: 'auto' }} />
-                                        <Skeleton variant="rounded" height={88} width="55%" sx={{ mx: 'auto', mt: 1 }} />
-                                        <Skeleton variant="rounded" height={32} width="30%" sx={{ mx: 'auto' }} />
-                                        <Skeleton variant="rounded" height={44} width="100%" sx={{ mt: 'auto' }} />
-                                    </Box>
+                                {isLoadingVocab || !vocabTransitionReady ? (
+                                    <LoadingView label="Loading words…" isLoading={isLoadingVocab} />
                                 ) : selectedTheme && activeQueue.length > 0 ? (
                                     <FlashcardQuiz
                                         textScale={textScale}
@@ -1591,6 +1671,7 @@ export default function FlashcardSlugPage() {
                                         flushRef={flushRef}
                                         levelCode={level}
                                         onThemeProgressUpdate={handleThemeProgressUpdate}
+                                        onOpenAuthDialog={() => setAuthDialogOpen(true)}
                                     />
                                 ) : selectedTheme ? (
                                     <Box sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px', padding: { xs: '2rem 1rem', md: '3rem 1.5rem' }, minHeight: 340, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center' }}>
@@ -1626,6 +1707,7 @@ export default function FlashcardSlugPage() {
                     )}
                 </Container>
             </Box>
+            <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
         </>
     )
 }

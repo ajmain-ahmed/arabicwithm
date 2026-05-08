@@ -10,10 +10,12 @@ import {
 import {
     ArrowBackSharp, CheckCircle, Refresh, Close,
     HelpOutlineRounded, Settings, ChevronLeft, ChevronRight,
-    Replay, TrendingFlat, Check, TrendingUp,
+    Replay, TrendingFlat, Check, TrendingUp, MenuBook,
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/app/components/navbar'
+import AuthDialog from '@/app/components/AuthDialog'
+import { useAuth } from '@/app/AuthContext'
 import {
     fetchRevisionSession,
     submitRevisionAnswer,
@@ -21,6 +23,11 @@ import {
     type Answer,
     type SessionLog,
 } from '@/app/actions/revision'
+
+/* ─────────────────────────────────────────────
+   Constants
+───────────────────────────────────────────── */
+const LEARNING_STEPS = [1, 10] // minutes
 
 /* ─────────────────────────────────────────────
    Types
@@ -91,7 +98,7 @@ let _dotIdCounter = 0
 function makeDotId() { return `dot-${++_dotIdCounter}` }
 
 /* ─────────────────────────────────────────────
-   Countdown Timer
+   Countdown Timer (kept for future use)
 ───────────────────────────────────────────── */
 function CountdownTimer({ targetTime }: { targetTime: string }) {
     const [remaining, setRemaining] = useState<number>(() => {
@@ -191,12 +198,17 @@ function useAnkiQueue(initial: SessionCard[], seedAnswered?: Map<string, string>
             newAnswered.set(current.dotId, color)
 
             if (ans === 'again') {
+                /* ── FIX: card is immediately answerable in this session ── */
                 const reinserted: SessionCard = {
                     ...current,
                     queue: 'learning',
                     lapses: current.lapses + 1,
                     dotId: makeDotId(),
                     learningStep: nextLearningStep,
+                    data: {
+                        ...current.data,
+                        next_review_at: null,
+                    },
                 }
                 const insertAt = Math.min(3, rest.length)
                 const newDeck = [
@@ -548,10 +560,9 @@ function SessionSidebar({ logs, doneCount, remainingCount }: { logs: SessionLog[
     useEffect(() => { setPage(1) }, [logs.length === 0])
     const start = (page - 1) * SIDEBAR_PAGE_SIZE
     const pageLogs = logs.slice(start, start + SIDEBAR_PAGE_SIZE)
-    const answered = logs.length
     const totalCards = doneCount + remainingCount
-    const progress = totalCards > 0 ? Math.round((answered / totalCards) * 100) : 0
-    const avgTime = answered > 0 ? Math.round(logs.reduce((s, l) => s + l.timeTaken, 0) / answered) : 0
+    const progress = totalCards > 0 ? Math.round((doneCount / totalCards) * 100) : 0
+    const avgTime = logs.length > 0 ? Math.round(logs.reduce((s, l) => s + l.timeTaken, 0) / logs.length) : 0
     const ratingCounts = { again: 0, hard: 0, good: 0, easy: 0 }
     logs.forEach(l => ratingCounts[l.rating]++)
 
@@ -560,7 +571,7 @@ function SessionSidebar({ logs, doneCount, remainingCount }: { logs: SessionLog[
             <Box sx={{ background: 'linear-gradient(135deg, #0e2e1f 0%, #071a0f 100%)', px: 2, py: 2, flexShrink: 0 }}>
                 <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.3rem', fontWeight: 700, color: '#f5ede0', lineHeight: 1.2, mb: 0.75 }}>Word Bank</Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'rgba(245,237,224,0.6)', fontWeight: 500 }}>{answered} / {totalCards} cards</Typography>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'rgba(245,237,224,0.6)', fontWeight: 500 }}>{doneCount} / {totalCards} cards</Typography>
                     <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: '#d4a843', fontWeight: 700 }}>{progress}%</Typography>
                 </Box>
                 <LinearProgress variant="determinate" value={progress} sx={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.1)', '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, #b8860b 0%, #d4a843 100%)', borderRadius: 3 } }} />
@@ -646,7 +657,6 @@ function RevisionFlashcard({
     const card = sessionCard.data
     const examples = parseExamples(card)
     const progress = totalEver > 0 ? Math.round((doneCount / totalEver) * 100) : 0
-    const isDue = card.isDue
 
     /* ── Reset UI when card changes ── */
     useEffect(() => {
@@ -707,7 +717,6 @@ function RevisionFlashcard({
                 </Box>
 
                 <Box sx={{ mt: 'auto', width: '100%' }}>
-                    {/* ── EXIT is instant (0 ms) so the next card never flashes the old answer ── */}
                     <Collapse in={revealed} timeout={{ enter: 300, exit: 0 }}>
                         <Box sx={{ borderTop: '1px solid rgba(184,134,11,0.1)', pt: '1rem', mb: '1rem' }} />
 
@@ -733,48 +742,34 @@ function RevisionFlashcard({
                             {activeTab === 'examples' && <ExampleSentences examples={examples} showDiacritics={showDiacritics} textScale={textScale} />}
                         </Box>
 
+                        {/* ── FIX: always show active answer buttons ── */}
                         <Box sx={{ mt: { xs: '1.25rem', md: '1.5rem' } }}>
-                            {isDue ? (
-                                <>
-                                    {/* Desktop */}
-                                    <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                                        {ANSWER_BUTTONS.map(btn => (
-                                            <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} startIcon={btn.icon}
-                                                sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', textTransform: 'none', borderRadius: '6px', py: '0.5rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color } }}>
-                                                {btn.label}
-                                            </Button>
-                                        ))}
-                                    </Box>
-                                    {/* Mobile */}
-                                    <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: '8px' }}>
-                                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                            {ANSWER_BUTTONS.slice(0, 2).map(btn => (
-                                                <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} startIcon={btn.icon}
-                                                    sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', borderRadius: '8px', py: '0.55rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color } }}>
-                                                    {btn.label}
-                                                </Button>
-                                            ))}
-                                        </Box>
-                                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                            {ANSWER_BUTTONS.slice(2, 4).map(btn => (
-                                                <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} startIcon={btn.icon}
-                                                    sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', borderRadius: '8px', py: '0.55rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color } }}>
-                                                    {btn.label}
-                                                </Button>
-                                            ))}
-                                        </Box>
-                                    </Box>
-                                </>
-                            ) : (
-                                <Box sx={{ textAlign: 'center' }}>
-                                    <CountdownTimer targetTime={card.next_review_at!} />
-                                    <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', mt: 2, opacity: 0.5 }}>
-                                        {ANSWER_BUTTONS.map(btn => (
-                                            <Button key={btn.value} variant="outlined" disabled startIcon={btn.icon} sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', textTransform: 'none', borderRadius: '6px', py: '0.5rem', border: `1.5px solid ${btn.border}`, background: 'transparent' }}>{btn.label}</Button>
-                                        ))}
-                                    </Box>
+                            <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                                {ANSWER_BUTTONS.map(btn => (
+                                    <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} startIcon={btn.icon}
+                                        sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', textTransform: 'none', borderRadius: '6px', py: '0.5rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color } }}>
+                                        {btn.label}
+                                    </Button>
+                                ))}
+                            </Box>
+                            <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: '8px' }}>
+                                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                    {ANSWER_BUTTONS.slice(0, 2).map(btn => (
+                                        <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} startIcon={btn.icon}
+                                            sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', borderRadius: '8px', py: '0.55rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color } }}>
+                                            {btn.label}
+                                        </Button>
+                                    ))}
                                 </Box>
-                            )}
+                                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                    {ANSWER_BUTTONS.slice(2, 4).map(btn => (
+                                        <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} startIcon={btn.icon}
+                                            sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', borderRadius: '8px', py: '0.55rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color } }}>
+                                            {btn.label}
+                                        </Button>
+                                    ))}
+                                </Box>
+                            </Box>
                         </Box>
                     </Collapse>
 
@@ -797,6 +792,7 @@ function RevisionFlashcard({
 ───────────────────────────────────────────── */
 export default function RevisionPage() {
     const router = useRouter()
+    const { user, loading: authLoading } = useAuth()
 
     const [dueCards, setDueCards] = useState<RevisionCard[]>([])
     const [completedCards, setCompletedCards] = useState<RevisionCard[]>([])
@@ -808,13 +804,14 @@ export default function RevisionPage() {
     const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([])
     const [progressOpen, setProgressOpen] = useState(false)
     const [settingsOpen, setSettingsOpen] = useState(false)
+    const [authDialogOpen, setAuthDialogOpen] = useState(false)
 
     const initialDeck = useMemo<SessionCard[]>(() => dueCards.map(card => ({
         data: card,
         queue: classifyCard(card),
-        lapses: 0,
+        lapses: card.lapses ?? 0,
         dotId: makeDotId(),
-        learningStep: 0,
+        learningStep: card.learning_step ?? 0,
     })), [dueCards])
 
     const { seedAnsweredDots, seedDotOrder } = useMemo(() => {
@@ -844,6 +841,7 @@ export default function RevisionPage() {
         return set
     }, [dotOrder, answeredDots, deck])
 
+    /* ── FIX: merge logs instead of overwriting ── */
     const loadCards = useCallback(async () => {
         setLoading(true)
         try {
@@ -851,11 +849,23 @@ export default function RevisionPage() {
             setDueCards(dueCards)
             setCompletedCards(completedCards)
             setSessionStarted(true)
-            const historicalLogs: SessionLog[] = completedCards.map(c => ({
-                cardId: c.id, word: c.word, rating: c.lastRating ?? 'good',
-                timeTaken: 0, level: c.level, theme: c.theme_name ?? '',
-            }))
-            setSessionLogs(historicalLogs)
+
+            setSessionLogs(prev => {
+                if (prev.length === 0) {
+                    return completedCards.map(c => ({
+                        cardId: c.id, word: c.word, rating: c.lastRating ?? 'good',
+                        timeTaken: 0, level: c.level, theme: c.theme_name ?? '',
+                    }))
+                }
+                const existingIds = new Set(prev.map(l => l.cardId))
+                const newLogs = completedCards
+                    .filter(c => !existingIds.has(c.id))
+                    .map(c => ({
+                        cardId: c.id, word: c.word, rating: c.lastRating ?? 'good',
+                        timeTaken: 0, level: c.level, theme: c.theme_name ?? '',
+                    }))
+                return newLogs.length > 0 ? [...prev, ...newLogs] : prev
+            })
         } catch (err) {
             console.error(err)
         } finally {
@@ -866,18 +876,33 @@ export default function RevisionPage() {
     useEffect(() => { loadCards() }, [loadCards])
 
     useEffect(() => {
-        if (!sessionStarted) return
-        if (isComplete) {
+        if (!sessionStarted || isComplete) return
+
+        if (deck.length === 0) {
             const timeout = setTimeout(() => loadCards(), 2000)
             return () => clearTimeout(timeout)
         }
-        const interval = setInterval(() => { loadCards() }, 30000)
-        return () => clearInterval(interval)
-    }, [sessionStarted, isComplete, loadCards])
 
+        const upcoming = deck.filter(c =>
+            c.queue === 'learning' &&
+            c.data.next_review_at &&
+            new Date(c.data.next_review_at) > new Date()
+        )
+
+        if (upcoming.length === 0) return
+
+        const nextDue = Math.min(...upcoming.map(c => new Date(c.data.next_review_at!).getTime()))
+        const delay = nextDue - Date.now()
+
+        if (delay > 0 && delay < 10 * 60 * 1000) {
+            const timeout = setTimeout(() => loadCards(), delay + 2000)
+            return () => clearTimeout(timeout)
+        }
+    }, [sessionStarted, isComplete, deck, loadCards])
+
+    /* ── FIX: removed due guard; every deck card is answerable now ── */
     const handleAnswer = useCallback(async (ans: Answer, timeTaken: number) => {
         if (!currentCard) return
-        if (!currentCard.data.isDue) return
 
         const vocabId = currentCard.data.progress_word_id
         const learningStep = currentCard.learningStep
@@ -893,13 +918,14 @@ export default function RevisionPage() {
             theme: currentCard.data.theme_name ?? '',
         }])
 
-        submitRevisionAnswer(vocabId, ans, learningStep).catch(err => {
-            console.error('[revision] background save failed:', err)
-        })
+        try {
+            await submitRevisionAnswer(vocabId, ans, learningStep)
+        } catch (err) {
+            console.error('[revision] save failed:', err)
+        }
     }, [currentCard, answer])
 
-    /* ── Loading ── */
-    if (loading) {
+    if (loading || authLoading) {
         return (
             <>
                 <Navbar />
@@ -925,7 +951,30 @@ export default function RevisionPage() {
         )
     }
 
-    /* ── Session complete ── */
+    if (!user) {
+        return (
+            <>
+                <Navbar />
+                <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh', pt: { xs: 8, sm: 10 } }}>
+                    <Container maxWidth="sm" sx={{ py: { xs: 4, md: 6 } }}>
+                        <Box sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px', padding: { xs: '2.5rem 1.5rem', md: '3rem 2rem' }, textAlign: 'center' }}>
+                            <MenuBook sx={{ fontSize: { xs: 52, md: 64 }, color: '#b8860b', mb: 2 }} />
+                            <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { xs: '1.8rem', md: '2.2rem' }, fontWeight: 700, color: '#2c1a0e', mb: 1 }}>Word Bank</Typography>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.95rem', md: '1.05rem' }, color: '#7a6e65', mb: 3 }}>
+                                Log in to track your revision progress and review words with spaced repetition.
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                                <Button variant="contained" onClick={() => setAuthDialogOpen(true)} sx={{ background: '#2c1a0e', color: '#f5ede0', fontFamily: 'Jost, sans-serif', fontWeight: 600, textTransform: 'none', borderRadius: '6px', px: 3, '&:hover': { background: '#1a0f08' } }}>Log in</Button>
+                                <Button variant="outlined" startIcon={<ArrowBackSharp />} onClick={() => router.back()} sx={{ borderColor: 'rgba(122,110,101,0.3)', color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontWeight: 500, textTransform: 'none', borderRadius: '6px', px: 3, '&:hover': { borderColor: '#7a6e65', background: 'rgba(122,110,101,0.05)' } }}>Back</Button>
+                            </Box>
+                        </Box>
+                    </Container>
+                </Box>
+                <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
+            </>
+        )
+    }
+
     if (isComplete || (sessionStarted && dueCards.length === 0 && completedCards.length === 0)) {
         return (
             <>
@@ -951,7 +1000,6 @@ export default function RevisionPage() {
         )
     }
 
-    /* ── Quiz ── */
     return (
         <>
             <Navbar />
@@ -1029,6 +1077,7 @@ export default function RevisionPage() {
                     </Box>
                 </Container>
             </Box>
+            <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
         </>
     )
 }
