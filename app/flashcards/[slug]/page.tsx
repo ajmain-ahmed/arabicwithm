@@ -760,11 +760,12 @@ function FlashcardQuiz({
         )
     }, [])
 
-    /* ── FIX #1: flush on unmount so Next.js navigation doesn't drop the batch ── */
+    // Expose flushPending to parent via ref, and flush on unmount
     useEffect(() => {
         if (flushRef) flushRef.current = flushPending
-        return () => { 
+        return () => {
             if (flushRef) flushRef.current = null
+            // Fire-and-forget on unmount — covers Next.js client-side navigation
             if (pendingRef.current.size > 0) {
                 flushPending()
             }
@@ -813,13 +814,13 @@ function FlashcardQuiz({
         [current, allExamples]
     )
 
-    /* ── Sync theme-level counts back to parent ── */
+    // Sync theme-level counts back to parent
     useEffect(() => {
         if (allCards.length === 0) return
         onThemeProgressUpdate?.(themeId, { completedCount, revisionCount })
     }, [allCards, themeId, completedCount, revisionCount, onThemeProgressUpdate])
 
-    /* ── Auto-advance when theme fully completed ── */
+    // Auto-advance when theme fully completed
     const wasAlreadyCompleteOnMount = useRef(initialQueue.every(c => c.isCompleted))
     const hasTriggeredAdvance = useRef(false)
     const hasAwardedThemeBonus = useRef(false)
@@ -854,6 +855,7 @@ function FlashcardQuiz({
                     else if (isInRevision) status = 'revision'
 
                     if (opts) {
+                        // Queue in the batch — do NOT flush here
                         pendingRef.current.set(cardId, { isCompleted, isInRevision })
                         updateLocalProgress(themeId, levelCode, cardId, {
                             is_completed: isCompleted,
@@ -891,13 +893,11 @@ function FlashcardQuiz({
         }
     }, [currentIndex, filteredCards.length, goToIndex, onComplete, filter])
 
-    /* ── FIX #2: await flush so data is written before navigation ── */
-    const toggleRevision = useCallback(async () => {
+    // Update local state + advance instantly — no DB call here
+    const toggleRevision = useCallback(() => {
         if (!current) return
         const toRevision = !current.isInRevision
         updateCardStatus(current.id, toRevision ? 'revision' : 'new', { isInRevision: toRevision })
-        
-        await flushPending()
 
         if (toRevision) {
             if (currentIndex < filteredCards.length - 1) {
@@ -906,10 +906,10 @@ function FlashcardQuiz({
                 onComplete?.()
             }
         }
-    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, filter, flushPending])
+    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, filter])
 
-    /* ── FIX #3: await flush so data is written before navigation ── */
-    const toggleComplete = useCallback(async () => {
+    // Update local state + advance instantly — no DB call here
+    const toggleComplete = useCallback(() => {
         if (!current) return
         const wasCompleted = current.isCompleted
 
@@ -920,8 +920,6 @@ function FlashcardQuiz({
             awardWord(current.id)
         }
 
-        await flushPending()
-
         if (!wasCompleted) {
             if (currentIndex < filteredCards.length - 1) {
                 goToIndex(currentIndex + 1)
@@ -929,7 +927,7 @@ function FlashcardQuiz({
                 onComplete?.()
             }
         }
-    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, awardWord, filter, flushPending])
+    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, awardWord, filter])
 
     const handleFilterChange = useCallback(
         (newFilter: FilterType) => {
@@ -1006,14 +1004,14 @@ function FlashcardQuiz({
                     <Collapse in={revealed} timeout={300}>
                         <Box sx={{ borderTop: '1px solid rgba(184,134,11,0.1)', margin: '1rem 0' }} />
 
-                        {/* POS chip on its own line */}
+                        {/* POS chip */}
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: { xs: 0.5, md: 0.75 } }}>
                             <Box sx={{ display: 'inline-flex', alignItems: 'center', fontFamily: 'Jost, sans-serif', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '8px 16px', borderRadius: '999px', background: 'rgba(122,110,101,0.08)', color: '#7a6e65' }}>
                                 {current.pos}
                             </Box>
                         </Box>
 
-                        {/* Transliteration + definition on the same line */}
+                        {/* Transliteration + definition */}
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap', py: 1, mb: { xs: 1, md: 1.5} }}>
                             <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: transliterationFontSize, color: '#b8860b', letterSpacing: '0.05em', lineHeight: 1 }}>
                                 {current.transliteration}
@@ -1023,20 +1021,15 @@ function FlashcardQuiz({
                             </Typography>
                         </Box>
 
-                        {/* Tabs for Definition / Examples / Forms */}
+                        {/* Tabs */}
                         <Box sx={{ display: 'block' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
                                 <Button
                                     onClick={() => setMobileTab('definition')}
                                     sx={{
-                                        fontFamily: 'Jost, sans-serif',
-                                        fontSize: '0.8rem',
+                                        fontFamily: 'Jost, sans-serif', fontSize: '0.8rem',
                                         fontWeight: mobileTab === 'definition' ? 600 : 500,
-                                        textTransform: 'none',
-                                        borderRadius: '20px',
-                                        px: 2,
-                                        py: 0.5,
-                                        minWidth: 80,
+                                        textTransform: 'none', borderRadius: '20px', px: 2, py: 0.5, minWidth: 80,
                                         background: mobileTab === 'definition' ? 'rgba(184,134,11,0.12)' : 'transparent',
                                         color: mobileTab === 'definition' ? '#b8860b' : '#7a6e65',
                                         border: '1px solid',
@@ -1048,14 +1041,9 @@ function FlashcardQuiz({
                                 <Button
                                     onClick={() => setMobileTab('examples')}
                                     sx={{
-                                        fontFamily: 'Jost, sans-serif',
-                                        fontSize: '0.8rem',
+                                        fontFamily: 'Jost, sans-serif', fontSize: '0.8rem',
                                         fontWeight: mobileTab === 'examples' ? 600 : 500,
-                                        textTransform: 'none',
-                                        borderRadius: '20px',
-                                        px: 2,
-                                        py: 0.5,
-                                        minWidth: 80,
+                                        textTransform: 'none', borderRadius: '20px', px: 2, py: 0.5, minWidth: 80,
                                         background: mobileTab === 'examples' ? 'rgba(184,134,11,0.12)' : 'transparent',
                                         color: mobileTab === 'examples' ? '#b8860b' : '#7a6e65',
                                         border: '1px solid',
@@ -1068,14 +1056,9 @@ function FlashcardQuiz({
                                     <Button
                                         onClick={() => setMobileTab('forms')}
                                         sx={{
-                                            fontFamily: 'Jost, sans-serif',
-                                            fontSize: '0.8rem',
+                                            fontFamily: 'Jost, sans-serif', fontSize: '0.8rem',
                                             fontWeight: mobileTab === 'forms' ? 600 : 500,
-                                            textTransform: 'none',
-                                            borderRadius: '20px',
-                                            px: 2,
-                                            py: 0.5,
-                                            minWidth: 80,
+                                            textTransform: 'none', borderRadius: '20px', px: 2, py: 0.5, minWidth: 80,
                                             background: mobileTab === 'forms' ? 'rgba(184,134,11,0.12)' : 'transparent',
                                             color: mobileTab === 'forms' ? '#b8860b' : '#7a6e65',
                                             border: '1px solid',
@@ -1298,6 +1281,7 @@ export default function FlashcardSlugPage() {
     const flushRef = useRef<(() => Promise<void>) | null>(null)
     const flush = useCallback(() => flushRef.current?.() ?? Promise.resolve(), [])
 
+    // Flush on tab hide or page unload — covers browser navigation and closing the tab
     useEffect(() => {
         const onVisibility = () => { if (document.visibilityState === 'hidden') flush() }
         const onBeforeUnload = () => { flush() }
@@ -1342,9 +1326,10 @@ export default function FlashcardSlugPage() {
         return () => { cancelled = true }
     }, [slug, level])
 
+    // Flush pending writes before switching themes, then load the new one
     const handleThemeSelect = useCallback(async (theme: ThemeProgress, cardIndex?: number) => {
         if (!theme?.theme_id || Number.isNaN(theme.theme_id)) return
-        await flush()
+        await flush()  // <-- batch write happens here on theme switch
         setSelectedTheme(theme)
         try {
             const { vocab, progress, examples } = await fetchTheme(theme.theme_id, level)
@@ -1366,9 +1351,9 @@ export default function FlashcardSlugPage() {
             setActiveExamples([])
             setInitialCardIndex(0)
         }
-    }, [fetchTheme, level])
+    }, [fetchTheme, level, flush])
 
-    /* ── Keep sidebar counts in sync with quiz actions ── */
+    // Keep sidebar counts in sync with quiz actions
     const handleThemeProgressUpdate = useCallback((themeId: number, progress: { completedCount: number; revisionCount: number }) => {
         setThemes(prev => prev.map(t =>
             t.theme_id === themeId
@@ -1381,7 +1366,7 @@ export default function FlashcardSlugPage() {
         )
     }, [])
 
-    /* ── Auto-advance to next unfinished theme ── */
+    // Auto-advance to next unfinished theme
     const validThemes = useMemo(() => themes.filter((t) => t?.theme_id != null && !Number.isNaN(t.theme_id)), [themes])
 
     const handleQuizComplete = useCallback(() => {
@@ -1480,11 +1465,9 @@ export default function FlashcardSlugPage() {
                                     </Box>
                                     <Box sx={{ flex: 1, minWidth: 0 }}>
                                         <Typography sx={{
-                                            fontFamily: 'Jost, sans-serif',
-                                            fontSize: '0.95rem',
+                                            fontFamily: 'Jost, sans-serif', fontSize: '0.95rem',
                                             fontWeight: isActive ? 700 : 500,
-                                            color: isActive ? '#2c1a0e' : '#3d3028',
-                                            lineHeight: 1.25,
+                                            color: isActive ? '#2c1a0e' : '#3d3028', lineHeight: 1.25,
                                         }}>
                                             {theme.display_name}
                                         </Typography>
@@ -1500,19 +1483,15 @@ export default function FlashcardSlugPage() {
                                         </Box>
                                         <Box sx={{ mt: 0.75, height: 3, borderRadius: 2, background: 'rgba(184,134,11,0.1)', overflow: 'hidden' }}>
                                             <Box sx={{
-                                                height: '100%', borderRadius: 2,
-                                                width: `${progress}%`,
+                                                height: '100%', borderRadius: 2, width: `${progress}%`,
                                                 background: isComplete ? 'linear-gradient(90deg, #2e7d32, #4caf50)' : 'linear-gradient(90deg, #b8860b, #d4a843)',
                                                 transition: 'width 0.4s ease',
                                             }} />
                                         </Box>
                                     </Box>
                                     <Typography sx={{
-                                        fontFamily: 'Jost, sans-serif',
-                                        fontSize: '0.78rem',
-                                        fontWeight: 600,
-                                        color: isComplete ? '#2e7d32' : isActive ? '#b8860b' : '#9e8a7a',
-                                        flexShrink: 0,
+                                        fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', fontWeight: 600,
+                                        color: isComplete ? '#2e7d32' : isActive ? '#b8860b' : '#9e8a7a', flexShrink: 0,
                                     }}>
                                         {progress}%
                                     </Typography>
