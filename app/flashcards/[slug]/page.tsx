@@ -1204,7 +1204,7 @@ function FlashcardQuiz({
 }
 
 /* ─────────────────────────────────────────────
-   ThemePlaylistSidebar
+   ThemePlaylistSidebar  (PAGINATED — 10 per page)
 ───────────────────────────────────────────── */
 function ThemePlaylistSidebar({
     themes, selectedTheme, onSelectTheme, label,
@@ -1214,6 +1214,11 @@ function ThemePlaylistSidebar({
     onSelectTheme: (theme: ThemeProgress) => void
     label: string
 }) {
+    const [page, setPage] = useState(0)
+    const pageSize = 10
+    const totalPages = Math.ceil(themes.length / pageSize)
+    const pagedThemes = themes.slice(page * pageSize, (page + 1) * pageSize)
+
     const overallProgress = useMemo(() => {
         const total = themes.reduce((s, t) => s + t.total_words, 0)
         if (total === 0) return 0
@@ -1260,12 +1265,13 @@ function ThemePlaylistSidebar({
                 />
             </Box>
             <Box sx={{ overflowY: 'auto', flex: 1 }}>
-                {themes.map((theme, idx) => {
+                {pagedThemes.map((theme, idx) => {
                     const progress = theme.total_words > 0
                         ? Math.round((theme.completed_count / theme.total_words) * 100)
                         : 0
                     const isActive = selectedTheme?.theme_id === theme.theme_id
                     const isComplete = progress === 100
+                    const globalIdx = page * pageSize + idx
 
                     return (
                         <Box key={theme.theme_id} onClick={() => onSelectTheme(theme)} sx={{
@@ -1285,7 +1291,7 @@ function ThemePlaylistSidebar({
                             }}>
                                 {isComplete ? <CheckCircle sx={{ fontSize: '1rem', color: '#2e7d32' }} />
                                     : isActive ? <Box sx={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderLeft: '8px solid #b8860b', ml: '2px' }} />
-                                        : <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: '#7a6e65' }}>{idx + 1}</Typography>
+                                        : <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: '#7a6e65' }}>{globalIdx + 1}</Typography>
                                 }
                             </Box>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -1307,6 +1313,32 @@ function ThemePlaylistSidebar({
                     )
                 })}
             </Box>
+            {totalPages > 1 && (
+                <Box sx={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    px: 2, py: 1.25, borderTop: '1px solid rgba(184,134,11,0.1)', flexShrink: 0,
+                }}>
+                    <Button
+                        size="small"
+                        disabled={page === 0}
+                        onClick={() => setPage(p => Math.max(0, p - 1))}
+                        sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', textTransform: 'none', color: '#7a6e65', minWidth: 0 }}
+                    >
+                        Prev
+                    </Button>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', color: '#9e8a7a' }}>
+                        {page + 1} / {totalPages}
+                    </Typography>
+                    <Button
+                        size="small"
+                        disabled={page >= totalPages - 1}
+                        onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                        sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', textTransform: 'none', color: '#7a6e65', minWidth: 0 }}
+                    >
+                        Next
+                    </Button>
+                </Box>
+            )}
         </Box>
     )
 }
