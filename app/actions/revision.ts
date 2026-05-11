@@ -1,11 +1,11 @@
 // app/actions/revision.ts
-
 'use server'
 
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { revalidatePath } from "next/cache"
+import { computeAnswerResult } from '@/app/lib/sm2'
 
 const serviceUrl = process.env.SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_KEY
@@ -14,6 +14,7 @@ if (!serviceUrl || !serviceKey) {
 }
 const serviceClient = createServiceClient(serviceUrl, serviceKey)
 
+/* ── Auth helper with corrected cookie handling ── */
 async function getAuthClient() {
     const cookieStore = await cookies()
     return createServerClient(
@@ -22,7 +23,11 @@ async function getAuthClient() {
         {
             cookies: {
                 getAll() { return cookieStore.getAll() },
-                setAll() {},
+                setAll(cookiesToSet) {
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        cookieStore.set(name, value, options)
+                    })
+                },
             },
         }
     )
@@ -80,91 +85,12 @@ export type SessionLog = {
     timeTaken: number
     level?: string
     theme?: string
+    queue?: string
 }
 
 const DAILY_NEW_LIMIT = 20
-const LEARNING_STEPS = [1, 10] // minutes
 
-function applySM2(
-    repetitions: number,
-    intervalDays: number,
-    easeFactor: number,
-    answer: Answer
-): { repetitions: number; intervalDays: number; easeFactor: number } {
-    let newReps = repetitions
-    let newInterval = intervalDays
-    let newEase = easeFactor
-
-    if (answer === 'again') {
-        newReps = 0
-        newInterval = 0
-        newEase = Math.max(1.3, easeFactor - 0.20)
-    } else {
-        if (answer === 'hard') {
-            newEase = Math.max(1.3, easeFactor - 0.15)
-        } else if (answer === 'easy') {
-            newEase = easeFactor + 0.15
-        }
-
-        if (intervalDays === 0) {
-            if (answer === 'hard' || answer === 'good') newInterval = 1
-            else if (answer === 'easy') newInterval = Math.max(2, Math.round(1 * newEase))
-        } else {
-            if (answer === 'hard') {
-                newInterval = Math.max(1, Math.round(intervalDays * 1.2))
-            } else if (answer === 'good') {
-                newInterval = Math.round(intervalDays * easeFactor)
-            } else if (answer === 'easy') {
-                newInterval = Math.round(intervalDays * easeFactor * 1.3)
-            }
-        }
-        newReps = repetitions + 1
-    }
-
-    return { repetitions: newReps, intervalDays: newInterval, easeFactor: newEase }
-}
-
-function calculateNextReview(
-    currentStep: number,
-    oldIntervalDays: number,
-    newIntervalDays: number,
-    answer: Answer
-): { nextReview: Date; newStep: number; graduated: boolean } {
-    const now = new Date()
-
-    if (answer === 'again') {
-        return {
-            nextReview: new Date(now.getTime() + LEARNING_STEPS[0] * 60 * 1000),
-            newStep: 0,
-            graduated: false,
-        }
-    }
-
-    if (oldIntervalDays === 0) {
-        if (answer === 'easy') {
-            const next = new Date(now)
-            next.setDate(now.getDate() + newIntervalDays)
-            return { nextReview: next, newStep: 0, graduated: true }
-        }
-
-        const nextStep = currentStep + 1
-        if (nextStep < LEARNING_STEPS.length) {
-            return {
-                nextReview: new Date(now.getTime() + LEARNING_STEPS[nextStep] * 60 * 1000),
-                newStep: nextStep,
-                graduated: false,
-            }
-        }
-
-        const next = new Date(now)
-        next.setDate(now.getDate() + newIntervalDays)
-        return { nextReview: next, newStep: 0, graduated: true }
-    }
-
-    const next = new Date(now)
-    next.setDate(now.getDate() + newIntervalDays)
-    return { nextReview: next, newStep: 0, graduated: true }
-}
+/* ── Build revision cards from RPC rows ───────────────────────────── */
 
 async function buildRevisionCards(
     progressRows: any[],
@@ -235,6 +161,8 @@ async function buildRevisionCards(
     })
 }
 
+/* ── Fetch session ─────────────────────────────────────────────────── */
+
 export async function fetchRevisionSession(): Promise<{
     dueCards: RevisionCard[]
     completedCards: RevisionCard[]
@@ -258,69 +186,55 @@ export async function fetchRevisionSession(): Promise<{
     return { dueCards, completedCards }
 }
 
-export async function submitRevisionAnswer(
-    vocabId: number,
-    answer: Answer,
-    currentStep: number = 0
-) {
-    if (!Number.isFinite(vocabId) || vocabId <= 0) throw new Error('Invalid vocabId')
-    if (!['again', 'hard', 'good', 'easy'].includes(answer)) throw new Error('Invalid answer')
-    if (!Number.isFinite(currentStep) || currentStep < 0 || currentStep > 100) throw new Error('Invalid currentStep')
+/* ── Submit answers batch ──────────────────────────────────────────── */
+
+export async function submitRevisionAnswersBatch(
+    answers: { vocabId: number; answer: Answer }[]
+): Promise<void> {
+    if (!answers.length) return
 
     const userId = await getAuthenticatedUserId()
     if (!userId) throw new Error('Not authenticated')
 
-    const { data: progress, error: fetchError } = await serviceClient
-        .from('progress')
-        .select('repetitions, interval_days, ease_factor, last_review_at, next_review_at, learning_step, lapses')
-        .eq('user_id', userId)
-        .eq('vocab_id', vocabId)
-        .single()
+    for (const { vocabId, answer } of answers) {
+        const { data: progress, error: fetchError } = await serviceClient
+            .from('progress')
+            .select('repetitions, interval_days, ease_factor, learning_step, lapses, last_review_at')
+            .eq('user_id', userId)
+            .eq('vocab_id', vocabId)
+            .single()
 
-    if (fetchError || !progress) throw new Error('Progress not found')
+        if (fetchError || !progress) continue
 
-    const { repetitions, interval_days, ease_factor, lapses } = progress
+        const result = computeAnswerResult(progress, answer)
 
-    const { repetitions: newReps, intervalDays: newInterval, easeFactor: newEase } = applySM2(
-        repetitions,
-        interval_days,
-        ease_factor,
-        answer
-    )
+        const now = new Date().toISOString()
+        const updates = {
+            repetitions: result.repetitions,
+            interval_days: result.interval_days,
+            ease_factor: result.ease_factor,
+            learning_step: result.learning_step,
+            last_review_at: now,
+            last_rating: answer,
+            updated_at: now,
+            next_review_at: result.nextReview?.toISOString() ?? null,
+            ...(answer === 'again' && { lapses: (progress.lapses ?? 0) + 1 }),
+            ...(progress.last_review_at === null && { first_review_at: now }),
+        }
 
-    const { nextReview, newStep } = calculateNextReview(
-        currentStep,
-        interval_days,
-        newInterval,
-        answer
-    )
+        const { error } = await serviceClient
+            .from('progress')
+            .update(updates)
+            .eq('user_id', userId)
+            .eq('vocab_id', vocabId)
 
-    const now = new Date().toISOString()
-
-    const updates: any = {
-        repetitions: newReps,
-        interval_days: newInterval,
-        ease_factor: newEase,
-        learning_step: newStep,
-        last_review_at: now,
-        next_review_at: nextReview.toISOString(),
-        last_rating: answer,
-        updated_at: now,
-        ...(answer === 'again' && { lapses: (lapses ?? 0) + 1 }),
-        ...(progress.last_review_at === null && { first_review_at: now }),
+        if (error) console.error('Batch update failed:', error.message)
     }
 
-    const { error: updateError } = await serviceClient
-        .from('progress')
-        .update(updates)
-        .eq('user_id', userId)
-        .eq('vocab_id', vocabId)
-
-    if (updateError) throw new Error(updateError.message)
-
     revalidatePath('/revision')
-    return { success: true, nextReview }
 }
+
+/* ── Toggle revision (preserves SRS state) ─────────────────────────── */
 
 export async function toggleRevision(vocabId: number): Promise<{ success: boolean; inRevision: boolean }> {
     if (!Number.isFinite(vocabId) || vocabId <= 0) throw new Error('Invalid vocabId')
@@ -340,13 +254,13 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
     const now = new Date().toISOString()
 
     if (existing?.is_in_revision) {
-        const { error: delErr } = await serviceClient
+        const { error: updErr } = await serviceClient
             .from('progress')
-            .delete()
+            .update({ is_in_revision: false, updated_at: now })
             .eq('user_id', userId)
             .eq('vocab_id', vocabId)
 
-        if (delErr) throw new Error(delErr.message)
+        if (updErr) throw new Error(updErr.message)
         return { success: true, inRevision: false }
     }
 
@@ -384,6 +298,8 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
     return { success: true, inRevision: true }
 }
 
+/* ── Due counts ──────────────────────────────────────────────────── */
+
 export async function getDueCounts(): Promise<{ reviews: number; new: number }> {
     const userId = await getAuthenticatedUserId()
     if (!userId) return { reviews: 0, new: 0 }
@@ -391,23 +307,16 @@ export async function getDueCounts(): Promise<{ reviews: number; new: number }> 
     const now = new Date().toISOString()
     const startOfDay = new Date()
     startOfDay.setUTCHours(0, 0, 0, 0)
+    const startOfDayISO = startOfDay.toISOString()
 
     const { count: introducedToday } = await serviceClient
         .from('progress')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('is_in_revision', true)
-        .gte('first_review_at', startOfDay.toISOString())
+        .gte('first_review_at', startOfDayISO)
 
     const remainingNew = Math.max(0, DAILY_NEW_LIMIT - (introducedToday ?? 0))
-
-    const { count: dueCount } = await serviceClient
-        .from('progress')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .not('last_review_at', 'is', null)
-        .lte('next_review_at', now)
 
     const { count: rawNewCount } = await serviceClient
         .from('progress')
@@ -417,11 +326,35 @@ export async function getDueCounts(): Promise<{ reviews: number; new: number }> 
         .eq('repetitions', 0)
         .is('last_review_at', null)
 
+    const { count: graduatedDue, error: graduatedErr } = await serviceClient
+        .from('progress')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('is_in_revision', true)
+        .gt('interval_days', 0)
+        .lte('next_review_at', now)
+
+    if (graduatedErr) console.error('getDueCounts graduated error:', graduatedErr.message)
+
+    const { count: inProgressDue, error: inProgressErr } = await serviceClient
+        .from('progress')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('is_in_revision', true)
+        .eq('interval_days', 0)
+        .not('last_review_at', 'is', null)
+
+    if (inProgressErr) console.error('getDueCounts in-progress error:', inProgressErr.message)
+
+    const reviews = (graduatedDue ?? 0) + (inProgressDue ?? 0)
+
     return {
-        reviews: dueCount ?? 0,
+        reviews,
         new: Math.min(remainingNew, rawNewCount ?? 0),
     }
 }
+
+/* ── Upsert progress ───────────────────────────────────────────────── */
 
 export async function upsertWordProgress(
     vocabId: number,

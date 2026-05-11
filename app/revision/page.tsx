@@ -5,12 +5,13 @@ import {
     Box, Container, Typography, Button, Collapse,
     LinearProgress, Skeleton, IconButton, Dialog,
     DialogTitle, DialogContent, Fade,
-    DialogActions, Slider, useMediaQuery,
+    DialogActions, Slider, useMediaQuery, Grid,
 } from '@mui/material'
 import {
     ArrowBackSharp, CheckCircle, Refresh, Close,
     HelpOutlineRounded, Settings, ChevronLeft, ChevronRight,
     Replay, TrendingFlat, Check, TrendingUp, MenuBook,
+    ArrowForwardSharp,
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/app/components/navbar'
@@ -18,16 +19,13 @@ import AuthDialog from '@/app/components/AuthDialog'
 import { useAuth } from '@/app/AuthContext'
 import {
     fetchRevisionSession,
-    submitRevisionAnswer,
+    submitRevisionAnswersBatch,
+    getDueCounts,
     type RevisionCard,
     type Answer,
     type SessionLog,
 } from '@/app/actions/revision'
-
-/* ─────────────────────────────────────────────
-   Constants
-───────────────────────────────────────────── */
-const LEARNING_STEPS = [1, 10] // minutes
+import { computeAnswerResult, type ProgressState } from '@/app/lib/sm2'
 
 /* ─────────────────────────────────────────────
    Types
@@ -71,6 +69,8 @@ const SIDEBAR_PAGE_SIZE = 10
    Helpers
 ───────────────────────────────────────────── */
 function classifyCard(card: RevisionCard): Queue {
+    // NOTE: This assumes the RPC only returns review cards that are actually due.
+    // If we ever return non-due review cards, we'd need to check next_review_at too.
     const lastReview = card.last_review_at as string | null | undefined
     const interval = card.interval_days as number | null | undefined
     if (!lastReview && (card.repetitions ?? 0) === 0) return 'new'
@@ -98,31 +98,6 @@ let _dotIdCounter = 0
 function makeDotId() { return `dot-${++_dotIdCounter}` }
 
 /* ─────────────────────────────────────────────
-   Countdown Timer (kept for future use)
-───────────────────────────────────────────── */
-function CountdownTimer({ targetTime }: { targetTime: string }) {
-    const [remaining, setRemaining] = useState<number>(() => {
-        const diff = new Date(targetTime).getTime() - Date.now()
-        return Math.max(0, Math.floor(diff / 1000))
-    })
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const diff = new Date(targetTime).getTime() - Date.now()
-            setRemaining(Math.max(0, Math.floor(diff / 1000)))
-        }, 500)
-        return () => clearInterval(interval)
-    }, [targetTime])
-    if (remaining <= 0) return null
-    const minutes = Math.floor(remaining / 60)
-    const seconds = remaining % 60
-    return (
-        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: '#c13a00', textAlign: 'center', mt: 1 }}>
-            Available in {minutes}:{seconds.toString().padStart(2, '0')}
-        </Typography>
-    )
-}
-
-/* ─────────────────────────────────────────────
    useAnkiQueue
 ───────────────────────────────────────────── */
 interface QueueState {
@@ -132,7 +107,7 @@ interface QueueState {
     totalEver: number
 }
 
-function useAnkiQueue(initial: SessionCard[], seedAnswered?: Map<string, string>, seedDotOrder?: string[]) {
+function useAnkiQueue(initial: SessionCard[], seedAnswered?: Map<string, string>, seedDotOrder?: string[], sessionKey?: number) {
     const [state, setState] = useState<QueueState>(() => {
         const initialDotIds = initial.map(c => c.dotId)
         const mergedDotOrder = [...(seedDotOrder ?? []), ...initialDotIds]
@@ -144,39 +119,20 @@ function useAnkiQueue(initial: SessionCard[], seedAnswered?: Map<string, string>
         }
     })
 
+    /* ── Full reset when session restarts ──
+       Every call to loadCards increments sessionKey, so this effect handles
+       both initial mount and all restarts. The old merge effect is removed
+       because it conflicted with this reset during batched state updates. ── */
     useEffect(() => {
-        setState(prev => {
-            const existingIds = new Set(prev.deck.map(c => c.data.id))
-            const newCards = initial.filter(c => !existingIds.has(c.data.id))
-            if (newCards.length === 0) return prev
-            const newDeck = [...prev.deck, ...newCards]
-            const newDotOrder = [...prev.dotOrder, ...newCards.map(c => c.dotId)]
-            return {
-                ...prev,
-                deck: newDeck,
-                dotOrder: newDotOrder,
-                totalEver: prev.totalEver + newCards.length,
-            }
+        const initialDotIds = initial.map(c => c.dotId)
+        const mergedDotOrder = [...(seedDotOrder ?? []), ...initialDotIds]
+        setState({
+            deck: initial,
+            answeredDots: seedAnswered ? new Map(seedAnswered) : new Map(),
+            dotOrder: mergedDotOrder,
+            totalEver: mergedDotOrder.length,
         })
-    }, [initial])
-
-    useEffect(() => {
-        setState(prev => {
-            const newAnswered = new Map(prev.answeredDots)
-            seedAnswered?.forEach((color, dotId) => {
-                if (!newAnswered.has(dotId)) newAnswered.set(dotId, color)
-            })
-            const existingDotSet = new Set(prev.dotOrder)
-            const seedDotsToAdd = seedDotOrder?.filter(dotId => !existingDotSet.has(dotId)) ?? []
-            if (seedDotsToAdd.length === 0 && newAnswered.size === prev.answeredDots.size) return prev
-            return {
-                ...prev,
-                answeredDots: newAnswered,
-                dotOrder: [...seedDotsToAdd, ...prev.dotOrder],
-                totalEver: prev.totalEver + seedDotsToAdd.length,
-            }
-        })
-    }, [seedAnswered, seedDotOrder])
+    }, [sessionKey, initial, seedAnswered, seedDotOrder])
 
     const currentCard = state.deck[0] ?? null
     const isComplete = state.deck.length === 0
@@ -188,7 +144,7 @@ function useAnkiQueue(initial: SessionCard[], seedAnswered?: Map<string, string>
         return c
     }, [state.deck])
 
-    const answer = useCallback((ans: Answer, nextLearningStep: number) => {
+    const answer = useCallback((ans: Answer, nextLearningStep: number, graduated: boolean) => {
         setState(prev => {
             if (prev.deck.length === 0) return prev
             const [current, ...rest] = prev.deck
@@ -197,12 +153,13 @@ function useAnkiQueue(initial: SessionCard[], seedAnswered?: Map<string, string>
             const newAnswered = new Map(prev.answeredDots)
             newAnswered.set(current.dotId, color)
 
-            if (ans === 'again') {
-                /* ── FIX: card is immediately answerable in this session ── */
+            const shouldReinsert = ans === 'again' || !graduated
+
+            if (shouldReinsert) {
                 const reinserted: SessionCard = {
                     ...current,
                     queue: 'learning',
-                    lapses: current.lapses + 1,
+                    lapses: ans === 'again' ? current.lapses + 1 : current.lapses,
                     dotId: makeDotId(),
                     learningStep: nextLearningStep,
                     data: {
@@ -361,7 +318,7 @@ function InfoDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, mb: 2.5 }}>
                     {([
                         { queue: 'new' as Queue, icon: '🟦', body: 'Cards you have added to Word Bank but never studied yet. Max 20 per day.' },
-                        { queue: 'learning' as Queue, icon: '🟥', body: 'Cards you just saw for the first time today. They come back after 10 minutes so you can lock them in.' },
+                        { queue: 'learning' as Queue, icon: '🟥', body: 'Cards you are currently learning. You must answer them correctly three times in a row before they graduate. If you press Again, the counter resets.' },
                         { queue: 'review' as Queue, icon: '🟩', body: 'Cards you learned in a previous session. Answer correctly and the interval doubles or triples. Fail and the card lapses back to Learning.' },
                     ]).map(({ queue, icon, body }) => {
                         const cfg = QUEUE_CONFIG[queue]
@@ -385,7 +342,7 @@ function InfoDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 1 }}>
                     {([
-                        { label: 'Again', color: '#c62828', desc: 'You forgot. Card goes back to Learning and returns within a few cards.' },
+                        { label: 'Again', color: '#c62828', desc: 'You forgot. The card resets its learning counter and returns within a few cards.' },
                         { label: 'Hard', color: '#e65100', desc: 'You remembered with difficulty. Interval grows slowly.' },
                         { label: 'Good', color: '#2e7d32', desc: 'Normal recall. Interval roughly doubles.' },
                         { label: 'Easy', color: '#1565c0', desc: 'Effortless recall. Interval triples or more.' },
@@ -580,6 +537,7 @@ function SessionSidebar({ logs, doneCount, remainingCount }: { logs: SessionLog[
                 {[
                     { label: 'Avg Time', value: `${avgTime}s`, color: '#2c1a0e' },
                     { label: 'Again', value: `${ratingCounts.again}`, color: '#c62828' },
+                    { label: 'Hard', value: `${ratingCounts.hard}`, color: '#e65100' },
                     { label: 'Good', value: `${ratingCounts.good}`, color: '#2e7d32' },
                     { label: 'Easy', value: `${ratingCounts.easy}`, color: '#1565c0' },
                 ].map(stat => (
@@ -624,6 +582,398 @@ function SessionSidebar({ logs, doneCount, remainingCount }: { logs: SessionLog[
 }
 
 /* ─────────────────────────────────────────────
+   SessionResults
+───────────────────────────────────────────── */
+function SessionResults({
+    logs,
+    dueCounts,
+    onRestart,
+    onBack,
+    isLoading = false,
+}: {
+    logs: SessionLog[]
+    dueCounts: { reviews: number; new: number } | null
+    onRestart: () => void
+    onBack: () => void
+    isLoading?: boolean
+}) {
+    const total = logs.length
+    const newCards = logs.filter(l => l.queue === 'new').length
+    const reviewCards = logs.filter(l => l.queue === 'learning' || l.queue === 'review').length
+
+    const again = logs.filter(l => l.rating === 'again').length
+    const hard = logs.filter(l => l.rating === 'hard').length
+    const good = logs.filter(l => l.rating === 'good').length
+    const easy = logs.filter(l => l.rating === 'easy').length
+
+    const correct = good + easy + hard
+    const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0
+    const avgTime = total > 0 ? Math.round(logs.reduce((s, l) => s + l.timeTaken, 0) / total) : 0
+
+    let ratingLabel = 'Keep Practicing'
+    let ratingColor = '#c62828'
+    let ratingBg = 'rgba(198,40,40,0.08)'
+    if (accuracy >= 90) {
+        ratingLabel = 'Outstanding!'
+        ratingColor = '#1565c0'
+        ratingBg = 'rgba(21,101,192,0.08)'
+    } else if (accuracy >= 75) {
+        ratingLabel = 'Great Work'
+        ratingColor = '#2e7d32'
+        ratingBg = 'rgba(46,125,50,0.08)'
+    } else if (accuracy >= 60) {
+        ratingLabel = 'Good Progress'
+        ratingColor = '#b8860b'
+        ratingBg = 'rgba(184,134,11,0.08)'
+    } else if (accuracy >= 40) {
+        ratingLabel = 'Keep Practicing'
+        ratingColor = '#e65100'
+        ratingBg = 'rgba(230,81,0,0.08)'
+    }
+
+    const circumference = 2 * Math.PI * 52
+    const strokeDashoffset = circumference - (accuracy / 100) * circumference
+
+    return (
+        <Box sx={{ background: '#faf7f2', minHeight: '100vh', pt: { xs: 8, sm: 10 } }}>
+            <Container maxWidth="sm" sx={{ py: { xs: 4, md: 6 } }}>
+                <Box sx={{
+                    background: '#fff',
+                    border: '1px solid rgba(184,134,11,0.2)',
+                    borderRadius: '16px',
+                    p: { xs: '2rem 1.5rem', md: '3rem 2.5rem' },
+                    textAlign: 'center',
+                }}>
+                    <Typography sx={{
+                        fontFamily: "'EB Garamond', serif",
+                        fontSize: { xs: '1.8rem', md: '2.4rem' },
+                        fontWeight: 700,
+                        color: '#2c1a0e',
+                        mb: 0.5,
+                    }}>
+                        Session Complete
+                    </Typography>
+                    <Typography sx={{
+                        fontFamily: 'Jost, sans-serif',
+                        fontSize: { xs: '0.9rem', md: '1rem' },
+                        color: '#7a6e65',
+                        mb: 4,
+                    }}>
+                        Here is how you performed today
+                    </Typography>
+
+                    <Box sx={{ position: 'relative', width: 140, height: 140, mx: 'auto', mb: 4 }}>
+                        <svg width="140" height="140" viewBox="0 0 120 120" style={{ transform: 'rotate(-90deg)' }}>
+                            <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(184,134,11,0.12)" strokeWidth="8" />
+                            <circle
+                                cx="60"
+                                cy="60"
+                                r="52"
+                                fill="none"
+                                stroke="url(#accuracyGrad)"
+                                strokeWidth="8"
+                                strokeLinecap="round"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={strokeDashoffset}
+                                style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                            />
+                            <defs>
+                                <linearGradient id="accuracyGrad" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stopColor="#b8860b" />
+                                    <stop offset="100%" stopColor="#d4a843" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <Box sx={{
+                            position: 'absolute',
+                            inset: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                        }}>
+                            <Typography sx={{
+                                fontFamily: 'Jost, sans-serif',
+                                fontSize: '2rem',
+                                fontWeight: 800,
+                                color: '#2c1a0e',
+                                lineHeight: 1,
+                            }}>
+                                {accuracy}%
+                            </Typography>
+                            <Typography sx={{
+                                fontFamily: 'Jost, sans-serif',
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                                color: '#9e8a7a',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.06em',
+                                mt: 0.5,
+                            }}>
+                                accuracy
+                            </Typography>
+                        </Box>
+                    </Box>
+
+                    <Box sx={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        px: 2.5,
+                        py: 1,
+                        borderRadius: '999px',
+                        background: ratingBg,
+                        border: `1.5px solid ${ratingColor}44`,
+                        mb: 4,
+                    }}>
+                        <CheckCircle sx={{ fontSize: 18, color: ratingColor }} />
+                        <Typography sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: '0.95rem',
+                            fontWeight: 700,
+                            color: ratingColor,
+                            letterSpacing: '0.02em',
+                        }}>
+                            {ratingLabel}
+                        </Typography>
+                    </Box>
+
+                    <Grid container spacing={2} sx={{ mb: 4 }}>
+                        {[
+                            { label: 'Total Cards', value: total, color: '#2c1a0e' },
+                            { label: 'New Cards', value: newCards, color: '#1565c0' },
+                            { label: 'Reviewed', value: reviewCards, color: '#2e7d32' },
+                            { label: 'Avg Time', value: `${avgTime}s`, color: '#7a6e65' },
+                        ].map((stat) => (
+                            <Grid key={stat.label} size={{ xs: 6 }}>
+                                <Box sx={{
+                                    background: 'rgba(245,237,224,0.5)',
+                                    border: '1px solid rgba(184,134,11,0.12)',
+                                    borderRadius: '12px',
+                                    p: 2,
+                                }}>
+                                    <Typography sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 600,
+                                        color: '#9e8a7a',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.06em',
+                                        mb: 0.75,
+                                    }}>
+                                        {stat.label}
+                                    </Typography>
+                                    <Typography sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '1.6rem',
+                                        fontWeight: 700,
+                                        color: stat.color,
+                                        lineHeight: 1.2,
+                                    }}>
+                                        {stat.value}
+                                    </Typography>
+                                </Box>
+                            </Grid>
+                        ))}
+                    </Grid>
+
+                    <Box sx={{ textAlign: 'left', mb: 4 }}>
+                        <Typography sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            color: '#9e8a7a',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.08em',
+                            mb: 1.5,
+                        }}>
+                            Answer Breakdown
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+                            {([
+                                { label: 'Again', count: again, color: '#c62828', bg: 'rgba(198,40,40,0.08)' },
+                                { label: 'Hard', count: hard, color: '#e65100', bg: 'rgba(230,81,0,0.08)' },
+                                { label: 'Good', count: good, color: '#2e7d32', bg: 'rgba(46,125,50,0.08)' },
+                                { label: 'Easy', count: easy, color: '#1565c0', bg: 'rgba(21,101,192,0.08)' },
+                            ]).map((row) => {
+                                const pct = total > 0 ? Math.round((row.count / total) * 100) : 0
+                                return (
+                                    <Box key={row.label} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                        <Typography sx={{
+                                            fontFamily: 'Jost, sans-serif',
+                                            fontSize: '0.82rem',
+                                            fontWeight: 600,
+                                            color: row.color,
+                                            width: 48,
+                                            flexShrink: 0,
+                                        }}>
+                                            {row.label}
+                                        </Typography>
+                                        <Box sx={{ flex: 1, height: 8, borderRadius: 4, background: 'rgba(184,134,11,0.08)', overflow: 'hidden' }}>
+                                            <Box sx={{
+                                                height: '100%',
+                                                width: `${pct}%`,
+                                                background: row.color,
+                                                borderRadius: 4,
+                                                transition: 'width 0.8s ease',
+                                            }} />
+                                        </Box>
+                                        <Typography sx={{
+                                            fontFamily: 'Jost, sans-serif',
+                                            fontSize: '0.82rem',
+                                            fontWeight: 700,
+                                            color: '#2c1a0e',
+                                            width: 40,
+                                            textAlign: 'right',
+                                            flexShrink: 0,
+                                        }}>
+                                            {row.count}
+                                        </Typography>
+                                    </Box>
+                                )
+                            })}
+                        </Box>
+                    </Box>
+
+                    {dueCounts && (
+                        <Box sx={{
+                            background: 'linear-gradient(135deg, #0e2e1f 0%, #071a0f 100%)',
+                            borderRadius: '12px',
+                            p: { xs: 2, md: 2.5 },
+                            mb: 4,
+                            textAlign: 'center',
+                        }}>
+                            <Typography sx={{
+                                fontFamily: "'EB Garamond', serif",
+                                fontSize: '1.1rem',
+                                fontWeight: 700,
+                                color: '#f5ede0',
+                                mb: 1.5,
+                            }}>
+                                Tomorrow's Word Bank
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 2, md: 4 } }}>
+                                <Box>
+                                    <Typography sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '1.8rem',
+                                        fontWeight: 700,
+                                        color: '#d4a843',
+                                    }}>
+                                        {dueCounts.new}
+                                    </Typography>
+                                    <Typography sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '0.75rem',
+                                        color: 'rgba(245,237,224,0.7)',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.06em',
+                                    }}>
+                                        New
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ width: '1px', background: 'rgba(245,237,224,0.15)' }} />
+                                <Box>
+                                    <Typography sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '1.8rem',
+                                        fontWeight: 700,
+                                        color: '#d4a843',
+                                    }}>
+                                        {dueCounts.reviews}
+                                    </Typography>
+                                    <Typography sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '0.75rem',
+                                        color: 'rgba(245,237,224,0.7)',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.06em',
+                                    }}>
+                                        To Review
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ width: '1px', background: 'rgba(245,237,224,0.15)' }} />
+                                <Box>
+                                    <Typography sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '1.8rem',
+                                        fontWeight: 700,
+                                        color: '#f5ede0',
+                                    }}>
+                                        {dueCounts.new + dueCounts.reviews}
+                                    </Typography>
+                                    <Typography sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '0.75rem',
+                                        color: 'rgba(245,237,224,0.7)',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.06em',
+                                    }}>
+                                        Total
+                                    </Typography>
+                                </Box>
+                            </Box>
+                        </Box>
+                    )}
+
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                        <Button
+                            variant="contained"
+                            onClick={onRestart}
+                            disabled={isLoading}
+                            startIcon={<Refresh />}
+                            sx={{
+                                background: 'linear-gradient(135deg, #b8860b 0%, #d4a843 100%)',
+                                color: '#1a0e00',
+                                fontFamily: 'Jost, sans-serif',
+                                fontWeight: 700,
+                                fontSize: '0.95rem',
+                                textTransform: 'none',
+                                borderRadius: '10px',
+                                px: 3,
+                                py: 1.1,
+                                boxShadow: '0 6px 20px rgba(184,134,11,0.3)',
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #d4a843 0%, #e6c060 100%)',
+                                    boxShadow: '0 8px 28px rgba(184,134,11,0.4)',
+                                },
+                                '&.Mui-disabled': {
+                                    background: 'rgba(184,134,11,0.3)',
+                                    color: 'rgba(26,14,0,0.4)',
+                                },
+                            }}
+                        >
+                            {isLoading ? 'Loading…' : 'Study Again'}
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            onClick={onBack}
+                            startIcon={<ArrowBackSharp />}
+                            sx={{
+                                borderColor: 'rgba(122,110,101,0.3)',
+                                color: '#7a6e65',
+                                fontFamily: 'Jost, sans-serif',
+                                fontWeight: 500,
+                                textTransform: 'none',
+                                borderRadius: '10px',
+                                px: 3,
+                                py: 1.1,
+                                '&:hover': {
+                                    borderColor: '#7a6e65',
+                                    background: 'rgba(122,110,101,0.05)',
+                                },
+                            }}
+                        >
+                            Back
+                        </Button>
+                    </Box>
+                </Box>
+            </Container>
+        </Box>
+    )
+}
+
+/* ─────────────────────────────────────────────
    RevisionFlashcard
 ───────────────────────────────────────────── */
 const tabButtonSx = {
@@ -658,7 +1008,6 @@ function RevisionFlashcard({
     const examples = parseExamples(card)
     const progress = totalEver > 0 ? Math.round((doneCount / totalEver) * 100) : 0
 
-    /* ── Reset UI when card changes ── */
     useEffect(() => {
         setRevealed(false)
         setActiveTab('definition')
@@ -667,7 +1016,6 @@ function RevisionFlashcard({
         setTimerRunning(true)
     }, [card.id ?? card.word])
 
-    /* ── Timer tick ── */
     useEffect(() => {
         if (!timerRunning) return
         const interval = setInterval(() => { setElapsed(Math.round((Date.now() - cardStartRef.current) / 1000)) }, 1000)
@@ -742,7 +1090,6 @@ function RevisionFlashcard({
                             {activeTab === 'examples' && <ExampleSentences examples={examples} showDiacritics={showDiacritics} textScale={textScale} />}
                         </Box>
 
-                        {/* ── FIX: always show active answer buttons ── */}
                         <Box sx={{ mt: { xs: '1.25rem', md: '1.5rem' } }}>
                             <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                                 {ANSWER_BUTTONS.map(btn => (
@@ -805,6 +1152,10 @@ export default function RevisionPage() {
     const [progressOpen, setProgressOpen] = useState(false)
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
+    const [dueCounts, setDueCounts] = useState<{ reviews: number; new: number } | null>(null)
+    const [sessionKey, setSessionKey] = useState(0)
+    const pendingAnswersRef = useRef<{ vocabId: number; answer: Answer }[]>([])
+    const [hasUnsavedAnswers, setHasUnsavedAnswers] = useState(false)
 
     const initialDeck = useMemo<SessionCard[]>(() => dueCards.map(card => ({
         data: card,
@@ -828,7 +1179,7 @@ export default function RevisionPage() {
     }, [completedCards, dueCards])
 
     const { deck, currentCard, counts, doneCount, totalEver, isComplete, answer, dotOrder, answeredDots } =
-        useAnkiQueue(initialDeck, seedAnsweredDots, seedDotOrder)
+        useAnkiQueue(initialDeck, seedAnsweredDots, seedDotOrder, sessionKey)
 
     const againPendingIds = useMemo<Set<string>>(() => {
         const set = new Set<string>()
@@ -841,74 +1192,127 @@ export default function RevisionPage() {
         return set
     }, [dotOrder, answeredDots, deck])
 
-    /* ── FIX: merge logs instead of overwriting ── */
+    /* ── Flush pending answers to server ── */
+    const flushPendingAnswers = useCallback(async () => {
+        const pending = pendingAnswersRef.current
+        if (pending.length === 0) return
+
+        const answers = pending.splice(0)
+        setHasUnsavedAnswers(false)
+
+        try {
+            await submitRevisionAnswersBatch(answers)
+        } catch (err) {
+            console.error('Batch flush failed:', err)
+        }
+    }, [])
+
+    /* ── Flush + fetch tomorrow's forecast when session completes ── */
+    useEffect(() => {
+        if (isComplete && user) {
+            flushPendingAnswers().then(() => {
+                getDueCounts().then(setDueCounts).catch(console.error)
+            })
+        }
+    }, [isComplete, user, flushPendingAnswers])
+
+    /* ── Load cards with re-entry guard ── */
+    const loadingRef = useRef(false)
+
     const loadCards = useCallback(async () => {
+        if (loadingRef.current) return
+        loadingRef.current = true
         setLoading(true)
+
+        // Flush any pending answers from the previous session
+        await flushPendingAnswers()
+
         try {
             const { dueCards, completedCards } = await fetchRevisionSession()
             setDueCards(dueCards)
             setCompletedCards(completedCards)
             setSessionStarted(true)
+            setDueCounts(null)
+            setSessionKey(k => k + 1)
 
-            setSessionLogs(prev => {
-                if (prev.length === 0) {
-                    return completedCards.map(c => ({
-                        cardId: c.id, word: c.word, rating: c.lastRating ?? 'good',
-                        timeTaken: 0, level: c.level, theme: c.theme_name ?? '',
-                    }))
-                }
-                const existingIds = new Set(prev.map(l => l.cardId))
-                const newLogs = completedCards
-                    .filter(c => !existingIds.has(c.id))
-                    .map(c => ({
-                        cardId: c.id, word: c.word, rating: c.lastRating ?? 'good',
-                        timeTaken: 0, level: c.level, theme: c.theme_name ?? '',
-                    }))
-                return newLogs.length > 0 ? [...prev, ...newLogs] : prev
-            })
+            setSessionLogs(completedCards.map(c => ({
+                cardId: c.id,
+                word: c.word,
+                rating: c.lastRating ?? 'good',
+                timeTaken: 0,
+                level: c.level,
+                theme: c.theme_name ?? '',
+                queue: classifyCard(c),
+            })))
         } catch (err) {
             console.error(err)
         } finally {
             setLoading(false)
+            loadingRef.current = false
         }
-    }, [])
+    }, [flushPendingAnswers])
 
     useEffect(() => { loadCards() }, [loadCards])
 
+    /* ── Flush on tab hide / page leave / navigation ── */
     useEffect(() => {
-        if (!sessionStarted || isComplete) return
+        const flush = () => { flushPendingAnswers() }
 
-        if (deck.length === 0) {
-            const timeout = setTimeout(() => loadCards(), 2000)
-            return () => clearTimeout(timeout)
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') flush()
         }
 
-        const upcoming = deck.filter(c =>
-            c.queue === 'learning' &&
-            c.data.next_review_at &&
-            new Date(c.data.next_review_at) > new Date()
-        )
+        const onPageHide = () => { flush() }
 
-        if (upcoming.length === 0) return
-
-        const nextDue = Math.min(...upcoming.map(c => new Date(c.data.next_review_at!).getTime()))
-        const delay = nextDue - Date.now()
-
-        if (delay > 0 && delay < 10 * 60 * 1000) {
-            const timeout = setTimeout(() => loadCards(), delay + 2000)
-            return () => clearTimeout(timeout)
+        const onBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (hasUnsavedAnswers) {
+                e.preventDefault()
+                e.returnValue = ''
+            }
+            flush()
         }
-    }, [sessionStarted, isComplete, deck, loadCards])
 
-    /* ── FIX: removed due guard; every deck card is answerable now ── */
-    const handleAnswer = useCallback(async (ans: Answer, timeTaken: number) => {
+        document.addEventListener('visibilitychange', onVisibilityChange)
+        window.addEventListener('pagehide', onPageHide)
+        window.addEventListener('beforeunload', onBeforeUnload)
+
+        return () => {
+            document.removeEventListener('visibilitychange', onVisibilityChange)
+            window.removeEventListener('pagehide', onPageHide)
+            window.removeEventListener('beforeunload', onBeforeUnload)
+        }
+    }, [flushPendingAnswers, hasUnsavedAnswers])
+
+    /* ── Optimistic answer handler ── */
+    const handleAnswer = useCallback((ans: Answer, timeTaken: number) => {
         if (!currentCard) return
 
         const vocabId = currentCard.data.progress_word_id
-        const learningStep = currentCard.learningStep
+        const currentProgress: ProgressState = {
+            repetitions: currentCard.data.repetitions,
+            interval_days: currentCard.data.interval_days,
+            ease_factor: currentCard.data.ease_factor,
+            learning_step: currentCard.learningStep,
+            lapses: currentCard.data.lapses ?? 0,
+        }
 
-        answer(ans, ans === 'again' ? 0 : learningStep + 1)
+        // Compute new state locally
+        const result = computeAnswerResult(currentProgress, ans)
 
+        // Update card data in place so successive answers use fresh state
+        currentCard.data.repetitions = result.repetitions
+        currentCard.data.interval_days = result.interval_days
+        currentCard.data.ease_factor = result.ease_factor
+        currentCard.data.learning_step = result.learning_step
+
+        // Update the deck immediately
+        answer(ans, result.learning_step, result.graduated)
+
+        // Accumulate every answer in order for the pending batch
+        pendingAnswersRef.current.push({ vocabId, answer: ans })
+        setHasUnsavedAnswers(true)
+
+        // Log the answer for the session results screen
         setSessionLogs(prev => [...prev, {
             cardId: currentCard.data.id ?? vocabId,
             word: currentCard.data.word,
@@ -916,13 +1320,8 @@ export default function RevisionPage() {
             timeTaken,
             level: currentCard.data.level,
             theme: currentCard.data.theme_name ?? '',
+            queue: currentCard.queue,
         }])
-
-        try {
-            await submitRevisionAnswer(vocabId, ans, learningStep)
-        } catch (err) {
-            console.error('[revision] save failed:', err)
-        }
     }, [currentCard, answer])
 
     if (loading || authLoading) {
@@ -979,23 +1378,13 @@ export default function RevisionPage() {
         return (
             <>
                 <Navbar />
-                <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh', pt: { xs: 8, sm: 10 } }}>
-                    <Container maxWidth="sm" sx={{ py: { xs: 4, md: 6 } }}>
-                        <Box sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px', padding: { xs: '2.5rem 1.5rem', md: '3rem 2rem' }, textAlign: 'center' }}>
-                            <CheckCircle sx={{ fontSize: { xs: 52, md: 64 }, color: '#2e7d32', mb: 2 }} />
-                            <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { xs: '1.8rem', md: '2.2rem' }, fontWeight: 700, color: '#2c1a0e', mb: 1 }}>Session Complete</Typography>
-                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.95rem', md: '1.05rem' }, color: '#7a6e65', mb: 3 }}>
-                                {dueCards.length === 0 && completedCards.length === 0
-                                    ? 'No cards are due for review today. Check back tomorrow!'
-                                    : 'You have reviewed all due cards for today. Great work!'}
-                            </Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                                <Button variant="outlined" onClick={loadCards} startIcon={<Refresh />} sx={{ borderColor: 'rgba(184,134,11,0.3)', color: '#2c1a0e', fontFamily: 'Jost, sans-serif', fontWeight: 500, textTransform: 'none', borderRadius: '6px', px: 3, '&:hover': { borderColor: '#b8860b', background: 'rgba(184,134,11,0.05)' } }}>Check again</Button>
-                                <Button variant="outlined" startIcon={<ArrowBackSharp />} onClick={() => router.back()} sx={{ borderColor: 'rgba(122,110,101,0.3)', color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontWeight: 500, textTransform: 'none', borderRadius: '6px', px: 3, '&:hover': { borderColor: '#7a6e65', background: 'rgba(122,110,101,0.05)' } }}>Back</Button>
-                            </Box>
-                        </Box>
-                    </Container>
-                </Box>
+                <SessionResults
+                    logs={sessionLogs}
+                    dueCounts={dueCounts}
+                    onRestart={loadCards}
+                    onBack={() => router.back()}
+                    isLoading={loading}
+                />
             </>
         )
     }
