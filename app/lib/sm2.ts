@@ -61,23 +61,40 @@ export function computeAnswerResult(
       newEase = Math.max(1.3, current.ease_factor - 0.20)
       newReps = Math.max(0, current.repetitions - 1)
     } else {
-      newStep = current.learning_step + 1
-      if (answer === 'hard') {
-        newEase = Math.max(1.3, current.ease_factor - 0.15)
-      } else if (answer === 'easy') {
-        newEase = current.ease_factor + 0.15
-      }
-      if (newStep >= 3) {
+      const isBrandNew = current.repetitions === 0 && current.learning_step === 0
+
+      // Brand-new card + Easy = immediate graduation (3 days)
+      if (isBrandNew && answer === 'easy') {
         graduated = true
         newStep = 0
-        newInterval = answer === 'easy' ? 3 : 1
+        newEase = current.ease_factor + 0.15
+        newInterval = 3
         const d = new Date(now)
-        d.setDate(d.getDate() + newInterval)
+        d.setDate(d.getDate() + 3)
         nextReview = d
-        newReps = current.repetitions + 1
+        newReps = 1
       } else {
-        newInterval = 0
-        newReps = current.repetitions + 1
+        newStep = current.learning_step + 1
+
+        if (answer === 'hard') {
+          newEase = Math.max(1.3, current.ease_factor - 0.15)
+        } else if (answer === 'easy') {
+          newEase = current.ease_factor + 0.15
+        }
+
+        // Graduate after 2 correct answers in learning
+        if (newStep >= 2) {
+          graduated = true
+          newStep = 0
+          newInterval = answer === 'easy' ? 3 : 1
+          const d = new Date(now)
+          d.setDate(d.getDate() + newInterval)
+          nextReview = d
+          newReps = current.repetitions + 1
+        } else {
+          newInterval = 0
+          newReps = current.repetitions + 1
+        }
       }
     }
   }

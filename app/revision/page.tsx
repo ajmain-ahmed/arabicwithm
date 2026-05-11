@@ -69,8 +69,6 @@ const SIDEBAR_PAGE_SIZE = 10
    Helpers
 ───────────────────────────────────────────── */
 function classifyCard(card: RevisionCard): Queue {
-    // NOTE: This assumes the RPC only returns review cards that are actually due.
-    // If we ever return non-due review cards, we'd need to check next_review_at too.
     const lastReview = card.last_review_at as string | null | undefined
     const interval = card.interval_days as number | null | undefined
     if (!lastReview && (card.repetitions ?? 0) === 0) return 'new'
@@ -119,10 +117,6 @@ function useAnkiQueue(initial: SessionCard[], seedAnswered?: Map<string, string>
         }
     })
 
-    /* ── Full reset when session restarts ──
-       Every call to loadCards increments sessionKey, so this effect handles
-       both initial mount and all restarts. The old merge effect is removed
-       because it conflicted with this reset during batched state updates. ── */
     useEffect(() => {
         const initialDotIds = initial.map(c => c.dotId)
         const mergedDotOrder = [...(seedDotOrder ?? []), ...initialDotIds]
@@ -318,7 +312,7 @@ function InfoDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, mb: 2.5 }}>
                     {([
                         { queue: 'new' as Queue, icon: '🟦', body: 'Cards you have added to Word Bank but never studied yet. Max 20 per day.' },
-                        { queue: 'learning' as Queue, icon: '🟥', body: 'Cards you are currently learning. You must answer them correctly three times in a row before they graduate. If you press Again, the counter resets.' },
+                        { queue: 'learning' as Queue, icon: '🟥', body: 'Cards you are currently learning. You must answer them correctly twice in a row before they graduate. If you press Again, the counter resets.' },
                         { queue: 'review' as Queue, icon: '🟩', body: 'Cards you learned in a previous session. Answer correctly and the interval doubles or triples. Fail and the card lapses back to Learning.' },
                     ]).map(({ queue, icon, body }) => {
                         const cfg = QUEUE_CONFIG[queue]
@@ -458,7 +452,8 @@ function IntegratedProgressDots({ dotOrder, answeredDots, currentDotId, againPen
         isCurrent: id === currentDotId, isAgainPending: againPendingIds.has(id),
     }))
 
-    const MAX_DESKTOP_DOTS = 50
+    const MAX_DESKTOP_DOTS = 20
+    const DESKTOP_HALF = 10
     const MAX_MOBILE_DOTS = 10
     let visible: DotInfo[] = dots
     let isWindowed = false
@@ -471,10 +466,13 @@ function IntegratedProgressDots({ dotOrder, answeredDots, currentDotId, againPen
         visible = dots.slice(start, end)
         isWindowed = true
     } else if (!isMobile && total > MAX_DESKTOP_DOTS) {
-        visible = dots.slice(0, MAX_DESKTOP_DOTS)
+        const currentIdx = currentDotId ? dotOrder.indexOf(currentDotId) : 0
+        let start = Math.max(0, currentIdx - DESKTOP_HALF)
+        let end = Math.min(total, start + MAX_DESKTOP_DOTS)
+        if (end - start < MAX_DESKTOP_DOTS && end === total) { start = Math.max(0, total - MAX_DESKTOP_DOTS); end = total }
+        visible = dots.slice(start, end)
+        isWindowed = true
     }
-
-    const overflow = total - visible.length
 
     return (
         <Box sx={{ position: 'relative', mb: '1.25rem' }}>
@@ -500,9 +498,6 @@ function IntegratedProgressDots({ dotOrder, answeredDots, currentDotId, againPen
                     )
                 })}
             </Box>
-            {!isMobile && overflow > 0 && (
-                <Typography sx={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', fontFamily: 'Jost, sans-serif', fontSize: '0.65rem', color: '#9e8a7a' }}>+{overflow}</Typography>
-            )}
             <style>{`@keyframes dotPulse { 0%,100% { box-shadow: 0 0 0 3px rgba(184,134,11,0.20); } 50% { box-shadow: 0 0 0 5px rgba(184,134,11,0.08); } }`}</style>
         </Box>
     )
@@ -1155,7 +1150,7 @@ export default function RevisionPage() {
     const [dueCounts, setDueCounts] = useState<{ reviews: number; new: number } | null>(null)
     const [sessionKey, setSessionKey] = useState(0)
     const pendingAnswersRef = useRef<{ vocabId: number; answer: Answer }[]>([])
-    const [hasUnsavedAnswers, setHasUnsavedAnswers] = useState(false)
+    const hasUnsavedRef = useRef(false)
 
     const initialDeck = useMemo<SessionCard[]>(() => dueCards.map(card => ({
         data: card,
@@ -1198,7 +1193,7 @@ export default function RevisionPage() {
         if (pending.length === 0) return
 
         const answers = pending.splice(0)
-        setHasUnsavedAnswers(false)
+        hasUnsavedRef.current = false
 
         try {
             await submitRevisionAnswersBatch(answers)
@@ -1254,7 +1249,7 @@ export default function RevisionPage() {
 
     useEffect(() => { loadCards() }, [loadCards])
 
-    /* ── Flush on tab hide / page leave / navigation ── */
+    /* ── Flush on tab hide / page leave / soft navigation ── */
     useEffect(() => {
         const flush = () => { flushPendingAnswers() }
 
@@ -1265,7 +1260,7 @@ export default function RevisionPage() {
         const onPageHide = () => { flush() }
 
         const onBeforeUnload = (e: BeforeUnloadEvent) => {
-            if (hasUnsavedAnswers) {
+            if (hasUnsavedRef.current) {
                 e.preventDefault()
                 e.returnValue = ''
             }
@@ -1277,11 +1272,13 @@ export default function RevisionPage() {
         window.addEventListener('beforeunload', onBeforeUnload)
 
         return () => {
+            // 🔥 CRITICAL: flush on soft navigation (Next.js Link / router.push)
+            flush()
             document.removeEventListener('visibilitychange', onVisibilityChange)
             window.removeEventListener('pagehide', onPageHide)
             window.removeEventListener('beforeunload', onBeforeUnload)
         }
-    }, [flushPendingAnswers, hasUnsavedAnswers])
+    }, [flushPendingAnswers])
 
     /* ── Optimistic answer handler ── */
     const handleAnswer = useCallback((ans: Answer, timeTaken: number) => {
@@ -1310,7 +1307,7 @@ export default function RevisionPage() {
 
         // Accumulate every answer in order for the pending batch
         pendingAnswersRef.current.push({ vocabId, answer: ans })
-        setHasUnsavedAnswers(true)
+        hasUnsavedRef.current = true
 
         // Log the answer for the session results screen
         setSessionLogs(prev => [...prev, {

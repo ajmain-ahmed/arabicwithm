@@ -333,3 +333,25 @@ export async function upsertWordProgress({
 
   if (error) throw new Error(error.message)
 }
+
+export async function upsertWordProgressBatch(
+  items: { vocabId: number; isCompleted: boolean; isInRevision: boolean }[]
+): Promise<void> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId || items.length === 0) return
+
+  const now = new Date().toISOString()
+  const rows = items.map(({ vocabId, isCompleted, isInRevision }) => ({
+    user_id: userId,
+    vocab_id: vocabId,
+    is_completed: isCompleted,
+    is_in_revision: isInRevision,
+    updated_at: now,
+  }))
+
+  const { error } = await serviceClient
+    .from("progress")
+    .upsert(rows, { onConflict: "user_id,vocab_id" })
+
+  if (error) throw new Error(error.message)
+}
