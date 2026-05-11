@@ -8,12 +8,10 @@ interface ThemeCache {
   vocab: VocabRow[]
   progress: WordProgress[]
   examples: ExampleRow[]
-  fetchedAt: number
 }
 
 interface ThemeListCache {
   themes: ThemeProgress[]
-  fetchedAt: number
 }
 
 interface VocabStore {
@@ -37,8 +35,6 @@ interface VocabStore {
   invalidateThemeList: (levelCode: string) => void
 }
 
-const CACHE_TTL_MS = 5 * 60 * 1000
-
 export const useVocabStore = create<VocabStore>((set, get) => ({
   themeCache: {},
   themeListCache: {},
@@ -48,7 +44,7 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
   fetchTheme: async (themeId: number, levelCode: string) => {
     const cacheKey = `${themeId}:${levelCode}`
     const cached = get().themeCache[cacheKey]
-    if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+    if (cached) {
       return { vocab: cached.vocab, progress: cached.progress, examples: cached.examples }
     }
 
@@ -58,7 +54,7 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
       set((state) => ({
         themeCache: {
           ...state.themeCache,
-          [cacheKey]: { vocab, progress, examples, fetchedAt: Date.now() },
+          [cacheKey]: { vocab, progress, examples },
         },
         loadingThemeId: null,
       }))
@@ -98,7 +94,7 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
   fetchThemeList: async (levelCode: string) => {
     const key = levelCode
     const cached = get().themeListCache[key]
-    if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+    if (cached) {
       return cached.themes
     }
 
@@ -106,7 +102,7 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
     set(state => ({
       themeListCache: {
         ...state.themeListCache,
-        [key]: { themes, fetchedAt: Date.now() },
+        [key]: { themes },
       },
     }))
     return themes

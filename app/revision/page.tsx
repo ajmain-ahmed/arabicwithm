@@ -119,9 +119,17 @@ function useAnkiQueue(initial: SessionCard[], seedAnswered?: Map<string, string>
     useEffect(() => {
         const initialDotIds = initial.map(c => c.dotId)
         const mergedDotOrder = [...(seedDotOrder ?? []), ...initialDotIds]
+        const answeredDots = seedAnswered ? new Map(seedAnswered) : new Map()
+        // Pre-colour dots for cards that were already answered in this session
+        // (e.g. Again cards that are still in the deck after a soft navigation).
+        for (const c of initial) {
+            if (c.data.lastRating) {
+                answeredDots.set(c.dotId, RATING_COLORS[c.data.lastRating])
+            }
+        }
         setState({
             deck: initial,
-            answeredDots: seedAnswered ? new Map(seedAnswered) : new Map(),
+            answeredDots,
             dotOrder: mergedDotOrder,
             totalEver: mergedDotOrder.length,
         })
@@ -1143,11 +1151,17 @@ export default function RevisionPage() {
             setCompletedCards(completedCards)
             setSessionStarted(true)
 
-            // Only reset deck and logs on a fresh start (first mount or restart)
-            if (!hasInitializedRef.current) {
-                hasInitializedRef.current = true
-                setSessionKey(k => k + 1)
-                setSessionLogs(completedCards.map(c => ({
+            // Rebuild session logs from the cache so they survive navigation.
+            // Cards in either due or completed with a lastRating get a log entry.
+            const allRated = new Map<number, RevisionCard>()
+            for (const c of dueCards) {
+                if (c.lastRating) allRated.set(c.id, c)
+            }
+            for (const c of completedCards) {
+                if (c.lastRating) allRated.set(c.id, c)
+            }
+            setSessionLogs(
+                Array.from(allRated.values()).map(c => ({
                     cardId: c.id,
                     word: c.word,
                     rating: c.lastRating ?? 'good',
@@ -1155,7 +1169,12 @@ export default function RevisionPage() {
                     level: c.level,
                     theme: c.theme_name ?? '',
                     queue: classifyCard(c),
-                })))
+                }))
+            )
+
+            if (!hasInitializedRef.current) {
+                hasInitializedRef.current = true
+                setSessionKey(k => k + 1)
             }
         } catch (err) {
             console.error(err)

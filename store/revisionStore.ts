@@ -25,7 +25,6 @@
   interface SessionCache {
     dueCards: RevisionCard[]
     completedCards: RevisionCard[]
-    fetchedAt: number
   }
 
   const store = create<RevisionStore>((set, get) => ({
@@ -142,7 +141,7 @@
 
     getSession: async () => {
       const { sessionCache } = get()
-      if (sessionCache && Date.now() - sessionCache.fetchedAt < 5 * 60 * 1000) {
+      if (sessionCache) {
         return { dueCards: sessionCache.dueCards, completedCards: sessionCache.completedCards }
       }
 
@@ -150,7 +149,7 @@
       try {
         const { dueCards, completedCards } = await fetchRevisionSession()
         set({
-          sessionCache: { dueCards, completedCards, fetchedAt: Date.now() },
+          sessionCache: { dueCards, completedCards },
           sessionLoading: false,
         })
         return { dueCards, completedCards }
