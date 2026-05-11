@@ -39,10 +39,7 @@ import TutorialDialog, { useTutorialSeen } from '../components/TutorialDialog'
 import AuthDialog from '@/app/components/AuthDialog'
 import { useAuth } from '@/app/AuthContext'
 import type { VocabRow, WordProgress, ThemeProgress, ExampleRow, FormRow } from '@/app/actions/vocab'
-import {
-    fetchThemesWithProgress,
-    upsertWordProgress,
-} from '@/app/actions/vocab'
+
 
 /* ─────────────────────────────────────────────
    Slug → DB level mapping
@@ -1369,7 +1366,9 @@ export default function FlashcardSlugPage() {
     const label = SLUG_LABELS[slug] ?? slug
 
     const fetchTheme = useVocabStore(s => s.fetchTheme)
+    const fetchThemeList = useVocabStore(s => s.fetchThemeList)
     const loadingThemeId = useVocabStore(s => s.loadingThemeId)
+    const themeCache = useVocabStore(s => s.themeCache)
 
     const [themes, setThemes] = useState<ThemeProgress[]>([])
     const [themesLoading, setThemesLoading] = useState(true)
@@ -1428,7 +1427,7 @@ export default function FlashcardSlugPage() {
         setThemesLoading(true)
         setThemesError(null)
         setSelectedTheme(null)
-        fetchThemesWithProgress(level)
+        fetchThemeList(level)
             .then(async (data) => {
                 if (cancelled) return
                 setThemes(data)
@@ -1497,6 +1496,19 @@ export default function FlashcardSlugPage() {
 
     // Auto-advance to next unfinished theme
     const validThemes = useMemo(() => themes.filter((t) => t?.theme_id != null && !Number.isNaN(t.theme_id)), [themes])
+
+    const themesForSidebar = useMemo(() => {
+        return validThemes.map(t => {
+            const cacheKey = `${t.theme_id}:${level}`
+            const cached = themeCache[cacheKey]
+            if (cached) {
+                const completed = cached.progress.filter(p => p.is_completed).length
+                const revision = cached.progress.filter(p => p.is_in_revision).length
+                return { ...t, completed_count: completed, revision_count: revision }
+            }
+            return t
+        })
+    }, [validThemes, themeCache, level])
 
     const handleQuizComplete = useCallback(() => {
         if (!selectedTheme) return
@@ -1742,7 +1754,7 @@ export default function FlashcardSlugPage() {
                             {validThemes.length > 0 && (
                                 <Box sx={{ display: { xs: 'none', lg: 'block' }, position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)' }}>
                                     <ThemePlaylistSidebar
-                                        themes={validThemes}
+                                        themes={themesForSidebar}
                                         selectedTheme={selectedTheme}
                                         onSelectTheme={(t) => handleThemeSelect(t)}
                                         label={label}

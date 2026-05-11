@@ -1,8 +1,8 @@
 // store/vocabStore.ts
 
 import { create } from "zustand"
-import type { VocabRow, WordProgress, ExampleRow } from "@/app/actions/vocab"
-import { fetchThemeVocabWithProgress } from "@/app/actions/vocab"
+import type { VocabRow, WordProgress, ThemeProgress, ExampleRow } from "@/app/actions/vocab"
+import { fetchThemeVocabWithProgress, fetchThemesWithProgress } from "@/app/actions/vocab"
 
 interface ThemeCache {
   vocab: VocabRow[]
@@ -11,8 +11,14 @@ interface ThemeCache {
   fetchedAt: number
 }
 
+interface ThemeListCache {
+  themes: ThemeProgress[]
+  fetchedAt: number
+}
+
 interface VocabStore {
   themeCache: Record<string, ThemeCache>  // key = `${themeId}:${levelCode}`
+  themeListCache: Record<string, ThemeListCache>  // key = levelCode
   loadingThemeId: number | null
   error: string | null
   fetchTheme: (themeId: number, levelCode: string) => Promise<{
@@ -20,6 +26,7 @@ interface VocabStore {
     progress: WordProgress[]
     examples: ExampleRow[]
   }>
+  fetchThemeList: (levelCode: string) => Promise<ThemeProgress[]>
   updateLocalProgress: (
     themeId: number,
     levelCode: string,
@@ -27,12 +34,14 @@ interface VocabStore {
     patch: Partial<WordProgress>
   ) => void
   invalidateTheme: (themeId: number, levelCode?: string) => void
+  invalidateThemeList: (levelCode: string) => void
 }
 
 const CACHE_TTL_MS = 5 * 60 * 1000
 
 export const useVocabStore = create<VocabStore>((set, get) => ({
   themeCache: {},
+  themeListCache: {},
   loadingThemeId: null,
   error: null,
 
@@ -86,6 +95,23 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
     })
   },
 
+  fetchThemeList: async (levelCode: string) => {
+    const key = levelCode
+    const cached = get().themeListCache[key]
+    if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+      return cached.themes
+    }
+
+    const themes = await fetchThemesWithProgress(levelCode)
+    set(state => ({
+      themeListCache: {
+        ...state.themeListCache,
+        [key]: { themes, fetchedAt: Date.now() },
+      },
+    }))
+    return themes
+  },
+
   invalidateTheme: (themeId, levelCode) => {
     set((state) => {
       const next = { ...state.themeCache }
@@ -98,6 +124,14 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
         })
       }
       return { themeCache: next }
+    })
+  },
+
+  invalidateThemeList: (levelCode: string) => {
+    set((state) => {
+      const next = { ...state.themeListCache }
+      delete next[levelCode]
+      return { themeListCache: next }
     })
   },
 }))

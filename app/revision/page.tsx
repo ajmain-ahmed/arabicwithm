@@ -18,13 +18,12 @@ import Navbar from '@/app/components/navbar'
 import AuthDialog from '@/app/components/AuthDialog'
 import { useAuth } from '@/app/AuthContext'
 import {
-    fetchRevisionSession,
     submitRevisionAnswersBatch,
-    getDueCounts,
     type RevisionCard,
     type Answer,
     type SessionLog,
 } from '@/app/actions/revision'
+import { useRevisionStore } from '@/store/revisionStore'
 import { computeAnswerResult, type ProgressState } from '@/app/lib/sm2'
 
 /* ─────────────────────────────────────────────
@@ -126,7 +125,8 @@ function useAnkiQueue(initial: SessionCard[], seedAnswered?: Map<string, string>
             dotOrder: mergedDotOrder,
             totalEver: mergedDotOrder.length,
         })
-    }, [sessionKey, initial, seedAnswered, seedDotOrder])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sessionKey])
 
     const currentCard = state.deck[0] ?? null
     const isComplete = state.deck.length === 0
@@ -483,7 +483,7 @@ function IntegratedProgressDots({ dotOrder, answeredDots, currentDotId, againPen
                         ? (visible.length === 1 ? 50 : (idx / (visible.length - 1)) * 100)
                         : (total === 1 ? 50 : (idx / (total - 1)) * 100)
                     const answered = dot.color !== undefined
-                    const bg = answered ? dot.color! : dot.isCurrent ? 'transparent' : dot.isAgainPending ? 'transparent' : 'rgba(122,110,101,0.18)'
+                    const bg = answered ? dot.color! : dot.isCurrent ? '#fff' : dot.isAgainPending ? '#fff' : 'rgba(122,110,101,0.18)'
                     const border = answered ? 'none' : dot.isCurrent ? '2px solid #b8860b' : dot.isAgainPending ? '2px solid #c62828' : 'none'
                     const size = dot.isCurrent ? 14 : 10
                     return (
@@ -581,13 +581,11 @@ function SessionSidebar({ logs, doneCount, remainingCount }: { logs: SessionLog[
 ───────────────────────────────────────────── */
 function SessionResults({
     logs,
-    dueCounts,
     onRestart,
     onBack,
     isLoading = false,
 }: {
     logs: SessionLog[]
-    dueCounts: { reviews: number; new: number } | null
     onRestart: () => void
     onBack: () => void
     isLoading?: boolean
@@ -830,87 +828,6 @@ function SessionResults({
                         </Box>
                     </Box>
 
-                    {dueCounts && (
-                        <Box sx={{
-                            background: 'linear-gradient(135deg, #0e2e1f 0%, #071a0f 100%)',
-                            borderRadius: '12px',
-                            p: { xs: 2, md: 2.5 },
-                            mb: 4,
-                            textAlign: 'center',
-                        }}>
-                            <Typography sx={{
-                                fontFamily: "'EB Garamond', serif",
-                                fontSize: '1.1rem',
-                                fontWeight: 700,
-                                color: '#f5ede0',
-                                mb: 1.5,
-                            }}>
-                                Tomorrow's Word Bank
-                            </Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 2, md: 4 } }}>
-                                <Box>
-                                    <Typography sx={{
-                                        fontFamily: 'Jost, sans-serif',
-                                        fontSize: '1.8rem',
-                                        fontWeight: 700,
-                                        color: '#d4a843',
-                                    }}>
-                                        {dueCounts.new}
-                                    </Typography>
-                                    <Typography sx={{
-                                        fontFamily: 'Jost, sans-serif',
-                                        fontSize: '0.75rem',
-                                        color: 'rgba(245,237,224,0.7)',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.06em',
-                                    }}>
-                                        New
-                                    </Typography>
-                                </Box>
-                                <Box sx={{ width: '1px', background: 'rgba(245,237,224,0.15)' }} />
-                                <Box>
-                                    <Typography sx={{
-                                        fontFamily: 'Jost, sans-serif',
-                                        fontSize: '1.8rem',
-                                        fontWeight: 700,
-                                        color: '#d4a843',
-                                    }}>
-                                        {dueCounts.reviews}
-                                    </Typography>
-                                    <Typography sx={{
-                                        fontFamily: 'Jost, sans-serif',
-                                        fontSize: '0.75rem',
-                                        color: 'rgba(245,237,224,0.7)',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.06em',
-                                    }}>
-                                        To Review
-                                    </Typography>
-                                </Box>
-                                <Box sx={{ width: '1px', background: 'rgba(245,237,224,0.15)' }} />
-                                <Box>
-                                    <Typography sx={{
-                                        fontFamily: 'Jost, sans-serif',
-                                        fontSize: '1.8rem',
-                                        fontWeight: 700,
-                                        color: '#f5ede0',
-                                    }}>
-                                        {dueCounts.new + dueCounts.reviews}
-                                    </Typography>
-                                    <Typography sx={{
-                                        fontFamily: 'Jost, sans-serif',
-                                        fontSize: '0.75rem',
-                                        color: 'rgba(245,237,224,0.7)',
-                                        textTransform: 'uppercase',
-                                        letterSpacing: '0.06em',
-                                    }}>
-                                        Total
-                                    </Typography>
-                                </Box>
-                            </Box>
-                        </Box>
-                    )}
-
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                         <Button
                             variant="contained"
@@ -1135,6 +1052,9 @@ function RevisionFlashcard({
 export default function RevisionPage() {
     const router = useRouter()
     const { user, loading: authLoading } = useAuth()
+    const getSession = useRevisionStore((s) => s.getSession)
+    const updateSessionCard = useRevisionStore((s) => s.updateSessionCard)
+    const clearSession = useRevisionStore((s) => s.clearSession)
 
     const [dueCards, setDueCards] = useState<RevisionCard[]>([])
     const [completedCards, setCompletedCards] = useState<RevisionCard[]>([])
@@ -1147,7 +1067,6 @@ export default function RevisionPage() {
     const [progressOpen, setProgressOpen] = useState(false)
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
-    const [dueCounts, setDueCounts] = useState<{ reviews: number; new: number } | null>(null)
     const [sessionKey, setSessionKey] = useState(0)
     const pendingAnswersRef = useRef<{ vocabId: number; answer: Answer }[]>([])
     const hasUnsavedRef = useRef(false)
@@ -1202,52 +1121,58 @@ export default function RevisionPage() {
         }
     }, [])
 
-    /* ── Flush + fetch tomorrow's forecast when session completes ── */
+    /* ── Flush pending answers when session completes ── */
     useEffect(() => {
-        if (isComplete && user) {
-            flushPendingAnswers().then(() => {
-                getDueCounts().then(setDueCounts).catch(console.error)
-            })
+        if (isComplete && user && sessionStarted) {
+            flushPendingAnswers()
         }
-    }, [isComplete, user, flushPendingAnswers])
+    }, [isComplete, user, flushPendingAnswers, sessionStarted])
 
-    /* ── Load cards with re-entry guard ── */
-    const loadingRef = useRef(false)
+    /* ── Load cards ── */
+    const hasInitializedRef = useRef(false)
 
     const loadCards = useCallback(async () => {
-        if (loadingRef.current) return
-        loadingRef.current = true
         setLoading(true)
 
         // Flush any pending answers from the previous session
         await flushPendingAnswers()
 
         try {
-            const { dueCards, completedCards } = await fetchRevisionSession()
+            const { dueCards, completedCards } = await getSession()
             setDueCards(dueCards)
             setCompletedCards(completedCards)
             setSessionStarted(true)
-            setDueCounts(null)
-            setSessionKey(k => k + 1)
 
-            setSessionLogs(completedCards.map(c => ({
-                cardId: c.id,
-                word: c.word,
-                rating: c.lastRating ?? 'good',
-                timeTaken: 0,
-                level: c.level,
-                theme: c.theme_name ?? '',
-                queue: classifyCard(c),
-            })))
+            // Only reset deck and logs on a fresh start (first mount or restart)
+            if (!hasInitializedRef.current) {
+                hasInitializedRef.current = true
+                setSessionKey(k => k + 1)
+                setSessionLogs(completedCards.map(c => ({
+                    cardId: c.id,
+                    word: c.word,
+                    rating: c.lastRating ?? 'good',
+                    timeTaken: 0,
+                    level: c.level,
+                    theme: c.theme_name ?? '',
+                    queue: classifyCard(c),
+                })))
+            }
         } catch (err) {
             console.error(err)
         } finally {
             setLoading(false)
-            loadingRef.current = false
         }
     }, [flushPendingAnswers])
 
     useEffect(() => { loadCards() }, [loadCards])
+
+    const restartSession = useCallback(async () => {
+        clearSession()
+        hasInitializedRef.current = false
+        setSessionLogs([])
+        setSessionKey(k => k + 1)
+        loadCards()
+    }, [clearSession, loadCards])
 
     /* ── Flush on tab hide / page leave / soft navigation ── */
     useEffect(() => {
@@ -1295,6 +1220,18 @@ export default function RevisionPage() {
 
         // Compute new state locally
         const result = computeAnswerResult(currentProgress, ans)
+
+        const nowISO = new Date().toISOString()
+        currentCard.data.last_review_at = nowISO
+
+        // Keep the store cache in sync with the optimistic update
+        updateSessionCard(vocabId, {
+            repetitions: result.repetitions,
+            interval_days: result.interval_days,
+            ease_factor: result.ease_factor,
+            learning_step: result.learning_step,
+            lapses: currentCard.data.lapses ?? 0,
+        }, ans)
 
         // Update card data in place so successive answers use fresh state
         currentCard.data.repetitions = result.repetitions
@@ -1377,8 +1314,7 @@ export default function RevisionPage() {
                 <Navbar />
                 <SessionResults
                     logs={sessionLogs}
-                    dueCounts={dueCounts}
-                    onRestart={loadCards}
+                    onRestart={restartSession}
                     onBack={() => router.back()}
                     isLoading={loading}
                 />

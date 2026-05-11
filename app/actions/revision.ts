@@ -298,62 +298,6 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
     return { success: true, inRevision: true }
 }
 
-/* ── Due counts ──────────────────────────────────────────────────── */
-
-export async function getDueCounts(): Promise<{ reviews: number; new: number }> {
-    const userId = await getAuthenticatedUserId()
-    if (!userId) return { reviews: 0, new: 0 }
-
-    const now = new Date().toISOString()
-    const startOfDay = new Date()
-    startOfDay.setUTCHours(0, 0, 0, 0)
-    const startOfDayISO = startOfDay.toISOString()
-
-    const { count: introducedToday } = await serviceClient
-        .from('progress')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .gte('first_review_at', startOfDayISO)
-
-    const remainingNew = Math.max(0, DAILY_NEW_LIMIT - (introducedToday ?? 0))
-
-    const { count: rawNewCount } = await serviceClient
-        .from('progress')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .eq('repetitions', 0)
-        .is('last_review_at', null)
-
-    const { count: graduatedDue, error: graduatedErr } = await serviceClient
-        .from('progress')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .gt('interval_days', 0)
-        .lte('next_review_at', now)
-
-    if (graduatedErr) console.error('getDueCounts graduated error:', graduatedErr.message)
-
-    const { count: inProgressDue, error: inProgressErr } = await serviceClient
-        .from('progress')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('is_in_revision', true)
-        .eq('interval_days', 0)
-        .not('last_review_at', 'is', null)
-
-    if (inProgressErr) console.error('getDueCounts in-progress error:', inProgressErr.message)
-
-    const reviews = (graduatedDue ?? 0) + (inProgressDue ?? 0)
-
-    return {
-        reviews,
-        new: Math.min(remainingNew, rawNewCount ?? 0),
-    }
-}
-
 /* ── Upsert progress ───────────────────────────────────────────────── */
 
 export async function upsertWordProgress(
