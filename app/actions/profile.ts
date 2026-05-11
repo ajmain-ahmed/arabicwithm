@@ -36,10 +36,6 @@ export type ProfileData = {
   totalThemes: number
   completedThemes: number
   levels: LevelStat[]
-  totalXp: number
-  currentLevel: number
-  weeklyXp: number
-  streakDays: number
 }
 
 const LEVELS = [
@@ -112,12 +108,6 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
     rpcLevels = []
   }
 
-  const { data: statsData } = await serviceClient
-    .from('user_stats')
-    .select('total_xp, current_level, weekly_xp, streak_days')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
   const levels: LevelStat[] = LEVELS.map((meta) => {
     const rpcLevel = rpcLevels.find((l: any) => l?.code === meta.code)
 
@@ -168,9 +158,5 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
     totalThemes: levels.reduce((s, l) => s + l.totalThemes, 0),
     completedThemes: levels.reduce((s, l) => s + l.completedThemes, 0),
     levels,
-    totalXp: statsData?.total_xp ?? 0,
-    currentLevel: statsData?.current_level ?? 1,
-    weeklyXp: statsData?.weekly_xp ?? 0,
-    streakDays: statsData?.streak_days ?? 0,
   }
 }

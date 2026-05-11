@@ -34,7 +34,6 @@ import { CSS } from '@dnd-kit/utilities'
 import { stripDiacritics } from '@/app/lib/arabic'
 import Navbar from '@/app/components/navbar'
 import { useVocabStore } from '@/store/vocabStore'
-import { useXpStore } from '@/store/xpStore'
 import TutorialDialog, { useTutorialSeen } from '../components/TutorialDialog'
 import AuthDialog from '@/app/components/AuthDialog'
 import { useAuth } from '@/app/AuthContext'
@@ -795,9 +794,6 @@ function FlashcardQuiz({
 }) {
     const { user } = useAuth()
     const updateLocalProgress = useVocabStore(s => s.updateLocalProgress)
-    const awardWord = useXpStore(s => s.awardWord)
-    const awardTheme = useXpStore(s => s.awardTheme)
-
     const [allCards, setAllCards] = useState<CardState[]>(initialQueue)
     const [filter, setFilter] = useState<FilterType>('all')
     const [revealed, setRevealed] = useState(alwaysShow)
@@ -882,16 +878,10 @@ function FlashcardQuiz({
     // Auto-advance when theme fully completed
     const wasAlreadyCompleteOnMount = useRef(initialQueue.every(c => c.isCompleted))
     const hasTriggeredAdvance = useRef(false)
-    const hasAwardedThemeBonus = useRef(false)
-
     useEffect(() => {
         const everyCompleted = allCards.length > 0 && allCards.every(c => c.isCompleted)
         if (everyCompleted && !wasAlreadyCompleteOnMount.current && !hasTriggeredAdvance.current) {
             hasTriggeredAdvance.current = true
-            if (!hasAwardedThemeBonus.current) {
-                hasAwardedThemeBonus.current = true
-                awardTheme(themeId)
-            }
             const timer = setTimeout(() => {
                 onComplete?.()
             }, 1200)
@@ -900,7 +890,7 @@ function FlashcardQuiz({
         if (!everyCompleted) {
             hasTriggeredAdvance.current = false
         }
-    }, [allCards, onComplete, themeId, awardTheme])
+    }, [allCards, onComplete, themeId])
 
     const updateCardStatus = useCallback(
         (cardId: number, newStatus: CardStatus, opts?: { isCompleted?: boolean; isInRevision?: boolean }) => {
@@ -976,7 +966,6 @@ function FlashcardQuiz({
             updateCardStatus(current.id, current.isInRevision ? 'revision' : 'new', { isCompleted: false })
         } else {
             updateCardStatus(current.id, 'completed', { isCompleted: true })
-            awardWord(current.id)
         }
 
         if (!wasCompleted) {
@@ -986,7 +975,7 @@ function FlashcardQuiz({
                 onComplete?.()
             }
         }
-    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, awardWord, filter])
+    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, filter])
 
     const handleFilterChange = useCallback(
         (newFilter: FilterType) => {

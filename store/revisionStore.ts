@@ -3,6 +3,7 @@
   import { create } from "zustand"
   import { fetchRevisionVocabIds } from "@/app/actions/vocab"
   import { toggleRevision as serverToggleRevision } from "@/app/actions/revision"
+  import { useEffect } from "react"
 
   interface RevisionStore {
     revisionIds: Set<number>
@@ -15,7 +16,7 @@
     toggleRevision: (vocabId: number) => Promise<boolean>
   }
 
-  export const useRevisionStore = create<RevisionStore>((set, get) => ({
+  const store = create<RevisionStore>((set, get) => ({
     revisionIds: new Set(),
     loading: false,
     initialized: false,
@@ -125,3 +126,12 @@
       }
     },
   }))
+
+  // Lazy wrapper: automatically calls init() on first use in a component
+  export const useRevisionStore = ((selector: any) => {
+    const { init, initialized } = store.getState()
+    useEffect(() => {
+      if (!initialized) init()
+    }, [initialized, init])
+    return store(selector)
+  }) as typeof store

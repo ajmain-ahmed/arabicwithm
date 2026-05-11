@@ -22,7 +22,6 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { useAuth } from '../AuthContext';
 import { supabase } from '../lib/supabase/client';
 import AuthDialog from './AuthDialog';
-import { XpBarDesktop, XpBarMobileLine, XpLevelBadge } from './XpBar';
 
 const NAV_ITEMS = ['Learn', 'About', 'Contact'] as const;
 const NAV_ROUTES: Record<string, string> = {
@@ -687,7 +686,6 @@ export default function Navbar() {
                                         }}>
                                             {userInitial}
                                         </Avatar>
-                                        <XpLevelBadge />
                                     </IconButton>
                                 ) : (
                                     <IconButton onClick={() => setAuthDialogOpen(true)} sx={{ color: 'var(--forest)' }}>
@@ -728,7 +726,6 @@ export default function Navbar() {
                                 <BrandLogo />
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                                    {isLoggedIn && <XpBarDesktop />}
                                     {isLoggedIn ? (
                                         <IconButton onClick={e => setUserMenuAnchor(e.currentTarget)} size="small">
                                             <Avatar sx={{
@@ -796,8 +793,7 @@ export default function Navbar() {
                     )}
                 </AnimatePresence>
 
-                {/* Mobile XP progress line */}
-                {isMobile && isLoggedIn && <XpBarMobileLine />}
+                {isMobile && isLoggedIn && <Box sx={{ height: 2, background: 'rgba(184,134,11,0.15)' }} />}
             </AppBar>
         </>
     );

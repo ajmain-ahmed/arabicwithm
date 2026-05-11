@@ -4,7 +4,6 @@ import "./globals.css";
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
 import { AuthProvider } from './AuthContext'
-import { XpInit, XpOverlays } from './components/XpBar'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,8 +29,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>
-          <XpInit />
-          <XpOverlays />
           <Navbar />
           {children}
           <Footer />
