@@ -25,10 +25,13 @@ import {
 } from '@/app/actions/revision'
 import { useRevisionStore } from '@/store/revisionStore'
 import { computeAnswerResult, type ProgressState } from '@/app/lib/sm2'
+import WelcomeScreen from './WelcomeScreen'
 
 /* ─────────────────────────────────────────────
    Types
 ───────────────────────────────────────────── */
+type SessionMode = 'daily' | 'custom'
+
 type Queue = 'new' | 'learning' | 'review'
 
 interface SessionCard {
@@ -1066,11 +1069,12 @@ export default function RevisionPage() {
 
     const [dueCards, setDueCards] = useState<RevisionCard[]>([])
     const [completedCards, setCompletedCards] = useState<RevisionCard[]>([])
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(false)
     const [showDiacritics, setShowDiacritics] = useState(true)
     const [textScale, setTextScale] = useState(1.1)
     const [infoOpen, setInfoOpen] = useState(false)
     const [sessionStarted, setSessionStarted] = useState(false)
+    const [sessionMode, setSessionMode] = useState<SessionMode | null>(null)
     const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([])
     const [progressOpen, setProgressOpen] = useState(false)
     const [settingsOpen, setSettingsOpen] = useState(false)
@@ -1131,10 +1135,10 @@ export default function RevisionPage() {
 
     /* ── Flush pending answers when session completes ── */
     useEffect(() => {
-        if (isComplete && user && sessionStarted) {
+        if (isComplete && user && sessionStarted && sessionMode === 'daily') {
             flushPendingAnswers()
         }
-    }, [isComplete, user, flushPendingAnswers, sessionStarted])
+    }, [isComplete, user, flushPendingAnswers, sessionStarted, sessionMode])
 
     /* ── Load cards ── */
     const hasInitializedRef = useRef(false)
@@ -1183,15 +1187,18 @@ export default function RevisionPage() {
         }
     }, [flushPendingAnswers])
 
-    useEffect(() => { loadCards() }, [loadCards])
+
 
     const restartSession = useCallback(async () => {
         clearSession()
+        setDueCards([])
+        setCompletedCards([])
         hasInitializedRef.current = false
         setSessionLogs([])
+        setSessionStarted(false)
+        setSessionMode(null)
         setSessionKey(k => k + 1)
-        loadCards()
-    }, [clearSession, loadCards])
+    }, [clearSession])
 
     /* ── Flush on tab hide / page leave / soft navigation ── */
     useEffect(() => {
@@ -1261,9 +1268,11 @@ export default function RevisionPage() {
         // Update the deck immediately
         answer(ans, result.learning_step, result.graduated)
 
-        // Accumulate every answer in order for the pending batch
-        pendingAnswersRef.current.push({ vocabId, answer: ans })
-        hasUnsavedRef.current = true
+        // Accumulate every answer in order for the pending batch (daily only)
+        if (sessionMode === 'daily') {
+            pendingAnswersRef.current.push({ vocabId, answer: ans })
+            hasUnsavedRef.current = true
+        }
 
         // Log the answer for the session results screen
         setSessionLogs(prev => [...prev, {
@@ -1275,7 +1284,7 @@ export default function RevisionPage() {
             theme: currentCard.data.theme_name ?? '',
             queue: currentCard.queue,
         }])
-    }, [currentCard, answer])
+    }, [currentCard, answer, sessionMode])
 
     if (loading || authLoading) {
         return (
@@ -1322,6 +1331,28 @@ export default function RevisionPage() {
                         </Box>
                     </Container>
                 </Box>
+                <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
+            </>
+        )
+    }
+
+    if (!sessionStarted && user) {
+        return (
+            <>
+                <WelcomeScreen
+                    onStartDaily={() => {
+                        setSessionMode('daily')
+                        loadCards()
+                    }}
+                    onStartCustom={(cards) => {
+                        setSessionMode('custom')
+                        setDueCards(cards)
+                        setCompletedCards([])
+                        setSessionStarted(true)
+                        setSessionLogs([])
+                        setSessionKey(k => k + 1)
+                    }}
+                />
                 <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
             </>
         )

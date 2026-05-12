@@ -342,3 +342,240 @@ export async function upsertWordProgress(
     })
     if (error) throw new Error(error.message)
 }
+
+/* ── Custom session metadata ───────────────────────────────────────── */
+
+const LABEL_MAP: Record<string, string> = {
+    A0: 'Beginner | A0',
+    A1: 'Apprentice | A1',
+    A2: 'Competent | A2',
+    B1: 'Proficient | B1',
+    B2: 'Highly Proficient | B2',
+    C1: 'Expert | C1',
+    C2: 'Native | C2',
+}
+
+const LEVEL_ORDER = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+
+export type LevelMeta = {
+    code: string
+    label: string
+    themes: {
+        theme_id: number
+        display_name: string
+        total_words: number
+    }[]
+}
+
+export async function fetchCustomSessionMetadata(): Promise<LevelMeta[]> {
+    const { data: levels, error: levelsErr } = await serviceClient
+        .from('levels')
+        .select('id, code')
+        .order('id')
+
+    if (levelsErr || !levels) {
+        console.error('[fetchCustomSessionMetadata] levels error:', levelsErr?.message)
+        return []
+    }
+
+    const levelIds = levels.map(l => l.id)
+
+    const { data: themes, error: themesErr } = await serviceClient
+        .from('themes')
+        .select('id, display_name')
+        .order('id')
+
+    if (themesErr || !themes) {
+        console.error('[fetchCustomSessionMetadata] themes error:', themesErr?.message)
+        return []
+    }
+
+    const { data: vocabData, error: vocabErr } = await serviceClient
+        .from('vocab')
+        .select('level_id, theme_id')
+        .in('level_id', levelIds)
+
+    if (vocabErr) {
+        console.error('[fetchCustomSessionMetadata] vocab error:', vocabErr.message)
+    }
+
+    const result: LevelMeta[] = []
+
+    for (const level of levels) {
+        const themeCountMap = new Map<number, number>()
+        for (const v of vocabData ?? []) {
+            if (v.level_id === level.id) {
+                themeCountMap.set(v.theme_id, (themeCountMap.get(v.theme_id) ?? 0) + 1)
+            }
+        }
+
+        const levelThemes: LevelMeta['themes'] = []
+        for (const theme of themes) {
+            const count = themeCountMap.get(theme.id)
+            if (count && count > 0) {
+                levelThemes.push({
+                    theme_id: theme.id,
+                    display_name: theme.display_name,
+                    total_words: count,
+                })
+            }
+        }
+
+        result.push({
+            code: level.code,
+            label: level.code,
+            themes: levelThemes,
+        })
+    }
+
+    result.sort((a, b) => {
+        const idxA = LEVEL_ORDER.indexOf(a.code)
+        const idxB = LEVEL_ORDER.indexOf(b.code)
+        return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB)
+    })
+
+    return result
+}
+
+/* ── Custom session cards ──────────────────────────────────────────── */
+
+export async function fetchCustomSessionCards(settings: {
+    levelCodes: string[]
+    themeIds: number[]
+    cardCount: number
+    random: boolean
+}): Promise<RevisionCard[]> {
+    const { levelCodes, themeIds, cardCount, random } = settings
+
+    let builder = serviceClient
+        .from('vocab')
+        .select('word_id, word_ar, word_di, word_tr, theme_id, level_id')
+
+    if (!random && levelCodes.length > 0) {
+        const { data: levelData } = await serviceClient
+            .from('levels')
+            .select('id')
+            .in('code', levelCodes)
+        const ids = levelData?.map(l => l.id) ?? []
+        if (ids.length > 0) {
+            builder = builder.in('level_id', ids)
+        }
+    }
+
+    if (!random && themeIds.length > 0) {
+        builder = builder.in('theme_id', themeIds)
+    }
+
+    const { data: vocabData, error } = await builder
+    if (error) throw new Error(error.message)
+    if (!vocabData || vocabData.length === 0) return []
+
+    // Shuffle and limit in JavaScript
+    const shuffled = [...vocabData].sort(() => Math.random() - 0.5).slice(0, cardCount)
+    const vocabIds = shuffled.map(v => v.word_id)
+
+    const levelIds = [...new Set(shuffled.map(v => v.level_id))]
+    const themeIdsSet = [...new Set(shuffled.map(v => v.theme_id))]
+
+    const [{ data: levelsData }, { data: themesData }] = await Promise.all([
+        serviceClient.from('levels').select('id, code').in('id', levelIds),
+        serviceClient.from('themes').select('id, display_name').in('id', themeIdsSet),
+    ])
+
+    const levelCodeMap = new Map((levelsData ?? []).map(l => [l.id, l.code]))
+    const themeNameMap = new Map((themesData ?? []).map(t => [t.id, t.display_name]))
+
+    const [{ data: defsData, error: defsErr }, { data: exData, error: exErr }] = await Promise.all([
+        serviceClient
+            .from('definitions')
+            .select('vocab_id, meaning, pos, def_ar, def_tr, def_en')
+            .in('vocab_id', vocabIds),
+        serviceClient
+            .from('examples')
+            .select('vocab_id, ex_ar, ex_di, ex_en')
+            .in('vocab_id', vocabIds),
+    ])
+
+    if (defsErr) throw new Error(defsErr.message)
+    if (exErr) throw new Error(exErr.message)
+
+    const defMap = new Map<number, { meaning: string; pos: string; def_ar: string | null; def_tr: string | null; def_en: string | null }[]>()
+    for (const d of defsData ?? []) {
+        const list = defMap.get(d.vocab_id) ?? []
+        list.push({ meaning: d.meaning, pos: d.pos, def_ar: d.def_ar, def_tr: d.def_tr, def_en: d.def_en })
+        defMap.set(d.vocab_id, list)
+    }
+
+    const exMap = new Map<number, { ex_ar: string; ex_di: string; ex_en: string }[]>()
+    for (const e of exData ?? []) {
+        const list = exMap.get(e.vocab_id) ?? []
+        list.push({ ex_ar: e.ex_ar ?? '', ex_di: e.ex_di ?? '', ex_en: e.ex_en ?? '' })
+        exMap.set(e.vocab_id, list)
+    }
+
+    return shuffled.map((v) => {
+        const defs = defMap.get(v.word_id) ?? []
+        const primaryDef = defs[0] ?? { meaning: '', pos: 'unknown', def_ar: null, def_tr: null, def_en: null }
+        const examples = exMap.get(v.word_id) ?? []
+
+        return {
+            id: v.word_id,
+            word: v.word_ar ?? '',
+            word_diacritic: v.word_di ?? '',
+            transliteration: v.word_tr ?? '',
+            definition: primaryDef.meaning,
+            level: levelCodeMap.get(v.level_id) ?? '',
+            type: primaryDef.pos,
+            root: null,
+            ex_ar: examples.map(e => e.ex_ar).join(';') || null,
+            ex_di: examples.map(e => e.ex_di).join(';') || null,
+            ex_en: examples.map(e => e.ex_en).join(';') || null,
+            theme_id: v.theme_id ?? 0,
+            theme_name: themeNameMap.get(v.theme_id) ?? null,
+            def_ar: primaryDef.def_ar ?? null,
+            def_tr: primaryDef.def_tr ?? null,
+            def_en: primaryDef.def_en ?? null,
+            progress_word_id: v.word_id,
+            repetitions: 0,
+            interval_days: 0,
+            ease_factor: 2.5,
+            learning_step: 0,
+            lapses: 0,
+            last_review_at: null,
+            next_review_at: null,
+            lastRating: null,
+        }
+    })
+}
+
+/* ── Daily review counts (lightweight) ─────────────────────────────── */
+
+export async function fetchDailyReviewCounts(): Promise<{
+    newCount: number
+    learningCount: number
+    reviewCount: number
+}> {
+    const userId = await getAuthenticatedUserId()
+    if (!userId) return { newCount: 0, learningCount: 0, reviewCount: 0 }
+
+    const { data, error } = await serviceClient.rpc('get_revision_session', {
+        p_user_id: userId,
+        p_daily_new_limit: DAILY_NEW_LIMIT,
+    })
+
+    if (error || !data) {
+        console.error('[fetchDailyReviewCounts] RPC error:', error?.message)
+        return { newCount: 0, learningCount: 0, reviewCount: 0 }
+    }
+
+    const dueCards = data.due_cards ?? []
+    const counts = { newCount: 0, learningCount: 0, reviewCount: 0 }
+
+    dueCards.forEach((c: any) => {
+        if (!c.last_review_at && (c.repetitions ?? 0) === 0) counts.newCount++
+        else if ((c.interval_days ?? 0) === 0) counts.learningCount++
+        else counts.reviewCount++
+    })
+
+    return counts
+}
