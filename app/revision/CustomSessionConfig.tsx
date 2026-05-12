@@ -49,12 +49,11 @@ export default function CustomSessionConfig({ metadata, onStart }: CustomSession
   }, [metadata])
 
   const availableWords = useMemo(() => {
+    if (selectedThemes.length === 0) return 0
     return metadata
       .filter(l => selectedLevels.includes(l.code))
       .reduce((s, l) => {
-        const themes = selectedThemes.length > 0
-          ? l.themes.filter(t => selectedThemes.includes(t.theme_id))
-          : l.themes
+        const themes = l.themes.filter(t => selectedThemes.includes(t.theme_id))
         return s + themes.reduce((a, t) => a + t.total_words, 0)
       }, 0)
   }, [metadata, selectedLevels, selectedThemes])

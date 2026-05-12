@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { Box, Typography, Card, CardContent, Button, Chip, Skeleton, CircularProgress } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import Navbar from '@/app/components/navbar'
+import { useAuth } from '@/app/AuthContext'
 import CustomSessionConfig from './CustomSessionConfig'
 import { fetchDailyReviewCounts, fetchCustomSessionMetadata } from '@/app/actions/revision'
 import type { RevisionCard } from '@/app/actions/revision'
@@ -46,6 +47,7 @@ const slideVariants = {
 }
 
 export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeScreenProps) {
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<TabKey>('daily')
   const [direction, setDirection] = useState(1)
   const [dailyCounts, setDailyCounts] = useState({ newCount: 0, learningCount: 0, reviewCount: 0 })
@@ -221,12 +223,12 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
                         <Typography sx={{
                           fontFamily: 'Jost, sans-serif',
                           color: '#7a6e65',
-                          mb: 2,
+                          mb: 3,
                           lineHeight: 1.7,
                           fontSize: { xs: '0.9rem', md: '1.15rem' },
                         }}>
                           Review words that are due today using spaced repetition.
-                          Your progress is saved and used to schedule future reviews.
+                          Your progress is saved and used to schedule future reviews. You must be logged in and have at least 20 cards in revision to unlock the daily review.
                         </Typography>
 
                         <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 3 }}>
@@ -278,6 +280,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
                           variant="contained"
                           onClick={handleStartDaily}
                           fullWidth
+                          disabled={!user || dailyCounts.newCount + dailyCounts.learningCount + dailyCounts.reviewCount === 0}
                           sx={{
                             background: '#2c1a0e',
                             color: '#f5ede0',
@@ -288,10 +291,16 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
                             py: { xs: 1.2, md: 1.4 },
                             fontSize: { xs: '0.95rem', md: '1.15rem' },
                             '&:hover': { background: '#1a0f08' },
+                            '&.Mui-disabled': { background: 'rgba(44,26,14,0.3)', color: 'rgba(245,237,224,0.5)' },
                           }}
                         >
                           Start Daily Review
                         </Button>
+                        {!user && (
+                          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#9e8a7a', mt: 1, textAlign: 'center' }}>
+                            Log in to access daily review
+                          </Typography>
+                        )}
                       </motion.div>
                     )}
 

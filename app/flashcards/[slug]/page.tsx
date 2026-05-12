@@ -167,15 +167,11 @@ function DesktopTextScaleSlider({ textScale, onChange }: { textScale: number; on
 function SettingsDialog({
     open, onClose,
     showDiacritics, onToggleDiacritics,
-    alwaysShow, onToggleAlwaysShow,
     textScale, onTextScaleChange,
-    onOpenTutorial,
 }: {
     open: boolean; onClose: () => void
     showDiacritics: boolean; onToggleDiacritics: () => void
-    alwaysShow: boolean; onToggleAlwaysShow: () => void
     textScale: number; onTextScaleChange: (v: number) => void
-    onOpenTutorial: () => void
 }) {
     const ToggleRow = ({ label, description, enabled, onToggle, activeColor }: {
         label: string; description: string; enabled: boolean; onToggle: () => void; activeColor: string
@@ -216,7 +212,6 @@ function SettingsDialog({
             <DialogContent sx={{ px: 2.5, pt: 1.5, pb: 2 }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                     <ToggleRow label="Show Diacritics" description="Display vowel marks on Arabic words" enabled={showDiacritics} onToggle={onToggleDiacritics} activeColor="#b8860b" />
-                    <ToggleRow label="Always Show Card" description="Never hide the answer side" enabled={alwaysShow} onToggle={onToggleAlwaysShow} activeColor="#0e2e1f" />
                     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.25, px: 1.5, borderRadius: '10px', border: '1px solid rgba(122,110,101,0.15)', background: 'rgba(122,110,101,0.03)', gap: 2 }}>
                         <Box sx={{ pr: 2, flex: '0 0 auto' }}>
                             <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e' }}>Text Size</Typography>
@@ -233,10 +228,6 @@ function SettingsDialog({
                 </Box>
             </DialogContent>
             <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5, flexDirection: 'column', gap: 1 }}>
-                <Button fullWidth variant="outlined" onClick={() => { onClose(); onOpenTutorial(); }} sx={{ borderColor: 'rgba(122,110,101,0.3)', color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.9rem', textTransform: 'none', borderRadius: '10px', py: 1, '&:hover': { borderColor: '#b8860b', color: '#b8860b', background: 'rgba(184,134,11,0.04)' } }}>
-                    <HelpOutlineRounded sx={{ fontSize: '1rem', mr: 1 }} />
-                    View Tutorial
-                </Button>
                 <Button fullWidth variant="contained" onClick={onClose} disableElevation sx={{ background: '#2c1a0e', color: '#f5ede0', fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.95rem', textTransform: 'none', borderRadius: '10px', py: 1.1, '&:hover': { background: '#1a0f08' } }}>Done</Button>
             </DialogActions>
         </Dialog>
@@ -768,7 +759,7 @@ function FormsPanel({ forms, showDiacritics, textScale }: {
    FlashcardQuiz
 ───────────────────────────────────────────── */
 function FlashcardQuiz({
-    initialQueue, themeId, allExamples, showDiacritics, alwaysShow, onComplete, themeLabel,
+    initialQueue, themeId, allExamples, showDiacritics, onComplete, themeLabel,
     totalInTheme, alreadyCompletedCount, textScale, initialCardIndex, flushRef,
     levelCode,
     onThemeProgressUpdate,
@@ -778,7 +769,6 @@ function FlashcardQuiz({
     themeId: number
     allExamples: ExampleRow[]
     showDiacritics: boolean
-    alwaysShow: boolean
     onComplete: () => void
     themeLabel: string
     totalInTheme: number
@@ -794,7 +784,7 @@ function FlashcardQuiz({
     const updateLocalProgress = useVocabStore(s => s.updateLocalProgress)
     const [allCards, setAllCards] = useState<CardState[]>(initialQueue)
     const [filter, setFilter] = useState<FilterType>('all')
-    const [revealed, setRevealed] = useState(alwaysShow)
+    const [revealed, setRevealed] = useState(true)
     const [cardKey, setCardKey] = useState(0)
     const [mobileTab, setMobileTab] = useState<'definition' | 'examples' | 'forms'>('definition')
     const themeObj = useTheme()
@@ -829,7 +819,6 @@ function FlashcardQuiz({
         }
     }, [flushRef, flushPending])
 
-    useEffect(() => { if (alwaysShow) setRevealed(true) }, [alwaysShow])
 
     const filteredCards = useMemo(
         () => (filter === 'all' ? allCards : allCards.filter(c => c.status === filter)),
@@ -928,11 +917,10 @@ function FlashcardQuiz({
         (newIndex: number) => {
             if (newIndex >= 0 && newIndex < filteredCards.length) {
                 setCurrentIndex(newIndex)
-                if (!alwaysShow) setRevealed(false)
                 setCardKey(k => k + 1)
             }
         },
-        [filteredCards.length, alwaysShow]
+        [filteredCards.length]
     )
 
     const handlePrevious = useCallback(() => {
@@ -988,10 +976,9 @@ function FlashcardQuiz({
             const next = newFilter === 'all' ? allCards : allCards.filter(c => c.status === newFilter)
             const idx = next.findIndex(c => c.status === 'new')
             setCurrentIndex(idx === -1 ? 0 : idx)
-            if (!alwaysShow) setRevealed(false)
             setCardKey(k => k + 1)
         },
-        [allCards, alwaysShow]
+        [allCards]
     )
 
     if (!current) return null
@@ -1378,7 +1365,7 @@ export default function FlashcardSlugPage() {
     const [activeExamples, setActiveExamples] = useState<ExampleRow[]>([])
     const [initialCardIndex, setInitialCardIndex] = useState<number | undefined>(undefined)
     const [showDiacritics, setShowDiacritics] = useState(true)
-    const [alwaysShow, setAlwaysShow] = useState(true)
+
     const [quizKey, setQuizKey] = useState(0)
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [themesOpen, setThemesOpen] = useState(false)
@@ -1655,9 +1642,7 @@ export default function FlashcardSlugPage() {
             <SettingsDialog
                 open={settingsOpen} onClose={() => setSettingsOpen(false)}
                 showDiacritics={showDiacritics} onToggleDiacritics={() => setShowDiacritics(p => !p)}
-                alwaysShow={alwaysShow} onToggleAlwaysShow={() => setAlwaysShow(p => !p)}
                 textScale={textScale} onTextScaleChange={setTextScale}
-                onOpenTutorial={() => setTutorialOpen(true)}
             />
 
             <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh', pt: { xs: 8, sm: 10 } }}>
@@ -1670,7 +1655,7 @@ export default function FlashcardSlugPage() {
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
                                 <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
-                                <PillToggle enabled={alwaysShow} onToggle={() => setAlwaysShow(p => !p)} label="Always show card" activeColor="#0e2e1f" />
+
                                 <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics(p => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
                                 <IconButton onClick={() => setTutorialOpen(true)} size="small" sx={{ width: 32, height: 32, border: '1px solid rgba(122,110,101,0.3)', borderRadius: '50%', color: '#7a6e65', flexShrink: 0 }}>
                                     <HelpOutlineRounded sx={{ fontSize: '1rem' }} />
@@ -1720,7 +1705,7 @@ export default function FlashcardSlugPage() {
                                         themeId={selectedTheme.theme_id}
                                         allExamples={activeExamples}
                                         showDiacritics={showDiacritics}
-                                        alwaysShow={alwaysShow}
+
                                         onComplete={handleQuizComplete}
                                         themeLabel={selectedTheme.display_name}
                                         totalInTheme={selectedTheme.total_words}

@@ -3,16 +3,18 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
     Box, Container, Typography, Button, Collapse,
-    LinearProgress, Skeleton, IconButton, Dialog,
+    Skeleton, IconButton, Dialog,
     DialogTitle, DialogContent, Fade,
-    DialogActions, Slider, useMediaQuery, Grid,
+    DialogActions, Slider, useMediaQuery, Grid, Chip,
 } from '@mui/material'
 import {
-    ArrowBackSharp, CheckCircle, Refresh, Close,
-    HelpOutlineRounded, Settings, ChevronLeft, ChevronRight,
+    ArrowBackSharp, CheckCircle, Close,
+    HelpOutlineRounded, Settings,
     Replay, TrendingFlat, Check, TrendingUp, MenuBook,
     ArrowForwardSharp,
+    Star,
 } from '@mui/icons-material'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import Navbar from '@/app/components/navbar'
 import AuthDialog from '@/app/components/AuthDialog'
@@ -42,6 +44,12 @@ interface SessionCard {
     learningStep: number
 }
 
+type ExtendedSessionLog = SessionLog & {
+    easeFactor?: number
+    lapsesAtTime?: number
+    cardPoints?: number
+}
+
 /* ─────────────────────────────────────────────
    Config
 ───────────────────────────────────────────── */
@@ -65,7 +73,6 @@ const RATING_COLORS: Record<Answer, string> = {
     easy: '#1565c0',
 }
 
-const SIDEBAR_PAGE_SIZE = 10
 
 /* ─────────────────────────────────────────────
    Helpers
@@ -96,6 +103,47 @@ function parseExamples(card: RevisionCard) {
 
 let _dotIdCounter = 0
 function makeDotId() { return `dot-${++_dotIdCounter}` }
+
+function computeCardPoints(
+    easeFactor: number,
+    timeTaken: number,
+    rating: Answer,
+    lapsesAtTime: number,
+    streakCount: number
+): { points: number; multipliers: { difficulty: string; time: string; rating: string; streak: string } } {
+    const basePoints = 100
+    const difficultyMultiplier = 0.5 + (2.5 / Math.max(easeFactor, 1.3))
+
+    let timeMultiplier: number
+    if (timeTaken <= 2) timeMultiplier = 1.2
+    else if (timeTaken <= 5) timeMultiplier = 1.0
+    else if (timeTaken <= 10) timeMultiplier = 0.8
+    else timeMultiplier = 0.5
+
+    const ratingMultiplier: Record<Answer, number> = {
+        again: 0,
+        hard: 0.6,
+        good: 1.0,
+        easy: 1.4,
+    }
+
+    const streakMultiplier = Math.min(1 + streakCount * 0.1, 2.0)
+    const lapsePenalty = lapsesAtTime * 10
+
+    const points = Math.max(0, Math.round(
+        basePoints * difficultyMultiplier * timeMultiplier * ratingMultiplier[rating] * streakMultiplier - lapsePenalty
+    ))
+
+    return {
+        points,
+        multipliers: {
+            difficulty: `${difficultyMultiplier.toFixed(2)}x`,
+            time: `${timeMultiplier.toFixed(2)}x`,
+            rating: `${ratingMultiplier[rating].toFixed(2)}x`,
+            streak: `${streakMultiplier.toFixed(2)}x`,
+        },
+    }
+}
 
 /* ─────────────────────────────────────────────
    useAnkiQueue
@@ -515,72 +563,30 @@ function IntegratedProgressDots({ dotOrder, answeredDots, currentDotId, againPen
 }
 
 /* ─────────────────────────────────────────────
-   SessionSidebar
+   PointsPanel
 ───────────────────────────────────────────── */
-function SessionSidebar({ logs, doneCount, remainingCount }: { logs: SessionLog[]; doneCount: number; remainingCount: number }) {
-    const [page, setPage] = useState(1)
-    const totalPages = Math.max(1, Math.ceil(logs.length / SIDEBAR_PAGE_SIZE))
-    useEffect(() => { setPage(1) }, [logs.length === 0])
-    const start = (page - 1) * SIDEBAR_PAGE_SIZE
-    const pageLogs = logs.slice(start, start + SIDEBAR_PAGE_SIZE)
-    const totalCards = doneCount + remainingCount
-    const progress = totalCards > 0 ? Math.round((doneCount / totalCards) * 100) : 0
-    const avgTime = logs.length > 0 ? Math.round(logs.reduce((s, l) => s + l.timeTaken, 0) / logs.length) : 0
-    const ratingCounts = { again: 0, hard: 0, good: 0, easy: 0 }
-    logs.forEach(l => ratingCounts[l.rating]++)
-
+function PointsPanel({ displayPoints, multipliers }: { displayPoints: number; multipliers: { difficulty: string; time: string; rating: string; streak: string } | null }) {
     return (
-        <Box sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.15)', borderRadius: '10px', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <Box sx={{ background: 'linear-gradient(135deg, #0e2e1f 0%, #071a0f 100%)', px: 2, py: 2, flexShrink: 0 }}>
-                <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.3rem', fontWeight: 700, color: '#f5ede0', lineHeight: 1.2, mb: 0.75 }}>Word Bank</Typography>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'rgba(245,237,224,0.6)', fontWeight: 500 }}>{doneCount} / {totalCards} cards</Typography>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: '#d4a843', fontWeight: 700 }}>{progress}%</Typography>
-                </Box>
-                <LinearProgress variant="determinate" value={progress} sx={{ height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.1)', '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, #b8860b 0%, #d4a843 100%)', borderRadius: 3 } }} />
+        <Box sx={{ position: 'sticky', top: 80, textAlign: 'center', p: 2, background: '#fff', border: '1px solid rgba(184,134,11,0.15)', borderRadius: '10px' }}>
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9e8a7a', mb: 1 }}>
+                Total Points
+            </Typography>
+            <Box sx={{ fontFamily: 'Jost, sans-serif', fontSize: '2.5rem', fontWeight: 800, color: '#b8860b', lineHeight: 1, mb: 1 }}>
+                {displayPoints}
             </Box>
-            <Box sx={{ px: 2, py: 2.5, borderBottom: '1px solid rgba(184,134,11,0.1)', display: 'flex', justifyContent: 'space-around', alignItems: 'flex-start' }}>
-                {[
-                    { label: 'Avg Time', value: `${avgTime}s`, color: '#2c1a0e' },
-                    { label: 'Again', value: `${ratingCounts.again}`, color: '#c62828' },
-                    { label: 'Hard', value: `${ratingCounts.hard}`, color: '#e65100' },
-                    { label: 'Good', value: `${ratingCounts.good}`, color: '#2e7d32' },
-                    { label: 'Easy', value: `${ratingCounts.easy}`, color: '#1565c0' },
-                ].map(stat => (
-                    <Box key={stat.label} sx={{ textAlign: 'center', flex: 1 }}>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#9e8a7a', mb: 0.75 }}>{stat.label}</Typography>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.25rem', fontWeight: 700, color: stat.color }}>{stat.value}</Typography>
-                    </Box>
-                ))}
-            </Box>
-            <Box sx={{ overflowY: 'auto', flex: 1 }}>
-                {logs.length === 0 && (
-                    <Box sx={{ px: 2, py: 4, textAlign: 'center' }}>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.05rem', color: '#9e8a7a' }}>Your session history will appear here</Typography>
-                    </Box>
-                )}
-                {pageLogs.map((log, idx) => (
-                    <Box key={start + idx} sx={{ px: 2, py: 1.5, borderBottom: '1px solid rgba(184,134,11,0.07)', display: 'flex', alignItems: 'center', gap: 1.5, transition: 'background 0.15s', '&:hover': { background: 'rgba(184,134,11,0.03)' } }}>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: '#9e8a7a', width: 28, flexShrink: 0, fontWeight: 700 }}>{start + idx + 1}</Typography>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.35rem', color: '#2c1a0e', direction: 'rtl', textAlign: 'right', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{log.word}</Typography>
-                            <Box sx={{ display: 'flex', gap: 0.75, mt: 0.5, flexWrap: 'wrap', alignItems: 'center' }}>
-                                {log.level && <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: '#b8860b', background: 'rgba(184,134,11,0.08)', px: 0.75, py: '2px', borderRadius: '4px', lineHeight: 1 }}>{log.level}</Typography>}
-                                {log.theme && <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#7a6e65', background: 'rgba(122,110,101,0.08)', px: 0.75, py: '2px', borderRadius: '4px', lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 140 }}>{log.theme}</Typography>}
-                            </Box>
+            {multipliers && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, pt: 2 }}>
+                    {[
+                        { label: 'Difficulty', value: multipliers.difficulty },
+                        { label: 'Time', value: multipliers.time },
+                        { label: 'Rating', value: multipliers.rating },
+                        { label: 'Streak', value: multipliers.streak },
+                    ].map(m => (
+                        <Box key={m.label} sx={{ display: 'flex', justifyContent: 'space-between', px: 1 }}>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#9e8a7a' }}>{m.label}</Typography>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', fontWeight: 600, color: '#b8860b' }}>{m.value}</Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.25, flexShrink: 0 }}>
-                            <Box sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', fontWeight: 700, color: '#fff', background: RATING_COLORS[log.rating], px: 1.2, py: '3px', borderRadius: '4px', lineHeight: 1, textTransform: 'capitalize' }}>{log.rating}</Box>
-                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#9e8a7a' }}>{log.timeTaken}s</Typography>
-                        </Box>
-                    </Box>
-                ))}
-            </Box>
-            {logs.length > SIDEBAR_PAGE_SIZE && (
-                <Box sx={{ flexShrink: 0, px: 2, py: 1.5, borderTop: '1px solid rgba(184,134,11,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Button size="small" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} sx={{ minWidth: 0, px: 1, color: '#7a6e65', borderColor: 'rgba(122,110,101,0.25)' }} variant="outlined"><ChevronLeft fontSize="small" /></Button>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#7a6e65', fontWeight: 500 }}>Page {page} / {totalPages}</Typography>
-                    <Button size="small" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} sx={{ minWidth: 0, px: 1, color: '#7a6e65', borderColor: 'rgba(122,110,101,0.25)' }} variant="outlined"><ChevronRight fontSize="small" /></Button>
+                    ))}
                 </Box>
             )}
         </Box>
@@ -593,14 +599,16 @@ function SessionSidebar({ logs, doneCount, remainingCount }: { logs: SessionLog[
 function SessionResults({
     logs,
     onRestart,
-    onBack,
     isLoading = false,
+    sessionMode,
 }: {
-    logs: SessionLog[]
+    logs: ExtendedSessionLog[]
     onRestart: () => void
-    onBack: () => void
     isLoading?: boolean
+    sessionMode?: SessionMode | null
 }) {
+    const router = useRouter()
+    const totalPoints = logs.reduce((sum, l) => sum + (l.cardPoints ?? 0), 0)
     const total = logs.length
     const newCards = logs.filter(l => l.queue === 'new').length
     const reviewCards = logs.filter(l => l.queue === 'learning' || l.queue === 'review').length
@@ -613,6 +621,9 @@ function SessionResults({
     const correct = good + easy + hard
     const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0
     const avgTime = total > 0 ? Math.round(logs.reduce((s, l) => s + l.timeTaken, 0) / total) : 0
+
+    const themes = [...new Set(logs.map(l => l.theme).filter(Boolean))]
+    const levels = [...new Set(logs.map(l => l.level).filter(Boolean))]
 
     let ratingLabel = 'Keep Practicing'
     let ratingColor = '#c62828'
@@ -638,6 +649,17 @@ function SessionResults({
     const circumference = 2 * Math.PI * 52
     const strokeDashoffset = circumference - (accuracy / 100) * circumference
 
+    const statItems = [
+        { label: 'Total Cards', value: total, color: '#2c1a0e' },
+        { label: 'Avg Time', value: `${avgTime}s`, color: '#7a6e65' },
+        { label: 'Themes', value: themes.length, color: '#b8860b' },
+        { label: 'Levels', value: levels.length, color: '#b8860b' },
+        ...(sessionMode === 'daily' ? [
+            { label: 'New Cards', value: newCards, color: '#1565c0' },
+            { label: 'Reviewed', value: reviewCards, color: '#2e7d32' },
+        ] : []),
+    ]
+
     return (
         <Box sx={{ background: '#faf7f2', minHeight: '100vh', pt: { xs: 8, sm: 10 } }}>
             <Container maxWidth="sm" sx={{ py: { xs: 4, md: 6 } }}>
@@ -655,15 +677,7 @@ function SessionResults({
                         color: '#2c1a0e',
                         mb: 0.5,
                     }}>
-                        Session Complete
-                    </Typography>
-                    <Typography sx={{
-                        fontFamily: 'Jost, sans-serif',
-                        fontSize: { xs: '0.9rem', md: '1rem' },
-                        color: '#7a6e65',
-                        mb: 4,
-                    }}>
-                        Here is how you performed today
+                        Session Complete!
                     </Typography>
 
                     <Box sx={{ position: 'relative', width: 140, height: 140, mx: 'auto', mb: 4 }}>
@@ -728,7 +742,7 @@ function SessionResults({
                         borderRadius: '999px',
                         background: ratingBg,
                         border: `1.5px solid ${ratingColor}44`,
-                        mb: 4,
+                        mb: 3,
                     }}>
                         <CheckCircle sx={{ fontSize: 18, color: ratingColor }} />
                         <Typography sx={{
@@ -742,13 +756,20 @@ function SessionResults({
                         </Typography>
                     </Box>
 
-                    <Grid container spacing={2} sx={{ mb: 4 }}>
-                        {[
-                            { label: 'Total Cards', value: total, color: '#2c1a0e' },
-                            { label: 'New Cards', value: newCards, color: '#1565c0' },
-                            { label: 'Reviewed', value: reviewCards, color: '#2e7d32' },
-                            { label: 'Avg Time', value: `${avgTime}s`, color: '#7a6e65' },
-                        ].map((stat) => (
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 3 }}>
+                        <Star sx={{ fontSize: 28, color: '#b8860b' }} />
+                        <Box sx={{ textAlign: 'left' }}>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.8rem', fontWeight: 800, color: '#2c1a0e', lineHeight: 1 }}>
+                                {totalPoints}
+                            </Typography>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', fontWeight: 600, color: '#9e8a7a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                                Total Points
+                            </Typography>
+                        </Box>
+                    </Box>
+
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
+                        {statItems.map((stat) => (
                             <Grid key={stat.label} size={{ xs: 6 }}>
                                 <Box sx={{
                                     background: 'rgba(245,237,224,0.5)',
@@ -781,70 +802,65 @@ function SessionResults({
                         ))}
                     </Grid>
 
-                    <Box sx={{ textAlign: 'left', mb: 4 }}>
-                        <Typography sx={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontSize: '0.72rem',
-                            fontWeight: 600,
-                            color: '#9e8a7a',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.08em',
-                            mb: 1.5,
-                        }}>
-                            Answer Breakdown
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-                            {([
-                                { label: 'Again', count: again, color: '#c62828', bg: 'rgba(198,40,40,0.08)' },
-                                { label: 'Hard', count: hard, color: '#e65100', bg: 'rgba(230,81,0,0.08)' },
-                                { label: 'Good', count: good, color: '#2e7d32', bg: 'rgba(46,125,50,0.08)' },
-                                { label: 'Easy', count: easy, color: '#1565c0', bg: 'rgba(21,101,192,0.08)' },
-                            ]).map((row) => {
-                                const pct = total > 0 ? Math.round((row.count / total) * 100) : 0
-                                return (
-                                    <Box key={row.label} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                        <Typography sx={{
-                                            fontFamily: 'Jost, sans-serif',
-                                            fontSize: '0.82rem',
-                                            fontWeight: 600,
-                                            color: row.color,
-                                            width: 48,
-                                            flexShrink: 0,
-                                        }}>
-                                            {row.label}
-                                        </Typography>
-                                        <Box sx={{ flex: 1, height: 8, borderRadius: 4, background: 'rgba(184,134,11,0.08)', overflow: 'hidden' }}>
-                                            <Box sx={{
-                                                height: '100%',
-                                                width: `${pct}%`,
-                                                background: row.color,
-                                                borderRadius: 4,
-                                                transition: 'width 0.8s ease',
-                                            }} />
-                                        </Box>
-                                        <Typography sx={{
-                                            fontFamily: 'Jost, sans-serif',
-                                            fontSize: '0.82rem',
-                                            fontWeight: 700,
-                                            color: '#2c1a0e',
-                                            width: 40,
-                                            textAlign: 'right',
-                                            flexShrink: 0,
-                                        }}>
-                                            {row.count}
-                                        </Typography>
-                                    </Box>
-                                )
-                            })}
+                    {themes.length > 0 && (
+                        <Box sx={{ textAlign: 'left', mb: 3 }}>
+                            <Typography sx={{
+                                fontFamily: 'Jost, sans-serif',
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                                color: '#9e8a7a',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                mb: 1.5,
+                            }}>
+                                Themes
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                                {themes.map(t => (
+                                    <Chip key={t} label={t} size="small" sx={{
+                                        background: 'rgba(184,134,11,0.08)',
+                                        border: '1px solid rgba(184,134,11,0.2)',
+                                        color: '#7a6e65',
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '0.8rem',
+                                    }} />
+                                ))}
+                            </Box>
                         </Box>
-                    </Box>
+                    )}
+
+                    {levels.length > 0 && (
+                        <Box sx={{ textAlign: 'left', mb: 4 }}>
+                            <Typography sx={{
+                                fontFamily: 'Jost, sans-serif',
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                                color: '#9e8a7a',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.08em',
+                                mb: 1.5,
+                            }}>
+                                Levels
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                                {levels.map(l => (
+                                    <Chip key={l} label={l} size="small" sx={{
+                                        background: 'rgba(21,101,192,0.08)',
+                                        border: '1px solid rgba(21,101,192,0.2)',
+                                        color: '#1565c0',
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: '0.8rem',
+                                    }} />
+                                ))}
+                            </Box>
+                        </Box>
+                    )}
 
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                         <Button
                             variant="contained"
                             onClick={onRestart}
                             disabled={isLoading}
-                            startIcon={<Refresh />}
                             sx={{
                                 background: 'linear-gradient(135deg, #b8860b 0%, #d4a843 100%)',
                                 color: '#1a0e00',
@@ -866,12 +882,11 @@ function SessionResults({
                                 },
                             }}
                         >
-                            {isLoading ? 'Loading…' : 'Study Again'}
+                            {isLoading ? 'Loading…' : 'Back to Revision'}
                         </Button>
                         <Button
                             variant="outlined"
-                            onClick={onBack}
-                            startIcon={<ArrowBackSharp />}
+                            onClick={() => router.push('/flashcards')}
                             sx={{
                                 borderColor: 'rgba(122,110,101,0.3)',
                                 color: '#7a6e65',
@@ -887,7 +902,7 @@ function SessionResults({
                                 },
                             }}
                         >
-                            Back
+                            To Flashcards
                         </Button>
                     </Box>
                 </Box>
@@ -907,6 +922,7 @@ const tabButtonSx = {
 function RevisionFlashcard({
     sessionCard, counts, showDiacritics, onAnswer, textScale,
     dotOrder, answeredDots, againPendingIds, totalEver, doneCount,
+    lastAnswerPoints,
 }: {
     sessionCard: SessionCard
     counts: Record<Queue, number>
@@ -918,6 +934,7 @@ function RevisionFlashcard({
     againPendingIds: Set<string>
     totalEver: number
     doneCount: number
+    lastAnswerPoints?: number | null
 }) {
     const [revealed, setRevealed] = useState(false)
     const [activeTab, setActiveTab] = useState<'definition' | 'examples'>('definition')
@@ -1013,7 +1030,7 @@ function RevisionFlashcard({
                             {activeTab === 'examples' && <ExampleSentences examples={examples} showDiacritics={showDiacritics} textScale={textScale} />}
                         </Box>
 
-                        <Box sx={{ mt: { xs: '1.25rem', md: '1.5rem' } }}>
+                        <Box sx={{ mt: { xs: '1.25rem', md: '1.5rem' }, position: 'relative' }}>
                             <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                                 {ANSWER_BUTTONS.map(btn => (
                                     <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} startIcon={btn.icon}
@@ -1040,6 +1057,20 @@ function RevisionFlashcard({
                                     ))}
                                 </Box>
                             </Box>
+                            <AnimatePresence>
+                                {lastAnswerPoints !== null && (
+                                    <motion.div
+                                        key={lastAnswerPoints}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: -20 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.6 }}
+                                        style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', fontWeight: 700, color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: '1.2rem', pointerEvents: 'none' }}
+                                    >
+                                        +{lastAnswerPoints}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </Box>
                     </Collapse>
 
@@ -1075,13 +1106,43 @@ export default function RevisionPage() {
     const [infoOpen, setInfoOpen] = useState(false)
     const [sessionStarted, setSessionStarted] = useState(false)
     const [sessionMode, setSessionMode] = useState<SessionMode | null>(null)
-    const [sessionLogs, setSessionLogs] = useState<SessionLog[]>([])
-    const [progressOpen, setProgressOpen] = useState(false)
+    const [sessionLogs, setSessionLogs] = useState<ExtendedSessionLog[]>([])
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
     const [sessionKey, setSessionKey] = useState(0)
+    const [totalPoints, setTotalPoints] = useState(0)
+    const [displayPoints, setDisplayPoints] = useState(0)
+    const displayPointsRef = useRef(0)
+    const [lastPoints, setLastPoints] = useState<number | null>(null)
+    const [lastMultipliers, setLastMultipliers] = useState<{ difficulty: string; time: string; rating: string; streak: string } | null>(null)
+    const [streakCount, setStreakCount] = useState(0)
+    const [showResults, setShowResults] = useState(false)
+    const resultsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const pendingAnswersRef = useRef<{ vocabId: number; answer: Answer }[]>([])
     const hasUnsavedRef = useRef(false)
+    const pointsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    /* ── Count-up animation for points ── */
+    useEffect(() => {
+        const start = displayPointsRef.current
+        const end = totalPoints
+        if (start === end) return
+        const duration = 500
+        const startTime = performance.now()
+
+        const animate = (now: number) => {
+            const elapsed = now - startTime
+            const progress = Math.min(elapsed / duration, 1)
+            const current = Math.round(start + (end - start) * progress)
+            displayPointsRef.current = current
+            setDisplayPoints(current)
+            if (progress < 1) {
+                requestAnimationFrame(animate)
+            }
+        }
+
+        requestAnimationFrame(animate)
+    }, [totalPoints])
 
     const initialDeck = useMemo<SessionCard[]>(() => dueCards.map(card => ({
         data: card,
@@ -1106,6 +1167,19 @@ export default function RevisionPage() {
 
     const { deck, currentCard, counts, doneCount, totalEver, isComplete, answer, dotOrder, answeredDots } =
         useAnkiQueue(initialDeck, seedAnsweredDots, seedDotOrder, sessionKey)
+
+    /* ── Session complete transition ── */
+    const isFinished = isComplete || (sessionStarted && dueCards.length === 0 && completedCards.length === 0)
+    useEffect(() => {
+        if (isFinished) {
+            resultsTimeoutRef.current = setTimeout(() => setShowResults(true), 800)
+        } else {
+            setShowResults(false)
+        }
+        return () => {
+            if (resultsTimeoutRef.current) clearTimeout(resultsTimeoutRef.current)
+        }
+    }, [isFinished])
 
     const againPendingIds = useMemo<Set<string>>(() => {
         const set = new Set<string>()
@@ -1173,6 +1247,9 @@ export default function RevisionPage() {
                     level: c.level,
                     theme: c.theme_name ?? '',
                     queue: classifyCard(c),
+                    easeFactor: c.ease_factor,
+                    lapsesAtTime: c.lapses ?? 0,
+                    cardPoints: 0,
                 }))
             )
 
@@ -1198,6 +1275,17 @@ export default function RevisionPage() {
         setSessionStarted(false)
         setSessionMode(null)
         setSessionKey(k => k + 1)
+        setTotalPoints(0)
+        setDisplayPoints(0)
+        displayPointsRef.current = 0
+        setLastPoints(null)
+        setStreakCount(0)
+        setLastMultipliers(null)
+        setShowResults(false)
+        if (resultsTimeoutRef.current) clearTimeout(resultsTimeoutRef.current)
+        resultsTimeoutRef.current = null
+        if (pointsTimeoutRef.current) clearTimeout(pointsTimeoutRef.current)
+        pointsTimeoutRef.current = null
     }, [clearSession])
 
     /* ── Flush on tab hide / page leave / soft navigation ── */
@@ -1223,6 +1311,8 @@ export default function RevisionPage() {
         window.addEventListener('beforeunload', onBeforeUnload)
 
         return () => {
+            if (pointsTimeoutRef.current) clearTimeout(pointsTimeoutRef.current)
+            if (resultsTimeoutRef.current) clearTimeout(resultsTimeoutRef.current)
             // 🔥 CRITICAL: flush on soft navigation (Next.js Link / router.push)
             flush()
             document.removeEventListener('visibilitychange', onVisibilityChange)
@@ -1274,6 +1364,24 @@ export default function RevisionPage() {
             hasUnsavedRef.current = true
         }
 
+        // Update streak
+        const newStreak = (ans === 'good' || ans === 'easy') ? streakCount + 1 : 0
+        setStreakCount(newStreak)
+
+        // Compute points based on state at time of answer
+        const { points: cardPoints, multipliers } = computeCardPoints(
+            currentProgress.ease_factor,
+            timeTaken,
+            ans,
+            currentCard.data.lapses ?? 0,
+            newStreak
+        )
+        if (pointsTimeoutRef.current) clearTimeout(pointsTimeoutRef.current)
+        setTotalPoints(prev => prev + cardPoints)
+        setLastPoints(cardPoints)
+        setLastMultipliers(multipliers)
+        pointsTimeoutRef.current = setTimeout(() => setLastPoints(null), 800)
+
         // Log the answer for the session results screen
         setSessionLogs(prev => [...prev, {
             cardId: currentCard.data.id ?? vocabId,
@@ -1283,8 +1391,11 @@ export default function RevisionPage() {
             level: currentCard.data.level,
             theme: currentCard.data.theme_name ?? '',
             queue: currentCard.queue,
+            easeFactor: currentCard.data.ease_factor,
+            lapsesAtTime: currentCard.data.lapses ?? 0,
+            cardPoints,
         }])
-    }, [currentCard, answer, sessionMode])
+    }, [currentCard, answer, sessionMode, streakCount])
 
     if (loading || authLoading) {
         return (
@@ -1296,7 +1407,7 @@ export default function RevisionPage() {
                             <Skeleton variant="text" width={140} height={40} />
                             <Skeleton variant="rounded" width={180} height={36} />
                         </Box>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' }, gap: { xs: 2, lg: 3 }, alignItems: 'start' }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 200px' }, gap: { xs: 2, lg: 3 }, alignItems: 'start' }}>
                             <Box sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px', padding: { xs: '1.5rem 1rem', md: '2rem 1.5rem' }, minHeight: 340, display: 'flex', flexDirection: 'column', gap: 2 }}>
                                 <Skeleton variant="rounded" height={4} sx={{ mb: 2, borderRadius: '999px' }} />
                                 <Skeleton variant="rounded" height={24} width={220} />
@@ -1304,7 +1415,7 @@ export default function RevisionPage() {
                                 <Skeleton variant="rounded" height={32} width="30%" sx={{ mx: 'auto' }} />
                                 <Skeleton variant="rounded" height={44} width="100%" sx={{ mt: 'auto' }} />
                             </Box>
-                            <Box sx={{ display: { xs: 'none', lg: 'block' } }}><Skeleton variant="rounded" height={400} sx={{ borderRadius: '10px' }} /></Box>
+                            <Box sx={{ display: { xs: 'none', lg: 'block' } }}><Skeleton variant="rounded" height={120} sx={{ borderRadius: '10px' }} /></Box>
                         </Box>
                     </Container>
                 </Box>
@@ -1362,12 +1473,20 @@ export default function RevisionPage() {
         return (
             <>
                 <Navbar />
-                <SessionResults
-                    logs={sessionLogs}
-                    onRestart={restartSession}
-                    onBack={() => router.back()}
-                    isLoading={loading}
-                />
+                {showResults && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <SessionResults
+                            logs={sessionLogs}
+                            onRestart={restartSession}
+                            isLoading={loading}
+                            sessionMode={sessionMode}
+                        />
+                    </motion.div>
+                )}
             </>
         )
     }
@@ -1377,32 +1496,56 @@ export default function RevisionPage() {
             <Navbar />
             <InfoDialog open={infoOpen} onClose={() => setInfoOpen(false)} />
 
-            <Dialog open={progressOpen} onClose={() => setProgressOpen(false)} fullScreen sx={{ display: { sm: 'none' } }} slotProps={{ paper: { sx: { background: '#faf7f2' } } }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                    <Box sx={{ background: 'linear-gradient(135deg, #0e2e1f 0%, #071a0f 100%)', px: 2.5, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-                        <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.25rem', fontWeight: 700, color: '#f5ede0' }}>Session Progress</Typography>
-                        <IconButton onClick={() => setProgressOpen(false)} size="small" sx={{ color: '#f5ede0' }}><Close sx={{ fontSize: '1.5rem' }} /></IconButton>
-                    </Box>
-                    <Box sx={{ flex: 1, overflowY: 'auto' }}>
-                        <SessionSidebar logs={sessionLogs} doneCount={doneCount} remainingCount={deck.length} />
-                    </Box>
-                </Box>
-            </Dialog>
-
-            <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)} fullScreen sx={{ display: { sm: 'none' } }} slotProps={{ paper: { sx: { background: '#faf7f2' } } }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                    <Box sx={{ background: 'linear-gradient(135deg, #0e2e1f 0%, #071a0f 100%)', px: 2.5, py: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-                        <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.25rem', fontWeight: 700, color: '#f5ede0' }}>Settings</Typography>
-                        <IconButton onClick={() => setSettingsOpen(false)} size="small" sx={{ color: '#f5ede0' }}><Close sx={{ fontSize: '1.5rem' }} /></IconButton>
-                    </Box>
-                    <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics(p => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: '#7a6e65' }}>Text size</Typography>
-                            <Slider value={textScale} min={1.0} max={1.4} step={0.1} onChange={(_, v) => setTextScale(v as number)} sx={{ color: '#b8860b', flex: 1 }} />
+            <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: '16px', width: '100%', maxWidth: 360, m: 2, overflow: 'hidden', boxShadow: '0 24px 64px rgba(44,26,14,0.2)' } } }}>
+                <DialogTitle sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.5rem', fontWeight: 700, color: '#2c1a0e', pb: 2, pt: 2.5, px: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    Settings
+                    <IconButton onClick={() => setSettingsOpen(false)} size="small" sx={{ color: '#7a6e65', mr: -0.5 }}><Close sx={{ fontSize: '1.2rem' }} /></IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ px: 2.5, pt: 1.5, pb: 2 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                        <Box onClick={() => setShowDiacritics(p => !p)} sx={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            cursor: 'pointer', py: 1.25, px: 1.5, borderRadius: '10px', border: '1px solid',
+                            borderColor: showDiacritics ? 'rgba(184,134,11,0.33)' : 'rgba(122,110,101,0.15)',
+                            background: showDiacritics ? 'rgba(184,134,11,0.08)' : 'rgba(122,110,101,0.03)',
+                            transition: 'all 0.15s', userSelect: 'none',
+                            '&:hover': { borderColor: 'rgba(184,134,11,0.53)', background: 'rgba(184,134,11,0.05)' },
+                        }}>
+                            <Box sx={{ pr: 2 }}>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e', lineHeight: 1.2 }}>Show Diacritics</Typography>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#7a6e65', mt: 0.3, lineHeight: 1.4 }}>Display vowel marks on Arabic words</Typography>
+                            </Box>
+                            <Box sx={{
+                                width: 38, height: 22, borderRadius: '999px', flexShrink: 0,
+                                background: showDiacritics ? '#b8860b' : 'rgba(122,110,101,0.22)',
+                                position: 'relative', transition: 'background 0.2s',
+                            }}>
+                                <Box sx={{
+                                    position: 'absolute', top: '3px', left: showDiacritics ? '19px' : '3px',
+                                    width: 16, height: 16, borderRadius: '50%',
+                                    background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.22)',
+                                    transition: 'left 0.18s cubic-bezier(0.4,0,0.2,1)',
+                                }} />
+                            </Box>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.25, px: 1.5, borderRadius: '10px', border: '1px solid rgba(122,110,101,0.15)', background: 'rgba(122,110,101,0.03)', gap: 2 }}>
+                            <Box sx={{ pr: 2, flex: '0 0 auto' }}>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e' }}>Text Size</Typography>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#7a6e65', mt: 0.3 }}>Adjust flashcard content size</Typography>
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
+                                <Box sx={{ flex: 1, minWidth: 0 }}>
+                                    <Slider value={textScale} min={1.0} max={1.4} step={0.1} size="small" onChange={(_, v) => setTextScale(v as number)} sx={{ color: '#b8860b', width: '100%', '& .MuiSlider-thumb': { width: 14, height: 14 } }} />
+                                </Box>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.1rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
+                            </Box>
                         </Box>
                     </Box>
-                </Box>
+                </DialogContent>
+                <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5, flexDirection: 'column', gap: 1 }}>
+                    <Button fullWidth variant="contained" onClick={() => setSettingsOpen(false)} disableElevation sx={{ background: '#2c1a0e', color: '#f5ede0', fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.95rem', textTransform: 'none', borderRadius: '10px', py: 1.1, '&:hover': { background: '#1a0f08' } }}>Done</Button>
+                </DialogActions>
             </Dialog>
 
             <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh', pt: { xs: 8, sm: 10 } }}>
@@ -1419,12 +1562,17 @@ export default function RevisionPage() {
                     <Box sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', justifyContent: 'space-between', mb: 1.5, gap: 1 }}>
                         <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.3rem', fontWeight: 700, color: '#2c1a0e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, mr: 1 }}>Word Bank</Typography>
                         <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', flexShrink: 0 }}>
-                            <Button size="small" onClick={() => setProgressOpen(true)} variant="outlined" sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.75rem', textTransform: 'none', borderRadius: '20px', px: 1.5, py: '4px', borderColor: 'rgba(14,46,31,0.35)', color: '#0e2e1f', '&:hover': { background: 'rgba(14,46,31,0.06)', borderColor: '#0e2e1f' } }}>Progress</Button>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Star sx={{ fontSize: 18, color: '#b8860b' }} />
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '0.9rem', color: '#b8860b' }}>
+                                    {displayPoints}
+                                </Typography>
+                            </Box>
                             <IconButton onClick={() => setSettingsOpen(true)} size="small" sx={{ width: 32, height: 32, border: '1px solid rgba(122,110,101,0.3)', borderRadius: '50%', color: '#7a6e65', flexShrink: 0 }}><Settings sx={{ fontSize: '1rem' }} /></IconButton>
                         </Box>
                     </Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' }, gap: { xs: 2, lg: 3 }, alignItems: 'start' }}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 200px' }, gap: { xs: 2, lg: 3 }, alignItems: 'start' }}>
                         <Box>
                             {currentCard && (
                                 <Box sx={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
@@ -1439,12 +1587,13 @@ export default function RevisionPage() {
                                         againPendingIds={againPendingIds}
                                         totalEver={totalEver}
                                         doneCount={doneCount}
+                                        lastAnswerPoints={lastPoints}
                                     />
                                 </Box>
                             )}
                         </Box>
-                        <Box sx={{ display: { xs: 'none', lg: 'block' }, position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)' }}>
-                            <SessionSidebar logs={sessionLogs} doneCount={doneCount} remainingCount={deck.length} />
+                        <Box sx={{ display: { xs: 'none', lg: 'block' } }}>
+                            <PointsPanel displayPoints={displayPoints} multipliers={lastMultipliers} />
                         </Box>
                     </Box>
                 </Container>
