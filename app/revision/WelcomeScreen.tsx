@@ -231,7 +231,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
                           Your progress is saved and used to schedule future reviews. You must be logged in and have at least 20 cards in revision to unlock the daily review.
                         </Typography>
 
-                        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 3 }}>
+                        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 4 }}>
                           <Chip
                             label={`${dailyCounts.newCount} new`}
                             sx={{
