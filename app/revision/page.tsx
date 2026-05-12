@@ -1093,7 +1093,13 @@ function RevisionFlashcard({
 ───────────────────────────────────────────── */
 export default function RevisionPage() {
     const router = useRouter()
+    const [resetParam, setResetParam] = useState<string | null>(null)
     const { user, loading: authLoading } = useAuth()
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        setResetParam(params.get('reset'))
+    }, [])
     const getSession = useRevisionStore((s) => s.getSession)
     const updateSessionCard = useRevisionStore((s) => s.updateSessionCard)
     const clearSession = useRevisionStore((s) => s.clearSession)
@@ -1180,6 +1186,13 @@ export default function RevisionPage() {
             if (resultsTimeoutRef.current) clearTimeout(resultsTimeoutRef.current)
         }
     }, [isFinished])
+
+    /* ── Reset session when ?reset=true ── */
+    useEffect(() => {
+        if (resetParam === 'true' && sessionStarted) {
+            restartSession()
+        }
+    }, [resetParam, sessionStarted])
 
     const againPendingIds = useMemo<Set<string>>(() => {
         const set = new Set<string>()
@@ -1589,6 +1602,33 @@ export default function RevisionPage() {
                                         doneCount={doneCount}
                                         lastAnswerPoints={lastPoints}
                                     />
+                                </Box>
+                            )}
+                            {sessionMode === 'custom' && (
+                                <Box sx={{ mt: 2, textAlign: 'center' }}>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={() => {
+                                            setDueCards([])
+                                            setCompletedCards([])
+                                        }}
+                                        sx={{
+                                            borderColor: 'rgba(198,40,40,0.4)',
+                                            color: '#c62828',
+                                            fontFamily: 'Jost, sans-serif',
+                                            fontWeight: 600,
+                                            textTransform: 'none',
+                                            borderRadius: '10px',
+                                            px: 3,
+                                            py: 1,
+                                            '&:hover': {
+                                                background: 'rgba(198,40,40,0.06)',
+                                                borderColor: '#c62828',
+                                            },
+                                        }}
+                                    >
+                                        End Practice
+                                    </Button>
                                 </Box>
                             )}
                         </Box>

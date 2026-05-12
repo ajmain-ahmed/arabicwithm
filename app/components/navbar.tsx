@@ -271,7 +271,7 @@ export default function Navbar() {
     const DropdownContent = ({ section, isMobile = false }: { section: typeof MEGA_MENU_ITEMS[0], isMobile?: boolean }) => {
         const handleItemClick = (item: string) => {
             if (section.header === 'Study' && item === 'Revision') {
-                router.push('/revision');
+                router.push('/revision?reset=true');
             } else if (section.header === 'Study') {
                 const slug = STUDY_LEVEL_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-');
                 router.push(`/flashcards/${slug}`);

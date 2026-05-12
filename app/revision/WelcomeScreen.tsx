@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Navbar from '@/app/components/navbar'
 import { useAuth } from '@/app/AuthContext'
 import CustomSessionConfig from './CustomSessionConfig'
-import { fetchDailyReviewCounts, fetchCustomSessionMetadata } from '@/app/actions/revision'
+import { useWelcomeStore } from '@/store/welcomeStore'
 import type { RevisionCard } from '@/app/actions/revision'
 
 const PAGE_CSS = `
@@ -50,27 +50,15 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<TabKey>('daily')
   const [direction, setDirection] = useState(1)
-  const [dailyCounts, setDailyCounts] = useState({ newCount: 0, learningCount: 0, reviewCount: 0 })
-  const [metadata, setMetadata] = useState<{
-    code: string
-    label: string
-    themes: { theme_id: number; display_name: string; total_words: number }[]
-  }[]>([])
-  const [fetching, setFetching] = useState(true)
   const [starting, setStarting] = useState(false)
 
+  const cache = useWelcomeStore(s => s.cache)
+  const getData = useWelcomeStore(s => s.getData)
+  const [data, setData] = useState(cache)
+
   useEffect(() => {
-    Promise.all([
-      fetchDailyReviewCounts(),
-      fetchCustomSessionMetadata(),
-    ])
-      .then(([counts, meta]) => {
-        setDailyCounts(counts)
-        setMetadata(meta)
-      })
-      .catch(console.error)
-      .finally(() => setFetching(false))
-  }, [])
+    getData().then(setData)
+  }, [getData])
 
   const switchTab = (key: TabKey) => {
     const idxCurrent = TAB_META.findIndex(t => t.key === activeTab)
@@ -192,7 +180,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
 
               {/* Content */}
               <CardContent sx={{ p: { xs: 3, md: 4 } }}>
-                {fetching ? (
+                {!data ? (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
                     <Skeleton variant="text" width={160} height={32} />
                     <Skeleton variant="text" width="90%" height={20} />
@@ -233,7 +221,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
 
                         <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', mb: 4 }}>
                           <Chip
-                            label={`${dailyCounts.newCount} new`}
+                            label={`${data.dailyCounts.newCount} new`}
                             sx={{
                               fontFamily: 'Jost, sans-serif',
                               fontWeight: 600,
@@ -247,7 +235,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
                             }}
                           />
                           <Chip
-                            label={`${dailyCounts.learningCount} learning`}
+                            label={`${data.dailyCounts.learningCount} learning`}
                             sx={{
                               fontFamily: 'Jost, sans-serif',
                               fontWeight: 600,
@@ -261,7 +249,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
                             }}
                           />
                           <Chip
-                            label={`${dailyCounts.reviewCount} review`}
+                            label={`${data.dailyCounts.reviewCount} review`}
                             sx={{
                               fontFamily: 'Jost, sans-serif',
                               fontWeight: 600,
@@ -280,7 +268,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
                           variant="contained"
                           onClick={handleStartDaily}
                           fullWidth
-                          disabled={!user || dailyCounts.newCount + dailyCounts.learningCount + dailyCounts.reviewCount === 0}
+                          disabled={!user || data.dailyCounts.newCount + data.dailyCounts.learningCount + data.dailyCounts.reviewCount === 0}
                           sx={{
                             background: '#2c1a0e',
                             color: '#f5ede0',
@@ -314,7 +302,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
                         exit="exit"
                         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                       >
-                        <CustomSessionConfig metadata={metadata} onStart={handleStartCustom} />
+                        <CustomSessionConfig metadata={data.metadata} onStart={handleStartCustom} />
                       </motion.div>
                     )}
                   </AnimatePresence>
