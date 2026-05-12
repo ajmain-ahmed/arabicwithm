@@ -6,6 +6,8 @@
   import { useEffect } from "react"
   import type { ProgressState } from "@/app/lib/sm2"
 
+  const SESSION_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
   interface RevisionStore {
     revisionIds: Set<number>
     loading: boolean
@@ -25,6 +27,7 @@
   interface SessionCache {
     dueCards: RevisionCard[]
     completedCards: RevisionCard[]
+    fetchedAt: number
   }
 
   const store = create<RevisionStore>((set, get) => ({
@@ -141,7 +144,10 @@
 
     getSession: async () => {
       const { sessionCache } = get()
-      if (sessionCache) {
+      const now = Date.now()
+
+      // Return cached data if it exists and is fresh enough
+      if (sessionCache && now - sessionCache.fetchedAt < SESSION_CACHE_TTL) {
         return { dueCards: sessionCache.dueCards, completedCards: sessionCache.completedCards }
       }
 
@@ -149,7 +155,7 @@
       try {
         const { dueCards, completedCards } = await fetchRevisionSession()
         set({
-          sessionCache: { dueCards, completedCards },
+          sessionCache: { dueCards, completedCards, fetchedAt: now },
           sessionLoading: false,
         })
         return { dueCards, completedCards }
