@@ -210,7 +210,7 @@ export default function PointsPanel({
                     }} />
 
                     <Box sx={{ position: 'relative', zIndex: 1 }}>
-                        {/* Header — text gets room, icon is small */}
+                        {/* Header — text gets room, icon is bigger */}
                         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2, gap: 1.5 }}>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                                 <Typography sx={{
@@ -236,10 +236,10 @@ export default function PointsPanel({
                                 </Typography>
                             </Box>
 
-                            {/* Small locked icon container */}
+                            {/* Bigger icon container */}
                             <Box sx={{
-                                width: 24,
-                                height: 24,
+                                width: 32,
+                                height: 32,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -247,9 +247,9 @@ export default function PointsPanel({
                                 mt: 0.25,
                             }}>
                                 {targetReached ? (
-                                    <CheckCircle sx={{ fontSize: 20, color: c.icon }} />
+                                    <CheckCircle sx={{ fontSize: 28, color: c.icon }} />
                                 ) : (
-                                    <Whatshot sx={{ fontSize: 20, color: c.icon }} />
+                                    <Whatshot sx={{ fontSize: 28, color: c.icon }} />
                                 )}
                             </Box>
                         </Box>
@@ -371,7 +371,7 @@ export default function PointsPanel({
                     </AnimatePresence>
                 </Box>
 
-                {/* ══ ALWAYS render multipliers, even at 0 points ══ */}
+                {/* Always render multipliers */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                     <MultiplierGrid
                         label="Rating"

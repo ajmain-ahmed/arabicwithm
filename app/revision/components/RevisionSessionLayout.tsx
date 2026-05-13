@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React from 'react'
 import { Box, Container, Typography, IconButton, Dialog } from '@mui/material'
 import { HelpOutlineRounded, Settings, Star, Close } from '@mui/icons-material'
 import DesktopTextScaleSlider from './DesktopTextScaleSlider'
@@ -16,6 +16,8 @@ export default function RevisionSessionLayout({
     displayPoints,
     onInfoClick,
     onSettingsClick,
+    mobilePointsOpen,
+    setMobilePointsOpen,
 }: {
     children: React.ReactNode
     sidePanel: React.ReactNode
@@ -26,9 +28,9 @@ export default function RevisionSessionLayout({
     displayPoints: number
     onInfoClick: () => void
     onSettingsClick: () => void
+    mobilePointsOpen: boolean
+    setMobilePointsOpen: (v: boolean) => void
 }) {
-    const [mobilePointsOpen, setMobilePointsOpen] = useState(false)
-
     return (
         <>
             <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh', pt: { xs: 8, sm: 10 } }}>

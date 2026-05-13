@@ -4,7 +4,6 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import {
     Box, Typography, Button, Collapse,
 } from '@mui/material'
-import { motion, AnimatePresence } from 'framer-motion'
 import { useMediaQuery } from '@mui/material'
 import { type SessionCard, type Queue, parseExamples } from '../types'
 import IntegratedProgressDots from './IntegratedProgressDots'
@@ -31,6 +30,7 @@ export default function RevisionFlashcard({
     sessionCard, counts, showDiacritics, onAnswer, textScale,
     dotOrder, answeredDots, againPendingIds, totalEver, doneCount,
     uniqueDoneCount, uniqueTotal,
+    dialogsOpen = false,
 }: {
     sessionCard: SessionCard
     counts: Record<Queue, number>
@@ -44,6 +44,7 @@ export default function RevisionFlashcard({
     doneCount: number
     uniqueDoneCount: number
     uniqueTotal: number
+    dialogsOpen?: boolean
 }) {
     const [revealed, setRevealed] = useState(false)
     const [activeTab, setActiveTab] = useState<'definition' | 'examples'>('definition')
@@ -52,33 +53,62 @@ export default function RevisionFlashcard({
 
     const cardStartRef = useRef<number>(Date.now())
     const revealTimeRef = useRef<number>(0)
+    const wasPausedByDialog = useRef(false)
+    const accumulatedRef = useRef(0) // accumulated ms before current run
 
     const card = sessionCard.data
     const examples = parseExamples(card)
     const progress = uniqueTotal > 0 ? Math.round((uniqueDoneCount / uniqueTotal) * 100) : 0
+    const isMobile = useMediaQuery('(max-width:600px)')
 
+    /* ── Card change: reset everything ── */
     useLayoutEffect(() => {
         setRevealed(false)
         setActiveTab('definition')
         cardStartRef.current = Date.now()
+        accumulatedRef.current = 0
         setElapsed(0)
+        wasPausedByDialog.current = false
         setTimerRunning(true)
     }, [card.id ?? card.word])
 
+    /* ── Pause/resume when dialogs open/close ── */
+    useEffect(() => {
+        if (dialogsOpen) {
+            if (timerRunning) {
+                wasPausedByDialog.current = true
+                accumulatedRef.current += Date.now() - cardStartRef.current
+                setTimerRunning(false)
+            }
+        } else {
+            if (wasPausedByDialog.current && !revealed) {
+                cardStartRef.current = Date.now() // reset anchor so math stays correct
+                setTimerRunning(true)
+            }
+            wasPausedByDialog.current = false
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dialogsOpen, revealed])
+
+    /* ── Tick timer ── */
     useEffect(() => {
         if (!timerRunning) return
-        const interval = setInterval(() => { setElapsed(Math.round((Date.now() - cardStartRef.current) / 1000)) }, 1000)
+        const interval = setInterval(() => {
+            const currentRun = Date.now() - cardStartRef.current
+            setElapsed(Math.round((accumulatedRef.current + currentRun) / 1000))
+        }, 1000)
         return () => clearInterval(interval)
     }, [timerRunning])
 
     const handleReveal = () => {
         setRevealed(true)
         setTimerRunning(false)
-        revealTimeRef.current = Math.round((Date.now() - cardStartRef.current) / 1000)
+        const currentRun = Date.now() - cardStartRef.current
+        revealTimeRef.current = Math.round((accumulatedRef.current + currentRun) / 1000)
     }
 
     const handleAnswer = (ans: Answer) => {
-        const timeTaken = revealTimeRef.current || Math.round((Date.now() - cardStartRef.current) / 1000)
+        const timeTaken = revealTimeRef.current || elapsed
         onAnswer(ans, timeTaken)
     }
 

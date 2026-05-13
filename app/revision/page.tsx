@@ -22,6 +22,7 @@ export default function RevisionPage() {
     const [infoOpen, setInfoOpen] = useState(false)
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
+    const [mobilePointsOpen, setMobilePointsOpen] = useState(false)
 
     const {
         currentCard, counts, isComplete, dotOrder, answeredDots, againPendingIds,
@@ -71,6 +72,8 @@ export default function RevisionPage() {
         )
     }
 
+    const dialogsOpen = infoOpen || settingsOpen || leaveDialogOpen || authDialogOpen || mobilePointsOpen
+
     return (
         <>
             <RevisionSessionLayout
@@ -81,6 +84,8 @@ export default function RevisionPage() {
                 displayPoints={displayPoints}
                 onInfoClick={() => setInfoOpen(true)}
                 onSettingsClick={() => setSettingsOpen(true)}
+                mobilePointsOpen={mobilePointsOpen}
+                setMobilePointsOpen={setMobilePointsOpen}
                 sidePanel={
                     <PointsPanel
                         displayPoints={displayPoints}
@@ -105,6 +110,7 @@ export default function RevisionPage() {
                         doneCount={answeredDots.size}
                         uniqueDoneCount={uniqueDoneCount}
                         uniqueTotal={uniqueTotal}
+                        dialogsOpen={dialogsOpen}
                     />
                 )}
             </RevisionSessionLayout>
