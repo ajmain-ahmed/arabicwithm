@@ -15,7 +15,6 @@ import {
 import {
   Accordion, AccordionSummary, AccordionDetails,
 } from '@mui/material'
-import Navbar from '@/app/components/navbar'
 import { useAuth } from '@/app/AuthContext'
 import { fetchUserProfile, type ProfileData, type LevelStat } from '@/app/actions/profile'
 import { supabase } from '@/app/lib/supabase/client'
@@ -667,7 +666,6 @@ function ProfilePageInner() {
   if (authLoading || loading) {
     return (
       <>
-        <Navbar />
         <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh' }}>
           <Box sx={{
             position: 'relative',
@@ -700,7 +698,6 @@ function ProfilePageInner() {
   return (
     <>
       <style>{CSS}</style>
-      <Navbar />
 
       <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh' }}>
         <Box sx={{

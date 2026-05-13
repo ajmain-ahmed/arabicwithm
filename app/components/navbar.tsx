@@ -186,7 +186,15 @@ export default function Navbar() {
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
-        router.push('/');
+        window.location.href = '/';
+    };
+
+    const safePush = (url: string) => {
+        if (typeof window !== 'undefined' && (window as any).__customSessionActive && url !== '/revision') {
+            window.dispatchEvent(new CustomEvent('revision-leave-requested', { detail: { url } }));
+            return;
+        }
+        router.push(url);
     };
 
     const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M';
@@ -225,7 +233,7 @@ export default function Navbar() {
 
         return (
             <Box
-                onClick={() => { router.push('/'); setDrawerOpen(false); setLearnMenuOpen(false); }}
+                onClick={() => { safePush('/'); setDrawerOpen(false); setLearnMenuOpen(false); }}
                 sx={{ mr: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, cursor: 'pointer', py: 0.5 }}
             >
                 <Box component="img" src="/homepage/arabicwithm-notext.png" alt="Logo"
@@ -271,26 +279,27 @@ export default function Navbar() {
     const DropdownContent = ({ section, isMobile = false }: { section: typeof MEGA_MENU_ITEMS[0], isMobile?: boolean }) => {
         const handleItemClick = (item: string) => {
             if (section.header === 'Study' && item === 'Revision') {
-                router.push('/revision');
+                window.dispatchEvent(new CustomEvent('navigate-to-revision'))
+                safePush('/revision');
             } else if (section.header === 'Study') {
                 const slug = STUDY_LEVEL_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-');
-                router.push(`/flashcards/${slug}`);
+                safePush(`/flashcards/${slug}`);
             } else if (section.header === 'Cartoons') {
                 const slug = CARTOON_SLUG_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-');
-                router.push(`/cartoons/${slug}`);
+                safePush(`/cartoons/${slug}`);
             } else {
                 const key = item.toLowerCase().replace(/\s+/g, '-');
-                router.push(`/learn/${section.header.toLowerCase()}/${key}`);
+                safePush(`/learn/${section.header.toLowerCase()}/${key}`);
             }
             closeAll();
         };
 
         const handleHeaderClick = () => {
             if (section.header === 'Cartoons') {
-                router.push('/cartoons');
+                safePush('/cartoons');
                 closeAll();
             } else if (section.header === 'Study') {
-                router.push('/flashcards');
+                safePush('/flashcards');
                 closeAll();
             }
         };
@@ -389,7 +398,7 @@ export default function Navbar() {
             </Box>
             <Box sx={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(184,134,11,0.3), transparent)' }} />
             <MenuItem
-                onClick={() => { setUserMenuAnchor(null); router.push('/profile'); }}
+                onClick={() => { setUserMenuAnchor(null); safePush('/profile'); }}
                 sx={{ py: 1.2, gap: 1.5, '&:hover': { background: 'rgba(184,134,11,0.06)' } }}
             >
                 <AccountCircle sx={{ fontSize: 18, color: 'var(--forest)' }} />
@@ -529,7 +538,7 @@ export default function Navbar() {
 
                 <ListItem disablePadding>
                     <ListItemButton className="mobile-list-btn"
-                        onClick={() => { router.push('/about'); setDrawerOpen(false); }}
+                        onClick={() => { safePush('/about'); setDrawerOpen(false); }}
                         sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
                         <ListItemIcon sx={{ color: 'var(--gold)' }}>
                             <InfoOutlined sx={{ fontSize: 20 }} />
@@ -559,7 +568,7 @@ export default function Navbar() {
 
                 <ListItem disablePadding>
                     <ListItemButton className="mobile-list-btn"
-                        onClick={() => { router.push('/faq'); setDrawerOpen(false); }}
+                        onClick={() => { safePush('/faq'); setDrawerOpen(false); }}
                         sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}>
                         <ListItemIcon sx={{ color: 'var(--gold)' }}>
                             <HelpSharp sx={{ fontSize: 20 }} />
@@ -714,7 +723,7 @@ export default function Navbar() {
                                                 </Box>
                                             ) : (
                                                 <Typography className="nav-link"
-                                                    onClick={() => item === 'Contact' ? setContactOpen(true) : router.push(NAV_ROUTES[item])}
+                                                    onClick={() => item === 'Contact' ? setContactOpen(true) : safePush(NAV_ROUTES[item])}
                                                     sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', fontWeight: 500, letterSpacing: '0.06em', color: 'var(--forest)', cursor: 'pointer', py: 2 }}>
                                                     {item}
                                                 </Typography>

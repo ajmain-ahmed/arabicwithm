@@ -147,8 +147,7 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
 
   const tokens = extractArabicTokens(content)
 
-  // ── NEW: expand tokens to include normalized (proclitic-stripped) forms ──
-  // e.g. "الوداع" → also add "وداع" so the DB query finds the canonical row
+  // Expand tokens to include normalized (proclitic-stripped) forms
   const expandedTokens = new Set<string>()
   for (const t of tokens) {
     expandedTokens.add(t)
@@ -158,7 +157,6 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
     }
   }
   const tokenArray = Array.from(expandedTokens)
-  // ─────────────────────────────────────────────────────────────────────────
 
   let vocabMap: Record<string, VocabEntry> = {}
   if (tokenArray.length > 0) {
@@ -176,12 +174,19 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
 
       if (vocabData && vocabData.length > 0) {
         const vocabIds = vocabData.map((v) => v.word_id)
+        const levelIds = [...new Set(vocabData.map(v => v.level_id))]
+        const themeIds = [...new Set(vocabData.map(v => v.theme_id))]
 
-        // 2. Fetch definitions for matched words
-        const { data: defData, error: defErr } = await serviceClient
-          .from('definitions')
-          .select('vocab_id, meaning, pos')
-          .in('vocab_id', vocabIds)
+        // 2. Fetch definitions, levels, and themes in parallel
+        const [
+          { data: defData, error: defErr },
+          { data: levelsData },
+          { data: themesData },
+        ] = await Promise.all([
+          serviceClient.from('definitions').select('vocab_id, meaning, pos').in('vocab_id', vocabIds),
+          serviceClient.from('levels').select('id, code').in('id', levelIds),
+          serviceClient.from('themes').select('id, display_name').in('id', themeIds),
+        ])
 
         if (defErr) {
           console.error(`[getEpisode] definitions query error:`, defErr.message)
@@ -190,25 +195,10 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
 
         const defMap = new Map<number, { meaning: string; pos: string }>()
         for (const d of defData ?? []) {
-          // Keep only the first definition per word
           if (!defMap.has(d.vocab_id)) {
             defMap.set(d.vocab_id, { meaning: d.meaning, pos: d.pos })
           }
         }
-
-        // Fetch level codes and theme names
-        const levelIds = [...new Set(vocabData.map(v => v.level_id))]
-        const themeIds = [...new Set(vocabData.map(v => v.theme_id))]
-
-        const { data: levelsData } = await serviceClient
-          .from('levels')
-          .select('id, code')
-          .in('id', levelIds)
-
-        const { data: themesData } = await serviceClient
-          .from('themes')
-          .select('id, display_name')
-          .in('id', themeIds)
 
         const levelMap = new Map((levelsData ?? []).map(l => [l.id, l.code]))
         const themeMap = new Map((themesData ?? []).map(t => [t.id, t.display_name]))
@@ -226,29 +216,24 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
             theme: themeMap.get(row.theme_id) ?? '',
           }
 
-          // Key 1: exact DB word (e.g. "وداع")
           vocabMap[row.word_ar] = entry
 
-          // Key 2: canonical diacritic-free word
           const bareKey = stripDiacritics(row.word_ar)
           if (bareKey && bareKey !== row.word_ar) {
             vocabMap[bareKey] = entry
           }
 
-          // Key 3: definite-article prepended (e.g. "الوداع")
           const alKey = 'ال' + bareKey
           if (alKey !== row.word_ar && alKey !== bareKey) {
             vocabMap[alKey] = entry
           }
 
-          // Key 4: normalized legacy fallback
           const normKey = normalizeArabicToken(row.word_ar)
           if (normKey && normKey !== row.word_ar && normKey !== bareKey && normKey !== alKey) {
             vocabMap[normKey] = entry
           }
         }
 
-        // TEMPORARY DEBUG: verify keys are present
         console.log('[getEpisode] vocabMap keys:', Object.keys(vocabMap))
       }
     } catch (e) {

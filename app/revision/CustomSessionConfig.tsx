@@ -89,7 +89,6 @@ export default function CustomSessionConfig({ metadata, onStart }: CustomSession
         levelCodes: selectedLevels,
         themeIds: selectedThemes,
         cardCount,
-        random: false,
       })
       onStart(cards)
     } catch (err) {
@@ -138,8 +137,6 @@ export default function CustomSessionConfig({ metadata, onStart }: CustomSession
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-
-      {/* Explanation */}
       <Typography sx={{
         fontFamily: 'Jost, sans-serif',
         color: '#7a6e65',
@@ -150,7 +147,6 @@ export default function CustomSessionConfig({ metadata, onStart }: CustomSession
         Adjust the number of cards and start a practice session that isn't saved to your progress.
       </Typography>
 
-      {/* Levels horizontal */}
       <Box>
         <Typography sx={labelSx}>Levels</Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -183,7 +179,6 @@ export default function CustomSessionConfig({ metadata, onStart }: CustomSession
         </Box>
       </Box>
 
-      {/* Themes */}
       <Box>
         <Typography sx={labelSx}>Themes</Typography>
         {allThemesForSelectedLevels.length > 0 && (
@@ -323,7 +318,6 @@ export default function CustomSessionConfig({ metadata, onStart }: CustomSession
         )}
       </Box>
 
-      {/* Card count */}
       <Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <Typography sx={labelSx}>Card count</Typography>
@@ -368,7 +362,6 @@ export default function CustomSessionConfig({ metadata, onStart }: CustomSession
         </Typography>
       </Box>
 
-      {/* Start button */}
       <Button
         variant="contained"
         onClick={handleStart}

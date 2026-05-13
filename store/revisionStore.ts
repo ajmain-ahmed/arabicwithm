@@ -1,232 +1,255 @@
-  // // store/revisionStore.ts
+import { create } from "zustand"
+import { useEffect } from "react"
+import { fetchRevisionVocabIds } from "@/app/actions/vocab"
+import { toggleRevision as serverToggleRevision, fetchRevisionSession, fetchCustomSessionMetadata, type RevisionCard, type LevelMeta } from "@/app/actions/revision"
+import type { ProgressState } from "@/app/lib/sm2"
 
-  import { create } from "zustand"
-  import { fetchRevisionVocabIds } from "@/app/actions/vocab"
-  import { toggleRevision as serverToggleRevision, fetchRevisionSession, type RevisionCard } from "@/app/actions/revision"
-  import { useEffect } from "react"
-  import type { ProgressState } from "@/app/lib/sm2"
+const SESSION_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const METADATA_TTL = 10 * 60 * 1000      // 10 minutes
 
-  const SESSION_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+interface RevisionStore {
+  revisionIds: Set<number>
+  loading: boolean
+  initialized: boolean
+  init: () => Promise<void>
+  isInRevision: (vocabId: number) => boolean
+  addToRevision: (vocabId: number) => Promise<boolean>
+  removeFromRevision: (vocabId: number) => Promise<boolean>
+  toggleRevision: (vocabId: number) => Promise<boolean>
+  sessionCache: SessionCache | null
+  sessionLoading: boolean
+  getSession: () => Promise<{ dueCards: RevisionCard[]; completedCards: RevisionCard[] }>
+  updateSessionCard: (vocabId: number, updatedProgress: ProgressState, lastRating?: string) => void
+  clearSession: () => void
+  // Custom metadata cache (static, fetched once globally)
+  customMetadata: LevelMeta[] | null
+  customMetadataFetchedAt: number
+  customMetadataLoading: boolean
+  fetchCustomMetadata: () => Promise<LevelMeta[]>
+}
 
-  interface RevisionStore {
-    revisionIds: Set<number>
-    loading: boolean
-    initialized: boolean
-    init: () => Promise<void>
-    isInRevision: (vocabId: number) => boolean
-    addToRevision: (vocabId: number) => Promise<boolean>
-    removeFromRevision: (vocabId: number) => Promise<boolean>
-    toggleRevision: (vocabId: number) => Promise<boolean>
-    sessionCache: SessionCache | null
-    sessionLoading: boolean
-    getSession: () => Promise<{ dueCards: RevisionCard[]; completedCards: RevisionCard[] }>
-    updateSessionCard: (vocabId: number, updatedProgress: ProgressState, lastRating?: string) => void
-    clearSession: () => void
-  }
+interface SessionCache {
+  dueCards: RevisionCard[]
+  completedCards: RevisionCard[]
+  fetchedAt: number
+}
 
-  interface SessionCache {
-    dueCards: RevisionCard[]
-    completedCards: RevisionCard[]
-    fetchedAt: number
-  }
+export const useRevisionStore = create<RevisionStore>((set, get) => ({
+  revisionIds: new Set(),
+  loading: false,
+  initialized: false,
+  sessionCache: null,
+  sessionLoading: false,
+  customMetadata: null,
+  customMetadataFetchedAt: 0,
+  customMetadataLoading: false,
 
-  const store = create<RevisionStore>((set, get) => ({
-    revisionIds: new Set(),
-    loading: false,
-    initialized: false,
-    sessionCache: null,
-    sessionLoading: false,
+  init: async () => {
+    if (get().initialized || get().loading) return
+    set({ loading: true })
+    try {
+      const ids = await fetchRevisionVocabIds()
+      set({ revisionIds: new Set(ids), initialized: true, loading: false })
+    } catch (e) {
+      console.error("[revisionStore] init failed:", e)
+      set({ initialized: false, loading: false })
+    }
+  },
 
-    init: async () => {
-      if (get().initialized || get().loading) return
-      set({ loading: true })
-      try {
-        const ids = await fetchRevisionVocabIds()
-        set({ revisionIds: new Set(ids), initialized: true, loading: false })
-      } catch (e) {
-        console.error("[revisionStore] init failed:", e)
-        set({ initialized: true, loading: false })
-      }
-    },
+  isInRevision: (vocabId: number) => {
+    return get().revisionIds.has(vocabId)
+  },
 
-    isInRevision: (vocabId: number) => {
-      return get().revisionIds.has(vocabId)
-    },
+  addToRevision: async (vocabId: number) => {
+    if (get().isInRevision(vocabId)) return true
 
-    addToRevision: async (vocabId: number) => {
-      if (get().isInRevision(vocabId)) return true
+    set((state) => {
+      const next = new Set(state.revisionIds)
+      next.add(vocabId)
+      return { revisionIds: next }
+    })
 
+    try {
+      const result = await serverToggleRevision(vocabId)
       set((state) => {
         const next = new Set(state.revisionIds)
-        next.add(vocabId)
+        if (result.inRevision) next.add(vocabId)
+        else next.delete(vocabId)
         return { revisionIds: next }
       })
-
-      try {
-        const result = await serverToggleRevision(vocabId)
-        set((state) => {
-          const next = new Set(state.revisionIds)
-          if (result.inRevision) next.add(vocabId)
-          else next.delete(vocabId)
-          return { revisionIds: next }
-        })
-        return result.inRevision
-      } catch (e) {
-        console.error("[revisionStore] add failed:", e)
-        set((state) => {
-          const next = new Set(state.revisionIds)
-          next.delete(vocabId)
-          return { revisionIds: next }
-        })
-        return false
-      }
-    },
-
-    removeFromRevision: async (vocabId: number) => {
-      if (!get().isInRevision(vocabId)) return false
-
+      return result.inRevision
+    } catch (e) {
+      console.error("[revisionStore] add failed:", e)
       set((state) => {
         const next = new Set(state.revisionIds)
         next.delete(vocabId)
         return { revisionIds: next }
       })
+      return false
+    }
+  },
 
-      try {
-        const result = await serverToggleRevision(vocabId)
-        set((state) => {
-          const next = new Set(state.revisionIds)
-          if (result.inRevision) next.add(vocabId)
-          else next.delete(vocabId)
-          return { revisionIds: next }
-        })
-        return !result.inRevision
-      } catch (e) {
-        console.error("[revisionStore] remove failed:", e)
-        set((state) => {
-          const next = new Set(state.revisionIds)
-          next.add(vocabId)
-          return { revisionIds: next }
-        })
-        return false
-      }
-    },
+  removeFromRevision: async (vocabId: number) => {
+    if (!get().isInRevision(vocabId)) return false
 
-    toggleRevision: async (vocabId: number) => {
-      const currentlyIn = get().isInRevision(vocabId)
+    set((state) => {
+      const next = new Set(state.revisionIds)
+      next.delete(vocabId)
+      return { revisionIds: next }
+    })
 
+    try {
+      const result = await serverToggleRevision(vocabId)
       set((state) => {
         const next = new Set(state.revisionIds)
-        if (currentlyIn) next.delete(vocabId)
-        else next.add(vocabId)
+        if (result.inRevision) next.add(vocabId)
+        else next.delete(vocabId)
         return { revisionIds: next }
       })
-
-      try {
-        const result = await serverToggleRevision(vocabId)
-        set((state) => {
-          const next = new Set(state.revisionIds)
-          if (result.inRevision) next.add(vocabId)
-          else next.delete(vocabId)
-          return { revisionIds: next }
-        })
-        return result.inRevision
-      } catch (e) {
-        console.error("[revisionStore] toggle failed:", e)
-        set((state) => {
-          const next = new Set(state.revisionIds)
-          if (currentlyIn) next.add(vocabId)
-          else next.delete(vocabId)
-          return { revisionIds: next }
-        })
-        return currentlyIn
-      }
-    },
-
-    getSession: async () => {
-      const { sessionCache } = get()
-      const now = Date.now()
-
-      // Return cached data if it exists and is fresh enough
-      if (sessionCache && now - sessionCache.fetchedAt < SESSION_CACHE_TTL) {
-        return { dueCards: sessionCache.dueCards, completedCards: sessionCache.completedCards }
-      }
-
-      set({ sessionLoading: true })
-      try {
-        const { dueCards, completedCards } = await fetchRevisionSession()
-        set({
-          sessionCache: { dueCards, completedCards, fetchedAt: now },
-          sessionLoading: false,
-        })
-        return { dueCards, completedCards }
-      } catch (err) {
-        console.error('[revisionStore] fetch session failed:', err)
-        set({ sessionLoading: false })
-        return { dueCards: [], completedCards: [] }
-      }
-    },
-
-    updateSessionCard: (vocabId, updatedProgress, lastRating?) => {
+      return !result.inRevision
+    } catch (e) {
+      console.error("[revisionStore] remove failed:", e)
       set((state) => {
-        if (!state.sessionCache) return {}
+        const next = new Set(state.revisionIds)
+        next.add(vocabId)
+        return { revisionIds: next }
+      })
+      return false
+    }
+  },
 
-        const { dueCards, completedCards } = state.sessionCache
+  toggleRevision: async (vocabId: number) => {
+    const currentlyIn = get().isInRevision(vocabId)
 
-        const updateFields = (c: RevisionCard) => {
-          const nowISO = new Date().toISOString()
-          const updates: any = {
-            ...c,
-            repetitions: updatedProgress.repetitions,
-            interval_days: updatedProgress.interval_days,
-            ease_factor: updatedProgress.ease_factor,
-            learning_step: updatedProgress.learning_step,
-            lapses: updatedProgress.lapses,
-            last_review_at: nowISO,
-          }
-          if (lastRating) {
-            updates.lastRating = lastRating
-          }
-          return updates as RevisionCard
+    set((state) => {
+      const next = new Set(state.revisionIds)
+      if (currentlyIn) next.delete(vocabId)
+      else next.add(vocabId)
+      return { revisionIds: next }
+    })
+
+    try {
+      const result = await serverToggleRevision(vocabId)
+      set((state) => {
+        const next = new Set(state.revisionIds)
+        if (result.inRevision) next.add(vocabId)
+        else next.delete(vocabId)
+        return { revisionIds: next }
+      })
+      return result.inRevision
+    } catch (e) {
+      console.error("[revisionStore] toggle failed:", e)
+      set((state) => {
+        const next = new Set(state.revisionIds)
+        if (currentlyIn) next.add(vocabId)
+        else next.delete(vocabId)
+        return { revisionIds: next }
+      })
+      return currentlyIn
+    }
+  },
+
+  getSession: async () => {
+    const { sessionCache } = get()
+    const now = Date.now()
+
+    if (sessionCache && now - sessionCache.fetchedAt < SESSION_CACHE_TTL) {
+      return { dueCards: sessionCache.dueCards, completedCards: sessionCache.completedCards }
+    }
+
+    set({ sessionLoading: true })
+    try {
+      const { dueCards, completedCards } = await fetchRevisionSession()
+      set({
+        sessionCache: { dueCards, completedCards, fetchedAt: now },
+        sessionLoading: false,
+      })
+      return { dueCards, completedCards }
+    } catch (err) {
+      console.error('[revisionStore] fetch session failed:', err)
+      set({ sessionLoading: false })
+      return { dueCards: [], completedCards: [] }
+    }
+  },
+
+  updateSessionCard: (vocabId, updatedProgress, lastRating?) => {
+    set((state) => {
+      if (!state.sessionCache) return {}
+
+      const { dueCards, completedCards } = state.sessionCache
+
+      const updateFields = (c: RevisionCard) => {
+        const nowISO = new Date().toISOString()
+        const updates: any = {
+          ...c,
+          repetitions: updatedProgress.repetitions,
+          interval_days: updatedProgress.interval_days,
+          ease_factor: updatedProgress.ease_factor,
+          learning_step: updatedProgress.learning_step,
+          lapses: updatedProgress.lapses,
+          last_review_at: nowISO,
         }
+        if (lastRating) {
+          updates.lastRating = lastRating
+        }
+        return updates as RevisionCard
+      }
 
-        if (updatedProgress.interval_days > 0) {
-          const card = dueCards.find(c => c.id === vocabId)
-          if (card) {
-            return {
-              sessionCache: {
-                ...state.sessionCache,
-                dueCards: dueCards.filter(c => c.id !== vocabId),
-                completedCards: [...completedCards, updateFields(card)],
-              },
-            }
-          }
+      if (updatedProgress.interval_days > 0) {
+        const card = dueCards.find(c => c.id === vocabId)
+        if (card) {
           return {
             sessionCache: {
               ...state.sessionCache,
-              dueCards,
-              completedCards: completedCards.map(c => c.id === vocabId ? updateFields(c) : c),
+              dueCards: dueCards.filter(c => c.id !== vocabId),
+              completedCards: [...completedCards, updateFields(card)],
             },
           }
         }
-
         return {
           sessionCache: {
             ...state.sessionCache,
-            dueCards: dueCards.map(c => c.id === vocabId ? updateFields(c) : c),
+            dueCards,
             completedCards: completedCards.map(c => c.id === vocabId ? updateFields(c) : c),
           },
         }
-      })
-    },
+      }
 
-    clearSession: () => set({ sessionCache: null }),
-  }))
+      return {
+        sessionCache: {
+          ...state.sessionCache,
+          dueCards: dueCards.map(c => c.id === vocabId ? updateFields(c) : c),
+          completedCards: completedCards.map(c => c.id === vocabId ? updateFields(c) : c),
+        },
+      }
+    })
+  },
 
-  // Lazy wrapper: automatically calls init() on first use in a component
-  export const useRevisionStore = ((selector: any) => {
-    const { init, initialized } = store.getState()
-    useEffect(() => {
-      if (!initialized) init()
-    }, [initialized, init])
-    return store(selector)
-  }) as typeof store
+  clearSession: () => set({ sessionCache: null }),
+
+  fetchCustomMetadata: async () => {
+    const { customMetadata, customMetadataFetchedAt } = get()
+    const now = Date.now()
+    if (customMetadata && now - customMetadataFetchedAt < METADATA_TTL) {
+      return customMetadata
+    }
+    set({ customMetadataLoading: true })
+    try {
+      const meta = await fetchCustomSessionMetadata()
+      set({ customMetadata: meta, customMetadataFetchedAt: now, customMetadataLoading: false })
+      return meta
+    } catch (err) {
+      console.error('[revisionStore] fetchCustomMetadata failed:', err)
+      set({ customMetadataLoading: false })
+      return []
+    }
+  },
+}))
+
+export function useInitRevisionStore() {
+  const initialized = useRevisionStore((s) => s.initialized)
+  const init = useRevisionStore((s) => s.init)
+  useEffect(() => {
+    if (!initialized) init()
+  }, [initialized, init])
+}
