@@ -247,9 +247,9 @@ export default function PointsPanel({
                                 mt: 0.25,
                             }}>
                                 {targetReached ? (
-                                    <CheckCircle sx={{ fontSize: 40, color: c.icon }} />
+                                    <CheckCircle sx={{ fontSize: 20, color: c.icon }} />
                                 ) : (
-                                    <Whatshot sx={{ fontSize: 40, color: c.icon }} />
+                                    <Whatshot sx={{ fontSize: 20, color: c.icon }} />
                                 )}
                             </Box>
                         </Box>
@@ -371,29 +371,28 @@ export default function PointsPanel({
                     </AnimatePresence>
                 </Box>
 
-                {multipliers && (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                        <MultiplierGrid
-                            label="Rating"
-                            values={[0.0, 0.6, 1.0, 1.4]}
-                            activeValue={multipliers.rating}
-                            colors={RATING_COLORS}
-                        />
-                        <MultiplierGrid
-                            label="Time"
-                            values={[0.5, 0.8, 1.0, 1.2]}
-                            activeValue={multipliers.time}
-                            colors={TIME_COLORS}
-                        />
-                        <MultiplierGrid
-                            label="Difficulty"
-                            values={[1.5, 1.7, 1.9, 2.1, 2.3, 2.5]}
-                            activeValue={snappedDifficulty}
-                            colors={DIFFICULTY_COLORS}
-                        />
-                        <StreakBar value={multipliers.streak} />
-                    </Box>
-                )}
+                {/* ══ ALWAYS render multipliers, even at 0 points ══ */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                    <MultiplierGrid
+                        label="Rating"
+                        values={[0.0, 0.6, 1.0, 1.4]}
+                        activeValue={multipliers?.rating ?? -1}
+                        colors={RATING_COLORS}
+                    />
+                    <MultiplierGrid
+                        label="Time"
+                        values={[0.5, 0.8, 1.0, 1.2]}
+                        activeValue={multipliers?.time ?? -1}
+                        colors={TIME_COLORS}
+                    />
+                    <MultiplierGrid
+                        label="Difficulty"
+                        values={[1.5, 1.7, 1.9, 2.1, 2.3, 2.5]}
+                        activeValue={snappedDifficulty}
+                        colors={DIFFICULTY_COLORS}
+                    />
+                    <StreakBar value={multipliers?.streak ?? 1.0} />
+                </Box>
             </Box>
         </Box>
     )
