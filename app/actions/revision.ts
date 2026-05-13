@@ -100,16 +100,12 @@ async function buildRevisionCards(
 
     const vocabIds = progressRows.map(r => r.vocab_id)
 
-    const { data: defsData, error: defsErr } = await serviceClient
-        .from('definitions')
-        .select('vocab_id, meaning, pos, def_ar, def_tr, def_en')
-        .in('vocab_id', vocabIds)
-    if (defsErr) throw new Error(defsErr.message)
+    const [{ data: defsData, error: defsErr }, { data: exData, error: exErr }] = await Promise.all([
+        serviceClient.from('definitions').select('vocab_id, meaning, pos, def_ar, def_tr, def_en').in('vocab_id', vocabIds),
+        serviceClient.from('examples').select('vocab_id, ex_ar, ex_di, ex_en').in('vocab_id', vocabIds),
+    ])
 
-    const { data: exData, error: exErr } = await serviceClient
-        .from('examples')
-        .select('vocab_id, ex_ar, ex_di, ex_en')
-        .in('vocab_id', vocabIds)
+    if (defsErr) throw new Error(defsErr.message)
     if (exErr) throw new Error(exErr.message)
 
     const defMap = new Map<number, { meaning: string; pos: string; def_ar: string | null; def_tr: string | null; def_en: string | null }[]>()
@@ -186,7 +182,7 @@ export async function fetchRevisionSession(): Promise<{
     return { dueCards, completedCards }
 }
 
-/* ── Submit answers batch ──────────────────────────────────────────── */
+/* ── Submit answers batch (N+1 fixed) ───────────────────────────── */
 
 export async function submitRevisionAnswersBatch(
     answers: { vocabId: number; answer: Answer }[]
@@ -196,39 +192,86 @@ export async function submitRevisionAnswersBatch(
     const userId = await getAuthenticatedUserId()
     if (!userId) throw new Error('Not authenticated')
 
-    for (const { vocabId, answer } of answers) {
-        const { data: progress, error: fetchError } = await serviceClient
-            .from('progress')
-            .select('repetitions, interval_days, ease_factor, learning_step, lapses, last_review_at')
-            .eq('user_id', userId)
-            .eq('vocab_id', vocabId)
-            .single()
+    const vocabIds = answers.map(a => a.vocabId)
 
-        if (fetchError || !progress) continue
+    // 1. Fetch all existing progress rows in ONE query
+    const { data: allProgress, error: fetchError } = await serviceClient
+        .from('progress')
+        .select('vocab_id, repetitions, interval_days, ease_factor, learning_step, lapses, last_review_at, first_review_at')
+        .eq('user_id', userId)
+        .in('vocab_id', vocabIds)
+
+    if (fetchError) {
+        console.error('Batch fetch failed:', fetchError.message)
+        throw new Error(fetchError.message)
+    }
+
+    const progressMap = new Map((allProgress ?? []).map(p => [p.vocab_id, p]))
+    const now = new Date().toISOString()
+
+    // 2. Build upsert rows locally
+    const rows = answers.map(({ vocabId, answer }) => {
+        const progress = progressMap.get(vocabId)
+
+        if (!progress) {
+            // Fallback: card somehow lacks a progress row — create one
+            const result = computeAnswerResult({
+                repetitions: 0,
+                interval_days: 0,
+                ease_factor: 2.5,
+                learning_step: 0,
+                lapses: 0,
+            }, answer)
+
+            return {
+                user_id: userId,
+                vocab_id: vocabId,
+                is_in_revision: true,
+                is_completed: false,
+                repetitions: result.repetitions,
+                interval_days: result.interval_days,
+                ease_factor: result.ease_factor,
+                learning_step: result.learning_step,
+                lapses: answer === 'again' ? 1 : 0,
+                last_review_at: now,
+                last_rating: answer,
+                next_review_at: result.nextReview?.toISOString() ?? null,
+                first_review_at: now,
+                updated_at: now,
+                created_at: now,
+            }
+        }
 
         const result = computeAnswerResult(progress, answer)
+        const nextReview = result.nextReview?.toISOString() ?? null
+        const newLapses = answer === 'again' ? (progress.lapses ?? 0) + 1 : (progress.lapses ?? 0)
 
-        const now = new Date().toISOString()
-        const updates = {
+        return {
+            user_id: userId,
+            vocab_id: vocabId,
+            is_in_revision: true,
+            is_completed: false,
             repetitions: result.repetitions,
             interval_days: result.interval_days,
             ease_factor: result.ease_factor,
             learning_step: result.learning_step,
             last_review_at: now,
             last_rating: answer,
+            next_review_at: nextReview,
+            lapses: newLapses,
             updated_at: now,
-            next_review_at: result.nextReview?.toISOString() ?? null,
-            ...(answer === 'again' && { lapses: (progress.lapses ?? 0) + 1 }),
             ...(progress.last_review_at === null && { first_review_at: now }),
         }
+    })
 
-        const { error } = await serviceClient
-            .from('progress')
-            .update(updates)
-            .eq('user_id', userId)
-            .eq('vocab_id', vocabId)
+    // 3. ONE bulk upsert
+    const { error } = await serviceClient
+        .from('progress')
+        .upsert(rows, { onConflict: 'user_id,vocab_id' })
 
-        if (error) console.error('Batch update failed:', error.message)
+    if (error) {
+        console.error('Batch upsert failed:', error.message)
+        throw new Error(error.message)
     }
 
     revalidatePath('/revision')
@@ -437,21 +480,20 @@ export async function fetchCustomSessionMetadata(): Promise<LevelMeta[]> {
     return result
 }
 
-/* ── Custom session cards ──────────────────────────────────────────── */
+/* ── Custom session cards (random flag removed) ───────────────────── */
 
 export async function fetchCustomSessionCards(settings: {
     levelCodes: string[]
     themeIds: number[]
     cardCount: number
-    random: boolean
 }): Promise<RevisionCard[]> {
-    const { levelCodes, themeIds, cardCount, random } = settings
+    const { levelCodes, themeIds, cardCount } = settings
 
     let builder = serviceClient
         .from('vocab')
         .select('word_id, word_ar, word_di, word_tr, theme_id, level_id')
 
-    if (!random && levelCodes.length > 0) {
+    if (levelCodes.length > 0) {
         const { data: levelData } = await serviceClient
             .from('levels')
             .select('id')
@@ -462,15 +504,16 @@ export async function fetchCustomSessionCards(settings: {
         }
     }
 
-    if (!random && themeIds.length > 0) {
+    if (themeIds.length > 0) {
         builder = builder.in('theme_id', themeIds)
     }
 
-    const { data: vocabData, error } = await builder
+    // Hard limit at DB level to avoid unbounded fetches
+    const { data: vocabData, error } = await builder.limit(Math.max(cardCount * 2, 50))
     if (error) throw new Error(error.message)
     if (!vocabData || vocabData.length === 0) return []
 
-    // Shuffle and limit in JavaScript
+    // Shuffle and limit client-side
     const shuffled = [...vocabData].sort(() => Math.random() - 0.5).slice(0, cardCount)
     const vocabIds = shuffled.map(v => v.word_id)
 
@@ -486,14 +529,8 @@ export async function fetchCustomSessionCards(settings: {
     const themeNameMap = new Map((themesData ?? []).map(t => [t.id, t.display_name]))
 
     const [{ data: defsData, error: defsErr }, { data: exData, error: exErr }] = await Promise.all([
-        serviceClient
-            .from('definitions')
-            .select('vocab_id, meaning, pos, def_ar, def_tr, def_en')
-            .in('vocab_id', vocabIds),
-        serviceClient
-            .from('examples')
-            .select('vocab_id, ex_ar, ex_di, ex_en')
-            .in('vocab_id', vocabIds),
+        serviceClient.from('definitions').select('vocab_id, meaning, pos, def_ar, def_tr, def_en').in('vocab_id', vocabIds),
+        serviceClient.from('examples').select('vocab_id, ex_ar, ex_di, ex_en').in('vocab_id', vocabIds),
     ])
 
     if (defsErr) throw new Error(defsErr.message)
@@ -546,36 +583,4 @@ export async function fetchCustomSessionCards(settings: {
             lastRating: null,
         }
     })
-}
-
-/* ── Daily review counts (lightweight) ─────────────────────────────── */
-
-export async function fetchDailyReviewCounts(): Promise<{
-    newCount: number
-    learningCount: number
-    reviewCount: number
-}> {
-    const userId = await getAuthenticatedUserId()
-    if (!userId) return { newCount: 0, learningCount: 0, reviewCount: 0 }
-
-    const { data, error } = await serviceClient.rpc('get_revision_session', {
-        p_user_id: userId,
-        p_daily_new_limit: DAILY_NEW_LIMIT,
-    })
-
-    if (error || !data) {
-        console.error('[fetchDailyReviewCounts] RPC error:', error?.message)
-        return { newCount: 0, learningCount: 0, reviewCount: 0 }
-    }
-
-    const dueCards = data.due_cards ?? []
-    const counts = { newCount: 0, learningCount: 0, reviewCount: 0 }
-
-    dueCards.forEach((c: any) => {
-        if (!c.last_review_at && (c.repetitions ?? 0) === 0) counts.newCount++
-        else if ((c.interval_days ?? 0) === 0) counts.learningCount++
-        else counts.reviewCount++
-    })
-
-    return counts
 }

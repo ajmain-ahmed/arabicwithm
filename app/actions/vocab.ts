@@ -152,7 +152,7 @@ export type WordProgress = {
   is_in_revision: boolean
 }
 
-/* ── fetch vocab + defs + examples for a theme ── */
+/* ── fetch vocab + defs + examples for a theme (parallelized) ── */
 export async function fetchThemeVocabWithProgress(
   themeId: number,
   levelCode: string
@@ -188,23 +188,23 @@ export async function fetchThemeVocabWithProgress(
 
   const vocabIds = vocabData.map(v => v.word_id)
 
-  // 3. Get definitions (batched)
-  const { data: defData, error: defErr } = await serviceClient
-    .from("definitions")
-    .select("vocab_id, pos, meaning, def_ar, def_tr, def_en")
-    .in("vocab_id", vocabIds)
+  // 3. Fetch definitions, examples, and progress in parallel
+  const [
+    { data: defData, error: defErr },
+    { data: exData, error: exErr },
+    { data: progData },
+  ] = await Promise.all([
+    serviceClient.from("definitions").select("vocab_id, pos, meaning, def_ar, def_tr, def_en").in("vocab_id", vocabIds),
+    serviceClient.from("examples").select("vocab_id, ex_ar, ex_di, ex_tr, ex_en, interactive").in("vocab_id", vocabIds),
+    userId
+      ? serviceClient.from("progress").select("vocab_id, is_completed, is_in_revision").eq("user_id", userId).in("vocab_id", vocabIds)
+      : Promise.resolve({ data: [] }),
+  ])
 
   if (defErr) throw new Error(defErr.message)
-
-  // 4. Get examples (batched)
-  const { data: exData, error: exErr } = await serviceClient
-    .from("examples")
-    .select("vocab_id, ex_ar, ex_di, ex_tr, ex_en, interactive")
-    .in("vocab_id", vocabIds)
-
   if (exErr) throw new Error(exErr.message)
 
-  // 5. Build lookup maps
+  // 4. Build lookup maps
   const defMap = new Map<number, { pos: string; meaning: string; def_ar: string | null; def_tr: string | null; def_en: string | null }[]>()
   for (const d of defData ?? []) {
     const list = defMap.get(d.vocab_id) ?? []
@@ -219,7 +219,7 @@ export async function fetchThemeVocabWithProgress(
     exMap.set(e.vocab_id, list)
   }
 
-  // 6. Build VocabRow and ExampleRow
+  // 5. Build VocabRow and ExampleRow
   const vocab: VocabRow[] = []
   const examples: ExampleRow[] = []
 
@@ -266,21 +266,12 @@ export async function fetchThemeVocabWithProgress(
     }
   }
 
-  // 7. Get progress
-  let progress: WordProgress[] = []
-  if (userId) {
-    const { data: progData } = await serviceClient
-      .from("progress")
-      .select("vocab_id, is_completed, is_in_revision")
-      .eq("user_id", userId)
-      .in("vocab_id", vocabIds)
-
-    progress = (progData ?? []).map(p => ({
-      vocab_id: p.vocab_id,
-      is_completed: p.is_completed,
-      is_in_revision: p.is_in_revision,
-    }))
-  }
+  // 6. Progress already fetched above
+  const progress: WordProgress[] = (progData ?? []).map((p: any) => ({
+    vocab_id: p.vocab_id,
+    is_completed: p.is_completed,
+    is_in_revision: p.is_in_revision,
+  }))
 
   return { vocab, progress, examples }
 }

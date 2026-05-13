@@ -1,5 +1,6 @@
 'use client'
 
+import { useRevisionStore } from '@/store/revisionStore'
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { upsertWordProgressBatch } from '@/app/actions/vocab'
 import { useParams, useRouter } from 'next/navigation'
@@ -33,7 +34,6 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { stripDiacritics } from '@/app/lib/arabic'
-import Navbar from '@/app/components/navbar'
 import { useVocabStore } from '@/store/vocabStore'
 import TutorialDialog, { useTutorialSeen } from '../components/TutorialDialog'
 import AuthDialog from '@/app/components/AuthDialog'
@@ -782,6 +782,7 @@ function FlashcardQuiz({
 }) {
     const { user } = useAuth()
     const updateLocalProgress = useVocabStore(s => s.updateLocalProgress)
+    const clearSession = useRevisionStore((s) => s.clearSession)
     const [allCards, setAllCards] = useState<CardState[]>(initialQueue)
     const [filter, setFilter] = useState<FilterType>('all')
     const [revealed, setRevealed] = useState(true)
@@ -940,6 +941,7 @@ function FlashcardQuiz({
         if (!current) return
         const toRevision = !current.isInRevision
         updateCardStatus(current.id, toRevision ? 'revision' : 'new', { isInRevision: toRevision })
+        clearSession() // 🔴 FIX: invalidate daily count cache
 
         if (toRevision) {
             if (currentIndex < filteredCards.length - 1) {
@@ -948,7 +950,7 @@ function FlashcardQuiz({
                 onComplete?.()
             }
         }
-    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, filter])
+    }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, filter, clearSession])
 
     // Update local state + advance instantly — no DB call here
     const toggleComplete = useCallback(() => {
@@ -1532,7 +1534,6 @@ export default function FlashcardSlugPage() {
 
     return (
         <>
-            <Navbar />
 
             <TutorialDialog
                 open={tutorialOpen}

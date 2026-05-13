@@ -54,11 +54,14 @@ export async function getAllLevels(): Promise<LevelMeta[]> {
 
   const levelIds = levels?.map(l => l.id) ?? []
 
-  // Count vocab words per level
-  const { data: vocabData, error: vocabErr } = await serviceClient
-    .from('vocab')
-    .select('level_id')
-    .in('level_id', levelIds)
+  // Parallelize vocab + theme counts
+  const [
+    { data: vocabData, error: vocabErr },
+    { data: themeVocabData, error: themeVocabErr },
+  ] = await Promise.all([
+    serviceClient.from('vocab').select('level_id').in('level_id', levelIds),
+    serviceClient.from('vocab').select('level_id, theme_id').in('level_id', levelIds),
+  ])
 
   if (vocabErr) {
     console.error('[getAllLevels] vocab count error:', vocabErr.message)
@@ -71,12 +74,6 @@ export async function getAllLevels(): Promise<LevelMeta[]> {
       wordCountMap.set(level.code, (wordCountMap.get(level.code) ?? 0) + 1)
     }
   }
-
-  // Count distinct themes per level
-  const { data: themeVocabData, error: themeVocabErr } = await serviceClient
-    .from('vocab')
-    .select('level_id, theme_id')
-    .in('level_id', levelIds)
 
   if (themeVocabErr) {
     console.error('[getAllLevels] theme count error:', themeVocabErr.message)

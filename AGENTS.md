@@ -12,8 +12,10 @@ ArabicWithM is a Next.js 16 web application that helps users learn Arabic throug
 
 Key features:
 - **Cartoons**: Arabic-subtitled cartoon episodes with inline vocabulary lookup, synced to a YouTube player.
-- **Flashcards**: Themed vocabulary decks organised by CEFR level (A0–C2).
-- **Word Bank (Revision)**: An SM-2-based SRS session manager with daily new-card limits and rating buttons (Again / Hard / Good / Easy).
+- **Flashcards**: Themed vocabulary decks organised by CEFR level (A0–C2). Each card supports an interactive sentence-builder mini-game (drag-and-drop Arabic word ordering) when example data is marked `interactive`.
+- **Word Bank (Revision)**: An SM-2-based SRS session manager with two modes:
+  - **Daily Review**: Spaced-repetition queue (New / Learning / Review) with a daily new-card limit. Progress is saved to the database.
+  - **Custom Practice**: Ad-hoc sessions where the user picks levels, themes, and card count. Progress is **not** saved and does not affect SRS state.
 - **User Profiles**: Progress tracking, level stats, and password reset via Supabase Auth.
 
 ## Technology Stack
@@ -30,16 +32,16 @@ Key features:
 | State | Zustand | 5.x (client stores) |
 | Backend / Auth | Supabase | `@supabase/supabase-js` + `@supabase/ssr` |
 | Markdown | gray-matter | front-matter parsing for cartoon episodes |
-| Fonts | Google Fonts | EB Garamond, Jost, Cookie, Cormorant Garamond (loaded inline in components) |
+| Fonts | Google Fonts | EB Garamond (Arabic/serif), Jost (UI/sans-serif). Loaded inline in component `<style>` blocks. The root layout also installs Geist/Geist_Mono via `next/font/google` but they are rarely used. |
 
 ## Project Structure
 
 ```
-arabic-with-m/
+arrow-line-arabic/
 ├── app/                          # Next.js App Router
 │   ├── actions/                  # Server Actions (data fetching & mutations)
 │   │   ├── vocab.ts              # Vocab/theme fetching, progress upserts
-│   │   ├── revision.ts           # SRS session fetch, answer submission, toggle revision
+│   │   ├── revision.ts           # SRS session fetch, answer submission, toggle revision, custom metadata/cards
 │   │   └── profile.ts            # User profile RPC call
 │   ├── auth/callback/page.tsx    # OAuth callback handler
 │   ├── cartoons/                 # Cartoon routes
@@ -53,33 +55,45 @@ arabic-with-m/
 │   │   ├── AuthDialog.tsx        # Sign-in / register / forgot-password modal
 │   │   ├── footer.tsx            # Site footer
 │   │   ├── StudySection.tsx      # Homepage study CTA section
-│   │   └── CartoonSection.tsx    # Homepage cartoons CTA section
+│   │   ├── CartoonSection.tsx    # Homepage cartoons CTA section
+│   │   └── GlobalDataInit.tsx    # Client init wrapper: fetches custom session metadata once per app load
 │   ├── flashcards/               # Flashcard routes
 │   │   ├── page.tsx              # Server: level list
 │   │   ├── FlashcardsLandingPage.tsx
-│   │   ├── [slug]/page.tsx       # Server: resolve level slug → theme list + quiz
+│   │   ├── [slug]/page.tsx       # Client: theme list + quiz (very large component, ~1700 lines)
 │   │   └── components/TutorialDialog.tsx
 │   ├── lib/                      # Shared utilities
 │   │   ├── supabase/client.ts    # Browser Supabase client singleton
-│   │   ├── study.ts              # Level metadata helpers
-│   │   ├── cartoons.ts           # File-system cartoon parsing
+│   │   ├── study.ts              # Level metadata helpers (slug/label mapping)
+│   │   ├── cartoons.ts           # File-system cartoon parsing + vocabMap building
 │   │   ├── arabic.ts             # Arabic token normalisation & diacritic stripping
 │   │   └── sm2.ts                # SM-2 spaced-repetition algorithm
 │   ├── profile/page.tsx          # User profile dashboard
 │   ├── reset-password/page.tsx   # Password reset form
-│   ├── revision/page.tsx         # SRS revision session page
+│   ├── revision/                 # SRS revision session
+│   │   ├── page.tsx              # Main session page (~1700 lines, contains useAnkiQueue hook)
+│   │   ├── WelcomeScreen.tsx     # Daily vs Custom tabbed entry screen
+│   │   └── CustomSessionConfig.tsx # Level/theme picker for custom practice
 │   ├── AuthContext.tsx           # React Context for Supabase auth state
-│   ├── globals.css               # Tailwind v4 import + basic variables
-│   ├── layout.tsx                # Root layout (Navbar + Footer + AuthProvider)
+│   ├── globals.css               # Tailwind v4 import + basic variables (NOT the main design palette)
+│   ├── layout.tsx                # Root layout (Navbar + Footer + AuthProvider + GlobalDataInit)
 │   └── page.tsx                  # Homepage
 ├── content/cartoons/             # Markdown episode content
 │   └── {show}/
 │       ├── _meta.json            # Show metadata
 │       └── {episode}.md          # Episode script + vocab notes
-├── public/                       # Static assets (images, banners, cards)
+├── public/                       # Static assets
+│   ├── banners/
+│   ├── cards/
+│   ├── cartoons/
+│   ├── dragons/                  # Decorative images used in revision screens
+│   ├── homepage/
+│   ├── levels/
+│   ├── themes/
+│   └── vercel.svg
 ├── store/                        # Zustand client stores
 │   ├── vocabStore.ts             # Theme/vocab caching + local progress updates
-│   └── revisionStore.ts          # Revision IDs cache + session cache
+│   └── revisionStore.ts          # Revision IDs cache, session cache (TTL), custom metadata cache (TTL)
 ├── next.config.ts                # Next.js config (security headers, CSP)
 ├── eslint.config.mjs             # ESLint 9 flat config (Next.js presets)
 ├── postcss.config.mjs            # Tailwind v4 PostCSS plugin
@@ -127,12 +141,19 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ## Code Style and Conventions
 
 - **Component types**: Server Components are the default. Mark Client Components explicitly with `'use client'` at the top of the file.
-- **Styling**: The codebase uses MUI's `sx` prop extensively for inline styling. CSS custom properties (e.g. `--bark: #2c1a0e`, `--gold: #b8860b`) are defined inline in component `<style>` tags or `globals.css`.
-- **Fonts**: EB Garamond is used for Arabic/serif text; Jost is used for UI/sans-serif text. These are imported via `@import url(...)` inside component-level `<style>` blocks, not in a global CSS file.
+- **Styling**: The codebase uses MUI's `sx` prop extensively for inline styling. Tailwind utility classes are almost never used. The design palette is implemented via hardcoded hex values in `sx` props rather than CSS custom properties.
+- **Design palette** (commonly used literal colours):
+  - `#2c1a0e` — dark bark (headings, primary text)
+  - `#b8860b` — gold (accents, primary buttons, borders)
+  - `#f5ede0` — cream (light backgrounds)
+  - `#7a6e65` — muted brown (secondary text)
+  - `#9e8a7a` — lighter muted (labels, tertiary text)
+  - `#d4a843` — gold light (gradients)
+- **Fonts**: EB Garamond is used for Arabic/serif text; Jost is used for UI/sans-serif text. These are imported via `@import url(...)` inside component-level `<style>` blocks (e.g. `WelcomeScreen.tsx`). The root `layout.tsx` also loads Geist/Geist_Mono via `next/font/google`, but they are not the dominant fonts.
 - **Path alias**: Use `@/` for imports from the project root (e.g. `@/app/lib/arabic`, `@/store/vocabStore`).
 - **File naming**: PascalCase for components (`AuthDialog.tsx`), camelCase for utilities (`cartoons.ts`), kebab-case for routes (`reset-password`).
 - **TypeScript**: Strict mode is enabled. Prefer explicit types for props and Server Action return values.
-- **State management**: Server-fetched data flows through Server Actions → Zustand stores (with 5-minute client-side caching). Auth state lives in `AuthContext.tsx`.
+- **State management**: Server-fetched data flows through Server Actions → Zustand stores. Auth state lives in `AuthContext.tsx`.
 
 ## Authentication Flow
 
@@ -149,7 +170,8 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 - `vocab` — Arabic words with `word_ar`, `word_di`, `word_tr`, `theme_id`, `level_id`
 - `definitions` — POS, meaning, and multilingual definitions per vocab row
 - `examples` — Example sentences (`ex_ar`, `ex_di`, `ex_tr`, `ex_en`, `interactive`)
-- `progress` — User progress per word (`is_completed`, `is_in_revision`, SRS fields: `repetitions`, `interval_days`, `ease_factor`, `learning_step`, `lapses`, `last_review_at`, `next_review_at`)
+- `progress` — User progress per word (`is_completed`, `is_in_revision`, SRS fields: `repetitions`, `interval_days`, `ease_factor`, `learning_step`, `lapses`, `last_review_at`, `next_review_at`, `last_rating`)
+- `forms` — Verb/conjugation forms (`con_ar`, `con_di`, `con_tr`, `con_en`, `type`) linked to `vocab_id`
 
 ### Server Actions pattern
 All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use server"`. They use:
@@ -157,14 +179,14 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 - `createServerClient` from `@supabase/ssr` with cookie access for auth verification.
 
 ### Client-side caching
-- `vocabStore.ts`: Caches theme vocab + progress for 5 minutes.
-- `revisionStore.ts`: Caches the user's revision ID set and the current session cards for 5 minutes.
+- `vocabStore.ts`: Caches theme vocab + progress indefinitely (until invalidated via `invalidateTheme` / `invalidateThemeList`).
+- `revisionStore.ts`: Caches the user's revision ID set (no TTL), the current session cards for **5 minutes**, and custom session metadata for **10 minutes**.
 
 ## Key Domain Logic
 
 ### Arabic Text Processing (`app/lib/arabic.ts`)
 - `stripDiacritics(token)` — removes harakat/tatweel for matching.
-- `normalizeArabicToken(token)` — strips diacritics, definite articles (`ال`, `وال`, `بال`, etc.), single-letter proclitics, and common enclitic pronoun suffixes. Used for fuzzy vocabulary lookup in cartoon scripts.
+- `normalizeArabicToken(token)` — strips diacritics, definite articles (`ال`, `وال`, `بال`, etc.), single-letter proclitics (when the remaining stem is ≥ 4 chars), and common enclitic pronoun suffixes. Used for fuzzy vocabulary lookup in cartoon scripts.
 
 ### SM-2 SRS (`app/lib/sm2.ts`)
 - `computeAnswerResult(current, answer)` implements a simplified SM-2 algorithm.
@@ -176,7 +198,17 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 1. Show metadata is read from `content/cartoons/{show}/_meta.json`.
 2. Episodes are `.md` files parsed with `gray-matter`. Frontmatter contains `youtubeId`, `level`, `episode`, `tags`.
 3. The script body contains timestamps, Arabic (diacritic + plain), and English lines.
-4. At build/request time, Arabic tokens are extracted from the markdown and matched against the `vocab` table to build an inline `vocabMap` for tooltip lookup.
+4. At request time, Arabic tokens are extracted from the markdown and matched against the `vocab` table to build an inline `vocabMap` for tooltip lookup.
+
+### Revision Session Architecture (`app/revision/page.tsx`)
+- The page is a large client component (~1700 lines) that orchestrates the SRS UI.
+- `useAnkiQueue` is a custom hook that manages the card deck, dot-progress tracking, and re-insertion of "Again" cards.
+- Answers are batched locally in `pendingAnswersRef` and flushed to the server via `submitRevisionAnswersBatch`:
+  - On session completion
+  - On tab hide / page leave / beforeunload
+  - On soft navigation (cleanup effect)
+- **Daily sessions** mutate the Zustand cache optimistically and persist to DB.
+- **Custom sessions** do not touch the DB or the Zustand cache; they are pure frontend practice.
 
 ## Security Considerations
 
@@ -198,6 +230,10 @@ There is currently **no test suite** in the project. If you add tests, place the
 
 1. **Check if a file is a Client Component** before adding browser-only hooks (`useState`, `useEffect`, etc.). If it is a Server Component and you need interactivity, either convert it to `'use client'` or extract a client sub-component.
 2. **Prefer Server Actions** for any data mutation or sensitive read. Do not call Supabase service key from the browser.
-3. **Preserve the design system**: Use the existing CSS variable names (`--bark`, `--forest`, `--gold`, `--gold-lt`, `--muted`, `--cream`, `--sand`) and font pairings (EB Garamond for Arabic/headings, Jost for UI text).
+3. **Preserve the design system**: Use the existing colour values (`#2c1a0e`, `#b8860b`, `#f5ede0`, `#7a6e65`, `#9e8a7a`, `#d4a843`) and font pairings (EB Garamond for Arabic/headings, Jost for UI text).
 4. **Keep MUI `sx` prop usage consistent** with the existing patterns (e.g. `borderRadius: '10px'` for cards, `borderRadius: '9999px'` for pills, `fontFamily: 'Jost, sans-serif'`).
 5. **Respect the path alias**: Always use `@/` imports rather than relative paths when crossing top-level directories.
+6. **Revision page specifics**:
+   - Do not mutate `currentCard.data` in-place. Pass the full `AnswerResult` to the `answer` callback from `useAnkiQueue` so the queue updates immutably.
+   - Do not pollute the `revisionStore` session cache with custom-practice state.
+   - If you change navigation behaviour, ensure `flushPendingAnswers()` is still called on unmount/leave.
