@@ -2,6 +2,7 @@
 
 import { Box } from '@mui/material'
 import { useMediaQuery } from '@mui/material'
+import { motion } from 'framer-motion'
 import { type DotInfo } from '../types'
 
 export default function IntegratedProgressDots({
@@ -26,31 +27,12 @@ export default function IntegratedProgressDots({
         isAgainPending: againPendingIds.has(id),
     }))
 
-    /* ── stepped bar: extend past last answered dot ── */
-    const lastAnsweredIndex = dotOrder.reduce(
-        (last, id, idx) => (answeredDots.has(id) ? idx : last),
-        -1
-    )
-
-    let fillWidth = '0%'
-    if (total > 0 && lastAnsweredIndex >= 0) {
-        if (total === 1) {
-            fillWidth = '82%'
-        } else {
-            const dotPosition = (lastAnsweredIndex / (total - 1)) * 100
-            const gap = 100 / (total - 1)
-            const extension = gap * 0.35 // push past dot, stop before next
-            fillWidth = `${Math.min(dotPosition + extension, 100)}%`
-        }
-    }
-
     /* ── windowing ── */
     const MAX_DESKTOP_DOTS = 20
     const DESKTOP_HALF = 10
     const MAX_MOBILE_DOTS = 10
     let visible: DotInfo[] = dots
     let isWindowed = false
-    let windowStart = 0
 
     if (isMobile && total > MAX_MOBILE_DOTS) {
         const currentIdx = currentDotId ? dotOrder.indexOf(currentDotId) : 0
@@ -61,7 +43,6 @@ export default function IntegratedProgressDots({
             end = total
         }
         visible = dots.slice(start, end)
-        windowStart = start
         isWindowed = true
     } else if (!isMobile && total > MAX_DESKTOP_DOTS) {
         const currentIdx = currentDotId ? dotOrder.indexOf(currentDotId) : 0
@@ -72,11 +53,22 @@ export default function IntegratedProgressDots({
             end = total
         }
         visible = dots.slice(start, end)
-        windowStart = start
         isWindowed = true
     }
 
-    /* ── current indicator position (slides smoothly) ── */
+    const dotPositionPct = (idx: number) =>
+        visible.length === 1 ? 50 : (idx / (visible.length - 1)) * 100
+
+    /* ── single fill bar: width = position of the last answered dot ── */
+    const lastAnsweredIdx = visible.reduce<number>(
+        (acc, dot, idx) => (dot.color !== undefined ? idx : acc),
+        -1,
+    )
+    const fillPct =
+        visible.length <= 1 || lastAnsweredIdx < 0
+            ? 0
+            : (lastAnsweredIdx / (visible.length - 1)) * 100
+
     const currentVisibleIdx = currentDotId
         ? visible.findIndex((d) => d.dotId === currentDotId)
         : -1
@@ -89,6 +81,7 @@ export default function IntegratedProgressDots({
 
     return (
         <Box sx={{ position: 'relative', mb: '1.25rem' }}>
+            {/* base track */}
             <Box
                 sx={{
                     height: 4,
@@ -98,88 +91,94 @@ export default function IntegratedProgressDots({
                     position: 'relative',
                 }}
             >
-                {/* filled track */}
-                <Box
-                    sx={{
+                {/* ── single fill bar ── */}
+                <motion.div
+                    initial={false}
+                    animate={{ width: `${fillPct}%` }}
+                    transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+                    style={{
                         position: 'absolute',
                         left: 0,
                         top: 0,
-                        bottom: 0,
-                        background: 'linear-gradient(90deg, #b8860b, #d4a843)',
+                        height: '100%',
                         borderRadius: '999px',
-                        transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-                        width: fillWidth,
+                        background: 'linear-gradient(90deg, #b8860b, #d4a843)',
+                        zIndex: 1,
                     }}
                 />
 
-                {/* sliding "current" ring — moves smoothly between dots */}
+                {/* ── sliding current ring ── */}
                 {currentLeftPct !== null && (
-                    <Box
-                        sx={{
+                    <motion.div
+                        initial={false}
+                        animate={{ left: `${currentLeftPct}%` }}
+                        transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+                        style={{
                             position: 'absolute',
-                            left: `${currentLeftPct}%`,
                             top: '50%',
                             transform: 'translate(-50%, -50%)',
                             width: 16,
                             height: 16,
                             borderRadius: '50%',
                             border: '2.5px solid #b8860b',
-                            background: 'transparent',
+                            background: 'rgba(0,0,0,0)',
                             boxShadow: '0 0 0 4px rgba(184,134,11,0.15)',
-                            transition: 'left 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
                             zIndex: 4,
                             pointerEvents: 'none',
-                            animation: 'dotPulse 1.8s ease-in-out infinite',
                         }}
-                    />
-                )}
-
-                {/* dots */}
-                {visible.map((dot, idx) => {
-                    const leftPct = isWindowed
-                        ? visible.length === 1
-                            ? 50
-                            : (idx / (visible.length - 1)) * 100
-                        : total === 1
-                            ? 50
-                            : (idx / (total - 1)) * 100
-
-                    const answered = dot.color !== undefined
-                    const bg = answered
-                        ? dot.color!
-                        : dot.isAgainPending
-                            ? 'rgba(198,40,40,0.12)'
-                            : 'rgba(122,110,101,0.18)'
-                    const border = answered
-                        ? 'none'
-                        : dot.isAgainPending
-                            ? '1.5px solid rgba(198,40,40,0.35)'
-                            : 'none'
-
-                    return (
+                    >
                         <Box
-                            key={dot.dotId}
                             sx={{
-                                position: 'absolute',
-                                left: `${leftPct}%`,
-                                top: '50%',
-                                transform: 'translate(-50%, -50%)',
-                                width: 10,
-                                height: 10,
+                                width: '100%',
+                                height: '100%',
                                 borderRadius: '50%',
-                                background: bg,
-                                border,
-                                boxShadow: answered
-                                    ? `0 0 0 2px ${dot.color}18`
-                                    : 'none',
-                                /* smooth glide when reinsertion shifts positions */
-                                transition:
-                                    'left 0.5s cubic-bezier(0.4, 0, 0.2, 1), ' +
-                                    'background 0.35s ease, ' +
-                                    'box-shadow 0.35s ease',
-                                zIndex: answered ? 2 : 1,
+                                animation: 'dotPulse 1.8s ease-in-out infinite',
                             }}
                         />
+                    </motion.div>
+                )}
+
+                {/* ── dots ── */}
+                {visible.map((dot, idx) => {
+                    const leftPct = dotPositionPct(idx)
+                    const answered = dot.color !== undefined
+                    const borderColor = answered
+                        ? 'rgba(0,0,0,0)'
+                        : dot.isAgainPending
+                            ? 'rgba(198,40,40,0.4)'
+                            : 'rgba(122,110,101,0.3)'
+
+                    return (
+                        <motion.div
+                            key={dot.dotId}
+                            initial={false}
+                            animate={{ left: `${leftPct}%` }}
+                            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+                            style={{
+                                position: 'absolute',
+                                top: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                zIndex: answered ? 3 : 2,
+                            }}
+                        >
+                            <motion.div
+                                initial={false}
+                                animate={{
+                                    backgroundColor: answered ? dot.color! : 'rgba(0,0,0,0)',
+                                    borderColor: borderColor,
+                                }}
+                                transition={{ duration: 0.35, ease: 'easeOut' }}
+                                style={{
+                                    width: 10,
+                                    height: 10,
+                                    borderRadius: '50%',
+                                    border: '1.5px solid',
+                                    boxShadow: answered
+                                        ? `0 0 0 2px ${dot.color}18`
+                                        : 'none',
+                                }}
+                            />
+                        </motion.div>
                     )
                 })}
             </Box>

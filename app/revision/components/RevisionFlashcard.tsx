@@ -1,10 +1,11 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import {
     Box, Typography, Button, Collapse,
 } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useMediaQuery } from '@mui/material'
 import { type SessionCard, type Queue, parseExamples } from '../types'
 import IntegratedProgressDots from './IntegratedProgressDots'
 import BucketChips from './BucketChips'
@@ -29,7 +30,7 @@ const tabButtonSx = {
 export default function RevisionFlashcard({
     sessionCard, counts, showDiacritics, onAnswer, textScale,
     dotOrder, answeredDots, againPendingIds, totalEver, doneCount,
-    lastAnswerPoints, pointsAnimKey, uniqueDoneCount, uniqueTotal,
+    uniqueDoneCount, uniqueTotal,
 }: {
     sessionCard: SessionCard
     counts: Record<Queue, number>
@@ -41,8 +42,6 @@ export default function RevisionFlashcard({
     againPendingIds: Set<string>
     totalEver: number
     doneCount: number
-    lastAnswerPoints?: number | null
-    pointsAnimKey?: number
     uniqueDoneCount: number
     uniqueTotal: number
 }) {
@@ -58,7 +57,7 @@ export default function RevisionFlashcard({
     const examples = parseExamples(card)
     const progress = uniqueTotal > 0 ? Math.round((uniqueDoneCount / uniqueTotal) * 100) : 0
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         setRevealed(false)
         setActiveTab('definition')
         cardStartRef.current = Date.now()
@@ -167,20 +166,6 @@ export default function RevisionFlashcard({
                                     ))}
                                 </Box>
                             </Box>
-                            <AnimatePresence>
-                                {lastAnswerPoints !== null && pointsAnimKey !== undefined && (
-                                    <motion.div
-                                        key={pointsAnimKey}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: -20 }}
-                                        exit={{ opacity: 0 }}
-                                        transition={{ duration: 0.6 }}
-                                        style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', fontWeight: 700, color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: '1.2rem', pointerEvents: 'none' }}
-                                    >
-                                        +{lastAnswerPoints}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
                         </Box>
                     </Collapse>
 

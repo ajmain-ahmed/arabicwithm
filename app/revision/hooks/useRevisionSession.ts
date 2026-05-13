@@ -6,7 +6,7 @@ import { useRevisionStore } from '@/store/revisionStore'
 import { submitRevisionAnswersBatch, type RevisionCard, type Answer } from '@/app/actions/revision'
 import { computeAnswerResult, type ProgressState } from '@/app/lib/sm2'
 import useAnkiQueue from './useAnkiQueue'
-import { type SessionMode, type SessionCard, type ExtendedSessionLog, classifyCard, computeCardPoints, makeDotId, RATING_COLORS } from '../types'
+import { type SessionMode, type SessionCard, type ExtendedSessionLog, type MultiplierData, classifyCard, computeCardPoints, makeDotId, RATING_COLORS } from '../types'
 
 export default function useRevisionSession() {
     const { user } = useAuth()
@@ -28,9 +28,10 @@ export default function useRevisionSession() {
     const displayPointsRef = useRef(0)
     const [lastPoints, setLastPoints] = useState<number | null>(null)
     const [pointsAnimKey, setPointsAnimKey] = useState(0)
-    const [lastMultipliers, setLastMultipliers] = useState<{ difficulty: string; time: string; rating: string; streak: string } | null>(null)
+    const [lastMultipliers, setLastMultipliers] = useState<MultiplierData | null>(null)
     const [streakCount, setStreakCount] = useState(0)
     const [showResults, setShowResults] = useState(false)
+    const [targetPoints, setTargetPoints] = useState(0)
     const pendingAnswersRef = useRef<{ vocabId: number; answer: Answer }[]>([])
     const hasUnsavedRef = useRef(false)
     const pointsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -140,6 +141,11 @@ export default function useRevisionSession() {
             setCompletedCards(completedCards)
             setSessionStarted(true)
 
+            // Target = 60% of theoretical per-card max (no streak bonus)
+            // 100 * maxDifficulty(2.42) * maxTime(1.2) * maxRating(1.4) * 0.6 ≈ 244 per card
+            const target = Math.round((dueCards.length + completedCards.length) * 244)
+            setTargetPoints(target)
+
             setSessionLogs([])
 
             if (!hasInitializedRef.current) {
@@ -171,6 +177,7 @@ export default function useRevisionSession() {
         setStreakCount(0)
         setLastMultipliers(null)
         setShowResults(false)
+        setTargetPoints(0)
         setLeaveDialogOpen(false)
         leaveTargetUrlRef.current = null
         if (pointsTimeoutRef.current) clearTimeout(pointsTimeoutRef.current)
@@ -281,7 +288,7 @@ export default function useRevisionSession() {
         setLastPoints(cardPoints)
         setPointsAnimKey(k => k + 1)
         setLastMultipliers(multipliers)
-        pointsTimeoutRef.current = setTimeout(() => setLastPoints(null), 800)
+        pointsTimeoutRef.current = setTimeout(() => setLastPoints(null), 1400)
 
         setSessionLogs(prev => [...prev, {
             cardId: currentCard.data.id ?? vocabId,
@@ -304,6 +311,8 @@ export default function useRevisionSession() {
         setSessionStarted(true)
         setSessionLogs([])
         setSessionKey(k => k + 1)
+        const target = Math.round(cards.length * 244)
+        setTargetPoints(target)
     }, [])
 
     const startDaily = useCallback(() => {
@@ -344,6 +353,7 @@ export default function useRevisionSession() {
         loading,
         dueCards,
         completedCards,
+        targetPoints,
 
         /* Leave dialog */
         leaveDialogOpen,

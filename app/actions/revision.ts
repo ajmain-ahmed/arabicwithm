@@ -182,7 +182,7 @@ export async function fetchRevisionSession(): Promise<{
     return { dueCards, completedCards }
 }
 
-/* ── Submit answers batch (N+1 fixed) ───────────────────────────── */
+/* ── Submit answers batch (deduplicated) ───────────────────────────── */
 
 export async function submitRevisionAnswersBatch(
     answers: { vocabId: number; answer: Answer }[]
@@ -192,7 +192,16 @@ export async function submitRevisionAnswersBatch(
     const userId = await getAuthenticatedUserId()
     if (!userId) throw new Error('Not authenticated')
 
-    const vocabIds = answers.map(a => a.vocabId)
+    /* ── CRITICAL FIX: deduplicate by vocabId, keep last answer only ── */
+    const lastAnswerMap = new Map<number, Answer>()
+    for (const a of answers) {
+        lastAnswerMap.set(a.vocabId, a.answer)
+    }
+    const uniqueAnswers = Array.from(lastAnswerMap.entries()).map(
+        ([vocabId, answer]) => ({ vocabId, answer })
+    )
+
+    const vocabIds = uniqueAnswers.map(a => a.vocabId)
 
     // 1. Fetch all existing progress rows in ONE query
     const { data: allProgress, error: fetchError } = await serviceClient
@@ -210,7 +219,7 @@ export async function submitRevisionAnswersBatch(
     const now = new Date().toISOString()
 
     // 2. Build upsert rows locally
-    const rows = answers.map(({ vocabId, answer }) => {
+    const rows = uniqueAnswers.map(({ vocabId, answer }) => {
         const progress = progressMap.get(vocabId)
 
         if (!progress) {
@@ -480,7 +489,7 @@ export async function fetchCustomSessionMetadata(): Promise<LevelMeta[]> {
     return result
 }
 
-/* ── Custom session cards (random flag removed) ───────────────────── */
+/* ── Custom session cards ───────────────────── */
 
 export async function fetchCustomSessionCards(settings: {
     levelCodes: string[]
@@ -508,12 +517,10 @@ export async function fetchCustomSessionCards(settings: {
         builder = builder.in('theme_id', themeIds)
     }
 
-    // Hard limit at DB level to avoid unbounded fetches
     const { data: vocabData, error } = await builder.limit(Math.max(cardCount * 2, 50))
     if (error) throw new Error(error.message)
     if (!vocabData || vocabData.length === 0) return []
 
-    // Shuffle and limit client-side
     const shuffled = [...vocabData].sort(() => Math.random() - 0.5).slice(0, cardCount)
     const vocabIds = shuffled.map(v => v.word_id)
 

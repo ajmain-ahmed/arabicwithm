@@ -28,7 +28,7 @@ export default function RevisionPage() {
         uniqueDoneCount, uniqueTotal, handleAnswer, restartSession, startDaily, startCustom,
         sessionStarted, sessionMode, sessionLogs, totalPoints, displayPoints,
         lastPoints, pointsAnimKey, lastMultipliers, streakCount, showResults,
-        loading, dueCards, completedCards,
+        loading, dueCards, completedCards, targetPoints,
         leaveDialogOpen, setLeaveDialogOpen, leaveTargetUrlRef,
         showDiacritics, setShowDiacritics, textScale, setTextScale,
     } = useRevisionSession()
@@ -60,6 +60,7 @@ export default function RevisionPage() {
                     >
                         <SessionResults
                             logs={sessionLogs}
+                            priorCompleted={completedCards}
                             onRestart={restartSession}
                             isLoading={loading}
                             sessionMode={sessionMode}
@@ -81,7 +82,13 @@ export default function RevisionPage() {
                 onInfoClick={() => setInfoOpen(true)}
                 onSettingsClick={() => setSettingsOpen(true)}
                 sidePanel={
-                    <PointsPanel displayPoints={displayPoints} multipliers={lastMultipliers} />
+                    <PointsPanel
+                        displayPoints={displayPoints}
+                        multipliers={lastMultipliers}
+                        targetPoints={targetPoints}
+                        lastPoints={lastPoints}
+                        pointsAnimKey={pointsAnimKey}
+                    />
                 }
             >
                 {currentCard && (
@@ -96,8 +103,6 @@ export default function RevisionPage() {
                         againPendingIds={againPendingIds}
                         totalEver={dotOrder.length}
                         doneCount={answeredDots.size}
-                        lastAnswerPoints={lastPoints}
-                        pointsAnimKey={pointsAnimKey}
                         uniqueDoneCount={uniqueDoneCount}
                         uniqueTotal={uniqueTotal}
                     />

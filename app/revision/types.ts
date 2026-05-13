@@ -66,13 +66,20 @@ export function parseExamples(card: RevisionCard) {
 let _dotIdCounter = 0
 export function makeDotId() { return `dot-${++_dotIdCounter}` }
 
+export interface MultiplierData {
+    difficulty: number
+    time: number
+    rating: number
+    streak: number
+}
+
 export function computeCardPoints(
     easeFactor: number,
     timeTaken: number,
     rating: Answer,
     lapsesAtTime: number,
     streakCount: number
-): { points: number; multipliers: { difficulty: string; time: string; rating: string; streak: string } } {
+): { points: number; multipliers: MultiplierData } {
     const basePoints = 100
     const difficultyMultiplier = 0.5 + (2.5 / Math.max(easeFactor, 1.3))
 
@@ -99,10 +106,10 @@ export function computeCardPoints(
     return {
         points,
         multipliers: {
-            difficulty: `${difficultyMultiplier.toFixed(2)}x`,
-            time: `${timeMultiplier.toFixed(2)}x`,
-            rating: `${ratingMultiplier[rating].toFixed(2)}x`,
-            streak: `${streakMultiplier.toFixed(2)}x`,
+            difficulty: difficultyMultiplier,
+            time: timeMultiplier,
+            rating: ratingMultiplier[rating],
+            streak: streakMultiplier,
         },
     }
 }
