@@ -36,6 +36,9 @@ export default function useRevisionSession() {
     const hasUnsavedRef = useRef(false)
     const pointsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+    /* ── NEW: track which unique cards have already been scored ── */
+    const [scoredIds, setScoredIds] = useState<Set<number>>(new Set())
+
     const [leaveDialogOpen, setLeaveDialogOpen] = useState(false)
     const leaveTargetUrlRef = useRef<string | null>(null)
 
@@ -147,6 +150,7 @@ export default function useRevisionSession() {
             setTargetPoints(target)
 
             setSessionLogs([])
+            setScoredIds(new Set()) // reset scored tracking
 
             if (!hasInitializedRef.current) {
                 hasInitializedRef.current = true
@@ -178,6 +182,7 @@ export default function useRevisionSession() {
         setLastMultipliers(null)
         setShowResults(false)
         setTargetPoints(0)
+        setScoredIds(new Set()) // reset scored tracking
         setLeaveDialogOpen(false)
         leaveTargetUrlRef.current = null
         if (pointsTimeoutRef.current) clearTimeout(pointsTimeoutRef.current)
@@ -273,22 +278,39 @@ export default function useRevisionSession() {
             hasUnsavedRef.current = true
         }
 
+        /* ── Streak logic: Again/Hard break, Good/Easy build ── */
         const newStreak = (ans === 'good' || ans === 'easy') ? streakCount + 1 : 0
         setStreakCount(newStreak)
 
-        const { points: cardPoints, multipliers } = computeCardPoints(
-            currentProgress.ease_factor,
-            timeTaken,
-            ans,
-            currentCard.data.lapses ?? 0,
-            newStreak
-        )
-        if (pointsTimeoutRef.current) clearTimeout(pointsTimeoutRef.current)
-        setTotalPoints(prev => prev + cardPoints)
-        setLastPoints(cardPoints)
-        setPointsAnimKey(k => k + 1)
-        setLastMultipliers(multipliers)
-        pointsTimeoutRef.current = setTimeout(() => setLastPoints(null), 1400)
+        /* ── Points: only score on first encounter per unique card ── */
+        const alreadyScored = scoredIds.has(vocabId)
+        let cardPoints = 0
+        let multipliers: MultiplierData | null = null
+
+        if (!alreadyScored) {
+            const pointsResult = computeCardPoints(
+                currentProgress.ease_factor,
+                timeTaken,
+                ans,
+                currentCard.data.lapses ?? 0,
+                newStreak
+            )
+            cardPoints = pointsResult.points
+            multipliers = pointsResult.multipliers
+
+            setScoredIds(prev => {
+                const next = new Set(prev)
+                next.add(vocabId)
+                return next
+            })
+
+            if (pointsTimeoutRef.current) clearTimeout(pointsTimeoutRef.current)
+            setTotalPoints(prev => prev + cardPoints)
+            setLastPoints(cardPoints)
+            setPointsAnimKey(k => k + 1)
+            setLastMultipliers(multipliers)
+            pointsTimeoutRef.current = setTimeout(() => setLastPoints(null), 1400)
+        }
 
         setSessionLogs(prev => [...prev, {
             cardId: currentCard.data.id ?? vocabId,
@@ -302,7 +324,7 @@ export default function useRevisionSession() {
             lapsesAtTime: currentCard.data.lapses ?? 0,
             cardPoints,
         }])
-    }, [currentCard, answer, sessionMode, streakCount, updateSessionCard])
+    }, [currentCard, answer, sessionMode, streakCount, updateSessionCard, scoredIds])
 
     const startCustom = useCallback((cards: RevisionCard[]) => {
         setSessionMode('custom')
@@ -311,6 +333,7 @@ export default function useRevisionSession() {
         setSessionStarted(true)
         setSessionLogs([])
         setSessionKey(k => k + 1)
+        setScoredIds(new Set()) // reset scored tracking
         const target = Math.round(cards.length * 244)
         setTargetPoints(target)
     }, [])
