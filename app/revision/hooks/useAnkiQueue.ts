@@ -38,11 +38,10 @@ export default function useAnkiQueue(
         const initialDotIds = initial.map(c => c.dotId)
         const mergedDotOrder = [...(seedDotOrder ?? []), ...initialDotIds]
         const answeredDots = seedAnswered ? new Map(seedAnswered) : new Map()
-        for (const c of initial) {
-            if (c.data.lastRating) {
-                answeredDots.set(c.dotId, RATING_COLORS[c.data.lastRating])
-            }
-        }
+
+        /* ── BUG FIX: do NOT pre-mark initial cards as answered ──
+           lastRating belongs to a previous session, not this one. ── */
+
         const initialIds = new Set(initial.map(c => c.data.id))
         setState({
             deck: initial,

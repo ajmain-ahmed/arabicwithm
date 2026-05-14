@@ -31,7 +31,9 @@ export function computeAnswerResult(
 
   if (current.interval_days > 0) {
     // ── Review phase ──
+    // Card is already graduated and in the spaced-repetition schedule.
     if (answer === 'again') {
+      // Lapse: send back to learning queue
       newStep = 0
       newInterval = 0
       newEase = Math.max(1.3, current.ease_factor - 0.20)
@@ -48,7 +50,7 @@ export function computeAnswerResult(
         newEase = current.ease_factor + 0.15
         newInterval = Math.round(current.interval_days * current.ease_factor * 1.3)
       }
-      // Set due date to midnight UTC
+      // Due at midnight UTC, newInterval days from now
       const dueDate = new Date(now)
       dueDate.setUTCHours(0, 0, 0, 0)
       dueDate.setUTCDate(dueDate.getUTCDate() + newInterval)
@@ -56,51 +58,40 @@ export function computeAnswerResult(
       newReps = current.repetitions + 1
     }
   } else {
-    // ── Learning phase ──
+    // ── Learning phase (interval_days === 0) ──
+    // New cards (never seen) and lapsed/hard cards both live here.
+    //
+    // Rules:
+    //   Again → reset to step 0, stays in learning
+    //   Hard  → stays in learning (step advances so it won't reset streak, but interval stays 0)
+    //   Good  → graduates immediately, due tomorrow (interval = 1)
+    //   Easy  → graduates immediately, due tomorrow (interval = 1), ease bonus
+
     if (answer === 'again') {
       newStep = 0
       newInterval = 0
       newEase = Math.max(1.3, current.ease_factor - 0.20)
       newReps = Math.max(0, current.repetitions - 1)
+    } else if (answer === 'hard') {
+      // Stays in learning — advance step but keep interval at 0
+      newStep = current.learning_step + 1
+      newEase = Math.max(1.3, current.ease_factor - 0.15)
+      newInterval = 0
+      newReps = current.repetitions + 1
     } else {
-      const isBrandNew = current.repetitions === 0 && current.learning_step === 0
+      // good or easy → graduate, due tomorrow
+      graduated = true
+      newStep = 0
+      newInterval = 1 // always 1 day: appears in tomorrow's review queue
+      newEase = answer === 'easy'
+        ? current.ease_factor + 0.15
+        : current.ease_factor
 
-      // Brand-new card + Easy = immediate graduation (3 days)
-      if (isBrandNew && answer === 'easy') {
-        graduated = true
-        newStep = 0
-        newEase = current.ease_factor + 0.15
-        newInterval = 3
-        const dueDate = new Date(now)
-        dueDate.setUTCHours(0, 0, 0, 0)
-        dueDate.setUTCDate(dueDate.getUTCDate() + newInterval)
-        nextReview = dueDate
-        newReps = 1
-      } else {
-        newStep = current.learning_step + 1
-
-        if (answer === 'hard') {
-          newEase = Math.max(1.3, current.ease_factor - 0.15)
-        } else if (answer === 'easy') {
-          newEase = current.ease_factor + 0.15
-        }
-
-        // Graduate after 2 correct answers in learning
-        if (newStep >= 2) {
-          graduated = true
-          newStep = 0
-          newInterval = answer === 'easy' ? 3 : 1
-          // Set due date to midnight UTC
-          const dueDate = new Date(now)
-          dueDate.setUTCHours(0, 0, 0, 0)
-          dueDate.setUTCDate(dueDate.getUTCDate() + newInterval)
-          nextReview = dueDate
-          newReps = current.repetitions + 1
-        } else {
-          newInterval = 0
-          newReps = current.repetitions + 1
-        }
-      }
+      const dueDate = new Date(now)
+      dueDate.setUTCHours(0, 0, 0, 0)
+      dueDate.setUTCDate(dueDate.getUTCDate() + 1)
+      nextReview = dueDate
+      newReps = current.repetitions + 1
     }
   }
 
