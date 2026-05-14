@@ -48,9 +48,11 @@ export function computeAnswerResult(
         newEase = current.ease_factor + 0.15
         newInterval = Math.round(current.interval_days * current.ease_factor * 1.3)
       }
-      const d = new Date(now)
-      d.setDate(d.getDate() + newInterval)
-      nextReview = d
+      // Set due date to midnight UTC
+      const dueDate = new Date(now)
+      dueDate.setUTCHours(0, 0, 0, 0)
+      dueDate.setUTCDate(dueDate.getUTCDate() + newInterval)
+      nextReview = dueDate
       newReps = current.repetitions + 1
     }
   } else {
@@ -69,9 +71,10 @@ export function computeAnswerResult(
         newStep = 0
         newEase = current.ease_factor + 0.15
         newInterval = 3
-        const d = new Date(now)
-        d.setDate(d.getDate() + 3)
-        nextReview = d
+        const dueDate = new Date(now)
+        dueDate.setUTCHours(0, 0, 0, 0)
+        dueDate.setUTCDate(dueDate.getUTCDate() + newInterval)
+        nextReview = dueDate
         newReps = 1
       } else {
         newStep = current.learning_step + 1
@@ -87,9 +90,11 @@ export function computeAnswerResult(
           graduated = true
           newStep = 0
           newInterval = answer === 'easy' ? 3 : 1
-          const d = new Date(now)
-          d.setDate(d.getDate() + newInterval)
-          nextReview = d
+          // Set due date to midnight UTC
+          const dueDate = new Date(now)
+          dueDate.setUTCHours(0, 0, 0, 0)
+          dueDate.setUTCDate(dueDate.getUTCDate() + newInterval)
+          nextReview = dueDate
           newReps = current.repetitions + 1
         } else {
           newInterval = 0
