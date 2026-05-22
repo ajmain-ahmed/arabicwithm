@@ -14,7 +14,7 @@ Key features:
 - **Cartoons**: Arabic-subtitled cartoon episodes with inline vocabulary lookup, synced to a YouTube player.
 - **Flashcards**: Themed vocabulary decks organised by CEFR level (A0–C2). Each card supports an interactive sentence-builder mini-game (drag-and-drop Arabic word ordering) when example data is marked `interactive`.
 - **Word Bank (Revision)**: An SM-2-based SRS session manager with two modes:
-  - **Daily Review**: Spaced-repetition queue (New / Learning / Review) with a daily new-card limit. Progress is saved to the database.
+  - **Daily Review**: Spaced-repetition queue (New / Learning / Review) with a daily new-card limit of 20. Progress is saved to the database.
   - **Custom Practice**: Ad-hoc sessions where the user picks levels, themes, and card count. Progress is **not** saved and does not affect SRS state.
 - **User Profiles**: Progress tracking, level stats, and password reset via Supabase Auth.
 
@@ -37,7 +37,6 @@ Key features:
 ## Project Structure
 
 ```
-arrow-line-arabic/
 ├── app/                          # Next.js App Router
 │   ├── actions/                  # Server Actions (data fetching & mutations)
 │   │   ├── vocab.ts              # Vocab/theme fetching, progress upserts
@@ -60,7 +59,7 @@ arrow-line-arabic/
 │   ├── flashcards/               # Flashcard routes
 │   │   ├── page.tsx              # Server: level list
 │   │   ├── FlashcardsLandingPage.tsx
-│   │   ├── [slug]/page.tsx       # Client: theme list + quiz (very large component, ~1700 lines)
+│   │   ├── [slug]/page.tsx       # Client: theme list + quiz (~1750 lines)
 │   │   └── components/TutorialDialog.tsx
 │   ├── lib/                      # Shared utilities
 │   │   ├── supabase/client.ts    # Browser Supabase client singleton
@@ -71,9 +70,14 @@ arrow-line-arabic/
 │   ├── profile/page.tsx          # User profile dashboard
 │   ├── reset-password/page.tsx   # Password reset form
 │   ├── revision/                 # SRS revision session
-│   │   ├── page.tsx              # Main session page (~1700 lines, contains useAnkiQueue hook)
+│   │   ├── page.tsx              # Main session page (thin orchestrator, ~145 lines)
 │   │   ├── WelcomeScreen.tsx     # Daily vs Custom tabbed entry screen
-│   │   └── CustomSessionConfig.tsx # Level/theme picker for custom practice
+│   │   ├── CustomSessionConfig.tsx # Level/theme picker for custom practice
+│   │   ├── types.ts              # Shared types, queue helpers, point-scoring logic
+│   │   ├── hooks/
+│   │   │   ├── useAnkiQueue.ts   # Deck queue manager (dot tracking, re-insertion)
+│   │   │   └── useRevisionSession.ts # Session orchestration hook
+│   │   └── components/           # ~14 UI sub-components (flashcard, layout, dialogs, etc.)
 │   ├── AuthContext.tsx           # React Context for Supabase auth state
 │   ├── globals.css               # Tailwind v4 import + basic variables (NOT the main design palette)
 │   ├── layout.tsx                # Root layout (Navbar + Footer + AuthProvider + GlobalDataInit)
@@ -89,8 +93,7 @@ arrow-line-arabic/
 │   ├── dragons/                  # Decorative images used in revision screens
 │   ├── homepage/
 │   ├── levels/
-│   ├── themes/
-│   └── vercel.svg
+│   └── themes/
 ├── store/                        # Zustand client stores
 │   ├── vocabStore.ts             # Theme/vocab caching + local progress updates
 │   └── revisionStore.ts          # Revision IDs cache, session cache (TTL), custom metadata cache (TTL)
@@ -119,7 +122,7 @@ npm start
 npm run lint
 ```
 
-There are **no test scripts** defined. The project currently has no automated test suite (no Jest, Vitest, Playwright, or Cypress configured).
+There are **no test scripts** defined. The project currently has no automated test suite (no Jest, Vitest, Playwright, or Cypress configured). No CI/CD configuration files (GitHub Actions, GitLab CI, etc.) exist in the repository.
 
 ## Environment Variables
 
@@ -149,11 +152,21 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
   - `#7a6e65` — muted brown (secondary text)
   - `#9e8a7a` — lighter muted (labels, tertiary text)
   - `#d4a843` — gold light (gradients)
+- **Queue colours** (revision UI):
+  - New: `#1565c0`
+  - Learning: `#c13a00`
+  - Review: `#2e7d32`
+- **Rating colours** (revision UI):
+  - Again: `#c62828`
+  - Hard: `#e65100`
+  - Good: `#2e7d32`
+  - Easy: `#1565c0`
 - **Fonts**: EB Garamond is used for Arabic/serif text; Jost is used for UI/sans-serif text. These are imported via `@import url(...)` inside component-level `<style>` blocks (e.g. `WelcomeScreen.tsx`). The root `layout.tsx` also loads Geist/Geist_Mono via `next/font/google`, but they are not the dominant fonts.
 - **Path alias**: Use `@/` for imports from the project root (e.g. `@/app/lib/arabic`, `@/store/vocabStore`).
 - **File naming**: PascalCase for components (`AuthDialog.tsx`), camelCase for utilities (`cartoons.ts`), kebab-case for routes (`reset-password`).
 - **TypeScript**: Strict mode is enabled. Prefer explicit types for props and Server Action return values.
 - **State management**: Server-fetched data flows through Server Actions → Zustand stores. Auth state lives in `AuthContext.tsx`.
+- **Comments**: Inline section dividers are common, e.g. `/* ── theme progress ── */`.
 
 ## Authentication Flow
 
@@ -165,21 +178,21 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ## Data Architecture
 
 ### Supabase Schema (key tables)
-- `levels` — CEFR levels (A0–C2)
-- `themes` — Vocabulary themes per level
-- `vocab` — Arabic words with `word_ar`, `word_di`, `word_tr`, `theme_id`, `level_id`
-- `definitions` — POS, meaning, and multilingual definitions per vocab row
-- `examples` — Example sentences (`ex_ar`, `ex_di`, `ex_tr`, `ex_en`, `interactive`)
-- `progress` — User progress per word (`is_completed`, `is_in_revision`, SRS fields: `repetitions`, `interval_days`, `ease_factor`, `learning_step`, `lapses`, `last_review_at`, `next_review_at`, `last_rating`)
-- `forms` — Verb/conjugation forms (`con_ar`, `con_di`, `con_tr`, `con_en`, `type`) linked to `vocab_id`
+- `vocabulary` — Single table containing all word data:
+  - `word_id`, `word_ar`, `word_di`, `word_tr`, `root`, `level` (varchar), `theme` (text)
+  - `forms` — JSONB array of POS + conjugations (e.g. `[{type: "verb", conjugations: {past: {con_ar, con_di, con_en, con_tr, type}}}]`)
+  - `definitions` — JSONB array of meanings (e.g. `[{english, simple_ar, simple_ar_tr, direct_english}]`)
+  - `examples` — JSONB array of sentences (e.g. `[{ar, en, tr, ar_di}]`)
+- `progress` — User progress per word (`vocab_id` references `vocabulary.word_id`, `is_completed`, `is_in_revision`, SRS fields: `repetitions`, `interval_days`, `ease_factor`, `learning_step`, `lapses`, `last_review_at`, `next_review_at`, `last_rating`)
 
 ### Server Actions pattern
 All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use server"`. They use:
 - `createClient` from `@supabase/supabase-js` with the service key for DB queries.
 - `createServerClient` from `@supabase/ssr` with cookie access for auth verification.
+- Direct queries against the `vocabulary` table replace all old multi-table joins.
 
 ### Client-side caching
-- `vocabStore.ts`: Caches theme vocab + progress indefinitely (until invalidated via `invalidateTheme` / `invalidateThemeList`).
+- `vocabStore.ts`: Caches theme vocab + progress indefinitely (until invalidated via `invalidateTheme` / `invalidateThemeList`). Cache keys use `${themeName}:${levelCode}`.
 - `revisionStore.ts`: Caches the user's revision ID set (no TTL), the current session cards for **5 minutes**, and custom session metadata for **10 minutes**.
 
 ## Key Domain Logic
@@ -187,6 +200,10 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 ### Arabic Text Processing (`app/lib/arabic.ts`)
 - `stripDiacritics(token)` — removes harakat/tatweel for matching.
 - `normalizeArabicToken(token)` — strips diacritics, definite articles (`ال`, `وال`, `بال`, etc.), single-letter proclitics (when the remaining stem is ≥ 4 chars), and common enclitic pronoun suffixes. Used for fuzzy vocabulary lookup in cartoon scripts.
+
+### JSONB Parsing (`app/actions/vocab.ts`, `app/actions/revision.ts`)
+- `getPos(formsJson)` — extracts POS from `forms[0].type`.
+- `flattenForms(formsJson)` — flattens nested `forms[0].conjugations` into the UI-friendly `FormRow[]` shape.
 
 ### SM-2 SRS (`app/lib/sm2.ts`)
 - `computeAnswerResult(current, answer)` implements a simplified SM-2 algorithm.
@@ -201,7 +218,7 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 4. At request time, Arabic tokens are extracted from the markdown and matched against the `vocab` table to build an inline `vocabMap` for tooltip lookup.
 
 ### Revision Session Architecture (`app/revision/page.tsx`)
-- The page is a large client component (~1700 lines) that orchestrates the SRS UI.
+- The page is a thin orchestrator component (~145 lines) that delegates to `useRevisionSession` hook.
 - `useAnkiQueue` is a custom hook that manages the card deck, dot-progress tracking, and re-insertion of "Again" cards.
 - Answers are batched locally in `pendingAnswersRef` and flushed to the server via `submitRevisionAnswersBatch`:
   - On session completion
@@ -209,6 +226,12 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
   - On soft navigation (cleanup effect)
 - **Daily sessions** mutate the Zustand cache optimistically and persist to DB.
 - **Custom sessions** do not touch the DB or the Zustand cache; they are pure frontend practice.
+
+### Flashcard Quiz Architecture (`app/flashcards/[slug]/page.tsx`)
+- This is a large client component (~1750 lines) that handles theme selection, card flipping, progress tracking, and the interactive sentence-builder mini-game.
+- Uses `@dnd-kit` for drag-and-drop word ordering in interactive examples.
+- Progress is synced via `upsertWordProgressBatch`.
+- Themes are identified by name (string) rather than numeric ID.
 
 ## Security Considerations
 

@@ -6,7 +6,7 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
 export type ThemeProgress = {
-  theme_id: number
+  theme_id: string
   display_name: string
   total_words: number
   completed_count: number
@@ -78,51 +78,41 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) return null
 
-  const { data: rpcData, error } = await serviceClient.rpc('get_user_profile', {
-    p_user_id: user.id,
-  })
+  // Fetch all vocabulary and user progress directly
+  const { data: vocabData } = await serviceClient
+    .from('vocabulary')
+    .select('word_id, level, theme')
 
-  if (error) {
-    console.error('[profile] RPC error:', error.message)
-    throw new Error(error.message)
-  }
+  const { data: progressData } = await serviceClient
+    .from('progress')
+    .select('vocab_id, is_completed, is_in_revision')
+    .eq('user_id', user.id)
 
-  if (!rpcData) return null
-
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[profile] raw RPC:', JSON.stringify(rpcData).slice(0, 800))
-  }
-
-  let rpcLevels: any[] = []
-
-  if (Array.isArray(rpcData)) {
-    rpcLevels = rpcData
-  } else if (typeof rpcData === 'string') {
-    rpcLevels = JSON.parse(rpcData)
-  } else if (rpcData && typeof rpcData === 'object') {
-    rpcLevels = (rpcData as any).levels ?? (rpcData as any).data ?? []
-  }
-
-  if (!Array.isArray(rpcLevels)) {
-    console.error('[profile] RPC did not return an array. Got:', rpcData)
-    rpcLevels = []
-  }
+  const progressMap = new Map((progressData ?? []).map(p => [p.vocab_id, p]))
 
   const levels: LevelStat[] = LEVELS.map((meta) => {
-    const rpcLevel = rpcLevels.find((l: any) => l?.code === meta.code)
+    const levelWords = (vocabData ?? []).filter(v => v.level === meta.code)
+    const themeStats = new Map<string, { total: number; completed: number; revision: number }>()
 
-    const themes: ThemeProgress[] = (rpcLevel?.themes ?? []).map((t: any) => {
-      const total = Number(t?.total_words ?? 0)
-      const completed = Number(t?.completed_count ?? 0)
-      const revision = Number(t?.revision_count ?? 0)
+    for (const v of levelWords) {
+      const theme = v.theme ?? 'Untitled'
+      if (!themeStats.has(theme)) {
+        themeStats.set(theme, { total: 0, completed: 0, revision: 0 })
+      }
+      const stats = themeStats.get(theme)!
+      stats.total++
+      const p = progressMap.get(v.word_id)
+      if (p?.is_completed) stats.completed++
+      if (p?.is_in_revision) stats.revision++
+    }
 
-      const clampedCompleted = Math.min(completed, total)
-      const clampedRevision = Math.min(revision, total - clampedCompleted)
-
+    const themes: ThemeProgress[] = Array.from(themeStats.entries()).map(([theme, stats]) => {
+      const clampedCompleted = Math.min(stats.completed, stats.total)
+      const clampedRevision = Math.min(stats.revision, stats.total - clampedCompleted)
       return {
-        theme_id: Number(t?.theme_id ?? 0),
-        display_name: t?.display_name ?? 'Untitled',
-        total_words: total,
+        theme_id: theme,
+        display_name: theme,
+        total_words: stats.total,
         completed_count: clampedCompleted,
         revision_count: clampedRevision,
       }

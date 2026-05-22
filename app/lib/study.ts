@@ -40,72 +40,44 @@ const LABEL_MAP: Record<string, string> = {
 const LEVEL_ORDER = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
 export async function getAllLevels(): Promise<LevelMeta[]> {
-  const { data: levels, error } = await serviceClient
-    .from('levels')
-    .select('id, code')
+  const { data: vocabData, error } = await serviceClient
+    .from('vocabulary')
+    .select('level, theme')
 
   if (error) {
     console.error('[getAllLevels] error:', error.message)
     return []
   }
 
-  const levelCodes = levels?.map((l) => l.code) ?? []
-  if (levelCodes.length === 0) return []
-
-  const levelIds = levels?.map(l => l.id) ?? []
-
-  // Parallelize vocab + theme counts
-  const [
-    { data: vocabData, error: vocabErr },
-    { data: themeVocabData, error: themeVocabErr },
-  ] = await Promise.all([
-    serviceClient.from('vocab').select('level_id').in('level_id', levelIds),
-    serviceClient.from('vocab').select('level_id, theme_id').in('level_id', levelIds),
-  ])
-
-  if (vocabErr) {
-    console.error('[getAllLevels] vocab count error:', vocabErr.message)
-  }
-
   const wordCountMap = new Map<string, number>()
-  for (const v of vocabData ?? []) {
-    const level = levels?.find(l => l.id === v.level_id)
-    if (level) {
-      wordCountMap.set(level.code, (wordCountMap.get(level.code) ?? 0) + 1)
-    }
-  }
-
-  if (themeVocabErr) {
-    console.error('[getAllLevels] theme count error:', themeVocabErr.message)
-  }
-
   const themeCountMap = new Map<string, number>()
-  const levelThemeSets = new Map<string, Set<number>>()
-  for (const v of themeVocabData ?? []) {
-    const level = levels?.find(l => l.id === v.level_id)
-    if (level) {
-      const set = levelThemeSets.get(level.code) ?? new Set<number>()
-      set.add(v.theme_id)
-      levelThemeSets.set(level.code, set)
+  const levelThemeSets = new Map<string, Set<string>>()
+
+  for (const v of vocabData ?? []) {
+    const level = v.level
+    const theme = v.theme
+    if (!level) continue
+
+    wordCountMap.set(level, (wordCountMap.get(level) ?? 0) + 1)
+
+    if (theme) {
+      const set = levelThemeSets.get(level) ?? new Set<string>()
+      set.add(theme)
+      levelThemeSets.set(level, set)
     }
   }
+
   for (const [code, set] of levelThemeSets) {
     themeCountMap.set(code, set.size)
   }
 
-  const result: LevelMeta[] = (levels ?? []).map((l) => ({
-    code: l.code,
-    slug: SLUG_MAP[l.code] ?? l.code,
-    label: LABEL_MAP[l.code] ?? l.code,
-    wordCount: wordCountMap.get(l.code) ?? 0,
-    themeCount: themeCountMap.get(l.code) ?? 0,
+  const result: LevelMeta[] = LEVEL_ORDER.map((code) => ({
+    code,
+    slug: SLUG_MAP[code] ?? code,
+    label: LABEL_MAP[code] ?? code,
+    wordCount: wordCountMap.get(code) ?? 0,
+    themeCount: themeCountMap.get(code) ?? 0,
   }))
 
-  result.sort((a, b) => {
-    const idxA = LEVEL_ORDER.indexOf(a.code)
-    const idxB = LEVEL_ORDER.indexOf(b.code)
-    return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB)
-  })
-
-  return result
+  return result.filter(l => l.wordCount > 0)
 }

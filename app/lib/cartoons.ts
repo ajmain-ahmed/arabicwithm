@@ -161,10 +161,10 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
   let vocabMap: Record<string, VocabEntry> = {}
   if (tokenArray.length > 0) {
     try {
-      // 1. Fetch matching vocab rows
+      // Fetch matching vocab rows from the new vocabulary table
       const { data: vocabData, error: vocabErr } = await serviceClient
-        .from('vocab')
-        .select('word_id, word_ar, word_di, word_tr, level_id, theme_id')
+        .from('vocabulary')
+        .select('word_id, word_ar, word_di, word_tr, level, theme, definitions, forms')
         .in('word_ar', tokenArray)
 
       if (vocabErr) {
@@ -173,47 +173,22 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
       }
 
       if (vocabData && vocabData.length > 0) {
-        const vocabIds = vocabData.map((v) => v.word_id)
-        const levelIds = [...new Set(vocabData.map(v => v.level_id))]
-        const themeIds = [...new Set(vocabData.map(v => v.theme_id))]
-
-        // 2. Fetch definitions, levels, and themes in parallel
-        const [
-          { data: defData, error: defErr },
-          { data: levelsData },
-          { data: themesData },
-        ] = await Promise.all([
-          serviceClient.from('definitions').select('vocab_id, meaning, pos').in('vocab_id', vocabIds),
-          serviceClient.from('levels').select('id, code').in('id', levelIds),
-          serviceClient.from('themes').select('id, display_name').in('id', themeIds),
-        ])
-
-        if (defErr) {
-          console.error(`[getEpisode] definitions query error:`, defErr.message)
-          throw defErr
-        }
-
-        const defMap = new Map<number, { meaning: string; pos: string }>()
-        for (const d of defData ?? []) {
-          if (!defMap.has(d.vocab_id)) {
-            defMap.set(d.vocab_id, { meaning: d.meaning, pos: d.pos })
-          }
-        }
-
-        const levelMap = new Map((levelsData ?? []).map(l => [l.id, l.code]))
-        const themeMap = new Map((themesData ?? []).map(t => [t.id, t.display_name]))
-
-        // 3. Build vocabMap with multiple keys per entry
+        // Build vocabMap with multiple keys per entry
         for (const row of vocabData as any[]) {
+          const definitions = Array.isArray(row.definitions) ? row.definitions : []
+          const primary = definitions[0] ?? null
+          const forms = Array.isArray(row.forms) ? row.forms : []
+          const pos = forms[0]?.type ?? ''
+
           const entry: VocabEntry = {
             id: row.word_id,
             word: row.word_ar,
             word_diacritic: row.word_di ?? '',
-            definition: defMap.get(row.word_id)?.meaning ?? '',
-            pos: defMap.get(row.word_id)?.pos ?? '',
+            definition: primary?.direct_english ?? primary?.english ?? '',
+            pos,
             transliteration: row.word_tr ?? '',
-            level: levelMap.get(row.level_id) ?? '',
-            theme: themeMap.get(row.theme_id) ?? '',
+            level: row.level ?? '',
+            theme: row.theme ?? '',
           }
 
           vocabMap[row.word_ar] = entry

@@ -39,9 +39,35 @@ async function getAuthenticatedUserId(): Promise<string | null> {
   }
 }
 
+/* ── JSONB helpers ── */
+
+function getPos(formsJson: any): string {
+  if (!Array.isArray(formsJson) || formsJson.length === 0) return 'unknown'
+  return formsJson[0]?.type ?? 'unknown'
+}
+
+function flattenForms(formsJson: any): FormRow[] | null {
+  if (!Array.isArray(formsJson) || formsJson.length === 0) return null
+  const first = formsJson[0]
+  if (!first?.conjugations) return null
+  const rows: FormRow[] = []
+  for (const [key, val] of Object.entries(first.conjugations)) {
+    if (val && typeof val === 'object') {
+      rows.push({
+        type: (val as any).type ?? key,
+        con_ar: (val as any).con_ar ?? '',
+        con_di: (val as any).con_di ?? '',
+        con_en: (val as any).con_en ?? '',
+        con_tr: (val as any).con_tr ?? '',
+      })
+    }
+  }
+  return rows.length > 0 ? rows : null
+}
+
 /* ── theme progress ── */
 export type ThemeProgress = {
-  theme_id: number
+  theme_id: string
   display_name: string
   total_words: number
   completed_count: number
@@ -58,59 +84,68 @@ export async function fetchThemesWithProgress(
   const userId = await getAuthenticatedUserId()
 
   if (!userId) {
-    const { data: levelData, error: levelErr } = await serviceClient
-      .from('levels')
-      .select('id')
-      .eq('code', levelCode)
-      .single()
-
-    if (levelErr || !levelData) return []
-
     const { data: vocabData } = await serviceClient
-      .from('vocab')
-      .select('theme_id')
-      .eq('level_id', levelData.id)
+      .from('vocabulary')
+      .select('theme')
+      .eq('level', levelCode)
 
-    const themeIds = [...new Set((vocabData ?? []).map((v: any) => v.theme_id))]
-    if (themeIds.length === 0) return []
-
-    const { data: themesData } = await serviceClient
-      .from('themes')
-      .select('id, display_name')
-      .in('id', themeIds)
-      .order('id')
-
-    const countMap = new Map<number, number>()
+    const themeCounts = new Map<string, number>()
     for (const v of vocabData ?? []) {
-      countMap.set(v.theme_id, (countMap.get(v.theme_id) ?? 0) + 1)
+      const t = v.theme
+      if (t) themeCounts.set(t, (themeCounts.get(t) ?? 0) + 1)
     }
 
-    return (themesData ?? []).map((t: any) => ({
-      theme_id: Number(t.id),
-      display_name: t.display_name,
-      total_words: countMap.get(t.id) ?? 0,
+    const themes = Array.from(themeCounts.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+
+    return themes.map(([theme, count]) => ({
+      theme_id: theme,
+      display_name: theme,
+      total_words: count,
       completed_count: 0,
       revision_count: 0,
     }))
   }
 
-  const { data, error } = await serviceClient.rpc('get_theme_progress', {
-    p_user_id: userId,
-    p_level_code: levelCode,
-  })
+  // Authenticated: query vocabulary + progress directly
+  const { data: vocabData } = await serviceClient
+    .from('vocabulary')
+    .select('word_id, theme')
+    .eq('level', levelCode)
 
-  if (error) {
-    console.error("[fetchThemesWithProgress] RPC error:", error.message)
-    throw new Error(error.message)
+  const wordIds = (vocabData ?? []).map(v => v.word_id)
+
+  const { data: progressData } = wordIds.length > 0
+    ? await serviceClient
+        .from('progress')
+        .select('vocab_id, is_completed, is_in_revision')
+        .eq('user_id', userId)
+        .in('vocab_id', wordIds)
+    : { data: [] }
+
+  const progressMap = new Map((progressData ?? []).map(p => [p.vocab_id, p]))
+  const themeStats = new Map<string, { total: number; completed: number; revision: number }>()
+
+  for (const v of vocabData ?? []) {
+    const theme = v.theme ?? 'Untitled'
+    if (!themeStats.has(theme)) {
+      themeStats.set(theme, { total: 0, completed: 0, revision: 0 })
+    }
+    const stats = themeStats.get(theme)!
+    stats.total++
+    const p = progressMap.get(v.word_id)
+    if (p?.is_completed) stats.completed++
+    if (p?.is_in_revision) stats.revision++
   }
 
-  return (data ?? []).map((t: any) => ({
-    theme_id: Number(t.theme_id),
-    display_name: t.display_name,
-    total_words: Number(t.total_words),
-    completed_count: Number(t.completed_count),
-    revision_count: Number(t.revision_count),
-  }))
+  return Array.from(themeStats.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([theme, stats]) => ({
+      theme_id: theme,
+      display_name: theme,
+      total_words: stats.total,
+      completed_count: stats.completed,
+      revision_count: stats.revision,
+    }))
 }
 
 /* ── vocabulary row shapes ── */
@@ -134,7 +169,7 @@ export type FormRow = {
 export type VocabRow = {
   id: number
   level: string
-  theme_id: number
+  theme_id: string
   pos: string
   definition: string
   word: string
@@ -154,7 +189,7 @@ export type WordProgress = {
 
 /* ── fetch vocab + defs + examples for a theme (parallelized) ── */
 export async function fetchThemeVocabWithProgress(
-  themeId: number,
+  themeId: string,
   levelCode: string
 ): Promise<{
   vocab: VocabRow[]
@@ -163,22 +198,12 @@ export async function fetchThemeVocabWithProgress(
 }> {
   const userId = await getAuthenticatedUserId()
 
-  // 1. Resolve level_id
-  const { data: levelData, error: levelErr } = await serviceClient
-    .from("levels")
-    .select("id")
-    .eq("code", levelCode)
-    .single()
-
-  if (levelErr || !levelData) throw new Error("Level not found")
-  const levelId = levelData.id
-
-  // 2. Get vocab for this theme and level
+  // 1. Get vocab for this theme and level
   const { data: vocabData, error: vocabErr } = await serviceClient
-    .from("vocab")
-    .select("word_id, word_ar, word_di, word_tr, theme_id, level_id, forms")
-    .eq("theme_id", themeId)
-    .eq("level_id", levelId)
+    .from("vocabulary")
+    .select("word_id, word_ar, word_di, word_tr, theme, level, forms, definitions, examples")
+    .eq("theme", themeId)
+    .eq("level", levelCode)
     .order("word_id")
 
   if (vocabErr) throw new Error(vocabErr.message)
@@ -188,85 +213,48 @@ export async function fetchThemeVocabWithProgress(
 
   const vocabIds = vocabData.map(v => v.word_id)
 
-  // 3. Fetch definitions, examples, and progress in parallel
-  const [
-    { data: defData, error: defErr },
-    { data: exData, error: exErr },
-    { data: progData },
-  ] = await Promise.all([
-    serviceClient.from("definitions").select("vocab_id, pos, meaning, def_ar, def_tr, def_en").in("vocab_id", vocabIds),
-    serviceClient.from("examples").select("vocab_id, ex_ar, ex_di, ex_tr, ex_en, interactive").in("vocab_id", vocabIds),
-    userId
-      ? serviceClient.from("progress").select("vocab_id, is_completed, is_in_revision").eq("user_id", userId).in("vocab_id", vocabIds)
-      : Promise.resolve({ data: [] }),
-  ])
+  // 2. Fetch progress in parallel
+  const { data: progData } = userId
+    ? await serviceClient.from("progress").select("vocab_id, is_completed, is_in_revision").eq("user_id", userId).in("vocab_id", vocabIds)
+    : { data: [] }
 
-  if (defErr) throw new Error(defErr.message)
-  if (exErr) throw new Error(exErr.message)
-
-  // 4. Build lookup maps
-  const defMap = new Map<number, { pos: string; meaning: string; def_ar: string | null; def_tr: string | null; def_en: string | null }[]>()
-  for (const d of defData ?? []) {
-    const list = defMap.get(d.vocab_id) ?? []
-    list.push({ pos: d.pos, meaning: d.meaning, def_ar: d.def_ar, def_tr: d.def_tr, def_en: d.def_en })
-    defMap.set(d.vocab_id, list)
-  }
-
-  const exMap = new Map<number, { ex_ar: string; ex_di: string; ex_tr: string; ex_en: string; interactive: boolean }[]>()
-  for (const e of exData ?? []) {
-    const list = exMap.get(e.vocab_id) ?? []
-    list.push({ ex_ar: e.ex_ar ?? '', ex_di: e.ex_di ?? '', ex_tr: e.ex_tr ?? '', ex_en: e.ex_en ?? '', interactive: e.interactive ?? false })
-    exMap.set(e.vocab_id, list)
-  }
-
-  // 5. Build VocabRow and ExampleRow
+  // 3. Build VocabRow and ExampleRow
   const vocab: VocabRow[] = []
   const examples: ExampleRow[] = []
 
   for (const v of vocabData) {
-    const defs = defMap.get(v.word_id) ?? []
-    const primary = defs[0] ?? { pos: "unknown", meaning: "", def_ar: null, def_tr: null, def_en: null }
+    const definitions = Array.isArray(v.definitions) ? v.definitions : []
+    const primary = definitions[0] ?? null
 
-    let parsedForms: FormRow[] | null = null
-    if (v.forms) {
-      try {
-        parsedForms = Array.isArray(v.forms)
-          ? (v.forms as unknown as FormRow[])
-          : JSON.parse(v.forms as string)
-      } catch {
-        parsedForms = null
-      }
+    const exList = Array.isArray(v.examples) ? v.examples : []
+    for (const e of exList) {
+      examples.push({
+        vocab_id: v.word_id,
+        ex_ar: e.ar ?? '',
+        ex_dia: e.ar_di ?? '',
+        ex_en: e.en ?? '',
+        interactive: e.interactive ?? false,
+        ex_tr: e.tr ?? '',
+      })
     }
 
     vocab.push({
       id: v.word_id,
       level: levelCode,
-      theme_id: v.theme_id,
-      pos: primary.pos,
-      definition: primary.meaning,
+      theme_id: v.theme ?? '',
+      pos: getPos(v.forms),
+      definition: primary?.direct_english ?? primary?.english ?? '',
       word: v.word_ar,
       word_diacritic: v.word_di ?? "",
       transliteration: v.word_tr ?? "",
-      def_ar: primary.def_ar,
-      def_tr: primary.def_tr,
-      def_en: primary.def_en,
-      forms: parsedForms,
+      def_ar: primary?.simple_ar ?? null,
+      def_tr: primary?.simple_ar_tr ?? null,
+      def_en: primary?.english ?? null,
+      forms: flattenForms(v.forms),
     })
-
-    const exList = exMap.get(v.word_id) ?? []
-    for (const e of exList) {
-      examples.push({
-        vocab_id: v.word_id,
-        ex_ar: e.ex_ar,
-        ex_dia: e.ex_di ?? "",
-        ex_en: e.ex_en ?? "",
-        interactive: e.interactive ?? false,
-        ex_tr: e.ex_tr ?? "",
-      })
-    }
   }
 
-  // 6. Progress already fetched above
+  // 4. Progress already fetched above
   const progress: WordProgress[] = (progData ?? []).map((p: any) => ({
     vocab_id: p.vocab_id,
     is_completed: p.is_completed,

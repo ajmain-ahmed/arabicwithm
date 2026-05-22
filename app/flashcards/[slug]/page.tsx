@@ -759,14 +759,14 @@ function FormsPanel({ forms, showDiacritics, textScale }: {
    FlashcardQuiz
 ───────────────────────────────────────────── */
 function FlashcardQuiz({
-    initialQueue, themeId, allExamples, showDiacritics, onComplete, themeLabel,
+    initialQueue, theme, allExamples, showDiacritics, onComplete, themeLabel,
     totalInTheme, alreadyCompletedCount, textScale, initialCardIndex, flushRef,
     levelCode,
     onThemeProgressUpdate,
     onOpenAuthDialog,
 }: {
     initialQueue: CardState[]
-    themeId: number
+    theme: string
     allExamples: ExampleRow[]
     showDiacritics: boolean
     onComplete: () => void
@@ -777,7 +777,7 @@ function FlashcardQuiz({
     initialCardIndex?: number
     flushRef?: React.MutableRefObject<(() => Promise<void>) | null>
     levelCode: string
-    onThemeProgressUpdate?: (themeId: number, progress: { completedCount: number; revisionCount: number }) => void
+    onThemeProgressUpdate?: (theme: string, progress: { completedCount: number; revisionCount: number }) => void
     onOpenAuthDialog?: () => void
 }) {
     const { user } = useAuth()
@@ -864,8 +864,8 @@ function FlashcardQuiz({
     // Sync theme-level counts back to parent
     useEffect(() => {
         if (allCards.length === 0) return
-        onThemeProgressUpdate?.(themeId, { completedCount, revisionCount })
-    }, [allCards, themeId, completedCount, revisionCount, onThemeProgressUpdate])
+        onThemeProgressUpdate?.(theme, { completedCount, revisionCount })
+    }, [allCards, theme, completedCount, revisionCount, onThemeProgressUpdate])
 
     // Auto-advance when theme fully completed
     const [isAutoAdvancing, setIsAutoAdvancing] = useState(false)
@@ -885,7 +885,7 @@ function FlashcardQuiz({
             hasTriggeredAdvance.current = false
             setIsAutoAdvancing(false)
         }
-    }, [allCards, onComplete, themeId])
+    }, [allCards, onComplete, theme])
 
     const updateCardStatus = useCallback(
         (cardId: number, newStatus: CardStatus, opts?: { isCompleted?: boolean; isInRevision?: boolean }) => {
@@ -901,7 +901,7 @@ function FlashcardQuiz({
                     if (opts) {
                         // Queue in the batch — do NOT flush here
                         pendingRef.current.set(cardId, { isCompleted, isInRevision })
-                        updateLocalProgress(themeId, levelCode, cardId, {
+                        updateLocalProgress(theme, levelCode, cardId, {
                             is_completed: isCompleted,
                             is_in_revision: isInRevision,
                         })
@@ -911,7 +911,7 @@ function FlashcardQuiz({
                 })
             )
         },
-        [themeId, levelCode, updateLocalProgress]
+        [theme, levelCode, updateLocalProgress]
     )
 
     const goToIndex = useCallback(
@@ -1424,7 +1424,6 @@ export default function FlashcardSlugPage() {
 
                 const firstIncomplete = data.find((t: ThemeProgress) =>
                     t?.theme_id != null &&
-                    !Number.isNaN(t.theme_id) &&
                     (t.total_words === 0 || t.completed_count < t.total_words)
                 ) ?? data[0]
 
@@ -1445,7 +1444,7 @@ export default function FlashcardSlugPage() {
 
     // Flush pending writes before switching themes, then load the new one
     const handleThemeSelect = useCallback(async (theme: ThemeProgress, cardIndex?: number) => {
-        if (!theme?.theme_id || Number.isNaN(theme.theme_id)) return
+        if (!theme?.theme_id) return
         await flush()  // <-- batch write happens here on theme switch
         setSelectedTheme(theme)
         try {
@@ -1471,20 +1470,20 @@ export default function FlashcardSlugPage() {
     }, [fetchTheme, level, flush])
 
     // Keep sidebar counts in sync with quiz actions
-    const handleThemeProgressUpdate = useCallback((themeId: number, progress: { completedCount: number; revisionCount: number }) => {
+    const handleThemeProgressUpdate = useCallback((theme: string, progress: { completedCount: number; revisionCount: number }) => {
         setThemes(prev => prev.map(t =>
-            t.theme_id === themeId
+            t.theme_id === theme
                 ? { ...t, completed_count: progress.completedCount, revision_count: progress.revisionCount }
                 : t
         ))
-        setSelectedTheme(prev => prev && prev.theme_id === themeId
+        setSelectedTheme(prev => prev && prev.theme_id === theme
             ? { ...prev, completed_count: progress.completedCount, revision_count: progress.revisionCount }
             : prev
         )
     }, [])
 
     // Auto-advance to next unfinished theme
-    const validThemes = useMemo(() => themes.filter((t) => t?.theme_id != null && !Number.isNaN(t.theme_id)), [themes])
+    const validThemes = useMemo(() => themes.filter((t) => t?.theme_id != null), [themes])
 
     const themesForSidebar = useMemo(() => {
         return validThemes.map(t => {
@@ -1703,7 +1702,7 @@ export default function FlashcardSlugPage() {
                                         textScale={textScale}
                                         key={quizKey}
                                         initialQueue={activeQueue}
-                                        themeId={selectedTheme.theme_id}
+                                        theme={selectedTheme.theme_id}
                                         allExamples={activeExamples}
                                         showDiacritics={showDiacritics}
 

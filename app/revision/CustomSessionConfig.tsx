@@ -20,7 +20,7 @@ const LEVEL_COLORS: Record<string, string> = {
 }
 
 type ThemeMeta = {
-  theme_id: number
+  theme_id: string
   display_name: string
   total_words: number
 }
@@ -38,7 +38,7 @@ interface CustomSessionConfigProps {
 
 export default function CustomSessionConfig({ metadata, onStart }: CustomSessionConfigProps) {
   const [selectedLevels, setSelectedLevels] = useState<string[]>([])
-  const [selectedThemes, setSelectedThemes] = useState<number[]>([])
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([])
   const [cardCount, setCardCount] = useState(10)
   const [loading, setLoading] = useState(false)
 
@@ -78,7 +78,7 @@ export default function CustomSessionConfig({ metadata, onStart }: CustomSession
     })
   }
 
-  const handleToggleTheme = (id: number) => {
+  const handleToggleTheme = (id: string) => {
     setSelectedThemes(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id])
   }
 
@@ -122,7 +122,7 @@ export default function CustomSessionConfig({ metadata, onStart }: CustomSession
 
   const startDisabled = availableWords === 0 || cardCount > availableWords || loading
 
-  const levelForTheme = (themeId: number) =>
+  const levelForTheme = (themeId: string) =>
     metadata.find(l => l.themes.some(t => t.theme_id === themeId))
 
   const labelSx = {
