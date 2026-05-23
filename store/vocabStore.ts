@@ -79,14 +79,18 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
       } else {
         newProgress = [
           ...cached.progress,
-          { vocab_id: vocabId, is_completed: false, is_in_revision: false, ...patch },
+          { vocab_id: vocabId, status: null, ...patch },
         ]
       }
+      // Also invalidate the theme list cache so sidebar counts refresh on next load
+      const nextThemeList = { ...state.themeListCache }
+      delete nextThemeList[levelCode]
       return {
         themeCache: {
           ...state.themeCache,
           [cacheKey]: { ...cached, progress: newProgress },
         },
+        themeListCache: nextThemeList,
       }
     })
   },

@@ -72,23 +72,28 @@ type FilterType = 'all' | 'new' | 'revision' | 'completed'
 
 type CardState = VocabRow & {
     status: CardStatus
-    isCompleted: boolean
-    isInRevision: boolean
 }
 
 function buildQueue(vocab: VocabRow[], progress: WordProgress[]): CardState[] {
     const progressMap = new Map(progress.map(p => [p.vocab_id, p]))
     return vocab.map(v => {
         const p = progressMap.get(v.id)
-        const isCompleted = p?.is_completed ?? false
-        const isInRevision = p?.is_in_revision ?? false
+        const s = p?.status
 
         let status: CardStatus = 'new'
-        if (isCompleted) status = 'completed'
-        else if (isInRevision) status = 'revision'
+        if (s === 1) status = 'completed'
+        else if (s === 0) status = 'revision'
 
-        return { ...v, status, isCompleted, isInRevision }
+        return { ...v, status }
     })
+}
+
+function themeDoneCount(t: { completed_count: number; revision_count: number }): number {
+    return t.completed_count + t.revision_count
+}
+
+function themeProgressPct(t: { completed_count: number; revision_count: number; total_words: number }): number {
+    return t.total_words > 0 ? Math.round((themeDoneCount(t) / t.total_words) * 100) : 0
 }
 
 /* ─────────────────────────────────────────────
@@ -103,14 +108,15 @@ function PillToggle({
         <Box
             onClick={onToggle}
             sx={{
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1,
                 cursor: 'pointer', userSelect: 'none',
                 padding: '5px 10px', borderRadius: '999px',
                 border: '1px solid',
                 borderColor: enabled ? activeColor : 'rgba(122,110,101,0.25)',
                 background: enabled ? `${activeColor}14` : 'transparent',
                 transition: 'border-color 0.15s, background 0.15s',
-                width: 200,
+                height: 36,
+                width: '100%',
                 '&:hover': { borderColor: activeColor, background: `${activeColor}0d` },
             }}
         >
@@ -146,9 +152,10 @@ function DesktopTextScaleSlider({ textScale, onChange }: { textScale: number; on
     return (
         <Box sx={{
             display: 'flex', alignItems: 'center', gap: 1.5,
-            px: 1.5, py: 0.5, borderRadius: '999px',
+            px: 1.5, borderRadius: '999px',
             border: '1px solid rgba(122,110,101,0.2)',
-            background: 'rgba(122,110,101,0.02)', minWidth: 160,
+            background: 'rgba(122,110,101,0.02)',
+            height: 36, flex: 1, minWidth: 100,
         }}>
             <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
             <Slider
@@ -425,7 +432,7 @@ function ExampleSentences({ examplesForCard, revealed, showDiacritics, textScale
 
     return (
         <Collapse in={revealed} timeout={300}>
-            <Box sx={{ background: 'rgba(245,237,224,0.5)', borderRadius: '8px', padding: { xs: '1rem', sm: '1.25rem' }, margin: '1.25rem 0', borderLeft: '3px solid #b8860b' }}>
+            <Box sx={{ background: 'rgba(245,237,224,0.5)', borderRadius: '8px', padding: { xs: '1rem', sm: '1.25rem' }, borderLeft: '3px solid #b8860b', mb: { xs: '0.75rem', md: '0.25rem' } }}>
                 {hasExamples && hasInteractive && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.5 }}>
                         <ToggleButtonGroup value={viewMode} exclusive onChange={(_, val) => val && setViewMode(val)} size="small"
@@ -791,7 +798,7 @@ function FlashcardQuiz({
     const themeObj = useTheme()
     const isMobile = useMediaQuery(themeObj.breakpoints.down('sm'))
 
-    const pendingRef = useRef<Map<number, { isCompleted: boolean; isInRevision: boolean }>>(new Map())
+    const pendingRef = useRef<Map<number, { status: number | null }>>(new Map())
 
     const flushPending = useCallback(async () => {
         if (pendingRef.current.size === 0) return
@@ -799,10 +806,9 @@ function FlashcardQuiz({
         pendingRef.current.clear()
 
         // Build a single batch array
-        const batch = entries.map(([wordId, { isCompleted, isInRevision }]) => ({
+        const batch = entries.map(([wordId, { status }]) => ({
             vocabId: wordId,
-            isCompleted,
-            isInRevision,
+            status,
         }))
 
         await upsertWordProgressBatch(batch)   // one DB call
@@ -851,10 +857,11 @@ function FlashcardQuiz({
 
     const hasForms = current?.forms && current.forms.length > 0
 
-    const newCount = allCards.filter(c => !c.isCompleted && !c.isInRevision).length
-    const revisionCount = allCards.filter(c => c.isInRevision).length
-    const completedCount = allCards.filter(c => c.isCompleted).length
-    const progressPct = allCards.length > 0 ? Math.round((completedCount / allCards.length) * 100) : 0
+    const newCount = allCards.filter(c => c.status === 'new').length
+    const revisionCount = allCards.filter(c => c.status === 'revision').length
+    const completedCount = allCards.filter(c => c.status === 'completed').length
+    // Both revision and completed count toward the progress percentage
+    const progressPct = allCards.length > 0 ? Math.round(((revisionCount + completedCount) / allCards.length) * 100) : 0
 
     const currentCardExamples = useMemo(
         () => current ? allExamples.filter(e => e.vocab_id === current.id) : [],
@@ -869,10 +876,10 @@ function FlashcardQuiz({
 
     // Auto-advance when theme fully completed
     const [isAutoAdvancing, setIsAutoAdvancing] = useState(false)
-    const wasAlreadyCompleteOnMount = useRef(initialQueue.every(c => c.isCompleted))
+    const wasAlreadyCompleteOnMount = useRef(initialQueue.every(c => c.status === 'completed' || c.status === 'revision'))
     const hasTriggeredAdvance = useRef(false)
     useEffect(() => {
-        const everyCompleted = allCards.length > 0 && allCards.every(c => c.isCompleted)
+        const everyCompleted = allCards.length > 0 && allCards.every(c => c.status === 'completed' || c.status === 'revision')
         if (everyCompleted && !wasAlreadyCompleteOnMount.current && !hasTriggeredAdvance.current) {
             hasTriggeredAdvance.current = true
             setIsAutoAdvancing(true)
@@ -888,26 +895,20 @@ function FlashcardQuiz({
     }, [allCards, onComplete, theme])
 
     const updateCardStatus = useCallback(
-        (cardId: number, newStatus: CardStatus, opts?: { isCompleted?: boolean; isInRevision?: boolean }) => {
+        (cardId: number, newStatus: CardStatus, opts?: { status?: number | null }) => {
             setAllCards(prev =>
                 prev.map(c => {
                     if (c.id !== cardId) return c
-                    const isCompleted = opts?.isCompleted ?? c.isCompleted
-                    const isInRevision = opts?.isInRevision ?? c.isInRevision
-                    let status: CardStatus = 'new'
-                    if (isCompleted) status = 'completed'
-                    else if (isInRevision) status = 'revision'
 
-                    if (opts) {
+                    if (opts && opts.status !== undefined) {
                         // Queue in the batch — do NOT flush here
-                        pendingRef.current.set(cardId, { isCompleted, isInRevision })
+                        pendingRef.current.set(cardId, { status: opts.status })
                         updateLocalProgress(theme, levelCode, cardId, {
-                            is_completed: isCompleted,
-                            is_in_revision: isInRevision,
+                            status: opts.status,
                         })
                     }
 
-                    return { ...c, status, isCompleted, isInRevision }
+                    return { ...c, status: newStatus }
                 })
             )
         },
@@ -939,28 +940,33 @@ function FlashcardQuiz({
     // Update local state + advance instantly — no DB call here
     const toggleRevision = useCallback(() => {
         if (!current) return
-        const toRevision = !current.isInRevision
-        updateCardStatus(current.id, toRevision ? 'revision' : 'new', { isInRevision: toRevision })
-        clearSession() // 🔴 FIX: invalidate daily count cache
-
+        const toRevision = current.status !== 'revision'
         if (toRevision) {
+            // Adding to revision — also counts as "done" for progress %
+            updateCardStatus(current.id, 'revision', { status: 0 })
+            clearSession() // invalidate daily count cache
             if (currentIndex < filteredCards.length - 1) {
                 goToIndex(currentIndex + 1)
             } else if (filter === 'all') {
                 onComplete?.()
             }
+        } else {
+            // Removing from revision — delete from progress table
+            updateCardStatus(current.id, 'new', { status: null })
+            clearSession()
         }
     }, [current, currentIndex, filteredCards.length, updateCardStatus, goToIndex, onComplete, filter, clearSession])
 
     // Update local state + advance instantly — no DB call here
     const toggleComplete = useCallback(() => {
         if (!current) return
-        const wasCompleted = current.isCompleted
+        const wasCompleted = current.status === 'completed'
 
         if (wasCompleted) {
-            updateCardStatus(current.id, current.isInRevision ? 'revision' : 'new', { isCompleted: false })
+            // Un-completing — goes back to new (not revision)
+            updateCardStatus(current.id, 'new', { status: null })
         } else {
-            updateCardStatus(current.id, 'completed', { isCompleted: true })
+            updateCardStatus(current.id, 'completed', { status: 1 })
         }
 
         if (!wasCompleted) {
@@ -1065,7 +1071,7 @@ function FlashcardQuiz({
 
                             {/* Tabs */}
                             <Box sx={{ display: 'block' }}>
-                                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 3, flexWrap: 'wrap' }}>
                                     <Button
                                         onClick={() => setMobileTab('definition')}
                                         sx={{
@@ -1146,10 +1152,10 @@ function FlashcardQuiz({
                             <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', mt: '1.25rem' }}>
                                 <Button variant="outlined" size="small" onClick={handlePrevious} disabled={!canGoBack} startIcon={<NavigateBefore sx={{ fontSize: '1.1rem !important' }} />}
                                     sx={{ borderColor: '#7a6e65', color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px', textTransform: 'none', '&:hover': { background: 'rgba(122,110,101,0.08)' }, '&:disabled': { opacity: 0.4 } }}>Back</Button>
-                                <Button variant={current.isInRevision ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} disabled={!user} startIcon={current.isInRevision ? <BookmarkAdded sx={{ fontSize: '1.1rem !important' }} /> : <Bookmark sx={{ fontSize: '1.1rem !important' }} />}
+                                <Button variant={current.status === 'revision' ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} disabled={!user} startIcon={current.status === 'revision' ? <BookmarkAdded sx={{ fontSize: '1.1rem !important' }} /> : <Bookmark sx={{ fontSize: '1.1rem !important' }} />}
                                     sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>Revision</Button>
-                                <Button variant={current.isCompleted ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} disabled={!user} startIcon={current.isCompleted ? <DoneAll sx={{ fontSize: '1.1rem !important' }} /> : <Check sx={{ fontSize: '1.1rem !important' }} />}
-                                    sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>{current.isCompleted ? 'Completed' : 'Complete'}</Button>
+                                <Button variant={current.status === 'completed' ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} disabled={!user} startIcon={current.status === 'completed' ? <DoneAll sx={{ fontSize: '1.1rem !important' }} /> : <Check sx={{ fontSize: '1.1rem !important' }} />}
+                                    sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>{current.status === 'completed' ? 'Completed' : 'Complete'}</Button>
                                 <Button variant="outlined" color="warning" size="small" onClick={handleNext} disabled={isLastCard && filter !== 'all'} endIcon={<NavigateNext sx={{ fontSize: '1.1rem !important' }} />}
                                     sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px', '&:disabled': { opacity: 0.4 } }}>
                                     {isLastCardInTheme && filter === 'all' ? 'Next Theme' : 'Next'}
@@ -1162,8 +1168,8 @@ function FlashcardQuiz({
                                     sx={{ ...mobileActionBtnSx, borderColor: canGoBack ? 'rgba(122,110,101,0.4)' : 'rgba(122,110,101,0.15)', color: canGoBack ? '#7a6e65' : 'rgba(122,110,101,0.3)', '&:hover': { background: 'rgba(122,110,101,0.08)' }, '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(122,110,101,0.15)' } }}>
                                     Prev
                                 </Button>
-                                <Button variant={current.isInRevision ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} disabled={!user} startIcon={current.isInRevision ? <BookmarkAdded /> : <Bookmark />} sx={mobileActionBtnSx}>Revision</Button>
-                                <Button variant={current.isCompleted ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} disabled={!user} startIcon={current.isCompleted ? <DoneAll /> : <Check />} sx={mobileActionBtnSx}>{current.isCompleted ? 'Completed' : 'Complete'}</Button>
+                                <Button variant={current.status === 'revision' ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} disabled={!user} startIcon={current.status === 'revision' ? <BookmarkAdded /> : <Bookmark />} sx={mobileActionBtnSx}>Revision</Button>
+                                <Button variant={current.status === 'completed' ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} disabled={!user} startIcon={current.status === 'completed' ? <DoneAll /> : <Check />} sx={mobileActionBtnSx}>{current.status === 'completed' ? 'Completed' : 'Complete'}</Button>
                                 <Button variant="outlined" size="small" onClick={handleNext} disabled={isLastCard && filter !== 'all'}
                                     sx={{ ...mobileActionBtnSx, borderColor: isLastCard && filter !== 'all' ? 'rgba(184,134,11,0.15)' : 'rgba(184,134,11,0.45)', color: isLastCard && filter !== 'all' ? 'rgba(184,134,11,0.3)' : '#b8860b', '&:hover': { background: 'rgba(184,134,11,0.06)' }, '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(184,134,11,0.15)' } }}>
                                     Skip
@@ -1207,12 +1213,13 @@ function FlashcardQuiz({
    ThemePlaylistSidebar  (PAGINATED — 10 per page)
 ───────────────────────────────────────────── */
 function ThemePlaylistSidebar({
-    themes, selectedTheme, onSelectTheme, label,
+    themes, selectedTheme, onSelectTheme, label, onOpenTutorial,
 }: {
     themes: ThemeProgress[]
     selectedTheme: ThemeProgress | null
     onSelectTheme: (theme: ThemeProgress) => void
     label: string
+    onOpenTutorial?: () => void
 }) {
     const [page, setPage] = useState(0)
     const pageSize = 10
@@ -1222,7 +1229,7 @@ function ThemePlaylistSidebar({
     const overallProgress = useMemo(() => {
         const total = themes.reduce((s, t) => s + t.total_words, 0)
         if (total === 0) return 0
-        return Math.round(themes.reduce((s, t) => s + t.completed_count, 0) / total * 100)
+        return Math.round(themes.reduce((s, t) => s + themeDoneCount(t), 0) / total * 100)
     }, [themes])
 
     return (
@@ -1240,9 +1247,16 @@ function ThemePlaylistSidebar({
                 px: 2, py: 1.75,
                 flexShrink: 0,
             }}>
-                <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.1rem', fontWeight: 700, color: '#f5ede0', lineHeight: 1.2, mb: 0.5 }}>
-                    {label}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
+                    <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.1rem', fontWeight: 700, color: '#f5ede0', lineHeight: 1.2 }}>
+                        {label}
+                    </Typography>
+                    {onOpenTutorial && (
+                        <IconButton onClick={onOpenTutorial} size="small" sx={{ width: 22, height: 22, color: 'rgba(245,237,224,0.7)', p: 0 }}>
+                            <HelpOutlineRounded sx={{ fontSize: '0.9rem' }} />
+                        </IconButton>
+                    )}
+                </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
                     <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', color: 'rgba(245,237,224,0.6)', fontWeight: 500 }}>
                         {themes.reduce((s, t) => s + t.total_words, 0)} words · {themes.length} themes
@@ -1266,9 +1280,7 @@ function ThemePlaylistSidebar({
             </Box>
             <Box sx={{ overflowY: 'auto', flex: 1 }}>
                 {pagedThemes.map((theme, idx) => {
-                    const progress = theme.total_words > 0
-                        ? Math.round((theme.completed_count / theme.total_words) * 100)
-                        : 0
+                    const progress = themeProgressPct(theme)
                     const isActive = selectedTheme?.theme_id === theme.theme_id
                     const isComplete = progress === 100
                     const globalIdx = page * pageSize + idx
@@ -1424,7 +1436,7 @@ export default function FlashcardSlugPage() {
 
                 const firstIncomplete = data.find((t: ThemeProgress) =>
                     t?.theme_id != null &&
-                    (t.total_words === 0 || t.completed_count < t.total_words)
+                    (t.total_words === 0 || themeDoneCount(t) < t.total_words)
                 ) ?? data[0]
 
                 if (firstIncomplete) {
@@ -1456,7 +1468,7 @@ export default function FlashcardSlugPage() {
             if (cardIndex !== undefined) {
                 setInitialCardIndex(cardIndex)
             } else {
-                const firstIncomplete = queue.findIndex(c => !c.isCompleted && !c.isInRevision)
+                const firstIncomplete = queue.findIndex(c => c.status === 'new')
                 setInitialCardIndex(firstIncomplete === -1 ? 0 : firstIncomplete)
             }
 
@@ -1490,8 +1502,8 @@ export default function FlashcardSlugPage() {
             const cacheKey = `${t.theme_id}:${level}`
             const cached = themeCache[cacheKey]
             if (cached) {
-                const completed = cached.progress.filter(p => p.is_completed).length
-                const revision = cached.progress.filter(p => p.is_in_revision).length
+                const completed = cached.progress.filter(p => p.status === 1).length
+                const revision = cached.progress.filter(p => p.status === 0).length
                 return { ...t, completed_count: completed, revision_count: revision }
             }
             return t
@@ -1502,7 +1514,7 @@ export default function FlashcardSlugPage() {
         if (!selectedTheme) return
         const currentIdx = validThemes.findIndex(t => t.theme_id === selectedTheme.theme_id)
         const nextTheme = validThemes.slice(currentIdx + 1).find(t =>
-            t.total_words === 0 || t.completed_count < t.total_words
+            t.total_words === 0 || themeDoneCount(t) < t.total_words
         )
         if (nextTheme) {
             handleThemeSelect(nextTheme)
@@ -1513,7 +1525,7 @@ export default function FlashcardSlugPage() {
         if (!selectedTheme) return
         const currentIdx = validThemes.findIndex(t => t.theme_id === selectedTheme.theme_id)
         const nextTheme = validThemes.slice(currentIdx + 1).find(t =>
-            t.total_words === 0 || t.completed_count < t.total_words
+            t.total_words === 0 || themeDoneCount(t) < t.total_words
         )
         if (nextTheme) {
             handleThemeSelect(nextTheme)
@@ -1566,9 +1578,7 @@ export default function FlashcardSlugPage() {
 
                     <Box sx={{ overflowY: 'auto', flex: 1, py: 0.5 }}>
                         {validThemes.map((theme, idx) => {
-                            const progress = theme.total_words > 0
-                                ? Math.round((theme.completed_count / theme.total_words) * 100)
-                                : 0
+                            const progress = themeProgressPct(theme)
                             const isActive = selectedTheme?.theme_id === theme.theme_id
                             const isComplete = progress === 100
 
@@ -1653,14 +1663,6 @@ export default function FlashcardSlugPage() {
                             <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { sm: '1.6rem', md: '2rem' }, fontWeight: 700, color: '#2c1a0e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {selectedTheme.display_name}
                             </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-                                <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
-
-                                <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics(p => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
-                                <IconButton onClick={() => setTutorialOpen(true)} size="small" sx={{ width: 32, height: 32, border: '1px solid rgba(122,110,101,0.3)', borderRadius: '50%', color: '#7a6e65', flexShrink: 0 }}>
-                                    <HelpOutlineRounded sx={{ fontSize: '1rem' }} />
-                                </IconButton>
-                            </Box>
                         </Box>
                     )}
 
@@ -1709,7 +1711,7 @@ export default function FlashcardSlugPage() {
                                         onComplete={handleQuizComplete}
                                         themeLabel={selectedTheme.display_name}
                                         totalInTheme={selectedTheme.total_words}
-                                        alreadyCompletedCount={selectedTheme.completed_count}
+                                        alreadyCompletedCount={themeDoneCount(selectedTheme)}
                                         initialCardIndex={initialCardIndex}
                                         flushRef={flushRef}
                                         levelCode={level}
@@ -1737,12 +1739,19 @@ export default function FlashcardSlugPage() {
                                 )}
                             </Box>
                             {validThemes.length > 0 && (
-                                <Box sx={{ display: { xs: 'none', lg: 'block' }, position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)' }}>
+                                <Box sx={{ display: { xs: 'none', lg: 'block' }, position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)', mt: -5.5 }}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                                        <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
+                                        <Box sx={{ width: 162, flexShrink: 0 }}>
+                                            <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics(p => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
+                                        </Box>
+                                    </Box>
                                     <ThemePlaylistSidebar
                                         themes={themesForSidebar}
                                         selectedTheme={selectedTheme}
                                         onSelectTheme={(t) => handleThemeSelect(t)}
                                         label={label}
+                                        onOpenTutorial={() => setTutorialOpen(true)}
                                     />
                                 </Box>
                             )}

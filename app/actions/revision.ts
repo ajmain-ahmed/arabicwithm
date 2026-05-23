@@ -47,9 +47,18 @@ async function getAuthenticatedUserId(): Promise<string | null> {
 
 /* ── JSONB helpers ── */
 
+function parseJsonb<T = any>(val: any): T | null {
+    if (val == null) return null
+    if (typeof val === 'string') {
+        try { return JSON.parse(val) as T } catch { return null }
+    }
+    return val as T
+}
+
 function getPos(formsJson: any): string {
-    if (!Array.isArray(formsJson) || formsJson.length === 0) return 'unknown'
-    return formsJson[0]?.type ?? 'unknown'
+    const parsed = parseJsonb(formsJson)
+    if (!Array.isArray(parsed) || parsed.length === 0) return 'unknown'
+    return parsed[0]?.type ?? 'unknown'
 }
 
 export type VocabRow = {
@@ -79,7 +88,6 @@ export type RevisionCard = VocabRow & {
     def_en?: string | null
     lastRating?: Answer | null
     theme_name?: string | null
-    learning_step?: number
     lapses?: number
 }
 
@@ -131,9 +139,9 @@ async function buildRevisionCards(
     }>()
 
     for (const v of vocabData ?? []) {
-        const definitions = Array.isArray(v.definitions) ? v.definitions : []
+        const definitions = parseJsonb(v.definitions) ?? []
         const primary = definitions[0] ?? null
-        const examples = Array.isArray(v.examples) ? v.examples : []
+        const examples = parseJsonb(v.examples) ?? []
         const exAr = examples.map((e: any) => e.ar).join(';') || null
         const exDi = examples.map((e: any) => e.ar_di).join(';') || null
         const exEn = examples.map((e: any) => e.en).join(';') || null
@@ -180,7 +188,7 @@ async function buildRevisionCards(
             repetitions: row.repetitions,
             interval_days: row.interval_days,
             ease_factor: row.ease_factor,
-            learning_step: row.learning_step ?? 0,
+            // learning_step removed from schema
             lapses: row.lapses ?? 0,
             last_review_at: row.last_review_at,
             next_review_at: row.next_review_at,
@@ -204,9 +212,9 @@ export async function fetchRevisionSession(): Promise<{
     // 1. Get all progress rows in revision for this user
     const { data: progressData, error: progErr } = await serviceClient
         .from('progress')
-        .select('vocab_id, repetitions, interval_days, ease_factor, learning_step, lapses, last_review_at, next_review_at, last_rating')
+        .select('vocab_id, repetitions, interval_days, ease_factor, lapses, last_review_at, next_review_at, last_rating')
         .eq('user_id', userId)
-        .eq('is_in_revision', true)
+        .eq('status', 0)
 
     if (progErr) throw new Error(progErr.message)
     if (!progressData || progressData.length === 0) {
@@ -272,7 +280,7 @@ export async function submitRevisionAnswersBatch(
     // 1. Fetch all existing progress rows in ONE query
     const { data: allProgress, error: fetchError } = await serviceClient
         .from('progress')
-        .select('vocab_id, repetitions, interval_days, ease_factor, learning_step, lapses, last_review_at, first_review_at')
+        .select('vocab_id, repetitions, interval_days, ease_factor, lapses, last_review_at, first_review_at')
         .eq('user_id', userId)
         .in('vocab_id', vocabIds)
 
@@ -294,19 +302,16 @@ export async function submitRevisionAnswersBatch(
                 repetitions: 0,
                 interval_days: 0,
                 ease_factor: 2.5,
-                learning_step: 0,
                 lapses: 0,
             }, answer)
 
             return {
                 user_id: userId,
                 vocab_id: vocabId,
-                is_in_revision: true,
-                is_completed: false,
+                status: 0,
                 repetitions: result.repetitions,
                 interval_days: result.interval_days,
                 ease_factor: result.ease_factor,
-                learning_step: result.learning_step,
                 lapses: answer === 'again' ? 1 : 0,
                 last_review_at: now,
                 last_rating: answer,
@@ -324,12 +329,10 @@ export async function submitRevisionAnswersBatch(
         return {
             user_id: userId,
             vocab_id: vocabId,
-            is_in_revision: true,
-            is_completed: false,
+            status: 0,
             repetitions: result.repetitions,
             interval_days: result.interval_days,
             ease_factor: result.ease_factor,
-            learning_step: result.learning_step,
             last_review_at: now,
             last_rating: answer,
             next_review_at: nextReview,
@@ -362,7 +365,7 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
 
     const { data: existing, error: fetchErr } = await serviceClient
         .from('progress')
-        .select('is_in_revision, is_completed')
+        .select('status')
         .eq('user_id', userId)
         .eq('vocab_id', vocabId)
         .maybeSingle()
@@ -371,21 +374,23 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
 
     const now = new Date().toISOString()
 
-    if (existing?.is_in_revision) {
-        const { error: updErr } = await serviceClient
+    // status === 0 means in revision — toggle removes the row entirely
+    if (existing?.status === 0) {
+        const { error: delErr } = await serviceClient
             .from('progress')
-            .update({ is_in_revision: false, updated_at: now })
+            .delete()
             .eq('user_id', userId)
             .eq('vocab_id', vocabId)
 
-        if (updErr) throw new Error(updErr.message)
+        if (delErr) throw new Error(delErr.message)
         return { success: true, inRevision: false }
     }
 
+    // Existing row with status === 1 (completed) or any other status — update to revision
     if (existing) {
         const { error: updErr } = await serviceClient
             .from('progress')
-            .update({ is_in_revision: true, is_completed: false, updated_at: now })
+            .update({ status: 0, updated_at: now })
             .eq('user_id', userId)
             .eq('vocab_id', vocabId)
 
@@ -393,17 +398,16 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
         return { success: true, inRevision: true }
     }
 
+    // No existing row — insert new revision entry
     const { error: insErr } = await serviceClient
         .from('progress')
         .insert({
             user_id: userId,
             vocab_id: vocabId,
-            is_in_revision: true,
-            is_completed: false,
+            status: 0,
             repetitions: 0,
             interval_days: 0,
             ease_factor: 2.5,
-            learning_step: 0,
             last_review_at: null,
             next_review_at: null,
             first_review_at: null,
@@ -420,26 +424,35 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
 
 export async function upsertWordProgress(
     vocabId: number,
-    updates: { isCompleted?: boolean; isInRevision?: boolean }
+    updates: { status?: number | null }
 ) {
     const userId = await getAuthenticatedUserId()
     if (!userId) throw new Error('Not authenticated')
 
     const { data: existing } = await serviceClient
         .from('progress')
-        .select('id')
+        .select('vocab_id')
         .eq('user_id', userId)
         .eq('vocab_id', vocabId)
         .maybeSingle()
 
-    if (existing) {
-        const patch: any = { updated_at: new Date().toISOString() }
-        if (updates.isCompleted !== undefined) patch.is_completed = updates.isCompleted
-        if (updates.isInRevision !== undefined) patch.is_in_revision = updates.isInRevision
+    // status === null means delete the row
+    if (updates.status === null) {
+        if (existing) {
+            const { error } = await serviceClient
+                .from('progress')
+                .delete()
+                .eq('user_id', userId)
+                .eq('vocab_id', vocabId)
+            if (error) throw new Error(error.message)
+        }
+        return
+    }
 
+    if (existing) {
         const { error } = await serviceClient
             .from('progress')
-            .update(patch)
+            .update({ status: updates.status, updated_at: new Date().toISOString() })
             .eq('user_id', userId)
             .eq('vocab_id', vocabId)
         if (error) throw new Error(error.message)
@@ -449,12 +462,10 @@ export async function upsertWordProgress(
     const { error } = await serviceClient.from('progress').insert({
         user_id: userId,
         vocab_id: vocabId,
-        is_completed: updates.isCompleted ?? false,
-        is_in_revision: updates.isInRevision ?? false,
+        status: updates.status ?? 0,
         repetitions: 0,
         interval_days: 0,
         ease_factor: 2.5,
-        learning_step: 0,
         lapses: 0,
         created_at: new Date().toISOString(),
     })
@@ -563,9 +574,9 @@ export async function fetchCustomSessionCards(settings: {
     const shuffled = [...vocabData].sort(() => Math.random() - 0.5).slice(0, cardCount)
 
     return shuffled.map((v) => {
-        const definitions = Array.isArray(v.definitions) ? v.definitions : []
+        const definitions = parseJsonb(v.definitions) ?? []
         const primary = definitions[0] ?? null
-        const examples = Array.isArray(v.examples) ? v.examples : []
+        const examples = parseJsonb(v.examples) ?? []
 
         return {
             id: v.word_id,
@@ -588,7 +599,6 @@ export async function fetchCustomSessionCards(settings: {
             repetitions: 0,
             interval_days: 0,
             ease_factor: 2.5,
-            learning_step: 0,
             lapses: 0,
             last_review_at: null,
             next_review_at: null,

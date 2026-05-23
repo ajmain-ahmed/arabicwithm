@@ -9,7 +9,6 @@ export interface SessionCard {
     queue: Queue
     lapses: number
     dotId: string
-    learningStep: number
 }
 
 export type ExtendedSessionLog = SessionLog & {

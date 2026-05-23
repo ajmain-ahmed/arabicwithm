@@ -15,6 +15,14 @@ if (!serviceUrl || !serviceKey) {
 }
 const serviceClient = createServiceClient(serviceUrl, serviceKey)
 
+function parseJsonb<T = any>(val: any): T | null {
+    if (val == null) return null
+    if (typeof val === 'string') {
+        try { return JSON.parse(val) as T } catch { return null }
+    }
+    return val as T
+}
+
 export interface ShowMeta {
   slug: string
   title: string
@@ -175,9 +183,9 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
       if (vocabData && vocabData.length > 0) {
         // Build vocabMap with multiple keys per entry
         for (const row of vocabData as any[]) {
-          const definitions = Array.isArray(row.definitions) ? row.definitions : []
+          const definitions = parseJsonb(row.definitions) ?? []
           const primary = definitions[0] ?? null
-          const forms = Array.isArray(row.forms) ? row.forms : []
+          const forms = parseJsonb(row.forms) ?? []
           const pos = forms[0]?.type ?? ''
 
           const entry: VocabEntry = {

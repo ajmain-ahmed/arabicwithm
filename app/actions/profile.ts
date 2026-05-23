@@ -85,7 +85,7 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
 
   const { data: progressData } = await serviceClient
     .from('progress')
-    .select('vocab_id, is_completed, is_in_revision')
+    .select('vocab_id, status')
     .eq('user_id', user.id)
 
   const progressMap = new Map((progressData ?? []).map(p => [p.vocab_id, p]))
@@ -102,8 +102,8 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
       const stats = themeStats.get(theme)!
       stats.total++
       const p = progressMap.get(v.word_id)
-      if (p?.is_completed) stats.completed++
-      if (p?.is_in_revision) stats.revision++
+      if (p?.status === 1) stats.completed++
+      if (p?.status === 0) stats.revision++
     }
 
     const themes: ThemeProgress[] = Array.from(themeStats.entries()).map(([theme, stats]) => {
@@ -120,12 +120,13 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
 
     const totalThemes = themes.length
     const completedThemes = themes.filter(
-      (t) => t.total_words > 0 && t.completed_count >= t.total_words
+      (t) => t.total_words > 0 && (t.completed_count + t.revision_count) >= t.total_words
     ).length
 
     const totalWords = themes.reduce((s, t) => s + t.total_words, 0)
     const completedWords = themes.reduce((s, t) => s + t.completed_count, 0)
     const revisionWords = themes.reduce((s, t) => s + t.revision_count, 0)
+    const doneWords = completedWords + revisionWords
 
     return {
       ...meta,
@@ -134,7 +135,7 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
       totalWords,
       completedWords,
       revisionWords,
-      progressPct: totalWords > 0 ? Math.round((completedWords / totalWords) * 100) : 0,
+      progressPct: totalWords > 0 ? Math.round((doneWords / totalWords) * 100) : 0,
       themes,
     }
   })

@@ -185,7 +185,7 @@ export const useRevisionStore = create<RevisionStore>((set, get) => ({
           repetitions: updatedProgress.repetitions,
           interval_days: updatedProgress.interval_days,
           ease_factor: updatedProgress.ease_factor,
-          learning_step: updatedProgress.learning_step,
+          // learning_step removed from schema
           lapses: updatedProgress.lapses,
           last_review_at: nowISO,
         }

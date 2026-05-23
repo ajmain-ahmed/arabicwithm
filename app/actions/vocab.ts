@@ -41,27 +41,36 @@ async function getAuthenticatedUserId(): Promise<string | null> {
 
 /* ── JSONB helpers ── */
 
+function parseJsonb(val: any): any {
+  if (val == null) return null
+  if (Array.isArray(val)) return val
+  if (typeof val === 'object') return val
+  if (typeof val === 'string') {
+    try { return JSON.parse(val) } catch { return null }
+  }
+  return null
+}
+
 function getPos(formsJson: any): string {
-  if (!Array.isArray(formsJson) || formsJson.length === 0) return 'unknown'
-  return formsJson[0]?.type ?? 'unknown'
+  const parsed = parseJsonb(formsJson)
+  if (!Array.isArray(parsed) || parsed.length === 0) return 'unknown'
+  return parsed[0]?.type ?? 'unknown'
 }
 
 function flattenForms(formsJson: any): FormRow[] | null {
-  if (!Array.isArray(formsJson) || formsJson.length === 0) return null
-  const first = formsJson[0]
-  if (!first?.conjugations) return null
-  const rows: FormRow[] = []
-  for (const [key, val] of Object.entries(first.conjugations)) {
-    if (val && typeof val === 'object') {
-      rows.push({
-        type: (val as any).type ?? key,
-        con_ar: (val as any).con_ar ?? '',
-        con_di: (val as any).con_di ?? '',
-        con_en: (val as any).con_en ?? '',
-        con_tr: (val as any).con_tr ?? '',
-      })
-    }
-  }
+  const parsed = parseJsonb(formsJson)
+  if (!Array.isArray(parsed) || parsed.length === 0) return null
+  // The forms JSONB is a flat array where the first element is a POS marker
+  // (e.g. {"type":"verb"}) and subsequent elements are conjugation rows.
+  const rows: FormRow[] = parsed
+    .filter((f: any) => f?.con_ar && f.con_ar !== '')
+    .map((f: any) => ({
+      type: f.type ?? '',
+      con_ar: f.con_ar ?? '',
+      con_di: f.con_di ?? '',
+      con_en: f.con_en ?? '',
+      con_tr: f.con_tr ?? '',
+    }))
   return rows.length > 0 ? rows : null
 }
 
@@ -117,7 +126,7 @@ export async function fetchThemesWithProgress(
   const { data: progressData } = wordIds.length > 0
     ? await serviceClient
         .from('progress')
-        .select('vocab_id, is_completed, is_in_revision')
+        .select('vocab_id, status')
         .eq('user_id', userId)
         .in('vocab_id', wordIds)
     : { data: [] }
@@ -133,8 +142,8 @@ export async function fetchThemesWithProgress(
     const stats = themeStats.get(theme)!
     stats.total++
     const p = progressMap.get(v.word_id)
-    if (p?.is_completed) stats.completed++
-    if (p?.is_in_revision) stats.revision++
+    if (p?.status === 1) stats.completed++
+    if (p?.status === 0) stats.revision++
   }
 
   return Array.from(themeStats.entries())
@@ -183,8 +192,7 @@ export type VocabRow = {
 
 export type WordProgress = {
   vocab_id: number
-  is_completed: boolean
-  is_in_revision: boolean
+  status: number | null
 }
 
 /* ── fetch vocab + defs + examples for a theme (parallelized) ── */
@@ -215,7 +223,7 @@ export async function fetchThemeVocabWithProgress(
 
   // 2. Fetch progress in parallel
   const { data: progData } = userId
-    ? await serviceClient.from("progress").select("vocab_id, is_completed, is_in_revision").eq("user_id", userId).in("vocab_id", vocabIds)
+    ? await serviceClient.from("progress").select("vocab_id, status").eq("user_id", userId).in("vocab_id", vocabIds)
     : { data: [] }
 
   // 3. Build VocabRow and ExampleRow
@@ -223,10 +231,10 @@ export async function fetchThemeVocabWithProgress(
   const examples: ExampleRow[] = []
 
   for (const v of vocabData) {
-    const definitions = Array.isArray(v.definitions) ? v.definitions : []
+    const definitions = parseJsonb(v.definitions) ?? []
     const primary = definitions[0] ?? null
 
-    const exList = Array.isArray(v.examples) ? v.examples : []
+    const exList = parseJsonb(v.examples) ?? []
     for (const e of exList) {
       examples.push({
         vocab_id: v.word_id,
@@ -257,8 +265,7 @@ export async function fetchThemeVocabWithProgress(
   // 4. Progress already fetched above
   const progress: WordProgress[] = (progData ?? []).map((p: any) => ({
     vocab_id: p.vocab_id,
-    is_completed: p.is_completed,
-    is_in_revision: p.is_in_revision,
+    status: p.status,
   }))
 
   return { vocab, progress, examples }
@@ -273,7 +280,7 @@ export async function fetchRevisionVocabIds(): Promise<number[]> {
     .from("progress")
     .select("vocab_id")
     .eq("user_id", userId)
-    .eq("is_in_revision", true)
+    .eq("status", 0)
 
   if (error) {
     console.error("[fetchRevisionVocabIds] error:", error.message)
@@ -286,12 +293,10 @@ export async function fetchRevisionVocabIds(): Promise<number[]> {
 /* ── upsert progress ── */
 export async function upsertWordProgress({
   vocabId,
-  isCompleted,
-  isInRevision,
+  status,
 }: {
   vocabId: number
-  isCompleted: boolean
-  isInRevision: boolean
+  status: number | null
 }): Promise<void> {
   if (!Number.isFinite(vocabId) || vocabId <= 0) {
     throw new Error('Invalid vocabId')
@@ -299,12 +304,22 @@ export async function upsertWordProgress({
   const userId = await getAuthenticatedUserId()
   if (!userId) return
 
+  // status === null means remove from progress table
+  if (status === null) {
+    const { error } = await serviceClient
+      .from("progress")
+      .delete()
+      .eq("user_id", userId)
+      .eq("vocab_id", vocabId)
+    if (error) throw new Error(error.message)
+    return
+  }
+
   const { error } = await serviceClient.from("progress").upsert(
     {
       user_id: userId,
       vocab_id: vocabId,
-      is_completed: isCompleted,
-      is_in_revision: isInRevision,
+      status,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id,vocab_id" }
@@ -314,23 +329,39 @@ export async function upsertWordProgress({
 }
 
 export async function upsertWordProgressBatch(
-  items: { vocabId: number; isCompleted: boolean; isInRevision: boolean }[]
+  items: { vocabId: number; status: number | null }[]
 ): Promise<void> {
   const userId = await getAuthenticatedUserId()
   if (!userId || items.length === 0) return
 
   const now = new Date().toISOString()
-  const rows = items.map(({ vocabId, isCompleted, isInRevision }) => ({
-    user_id: userId,
-    vocab_id: vocabId,
-    is_completed: isCompleted,
-    is_in_revision: isInRevision,
-    updated_at: now,
-  }))
 
-  const { error } = await serviceClient
-    .from("progress")
-    .upsert(rows, { onConflict: "user_id,vocab_id" })
+  // Separate deletions from upserts
+  const toDelete = items.filter(i => i.status === null)
+  const toUpsert = items.filter(i => i.status !== null)
 
-  if (error) throw new Error(error.message)
+  if (toDelete.length > 0) {
+    const vocabIds = toDelete.map(i => i.vocabId)
+    const { error: delError } = await serviceClient
+      .from("progress")
+      .delete()
+      .eq("user_id", userId)
+      .in("vocab_id", vocabIds)
+    if (delError) throw new Error(delError.message)
+  }
+
+  if (toUpsert.length > 0) {
+    const rows = toUpsert.map(({ vocabId, status }) => ({
+      user_id: userId,
+      vocab_id: vocabId,
+      status,
+      updated_at: now,
+    }))
+
+    const { error } = await serviceClient
+      .from("progress")
+      .upsert(rows, { onConflict: "user_id,vocab_id" })
+
+    if (error) throw new Error(error.message)
+  }
 }

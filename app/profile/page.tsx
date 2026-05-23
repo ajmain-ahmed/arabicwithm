@@ -92,7 +92,7 @@ function ChartSection({ level }: { level: LevelStat | null }) {
   const accounted = completed + revision
   const remaining = Math.max(0, total - accounted)
 
-  const progressPct = total > 0 ? Math.round((completed / total) * 100) : 0
+  const progressPct = total > 0 ? Math.round((accounted / total) * 100) : 0
 
   const color = level.color ?? '#b8860b'
   const label = level.code === 'ALL'
@@ -637,7 +637,7 @@ function ProfilePageInner() {
       completedWords: profile.completedWords,
       revisionWords: profile.revisionWords,
       progressPct: profile.totalWords > 0
-        ? Math.round((profile.completedWords / profile.totalWords) * 100)
+        ? Math.round(((profile.completedWords + profile.revisionWords) / profile.totalWords) * 100)
         : 0,
       themes: [],
     }

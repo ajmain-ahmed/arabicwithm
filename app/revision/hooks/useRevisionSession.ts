@@ -69,7 +69,7 @@ export default function useRevisionSession() {
         queue: classifyCard(card),
         lapses: card.lapses ?? 0,
         dotId: makeDotId(),
-        learningStep: card.learning_step ?? 0,
+        // learningStep removed from schema
     })), [dueCards])
 
     const { seedAnsweredDots, seedDotOrder } = useMemo(() => {
@@ -257,7 +257,6 @@ export default function useRevisionSession() {
             repetitions: currentCard.data.repetitions,
             interval_days: currentCard.data.interval_days,
             ease_factor: currentCard.data.ease_factor,
-            learning_step: currentCard.learningStep,
             lapses: currentCard.data.lapses ?? 0,
         }
 
@@ -270,7 +269,6 @@ export default function useRevisionSession() {
                 repetitions: result.repetitions,
                 interval_days: result.interval_days,
                 ease_factor: result.ease_factor,
-                learning_step: result.learning_step,
                 lapses: ans === 'again' ? (currentCard.data.lapses ?? 0) + 1 : (currentCard.data.lapses ?? 0),
             }, ans)
 
