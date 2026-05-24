@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Box, Typography } from '@mui/material'
+import { useRouter } from 'next/navigation'
 
 const LEVEL_COLORS: Record<string, string> = {
   A1: '#2d6a4f', A2: '#40916c', B1: '#b5861a', B2: '#9c6b00', C1: '#6d4c9e', C2: '#4a2f7a',
@@ -17,7 +18,9 @@ export interface NewsCardData {
   topics: string[]
 }
 
-export default function NewsCard({ article, onClick }: { article: NewsCardData; onClick: () => void }) {
+export default function NewsCard({ article }: { article: NewsCardData }) {
+  const router = useRouter()
+
   const formattedDate = new Date(article.date).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
@@ -26,7 +29,7 @@ export default function NewsCard({ article, onClick }: { article: NewsCardData; 
 
   return (
     <Box
-      onClick={onClick}
+      onClick={() => router.push(`/news/${article.slug}`)}
       sx={{
         cursor: 'pointer',
         background: '#fff',

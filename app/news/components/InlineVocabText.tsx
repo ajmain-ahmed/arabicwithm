@@ -279,10 +279,12 @@ export default function InlineVocabText({
   text,
   vocabMap,
   textScale = 1,
+  propagateClick = false,
 }: {
   text: string
   vocabMap: Record<string, InlineVocabEntry>
   textScale?: number
+  propagateClick?: boolean
 }) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
@@ -474,7 +476,9 @@ export default function InlineVocabText({
             }}
           >
             <span
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                if (!propagateClick) e.stopPropagation()
+              }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
                 handleOpen(entry, e.currentTarget, i)

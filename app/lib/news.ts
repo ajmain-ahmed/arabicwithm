@@ -109,6 +109,90 @@ export function getAllArticles(): ArticleMeta[] {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
+export async function getAllArticlesWithVocab(): Promise<ArticleFull[]> {
+  const metas = getAllArticles()
+  const articleData: { meta: ArticleMeta; content: string }[] = []
+  const allTokens = new Set<string>()
+
+  for (const meta of metas) {
+    const filePath = path.join(CONTENT_DIR, `${meta.slug}.md`)
+    if (!fs.existsSync(filePath)) continue
+    const raw = fs.readFileSync(filePath, 'utf8')
+    const { content } = matter(raw)
+    articleData.push({ meta, content })
+    for (const t of extractArabicTokens(content)) {
+      allTokens.add(t)
+      const norm = normalizeArabicToken(t)
+      if (norm && norm !== t && norm.length > 1) allTokens.add(norm)
+    }
+  }
+
+  const tokenArray = Array.from(allTokens)
+  const globalVocabMap: Record<string, VocabEntry> = {}
+
+  if (tokenArray.length > 0) {
+    try {
+      const { data: vocabData, error: vocabErr } = await serviceClient
+        .from('vocabulary')
+        .select('word_id, word_ar, word_di, word_tr, level, theme, definitions, forms')
+        .in('word_ar', tokenArray)
+
+      if (vocabErr) {
+        console.error('[getAllArticlesWithVocab] vocab query error:', vocabErr.message)
+      } else if (vocabData && vocabData.length > 0) {
+        for (const row of vocabData as Record<string, unknown>[]) {
+          const definitions = (parseJsonb(row.definitions) ?? []) as Array<Record<string, unknown>>
+          const primary = definitions[0] ?? null
+          const forms = (parseJsonb(row.forms) ?? []) as Array<Record<string, unknown>>
+          const pos = (forms[0]?.type as string) ?? ''
+
+          const entry: VocabEntry = {
+            id: row.word_id as number,
+            word: (row.word_ar as string) ?? '',
+            word_diacritic: (row.word_di as string) ?? '',
+            definition: (primary?.direct_english as string) ?? (primary?.english as string) ?? '',
+            pos,
+            transliteration: (row.word_tr as string) ?? '',
+            level: (row.level as string) ?? '',
+            theme: (row.theme as string) ?? '',
+          }
+
+          const wordAr = (row.word_ar as string) ?? ''
+          globalVocabMap[wordAr] = entry
+
+          const bareKey = stripDiacritics(wordAr)
+          if (bareKey && bareKey !== wordAr) globalVocabMap[bareKey] = entry
+
+          const alKey = 'ال' + bareKey
+          if (alKey !== wordAr && alKey !== bareKey) globalVocabMap[alKey] = entry
+
+          const normKey = normalizeArabicToken(wordAr)
+          if (normKey && normKey !== wordAr && normKey !== bareKey && normKey !== alKey) {
+            globalVocabMap[normKey] = entry
+          }
+        }
+      }
+    } catch (e) {
+      console.error('[getAllArticlesWithVocab] vocab lookup failed:', e)
+    }
+  }
+
+  return articleData.map(({ meta, content }) => {
+    const articleVocabMap: Record<string, VocabEntry> = {}
+    const tokens = extractArabicTokens(content)
+    const expanded = new Set<string>()
+    for (const t of tokens) {
+      expanded.add(t)
+      const norm = normalizeArabicToken(t)
+      if (norm && norm !== t && norm.length > 1) expanded.add(norm)
+    }
+    for (const t of expanded) {
+      if (globalVocabMap[t]) articleVocabMap[t] = globalVocabMap[t]
+    }
+    return { ...meta, content, vocabMap: articleVocabMap }
+  })
+}
+
 // ── Extract unique Arabic tokens from content ─────────────────────────────────
 function extractArabicTokens(content: string): string[] {
   const tokens = new Set<string>()
@@ -118,6 +202,71 @@ function extractArabicTokens(content: string): string[] {
     if (bare.length > 1) tokens.add(bare)
   }
   return Array.from(tokens)
+}
+
+// ── Build vocab map for arbitrary text ────────────────────────────────────────
+export async function buildVocabMapForText(text: string): Promise<Record<string, VocabEntry>> {
+  const vocabMap: Record<string, VocabEntry> = {}
+  const tokens = extractArabicTokens(text)
+  const expanded = new Set<string>()
+  for (const t of tokens) {
+    expanded.add(t)
+    const norm = normalizeArabicToken(t)
+    if (norm && norm !== t && norm.length > 1) expanded.add(norm)
+  }
+  const tokenArray = Array.from(expanded)
+
+  if (tokenArray.length === 0) return vocabMap
+
+  try {
+    const { data: vocabData, error: vocabErr } = await serviceClient
+      .from('vocabulary')
+      .select('word_id, word_ar, word_di, word_tr, level, theme, definitions, forms')
+      .in('word_ar', tokenArray)
+
+    if (vocabErr) {
+      console.error('[buildVocabMapForText] vocab query error:', vocabErr.message)
+      return vocabMap
+    }
+
+    if (vocabData && vocabData.length > 0) {
+      for (const row of vocabData as Record<string, unknown>[]) {
+        const definitions = (parseJsonb(row.definitions) ?? []) as Array<Record<string, unknown>>
+        const primary = definitions[0] ?? null
+        const forms = (parseJsonb(row.forms) ?? []) as Array<Record<string, unknown>>
+        const pos = (forms[0]?.type as string) ?? ''
+
+        const entry: VocabEntry = {
+          id: row.word_id as number,
+          word: (row.word_ar as string) ?? '',
+          word_diacritic: (row.word_di as string) ?? '',
+          definition: (primary?.direct_english as string) ?? (primary?.english as string) ?? '',
+          pos,
+          transliteration: (row.word_tr as string) ?? '',
+          level: (row.level as string) ?? '',
+          theme: (row.theme as string) ?? '',
+        }
+
+        const wordAr = (row.word_ar as string) ?? ''
+        vocabMap[wordAr] = entry
+
+        const bareKey = stripDiacritics(wordAr)
+        if (bareKey && bareKey !== wordAr) vocabMap[bareKey] = entry
+
+        const alKey = 'ال' + bareKey
+        if (alKey !== wordAr && alKey !== bareKey) vocabMap[alKey] = entry
+
+        const normKey = normalizeArabicToken(wordAr)
+        if (normKey && normKey !== wordAr && normKey !== bareKey && normKey !== alKey) {
+          vocabMap[normKey] = entry
+        }
+      }
+    }
+  } catch (e) {
+    console.error('[buildVocabMapForText] vocab lookup failed:', e)
+  }
+
+  return vocabMap
 }
 
 // ── Single article with vocab map ─────────────────────────────────────────────
@@ -234,4 +383,95 @@ export async function getArticle(slug: string): Promise<ArticleFull | null> {
 // ── Static params helper ──────────────────────────────────────────────────────
 export function getAllArticleSlugs() {
   return getAllArticles().map((a) => ({ slug: a.slug }))
+}
+
+// ── Unified article type (local + RSS) ───────────────────────────────────────
+
+export type UnifiedArticle = {
+  id: string
+  title: string
+  summary: string
+  body: string
+  image: string
+  date: string
+  source: string
+  sourceLabel: string
+  url: string
+  isExternal: boolean
+  topics: string[]
+  cefr?: string
+  region?: string
+  vocabMap?: Record<string, VocabEntry>
+}
+
+export const SOURCE_REGION_MAP: Record<string, string> = {
+  'cnn-arabic': 'UAE',
+  'france24-arabic': 'France',
+  'al-sharq': 'Qatar',
+  'bbc-arabic': 'UK',
+  'skynews-arabia': 'UAE',
+}
+
+export function unifyLocalArticles(articles: ArticleMeta[]): UnifiedArticle[] {
+  return articles.map((a) => ({
+    id: a.slug,
+    title: a.title,
+    summary: '',
+    body: '',
+    image: a.image,
+    date: a.date,
+    source: a.source,
+    sourceLabel: a.source,
+    url: `/news/${a.slug}`,
+    isExternal: false,
+    topics: a.topics,
+    cefr: a.cefr,
+    region: SOURCE_REGION_MAP[a.source] || 'Other',
+  }))
+}
+
+export async function findArticleBySlug(slug: string): Promise<UnifiedArticle | null> {
+  // 1. Try local articles first
+  const local = await getArticle(slug)
+  if (local) {
+    return {
+      id: local.slug,
+      title: local.title,
+      summary: '',
+      body: local.content,
+      image: local.image,
+      date: local.date,
+      source: local.source,
+      sourceLabel: local.source,
+      url: `/news/${local.slug}`,
+      isExternal: false,
+      topics: local.topics,
+      cefr: local.cefr,
+      region: SOURCE_REGION_MAP[local.source] || 'Other',
+      vocabMap: local.vocabMap,
+    }
+  }
+
+  // 2. Try RSS articles
+  const { fetchRssArticles } = await import('./rss')
+  const rssArticles = await fetchRssArticles()
+  const rssMatch = rssArticles.find((a) => a.id === slug)
+  if (rssMatch) {
+    return {
+      id: rssMatch.id,
+      title: rssMatch.title,
+      summary: rssMatch.summary,
+      body: rssMatch.body,
+      image: rssMatch.image,
+      date: rssMatch.date,
+      source: rssMatch.source,
+      sourceLabel: rssMatch.sourceLabel,
+      url: rssMatch.url,
+      isExternal: true,
+      topics: rssMatch.topics,
+      region: SOURCE_REGION_MAP[rssMatch.source] || 'Other',
+    }
+  }
+
+  return null
 }
