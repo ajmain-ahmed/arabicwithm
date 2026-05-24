@@ -39,9 +39,9 @@ Key features:
 ```
 ├── app/                          # Next.js App Router
 │   ├── actions/                  # Server Actions (data fetching & mutations)
-│   │   ├── vocab.ts              # Vocab/theme fetching, progress upserts
-│   │   ├── revision.ts           # SRS session fetch, answer submission, toggle revision, custom metadata/cards
-│   │   └── profile.ts            # User profile RPC call
+│   │   ├── vocab.ts              # Vocab/theme fetching, progress upserts (~367 lines)
+│   │   ├── revision.ts           # SRS session fetch, answer submission, toggle revision, custom metadata/cards (~608 lines)
+│   │   └── profile.ts            # User profile data aggregation (~153 lines)
 │   ├── auth/callback/page.tsx    # OAuth callback handler
 │   ├── cartoons/                 # Cartoon routes
 │   │   ├── page.tsx              # Server: list all shows
@@ -49,39 +49,41 @@ Key features:
 │   │   ├── [show]/page.tsx       # Server: show detail
 │   │   ├── [show]/ShowPage.tsx   # Client: episodes list
 │   │   └── [show]/[episode]/     # Episode watch page
+│   │       ├── page.tsx          # Server: fetches episode + vocabMap
+│   │       └── EpisodePage.tsx   # Client: player, script, tooltips (~1,456 lines)
 │   ├── components/               # Shared components
-│   │   ├── navbar.tsx            # Top nav with mega-menu, mobile drawer, auth
-│   │   ├── AuthDialog.tsx        # Sign-in / register / forgot-password modal
+│   │   ├── navbar.tsx            # Top nav with mega-menu, mobile drawer, auth (~808 lines)
+│   │   ├── AuthDialog.tsx        # Sign-in / register / forgot-password modal (~468 lines)
 │   │   ├── footer.tsx            # Site footer
 │   │   ├── StudySection.tsx      # Homepage study CTA section
 │   │   ├── CartoonSection.tsx    # Homepage cartoons CTA section
 │   │   └── GlobalDataInit.tsx    # Client init wrapper: fetches custom session metadata once per app load
 │   ├── flashcards/               # Flashcard routes
 │   │   ├── page.tsx              # Server: level list
-│   │   ├── FlashcardsLandingPage.tsx
-│   │   ├── [slug]/page.tsx       # Client: theme list + quiz (~1750 lines)
-│   │   └── components/TutorialDialog.tsx
+│   │   ├── FlashcardsLandingPage.tsx  # Client: level grid (~280 lines)
+│   │   ├── [slug]/page.tsx       # Client: theme list + quiz (~1,840 lines)
+│   │   └── components/TutorialDialog.tsx  # Onboarding carousel (~220 lines)
 │   ├── lib/                      # Shared utilities
 │   │   ├── supabase/client.ts    # Browser Supabase client singleton
 │   │   ├── study.ts              # Level metadata helpers (slug/label mapping)
 │   │   ├── cartoons.ts           # File-system cartoon parsing + vocabMap building
 │   │   ├── arabic.ts             # Arabic token normalisation & diacritic stripping
 │   │   └── sm2.ts                # SM-2 spaced-repetition algorithm
-│   ├── profile/page.tsx          # User profile dashboard
-│   ├── reset-password/page.tsx   # Password reset form
-│   ├── revision/                 # SRS revision session
-│   │   ├── page.tsx              # Main session page (thin orchestrator, ~145 lines)
-│   │   ├── WelcomeScreen.tsx     # Daily vs Custom tabbed entry screen
-│   │   ├── CustomSessionConfig.tsx # Level/theme picker for custom practice
-│   │   ├── types.ts              # Shared types, queue helpers, point-scoring logic
+│   ├── profile/page.tsx          # User profile dashboard (~834 lines)
+│   ├── reset-password/page.tsx   # Password reset form (~172 lines)
+│   ├── revision/                 # SRS revision session (~3,374 lines across 21 files)
+│   │   ├── page.tsx              # Thin orchestrator (~144 lines)
+│   │   ├── WelcomeScreen.tsx     # Daily vs Custom tabbed entry screen (~378 lines)
+│   │   ├── CustomSessionConfig.tsx  # Level/theme picker for custom practice (~391 lines)
+│   │   ├── types.ts              # Shared types, queue helpers, point-scoring logic (~114 lines)
 │   │   ├── hooks/
-│   │   │   ├── useAnkiQueue.ts   # Deck queue manager (dot tracking, re-insertion)
-│   │   │   └── useRevisionSession.ts # Session orchestration hook
-│   │   └── components/           # ~14 UI sub-components (flashcard, layout, dialogs, etc.)
-│   ├── AuthContext.tsx           # React Context for Supabase auth state
+│   │   │   ├── useAnkiQueue.ts   # Deck queue manager (dot tracking, re-insertion) (~137 lines)
+│   │   │   └── useRevisionSession.ts  # Session orchestration hook (~389 lines)
+│   │   └── components/           # ~15 UI sub-components (flashcard, layout, dialogs, points, results, etc.)
+│   ├── AuthContext.tsx           # React Context for Supabase auth state (~60 lines)
 │   ├── globals.css               # Tailwind v4 import + basic variables (NOT the main design palette)
-│   ├── layout.tsx                # Root layout (Navbar + Footer + AuthProvider + GlobalDataInit)
-│   └── page.tsx                  # Homepage
+│   ├── layout.tsx                # Root layout (Navbar + Footer + AuthProvider + GlobalDataInit) (~41 lines)
+│   └── page.tsx                  # Homepage (~310 lines)
 ├── content/cartoons/             # Markdown episode content
 │   └── {show}/
 │       ├── _meta.json            # Show metadata
@@ -95,8 +97,8 @@ Key features:
 │   ├── levels/
 │   └── themes/
 ├── store/                        # Zustand client stores
-│   ├── vocabStore.ts             # Theme/vocab caching + local progress updates
-│   └── revisionStore.ts          # Revision IDs cache, session cache (TTL), custom metadata cache (TTL)
+│   ├── vocabStore.ts             # Theme/vocab caching + local progress updates (~137 lines)
+│   └── revisionStore.ts          # Revision IDs cache, session cache (TTL), custom metadata cache (TTL) (~254 lines)
 ├── next.config.ts                # Next.js config (security headers, CSP)
 ├── eslint.config.mjs             # ESLint 9 flat config (Next.js presets)
 ├── postcss.config.mjs            # Tailwind v4 PostCSS plugin
@@ -144,7 +146,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ## Code Style and Conventions
 
 - **Component types**: Server Components are the default. Mark Client Components explicitly with `'use client'` at the top of the file.
-- **Styling**: The codebase uses MUI's `sx` prop extensively for inline styling. Tailwind utility classes are almost never used. The design palette is implemented via hardcoded hex values in `sx` props rather than CSS custom properties.
+- **Styling**: The codebase uses MUI's `sx` prop extensively for inline styling. Tailwind utility classes are almost never used. The design palette is implemented via hardcoded hex values in `sx` props rather than CSS custom properties. A few components (e.g. `navbar.tsx`) declare component-local CSS custom properties in inline `<style>` blocks, but these are not global.
 - **Design palette** (commonly used literal colours):
   - `#2c1a0e` — dark bark (headings, primary text)
   - `#b8860b` — gold (accents, primary buttons, borders)
@@ -179,20 +181,29 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 ### Supabase Schema (key tables)
 - `vocabulary` — Single table containing all word data:
-  - `word_id`, `word_ar`, `word_di`, `word_tr`, `root`, `level` (varchar), `theme` (text)
-  - `forms` — JSONB array of POS + conjugations (e.g. `[{type: "verb", conjugations: {past: {con_ar, con_di, con_en, con_tr, type}}}]`)
+  - `word_id` (number, primary key)
+  - `word_ar` (Arabic word, plain)
+  - `word_di` (diacritic form)
+  - `word_tr` (transliteration)
+  - `root` (optional string)
+  - `level` (CEFR string: A0–C2)
+  - `theme` (theme name string)
   - `definitions` — JSONB array of meanings (e.g. `[{english, simple_ar, simple_ar_tr, direct_english}]`)
-  - `examples` — JSONB array of sentences (e.g. `[{ar, en, tr, ar_di}]`)
-- `progress` — User progress per word (`vocab_id` references `vocabulary.word_id`, `is_completed`, `is_in_revision`, SRS fields: `repetitions`, `interval_days`, `ease_factor`, `learning_step`, `lapses`, `last_review_at`, `next_review_at`, `last_rating`)
+  - `examples` — JSONB array of sentences (e.g. `[{ar, en, tr, ar_di, interactive?}]`)
+  - `forms` — JSONB array of POS + conjugations (e.g. `[{type: "verb", conjugations: {past: {con_ar, con_di, con_en, con_tr, type}}}]`)
+- `progress` — User progress per word (`vocab_id` references `vocabulary.word_id`):
+  - `user_id` (string, UUID)
+  - `status` (`0` = in revision, `1` = completed)
+  - SRS fields: `repetitions`, `interval_days`, `ease_factor`, `learning_step`, `lapses`, `last_review_at`, `next_review_at`, `last_rating`, `first_review_at`
 
 ### Server Actions pattern
 All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use server"`. They use:
 - `createClient` from `@supabase/supabase-js` with the service key for DB queries.
 - `createServerClient` from `@supabase/ssr` with cookie access for auth verification.
-- Direct queries against the `vocabulary` table replace all old multi-table joins.
+- Direct queries against the `vocabulary` and `progress` tables. No RPC calls are used.
 
 ### Client-side caching
-- `vocabStore.ts`: Caches theme vocab + progress indefinitely (until invalidated via `invalidateTheme` / `invalidateThemeList`). Cache keys use `${themeName}:${levelCode}`.
+- `vocabStore.ts`: Caches theme vocab + progress indefinitely (until invalidated via `invalidateTheme` / `invalidateThemeList`). Cache keys use `` `${themeName}:${levelCode}` ``.
 - `revisionStore.ts`: Caches the user's revision ID set (no TTL), the current session cards for **5 minutes**, and custom session metadata for **10 minutes**.
 
 ## Key Domain Logic
@@ -213,12 +224,12 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 
 ### Cartoon Content Pipeline
 1. Show metadata is read from `content/cartoons/{show}/_meta.json`.
-2. Episodes are `.md` files parsed with `gray-matter`. Frontmatter contains `youtubeId`, `level`, `episode`, `tags`.
+2. Episodes are `.md` files parsed with `gray-matter`. Frontmatter contains `youtubeId`, `youtubeShort`, `level`, `episode`, `tags`, `description`.
 3. The script body contains timestamps, Arabic (diacritic + plain), and English lines.
-4. At request time, Arabic tokens are extracted from the markdown and matched against the `vocab` table to build an inline `vocabMap` for tooltip lookup.
+4. At request time, Arabic tokens are extracted from the markdown and matched against the `vocabulary` table to build an inline `vocabMap` for tooltip lookup.
 
 ### Revision Session Architecture (`app/revision/page.tsx`)
-- The page is a thin orchestrator component (~145 lines) that delegates to `useRevisionSession` hook.
+- The page is a thin orchestrator component (~144 lines) that delegates to `useRevisionSession` hook.
 - `useAnkiQueue` is a custom hook that manages the card deck, dot-progress tracking, and re-insertion of "Again" cards.
 - Answers are batched locally in `pendingAnswersRef` and flushed to the server via `submitRevisionAnswersBatch`:
   - On session completion
@@ -228,7 +239,7 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 - **Custom sessions** do not touch the DB or the Zustand cache; they are pure frontend practice.
 
 ### Flashcard Quiz Architecture (`app/flashcards/[slug]/page.tsx`)
-- This is a large client component (~1750 lines) that handles theme selection, card flipping, progress tracking, and the interactive sentence-builder mini-game.
+- This is a large client component (~1,840 lines) that handles theme selection, card flipping, progress tracking, and the interactive sentence-builder mini-game.
 - Uses `@dnd-kit` for drag-and-drop word ordering in interactive examples.
 - Progress is synced via `upsertWordProgressBatch`.
 - Themes are identified by name (string) rather than numeric ID.
@@ -240,6 +251,7 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 - The CSP allows YouTube iframe embeds and the Supabase API domain.
 - All DB mutations validate the authenticated user ID server-side.
 - Input validation is present on Server Actions (e.g. `levelCode.length > 10` checks, `vocabId <= 0` guards).
+- `cartoons.ts` uses a path-traversal guard (`isPathContained`) to ensure all filesystem reads stay inside `content/cartoons/`.
 
 ## Deployment
 

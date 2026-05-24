@@ -52,9 +52,9 @@ const MEGA_MENU_ITEMS = [
         items: ['Spongebob', 'Amazing World of Gumball', 'Dragonball Z', 'Yu-Gi-Oh!', 'TMNT', 'Others']
     },
     {
-        header: 'Literature',
+        header: 'Reading',
         icon: <MenuBook sx={{ fontSize: 20, color: 'var(--forest)' }} />,
-        items: ['Visual', 'Written']
+        items: ['Visual', 'Written', 'News']
     },
     {
         header: 'Stories',
@@ -154,7 +154,7 @@ export default function Navbar() {
     const [mobileOpenSections, setMobileOpenSections] = useState<Record<string, boolean>>({
         Study: false,
         Cartoons: false,
-        Literature: false,
+        Reading: false,
         Stories: false,
     });
 
@@ -287,6 +287,11 @@ export default function Navbar() {
             } else if (section.header === 'Cartoons') {
                 const slug = CARTOON_SLUG_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-');
                 safePush(`/cartoons/${slug}`);
+            } else if (section.header === 'Reading' && item === 'News') {
+                safePush('/news');
+            } else if (section.header === 'Reading') {
+                const key = item.toLowerCase().replace(/\s+/g, '-');
+                safePush(`/learn/reading/${key}`);
             } else {
                 const key = item.toLowerCase().replace(/\s+/g, '-');
                 safePush(`/learn/${section.header.toLowerCase()}/${key}`);
@@ -300,6 +305,9 @@ export default function Navbar() {
                 closeAll();
             } else if (section.header === 'Study') {
                 safePush('/flashcards');
+                closeAll();
+            } else if (section.header === 'Reading') {
+                safePush('/news');
                 closeAll();
             }
         };

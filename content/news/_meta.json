@@ -1,0 +1,20 @@
+{
+  "sources": [
+    { "id": "bbc-arabic", "name": "BBC Arabic", "logo": "/news/logos/bbc-arabic.png" },
+    { "id": "al-jazeera", "name": "Al Jazeera", "logo": "/news/logos/al-jazeera.png" },
+    { "id": "al-arabiya", "name": "Al Arabiya", "logo": "/news/logos/al-arabiya.png" },
+    { "id": "sky-news-arabia", "name": "Sky News Arabia", "logo": "/news/logos/sky-news.png" },
+    { "id": "the-national", "name": "The National", "logo": "/news/logos/the-national.png" },
+    { "id": "reuters-arabic", "name": "Reuters Arabic", "logo": "/news/logos/reuters.png" }
+  ],
+  "topics": [
+    "Politics",
+    "Sports",
+    "Technology",
+    "Culture",
+    "Economy",
+    "Health",
+    "Environment",
+    "Middle East"
+  ]
+}

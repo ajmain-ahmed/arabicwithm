@@ -863,6 +863,24 @@ function FlashcardQuiz({
     // Both revision and completed count toward the progress percentage
     const progressPct = allCards.length > 0 ? Math.round(((revisionCount + completedCount) / allCards.length) * 100) : 0
 
+    // Progress bump animation
+    const prevProgressRef = useRef(progressPct)
+    const [progressBump, setProgressBump] = useState<{ value: number; key: number } | null>(null)
+    const bumpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    useEffect(() => {
+        if (progressPct > prevProgressRef.current) {
+            const diff = progressPct - prevProgressRef.current
+            if (bumpTimerRef.current) clearTimeout(bumpTimerRef.current)
+            setProgressBump({ value: diff, key: Date.now() })
+            bumpTimerRef.current = setTimeout(() => setProgressBump(null), 1500)
+        }
+        prevProgressRef.current = progressPct
+        return () => {
+            if (bumpTimerRef.current) clearTimeout(bumpTimerRef.current)
+        }
+    }, [progressPct])
+
     const currentCardExamples = useMemo(
         () => current ? allExamples.filter(e => e.vocab_id === current.id) : [],
         [current, allExamples]
@@ -1015,8 +1033,32 @@ function FlashcardQuiz({
                     }}
                 >
                     {/* Progress bar */}
-                    <Box sx={{ height: '2px', background: 'rgba(184,134,11,0.1)', borderRadius: '999px', mb: '1.25rem', overflow: 'hidden' }}>
-                        <Box sx={{ height: '100%', background: 'linear-gradient(90deg, #b8860b, #d4a843)', borderRadius: '999px', transition: 'width 0.4s ease', width: `${progressPct}%` }} />
+                    <Box sx={{ position: 'relative', mb: '1.25rem' }}>
+                        <Box sx={{ height: '2px', background: 'rgba(184,134,11,0.1)', borderRadius: '999px', overflow: 'hidden' }}>
+                            <Box sx={{ height: '100%', background: 'linear-gradient(90deg, #b8860b, #d4a843)', borderRadius: '999px', transition: 'width 0.4s ease', width: `${progressPct}%` }} />
+                        </Box>
+                        {progressBump && (
+                            <Fade in key={progressBump.key} timeout={{ enter: 300, exit: 500 }}>
+                                <Typography sx={{
+                                    position: 'absolute',
+                                    left: `calc(${progressPct}% - 14px)`,
+                                    top: -20,
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    color: '#2e7d32',
+                                    background: 'rgba(46,125,50,0.1)',
+                                    px: 0.6,
+                                    py: 0.2,
+                                    borderRadius: '4px',
+                                    whiteSpace: 'nowrap',
+                                    pointerEvents: 'none',
+                                    lineHeight: 1,
+                                }}>
+                                    +{progressBump.value}%
+                                </Typography>
+                            </Fade>
+                        )}
                     </Box>
 
                     {/* Status chips + progress % */}
@@ -1158,19 +1200,19 @@ function FlashcardQuiz({
                                     sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px' }}>{current.status === 'completed' ? 'Completed' : 'Complete'}</Button>
                                 <Button variant="outlined" color="warning" size="small" onClick={handleNext} disabled={isLastCard && filter !== 'all'} endIcon={<NavigateNext sx={{ fontSize: '1.1rem !important' }} />}
                                     sx={{ textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px', '&:disabled': { opacity: 0.4 } }}>
-                                    {isLastCardInTheme && filter === 'all' ? 'Next Theme' : 'Next'}
+                                    {isLastCardInTheme && filter === 'all' ? 'Next Theme' : 'Skip'}
                                 </Button>
                             </Box>
 
                             {/* Mobile action buttons */}
                             <Box sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', justifyContent: 'center', gap: '10px', mt: '1rem' }}>
-                                <Button variant="outlined" size="small" onClick={handlePrevious} disabled={!canGoBack}
+                                <Button variant="outlined" size="small" onClick={handlePrevious} disabled={!canGoBack} startIcon={<NavigateBefore sx={{ fontSize: '0.85rem !important' }} />}
                                     sx={{ ...mobileActionBtnSx, borderColor: canGoBack ? 'rgba(122,110,101,0.4)' : 'rgba(122,110,101,0.15)', color: canGoBack ? '#7a6e65' : 'rgba(122,110,101,0.3)', '&:hover': { background: 'rgba(122,110,101,0.08)' }, '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(122,110,101,0.15)' } }}>
-                                    Prev
+                                    Back
                                 </Button>
                                 <Button variant={current.status === 'revision' ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} disabled={!user} startIcon={current.status === 'revision' ? <BookmarkAdded /> : <Bookmark />} sx={mobileActionBtnSx}>Revision</Button>
                                 <Button variant={current.status === 'completed' ? 'contained' : 'outlined'} color="success" size="small" onClick={toggleComplete} disabled={!user} startIcon={current.status === 'completed' ? <DoneAll /> : <Check />} sx={mobileActionBtnSx}>{current.status === 'completed' ? 'Completed' : 'Complete'}</Button>
-                                <Button variant="outlined" size="small" onClick={handleNext} disabled={isLastCard && filter !== 'all'}
+                                <Button variant="outlined" size="small" onClick={handleNext} disabled={isLastCard && filter !== 'all'} endIcon={<NavigateNext sx={{ fontSize: '0.85rem !important' }} />}
                                     sx={{ ...mobileActionBtnSx, borderColor: isLastCard && filter !== 'all' ? 'rgba(184,134,11,0.15)' : 'rgba(184,134,11,0.45)', color: isLastCard && filter !== 'all' ? 'rgba(184,134,11,0.3)' : '#b8860b', '&:hover': { background: 'rgba(184,134,11,0.06)' }, '&.Mui-disabled': { opacity: 0.35, border: '1px solid rgba(184,134,11,0.15)' } }}>
                                     Skip
                                 </Button>
@@ -1510,6 +1552,22 @@ export default function FlashcardSlugPage() {
         })
     }, [validThemes, themeCache, level])
 
+    const goToPreviousTheme = useCallback(() => {
+        if (!selectedTheme) return
+        const currentIdx = validThemes.findIndex(t => t.theme_id === selectedTheme.theme_id)
+        if (currentIdx > 0) {
+            handleThemeSelect(validThemes[currentIdx - 1])
+        }
+    }, [selectedTheme, validThemes, handleThemeSelect])
+
+    const goToNextTheme = useCallback(() => {
+        if (!selectedTheme) return
+        const currentIdx = validThemes.findIndex(t => t.theme_id === selectedTheme.theme_id)
+        if (currentIdx >= 0 && currentIdx < validThemes.length - 1) {
+            handleThemeSelect(validThemes[currentIdx + 1])
+        }
+    }, [selectedTheme, validThemes, handleThemeSelect])
+
     const handleQuizComplete = useCallback(() => {
         if (!selectedTheme) return
         const currentIdx = validThemes.findIndex(t => t.theme_id === selectedTheme.theme_id)
@@ -1657,15 +1715,6 @@ export default function FlashcardSlugPage() {
 
             <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh', pt: { xs: 8, sm: 10 } }}>
                 <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
-                    {/* Desktop controls */}
-                    {selectedTheme && (
-                        <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-                            <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { sm: '1.6rem', md: '2rem' }, fontWeight: 700, color: '#2c1a0e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                {selectedTheme.display_name}
-                            </Typography>
-                        </Box>
-                    )}
-
                     {/* Mobile controls */}
                     {selectedTheme && (
                         <Box sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
@@ -1697,6 +1746,33 @@ export default function FlashcardSlugPage() {
                     ) : (
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' }, gap: { xs: 2, lg: 3 }, alignItems: 'start' }}>
                             <Box>
+                                {selectedTheme && (
+                                    <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                                        <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.6rem', fontWeight: 700, color: '#2c1a0e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                            {selectedTheme.display_name}
+                                        </Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <Button
+                                                size="small"
+                                                onClick={goToPreviousTheme}
+                                                disabled={validThemes.findIndex(t => t.theme_id === selectedTheme.theme_id) <= 0}
+                                                startIcon={<NavigateBefore sx={{ fontSize: '1rem !important' }} />}
+                                                sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.8rem', textTransform: 'none', borderRadius: '20px', px: 1.5, py: '4px', borderColor: 'rgba(122,110,101,0.3)', color: '#7a6e65', '&:hover': { background: 'rgba(122,110,101,0.06)', borderColor: '#7a6e65' }, '&:disabled': { opacity: 0.35, borderColor: 'rgba(122,110,101,0.15)' } }}
+                                            >
+                                                Prev
+                                            </Button>
+                                            <Button
+                                                size="small"
+                                                onClick={goToNextTheme}
+                                                disabled={validThemes.findIndex(t => t.theme_id === selectedTheme.theme_id) >= validThemes.length - 1}
+                                                endIcon={<NavigateNext sx={{ fontSize: '1rem !important' }} />}
+                                                sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.8rem', textTransform: 'none', borderRadius: '20px', px: 1.5, py: '4px', borderColor: 'rgba(122,110,101,0.3)', color: '#7a6e65', '&:hover': { background: 'rgba(122,110,101,0.06)', borderColor: '#7a6e65' }, '&:disabled': { opacity: 0.35, borderColor: 'rgba(122,110,101,0.15)' } }}
+                                            >
+                                                Next
+                                            </Button>
+                                        </Box>
+                                    </Box>
+                                )}
                                 {isLoadingVocab || !vocabTransitionReady ? (
                                     <LoadingView label="Loading words…" isLoading={isLoadingVocab} />
                                 ) : selectedTheme && activeQueue.length > 0 ? (
@@ -1739,7 +1815,7 @@ export default function FlashcardSlugPage() {
                                 )}
                             </Box>
                             {validThemes.length > 0 && (
-                                <Box sx={{ display: { xs: 'none', lg: 'block' }, position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)', mt: -5.5 }}>
+                                <Box sx={{ display: { xs: 'none', lg: 'block' }, position: 'sticky', top: 80, maxHeight: 'calc(100vh - 100px)' }}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
                                         <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
                                         <Box sx={{ width: 162, flexShrink: 0 }}>
