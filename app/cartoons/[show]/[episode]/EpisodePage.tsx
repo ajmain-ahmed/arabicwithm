@@ -34,6 +34,7 @@ import Navbar from '@/app/components/navbar'
 import { EpisodeFull, VocabEntry } from '@/app/lib/cartoons'
 import { normalizeArabicToken, stripDiacritics } from '@/app/lib/arabic'
 import { useRevisionStore } from '@/store/revisionStore'
+import { useVocabStore } from '@/store/vocabStore'
 import { useAuth } from '@/app/AuthContext'          // ← added
 
 // ─── Fallback — used before we measure the real navbar ────────────────────────
@@ -465,6 +466,7 @@ function SettingsDialog({
 ───────────────────────────────────────────── */
 function VocabDetail({
   entry,
+  secondaries = [],
   toggling,
   inRevision,
   onToggle,
@@ -472,6 +474,7 @@ function VocabDetail({
   onClose,
 }: {
   entry: VocabEntry
+  secondaries?: VocabEntry[]
   toggling: boolean
   inRevision: boolean
   onToggle: () => void
@@ -618,6 +621,104 @@ function VocabDetail({
           Sign in to save words for revision
         </Typography>
       )}
+
+      {/* ── Secondary matches (other vocab entries for same bare word) ── */}
+      {secondaries.length > 0 && (
+        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(44,26,14,0.08)' }}>
+          <Typography
+            sx={{
+              fontFamily: 'Jost, sans-serif',
+              fontSize: `calc(0.7rem * ${textScale})`,
+              fontWeight: 600,
+              color: 'var(--muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              mb: 1,
+            }}
+          >
+            Also matches
+          </Typography>
+          {secondaries.map((sec) => (
+            <Box
+              key={sec.id}
+              sx={{
+                py: 1,
+                px: 1.5,
+                mb: 0.75,
+                borderRadius: '8px',
+                background: 'rgba(44,26,14,0.03)',
+                border: '1px solid rgba(44,26,14,0.06)',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 0.5 }}>
+                {sec.level && (
+                  <Chip
+                    label={sec.level}
+                    size="small"
+                    sx={{
+                      background: LEVEL_COLORS[sec.level] ?? 'var(--forest)',
+                      color: '#fff',
+                      fontFamily: 'Jost, sans-serif',
+                      fontWeight: 600,
+                      fontSize: `calc(0.6rem * ${textScale})`,
+                      letterSpacing: '0.04em',
+                      height: 20,
+                    }}
+                  />
+                )}
+                {sec.theme && (
+                  <Chip
+                    label={sec.theme}
+                    size="small"
+                    sx={{
+                      background: 'rgba(184,134,11,0.12)',
+                      color: 'var(--gold)',
+                      fontFamily: 'Jost, sans-serif',
+                      fontWeight: 600,
+                      fontSize: `calc(0.6rem * ${textScale})`,
+                      border: '1px solid rgba(184,134,11,0.25)',
+                      height: 20,
+                    }}
+                  />
+                )}
+              </Box>
+
+              <Typography
+                sx={{
+                  fontFamily: '"EB Garamond", Georgia, serif',
+                  fontSize: `calc(1.2rem * ${textScale})`,
+                  fontWeight: 700,
+                  color: 'var(--bark)',
+                  direction: 'rtl',
+                  textAlign: 'center',
+                }}
+              >
+                {sec.word_diacritic || sec.word}
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: `calc(0.75rem * ${textScale})`,
+                  color: 'var(--muted)',
+                  textAlign: 'center',
+                }}
+              >
+                {sec.transliteration}
+              </Typography>
+              <Typography
+                sx={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: `calc(0.8rem * ${textScale})`,
+                  color: 'var(--bark)',
+                  mt: 0.5,
+                }}
+              >
+                {sec.definition}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      )}
     </Box>
   )
 }
@@ -694,25 +795,92 @@ function getStrippedForms(word: string): string[] {
   return Array.from(forms)
 }
 
-function lookupEntry(
-  part: string,
-  vocabMap: Record<string, VocabEntry>
-): VocabEntry | undefined {
+function countMatchingDiacritics(a: string, b: string): number {
+  const DIACRITICS = /[\u064B-\u065F\u0670]/g
+  const aDia = a.match(DIACRITICS) || []
+  const bDia = b.match(DIACRITICS) || []
+  let score = 0
+  const minLen = Math.min(aDia.length, bDia.length)
+  for (let i = 0; i < minLen; i++) {
+    if (aDia[i] === bDia[i]) score++
+  }
+  score -= Math.abs(aDia.length - bDia.length) * 0.5
+  return score
+}
+
+function dedupEntries(entries: VocabEntry[]): VocabEntry[] {
+  const seen = new Set<number>()
+  return entries.filter(e => {
+    if (seen.has(e.id)) return false
+    seen.add(e.id)
+    return true
+  })
+}
+
+/**
+ * Look up ALL matching vocabulary entries for a word.
+ * Returns every candidate that matches, deduplicated by word_id.
+ * The caller decides how to display them (primary + secondaries, or all equal).
+ */
+function lookupAllEntries(
+  part: string, // the word as it appears in the script (preserves diacritics)
+  vocabMap: Record<string, VocabEntry[]>,
+  diacritizedMap: Record<string, VocabEntry>,
+  diacritizedIndex: Record<string, string>
+): VocabEntry[] {
   const bare = stripDiacritics(part)
+  const all: VocabEntry[] = []
 
-  // 1. Exact bare match
-  if (vocabMap[bare]) return vocabMap[bare]
+  // ── Tier 1: Exact diacritized match against word_di ──
+  if (diacritizedMap[part]) {
+    all.push(diacritizedMap[part])
+  }
 
-  // 2. Try every stripped form (relaxed: stem can be 3+ chars)
-  for (const candidate of getStrippedForms(bare)) {
-    if (candidate !== bare && vocabMap[candidate]) {
-      return vocabMap[candidate]
+  // ── Tier 2: Script's canonical diacritized form → word_di exact match ──
+  const scriptDi = diacritizedIndex[bare]
+  if (scriptDi && diacritizedMap[scriptDi] && diacritizedMap[scriptDi].id !== all[0]?.id) {
+    all.push(diacritizedMap[scriptDi])
+  }
+
+  // ── Tier 3: All candidates from vocabMap[bare] ──
+  const candidates = vocabMap[bare]
+  if (candidates) {
+    for (const c of candidates) {
+      if (!all.some(e => e.id === c.id)) {
+        all.push(c)
+      }
     }
   }
 
-  // 3. Legacy fallback
-  const normalized = normalizeArabicToken(part)
-  return vocabMap[normalized]
+  // ── Tier 4: Client-side clitic stripping as safety net ──
+  // This catches cases where the server expansion missed a form
+  for (const candidate of getStrippedForms(bare)) {
+    if (candidate !== bare) {
+      const strippedCandidates = vocabMap[candidate]
+      if (strippedCandidates) {
+        for (const c of strippedCandidates) {
+          if (!all.some(e => e.id === c.id)) {
+            all.push(c)
+          }
+        }
+      }
+    }
+  }
+
+  // ── Tier 5: Alif-normalized fallback ──
+  const alifNorm = bare.replace(/[أإآٱ]/g, 'ا')
+  if (alifNorm !== bare) {
+    const normCandidates = vocabMap[alifNorm]
+    if (normCandidates) {
+      for (const c of normCandidates) {
+        if (!all.some(e => e.id === c.id)) {
+          all.push(c)
+        }
+      }
+    }
+  }
+
+  return all
 }
 
 /* ─────────────────────────────────────────────
@@ -721,11 +889,15 @@ function lookupEntry(
 function ArabicLineText({
   text,
   vocabMap,
+  diacritizedMap,
+  diacritizedIndex,
   textScale,
   showDiacritics,
 }: {
   text: string
-  vocabMap: Record<string, VocabEntry>
+  vocabMap: Record<string, VocabEntry[]>
+  diacritizedMap: Record<string, VocabEntry>
+  diacritizedIndex: Record<string, string>
   textScale: number
   showDiacritics: boolean
 }) {
@@ -734,8 +906,10 @@ function ArabicLineText({
   const revisionStore = useRevisionStore()
   const isInRevision = revisionStore.isInRevision
   const toggleRevision = revisionStore.toggleRevision
+  const updateUserProgressWord = useVocabStore(s => s.updateUserProgressWord)
 
   const [activeEntry, setActiveEntry] = useState<VocabEntry | null>(null)
+  const [activeSecondaries, setActiveSecondaries] = useState<VocabEntry[]>([])
   const [activePartIndex, setActivePartIndex] = useState<number | null>(null)
   const [open, setOpen] = useState(false)
   const [toggling, setToggling] = useState(false)
@@ -755,23 +929,26 @@ function ArabicLineText({
     leaveTimerRef.current = setTimeout(() => {
       setOpen(false)
       setActiveEntry(null)
+      setActiveSecondaries([])
       setActivePartIndex(null)
       childRef.current = null
     }, 50)
   }, [clearLeaveTimer])
 
-  const handleOpen = useCallback((entry: VocabEntry, el: HTMLSpanElement, partIndex: number) => {
+  const handleOpen = useCallback((entry: VocabEntry, secondaries: VocabEntry[], el: HTMLSpanElement, partIndex: number) => {
     clearLeaveTimer()
     setActiveEntry(entry)
+    setActiveSecondaries(secondaries)
     setActivePartIndex(partIndex)
     setOpen(true)
     childRef.current = el
-  }, [isInRevision, clearLeaveTimer])
+  }, [clearLeaveTimer])
 
   const handleClose = useCallback(() => {
     clearLeaveTimer()
     setOpen(false)
     setActiveEntry(null)
+    setActiveSecondaries([])
     setActivePartIndex(null)
     childRef.current = null
     lastVocabCloseAt = Date.now()
@@ -780,9 +957,11 @@ function ArabicLineText({
   const handleToggle = useCallback(async () => {
     if (!activeEntry) return
     setToggling(true)
+    const nextInRevision = !isInRevision(activeEntry.id)
     await toggleRevision(activeEntry.id)
+    updateUserProgressWord(activeEntry.id, nextInRevision ? 'revision' : null)
     setToggling(false)
-  }, [activeEntry, toggleRevision])
+  }, [activeEntry, toggleRevision, isInRevision, updateUserProgressWord])
 
   useVocabOpenTracker(open)
 
@@ -800,12 +979,26 @@ function ArabicLineText({
         if (!/[\u0600-\u06FF]+/.test(part)) {
           return <span key={i}>{part}</span>
         }
-        const entry = lookupEntry(part, vocabMap)
-        if (!entry) {
+        const matches = lookupAllEntries(part, vocabMap, diacritizedMap, diacritizedIndex)
+        if (matches.length === 0) {
           return <span key={i}>{part}</span>
         }
 
-        const isActive = activeEntry?.id === entry.id && open && activePartIndex === i
+        // Primary = best diacritic match, rest = secondaries
+        let primary = matches[0]
+        if (matches.length > 1) {
+          let bestScore = countMatchingDiacritics(part, primary.word_diacritic)
+          for (let m = 1; m < matches.length; m++) {
+            const score = countMatchingDiacritics(part, matches[m].word_diacritic)
+            if (score > bestScore) {
+              bestScore = score
+              primary = matches[m]
+            }
+          }
+        }
+        const secondaries = matches.filter(m => m.id !== primary.id)
+
+        const isActive = activeEntry?.id === primary.id && open && activePartIndex === i
 
         /* ── Mobile: tap word → bottom sheet ── */
         if (isMobile) {
@@ -814,7 +1007,7 @@ function ArabicLineText({
               <span
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleOpen(entry, e.currentTarget, i)
+                  handleOpen(primary, secondaries, e.currentTarget, i)
                 }}
                 className="vocab-word"
                 style={{
@@ -862,6 +1055,7 @@ function ArabicLineText({
                   {activeEntry && (
                     <VocabDetail
                       entry={activeEntry}
+                      secondaries={activeSecondaries}
                       toggling={toggling}
                       inRevision={activeEntry ? isInRevision(activeEntry.id) : false}
                       onToggle={handleToggle}
@@ -890,6 +1084,7 @@ function ArabicLineText({
                   <Box sx={{ p: 2.5 }}>
                     <VocabDetail
                       entry={activeEntry}
+                      secondaries={activeSecondaries}
                       toggling={toggling}
                       inRevision={activeEntry ? isInRevision(activeEntry.id) : false}
                       onToggle={handleToggle}
@@ -933,7 +1128,7 @@ function ArabicLineText({
               onClick={(e) => e.stopPropagation()}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
-                handleOpen(entry, e.currentTarget, i)
+                handleOpen(primary, secondaries, e.currentTarget, i)
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'transparent'
@@ -1403,6 +1598,8 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                                 textScale={textScale}
                                 text={showDiacritics ? line.arabicDiacritic : line.arabicPlain}
                                 vocabMap={episode.vocabMap}
+                                diacritizedMap={episode.diacritizedMap}
+                                diacritizedIndex={episode.diacritizedIndex}
                                 showDiacritics={showDiacritics}
                               />
                             </Typography>

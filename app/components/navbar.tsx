@@ -54,7 +54,7 @@ const MEGA_MENU_ITEMS = [
     {
         header: 'Reading',
         icon: <MenuBook sx={{ fontSize: 20, color: 'var(--forest)' }} />,
-        items: ['Visual', 'Written', 'News']
+        items: ['Visual', 'Written', 'News', 'Literature']
     },
     {
         header: 'Stories',
@@ -295,6 +295,8 @@ export default function Navbar() {
                 safePush(`/cartoons/${slug}`);
             } else if (section.header === 'Reading' && item === 'News') {
                 safePush('/news');
+            } else if (section.header === 'Reading' && item === 'Literature') {
+                safePush('/literature');
             } else if (section.header === 'Reading') {
                 const key = item.toLowerCase().replace(/\s+/g, '-');
                 safePush(`/learn/reading/${key}`);

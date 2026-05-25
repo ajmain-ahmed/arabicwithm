@@ -218,48 +218,59 @@ export async function buildVocabMapForText(text: string): Promise<Record<string,
 
   if (tokenArray.length === 0) return vocabMap
 
-  try {
-    const { data: vocabData, error: vocabErr } = await serviceClient
-      .from('vocabulary')
-      .select('word_id, word_ar, word_di, word_tr, level, theme, definitions, forms')
-      .in('word_ar', tokenArray)
+  // Chunk to avoid URI-too-long errors from Supabase REST API
+  const CHUNK_SIZE = 150
+  const chunks: string[][] = []
+  for (let i = 0; i < tokenArray.length; i += CHUNK_SIZE) {
+    chunks.push(tokenArray.slice(i, i + CHUNK_SIZE))
+  }
 
-    if (vocabErr) {
-      console.error('[buildVocabMapForText] vocab query error:', vocabErr.message)
-      return vocabMap
+  try {
+    const allRows: Record<string, unknown>[] = []
+    for (const chunk of chunks) {
+      const { data: vocabData, error: vocabErr } = await serviceClient
+        .from('vocabulary')
+        .select('word_id, word_ar, word_di, word_tr, level, theme, definitions, forms')
+        .in('word_ar', chunk)
+
+      if (vocabErr) {
+        console.error('[buildVocabMapForText] vocab query error:', vocabErr.message)
+        continue
+      }
+      if (vocabData) {
+        allRows.push(...(vocabData as Record<string, unknown>[]))
+      }
     }
 
-    if (vocabData && vocabData.length > 0) {
-      for (const row of vocabData as Record<string, unknown>[]) {
-        const definitions = (parseJsonb(row.definitions) ?? []) as Array<Record<string, unknown>>
-        const primary = definitions[0] ?? null
-        const forms = (parseJsonb(row.forms) ?? []) as Array<Record<string, unknown>>
-        const pos = (forms[0]?.type as string) ?? ''
+    for (const row of allRows) {
+      const definitions = (parseJsonb(row.definitions) ?? []) as Array<Record<string, unknown>>
+      const primary = definitions[0] ?? null
+      const forms = (parseJsonb(row.forms) ?? []) as Array<Record<string, unknown>>
+      const pos = (forms[0]?.type as string) ?? ''
 
-        const entry: VocabEntry = {
-          id: row.word_id as number,
-          word: (row.word_ar as string) ?? '',
-          word_diacritic: (row.word_di as string) ?? '',
-          definition: (primary?.direct_english as string) ?? (primary?.english as string) ?? '',
-          pos,
-          transliteration: (row.word_tr as string) ?? '',
-          level: (row.level as string) ?? '',
-          theme: (row.theme as string) ?? '',
-        }
+      const entry: VocabEntry = {
+        id: row.word_id as number,
+        word: (row.word_ar as string) ?? '',
+        word_diacritic: (row.word_di as string) ?? '',
+        definition: (primary?.direct_english as string) ?? (primary?.english as string) ?? '',
+        pos,
+        transliteration: (row.word_tr as string) ?? '',
+        level: (row.level as string) ?? '',
+        theme: (row.theme as string) ?? '',
+      }
 
-        const wordAr = (row.word_ar as string) ?? ''
-        vocabMap[wordAr] = entry
+      const wordAr = (row.word_ar as string) ?? ''
+      vocabMap[wordAr] = entry
 
-        const bareKey = stripDiacritics(wordAr)
-        if (bareKey && bareKey !== wordAr) vocabMap[bareKey] = entry
+      const bareKey = stripDiacritics(wordAr)
+      if (bareKey && bareKey !== wordAr) vocabMap[bareKey] = entry
 
-        const alKey = 'ال' + bareKey
-        if (alKey !== wordAr && alKey !== bareKey) vocabMap[alKey] = entry
+      const alKey = 'ال' + bareKey
+      if (alKey !== wordAr && alKey !== bareKey) vocabMap[alKey] = entry
 
-        const normKey = normalizeArabicToken(wordAr)
-        if (normKey && normKey !== wordAr && normKey !== bareKey && normKey !== alKey) {
-          vocabMap[normKey] = entry
-        }
+      const normKey = normalizeArabicToken(wordAr)
+      if (normKey && normKey !== wordAr && normKey !== bareKey && normKey !== alKey) {
+        vocabMap[normKey] = entry
       }
     }
   } catch (e) {

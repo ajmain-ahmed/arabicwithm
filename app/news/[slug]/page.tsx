@@ -75,7 +75,7 @@ export default async function Page({
   if (!article) notFound()
 
   // Build vocab map for RSS articles so inline translation works
-  if (article.isExternal && !article.vocabMap) {
+  if (article.isExternal && Object.keys(article.vocabMap || {}).length === 0) {
     const text = (article.body || '') + ' ' + (article.summary || '')
     article.vocabMap = await buildVocabMapForText(text)
   }

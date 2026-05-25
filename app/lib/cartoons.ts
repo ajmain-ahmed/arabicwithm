@@ -59,7 +59,9 @@ export interface VocabEntry {
 export interface EpisodeFull extends EpisodeMeta {
   content: string
   show: string
-  vocabMap: Record<string, VocabEntry>
+  vocabMap: Record<string, VocabEntry[]>     // ← array: multiple entries per bare key
+  diacritizedMap: Record<string, VocabEntry> // ← NEW: exact word_di lookup
+  diacritizedIndex: Record<string, string>   // ← NEW: bare → diacritized form from script
 }
 
 // ── All shows ──────────────────────────────────────────────────────────────────
@@ -135,14 +137,16 @@ export function getEpisodesForShow(show: string): EpisodeMeta[] {
 }
 
 // ── Extract unique Arabic tokens from markdown content ─────────────────────────
-function extractArabicTokens(content: string): string[] {
-  const tokens = new Set<string>()
+function extractArabicTokens(content: string): { bare: string; diacritized: string }[] {
+  const seen = new Map<string, string>() // bare → first diacritized occurrence
   const matches = content.match(/[\u0600-\u06FF]+/g) || []
   for (const word of matches) {
     const bare = stripDiacritics(word)
-    if (bare.length > 1) tokens.add(bare)
+    if (bare.length > 1 && !seen.has(bare)) {
+      seen.set(bare, word) // store the first diacritized form we see
+    }
   }
-  return Array.from(tokens)
+  return Array.from(seen.entries()).map(([bare, diacritized]) => ({ bare, diacritized }))
 }
 
 // ── Single episode with full content ──────────────────────────────────────────
@@ -153,20 +157,90 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
   const raw = fs.readFileSync(filePath, 'utf8')
   const { data, content } = matter(raw)
 
-  const tokens = extractArabicTokens(content)
+  const tokenPairs = extractArabicTokens(content)
 
-  // Expand tokens to include normalized (proclitic-stripped) forms
+  // ── Expanded token set for DB query ──────────────────────────────────────────
+  // We must generate ALL possible stripped forms because the DB stores base
+  // forms (e.g. "كتاب") but scripts contain cliticized forms (e.g. "كتابهم").
+  // The client strips proclitics/enclitics aggressively, so we must match
+  // that here to ensure every base form is fetched.
+
+  const PROCLITICS = [
+    'ال', 'و', 'ف', 'ب', 'ل', 'ك', 'س', 'أ', 'سأ',
+    'وب', 'فب', 'ول', 'فل', 'وبال', 'فبال', 'ولل', 'فلل',
+    'بال', 'فال', 'وال', 'لل', 'كال', 'وس', 'فس',
+  ]
+
+  const ENCLITICS = [
+    'ك', 'ه', 'ها', 'هم', 'هن', 'نا', 'ي', 'ن',
+    'كما', 'هما', 'تا', 'تما', 'ان', 'ين', 'ون',
+    'ات', 'تك', 'ته', 'تها', 'تهم', 'تهن', 'تنا', 'تي', 'تن',
+  ]
+
+  function getAllStrippedForms(word: string): string[] {
+    const forms = new Set<string>()
+    forms.add(word)
+
+    // Ta marbuta ↔ heh alternation
+    if (word.endsWith('ة')) {
+      forms.add(word.slice(0, -1) + 'ه')
+    } else if (word.endsWith('ه')) {
+      forms.add(word.slice(0, -1) + 'ة')
+    }
+
+    // Alif normalization (أ/إ/آ/ٱ → ا)
+    const alifNorm = word.replace(/[أإآٱ]/g, 'ا')
+    if (alifNorm !== word) {
+      forms.add(alifNorm)
+    }
+
+    // Single proclitic
+    for (const p of PROCLITICS) {
+      if (word.startsWith(p) && word.length - p.length >= 3) {
+        forms.add(word.slice(p.length))
+      }
+    }
+
+    // Single enclitic
+    for (const e of ENCLITICS) {
+      if (word.endsWith(e) && word.length - e.length >= 3) {
+        forms.add(word.slice(0, -e.length))
+      }
+    }
+
+    // Proclitic + enclitic combined
+    for (const p of PROCLITICS) {
+      for (const e of ENCLITICS) {
+        if (
+          word.startsWith(p) &&
+          word.endsWith(e) &&
+          word.length - p.length - e.length >= 3
+        ) {
+          forms.add(word.slice(p.length, -e.length))
+        }
+      }
+    }
+
+    return Array.from(forms)
+  }
+
   const expandedTokens = new Set<string>()
-  for (const t of tokens) {
-    expandedTokens.add(t)
-    const norm = normalizeArabicToken(t)
-    if (norm && norm !== t && norm.length > 1) {
-      expandedTokens.add(norm)
+  const diacritizedIndex: Record<string, string> = {}
+
+  for (const { bare, diacritized } of tokenPairs) {
+    expandedTokens.add(bare)
+    diacritizedIndex[bare] = diacritized
+    for (const form of getAllStrippedForms(bare)) {
+      if (form.length > 1) {
+        expandedTokens.add(form)
+      }
     }
   }
   const tokenArray = Array.from(expandedTokens)
+  // ── end expanded token set ───────────────────────────────────────────────────
 
-  let vocabMap: Record<string, VocabEntry> = {}
+  let vocabMap: Record<string, VocabEntry[]> = {}
+  let diacritizedMap: Record<string, VocabEntry> = {}
   if (tokenArray.length > 0) {
     try {
       // Fetch matching vocab rows from the new vocabulary table
@@ -185,8 +259,8 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
         for (const row of vocabData as any[]) {
           const definitions = parseJsonb(row.definitions) ?? []
           const primary = definitions[0] ?? null
-          const forms = parseJsonb(row.forms) ?? []
-          const pos = forms[0]?.type ?? ''
+          const formsJson = parseJsonb(row.forms) ?? []
+          const pos = formsJson[0]?.type ?? ''
 
           const entry: VocabEntry = {
             id: row.word_id,
@@ -199,21 +273,41 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
             theme: row.theme ?? '',
           }
 
-          vocabMap[row.word_ar] = entry
-
-          const bareKey = stripDiacritics(row.word_ar)
-          if (bareKey && bareKey !== row.word_ar) {
-            vocabMap[bareKey] = entry
+          // Helper to push entry into vocabMap array (deduped by word_id)
+          const pushEntry = (key: string) => {
+            if (!vocabMap[key]) vocabMap[key] = []
+            if (!vocabMap[key].some((e: VocabEntry) => e.id === entry.id)) {
+              vocabMap[key].push(entry)
+            }
           }
 
+          pushEntry(row.word_ar)
+          diacritizedMap[row.word_di] = entry  // ← exact diacritized lookup
+
+          const bareKey = stripDiacritics(row.word_ar)
+          if (bareKey && bareKey !== row.word_ar) pushEntry(bareKey)
+
           const alKey = 'ال' + bareKey
-          if (alKey !== row.word_ar && alKey !== bareKey) {
-            vocabMap[alKey] = entry
+          if (alKey !== row.word_ar && alKey !== bareKey) pushEntry(alKey)
+
+          // Ta marbuta cross-key
+          if (bareKey.endsWith('ة')) {
+            const hehVariant = bareKey.slice(0, -1) + 'ه'
+            if (hehVariant !== bareKey) pushEntry(hehVariant)
+          } else if (bareKey.endsWith('ه')) {
+            const taVariant = bareKey.slice(0, -1) + 'ة'
+            if (taVariant !== bareKey) pushEntry(taVariant)
+          }
+
+          // Alif-normalized key
+          const alifNormKey = bareKey.replace(/[أإآٱ]/g, 'ا')
+          if (alifNormKey !== bareKey && alifNormKey !== row.word_ar) {
+            pushEntry(alifNormKey)
           }
 
           const normKey = normalizeArabicToken(row.word_ar)
           if (normKey && normKey !== row.word_ar && normKey !== bareKey && normKey !== alKey) {
-            vocabMap[normKey] = entry
+            pushEntry(normKey)
           }
         }
 
@@ -236,6 +330,8 @@ export async function getEpisode(show: string, episode: string): Promise<Episode
     description: data.description ?? undefined,
     content,
     vocabMap,
+    diacritizedMap,
+    diacritizedIndex,
   }
 }
 

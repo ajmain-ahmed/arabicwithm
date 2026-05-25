@@ -1,4 +1,4 @@
-import { getAllArticlesWithVocab, SOURCE_REGION_MAP } from '@/app/lib/news'
+import { getAllArticlesWithVocab, SOURCE_REGION_MAP, buildVocabMapForText } from '@/app/lib/news'
 import { fetchRssArticles } from '@/app/lib/rss'
 import NewsPage from './NewsPage'
 
@@ -34,6 +34,10 @@ export default async function Page() {
     vocabMap: a.vocabMap,
   }))
 
+  // Build a single vocab map for all RSS article titles + summaries
+  const rssText = rssArticles.map(a => `${a.title} ${a.summary || ''} ${a.body || ''}`).join(' ')
+  const rssVocabMap = rssText.trim() ? await buildVocabMapForText(rssText) : {}
+
   const rssUnified = rssArticles.map((a) => ({
     id: a.id,
     title: a.title,
@@ -47,6 +51,7 @@ export default async function Page() {
     isExternal: true as const,
     topics: a.topics,
     region: SOURCE_REGION_MAP[a.source] || 'Other',
+    vocabMap: rssVocabMap,
   }))
 
   const PRIORITY_SOURCES = ['cnn-arabic', 'skynews-arabia', 'france24-arabic', 'bbc-arabic']

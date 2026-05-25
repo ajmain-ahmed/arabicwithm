@@ -54,7 +54,7 @@ export async function getAllLevels(): Promise<LevelMeta[]> {
   const levelThemeSets = new Map<string, Set<string>>()
 
   for (const v of vocabData ?? []) {
-    const level = v.level
+    const level = (v.level ?? '').toString().trim().toUpperCase()
     const theme = v.theme
     if (!level) continue
 

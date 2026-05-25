@@ -15,6 +15,7 @@ import { Close } from '@mui/icons-material'
 import { useMediaQuery } from '@mui/material'
 import { stripDiacritics, normalizeArabicToken } from '@/app/lib/arabic'
 import { useRevisionStore } from '@/store/revisionStore'
+import { useVocabStore } from '@/store/vocabStore'
 import { useAuth } from '@/app/AuthContext'
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -291,6 +292,7 @@ export default function InlineVocabText({
   const revisionStore = useRevisionStore()
   const isInRevision = revisionStore.isInRevision
   const toggleRevision = revisionStore.toggleRevision
+  const updateUserProgressWord = useVocabStore(s => s.updateUserProgressWord)
 
   const [activeEntry, setActiveEntry] = useState<InlineVocabEntry | null>(null)
   const [activePartIndex, setActivePartIndex] = useState<number | null>(null)
@@ -336,9 +338,11 @@ export default function InlineVocabText({
   const handleToggle = useCallback(async () => {
     if (!activeEntry) return
     setToggling(true)
+    const nextInRevision = !isInRevision(activeEntry.id)
     await toggleRevision(activeEntry.id)
+    updateUserProgressWord(activeEntry.id, nextInRevision ? 'revision' : null)
     setToggling(false)
-  }, [activeEntry, toggleRevision])
+  }, [activeEntry, toggleRevision, isInRevision, updateUserProgressWord])
 
   useEffect(() => {
     return () => { clearLeaveTimer() }

@@ -3,6 +3,8 @@
 import { create } from "zustand"
 import type { VocabRow, WordProgress, ThemeProgress, ExampleRow } from "@/app/actions/vocab"
 import { fetchThemeVocabWithProgress, fetchThemesWithProgress } from "@/app/actions/vocab"
+import type { ProgressWord } from "@/app/actions/profile"
+import { fetchUserProgressWords as fetchUserProgressWordsServer } from "@/app/actions/profile"
 
 interface ThemeCache {
   vocab: VocabRow[]
@@ -33,6 +35,14 @@ interface VocabStore {
   ) => void
   invalidateTheme: (themeName: string, levelCode?: string) => void
   invalidateThemeList: (levelCode: string) => void
+
+  // Global user progress words (used by profile page)
+  userProgressWords: ProgressWord[] | null
+  userProgressLoading: boolean
+  userProgressInitialized: boolean
+  fetchUserProgressWords: () => Promise<void>
+  updateUserProgressWord: (vocabId: number, status: 'revision' | 'completed' | null) => void
+  invalidateUserProgress: () => void
 }
 
 export const useVocabStore = create<VocabStore>((set, get) => ({
@@ -40,6 +50,11 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
   themeListCache: {},
   loadingThemeId: null,
   error: null,
+
+  // Global user progress words
+  userProgressWords: null,
+  userProgressLoading: false,
+  userProgressInitialized: false,
 
   fetchTheme: async (themeName: string, levelCode: string) => {
     const cacheKey = `${themeName}:${levelCode}`
@@ -133,5 +148,43 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
       delete next[levelCode]
       return { themeListCache: next }
     })
+  },
+
+  fetchUserProgressWords: async () => {
+    if (get().userProgressInitialized || get().userProgressLoading) return
+    set({ userProgressLoading: true })
+    try {
+      const words = await fetchUserProgressWordsServer()
+      set({ userProgressWords: words, userProgressLoading: false, userProgressInitialized: true })
+    } catch (err: any) {
+      set({ error: err.message, userProgressLoading: false })
+    }
+  },
+
+  updateUserProgressWord: (vocabId: number, status: 'revision' | 'completed' | null) => {
+    set((state) => {
+      if (!state.userProgressWords) return state
+      const exists = state.userProgressWords.find(w => w.vocab_id === vocabId)
+      if (status === null) {
+        // Remove from progress words
+        return {
+          userProgressWords: state.userProgressWords.filter(w => w.vocab_id !== vocabId),
+        }
+      }
+      if (exists) {
+        return {
+          userProgressWords: state.userProgressWords.map(w =>
+            w.vocab_id === vocabId ? { ...w, status } : w
+          ),
+        }
+      }
+      // Word not in cache — we don't have its metadata (word_ar, etc.) here.
+      // The next time the user visits the profile page, a fresh fetch will pick it up.
+      return state
+    })
+  },
+
+  invalidateUserProgress: () => {
+    set({ userProgressWords: null, userProgressInitialized: false })
   },
 }))

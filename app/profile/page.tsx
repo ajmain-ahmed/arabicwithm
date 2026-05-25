@@ -18,7 +18,8 @@ import {
   Accordion, AccordionSummary, AccordionDetails,
 } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
-import { fetchUserProfile, fetchUserProgressWords, type ProfileData, type LevelStat, type ProgressWord } from '@/app/actions/profile'
+import { fetchUserProfile, type ProfileData, type LevelStat, type ProgressWord } from '@/app/actions/profile'
+import { useVocabStore } from '@/store/vocabStore'
 import { supabase } from '@/app/lib/supabase/client'
 
 const CSS = `
@@ -493,30 +494,42 @@ function SettingsSection({ userEmail }: { userEmail: string }) {
 }
 
 function WordsSection() {
-  const [words, setWords] = useState<ProgressWord[]>([])
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'revision' | 'completed'>('all')
   const [sortKey, setSortKey] = useState<'word' | 'level' | 'theme' | 'date'>('word')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
+  const {
+    userProgressWords,
+    userProgressLoading,
+    userProgressInitialized,
+    fetchUserProgressWords,
+  } = useVocabStore()
+
   useEffect(() => {
-    let cancelled = false
-    const timer = setTimeout(() => {
-      setLoading(true)
-      fetchUserProgressWords(
-        statusFilter === 'all' ? undefined : statusFilter,
-        search.trim() || undefined
+    if (!userProgressInitialized) {
+      fetchUserProgressWords()
+    }
+  }, [userProgressInitialized, fetchUserProgressWords])
+
+  const filteredWords = useMemo(() => {
+    let words = userProgressWords ?? []
+    if (statusFilter !== 'all') {
+      words = words.filter(w => w.status === statusFilter)
+    }
+    if (search.trim()) {
+      const term = search.trim().toLowerCase()
+      words = words.filter(w =>
+        (w.word_ar ?? '').toLowerCase().includes(term) ||
+        (w.word_tr ?? '').toLowerCase().includes(term) ||
+        (w.theme ?? '').toLowerCase().includes(term)
       )
-        .then(data => { if (!cancelled) setWords(data) })
-        .catch(err => { if (!cancelled) console.error(err) })
-        .finally(() => { if (!cancelled) setLoading(false) })
-    }, 300)
-    return () => { cancelled = true; clearTimeout(timer) }
-  }, [statusFilter, search])
+    }
+    return words
+  }, [userProgressWords, statusFilter, search])
 
   const sortedWords = useMemo(() => {
-    const sorted = [...words]
+    const sorted = [...filteredWords]
     sorted.sort((a, b) => {
       let cmp = 0
       if (sortKey === 'word') cmp = (a.word_ar || '').localeCompare(b.word_ar || '')
@@ -526,7 +539,7 @@ function WordsSection() {
       return sortDir === 'asc' ? cmp : -cmp
     })
     return sorted
-  }, [words, sortKey, sortDir])
+  }, [filteredWords, sortKey, sortDir])
 
   const toggleSort = (key: 'word' | 'level' | 'theme' | 'date') => {
     if (sortKey === key) {
@@ -618,7 +631,7 @@ function WordsSection() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {loading ? (
+                {userProgressLoading ? (
                   [...Array(5)].map((_, i) => (
                     <TableRow key={i}>
                       <TableCell colSpan={5}><Skeleton variant="text" width="60%" height={20} /></TableCell>
@@ -684,7 +697,7 @@ function WordsSection() {
 
         {/* Mobile cards */}
         <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 1.5 }}>
-          {loading ? (
+          {userProgressLoading ? (
             [...Array(4)].map((_, i) => (
               <Box key={i} sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.1)', borderRadius: '8px', p: 2 }}>
                 <Skeleton variant="text" width="50%" height={24} sx={{ mb: 0.5 }} />
