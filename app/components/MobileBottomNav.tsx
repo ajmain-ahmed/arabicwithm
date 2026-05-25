@@ -31,32 +31,19 @@ function getActiveValue(pathname: string): string {
   return ''
 }
 
-function getIOSBottomOffset(): string {
-  if (typeof navigator === 'undefined') return 'calc(8px + env(safe-area-inset-bottom))'
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
-  // On iOS Safari the visual viewport already sits above the bottom URL bar,
-  // so we only need the safe-area inset (home indicator). Adding extra px
-  // creates a double gap. On Android (top URL bar) we add a small float.
-  return isIOS
-    ? 'env(safe-area-inset-bottom)'
-    : 'calc(8px + env(safe-area-inset-bottom))'
-}
-
 export default function MobileBottomNav() {
   const router = useRouter()
   const pathname = usePathname()
   const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
-  const [bottomOffset, setBottomOffset] = useState('calc(8px + env(safe-area-inset-bottom))')
   const activeValue = getActiveValue(pathname)
 
   useEffect(() => {
     setMounted(true)
-    setBottomOffset(getIOSBottomOffset())
   }, [])
 
   if (!mounted) {
-    return <Box sx={{ display: { xs: 'block', md: 'none' }, height: 72 }} />
+    return <Box sx={{ display: { xs: 'block', md: 'none' }, height: 64 }} />
   }
 
   const handleChange = (_: React.SyntheticEvent, newValue: string) => {
@@ -70,26 +57,14 @@ export default function MobileBottomNav() {
 
   return (
     <>
-      {/* Floating pill container */}
       <Box
         sx={{
           position: 'fixed',
-          bottom: bottomOffset,
-          left: '50%',
-          transform: 'translateX(-50%)',
+          bottom: 0,
+          left: 0,
+          right: 0,
           zIndex: 1200,
-          display: { xs: 'flex', md: 'none' },
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'rgba(255,255,255,0.94)',
-          backdropFilter: 'blur(16px) saturate(1.4)',
-          WebkitBackdropFilter: 'blur(16px) saturate(1.4)',
-          borderRadius: '9999px',
-          border: '1px solid rgba(184,134,11,0.18)',
-          boxShadow: '0 12px 40px rgba(44,26,14,0.15), 0 2px 8px rgba(44,26,14,0.08)',
-          px: { xs: 1.5, sm: 2.5 },
-          py: 0.75,
-          maxWidth: 'calc(100vw - 24px)',
+          display: { xs: 'block', md: 'none' },
         }}
       >
         <BottomNavigation
@@ -97,26 +72,23 @@ export default function MobileBottomNav() {
           onChange={handleChange}
           showLabels
           sx={{
-            background: 'transparent',
+            background: 'rgba(255,255,255,0.98)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderTop: '1px solid rgba(184,134,11,0.15)',
             height: 56,
-            minWidth: 0,
-            width: 'auto',
+            pb: 'env(safe-area-inset-bottom)',
             '& .MuiBottomNavigationAction-root': {
               fontFamily: 'Jost, sans-serif',
               fontSize: '0.62rem',
               fontWeight: 500,
               letterSpacing: '0.03em',
               color: '#7a6e65',
-              minWidth: { xs: 60, sm: 72 },
-              maxWidth: { xs: 72, sm: 84 },
-              padding: '6px 8px',
-              borderRadius: '9999px',
-              transition: 'all 0.2s ease',
-              gap: 0.5,
+              minWidth: 0,
+              padding: '6px 0',
               '&.Mui-selected': {
                 color: '#b8860b',
                 fontWeight: 600,
-                background: 'rgba(184,134,11,0.1)',
               },
             },
             '& .MuiBottomNavigationAction-label': {
@@ -136,8 +108,8 @@ export default function MobileBottomNav() {
           ))}
         </BottomNavigation>
       </Box>
-      {/* Spacer: pill height (56) + float offset (~30) — only on mobile */}
-      <Box sx={{ display: { xs: 'block', md: 'none' }, height: 72 }} />
+      {/* Spacer: accounts for nav height (56) + safe-area — only on mobile */}
+      <Box sx={{ display: { xs: 'block', md: 'none' }, height: 64 }} />
     </>
   )
 }
