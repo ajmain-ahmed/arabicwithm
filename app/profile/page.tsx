@@ -6,7 +6,6 @@ import {
   Box, Container, Typography, Button, Skeleton, LinearProgress,
   Avatar, Fade, Grid, TextField, Chip, Table, TableHead, TableBody,
   TableRow, TableCell, TableContainer, Paper, IconButton, Tabs, Tab,
-  BottomNavigation, BottomNavigationAction,
 } from '@mui/material'
 import {
   LogoutOutlined, SettingsOutlined, SupportOutlined,
@@ -1047,7 +1046,38 @@ function ProfilePageInner() {
           </Container>
         </Box>
 
-        <Box sx={{ display: { xs: 'block', md: 'none' }, pb: 9 }}>
+        <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+          {/* Mobile tabs */}
+          <Container maxWidth="lg" sx={{ pt: 3, pb: 1 }}>
+            <Tabs
+              value={activeSection}
+              onChange={(_, newValue) => handleNavClick(newValue as Section)}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{
+                minHeight: 40,
+                '& .MuiTabs-flexContainer': { gap: 0.5 },
+                '& .MuiTabs-indicator': { background: '#b8860b', height: 2 },
+                '& .MuiTab-root': {
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: '0.82rem',
+                  fontWeight: 500,
+                  textTransform: 'none',
+                  color: '#7a6e65',
+                  minHeight: 36,
+                  px: 2,
+                  borderRadius: '6px',
+                  '&.Mui-selected': { color: '#b8860b', fontWeight: 600, background: 'rgba(184,134,11,0.06)' },
+                },
+              }}
+            >
+              {NAV_ITEMS.map(item => (
+                <Tab key={item.id} value={item.id} label={item.label} icon={item.icon as React.ReactElement} iconPosition="start" />
+              ))}
+              <Tab value="signout" label="Sign Out" icon={<LogoutOutlined sx={{ fontSize: 18 }} />} iconPosition="start" sx={{ color: '#c0392b', '&.Mui-selected': { color: '#c0392b' } }} />
+            </Tabs>
+          </Container>
+
           <Container maxWidth="lg" sx={{ py: 3 }}>
             {activeSection === 'stats' && (
               <StatsSection
@@ -1061,59 +1091,6 @@ function ProfilePageInner() {
             {activeSection === 'settings' && <SettingsSection userEmail={profile.email} />}
             {activeSection === 'support' && <SupportSection />}
           </Container>
-
-          <BottomNavigation
-            value={activeSection}
-            onChange={(_, newValue) => {
-              if (newValue === 'signout') {
-                handleSignOut()
-              } else {
-                handleNavClick(newValue as Section)
-              }
-            }}
-            showLabels
-            sx={{
-              position: 'fixed',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              zIndex: 100,
-              background: '#fff',
-              borderTop: '1px solid var(--border)',
-              boxShadow: '0 -4px 20px rgba(44,26,14,0.08)',
-              height: 64,
-              '& .MuiBottomNavigationAction-root': {
-                fontFamily: 'Jost, sans-serif',
-                fontSize: '0.62rem',
-                fontWeight: 500,
-                letterSpacing: '0.03em',
-                color: 'var(--muted)',
-                minWidth: 0,
-                padding: '6px 2px',
-                '&.Mui-selected': { color: 'var(--gold)', fontWeight: 600 },
-              },
-              '& .MuiBottomNavigationAction-label': {
-                fontFamily: 'Jost, sans-serif',
-                fontSize: '0.62rem',
-              },
-              '& .MuiSvgIcon-root': { fontSize: 20 },
-            }}
-          >
-            {NAV_ITEMS.map(item => (
-              <BottomNavigationAction
-                key={item.id}
-                value={item.id}
-                label={item.label}
-                icon={item.icon}
-              />
-            ))}
-            <BottomNavigationAction
-              value="signout"
-              label="Sign Out"
-              icon={<LogoutOutlined sx={{ fontSize: 20 }} />}
-              sx={{ '&.Mui-selected': { color: '#c0392b !important' } }}
-            />
-          </BottomNavigation>
         </Box>
       </Box>
     </>

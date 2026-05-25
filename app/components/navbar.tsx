@@ -173,6 +173,12 @@ export default function Navbar() {
         };
     }, []);
 
+    useEffect(() => {
+        const handler = () => setAuthDialogOpen(true);
+        window.addEventListener('open-auth-dialog', handler);
+        return () => window.removeEventListener('open-auth-dialog', handler);
+    }, []);
+
     const scheduleClose = useCallback(() => {
         if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
         closeTimerRef.current = setTimeout(() => {

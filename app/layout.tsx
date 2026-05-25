@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
+import MobileBottomNav from "./components/MobileBottomNav";
 import { AuthProvider } from './AuthContext'
 import GlobalDataInit from '@/app/components/GlobalDataInit'
 
@@ -35,6 +36,7 @@ export default function RootLayout({
             {children}
           </GlobalDataInit>
           <Footer />
+          <MobileBottomNav />
         </AuthProvider>
       </body>
     </html>
