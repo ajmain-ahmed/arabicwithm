@@ -290,6 +290,146 @@ export async function fetchRevisionVocabIds(): Promise<number[]> {
   return (data ?? []).map((r) => Number(r.vocab_id))
 }
 
+/* ── admin helpers ── */
+
+const ADMIN_UID = process.env.ADMIN ?? ''
+
+export async function isAdminUser(): Promise<boolean> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId || !ADMIN_UID) return false
+  return userId === ADMIN_UID
+}
+
+export type VocabUpdateInput = {
+  word_ar?: string
+  word_di?: string
+  word_tr?: string
+  root?: string | null
+  level?: string
+  theme?: string
+  forms?: unknown
+  definitions?: unknown
+  examples?: unknown
+}
+
+export async function updateVocabWord(
+  wordId: number,
+  data: VocabUpdateInput
+): Promise<void> {
+  if (!Number.isFinite(wordId) || wordId <= 0) {
+    throw new Error('Invalid wordId')
+  }
+  const isAdmin = await isAdminUser()
+  if (!isAdmin) throw new Error('Forbidden')
+
+  const payload: Record<string, unknown> = {}
+  if (data.word_ar !== undefined) payload.word_ar = data.word_ar
+  if (data.word_di !== undefined) payload.word_di = data.word_di
+  if (data.word_tr !== undefined) payload.word_tr = data.word_tr
+  if (data.root !== undefined) payload.root = data.root
+  if (data.level !== undefined) payload.level = data.level
+  if (data.theme !== undefined) payload.theme = data.theme
+  if (data.forms !== undefined) payload.forms = data.forms
+  if (data.definitions !== undefined) payload.definitions = data.definitions
+  if (data.examples !== undefined) payload.examples = data.examples
+
+  const { error } = await serviceClient
+    .from('vocabulary')
+    .update(payload)
+    .eq('word_id', wordId)
+
+  if (error) throw new Error(error.message)
+}
+
+export async function deleteVocabWord(wordId: number): Promise<void> {
+  if (!Number.isFinite(wordId) || wordId <= 0) {
+    throw new Error('Invalid wordId')
+  }
+  const isAdmin = await isAdminUser()
+  if (!isAdmin) throw new Error('Forbidden')
+
+  const { error } = await serviceClient
+    .from('vocabulary')
+    .delete()
+    .eq('word_id', wordId)
+
+  if (error) throw new Error(error.message)
+}
+
+export async function createVocabWord(
+  data: Omit<VocabUpdateInput, never> & { word_id?: number }
+): Promise<number> {
+  const isAdmin = await isAdminUser()
+  if (!isAdmin) throw new Error('Forbidden')
+
+  const payload: Record<string, unknown> = {
+    word_ar: data.word_ar ?? '',
+    word_di: data.word_di ?? '',
+    word_tr: data.word_tr ?? '',
+    root: data.root ?? null,
+    level: data.level ?? 'A0',
+    theme: data.theme ?? 'Untitled',
+    forms: data.forms ?? [],
+    definitions: data.definitions ?? [],
+    examples: data.examples ?? [],
+  }
+  if (data.word_id !== undefined) payload.word_id = data.word_id
+
+  const { data: result, error } = await serviceClient
+    .from('vocabulary')
+    .insert(payload)
+    .select('word_id')
+    .single()
+
+  if (error) throw new Error(error.message)
+  return result?.word_id ?? 0
+}
+
+export type RawVocabRow = {
+  word_id: number
+  word_ar: string
+  word_di: string
+  word_tr: string
+  root: string | null
+  level: string
+  theme: string
+  forms: unknown
+  definitions: unknown
+  examples: unknown
+  created_at: string | null
+}
+
+export async function fetchRawVocabWord(wordId: number): Promise<RawVocabRow | null> {
+  if (!Number.isFinite(wordId) || wordId <= 0) return null
+  const isAdmin = await isAdminUser()
+  if (!isAdmin) throw new Error('Forbidden')
+
+  const { data, error } = await serviceClient
+    .from('vocabulary')
+    .select('word_id, word_ar, word_di, word_tr, root, level, theme, forms, definitions, examples, created_at')
+    .eq('word_id', wordId)
+    .single()
+
+  if (error || !data) {
+    console.error('[fetchRawVocabWord] error:', error?.message)
+    return null
+  }
+
+  return {
+    word_id: data.word_id,
+    word_ar: data.word_ar ?? '',
+    word_di: data.word_di ?? '',
+    word_tr: data.word_tr ?? '',
+    root: data.root ?? null,
+    level: data.level ?? '',
+    theme: data.theme ?? '',
+    forms: data.forms,
+    definitions: data.definitions,
+    examples: data.examples,
+    created_at: data.created_at ?? null,
+  }
+}
+
 /* ── upsert progress ── */
 export async function upsertWordProgress({
   vocabId,

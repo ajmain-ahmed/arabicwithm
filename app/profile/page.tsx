@@ -4,19 +4,21 @@ import React, { useEffect, useMemo, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Box, Container, Typography, Button, Skeleton, LinearProgress,
-  Avatar, Fade, Grid,
+  Avatar, Fade, Grid, TextField, Chip, Table, TableHead, TableBody,
+  TableRow, TableCell, TableContainer, Paper, IconButton, Tabs, Tab,
 } from '@mui/material'
 import {
   LogoutOutlined, SettingsOutlined, SupportOutlined,
   BarChartOutlined, CheckCircleOutlined, MailOutlineOutlined,
   LocalShippingOutlined, InventoryOutlined, ShoppingBagOutlined,
   ChevronRight, ArrowForwardIos, ExpandMore,
+  Search, Sort, FilterList, School, Bookmark,
 } from '@mui/icons-material'
 import {
   Accordion, AccordionSummary, AccordionDetails,
 } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
-import { fetchUserProfile, type ProfileData, type LevelStat } from '@/app/actions/profile'
+import { fetchUserProfile, fetchUserProgressWords, type ProfileData, type LevelStat, type ProgressWord } from '@/app/actions/profile'
 import { supabase } from '@/app/lib/supabase/client'
 
 const CSS = `
@@ -44,11 +46,12 @@ const CSS = `
   .support-card:hover{box-shadow:0 8px 32px rgba(44,26,14,0.08);}
 `
 
-type Section = 'stats' | 'settings' | 'support'
-const validTabs: Section[] = ['stats', 'settings', 'support']
+type Section = 'stats' | 'words' | 'settings' | 'support'
+const validTabs: Section[] = ['stats', 'words', 'settings', 'support']
 
 const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'stats', label: 'Stats', icon: <BarChartOutlined sx={{ fontSize: 18 }} /> },
+  { id: 'words', label: 'Words', icon: <InventoryOutlined sx={{ fontSize: 18 }} /> },
   { id: 'settings', label: 'Settings', icon: <SettingsOutlined sx={{ fontSize: 18 }} /> },
   { id: 'support', label: 'Support', icon: <SupportOutlined sx={{ fontSize: 18 }} /> },
 ]
@@ -494,6 +497,264 @@ function SettingsSection({ userEmail }: { userEmail: string }) {
   )
 }
 
+function WordsSection() {
+  const [words, setWords] = useState<ProgressWord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'revision' | 'completed'>('all')
+  const [sortKey, setSortKey] = useState<'word' | 'level' | 'theme' | 'date'>('word')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+
+  useEffect(() => {
+    let cancelled = false
+    const timer = setTimeout(() => {
+      setLoading(true)
+      fetchUserProgressWords(
+        statusFilter === 'all' ? undefined : statusFilter,
+        search.trim() || undefined
+      )
+        .then(data => { if (!cancelled) setWords(data) })
+        .catch(err => { if (!cancelled) console.error(err) })
+        .finally(() => { if (!cancelled) setLoading(false) })
+    }, 300)
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [statusFilter, search])
+
+  const sortedWords = useMemo(() => {
+    const sorted = [...words]
+    sorted.sort((a, b) => {
+      let cmp = 0
+      if (sortKey === 'word') cmp = (a.word_ar || '').localeCompare(b.word_ar || '')
+      else if (sortKey === 'level') cmp = (a.level || '').localeCompare(b.level || '')
+      else if (sortKey === 'theme') cmp = (a.theme || '').localeCompare(b.theme || '')
+      else if (sortKey === 'date') cmp = (a.updated_at || '').localeCompare(b.updated_at || '')
+      return sortDir === 'asc' ? cmp : -cmp
+    })
+    return sorted
+  }, [words, sortKey, sortDir])
+
+  const toggleSort = (key: 'word' | 'level' | 'theme' | 'date') => {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
+
+  const statusColor = (s: string) => s === 'completed' ? '#2e7d32' : '#1565c0'
+  const statusBg = (s: string) => s === 'completed' ? 'rgba(46,125,50,0.08)' : 'rgba(21,101,192,0.08)'
+
+  return (
+    <Box className="fade-up">
+      <SectionLabel>Library</SectionLabel>
+      <SectionTitle>Your Words</SectionTitle>
+
+      <Box sx={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '4px', p: { xs: 2, sm: 3 }, mb: 3 }}>
+        {/* Search + filters */}
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 2.5 }}>
+          <TextField
+            placeholder="Search words, themes…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            size="small"
+            fullWidth
+            sx={{
+              maxWidth: { sm: 320 },
+              '& .MuiInputBase-root': { fontFamily: 'Jost, sans-serif', fontSize: '0.88rem', borderRadius: '8px' },
+            }}
+            slotProps={{
+              input: {
+                startAdornment: <Search sx={{ fontSize: 18, color: 'var(--muted)', mr: 0.75 }} />,
+              },
+            }}
+          />
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {(['all', 'revision', 'completed'] as const).map(s => (
+              <Chip
+                key={s}
+                label={s === 'all' ? 'All' : s === 'revision' ? 'Revision' : 'Completed'}
+                onClick={() => setStatusFilter(s)}
+                sx={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontWeight: statusFilter === s ? 600 : 500,
+                  fontSize: '0.82rem',
+                  textTransform: 'capitalize',
+                  background: statusFilter === s ? (s === 'completed' ? 'rgba(46,125,50,0.12)' : s === 'revision' ? 'rgba(21,101,192,0.12)' : 'rgba(184,134,11,0.12)') : 'transparent',
+                  color: statusFilter === s ? (s === 'completed' ? '#2e7d32' : s === 'revision' ? '#1565c0' : '#b8860b') : 'var(--muted)',
+                  border: '1px solid',
+                  borderColor: statusFilter === s ? (s === 'completed' ? 'rgba(46,125,50,0.3)' : s === 'revision' ? 'rgba(21,101,192,0.3)' : 'rgba(184,134,11,0.3)') : 'rgba(122,110,101,0.18)',
+                  cursor: 'pointer',
+                  '&:hover': { background: s === 'completed' ? 'rgba(46,125,50,0.08)' : s === 'revision' ? 'rgba(21,101,192,0.08)' : 'rgba(184,134,11,0.08)' },
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+
+        {/* Desktop table */}
+        <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+          <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid rgba(184,134,11,0.1)', borderRadius: '8px' }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ background: 'rgba(245,237,224,0.4)' }}>
+                  {[
+                    { key: 'word' as const, label: 'Word' },
+                    { key: 'level' as const, label: 'Level' },
+                    { key: 'theme' as const, label: 'Theme' },
+                    { key: 'date' as const, label: 'Updated' },
+                  ].map(col => (
+                    <TableCell key={col.key} onClick={() => toggleSort(col.key)}
+                      sx={{
+                        fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.78rem',
+                        color: '#9e8a7a', textTransform: 'uppercase', letterSpacing: '0.06em',
+                        cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        {col.label}
+                        {sortKey === col.key && (
+                          <Sort sx={{ fontSize: 14, color: '#b8860b', transform: sortDir === 'desc' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                        )}
+                      </Box>
+                    </TableCell>
+                  ))}
+                  <TableCell sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.78rem', color: '#9e8a7a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell colSpan={5}><Skeleton variant="text" width="60%" height={20} /></TableCell>
+                    </TableRow>
+                  ))
+                ) : sortedWords.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--muted)' }}>
+                        No words found.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  sortedWords.map(w => (
+                    <TableRow key={w.vocab_id} hover sx={{ '&:last-child td': { borderBottom: 'none' } }}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                          <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.15rem', fontWeight: 700, color: '#2c1a0e', direction: 'rtl', textAlign: 'right' }}>
+                            {w.word_di || w.word_ar}
+                          </Typography>
+                          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#b8860b' }}>
+                            {w.word_tr}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: '#2c1a0e' }}>
+                          {w.level}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--muted)' }}>
+                          {w.theme}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#9e8a7a' }}>
+                          {w.updated_at ? new Date(w.updated_at).toLocaleDateString() : '—'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={w.status}
+                          size="small"
+                          sx={{
+                            fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.75rem',
+                            textTransform: 'capitalize',
+                            background: statusBg(w.status),
+                            color: statusColor(w.status),
+                            border: '1px solid',
+                            borderColor: w.status === 'completed' ? 'rgba(46,125,50,0.25)' : 'rgba(21,101,192,0.25)',
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+
+        {/* Mobile cards */}
+        <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 1.5 }}>
+          {loading ? (
+            [...Array(4)].map((_, i) => (
+              <Box key={i} sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.1)', borderRadius: '8px', p: 2 }}>
+                <Skeleton variant="text" width="50%" height={24} sx={{ mb: 0.5 }} />
+                <Skeleton variant="text" width="30%" height={16} />
+              </Box>
+            ))
+          ) : sortedWords.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--muted)' }}>
+                No words found.
+              </Typography>
+            </Box>
+          ) : (
+            sortedWords.map(w => (
+              <Box key={w.vocab_id} sx={{
+                background: '#fff', border: '1px solid rgba(184,134,11,0.1)', borderRadius: '8px', p: 2,
+                display: 'flex', flexDirection: 'column', gap: 1,
+              }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+                    <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.3rem', fontWeight: 700, color: '#2c1a0e', direction: 'rtl', textAlign: 'right' }}>
+                      {w.word_di || w.word_ar}
+                    </Typography>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.82rem', color: '#b8860b' }}>
+                      {w.word_tr}
+                    </Typography>
+                  </Box>
+                  <Chip
+                    label={w.status}
+                    size="small"
+                    sx={{
+                      fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.72rem',
+                      textTransform: 'capitalize',
+                      background: statusBg(w.status),
+                      color: statusColor(w.status),
+                      border: '1px solid',
+                      borderColor: w.status === 'completed' ? 'rgba(46,125,50,0.25)' : 'rgba(21,101,192,0.25)',
+                    }}
+                  />
+                </Box>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Box>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#9e8a7a', fontWeight: 500 }}>Level</Typography>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: '#2c1a0e' }}>{w.level}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#9e8a7a', fontWeight: 500 }}>Theme</Typography>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--muted)' }}>{w.theme}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#9e8a7a', fontWeight: 500 }}>Updated</Typography>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--muted)' }}>
+                      {w.updated_at ? new Date(w.updated_at).toLocaleDateString() : '—'}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            ))
+          )}
+        </Box>
+      </Box>
+    </Box>
+  )
+}
+
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
@@ -782,6 +1043,7 @@ function ProfilePageInner() {
                     onCardClick={handleCardClick}
                   />
                 )}
+                {activeSection === 'words' && <WordsSection />}
                 {activeSection === 'settings' && <SettingsSection userEmail={profile.email} />}
                 {activeSection === 'support' && <SupportSection />}
               </Box>
@@ -799,6 +1061,7 @@ function ProfilePageInner() {
                 onCardClick={handleCardClick}
               />
             )}
+            {activeSection === 'words' && <WordsSection />}
             {activeSection === 'settings' && <SettingsSection userEmail={profile.email} />}
             {activeSection === 'support' && <SupportSection />}
           </Container>

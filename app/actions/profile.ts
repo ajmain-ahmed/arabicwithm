@@ -151,3 +151,95 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
     levels,
   }
 }
+
+export type ProgressWord = {
+  vocab_id: number
+  word_ar: string
+  word_di: string
+  word_tr: string
+  level: string
+  theme: string
+  root: string | null
+  status: 'revision' | 'completed'
+  updated_at: string | null
+}
+
+export async function fetchUserProgressWords(
+  statusFilter?: 'revision' | 'completed',
+  search?: string
+): Promise<ProgressWord[]> {
+  const cookieStore = await cookies()
+  const authClient = createServerClient(
+    process.env.SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll() {},
+      },
+    }
+  )
+
+  const { data: { user } } = await authClient.auth.getUser()
+  if (!user) return []
+
+  let query = serviceClient
+    .from('progress')
+    .select('vocab_id, status, updated_at')
+    .eq('user_id', user.id)
+
+  if (statusFilter === 'revision') {
+    query = query.eq('status', 0)
+  } else if (statusFilter === 'completed') {
+    query = query.eq('status', 1)
+  } else {
+    query = query.in('status', [0, 1])
+  }
+
+  const { data: progressData, error: progressErr } = await query
+  if (progressErr) {
+    console.error('[fetchUserProgressWords] progress error:', progressErr.message)
+    return []
+  }
+
+  if (!progressData || progressData.length === 0) return []
+
+  const vocabIds = progressData.map(p => p.vocab_id)
+
+  let vocabQuery = serviceClient
+    .from('vocabulary')
+    .select('word_id, word_ar, word_di, word_tr, level, theme, root')
+    .in('word_id', vocabIds)
+
+  if (search && search.trim()) {
+    const term = search.trim()
+    vocabQuery = vocabQuery.or(`word_ar.ilike.%${term}%,word_tr.ilike.%${term}%,theme.ilike.%${term}%`)
+  }
+
+  const { data: vocabData, error: vocabErr } = await vocabQuery
+  if (vocabErr) {
+    console.error('[fetchUserProgressWords] vocab error:', vocabErr.message)
+    return []
+  }
+
+  const vocabMap = new Map((vocabData ?? []).map(v => [v.word_id, v]))
+
+  const result: ProgressWord[] = []
+  for (const p of progressData) {
+    const v = vocabMap.get(p.vocab_id)
+    if (!v) continue
+    result.push({
+      vocab_id: p.vocab_id,
+      word_ar: v.word_ar ?? '',
+      word_di: v.word_di ?? '',
+      word_tr: v.word_tr ?? '',
+      level: v.level ?? '',
+      theme: v.theme ?? '',
+      root: v.root ?? null,
+      status: p.status === 1 ? 'completed' : 'revision',
+      updated_at: p.updated_at ?? null,
+    })
+  }
+
+  return result
+}
