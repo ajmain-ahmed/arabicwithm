@@ -31,19 +31,32 @@ function getActiveValue(pathname: string): string {
   return ''
 }
 
+function getIOSBottomOffset(): string {
+  if (typeof navigator === 'undefined') return 'calc(8px + env(safe-area-inset-bottom))'
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+  // On iOS Safari the visual viewport already sits above the bottom URL bar,
+  // so we only need the safe-area inset (home indicator). Adding extra px
+  // creates a double gap. On Android (top URL bar) we add a small float.
+  return isIOS
+    ? 'env(safe-area-inset-bottom)'
+    : 'calc(8px + env(safe-area-inset-bottom))'
+}
+
 export default function MobileBottomNav() {
   const router = useRouter()
   const pathname = usePathname()
   const { user } = useAuth()
   const [mounted, setMounted] = useState(false)
+  const [bottomOffset, setBottomOffset] = useState('calc(8px + env(safe-area-inset-bottom))')
   const activeValue = getActiveValue(pathname)
 
   useEffect(() => {
     setMounted(true)
+    setBottomOffset(getIOSBottomOffset())
   }, [])
 
   if (!mounted) {
-    return <Box sx={{ display: { xs: 'block', md: 'none' }, height: 100 }} />
+    return <Box sx={{ display: { xs: 'block', md: 'none' }, height: 72 }} />
   }
 
   const handleChange = (_: React.SyntheticEvent, newValue: string) => {
@@ -61,7 +74,7 @@ export default function MobileBottomNav() {
       <Box
         sx={{
           position: 'fixed',
-          bottom: { xs: 'calc(12px + env(safe-area-inset-bottom))', sm: 'calc(16px + env(safe-area-inset-bottom))' },
+          bottom: bottomOffset,
           left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 1200,
@@ -75,7 +88,7 @@ export default function MobileBottomNav() {
           border: '1px solid rgba(184,134,11,0.18)',
           boxShadow: '0 12px 40px rgba(44,26,14,0.15), 0 2px 8px rgba(44,26,14,0.08)',
           px: { xs: 1.5, sm: 2.5 },
-          py: 1,
+          py: 0.75,
           maxWidth: 'calc(100vw - 24px)',
         }}
       >
@@ -123,8 +136,8 @@ export default function MobileBottomNav() {
           ))}
         </BottomNavigation>
       </Box>
-      {/* Spacer: accounts for pill height + float offset + safe-area */}
-      <Box sx={{ display: { xs: 'block', md: 'none' }, height: 100 }} />
+      {/* Spacer: pill height (56) + float offset (~30) — only on mobile */}
+      <Box sx={{ display: { xs: 'block', md: 'none' }, height: 72 }} />
     </>
   )
 }
