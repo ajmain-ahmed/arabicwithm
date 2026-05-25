@@ -22,6 +22,12 @@ export const metadata: Metadata = {
   description: "Master Arabic through cartoons, flashcards, and spaced repetition.",
 };
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{

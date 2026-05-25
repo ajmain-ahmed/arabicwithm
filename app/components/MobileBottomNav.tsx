@@ -43,7 +43,7 @@ export default function MobileBottomNav() {
   }, [])
 
   if (!mounted) {
-    return <Box sx={{ display: { xs: 'block', md: 'none' }, height: 64 }} />
+    return <Box sx={{ display: { xs: 'block', md: 'none' }, height: 100 }} />
   }
 
   const handleChange = (_: React.SyntheticEvent, newValue: string) => {
@@ -57,49 +57,74 @@ export default function MobileBottomNav() {
 
   return (
     <>
-      <BottomNavigation
-        value={activeValue}
-        onChange={handleChange}
-        showLabels
+      {/* Floating pill container */}
+      <Box
         sx={{
           position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
+          bottom: { xs: 'calc(12px + env(safe-area-inset-bottom))', sm: 'calc(16px + env(safe-area-inset-bottom))' },
+          left: '50%',
+          transform: 'translateX(-50%)',
           zIndex: 1200,
           display: { xs: 'flex', md: 'none' },
-          background: '#fff',
-          borderTop: '1px solid rgba(184,134,11,0.15)',
-          boxShadow: '0 -4px 20px rgba(44,26,14,0.08)',
-          height: 64,
-          '& .MuiBottomNavigationAction-root': {
-            fontFamily: 'Jost, sans-serif',
-            fontSize: '0.6rem',
-            fontWeight: 500,
-            letterSpacing: '0.03em',
-            color: '#7a6e65',
-            minWidth: 0,
-            padding: '6px 2px',
-            '&.Mui-selected': { color: '#b8860b', fontWeight: 600 },
-          },
-          '& .MuiBottomNavigationAction-label': {
-            fontFamily: 'Jost, sans-serif',
-            fontSize: '0.6rem',
-          },
-          '& .MuiSvgIcon-root': { fontSize: 22 },
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(255,255,255,0.94)',
+          backdropFilter: 'blur(16px) saturate(1.4)',
+          WebkitBackdropFilter: 'blur(16px) saturate(1.4)',
+          borderRadius: '9999px',
+          border: '1px solid rgba(184,134,11,0.18)',
+          boxShadow: '0 12px 40px rgba(44,26,14,0.15), 0 2px 8px rgba(44,26,14,0.08)',
+          px: { xs: 1.5, sm: 2.5 },
+          py: 1,
+          maxWidth: 'calc(100vw - 24px)',
         }}
       >
-        {NAV_ITEMS.map((item) => (
-          <BottomNavigationAction
-            key={item.value}
-            value={item.value}
-            label={item.label}
-            icon={item.icon}
-          />
-        ))}
-      </BottomNavigation>
-      {/* Spacer so page content isn't hidden behind the fixed nav */}
-      <Box sx={{ display: { xs: 'block', md: 'none' }, height: 64 }} />
+        <BottomNavigation
+          value={activeValue}
+          onChange={handleChange}
+          showLabels
+          sx={{
+            background: 'transparent',
+            height: 56,
+            minWidth: 0,
+            width: 'auto',
+            '& .MuiBottomNavigationAction-root': {
+              fontFamily: 'Jost, sans-serif',
+              fontSize: '0.62rem',
+              fontWeight: 500,
+              letterSpacing: '0.03em',
+              color: '#7a6e65',
+              minWidth: { xs: 60, sm: 72 },
+              maxWidth: { xs: 72, sm: 84 },
+              padding: '6px 8px',
+              borderRadius: '9999px',
+              transition: 'all 0.2s ease',
+              gap: 0.5,
+              '&.Mui-selected': {
+                color: '#b8860b',
+                fontWeight: 600,
+                background: 'rgba(184,134,11,0.1)',
+              },
+            },
+            '& .MuiBottomNavigationAction-label': {
+              fontFamily: 'Jost, sans-serif',
+              fontSize: '0.62rem',
+            },
+            '& .MuiSvgIcon-root': { fontSize: 22 },
+          }}
+        >
+          {NAV_ITEMS.map((item) => (
+            <BottomNavigationAction
+              key={item.value}
+              value={item.value}
+              label={item.label}
+              icon={item.icon}
+            />
+          ))}
+        </BottomNavigation>
+      </Box>
+      {/* Spacer: accounts for pill height + float offset + safe-area */}
+      <Box sx={{ display: { xs: 'block', md: 'none' }, height: 100 }} />
     </>
   )
 }
