@@ -3,19 +3,20 @@
 import { useRevisionStore } from '@/store/revisionStore'
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { upsertWordProgressBatch, isAdminUser, updateVocabWord, deleteVocabWord } from '@/app/actions/vocab'
-import { useParams, useRouter } from 'next/navigation'
+import { siwarSearch, siwarSenses, siwarExamples } from '@/app/actions/siwar'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import {
     Box, Button, Container, Typography, Collapse, Fade,
     LinearProgress, Skeleton, CircularProgress,
     IconButton, Dialog, DialogTitle, DialogContent, DialogActions,
     ToggleButton, ToggleButtonGroup,
-    Slider, Badge, TextField,
+    Slider, Badge, TextField, Breadcrumbs, Link,
     useMediaQuery, useTheme,
 } from '@mui/material'
 import {
     Bookmark, BookmarkAdded, Check, DoneAll, NavigateNext, NavigateBefore,
     Settings, Close, MenuBook, TouchApp, CheckCircle, HelpOutlineRounded,
-    Edit, Delete, Save, Add,
+    Edit, Delete, Save, Add, NavigateNext as NavigateNextIcon,
 } from '@mui/icons-material'
 import {
     DndContext,
@@ -932,6 +933,170 @@ function AdminEditDialog({
 }
 
 /* ─────────────────────────────────────────────
+   SiwarPanel
+───────────────────────────────────────────── */
+function SiwarPanel({ word }: { word: string }) {
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const [searchData, setSearchData] = useState<any[]>([])
+    const [sensesData, setSensesData] = useState<any[]>([])
+    const [examplesData, setExamplesData] = useState<any[]>([])
+    const [activeSubTab, setActiveSubTab] = useState<'search' | 'senses' | 'examples'>('search')
+
+    useEffect(() => {
+        if (!word) return
+        let cancelled = false
+        setLoading(true)
+        setError(null)
+        Promise.all([
+            siwarSearch(word).catch(() => []),
+            siwarSenses(word).catch(() => []),
+            siwarExamples(word).catch(() => []),
+        ]).then(([search, senses, examples]) => {
+            if (cancelled) return
+            setSearchData(search)
+            setSensesData(senses)
+            setExamplesData(examples)
+        }).catch((e: any) => {
+            if (!cancelled) setError(e?.message ?? 'Failed to load Siwar data')
+        }).finally(() => {
+            if (!cancelled) setLoading(false)
+        })
+        return () => { cancelled = true }
+    }, [word])
+
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress size={28} sx={{ color: '#b8860b' }} />
+            </Box>
+        )
+    }
+
+    if (error) {
+        return (
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: '#c0392b', textAlign: 'center', py: 2 }}>
+                {error}
+            </Typography>
+        )
+    }
+
+    const hasAny = searchData.length > 0 || sensesData.length > 0 || examplesData.length > 0
+    if (!hasAny) {
+        return (
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: '#7a6e65', textAlign: 'center', py: 2 }}>
+                No Siwar data found for this word.
+            </Typography>
+        )
+    }
+
+    const subTabBtn = (key: 'search' | 'senses' | 'examples', label: string, count: number) => (
+        <Button
+            key={key}
+            onClick={() => setActiveSubTab(key)}
+            size="small"
+            sx={{
+                fontFamily: 'Jost, sans-serif', fontSize: '0.75rem',
+                fontWeight: activeSubTab === key ? 600 : 500,
+                textTransform: 'none', borderRadius: '20px', px: 1.5, py: 0.4, minWidth: 60,
+                background: activeSubTab === key ? 'rgba(184,134,11,0.12)' : 'transparent',
+                color: activeSubTab === key ? '#b8860b' : '#7a6e65',
+                border: '1px solid',
+                borderColor: activeSubTab === key ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)',
+            }}
+        >
+            {label} ({count})
+        </Button>
+    )
+
+    return (
+        <Box sx={{ mt: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                {subTabBtn('search', 'Search', searchData.length)}
+                {subTabBtn('senses', 'Senses', sensesData.length)}
+                {subTabBtn('examples', 'Examples', examplesData.length)}
+            </Box>
+
+            {activeSubTab === 'search' && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    {searchData.map((item: any, i: number) => (
+                        <Box key={i} sx={{
+                            background: 'rgba(245,237,224,0.4)', border: '1px solid rgba(184,134,11,0.12)',
+                            borderRadius: '10px', p: { xs: '1rem', md: '1.25rem 1.5rem' },
+                        }}>
+                            <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.35rem', fontWeight: 700, color: '#2c1a0e', direction: 'rtl', textAlign: 'right', mb: 0.5 }}>
+                                {item.lemma}
+                            </Typography>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#9e8a7a', mb: 1 }}>
+                                {item.lexiconName}
+                            </Typography>
+                            {item.senses?.map((sense: any, j: number) => (
+                                <Box key={j} sx={{ mb: 1 }}>
+                                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: '#2c1a0e', lineHeight: 1.5 }}>
+                                        {sense.definition}
+                                    </Typography>
+                                    {sense.translations?.map((t: any, k: number) => (
+                                        <Typography key={k} sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.82rem', color: '#7a6e65', mt: 0.3 }}>
+                                            {t.word}
+                                        </Typography>
+                                    ))}
+                                </Box>
+                            ))}
+                        </Box>
+                    ))}
+                </Box>
+            )}
+
+            {activeSubTab === 'senses' && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    {sensesData.map((item: any, i: number) => (
+                        <Box key={i} sx={{
+                            background: 'rgba(245,237,224,0.4)', border: '1px solid rgba(184,134,11,0.12)',
+                            borderRadius: '10px', p: { xs: '1rem', md: '1.25rem 1.5rem' },
+                        }}>
+                            <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.35rem', fontWeight: 700, color: '#2c1a0e', direction: 'rtl', textAlign: 'right', mb: 0.5 }}>
+                                {item.lemma}
+                            </Typography>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#9e8a7a', mb: 1 }}>
+                                {item.lexiconName}
+                            </Typography>
+                            {item.senses?.map((sense: string, j: number) => (
+                                <Typography key={j} sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: '#2c1a0e', lineHeight: 1.5, mb: 0.5 }}>
+                                    • {sense}
+                                </Typography>
+                            ))}
+                        </Box>
+                    ))}
+                </Box>
+            )}
+
+            {activeSubTab === 'examples' && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    {examplesData.map((item: any, i: number) => (
+                        <Box key={i} sx={{
+                            background: 'rgba(245,237,224,0.4)', border: '1px solid rgba(184,134,11,0.12)',
+                            borderRadius: '10px', p: { xs: '1rem', md: '1.25rem 1.5rem' },
+                        }}>
+                            <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.35rem', fontWeight: 700, color: '#2c1a0e', direction: 'rtl', textAlign: 'right', mb: 0.5 }}>
+                                {item.lemma}
+                            </Typography>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#9e8a7a', mb: 1 }}>
+                                {item.lexiconName}
+                            </Typography>
+                            {item.examples?.map((ex: string, j: number) => (
+                                <Typography key={j} sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.1rem', color: '#2c1a0e', direction: 'rtl', textAlign: 'right', lineHeight: 1.6, mb: 0.5 }}>
+                                    • {ex}
+                                </Typography>
+                            ))}
+                        </Box>
+                    ))}
+                </Box>
+            )}
+        </Box>
+    )
+}
+
+/* ─────────────────────────────────────────────
    FlashcardQuiz
 ───────────────────────────────────────────── */
 function FlashcardQuiz({
@@ -969,7 +1134,7 @@ function FlashcardQuiz({
     const [filter, setFilter] = useState<FilterType>('all')
     const [revealed, setRevealed] = useState(true)
     const [cardKey, setCardKey] = useState(0)
-    const [mobileTab, setMobileTab] = useState<'definition' | 'examples' | 'forms'>('definition')
+    const [mobileTab, setMobileTab] = useState<'definition' | 'examples' | 'forms' | 'siwar'>('definition')
     const [editOpen, setEditOpen] = useState(false)
     const themeObj = useTheme()
     const isMobile = useMediaQuery(themeObj.breakpoints.down('sm'))
@@ -1353,6 +1518,20 @@ function FlashcardQuiz({
                                             Forms
                                         </Button>
                                     )}
+                                    <Button
+                                        onClick={() => setMobileTab('siwar')}
+                                        sx={{
+                                            fontFamily: 'Jost, sans-serif', fontSize: '0.8rem',
+                                            fontWeight: mobileTab === 'siwar' ? 600 : 500,
+                                            textTransform: 'none', borderRadius: '20px', px: 2, py: 0.5, minWidth: 80,
+                                            background: mobileTab === 'siwar' ? 'rgba(184,134,11,0.12)' : 'transparent',
+                                            color: mobileTab === 'siwar' ? '#b8860b' : '#7a6e65',
+                                            border: '1px solid',
+                                            borderColor: mobileTab === 'siwar' ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)',
+                                        }}
+                                    >
+                                        Siwar
+                                    </Button>
                                 </Box>
                                 {mobileTab === 'definition' && (
                                     <DefinitionPanel card={current} showDiacritics={showDiacritics} textScale={textScale} />
@@ -1371,6 +1550,9 @@ function FlashcardQuiz({
                                         showDiacritics={showDiacritics}
                                         textScale={textScale}
                                     />
+                                )}
+                                {mobileTab === 'siwar' && (
+                                    <SiwarPanel word={current.word} />
                                 )}
                             </Box>
 
@@ -1599,9 +1781,11 @@ export default function FlashcardSlugPage() {
     const [textScale, setTextScale] = useState(1.1)
     const params = useParams()
     const router = useRouter()
+    const searchParams = useSearchParams()
     const slug = (params?.slug as string) ?? 'beginner'
     const level = SLUG_TO_LEVEL[slug] ?? 'A0'
     const label = SLUG_LABELS[slug] ?? slug
+    const themeQueryParam = searchParams.get('theme')
 
     const fetchTheme = useVocabStore(s => s.fetchTheme)
     const fetchThemeList = useVocabStore(s => s.fetchThemeList)
@@ -1676,13 +1860,22 @@ export default function FlashcardSlugPage() {
                 setThemes(data)
                 setThemesLoading(false)
 
-                const firstIncomplete = data.find((t: ThemeProgress) =>
-                    t?.theme_id != null &&
-                    (t.total_words === 0 || themeDoneCount(t) < t.total_words)
-                ) ?? data[0]
+                // If ?theme= query param is present, select that theme
+                const targetTheme = themeQueryParam
+                    ? data.find((t: ThemeProgress) => t?.theme_id === themeQueryParam)
+                    : null
 
-                if (firstIncomplete) {
-                    await handleThemeSelect(firstIncomplete)
+                if (targetTheme) {
+                    await handleThemeSelect(targetTheme)
+                } else {
+                    const firstIncomplete = data.find((t: ThemeProgress) =>
+                        t?.theme_id != null &&
+                        (t.total_words === 0 || themeDoneCount(t) < t.total_words)
+                    ) ?? data[0]
+
+                    if (firstIncomplete) {
+                        await handleThemeSelect(firstIncomplete)
+                    }
                 }
             })
             .catch(err => {
@@ -1694,7 +1887,7 @@ export default function FlashcardSlugPage() {
                 }
             })
         return () => { cancelled = true }
-    }, [slug, level])
+    }, [slug, level, themeQueryParam])
 
     // Flush pending writes before switching themes, then load the new one
     const handleThemeSelect = useCallback(async (theme: ThemeProgress, cardIndex?: number) => {
@@ -1915,7 +2108,35 @@ export default function FlashcardSlugPage() {
 
             <Box component="main" sx={{ background: '#faf7f2', minHeight: '100vh', pt: { xs: 8, sm: 10 } }}>
                 <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
-                    {/* Mobile controls */}
+                    {/* Breadcrumbs */}
+                    <Breadcrumbs
+                        separator={<NavigateNextIcon sx={{ fontSize: 16, color: '#9e8a7a' }} />}
+                        sx={{ mb: 2, '& .MuiBreadcrumbs-li': { fontFamily: 'Jost, sans-serif' } }}
+                    >
+                        <Link
+                            underline="hover"
+                            color="inherit"
+                            onClick={() => router.push('/flashcards')}
+                            sx={{ cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: '#7a6e65' }}
+                        >
+                            Flashcards
+                        </Link>
+                        <Link
+                            underline="hover"
+                            color="inherit"
+                            onClick={() => router.push(`/flashcards/${slug}/themes`)}
+                            sx={{ cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: '#7a6e65' }}
+                        >
+                            {label.split(' | ')[0]}
+                        </Link>
+                        {selectedTheme && (
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: '#2c1a0e', fontWeight: 600 }}>
+                                {selectedTheme.display_name}
+                            </Typography>
+                        )}
+                    </Breadcrumbs>
+
+                    {/* Mobile controls -->
                     {selectedTheme && (
                         <Box sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                             <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.3rem', fontWeight: 700, color: '#2c1a0e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, mr: 1 }}>

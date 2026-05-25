@@ -6,6 +6,7 @@ import {
   Box, Container, Typography, Button, Skeleton, LinearProgress,
   Avatar, Fade, Grid, TextField, Chip, Table, TableHead, TableBody,
   TableRow, TableCell, TableContainer, Paper, IconButton, Tabs, Tab,
+  BottomNavigation, BottomNavigationAction,
 } from '@mui/material'
 import {
   LogoutOutlined, SettingsOutlined, SupportOutlined,
@@ -36,11 +37,6 @@ const CSS = `
   .nav-item:hover{background:rgba(184,134,11,0.05);color:var(--bark);}
   .nav-item.active{background:rgba(184,134,11,0.07);color:var(--forest);border-color:var(--border);font-weight:600;}
   .nav-item.active .nav-icon{color:var(--gold);}
-  .mobile-tab{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;
-    cursor:pointer;flex:1;border:none;background:transparent;transition:color 0.15s;
-    color:var(--muted);font-family:'Jost',sans-serif;font-size:0.62rem;font-weight:500;letter-spacing:0.03em;}
-  .mobile-tab.active{color:var(--gold);}
-  .mobile-tab.signout{color:#c0392b;}
   .support-card{background:#fff;border:1px solid var(--border);border-radius:4px;padding:20px;
     transition:box-shadow 0.2s;cursor:pointer;text-decoration:none;display:block;}
   .support-card:hover{box-shadow:0 8px 32px rgba(44,26,14,0.08);}
@@ -1066,23 +1062,58 @@ function ProfilePageInner() {
             {activeSection === 'support' && <SupportSection />}
           </Container>
 
-          <Box sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, background: '#fff', borderTop: '1px solid var(--border)', display: 'flex', boxShadow: '0 -4px 20px rgba(44,26,14,0.08)' }}>
+          <BottomNavigation
+            value={activeSection}
+            onChange={(_, newValue) => {
+              if (newValue === 'signout') {
+                handleSignOut()
+              } else {
+                handleNavClick(newValue as Section)
+              }
+            }}
+            showLabels
+            sx={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              zIndex: 100,
+              background: '#fff',
+              borderTop: '1px solid var(--border)',
+              boxShadow: '0 -4px 20px rgba(44,26,14,0.08)',
+              height: 64,
+              '& .MuiBottomNavigationAction-root': {
+                fontFamily: 'Jost, sans-serif',
+                fontSize: '0.62rem',
+                fontWeight: 500,
+                letterSpacing: '0.03em',
+                color: 'var(--muted)',
+                minWidth: 0,
+                padding: '6px 2px',
+                '&.Mui-selected': { color: 'var(--gold)', fontWeight: 600 },
+              },
+              '& .MuiBottomNavigationAction-label': {
+                fontFamily: 'Jost, sans-serif',
+                fontSize: '0.62rem',
+              },
+              '& .MuiSvgIcon-root': { fontSize: 20 },
+            }}
+          >
             {NAV_ITEMS.map(item => (
-              <Box
+              <BottomNavigationAction
                 key={item.id}
-                component="button"
-                className={`mobile-tab${activeSection === item.id ? ' active' : ''}`}
-                onClick={() => handleNavClick(item.id)}
-              >
-                <Box sx={{ display: 'flex', color: 'inherit' }}>{item.icon}</Box>
-                {item.label}
-              </Box>
+                value={item.id}
+                label={item.label}
+                icon={item.icon}
+              />
             ))}
-            <Box component="button" className="mobile-tab signout" onClick={handleSignOut}>
-              <Box sx={{ display: 'flex', color: 'inherit' }}><LogoutOutlined sx={{ fontSize: 18 }} /></Box>
-              Sign Out
-            </Box>
-          </Box>
+            <BottomNavigationAction
+              value="signout"
+              label="Sign Out"
+              icon={<LogoutOutlined sx={{ fontSize: 20 }} />}
+              sx={{ '&.Mui-selected': { color: '#c0392b !important' } }}
+            />
+          </BottomNavigation>
         </Box>
       </Box>
     </>
