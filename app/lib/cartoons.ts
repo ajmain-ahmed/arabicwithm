@@ -383,6 +383,17 @@ export function getEpisode(show: string, episode: string): EpisodeFull | null {
   }
 }
 
+/* ── Fetch a single sentence block by index ──────────────────────────────────── */
+export function getSentenceBlock(
+  show: string,
+  episode: string,
+  blockIndex: number
+): ScriptBlock | null {
+  const ep = getEpisode(show, episode)
+  if (!ep) return null
+  return ep.scriptBlocks[blockIndex] ?? null
+}
+
 // ── Static params helpers (for generateStaticParams) ──────────────────────────
 export function getAllShowSlugs() {
   return getAllShows().map((s) => ({ show: s.slug }))

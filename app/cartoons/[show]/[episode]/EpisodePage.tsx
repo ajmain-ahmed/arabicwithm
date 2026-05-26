@@ -29,10 +29,12 @@ import {
 import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip'
 import { styled } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
-import { ArrowBack, Settings, Close, ExpandMore, ExpandLess, ChevronRight } from '@mui/icons-material'
+import { ArrowBack, Settings, Close, ExpandMore, ExpandLess, ChevronRight, Add, CheckCircle, Quiz } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { stripDiacritics } from '@/app/lib/arabic'
 import { EpisodeFull, CartoonWordEntry } from '@/app/lib/cartoons'
+import { toggleSentenceRevision, fetchSentenceRevisionIds } from '@/app/actions/revision'
+import EpisodeTestDialog from './EpisodeTestDialog'
 
 // ─── Fallback — used before we measure the real navbar ────────────────────────
 const NAVBAR_HEIGHT = 64 // px
@@ -152,6 +154,7 @@ namespace YT {
     getCurrentTime(): number
     seekTo(seconds: number, allowSeekAhead: boolean): void
     playVideo(): void
+    pauseVideo(): void
     destroy(): void
   }
 }
@@ -862,7 +865,30 @@ function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: num
     }
   }, [])
 
-  return { wrapRef, seekTo, isReady }
+  const playSegment = useCallback((startSeconds: number, durationSeconds: number) => {
+    if (!playerRef.current) return
+    const endTime = startSeconds + durationSeconds
+    playerRef.current.seekTo(startSeconds, true)
+    playerRef.current.playVideo?.()
+
+    // Poll and pause when segment ends
+    const poll = setInterval(() => {
+      const t = playerRef.current?.getCurrentTime?.()
+      if (typeof t === 'number' && t >= endTime) {
+        clearInterval(poll)
+        playerRef.current?.pauseVideo?.()
+      }
+    }, 150)
+
+    // Safety cleanup after duration + 1s
+    setTimeout(() => clearInterval(poll), (durationSeconds + 1) * 1000)
+  }, [])
+
+  const pauseVideo = useCallback(() => {
+    playerRef.current?.pauseVideo?.()
+  }, [])
+
+  return { wrapRef, seekTo, playSegment, pauseVideo, isReady }
 }
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -882,6 +908,64 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement | null>(null)
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set())
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
+
+  /* ── Sentence revision enrollment ── */
+  const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set())
+  const [testDialogOpen, setTestDialogOpen] = useState(false)
+  const pendingRef = useRef<Map<string, { showSlug: string; episodeSlug: string; blockIndex: number; inRevision: boolean }>>(new Map())
+
+  // Fetch enrolled sentence IDs on mount
+  useEffect(() => {
+    let cancelled = false
+    fetchSentenceRevisionIds().then(ids => {
+      if (!cancelled) setEnrolledIds(new Set(ids))
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  const flushPending = useCallback(async () => {
+    const batch = pendingRef.current
+    if (batch.size === 0) return
+    pendingRef.current = new Map()
+    const promises: Promise<unknown>[] = []
+    for (const { showSlug, episodeSlug, blockIndex, inRevision } of batch.values()) {
+      promises.push(
+        toggleSentenceRevision(showSlug, episodeSlug, blockIndex)
+          .catch(err => console.error('Sentence toggle failed:', err))
+      )
+    }
+    await Promise.all(promises)
+  }, [])
+
+  useEffect(() => {
+    const onBeforeUnload = () => flushPending()
+    const onVisibility = () => { if (document.hidden) flushPending() }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+      document.removeEventListener('visibilitychange', onVisibility)
+      flushPending()
+    }
+  }, [flushPending])
+
+  const toggleBlockRevision = useCallback((blockIndex: number) => {
+    const key = `${episode.show}:${episode.slug}:${blockIndex}`
+    const currentlyEnrolled = enrolledIds.has(key)
+    const next = new Set(enrolledIds)
+    if (currentlyEnrolled) {
+      next.delete(key)
+    } else {
+      next.add(key)
+    }
+    setEnrolledIds(next)
+    pendingRef.current.set(key, {
+      showSlug: episode.show,
+      episodeSlug: episode.slug,
+      blockIndex,
+      inRevision: !currentlyEnrolled,
+    })
+  }, [enrolledIds, episode.show, episode.slug])
 
   const [navbarHeight, setNavbarHeight] = useState(NAVBAR_HEIGHT);
 
@@ -961,7 +1045,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
     setActiveIndex(idx >= 0 ? idx : null)
   }, [episode.scriptBlocks])
 
-  const { wrapRef, seekTo } = useYouTubePlayer(episode.youtubeId, handleTimeUpdate)
+  const { wrapRef, seekTo, playSegment } = useYouTubePlayer(episode.youtubeId, handleTimeUpdate)
 
   useEffect(() => {
     if (activeIndex == null) return
@@ -1279,6 +1363,35 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
             </Box>
 
             <Box sx={{ background: '#fff', borderRadius: '0 0 12px 12px', px: { xs: 2, md: 4 }, py: { xs: 3, md: 4 } }}>
+              {/* ── Test Yourself button (Script tab only) ── */}
+              {tab === 0 && episode.scriptBlocks.length > 0 && (
+                <Box sx={{ mb: 2 }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setTestDialogOpen(true)}
+                    startIcon={<Quiz sx={{ fontSize: '1.1rem' }} />}
+                    sx={{
+                      border: '1.5px solid rgba(184,134,11,0.35)',
+                      color: '#b8860b',
+                      fontFamily: 'Jost, sans-serif',
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                      textTransform: 'none',
+                      borderRadius: '10px',
+                      px: 2.5,
+                      py: 0.8,
+                      background: 'rgba(184,134,11,0.04)',
+                      '&:hover': {
+                        background: 'rgba(184,134,11,0.1)',
+                        borderColor: 'rgba(184,134,11,0.55)',
+                      },
+                    }}
+                  >
+                    Test Yourself
+                  </Button>
+                </Box>
+              )}
+
               {/* ── Script Tab ── */}
               {tab === 0 && (
                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -1302,16 +1415,54 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                             }}
                             sx={{ cursor: hasTimestamp ? 'pointer' : 'default', opacity: hasTimestamp ? 1 : 0.75 }}
                           >
-                            {/* Block title / timestamp */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                              {hasTimestamp && (
-                                <Typography sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1 }}>
-                                  {(() => { const s = block.timestamp!; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` })()}
+                            {/* Block title / timestamp + add button */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 0.5 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                {hasTimestamp && (
+                                  <Typography sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1 }}>
+                                    {(() => { const s = block.timestamp!; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` })()}
+                                  </Typography>
+                                )}
+                                <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 500 }}>
+                                  {block.title}
                                 </Typography>
-                              )}
-                              <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 500 }}>
-                                {block.title}
-                              </Typography>
+                              </Box>
+                              {/* Sentence revision toggle */}
+                              {(() => {
+                                const key = `${episode.show}:${episode.slug}:${i}`
+                                const isEnrolled = enrolledIds.has(key) || pendingRef.current.get(key)?.inRevision === true
+                                const hasPending = pendingRef.current.has(key)
+                                return (
+                                  <IconButton
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      toggleBlockRevision(i)
+                                    }}
+                                    size="small"
+                                    sx={{
+                                      width: 26, height: 26,
+                                      border: '1.5px solid',
+                                      borderColor: isEnrolled ? 'rgba(46,125,50,0.4)' : 'rgba(122,110,101,0.25)',
+                                      borderRadius: '50%',
+                                      color: isEnrolled ? '#2e7d32' : '#7a6e65',
+                                      background: isEnrolled ? 'rgba(46,125,50,0.08)' : 'transparent',
+                                      transition: 'all 0.2s',
+                                      opacity: hasPending ? 0.7 : 1,
+                                      '&:hover': {
+                                        borderColor: isEnrolled ? '#2e7d32' : '#b8860b',
+                                        color: isEnrolled ? '#2e7d32' : '#b8860b',
+                                        background: isEnrolled ? 'rgba(46,125,50,0.12)' : 'rgba(184,134,11,0.06)',
+                                      },
+                                    }}
+                                  >
+                                    {isEnrolled ? (
+                                      <CheckCircle sx={{ fontSize: '0.85rem' }} />
+                                    ) : (
+                                      <Add sx={{ fontSize: '0.9rem' }} />
+                                    )}
+                                  </IconButton>
+                                )
+                              })()}
                             </Box>
 
                             {/* Arabic */}
@@ -1602,6 +1753,14 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
           </Box>
         </Box>
       </Box>
+
+      {/* ── Test Yourself Dialog ── */}
+      <EpisodeTestDialog
+        episode={episode}
+        open={testDialogOpen}
+        onClose={() => setTestDialogOpen(false)}
+        playSegment={playSegment}
+      />
     </>
   )
 }

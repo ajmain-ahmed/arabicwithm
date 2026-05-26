@@ -6,6 +6,7 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { revalidatePath } from "next/cache"
 import { computeAnswerResult } from '@/app/lib/sm2'
+import { getSentenceBlock } from '@/app/lib/cartoons'
 
 const serviceUrl = process.env.SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_KEY
@@ -605,4 +606,322 @@ export async function fetchCustomSessionCards(settings: {
             lastRating: null,
         }
     })
+}
+
+
+/* ── Sentence Revision Types ─────────────────────────────────────────── */
+
+export type SentenceCardType = 'reveal' | 'fillblank'
+
+export type SentenceRevisionCard = {
+  id: string                          // composite: show:episode:blockIndex
+  show_slug: string
+  episode_slug: string
+  block_index: number
+  title: string
+  arabicDiacritic: string
+  arabicPlain: string
+  english: string
+  timestamp: number | null
+  words: { arabic: string; plain: string; transliteration: string; english: string; cefr: string }[]
+  notes: string[]
+  cardType: SentenceCardType
+
+  // SRS fields
+  repetitions: number
+  interval_days: number
+  ease_factor: number
+  lapses: number
+  last_review_at: string | null
+  next_review_at: string | null
+  lastRating: Answer | null
+}
+
+const SENTENCE_DAILY_NEW_LIMIT = 10
+
+/* ── Sentence Revision Session Fetch ─────────────────────────────────── */
+
+export async function fetchSentenceRevisionSession(): Promise<{
+  dueCards: SentenceRevisionCard[]
+  completedCards: SentenceRevisionCard[]
+}> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) return { dueCards: [], completedCards: [] }
+
+  const startOfDay = new Date()
+  startOfDay.setHours(0, 0, 0, 0)
+
+  const { data: progressData, error: progErr } = await serviceClient
+    .from('sentence_progress')
+    .select('show_slug, episode_slug, block_index, repetitions, interval_days, ease_factor, lapses, last_review_at, next_review_at, last_rating')
+    .eq('user_id', userId)
+    .eq('status', 0)
+
+  if (progErr) throw new Error(progErr.message)
+  if (!progressData || progressData.length === 0) {
+    return { dueCards: [], completedCards: [] }
+  }
+
+  const dueProgress: any[] = []
+  const completedToday: any[] = []
+  const newCandidates: any[] = []
+
+  for (const p of progressData) {
+    const reviewedToday = p.last_review_at && new Date(p.last_review_at) >= startOfDay
+    if (reviewedToday) {
+      completedToday.push(p)
+      continue
+    }
+
+    const isDue = !p.next_review_at || new Date(p.next_review_at) <= new Date()
+    if (!isDue) continue
+
+    const isNew = p.repetitions === 0 && p.interval_days === 0 && !p.last_review_at
+    if (isNew) {
+      newCandidates.push(p)
+    } else {
+      dueProgress.push(p)
+    }
+  }
+
+  const shuffledNew = newCandidates.sort(() => Math.random() - 0.5)
+  const limitedNew = shuffledNew.slice(0, SENTENCE_DAILY_NEW_LIMIT)
+  const allDue = [...dueProgress, ...limitedNew]
+
+  const dueCards = await buildSentenceCards(allDue)
+  const completedCards = await buildSentenceCards(completedToday)
+
+  return { dueCards, completedCards }
+}
+
+/* ── Build sentence cards from progress rows ─────────────────────────── */
+
+async function buildSentenceCards(rows: any[]): Promise<SentenceRevisionCard[]> {
+  const cards: SentenceRevisionCard[] = []
+
+  for (const row of rows) {
+    const block = getSentenceBlock(row.show_slug, row.episode_slug, row.block_index)
+    if (!block) continue
+
+    const id = `${row.show_slug}:${row.episode_slug}:${row.block_index}`
+    const cardType: SentenceCardType = Math.random() < 0.5 ? 'reveal' : 'fillblank'
+
+    cards.push({
+      id,
+      show_slug: row.show_slug,
+      episode_slug: row.episode_slug,
+      block_index: row.block_index,
+      title: block.title,
+      arabicDiacritic: block.arabicDiacritic,
+      arabicPlain: block.arabicPlain,
+      english: block.english,
+      timestamp: block.timestamp,
+      words: block.words,
+      notes: block.notes,
+      cardType,
+      repetitions: row.repetitions,
+      interval_days: row.interval_days,
+      ease_factor: row.ease_factor,
+      lapses: row.lapses ?? 0,
+      last_review_at: row.last_review_at,
+      next_review_at: row.next_review_at,
+      lastRating: row.last_rating ?? null,
+    })
+  }
+
+  return cards
+}
+
+/* ── Submit sentence answers batch ───────────────────────────────────── */
+
+export async function submitSentenceRevisionAnswersBatch(
+  answers: { showSlug: string; episodeSlug: string; blockIndex: number; answer: Answer }[]
+): Promise<void> {
+  if (!answers.length) return
+
+  const userId = await getAuthenticatedUserId()
+  if (!userId) throw new Error('Not authenticated')
+
+  // Deduplicate by composite key, keep last answer
+  const lastAnswerMap = new Map<string, { showSlug: string; episodeSlug: string; blockIndex: number; answer: Answer }>()
+  for (const a of answers) {
+    const key = `${a.showSlug}:${a.episodeSlug}:${a.blockIndex}`
+    lastAnswerMap.set(key, a)
+  }
+  const uniqueAnswers = Array.from(lastAnswerMap.values())
+
+  // Fetch existing progress rows
+  const conditions = uniqueAnswers.map(a =>
+    `and(show_slug.eq.${a.showSlug},episode_slug.eq.${a.episodeSlug},block_index.eq.${a.blockIndex})`
+  )
+
+  const { data: allProgress, error: fetchError } = await serviceClient
+    .from('sentence_progress')
+    .select('show_slug, episode_slug, block_index, repetitions, interval_days, ease_factor, lapses, last_review_at, first_review_at')
+    .eq('user_id', userId)
+    .or(conditions.join(','))
+
+  if (fetchError) {
+    console.error('Sentence batch fetch failed:', fetchError.message)
+    throw new Error(fetchError.message)
+  }
+
+  const progressMap = new Map(
+    (allProgress ?? []).map(p => [`${p.show_slug}:${p.episode_slug}:${p.block_index}`, p])
+  )
+  const now = new Date().toISOString()
+
+  const rows = uniqueAnswers.map(({ showSlug, episodeSlug, blockIndex, answer }) => {
+    const key = `${showSlug}:${episodeSlug}:${blockIndex}`
+    const progress = progressMap.get(key)
+
+    if (!progress) {
+      const result = computeAnswerResult({
+        repetitions: 0,
+        interval_days: 0,
+        ease_factor: 2.5,
+        lapses: 0,
+      }, answer)
+
+      return {
+        user_id: userId,
+        show_slug: showSlug,
+        episode_slug: episodeSlug,
+        block_index: blockIndex,
+        status: 0,
+        repetitions: result.repetitions,
+        interval_days: result.interval_days,
+        ease_factor: result.ease_factor,
+        lapses: answer === 'again' ? 1 : 0,
+        last_review_at: now,
+        last_rating: answer,
+        next_review_at: result.nextReview?.toISOString() ?? null,
+        first_review_at: now,
+        updated_at: now,
+        created_at: now,
+      }
+    }
+
+    const result = computeAnswerResult(progress, answer)
+    const nextReview = result.nextReview?.toISOString() ?? null
+    const newLapses = answer === 'again' ? (progress.lapses ?? 0) + 1 : (progress.lapses ?? 0)
+
+    return {
+      user_id: userId,
+      show_slug: showSlug,
+      episode_slug: episodeSlug,
+      block_index: blockIndex,
+      status: 0,
+      repetitions: result.repetitions,
+      interval_days: result.interval_days,
+      ease_factor: result.ease_factor,
+      last_review_at: now,
+      last_rating: answer,
+      next_review_at: nextReview,
+      lapses: newLapses,
+      updated_at: now,
+      ...(progress.last_review_at === null && { first_review_at: now }),
+    }
+  })
+
+  const { error } = await serviceClient
+    .from('sentence_progress')
+    .upsert(rows, { onConflict: 'user_id,show_slug,episode_slug,block_index' })
+
+  if (error) {
+    console.error('Sentence batch upsert failed:', error.message)
+    throw new Error(error.message)
+  }
+
+  revalidatePath('/revision')
+}
+
+/* ── Toggle sentence revision ────────────────────────────────────────── */
+
+export async function toggleSentenceRevision(
+  showSlug: string,
+  episodeSlug: string,
+  blockIndex: number
+): Promise<{ success: boolean; inRevision: boolean }> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) throw new Error('Not authenticated')
+
+  const { data: existing, error: fetchErr } = await serviceClient
+    .from('sentence_progress')
+    .select('status')
+    .eq('user_id', userId)
+    .eq('show_slug', showSlug)
+    .eq('episode_slug', episodeSlug)
+    .eq('block_index', blockIndex)
+    .maybeSingle()
+
+  if (fetchErr) throw new Error(fetchErr.message)
+
+  const now = new Date().toISOString()
+
+  if (existing?.status === 0) {
+    const { error: delErr } = await serviceClient
+      .from('sentence_progress')
+      .delete()
+      .eq('user_id', userId)
+      .eq('show_slug', showSlug)
+      .eq('episode_slug', episodeSlug)
+      .eq('block_index', blockIndex)
+
+    if (delErr) throw new Error(delErr.message)
+    return { success: true, inRevision: false }
+  }
+
+  if (existing) {
+    const { error: updErr } = await serviceClient
+      .from('sentence_progress')
+      .update({ status: 0, updated_at: now })
+      .eq('user_id', userId)
+      .eq('show_slug', showSlug)
+      .eq('episode_slug', episodeSlug)
+      .eq('block_index', blockIndex)
+
+    if (updErr) throw new Error(updErr.message)
+    return { success: true, inRevision: true }
+  }
+
+  // Insert new row with default SRS values
+  const { error: insErr } = await serviceClient
+    .from('sentence_progress')
+    .insert({
+      user_id: userId,
+      show_slug: showSlug,
+      episode_slug: episodeSlug,
+      block_index: blockIndex,
+      status: 0,
+      repetitions: 0,
+      interval_days: 0,
+      ease_factor: 2.5,
+      lapses: 0,
+      updated_at: now,
+      created_at: now,
+    })
+
+  if (insErr) throw new Error(insErr.message)
+  return { success: true, inRevision: true }
+}
+
+/* ── Fetch enrolled sentence IDs ─────────────────────────────────────── */
+
+export async function fetchSentenceRevisionIds(): Promise<string[]> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) return []
+
+  const { data, error } = await serviceClient
+    .from('sentence_progress')
+    .select('show_slug, episode_slug, block_index')
+    .eq('user_id', userId)
+    .eq('status', 0)
+
+  if (error) {
+    console.error('[fetchSentenceRevisionIds] error:', error.message)
+    return []
+  }
+
+  return (data ?? []).map(r => `${r.show_slug}:${r.episode_slug}:${r.block_index}`)
 }
