@@ -5,7 +5,6 @@ import React, {
   useEffect,
   useRef,
   useCallback,
-  useMemo,
 } from 'react'
 import { createPortal } from 'react-dom'
 import {
@@ -24,18 +23,16 @@ import {
   useMediaQuery,
   Chip,
   Drawer,
+  Breadcrumbs,
+  Popover,
 } from '@mui/material'
 import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip'
 import { styled } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
-import { ArrowBack, Settings, Close } from '@mui/icons-material'
+import { ArrowBack, Settings, Close, ExpandMore, ExpandLess, ChevronRight } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
-import Navbar from '@/app/components/navbar'
-import { EpisodeFull, VocabEntry } from '@/app/lib/cartoons'
-import { normalizeArabicToken, stripDiacritics } from '@/app/lib/arabic'
-import { useRevisionStore } from '@/store/revisionStore'
-import { useVocabStore } from '@/store/vocabStore'
-import { useAuth } from '@/app/AuthContext'          // ← added
+import { stripDiacritics } from '@/app/lib/arabic'
+import { EpisodeFull, CartoonWordEntry } from '@/app/lib/cartoons'
 
 // ─── Fallback — used before we measure the real navbar ────────────────────────
 const NAVBAR_HEIGHT = 64 // px
@@ -69,19 +66,21 @@ const PAGE_CSS = `
     right: 0;
     z-index: 30;
     background: var(--cream);
-    padding: 10px 20px 12px;
+    padding: 4px 20px 12px;
   }
   @media (min-width: 1200px) {
     #mobile-fixed-header { display: none; }
   }
 
-  .script-line {
+  .script-block {
     transition: background 0.15s ease, border-color 0.2s ease;
     border-radius: 8px;
     border-left: 3px solid transparent;
+    padding: 12px 16px;
+    margin-bottom: 8px;
   }
-  .script-line:hover  { background: rgba(184,134,11,0.06); }
-  .script-line.active { background: rgba(184,134,11,0.12); border-left-color: var(--gold); }
+  .script-block:hover  { background: rgba(184,134,11,0.06); }
+  .script-block.active { background: rgba(184,134,11,0.12); border-left-color: var(--gold); }
 
   .arabic-line {
     font-family: "EB Garamond", Georgia, serif;
@@ -126,6 +125,22 @@ const PAGE_CSS = `
     font-weight: 700;
     direction: rtl;
     text-align: right;
+  }
+
+  .note-line {
+    font-family: Jost, var(--font-sans);
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.6;
+    padding: 6px 0;
+    border-left: 2px solid var(--gold);
+    padding-left: 10px;
+    margin: 4px 0;
+  }
+  .note-line em {
+    color: var(--bark);
+    font-weight: 600;
+    font-style: normal;
   }
 `
 
@@ -390,7 +405,7 @@ function PillToggle({
         display: 'inline-flex', alignItems: 'center', gap: 1, cursor: 'pointer',
         userSelect: 'none', padding: '5px 12px 5px 6px', borderRadius: '999px',
         border: '1px solid', borderColor: enabled ? activeColor : 'rgba(122,110,101,0.25)',
-        background: enabled ? `${activeColor}14` : 'transparent', minWidth: 178,
+        background: enabled ? `${activeColor}14` : 'transparent',
         transition: 'all 0.15s',
         '&:hover': { borderColor: activeColor, background: `${activeColor}0d` },
       }}
@@ -407,9 +422,9 @@ function PillToggle({
 
 function DesktopTextScaleSlider({ textScale, onChange }: { textScale: number; onChange: (v: number) => void }) {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 1.5, py: 0.5, borderRadius: '999px', border: '1px solid rgba(122,110,101,0.2)', background: 'rgba(122,110,101,0.02)', minWidth: 160 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 1.5, borderRadius: '999px', border: '1px solid rgba(122,110,101,0.2)', background: 'rgba(122,110,101,0.02)', height: 36, flex: 1, minWidth: 100 }}>
       <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
-      <Slider value={textScale} min={0.9} max={1.5} step={0.1} size="small" onChange={(_, v) => onChange(v as number)} sx={{ color: '#b8860b', flex: 1, '& .MuiSlider-thumb': { width: 14, height: 14 } }} />
+      <Slider value={textScale} min={1.0} max={1.4} step={0.1} size="small" onChange={(_, v) => onChange(v as number)} sx={{ color: '#b8860b', flex: 1, '& .MuiSlider-thumb': { width: 14, height: 14 } }} />
       <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
     </Box>
   )
@@ -462,94 +477,28 @@ function SettingsDialog({
 }
 
 /* ─────────────────────────────────────────────
-   VocabDetail
+   WordTooltip — inline markdown word popup
 ───────────────────────────────────────────── */
-function VocabDetail({
+function WordTooltip({
   entry,
-  secondaries = [],
-  toggling,
-  inRevision,
-  onToggle,
   textScale,
-  onClose,
 }: {
-  entry: VocabEntry
-  secondaries?: VocabEntry[]
-  toggling: boolean
-  inRevision: boolean
-  onToggle: () => void
+  entry: CartoonWordEntry
   textScale: number
-  onClose?: () => void
 }) {
-  const { user } = useAuth()   // ← guard added
-
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-      {/* Chips + close button row */}
-      {(entry.level || entry.theme || onClose) && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', flex: 1 }}>
-            {entry.level && (
-              <Chip
-                label={entry.level}
-                size="small"
-                sx={{
-                  background: LEVEL_COLORS[entry.level] ?? 'var(--forest)',
-                  color: '#fff',
-                  fontFamily: 'Jost, sans-serif',
-                  fontWeight: 600,
-                  fontSize: `calc(0.7rem * ${textScale})`,
-                  letterSpacing: '0.04em',
-                }}
-              />
-            )}
-            {entry.theme && (
-              <Chip
-                label={entry.theme}
-                size="small"
-                sx={{
-                  background: 'rgba(184,134,11,0.12)',
-                  color: 'var(--gold)',
-                  fontFamily: 'Jost, sans-serif',
-                  fontWeight: 600,
-                  fontSize: `calc(0.7rem * ${textScale})`,
-                  border: '1px solid rgba(184,134,11,0.25)',
-                }}
-              />
-            )}
-          </Box>
-
-          {onClose && (
-            <IconButton
-              onClick={(e) => {
-                e.stopPropagation()
-                onClose()
-              }}
-              size="small"
-              sx={{
-                color: '#7a6e65',
-                width: 26,
-                height: 26,
-                flexShrink: 0,
-              }}
-            >
-              <Close sx={{ fontSize: '0.95rem' }} />
-            </IconButton>
-          )}
-        </Box>
-      )}
-
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, minWidth: 200 }}>
       <Box sx={{ textAlign: 'center' }}>
         <Typography
           sx={{
             fontFamily: '"EB Garamond", Georgia, serif',
-            fontSize: `calc(1.7rem * ${textScale})`,
+            fontSize: `calc(1.6rem * ${textScale})`,
             fontWeight: 700,
             color: 'var(--bark)',
             direction: 'rtl',
           }}
         >
-          {entry.word_diacritic || entry.word}
+          {entry.arabic}
         </Typography>
         <Typography
           sx={{
@@ -563,162 +512,31 @@ function VocabDetail({
         </Typography>
       </Box>
 
-      <Box>
-        <Typography
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+        <Chip
+          label={entry.cefr}
+          size="small"
           sx={{
+            background: LEVEL_COLORS[entry.cefr] ?? 'var(--forest)',
+            color: '#fff',
             fontFamily: 'Jost, sans-serif',
-            fontSize: `calc(0.75rem * ${textScale})`,
             fontWeight: 600,
-            color: 'var(--forest)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.06em',
+            fontSize: `calc(0.7rem * ${textScale})`,
+            letterSpacing: '0.04em',
           }}
-        >
-          {entry.pos}
-        </Typography>
-        <Typography
-          sx={{
-            fontFamily: 'Jost, sans-serif',
-            fontSize: `calc(0.95rem * ${textScale})`,
-            color: 'var(--bark)',
-            mt: 0.5,
-          }}
-        >
-          {entry.definition}
-        </Typography>
+        />
       </Box>
 
-      {/* ── Auth-guarded revision button ── */}
-      {user ? (
-        <Button
-          variant="contained"
-          size="small"
-          disabled={toggling}
-          onClick={onToggle}
-          sx={{
-            background: inRevision ? 'var(--gold)' : 'var(--forest)',
-            color: '#fff',
-            textTransform: 'none',
-            borderRadius: '8px',
-            fontFamily: 'Jost, sans-serif',
-            fontWeight: 600,
-            fontSize: `calc(0.9rem * ${textScale})`,
-            '&:hover': { background: inRevision ? '#9c6b00' : '#0a1f15' },
-          }}
-        >
-          {toggling ? 'Updating…' : inRevision ? 'Remove from Revision' : 'Add to Revision'}
-        </Button>
-      ) : (
-        <Typography
-          sx={{
-            fontFamily: 'Jost, sans-serif',
-            fontSize: `calc(0.78rem * ${textScale})`,
-            color: 'var(--muted)',
-            textAlign: 'center',
-            fontStyle: 'italic',
-          }}
-        >
-          Sign in to save words for revision
-        </Typography>
-      )}
-
-      {/* ── Secondary matches (other vocab entries for same bare word) ── */}
-      {secondaries.length > 0 && (
-        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(44,26,14,0.08)' }}>
-          <Typography
-            sx={{
-              fontFamily: 'Jost, sans-serif',
-              fontSize: `calc(0.7rem * ${textScale})`,
-              fontWeight: 600,
-              color: 'var(--muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              mb: 1,
-            }}
-          >
-            Also matches
-          </Typography>
-          {secondaries.map((sec) => (
-            <Box
-              key={sec.id}
-              sx={{
-                py: 1,
-                px: 1.5,
-                mb: 0.75,
-                borderRadius: '8px',
-                background: 'rgba(44,26,14,0.03)',
-                border: '1px solid rgba(44,26,14,0.06)',
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 0.5 }}>
-                {sec.level && (
-                  <Chip
-                    label={sec.level}
-                    size="small"
-                    sx={{
-                      background: LEVEL_COLORS[sec.level] ?? 'var(--forest)',
-                      color: '#fff',
-                      fontFamily: 'Jost, sans-serif',
-                      fontWeight: 600,
-                      fontSize: `calc(0.6rem * ${textScale})`,
-                      letterSpacing: '0.04em',
-                      height: 20,
-                    }}
-                  />
-                )}
-                {sec.theme && (
-                  <Chip
-                    label={sec.theme}
-                    size="small"
-                    sx={{
-                      background: 'rgba(184,134,11,0.12)',
-                      color: 'var(--gold)',
-                      fontFamily: 'Jost, sans-serif',
-                      fontWeight: 600,
-                      fontSize: `calc(0.6rem * ${textScale})`,
-                      border: '1px solid rgba(184,134,11,0.25)',
-                      height: 20,
-                    }}
-                  />
-                )}
-              </Box>
-
-              <Typography
-                sx={{
-                  fontFamily: '"EB Garamond", Georgia, serif',
-                  fontSize: `calc(1.2rem * ${textScale})`,
-                  fontWeight: 700,
-                  color: 'var(--bark)',
-                  direction: 'rtl',
-                  textAlign: 'center',
-                }}
-              >
-                {sec.word_diacritic || sec.word}
-              </Typography>
-              <Typography
-                sx={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: `calc(0.75rem * ${textScale})`,
-                  color: 'var(--muted)',
-                  textAlign: 'center',
-                }}
-              >
-                {sec.transliteration}
-              </Typography>
-              <Typography
-                sx={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: `calc(0.8rem * ${textScale})`,
-                  color: 'var(--bark)',
-                  mt: 0.5,
-                }}
-              >
-                {sec.definition}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      )}
+      <Typography
+        sx={{
+          fontFamily: 'Jost, sans-serif',
+          fontSize: `calc(0.95rem * ${textScale})`,
+          color: 'var(--bark)',
+          textAlign: 'center',
+        }}
+      >
+        {entry.english}
+      </Typography>
     </Box>
   )
 }
@@ -742,177 +560,27 @@ function useVocabOpenTracker(isOpen: boolean) {
 }
 
 /* ─────────────────────────────────────────────
-   Clitic stripping + relaxed lookup (stem ≥ 3)
-───────────────────────────────────────────── */
-const PROCLITICS = [
-  'ال', 'و', 'ف', 'ب', 'ل', 'ك', 'س', 'أ', 'سأ',
-  'وب', 'فب', 'ول', 'فل', 'وبال', 'فبال', 'ولل', 'فلل',
-  'بال', 'فال', 'وال', 'لل', 'كال', 'وس', 'فس',
-]
-
-const ENCLITICS = [
-  'ك', 'ه', 'ها', 'هم', 'هن', 'نا', 'ي', 'ن',
-  'كما', 'هما', 'تا', 'تما', 'ان', 'ين', 'ون',
-  'ات', 'تك', 'ته', 'تها', 'تهم', 'تهن', 'تنا', 'تي', 'تن',
-]
-
-function getStrippedForms(word: string): string[] {
-  const forms = new Set<string>()
-  forms.add(word)
-
-  // Ta marbuta → ه  (e.g. صديقة → صديقه)
-  if (word.endsWith('ة')) {
-    forms.add(word.slice(0, -1) + 'ه')
-  }
-
-  // Single proclitic
-  for (const p of PROCLITICS) {
-    if (word.startsWith(p) && word.length - p.length >= 3) {
-      forms.add(word.slice(p.length))
-    }
-  }
-
-  // Single enclitic
-  for (const e of ENCLITICS) {
-    if (word.endsWith(e) && word.length - e.length >= 3) {
-      forms.add(word.slice(0, -e.length))
-    }
-  }
-
-  // Proclitic + enclitic combined
-  for (const p of PROCLITICS) {
-    for (const e of ENCLITICS) {
-      if (
-        word.startsWith(p) &&
-        word.endsWith(e) &&
-        word.length - p.length - e.length >= 3
-      ) {
-        forms.add(word.slice(p.length, -e.length))
-      }
-    }
-  }
-
-  return Array.from(forms)
-}
-
-function countMatchingDiacritics(a: string, b: string): number {
-  const DIACRITICS = /[\u064B-\u065F\u0670]/g
-  const aDia = a.match(DIACRITICS) || []
-  const bDia = b.match(DIACRITICS) || []
-  let score = 0
-  const minLen = Math.min(aDia.length, bDia.length)
-  for (let i = 0; i < minLen; i++) {
-    if (aDia[i] === bDia[i]) score++
-  }
-  score -= Math.abs(aDia.length - bDia.length) * 0.5
-  return score
-}
-
-function dedupEntries(entries: VocabEntry[]): VocabEntry[] {
-  const seen = new Set<number>()
-  return entries.filter(e => {
-    if (seen.has(e.id)) return false
-    seen.add(e.id)
-    return true
-  })
-}
-
-/**
- * Look up ALL matching vocabulary entries for a word.
- * Returns every candidate that matches, deduplicated by word_id.
- * The caller decides how to display them (primary + secondaries, or all equal).
- */
-function lookupAllEntries(
-  part: string, // the word as it appears in the script (preserves diacritics)
-  vocabMap: Record<string, VocabEntry[]>,
-  diacritizedMap: Record<string, VocabEntry>,
-  diacritizedIndex: Record<string, string>
-): VocabEntry[] {
-  const bare = stripDiacritics(part)
-  const all: VocabEntry[] = []
-
-  // ── Tier 1: Exact diacritized match against word_di ──
-  if (diacritizedMap[part]) {
-    all.push(diacritizedMap[part])
-  }
-
-  // ── Tier 2: Script's canonical diacritized form → word_di exact match ──
-  const scriptDi = diacritizedIndex[bare]
-  if (scriptDi && diacritizedMap[scriptDi] && diacritizedMap[scriptDi].id !== all[0]?.id) {
-    all.push(diacritizedMap[scriptDi])
-  }
-
-  // ── Tier 3: All candidates from vocabMap[bare] ──
-  const candidates = vocabMap[bare]
-  if (candidates) {
-    for (const c of candidates) {
-      if (!all.some(e => e.id === c.id)) {
-        all.push(c)
-      }
-    }
-  }
-
-  // ── Tier 4: Client-side clitic stripping as safety net ──
-  // This catches cases where the server expansion missed a form
-  for (const candidate of getStrippedForms(bare)) {
-    if (candidate !== bare) {
-      const strippedCandidates = vocabMap[candidate]
-      if (strippedCandidates) {
-        for (const c of strippedCandidates) {
-          if (!all.some(e => e.id === c.id)) {
-            all.push(c)
-          }
-        }
-      }
-    }
-  }
-
-  // ── Tier 5: Alif-normalized fallback ──
-  const alifNorm = bare.replace(/[أإآٱ]/g, 'ا')
-  if (alifNorm !== bare) {
-    const normCandidates = vocabMap[alifNorm]
-    if (normCandidates) {
-      for (const c of normCandidates) {
-        if (!all.some(e => e.id === c.id)) {
-          all.push(c)
-        }
-      }
-    }
-  }
-
-  return all
-}
-
-/* ─────────────────────────────────────────────
    ArabicLineText — Desktop tooltip / Mobile bottom-sheet
 ───────────────────────────────────────────── */
 function ArabicLineText({
   text,
-  vocabMap,
+  wordMap,
   diacritizedMap,
-  diacritizedIndex,
   textScale,
   showDiacritics,
 }: {
   text: string
-  vocabMap: Record<string, VocabEntry[]>
-  diacritizedMap: Record<string, VocabEntry>
-  diacritizedIndex: Record<string, string>
+  wordMap: Record<string, CartoonWordEntry>
+  diacritizedMap: Record<string, CartoonWordEntry>
   textScale: number
   showDiacritics: boolean
 }) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
-  const revisionStore = useRevisionStore()
-  const isInRevision = revisionStore.isInRevision
-  const toggleRevision = revisionStore.toggleRevision
-  const updateUserProgressWord = useVocabStore(s => s.updateUserProgressWord)
 
-  const [activeEntry, setActiveEntry] = useState<VocabEntry | null>(null)
-  const [activeSecondaries, setActiveSecondaries] = useState<VocabEntry[]>([])
+  const [activeEntry, setActiveEntry] = useState<CartoonWordEntry | null>(null)
   const [activePartIndex, setActivePartIndex] = useState<number | null>(null)
   const [open, setOpen] = useState(false)
-  const [toggling, setToggling] = useState(false)
 
   const childRef = useRef<HTMLSpanElement | null>(null)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -929,16 +597,14 @@ function ArabicLineText({
     leaveTimerRef.current = setTimeout(() => {
       setOpen(false)
       setActiveEntry(null)
-      setActiveSecondaries([])
       setActivePartIndex(null)
       childRef.current = null
     }, 50)
   }, [clearLeaveTimer])
 
-  const handleOpen = useCallback((entry: VocabEntry, secondaries: VocabEntry[], el: HTMLSpanElement, partIndex: number) => {
+  const handleOpen = useCallback((entry: CartoonWordEntry, el: HTMLSpanElement, partIndex: number) => {
     clearLeaveTimer()
     setActiveEntry(entry)
-    setActiveSecondaries(secondaries)
     setActivePartIndex(partIndex)
     setOpen(true)
     childRef.current = el
@@ -948,20 +614,10 @@ function ArabicLineText({
     clearLeaveTimer()
     setOpen(false)
     setActiveEntry(null)
-    setActiveSecondaries([])
     setActivePartIndex(null)
     childRef.current = null
     lastVocabCloseAt = Date.now()
   }, [clearLeaveTimer])
-
-  const handleToggle = useCallback(async () => {
-    if (!activeEntry) return
-    setToggling(true)
-    const nextInRevision = !isInRevision(activeEntry.id)
-    await toggleRevision(activeEntry.id)
-    updateUserProgressWord(activeEntry.id, nextInRevision ? 'revision' : null)
-    setToggling(false)
-  }, [activeEntry, toggleRevision, isInRevision, updateUserProgressWord])
 
   useVocabOpenTracker(open)
 
@@ -979,26 +635,13 @@ function ArabicLineText({
         if (!/[\u0600-\u06FF]+/.test(part)) {
           return <span key={i}>{part}</span>
         }
-        const matches = lookupAllEntries(part, vocabMap, diacritizedMap, diacritizedIndex)
-        if (matches.length === 0) {
+        const plain = stripDiacritics(part)
+        const entry = diacritizedMap[part] || wordMap[plain]
+        if (!entry) {
           return <span key={i}>{part}</span>
         }
 
-        // Primary = best diacritic match, rest = secondaries
-        let primary = matches[0]
-        if (matches.length > 1) {
-          let bestScore = countMatchingDiacritics(part, primary.word_diacritic)
-          for (let m = 1; m < matches.length; m++) {
-            const score = countMatchingDiacritics(part, matches[m].word_diacritic)
-            if (score > bestScore) {
-              bestScore = score
-              primary = matches[m]
-            }
-          }
-        }
-        const secondaries = matches.filter(m => m.id !== primary.id)
-
-        const isActive = activeEntry?.id === primary.id && open && activePartIndex === i
+        const isActive = activeEntry === entry && open && activePartIndex === i
 
         /* ── Mobile: tap word → bottom sheet ── */
         if (isMobile) {
@@ -1007,7 +650,7 @@ function ArabicLineText({
               <span
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleOpen(primary, secondaries, e.currentTarget, i)
+                  handleOpen(entry, e.currentTarget, i)
                 }}
                 className="vocab-word"
                 style={{
@@ -1051,17 +694,8 @@ function ArabicLineText({
                       mb: 1.5,
                     }}
                   />
-
                   {activeEntry && (
-                    <VocabDetail
-                      entry={activeEntry}
-                      secondaries={activeSecondaries}
-                      toggling={toggling}
-                      inRevision={activeEntry ? isInRevision(activeEntry.id) : false}
-                      onToggle={handleToggle}
-                      textScale={textScale}
-                      onClose={handleClose}
-                    />
+                    <WordTooltip entry={activeEntry} textScale={textScale} />
                   )}
                 </Box>
               </Drawer>
@@ -1082,14 +716,7 @@ function ArabicLineText({
                   sx={{ position: 'relative' }}
                 >
                   <Box sx={{ p: 2.5 }}>
-                    <VocabDetail
-                      entry={activeEntry}
-                      secondaries={activeSecondaries}
-                      toggling={toggling}
-                      inRevision={activeEntry ? isInRevision(activeEntry.id) : false}
-                      onToggle={handleToggle}
-                      textScale={textScale}
-                    />
+                    <WordTooltip entry={activeEntry} textScale={textScale} />
                   </Box>
                 </Box>
               ) : (
@@ -1128,7 +755,7 @@ function ArabicLineText({
               onClick={(e) => e.stopPropagation()}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
-                handleOpen(primary, secondaries, e.currentTarget, i)
+                handleOpen(entry, e.currentTarget, i)
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'transparent'
@@ -1149,78 +776,6 @@ function ArabicLineText({
       })}
     </>
   )
-}
-
-/* ─────────────────────────────────────────────
-   Timestamp Parser
-───────────────────────────────────────────── */
-function parseTimestamp(line: string): number | null {
-  const m = line.match(/^(?:(\d+):)?(\d{1,2}):(\d{2})$/)
-  if (!m) return null
-  const h = parseInt(m[1] || '0', 10)
-  const min = parseInt(m[2], 10)
-  const sec = parseInt(m[3], 10)
-  if (min > 59 || sec > 59) return null
-  return h * 3600 + min * 60 + sec
-}
-
-/* ─────────────────────────────────────────────
-   Content Parser
-───────────────────────────────────────────── */
-function parseContent(content: string) {
-  const lines = content.split('\n')
-  const scriptLines: Array<{ timestamp: number | null; arabicDiacritic: string; arabicPlain: string; english: string }> = []
-  const vocabRows: Array<{ arabic: string; plain: string; english: string }> = []
-  let inScript = false, inNotes = false
-  let pendingTimestamp: number | null = null
-  let i = 0
-
-  while (i < lines.length) {
-    const line = lines[i].trim()
-    if (line === '## Script') { inScript = true; inNotes = false; i++; continue }
-    if (line === '## Notes') { inScript = false; inNotes = true; i++; continue }
-
-    if (inScript && line) {
-      const ts = parseTimestamp(line)
-      if (ts !== null) { pendingTimestamp = ts; i++; continue }
-      const isArabic = /[\u0600-\u06FF]/.test(line)
-      if (isArabic) {
-        let j = i + 1
-        while (j < lines.length && !lines[j].trim()) j++
-        const nextLine = lines[j]?.trim() ?? ''
-        const nextIsArabic = /[\u0600-\u06FF]/.test(nextLine)
-        if (nextIsArabic) {
-          let k = j + 1
-          while (k < lines.length && !lines[k].trim()) k++
-          const englishLine = lines[k]?.trim() ?? ''
-          const englishIsArabic = /[\u0600-\u06FF]/.test(englishLine)
-          if (!englishIsArabic && englishLine && !englishLine.startsWith('#')) {
-            scriptLines.push({ timestamp: pendingTimestamp, arabicDiacritic: line, arabicPlain: nextLine, english: englishLine })
-            pendingTimestamp = null; i = k + 1; continue
-          } else {
-            scriptLines.push({ timestamp: pendingTimestamp, arabicDiacritic: line, arabicPlain: nextLine, english: '' })
-            pendingTimestamp = null; i = j + 1; continue
-          }
-        } else {
-          if (nextLine && !nextLine.startsWith('#')) {
-            scriptLines.push({ timestamp: pendingTimestamp, arabicDiacritic: line, arabicPlain: line, english: nextLine })
-            pendingTimestamp = null; i = j + 1; continue
-          } else {
-            scriptLines.push({ timestamp: pendingTimestamp, arabicDiacritic: line, arabicPlain: line, english: '' })
-            pendingTimestamp = null
-          }
-        }
-      }
-    }
-
-    if (inNotes && line.startsWith('|') && !line.startsWith('|--') && !line.startsWith('| Arabic')) {
-      const cols = line.split('|').map((c) => c.trim()).filter(Boolean)
-      if (cols.length >= 4) vocabRows.push({ arabic: cols[0], plain: cols[1], english: cols[3] })
-      else if (cols.length >= 3) vocabRows.push({ arabic: cols[0], plain: cols[0], english: cols[2] })
-    }
-    i++
-  }
-  return { scriptLines, vocabRows }
 }
 
 /* ─────────────────────────────────────────────
@@ -1311,8 +866,9 @@ function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: num
 }
 
 const LEVEL_COLORS: Record<string, string> = {
-  A1: '#2d6a4f', A2: '#40916c', B1: '#b5861a', B2: '#9c6b00', C1: '#6d4c9e', C2: '#4a2f7a',
+  A0: '#5c8a6f', A1: '#2d6a4f', A2: '#40916c', B1: '#b5861a', B2: '#9c6b00', C1: '#6d4c9e', C2: '#4a2f7a',
 }
+
 
 /* ─────────────────────────────────────────────
    Main Component
@@ -1323,6 +879,8 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   const [showDiacritics, setShowDiacritics] = useState(true)
   const [textScale, setTextScale] = useState(1.2)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement | null>(null)
+  const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set())
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   const [navbarHeight, setNavbarHeight] = useState(NAVBAR_HEIGHT);
@@ -1344,22 +902,55 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   const [mobileHeaderHeight, setMobileHeaderHeight] = useState(estimatedMobileHeader)
   const [isMobile, setIsMobile] = useState(false)
 
-  const scriptContainerRef = useRef<HTMLDivElement | null>(null)
-  const activeLineRef = useRef<HTMLDivElement | null>(null)
+  const activeBlockRef = useRef<HTMLDivElement | null>(null)
   const skipInitialScroll = useRef(true)
+
+  // ── Desktop video resize ──
+  const [desktopVideoWidth, setDesktopVideoWidth] = useState(420)
+  const desktopVideoDrag = useRef<{ startX: number; startWidth: number } | null>(null)
+  const desktopVideoContainerRef = useRef<HTMLDivElement | null>(null)
+
+  const startDesktopDrag = useCallback((clientX: number) => {
+    desktopVideoDrag.current = { startX: clientX, startWidth: desktopVideoWidth }
+    document.body.style.cursor = 'ew-resize'
+    document.body.style.userSelect = 'none'
+  }, [desktopVideoWidth])
+
+  const onDesktopDrag = useCallback((clientX: number) => {
+    if (!desktopVideoDrag.current) return
+    const delta = clientX - desktopVideoDrag.current.startX
+    const newW = Math.max(320, Math.min(720, desktopVideoDrag.current.startWidth + delta))
+    setDesktopVideoWidth(newW)
+  }, [])
+
+  const endDesktopDrag = useCallback(() => {
+    desktopVideoDrag.current = null
+    document.body.style.cursor = ''
+    document.body.style.userSelect = ''
+  }, [])
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => onDesktopDrag(e.clientX)
+    const handleMouseUp = () => endDesktopDrag()
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [onDesktopDrag, endDesktopDrag])
 
   const scrollOffsetRef = useRef(0)
   useEffect(() => {
     scrollOffsetRef.current = navbarHeight + mobileHeaderHeight + 16
   }, [navbarHeight, mobileHeaderHeight])
 
-  const { scriptLines, vocabRows } = useMemo(() => parseContent(episode.content), [episode.content])
-
   const handleTimeUpdate = useCallback((time: number) => {
-    let lo = 0, hi = scriptLines.length - 1, idx = -1
+    const blocks = episode.scriptBlocks
+    let lo = 0, hi = blocks.length - 1, idx = -1
     while (lo <= hi) {
       const mid = (lo + hi) >> 1
-      const ts = scriptLines[mid].timestamp
+      const ts = blocks[mid].timestamp
       if (ts != null && ts <= time) {
         idx = mid
         lo = mid + 1
@@ -1368,7 +959,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
       }
     }
     setActiveIndex(idx >= 0 ? idx : null)
-  }, [scriptLines])
+  }, [episode.scriptBlocks])
 
   const { wrapRef, seekTo } = useYouTubePlayer(episode.youtubeId, handleTimeUpdate)
 
@@ -1378,10 +969,10 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
       skipInitialScroll.current = false
       return
     }
-    if (!activeLineRef.current) return
+    if (!activeBlockRef.current) return
 
     if (isMobile) {
-      const rect = activeLineRef.current.getBoundingClientRect()
+      const rect = activeBlockRef.current.getBoundingClientRect()
       const offset = scrollOffsetRef.current
       const isAbove = rect.top < offset
       const isBelow = rect.bottom > window.innerHeight
@@ -1391,7 +982,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
         window.scrollTo({ top: Math.max(0, scrollTop), behavior: 'smooth' })
       }
     } else {
-      activeLineRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      activeBlockRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   }, [activeIndex, isMobile])
 
@@ -1400,10 +991,6 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
-  }, [])
-
-  useEffect(() => {
-    useRevisionStore.getState().init()
   }, [])
 
   return (
@@ -1447,7 +1034,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
           sx={{
             display: { xs: 'flex', lg: 'grid' },
             flexDirection: { xs: 'column', lg: 'unset' },
-            gridTemplateColumns: { lg: '420px 1fr' },
+            gridTemplateColumns: { lg: `${desktopVideoWidth}px 1fr` },
             gap: { xs: 0, lg: 5 },
             maxWidth: 1536,
             mx: 'auto',
@@ -1493,6 +1080,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
             </Box>
 
             <Box
+              ref={desktopVideoContainerRef}
               sx={{
                 display: { xs: 'none', lg: 'block' },
                 width: '100%',
@@ -1502,9 +1090,58 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                 background: '#000',
                 aspectRatio: episode.youtubeShort ? '9/16' : '16/9',
                 maxHeight: episode.youtubeShort ? 560 : 'auto',
+                position: 'relative',
               }}
             >
               <Box ref={wrapRef} sx={{ width: '100%', height: '100%' }} />
+
+              {/* Desktop resize handle */}
+              <Box
+                onMouseDown={(e) => {
+                  e.stopPropagation()
+                  startDesktopDrag(e.clientX)
+                }}
+                sx={{
+                  position: 'absolute',
+                  bottom: 8,
+                  right: 8,
+                  width: 24,
+                  height: 24,
+                  cursor: 'se-resize',
+                  zIndex: 10,
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'flex-end',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(255,255,255,0.5)">
+                  <path d="M22 22H20V20H22V22ZM22 18H20V16H22V18ZM22 14H20V12H22V14ZM18 22H16V20H18V22Z" />
+                </svg>
+              </Box>
+            </Box>
+
+            {/* Desktop video resize hint */}
+            <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', justifyContent: 'space-between', mt: -1 }}>
+              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: 'var(--muted)', fontStyle: 'italic' }}>
+                Drag corner to resize
+              </Typography>
+              {desktopVideoWidth !== 420 && (
+                <Button
+                  size="small"
+                  onClick={() => setDesktopVideoWidth(420)}
+                  sx={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: '0.7rem',
+                    color: 'var(--gold)',
+                    textTransform: 'none',
+                    py: 0,
+                    minHeight: 24,
+                    '&:hover': { background: 'transparent', color: '#9c6b00' },
+                  }}
+                >
+                  Reset size
+                </Button>
+              )}
             </Box>
 
             <Box sx={{ display: { xs: 'none', lg: 'flex' }, flexDirection: 'column', gap: 2.5 }}>
@@ -1519,7 +1156,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
             </Box>
           </Box>
 
-          {/* ── Right: Script + Vocab ── */}
+          {/* ── Right: Tabs ── */}
           <Box
             sx={{
               display: 'flex',
@@ -1529,9 +1166,84 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
               mt: { xs: 1, lg: 0 },
             }}
           >
-            <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', justifyContent: 'flex-end', gap: 2, mb: 2 }}>
-              <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
-              <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics((p) => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
+            <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              {/* Breadcrumbs */}
+              <Breadcrumbs
+                separator={<ChevronRight sx={{ fontSize: 14, color: 'var(--muted)' }} />}
+                sx={{
+                  '& .MuiBreadcrumbs-li': { fontFamily: 'Jost, sans-serif', fontSize: '0.78rem' },
+                }}
+              >
+                <Typography
+                  onClick={() => router.push('/')}
+                  sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--muted)', cursor: 'pointer', '&:hover': { color: 'var(--gold)' } }}
+                >
+                  Home
+                </Typography>
+                <Typography
+                  onClick={() => router.push('/cartoons')}
+                  sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--muted)', cursor: 'pointer', '&:hover': { color: 'var(--gold)' } }}
+                >
+                  Cartoons
+                </Typography>
+                <Typography
+                  onClick={() => router.push(`/cartoons/${episode.show}`)}
+                  sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--muted)', cursor: 'pointer', '&:hover': { color: 'var(--gold)' } }}
+                >
+                  {showTitle}
+                </Typography>
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--bark)', fontWeight: 500 }}>
+                  {episode.title}
+                </Typography>
+              </Breadcrumbs>
+
+              {/* Desktop settings button */}
+              <IconButton
+                onClick={(e) => setSettingsAnchor(e.currentTarget)}
+                size="small"
+                sx={{
+                  width: 34, height: 34,
+                  color: '#7a6e65',
+                  border: '1px solid rgba(122,110,101,0.25)',
+                  borderRadius: '8px',
+                  '&:hover': { background: 'rgba(122,110,101,0.08)', borderColor: 'rgba(122,110,101,0.4)' },
+                }}
+              >
+                <Settings sx={{ fontSize: '1.1rem' }} />
+              </IconButton>
+              <Popover
+                open={Boolean(settingsAnchor)}
+                anchorEl={settingsAnchor}
+                onClose={() => setSettingsAnchor(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                slotProps={{
+                  paper: {
+                    sx: {
+                      borderRadius: '12px',
+                      boxShadow: '0 12px 40px rgba(44,26,14,0.15)',
+                      p: 2,
+                      width: 320,
+                      border: '1px solid rgba(44,26,14,0.08)',
+                    },
+                  },
+                }}
+              >
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', mb: 1, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Text Size
+                    </Typography>
+                    <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', mb: 1, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Diacritics
+                    </Typography>
+                    <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics((p) => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
+                  </Box>
+                </Box>
+              </Popover>
             </Box>
 
             <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: '#fff', borderRadius: '12px 12px 0 0', px: { xs: 1, md: 4 }, display: 'flex', alignItems: 'center' }}>
@@ -1546,7 +1258,8 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                 }}
               >
                 <Tab label="Script" />
-                <Tab label={`Vocabulary (${vocabRows.length})`} />
+                <Tab label="Vocabulary List" />
+                <Tab label="Grammar Points" />
               </Tabs>
 
               <IconButton
@@ -1566,47 +1279,148 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
             </Box>
 
             <Box sx={{ background: '#fff', borderRadius: '0 0 12px 12px', px: { xs: 2, md: 4 }, py: { xs: 3, md: 4 } }}>
+              {/* ── Script Tab ── */}
               {tab === 0 && (
-                <Box ref={scriptContainerRef} sx={{ display: 'flex', flexDirection: 'column' }}>
-                  {scriptLines.length === 0 ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                  {episode.scriptBlocks.length === 0 ? (
                     <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No script found in this episode file.</Typography>
                   ) : (
-                    scriptLines.map((line, i) => {
-                      const hasTimestamp = line.timestamp != null
+                    episode.scriptBlocks.map((block, i) => {
+                      const hasTimestamp = block.timestamp != null
                       const isActive = activeIndex === i
-                      const isLast = i === scriptLines.length - 1
+                      const isLast = i === episode.scriptBlocks.length - 1
                       return (
                         <React.Fragment key={i}>
                           <Box
-                            ref={isActive ? activeLineRef : undefined}
-                            className={`script-line ${isActive ? 'active' : ''}`}
+                            ref={isActive ? activeBlockRef : undefined}
+                            className={`script-block ${isActive ? 'active' : ''}`}
                             onClick={(e) => {
                               if (openVocabCount > 0) return
                               if (Date.now() - lastVocabCloseAt < 120) return
                               if ((e.target as HTMLElement).closest('.vocab-word')) return
-                              if (hasTimestamp) seekTo(line.timestamp!)
+                              if (hasTimestamp) seekTo(block.timestamp!)
                             }}
-                            sx={{ px: 2, py: 1.5, display: 'flex', flexDirection: 'column', gap: 0.3, cursor: hasTimestamp ? 'pointer' : 'default', opacity: hasTimestamp ? 1 : 0.75 }}
+                            sx={{ cursor: hasTimestamp ? 'pointer' : 'default', opacity: hasTimestamp ? 1 : 0.75 }}
                           >
-                            {hasTimestamp && (
-                              <Typography sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1 }}>
-                                {(() => { const s = line.timestamp!; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` })()}
+                            {/* Block title / timestamp */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                              {hasTimestamp && (
+                                <Typography sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1 }}>
+                                  {(() => { const s = block.timestamp!; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` })()}
+                                </Typography>
+                              )}
+                              <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 500 }}>
+                                {block.title}
                               </Typography>
-                            )}
-                            <Typography className="arabic-line" sx={{ fontSize: `calc(1.35rem * ${textScale})` }}>
+                            </Box>
+
+                            {/* Arabic */}
+                            <Typography className="arabic-line" sx={{ fontSize: `calc(1.35rem * ${textScale})`, mb: 0.5 }}>
                               <ArabicLineText
                                 textScale={textScale}
-                                text={showDiacritics ? line.arabicDiacritic : line.arabicPlain}
-                                vocabMap={episode.vocabMap}
+                                text={showDiacritics ? block.arabicDiacritic : block.arabicPlain}
+                                wordMap={episode.wordMap}
                                 diacritizedMap={episode.diacritizedMap}
-                                diacritizedIndex={episode.diacritizedIndex}
                                 showDiacritics={showDiacritics}
                               />
                             </Typography>
-                            {line.english && (
-                              <Typography className="english-line" sx={{ fontSize: `calc(0.88rem * ${textScale})` }}>
-                                {line.english}
+
+                            {/* English */}
+                            {block.english && (
+                              <Typography className="english-line" sx={{ fontSize: `calc(0.88rem * ${textScale})`, mb: 1.5 }}>
+                                {block.english}
                               </Typography>
+                            )}
+
+                            {/* Notes — collapsible button on mobile, inline on desktop */}
+                            {block.notes.length > 0 && (
+                              isMobile ? (
+                                <>
+                                  <Button
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setExpandedNotes(prev => {
+                                        const next = new Set(prev)
+                                        if (next.has(i)) next.delete(i)
+                                        else next.add(i)
+                                        return next
+                                      })
+                                    }}
+                                    endIcon={expandedNotes.has(i) ? <ExpandLess sx={{ fontSize: '1rem' }} /> : <ExpandMore sx={{ fontSize: '1rem' }} />}
+                                    sx={{
+                                      mt: 1,
+                                      py: 0.3,
+                                      px: 1.5,
+                                      minHeight: 28,
+                                      fontFamily: 'Jost, sans-serif',
+                                      fontSize: `calc(0.75rem * ${textScale})`,
+                                      fontWeight: 500,
+                                      color: 'var(--muted)',
+                                      border: '1px solid rgba(122,110,101,0.2)',
+                                      borderRadius: '999px',
+                                      background: 'transparent',
+                                      textTransform: 'none',
+                                      gap: 0.5,
+                                      '& .MuiButton-endIcon': { ml: 0 },
+                                      '&:hover': { background: 'rgba(184,134,11,0.06)', borderColor: 'rgba(184,134,11,0.35)' },
+                                    }}
+                                  >
+                                    Notes ({block.notes.length})
+                                  </Button>
+                                  {expandedNotes.has(i) && (
+                                    <Box sx={{ mt: 1 }}>
+                                      {block.notes.map((note, ni) => (
+                                        <Typography
+                                          key={ni}
+                                          component="div"
+                                          sx={{
+                                            fontFamily: 'Jost, sans-serif',
+                                            fontSize: `calc(0.82rem * ${textScale})`,
+                                            color: 'var(--muted)',
+                                            lineHeight: 1.6,
+                                            py: 0.5,
+                                            borderLeft: '2px solid var(--gold)',
+                                            pl: 1.25,
+                                            mb: 0.75,
+                                            '& em': {
+                                              color: 'var(--bark)',
+                                              fontWeight: 600,
+                                              fontStyle: 'normal',
+                                            },
+                                          }}
+                                          dangerouslySetInnerHTML={{ __html: note.replace(/\*(.+?)\*/g, '<em>$1</em>') }}
+                                        />
+                                      ))}
+                                    </Box>
+                                  )}
+                                </>
+                              ) : (
+                                <Box sx={{ mt: 1 }}>
+                                  {block.notes.map((note, ni) => (
+                                    <Typography
+                                      key={ni}
+                                      component="div"
+                                      sx={{
+                                        fontFamily: 'Jost, sans-serif',
+                                        fontSize: `calc(0.85rem * ${textScale})`,
+                                        color: 'var(--muted)',
+                                        lineHeight: 1.6,
+                                        py: 0.6,
+                                        borderLeft: '2px solid var(--gold)',
+                                        pl: 1.5,
+                                        mb: 0.75,
+                                        '& em': {
+                                          color: 'var(--bark)',
+                                          fontWeight: 600,
+                                          fontStyle: 'normal',
+                                        },
+                                      }}
+                                      dangerouslySetInnerHTML={{ __html: note.replace(/\*(.+?)\*/g, '<em>$1</em>') }}
+                                    />
+                                  ))}
+                                </Box>
+                              )
                             )}
                           </Box>
                           {!isLast && <Divider sx={{ borderColor: 'rgba(44,26,14,0.06)', my: 0.5 }} />}
@@ -1617,31 +1431,170 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                 </Box>
               )}
 
+              {/* ── Vocabulary List Tab ── */}
               {tab === 1 && (
-                <Box sx={{ overflowX: 'auto' }}>
-                  {vocabRows.length === 0 ? (
-                    <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No vocabulary notes found.</Typography>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 1 } }}>
+                  {episode.vocabList.length === 0 ? (
+                    <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No vocabulary list found.</Typography>
                   ) : (
-                    <table className="vocab-table">
-                      <thead>
-                        <tr>
-                          <th style={{ textAlign: 'right', direction: 'rtl' }}>Arabic</th>
-                          <th>English</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {vocabRows.map((row, i) => (
-                          <tr key={i}>
-                            <td className="vocab-arabic" style={{ fontSize: `calc(1.1rem * ${textScale})` }}>
-                              {showDiacritics ? row.arabic : row.plain}
-                            </td>
-                            <td style={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.88rem * ${textScale})` }}>
-                              {row.english}
-                            </td>
-                          </tr>
+                    episode.vocabList.map((row) => (
+                      <Box
+                        key={row.number}
+                        sx={{
+                          display: 'flex',
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          alignItems: { xs: 'flex-start', sm: 'center' },
+                          gap: { xs: 1, sm: 2 },
+                          py: { xs: 2, sm: 1.25 },
+                          px: { xs: 2, sm: 2 },
+                          borderRadius: { xs: '12px', sm: '10px' },
+                          border: '1px solid rgba(44,26,14,0.08)',
+                          background: { xs: '#fff', sm: 'rgba(44,26,14,0.02)' },
+                          boxShadow: { xs: '0 2px 8px rgba(44,26,14,0.04)', sm: 'none' },
+                          transition: 'background 0.15s',
+                          '&:hover': { background: { xs: '#fff', sm: 'rgba(184,134,11,0.04)' } },
+                        }}
+                      >
+                        {/* CEFR chip */}
+                        <Chip
+                          label={row.cefr}
+                          size="small"
+                          sx={{
+                            background: LEVEL_COLORS[row.cefr] ?? 'var(--forest)',
+                            color: '#fff',
+                            fontFamily: 'Jost, sans-serif',
+                            fontWeight: 600,
+                            fontSize: `calc(0.65rem * ${textScale})`,
+                            minWidth: 40,
+                            flexShrink: 0,
+                          }}
+                        />
+
+                        {/* Arabic */}
+                        <Typography
+                          sx={{
+                            fontFamily: '"EB Garamond", Georgia, serif',
+                            fontSize: `calc(1.25rem * ${textScale})`,
+                            fontWeight: 700,
+                            color: '#2c1a0e',
+                            flex: { sm: '0 0 auto' },
+                            minWidth: { sm: 100 },
+                            textAlign: 'right',
+                            direction: 'rtl',
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {showDiacritics ? row.arabic : stripDiacritics(row.arabic)}
+                        </Typography>
+
+                        {/* Transliteration */}
+                        <Typography
+                          sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: `calc(0.82rem * ${textScale})`,
+                            color: 'var(--muted)',
+                            flex: { sm: '0 0 auto' },
+                            minWidth: { sm: 70 },
+                          }}
+                        >
+                          {row.transliteration}
+                        </Typography>
+
+                        {/* English */}
+                        <Typography
+                          sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: `calc(0.9rem * ${textScale})`,
+                            color: 'var(--bark)',
+                            flex: 1,
+                            minWidth: 0,
+                            textAlign: { xs: 'right', sm: 'left' },
+                          }}
+                        >
+                          {row.english}
+                        </Typography>
+                      </Box>
+                    ))
+                  )}
+                </Box>
+              )}
+
+              {/* ── Grammar Points Tab ── */}
+              {tab === 2 && (
+                <Box>
+                  {episode.grammarPoints.length === 0 ? (
+                    <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No grammar points found.</Typography>
+                  ) : (
+                    <>
+                      {/* Mobile: cards */}
+                      <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: 2 }}>
+                        {episode.grammarPoints.map((gp) => (
+                          <Box
+                            key={gp.number}
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: 1.5,
+                              py: 2,
+                              px: 2,
+                              borderRadius: '12px',
+                              border: '1px solid rgba(44,26,14,0.08)',
+                              background: '#fff',
+                              boxShadow: '0 2px 8px rgba(44,26,14,0.04)',
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.75rem * ${textScale})`, fontWeight: 700, color: 'var(--gold)', mt: 0.4, flexShrink: 0 }}>
+                                {String(gp.number).padStart(2, '0')}
+                              </Typography>
+                              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.95rem * ${textScale})`, fontWeight: 600, color: 'var(--bark)', lineHeight: 1.4 }}>
+                                <span dangerouslySetInnerHTML={{ __html: gp.pattern }} />
+                              </Typography>
+                            </Box>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.85rem * ${textScale})`, color: 'var(--bark)', lineHeight: 1.6 }}>
+                              {gp.explanation}
+                            </Typography>
+                            <Box sx={{ textAlign: 'right', direction: 'rtl', background: 'rgba(14,46,31,0.03)', borderRadius: '8px', px: 1.5, py: 1 }}>
+                              <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: `calc(1.05rem * ${textScale})`, fontWeight: 700, color: 'var(--forest)', lineHeight: 1.5 }}>
+                                {gp.example}
+                              </Typography>
+                            </Box>
+                          </Box>
                         ))}
-                      </tbody>
-                    </table>
+                      </Box>
+
+                      {/* Desktop: table */}
+                      <Box sx={{ display: { xs: 'none', sm: 'block' }, overflowX: 'auto' }}>
+                        <table className="vocab-table">
+                          <thead>
+                            <tr>
+                              <th style={{ textAlign: 'center', width: 48 }}>#</th>
+                              <th>Pattern</th>
+                              <th>How It Works</th>
+                              <th style={{ textAlign: 'right', direction: 'rtl' }}>Example</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {episode.grammarPoints.map((gp) => (
+                              <tr key={gp.number}>
+                                <td style={{ textAlign: 'center', fontFamily: 'Jost, sans-serif', fontSize: `calc(0.8rem * ${textScale})`, color: 'var(--muted)' }}>
+                                  {gp.number}
+                                </td>
+                                <td style={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.9rem * ${textScale})`, fontWeight: 600, color: 'var(--bark)' }}>
+                                  <span dangerouslySetInnerHTML={{ __html: gp.pattern }} />
+                                </td>
+                                <td style={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.85rem * ${textScale})`, color: 'var(--bark)' }}>
+                                  {gp.explanation}
+                                </td>
+                                <td className="vocab-arabic" style={{ fontSize: `calc(1rem * ${textScale})` }}>
+                                  {gp.example}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </Box>
+                    </>
                   )}
                 </Box>
               )}

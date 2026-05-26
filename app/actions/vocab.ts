@@ -31,7 +31,13 @@ async function getAuthenticatedUserId(): Promise<string | null> {
   try {
     const supabase = await getAuthClient()
     const { data, error } = await supabase.auth.getUser()
-    if (error) { console.error("[auth] getUser error:", error.message); return null }
+    if (error) {
+      // "Auth session missing!" is expected for anonymous users on public pages
+      if (error.message !== "Auth session missing!") {
+        console.error("[auth] getUser error:", error.message)
+      }
+      return null
+    }
     return data.user?.id ?? null
   } catch (e) {
     console.error("[auth] unexpected error:", e)

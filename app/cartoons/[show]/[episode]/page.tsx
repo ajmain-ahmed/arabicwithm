@@ -11,7 +11,7 @@ export async function generateMetadata({
   params: Promise<{ show: string; episode: string }>
 }) {
   const { show, episode } = await params
-  const ep = await getEpisode(show, episode)
+  const ep = getEpisode(show, episode)
   if (!ep) return { title: 'Not Found' }
   return {
     title: `${ep.title} | ArabicWithM`,
@@ -26,7 +26,7 @@ export default async function Page({
 }) {
   const { show, episode } = await params
 
-  const ep = await getEpisode(show, episode)
+  const ep = getEpisode(show, episode)
   if (!ep) notFound()
 
   const showData = getShowBySlug(show)
