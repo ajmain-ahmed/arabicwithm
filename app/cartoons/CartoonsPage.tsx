@@ -144,11 +144,24 @@ export default function CartoonsPage({ shows }: { shows: ShowMeta[] }) {
                   fontFamily: 'var(--font-serif)',
                   fontSize: { xs: '1.3rem', md: '1.9rem' },
                   color: 'var(--gold-lt)',
-                  mb: 2,
+                  mb: 1.5,
                   direction: 'rtl',
                 }}
               >
                 الرسوم المتحركة بالعربية
+              </Typography>
+
+              <Typography
+                sx={{
+                  fontFamily: 'Jost, var(--font-sans)',
+                  fontSize: { xs: '0.95rem', md: '1.15rem' },
+                  color: 'rgba(245,237,224,0.85)',
+                  lineHeight: 1.6,
+                  maxWidth: 560,
+                  mx: 'auto',
+                }}
+              >
+                Learn Arabic naturally through your favourite shows, with interactive subtitles and vocabulary.
               </Typography>
             </Box>
           </Box>

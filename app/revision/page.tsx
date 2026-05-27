@@ -77,10 +77,6 @@ export default function RevisionPage() {
     return (
         <>
             <RevisionSessionLayout
-                textScale={textScale}
-                onTextScaleChange={setTextScale}
-                showDiacritics={showDiacritics}
-                onDiacriticsToggle={() => setShowDiacritics((p: boolean) => !p)}
                 displayPoints={displayPoints}
                 onInfoClick={() => setInfoOpen(true)}
                 onSettingsClick={() => setSettingsOpen(true)}

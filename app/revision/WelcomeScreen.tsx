@@ -339,62 +339,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
               </CardContent>
             </Card>
 
-            {/* Sentence Revision link */}
-            <Box
-              component="a"
-              href="/revision/sentences"
-              sx={{
-                display: 'block',
-                mt: 3,
-                textDecoration: 'none',
-              }}
-            >
-              <Card
-                elevation={0}
-                sx={{
-                  borderRadius: '16px',
-                  border: '1px solid rgba(184,134,11,0.2)',
-                  background: 'rgba(184,134,11,0.04)',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    background: 'rgba(184,134,11,0.08)',
-                    borderColor: 'rgba(184,134,11,0.35)',
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-              >
-                <CardContent sx={{ p: { xs: '1.25rem', md: '1.5rem' }, '&:last-child': { pb: { xs: '1.25rem', md: '1.5rem' } } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box>
-                      <Typography sx={{
-                        fontFamily: "'EB Garamond', serif",
-                        fontSize: { xs: '1.1rem', md: '1.25rem' },
-                        fontWeight: 700,
-                        color: '#2c1a0e',
-                        mb: 0.3,
-                      }}>
-                        Sentence Revision
-                      </Typography>
-                      <Typography sx={{
-                        fontFamily: 'Jost, sans-serif',
-                        fontSize: '0.85rem',
-                        color: '#7a6e65',
-                      }}>
-                        Review sentences from cartoons with spaced repetition
-                      </Typography>
-                    </Box>
-                    <Typography sx={{
-                      fontFamily: 'Jost, sans-serif',
-                      fontSize: '1.5rem',
-                      color: '#b8860b',
-                      fontWeight: 500,
-                    }}>
-                      →
-                    </Typography>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Box>
+
           </Box>
         </Box>
       </Box>

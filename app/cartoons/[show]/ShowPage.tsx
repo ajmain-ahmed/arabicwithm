@@ -68,7 +68,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
         <Box
           sx={{
             position: 'relative',
-            height: { xs: 380, md: 540 },
+            height: { xs: 300, md: 420 },
             overflow: 'hidden',
           }}
         >
@@ -236,8 +236,8 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                         flexDirection: 'column',
                         flex: 1,
                         minWidth: 0,
-                        py: { xs: 1.5, md: 2 },
-                        px: { xs: 2, md: 2.5 },
+                        py: { xs: 1.25, md: 1.5 },
+                        px: { xs: 1.75, md: 2 },
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1 }}>
@@ -267,7 +267,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                           fontWeight: 700,
                           color: 'var(--bark)',
                           lineHeight: 1.3,
-                          mb: 0.75,
+                          mb: 0.5,
                         }}
                       >
                         {ep.title}
@@ -280,7 +280,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                             fontSize: { xs: '0.8rem', md: '0.85rem' },
                             color: 'var(--muted)',
                             lineHeight: 1.5,
-                            mb: 1.25,
+                            mb: 0.75,
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
@@ -325,7 +325,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                       image={`/cartoons/${show.slug}/${ep.slug}.avif`}
                       alt={ep.title}
                       sx={{
-                        width: { xs: 90, sm: 120, md: 150 },
+                        width: { xs: 80, sm: 100, md: 120 },
                         flexShrink: 0,
                         objectFit: 'cover',
                         display: 'block',

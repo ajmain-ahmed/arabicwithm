@@ -45,9 +45,8 @@ export function computeAnswerResult(
         newEase = current.ease_factor + 0.15
         newInterval = Math.round(current.interval_days * current.ease_factor * 1.3)
       }
-      // Due at midnight UTC, newInterval days from now
+      // Due newInterval days from now (preserving time-of-day)
       const dueDate = new Date(now)
-      dueDate.setUTCHours(0, 0, 0, 0)
       dueDate.setUTCDate(dueDate.getUTCDate() + newInterval)
       nextReview = dueDate
       newReps = current.repetitions + 1
@@ -79,7 +78,6 @@ export function computeAnswerResult(
         : current.ease_factor
 
       const dueDate = new Date(now)
-      dueDate.setUTCHours(0, 0, 0, 0)
       dueDate.setUTCDate(dueDate.getUTCDate() + 1)
       nextReview = dueDate
       newReps = current.repetitions + 1

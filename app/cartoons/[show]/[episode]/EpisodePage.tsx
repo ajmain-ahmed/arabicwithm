@@ -29,11 +29,10 @@ import {
 import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip'
 import { styled } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
-import { ArrowBack, Settings, Close, ExpandMore, ExpandLess, ChevronRight, Add, CheckCircle, Quiz } from '@mui/icons-material'
+import { ArrowBack, Settings, Close, ExpandMore, ExpandLess, ChevronRight, Quiz } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { stripDiacritics } from '@/app/lib/arabic'
 import { EpisodeFull, CartoonWordEntry } from '@/app/lib/cartoons'
-import { toggleSentenceRevision, fetchSentenceRevisionIds } from '@/app/actions/revision'
 import EpisodeTestDialog from './EpisodeTestDialog'
 
 // ─── Fallback — used before we measure the real navbar ────────────────────────
@@ -425,7 +424,7 @@ function PillToggle({
 
 function DesktopTextScaleSlider({ textScale, onChange }: { textScale: number; onChange: (v: number) => void }) {
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 1.5, borderRadius: '999px', border: '1px solid rgba(122,110,101,0.2)', background: 'rgba(122,110,101,0.02)', height: 36, flex: 1, minWidth: 100 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1, borderRadius: '999px', border: '1px solid rgba(122,110,101,0.2)', background: 'rgba(122,110,101,0.02)', height: 28, flex: 1, minWidth: 80, maxWidth: 160 }}>
       <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
       <Slider value={textScale} min={1.0} max={1.4} step={0.1} size="small" onChange={(_, v) => onChange(v as number)} sx={{ color: '#b8860b', flex: 1, '& .MuiSlider-thumb': { width: 14, height: 14 } }} />
       <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
@@ -464,7 +463,7 @@ function SettingsDialog({
               <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e' }}>Text Size</Typography>
               <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#7a6e65', mt: 0.3 }}>Adjust Arabic text size</Typography>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0, maxWidth: 180 }}>
               <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
               <Box sx={{ flex: 1, minWidth: 0 }}><Slider value={textScale} min={0.9} max={1.5} step={0.1} size="small" onChange={(_, v) => onTextScaleChange(v as number)} sx={{ color: '#b8860b', width: '100%', '& .MuiSlider-thumb': { width: 14, height: 14 } }} /></Box>
               <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.1rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
@@ -903,69 +902,13 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   const router = useRouter()
   const [tab, setTab] = useState(0)
   const [showDiacritics, setShowDiacritics] = useState(true)
-  const [textScale, setTextScale] = useState(1.2)
+  const [textScale, setTextScale] = useState(1.3)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement | null>(null)
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set())
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
-  /* ── Sentence revision enrollment ── */
-  const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set())
   const [testDialogOpen, setTestDialogOpen] = useState(false)
-  const pendingRef = useRef<Map<string, { showSlug: string; episodeSlug: string; blockIndex: number; inRevision: boolean }>>(new Map())
-
-  // Fetch enrolled sentence IDs on mount
-  useEffect(() => {
-    let cancelled = false
-    fetchSentenceRevisionIds().then(ids => {
-      if (!cancelled) setEnrolledIds(new Set(ids))
-    })
-    return () => { cancelled = true }
-  }, [])
-
-  const flushPending = useCallback(async () => {
-    const batch = pendingRef.current
-    if (batch.size === 0) return
-    pendingRef.current = new Map()
-    const promises: Promise<unknown>[] = []
-    for (const { showSlug, episodeSlug, blockIndex, inRevision } of batch.values()) {
-      promises.push(
-        toggleSentenceRevision(showSlug, episodeSlug, blockIndex)
-          .catch(err => console.error('Sentence toggle failed:', err))
-      )
-    }
-    await Promise.all(promises)
-  }, [])
-
-  useEffect(() => {
-    const onBeforeUnload = () => flushPending()
-    const onVisibility = () => { if (document.hidden) flushPending() }
-    window.addEventListener('beforeunload', onBeforeUnload)
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      window.removeEventListener('beforeunload', onBeforeUnload)
-      document.removeEventListener('visibilitychange', onVisibility)
-      flushPending()
-    }
-  }, [flushPending])
-
-  const toggleBlockRevision = useCallback((blockIndex: number) => {
-    const key = `${episode.show}:${episode.slug}:${blockIndex}`
-    const currentlyEnrolled = enrolledIds.has(key)
-    const next = new Set(enrolledIds)
-    if (currentlyEnrolled) {
-      next.delete(key)
-    } else {
-      next.add(key)
-    }
-    setEnrolledIds(next)
-    pendingRef.current.set(key, {
-      showSlug: episode.show,
-      episodeSlug: episode.slug,
-      blockIndex,
-      inRevision: !currentlyEnrolled,
-    })
-  }, [enrolledIds, episode.show, episode.slug])
 
   const [navbarHeight, setNavbarHeight] = useState(NAVBAR_HEIGHT);
 
@@ -1109,7 +1052,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
           background: 'var(--cream)',
           pt: {
             xs: `${navbarHeight + mobileHeaderHeight}px`,
-            lg: '96px',
+            lg: '112px',
           },
           pb: { xs: 6, md: 10 },
         }}
@@ -1282,19 +1225,27 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
               </Breadcrumbs>
 
               {/* Desktop settings button */}
-              <IconButton
+              <Button
                 onClick={(e) => setSettingsAnchor(e.currentTarget)}
                 size="small"
+                startIcon={<Settings sx={{ fontSize: '1.1rem' }} />}
                 sx={{
-                  width: 34, height: 34,
+                  display: { xs: 'none', lg: 'inline-flex' },
                   color: '#7a6e65',
                   border: '1px solid rgba(122,110,101,0.25)',
                   borderRadius: '8px',
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: '0.85rem',
+                  fontWeight: 500,
+                  textTransform: 'none',
+                  px: 1.5,
+                  py: 0.5,
+                  minHeight: 34,
                   '&:hover': { background: 'rgba(122,110,101,0.08)', borderColor: 'rgba(122,110,101,0.4)' },
                 }}
               >
-                <Settings sx={{ fontSize: '1.1rem' }} />
-              </IconButton>
+                Settings
+              </Button>
               <Popover
                 open={Boolean(settingsAnchor)}
                 anchorEl={settingsAnchor}
@@ -1306,22 +1257,23 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                     sx: {
                       borderRadius: '12px',
                       boxShadow: '0 12px 40px rgba(44,26,14,0.15)',
-                      p: 2,
-                      width: 320,
+                      p: 1.5,
+                      width: 'auto',
+                      minWidth: 160,
                       border: '1px solid rgba(44,26,14,0.08)',
                     },
                   },
                 }}
               >
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Box>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', mb: 1, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)', mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                       Text Size
                     </Typography>
                     <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 600, color: 'var(--muted)', mb: 1, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)', mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                       Diacritics
                     </Typography>
                     <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics((p) => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
@@ -1362,10 +1314,10 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
               </IconButton>
             </Box>
 
-            <Box sx={{ background: '#fff', borderRadius: '0 0 12px 12px', px: { xs: 2, md: 4 }, py: { xs: 3, md: 4 } }}>
+            <Box sx={{ background: '#fff', borderRadius: '0 0 12px 12px', px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 } }}>
               {/* ── Test Yourself button (Script tab only) ── */}
               {tab === 0 && episode.scriptBlocks.length > 0 && (
-                <Box sx={{ mb: 2 }}>
+                <Box sx={{ mb: { xs: 2, md: 3 } }}>
                   <Button
                     variant="outlined"
                     onClick={() => setTestDialogOpen(true)}
@@ -1415,54 +1367,16 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                             }}
                             sx={{ cursor: hasTimestamp ? 'pointer' : 'default', opacity: hasTimestamp ? 1 : 0.75 }}
                           >
-                            {/* Block title / timestamp + add button */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 0.5 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                {hasTimestamp && (
-                                  <Typography sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1 }}>
-                                    {(() => { const s = block.timestamp!; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` })()}
-                                  </Typography>
-                                )}
-                                <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', fontSize: '0.75rem', color: 'var(--muted)', fontWeight: 500 }}>
-                                  {block.title}
+                            {/* Block title / timestamp */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                              {hasTimestamp && (
+                                <Typography sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1 }}>
+                                  {(() => { const s = block.timestamp!; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` })()}
                                 </Typography>
-                              </Box>
-                              {/* Sentence revision toggle */}
-                              {(() => {
-                                const key = `${episode.show}:${episode.slug}:${i}`
-                                const isEnrolled = enrolledIds.has(key) || pendingRef.current.get(key)?.inRevision === true
-                                const hasPending = pendingRef.current.has(key)
-                                return (
-                                  <IconButton
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      toggleBlockRevision(i)
-                                    }}
-                                    size="small"
-                                    sx={{
-                                      width: 26, height: 26,
-                                      border: '1.5px solid',
-                                      borderColor: isEnrolled ? 'rgba(46,125,50,0.4)' : 'rgba(122,110,101,0.25)',
-                                      borderRadius: '50%',
-                                      color: isEnrolled ? '#2e7d32' : '#7a6e65',
-                                      background: isEnrolled ? 'rgba(46,125,50,0.08)' : 'transparent',
-                                      transition: 'all 0.2s',
-                                      opacity: hasPending ? 0.7 : 1,
-                                      '&:hover': {
-                                        borderColor: isEnrolled ? '#2e7d32' : '#b8860b',
-                                        color: isEnrolled ? '#2e7d32' : '#b8860b',
-                                        background: isEnrolled ? 'rgba(46,125,50,0.12)' : 'rgba(184,134,11,0.06)',
-                                      },
-                                    }}
-                                  >
-                                    {isEnrolled ? (
-                                      <CheckCircle sx={{ fontSize: '0.85rem' }} />
-                                    ) : (
-                                      <Add sx={{ fontSize: '0.9rem' }} />
-                                    )}
-                                  </IconButton>
-                                )
-                              })()}
+                              )}
+                              <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', fontSize: `calc(0.75rem * ${textScale})`, color: 'var(--muted)', fontWeight: 500 }}>
+                                {block.title}
+                              </Typography>
                             </Box>
 
                             {/* Arabic */}

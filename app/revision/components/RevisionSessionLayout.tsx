@@ -3,16 +3,10 @@
 import React from 'react'
 import { Box, Container, Typography, IconButton, Dialog } from '@mui/material'
 import { HelpOutlineRounded, Settings, Star, Close } from '@mui/icons-material'
-import DesktopTextScaleSlider from './DesktopTextScaleSlider'
-import PillToggle from './PillToggle'
 
 export default function RevisionSessionLayout({
     children,
     sidePanel,
-    textScale,
-    onTextScaleChange,
-    showDiacritics,
-    onDiacriticsToggle,
     displayPoints,
     onInfoClick,
     onSettingsClick,
@@ -21,10 +15,6 @@ export default function RevisionSessionLayout({
 }: {
     children: React.ReactNode
     sidePanel: React.ReactNode
-    textScale: number
-    onTextScaleChange: (v: number) => void
-    showDiacritics: boolean
-    onDiacriticsToggle: () => void
     displayPoints: number
     onInfoClick: () => void
     onSettingsClick: () => void
@@ -38,10 +28,9 @@ export default function RevisionSessionLayout({
                     {/* Desktop header */}
                     <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2 }}>
                         <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: { sm: '1.6rem', md: '2rem' }, fontWeight: 700, color: '#2c1a0e' }}>Word Bank</Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
-                            <DesktopTextScaleSlider textScale={textScale} onChange={onTextScaleChange} />
-                            <PillToggle enabled={showDiacritics} onToggle={onDiacriticsToggle} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0 }}>
                             <IconButton onClick={onInfoClick} size="small" sx={{ width: 32, height: 32, border: '1px solid rgba(122,110,101,0.3)', borderRadius: '50%', color: '#7a6e65', flexShrink: 0 }}><HelpOutlineRounded sx={{ fontSize: '1rem' }} /></IconButton>
+                            <IconButton onClick={onSettingsClick} size="small" sx={{ width: 32, height: 32, border: '1px solid rgba(122,110,101,0.3)', borderRadius: '50%', color: '#7a6e65', flexShrink: 0 }}><Settings sx={{ fontSize: '1rem' }} /></IconButton>
                         </Box>
                     </Box>
 

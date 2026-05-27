@@ -1,19 +1,22 @@
 'use client'
 
-import React, { useState, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import {
-  Box, Typography, Button, Collapse, Dialog, IconButton,
+  Box, Typography, Button, Collapse, Dialog, IconButton, Chip, Tooltip, type TooltipProps,
 } from '@mui/material'
 import { useMediaQuery } from '@mui/material'
+import { tooltipClasses } from '@mui/material/Tooltip'
+import { styled } from '@mui/material/styles'
 import {
-  Close, Replay, TrendingFlat, Check, TrendingUp, Visibility,
+  Close, Replay, Check, Visibility,
   VolumeUp, School,
 } from '@mui/icons-material'
-import type { ScriptBlock, EpisodeFull } from '@/app/lib/cartoons'
+import type { ScriptBlock, EpisodeFull, CartoonWordEntry } from '@/app/lib/cartoons'
+import { stripDiacritics } from '@/app/lib/arabic'
 import { motion, AnimatePresence } from 'framer-motion'
 
 /* ── Types ───────────────────────────────────────────── */
-type Rating = 'again' | 'hard' | 'good' | 'easy'
+type Rating = 'correct' | 'incorrect'
 
 interface CardLog {
   cardId: number
@@ -35,11 +38,60 @@ function sentenceTransliteration(words: { transliteration: string }[]): string {
   return words.map(w => w.transliteration).join(' ')
 }
 
+const LEVEL_COLORS: Record<string, string> = {
+  A1: '#2d6a4f',
+  A2: '#40916c',
+  B1: '#b5861a',
+  B2: '#9c6b00',
+  C1: '#6d4c9e',
+  C2: '#4a2f7a',
+}
+
+const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
+  <Tooltip {...props} classes={{ popper: className }} />
+))(({ theme }) => ({
+  [`& .${tooltipClasses.tooltip}`]: {
+    backgroundColor: '#fff',
+    color: '#2c1a0e',
+    maxWidth: 320,
+    fontSize: theme.typography.pxToRem(14),
+    border: '1px solid rgba(44,26,14,0.08)',
+    borderRadius: '12px',
+    padding: 0,
+    boxShadow: '0 12px 40px rgba(44,26,14,0.18)',
+  },
+  [`& .${tooltipClasses.arrow}`]: {
+    color: '#fff',
+    '&::before': {
+      border: '1px solid rgba(44,26,14,0.08)',
+    },
+  },
+}))
+
+function WordTooltip({ entry, textScale }: { entry: CartoonWordEntry; textScale: number }) {
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, minWidth: 200, p: 2.5 }}>
+      <Box sx={{ textAlign: 'center' }}>
+        <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: `calc(1.6rem * ${textScale})`, fontWeight: 700, color: '#2c1a0e', direction: 'rtl' }}>
+          {entry.arabic}
+        </Typography>
+        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.85rem * ${textScale})`, color: '#7a6e65', mt: 0.5 }}>
+          {entry.transliteration}
+        </Typography>
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+        <Chip label={entry.cefr} size="small" sx={{ background: LEVEL_COLORS[entry.cefr] ?? '#0e2e1f', color: '#fff', fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: `calc(0.7rem * ${textScale})`, letterSpacing: '0.04em' }} />
+      </Box>
+      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.95rem * ${textScale})`, color: '#2c1a0e', textAlign: 'center' }}>
+        {entry.english}
+      </Typography>
+    </Box>
+  )
+}
+
 const RATING_META: { value: Rating; label: string; color: string; border: string; bg: string; icon: React.ReactNode }[] = [
-  { value: 'again', label: 'Again', color: '#c62828', border: 'rgba(198,40,40,0.4)', bg: 'rgba(198,40,40,0.06)', icon: <Replay sx={{ fontSize: '1rem' }} /> },
-  { value: 'hard', label: 'Hard', color: '#e65100', border: 'rgba(230,81,0,0.4)', bg: 'rgba(230,81,0,0.06)', icon: <TrendingFlat sx={{ fontSize: '1rem' }} /> },
-  { value: 'good', label: 'Good', color: '#2e7d32', border: 'rgba(46,125,50,0.4)', bg: 'rgba(46,125,50,0.06)', icon: <Check sx={{ fontSize: '1rem' }} /> },
-  { value: 'easy', label: 'Easy', color: '#1565c0', border: 'rgba(21,101,192,0.4)', bg: 'rgba(21,101,192,0.06)', icon: <TrendingUp sx={{ fontSize: '1rem' }} /> },
+  { value: 'incorrect', label: 'Incorrect', color: '#c62828', border: 'rgba(198,40,40,0.4)', bg: 'rgba(198,40,40,0.06)', icon: <Replay sx={{ fontSize: '1rem' }} /> },
+  { value: 'correct', label: 'Correct', color: '#2e7d32', border: 'rgba(46,125,50,0.4)', bg: 'rgba(46,125,50,0.06)', icon: <Check sx={{ fontSize: '1rem' }} /> },
 ]
 
 /* ── Progress dots ─────────────────────────────────────── */
@@ -88,6 +140,18 @@ function RecallCard({
   const arabicText = showDiacritics ? block.arabicDiacritic : block.arabicPlain
   const tr = sentenceTransliteration(block.words)
 
+  const wordMap = useMemo(() => {
+    const map: Record<string, CartoonWordEntry> = {}
+    block.words.forEach(w => {
+      map[w.plain] = w
+      map[w.arabic] = w
+      map[stripDiacritics(w.arabic)] = w
+    })
+    return map
+  }, [block.words])
+
+  const parts = arabicText.split(/([\u0600-\u06FF]+)/)
+
   return (
     <>
       {/* Audio + header */}
@@ -119,7 +183,42 @@ function RecallCard({
           fontSize: `calc(${isMobile ? '1.8rem' : '2.4rem'} * ${textScale})`,
           fontWeight: 700, color: '#2c1a0e', lineHeight: 1.6,
         }}>
-          {arabicText}
+          {parts.map((part, i) => {
+            if (!/[\u0600-\u06FF]+/.test(part)) {
+              return <span key={i}>{part}</span>
+            }
+            const plain = stripDiacritics(part)
+            const entry = wordMap[plain] || wordMap[part]
+            if (!entry || !revealed) {
+              return <span key={i}>{part}</span>
+            }
+            return (
+              <React.Fragment key={i}>
+                <HtmlTooltip
+                  title={<WordTooltip entry={entry} textScale={textScale} />}
+                  placement="bottom"
+                  arrow
+                >
+                  <span
+                    style={{
+                      cursor: 'pointer',
+                      borderBottom: '2px dotted #b8860b',
+                      paddingBottom: showDiacritics ? '5px' : '1px',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'transparent'
+                    }}
+                  >
+                    {part}
+                  </span>
+                </HtmlTooltip>
+              </React.Fragment>
+            )
+          })}
         </Typography>
         <Typography sx={{
           fontFamily: 'Jost, sans-serif',
@@ -169,9 +268,9 @@ function RecallCard({
 /* ── Results screen ────────────────────────────────────── */
 function ResultsScreen({ logs, onRestart, onClose }: { logs: CardLog[]; onRestart: () => void; onClose: () => void }) {
   const total = logs.length
-  const counts = { again: 0, hard: 0, good: 0, easy: 0 }
+  const counts = { correct: 0, incorrect: 0 }
   logs.forEach(l => counts[l.rating]++)
-  const correct = counts.hard + counts.good + counts.easy
+  const correct = counts.correct
   const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0
 
   let label = 'Keep Practicing'
@@ -216,11 +315,11 @@ function ResultsScreen({ logs, onRestart, onClose }: { logs: CardLog[]; onRestar
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, maxWidth: 400, mx: 'auto', mb: 4 }}>
         {RATING_META.map(({ value, label: l, color: c }) => {
           const count = counts[value]
-          const max = Math.max(1, ...Object.values(counts))
+          const max = Math.max(1, counts.correct + counts.incorrect)
           const pct = (count / max) * 100
           return (
             <Box key={value} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: c, width: 48, flexShrink: 0, textAlign: 'right' }}>
+              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: c, width: 64, flexShrink: 0, textAlign: 'right' }}>
                 {l}
               </Typography>
               <Box sx={{ flex: 1, height: 8, background: 'rgba(122,110,101,0.08)', borderRadius: '999px', overflow: 'hidden' }}>
@@ -326,7 +425,7 @@ export default function EpisodeTestDialog({
     const duration = nextBlock?.timestamp != null
       ? nextBlock.timestamp - current.timestamp
       : 3
-    playSegment(current.timestamp, Math.max(1.5, Math.min(duration, 8)))
+    playSegment(current.timestamp, Math.max(1.5, duration))
   }, [current, episode.scriptBlocks, playSegment])
 
   if (!open) return null
@@ -436,46 +535,18 @@ export default function EpisodeTestDialog({
                 {/* Rating buttons */}
                 <Collapse in={revealed} timeout={{ enter: 200, exit: 0 }}>
                   <Box sx={{ mt: { xs: '1.25rem', md: '1.5rem' } }}>
-                    <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                       {RATING_META.map(btn => (
                         <Button key={btn.value} variant="outlined" onClick={() => handleRate(btn.value)} startIcon={btn.icon}
                           sx={{
-                            color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500,
-                            fontSize: '0.9rem', textTransform: 'none', borderRadius: '6px', py: '0.5rem',
+                            color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600,
+                            fontSize: '0.9rem', textTransform: 'none', borderRadius: '6px', py: '0.6rem',
                             border: `1.5px solid ${btn.border}`, background: 'transparent',
                             '&:hover': { background: btn.bg, borderColor: btn.color },
                           }}>
                           {btn.label}
                         </Button>
                       ))}
-                    </Box>
-                    <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: '8px' }}>
-                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                        {RATING_META.slice(0, 2).map(btn => (
-                          <Button key={btn.value} variant="outlined" onClick={() => handleRate(btn.value)} startIcon={btn.icon}
-                            sx={{
-                              color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600,
-                              fontSize: '0.85rem', textTransform: 'none', borderRadius: '8px', py: '0.55rem',
-                              border: `1.5px solid ${btn.border}`, background: 'transparent',
-                              '&:hover': { background: btn.bg, borderColor: btn.color },
-                            }}>
-                            {btn.label}
-                          </Button>
-                        ))}
-                      </Box>
-                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                        {RATING_META.slice(2, 4).map(btn => (
-                          <Button key={btn.value} variant="outlined" onClick={() => handleRate(btn.value)} startIcon={btn.icon}
-                            sx={{
-                              color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600,
-                              fontSize: '0.85rem', textTransform: 'none', borderRadius: '8px', py: '0.55rem',
-                              border: `1.5px solid ${btn.border}`, background: 'transparent',
-                              '&:hover': { background: btn.bg, borderColor: btn.color },
-                            }}>
-                            {btn.label}
-                          </Button>
-                        ))}
-                      </Box>
                     </Box>
                   </Box>
                 </Collapse>

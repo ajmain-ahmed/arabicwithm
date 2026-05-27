@@ -1,17 +1,22 @@
 'use client'
 
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import React, { useState, useEffect, useLayoutEffect, useRef, useMemo } from 'react'
 import {
-    Box, Typography, Button, Collapse,
+    Box, Typography, Button, Collapse, Tooltip,
 } from '@mui/material'
 import { useMediaQuery } from '@mui/material'
+import { motion } from 'framer-motion'
 import { type SessionCard, type Queue, parseExamples } from '../types'
 import IntegratedProgressDots from './IntegratedProgressDots'
 import BucketChips from './BucketChips'
 import AnimatedArabicWord from './AnimatedArabicWord'
 import DefinitionPanel from './DefinitionPanel'
 import ExampleSentences from './ExampleSentences'
+import MorphologyPanel from './MorphologyPanel'
+import CartoonContextPanel from './CartoonContextPanel'
 import type { Answer } from '@/app/actions/revision'
+import { computeAnswerResult } from '@/app/lib/sm2'
+import { stripDiacritics } from '@/app/lib/arabic'
 import { Replay, TrendingFlat, Check, TrendingUp } from '@mui/icons-material'
 
 const ANSWER_BUTTONS: { label: string; value: Answer; color: string; hoverBg: string; border: string; icon: React.ReactNode }[] = [
@@ -23,7 +28,38 @@ const ANSWER_BUTTONS: { label: string; value: Answer; color: string; hoverBg: st
 
 const tabButtonSx = {
     fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', fontWeight: 500,
-    textTransform: 'none', borderRadius: '20px', px: 2, py: 0.5, minWidth: 80, border: '1px solid',
+    textTransform: 'none', borderRadius: '20px', px: 2, py: 0.5, minWidth: 70, border: '1px solid',
+}
+
+function formatInterval(days: number): string {
+    if (days === 0) return '< 1 day'
+    if (days === 1) return '1 day'
+    if (days < 30) return `${days} days`
+    const months = Math.round(days / 30)
+    if (months === 1) return '1 month'
+    if (months < 12) return `${months} months`
+    const years = Math.round(days / 365)
+    return years === 1 ? '1 year' : `${years} years`
+}
+
+function getIntervalLabel(card: SessionCard, answer: Answer): string {
+    const result = computeAnswerResult({
+        repetitions: card.data.repetitions,
+        interval_days: card.data.interval_days,
+        ease_factor: card.data.ease_factor,
+        lapses: card.data.lapses ?? 0,
+    }, answer)
+    if (!result.nextReview) {
+        if (answer === 'again') return '< 15m'
+        return '< 15m'
+    }
+    const diffMs = result.nextReview.getTime() - Date.now()
+    const diffMins = diffMs / (1000 * 60)
+    const diffHours = diffMs / (1000 * 60 * 60)
+    const diffDays = diffMs / (1000 * 60 * 60 * 24)
+    if (diffMins < 60) return `< ${Math.ceil(diffMins)}m`
+    if (diffHours < 24) return `< ${Math.ceil(diffHours)}h`
+    return formatInterval(Math.round(diffDays))
 }
 
 export default function RevisionFlashcard({
@@ -47,19 +83,29 @@ export default function RevisionFlashcard({
     dialogsOpen?: boolean
 }) {
     const [revealed, setRevealed] = useState(false)
-    const [activeTab, setActiveTab] = useState<'definition' | 'examples'>('definition')
+    const [activeTab, setActiveTab] = useState<'definition' | 'examples' | 'forms' | 'cartoon'>('definition')
     const [elapsed, setElapsed] = useState(0)
     const [timerRunning, setTimerRunning] = useState(false)
 
     const cardStartRef = useRef<number>(Date.now())
     const revealTimeRef = useRef<number>(0)
     const wasPausedByDialog = useRef(false)
-    const accumulatedRef = useRef(0) // accumulated ms before current run
+    const accumulatedRef = useRef(0)
 
     const card = sessionCard.data
     const examples = parseExamples(card)
     const progress = uniqueTotal > 0 ? Math.round((uniqueDoneCount / uniqueTotal) * 100) : 0
     const isMobile = useMediaQuery('(max-width:600px)')
+
+    const hasForms = card.type === 'verb' && !!(card as any).forms
+    const [cartoonContexts, setCartoonContexts] = useState<null | any[]>(null)
+
+    useEffect(() => {
+        fetch('/cartoon-word-context.json')
+            .then(r => r.json())
+            .then(map => setCartoonContexts(map[stripDiacritics(card.word)] ?? []))
+            .catch(() => setCartoonContexts([]))
+    }, [card.word])
 
     /* ── Card change: reset everything ── */
     useLayoutEffect(() => {
@@ -82,7 +128,7 @@ export default function RevisionFlashcard({
             }
         } else {
             if (wasPausedByDialog.current && !revealed) {
-                cardStartRef.current = Date.now() // reset anchor so math stays correct
+                cardStartRef.current = Date.now()
                 setTimerRunning(true)
             }
             wasPausedByDialog.current = false
@@ -112,10 +158,29 @@ export default function RevisionFlashcard({
         onAnswer(ans, timeTaken)
     }
 
+    /* ── Swipe handlers ── */
+    const handleDragEnd = (_: any, info: any) => {
+        if (!revealed) return
+        const threshold = 60
+        const velocityThreshold = 300
+        if (info.offset.x > threshold || info.velocity.x > velocityThreshold) {
+            handleAnswer('good')
+        } else if (info.offset.x < -threshold || info.velocity.x < -velocityThreshold) {
+            handleAnswer('again')
+        }
+    }
+
     const answerTextSize = `calc(1.5rem * ${textScale})`
     const formatTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`
 
-    return (
+    const easePercent = useMemo(() => {
+        const ef = card.ease_factor
+        // Map 1.3 (hardest) → 0%, 2.5 (default) → 50%, 3.5+ → 100%
+        const pct = Math.min(100, Math.max(0, ((ef - 1.3) / (2.5 - 1.3)) * 50 + 50))
+        return Math.round(pct)
+    }, [card.ease_factor])
+
+    const cardContent = (
         <Box sx={{
             background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px',
             padding: { xs: '1.25rem 0.875rem 0.5rem', md: '2rem 1.5rem 0.75rem' },
@@ -147,6 +212,23 @@ export default function RevisionFlashcard({
                     <Collapse in={revealed} timeout={{ enter: 300, exit: 0 }}>
                         <Box sx={{ borderTop: '1px solid rgba(184,134,11,0.1)', pt: '1rem', mb: '1rem' }} />
 
+                        {/* Ease Factor Meter */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1.5 }}>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#9e8a7a', fontWeight: 500 }}>
+                                Difficulty
+                            </Typography>
+                            <Box sx={{ width: 80, height: 6, background: 'rgba(122,110,101,0.1)', borderRadius: '999px', overflow: 'hidden' }}>
+                                <Box sx={{
+                                    width: `${easePercent}%`, height: '100%',
+                                    background: easePercent > 70 ? '#2e7d32' : easePercent > 40 ? '#b8860b' : '#c62828',
+                                    borderRadius: '999px', transition: 'width 0.4s ease',
+                                }} />
+                            </Box>
+                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#7a6e65', fontWeight: 600, minWidth: 28 }}>
+                                {card.ease_factor.toFixed(2)}
+                            </Typography>
+                        </Box>
+
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: { xs: 0.5, md: 0.75 } }}>
                             <Box sx={{ display: 'inline-flex', alignItems: 'center', fontFamily: 'Jost, sans-serif', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '8px 16px', borderRadius: '999px', background: 'rgba(122,110,101,0.08)', color: '#7a6e65' }}>
                                 {card.type}
@@ -164,38 +246,75 @@ export default function RevisionFlashcard({
                             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
                                 <Button onClick={() => setActiveTab('definition')} sx={{ ...tabButtonSx, background: activeTab === 'definition' ? 'rgba(184,134,11,0.12)' : 'transparent', color: activeTab === 'definition' ? '#b8860b' : '#7a6e65', borderColor: activeTab === 'definition' ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)' }}>Definition</Button>
                                 <Button onClick={() => setActiveTab('examples')} sx={{ ...tabButtonSx, background: activeTab === 'examples' ? 'rgba(184,134,11,0.12)' : 'transparent', color: activeTab === 'examples' ? '#b8860b' : '#7a6e65', borderColor: activeTab === 'examples' ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)' }}>Examples</Button>
+                                {hasForms && (
+                                    <Button onClick={() => setActiveTab('forms')} sx={{ ...tabButtonSx, background: activeTab === 'forms' ? 'rgba(184,134,11,0.12)' : 'transparent', color: activeTab === 'forms' ? '#b8860b' : '#7a6e65', borderColor: activeTab === 'forms' ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)' }}>Forms</Button>
+                                )}
+                                {cartoonContexts && cartoonContexts.length > 0 && (
+                                    <Button onClick={() => setActiveTab('cartoon')} sx={{ ...tabButtonSx, background: activeTab === 'cartoon' ? 'rgba(184,134,11,0.12)' : 'transparent', color: activeTab === 'cartoon' ? '#b8860b' : '#7a6e65', borderColor: activeTab === 'cartoon' ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)' }}>Cartoon</Button>
+                                )}
                             </Box>
                             {activeTab === 'definition' && <DefinitionPanel card={card} showDiacritics={showDiacritics} textScale={textScale} />}
                             {activeTab === 'examples' && <ExampleSentences examples={examples} showDiacritics={showDiacritics} textScale={textScale} />}
+                            {activeTab === 'forms' && <MorphologyPanel card={card} textScale={textScale} />}
+                            {activeTab === 'cartoon' && <CartoonContextPanel plainWord={stripDiacritics(card.word)} textScale={textScale} />}
                         </Box>
 
                         <Box sx={{ mt: { xs: '1.25rem', md: '1.5rem' }, position: 'relative' }}>
                             <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                                 {ANSWER_BUTTONS.map(btn => (
-                                    <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} startIcon={btn.icon}
-                                        sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', textTransform: 'none', borderRadius: '6px', py: '0.5rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color } }}>
-                                        {btn.label}
+                                    <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)}
+                                        sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', textTransform: 'none', borderRadius: '6px', py: '0.4rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color }, lineHeight: 1.2 }}>
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', width: '100%' }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                {btn.icon}
+                                                <span>{btn.label}</span>
+                                            </Box>
+                                            <Typography sx={{ fontSize: '0.7rem', fontWeight: 600, opacity: 0.85, lineHeight: 1 }}>
+                                                {getIntervalLabel(sessionCard, btn.value)}
+                                            </Typography>
+                                        </Box>
                                     </Button>
                                 ))}
                             </Box>
                             <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: '8px' }}>
                                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                                     {ANSWER_BUTTONS.slice(0, 2).map(btn => (
-                                        <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} startIcon={btn.icon}
-                                            sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', borderRadius: '8px', py: '0.55rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color } }}>
-                                            {btn.label}
+                                        <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)}
+                                            sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', borderRadius: '8px', py: '0.4rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color }, lineHeight: 1.2 }}>
+                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', width: '100%' }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    {btn.icon}
+                                                    <span>{btn.label}</span>
+                                                </Box>
+                                                <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, opacity: 0.85, lineHeight: 1 }}>
+                                                    {getIntervalLabel(sessionCard, btn.value)}
+                                                </Typography>
+                                            </Box>
                                         </Button>
                                     ))}
                                 </Box>
                                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                                     {ANSWER_BUTTONS.slice(2, 4).map(btn => (
-                                        <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} startIcon={btn.icon}
-                                            sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', borderRadius: '8px', py: '0.55rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color } }}>
-                                            {btn.label}
+                                        <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)}
+                                            sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', borderRadius: '8px', py: '0.4rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color }, lineHeight: 1.2 }}>
+                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', width: '100%' }}>
+                                                <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    {btn.icon}
+                                                    <span>{btn.label}</span>
+                                                </Box>
+                                                <Typography sx={{ fontSize: '0.65rem', fontWeight: 600, opacity: 0.85, lineHeight: 1 }}>
+                                                    {getIntervalLabel(sessionCard, btn.value)}
+                                                </Typography>
+                                            </Box>
                                         </Button>
                                     ))}
                                 </Box>
                             </Box>
+                            {isMobile && (
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#9e8a7a', textAlign: 'center', mt: 1 }}>
+                                    Swipe left → Again · Swipe right → Good
+                                </Typography>
+                            )}
                         </Box>
                     </Collapse>
 
@@ -210,5 +329,19 @@ export default function RevisionFlashcard({
                 </Box>
             </Box>
         </Box>
+    )
+
+    if (!isMobile) return cardContent
+
+    return (
+        <motion.div
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.15}
+            onDragEnd={handleDragEnd}
+            style={{ touchAction: 'pan-y' }}
+        >
+            {cardContent}
+        </motion.div>
     )
 }
