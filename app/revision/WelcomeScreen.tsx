@@ -9,6 +9,7 @@ import { useRevisionStore } from '@/store/revisionStore'
 import { getLevelProgressStats } from '@/app/actions/revision'
 import type { RevisionCard } from '@/app/actions/revision'
 import type { LevelProgressStat } from '@/app/actions/revision'
+import type { ModeConfig } from './types'
 
 const PAGE_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,700;1,700&family=Jost:wght@300;400;500;600;700&display=swap');
@@ -16,7 +17,7 @@ const PAGE_CSS = `
 
 interface WelcomeScreenProps {
   onStartDaily: () => void
-  onStartCustom: (cards: RevisionCard[]) => void
+  onStartCustom: (cards: RevisionCard[], modeConfig: ModeConfig) => void
 }
 
 function classifyForCount(card: RevisionCard): 'new' | 'learning' | 'review' {
@@ -63,9 +64,9 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
     setTimeout(() => onStartDaily(), 500)
   }
 
-  const handleStartCustom = (cards: RevisionCard[]) => {
+  const handleStartCustom = (cards: RevisionCard[], modeConfig: ModeConfig) => {
     setStarting(true)
-    setTimeout(() => onStartCustom(cards), 500)
+    setTimeout(() => onStartCustom(cards, modeConfig), 500)
   }
 
   const dueCards = sessionCache?.dueCards ?? []

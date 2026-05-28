@@ -29,7 +29,7 @@ export default function RevisionPage() {
         uniqueDoneCount, uniqueTotal, handleAnswer, restartSession, startDaily, startCustom,
         sessionStarted, sessionMode, sessionLogs, totalPoints, displayPoints,
         lastPoints, pointsAnimKey, lastMultipliers, streakCount, showResults,
-        loading, dueCards, completedCards, targetPoints,
+        loading, dueCards, completedCards, targetPoints, modeConfig,
         leaveDialogOpen, setLeaveDialogOpen, leaveTargetUrlRef,
         showDiacritics, setShowDiacritics, textScale, setTextScale,
     } = useRevisionSession()
@@ -43,7 +43,7 @@ export default function RevisionPage() {
             <>
                 <WelcomeScreen
                     onStartDaily={startDaily}
-                    onStartCustom={startCustom}
+                    onStartCustom={(cards, modeConfig) => startCustom(cards, modeConfig)}
                 />
                 <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
             </>
@@ -107,6 +107,7 @@ export default function RevisionPage() {
                         uniqueDoneCount={uniqueDoneCount}
                         uniqueTotal={uniqueTotal}
                         dialogsOpen={dialogsOpen}
+                        modeConfig={modeConfig}
                     />
                 )}
             </RevisionSessionLayout>

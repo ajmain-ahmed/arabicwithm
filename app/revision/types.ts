@@ -2,6 +2,13 @@ import type { RevisionCard, Answer, SessionLog } from '@/app/actions/revision'
 
 export type SessionMode = 'daily' | 'custom'
 
+export interface ModeConfig {
+    reverse: boolean
+    rapidFire: boolean
+    scholar: boolean
+    weakWords: boolean
+}
+
 export type Queue = 'new' | 'learning' | 'review'
 
 export interface SessionCard {

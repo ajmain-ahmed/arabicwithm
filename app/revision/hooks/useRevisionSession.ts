@@ -6,7 +6,7 @@ import { useRevisionStore } from '@/store/revisionStore'
 import { submitRevisionAnswersBatch, type RevisionCard, type Answer } from '@/app/actions/revision'
 import { computeAnswerResult, type ProgressState } from '@/app/lib/sm2'
 import useAnkiQueue from './useAnkiQueue'
-import { type SessionMode, type SessionCard, type ExtendedSessionLog, type MultiplierData, classifyCard, computeCardPoints, makeDotId, RATING_COLORS } from '../types'
+import { type SessionMode, type SessionCard, type ExtendedSessionLog, type MultiplierData, type ModeConfig, classifyCard, computeCardPoints, makeDotId, RATING_COLORS } from '../types'
 
 export default function useRevisionSession() {
     const { user } = useAuth()
@@ -32,6 +32,7 @@ export default function useRevisionSession() {
     const [streakCount, setStreakCount] = useState(0)
     const [showResults, setShowResults] = useState(false)
     const [targetPoints, setTargetPoints] = useState(0)
+    const [modeConfig, setModeConfig] = useState<ModeConfig>({ reverse: false, rapidFire: false, scholar: false, weakWords: false })
     const pendingAnswersRef = useRef<{ vocabId: number; answer: Answer }[]>([])
     const hasUnsavedRef = useRef(false)
     const pointsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -183,6 +184,7 @@ export default function useRevisionSession() {
         setShowResults(false)
         setTargetPoints(0)
         setScoredIds(new Set()) // reset scored tracking
+        setModeConfig({ reverse: false, rapidFire: false, scholar: false, weakWords: false })
         setLeaveDialogOpen(false)
         leaveTargetUrlRef.current = null
         if (pointsTimeoutRef.current) clearTimeout(pointsTimeoutRef.current)
@@ -324,7 +326,7 @@ export default function useRevisionSession() {
         }])
     }, [currentCard, answer, sessionMode, streakCount, updateSessionCard, scoredIds])
 
-    const startCustom = useCallback((cards: RevisionCard[]) => {
+    const startCustom = useCallback((cards: RevisionCard[], config: ModeConfig) => {
         setSessionMode('custom')
         setDueCards(cards)
         setCompletedCards([])
@@ -332,6 +334,7 @@ export default function useRevisionSession() {
         setSessionLogs([])
         setSessionKey(k => k + 1)
         setScoredIds(new Set()) // reset scored tracking
+        setModeConfig(config)
         const target = Math.round(cards.length * 244)
         setTargetPoints(target)
     }, [])
@@ -375,6 +378,7 @@ export default function useRevisionSession() {
         dueCards,
         completedCards,
         targetPoints,
+        modeConfig,
 
         /* Leave dialog */
         leaveDialogOpen,

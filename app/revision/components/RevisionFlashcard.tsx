@@ -6,7 +6,7 @@ import {
 } from '@mui/material'
 import { useMediaQuery } from '@mui/material'
 import { motion } from 'framer-motion'
-import { type SessionCard, type Queue, parseExamples } from '../types'
+import { type SessionCard, type Queue, type ModeConfig, parseExamples } from '../types'
 import IntegratedProgressDots from './IntegratedProgressDots'
 import BucketChips from './BucketChips'
 import AnimatedArabicWord from './AnimatedArabicWord'
@@ -67,6 +67,7 @@ export default function RevisionFlashcard({
     dotOrder, answeredDots, againPendingIds, totalEver, doneCount,
     uniqueDoneCount, uniqueTotal,
     dialogsOpen = false,
+    modeConfig,
 }: {
     sessionCard: SessionCard
     counts: Record<Queue, number>
@@ -81,16 +82,19 @@ export default function RevisionFlashcard({
     uniqueDoneCount: number
     uniqueTotal: number
     dialogsOpen?: boolean
+    modeConfig: ModeConfig
 }) {
     const [revealed, setRevealed] = useState(false)
     const [activeTab, setActiveTab] = useState<'definition' | 'examples' | 'forms' | 'cartoon'>('definition')
     const [elapsed, setElapsed] = useState(0)
     const [timerRunning, setTimerRunning] = useState(false)
+    const [rapidFireCountdown, setRapidFireCountdown] = useState(5)
 
     const cardStartRef = useRef<number>(Date.now())
     const revealTimeRef = useRef<number>(0)
     const wasPausedByDialog = useRef(false)
     const accumulatedRef = useRef(0)
+    const rapidFireIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
     const card = sessionCard.data
     const examples = parseExamples(card)
@@ -114,6 +118,7 @@ export default function RevisionFlashcard({
         cardStartRef.current = Date.now()
         accumulatedRef.current = 0
         setElapsed(0)
+        setRapidFireCountdown(5)
         wasPausedByDialog.current = false
         setTimerRunning(true)
     }, [card.id ?? card.word])
@@ -145,6 +150,28 @@ export default function RevisionFlashcard({
         }, 1000)
         return () => clearInterval(interval)
     }, [timerRunning])
+
+    /* ── Rapid Fire countdown ── */
+    useEffect(() => {
+        if (!modeConfig.rapidFire || revealed) return
+        if (dialogsOpen) return
+        setRapidFireCountdown(5)
+        const interval = setInterval(() => {
+            setRapidFireCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(interval)
+                    handleAnswer('again')
+                    return 0
+                }
+                return prev - 1
+            })
+        }, 1000)
+        rapidFireIntervalRef.current = interval
+        return () => {
+            if (rapidFireIntervalRef.current) clearInterval(rapidFireIntervalRef.current)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [modeConfig.rapidFire, sessionCard.dotId, revealed, dialogsOpen])
 
     const handleReveal = () => {
         setRevealed(true)
@@ -200,12 +227,49 @@ export default function RevisionFlashcard({
 
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                 <Box sx={{ height: { xs: '2.5rem', md: '1.5rem' } }} />
+
+                {/* Rapid Fire countdown */}
+                {modeConfig.rapidFire && !revealed && (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
+                        <Typography sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            color: rapidFireCountdown <= 2 ? '#c62828' : '#e65100',
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            px: 1.5,
+                            py: 0.4,
+                            borderRadius: '999px',
+                            border: '1.5px solid',
+                            borderColor: rapidFireCountdown <= 2 ? 'rgba(198,40,40,0.3)' : 'rgba(230,81,0,0.3)',
+                            background: rapidFireCountdown <= 2 ? 'rgba(198,40,40,0.06)' : 'rgba(230,81,0,0.06)',
+                        }}>
+                            {rapidFireCountdown}s
+                        </Typography>
+                    </Box>
+                )}
+
                 <Box sx={{
                     flex: '0 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     height: { xs: `${(3.2 * textScale * 1.2).toFixed(1)}rem`, md: `${(3.8 * textScale * 1.2).toFixed(1)}rem` },
                     mb: { xs: '1.5rem', md: '2rem' },
                 }}>
-                    <AnimatedArabicWord word={card.word} wordDiacritic={card.word_diacritic} showDiacritics={showDiacritics} textScale={textScale} />
+                    {modeConfig.reverse && !revealed ? (
+                        <Typography sx={{
+                            fontFamily: "'EB Garamond', serif",
+                            fontSize: `calc(1.8rem * ${textScale})`,
+                            fontWeight: 700,
+                            color: '#2c1a0e',
+                            textAlign: 'center',
+                            lineHeight: 1.3,
+                            px: 2,
+                        }}>
+                            {card.definition}
+                        </Typography>
+                    ) : (
+                        <AnimatedArabicWord word={card.word} wordDiacritic={card.word_diacritic} showDiacritics={showDiacritics} textScale={textScale} />
+                    )}
                 </Box>
 
                 <Box sx={{ mt: 'auto', width: '100%' }}>
@@ -236,6 +300,9 @@ export default function RevisionFlashcard({
                         </Box>
 
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap', py: 1, mb: { xs: 1, md: 1.5 } }}>
+                            {modeConfig.reverse && (
+                                <Typography component="span" sx={{ fontFamily: "'EB Garamond', serif", fontSize: answerTextSize, fontWeight: 700, color: '#b8860b', lineHeight: 1 }}>{card.word}</Typography>
+                            )}
                             {card.transliteration && (
                                 <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: answerTextSize, color: '#b8860b', letterSpacing: '0.05em', lineHeight: 1 }}>{card.transliteration}</Typography>
                             )}

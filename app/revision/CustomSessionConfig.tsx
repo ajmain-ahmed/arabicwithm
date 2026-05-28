@@ -8,11 +8,16 @@ import {
   Slider,
   TextField,
   useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
 } from '@mui/material'
 import { Check, Search, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { fetchCustomSessionCards } from '@/app/actions/revision'
 import type { RevisionCard, LevelProgressStat } from '@/app/actions/revision'
+import type { ModeConfig } from './types'
 
 /* ─────────────────────────────────────────────
    Constants
@@ -40,28 +45,22 @@ const LEVEL_NAMES: Record<string, string> = {
 const ALL_LEVEL_CODES = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
 /* ─────────────────────────────────────────────
-   Practice Modes
+   Mode Config
 ───────────────────────────────────────────── */
-type PracticeMode =
-  | 'daily-review'
-  | 'random-themes'
-  | 'reverse-mode'
-  | 'rapid-fire'
-  | 'scholar-mode'
-  | 'weak-words'
+interface ModeToggles {
+  reverse: boolean
+  rapidFire: boolean
+  scholar: boolean
+  weakWords: boolean
+}
 
-const PRACTICE_MODES: {
-  key: PracticeMode
-  label: string
-  description: string
-  group: 'standalone' | 'grouped'
-}[] = [
-  { key: 'daily-review', label: 'Daily Review', description: 'Your due cards', group: 'standalone' },
-  { key: 'reverse-mode', label: 'Reverse Mode', description: 'English → Arabic', group: 'grouped' },
-  { key: 'rapid-fire', label: 'Rapid Fire', description: 'Speed practice', group: 'grouped' },
-  { key: 'scholar-mode', label: 'Scholar Mode', description: 'Deep study', group: 'grouped' },
-  { key: 'weak-words', label: 'Weak Words Only', description: 'Focus on hard cards', group: 'grouped' },
-]
+const MODE_DESCRIPTIONS: Record<string, string> = {
+  normal: 'Study cards the standard way. Arabic word shown first, then reveal the English definition.',
+  reverse: 'Flip the question and answer. You see the English definition first and must recall the Arabic word.',
+  rapidFire: 'A 5-second countdown timer appears on each card. If time runs out, the card is automatically marked as wrong.',
+  scholar: 'Test your knowledge with words from the Hans Wehr dictionary that fall outside the A0–C2 graded vocabulary. (Coming soon)',
+  weakWords: 'Focus only on words the system has identified as your weakest. (Coming soon)',
+}
 
 /* ─────────────────────────────────────────────
    Types
@@ -84,7 +83,7 @@ interface CustomSessionConfigProps {
   user: { id: string } | null
   levelProgress: LevelProgressStat[]
   onStartDaily: () => void
-  onStart: (cards: RevisionCard[]) => void
+  onStart: (cards: RevisionCard[], modeConfig: ModeConfig) => void
 }
 
 type NormalizedLevel = {
@@ -276,57 +275,87 @@ function CustomQuizCard({ onClick }: { onClick: () => void }) {
 /* ─────────────────────────────────────────────
    Option Card (small, for custom options)
 ───────────────────────────────────────────── */
-function OptionCard({
-  mode,
+function ModeToggleCard({
+  label,
+  description,
   isActive,
   onClick,
+  onHelpClick,
 }: {
-  mode: (typeof PRACTICE_MODES)[number]
+  label: string
+  description: string
   isActive: boolean
   onClick: () => void
+  onHelpClick: () => void
 }) {
+  const activeColor = '#b8860b'
   return (
     <Box
       onClick={onClick}
       sx={{
         background: isActive ? 'rgba(184,134,11,0.08)' : '#fff',
         border: '1.5px solid',
-        borderColor: isActive ? '#b8860b' : 'rgba(44,26,14,0.10)',
+        borderColor: isActive ? activeColor : 'rgba(44,26,14,0.10)',
         borderRadius: '10px',
-        p: '12px 14px',
+        p: '10px 12px',
         cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        gap: 0.5,
+        gap: 0.3,
         transition: 'all 0.15s ease',
-        minHeight: 72,
+        height: '100%',
         '&:hover': {
-          borderColor: '#b8860b',
+          borderColor: activeColor,
           boxShadow: '0 1px 4px rgba(184,134,11,0.12)',
         },
       }}
     >
-      <Typography
-        sx={{
-          fontFamily: "'EB Garamond', serif",
-          fontSize: '0.9rem',
-          fontWeight: 700,
-          color: isActive ? '#2c1a0e' : '#5a4e47',
-          lineHeight: 1.2,
-        }}
-      >
-        {mode.label}
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography
+          sx={{
+            fontFamily: "'EB Garamond', serif",
+            fontSize: '0.85rem',
+            fontWeight: 700,
+            color: isActive ? '#2c1a0e' : '#5a4e47',
+            lineHeight: 1.2,
+          }}
+        >
+          {label}
+        </Typography>
+        <Box
+          component="span"
+          onClick={(e) => { e.stopPropagation(); onHelpClick() }}
+          sx={{
+            width: 18,
+            height: 18,
+            borderRadius: '50%',
+            border: '1px solid rgba(44,26,14,0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontFamily: 'Jost, sans-serif',
+            fontSize: '0.65rem',
+            fontWeight: 700,
+            color: '#7a6e65',
+            cursor: 'pointer',
+            flexShrink: 0,
+            ml: 0.5,
+            '&:hover': { borderColor: activeColor, color: activeColor },
+          }}
+        >
+          ?
+        </Box>
+      </Box>
       <Typography
         sx={{
           fontFamily: 'Jost, sans-serif',
-          fontSize: '0.7rem',
+          fontSize: '0.65rem',
           color: isActive ? '#7a6e65' : '#9e8a7a',
           lineHeight: 1.3,
         }}
       >
-        {mode.description}
+        {description}
       </Typography>
     </Box>
   )
@@ -344,8 +373,15 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
   const [expandedLevelCode, setExpandedLevelCode] = useState<string | null>(null)
   const [expandedLevelCodes, setExpandedLevelCodes] = useState<Set<string>>(new Set())
   const [cardCount, setCardCount] = useState(10)
-  const [practiceMode, setPracticeMode] = useState<PracticeMode>('daily-review')
   const [showCustomOptions, setShowCustomOptions] = useState(false)
+  const [modeToggles, setModeToggles] = useState<ModeToggles>({
+    reverse: false,
+    rapidFire: false,
+    scholar: false,
+    weakWords: false,
+  })
+  const [isDailyReview, setIsDailyReview] = useState(true)
+  const [helpDialogOpen, setHelpDialogOpen] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -535,7 +571,12 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
         themeIds,
         cardCount,
       })
-      onStart(cards)
+      onStart(cards, {
+        reverse: modeToggles.reverse,
+        rapidFire: modeToggles.rapidFire,
+        scholar: modeToggles.scholar,
+        weakWords: modeToggles.weakWords,
+      })
     } catch (err) {
       console.error('Failed to start custom session:', err)
     } finally {
@@ -579,9 +620,10 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
   /* ═══════════════════════════════════════════
      DESKTOP LAYOUT
   ═══════════════════════════════════════════ */
-  if (isDesktop) {
-    return (
-      <Box sx={{ display: 'flex', minHeight: 600, mx: -3 }}>
+  return (
+    <>
+      {isDesktop ? (
+        <Box sx={{ display: 'flex', minHeight: 600, mx: -3 }}>
         {/* ── Left Sidebar ── */}
         <Box
           sx={{
@@ -613,7 +655,7 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
               const isSelected = selectedLevelCodes.includes(level.code)
               const selCount = levelSelectedCount(level.code)
               const hasThemes = level.themes.length > 0
-              const isDailyMode = practiceMode === 'daily-review'
+              const isDailyMode = isDailyReview
               const progressStat = levelProgress.find((p) => p.level === level.code)
               const progressPct = progressStat && progressStat.total > 0
                 ? (progressStat.mastered / progressStat.total) * 100
@@ -729,9 +771,9 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
             {/* Daily Review — left card */}
             <Box sx={{ width: '50%', flexShrink: 0 }}>
               <DailyReviewCard
-                isActive={practiceMode === 'daily-review'}
+                isActive={isDailyReview}
                 onClick={() => {
-                  setPracticeMode('daily-review')
+                  setIsDailyReview(true)
                   setShowCustomOptions(false)
                 }}
               />
@@ -752,7 +794,7 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
                     <CustomQuizCard
                       onClick={() => {
                         setShowCustomOptions(true)
-                        setPracticeMode('reverse-mode')
+                        setIsDailyReview(false)
                       }}
                     />
                   </motion.div>
@@ -769,24 +811,62 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
                       sx={{
                         height: '100%',
                         border: '2px solid',
-                        borderColor: practiceMode !== 'daily-review' ? '#b8860b' : 'rgba(44,26,14,0.12)',
+                        borderColor: !isDailyReview ? '#b8860b' : 'rgba(44,26,14,0.12)',
                         borderRadius: '14px',
                         p: 1.5,
                         display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
+                        gridTemplateColumns: '1fr 1fr 1fr',
+                        gridTemplateRows: '1fr 1fr',
                         gap: 1.5,
                         alignItems: 'stretch',
                         transition: 'border-color 0.2s ease',
                       }}
                     >
-                      {PRACTICE_MODES.filter((m) => m.group === 'grouped').map((mode) => (
-                        <OptionCard
-                          key={mode.key}
-                          mode={mode}
-                          isActive={practiceMode === mode.key}
-                          onClick={() => setPracticeMode(mode.key)}
+                      <Box sx={{ gridColumn: '1', gridRow: '1 / 3', height: '100%' }}>
+                        <ModeToggleCard
+                          label="Normal Mode"
+                          description="Standard Arabic → English"
+                          isActive={!modeToggles.scholar && !modeToggles.weakWords && !modeToggles.reverse && !modeToggles.rapidFire}
+                          onClick={() => setModeToggles({ reverse: false, rapidFire: false, scholar: false, weakWords: false })}
+                          onHelpClick={() => setHelpDialogOpen('normal')}
                         />
-                      ))}
+                      </Box>
+                      <Box sx={{ gridColumn: '2', gridRow: '1', height: '100%' }}>
+                        <ModeToggleCard
+                          label="Reverse Mode"
+                          description="English → Arabic"
+                          isActive={modeToggles.reverse}
+                          onClick={() => setModeToggles(prev => ({ ...prev, reverse: !prev.reverse }))}
+                          onHelpClick={() => setHelpDialogOpen('reverse')}
+                        />
+                      </Box>
+                      <Box sx={{ gridColumn: '2', gridRow: '2', height: '100%' }}>
+                        <ModeToggleCard
+                          label="Rapid Fire"
+                          description="5-second countdown"
+                          isActive={modeToggles.rapidFire}
+                          onClick={() => setModeToggles(prev => ({ ...prev, rapidFire: !prev.rapidFire }))}
+                          onHelpClick={() => setHelpDialogOpen('rapidFire')}
+                        />
+                      </Box>
+                      <Box sx={{ gridColumn: '3', gridRow: '1', height: '100%' }}>
+                        <ModeToggleCard
+                          label="Scholar Mode"
+                          description="Hans Wehr dictionary"
+                          isActive={modeToggles.scholar}
+                          onClick={() => setModeToggles(prev => ({ ...prev, scholar: !prev.scholar, weakWords: false }))}
+                          onHelpClick={() => setHelpDialogOpen('scholar')}
+                        />
+                      </Box>
+                      <Box sx={{ gridColumn: '3', gridRow: '2', height: '100%' }}>
+                        <ModeToggleCard
+                          label="Weak Words Only"
+                          description="Focus on hard cards"
+                          isActive={modeToggles.weakWords}
+                          onClick={() => setModeToggles(prev => ({ ...prev, weakWords: !prev.weakWords, scholar: false }))}
+                          onHelpClick={() => setHelpDialogOpen('weakWords')}
+                        />
+                      </Box>
                     </Box>
                   </motion.div>
                 )}
@@ -795,7 +875,7 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
           </Box>
 
           {/* Daily Review Content */}
-          {practiceMode === 'daily-review' && (
+          {isDailyReview && (
             <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3, justifyContent: 'center', minHeight: 300 }}>
               <Box sx={{ maxWidth: 520, mx: 'auto', textAlign: 'center' }}>
                 <Typography sx={{
@@ -879,7 +959,7 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
           )}
 
           {/* Custom Practice Content */}
-          {practiceMode !== 'daily-review' && (
+          {!isDailyReview && (
             <>
               {/* Search + Header */}
               <Box
@@ -1331,22 +1411,17 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
           )}
         </Box>
       </Box>
-    )
-  }
 
-  /* ═══════════════════════════════════════════
-     MOBILE LAYOUT
-  ═══════════════════════════════════════════ */
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pb: '80px' }}>
+      ) : (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pb: '80px' }}>
       {/* ── Mode Selection ── */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
         {/* Daily Review Card */}
         <Box sx={{ height: 190 }}>
           <DailyReviewCard
-            isActive={practiceMode === 'daily-review'}
+            isActive={isDailyReview}
             onClick={() => {
-              setPracticeMode('daily-review')
+              setIsDailyReview(true)
               setShowCustomOptions(false)
             }}
           />
@@ -1367,7 +1442,7 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
                 <CustomQuizCard
                   onClick={() => {
                     setShowCustomOptions(true)
-                    setPracticeMode('reverse-mode')
+                    setIsDailyReview(false)
                   }}
                 />
               </motion.div>
@@ -1382,23 +1457,62 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
                 <Box
                   sx={{
                     border: '2px solid',
-                    borderColor: practiceMode !== 'daily-review' ? '#b8860b' : 'rgba(44,26,14,0.12)',
+                    borderColor: !isDailyReview ? '#b8860b' : 'rgba(44,26,14,0.12)',
                     borderRadius: '14px',
                     p: 1.5,
                     display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
+                    gridTemplateColumns: '1fr 1fr 1fr',
+                    gridTemplateRows: '1fr 1fr',
                     gap: 1.5,
+                    alignItems: 'stretch',
                     transition: 'border-color 0.2s ease',
                   }}
                 >
-                  {PRACTICE_MODES.filter((m) => m.group === 'grouped').map((mode) => (
-                    <OptionCard
-                      key={mode.key}
-                      mode={mode}
-                      isActive={practiceMode === mode.key}
-                      onClick={() => setPracticeMode(mode.key)}
+                  <Box sx={{ gridColumn: '1', gridRow: '1 / 3', height: '100%' }}>
+                    <ModeToggleCard
+                      label="Normal"
+                      description="Standard practice"
+                      isActive={!modeToggles.scholar && !modeToggles.weakWords && !modeToggles.reverse && !modeToggles.rapidFire}
+                      onClick={() => setModeToggles({ reverse: false, rapidFire: false, scholar: false, weakWords: false })}
+                      onHelpClick={() => setHelpDialogOpen('normal')}
                     />
-                  ))}
+                  </Box>
+                  <Box sx={{ gridColumn: '2', gridRow: '1', height: '100%' }}>
+                    <ModeToggleCard
+                      label="Reverse"
+                      description="English → Arabic"
+                      isActive={modeToggles.reverse}
+                      onClick={() => setModeToggles(prev => ({ ...prev, reverse: !prev.reverse }))}
+                      onHelpClick={() => setHelpDialogOpen('reverse')}
+                    />
+                  </Box>
+                  <Box sx={{ gridColumn: '2', gridRow: '2', height: '100%' }}>
+                    <ModeToggleCard
+                      label="Rapid Fire"
+                      description="5-second timer"
+                      isActive={modeToggles.rapidFire}
+                      onClick={() => setModeToggles(prev => ({ ...prev, rapidFire: !prev.rapidFire }))}
+                      onHelpClick={() => setHelpDialogOpen('rapidFire')}
+                    />
+                  </Box>
+                  <Box sx={{ gridColumn: '3', gridRow: '1', height: '100%' }}>
+                    <ModeToggleCard
+                      label="Scholar"
+                      description="Hans Wehr words"
+                      isActive={modeToggles.scholar}
+                      onClick={() => setModeToggles(prev => ({ ...prev, scholar: !prev.scholar, weakWords: false }))}
+                      onHelpClick={() => setHelpDialogOpen('scholar')}
+                    />
+                  </Box>
+                  <Box sx={{ gridColumn: '3', gridRow: '2', height: '100%' }}>
+                    <ModeToggleCard
+                      label="Weak Words"
+                      description="Focus on weaknesses"
+                      isActive={modeToggles.weakWords}
+                      onClick={() => setModeToggles(prev => ({ ...prev, weakWords: !prev.weakWords, scholar: false }))}
+                      onHelpClick={() => setHelpDialogOpen('weakWords')}
+                    />
+                  </Box>
                 </Box>
               </motion.div>
             )}
@@ -1407,7 +1521,7 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
       </Box>
 
       {/* ── Daily Review Content ── */}
-      {practiceMode === 'daily-review' && (
+      {isDailyReview && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center', textAlign: 'center', py: 2 }}>
           <Box>
             <Typography
@@ -1523,7 +1637,7 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
       )}
 
       {/* ── Custom Practice Content ── */}
-      {practiceMode !== 'daily-review' && (
+      {!isDailyReview && (
         <>
           {/* Accordion Stack */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -1860,6 +1974,30 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
           </Box>
         </>
       )}
-    </Box>
+      </Box>
+      )}
+
+      {/* Help Dialog */}
+      <Dialog open={!!helpDialogOpen} onClose={() => setHelpDialogOpen(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.3rem', color: '#2c1a0e', pr: 5 }}>
+          {helpDialogOpen === 'normal' && 'Normal Mode'}
+          {helpDialogOpen === 'reverse' && 'Reverse Mode'}
+          {helpDialogOpen === 'rapidFire' && 'Rapid Fire'}
+          {helpDialogOpen === 'scholar' && 'Scholar Mode'}
+          {helpDialogOpen === 'weakWords' && 'Weak Words Only'}
+        </DialogTitle>
+        <IconButton
+          onClick={() => setHelpDialogOpen(null)}
+          sx={{ position: 'absolute', right: 12, top: 12, color: '#9e8a7a' }}
+        >
+          <Box component="span" sx={{ fontSize: '1.4rem', lineHeight: 1 }}>×</Box>
+        </IconButton>
+        <DialogContent>
+          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', color: '#7a6e65', lineHeight: 1.7 }}>
+            {helpDialogOpen && MODE_DESCRIPTIONS[helpDialogOpen]}
+          </Typography>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

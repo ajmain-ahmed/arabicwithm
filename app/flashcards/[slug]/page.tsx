@@ -681,7 +681,27 @@ function FormsPanel({ forms, showDiacritics, textScale }: {
     showDiacritics: boolean
     textScale: number
 }) {
-    if (!forms || forms.length === 0) return null
+    if (!forms || forms.length === 0) {
+        return (
+            <Box sx={{
+                background: 'rgba(245,237,224,0.4)',
+                border: '1px solid rgba(184,134,11,0.12)',
+                borderRadius: '10px',
+                p: { xs: '1rem', md: '1.25rem 1.5rem' },
+                mb: { xs: '0.75rem', md: '0.25rem' },
+                textAlign: 'center',
+            }}>
+                <Typography sx={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: `calc(0.85rem * ${textScale})`,
+                    fontWeight: 500,
+                    color: '#9e8a7a',
+                }}>
+                    No forms available for this word.
+                </Typography>
+            </Box>
+        )
+    }
 
     return (
         <Box sx={{
@@ -1034,7 +1054,7 @@ function FlashcardQuiz({
         setMobileTab('definition')
     }, [current?.id])
 
-    const hasForms = current?.forms && current.forms.length > 0
+    const hasForms = (current?.forms && current.forms.length > 0) || current?.theme_id?.toLowerCase().includes('verbs') || current?.pos === 'verb'
 
     const newCount = allCards.filter(c => c.status === 'new').length
     const revisionCount = allCards.filter(c => c.status === 'revision').length

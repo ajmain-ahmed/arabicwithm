@@ -66,17 +66,44 @@ function getPos(formsJson: any): string {
 function flattenForms(formsJson: any): FormRow[] | null {
   const parsed = parseJsonb(formsJson)
   if (!Array.isArray(parsed) || parsed.length === 0) return null
-  // The forms JSONB is a flat array where the first element is a POS marker
-  // (e.g. {"type":"verb"}) and subsequent elements are conjugation rows.
-  const rows: FormRow[] = parsed
-    .filter((f: any) => f?.con_ar && f.con_ar !== '')
-    .map((f: any) => ({
-      type: f.type ?? '',
-      con_ar: f.con_ar ?? '',
-      con_di: f.con_di ?? '',
-      con_en: f.con_en ?? '',
-      con_tr: f.con_tr ?? '',
-    }))
+
+  const rows: FormRow[] = []
+
+  for (const item of parsed) {
+    if (!item || typeof item !== 'object') continue
+
+    // Flat format: each item is a conjugation row with con_ar directly
+    if (item.con_ar && item.con_ar !== '') {
+      rows.push({
+        type: item.type ?? '',
+        con_ar: item.con_ar ?? '',
+        con_di: item.con_di ?? '',
+        con_en: item.con_en ?? '',
+        con_tr: item.con_tr ?? '',
+      })
+      continue
+    }
+
+    // Nested format: item has a conjugations object/array
+    const conjugations = item.conjugations
+    if (conjugations && typeof conjugations === 'object') {
+      const entries = Array.isArray(conjugations)
+        ? conjugations.map((c: any, i: number) => [`item_${i}`, c])
+        : Object.entries(conjugations)
+      for (const [key, value] of entries) {
+        if (value && typeof value === 'object' && value.con_ar) {
+          rows.push({
+            type: value.type ?? key ?? '',
+            con_ar: value.con_ar ?? '',
+            con_di: value.con_di ?? '',
+            con_en: value.con_en ?? '',
+            con_tr: value.con_tr ?? '',
+          })
+        }
+      }
+    }
+  }
+
   return rows.length > 0 ? rows : null
 }
 
