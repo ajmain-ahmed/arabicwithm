@@ -13,6 +13,39 @@ import type { ModeConfig } from './types'
 
 const PAGE_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,700;1,700&family=Jost:wght@300;400;500;600;700&display=swap');
+
+  .revision-banner-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+  .revision-banner-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(44,26,14,0.45) 0%,
+      rgba(44,26,14,0.65) 55%,
+      rgba(44,26,14,0.90) 100%
+    );
+  }
+  .revision-banner-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle,
+      rgba(0,0,0,0) 0%,
+      rgba(0,0,0,0.45) 70%,
+      rgba(0,0,0,0.75) 100%
+    );
+  }
+  .revision-banner-content {
+    position: relative;
+    z-index: 1;
+  }
 `
 
 interface WelcomeScreenProps {
@@ -86,7 +119,71 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
   return (
     <>
       <style>{PAGE_CSS}</style>
-      <Box component="main" sx={{ minHeight: '100vh', background: '#f5ede0', pt: { xs: '72px', md: '84px' } }}>
+      <Box component="main" sx={{ minHeight: '100vh', background: '#f5ede0', pt: { xs: '56px', md: '64px' } }}>
+        {/* ── Banner ── */}
+        <Box
+          sx={{
+            position: 'relative',
+            overflow: 'hidden',
+            borderBottom: '1px solid rgba(212,168,67,0.2)',
+            px: { xs: 3, md: 8 },
+            py: { xs: 4, md: 6 },
+            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Box
+            component="img"
+            className="revision-banner-img"
+            src="/cards/awm13_converted.avif"
+            alt=""
+            aria-hidden="true"
+          />
+          <Box className="revision-banner-overlay" />
+          <Box className="revision-banner-vignette" />
+          <Box className="revision-banner-content">
+            <Typography
+              component="h1"
+              sx={{
+                fontFamily: "'EB Garamond', serif",
+                fontSize: { xs: '2.4rem', md: '3.4rem' },
+                fontWeight: 700,
+                color: '#f5ede0',
+                lineHeight: 1.1,
+                mb: 0.5,
+                direction: 'rtl',
+              }}
+            >
+              بَيْتُ الْكَلِمَات
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: "'EB Garamond', serif",
+                fontSize: { xs: '1.2rem', md: '1.6rem' },
+                color: '#d4a843',
+                mb: 1,
+              }}
+            >
+              Bayt al-Kalimāt, House of Words
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: 'Jost, sans-serif',
+                fontSize: { xs: '0.85rem', md: '1rem' },
+                color: 'rgba(245,237,224,0.85)',
+                lineHeight: 1.5,
+                maxWidth: 480,
+                mx: 'auto',
+                fontWeight: 400,
+              }}
+            >
+              Sharpen what you know, Learn what you don&apos;t, One card at a time.
+            </Typography>
+          </Box>
+        </Box>
+
         <Box sx={{ pt: { xs: 3, md: 5 }, pb: { xs: 4, md: 6 }, px: { xs: 1.5, md: 3, lg: 5 } }}>
           <Box sx={{ maxWidth: 1536, mx: 'auto' }}>
             {fetching ? (
