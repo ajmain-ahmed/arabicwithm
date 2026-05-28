@@ -501,26 +501,24 @@ export type LevelMeta = {
 }
 
 export async function fetchCustomSessionMetadata(): Promise<LevelMeta[]> {
-    const { data: vocabData, error: vocabErr } = await serviceClient
-        .from('vocabulary')
-        .select('level, theme')
+    const { data, error } = await serviceClient
+        .rpc('get_vocab_level_theme_stats')
 
-    if (vocabErr || !vocabData) {
-        console.error('[fetchCustomSessionMetadata] vocab error:', vocabErr?.message)
+    if (error) {
+        console.error('[fetchCustomSessionMetadata] rpc error:', error.message)
         return []
     }
 
     const levelThemesMap = new Map<string, Map<string, number>>()
 
-    for (const v of vocabData) {
-        const level = v.level
-        const theme = v.theme
+    for (const row of data ?? []) {
+        const level = row.level
+        const theme = row.theme
         if (!level || !theme) continue
         if (!levelThemesMap.has(level)) {
             levelThemesMap.set(level, new Map())
         }
-        const themeMap = levelThemesMap.get(level)!
-        themeMap.set(theme, (themeMap.get(theme) ?? 0) + 1)
+        levelThemesMap.get(level)!.set(theme, Number(row.word_count))
     }
 
     const result: LevelMeta[] = []
@@ -616,3 +614,61 @@ export async function fetchCustomSessionCards(settings: {
 
 
 
+
+
+/* ── Level progress stats ── */
+export type LevelProgressStat = {
+  level: string
+  total: number
+  mastered: number
+}
+
+export async function getLevelProgressStats(): Promise<LevelProgressStat[]> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) {
+    return LEVEL_ORDER.map((code) => ({ level: code, total: 0, mastered: 0 }))
+  }
+
+  // Fetch all vocabulary counts per level
+  const { data: vocabData, error: vocabError } = await serviceClient
+    .from('vocabulary')
+    .select('level')
+
+  if (vocabError) {
+    console.error('[revision] vocab count error:', vocabError)
+    return LEVEL_ORDER.map((code) => ({ level: code, total: 0, mastered: 0 }))
+  }
+
+  // Fetch user's mastered words per level (status = 1)
+  const { data: progressData, error: progressError } = await serviceClient
+    .from('progress')
+    .select('vocabulary(level)')
+    .eq('user_id', userId)
+    .eq('status', 1)
+
+  if (progressError) {
+    console.error('[revision] progress count error:', progressError)
+    return LEVEL_ORDER.map((code) => ({ level: code, total: 0, mastered: 0 }))
+  }
+
+  // Aggregate
+  const totalMap: Record<string, number> = {}
+  const masteredMap: Record<string, number> = {}
+
+  for (const v of vocabData ?? []) {
+    totalMap[v.level] = (totalMap[v.level] ?? 0) + 1
+  }
+
+  for (const p of progressData ?? []) {
+    const level = (p.vocabulary as any)?.level
+    if (level) {
+      masteredMap[level] = (masteredMap[level] ?? 0) + 1
+    }
+  }
+
+  return LEVEL_ORDER.map((code) => ({
+    level: code,
+    total: totalMap[code] ?? 0,
+    mastered: masteredMap[code] ?? 0,
+  }))
+}

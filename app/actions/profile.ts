@@ -78,10 +78,20 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) return null
 
-  // Fetch all vocabulary and user progress directly
-  const { data: vocabData } = await serviceClient
-    .from('vocabulary')
-    .select('word_id, level, theme')
+  // Fetch all vocabulary and user progress directly (paginate to avoid 1000-row limit)
+  let allVocabData: { word_id: number; level: string; theme: string }[] = []
+  let vocabFrom = 0
+  const pageSize = 1000
+  while (true) {
+    const { data } = await serviceClient
+      .from('vocabulary')
+      .select('word_id, level, theme')
+      .range(vocabFrom, vocabFrom + pageSize - 1)
+    if (!data || data.length === 0) break
+    allVocabData = allVocabData.concat(data)
+    if (data.length < pageSize) break
+    vocabFrom += pageSize
+  }
 
   const { data: progressData } = await serviceClient
     .from('progress')
@@ -91,7 +101,7 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
   const progressMap = new Map((progressData ?? []).map(p => [p.vocab_id, p]))
 
   const levels: LevelStat[] = LEVELS.map((meta) => {
-    const levelWords = (vocabData ?? []).filter(v => v.level === meta.code)
+    const levelWords = allVocabData.filter(v => v.level === meta.code)
     const themeStats = new Map<string, { total: number; completed: number; revision: number }>()
 
     for (const v of levelWords) {

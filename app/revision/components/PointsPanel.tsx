@@ -29,6 +29,16 @@ const DIFFICULTY_COLORS = [
     { inactive: '#bdbdbd', active: '#43a047', glow: 'rgba(67,160,71,0.35)' },
 ]
 
+function adaptiveScoreSize(value: number, baseRem: number): string {
+    const len = value.toLocaleString().length
+    if (len <= 5) return `${baseRem}rem`
+    if (len <= 6) return `${baseRem * 0.9}rem`
+    if (len <= 7) return `${baseRem * 0.78}rem`
+    if (len <= 8) return `${baseRem * 0.68}rem`
+    if (len <= 9) return `${baseRem * 0.6}rem`
+    return `${baseRem * 0.52}rem`
+}
+
 function getCompeteColors(targetPct: number, reached: boolean) {
     if (reached) return {
         border: '#43a047',
@@ -269,12 +279,13 @@ export default function PointsPanel({
                             </Typography>
                             <Typography sx={{
                                 fontFamily: 'Jost, sans-serif',
-                                fontSize: { xs: '2.4rem', md: '2.8rem' },
+                                fontSize: { xs: adaptiveScoreSize(targetPoints, 2.4), md: adaptiveScoreSize(targetPoints, 2.8) },
                                 fontWeight: 800,
                                 color: targetReached ? c.accent : '#fff',
                                 lineHeight: 1,
-                                transition: 'color 0.5s ease',
+                                transition: 'color 0.5s ease, font-size 0.3s ease',
                                 textShadow: targetReached ? `0 0 24px ${c.glow}` : 'none',
+                                whiteSpace: 'nowrap',
                             }}>
                                 {targetPoints.toLocaleString()}
                             </Typography>
@@ -335,11 +346,13 @@ export default function PointsPanel({
                 <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', mb: 2.5 }}>
                     <Box sx={{
                         fontFamily: 'Jost, sans-serif',
-                        fontSize: '2.8rem',
+                        fontSize: adaptiveScoreSize(displayPoints, 2.8),
                         fontWeight: 800,
                         color: '#b8860b',
                         lineHeight: 1,
                         textShadow: '0 2px 12px rgba(184,134,11,0.15)',
+                        transition: 'font-size 0.3s ease',
+                        whiteSpace: 'nowrap',
                     }}>
                         {displayPoints.toLocaleString()}
                     </Box>

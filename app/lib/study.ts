@@ -40,25 +40,23 @@ const LABEL_MAP: Record<string, string> = {
 const LEVEL_ORDER = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
 export async function getAllLevels(): Promise<LevelMeta[]> {
-  const { data: vocabData, error } = await serviceClient
-    .from('vocabulary')
-    .select('level, theme')
+  const { data, error } = await serviceClient
+    .rpc('get_vocab_level_theme_stats')
 
   if (error) {
-    console.error('[getAllLevels] error:', error.message)
+    console.error('[getAllLevels] rpc error:', error.message)
     return []
   }
 
   const wordCountMap = new Map<string, number>()
-  const themeCountMap = new Map<string, number>()
   const levelThemeSets = new Map<string, Set<string>>()
 
-  for (const v of vocabData ?? []) {
-    const level = (v.level ?? '').toString().trim().toUpperCase()
-    const theme = v.theme
+  for (const row of data ?? []) {
+    const level = (row.level ?? '').toString().trim().toUpperCase()
+    const theme = row.theme
     if (!level) continue
 
-    wordCountMap.set(level, (wordCountMap.get(level) ?? 0) + 1)
+    wordCountMap.set(level, (wordCountMap.get(level) ?? 0) + Number(row.word_count))
 
     if (theme) {
       const set = levelThemeSets.get(level) ?? new Set<string>()
@@ -67,16 +65,12 @@ export async function getAllLevels(): Promise<LevelMeta[]> {
     }
   }
 
-  for (const [code, set] of levelThemeSets) {
-    themeCountMap.set(code, set.size)
-  }
-
   const result: LevelMeta[] = LEVEL_ORDER.map((code) => ({
     code,
     slug: SLUG_MAP[code] ?? code,
     label: LABEL_MAP[code] ?? code,
     wordCount: wordCountMap.get(code) ?? 0,
-    themeCount: themeCountMap.get(code) ?? 0,
+    themeCount: levelThemeSets.get(code)?.size ?? 0,
   }))
 
   return result.filter(l => l.wordCount > 0)

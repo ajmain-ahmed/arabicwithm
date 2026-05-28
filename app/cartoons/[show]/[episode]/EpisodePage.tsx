@@ -1020,6 +1020,12 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  const blocksWithNotes = episode.scriptBlocks
+    .map((block, i) => ({ hasNotes: block.notes.length > 0, index: i }))
+    .filter((b) => b.hasNotes)
+    .map((b) => b.index)
+  const allNotesExpanded = blocksWithNotes.length > 0 && blocksWithNotes.every((i) => expandedNotes.has(i))
+
   return (
     <>
       <style>{PAGE_CSS}</style>
@@ -1317,7 +1323,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
             <Box sx={{ background: '#fff', borderRadius: '0 0 12px 12px', px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 } }}>
               {/* ── Test Yourself button (Script tab only) ── */}
               {tab === 0 && episode.scriptBlocks.length > 0 && (
-                <Box sx={{ mb: { xs: 2, md: 3 } }}>
+                <Box sx={{ mb: { xs: 2, md: 3 }, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   <Button
                     variant="outlined"
                     onClick={() => setTestDialogOpen(true)}
@@ -1341,6 +1347,37 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                   >
                     Test Yourself
                   </Button>
+                  {blocksWithNotes.length > 0 && (
+                    <Button
+                      variant="outlined"
+                      onClick={() => {
+                        if (allNotesExpanded) {
+                          setExpandedNotes(new Set())
+                        } else {
+                          setExpandedNotes(new Set(blocksWithNotes))
+                        }
+                      }}
+                      startIcon={allNotesExpanded ? <ExpandLess sx={{ fontSize: '1.1rem' }} /> : <ExpandMore sx={{ fontSize: '1.1rem' }} />}
+                      sx={{
+                        border: '1.5px solid rgba(122,110,101,0.25)',
+                        color: '#7a6e65',
+                        fontFamily: 'Jost, sans-serif',
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                        textTransform: 'none',
+                        borderRadius: '10px',
+                        px: 2.5,
+                        py: 0.8,
+                        background: 'transparent',
+                        '&:hover': {
+                          background: 'rgba(122,110,101,0.06)',
+                          borderColor: 'rgba(122,110,101,0.4)',
+                        },
+                      }}
+                    >
+                      {allNotesExpanded ? 'Collapse All Notes' : 'Expand All Notes'}
+                    </Button>
+                  )}
                 </Box>
               )}
 
@@ -1397,95 +1434,68 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                               </Typography>
                             )}
 
-                            {/* Notes — collapsible button on mobile, inline on desktop */}
+                            {/* Notes — expandable / collapsible */}
                             {block.notes.length > 0 && (
-                              isMobile ? (
-                                <>
-                                  <Button
-                                    size="small"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setExpandedNotes(prev => {
-                                        const next = new Set(prev)
-                                        if (next.has(i)) next.delete(i)
-                                        else next.add(i)
-                                        return next
-                                      })
-                                    }}
-                                    endIcon={expandedNotes.has(i) ? <ExpandLess sx={{ fontSize: '1rem' }} /> : <ExpandMore sx={{ fontSize: '1rem' }} />}
-                                    sx={{
-                                      mt: 1,
-                                      py: 0.3,
-                                      px: 1.5,
-                                      minHeight: 28,
-                                      fontFamily: 'Jost, sans-serif',
-                                      fontSize: `calc(0.75rem * ${textScale})`,
-                                      fontWeight: 500,
-                                      color: 'var(--muted)',
-                                      border: '1px solid rgba(122,110,101,0.2)',
-                                      borderRadius: '999px',
-                                      background: 'transparent',
-                                      textTransform: 'none',
-                                      gap: 0.5,
-                                      '& .MuiButton-endIcon': { ml: 0 },
-                                      '&:hover': { background: 'rgba(184,134,11,0.06)', borderColor: 'rgba(184,134,11,0.35)' },
-                                    }}
-                                  >
-                                    Notes ({block.notes.length})
-                                  </Button>
-                                  {expandedNotes.has(i) && (
-                                    <Box sx={{ mt: 1 }}>
-                                      {block.notes.map((note, ni) => (
-                                        <Typography
-                                          key={ni}
-                                          component="div"
-                                          sx={{
-                                            fontFamily: 'Jost, sans-serif',
-                                            fontSize: `calc(0.82rem * ${textScale})`,
-                                            color: 'var(--muted)',
-                                            lineHeight: 1.6,
-                                            py: 0.5,
-                                            borderLeft: '2px solid var(--gold)',
-                                            pl: 1.25,
-                                            mb: 0.75,
-                                            '& em': {
-                                              color: 'var(--bark)',
-                                              fontWeight: 600,
-                                              fontStyle: 'normal',
-                                            },
-                                          }}
-                                          dangerouslySetInnerHTML={{ __html: note.replace(/\*(.+?)\*/g, '<em>$1</em>') }}
-                                        />
-                                      ))}
-                                    </Box>
-                                  )}
-                                </>
-                              ) : (
-                                <Box sx={{ mt: 1 }}>
-                                  {block.notes.map((note, ni) => (
-                                    <Typography
-                                      key={ni}
-                                      component="div"
-                                      sx={{
-                                        fontFamily: 'Jost, sans-serif',
-                                        fontSize: `calc(0.85rem * ${textScale})`,
-                                        color: 'var(--muted)',
-                                        lineHeight: 1.6,
-                                        py: 0.6,
-                                        borderLeft: '2px solid var(--gold)',
-                                        pl: 1.5,
-                                        mb: 0.75,
-                                        '& em': {
-                                          color: 'var(--bark)',
-                                          fontWeight: 600,
-                                          fontStyle: 'normal',
-                                        },
-                                      }}
-                                      dangerouslySetInnerHTML={{ __html: note.replace(/\*(.+?)\*/g, '<em>$1</em>') }}
-                                    />
-                                  ))}
-                                </Box>
-                              )
+                              <>
+                                <Button
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setExpandedNotes((prev) => {
+                                      const next = new Set(prev)
+                                      if (next.has(i)) next.delete(i)
+                                      else next.add(i)
+                                      return next
+                                    })
+                                  }}
+                                  endIcon={expandedNotes.has(i) ? <ExpandLess sx={{ fontSize: '1rem' }} /> : <ExpandMore sx={{ fontSize: '1rem' }} />}
+                                  sx={{
+                                    mt: 1,
+                                    py: 0.3,
+                                    px: 1.5,
+                                    minHeight: 28,
+                                    fontFamily: 'Jost, sans-serif',
+                                    fontSize: `calc(0.75rem * ${textScale})`,
+                                    fontWeight: 500,
+                                    color: 'var(--muted)',
+                                    border: '1px solid rgba(122,110,101,0.2)',
+                                    borderRadius: '999px',
+                                    background: 'transparent',
+                                    textTransform: 'none',
+                                    gap: 0.5,
+                                    '& .MuiButton-endIcon': { ml: 0 },
+                                    '&:hover': { background: 'rgba(184,134,11,0.06)', borderColor: 'rgba(184,134,11,0.35)' },
+                                  }}
+                                >
+                                  Notes ({block.notes.length})
+                                </Button>
+                                {expandedNotes.has(i) && (
+                                  <Box sx={{ mt: 1 }}>
+                                    {block.notes.map((note, ni) => (
+                                      <Typography
+                                        key={ni}
+                                        component="div"
+                                        sx={{
+                                          fontFamily: 'Jost, sans-serif',
+                                          fontSize: `calc(0.82rem * ${textScale})`,
+                                          color: 'var(--muted)',
+                                          lineHeight: 1.6,
+                                          py: 0.5,
+                                          borderLeft: '2px solid var(--gold)',
+                                          pl: 1.25,
+                                          mb: 0.75,
+                                          '& em': {
+                                            color: 'var(--bark)',
+                                            fontWeight: 600,
+                                            fontStyle: 'normal',
+                                          },
+                                        }}
+                                        dangerouslySetInnerHTML={{ __html: note.replace(/\*(.+?)\*/g, '<em>$1</em>') }}
+                                      />
+                                    ))}
+                                  </Box>
+                                )}
+                              </>
                             )}
                           </Box>
                           {!isLast && <Divider sx={{ borderColor: 'rgba(44,26,14,0.06)', my: 0.5 }} />}

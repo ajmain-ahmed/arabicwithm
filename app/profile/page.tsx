@@ -498,6 +498,8 @@ function WordsSection() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'revision' | 'completed'>('all')
   const [sortKey, setSortKey] = useState<'word' | 'level' | 'theme' | 'date'>('word')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
+  const [page, setPage] = useState(0)
+  const rowsPerPage = 20
 
   const {
     userProgressWords,
@@ -540,6 +542,17 @@ function WordsSection() {
     })
     return sorted
   }, [filteredWords, sortKey, sortDir])
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0)
+  }, [statusFilter, search, sortKey, sortDir])
+
+  const paginatedWords = useMemo(() => {
+    return sortedWords.slice(page * rowsPerPage, (page + 1) * rowsPerPage)
+  }, [sortedWords, page])
+
+  const totalPages = Math.ceil(sortedWords.length / rowsPerPage)
 
   const toggleSort = (key: 'word' | 'level' | 'theme' | 'date') => {
     if (sortKey === key) {
@@ -637,7 +650,7 @@ function WordsSection() {
                       <TableCell colSpan={5}><Skeleton variant="text" width="60%" height={20} /></TableCell>
                     </TableRow>
                   ))
-                ) : sortedWords.length === 0 ? (
+                ) : paginatedWords.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                       <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--muted)' }}>
@@ -646,7 +659,7 @@ function WordsSection() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  sortedWords.map(w => (
+                  paginatedWords.map(w => (
                     <TableRow key={w.vocab_id} hover sx={{ '&:last-child td': { borderBottom: 'none' } }}>
                       <TableCell>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
@@ -704,14 +717,14 @@ function WordsSection() {
                 <Skeleton variant="text" width="30%" height={16} />
               </Box>
             ))
-          ) : sortedWords.length === 0 ? (
+          ) : paginatedWords.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--muted)' }}>
                 No words found.
               </Typography>
             </Box>
           ) : (
-            sortedWords.map(w => (
+            paginatedWords.map(w => (
               <Box key={w.vocab_id} sx={{
                 background: '#fff', border: '1px solid rgba(184,134,11,0.1)', borderRadius: '8px', p: 2,
                 display: 'flex', flexDirection: 'column', gap: 1,
@@ -758,6 +771,49 @@ function WordsSection() {
             ))
           )}
         </Box>
+
+        {/* Pagination */}
+        {sortedWords.length > 0 && (
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2, pt: 2, borderTop: '1px solid rgba(184,134,11,0.1)' }}>
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#9e8a7a' }}>
+              {sortedWords.length} total · Page {page + 1} of {totalPages}
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                size="small"
+                onClick={() => setPage(p => Math.max(0, p - 1))}
+                disabled={page === 0}
+                sx={{
+                  fontFamily: 'Jost, sans-serif',
+                  textTransform: 'none',
+                  color: '#2c1a0e',
+                  border: '1px solid rgba(44,26,14,0.12)',
+                  borderRadius: '6px',
+                  px: 2,
+                  '&.Mui-disabled': { color: '#9e8a7a', borderColor: 'rgba(44,26,14,0.06)' },
+                }}
+              >
+                Previous
+              </Button>
+              <Button
+                size="small"
+                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1}
+                sx={{
+                  fontFamily: 'Jost, sans-serif',
+                  textTransform: 'none',
+                  color: '#2c1a0e',
+                  border: '1px solid rgba(44,26,14,0.12)',
+                  borderRadius: '6px',
+                  px: 2,
+                  '&.Mui-disabled': { color: '#9e8a7a', borderColor: 'rgba(44,26,14,0.06)' },
+                }}
+              >
+                Next
+              </Button>
+            </Box>
+          </Box>
+        )}
       </Box>
     </Box>
   )

@@ -40,6 +40,7 @@ import { useVocabStore } from '@/store/vocabStore'
 import TutorialDialog, { useTutorialSeen } from '../components/TutorialDialog'
 import AuthDialog from '@/app/components/AuthDialog'
 import { useAuth } from '@/app/AuthContext'
+import { motion } from 'framer-motion'
 import type { VocabRow, WordProgress, ThemeProgress, ExampleRow, FormRow, VocabUpdateInput } from '@/app/actions/vocab'
 
 
@@ -1133,6 +1134,17 @@ function FlashcardQuiz({
         }
     }, [currentIndex, filteredCards.length, goToIndex, onComplete, filter])
 
+    /* ── Swipe handlers ── */
+    const handleDragEnd = (_: any, info: any) => {
+        const threshold = 60
+        const velocityThreshold = 300
+        if (info.offset.x < -threshold || info.velocity.x < -velocityThreshold) {
+            handleNext()
+        } else if (info.offset.x > threshold || info.velocity.x > velocityThreshold) {
+            handlePrevious()
+        }
+    }
+
     // Update local state + advance instantly — no DB call here
     const toggleRevision = useCallback(() => {
         if (!current) return
@@ -1203,17 +1215,16 @@ function FlashcardQuiz({
         '& .MuiButton-startIcon svg': { fontSize: '0.9rem !important' },
     }
 
-    return (
-        <Box sx={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
-            <Fade in key={`${cardKey}-${current.id}`} timeout={400}>
-                <Box
-                    sx={{
-                        background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px',
-                        padding: { xs: '1.25rem 0.875rem', md: '2rem 1.5rem 1.75rem' },
-                        minHeight: { xs: '300px', md: '340px' }, display: 'flex', flexDirection: 'column',
-                        position: 'relative',
-                    }}
-                >
+    const cardInner = (
+        <Box
+            sx={{
+                background: '#fff', border: '1px solid rgba(184,134,11,0.2)', borderRadius: '10px',
+                padding: { xs: '1.25rem 0.875rem', md: '2rem 1.5rem 1.75rem' },
+                minHeight: { xs: '300px', md: '340px' }, display: 'flex', flexDirection: 'column',
+                position: 'relative',
+            }}
+        >
+
                     {/* Progress bar */}
                     <Box sx={{ position: 'relative', mb: '1.25rem' }}>
                         <Box sx={{ height: '2px', background: 'rgba(184,134,11,0.1)', borderRadius: '999px', overflow: 'hidden' }}>
@@ -1446,7 +1457,28 @@ function FlashcardQuiz({
                             </Typography>
                         </Box>
                     </Fade>
-                </Box>
+            {isMobile && (
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#9e8a7a', textAlign: 'center', mt: 1 }}>
+                    Swipe left → Skip · Swipe right → Back
+                </Typography>
+            )}
+        </Box>
+    )
+
+    return (
+        <Box sx={{ position: 'relative', overflow: 'hidden', borderRadius: '10px' }}>
+            <Fade in key={`${cardKey}-${current.id}`} timeout={400}>
+                {isMobile ? (
+                    <motion.div
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.15}
+                        onDragEnd={handleDragEnd}
+                        style={{ touchAction: 'pan-y' }}
+                    >
+                        {cardInner}
+                    </motion.div>
+                ) : cardInner}
             </Fade>
         </Box>
     )
