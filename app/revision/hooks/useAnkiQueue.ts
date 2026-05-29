@@ -51,7 +51,6 @@ export default function useAnkiQueue(
             uniqueAnsweredIds: new Set(),
             initialUniqueTotal: initialIds.size,
         })
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sessionKey, initial, seedAnswered, seedDotOrder])
 
     const currentCard = state.deck[0] ?? null

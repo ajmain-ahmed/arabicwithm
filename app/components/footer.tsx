@@ -100,7 +100,7 @@ const FOOTER_CSS = `
   .awm-legal-link {
     font-family: 'Jost', sans-serif;
     font-size: 0.72rem;
-    color: #b0a89e;
+    color: #767676;
     cursor: pointer;
     transition: color 0.2s;
     background: none;
@@ -138,7 +138,7 @@ export default function Footer({ onContactClick }: FooterProps) {
   const sections = FOOTER_SECTIONS(onContactClick)
 
   return (
-    <Box component="footer" sx={{ background: '#ffffff', borderTop: '1px solid rgba(184,134,11,0.12)' }}>
+    <Box component="footer" sx={{ display: { xs: 'none', md: 'block' }, background: '#ffffff', borderTop: '1px solid rgba(184,134,11,0.12)' }}>
       <style>{FOOTER_CSS}</style>
 
       {/* ── main columns ── */}
@@ -254,7 +254,7 @@ export default function Footer({ onContactClick }: FooterProps) {
           }}>
             <Typography sx={{
               fontFamily: 'Jost, sans-serif',
-              fontSize: '0.72rem', color: '#b0a89e', letterSpacing: '0.04em',
+              fontSize: '0.72rem', color: '#767676', letterSpacing: '0.04em',
             }}>
               © {new Date().getFullYear()} ArabicWithM. All rights reserved.
             </Typography>

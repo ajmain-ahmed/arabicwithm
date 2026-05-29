@@ -5,7 +5,9 @@ import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { revalidatePath } from "next/cache"
+import { z } from 'zod'
 import { computeAnswerResult } from '@/app/lib/sm2'
+import { checkRateLimit } from '@/app/lib/rateLimit'
 
 const serviceUrl = process.env.SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_KEY
@@ -253,22 +255,38 @@ export async function fetchRevisionSession(): Promise<{
     const limitedNew = shuffledNew.slice(0, DAILY_NEW_LIMIT)
     const allDue = [...dueProgress, ...limitedNew]
 
-    // 4. Build cards
-    const dueCards = await buildRevisionCards(allDue)
-    const completedCards = await buildRevisionCards(completedToday)
+    // 4. Build cards (parallel)
+    const [dueCards, completedCards] = await Promise.all([
+        buildRevisionCards(allDue),
+        buildRevisionCards(completedToday),
+    ])
 
     return { dueCards, completedCards }
 }
 
 /* ── Submit answers batch (deduplicated) ───────────────────────────── */
 
+const AnswerSchema = z.enum(['again', 'hard', 'good', 'easy'])
+const SubmitAnswersSchema = z.array(z.object({
+    vocabId: z.number().int().positive(),
+    answer: AnswerSchema,
+}))
+
 export async function submitRevisionAnswersBatch(
     answers: { vocabId: number; answer: Answer }[]
 ): Promise<void> {
-    if (!answers.length) return
-
     const userId = await getAuthenticatedUserId()
     if (!userId) throw new Error('Not authenticated')
+    if (!checkRateLimit(`submit:${userId}`, 10, 60_000)) {
+        throw new Error('Rate limit exceeded. Please slow down.')
+    }
+
+    const parsed = SubmitAnswersSchema.safeParse(answers)
+    if (!parsed.success) {
+        console.error('[submitRevisionAnswersBatch] validation failed:', parsed.error.flatten())
+        throw new Error('Invalid answers format')
+    }
+    if (!answers.length) return
 
     /* ── CRITICAL FIX: deduplicate by vocabId, keep last answer only ── */
     const lastAnswerMap = new Map<number, Answer>()
@@ -361,11 +379,17 @@ export async function submitRevisionAnswersBatch(
 
 /* ── Toggle revision (preserves SRS state) ─────────────────────────── */
 
-export async function toggleRevision(vocabId: number): Promise<{ success: boolean; inRevision: boolean }> {
-    if (!Number.isFinite(vocabId) || vocabId <= 0) throw new Error('Invalid vocabId')
+const VocabIdSchema = z.number().int().positive()
 
+export async function toggleRevision(vocabId: number): Promise<{ success: boolean; inRevision: boolean }> {
     const userId = await getAuthenticatedUserId()
     if (!userId) throw new Error('Not authenticated')
+    if (!checkRateLimit(`toggle:${userId}`, 30, 60_000)) {
+        throw new Error('Rate limit exceeded. Please slow down.')
+    }
+
+    const parsed = VocabIdSchema.safeParse(vocabId)
+    if (!parsed.success) throw new Error('Invalid vocabId')
 
     const { data: existing, error: fetchErr } = await serviceClient
         .from('progress')
@@ -424,56 +448,57 @@ export async function toggleRevision(vocabId: number): Promise<{ success: boolea
     return { success: true, inRevision: true }
 }
 
-/* ── Upsert progress ───────────────────────────────────────────────── */
+/* ── Batch toggle revision (for news inline vocab) ─────────────────── */
 
-export async function upsertWordProgress(
-    vocabId: number,
-    updates: { status?: number | null }
-) {
-    const userId = await getAuthenticatedUserId()
-    if (!userId) throw new Error('Not authenticated')
+const ToggleBatchSchema = z.array(z.object({
+  vocabId: z.number().int().positive(),
+  inRevision: z.boolean(),
+}))
 
-    const { data: existing } = await serviceClient
-        .from('progress')
-        .select('vocab_id')
-        .eq('user_id', userId)
-        .eq('vocab_id', vocabId)
-        .maybeSingle()
+export async function submitRevisionTogglesBatch(
+  toggles: { vocabId: number; inRevision: boolean }[]
+): Promise<void> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) throw new Error('Not authenticated')
+  if (!checkRateLimit(`toggleBatch:${userId}`, 10, 60_000)) {
+    throw new Error('Rate limit exceeded')
+  }
 
-    // status === null means delete the row
-    if (updates.status === null) {
-        if (existing) {
-            const { error } = await serviceClient
-                .from('progress')
-                .delete()
-                .eq('user_id', userId)
-                .eq('vocab_id', vocabId)
-            if (error) throw new Error(error.message)
-        }
-        return
-    }
+  const parsed = ToggleBatchSchema.safeParse(toggles)
+  if (!parsed.success) throw new Error('Invalid toggles: ' + parsed.error.message)
 
-    if (existing) {
-        const { error } = await serviceClient
-            .from('progress')
-            .update({ status: updates.status, updated_at: new Date().toISOString() })
-            .eq('user_id', userId)
-            .eq('vocab_id', vocabId)
-        if (error) throw new Error(error.message)
-        return
-    }
+  const valid = parsed.data
+  if (valid.length === 0) return
 
-    const { error } = await serviceClient.from('progress').insert({
-        user_id: userId,
-        vocab_id: vocabId,
-        status: updates.status ?? 0,
-        repetitions: 0,
-        interval_days: 0,
-        ease_factor: 2.5,
-        lapses: 0,
-        created_at: new Date().toISOString(),
-    })
-    if (error) throw new Error(error.message)
+  const toRemove = valid.filter(t => !t.inRevision).map(t => t.vocabId)
+  const toAdd = valid.filter(t => t.inRevision).map(t => t.vocabId)
+  const now = new Date().toISOString()
+
+  if (toRemove.length > 0) {
+    const { error: delErr } = await serviceClient
+      .from('progress')
+      .delete()
+      .eq('user_id', userId)
+      .in('vocab_id', toRemove)
+    if (delErr) throw new Error(delErr.message)
+  }
+
+  if (toAdd.length > 0) {
+    const { error: upsErr } = await serviceClient
+      .from('progress')
+      .upsert(
+        toAdd.map(id => ({
+          user_id: userId,
+          vocab_id: id,
+          status: 0,
+          updated_at: now,
+        })),
+        { onConflict: 'user_id,vocab_id' }
+      )
+    if (upsErr) throw new Error(upsErr.message)
+  }
+
+  revalidatePath('/revision')
 }
 
 /* ── Custom session metadata ───────────────────────────────────────── */
@@ -550,11 +575,22 @@ export async function fetchCustomSessionMetadata(): Promise<LevelMeta[]> {
 
 /* ── Custom session cards ───────────────────── */
 
+const FetchCustomCardsSchema = z.object({
+    levelCodes: z.array(z.string().max(10)),
+    themeIds: z.array(z.string().max(100)),
+    cardCount: z.number().int().min(1).max(200),
+})
+
 export async function fetchCustomSessionCards(settings: {
     levelCodes: string[]
     themeIds: string[]
     cardCount: number
 }): Promise<RevisionCard[]> {
+    const parsed = FetchCustomCardsSchema.safeParse(settings)
+    if (!parsed.success) {
+        console.error('[fetchCustomSessionCards] validation failed:', parsed.error.flatten())
+        throw new Error('Invalid session settings')
+    }
     const { levelCodes, themeIds, cardCount } = settings
 
     let builder = serviceClient

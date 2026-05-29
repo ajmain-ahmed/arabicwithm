@@ -5,6 +5,8 @@
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { z } from 'zod'
+import { checkRateLimit } from '@/app/lib/rateLimit'
 
 const serviceUrl = process.env.SUPABASE_URL
 const serviceKey = process.env.SUPABASE_SERVICE_KEY
@@ -345,15 +347,26 @@ export type VocabUpdateInput = {
   examples?: unknown
 }
 
+const WordIdSchema = z.number().int().positive()
+
 export async function updateVocabWord(
   wordId: number,
   data: VocabUpdateInput
 ): Promise<void> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) throw new Error('Not authenticated')
+  if (!checkRateLimit(`updateVocab:${userId}`, 10, 60_000)) {
+    throw new Error('Rate limit exceeded. Please slow down.')
+  }
+
+  const parsedId = WordIdSchema.safeParse(wordId)
+  if (!parsedId.success) throw new Error('Invalid wordId')
   if (!Number.isFinite(wordId) || wordId <= 0) {
     throw new Error('Invalid wordId')
   }
   const isAdmin = await isAdminUser()
   if (!isAdmin) throw new Error('Forbidden')
+  if (!userId) throw new Error('Not authenticated')
 
   const payload: Record<string, unknown> = {}
   if (data.word_ar !== undefined) payload.word_ar = data.word_ar
@@ -375,9 +388,14 @@ export async function updateVocabWord(
 }
 
 export async function deleteVocabWord(wordId: number): Promise<void> {
-  if (!Number.isFinite(wordId) || wordId <= 0) {
-    throw new Error('Invalid wordId')
+  const userId = await getAuthenticatedUserId()
+  if (!userId) throw new Error('Not authenticated')
+  if (!checkRateLimit(`deleteVocab:${userId}`, 10, 60_000)) {
+    throw new Error('Rate limit exceeded. Please slow down.')
   }
+
+  const parsedId = WordIdSchema.safeParse(wordId)
+  if (!parsedId.success) throw new Error('Invalid wordId')
   const isAdmin = await isAdminUser()
   if (!isAdmin) throw new Error('Forbidden')
 
@@ -463,49 +481,26 @@ export async function fetchRawVocabWord(wordId: number): Promise<RawVocabRow | n
   }
 }
 
-/* ── upsert progress ── */
-export async function upsertWordProgress({
-  vocabId,
-  status,
-}: {
-  vocabId: number
-  status: number | null
-}): Promise<void> {
-  if (!Number.isFinite(vocabId) || vocabId <= 0) {
-    throw new Error('Invalid vocabId')
-  }
-  const userId = await getAuthenticatedUserId()
-  if (!userId) return
-
-  // status === null means remove from progress table
-  if (status === null) {
-    const { error } = await serviceClient
-      .from("progress")
-      .delete()
-      .eq("user_id", userId)
-      .eq("vocab_id", vocabId)
-    if (error) throw new Error(error.message)
-    return
-  }
-
-  const { error } = await serviceClient.from("progress").upsert(
-    {
-      user_id: userId,
-      vocab_id: vocabId,
-      status,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id,vocab_id" }
-  )
-
-  if (error) throw new Error(error.message)
-}
+const UpsertBatchSchema = z.array(z.object({
+  vocabId: z.number().int().positive(),
+  status: z.number().int().min(0).max(1).nullable(),
+}))
 
 export async function upsertWordProgressBatch(
   items: { vocabId: number; status: number | null }[]
 ): Promise<void> {
   const userId = await getAuthenticatedUserId()
-  if (!userId || items.length === 0) return
+  if (!userId) throw new Error('Not authenticated')
+  if (!checkRateLimit(`batch:${userId}`, 20, 60_000)) {
+    throw new Error('Rate limit exceeded. Please slow down.')
+  }
+
+  const parsed = UpsertBatchSchema.safeParse(items)
+  if (!parsed.success) {
+    console.error('[upsertWordProgressBatch] validation failed:', parsed.error.flatten())
+    throw new Error('Invalid batch items')
+  }
+  if (items.length === 0) return
 
   const now = new Date().toISOString()
 
@@ -537,4 +532,27 @@ export async function upsertWordProgressBatch(
 
     if (error) throw new Error(error.message)
   }
+}
+
+
+/* ── Remove word progress ──────────────────────────────────────────── */
+
+export async function removeWordProgress(vocabId: number): Promise<void> {
+  if (!Number.isFinite(vocabId) || vocabId <= 0) {
+    throw new Error('Invalid vocabId')
+  }
+  const userId = await getAuthenticatedUserId()
+  if (!userId) return
+
+  if (!checkRateLimit(`removeProgress:${userId}`, 30, 60_000)) {
+    throw new Error('Rate limit exceeded')
+  }
+
+  const { error } = await serviceClient
+    .from('progress')
+    .delete()
+    .eq('user_id', userId)
+    .eq('vocab_id', vocabId)
+
+  if (error) throw new Error(error.message)
 }

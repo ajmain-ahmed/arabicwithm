@@ -86,6 +86,9 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
       const cached = state.themeCache[cacheKey]
       if (!cached) return state
       const existingIdx = cached.progress.findIndex((p) => p.vocab_id === vocabId)
+      const oldStatus = existingIdx >= 0 ? cached.progress[existingIdx].status : null
+      const newStatus = patch.status !== undefined ? patch.status : oldStatus
+
       let newProgress: WordProgress[]
       if (existingIdx >= 0) {
         newProgress = cached.progress.map((p, i) =>
@@ -97,9 +100,34 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
           { vocab_id: vocabId, status: null, ...patch },
         ]
       }
-      // Also invalidate the theme list cache so sidebar counts refresh on next load
-      const nextThemeList = { ...state.themeListCache }
-      delete nextThemeList[levelCode]
+
+      // Surgical themeListCache update — only adjust counts for the affected theme
+      const themeListCached = state.themeListCache[levelCode]
+      let nextThemeList = state.themeListCache
+      if (themeListCached) {
+        const themeIdx = themeListCached.themes.findIndex((t) => t.display_name === themeName)
+        if (themeIdx >= 0 && oldStatus !== newStatus) {
+          const updatedThemes = themeListCached.themes.map((t, i) => {
+            if (i !== themeIdx) return t
+            let completed = t.completed_count
+            let revision = t.revision_count
+            if (oldStatus === 0) revision -= 1
+            if (oldStatus === 1) completed -= 1
+            if (newStatus === 0) revision += 1
+            if (newStatus === 1) completed += 1
+            return {
+              ...t,
+              completed_count: Math.max(0, completed),
+              revision_count: Math.max(0, revision),
+            }
+          })
+          nextThemeList = {
+            ...state.themeListCache,
+            [levelCode]: { themes: updatedThemes },
+          }
+        }
+      }
+
       return {
         themeCache: {
           ...state.themeCache,

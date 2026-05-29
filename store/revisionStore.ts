@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { useEffect } from "react"
 import { fetchRevisionVocabIds } from "@/app/actions/vocab"
-import { toggleRevision as serverToggleRevision, fetchRevisionSession, fetchCustomSessionMetadata, type RevisionCard, type LevelMeta } from "@/app/actions/revision"
+import { toggleRevision as serverToggleRevision, submitRevisionTogglesBatch, fetchRevisionSession, fetchCustomSessionMetadata, type RevisionCard, type LevelMeta } from "@/app/actions/revision"
 import type { ProgressState } from "@/app/lib/sm2"
 
 const SESSION_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -16,6 +16,8 @@ interface RevisionStore {
   addToRevision: (vocabId: number) => Promise<boolean>
   removeFromRevision: (vocabId: number) => Promise<boolean>
   toggleRevision: (vocabId: number) => Promise<boolean>
+  toggleRevisionBuffered: (vocabId: number) => void
+  flushPendingToggles: () => Promise<void>
   sessionCache: SessionCache | null
   sessionLoading: boolean
   getSession: () => Promise<{ dueCards: RevisionCard[]; completedCards: RevisionCard[] }>
@@ -26,6 +28,7 @@ interface RevisionStore {
   customMetadataFetchedAt: number
   customMetadataLoading: boolean
   fetchCustomMetadata: () => Promise<LevelMeta[]>
+  _invalidateRevisionId: (vocabId: number, inRevision: boolean) => void
 }
 
 interface SessionCache {
@@ -34,7 +37,11 @@ interface SessionCache {
   fetchedAt: number
 }
 
-export const useRevisionStore = create<RevisionStore>((set, get) => ({
+export const useRevisionStore = create<RevisionStore>((set, get) => {
+  const pendingToggles = new Map<number, boolean>()
+  let toggleTimer: ReturnType<typeof setTimeout> | null = null
+
+  return {
   revisionIds: new Set(),
   loading: false,
   initialized: false,
@@ -149,6 +156,58 @@ export const useRevisionStore = create<RevisionStore>((set, get) => ({
     }
   },
 
+  toggleRevisionBuffered: (vocabId: number) => {
+    const currentlyIn = get().isInRevision(vocabId)
+    const nextInRevision = !currentlyIn
+
+    // Optimistically update local state
+    set((state) => {
+      const next = new Set(state.revisionIds)
+      if (nextInRevision) next.add(vocabId)
+      else next.delete(vocabId)
+      return { revisionIds: next }
+    })
+
+    // Accumulate in pending batch (last write wins)
+    pendingToggles.set(vocabId, nextInRevision)
+
+    // Reset debounce timer
+    if (toggleTimer) clearTimeout(toggleTimer)
+    toggleTimer = setTimeout(() => {
+      toggleTimer = null
+      get().flushPendingToggles()
+    }, 1500)
+  },
+
+  flushPendingToggles: async () => {
+    if (pendingToggles.size === 0) return
+    if (toggleTimer) {
+      clearTimeout(toggleTimer)
+      toggleTimer = null
+    }
+
+    const batch = Array.from(pendingToggles.entries()).map(([vocabId, inRevision]) => ({
+      vocabId,
+      inRevision,
+    }))
+
+    try {
+      await submitRevisionTogglesBatch(batch)
+      pendingToggles.clear()
+    } catch (e) {
+      console.error('[revisionStore] batch toggle failed:', e)
+      // Rollback optimistic updates on failure
+      set((state) => {
+        const next = new Set(state.revisionIds)
+        batch.forEach(({ vocabId, inRevision }) => {
+          if (inRevision) next.delete(vocabId)
+          else next.add(vocabId)
+        })
+        return { revisionIds: next }
+      })
+    }
+  },
+
   getSession: async () => {
     const { sessionCache } = get()
     const now = Date.now()
@@ -244,7 +303,17 @@ export const useRevisionStore = create<RevisionStore>((set, get) => ({
       return []
     }
   },
-}))
+
+  _invalidateRevisionId: (vocabId: number, inRevision: boolean) => {
+    set((state) => {
+      const next = new Set(state.revisionIds)
+      if (inRevision) next.add(vocabId)
+      else next.delete(vocabId)
+      return { revisionIds: next }
+    })
+  },
+  }
+})
 
 export function useInitRevisionStore() {
   const initialized = useRevisionStore((s) => s.initialized)

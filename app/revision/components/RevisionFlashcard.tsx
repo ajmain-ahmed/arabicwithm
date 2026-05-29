@@ -105,10 +105,16 @@ export default function RevisionFlashcard({
     const [cartoonContexts, setCartoonContexts] = useState<null | any[]>(null)
 
     useEffect(() => {
+        let cancelled = false
         fetch('/cartoon-word-context.json')
             .then(r => r.json())
-            .then(map => setCartoonContexts(map[stripDiacritics(card.word)] ?? []))
-            .catch(() => setCartoonContexts([]))
+            .then(map => {
+                if (!cancelled) setCartoonContexts(map[stripDiacritics(card.word)] ?? [])
+            })
+            .catch(() => {
+                if (!cancelled) setCartoonContexts([])
+            })
+        return () => { cancelled = true }
     }, [card.word])
 
     /* ── Card change: reset everything ── */
@@ -138,8 +144,7 @@ export default function RevisionFlashcard({
             }
             wasPausedByDialog.current = false
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dialogsOpen, revealed])
+    }, [dialogsOpen, revealed, timerRunning])
 
     /* ── Tick timer ── */
     useEffect(() => {
@@ -150,28 +155,6 @@ export default function RevisionFlashcard({
         }, 1000)
         return () => clearInterval(interval)
     }, [timerRunning])
-
-    /* ── Rapid Fire countdown ── */
-    useEffect(() => {
-        if (!modeConfig.rapidFire || revealed) return
-        if (dialogsOpen) return
-        setRapidFireCountdown(5)
-        const interval = setInterval(() => {
-            setRapidFireCountdown(prev => {
-                if (prev <= 1) {
-                    clearInterval(interval)
-                    handleAnswer('again')
-                    return 0
-                }
-                return prev - 1
-            })
-        }, 1000)
-        rapidFireIntervalRef.current = interval
-        return () => {
-            if (rapidFireIntervalRef.current) clearInterval(rapidFireIntervalRef.current)
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [modeConfig.rapidFire, sessionCard.dotId, revealed, dialogsOpen])
 
     const handleReveal = () => {
         setRevealed(true)
@@ -184,6 +167,51 @@ export default function RevisionFlashcard({
         const timeTaken = revealTimeRef.current || elapsed
         onAnswer(ans, timeTaken)
     }
+
+    const handleAnswerRef = useRef(handleAnswer)
+    useEffect(() => { handleAnswerRef.current = handleAnswer }, [handleAnswer])
+
+    /* ── Rapid Fire countdown ── */
+    useEffect(() => {
+        if (!modeConfig.rapidFire || revealed) return
+        if (dialogsOpen) return
+        setRapidFireCountdown(5)
+        const interval = setInterval(() => {
+            setRapidFireCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(interval)
+                    handleAnswerRef.current('again')
+                    return 0
+                }
+                return prev - 1
+            })
+        }, 1000)
+        rapidFireIntervalRef.current = interval
+        return () => {
+            if (rapidFireIntervalRef.current) clearInterval(rapidFireIntervalRef.current)
+        }
+    }, [modeConfig.rapidFire, sessionCard.dotId, revealed, dialogsOpen])
+
+    /* ── Keyboard shortcuts ── */
+    useEffect(() => {
+        if (!revealed || dialogsOpen) return
+        const keyMap: Record<string, Answer> = {
+            '1': 'again', 'a': 'again',
+            '2': 'hard', 'h': 'hard',
+            '3': 'good', 'g': 'good',
+            '4': 'easy', 'e': 'easy',
+        }
+        const handler = (e: KeyboardEvent) => {
+            if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+            const answer = keyMap[e.key.toLowerCase()]
+            if (answer) {
+                e.preventDefault()
+                handleAnswer(answer)
+            }
+        }
+        window.addEventListener('keydown', handler)
+        return () => window.removeEventListener('keydown', handler)
+    }, [revealed, dialogsOpen, handleAnswer])
 
     /* ── Swipe handlers ── */
     const handleDragEnd = (_: any, info: any) => {
@@ -231,20 +259,24 @@ export default function RevisionFlashcard({
                 {/* Rapid Fire countdown */}
                 {modeConfig.rapidFire && !revealed && (
                     <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1 }}>
-                        <Typography sx={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            color: rapidFireCountdown <= 2 ? '#c62828' : '#e65100',
-                            letterSpacing: '0.08em',
-                            textTransform: 'uppercase',
-                            px: 1.5,
-                            py: 0.4,
-                            borderRadius: '999px',
-                            border: '1.5px solid',
-                            borderColor: rapidFireCountdown <= 2 ? 'rgba(198,40,40,0.3)' : 'rgba(230,81,0,0.3)',
-                            background: rapidFireCountdown <= 2 ? 'rgba(198,40,40,0.06)' : 'rgba(230,81,0,0.06)',
-                        }}>
+                        <Typography
+                            aria-live="polite"
+                            aria-atomic="true"
+                            sx={{
+                                fontFamily: 'Jost, sans-serif',
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                color: rapidFireCountdown <= 2 ? '#c62828' : '#e65100',
+                                letterSpacing: '0.08em',
+                                textTransform: 'uppercase',
+                                px: 1.5,
+                                py: 0.4,
+                                borderRadius: '999px',
+                                border: '1.5px solid',
+                                borderColor: rapidFireCountdown <= 2 ? 'rgba(198,40,40,0.3)' : 'rgba(230,81,0,0.3)',
+                                background: rapidFireCountdown <= 2 ? 'rgba(198,40,40,0.06)' : 'rgba(230,81,0,0.06)',
+                            }}
+                        >
                             {rapidFireCountdown}s
                         </Typography>
                     </Box>
@@ -328,8 +360,8 @@ export default function RevisionFlashcard({
 
                         <Box sx={{ mt: { xs: '1.25rem', md: '1.5rem' }, position: 'relative' }}>
                             <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                                {ANSWER_BUTTONS.map(btn => (
-                                    <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)}
+                                {ANSWER_BUTTONS.map((btn, i) => (
+                                    <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} aria-label={`${btn.label} (press ${i + 1})`}
                                         sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', textTransform: 'none', borderRadius: '6px', py: '0.4rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color }, lineHeight: 1.2 }}>
                                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', width: '100%' }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -345,8 +377,8 @@ export default function RevisionFlashcard({
                             </Box>
                             <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: '8px' }}>
                                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                    {ANSWER_BUTTONS.slice(0, 2).map(btn => (
-                                        <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)}
+                                    {ANSWER_BUTTONS.slice(0, 2).map((btn, i) => (
+                                        <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} aria-label={`${btn.label} (press ${i + 1})`}
                                             sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', borderRadius: '8px', py: '0.4rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color }, lineHeight: 1.2 }}>
                                             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', width: '100%' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -361,8 +393,8 @@ export default function RevisionFlashcard({
                                     ))}
                                 </Box>
                                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                    {ANSWER_BUTTONS.slice(2, 4).map(btn => (
-                                        <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)}
+                                    {ANSWER_BUTTONS.slice(2, 4).map((btn, i) => (
+                                        <Button key={btn.value} variant="outlined" onClick={() => handleAnswer(btn.value)} aria-label={`${btn.label} (press ${i + 3})`}
                                             sx={{ color: btn.color, fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.85rem', textTransform: 'none', borderRadius: '8px', py: '0.4rem', border: `1.5px solid ${btn.border}`, background: 'transparent', '&:hover': { background: btn.hoverBg, borderColor: btn.color }, lineHeight: 1.2 }}>
                                             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', width: '100%' }}>
                                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>

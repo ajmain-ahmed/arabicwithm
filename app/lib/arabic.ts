@@ -115,3 +115,9 @@ export function normalizeArabicToken(token: string): string {
 export function stripDiacritics(token: string): string {
   return token.replace(DIACRITICS_AND_TATWEEL, '')
 }
+
+/* ── Strip Latin diacritics (for transliteration search) ───────────── */
+
+export function stripLatinDiacritics(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}

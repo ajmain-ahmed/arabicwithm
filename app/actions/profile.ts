@@ -172,6 +172,7 @@ export type ProgressWord = {
   root: string | null
   status: 'revision' | 'completed'
   updated_at: string | null
+  meaning?: string
 }
 
 export async function fetchUserProgressWords(
@@ -218,12 +219,16 @@ export async function fetchUserProgressWords(
 
   let vocabQuery = serviceClient
     .from('vocabulary')
-    .select('word_id, word_ar, word_di, word_tr, level, theme, root')
+    .select('word_id, word_ar, word_di, word_tr, level, theme, root, definitions')
     .in('word_id', vocabIds)
 
   if (search && search.trim()) {
-    const term = search.trim()
-    vocabQuery = vocabQuery.or(`word_ar.ilike.%${term}%,word_tr.ilike.%${term}%,theme.ilike.%${term}%`)
+    // Sanitize search term to prevent PostgREST filter injection
+    // Only allow alphanumeric, Arabic script, whitespace, and common diacritics
+    const term = search.trim().replace(/[%(),\\&|!:<>=*+\-\/\[\]{}^~`@#$]/g, '')
+    if (term.length > 0) {
+      vocabQuery = vocabQuery.or(`word_ar.ilike.%${term}%,word_tr.ilike.%${term}%,theme.ilike.%${term}%`)
+    }
   }
 
   const { data: vocabData, error: vocabErr } = await vocabQuery
@@ -238,6 +243,7 @@ export async function fetchUserProgressWords(
   for (const p of progressData) {
     const v = vocabMap.get(p.vocab_id)
     if (!v) continue
+    const defs = v.definitions as Array<{ english?: string }> | null
     result.push({
       vocab_id: p.vocab_id,
       word_ar: v.word_ar ?? '',
@@ -248,6 +254,7 @@ export async function fetchUserProgressWords(
       root: v.root ?? null,
       status: p.status === 1 ? 'completed' : 'revision',
       updated_at: p.updated_at ?? null,
+      meaning: defs?.[0]?.english ?? undefined,
     })
   }
 

@@ -119,3 +119,31 @@ export function computeCardPoints(
         },
     }
 }
+
+/* ── Custom Session Config Types ───────────────────────── */
+
+export type ThemeMeta = {
+  theme_id: string
+  display_name: string
+  total_words: number
+}
+
+export type LevelMeta = {
+  code: string
+  label: string
+  themes: ThemeMeta[]
+}
+
+export interface ModeToggles {
+  reverse: boolean
+  rapidFire: boolean
+  scholar: boolean
+  weakWords: boolean
+}
+
+export type NormalizedLevel = {
+  code: string
+  name: string
+  themes: ThemeMeta[]
+  totalWords: number
+}

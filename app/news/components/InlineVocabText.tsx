@@ -289,9 +289,9 @@ export default function InlineVocabText({
 }) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
-  const revisionStore = useRevisionStore()
-  const isInRevision = revisionStore.isInRevision
-  const toggleRevision = revisionStore.toggleRevision
+  const isInRevision = useRevisionStore(s => s.isInRevision)
+  const toggleRevisionBuffered = useRevisionStore(s => s.toggleRevisionBuffered)
+  const flushPendingToggles = useRevisionStore(s => s.flushPendingToggles)
   const updateUserProgressWord = useVocabStore(s => s.updateUserProgressWord)
 
   const [activeEntry, setActiveEntry] = useState<InlineVocabEntry | null>(null)
@@ -335,18 +335,21 @@ export default function InlineVocabText({
     childRef.current = null
   }, [clearLeaveTimer])
 
-  const handleToggle = useCallback(async () => {
+  const handleToggle = useCallback(() => {
     if (!activeEntry) return
     setToggling(true)
     const nextInRevision = !isInRevision(activeEntry.id)
-    await toggleRevision(activeEntry.id)
+    toggleRevisionBuffered(activeEntry.id)
     updateUserProgressWord(activeEntry.id, nextInRevision ? 'revision' : null)
     setToggling(false)
-  }, [activeEntry, toggleRevision, isInRevision, updateUserProgressWord])
+  }, [activeEntry, toggleRevisionBuffered, isInRevision, updateUserProgressWord])
 
   useEffect(() => {
-    return () => { clearLeaveTimer() }
-  }, [clearLeaveTimer])
+    return () => {
+      clearLeaveTimer()
+      flushPendingToggles()
+    }
+  }, [clearLeaveTimer, flushPendingToggles])
 
   const parts = text.split(/([\u0600-\u06FF]+)/)
 

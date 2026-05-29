@@ -7,6 +7,7 @@ import React, {
   useCallback,
 } from 'react'
 import { createPortal } from 'react-dom'
+import SafeHtml from '@/app/components/SafeHtml'
 import {
   Box,
   Typography,
@@ -787,6 +788,8 @@ function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: num
   const playerRef = useRef<YT.Player | null>(null)
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const segmentPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const segmentSafetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onTimeUpdateRef = useRef(onTimeUpdate)
   const [isReady, setIsReady] = useState(false)
 
@@ -851,6 +854,10 @@ function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: num
       clearTimeout(timer)
       if (intervalRef.current) clearInterval(intervalRef.current)
       intervalRef.current = null
+      if (segmentPollRef.current) clearInterval(segmentPollRef.current)
+      segmentPollRef.current = null
+      if (segmentSafetyRef.current) clearTimeout(segmentSafetyRef.current)
+      segmentSafetyRef.current = null
       try { playerRef.current?.destroy?.() } catch { }
       if (wrapRef.current) clearWrap(wrapRef.current)
       setIsReady(false)
@@ -870,17 +877,27 @@ function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: num
     playerRef.current.seekTo(startSeconds, true)
     playerRef.current.playVideo?.()
 
+    // Clear any previous segment polling
+    if (segmentPollRef.current) clearInterval(segmentPollRef.current)
+    if (segmentSafetyRef.current) clearTimeout(segmentSafetyRef.current)
+
     // Poll and pause when segment ends
     const poll = setInterval(() => {
       const t = playerRef.current?.getCurrentTime?.()
       if (typeof t === 'number' && t >= endTime) {
         clearInterval(poll)
+        segmentPollRef.current = null
         playerRef.current?.pauseVideo?.()
       }
     }, 150)
+    segmentPollRef.current = poll
 
     // Safety cleanup after duration + 1s
-    setTimeout(() => clearInterval(poll), (durationSeconds + 1) * 1000)
+    const safety = setTimeout(() => {
+      clearInterval(poll)
+      segmentPollRef.current = null
+    }, (durationSeconds + 1) * 1000)
+    segmentSafetyRef.current = safety
   }, [])
 
   const pauseVideo = useCallback(() => {
@@ -1490,8 +1507,9 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                                             fontStyle: 'normal',
                                           },
                                         }}
-                                        dangerouslySetInnerHTML={{ __html: note.replace(/\*(.+?)\*/g, '<em>$1</em>') }}
-                                      />
+                                      >
+                                        <SafeHtml text={note} />
+                                      </Typography>
                                     ))}
                                   </Box>
                                 )}
@@ -1623,7 +1641,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                                 {String(gp.number).padStart(2, '0')}
                               </Typography>
                               <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.95rem * ${textScale})`, fontWeight: 600, color: 'var(--bark)', lineHeight: 1.4 }}>
-                                <span dangerouslySetInnerHTML={{ __html: gp.pattern }} />
+                                <SafeHtml text={gp.pattern} />
                               </Typography>
                             </Box>
                             <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.85rem * ${textScale})`, color: 'var(--bark)', lineHeight: 1.6 }}>
@@ -1656,7 +1674,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                                   {gp.number}
                                 </td>
                                 <td style={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.9rem * ${textScale})`, fontWeight: 600, color: 'var(--bark)' }}>
-                                  <span dangerouslySetInnerHTML={{ __html: gp.pattern }} />
+                                  <SafeHtml text={gp.pattern} />
                                 </td>
                                 <td style={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.85rem * ${textScale})`, color: 'var(--bark)' }}>
                                   {gp.explanation}

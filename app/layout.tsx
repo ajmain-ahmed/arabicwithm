@@ -4,8 +4,10 @@ import "./globals.css";
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
 import MobileBottomNav from "./components/MobileBottomNav";
+import WordBankWidget from "./components/WordBankWidget";
 import { AuthProvider } from './AuthContext'
 import GlobalDataInit from '@/app/components/GlobalDataInit'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,11 +40,14 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>
           <Navbar />
-          <GlobalDataInit>
-            {children}
-          </GlobalDataInit>
+          <ErrorBoundary>
+            <GlobalDataInit>
+              {children}
+            </GlobalDataInit>
+          </ErrorBoundary>
           <Footer />
           <MobileBottomNav />
+          <WordBankWidget />
         </AuthProvider>
       </body>
     </html>

@@ -196,7 +196,7 @@ function ChartSection({ level }: { level: LevelStat | null }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               minWidth: remainingWidth > 0 && remainingWidth < 6 ? 28 : 'auto',
             }}>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 700, color: '#9e8a7a', whiteSpace: 'nowrap' }}>
+              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 700, color: '#6b5f55', whiteSpace: 'nowrap' }}>
                 {remaining}
               </Typography>
             </Box>
@@ -311,23 +311,23 @@ function LevelCard({
 
       <Box sx={{ display: 'flex', gap: { xs: 2, md: 3 }, pt: 0.5 }}>
         <Box>
-          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#9e8a7a', fontWeight: 500 }}>Words</Typography>
+          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#6b5f55', fontWeight: 500 }}>Words</Typography>
           <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e' }}>
             {level.completedWords}
-            <Box component="span" sx={{ color: '#9e8a7a', fontWeight: 400 }}>/{level.totalWords}</Box>
+            <Box component="span" sx={{ color: '#6b5f55', fontWeight: 400 }}>/{level.totalWords}</Box>
           </Typography>
         </Box>
         <Box>
-          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#9e8a7a', fontWeight: 500 }}>Revision</Typography>
+          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#6b5f55', fontWeight: 500 }}>Revision</Typography>
           <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#1565c0' }}>
             {level.revisionWords}
           </Typography>
         </Box>
         <Box>
-          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#9e8a7a', fontWeight: 500 }}>Themes</Typography>
+          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#6b5f55', fontWeight: 500 }}>Themes</Typography>
           <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e' }}>
             {level.completedThemes}
-            <Box component="span" sx={{ color: '#9e8a7a', fontWeight: 400 }}>/{level.totalThemes}</Box>
+            <Box component="span" sx={{ color: '#6b5f55', fontWeight: 400 }}>/{level.totalThemes}</Box>
           </Typography>
         </Box>
       </Box>
@@ -336,7 +336,7 @@ function LevelCard({
         <Typography sx={{
           fontFamily: 'Jost, sans-serif',
           fontSize: '0.78rem',
-          color: '#9e8a7a',
+          color: '#6b5f55',
           textAlign: 'center',
         }}>
           {isSelected
@@ -501,12 +501,10 @@ function WordsSection() {
   const [page, setPage] = useState(0)
   const rowsPerPage = 20
 
-  const {
-    userProgressWords,
-    userProgressLoading,
-    userProgressInitialized,
-    fetchUserProgressWords,
-  } = useVocabStore()
+  const userProgressWords = useVocabStore(s => s.userProgressWords)
+  const userProgressLoading = useVocabStore(s => s.userProgressLoading)
+  const userProgressInitialized = useVocabStore(s => s.userProgressInitialized)
+  const fetchUserProgressWords = useVocabStore(s => s.fetchUserProgressWords)
 
   useEffect(() => {
     if (!userProgressInitialized) {
@@ -628,7 +626,7 @@ function WordsSection() {
                     <TableCell key={col.key} onClick={() => toggleSort(col.key)}
                       sx={{
                         fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.78rem',
-                        color: '#9e8a7a', textTransform: 'uppercase', letterSpacing: '0.06em',
+                        color: '#6b5f55', textTransform: 'uppercase', letterSpacing: '0.06em',
                         cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap',
                       }}
                     >
@@ -640,7 +638,7 @@ function WordsSection() {
                       </Box>
                     </TableCell>
                   ))}
-                  <TableCell sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.78rem', color: '#9e8a7a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</TableCell>
+                  <TableCell sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.78rem', color: '#6b5f55', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -682,7 +680,7 @@ function WordsSection() {
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#9e8a7a' }}>
+                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#6b5f55' }}>
                           {w.updated_at ? new Date(w.updated_at).toLocaleDateString() : '—'}
                         </Typography>
                       </TableCell>
@@ -753,15 +751,15 @@ function WordsSection() {
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
                   <Box>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#9e8a7a', fontWeight: 500 }}>Level</Typography>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#6b5f55', fontWeight: 500 }}>Level</Typography>
                     <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: '#2c1a0e' }}>{w.level}</Typography>
                   </Box>
                   <Box>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#9e8a7a', fontWeight: 500 }}>Theme</Typography>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#6b5f55', fontWeight: 500 }}>Theme</Typography>
                     <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--muted)' }}>{w.theme}</Typography>
                   </Box>
                   <Box>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#9e8a7a', fontWeight: 500 }}>Updated</Typography>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#6b5f55', fontWeight: 500 }}>Updated</Typography>
                     <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--muted)' }}>
                       {w.updated_at ? new Date(w.updated_at).toLocaleDateString() : '—'}
                     </Typography>
@@ -775,7 +773,7 @@ function WordsSection() {
         {/* Pagination */}
         {sortedWords.length > 0 && (
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2, pt: 2, borderTop: '1px solid rgba(184,134,11,0.1)' }}>
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#9e8a7a' }}>
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#6b5f55' }}>
               {sortedWords.length} total · Page {page + 1} of {totalPages}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1 }}>

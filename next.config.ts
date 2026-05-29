@@ -1,7 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  reactStrictMode: false,   // ← add this line
+  reactStrictMode: false,
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'i.ytimg.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'ichef.bbci.co.uk' },
+      { protocol: 'https', hostname: 's.france24.com' },
+      { protocol: 'https', hostname: 'cnn-arabic-images.cnn.io' },
+      { protocol: 'https', hostname: 'images.skynewsarabia.com' },
+      { protocol: 'https', hostname: 'www.akhbarona.com' },
+    ],
+  },
   async headers() {
     return [
       {

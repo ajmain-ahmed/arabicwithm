@@ -22,22 +22,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let stateChanged = false
+
     // Grab the current session on mount
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
-        setSession(session)
-        setUser(session?.user ?? null)
-        setLoading(false)
+        // Only apply getSession result if onAuthStateChange hasn't already fired
+        if (!stateChanged) {
+          setSession(session)
+          setUser(session?.user ?? null)
+          setLoading(false)
+        }
       })
       .catch((err) => {
         console.error('Auth session error:', err)
-        setLoading(false)
+        if (!stateChanged) {
+          setLoading(false)
+        }
       })
 
     // Listen for auth state changes (sign in, sign out, token refresh)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      stateChanged = true
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)

@@ -635,7 +635,7 @@ export default function Navbar() {
             }}
         >
             <Box sx={{ position: 'relative', pt: 4, pb: 4, px: 3.5 }}>
-                <IconButton onClick={() => setContactOpen(false)} size="small"
+                <IconButton onClick={() => setContactOpen(false)} size="small" aria-label="Close contact dialog"
                     sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(245,237,224,0.4)', '&:hover': { color: 'var(--gold-lt)' } }}>
                     <Close sx={{ fontSize: 18 }} />
                 </IconButton>
@@ -693,14 +693,14 @@ export default function Navbar() {
                     <Toolbar disableGutters sx={{ py: { xs: 0.5, md: 1 }, minHeight: { xs: 56, md: 64 } }}>
                         {isMobile ? (
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                <IconButton onClick={() => setDrawerOpen(true)} sx={{ color: 'var(--forest)' }}>
+                                <IconButton onClick={() => setDrawerOpen(true)} sx={{ color: 'var(--forest)' }} aria-label="Open menu">
                                     <MenuOutlined />
                                 </IconButton>
 
                                 <BrandLogo />
 
                                 {isLoggedIn ? (
-                                    <IconButton onClick={e => setUserMenuAnchor(e.currentTarget)} size="small" sx={{ position: 'relative' }}>
+                                    <IconButton onClick={e => setUserMenuAnchor(e.currentTarget)} size="small" sx={{ position: 'relative' }} aria-label="Open user menu">
                                         <Avatar sx={{
                                             width: 30, height: 30,
                                             background: 'linear-gradient(135deg, #b8860b, #d4a843)',
@@ -713,7 +713,7 @@ export default function Navbar() {
                                         </Avatar>
                                     </IconButton>
                                 ) : (
-                                    <IconButton onClick={() => setAuthDialogOpen(true)} sx={{ color: 'var(--forest)' }}>
+                                    <IconButton onClick={() => setAuthDialogOpen(true)} sx={{ color: 'var(--forest)' }} aria-label="Sign in">
                                         <Person />
                                     </IconButton>
                                 )}
@@ -752,7 +752,7 @@ export default function Navbar() {
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
                                     {isLoggedIn ? (
-                                        <IconButton onClick={e => setUserMenuAnchor(e.currentTarget)} size="small">
+                                        <IconButton onClick={e => setUserMenuAnchor(e.currentTarget)} size="small" aria-label="Open user menu">
                                             <Avatar sx={{
                                                 width: 32, height: 32,
                                                 background: 'linear-gradient(135deg, #b8860b, #d4a843)',

@@ -242,6 +242,7 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
           <IconButton
             onClick={handleClose}
             size="small"
+            aria-label="Close"
             sx={{
               position: 'absolute',
               top: 14,

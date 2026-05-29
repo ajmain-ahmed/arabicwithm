@@ -120,6 +120,9 @@ export default function useRevisionSession() {
             await submitRevisionAnswersBatch(answers)
         } catch (err) {
             console.error('Batch flush failed:', err)
+            // Restore failed answers for next flush attempt
+            pending.unshift(...answers)
+            hasUnsavedRef.current = true
         }
     }, [])
 
