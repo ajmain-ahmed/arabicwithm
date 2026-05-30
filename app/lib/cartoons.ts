@@ -16,6 +16,10 @@ export interface ShowMeta {
   level: string
   episodeCount: number
   order?: number
+  category?: string
+  genre?: string
+  duration?: string
+  vocabCount?: number
 }
 
 export interface EpisodeMeta {

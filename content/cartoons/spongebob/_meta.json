@@ -1,7 +1,12 @@
 {
   "title": "Spongebob Squarepants",
   "titleAr": "سبونج بوب سكوير بانتس",
-  "description": "Enjoy the adventures of SpongeBob and his friends in the city of Bikini Bottom!",
+  "description": "Learn everyday Arabic through simple, funny conversations",
   "cover": "/cartoons/spongebob/spongebob_cover.avif",
-  "order": 1
+  "level": "A1-A2",
+  "order": 1,
+  "category": "Everyday Arabic",
+  "genre": "Comedy",
+  "duration": "11:24",
+  "vocabCount": 247
 }

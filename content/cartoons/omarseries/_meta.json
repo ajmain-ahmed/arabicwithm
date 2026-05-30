@@ -1,7 +1,12 @@
 {
   "title": "The Omar Series",
   "titleAr": "مسلسل عمر وقصص الصحابة",
-  "description": "Witness the early days of Islam and the lives of the Companions in this classic animated series.",
+  "description": "Dense historical narration in classical Arabic",
   "cover": "/cartoons/omarseries/omarseries_cover.avif",
-  "order": 1
+  "level": "B2-C1",
+  "order": 1,
+  "category": "Historical",
+  "genre": "Drama",
+  "duration": "45:00",
+  "vocabCount": 423
 }

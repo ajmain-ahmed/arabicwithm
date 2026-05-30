@@ -1,7 +1,12 @@
 {
   "title": "Companions of the Prophet",
   "titleAr": "قصص الصحابة",
-  "description": "A timeless animated journey into the lives, sacrifices, and legendary character of the men and women who stood beside the Prophet.",
+  "description": "Classical narration and religious vocabulary",
   "cover": "/cartoons/cotp/cotp_cover.avif",
-  "order": 1
+  "level": "B1-B2",
+  "order": 1,
+  "category": "Islamic Heritage",
+  "genre": "Religious",
+  "duration": "24:00",
+  "vocabCount": 189
 }

@@ -1,7 +1,12 @@
 {
   "title": "Teenage Mutant Ninja Turtles",
   "titleAr": "السلاحف النينجا المراهقة الطافرة",
-  "description": "Follow Leonardo, Donatello, Raphael and Michelangelo as they protect New York City!",
+  "description": "Action commands and dynamic dialogue in Arabic",
   "cover": "/cartoons/tmnt/_cover.avif",
-  "order": 1
+  "level": "A2-B1",
+  "order": 1,
+  "category": "Action",
+  "genre": "Adventure",
+  "duration": "22:15",
+  "vocabCount": 312
 }

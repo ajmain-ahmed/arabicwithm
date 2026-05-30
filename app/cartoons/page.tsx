@@ -1,9 +1,9 @@
-// app/cartoons/page.tsx  ← REPLACE the file above with this one
+// app/cartoons/page.tsx
 // This is a Server Component — no 'use client' needed.
 // It reads the filesystem and passes data to the client shell.
 
-import { getAllShows } from '../lib/cartoons'
-import CartoonsPage from './CartoonsPage' 
+import { getAllShows, getEpisodesForShow } from '../lib/cartoons'
+import CartoonsPage from './CartoonsPage'
 
 export const metadata = {
   title: 'Arabic Cartoons | ArabicWithM',
@@ -12,5 +12,13 @@ export const metadata = {
 
 export default function Page() {
   const shows = getAllShows()
-  return <CartoonsPage shows={shows} />
+
+  // Build a map of show slug → episode slugs for random navigation
+  const episodesMap: Record<string, string[]> = {}
+  for (const show of shows) {
+    const episodes = getEpisodesForShow(show.slug)
+    episodesMap[show.slug] = episodes.map((ep) => ep.slug)
+  }
+
+  return <CartoonsPage shows={shows} episodesMap={episodesMap} />
 }
