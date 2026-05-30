@@ -556,3 +556,29 @@ export async function removeWordProgress(vocabId: number): Promise<void> {
 
   if (error) throw new Error(error.message)
 }
+
+const RemoveBatchSchema = z.array(z.number().int().positive())
+
+export async function removeWordProgressBatch(vocabIds: number[]): Promise<void> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) throw new Error('Not authenticated')
+
+  const parsed = RemoveBatchSchema.safeParse(vocabIds)
+  if (!parsed.success) {
+    console.error('[removeWordProgressBatch] validation failed:', parsed.error.flatten())
+    throw new Error('Invalid batch items')
+  }
+  if (vocabIds.length === 0) return
+
+  if (!checkRateLimit(`removeProgressBatch:${userId}`, 10, 60_000)) {
+    throw new Error('Rate limit exceeded')
+  }
+
+  const { error } = await serviceClient
+    .from('progress')
+    .delete()
+    .eq('user_id', userId)
+    .in('vocab_id', vocabIds)
+
+  if (error) throw new Error(error.message)
+}

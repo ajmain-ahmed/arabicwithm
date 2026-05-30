@@ -52,6 +52,7 @@ export default function WordBankDialog({ open, onClose }: WordBankDialogProps) {
   const [levelFilter, setLevelFilter] = useState('ALL')
 
   const userProgressWords = useVocabStore((s) => s.userProgressWords)
+  const userProgressLoading = useVocabStore((s) => s.userProgressLoading)
   const userProgressInitialized = useVocabStore((s) => s.userProgressInitialized)
   const fetchUserProgressWords = useVocabStore((s) => s.fetchUserProgressWords)
 
@@ -257,6 +258,7 @@ export default function WordBankDialog({ open, onClose }: WordBankDialogProps) {
             isMobile={isMobile}
             searchQuery={search}
             levelFilter={levelFilter}
+            loading={userProgressLoading}
           />
         )}
         {activeTab === 'completed' && (
@@ -267,6 +269,7 @@ export default function WordBankDialog({ open, onClose }: WordBankDialogProps) {
             isMobile={isMobile}
             searchQuery={search}
             levelFilter={levelFilter}
+            loading={userProgressLoading}
           />
         )}
       </DialogContent>
