@@ -12,6 +12,12 @@ topic: "health-science"
 
 ---
 
+## Image
+
+![Steps](public/article-images/a2/7000-steps-study.avif)
+
+---
+
 ## Paragraphs
 
 ### Paragraph 1: The Study

@@ -19,7 +19,7 @@ description: "A heartwarming A0-level news article about Bryan Reisberg, a New Y
 
 ## Image
 
-![Bryan Reisberg carries his corgi Maxine in a backpack in New York City](dog-backpack-rescue-nyc.jpg)
+![Bryan Reisberg carries his corgi Maxine in a backpack in New York City](public/article-images/a0/dog-rescue.avif)
 
 > **Source:** People Magazine, December 2025 — Bryan Reisberg with his corgi Maxine, the original backpack dog.
 

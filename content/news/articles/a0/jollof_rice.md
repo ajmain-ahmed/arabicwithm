@@ -15,6 +15,12 @@ description: "A beginner Arabic news article about Nigerian chef Hilda Baci brea
 
 ---
 
+## Image
+
+![Jollof rice](public/article-images/a0/jollof_rice.avif)
+
+--
+
 ## The Article
 
 | # | Arabic (with diacritics) | Plain (no diacritics) | English |

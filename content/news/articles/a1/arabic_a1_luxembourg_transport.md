@@ -16,6 +16,12 @@ source: "RTL Today, Luxembourg Government"
 
 ---
 
+## Image
+
+![Lux Tram Airport](public/article-images/a1/luxembourg-tram-airport.jpg)
+
+---
+
 ## Paragraph 1: A Small Country, A Big Idea
 
 | Arabic (with tashkeel) | Plain Arabic | English |

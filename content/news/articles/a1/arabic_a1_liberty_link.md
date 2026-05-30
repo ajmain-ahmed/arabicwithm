@@ -22,6 +22,12 @@ grammar_points: 5
 
 ---
 
+## Image
+
+![Liberty Link](public/article-images/a1/liberty-link-nyc.jpg)
+
+---
+
 ## 📖 The Article
 
 ### Paragraph 1: The Announcement

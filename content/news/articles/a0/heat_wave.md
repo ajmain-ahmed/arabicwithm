@@ -18,7 +18,7 @@ description: "A news article about a record-breaking heat wave in Los Angeles in
 
 ## Image
 
-![A woman uses an umbrella to shield herself from the hot sun in Los Angeles during the March 2026 heat wave](la-heat-wave-march-2026.jpg)
+![A woman uses an umbrella to shield herself from the hot sun in Los Angeles during the March 2026 heat wave](public/article-images/a0/heat_wave.avif)
 
 > **Source:** New York Times, March 20, 2026 — "What Does the California Heat Mean for Fire Season?" A woman shields herself from the strong sun during the record-breaking heat wave in Los Angeles.
 

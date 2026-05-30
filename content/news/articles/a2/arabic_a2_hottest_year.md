@@ -15,6 +15,12 @@ author: "Arabic A2 News Series"
 
 ---
 
+## Image
+
+![Hot](public/article-images/a2/wmo-hottest-year-2025.avif)
+
+---
+
 ## Paragraphs
 
 ### Paragraph 1: The WMO Announcement

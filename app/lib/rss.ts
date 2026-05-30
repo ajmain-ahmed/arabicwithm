@@ -30,24 +30,6 @@ const RSS_SOURCES = [
     url: 'https://www.france24.com/ar/rss',
     region: 'France',
   },
-  {
-    key: 'al-sharq',
-    label: 'Al-Sharq',
-    url: 'https://al-sharq.com/rss/latestNews',
-    region: 'Qatar',
-  },
-  {
-    key: 'bbc-arabic',
-    label: 'BBC Arabic',
-    url: 'https://feeds.bbci.co.uk/arabic/rss.xml',
-    region: 'UK',
-  },
-  {
-    key: 'skynews-arabia',
-    label: 'Sky News Arabia',
-    url: 'https://www.skynewsarabia.com/rss.xml',
-    region: 'UAE',
-  },
 ]
 
 export const RSS_REGIONS = Array.from(new Set(RSS_SOURCES.map((s) => s.region)))

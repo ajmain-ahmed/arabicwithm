@@ -17,7 +17,7 @@ description: "An A0-level Arabic news article about Falling Creek Middle School 
 
 ## Image
 
-![The new Falling Creek Middle School building in Chesterfield County, Virginia](falling-creek-middle-school.jpg)
+![The new Falling Creek Middle School building in Chesterfield County, Virginia](public/article-images/a0/new_school.avif)
 
 > **Source:** VPM News, August 5, 2024 — Falling Creek Middle School, the largest middle school in central Virginia.
 

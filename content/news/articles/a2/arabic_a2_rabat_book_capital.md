@@ -15,6 +15,12 @@ topic: "Culture & Education"
 
 ---
 
+## Image
+
+![Rabat](public/article-images/a2/rabat-world-book-capital.avif)
+
+---
+
 ## Paragraph 1
 
 | Arabic (Diacritics) | Plain | English |

@@ -486,3 +486,34 @@ export async function findArticleBySlug(slug: string): Promise<UnifiedArticle | 
 
   return null
 }
+
+/* ── New: grouped parsed articles for tabbed news page ─────────────────────── */
+
+import {
+  getArticleLevels,
+  getArticlesForLevel,
+  parseArticle,
+  type ParsedArticle,
+  type WordBreakdown,
+} from './news-parser'
+
+export { getArticleLevels, getArticlesForLevel, parseArticle, type ParsedArticle, type WordBreakdown }
+
+export async function getAllParsedArticlesByLevel(): Promise<Record<string, ParsedArticle[]>> {
+  const result: Record<string, ParsedArticle[]> = {}
+  const levels = getArticleLevels()
+
+  for (const level of levels) {
+    const slugs = getArticlesForLevel(level)
+    const articles: ParsedArticle[] = []
+    for (const slug of slugs) {
+      const parsed = await parseArticle(slug)
+      if (parsed) articles.push(parsed)
+    }
+    // Sort by date descending
+    articles.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    result[level.toUpperCase()] = articles
+  }
+
+  return result
+}

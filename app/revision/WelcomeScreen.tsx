@@ -127,7 +127,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
             overflow: 'hidden',
             borderBottom: '1px solid rgba(212,168,67,0.2)',
             px: { xs: 3, md: 8 },
-            py: { xs: 4, md: 6 },
+            py: { xs: 7, md: 6 },
             textAlign: 'center',
             display: 'flex',
             alignItems: 'center',
@@ -148,7 +148,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
               component="h1"
               sx={{
                 fontFamily: "'EB Garamond', serif",
-                fontSize: { xs: '2.4rem', md: '3.4rem' },
+                fontSize: { xs: '2.8rem', md: '3.4rem' },
                 fontWeight: 700,
                 color: '#f5ede0',
                 lineHeight: 1.1,
@@ -161,7 +161,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
             <Typography
               sx={{
                 fontFamily: "'EB Garamond', serif",
-                fontSize: { xs: '1.2rem', md: '1.6rem' },
+                fontSize: { xs: '1.35rem', md: '1.6rem' },
                 color: '#d4a843',
                 mb: 1,
               }}
@@ -171,7 +171,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
             <Typography
               sx={{
                 fontFamily: 'Jost, sans-serif',
-                fontSize: { xs: '0.85rem', md: '1rem' },
+                fontSize: { xs: '0.9rem', md: '1rem' },
                 color: 'rgba(245,237,224,0.85)',
                 lineHeight: 1.5,
                 maxWidth: 480,

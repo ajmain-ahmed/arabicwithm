@@ -20,6 +20,12 @@ records: 3
 
 ---
 
+## Image
+
+![Discada](public/article-images/a1/discada-mexico.jpg)
+
+---
+
 ## 📰 The Article
 
 ### Paragraph 1 — The Festival

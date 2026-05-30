@@ -15,6 +15,12 @@ description: "A new waterfront park opened at Pier 42 in Manhattan. A0-level Ara
 
 ---
 
+## Image
+
+![New park](public/article-images/a0/new_park.avif)
+
+--
+
 ## The Article
 
 ### Paragraph 1 — Opening

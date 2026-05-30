@@ -276,6 +276,18 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
     }
   }
 
+  /* ── Body class for WordBankWidget positioning ── */
+  useEffect(() => {
+    if (!isDesktop && !isDailyReview) {
+      document.body.classList.add('revision-custom-active')
+    } else {
+      document.body.classList.remove('revision-custom-active')
+    }
+    return () => {
+      document.body.classList.remove('revision-custom-active')
+    }
+  }, [isDailyReview, isDesktop])
+
   const startDisabled = selectedThemeKeys.size === 0 || cardCount > totalSelectedWords || loading
 
   /* ── Header subtitle text ── */
@@ -350,7 +362,7 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
           />
         </Box>
       ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pb: '80px' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pb: isDailyReview ? '80px' : '140px' }}>
       {/* ── Mode Selection ── */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
         {/* Daily Review Card */}
@@ -361,6 +373,9 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
               setIsDailyReview(true)
               setShowCustomOptions(false)
             }}
+            counts={{ newCount: counts.newCount, learningCount: counts.learningCount, reviewCount: counts.reviewCount }}
+            onStartDaily={onStartDaily}
+            user={user}
           />
         </Box>
 
@@ -457,125 +472,103 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
         </Box>
       </Box>
 
-      {/* ── Daily Review Content ── */}
-      {isDailyReview && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'center', textAlign: 'center', py: 2 }}>
-          <Box>
-            <Typography
-              sx={{
-                fontFamily: "'EB Garamond', serif",
-                fontSize: '1.4rem',
-                fontWeight: 700,
-                color: '#2c1a0e',
-                mb: 1,
-              }}
-            >
-              Daily Review
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: 'Jost, sans-serif',
-                color: '#7a6e65',
-                fontSize: '0.9rem',
-                lineHeight: 1.6,
-                px: 2,
-              }}
-            >
-              Review words that are due today using spaced repetition.
-            </Typography>
-          </Box>
-
-          {/* Queue counts */}
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5, width: '100%', px: 1 }}>
-            {[
-              { label: 'New', count: counts.newCount, color: '#1565c0', bg: 'rgba(21,101,192,0.08)', border: 'rgba(21,101,192,0.2)' },
-              { label: 'Learning', count: counts.learningCount, color: '#c13a00', bg: 'rgba(193,58,0,0.08)', border: 'rgba(193,58,0,0.2)' },
-              { label: 'Review', count: counts.reviewCount, color: '#2e7d32', bg: 'rgba(46,125,50,0.08)', border: 'rgba(46,125,50,0.2)' },
-            ].map((stat) => (
-              <Box
-                key={stat.label}
-                sx={{
-                  flex: 1,
-                  background: stat.bg,
-                  border: `1px solid ${stat.border}`,
-                  borderRadius: '10px',
-                  px: 1.5,
-                  py: 1.5,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.6rem',
-                    fontWeight: 600,
-                    color: stat.color,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
-                  }}
-                >
-                  {stat.label}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontFamily: "'EB Garamond', serif",
-                    fontSize: '1.5rem',
-                    fontWeight: 700,
-                    color: stat.color,
-                    lineHeight: 1.1,
-                    mt: 0.5,
-                  }}
-                >
-                  {stat.count}
-                </Typography>
-              </Box>
-            ))}
-          </Box>
-
-          <Button
-            variant="contained"
-            onClick={onStartDaily}
-            fullWidth
-            disabled={!user || counts.newCount + counts.learningCount + counts.reviewCount === 0}
-            sx={{
-              background: '#2c1a0e',
-              color: '#f5ede0',
-              fontFamily: 'Jost, sans-serif',
-              fontWeight: 600,
-              textTransform: 'none',
-              borderRadius: '10px',
-              py: 1.2,
-              fontSize: '0.95rem',
-              mx: 1,
-              '&:hover': { background: '#1a0f08' },
-              '&.Mui-disabled': {
-                background: 'rgba(44,26,14,0.3)',
-                color: 'rgba(245,237,224,0.5)',
-              },
-            }}
-          >
-            Start Daily Review
-          </Button>
-          {!user && (
-            <Typography
-              sx={{
-                fontFamily: 'Jost, sans-serif',
-                fontSize: '0.8rem',
-                color: '#9e8a7a',
-                mt: -1,
-              }}
-            >
-              Log in to access daily review
-            </Typography>
-          )}
-        </Box>
-      )}
-
       {/* ── Custom Practice Content ── */}
       {!isDailyReview && (
         <>
+          {/* Sticky Start Bar */}
+          <Box
+            sx={{
+              position: 'fixed',
+              bottom: 56,
+              left: 0,
+              right: 0,
+              background: '#fff',
+              borderRadius: 0,
+              boxShadow: '0 -2px 12px rgba(44,26,14,0.08)',
+              p: '8px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1.5,
+              zIndex: 1100,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, minWidth: 0 }}>
+              <Slider
+                value={cardCount}
+                min={5}
+                max={sliderMax}
+                step={5}
+                onChange={(_, v) => setCardCount(v as number)}
+                disabled={totalSelectedWords === 0}
+                sx={{
+                  flex: 1,
+                  maxWidth: 160,
+                  color: '#b8860b',
+                  '& .MuiSlider-thumb': { width: 12, height: 12 },
+                  '& .MuiSlider-rail': { height: 3 },
+                  '& .MuiSlider-track': { height: 3 },
+                }}
+              />
+              <TextField
+                type="number"
+                value={cardCount}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10)
+                  if (!isNaN(val)) {
+                    setCardCount(Math.max(5, Math.min(val, sliderMax)))
+                  }
+                }}
+                disabled={totalSelectedWords === 0}
+                size="small"
+                slotProps={{
+                  htmlInput: {
+                    min: 5,
+                    max: sliderMax,
+                    style: { textAlign: 'center', fontWeight: 700, padding: '4px 0', fontSize: '0.85rem' },
+                  },
+                }}
+                sx={{
+                  width: 56,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '6px',
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: '0.9rem',
+                    color: '#2c1a0e',
+                    py: 0,
+                    minHeight: 36,
+                  },
+                }}
+              />
+            </Box>
+
+            <Button
+              variant="contained"
+              onClick={handleStart}
+              disabled={startDisabled}
+              sx={{
+                background: '#b8860b',
+                color: '#fff',
+                fontFamily: 'Jost, sans-serif',
+                fontWeight: 700,
+                textTransform: 'none',
+                borderRadius: '8px',
+                px: 2,
+                py: 0.6,
+                fontSize: '0.8rem',
+                flexShrink: 0,
+                minHeight: 32,
+                '&:hover': { background: '#9c6b00' },
+                '&.Mui-disabled': {
+                  background: 'rgba(184,134,11,0.2)',
+                  color: 'rgba(26,14,0,0.4)',
+                },
+              }}
+            >
+              Start
+            </Button>
+          </Box>
+
           {/* Accordion Stack */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {levels.map((level) => {
@@ -776,139 +769,6 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
             })}
           </Box>
 
-          {/* Floating Bottom Bar */}
-          <Box
-            sx={{
-              position: 'fixed',
-              bottom: 55.8,
-              left: 0,
-              right: 0,
-              background: '#fff',
-              borderRadius: '10px 10px 0 0',
-              boxShadow: '0 -4px 20px rgba(44,26,14,0.1)',
-              p: '12px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 1.5,
-              zIndex: 1300,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, minWidth: 0 }}>
-              <Box sx={{ flexShrink: 0 }}>
-                <Typography
-                  sx={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.65rem',
-                    fontWeight: 600,
-                    color: '#9e8a7a',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                  }}
-                >
-                  Cards
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.3 }}>
-                  <Slider
-                    value={cardCount}
-                    min={5}
-                    max={sliderMax}
-                    step={5}
-                    onChange={(_, v) => setCardCount(v as number)}
-                    disabled={totalSelectedWords === 0}
-                    sx={{
-                      width: 140,
-                      ml: 1,
-                      color: '#b8860b',
-                      '& .MuiSlider-thumb': { width: 14, height: 14 },
-                    }}
-                  />
-                  <TextField
-                    type="number"
-                    value={cardCount}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10)
-                      if (!isNaN(val)) {
-                        setCardCount(Math.max(5, Math.min(val, sliderMax)))
-                      }
-                    }}
-                    disabled={totalSelectedWords === 0}
-                    size="small"
-                    slotProps={{
-                      htmlInput: {
-                        min: 5,
-                        max: sliderMax,
-                        style: { textAlign: 'center', fontWeight: 700, padding: '4px 0', fontSize: '0.8rem' },
-                      },
-                    }}
-                    sx={{
-                      width: 50,
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: '6px',
-                        fontFamily: 'Jost, sans-serif',
-                        fontSize: '0.85rem',
-                        color: '#2c1a0e',
-                        py: 0,
-                      },
-                    }}
-                  />
-                </Box>
-              </Box>
-              {totalSelectedThemes > 0 && (
-                <Typography
-                  sx={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.75rem',
-                    color: '#7a6e65',
-                    flexShrink: 0,
-                  }}
-                >
-                  {totalSelectedThemes} theme{totalSelectedThemes === 1 ? '' : 's'}
-                </Typography>
-              )}
-            </Box>
-
-            <Button
-              variant="contained"
-              onClick={handleStart}
-              disabled={startDisabled}
-              sx={{
-                background: '#b8860b',
-                color: '#fff',
-                fontFamily: 'Jost, sans-serif',
-                fontWeight: 700,
-                textTransform: 'none',
-                borderRadius: '10px',
-                px: 2.5,
-                py: 1,
-                fontSize: '0.85rem',
-                flexShrink: 0,
-                mt: 0.5,
-                '&:hover': { background: '#9c6b00' },
-                '&.Mui-disabled': {
-                  background: 'rgba(184,134,11,0.2)',
-                  color: 'rgba(26,14,0,0.4)',
-                },
-              }}
-            >
-              Start
-              {totalSelectedThemes > 0 && (
-                <Box
-                  component="span"
-                  sx={{
-                    ml: 0.8,
-                    background: 'rgba(255,255,255,0.25)',
-                    borderRadius: '999px',
-                    px: 0.8,
-                    py: 0.15,
-                    fontSize: '0.7rem',
-                  }}
-                >
-                  {totalSelectedThemes}
-                </Box>
-              )}
-            </Button>
-          </Box>
         </>
       )}
       </Box>

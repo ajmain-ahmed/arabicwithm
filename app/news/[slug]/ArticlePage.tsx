@@ -1,277 +1,225 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import {
+  Container,
   Box,
   Typography,
   Chip,
-  Button,
-  Container,
-  Divider,
+  IconButton,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material'
-import { ArrowBack, CalendarToday, OpenInNew } from '@mui/icons-material'
+import { ArrowLeft, CalendarDays, Globe, User, Tag, BookOpen } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import InlineVocabText from '../components/InlineVocabText'
-import { UnifiedArticle } from '@/app/lib/news'
+import { ParsedArticle } from '@/app/lib/news'
+import { useRevisionStore } from '@/store/revisionStore'
+import InlineMdVocab from '../components/InlineMdVocab'
+import LevelBadge from '../components/LevelBadge'
 
-const LEVEL_COLORS: Record<string, string> = {
-  A1: '#2d6a4f', A2: '#40916c', B1: '#b5861a', B2: '#9c6b00', C1: '#6d4c9e', C2: '#4a2f7a',
+interface ArticlePageProps {
+  article: ParsedArticle
 }
 
-export default function ArticlePage({
-  article,
-}: {
-  article: UnifiedArticle
-}) {
+export default function ArticlePage({ article }: ArticlePageProps) {
   const router = useRouter()
-  const [navbarHeight, setNavbarHeight] = useState(64)
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+  const flushPendingToggles = useRevisionStore((s) => s.flushPendingToggles)
 
+  // Flush pending toggles on unmount / navigation away
   useEffect(() => {
-    const measure = () => {
-      const nav = document.getElementById('main-navbar')
-      if (nav) setNavbarHeight(nav.offsetHeight)
+    return () => {
+      flushPendingToggles()
     }
-    measure()
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [])
+  }, [flushPendingToggles])
 
-  const formattedDate = new Date(article.date).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-
-  const paragraphs = article.isExternal
-    ? [article.body || article.summary].filter(Boolean)
-    : article.body
-      ? article.body.split('\n\n').map((p) => p.trim()).filter((p) => p.length > 0)
-      : []
+  // Build full article text from paragraphs
+  const articleText = article.paragraphs.map((p) => p.arabicDi).join('\n\n')
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap');
       `}</style>
 
       <Box
         component="main"
         sx={{
-          background: '#faf7f2',
           minHeight: '100vh',
-          pt: `${navbarHeight}px`,
-          pb: { xs: 8, md: 12 },
+          background: '#f5ede0',
+          pt: { xs: '56px', md: '64px' },
+          pb: { xs: 8, md: 10 },
         }}
       >
-        <Container maxWidth="xl" sx={{ py: { xs: 4, md: 6 } }}>
+        <Container maxWidth="lg">
           {/* Back button */}
-          <Box
-            onClick={() => router.push('/news')}
-            sx={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 1,
-              cursor: 'pointer',
-              fontFamily: 'Jost, sans-serif',
-              fontSize: '0.85rem',
-              color: '#b8860b',
-              fontWeight: 500,
-              mb: { xs: 4, md: 5 },
-              '&:hover': { textDecoration: 'underline' },
-            }}
-          >
-            <ArrowBack sx={{ fontSize: 18 }} />
-            Back to news
+          <Box sx={{ pt: { xs: 2, md: 3 }, pb: 2 }}>
+            <IconButton
+              onClick={() => router.push('/news')}
+              sx={{
+                color: '#7a6e65',
+                '&:hover': { color: '#2c1a0e', background: 'rgba(44,26,14,0.05)' },
+              }}
+            >
+              <ArrowLeft size={22} />
+            </IconButton>
           </Box>
 
-          {/* Centered article content */}
-          <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-            {/* Headline — centered */}
+          {/* Header — centered */}
+          <Box sx={{ textAlign: 'center', maxWidth: 800, mx: 'auto', mb: 4 }}>
+            {/* Title with inline vocab */}
             <Typography
               component="h1"
               sx={{
-                fontFamily: '"EB Garamond", serif',
-                fontSize: { xs: '1.7rem', md: '2.4rem' },
+                fontFamily: "'EB Garamond', serif",
+                fontSize: { xs: '1.6rem', md: '2.2rem' },
                 fontWeight: 700,
                 color: '#2c1a0e',
-                lineHeight: 1.3,
+                lineHeight: 1.4,
                 direction: 'rtl',
-                textAlign: 'center',
-                mb: 2.5,
+                mb: 1.5,
               }}
             >
-              <InlineVocabText text={article.title} vocabMap={article.vocabMap || {}} textScale={1} propagateClick />
+              <InlineMdVocab
+                text={article.title}
+                wordBreakdown={article.wordBreakdown}
+              />
             </Typography>
 
-            {/* Meta row — centered */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
-              {!article.isExternal && article.cefr && (
-                <Chip
-                  label={article.cefr}
-                  size="small"
-                  sx={{
-                    background: LEVEL_COLORS[article.cefr] ?? '#2c1a0e',
-                    color: '#fff',
-                    fontFamily: 'Jost, sans-serif',
-                    fontWeight: 700,
-                    fontSize: '0.68rem',
-                    letterSpacing: '0.06em',
-                  }}
-                />
-              )}
-              {article.isExternal && (
-                <Chip
-                  label="External"
-                  size="small"
-                  sx={{
-                    background: '#b8860b',
-                    color: '#fff',
-                    fontFamily: 'Jost, sans-serif',
-                    fontWeight: 700,
-                    fontSize: '0.68rem',
-                    letterSpacing: '0.06em',
-                  }}
-                />
-              )}
-              <Box
+            {/* English title */}
+            {article.titleEnglish && (
+              <Typography
                 sx={{
-                  background: 'rgba(44,26,14,0.06)',
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: { xs: '1rem', md: '1.15rem' },
                   color: '#7a6e65',
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: '0.78rem',
-                  fontWeight: 500,
-                  px: 1.2,
-                  py: 0.4,
-                  borderRadius: '4px',
+                  fontWeight: 400,
+                  mb: 2.5,
                 }}
               >
-                {article.sourceLabel}
-              </Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                  color: '#9e8a7a',
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: '0.78rem',
-                }}
-              >
-                <CalendarToday sx={{ fontSize: 14 }} />
-                {formattedDate}
-              </Box>
-            </Box>
-
-            {/* Topics — centered */}
-            {article.topics.length > 0 && (
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center', mb: 3 }}>
-                {article.topics.map((topic) => (
-                  <Box
-                    key={topic}
-                    sx={{
-                      fontFamily: 'Jost, sans-serif',
-                      fontSize: '0.75rem',
-                      color: '#9e8a7a',
-                      background: 'rgba(158,138,122,0.08)',
-                      border: '1px solid rgba(158,138,122,0.15)',
-                      px: 1.2,
-                      py: 0.4,
-                      borderRadius: '4px',
-                    }}
-                  >
-                    {topic}
-                  </Box>
-                ))}
-              </Box>
+                {article.titleEnglish}
+              </Typography>
             )}
 
-            <Divider sx={{ borderColor: 'rgba(44,26,14,0.08)', mb: { xs: 3, md: 4 } }} />
+            {/* Meta chips */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1.2,
+                flexWrap: 'wrap',
+                mb: 2,
+              }}
+            >
+              <LevelBadge level={article.level} size="md" />
 
-            {/* Article image — centered, reasonable size */}
-            {article.image && (
-              <Box sx={{ mb: { xs: 3, md: 4 }, borderRadius: '12px', overflow: 'hidden', maxWidth: 700, mx: 'auto' }}>
-                <Box
-                  component="img"
-                  src={article.image}
-                  alt={article.title}
+              {article.source && (
+                <Chip
+                  icon={<BookOpen size={14} color="#9e8a7a" />}
+                  label={article.source}
+                  size="small"
                   sx={{
-                    width: '100%',
-                    height: 'auto',
-                    display: 'block',
+                    background: 'rgba(44,26,14,0.04)',
+                    color: '#7a6e65',
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: '0.78rem',
+                    fontWeight: 500,
+                    '& .MuiChip-icon': { ml: 0.8 },
                   }}
                 />
-              </Box>
-            )}
+              )}
 
-            {/* RSS external notice */}
-            {article.isExternal && (
-              <Box
-                sx={{
-                  background: 'rgba(184,134,11,0.06)',
-                  border: '1px solid rgba(184,134,11,0.15)',
-                  borderRadius: '10px',
-                  p: { xs: 1.5, md: 2 },
-                  mb: 3,
-                  textAlign: 'center',
-                }}
-              >
-                <Typography
+              {article.date && (
+                <Chip
+                  icon={<CalendarDays size={14} color="#9e8a7a" />}
+                  label={new Date(article.date).toLocaleDateString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                  size="small"
                   sx={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.85rem',
+                    background: 'rgba(44,26,14,0.04)',
                     color: '#7a6e65',
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: '0.78rem',
+                    fontWeight: 500,
+                    '& .MuiChip-icon': { ml: 0.8 },
                   }}
-                >
-                  This article is sourced from {article.sourceLabel}. Read the full story on their website.
-                </Typography>
-              </Box>
-            )}
+                />
+              )}
 
-            {/* Paragraphs */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              {paragraphs.map((para, i) => (
-                <Typography
-                  key={i}
-                  component="p"
-                  sx={{
-                    fontFamily: '"EB Garamond", Georgia, serif',
-                    fontSize: { xs: '1.1rem', md: '1.25rem' },
-                    lineHeight: 1.85,
-                    color: '#2c1a0e',
-                    direction: 'rtl',
-                    textAlign: 'right',
-                    fontWeight: 400,
-                  }}
-                >
-                  <InlineVocabText text={para} vocabMap={article.vocabMap || {}} textScale={1} />
-                </Typography>
-              ))}
+              {/* Author chip — if available in frontmatter */}
+              {/* We don't have author in ParsedArticle yet — add if needed */}
             </Box>
 
-            {/* External link button */}
-            {article.isExternal && article.url && (
-              <Box sx={{ mt: 5, textAlign: 'center' }}>
-                <Button
-                  variant="contained"
-                  endIcon={<OpenInNew />}
-                  onClick={() => window.open(article.url, '_blank')}
+            {/* Topic tags */}
+            {/* Topic not currently in ParsedArticle — would need to parse from frontmatter */}
+          </Box>
+
+          {/* Image */}
+          {article.image && (
+            <Box
+              sx={{
+                width: '100%',
+                maxWidth: 900,
+                mx: 'auto',
+                mb: 5,
+                borderRadius: '14px',
+                overflow: 'hidden',
+              }}
+            >
+              <Box
+                component="img"
+                src={article.image}
+                alt={article.title}
+                sx={{
+                  width: '100%',
+                  height: { xs: 260, md: 480 },
+                  objectFit: 'cover',
+                }}
+              />
+            </Box>
+          )}
+
+          {/* Article Body */}
+          <Box sx={{ maxWidth: 780, mx: 'auto' }}>
+            {article.paragraphs.map((para, idx) => (
+              <Box key={idx} sx={{ mb: 3 }}>
+                {/* Arabic with inline vocab */}
+                <Typography
                   sx={{
-                    background: '#2c1a0e',
-                    color: '#f5ede0',
-                    fontFamily: 'Jost, sans-serif',
-                    fontWeight: 600,
-                    fontSize: '0.95rem',
-                    textTransform: 'none',
-                    borderRadius: '10px',
-                    px: 3,
-                    py: 1.2,
-                    '&:hover': { background: '#1a0f08' },
+                    fontFamily: "'EB Garamond', serif",
+                    fontSize: { xs: '1.2rem', md: '1.45rem' },
+                    fontWeight: 500,
+                    color: '#2c1a0e',
+                    lineHeight: 1.75,
+                    direction: 'rtl',
+                    mb: 1,
                   }}
                 >
-                  Read full article on {article.sourceLabel}
-                </Button>
+                  <InlineMdVocab
+                    text={para.arabicDi}
+                    wordBreakdown={article.wordBreakdown}
+                  />
+                </Typography>
+
+                {/* English translation */}
+                <Typography
+                  sx={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: { xs: '0.9rem', md: '0.95rem' },
+                    color: '#7a6e65',
+                    lineHeight: 1.6,
+                    fontStyle: 'italic',
+                  }}
+                >
+                  {para.english}
+                </Typography>
               </Box>
-            )}
+            ))}
           </Box>
         </Container>
       </Box>

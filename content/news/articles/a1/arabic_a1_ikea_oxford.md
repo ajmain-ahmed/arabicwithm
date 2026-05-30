@@ -14,6 +14,12 @@ source: "BBC News / IKEA Press Release"
 
 ---
 
+## Image
+
+![Oxford Street](public/article-images/a1/ikea-oxford-street.jpg)
+
+---
+
 ## The Article / الْمَقَالَةُ
 
 ### Paragraph 1 / الْفَقْرَةُ الْأُولَى

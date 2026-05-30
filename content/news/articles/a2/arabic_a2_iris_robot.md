@@ -21,6 +21,12 @@ vocabulary_theme: [technology, education, innovation, women's empowerment]
 
 ---
 
+## Image
+
+![Robot](public/article-images/a2/iris-robot-south-africa.avif)
+
+---
+
 ## 📰 Article
 
 ### Paragraph 1: Introduction — The Launch of IRIS
