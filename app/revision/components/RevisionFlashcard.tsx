@@ -13,10 +13,8 @@ import AnimatedArabicWord from './AnimatedArabicWord'
 import DefinitionPanel from './DefinitionPanel'
 import ExampleSentences from './ExampleSentences'
 import MorphologyPanel from './MorphologyPanel'
-import CartoonContextPanel from './CartoonContextPanel'
 import type { Answer } from '@/app/actions/revision'
 import { computeAnswerResult } from '@/app/lib/sm2'
-import { stripDiacritics } from '@/app/lib/arabic'
 import { Replay, TrendingFlat, Check, TrendingUp } from '@mui/icons-material'
 
 const ANSWER_BUTTONS: { label: string; value: Answer; color: string; hoverBg: string; border: string; icon: React.ReactNode }[] = [
@@ -85,7 +83,7 @@ export default function RevisionFlashcard({
     modeConfig: ModeConfig
 }) {
     const [revealed, setRevealed] = useState(false)
-    const [activeTab, setActiveTab] = useState<'definition' | 'examples' | 'forms' | 'cartoon'>('definition')
+    const [activeTab, setActiveTab] = useState<'definition' | 'examples' | 'forms'>('definition')
     const [elapsed, setElapsed] = useState(0)
     const [timerRunning, setTimerRunning] = useState(false)
     const [rapidFireCountdown, setRapidFireCountdown] = useState(5)
@@ -102,20 +100,6 @@ export default function RevisionFlashcard({
     const isMobile = useMediaQuery('(max-width:600px)')
 
     const hasForms = card.type === 'verb' && !!(card as any).forms
-    const [cartoonContexts, setCartoonContexts] = useState<null | any[]>(null)
-
-    useEffect(() => {
-        let cancelled = false
-        fetch('/cartoon-word-context.json')
-            .then(r => r.json())
-            .then(map => {
-                if (!cancelled) setCartoonContexts(map[stripDiacritics(card.word)] ?? [])
-            })
-            .catch(() => {
-                if (!cancelled) setCartoonContexts([])
-            })
-        return () => { cancelled = true }
-    }, [card.word])
 
     /* ── Card change: reset everything ── */
     useLayoutEffect(() => {
@@ -348,14 +332,10 @@ export default function RevisionFlashcard({
                                 {hasForms && (
                                     <Button onClick={() => setActiveTab('forms')} sx={{ ...tabButtonSx, background: activeTab === 'forms' ? 'rgba(184,134,11,0.12)' : 'transparent', color: activeTab === 'forms' ? '#b8860b' : '#7a6e65', borderColor: activeTab === 'forms' ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)' }}>Forms</Button>
                                 )}
-                                {cartoonContexts && cartoonContexts.length > 0 && (
-                                    <Button onClick={() => setActiveTab('cartoon')} sx={{ ...tabButtonSx, background: activeTab === 'cartoon' ? 'rgba(184,134,11,0.12)' : 'transparent', color: activeTab === 'cartoon' ? '#b8860b' : '#7a6e65', borderColor: activeTab === 'cartoon' ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)' }}>Cartoon</Button>
-                                )}
                             </Box>
                             {activeTab === 'definition' && <DefinitionPanel card={card} showDiacritics={showDiacritics} textScale={textScale} />}
                             {activeTab === 'examples' && <ExampleSentences examples={examples} showDiacritics={showDiacritics} textScale={textScale} />}
                             {activeTab === 'forms' && <MorphologyPanel card={card} textScale={textScale} />}
-                            {activeTab === 'cartoon' && <CartoonContextPanel plainWord={stripDiacritics(card.word)} textScale={textScale} />}
                         </Box>
 
                         <Box sx={{ mt: { xs: '1.25rem', md: '1.5rem' }, position: 'relative' }}>
