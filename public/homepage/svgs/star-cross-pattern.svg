@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <g id="zellij-pattern">
+      <!-- Central 8-pointed star -->
+      <polygon points="100,30 115,70 155,85 115,100 100,140 85,100 45,85 85,70" 
+        fill="none" stroke="currentColor" stroke-width="2"/>
+      <!-- Inner star -->
+      <polygon points="100,55 108,78 130,85 108,92 100,115 92,92 70,85 92,78" 
+        fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <!-- Central diamond -->
+      <polygon points="100,72 108,85 100,98 92,85" 
+        fill="currentColor" opacity="0.3"/>
+
+      <!-- Corner crosses -->
+      <g stroke="currentColor" stroke-width="1.2">
+        <!-- Top-left cross -->
+        <line x1="30" y1="15" x2="30" y2="55"/>
+        <line x1="10" y1="35" x2="50" y2="35"/>
+        <!-- Top-right cross -->
+        <line x1="170" y1="15" x2="170" y2="55"/>
+        <line x1="150" y1="35" x2="190" y2="35"/>
+        <!-- Bottom-left cross -->
+        <line x1="30" y1="145" x2="30" y2="185"/>
+        <line x1="10" y1="165" x2="50" y2="165"/>
+        <!-- Bottom-right cross -->
+        <line x1="170" y1="145" x2="170" y2="185"/>
+        <line x1="150" y1="165" x2="190" y2="165"/>
+      </g>
+
+      <!-- Connecting octagons at edges -->
+      <g fill="none" stroke="currentColor" stroke-width="1">
+        <polygon points="85,15 100,5 115,15 115,30 100,40 85,30"/>
+        <polygon points="170,70 185,85 185,100 170,115 155,100 155,85"/>
+        <polygon points="85,185 100,195 115,185 115,170 100,160 85,170"/>
+        <polygon points="5,70 15,85 15,100 5,115 -5,100 -5,85" transform="translate(15,0)"/>
+      </g>
+
+      <!-- Grid lines -->
+      <line x1="100" y1="5" x2="100" y2="30" stroke="currentColor" stroke-width="0.8" opacity="0.4"/>
+      <line x1="100" y1="170" x2="100" y2="195" stroke="currentColor" stroke-width="0.8" opacity="0.4"/>
+      <line x1="5" y1="100" x2="30" y2="100" stroke="currentColor" stroke-width="0.8" opacity="0.4"/>
+      <line x1="170" y1="100" x2="195" y2="100" stroke="currentColor" stroke-width="0.8" opacity="0.4"/>
+    </g>
+  </defs>
+  <g style="color:#b8860b">
+    <use href="#zellij-pattern"/>
+  </g>
+  <!-- Accent dots -->
+  <g fill="#d4a843" opacity="0.5">
+    <circle cx="100" cy="100" r="3"/>
+    <circle cx="30" cy="35" r="2"/>
+    <circle cx="170" cy="35" r="2"/>
+    <circle cx="30" cy="165" r="2"/>
+    <circle cx="170" cy="165" r="2"/>
+  </g>
+</svg>

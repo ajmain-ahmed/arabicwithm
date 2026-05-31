@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <g fill="none" stroke="currentColor" stroke-width="1.2">
+    <!-- Outer hexagon -->
+    <polygon points="100,10 178,55 178,145 100,190 22,145 22,55" stroke-width="1.5"/>
+    <!-- Inner hexagon -->
+    <polygon points="100,40 155,72 155,128 100,160 45,128 45,72"/>
+    <!-- Six-pointed star (two triangles) -->
+    <polygon points="100,10 178,145 22,145" stroke-width="1"/>
+    <polygon points="100,190 178,55 22,55" stroke-width="1"/>
+    <!-- Inner six-pointed star -->
+    <polygon points="100,55 145,100 100,145 55,100"/>
+    <!-- Radial lines from center -->
+    <line x1="100" y1="10" x2="100" y2="190"/>
+    <line x1="22" y1="55" x2="178" y2="145"/>
+    <line x1="178" y1="55" x2="22" y2="145"/>
+    <!-- Center circle -->
+    <circle cx="100" cy="100" r="15"/>
+    <circle cx="100" cy="100" r="5" fill="currentColor"/>
+  </g>
+</svg>

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <!-- Golden color from the design palette -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#b8860b;stop-opacity:0.6" />
+      <stop offset="50%" style="stop-color:#d4a843;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#b8860b;stop-opacity:0.2" />
+    </linearGradient>
+  </defs>
+
+  <!-- 8-pointed star pattern -->
+  <g fill="none" stroke="url(#goldGrad)" stroke-width="1.2" opacity="0.7">
+    <!-- Outer octagon -->
+    <polygon points="100,10 165,35 190,100 165,165 100,190 35,165 10,100 35,35" />
+
+    <!-- Inner connecting lines creating the girih pattern -->
+    <!-- Diagonal lines from center to points -->
+    <line x1="100" y1="10" x2="100" y2="190" />
+    <line x1="10" y1="100" x2="190" y2="100" />
+    <line x1="35" y1="35" x2="165" y2="165" />
+    <line x1="165" y1="35" x2="35" y2="165" />
+
+    <!-- Inner octagon -->
+    <polygon points="100,40 140,60 160,100 140,140 100,160 60,140 40,100 60,60" />
+
+    <!-- Cross lines connecting inner octagon -->
+    <line x1="100" y1="40" x2="100" y2="160" />
+    <line x1="40" y1="100" x2="160" y2="100" />
+    <line x1="60" y1="60" x2="140" y2="140" />
+    <line x1="140" y1="60" x2="60" y2="140" />
+
+    <!-- Small diamonds at the points -->
+    <polygon points="100,10 108,30 100,50 92,30" />
+    <polygon points="190,100 170,108 150,100 170,92" />
+    <polygon points="100,190 92,170 100,150 108,170" />
+    <polygon points="10,100 30,92 50,100 30,108" />
+    <polygon points="165,35 148,48 130,40 145,28" />
+    <polygon points="165,165 145,172 130,160 148,152" />
+    <polygon points="35,165 52,152 70,160 55,172" />
+    <polygon points="35,35 55,28 70,40 52,48" />
+
+    <!-- Inner star -->
+    <polygon points="100,60 120,80 120,120 100,140 80,120 80,80" />
+
+    <!-- Central square rotated -->
+    <polygon points="100,75 125,100 100,125 75,100" />
+  </g>
+
+  <!-- Small accent dots at intersections -->
+  <g fill="#d4a843" opacity="0.5">
+    <circle cx="100" cy="100" r="3" />
+    <circle cx="100" cy="10" r="2" />
+    <circle cx="190" cy="100" r="2" />
+    <circle cx="100" cy="190" r="2" />
+    <circle cx="10" cy="100" r="2" />
+    <circle cx="35" cy="35" r="2" />
+    <circle cx="165" cy="35" r="2" />
+    <circle cx="165" cy="165" r="2" />
+    <circle cx="35" cy="165" r="2" />
+  </g>
+</svg>

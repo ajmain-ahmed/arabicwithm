@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" width="400" height="250">
+  <defs>
+    <linearGradient id="mosqueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#d4a843"/>
+      <stop offset="100%" style="stop-color:#8b6914"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#mosqueGrad)">
+    <!-- Left minaret -->
+    <circle cx="70" cy="25" r="3"/>
+    <rect x="68" y="28" width="4" height="8"/>
+    <polygon points="70,20 60,50 80,50"/>
+    <rect x="58" y="50" width="24" height="5"/>
+    <rect x="62" y="55" width="16" height="60"/>
+    <rect x="58" y="115" width="24" height="5"/>
+    <rect x="60" y="120" width="20" height="70"/>
+    <rect x="56" y="190" width="28" height="5"/>
+    <rect x="58" y="195" width="24" height="55"/>
+    <rect x="52" y="250" width="36" height="5"/>
+
+    <!-- Right minaret -->
+    <circle cx="330" cy="25" r="3"/>
+    <rect x="328" y="28" width="4" height="8"/>
+    <polygon points="330,20 320,50 340,50"/>
+    <rect x="318" y="50" width="24" height="5"/>
+    <rect x="322" y="55" width="16" height="60"/>
+    <rect x="318" y="115" width="24" height="5"/>
+    <rect x="320" y="120" width="20" height="70"/>
+    <rect x="316" y="190" width="28" height="5"/>
+    <rect x="318" y="195" width="24" height="55"/>
+    <rect x="312" y="250" width="36" height="5"/>
+
+    <!-- Main dome -->
+    <path d="M 130 150 Q 200 30 270 150" stroke="none"/>
+    <rect x="130" y="150" width="140" height="10" rx="2"/>
+
+    <!-- Smaller side domes -->
+    <path d="M 100 170 Q 115 130 130 170"/>
+    <path d="M 270 170 Q 285 130 300 170"/>
+
+    <!-- Building base -->
+    <rect x="100" y="160" width="200" height="90"/>
+
+    <!-- Main entrance arch -->
+    <path d="M 175 250 L 175 200 Q 200 170 225 200 L 225 250" fill="#1a3d3a"/>
+
+    <!-- Side windows (arched) -->
+    <path d="M 120 220 L 120 195 Q 130 180 140 195 L 140 220" fill="#1a3d3a"/>
+    <path d="M 260 220 L 260 195 Q 270 180 280 195 L 280 220" fill="#1a3d3a"/>
+
+    <!-- Dome crescent -->
+    <circle cx="200" cy="55" r="4"/>
+    <rect x="198" y="58" width="4" height="6"/>
+  </g>
+</svg>

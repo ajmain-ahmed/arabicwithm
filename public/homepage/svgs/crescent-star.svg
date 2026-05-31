@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="crescentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d4a843"/>
+      <stop offset="100%" style="stop-color:#b8860b"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#crescentGrad)">
+    <!-- Crescent moon -->
+    <path d="M 100 20 
+             A 80 80 0 1 1 100 180
+             A 65 65 0 1 0 100 20 Z"/>
+    <!-- 5-pointed star -->
+    <polygon points="145,35 151,52 168,52 154,63 160,80 145,70 130,80 136,63 122,52 139,52" 
+      transform="translate(10,-5) scale(0.85)"/>
+    <!-- Small decorative stars -->
+    <polygon points="60,40 62,45 67,45 63,49 65,54 60,51 55,54 57,49 53,45 58,45" 
+      fill="#d4a843" opacity="0.6"/>
+    <polygon points="155,120 156.5,124 160,124 157.2,126.5 158.5,130 155,128 151.5,130 152.8,126.5 150,124 153.5,124" 
+      fill="#d4a843" opacity="0.5"/>
+    <!-- Tiny dots around -->
+    <circle cx="75" cy="35" r="1.5" fill="#d4a843" opacity="0.4"/>
+    <circle cx="170" cy="90" r="1.5" fill="#d4a843" opacity="0.4"/>
+    <circle cx="50" cy="130" r="1.5" fill="#d4a843" opacity="0.4"/>
+  </g>
+</svg>

@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <g id="corner-motif">
+      <!-- Main arabesque curve -->
+      <path d="M 0 0 Q 30 5, 40 25 Q 45 40, 35 55 Q 25 65, 15 60" 
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      <!-- Inner curve -->
+      <path d="M 5 5 Q 28 10, 35 28 Q 38 38, 30 48" 
+        fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.7"/>
+      <!-- Decorative leaf shapes -->
+      <ellipse cx="28" cy="15" rx="6" ry="10" 
+        fill="none" stroke="currentColor" stroke-width="1" transform="rotate(-30 28 15)"/>
+      <ellipse cx="42" cy="38" rx="5" ry="9" 
+        fill="none" stroke="currentColor" stroke-width="1" transform="rotate(20 42 38)"/>
+      <!-- Small dots -->
+      <circle cx="18" cy="22" r="2.5" fill="currentColor" opacity="0.6"/>
+      <circle cx="38" cy="48" r="2" fill="currentColor" opacity="0.5"/>
+      <circle cx="8" cy="45" r="2" fill="currentColor" opacity="0.5"/>
+      <!-- Spiral curl at end -->
+      <path d="M 15 60 Q 8 58, 8 50 Q 8 42, 15 40" 
+        fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <!-- Tiny leaf -->
+      <path d="M 20 50 Q 25 45, 28 50 Q 25 55, 20 50" 
+        fill="currentColor" opacity="0.4"/>
+    </g>
+  </defs>
+  <!-- Top-left corner -->
+  <use href="#corner-motif" style="color:#b8860b"/>
+  <!-- Top-right corner (flipped) -->
+  <use href="#corner-motif" transform="scale(-1,1) translate(-120,0)" style="color:#b8860b"/>
+  <!-- Bottom-left corner (flipped vertical) -->
+  <use href="#corner-motif" transform="scale(1,-1) translate(0,-120)" style="color:#b8860b"/>
+  <!-- Bottom-right corner (flipped both) -->
+  <use href="#corner-motif" transform="scale(-1,-1) translate(-120,-120)" style="color:#b8860b"/>
+</svg>

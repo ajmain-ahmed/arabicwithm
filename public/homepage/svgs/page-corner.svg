@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <!-- Main flowing curve -->
+    <path d="M 0 0 Q 40 5, 55 30 Q 62 42, 58 58 Q 54 68, 42 72" 
+      stroke-width="2.5" style="color:#b8860b"/>
+    <!-- Inner parallel curve -->
+    <path d="M 8 8 Q 38 12, 48, 32 Q 53 42, 50 54" 
+      stroke-width="1.5" style="color:#d4a843" opacity="0.7"/>
+    <!-- Decorative leaf -->
+    <ellipse cx="42" cy="22" rx="10" ry="5" 
+      transform="rotate(-35 42 22)" 
+      fill="currentColor" opacity="0.25" style="color:#b8860b"/>
+    <!-- Small spiral curl -->
+    <path d="M 58 58 Q 64 55, 66 50 Q 68 44, 64 42" 
+      stroke-width="1.5" style="color:#d4a843"/>
+    <!-- Dot accents -->
+    <g fill="#d4a843" stroke="none">
+      <circle cx="30" cy="18" r="2.5" opacity="0.5"/>
+      <circle cx="52" cy="44" r="2" opacity="0.4"/>
+      <circle cx="12" cy="32" r="1.5" opacity="0.3"/>
+    </g>
+    <!-- Tiny leaf accent -->
+    <path d="M 38 52 Q 42 48, 46 52 Q 42 56, 38 52" 
+      fill="#b8860b" opacity="0.3" stroke="none"/>
+  </g>
+</svg>

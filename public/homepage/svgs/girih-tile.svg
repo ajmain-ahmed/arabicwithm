@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <g id="girih-tile">
+      <!-- Decagon-based girih pattern -->
+      <polygon points="100,10 147,25 175,65 175,135 147,175 100,190 53,175 25,135 25,65 53,25" 
+        fill="none" stroke="currentColor" stroke-width="1.5"/>
+
+      <!-- Inner pentagon connections -->
+      <polygon points="100,35 135,48 148,85 128,120 85,128 48,108 40,65 65,35" 
+        fill="none" stroke="currentColor" stroke-width="1"/>
+
+      <!-- Star lines connecting vertices -->
+      <line x1="100" y1="10" x2="100" y2="190" stroke="currentColor" stroke-width="0.8"/>
+      <line x1="53" y1="25" x2="147" y2="175" stroke="currentColor" stroke-width="0.8"/>
+      <line x1="25" y1="65" x2="175" y2="135" stroke="currentColor" stroke-width="0.8"/>
+      <line x1="25" y1="135" x2="175" y2="65" stroke="currentColor" stroke-width="0.8"/>
+      <line x1="53" y1="175" x2="147" y2="25" stroke="currentColor" stroke-width="0.8"/>
+
+      <!-- Inner 5-pointed star -->
+      <polygon points="100,60 118,95 155,95 125,118 138,155 100,132 62,155 75,118 45,95 82,95" 
+        fill="none" stroke="currentColor" stroke-width="1.2"/>
+
+      <!-- Central pentagon -->
+      <polygon points="100,100 108,110 103,122 97,122 92,110" 
+        fill="currentColor" opacity="0.3"/>
+    </g>
+  </defs>
+  <g style="color:#b8860b">
+    <use href="#girih-tile"/>
+  </g>
+  <!-- Accent dots -->
+  <g fill="#d4a843" opacity="0.5">
+    <circle cx="100" cy="10" r="2.5"/>
+    <circle cx="147" cy="25" r="2.5"/>
+    <circle cx="175" cy="65" r="2.5"/>
+    <circle cx="175" cy="135" r="2.5"/>
+    <circle cx="147" cy="175" r="2.5"/>
+    <circle cx="100" cy="190" r="2.5"/>
+    <circle cx="53" cy="175" r="2.5"/>
+    <circle cx="25" cy="135" r="2.5"/>
+    <circle cx="25" cy="65" r="2.5"/>
+    <circle cx="53" cy="25" r="2.5"/>
+    <circle cx="100" cy="100" r="3"/>
+  </g>
+</svg>

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 40" width="200" height="40">
+  <defs>
+    <!-- Diamond bullet -->
+    <g id="bullet-diamond">
+      <polygon points="10,10 16,20 10,30 4,20" fill="currentColor"/>
+      <circle cx="10" cy="20" r="2" fill="white" opacity="0.5"/>
+    </g>
+    <!-- Star bullet -->
+    <g id="bullet-star">
+      <polygon points="10,5 12,14 21,14 14,19 17,28 10,23 3,28 6,19 -1,14 8,14" fill="currentColor"/>
+    </g>
+    <!-- Circle with pattern -->
+    <g id="bullet-circle">
+      <circle cx="10" cy="20" r="10" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <circle cx="10" cy="20" r="5" fill="currentColor" opacity="0.5"/>
+      <circle cx="10" cy="20" r="2" fill="currentColor"/>
+    </g>
+    <!-- Small khatam -->
+    <g id="bullet-khatam">
+      <polygon points="10,6 14,14 22,20 14,26 10,34 6,26 -2,20 6,14" 
+        fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <polygon points="10,13 13,20 10,27 7,20" fill="currentColor" opacity="0.4"/>
+    </g>
+  </defs>
+
+  <!-- Show all 4 variants in a row -->
+  <g style="color:#b8860b">
+    <use href="#bullet-diamond" x="0"/>
+    <use href="#bullet-star" x="50"/>
+    <use href="#bullet-circle" x="100"/>
+    <use href="#bullet-khatam" x="150"/>
+  </g>
+</svg>

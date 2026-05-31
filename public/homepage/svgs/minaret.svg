@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 300" width="100" height="300">
+  <defs>
+    <linearGradient id="minaretGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#d4a843"/>
+      <stop offset="100%" style="stop-color:#b8860b"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#minaretGrad)">
+    <!-- Finial (alem) -->
+    <circle cx="50" cy="12" r="4"/>
+    <rect x="48" y="16" width="4" height="12"/>
+    <!-- Top cone -->
+    <polygon points="50,8 42,35 58,35"/>
+    <!-- Upper balcony -->
+    <rect x="38" y="35" width="24" height="6" rx="1"/>
+    <rect x="36" y="41" width="28" height="3" rx="1"/>
+    <!-- Upper shaft -->
+    <rect x="42" y="44" width="16" height="60"/>
+    <!-- Middle balcony -->
+    <rect x="38" y="104" width="24" height="6" rx="1"/>
+    <rect x="36" y="110" width="28" height="3" rx="1"/>
+    <!-- Middle shaft -->
+    <rect x="40" y="113" width="20" height="70"/>
+    <!-- Lower balcony -->
+    <rect x="38" y="183" width="24" height="6" rx="1"/>
+    <rect x="36" y="189" width="28" height="3" rx="1"/>
+    <!-- Lower shaft -->
+    <rect x="38" y="192" width="24" height="80"/>
+    <!-- Base -->
+    <rect x="34" y="272" width="32" height="10" rx="2"/>
+    <rect x="30" y="282" width="40" height="8" rx="2"/>
+    <!-- Decorative bands -->
+    <rect x="42" y="60" width="16" height="2" fill="#8b6914" opacity="0.5"/>
+    <rect x="42" y="80" width="16" height="2" fill="#8b6914" opacity="0.5"/>
+    <rect x="40" y="130" width="20" height="2" fill="#8b6914" opacity="0.5"/>
+    <rect x="40" y="155" width="20" height="2" fill="#8b6914" opacity="0.5"/>
+    <rect x="38" y="210" width="24" height="2" fill="#8b6914" opacity="0.5"/>
+    <rect x="38" y="240" width="24" height="2" fill="#8b6914" opacity="0.5"/>
+  </g>
+</svg>

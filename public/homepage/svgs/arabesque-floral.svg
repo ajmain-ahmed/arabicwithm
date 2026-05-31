@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="200" height="100">
+  <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    <!-- Central stem -->
+    <path d="M 0 50 Q 50 20, 100 50 Q 150 80, 200 50" 
+      stroke-width="2" style="color:#b8860b"/>
+
+    <!-- Symmetrical scrolling vines -->
+    <path d="M 30 50 Q 50 25, 70 40 Q 80 50, 75 60" opacity="0.8"/>
+    <path d="M 170 50 Q 150 25, 130 40 Q 120 50, 125 60" opacity="0.8"/>
+
+    <!-- Leaves -->
+    <g fill="currentColor" opacity="0.4" style="color:#b8860b">
+      <!-- Left side leaves -->
+      <ellipse cx="50" cy="30" rx="12" ry="6" transform="rotate(-25 50 30)"/>
+      <ellipse cx="80" cy="45" rx="10" ry="5" transform="rotate(15 80 45)"/>
+      <ellipse cx="40" cy="55" rx="8" ry="4" transform="rotate(30 40 55)"/>
+      <!-- Right side leaves -->
+      <ellipse cx="150" cy="30" rx="12" ry="6" transform="rotate(25 150 30)"/>
+      <ellipse cx="120" cy="45" rx="10" ry="5" transform="rotate(-15 120 45)"/>
+      <ellipse cx="160" cy="55" rx="8" ry="4" transform="rotate(-30 160 55)"/>
+    </g>
+
+    <!-- Small palmette flowers -->
+    <g fill="none" stroke-width="1">
+      <path d="M 45 25 Q 50 10, 55 25 Q 50 30, 45 25" fill="currentColor" opacity="0.5"/>
+      <path d="M 145 25 Q 150 10, 155 25 Q 150 30, 145 25" fill="currentColor" opacity="0.5"/>
+      <path d="M 95 40 Q 100 28, 105 40 Q 100 45, 95 40" fill="currentColor" opacity="0.5"/>
+      <path d="M 95 60 Q 100 48, 105 60 Q 100 65, 95 60" fill="currentColor" opacity="0.5"/>
+    </g>
+
+    <!-- Decorative dots -->
+    <g fill="currentColor" style="color:#d4a843">
+      <circle cx="25" cy="42" r="2" opacity="0.5"/>
+      <circle cx="65" cy="48" r="2" opacity="0.5"/>
+      <circle cx="135" cy="48" r="2" opacity="0.5"/>
+      <circle cx="175" cy="42" r="2" opacity="0.5"/>
+      <circle cx="100" cy="35" r="1.5" opacity="0.4"/>
+      <circle cx="100" cy="65" r="1.5" opacity="0.4"/>
+    </g>
+
+    <!-- Tendril curls -->
+    <path d="M 70 60 Q 75 70, 85 65 Q 90 60, 88 55" opacity="0.6"/>
+    <path d="M 130 60 Q 125 70, 115 65 Q 110 60, 112 55" opacity="0.6"/>
+  </g>
+</svg>
