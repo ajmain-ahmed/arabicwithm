@@ -53,14 +53,6 @@ export default function WordBankDialog({ open, onClose }: WordBankDialogProps) {
 
   const userProgressWords = useVocabStore((s) => s.userProgressWords)
   const userProgressLoading = useVocabStore((s) => s.userProgressLoading)
-  const userProgressInitialized = useVocabStore((s) => s.userProgressInitialized)
-  const fetchUserProgressWords = useVocabStore((s) => s.fetchUserProgressWords)
-
-  useEffect(() => {
-    if (open && !userProgressInitialized) {
-      fetchUserProgressWords()
-    }
-  }, [open, userProgressInitialized, fetchUserProgressWords])
 
   const filteredWords = useMemo(() => {
     let words = userProgressWords ?? []

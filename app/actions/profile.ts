@@ -4,6 +4,7 @@
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { checkRateLimit } from '@/app/lib/rateLimit'
 
 export type ThemeProgress = {
   theme_id: string
@@ -193,6 +194,10 @@ export async function fetchUserProgressWords(
 
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) return []
+
+  if (!checkRateLimit(`fetchProgress:${user.id}`, 30, 60_000)) {
+    throw new Error('Rate limit exceeded. Please slow down.')
+  }
 
   let query = serviceClient
     .from('progress')

@@ -17,6 +17,7 @@ import {
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined'
 import DeleteSweepOutlinedIcon from '@mui/icons-material/DeleteSweepOutlined'
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
+import RefreshIcon from '@mui/icons-material/Refresh'
 import SchoolIcon from '@mui/icons-material/School'
 import { useRouter } from 'next/navigation'
 import { removeWordProgress, removeWordProgressBatch } from '@/app/actions/vocab'
@@ -247,8 +248,11 @@ export default function WordListPanel({ words, totalWordsOfType, type, isMobile,
   const [confirmWord, setConfirmWord] = useState<ProgressWord | null>(null)
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false)
   const [bulkDialogMode, setBulkDialogMode] = useState<'selected' | 'all'>('selected')
+  const [refreshCooldown, setRefreshCooldown] = useState(false)
 
-  const invalidateUserProgress = useVocabStore((s) => s.invalidateUserProgress)
+  const updateUserProgressWord = useVocabStore((s) => s.updateUserProgressWord)
+  const removeUserProgressWords = useVocabStore((s) => s.removeUserProgressWords)
+  const fetchUserProgressWords = useVocabStore((s) => s.fetchUserProgressWords)
   const router = useRouter()
 
   // Reset page & selection when filters or tab change (but NOT on page change)
@@ -337,11 +341,11 @@ export default function WordListPanel({ words, totalWordsOfType, type, isMobile,
     setConfirmWord(null)
     try {
       await removeWordProgress(confirmWord.vocab_id)
-      invalidateUserProgress()
+      updateUserProgressWord(confirmWord.vocab_id, null)
     } catch (err) {
       console.error('Failed to remove word:', err)
     }
-  }, [confirmWord, invalidateUserProgress])
+  }, [confirmWord, updateUserProgressWord])
 
   const handleCancelRemove = useCallback(() => {
     setConfirmWord(null)
@@ -360,6 +364,13 @@ export default function WordListPanel({ words, totalWordsOfType, type, isMobile,
     setSelectedIds(new Set())
   }, [])
 
+  const handleRefresh = useCallback(async () => {
+    if (refreshCooldown) return
+    setRefreshCooldown(true)
+    await fetchUserProgressWords(true)
+    setTimeout(() => setRefreshCooldown(false), 10_000)
+  }, [refreshCooldown, fetchUserProgressWords])
+
   const handleConfirmBulkRemove = useCallback(async () => {
     setBulkDialogOpen(false)
     const idsToRemove = bulkDialogMode === 'all'
@@ -375,11 +386,11 @@ export default function WordListPanel({ words, totalWordsOfType, type, isMobile,
         for (const id of idsToRemove) next.delete(id)
         return next
       })
-      invalidateUserProgress()
+      removeUserProgressWords(idsToRemove)
     } catch (err) {
       console.error('Failed to remove words:', err)
     }
-  }, [bulkDialogMode, sortedWords, selectedIds, invalidateUserProgress])
+  }, [bulkDialogMode, sortedWords, selectedIds, removeUserProgressWords])
 
   if (loading) {
     return (
@@ -501,6 +512,24 @@ export default function WordListPanel({ words, totalWordsOfType, type, isMobile,
               ))}
             </Select>
           </FormControl>
+          <Tooltip title={refreshCooldown ? 'Wait 10s' : 'Refresh'}>
+            <Button
+              onClick={handleRefresh}
+              size="small"
+              disabled={refreshCooldown}
+              sx={{
+                minWidth: 0,
+                width: 32,
+                height: 32,
+                p: 0,
+                borderRadius: '8px',
+                color: refreshCooldown ? '#ccc' : '#9e8a7a',
+                '&:hover': { background: 'rgba(44,26,14,0.04)' },
+              }}
+            >
+              <RefreshIcon sx={{ fontSize: 16 }} />
+            </Button>
+          </Tooltip>
         </Box>
 
         {/* Row 2: select controls */}
@@ -745,6 +774,25 @@ export default function WordListPanel({ words, totalWordsOfType, type, isMobile,
               ))}
             </Select>
           </FormControl>
+
+          <Tooltip title={refreshCooldown ? 'Wait 10s' : 'Refresh'}>
+            <Button
+              onClick={handleRefresh}
+              size="small"
+              disabled={refreshCooldown}
+              sx={{
+                minWidth: 0,
+                width: 32,
+                height: 32,
+                p: 0,
+                borderRadius: '8px',
+                color: refreshCooldown ? '#ccc' : '#9e8a7a',
+                '&:hover': { background: 'rgba(44,26,14,0.04)' },
+              }}
+            >
+              <RefreshIcon sx={{ fontSize: 16 }} />
+            </Button>
+          </Tooltip>
         </Box>
       </Box>
 

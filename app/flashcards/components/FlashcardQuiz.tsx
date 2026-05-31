@@ -258,7 +258,14 @@ function FlashcardQuiz({
         if (toRevision) {
             // Adding to revision — also counts as "done" for progress %
             updateCardStatus(current.id, 'revision', { status: 0 })
-            updateUserProgressWord(current.id, 'revision')
+            updateUserProgressWord(current.id, 'revision', {
+                word_ar: current.word,
+                word_di: current.word_diacritic,
+                word_tr: current.transliteration,
+                level: current.level,
+                theme: current.theme_id,
+                meaning: current.definition,
+            })
             clearSession() // invalidate daily count cache
             if (currentIndex < filteredCards.length - 1) {
                 goToIndex(currentIndex + 1)
@@ -284,7 +291,14 @@ function FlashcardQuiz({
             updateUserProgressWord(current.id, null)
         } else {
             updateCardStatus(current.id, 'completed', { status: 1 })
-            updateUserProgressWord(current.id, 'completed')
+            updateUserProgressWord(current.id, 'completed', {
+                word_ar: current.word,
+                word_di: current.word_diacritic,
+                word_tr: current.transliteration,
+                level: current.level,
+                theme: current.theme_id,
+                meaning: current.definition,
+            })
         }
 
         if (!wasCompleted) {

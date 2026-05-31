@@ -1,15 +1,18 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRevisionStore } from '@/store/revisionStore'
+import { useVocabStore } from '@/store/vocabStore'
+import { useAuth } from '@/app/AuthContext'
 
 export default function GlobalDataInit({ children }: { children: React.ReactNode }) {
-  const fetchCustomMetadata = useRevisionStore((s) => s.fetchCustomMetadata)
+  const fetchUserProgressWords = useVocabStore((s) => s.fetchUserProgressWords)
+  const { user } = useAuth()
 
   useEffect(() => {
-    // Fires once per app load. Store TTL handles hot reloads / remounts.
-    fetchCustomMetadata()
-  }, [fetchCustomMetadata])
+    if (user) {
+      fetchUserProgressWords()
+    }
+  }, [user, fetchUserProgressWords])
 
   return <>{children}</>
 }

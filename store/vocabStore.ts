@@ -40,8 +40,13 @@ interface VocabStore {
   userProgressWords: ProgressWord[] | null
   userProgressLoading: boolean
   userProgressInitialized: boolean
-  fetchUserProgressWords: () => Promise<void>
-  updateUserProgressWord: (vocabId: number, status: 'revision' | 'completed' | null) => void
+  fetchUserProgressWords: (force?: boolean) => Promise<void>
+  updateUserProgressWord: (
+    vocabId: number,
+    status: 'revision' | 'completed' | null,
+    meta?: Partial<ProgressWord>
+  ) => void
+  removeUserProgressWords: (vocabIds: number[]) => void
   invalidateUserProgress: () => void
 }
 
@@ -178,37 +183,73 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
     })
   },
 
-  fetchUserProgressWords: async () => {
-    if (get().userProgressInitialized || get().userProgressLoading) return
+  fetchUserProgressWords: async (force?: boolean) => {
+    if ((!force && get().userProgressInitialized) || get().userProgressLoading) return
     set({ userProgressLoading: true })
     try {
       const words = await fetchUserProgressWordsServer()
-      set({ userProgressWords: words, userProgressLoading: false, userProgressInitialized: true })
+      set((state) => {
+        const fetchedIds = new Set(words.map(w => w.vocab_id))
+        // Preserve any locally-added words that haven't been flushed to DB yet
+        const localOnly = (state.userProgressWords ?? []).filter(w => !fetchedIds.has(w.vocab_id))
+        return {
+          userProgressWords: [...words, ...localOnly],
+          userProgressLoading: false,
+          userProgressInitialized: true,
+        }
+      })
     } catch (err: any) {
       set({ error: err.message, userProgressLoading: false })
     }
   },
 
-  updateUserProgressWord: (vocabId: number, status: 'revision' | 'completed' | null) => {
+  updateUserProgressWord: (vocabId: number, status: 'revision' | 'completed' | null, meta?: Partial<ProgressWord>) => {
     set((state) => {
-      if (!state.userProgressWords) return state
-      const exists = state.userProgressWords.find(w => w.vocab_id === vocabId)
+      const currentWords = state.userProgressWords ?? []
+      const exists = currentWords.find(w => w.vocab_id === vocabId)
       if (status === null) {
         // Remove from progress words
         return {
-          userProgressWords: state.userProgressWords.filter(w => w.vocab_id !== vocabId),
+          userProgressWords: currentWords.filter(w => w.vocab_id !== vocabId),
         }
       }
       if (exists) {
         return {
-          userProgressWords: state.userProgressWords.map(w =>
+          userProgressWords: currentWords.map(w =>
             w.vocab_id === vocabId ? { ...w, status } : w
           ),
         }
       }
-      // Word not in cache — we don't have its metadata (word_ar, etc.) here.
-      // The next time the user visits the profile page, a fresh fetch will pick it up.
-      return state
+      // Word not in cache — if we have metadata, insert it optimistically
+      if (meta) {
+        const newWord: ProgressWord = {
+          vocab_id: vocabId,
+          word_ar: meta.word_ar ?? '',
+          word_di: meta.word_di ?? '',
+          word_tr: meta.word_tr ?? '',
+          level: meta.level ?? '',
+          theme: meta.theme ?? '',
+          root: meta.root ?? null,
+          status,
+          updated_at: new Date().toISOString(),
+          meaning: meta.meaning,
+        }
+        return {
+          userProgressWords: [...currentWords, newWord],
+        }
+      }
+      // No metadata available — mark stale so widget refetches fresh data
+      return { userProgressInitialized: false }
+    })
+  },
+
+  removeUserProgressWords: (vocabIds: number[]) => {
+    set((state) => {
+      if (!state.userProgressWords) return state
+      const idSet = new Set(vocabIds)
+      return {
+        userProgressWords: state.userProgressWords.filter(w => !idSet.has(w.vocab_id)),
+      }
     })
   },
 

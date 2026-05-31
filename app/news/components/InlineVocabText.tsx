@@ -340,7 +340,20 @@ export default function InlineVocabText({
     setToggling(true)
     const nextInRevision = !isInRevision(activeEntry.id)
     toggleRevisionBuffered(activeEntry.id)
-    updateUserProgressWord(activeEntry.id, nextInRevision ? 'revision' : null)
+    updateUserProgressWord(
+      activeEntry.id,
+      nextInRevision ? 'revision' : null,
+      nextInRevision
+        ? {
+            word_ar: activeEntry.word,
+            word_di: activeEntry.word_diacritic,
+            word_tr: activeEntry.transliteration,
+            level: activeEntry.level,
+            theme: activeEntry.theme,
+            meaning: activeEntry.definition,
+          }
+        : undefined
+    )
     setToggling(false)
   }, [activeEntry, toggleRevisionBuffered, isInRevision, updateUserProgressWord])
 
