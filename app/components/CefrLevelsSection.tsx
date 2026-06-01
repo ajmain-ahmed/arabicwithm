@@ -260,10 +260,10 @@ export default function CefrLevelsSection({ levels }: { levels: LevelMeta[] }) {
             sx={{
               display: 'grid',
               gridTemplateColumns: {
-                xs: 'repeat(2, 1fr)',
-                sm: 'repeat(3, 1fr)',
-                md: 'repeat(4, 1fr)',
-                lg: 'repeat(7, 1fr)',
+                xs: 'repeat(2, minmax(0, 1fr))',
+                sm: 'repeat(3, minmax(0, 1fr))',
+                md: 'repeat(4, minmax(0, 1fr))',
+                lg: 'repeat(7, minmax(0, 1fr))',
               },
               gap: { xs: 1.5, sm: 2, md: 2.5, lg: 2.5, xl: 3 },
             }}
