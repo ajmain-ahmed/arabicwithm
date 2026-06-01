@@ -463,6 +463,7 @@ export default function CartoonsPage({
         minHeight: '100vh',
         background: WARM_WHITE,
         pt: { xs: '56px', md: '64px' },
+        pb: { xs: 4, md: 8 },
       }}
     >
       <PageBanner
@@ -489,10 +490,13 @@ export default function CartoonsPage({
           position: 'relative',
           zIndex: 2,
           px: { xs: 2, md: 3 },
+          display: 'flex',
+          flexDirection: 'column',
+          gap: { xs: 4, md: 6 },
         }}
       >
         {/* ── Section Header ── */}
-        <Box id="shows-section" sx={{ textAlign: 'center', mb: 3, pt: 4 }}>
+        <Box id="shows-section" sx={{ textAlign: 'center', pt: 4 }}>
           <Typography
             sx={{
               fontFamily: '"Jost", system-ui, sans-serif',
@@ -528,7 +532,7 @@ export default function CartoonsPage({
         </Box>
 
         {/* ── Mobile Filter Button ── */}
-        <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
           <Button
             startIcon={<Tune />}
             onClick={() => setFilterDrawerOpen(true)}
@@ -574,7 +578,7 @@ export default function CartoonsPage({
         </Box>
 
         {/* ── Desktop: Sidebar + Grid Layout ── */}
-        <Box sx={{ display: 'flex', gap: { md: 4, lg: 5 }, mb: 6 }}>
+        <Box sx={{ display: 'flex', gap: { md: 4, lg: 5 } }}>
           {/* Sidebar — desktop only */}
           <Box
             sx={{
@@ -666,7 +670,7 @@ export default function CartoonsPage({
         {/* ═══════════════════════════════════════════════
             COMING SOON
            ═══════════════════════════════════════════════ */}
-        <Box sx={{ pb: 8 }}>
+        <Box>
           <Box
             sx={{
               display: 'flex',
