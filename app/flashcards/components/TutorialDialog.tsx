@@ -51,7 +51,7 @@ const MOBILE_PAGES = [
   },
   {
     title: 'Swipe to Navigate',
-    body: 'Swipe left to go to the next card, swipe right to go back. Pull far enough and the card slides away; release early and it smoothly bounces back to centre.',
+    body: 'Swipe left to mark a word for revision, swipe right to mark it as complete. Pull far enough and the card slides away; release early and it smoothly bounces back to centre.',
     image: '/themes/weather.avif',
   },
   {

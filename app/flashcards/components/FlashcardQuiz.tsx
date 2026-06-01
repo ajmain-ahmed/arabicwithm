@@ -245,9 +245,19 @@ function FlashcardQuiz({
         const threshold = 60
         const velocityThreshold = 300
         if (info.offset.x < -threshold || info.velocity.x < -velocityThreshold) {
-            handleNext()
+            // Swipe left → revision
+            if (current && current.status !== 'revision') {
+                toggleRevision()
+            } else {
+                handleNext()
+            }
         } else if (info.offset.x > threshold || info.velocity.x > velocityThreshold) {
-            handlePrevious()
+            // Swipe right → complete
+            if (current && current.status !== 'completed') {
+                toggleComplete()
+            } else {
+                handleNext()
+            }
         }
     }
 
@@ -523,7 +533,7 @@ function FlashcardQuiz({
                             )}
 
                             {/* Desktop action buttons */}
-                            <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', mt: '1.25rem' }}>
+                            <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px', mt: '1.25rem' }}>
                                 <Button variant="outlined" size="small" onClick={handlePrevious} disabled={!canGoBack} startIcon={<NavigateBefore sx={{ fontSize: '1.1rem !important' }} />}
                                     sx={{ borderColor: '#7a6e65', color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontWeight: 500, fontSize: '0.9rem', padding: '0.6rem 0.5rem', borderRadius: '6px', textTransform: 'none', '&:hover': { background: 'rgba(122,110,101,0.08)' }, '&:disabled': { opacity: 0.4 } }}>Back</Button>
                                 <Button variant={current.status === 'revision' ? 'contained' : 'outlined'} color="primary" size="small" onClick={toggleRevision} disabled={!user} startIcon={current.status === 'revision' ? <BookmarkAdded sx={{ fontSize: '1.1rem !important' }} /> : <Bookmark sx={{ fontSize: '1.1rem !important' }} />}
@@ -579,7 +589,7 @@ function FlashcardQuiz({
                     </Fade>
             {isMobile && (
                 <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#6b5f55', textAlign: 'center', mt: 1 }}>
-                    Swipe left → Skip · Swipe right → Back
+                    Swipe left → Revision · Swipe right → Complete
                 </Typography>
             )}
         </Box>

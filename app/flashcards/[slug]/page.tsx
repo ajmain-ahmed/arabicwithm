@@ -457,7 +457,7 @@ export default function FlashcardSlugPage() {
 
                     {/* Main content */}
                     {(themesLoading && !selectedTheme) || !themeTransitionReady ? (
-                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' }, gap: { xs: 2, lg: 3 }, alignItems: 'start' }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: '1fr 360px' }, gap: { xs: 2, lg: 3 }, alignItems: 'start' }}>
                             <LoadingView label="Loading themes…" isLoading={themesLoading && !selectedTheme} />
                             <Box sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.15)', borderRadius: '10px', overflow: 'hidden', display: { xs: 'none', lg: 'block' } }}>
                                 <Skeleton variant="rounded" height={100} sx={{ borderRadius: 0 }} />
@@ -471,7 +471,7 @@ export default function FlashcardSlugPage() {
                             </Box>
                         </Box>
                     ) : (
-                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 360px' }, gap: { xs: 2, lg: 3 }, alignItems: 'start' }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: '1fr 360px' }, gap: { xs: 2, lg: 3 }, alignItems: 'start' }}>
                             <Box>
                                 {selectedTheme && (
                                     <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
