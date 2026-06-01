@@ -128,7 +128,7 @@ export default function WordBankDialog({ open, onClose }: WordBankDialogProps) {
             color: '#2c1a0e',
           }}
         >
-          Word Bank
+          House of Cards
         </Typography>
         <IconButton onClick={handleClose} size="small" aria-label="Close" sx={{ color: '#9e8a7a' }}>
           <CloseIcon sx={{ fontSize: 22 }} />

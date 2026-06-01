@@ -1,51 +1,21 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { Box, Typography, Skeleton, CircularProgress } from '@mui/material'
+import { Box, Typography, Skeleton, CircularProgress, Container } from '@mui/material'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '@/app/AuthContext'
 import CustomSessionConfig from './CustomSessionConfig'
 import { useRevisionStore } from '@/store/revisionStore'
-import { getLevelProgressStats } from '@/app/actions/revision'
+
+import { PageBanner, HowItWorksSection, PlacementTestCTA } from '@/app/components/page-layout'
 import type { RevisionCard } from '@/app/actions/revision'
-import type { LevelProgressStat } from '@/app/actions/revision'
 import type { ModeConfig } from './types'
+
+/* ── MUI Icons ── */
+import { School, MenuBook, TrendingUp, LibraryBooks, EventRepeat } from '@mui/icons-material'
 
 const PAGE_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,700;1,700&family=Jost:wght@300;400;500;600;700&display=swap');
-
-  .revision-banner-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-  }
-  .revision-banner-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to bottom,
-      rgba(44,26,14,0.45) 0%,
-      rgba(44,26,14,0.65) 55%,
-      rgba(44,26,14,0.90) 100%
-    );
-  }
-  .revision-banner-vignette {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-      circle,
-      rgba(0,0,0,0) 0%,
-      rgba(0,0,0,0.45) 70%,
-      rgba(0,0,0,0.75) 100%
-    );
-  }
-  .revision-banner-content {
-    position: relative;
-    z-index: 1;
-  }
 `
 
 interface WelcomeScreenProps {
@@ -65,10 +35,6 @@ function classifyForCount(card: RevisionCard): 'new' | 'learning' | 'review' {
 export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeScreenProps) {
   const { user } = useAuth()
   const [starting, setStarting] = useState(false)
-  const [levelProgress, setLevelProgress] = useState<LevelProgressStat[]>([])
-  const [progressLoading, setProgressLoading] = useState(true)
-
-  const getSession = useRevisionStore((s) => s.getSession)
   const sessionCache = useRevisionStore((s) => s.sessionCache)
   const sessionLoading = useRevisionStore((s) => s.sessionLoading)
 
@@ -77,20 +43,8 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
   const fetchCustomMetadata = useRevisionStore((s) => s.fetchCustomMetadata)
 
   useEffect(() => {
-    getSession()
-  }, [getSession])
-
-  useEffect(() => {
     fetchCustomMetadata()
   }, [fetchCustomMetadata])
-
-  useEffect(() => {
-    setProgressLoading(true)
-    getLevelProgressStats()
-      .then((data) => setLevelProgress(data))
-      .catch((err) => console.error('Failed to fetch level progress:', err))
-      .finally(() => setProgressLoading(false))
-  }, [])
 
   const handleStartDaily = () => {
     setStarting(true)
@@ -120,69 +74,20 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
     <>
       <style>{PAGE_CSS}</style>
       <Box component="main" sx={{ minHeight: '100vh', background: '#f5ede0', pt: { xs: '56px', md: '64px' } }}>
-        {/* ── Banner ── */}
-        <Box
-          sx={{
-            position: 'relative',
-            overflow: 'hidden',
-            borderBottom: '1px solid rgba(212,168,67,0.2)',
-            px: { xs: 3, md: 8 },
-            py: { xs: 7, md: 6 },
-            textAlign: 'center',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Box
-            component="img"
-            className="revision-banner-img"
-            src="/cards/awm13_converted.avif"
-            alt=""
-            aria-hidden="true"
-          />
-          <Box className="revision-banner-overlay" />
-          <Box className="revision-banner-vignette" />
-          <Box className="revision-banner-content">
-            <Typography
-              component="h1"
-              sx={{
-                fontFamily: "'EB Garamond', serif",
-                fontSize: { xs: '2.8rem', md: '3.4rem' },
-                fontWeight: 700,
-                color: '#f5ede0',
-                lineHeight: 1.1,
-                mb: 0.5,
-                direction: 'rtl',
-              }}
-            >
-              بَيْتُ الْكَلِمَات
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: "'EB Garamond', serif",
-                fontSize: { xs: '1.35rem', md: '1.6rem' },
-                color: '#d4a843',
-                mb: 1,
-              }}
-            >
-              Bayt al-Kalimāt, House of Words
-            </Typography>
-            <Typography
-              sx={{
-                fontFamily: 'Jost, sans-serif',
-                fontSize: { xs: '0.9rem', md: '1rem' },
-                color: 'rgba(245,237,224,0.85)',
-                lineHeight: 1.5,
-                maxWidth: 480,
-                mx: 'auto',
-                fontWeight: 400,
-              }}
-            >
-              Sharpen what you know, Learn what you don&apos;t, One card at a time.
-            </Typography>
-          </Box>
-        </Box>
+        <PageBanner
+          title="House of Cards"
+          titleAr="بَيْتُ الْكَلِمَات"
+          description="Sharpen what you know, Learn what you don't, One card at a time."
+          features={[
+            { icon: <School sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Spaced Repetition' },
+            { icon: <MenuBook sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Personalised Decks' },
+            { icon: <TrendingUp sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Track Progress' },
+          ]}
+          ctaLabel="Test My Arabic Skill"
+          ctaAction={handleStartDaily}
+          ctaStartIcon={<School sx={{ fontSize: 20 }} />}
+          backgroundImage="/cards/awm13_converted.avif"
+        />
 
         <Box sx={{ pt: { xs: 3, md: 5 }, pb: { xs: 4, md: 6 }, px: { xs: 1.5, md: 3, lg: 5 } }}>
           <Box sx={{ maxWidth: 1536, mx: 'auto' }}>
@@ -197,14 +102,41 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
               <CustomSessionConfig
                 metadata={metadata ?? []}
                 counts={counts}
+                dueCards={dueCards}
                 user={user}
-                levelProgress={levelProgress}
                 onStartDaily={handleStartDaily}
                 onStart={handleStartCustom}
               />
             )}
           </Box>
         </Box>
+
+        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pb: { xs: 4, md: 6 } }}>
+          <HowItWorksSection
+            steps={[
+              {
+                icon: <LibraryBooks sx={{ fontSize: 22, color: '#b8860b' }} />,
+                title: 'Organise Your Words',
+                desc: 'Sort vocabulary into New, Learning, and Review buckets. Track what you know and what needs work.',
+              },
+              {
+                icon: <EventRepeat sx={{ fontSize: 22, color: '#b8860b' }} />,
+                title: 'Review Daily with SM-2',
+                desc: 'Our spaced-repetition algorithm serves the right cards at the right time so you never forget.',
+              },
+              {
+                icon: <School sx={{ fontSize: 22, color: '#b8860b' }} />,
+                title: 'Build Lasting Fluency',
+                desc: 'Solidify your Arabic vocabulary session by session, from first words to native-level mastery.',
+              },
+            ]}
+          />
+          <PlacementTestCTA
+            heading="Not Sure Where to Start?"
+            description="Take a quick placement test to find shows matched to your Arabic level."
+            ctaLabel="Take Placement Test"
+          />
+        </Container>
       </Box>
 
       <AnimatePresence>

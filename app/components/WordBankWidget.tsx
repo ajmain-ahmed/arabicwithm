@@ -30,7 +30,7 @@ export default function WordBankWidget() {
     <>
       <Zoom in={!open}>
         <Fab
-          aria-label="Word bank"
+          aria-label="House of Cards"
           onClick={handleOpen}
           sx={{
             position: 'fixed',

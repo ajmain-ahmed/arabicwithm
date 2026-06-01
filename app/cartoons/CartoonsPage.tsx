@@ -15,11 +15,11 @@ import {
 import Grid from '@mui/material/Grid'
 import { useRouter } from 'next/navigation'
 import { ShowMeta } from '../lib/cartoons'
+import { PageBanner, HowItWorksSection, PlacementTestCTA } from '@/app/components/page-layout'
 
 /* ── MUI Icons ── */
 import {
   PlayArrow,
-  ChevronRight,
   Subtitles,
   MenuBook,
   School,
@@ -41,9 +41,6 @@ const CREAM = '#f5ede0'
 const WARM_WHITE = '#fffaf0'
 const MUTED = '#7a6e65'
 const LABEL = '#9e8a7a'
-
-/* ── How It Works background ── */
-const HOW_IT_WORKS_BG = "url('/pattern.svg')"
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   'A1-A2': '#6b8f5e',
@@ -468,177 +465,20 @@ export default function CartoonsPage({
         pt: { xs: '56px', md: '64px' },
       }}
     >
-      {/* ═══════════════════════════════════════════════
-          HERO
-         ═══════════════════════════════════════════════ */}
-      <Box
-        sx={{
-          position: 'relative',
-          width: '100%',
-          minHeight: { xs: '280px', md: '300px' },
-          maxHeight: { xs: '50vh', md: 'none' },
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          px: { xs: 2, md: 4 },
-          pt: { xs: 6, md: 10 },
-          pb: { xs: 10, md: 10 },
-          overflow: 'hidden',
-        }}
-      >
-        {/* Background image */}
-        <Box
-          component="img"
-          src="/cartoons/cartooons.avif"
-          alt=""
-          aria-hidden="true"
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center',
-          }}
-        />
-        {/* Dark overlay */}
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              'linear-gradient(to bottom, rgba(10,31,21,0.40) 0%, rgba(10,31,21,0.60) 55%, rgba(10,31,21,0.88) 100%)',
-          }}
-        />
-        {/* Vignette */}
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              'radial-gradient(circle, rgba(0,0,0,0) 0%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.8) 100%)',
-          }}
-        />
-
-        {/* Title */}
-        <Typography
-          variant="h1"
-          sx={{
-            fontFamily: '"EB Garamond", Georgia, serif',
-            fontSize: { xs: '32px', sm: '48px', md: '72px' },
-            fontWeight: 700,
-            color: '#fff',
-            mb: 1,
-            position: 'relative',
-            zIndex: 1,
-          }}
-        >
-          Arabic Cartoons
-        </Typography>
-
-        {/* Arabic subtitle */}
-        <Typography
-          sx={{
-            fontFamily: '"EB Garamond", Georgia, serif',
-            fontSize: { xs: '18px', sm: '24px', md: '36px' },
-            fontWeight: 600,
-            color: GOLD_LT,
-            mb: 2,
-            position: 'relative',
-            zIndex: 1,
-            direction: 'rtl',
-          }}
-        >
-          الرسوم المتحركة بالعربية
-        </Typography>
-
-        {/* Description */}
-        <Typography
-          sx={{
-            fontFamily: '"Jost", system-ui, sans-serif',
-            fontSize: { xs: '14px', sm: '16px', md: '20px' },
-            fontWeight: 500,
-            lineHeight: 1.5,
-            color: 'rgba(255,255,255,0.8)',
-            maxWidth: 420,
-            mb: { xs: 2, md: 3 },
-            position: 'relative',
-            zIndex: 1,
-          }}
-        >
-          Learn Arabic naturally through your favourite shows, with interactive
-          subtitles and vocabulary.
-        </Typography>
-
-        {/* Feature labels — desktop */}
-        <Box
-          sx={{
-            display: { xs: 'none', lg: 'flex' },
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 4,
-            mb: 3,
-            position: 'relative',
-            zIndex: 1,
-          }}
-        >
-          {[
-            { label: 'Interactive Subtitles', icon: <Subtitles sx={{ fontSize: { xs: 14, md: 16 }, mr: 0.5 }} /> },
-            { label: 'Vocabulary Builder', icon: <MenuBook sx={{ fontSize: { xs: 14, md: 16 }, mr: 0.5 }} /> },
-            { label: 'Grammar Notes', icon: <School sx={{ fontSize: { xs: 14, md: 16 }, mr: 0.5 }} /> },
-          ].map((f) => (
-            <Box key={f.label} sx={{ display: 'flex', alignItems: 'center' }}>
-              {f.icon}
-              <Typography sx={{ fontSize: { xs: 13, md: 16 }, color: 'rgba(255,255,255,0.9)' }}>
-                {f.label}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-
-        {/* Mobile feature line */}
-        <Typography
-          sx={{
-            display: { xs: 'block', lg: 'none' },
-            fontSize: 12,
-            fontStyle: 'italic',
-            color: GOLD_LT,
-            mb: 2,
-            position: 'relative',
-            zIndex: 1,
-          }}
-        >
-          With interactive subtitles, vocabulary &amp; grammar
-        </Typography>
-
-        {/* CTA */}
-        <Button
-          variant="contained"
-          endIcon={<ChevronRight />}
-          onClick={goToRandomEpisode}
-          sx={{
-            backgroundColor: GOLD,
-            color: BARK,
-            fontFamily: '"Jost", system-ui, sans-serif',
-            fontSize: { xs: 16, md: 19 },
-            fontWeight: 500,
-            textTransform: 'none',
-            borderRadius: '9999px',
-            px: 4,
-            py: 1.2,
-            minHeight: 48,
-            boxShadow: '0 4px 16px rgba(184,134,11,0.3)',
-            '&:hover': { backgroundColor: GOLD_LT, transform: 'scale(1.02)' },
-            transition: 'all 0.2s',
-            position: 'relative',
-            zIndex: 1,
-          }}
-        >
-          Take Me Anywhere
-        </Button>
-      </Box>
+      <PageBanner
+        title="Arabic Cartoons"
+        titleAr="الرسوم المتحركة بالعربية"
+        description="Learn Arabic naturally through your favourite shows, with interactive subtitles and vocabulary."
+        features={[
+          { icon: <Subtitles sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Interactive Subtitles' },
+          { icon: <MenuBook sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Vocabulary Builder' },
+          { icon: <School sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Grammar Notes' },
+        ]}
+        ctaLabel="Take Me Anywhere"
+        ctaAction={goToRandomEpisode}
+        ctaStartIcon={<PlayArrow sx={{ fontSize: 20 }} />}
+        backgroundImage="/cartoons/cartooons.avif"
+      />
 
       {/* ═══════════════════════════════════════════════
           CONTENT
@@ -797,192 +637,31 @@ export default function CartoonsPage({
           </Box>
         </Box>
 
-        {/* ═══════════════════════════════════════════════
-            HOW IT WORKS
-           ═══════════════════════════════════════════════ */}
-        <Box
-          sx={{
-            backgroundColor: '#1f1d21',
-            backgroundImage: HOW_IT_WORKS_BG,
-            borderRadius: '16px',
-            px: { xs: 3, md: 6 },
-            py: { xs: 5, md: 6 },
-            mb: 6,
-            textAlign: 'center',
-          }}
-        >
-          <Typography
-            sx={{
-              fontFamily: '"Jost", system-ui, sans-serif',
-              fontSize: { xs: 12, md: 13 },
-              textTransform: 'uppercase',
-              letterSpacing: '0.12em',
-              color: '#ffffff',
-              mb: 0.5,
-            }}
-          >
-            How It Works
-          </Typography>
-          <Typography
-            sx={{
-              fontFamily: '"EB Garamond", Georgia, serif',
-              fontSize: { xs: 22, md: 28 },
-              color: WARM_WHITE,
-              mb: 4,
-            }}
-          >
-            Three Steps to Learning
-          </Typography>
+        <HowItWorksSection
+          steps={[
+            {
+              icon: <Tv sx={{ fontSize: 22, color: '#b8860b' }} />,
+              title: 'Watch with Subtitles',
+              desc: 'Dual Arabic & English subtitles while you watch',
+            },
+            {
+              icon: <TouchApp sx={{ fontSize: 22, color: '#b8860b' }} />,
+              title: 'Click Any Word',
+              desc: 'Instant definitions, transliteration & audio',
+            },
+            {
+              icon: <AutoStories sx={{ fontSize: 22, color: '#b8860b' }} />,
+              title: 'Review & Learn',
+              desc: 'Save words to your personal vocabulary deck',
+            },
+          ]}
+        />
 
-          <Grid container spacing={3}>
-            {[
-              {
-                icon: <Tv sx={{ fontSize: 22, color: GOLD }} />,
-                title: 'Watch with Subtitles',
-                desc: 'Dual Arabic & English subtitles while you watch',
-              },
-              {
-                icon: <TouchApp sx={{ fontSize: 22, color: GOLD }} />,
-                title: 'Click Any Word',
-                desc: 'Instant definitions, transliteration & audio',
-              },
-              {
-                icon: <AutoStories sx={{ fontSize: 22, color: GOLD }} />,
-                title: 'Review & Learn',
-                desc: 'Save words to your personal vocabulary deck',
-              },
-            ].map((step) => (
-              <Grid size={{ xs: 12, md: 4 }} key={step.title}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <Box
-                    sx={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: '50%',
-                      backgroundColor: WARM_WHITE,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mb: 2,
-                      boxShadow: '0 2px 8px rgba(44,26,14,0.06)',
-                    }}
-                  >
-                    {step.icon}
-                  </Box>
-                  <Typography
-                    sx={{
-                      fontFamily: '"Jost", system-ui, sans-serif',
-                      fontSize: { xs: 15, md: 17 },
-                      fontWeight: 600,
-                      color: WARM_WHITE,
-                      mb: 0.5,
-                    }}
-                  >
-                    {step.title}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: { xs: 13, md: 15 },
-                      fontWeight: 500,
-                      color: 'rgba(245,237,224,0.7)',
-                      lineHeight: 1.5,
-                      maxWidth: 280,
-                      mx: 'auto',
-                    }}
-                  >
-                    {step.desc}
-                  </Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        {/* ═══════════════════════════════════════════════
-            PLACEMENT TEST CTA
-           ═══════════════════════════════════════════════ */}
-        <Box
-          sx={{
-            position: 'relative',
-            py: 5,
-            px: 3,
-            textAlign: 'center',
-            borderRadius: { xs: 0, md: '16px' },
-            mx: { xs: -2, md: 0 },
-            mb: 6,
-            overflow: 'hidden',
-          }}
-        >
-          <Box
-            component="img"
-            src="/cards/awm6_converted.avif"
-            alt=""
-            aria-hidden="true"
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center',
-            }}
-          />
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              background: 'rgba(44,26,14,0.78)',
-            }}
-          />
-          <Typography
-            sx={{
-              position: 'relative',
-              zIndex: 1,
-              fontFamily: '"EB Garamond", Georgia, serif',
-              fontSize: 22,
-              color: '#fff',
-              mb: 1.5,
-            }}
-          >
-            Not Sure Where to Start?
-          </Typography>
-          <Typography
-            sx={{
-              position: 'relative',
-              zIndex: 1,
-              fontSize: 14,
-              color: 'rgba(255,255,255,0.7)',
-              maxWidth: 400,
-              mx: 'auto',
-              mb: 3,
-              lineHeight: 1.5,
-            }}
-          >
-            Take a quick placement test to find shows matched to your Arabic
-            level.
-          </Typography>
-          <Button
-            variant="contained"
-            endIcon={<ChevronRight />}
-            sx={{
-              position: 'relative',
-              zIndex: 1,
-              backgroundColor: GOLD,
-              color: BARK,
-              fontFamily: '"Jost", system-ui, sans-serif',
-              fontSize: 14,
-              fontWeight: 600,
-              textTransform: 'none',
-              borderRadius: '9999px',
-              px: 4,
-              py: 1.2,
-              minHeight: 48,
-              '&:hover': { backgroundColor: GOLD_LT },
-            }}
-          >
-            Take Placement Test
-          </Button>
-        </Box>
+        <PlacementTestCTA
+          heading="Not Sure Where to Start?"
+          description="Take a quick placement test to find shows matched to your Arabic level."
+          ctaLabel="Take Placement Test"
+        />
 
         {/* ═══════════════════════════════════════════════
             COMING SOON

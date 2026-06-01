@@ -15,6 +15,7 @@ export interface SessionCard {
     data: RevisionCard
     queue: Queue
     lapses: number
+    learningStep: number
     dotId: string
 }
 
@@ -46,11 +47,12 @@ export const RATING_COLORS: Record<Answer, string> = {
 
 /* ── Helpers ───────────────────────────────────────────── */
 export function classifyCard(card: RevisionCard): Queue {
-    const lastReview = card.last_review_at as string | null | undefined
     const interval = card.interval_days as number | null | undefined
-    if (!lastReview && (card.repetitions ?? 0) === 0) return 'new'
-    if (interval == null || interval === 0) return 'learning'
-    return 'review'
+
+    if (interval != null && interval > 0) return 'review'
+    if ((card.repetitions ?? 0) === 0 && !card.last_review_at) return 'new'
+    if ((card.learning_step ?? 0) > 0) return 'learning'
+    return 'learning'
 }
 
 export function parseExamples(card: RevisionCard) {

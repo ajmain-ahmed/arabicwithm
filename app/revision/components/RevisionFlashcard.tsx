@@ -46,6 +46,7 @@ function getIntervalLabel(card: SessionCard, answer: Answer): string {
         interval_days: card.data.interval_days,
         ease_factor: card.data.ease_factor,
         lapses: card.data.lapses ?? 0,
+        learning_step: card.data.learning_step ?? 0,
     }, answer)
     if (!result.nextReview) {
         if (answer === 'again') return '< 15m'

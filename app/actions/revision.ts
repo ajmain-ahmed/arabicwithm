@@ -84,6 +84,7 @@ export type RevisionCard = VocabRow & {
     repetitions: number
     interval_days: number
     ease_factor: number
+    learning_step: number
     last_review_at: string | null
     next_review_at: string | null
     def_ar?: string | null
@@ -107,6 +108,15 @@ export type SessionLog = {
 }
 
 const DAILY_NEW_LIMIT = 20
+const MAX_REVIEWS = 100
+
+/* ── Helpers for queue classification ── */
+function classifyQueue(row: any): 'new' | 'learning' | 'review' {
+    if (row.interval_days > 0) return 'review'
+    if (row.repetitions === 0 && !row.last_review_at) return 'new'
+    if (row.learning_step && row.learning_step > 0) return 'learning'
+    return 'learning'
+}
 
 /* ── Build revision cards from RPC rows ───────────────────────────── */
 
@@ -194,7 +204,7 @@ async function buildRevisionCards(
             repetitions: row.repetitions,
             interval_days: row.interval_days,
             ease_factor: row.ease_factor,
-            // learning_step removed from schema
+            learning_step: row.learning_step ?? 0,
             lapses: row.lapses ?? 0,
             last_review_at: row.last_review_at,
             next_review_at: row.next_review_at,
@@ -214,11 +224,41 @@ export async function fetchRevisionSession(): Promise<{
 
     const startOfDay = new Date()
     startOfDay.setHours(0, 0, 0, 0)
+    const now = new Date()
 
-    // 1. Get all progress rows in revision for this user
+    // ── 1. Count how many new/review cards were already seen today ──
+    let newSeenToday = 0
+    let reviewSeenToday = 0
+
+    try {
+        const [newRes, reviewRes] = await Promise.all([
+            serviceClient
+                .from('review_logs')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId)
+                .eq('queue_type', 'new')
+                .gte('created_at', startOfDay.toISOString()),
+            serviceClient
+                .from('review_logs')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId)
+                .eq('queue_type', 'review')
+                .gte('created_at', startOfDay.toISOString()),
+        ])
+        newSeenToday = newRes.count ?? 0
+        reviewSeenToday = reviewRes.count ?? 0
+    } catch (e) {
+        console.error('[fetchRevisionSession] review_logs count failed:', e)
+        // Fallback: proceed without caps if review_logs is unreachable
+    }
+
+    const newBudget = Math.max(0, DAILY_NEW_LIMIT - newSeenToday)
+    const reviewBudget = Math.max(0, MAX_REVIEWS - reviewSeenToday)
+
+    // ── 2. Fetch all in-revision progress rows ──
     const { data: progressData, error: progErr } = await serviceClient
         .from('progress')
-        .select('vocab_id, repetitions, interval_days, ease_factor, lapses, last_review_at, next_review_at, last_rating')
+        .select('vocab_id, repetitions, interval_days, ease_factor, lapses, learning_step, last_review_at, next_review_at, last_rating')
         .eq('user_id', userId)
         .eq('status', 0)
 
@@ -227,35 +267,47 @@ export async function fetchRevisionSession(): Promise<{
         return { dueCards: [], completedCards: [] }
     }
 
-    // 2. Classify into due / completed today / new candidates
-    const dueProgress: any[] = []
+    // ── 3. Classify into buckets ──
     const completedToday: any[] = []
     const newCandidates: any[] = []
+    const learningDue: any[] = []
+    const reviewDue: any[] = []
 
     for (const p of progressData) {
+        const isDue = !p.next_review_at || new Date(p.next_review_at) <= now
+        if (!isDue) continue
+
+        const queue = classifyQueue(p)
+
+        // Only mark review cards as completed-today.
+        // Learning cards can be reviewed multiple times per day
+        // (they have next_review_at scheduled in 5-min increments).
         const reviewedToday = p.last_review_at && new Date(p.last_review_at) >= startOfDay
-        if (reviewedToday) {
+        if (reviewedToday && queue === 'review') {
             completedToday.push(p)
             continue
         }
 
-        const isDue = !p.next_review_at || new Date(p.next_review_at) <= new Date()
-        if (!isDue) continue
-
-        const isNew = p.repetitions === 0 && p.interval_days === 0 && !p.last_review_at
-        if (isNew) {
+        if (queue === 'new') {
             newCandidates.push(p)
+        } else if (queue === 'learning') {
+            learningDue.push(p)
         } else {
-            dueProgress.push(p)
+            reviewDue.push(p)
         }
     }
 
-    // 3. Apply daily new-card limit
+    // ── 4. Apply daily caps ──
     const shuffledNew = newCandidates.sort(() => Math.random() - 0.5)
-    const limitedNew = shuffledNew.slice(0, DAILY_NEW_LIMIT)
-    const allDue = [...dueProgress, ...limitedNew]
+    const limitedNew = shuffledNew.slice(0, newBudget)
 
-    // 4. Build cards (parallel)
+    const shuffledReview = reviewDue.sort(() => Math.random() - 0.5)
+    const limitedReview = shuffledReview.slice(0, reviewBudget)
+
+    // Learning cards are always shown (they're time-critical)
+    const allDue = [...limitedNew, ...learningDue, ...limitedReview]
+
+    // ── 5. Build cards (parallel) ──
     const [dueCards, completedCards] = await Promise.all([
         buildRevisionCards(allDue),
         buildRevisionCards(completedToday),
@@ -302,7 +354,7 @@ export async function submitRevisionAnswersBatch(
     // 1. Fetch all existing progress rows in ONE query
     const { data: allProgress, error: fetchError } = await serviceClient
         .from('progress')
-        .select('vocab_id, repetitions, interval_days, ease_factor, lapses, last_review_at, first_review_at')
+        .select('vocab_id, repetitions, interval_days, ease_factor, lapses, learning_step, last_review_at, first_review_at')
         .eq('user_id', userId)
         .in('vocab_id', vocabIds)
 
@@ -314,8 +366,11 @@ export async function submitRevisionAnswersBatch(
     const progressMap = new Map((allProgress ?? []).map(p => [p.vocab_id, p]))
     const now = new Date().toISOString()
 
-    // 2. Build upsert rows locally
-    const rows = uniqueAnswers.map(({ vocabId, answer }) => {
+    // 2. Build progress upsert rows + review_logs insert rows
+    const progressRows: any[] = []
+    const logRows: any[] = []
+
+    for (const { vocabId, answer } of uniqueAnswers) {
         const progress = progressMap.get(vocabId)
 
         if (!progress) {
@@ -325,15 +380,17 @@ export async function submitRevisionAnswersBatch(
                 interval_days: 0,
                 ease_factor: 2.5,
                 lapses: 0,
+                learning_step: 0,
             }, answer)
 
-            return {
+            progressRows.push({
                 user_id: userId,
                 vocab_id: vocabId,
                 status: 0,
                 repetitions: result.repetitions,
                 interval_days: result.interval_days,
                 ease_factor: result.ease_factor,
+                learning_step: result.learning_step,
                 lapses: answer === 'again' ? 1 : 0,
                 last_review_at: now,
                 last_rating: answer,
@@ -341,37 +398,78 @@ export async function submitRevisionAnswersBatch(
                 first_review_at: now,
                 updated_at: now,
                 created_at: now,
-            }
+            })
+
+            logRows.push({
+                user_id: userId,
+                vocab_id: vocabId,
+                rating: answer,
+                queue_type: 'new',
+                old_interval_days: 0,
+                new_interval_days: result.interval_days,
+                old_ease_factor: 2.5,
+                new_ease_factor: result.ease_factor,
+            })
+            continue
         }
 
-        const result = computeAnswerResult(progress, answer)
+        const queueType = classifyQueue(progress)
+        const result = computeAnswerResult({
+            repetitions: progress.repetitions ?? 0,
+            interval_days: progress.interval_days ?? 0,
+            ease_factor: progress.ease_factor ?? 2.5,
+            lapses: progress.lapses ?? 0,
+            learning_step: progress.learning_step ?? 0,
+        }, answer)
+
         const nextReview = result.nextReview?.toISOString() ?? null
         const newLapses = answer === 'again' ? (progress.lapses ?? 0) + 1 : (progress.lapses ?? 0)
 
-        return {
+        progressRows.push({
             user_id: userId,
             vocab_id: vocabId,
             status: 0,
             repetitions: result.repetitions,
             interval_days: result.interval_days,
             ease_factor: result.ease_factor,
+            learning_step: result.learning_step,
             last_review_at: now,
             last_rating: answer,
             next_review_at: nextReview,
             lapses: newLapses,
             updated_at: now,
             ...(progress.last_review_at === null && { first_review_at: now }),
-        }
-    })
+        })
 
-    // 3. ONE bulk upsert
-    const { error } = await serviceClient
+        logRows.push({
+            user_id: userId,
+            vocab_id: vocabId,
+            rating: answer,
+            queue_type: queueType,
+            old_interval_days: progress.interval_days ?? 0,
+            new_interval_days: result.interval_days,
+            old_ease_factor: progress.ease_factor ?? 2.5,
+            new_ease_factor: result.ease_factor,
+        })
+    }
+
+    // 3. Dual-write: progress first (source of truth), then review_logs
+    const { error: progError } = await serviceClient
         .from('progress')
-        .upsert(rows, { onConflict: 'user_id,vocab_id' })
+        .upsert(progressRows, { onConflict: 'user_id,vocab_id' })
 
-    if (error) {
-        console.error('Batch upsert failed:', error.message)
-        throw new Error(error.message)
+    if (progError) {
+        console.error('Batch upsert failed:', progError.message)
+        throw new Error(progError.message)
+    }
+
+    const { error: logError } = await serviceClient
+        .from('review_logs')
+        .insert(logRows)
+
+    if (logError) {
+        console.error('review_logs insert failed:', logError.message)
+        // Progress is already written — logs missing is acceptable vs state corruption
     }
 
     revalidatePath('/revision')
@@ -638,6 +736,7 @@ export async function fetchCustomSessionCards(settings: {
             repetitions: 0,
             interval_days: 0,
             ease_factor: 2.5,
+            learning_step: 0,
             lapses: 0,
             last_review_at: null,
             next_review_at: null,

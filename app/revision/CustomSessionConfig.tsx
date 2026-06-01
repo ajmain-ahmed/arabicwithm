@@ -4,26 +4,19 @@ import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import {
   Box,
   Typography,
-  Button,
-  Slider,
-  TextField,
   useMediaQuery,
   Dialog,
   DialogTitle,
   DialogContent,
   IconButton,
 } from '@mui/material'
-import { Search, ChevronDown } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { fetchCustomSessionCards } from '@/app/actions/revision'
-import type { RevisionCard, LevelProgressStat } from '@/app/actions/revision'
+import type { RevisionCard } from '@/app/actions/revision'
 import type { ModeConfig, ThemeMeta, LevelMeta, NormalizedLevel, ModeToggles } from './types'
-import CustomCheckbox from './components/CustomCheckbox'
-import DailyReviewCard from './components/DailyReviewCard'
-import CustomQuizCard from './components/CustomQuizCard'
-import ModeToggleCard from './components/ModeToggleCard'
-import DesktopSidebar from './components/DesktopSidebar'
 import DesktopMainPanel from './components/DesktopMainPanel'
+import MobileLayout from './components/MobileLayout'
+
+
 
 /* ─────────────────────────────────────────────
    Constants
@@ -54,8 +47,8 @@ const MODE_DESCRIPTIONS: Record<string, string> = {
 interface CustomSessionConfigProps {
   metadata: LevelMeta[]
   counts: { newCount: number; learningCount: number; reviewCount: number }
+  dueCards: RevisionCard[]
   user: { id: string } | null
-  levelProgress: LevelProgressStat[]
   onStartDaily: () => void
   onStart: (cards: RevisionCard[], modeConfig: ModeConfig) => void
 }
@@ -63,7 +56,7 @@ interface CustomSessionConfigProps {
 /* ─────────────────────────────────────────────
    Component
 ───────────────────────────────────────────── */
-export default function CustomSessionConfig({ metadata, counts, user, levelProgress, onStartDaily, onStart }: CustomSessionConfigProps) {
+export default function CustomSessionConfig({ metadata, counts, dueCards, user, onStartDaily, onStart }: CustomSessionConfigProps) {
   const isDesktop = useMediaQuery('(min-width:1024px)')
 
   const [selectedLevelCodes, setSelectedLevelCodes] = useState<string[]>([])
@@ -317,15 +310,9 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
     <>
       {isDesktop ? (
         <Box sx={{ display: 'flex', minHeight: 600, mx: -3 }}>
-          <DesktopSidebar
-            levels={levels}
-            selectedLevelCodes={selectedLevelCodes}
-            levelProgress={levelProgress}
-            isDailyReview={isDailyReview}
-            onToggleLevel={toggleLevel}
-            levelSelectedCount={levelSelectedCount}
-          />
           <DesktopMainPanel
+            levels={levels}
+            toggleLevel={toggleLevel}
             isDailyReview={isDailyReview}
             setIsDailyReview={setIsDailyReview}
             showCustomOptions={showCustomOptions}
@@ -334,6 +321,7 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
             setModeToggles={setModeToggles}
             onHelpClick={(mode) => setHelpDialogOpen(mode)}
             counts={counts}
+            dueCards={dueCards}
             user={user}
             onStartDaily={onStartDaily}
             searchQuery={searchQuery}
@@ -362,416 +350,38 @@ export default function CustomSessionConfig({ metadata, counts, user, levelProgr
           />
         </Box>
       ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pb: isDailyReview ? '80px' : '140px' }}>
-      {/* ── Mode Selection ── */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
-        {/* Daily Review Card */}
-        <Box sx={{ height: 190 }}>
-          <DailyReviewCard
-            isActive={isDailyReview}
-            onClick={() => {
-              setIsDailyReview(true)
-              setShowCustomOptions(false)
-            }}
-            counts={{ newCount: counts.newCount, learningCount: counts.learningCount, reviewCount: counts.reviewCount }}
-            onStartDaily={onStartDaily}
-            user={user}
-          />
-        </Box>
-
-        {/* Custom Quiz Card or Options */}
-        <Box sx={{ height: 190, position: 'relative' }}>
-          <AnimatePresence mode="wait">
-            {!showCustomOptions ? (
-              <motion.div
-                key="custom-quiz"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-                style={{ height: '100%' }}
-              >
-                <CustomQuizCard
-                  onClick={() => {
-                    setShowCustomOptions(true)
-                    setIsDailyReview(false)
-                  }}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="custom-options"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-              >
-                <Box
-                  sx={{
-                    border: '2px solid',
-                    borderColor: !isDailyReview ? '#b8860b' : 'rgba(44,26,14,0.12)',
-                    borderRadius: '14px',
-                    p: 1.5,
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 1fr',
-                    gridTemplateRows: '1fr 1fr',
-                    gap: 1.5,
-                    alignItems: 'stretch',
-                    transition: 'border-color 0.2s ease',
-                  }}
-                >
-                  <Box sx={{ gridColumn: '1', gridRow: '1 / 3', height: '100%' }}>
-                    <ModeToggleCard
-                      label="Normal"
-                      description="Standard practice"
-                      isActive={!modeToggles.scholar && !modeToggles.weakWords && !modeToggles.reverse && !modeToggles.rapidFire}
-                      onClick={() => setModeToggles({ reverse: false, rapidFire: false, scholar: false, weakWords: false })}
-                      onHelpClick={() => setHelpDialogOpen('normal')}
-                    />
-                  </Box>
-                  <Box sx={{ gridColumn: '2', gridRow: '1', height: '100%' }}>
-                    <ModeToggleCard
-                      label="Reverse"
-                      description="English → Arabic"
-                      isActive={modeToggles.reverse}
-                      onClick={() => setModeToggles(prev => ({ ...prev, reverse: !prev.reverse }))}
-                      onHelpClick={() => setHelpDialogOpen('reverse')}
-                    />
-                  </Box>
-                  <Box sx={{ gridColumn: '2', gridRow: '2', height: '100%' }}>
-                    <ModeToggleCard
-                      label="Rapid Fire"
-                      description="5-second timer"
-                      isActive={modeToggles.rapidFire}
-                      onClick={() => setModeToggles(prev => ({ ...prev, rapidFire: !prev.rapidFire }))}
-                      onHelpClick={() => setHelpDialogOpen('rapidFire')}
-                    />
-                  </Box>
-                  <Box sx={{ gridColumn: '3', gridRow: '1', height: '100%' }}>
-                    <ModeToggleCard
-                      label="Scholar"
-                      description="Hans Wehr words"
-                      isActive={modeToggles.scholar}
-                      onClick={() => setModeToggles(prev => ({ ...prev, scholar: !prev.scholar, weakWords: false }))}
-                      onHelpClick={() => setHelpDialogOpen('scholar')}
-                    />
-                  </Box>
-                  <Box sx={{ gridColumn: '3', gridRow: '2', height: '100%' }}>
-                    <ModeToggleCard
-                      label="Weak Words"
-                      description="Focus on weaknesses"
-                      isActive={modeToggles.weakWords}
-                      onClick={() => setModeToggles(prev => ({ ...prev, weakWords: !prev.weakWords, scholar: false }))}
-                      onHelpClick={() => setHelpDialogOpen('weakWords')}
-                    />
-                  </Box>
-                </Box>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </Box>
-      </Box>
-
-      {/* ── Custom Practice Content ── */}
-      {!isDailyReview && (
-        <>
-          {/* Sticky Start Bar */}
-          <Box
-            sx={{
-              position: 'fixed',
-              bottom: 56,
-              left: 0,
-              right: 0,
-              background: '#fff',
-              borderRadius: 0,
-              boxShadow: '0 -2px 12px rgba(44,26,14,0.08)',
-              p: '8px 16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 1.5,
-              zIndex: 1100,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1, minWidth: 0 }}>
-              <Slider
-                value={cardCount}
-                min={5}
-                max={sliderMax}
-                step={5}
-                onChange={(_, v) => setCardCount(v as number)}
-                disabled={totalSelectedWords === 0}
-                sx={{
-                  flex: 1,
-                  maxWidth: 160,
-                  color: '#b8860b',
-                  '& .MuiSlider-thumb': { width: 12, height: 12 },
-                  '& .MuiSlider-rail': { height: 3 },
-                  '& .MuiSlider-track': { height: 3 },
-                }}
-              />
-              <TextField
-                type="number"
-                value={cardCount}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10)
-                  if (!isNaN(val)) {
-                    setCardCount(Math.max(5, Math.min(val, sliderMax)))
-                  }
-                }}
-                disabled={totalSelectedWords === 0}
-                size="small"
-                slotProps={{
-                  htmlInput: {
-                    min: 5,
-                    max: sliderMax,
-                    style: { textAlign: 'center', fontWeight: 700, padding: '4px 0', fontSize: '0.85rem' },
-                  },
-                }}
-                sx={{
-                  width: 56,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: '6px',
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.9rem',
-                    color: '#2c1a0e',
-                    py: 0,
-                    minHeight: 36,
-                  },
-                }}
-              />
-            </Box>
-
-            <Button
-              variant="contained"
-              onClick={handleStart}
-              disabled={startDisabled}
-              sx={{
-                background: '#b8860b',
-                color: '#fff',
-                fontFamily: 'Jost, sans-serif',
-                fontWeight: 700,
-                textTransform: 'none',
-                borderRadius: '8px',
-                px: 2,
-                py: 0.6,
-                fontSize: '0.8rem',
-                flexShrink: 0,
-                minHeight: 32,
-                '&:hover': { background: '#9c6b00' },
-                '&.Mui-disabled': {
-                  background: 'rgba(184,134,11,0.2)',
-                  color: 'rgba(26,14,0,0.4)',
-                },
-              }}
-            >
-              Start
-            </Button>
-          </Box>
-
-          {/* Accordion Stack */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {levels.map((level) => {
-              const isExpanded = expandedLevelCode === level.code
-              const selCount = levelSelectedCount(level.code)
-              const allSel = allSelectedForLevel(level.code)
-              const someSel = someSelectedForLevel(level.code)
-              const hasThemes = level.themes.length > 0
-
-              return (
-                <Box
-                  key={level.code}
-                  sx={{
-                    background: '#fff',
-                    border: '1px solid rgba(44,26,14,0.08)',
-                    borderRadius: '10px',
-                    overflow: 'hidden',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  {/* Collapsed Bar */}
-                  <Box
-                    onClick={() => hasThemes && expandLevel(level.code)}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      p: '16px 20px',
-                      cursor: hasThemes ? 'pointer' : 'default',
-                      opacity: hasThemes ? 1 : 0.5,
-                      '&:hover': hasThemes ? { background: '#fdfaf5' } : undefined,
-                      transition: 'background 0.15s ease',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Typography
-                        sx={{
-                          fontFamily: "'EB Garamond', serif",
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          px: 1.2,
-                          py: 0.4,
-                          borderRadius: '999px',
-                          background: '#f5ede0',
-                          color: '#b8860b',
-                          lineHeight: 1,
-                        }}
-                      >
-                        {level.code}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontFamily: 'Jost, sans-serif',
-                          fontSize: '0.875rem',
-                          color: '#2c1a0e',
-                          fontWeight: 500,
-                        }}
-                      >
-                        {level.name}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontFamily: 'Jost, sans-serif',
-                          fontSize: '0.75rem',
-                          color: '#7a6e65',
-                        }}
-                      >
-                        {level.totalWords} words
-                      </Typography>
-                      {selCount > 0 && (
-                        <Typography
-                          sx={{
-                            fontFamily: 'Jost, sans-serif',
-                            fontSize: '0.75rem',
-                            color: '#b8860b',
-                          }}
-                        >
-                          {selCount} selected
-                        </Typography>
-                      )}
-                    </Box>
-                    <Box
-                      sx={{
-                        transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                        transition: 'transform 0.2s ease',
-                        color: '#9e8a7a',
-                      }}
-                    >
-                      <ChevronDown size={20} />
-                    </Box>
-                  </Box>
-
-                  {/* Expanded Content */}
-                  <Box
-                    sx={{
-                      maxHeight: isExpanded ? 2000 : 0,
-                      opacity: isExpanded ? 1 : 0,
-                      overflow: 'hidden',
-                      transition: 'max-height 0.25s ease, opacity 0.2s ease',
-                    }}
-                  >
-                    {isExpanded && hasThemes && (
-                      <>
-                        <Box
-                          sx={{
-                            borderTop: '1px solid rgba(44,26,14,0.06)',
-                            px: 2,
-                            py: 1.5,
-                          }}
-                        >
-                          <Box
-                            onClick={() => toggleAllForLevel(level.code, !(allSel || someSel))}
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                              cursor: 'pointer',
-                              userSelect: 'none',
-                            }}
-                          >
-                            <CustomCheckbox
-                              checked={allSel}
-                              indeterminate={someSel}
-                              onClick={() => toggleAllForLevel(level.code, !(allSel || someSel))}
-                            />
-                            <Typography
-                              sx={{
-                                fontFamily: 'Jost, sans-serif',
-                                fontSize: '0.85rem',
-                                color: '#5a4e47',
-                              }}
-                            >
-                              Select all themes
-                            </Typography>
-                          </Box>
-                        </Box>
-
-                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                          {level.themes.map((theme) => {
-                            const isSelected = selectedThemeKeys.has(`${level.code}:${theme.theme_id}`)
-                            return (
-                              <Box
-                                key={theme.theme_id}
-                                onClick={() => toggleTheme(level.code, theme.theme_id)}
-                                sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 1.5,
-                                  px: 2,
-                                  py: 1.5,
-                                  background: isSelected
-                                    ? 'rgba(184,134,11,0.05)'
-                                    : 'transparent',
-                                  borderTop: '1px solid rgba(44,26,14,0.06)',
-                                  cursor: 'pointer',
-                                  transition: 'background 0.15s ease',
-                                  '&:hover': {
-                                    background: 'rgba(184,134,11,0.06)',
-                                  },
-                                }}
-                              >
-                                <CustomCheckbox
-                                  checked={isSelected}
-                                  onClick={() => toggleTheme(level.code, theme.theme_id)}
-                                />
-                                <Typography
-                                  sx={{
-                                    flex: 1,
-                                    fontFamily: 'Jost, sans-serif',
-                                    fontSize: '0.875rem',
-                                    color: '#2c1a0e',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                  }}
-                                >
-                                  {theme.display_name}
-                                </Typography>
-                                <Typography
-                                  sx={{
-                                    fontFamily: 'Jost, sans-serif',
-                                    fontSize: '0.75rem',
-                                    color: '#7a6e65',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  {theme.total_words}
-                                </Typography>
-                              </Box>
-                            )
-                          })}
-                        </Box>
-                      </>
-                    )}
-                  </Box>
-                </Box>
-              )
-            })}
-          </Box>
-
-        </>
-      )}
-      </Box>
+        <MobileLayout
+          isDailyReview={isDailyReview}
+          setIsDailyReview={setIsDailyReview}
+          showCustomOptions={showCustomOptions}
+          setShowCustomOptions={setShowCustomOptions}
+          modeToggles={modeToggles}
+          setModeToggles={setModeToggles}
+          onHelpClick={(mode) => setHelpDialogOpen(mode)}
+          counts={counts}
+          dueCards={dueCards}
+          user={user}
+          onStartDaily={onStartDaily}
+          levels={levels}
+          toggleLevel={toggleLevel}
+          expandedLevelCode={expandedLevelCode}
+          expandLevel={expandLevel}
+          levelSelectedCount={levelSelectedCount}
+          allSelectedForLevel={allSelectedForLevel}
+          someSelectedForLevel={someSelectedForLevel}
+          toggleAllForLevel={toggleAllForLevel}
+          toggleTheme={toggleTheme}
+          selectedLevelCodes={selectedLevelCodes}
+          selectedThemeKeys={selectedThemeKeys}
+          cardCount={cardCount}
+          setCardCount={setCardCount}
+          sliderMax={sliderMax}
+          totalSelectedWords={totalSelectedWords}
+          totalSelectedThemes={totalSelectedThemes}
+          handleStart={handleStart}
+          startDisabled={startDisabled}
+          loading={loading}
+        />
       )}
 
       {/* Help Dialog */}

@@ -70,7 +70,7 @@ export default function useRevisionSession() {
         queue: classifyCard(card),
         lapses: card.lapses ?? 0,
         dotId: makeDotId(),
-        // learningStep removed from schema
+        learningStep: card.learning_step ?? 0,
     })), [dueCards])
 
     const { seedAnsweredDots, seedDotOrder } = useMemo(() => {
@@ -126,6 +126,18 @@ export default function useRevisionSession() {
         }
     }, [])
 
+    /* ── Fetch session cache on mount (for welcome screen stats) ── */
+    useEffect(() => {
+        if (!user) return
+        if (sessionStarted) return
+        // Only fetch if cache is stale or missing
+        const { sessionCache } = useRevisionStore.getState()
+        const now = Date.now()
+        if (!sessionCache || now - sessionCache.fetchedAt > 5 * 60 * 1000) {
+            getSession().catch(() => {})
+        }
+    }, [user, sessionStarted, getSession])
+
     /* ── Flush pending answers when session completes ── */
     useEffect(() => {
         if (isComplete && user && sessionStarted && sessionMode === 'daily') {
@@ -147,6 +159,11 @@ export default function useRevisionSession() {
             setDueCards(dueCards)
             setCompletedCards(completedCards)
             setSessionStarted(true)
+
+            // Scroll to top when session starts
+            if (typeof window !== 'undefined') {
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+            }
 
             // Target = 60% of theoretical per-card max (no streak bonus)
             // 100 * maxDifficulty(2.42) * maxTime(1.2) * maxRating(1.4) * 0.6 ≈ 244 per card
@@ -263,6 +280,7 @@ export default function useRevisionSession() {
             interval_days: currentCard.data.interval_days,
             ease_factor: currentCard.data.ease_factor,
             lapses: currentCard.data.lapses ?? 0,
+            learning_step: currentCard.data.learning_step ?? 0,
         }
 
         const result = computeAnswerResult(currentProgress, ans)
@@ -274,6 +292,7 @@ export default function useRevisionSession() {
                 repetitions: result.repetitions,
                 interval_days: result.interval_days,
                 ease_factor: result.ease_factor,
+                learning_step: result.learning_step,
                 lapses: ans === 'again' ? (currentCard.data.lapses ?? 0) + 1 : (currentCard.data.lapses ?? 0),
             }, ans)
 

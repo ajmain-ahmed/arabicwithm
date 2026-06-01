@@ -5,8 +5,23 @@ import { Box, Typography, Button, Slider, TextField } from '@mui/material'
 import { Search, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { NormalizedLevel, ThemeMeta, ModeToggles } from '@/app/revision/types'
+import type { RevisionCard } from '@/app/actions/revision'
 import CustomCheckbox from './CustomCheckbox'
+import LevelCard from '@/app/components/LevelCard'
 import DailyReviewCard from './DailyReviewCard'
+import DonutChart from './DonutChart'
+
+/* ── Level colours for accordion cards ── */
+const LEVEL_COLORS: Record<string, string> = {
+  A0: '#2d6a4f', A1: '#40916c', A2: '#52b788',
+  B1: '#b5861a', B2: '#9c6b00',
+  C1: '#6d4c9e', C2: '#4a2f7a',
+}
+const LEVEL_BG: Record<string, string> = {
+  A0: '#f5faf7', A1: '#f5faf8', A2: '#f5faf8',
+  B1: '#fdfbf5', B2: '#fdfbf5',
+  C1: '#f9f7fb', C2: '#f9f7fb',
+}
 import CustomQuizCard from './CustomQuizCard'
 import ModeToggleCard from './ModeToggleCard'
 
@@ -19,6 +34,7 @@ interface DesktopMainPanelProps {
   setModeToggles: React.Dispatch<React.SetStateAction<ModeToggles>>
   onHelpClick: (mode: string) => void
   counts: { newCount: number; learningCount: number; reviewCount: number }
+  dueCards: RevisionCard[]
   user: { id: string } | null
   onStartDaily: () => void
   searchQuery: string
@@ -44,6 +60,8 @@ interface DesktopMainPanelProps {
   handleStart: () => void
   startDisabled: boolean
   loading: boolean
+  levels: NormalizedLevel[]
+  toggleLevel: (code: string) => void
 }
 
 export default function DesktopMainPanel({
@@ -55,6 +73,7 @@ export default function DesktopMainPanel({
   setModeToggles,
   onHelpClick,
   counts,
+  dueCards,
   user,
   onStartDaily,
   searchQuery,
@@ -80,7 +99,26 @@ export default function DesktopMainPanel({
   handleStart,
   startDisabled,
   loading,
+  levels,
+  toggleLevel,
 }: DesktopMainPanelProps) {
+  const totalDue = counts.newCount + counts.learningCount + counts.reviewCount
+
+  const levelBreakdown = React.useMemo(() => {
+    const map: Record<string, number> = {}
+    for (const card of dueCards) {
+      const lvl = card.level ?? 'Unknown'
+      map[lvl] = (map[lvl] ?? 0) + 1
+    }
+    return Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([level, count]) => ({
+        label: level,
+        pct: totalDue > 0 ? (count / totalDue) * 100 : 0,
+        color: LEVEL_COLORS[level] ?? '#7a6e65',
+      }))
+  }, [dueCards, totalDue])
+
   return (
     <Box sx={{ flex: 1, minWidth: 0, p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
       {/* Mode Selection */}
@@ -193,84 +231,124 @@ export default function DesktopMainPanel({
 
       {/* Daily Review Content */}
       {isDailyReview && (
-        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 3, justifyContent: 'center', minHeight: 300 }}>
-          <Box sx={{ maxWidth: 520, mx: 'auto', textAlign: 'center' }}>
-            <Typography sx={{
-              fontFamily: "'EB Garamond', serif",
-              fontSize: { xs: '1.4rem', md: '1.8rem' },
-              fontWeight: 700,
-              color: '#2c1a0e',
-              mb: 1.5,
-            }}>
-              Daily Review
-            </Typography>
-            <Typography sx={{
-              fontFamily: 'Jost, sans-serif',
-              color: '#7a6e65',
-              mb: 2,
-              lineHeight: 1.7,
-              fontSize: { xs: '0.9rem', md: '1.05rem' },
-            }}>
-              Review words that are due today using spaced repetition.
-              Your progress is saved and used to schedule future reviews.
-            </Typography>
-
-            {/* Queue counts */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
-              {[
-                { label: 'New', count: counts.newCount, color: '#1565c0', bg: 'rgba(21,101,192,0.08)', border: 'rgba(21,101,192,0.2)' },
-                { label: 'Learning', count: counts.learningCount, color: '#c13a00', bg: 'rgba(193,58,0,0.08)', border: 'rgba(193,58,0,0.2)' },
-                { label: 'Review', count: counts.reviewCount, color: '#2e7d32', bg: 'rgba(46,125,50,0.08)', border: 'rgba(46,125,50,0.2)' },
-              ].map((stat) => (
-                <Box
-                  key={stat.label}
-                  sx={{
-                    background: stat.bg,
-                    border: `1px solid ${stat.border}`,
-                    borderRadius: '10px',
-                    px: 2,
-                    py: 1.5,
-                    width: 100,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: stat.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    {stat.label}
-                  </Typography>
-                  <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.75rem', fontWeight: 700, color: stat.color, lineHeight: 1.1, mt: 0.5 }}>
-                    {stat.count}
-                  </Typography>
-                </Box>
-              ))}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 300 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: { xs: 4, md: 6 },
+              maxWidth: 1000,
+              mx: 'auto',
+              width: '100%',
+            }}
+          >
+            {/* LEFT — Queue breakdown donut */}
+            <Box sx={{ flex: '1 1 0', minWidth: 0, display: 'flex', justifyContent: 'flex-end', order: { xs: 2, md: 1 } }}>
+              <Box sx={{ width: { md: 180, lg: 200 }, display: 'flex', justifyContent: 'center' }}>
+                <DonutChart
+                  segments={[
+                    { label: 'New', color: '#1565c0', pct: totalDue > 0 ? (counts.newCount / totalDue) * 100 : 0 },
+                    { label: 'Learning', color: '#c13a00', pct: totalDue > 0 ? (counts.learningCount / totalDue) * 100 : 0 },
+                    { label: 'Review', color: '#2e7d32', pct: totalDue > 0 ? (counts.reviewCount / totalDue) * 100 : 0 },
+                  ]}
+                  total={totalDue}
+                  label="cards"
+                />
+              </Box>
             </Box>
 
-            <Button
-              variant="contained"
-              onClick={onStartDaily}
-              fullWidth
-              disabled={!user || counts.newCount + counts.learningCount + counts.reviewCount === 0}
-              sx={{
-                background: '#2c1a0e',
-                color: '#f5ede0',
-                fontFamily: 'Jost, sans-serif',
-                fontWeight: 600,
-                textTransform: 'none',
-                borderRadius: '10px',
-                py: { xs: 1.2, md: 1.4 },
-                fontSize: { xs: '0.95rem', md: '1.15rem' },
-                '&:hover': { background: '#1a0f08' },
-                '&.Mui-disabled': { background: 'rgba(44,26,14,0.3)', color: 'rgba(245,237,224,0.5)' },
-              }}
-            >
-              Start Daily Review
-            </Button>
-            {!user && (
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#9e8a7a', mt: 1, textAlign: 'center' }}>
-                Log in to access daily review
+            {/* CENTER — original layout */}
+            <Box sx={{ flex: '0 0 auto', width: { xs: '100%', md: 420, lg: 480 }, textAlign: 'center', order: { xs: 1, md: 2 } }}>
+              <Typography sx={{
+                fontFamily: "'EB Garamond', serif",
+                fontSize: { xs: '1.4rem', md: '1.8rem' },
+                fontWeight: 700,
+                color: '#2c1a0e',
+                mb: 1.5,
+              }}>
+                Daily Review
               </Typography>
-            )}
+              <Typography sx={{
+                fontFamily: 'Jost, sans-serif',
+                color: '#7a6e65',
+                mb: 3,
+                lineHeight: 1.7,
+                fontSize: { xs: '0.9rem', md: '1.05rem' },
+              }}>
+                Review words that are due today using spaced repetition.
+                Your progress is saved and used to schedule future reviews.
+              </Typography>
+
+              {/* Queue pills */}
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 3 }}>
+                {[
+                  { label: 'New', count: counts.newCount, color: '#1565c0', bg: 'rgba(21,101,192,0.08)', border: 'rgba(21,101,192,0.2)' },
+                  { label: 'Learning', count: counts.learningCount, color: '#c13a00', bg: 'rgba(193,58,0,0.08)', border: 'rgba(193,58,0,0.2)' },
+                  { label: 'Review', count: counts.reviewCount, color: '#2e7d32', bg: 'rgba(46,125,50,0.08)', border: 'rgba(46,125,50,0.2)' },
+                ].map((stat) => (
+                  <Box
+                    key={stat.label}
+                    sx={{
+                      background: stat.bg,
+                      border: `1px solid ${stat.border}`,
+                      borderRadius: '10px',
+                      px: 2,
+                      py: 1.5,
+                      width: 100,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.65rem', fontWeight: 600, color: stat.color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      {stat.label}
+                    </Typography>
+                    <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.75rem', fontWeight: 700, color: stat.color, lineHeight: 1.1, mt: 0.5 }}>
+                      {stat.count}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+
+              <Button
+                variant="contained"
+                onClick={onStartDaily}
+                fullWidth
+                disabled={!user || totalDue === 0}
+                sx={{
+                  background: '#2c1a0e',
+                  color: '#f5ede0',
+                  fontFamily: 'Jost, sans-serif',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: '10px',
+                  py: { xs: 1.2, md: 1.4 },
+                  fontSize: { xs: '0.95rem', md: '1.15rem' },
+                  '&:hover': { background: '#1a0f08' },
+                  '&.Mui-disabled': { background: 'rgba(44,26,14,0.3)', color: 'rgba(245,237,224,0.5)' },
+                }}
+              >
+                Start Daily Review
+              </Button>
+              {!user && (
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#9e8a7a', mt: 1, textAlign: 'center' }}>
+                  Log in to access daily review
+                </Typography>
+              )}
+            </Box>
+
+            {/* RIGHT — Level breakdown donut */}
+            <Box sx={{ flex: '1 1 0', minWidth: 0, display: 'flex', justifyContent: 'flex-start', order: { xs: 3, md: 3 } }}>
+              <Box sx={{ width: { md: 180, lg: 200 }, display: 'flex', justifyContent: 'center' }}>
+                <DonutChart
+                  segments={levelBreakdown}
+                  total={totalDue}
+                  label="cards"
+                />
+              </Box>
+            </Box>
           </Box>
         </Box>
       )}
@@ -278,6 +356,35 @@ export default function DesktopMainPanel({
       {/* Custom Practice Content */}
       {!isDailyReview && (
         <>
+          {/* Level Selector Cards */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'repeat(2, 1fr)',
+                sm: 'repeat(3, 1fr)',
+                md: 'repeat(4, 1fr)',
+                lg: 'repeat(5, 1fr)',
+                xl: 'repeat(7, 1fr)',
+              },
+              gap: 1,
+            }}
+          >
+            {levels.map((level) => (
+              <Box key={level.code}>
+                <LevelCard
+                  code={level.code}
+                  title={level.name}
+                  wordCount={level.totalWords}
+                  themeCount={level.themes.length}
+                  selected={selectedLevelCodes.includes(level.code)}
+                  disabled={level.themes.length === 0}
+                  onClick={() => toggleLevel(level.code)}
+                />
+              </Box>
+            ))}
+          </Box>
+
           {/* Search + Header */}
           <Box
             sx={{
@@ -378,8 +485,8 @@ export default function DesktopMainPanel({
                 <Box
                   key={level.code}
                   sx={{
-                    background: '#fff',
-                    border: '1px solid rgba(44,26,14,0.08)',
+                    background: LEVEL_BG[level.code] ?? '#fff',
+                    border: `1px solid ${(LEVEL_COLORS[level.code] ?? '#b8860b')}28`,
                     borderRadius: '10px',
                     overflow: 'hidden',
                   }}
@@ -406,8 +513,8 @@ export default function DesktopMainPanel({
                           px: 1.2,
                           py: 0.4,
                           borderRadius: '999px',
-                          background: 'rgba(184,134,11,0.12)',
-                          color: '#b8860b',
+                          background: (LEVEL_COLORS[level.code] ?? '#b8860b') + '18',
+                          color: LEVEL_COLORS[level.code] ?? '#b8860b',
                           lineHeight: 1,
                         }}
                       >
@@ -467,6 +574,7 @@ export default function DesktopMainPanel({
                         <CustomCheckbox
                           checked={allSel}
                           indeterminate={someSel}
+                          color={LEVEL_COLORS[level.code] ?? '#b8860b'}
                           onClick={() => toggleAllForLevel(level.code, !(allSel || someSel))}
                         />
                         <Typography
@@ -542,6 +650,7 @@ export default function DesktopMainPanel({
                           >
                             <CustomCheckbox
                               checked={isSelected}
+                              color={LEVEL_COLORS[level.code] ?? '#b8860b'}
                               onClick={() => toggleTheme(level.code, theme.theme_id)}
                             />
                             <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -653,9 +762,9 @@ export default function DesktopMainPanel({
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0.5 }}>
                   <Slider
                     value={cardCount}
-                    min={5}
+                    min={0}
                     max={sliderMax}
-                    step={5}
+                    step={1}
                     onChange={(_, v) => setCardCount(v as number)}
                     disabled={totalSelectedWords === 0}
                     sx={{
@@ -706,7 +815,7 @@ export default function DesktopMainPanel({
               <Button
                 variant="contained"
                 onClick={handleStart}
-                disabled={startDisabled}
+                disabled={startDisabled || cardCount < 10}
                 sx={{
                   background: '#b8860b',
                   color: '#fff',

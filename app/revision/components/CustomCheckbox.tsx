@@ -8,12 +8,14 @@ interface CustomCheckboxProps {
   checked: boolean
   indeterminate?: boolean
   onClick: () => void
+  color?: string
 }
 
 function CustomCheckbox({
   checked,
   indeterminate = false,
   onClick,
+  color = '#b8860b',
 }: CustomCheckboxProps) {
   return (
     <Box
@@ -26,8 +28,8 @@ function CustomCheckbox({
         height: 18,
         borderRadius: '4px',
         border: '2px solid',
-        borderColor: checked || indeterminate ? '#b8860b' : 'rgba(44,26,14,0.25)',
-        background: checked || indeterminate ? '#b8860b' : 'transparent',
+        borderColor: checked || indeterminate ? color : 'rgba(44,26,14,0.25)',
+        background: checked || indeterminate ? color : 'transparent',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -45,7 +47,7 @@ function CustomCheckbox({
             width: 8,
             height: 8,
             borderRadius: '2px',
-            background: '#b8860b',
+            background: color,
           }}
         />
       )}

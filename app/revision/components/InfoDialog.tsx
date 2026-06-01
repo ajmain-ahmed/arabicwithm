@@ -14,7 +14,7 @@ export default function InfoDialog({ open, onClose }: { open: boolean; onClose: 
                 color: '#2c1a0e', pt: 3, px: 3, pb: 0.5,
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             }}>
-                How Word Bank Works
+                How House of Cards Works
                 <IconButton onClick={onClose} size="small" sx={{ color: '#7a6e65', mr: -0.5 }}>
                     <Close sx={{ fontSize: '1.1rem' }} />
                 </IconButton>
@@ -28,7 +28,7 @@ export default function InfoDialog({ open, onClose }: { open: boolean; onClose: 
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, mb: 2.5 }}>
                     {([
-                        { queue: 'new' as Queue, icon: '🟦', body: 'Cards you have added to Word Bank but never studied yet. Max 20 per day.' },
+                        { queue: 'new' as Queue, icon: '🟦', body: 'Cards you have added to House of Cards but never studied yet. Max 20 per day.' },
                         { queue: 'learning' as Queue, icon: '🟥', body: 'Cards you are currently learning. You must answer them correctly twice in a row before they graduate. If you press Again, the counter resets.' },
                         { queue: 'review' as Queue, icon: '🟩', body: 'Cards you learned in a previous session. Answer correctly and the interval doubles or triples. Fail and the card lapses back to Learning.' },
                     ]).map(({ queue, icon, body }) => {

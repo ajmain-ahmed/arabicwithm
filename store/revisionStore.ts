@@ -84,6 +84,7 @@ export const useRevisionStore = create<RevisionStore>((set, get) => {
         else next.delete(vocabId)
         return { revisionIds: next }
       })
+      get().clearSession()
       return result.inRevision
     } catch (e) {
       console.error("[revisionStore] add failed:", e)
@@ -113,6 +114,7 @@ export const useRevisionStore = create<RevisionStore>((set, get) => {
         else next.delete(vocabId)
         return { revisionIds: next }
       })
+      get().clearSession()
       return !result.inRevision
     } catch (e) {
       console.error("[revisionStore] remove failed:", e)
@@ -143,6 +145,7 @@ export const useRevisionStore = create<RevisionStore>((set, get) => {
         else next.delete(vocabId)
         return { revisionIds: next }
       })
+      get().clearSession()
       return result.inRevision
     } catch (e) {
       console.error("[revisionStore] toggle failed:", e)
@@ -194,6 +197,7 @@ export const useRevisionStore = create<RevisionStore>((set, get) => {
     try {
       await submitRevisionTogglesBatch(batch)
       pendingToggles.clear()
+      get().clearSession()
     } catch (e) {
       console.error('[revisionStore] batch toggle failed:', e)
       // Rollback optimistic updates on failure
@@ -244,7 +248,7 @@ export const useRevisionStore = create<RevisionStore>((set, get) => {
           repetitions: updatedProgress.repetitions,
           interval_days: updatedProgress.interval_days,
           ease_factor: updatedProgress.ease_factor,
-          // learning_step removed from schema
+          learning_step: updatedProgress.learning_step,
           lapses: updatedProgress.lapses,
           last_review_at: nowISO,
         }

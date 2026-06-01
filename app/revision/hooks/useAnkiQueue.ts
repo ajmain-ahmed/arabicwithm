@@ -80,7 +80,7 @@ export default function useAnkiQueue(
                 repetitions: result.repetitions,
                 interval_days: result.interval_days,
                 ease_factor: result.ease_factor,
-                // learning_step removed from schema
+                learning_step: result.learning_step,
                 last_review_at: new Date().toISOString(),
             }
 
@@ -91,8 +91,8 @@ export default function useAnkiQueue(
                     ...current,
                     queue: 'learning',
                     lapses: ans === 'again' ? current.lapses + 1 : current.lapses,
+                    learningStep: result.learning_step,
                     dotId: makeDotId(),
-                    // learningStep removed from schema
                     data: updatedData,
                 }
                 const insertAt = Math.min(3, rest.length)
