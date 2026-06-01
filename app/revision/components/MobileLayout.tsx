@@ -413,7 +413,7 @@ export default function MobileLayout({
   loading,
 }: MobileLayoutProps) {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pb: isDailyReview ? '80px' : '140px' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {/* ── Mode Toggle ── */}
       <Box sx={{ display: 'flex', justifyContent: 'center', px: 1, mb: 1 }}>
         <ToggleButtonGroup

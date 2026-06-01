@@ -73,7 +73,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
   return (
     <>
       <style>{PAGE_CSS}</style>
-      <Box component="main" sx={{ minHeight: '100vh', background: '#f5ede0', pt: { xs: '56px', md: '64px' } }}>
+      <Box component="main" sx={{ minHeight: '100vh', background: '#f5ede0', pt: { xs: '56px', md: '64px' }, pb: { xs: 0, md: 8 }, display: 'flex', flexDirection: 'column', gap: { xs: 3, md: 4 } }}>
         <PageBanner
           title="House of Cards"
           titleAr="بَيْتُ الْكَلِمَات"
@@ -89,7 +89,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
           backgroundImage="/cards/awm13_converted.avif"
         />
 
-        <Box sx={{ pt: { xs: 3, md: 5 }, pb: { xs: 4, md: 6 }, px: { xs: 1.5, md: 3, lg: 5 } }}>
+        <Box sx={{ px: { xs: 1.5, md: 3, lg: 5 } }}>
           <Box sx={{ maxWidth: 1536, mx: 'auto' }}>
             {fetching ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
@@ -111,7 +111,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
           </Box>
         </Box>
 
-        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pb: { xs: 4, md: 6 } }}>
+        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 } }}>
           <HowItWorksSection
             steps={[
               {

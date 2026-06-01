@@ -27,7 +27,7 @@ export default function PlacementTestCTA({
       sx={{
         position: 'relative',
         pt: 5,
-        pb: 6,
+        pb: { xs: 6, md: 10 },
         px: 3,
         textAlign: 'center',
         borderRadius: { xs: 0, md: '16px' },
