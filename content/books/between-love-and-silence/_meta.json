@@ -1,0 +1,90 @@
+{
+  "slug": "seeds-in-the-house",
+  "title": "Seeds in the House",
+  "titleAr": "بُذُورٌ فِي الْبَيْتِ",
+  "subtitleAr": "رِوَايَةٌ قَصِيرَةٌ",
+  "author": "ArabicWithM",
+  "description": "A cross-cultural family drama set in East London. Adel Mansour, a British-Egyptian man, secretly marries Sarah, a British-Jamaican woman, and must navigate the painful space between the traditional family he loves and the love he has hidden away. Rich in emotional nuance, colloquial and everyday literary Arabic, and critical intermediate grammatical structures including negation patterns, relative clauses, and passive participles.",
+  "cover": "/books/seeds-in-the-house/cover.avif",
+  "level": "B1",
+  "order": 1,
+  "category": "Literature",
+  "genre": "Contemporary",
+  "readingLength": "Medium",
+  "estimatedReadingTime": 120,
+  "languageStyle": ["MSA", "English"],
+  "audioAvailable": true,
+  "partsCount": 3,
+  "chaptersCount": 15,
+  "vocabCount": 3500,
+  "setting": "London, UK",
+  "themes": [
+    "Cross-cultural relationships",
+    "Family expectations",
+    "Identity and belonging",
+    "Generational divides"
+  ],
+  "tags": [
+    "Diaspora",
+    "Immigrant Experience",
+    "Arab Family",
+    "Cross-Cultural",
+    "Contemporary",
+    "Emotional"
+  ],
+  "characters": [
+    { "nameAr": "عَادِلُ مَنْصُورٌ", "nameEn": "Adel Mansour", "description": "28-year-old British-Egyptian logistics worker living a fragmented double life." },
+    { "nameAr": "سَارَةُ كُولِنز", "nameEn": "Sarah Collins", "description": "26-year-old British-Jamaican teaching assistant in Hackney who values clarity and quiet dignity." },
+    { "nameAr": "فَاطِمَةُ مَنْصُورٌ", "nameEn": "Fatima Mansour", "description": "Adel's highly observant mother (57) who guards the household traditions tightly." },
+    { "nameAr": "مَنْصُورُ الْحَاجّ", "nameEn": "Mansour al-Hajj", "description": "Adel's defensive, traditional father (61) who equates cultural differences with hardship." },
+    { "nameAr": "رِيمُ مَنْصُورٌ", "nameEn": "Reem Mansour", "description": "Adel's sister (24), a nursing student who pushes him to speak the truth." },
+    { "nameAr": "الْخَالَةُ هُدَى", "nameEn": "Aunt Huda", "description": "Fatima's visiting sister who highlights the casual, unexamined cultural biases of her generation." }
+  ],
+  "partNames": [
+    {
+      "partNumber": 1,
+      "ar": "الْجُزْءُ الْأَوَّلُ: بُذُورٌ فِي التُّرَابِ",
+      "en": "Part One: Seeds in the Soil",
+      "chapters": [
+        { "num": 1, "file": "page1.json", "titleAr": "الْفَصْلُ الْأَوَّلُ", "titleEn": "Chapter 1" },
+        { "num": 2, "file": "page2.json", "titleAr": "الْفَصْلُ الثَّانِي", "titleEn": "Chapter 2" },
+        { "num": 3, "file": "page3.json", "titleAr": "الْفَصْلُ الثَّالِثُ", "titleEn": "Chapter 3" }
+      ]
+    },
+    {
+      "partNumber": 2,
+      "ar": "الْجُزْءُ الثَّانِي: الْبَيْتُ يَضِيقُ",
+      "en": "Part Two: The House Narrows",
+      "chapters": [
+        { "num": 4, "file": "page4.json", "titleAr": "الْفَصْلُ الرَّابِعُ", "titleEn": "Chapter 4" },
+        { "num": 5, "file": "page5.json", "titleAr": "الْفَصْلُ الْخَامِسُ", "titleEn": "Chapter 5" },
+        { "num": 6, "file": "page6.json", "titleAr": "الْفَصْلُ السَّادِسُ", "titleEn": "Chapter 6" },
+        { "num": 7, "file": "page7.json", "titleAr": "الْفَصْلُ السَّابِعُ", "titleEn": "Chapter 7" }
+      ]
+    },
+    {
+      "partNumber": 3,
+      "ar": "الْجُزْءُ الثَّالِثُ: الِانْكِشَافُ وَالثَّمَنُ",
+      "en": "Part Three: The Reckoning and the Price",
+      "chapters": [
+        { "num": 8, "file": "page8.json", "titleAr": "الْفَصْلُ الثَّامِنُ", "titleEn": "Chapter 8" },
+        { "num": 9, "file": "page9.json", "titleAr": "الْفَصْلُ التَّاسِعُ", "titleEn": "Chapter 9" },
+        { "num": 10, "file": "page10.json", "titleAr": "الْفَصْلُ الْعَاشِرُ", "titleEn": "Chapter 10" },
+        { "num": 11, "file": "page11.json", "titleAr": "الْفَصْلُ الْحَادِي عَشَرَ", "titleEn": "Chapter 11" },
+        { "num": 12, "file": "page12.json", "titleAr": "الْفَصْلُ الثَّانِي عَشَرَ", "titleEn": "Chapter 12" },
+        { "num": 13, "file": "page13.json", "titleAr": "الْفَصْلُ الثَّالِثَ عَشَرَ", "titleEn": "Chapter 13" },
+        { "num": 14, "file": "page14.json", "titleAr": "الْفَصْلُ الرَّابِعَ عَشَرَ", "titleEn": "Chapter 14" },
+        { "num": 15, "file": "page15.json", "titleAr": "الْفَصْلُ الْخَامِسَ عَشَرَ", "titleEn": "Chapter 15" }
+      ]
+    }
+  ],
+  "features": {
+    "fullyVowelled": true,
+    "wordByWordAnnotation": true,
+    "dbLinks": true,
+    "grammarNotes": true,
+    "transliteration": true,
+    "englishTranslation": true,
+    "cefrTagging": true
+  }
+}

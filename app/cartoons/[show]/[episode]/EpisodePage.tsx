@@ -27,13 +27,12 @@ import {
   Breadcrumbs,
   Popover,
 } from '@mui/material'
-import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip'
-import { styled } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
 import { ArrowBack, Settings, Close, ExpandMore, ExpandLess, ChevronRight, Quiz } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { stripDiacritics } from '@/app/lib/arabic'
 import { EpisodeFull, CartoonWordEntry } from '@/app/lib/cartoons'
+import { HtmlTooltip, WordTooltip, LEVEL_COLORS } from '@/app/components/vocab-tooltip'
 import EpisodeTestDialog from './EpisodeTestDialog'
 
 // ─── Fallback — used before we measure the real navbar ────────────────────────
@@ -169,30 +168,6 @@ declare global {
     __ytApiReady?: boolean
   }
 }
-
-/* ─────────────────────────────────────────────
-   HtmlTooltip — desktop only
-───────────────────────────────────────────── */
-const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
-  <Tooltip {...props} classes={{ popper: className }} />
-))(({ theme }) => ({
-  [`& .${tooltipClasses.tooltip}`]: {
-    backgroundColor: '#fff',
-    color: 'var(--bark)',
-    maxWidth: 320,
-    fontSize: theme.typography.pxToRem(14),
-    border: '1px solid rgba(44,26,14,0.08)',
-    borderRadius: '12px',
-    padding: 0,
-    boxShadow: '0 12px 40px rgba(44,26,14,0.18)',
-  },
-  [`& .${tooltipClasses.arrow}`]: {
-    color: '#fff',
-    '&::before': {
-      border: '1px solid rgba(44,26,14,0.08)',
-    },
-  },
-}))
 
 /* ─────────────────────────────────────────────
    MobileFixedHeader — portal into <body>
@@ -482,68 +457,6 @@ function SettingsDialog({
 /* ─────────────────────────────────────────────
    WordTooltip — inline markdown word popup
 ───────────────────────────────────────────── */
-function WordTooltip({
-  entry,
-  textScale,
-}: {
-  entry: CartoonWordEntry
-  textScale: number
-}) {
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, minWidth: 200 }}>
-      <Box sx={{ textAlign: 'center' }}>
-        <Typography
-          sx={{
-            fontFamily: '"EB Garamond", Georgia, serif',
-            fontSize: `calc(1.6rem * ${textScale})`,
-            fontWeight: 700,
-            color: 'var(--bark)',
-            direction: 'rtl',
-          }}
-        >
-          {entry.arabic}
-        </Typography>
-        <Typography
-          sx={{
-            fontFamily: 'Jost, sans-serif',
-            fontSize: `calc(0.85rem * ${textScale})`,
-            color: 'var(--muted)',
-            mt: 0.5,
-          }}
-        >
-          {entry.transliteration}
-        </Typography>
-      </Box>
-
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-        <Chip
-          label={entry.cefr}
-          size="small"
-          sx={{
-            background: LEVEL_COLORS[entry.cefr] ?? 'var(--forest)',
-            color: '#fff',
-            fontFamily: 'Jost, sans-serif',
-            fontWeight: 600,
-            fontSize: `calc(0.7rem * ${textScale})`,
-            letterSpacing: '0.04em',
-          }}
-        />
-      </Box>
-
-      <Typography
-        sx={{
-          fontFamily: 'Jost, sans-serif',
-          fontSize: `calc(0.95rem * ${textScale})`,
-          color: 'var(--bark)',
-          textAlign: 'center',
-        }}
-      >
-        {entry.english}
-      </Typography>
-    </Box>
-  )
-}
-
 /* ─────────────────────────────────────────────
    Global guard — disable script-line clicks while any vocab UI is open
 ───────────────────────────────────────────── */
@@ -906,11 +819,6 @@ function useYouTubePlayer(videoId: string | undefined, onTimeUpdate?: (time: num
 
   return { wrapRef, seekTo, playSegment, pauseVideo, isReady }
 }
-
-const LEVEL_COLORS: Record<string, string> = {
-  A0: '#5c8a6f', A1: '#2d6a4f', A2: '#40916c', B1: '#b5861a', B2: '#9c6b00', C1: '#6d4c9e', C2: '#4a2f7a',
-}
-
 
 /* ─────────────────────────────────────────────
    Main Component

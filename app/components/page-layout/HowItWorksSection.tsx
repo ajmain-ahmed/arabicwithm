@@ -37,7 +37,6 @@ export default function HowItWorksSection({
         px: { xs: 3, md: 6 },
         py: { xs: 5, md: 6 },
         mx: { xs: -2, md: -3 },
-        mb: 6,
         textAlign: 'center',
       }}
     >

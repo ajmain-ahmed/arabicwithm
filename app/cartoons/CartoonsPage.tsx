@@ -5,17 +5,15 @@ import {
   Box,
   Typography,
   Button,
-  Chip,
-  Paper,
   Container,
   Drawer,
   IconButton,
-  Divider,
 } from '@mui/material'
 import Grid from '@mui/material/Grid'
 import { useRouter } from 'next/navigation'
 import { ShowMeta } from '../lib/cartoons'
 import { PageBanner, HowItWorksSection, PlacementTestCTA } from '@/app/components/page-layout'
+import { FilterSidebar, ContentCard, ComingSoonSection } from '@/app/components/content-grid'
 
 /* ── MUI Icons ── */
 import {
@@ -26,21 +24,15 @@ import {
   Tv,
   TouchApp,
   AutoStories,
-  Lock,
-  StarBorder,
-  NotificationsNone,
-  Tune,
   Close,
+  Tune,
 } from '@mui/icons-material'
 
 /* ── Palette ── */
 const BARK = '#2c1a0e'
 const GOLD = '#b8860b'
-const GOLD_LT = '#d4a843'
-const CREAM = '#f5ede0'
 const WARM_WHITE = '#fffaf0'
 const MUTED = '#7a6e65'
-const LABEL = '#9e8a7a'
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   'A1-A2': '#6b8f5e',
@@ -58,363 +50,6 @@ const COMING_SOON = [
   { title: 'Stories of the Prophets', category: 'Islamic Heritage', level: 'B1-B2', date: 'Coming January 2026' },
   { title: 'Adventure Time', category: 'Everyday Arabic', level: 'A1-A2', date: 'Coming February 2026' },
 ]
-
-/* ═══════════════════════════════════════════════
-   Filter Sidebar (shared desktop + drawer)
-   ═══════════════════════════════════════════════ */
-interface FilterSidebarProps {
-  activeCategory: string
-  setActiveCategory: (c: string) => void
-  activeLevel: string
-  setActiveLevel: (l: string) => void
-  onMobileClose?: () => void
-  hideTitle?: boolean
-}
-
-function FilterSidebar({
-  activeCategory,
-  setActiveCategory,
-  activeLevel,
-  setActiveLevel,
-  onMobileClose,
-  hideTitle,
-}: FilterSidebarProps) {
-  return (
-    <Box>
-      {!hideTitle && (
-        <>
-          <Typography
-            sx={{
-              fontFamily: '"EB Garamond", Georgia, serif',
-              fontSize: 20,
-              color: BARK,
-              mb: 1.5,
-            }}
-          >
-            Filters
-          </Typography>
-          <Divider sx={{ borderColor: 'rgba(184,134,11,0.2)', mb: 2.5 }} />
-        </>
-      )}
-
-      {/* ── Category ── */}
-      <Typography
-        sx={{
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: GOLD,
-          mb: 1.5,
-        }}
-      >
-        Category
-      </Typography>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75, mb: 3 }}>
-        {CATEGORIES.map((cat) => (
-          <Button
-            key={cat}
-            onClick={() => {
-              setActiveCategory(cat)
-              onMobileClose?.()
-            }}
-            sx={{
-              justifyContent: 'flex-start',
-              height: 40,
-              px: 1.5,
-              borderRadius: '6px',
-              fontFamily: '"Jost", system-ui, sans-serif',
-              fontSize: 13,
-              fontWeight: 500,
-              textTransform: 'none',
-              color: activeCategory === cat ? BARK : MUTED,
-              backgroundColor:
-                activeCategory === cat ? 'rgba(184,134,11,0.06)' : WARM_WHITE,
-              border: `1px solid ${activeCategory === cat ? GOLD : 'rgba(44,26,14,0.1)'}`,
-              borderLeft:
-                activeCategory === cat
-                  ? `3px solid ${GOLD}`
-                  : `1px solid rgba(44,26,14,0.1)`,
-              '&:hover': { backgroundColor: 'rgba(184,134,11,0.04)' },
-              transition: 'all 0.15s',
-            }}
-          >
-            {cat}
-          </Button>
-        ))}
-      </Box>
-
-      {/* ── Level ── */}
-      <Typography
-        sx={{
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: GOLD,
-          mb: 1.5,
-        }}
-      >
-        Level
-      </Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.75, mb: 3 }}>
-        {LEVELS.map((lvl) => (
-          <Button
-            key={lvl}
-            onClick={() => {
-              setActiveLevel(activeLevel === lvl ? '' : lvl)
-              onMobileClose?.()
-            }}
-            sx={{
-              height: 36,
-              borderRadius: '6px',
-              fontFamily: '"Jost", system-ui, sans-serif',
-              fontSize: 12,
-              fontWeight: 600,
-              textTransform: 'none',
-              color: activeLevel === lvl ? '#fff' : MUTED,
-              backgroundColor: activeLevel === lvl ? GOLD : WARM_WHITE,
-              border: `1px solid ${activeLevel === lvl ? GOLD : 'rgba(44,26,14,0.1)'}`,
-              '&:hover': {
-                backgroundColor: activeLevel === lvl ? GOLD : 'rgba(184,134,11,0.04)',
-              },
-              transition: 'all 0.15s',
-            }}
-          >
-            {lvl}
-          </Button>
-        ))}
-      </Box>
-
-      {/* ── Reset ── */}
-      <Button
-        fullWidth
-        onClick={() => {
-          setActiveCategory('All Shows')
-          setActiveLevel('')
-          onMobileClose?.()
-        }}
-        sx={{
-          height: 40,
-          borderRadius: '6px',
-          fontFamily: '"Jost", system-ui, sans-serif',
-          fontSize: 13,
-          fontWeight: 500,
-          textTransform: 'none',
-          color: BARK,
-          border: '1px solid rgba(44,26,14,0.15)',
-          backgroundColor: 'transparent',
-          '&:hover': { backgroundColor: 'rgba(44,26,14,0.04)' },
-        }}
-      >
-        Reset Filters
-      </Button>
-    </Box>
-  )
-}
-
-/* ═══════════════════════════════════════════════
-   Show Card
-   ═══════════════════════════════════════════════ */
-function ShowCard({ show }: { show: ShowMeta }) {
-  const [hovered, setHovered] = useState(false)
-  const router = useRouter()
-  const badgeColor = DIFFICULTY_COLORS[show.level ?? ''] || MUTED
-
-  return (
-    <Paper
-      elevation={0}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => router.push(`/cartoons/${show.slug}`)}
-      sx={{
-        borderRadius: '10px',
-        overflow: 'hidden',
-        backgroundColor: WARM_WHITE,
-        border: '1px solid rgba(44,26,14,0.04)',
-        boxShadow: hovered
-          ? '0 8px 24px rgba(44,26,14,0.1)'
-          : '0 1px 4px rgba(44,26,14,0.06)',
-        transform: hovered ? 'translateY(-3px)' : 'none',
-        transition: 'all 0.2s ease',
-        cursor: 'pointer',
-      }}
-    >
-      {/* Thumbnail */}
-      <Box sx={{ position: 'relative', aspectRatio: '16/9', overflow: 'hidden' }}>
-        <Box
-          component="img"
-          src={show.cover}
-          alt={show.title}
-          sx={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            transform: hovered ? 'scale(1.03)' : 'scale(1)',
-            transition: 'transform 0.3s',
-          }}
-        />
-        {/* Bottom gradient */}
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            background: 'linear-gradient(transparent 60%, rgba(44,26,14,0.5))',
-            pointerEvents: 'none',
-          }}
-        />
-        {/* Play button */}
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: hovered ? 'rgba(44,26,14,0.2)' : 'rgba(44,26,14,0.1)',
-            transition: 'background-color 0.2s',
-          }}
-        >
-          <Box
-            sx={{
-              width: 44,
-              height: 44,
-              borderRadius: '50%',
-              backgroundColor: 'rgba(255,255,255,0.92)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />
-          </Box>
-        </Box>
-        {/* Difficulty badge */}
-        {show.level && (
-          <Chip
-            label={show.level}
-            size="small"
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              backgroundColor: badgeColor,
-              color: '#fff',
-              fontSize: 11,
-              fontWeight: 700,
-              height: 24,
-              borderRadius: '6px',
-              '& .MuiChip-label': { px: 1.2, py: 0 },
-            }}
-          />
-        )}
-      </Box>
-
-      {/* Card Body */}
-      <Box sx={{ p: 2 }}>
-        <Typography
-          sx={{
-            fontFamily: '"EB Garamond", Georgia, serif',
-            fontSize: { xs: 18, md: 20 },
-            fontWeight: 500,
-            letterSpacing: '-0.01em',
-            lineHeight: 1.25,
-            color: BARK,
-            mb: 0.5,
-          }}
-          noWrap
-        >
-          {show.title}
-        </Typography>
-        <Typography
-          sx={{
-            fontFamily: '"EB Garamond", Georgia, serif',
-            fontSize: { xs: 15, md: 18 },
-            color: GOLD,
-            mb: 1.5,
-          }}
-          noWrap
-        >
-          {show.titleAr}
-        </Typography>
-        {/* Tags */}
-        <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
-          {show.category && (
-            <Chip
-              label={show.category}
-              size="small"
-              sx={{
-                height: 24,
-                borderRadius: '9999px',
-                backgroundColor: 'rgba(184,134,11,0.08)',
-                color: GOLD,
-                fontSize: 11,
-                fontWeight: 500,
-                border: '1px solid rgba(184,134,11,0.12)',
-                '& .MuiChip-label': { px: 1 },
-              }}
-            />
-          )}
-          {show.genre && (
-            <Chip
-              label={show.genre}
-              size="small"
-              sx={{
-                height: 24,
-                borderRadius: '9999px',
-                backgroundColor: 'transparent',
-                color: MUTED,
-                fontSize: 11,
-                fontWeight: 500,
-                border: '1px solid rgba(44,26,14,0.12)',
-                '& .MuiChip-label': { px: 1 },
-              }}
-            />
-          )}
-        </Box>
-        {/* Description */}
-        <Typography
-          sx={{
-            fontSize: { xs: 14, md: 15 },
-            lineHeight: 1.45,
-            color: MUTED,
-            mb: 1.5,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-          }}
-        >
-          {show.description}
-        </Typography>
-        {/* Meta row */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 3,
-            pt: 1.5,
-            borderTop: '1px solid rgba(44,26,14,0.06)',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <MenuBook sx={{ fontSize: 14, color: LABEL }} />
-            <Typography sx={{ fontSize: { xs: 13, md: 14 }, color: LABEL }}>
-              {show.vocabCount ?? 0} words
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <School sx={{ fontSize: 14, color: LABEL }} />
-            <Typography sx={{ fontSize: { xs: 13, md: 14 }, color: LABEL }}>
-              {show.episodeCount} {show.episodeCount === 1 ? 'episode' : 'episodes'}
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-    </Paper>
-  )
-}
 
 /* ═══════════════════════════════════════════════
    Main Page
@@ -437,11 +72,6 @@ export default function CartoonsPage({
     return catMatch && levelMatch
   })
 
-  const scrollToShows = () => {
-    const el = document.getElementById('shows-section')
-    if (el) el.scrollIntoView({ behavior: 'smooth' })
-  }
-
   const goToRandomEpisode = () => {
     const showSlugs = Object.keys(episodesMap).filter(
       (slug) => episodesMap[slug].length > 0
@@ -463,7 +93,7 @@ export default function CartoonsPage({
         minHeight: '100vh',
         background: WARM_WHITE,
         pt: { xs: '56px', md: '64px' },
-        pb: { xs: 4, md: 8 },
+        pb: { xs: 0, md: 8 },
       }}
     >
       <PageBanner
@@ -589,6 +219,8 @@ export default function CartoonsPage({
           >
             <Box sx={{ position: 'sticky', top: 100, alignSelf: 'flex-start' }}>
               <FilterSidebar
+                categories={CATEGORIES}
+                levels={LEVELS}
                 activeCategory={activeCategory}
                 setActiveCategory={setActiveCategory}
                 activeLevel={activeLevel}
@@ -633,7 +265,28 @@ export default function CartoonsPage({
               <Grid container spacing={2}>
                 {filteredShows.map((show) => (
                   <Grid size={{ xs: 12, sm: 6, xl: 3 }} key={show.slug}>
-                    <ShowCard show={show} />
+                    <ContentCard
+                      slug={show.slug}
+                      hrefPrefix="/cartoons"
+                      cover={show.cover}
+                      title={show.title}
+                      titleAr={show.titleAr}
+                      description={show.description}
+                      category={show.category}
+                      genre={show.genre}
+                      level={show.level}
+                      overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
+                      metaItems={[
+                        {
+                          icon: <MenuBook sx={{ fontSize: 14, color: '#9e8a7a' }} />,
+                          label: `${show.vocabCount ?? 0} words`,
+                        },
+                        {
+                          icon: <School sx={{ fontSize: 14, color: '#9e8a7a' }} />,
+                          label: `${show.episodeCount} ${show.episodeCount === 1 ? 'episode' : 'episodes'}`,
+                        },
+                      ]}
+                    />
                   </Grid>
                 ))}
               </Grid>
@@ -667,161 +320,11 @@ export default function CartoonsPage({
           ctaLabel="Take Placement Test"
         />
 
-        {/* ═══════════════════════════════════════════════
-            COMING SOON
-           ═══════════════════════════════════════════════ */}
-        <Box>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'space-between',
-              mb: 3,
-            }}
-          >
-            <Box>
-              <Typography
-                sx={{
-                  fontFamily: '"Jost", system-ui, sans-serif',
-                  fontSize: { xs: 13, md: 14 },
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.12em',
-                  color: GOLD,
-                  mb: 0.5,
-                }}
-              >
-                Coming Soon
-              </Typography>
-              <Typography
-                sx={{
-                  fontFamily: '"EB Garamond", Georgia, serif',
-                  fontSize: { xs: 24, md: 32 },
-                  color: BARK,
-                }}
-              >
-                More Shows on the Way
-              </Typography>
-            </Box>
-            <Button
-              startIcon={<NotificationsNone sx={{ fontSize: 16 }} />}
-              sx={{
-                fontFamily: '"Jost", system-ui, sans-serif',
-                fontSize: { xs: 13, md: 14 },
-                fontWeight: 500,
-                textTransform: 'none',
-                color: GOLD,
-                '&:hover': { backgroundColor: 'rgba(184,134,11,0.06)' },
-                display: { xs: 'none', sm: 'flex' },
-              }}
-            >
-              Notify Me
-            </Button>
-          </Box>
-
-          <Grid container spacing={2}>
-            {COMING_SOON.map((show) => (
-              <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={show.title}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 3,
-                    textAlign: 'center',
-                    borderRadius: '10px',
-                    backgroundColor: WARM_WHITE,
-                    border: '1px solid rgba(44,26,14,0.12)',
-                    opacity: 0.7,
-                    position: 'relative',
-                  }}
-                >
-                  {/* Lock icon */}
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 12,
-                      right: 12,
-                      width: 28,
-                      height: 28,
-                      borderRadius: '50%',
-                      backgroundColor: 'rgba(44,26,14,0.06)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Lock sx={{ fontSize: 14, color: LABEL }} />
-                  </Box>
-                  {/* Star icon */}
-                  <Box
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: '50%',
-                      backgroundColor: 'rgba(184,134,11,0.1)',
-                      color: GOLD,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 2,
-                    }}
-                  >
-                    <StarBorder sx={{ fontSize: 18 }} />
-                  </Box>
-                  <Typography
-                    sx={{
-                      fontFamily: '"EB Garamond", Georgia, serif',
-                      fontSize: { xs: 15, md: 17 },
-                      fontWeight: 500,
-                      color: BARK,
-                      mb: 1,
-                    }}
-                  >
-                    {show.title}
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 1,
-                      mb: 0.5,
-                    }}
-                  >
-                    <Chip
-                      label={show.category}
-                      size="small"
-                      sx={{
-                        height: 20,
-                        borderRadius: '9999px',
-                        backgroundColor: 'rgba(44,26,14,0.04)',
-                        color: MUTED,
-                        fontSize: 10,
-                      }}
-                    />
-                    <Typography
-                      sx={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        color: DIFFICULTY_COLORS[show.level] || MUTED,
-                      }}
-                    >
-                      {show.level}
-                    </Typography>
-                  </Box>
-                  <Typography
-                    sx={{
-                      fontSize: 12,
-                      fontStyle: 'italic',
-                      color: 'rgba(44,26,14,0.5)',
-                    }}
-                  >
-                    {show.date}
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
+        <ComingSoonSection
+          label="Coming Soon"
+          heading="More Shows on the Way"
+          items={COMING_SOON}
+        />
       </Container>
 
       {/* ═══════════════════════════════════════════════
@@ -856,6 +359,8 @@ export default function CartoonsPage({
           </IconButton>
         </Box>
         <FilterSidebar
+          categories={CATEGORIES}
+          levels={LEVELS}
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}
           activeLevel={activeLevel}
