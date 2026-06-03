@@ -1,47 +1,47 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Box,
   Typography,
   Button,
-  Chip,
-  Card,
-  CardMedia,
   Container,
   Grid,
+  Drawer,
+  IconButton,
+  Breadcrumbs,
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
-import Navbar from '../../components/navbar'
 import { ShowMeta, EpisodeMeta } from '../../lib/cartoons'
-import { ArrowBackIosNewSharp } from '@mui/icons-material'
+import { PageBanner, HowItWorksSection, PlacementTestCTA } from '@/app/components/page-layout'
+import { FilterSidebar, ComingSoonSection, ContentCard } from '@/app/components/content-grid'
 
-const PAGE_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,700&family=Jost:wght@300;400;500;600&display=swap');
+/* ── MUI Icons ── */
+import {
+  PlayArrow,
+  Subtitles,
+  MenuBook,
+  School,
+  Tv,
+  TouchApp,
+  AutoStories,
+  Close,
+  Tune,
+  NavigateNext,
+} from '@mui/icons-material'
 
-  :root {
-    --bark:   #2c1a0e;
-    --forest: #0e2e1f;
-    --gold:   #b8860b;
-    --gold-lt:#d4a843;
-    --muted:  #7a6e65;
-    --sand:   #f5ede0;
-    --cream:  #faf7f2;
-    --font-serif: Georgia, "Times New Roman", serif;
-    --font-sans:  system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  }
+/* ── Palette ── */
+const BARK = '#2c1a0e'
+const GOLD = '#b8860b'
+const WARM_WHITE = '#fffaf0'
+const MUTED = '#7a6e65'
 
-  html, body { background: var(--cream); margin: 0; }
-`
-
-const LEVEL_COLORS: Record<string, string> = {
-  A1: '#2d6a4f',
-  A2: '#40916c',
-  B1: '#b5861a',
-  B2: '#9c6b00',
-  C1: '#6d4c9e',
-  C2: '#4a2f7a',
-}
+const COMING_SOON = [
+  { title: 'Arabic Peppa Pig', category: 'Everyday Arabic', level: 'A1-A2', date: 'Coming November 2025' },
+  { title: 'Avatar: The Last Airbender', category: 'Action', level: 'A2-B1', date: 'Coming December 2025' },
+  { title: 'Stories of the Prophets', category: 'Islamic Heritage', level: 'B1-B2', date: 'Coming January 2026' },
+  { title: 'Adventure Time', category: 'Everyday Arabic', level: 'A1-A2', date: 'Coming February 2026' },
+]
 
 interface ShowPageProps {
   show: ShowMeta
@@ -50,299 +50,327 @@ interface ShowPageProps {
 
 export default function ShowPage({ show, episodes }: ShowPageProps) {
   const router = useRouter()
+  const [activeLevel, setActiveLevel] = useState('')
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
+
+  const LEVELS = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+
+  const filteredEpisodes = useMemo(() => {
+    if (!activeLevel) return episodes
+    return episodes.filter((e) => e.level === activeLevel)
+  }, [episodes, activeLevel])
+
+  const goToRandomEpisode = () => {
+    const pool = filteredEpisodes.length > 0 ? filteredEpisodes : episodes
+    if (pool.length === 0) return
+    const randomEp = pool[Math.floor(Math.random() * pool.length)]
+    router.push(`/cartoons/${show.slug}/${randomEp.slug}`)
+  }
+
+  const activeFilterCount = activeLevel ? 1 : 0
 
   return (
-    <>
-      <style>{PAGE_CSS}</style>
-      <Navbar />
+    <Box
+      component="main"
+      sx={{
+        minHeight: '100vh',
+        background: WARM_WHITE,
+        pt: { xs: '56px', md: '64px' },
+        pb: { xs: 0, md: 8 },
+      }}
+    >
+      <PageBanner
+        title={show.title}
+        titleAr={show.titleAr ?? ''}
+        description={show.description ?? 'Learn Arabic naturally through interactive subtitles and vocabulary.'}
+        features={[
+          { icon: <Subtitles sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Interactive Subtitles' },
+          { icon: <MenuBook sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Vocabulary Builder' },
+          { icon: <School sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Grammar Notes' },
+        ]}
+        ctaLabel={episodes.length > 0 ? 'Watch a Random Episode' : 'Coming Soon'}
+        ctaAction={goToRandomEpisode}
+        ctaStartIcon={<PlayArrow sx={{ fontSize: 20 }} />}
+        backgroundImage={show.cover}
+      />
 
-      <Box
-        component="main"
+      {/* ═══════════════════════════════════════════════
+          CONTENT
+         ═══════════════════════════════════════════════ */}
+      <Container
+        maxWidth="xl"
         sx={{
-          minHeight: '100vh',
-          background: 'var(--cream)',
-          pt: { xs: '56px', md: '64px' },
+          position: 'relative',
+          zIndex: 2,
+          px: { xs: 2, md: 3 },
+          display: 'flex',
+          flexDirection: 'column',
+          gap: { xs: 4, md: 6 },
         }}
       >
-        {/* ── Hero ── */}
-        <Box
-          sx={{
-            position: 'relative',
-            height: { xs: 300, md: 420 },
-            overflow: 'hidden',
-          }}
-        >
-          <Box
-            component="img"
-            src={show.cover}
-            alt={show.title}
+        {/* ── Content Area ── */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 3 }, pt: 4 }}>
+          {/* Breadcrumbs */}
+          <Breadcrumbs
+            separator={<NavigateNext sx={{ fontSize: 16, color: '#9e8a7a' }} />}
             sx={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-              filter: 'brightness(0.48)',
+              mb: 2,
+              '& .MuiBreadcrumbs-li': { fontFamily: 'Jost, sans-serif' },
+            }}
+          >
+            <Typography
+              onClick={() => router.push('/')}
+              sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#7a6e65', cursor: 'pointer', '&:hover': { color: GOLD } }}
+            >
+              Home
+            </Typography>
+            <Typography
+              onClick={() => router.push('/cartoons')}
+              sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#7a6e65', cursor: 'pointer', '&:hover': { color: GOLD } }}
+            >
+              Cartoons
+            </Typography>
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#2c1a0e', fontWeight: 600 }}>
+              {show.title}
+            </Typography>
+          </Breadcrumbs>
+
+          {/* ── Section Header ── */}
+          <Box id="episodes-section" sx={{ textAlign: 'center' }}>
+          <Typography
+            sx={{
+              fontFamily: '"Jost", system-ui, sans-serif',
+              fontSize: { xs: 13, md: 14 },
+              textTransform: 'uppercase',
+              letterSpacing: '0.12em',
+              color: GOLD,
+              mb: 0.5,
+            }}
+          >
+            Episodes
+          </Typography>
+          <Typography
+            variant="h2"
+            sx={{
+              fontFamily: '"EB Garamond", Georgia, serif',
+              fontSize: { xs: 24, md: 32 },
+              color: BARK,
+              mb: 1,
+            }}
+          >
+            {show.title}
+          </Typography>
+          <Box
+            sx={{
+              width: 48,
+              height: 2,
+              borderRadius: '2px',
+              backgroundColor: GOLD,
+              mx: 'auto',
             }}
           />
-
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-end',
-              background:
-                'linear-gradient(to top, rgba(14,46,31,0.96) 0%, rgba(14,46,31,0.5) 55%, transparent 100%)',
-            }}
-          >
-            <Container maxWidth="xl" sx={{ px: { xs: 3, md: 8 }, pb: { xs: 4, md: 8 } }}>
-              <Box sx={{ mx: 'auto', textAlign: 'center' }}>
-                {show.titleAr && (
-                  <Typography
-                    sx={{
-                      fontFamily: "'EB Garamond', serif",
-                      fontSize: { xs: '1.5rem', md: '2.2rem' },
-                      fontWeight: 700,
-                      color: 'var(--gold-lt)',
-                      lineHeight: 1.3,
-                      mb: 1,
-                      opacity: 0.95,
-                    }}
-                  >
-                    {show.titleAr}
-                  </Typography>
-                )}
-
-                <Typography
-                  sx={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: { xs: '2.6rem', md: '4.2rem' },
-                    fontWeight: 700,
-                    color: '#f5ede0',
-                    lineHeight: 1.05,
-                    mb: 2,
-                    textShadow: '0 2px 16px rgba(0,0,0,0.35)',
-                  }}
-                >
-                  {show.title}
-                </Typography>
-
-                {show.description && (
-                  <Typography
-                    sx={{
-                      fontFamily: 'Jost, var(--font-sans)',
-                      fontSize: { xs: '1rem', md: '1.25rem' },
-                      color: 'rgba(245,237,224,0.85)',
-                      lineHeight: 1.6,
-            
-                      mx: 'auto',
-                      mb: 3,
-                    }}
-                  >
-                    {show.description}
-                  </Typography>
-                )}
-
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', justifyContent: 'center' }}>
-                  <Box
-                    sx={{
-                      background: LEVEL_COLORS[show.level] ?? 'var(--forest)',
-                      color: '#fff',
-                      fontFamily: 'Jost, var(--font-sans)',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.08em',
-                      px: 1.4,
-                      py: 0.5,
-                      borderRadius: '4px',
-                    }}
-                  >
-                    {show.level}
-                  </Box>
-                </Box>
-              </Box>
-            </Container>
-          </Box>
         </Box>
 
-        {/* ── Content ── */}
-        <Container
-          maxWidth="xl"
-          sx={{ px: { xs: 3, md: 8 }, py: { xs: 5, md: 8 } }}
-        >
+        {/* ── Mobile Filter Button ── */}
+        <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
           <Button
-            onClick={() => router.push('/cartoons')}
-            startIcon={<ArrowBackIosNewSharp sx={{ fontSize: 18 }} />}
+            startIcon={<Tune />}
+            onClick={() => setFilterDrawerOpen(true)}
             sx={{
-              mb: { xs: 3, md: 4 },
-              color: 'var(--forest)',
-              fontFamily: 'Jost, var(--font-sans)',
-              textTransform: 'none',
+              height: 40,
+              px: 2,
+              borderRadius: '6px',
+              fontFamily: '"Jost", system-ui, sans-serif',
+              fontSize: 13,
               fontWeight: 500,
-              fontSize: '0.95rem',
-              pl: 0,
-              '&:hover': { background: 'transparent', color: 'var(--gold)' },
+              textTransform: 'none',
+              color: BARK,
+              border: '1px solid rgba(44,26,14,0.15)',
+              backgroundColor: WARM_WHITE,
+              '&:hover': { backgroundColor: 'rgba(44,26,14,0.04)' },
             }}
           >
-            Back to Cartoons
+            Filters
+            {activeFilterCount > 0 && (
+              <Box
+                component="span"
+                sx={{
+                  ml: 1,
+                  width: 18,
+                  height: 18,
+                  borderRadius: '50%',
+                  backgroundColor: GOLD,
+                  color: '#fff',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {activeFilterCount}
+              </Box>
+            )}
           </Button>
+          <Typography sx={{ fontSize: 13, color: MUTED }}>
+            {filteredEpisodes.length} {filteredEpisodes.length === 1 ? 'episode' : 'episodes'}
+          </Typography>
+        </Box>
 
-          {episodes.length === 0 ? (
-            <Typography
+        {filteredEpisodes.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 12 }}>
+            <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 20, color: BARK, mb: 1 }}>
+              No episodes match your filters
+            </Typography>
+            <Typography sx={{ fontSize: 14, color: MUTED, mb: 2 }}>
+              Try adjusting your level selection.
+            </Typography>
+            <Button
+              onClick={() => setActiveLevel('')}
               sx={{
-                fontFamily: 'Jost, var(--font-sans)',
-                color: 'var(--muted)',
-                fontSize: '1rem',
-                lineHeight: 1.7,
+                borderRadius: '9999px',
+                px: 3,
+                py: 1,
+                fontFamily: '"Jost", system-ui, sans-serif',
+                textTransform: 'none',
+                color: BARK,
+                border: '1px solid rgba(44,26,14,0.15)',
               }}
             >
-              No content available yet.
-            </Typography>
-          ) : (
-            <Grid container spacing={{ xs: 2, md: 2.5 }}>
-              {episodes.map((ep) => (
-                <Grid
-                  key={ep.slug}
-                  size={{ xs: 12, lg: 6 }}
-                  sx={{ display: 'flex' }}
-                >
-                  <Card
-                    onClick={() => router.push(`/cartoons/${show.slug}/${ep.slug}`)}
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'stretch',
-                      width: '100%',
-                      background: '#fff',
-                      borderRadius: '10px',
-                      overflow: 'hidden',
-                      boxShadow: '0 2px 12px rgba(44,26,14,0.06)',
-                      cursor: 'pointer',
-                      transition: 'transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease',
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 8px 24px rgba(44,26,14,0.1)',
-                      },
-                      '&:hover .MuiCardMedia-root': {
-                        transform: 'scale(1.05)',
-                      },
-                    }}
-                  >
-                    {/* Content */}
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        flex: 1,
-                        minWidth: 0,
-                        py: { xs: 1.25, md: 1.5 },
-                        px: { xs: 1.75, md: 2 },
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1 }}>
-                        <Box
-                          sx={{
-                            background: LEVEL_COLORS[ep.level] ?? 'var(--forest)',
-                            color: '#fff',
-                            fontFamily: 'Jost, var(--font-sans)',
-                            fontSize: '0.6rem',
-                            fontWeight: 700,
-                            letterSpacing: '0.08em',
-                            px: 0.9,
-                            py: 0.25,
-                            borderRadius: '3px',
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {ep.level}
-                        </Box>
-                      </Box>
+              Reset Filters
+            </Button>
+          </Box>
+        ) : (
+          /* ── Desktop: Sidebar + Grid Layout ── */
+          <Box sx={{ display: 'flex', gap: { md: 4, lg: 5 } }}>
+            {/* Sidebar — desktop only */}
+            <Box
+              sx={{
+                width: 240,
+                flexShrink: 0,
+                display: { xs: 'none', md: 'block' },
+              }}
+            >
+              <Box sx={{ position: 'sticky', top: 100, alignSelf: 'flex-start' }}>
+                <FilterSidebar
+                  categories={[]}
+                  levels={LEVELS}
+                  activeCategory=""
+                  setActiveCategory={() => {}}
+                  activeLevel={activeLevel}
+                  setActiveLevel={setActiveLevel}
+                />
+              </Box>
+            </Box>
 
-                      <Typography
-                        component="div"
-                        sx={{
-                          fontFamily: 'var(--font-serif)',
-                          fontSize: { xs: '1rem', md: '1.15rem' },
-                          fontWeight: 700,
-                          color: 'var(--bark)',
-                          lineHeight: 1.3,
-                          mb: 0.5,
-                        }}
-                      >
-                        {ep.title}
-                      </Typography>
+            {/* Episode Grid */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              {/* Desktop result count */}
+              <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-end', mb: 2 }}>
+                <Typography sx={{ fontSize: 13, color: MUTED }}>
+                  {filteredEpisodes.length} {filteredEpisodes.length === 1 ? 'episode' : 'episodes'}
+                </Typography>
+              </Box>
 
-                      {ep.description && (
-                        <Typography
-                          sx={{
-                            fontFamily: 'Jost, var(--font-sans)',
-                            fontSize: { xs: '0.8rem', md: '0.85rem' },
-                            color: 'var(--muted)',
-                            lineHeight: 1.5,
-                            mb: 0.75,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                          }}
-                        >
-                          {ep.description}
-                        </Typography>
-                      )}
-
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 0.75,
-                          flexWrap: 'wrap',
-                          mt: 'auto',
-                        }}
-                      >
-                        {ep.tags.map((tag) => (
-                          <Chip
-                            key={tag}
-                            label={tag}
-                            size="small"
-                            sx={{
-                              fontFamily: 'Jost, var(--font-sans)',
-                              fontSize: '0.68rem',
-                              background: 'rgba(44,26,14,0.05)',
-                              color: 'var(--muted)',
-                              height: 22,
-                              borderRadius: '3px',
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    </Box>
-
-                    {/* Thumbnail */}
-                    <CardMedia
-                      component="img"
-                      image={`/cartoons/${show.slug}/${ep.slug}.avif`}
-                      alt={ep.title}
-                      sx={{
-                        width: { xs: 80, sm: 100, md: 120 },
-                        flexShrink: 0,
-                        objectFit: 'cover',
-                        display: 'block',
-                        background: '#e8d8bf',
-                        transition: 'transform 0.35s cubic-bezier(.22,1,.36,1)',
-                      }}
-                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                        e.currentTarget.style.display = 'none'
-                      }}
+              <Grid container spacing={2}>
+                {filteredEpisodes.map((ep) => (
+                  <Grid size={{ xs: 12, sm: 6, xl: 3 }} key={ep.slug}>
+                    <ContentCard
+                      slug={ep.slug}
+                      hrefPrefix={`/cartoons/${show.slug}`}
+                      cover={`/cartoons/${show.slug}/${ep.slug}.avif`}
+                      title={ep.title}
+                      level={ep.level}
+                      category={ep.tags[0]}
+                      genre={ep.tags[1]}
+                      description={ep.description}
+                      overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
+                      metaItems={[]}
                     />
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </Container>
-      </Box>
-    </>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          </Box>
+        )}
+
+        </Box>
+
+        <HowItWorksSection
+          steps={[
+            {
+              icon: <Tv sx={{ fontSize: 22, color: '#b8860b' }} />,
+              title: 'Watch with Subtitles',
+              desc: 'Dual Arabic & English subtitles while you watch',
+            },
+            {
+              icon: <TouchApp sx={{ fontSize: 22, color: '#b8860b' }} />,
+              title: 'Click Any Word',
+              desc: 'Instant definitions, transliteration & audio',
+            },
+            {
+              icon: <AutoStories sx={{ fontSize: 22, color: '#b8860b' }} />,
+              title: 'Review & Learn',
+              desc: 'Save words to your personal vocabulary deck',
+            },
+          ]}
+        />
+
+        <PlacementTestCTA
+          heading="Not Sure Where to Start?"
+          description="Take a quick placement test to find shows matched to your Arabic level."
+          ctaLabel="Take Placement Test"
+        />
+
+        <ComingSoonSection
+          label="Coming Soon"
+          heading="More Shows on the Way"
+          items={COMING_SOON}
+        />
+      </Container>
+
+      {/* ═══════════════════════════════════════════════
+          MOBILE FILTER DRAWER
+         ═══════════════════════════════════════════════ */}
+      <Drawer
+        anchor="left"
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              width: 300,
+              backgroundColor: WARM_WHITE,
+              p: 3,
+            },
+          },
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Typography
+            sx={{
+              fontFamily: '"EB Garamond", Georgia, serif',
+              fontSize: 20,
+              color: BARK,
+            }}
+          >
+            Filters
+          </Typography>
+          <IconButton onClick={() => setFilterDrawerOpen(false)} size="small">
+            <Close sx={{ fontSize: 20, color: MUTED }} />
+          </IconButton>
+        </Box>
+        <FilterSidebar
+          categories={[]}
+          levels={LEVELS}
+          activeCategory=""
+          setActiveCategory={() => {}}
+          activeLevel={activeLevel}
+          setActiveLevel={setActiveLevel}
+          onMobileClose={() => setFilterDrawerOpen(false)}
+          hideTitle
+        />
+      </Drawer>
+    </Box>
   )
 }

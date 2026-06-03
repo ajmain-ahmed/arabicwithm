@@ -128,14 +128,16 @@ export default function FilterSidebar({
       )}
 
       {/* ── Category ── */}
-      <FilterSection label="Category">
-        <FilterButtonGroup
-          options={categories}
-          active={activeCategory}
-          onChange={(v) => setActiveCategory(v || categories[0] || '')}
-          onMobileClose={onMobileClose}
-        />
-      </FilterSection>
+      {categories.length > 1 && (
+        <FilterSection label="Category">
+          <FilterButtonGroup
+            options={categories}
+            active={activeCategory}
+            onChange={(v) => setActiveCategory(v || categories[0] || '')}
+            onMobileClose={onMobileClose}
+          />
+        </FilterSection>
+      )}
 
       {/* ── Genre ── */}
       {genres && genres.length > 0 && (
@@ -197,7 +199,7 @@ export default function FilterSidebar({
       <Button
         fullWidth
         onClick={() => {
-          setActiveCategory(categories[0] ?? '')
+          if (categories.length > 1) setActiveCategory(categories[0] ?? '')
           setActiveLevel('')
           setActiveGenre?.('')
           setActiveLanguage?.('')

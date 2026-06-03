@@ -1,9 +1,10 @@
 'use client'
 
 import React, { useState, useEffect, useMemo } from 'react'
-import { Box, Typography, Skeleton, CircularProgress, Container } from '@mui/material'
+import { Box, Typography, Skeleton, CircularProgress, Container, Breadcrumbs } from '@mui/material'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '@/app/AuthContext'
+import { useRouter } from 'next/navigation'
 import CustomSessionConfig from './CustomSessionConfig'
 import { useRevisionStore } from '@/store/revisionStore'
 
@@ -12,7 +13,7 @@ import type { RevisionCard } from '@/app/actions/revision'
 import type { ModeConfig } from './types'
 
 /* ── MUI Icons ── */
-import { School, MenuBook, TrendingUp, LibraryBooks, EventRepeat } from '@mui/icons-material'
+import { School, MenuBook, TrendingUp, LibraryBooks, EventRepeat, NavigateNext } from '@mui/icons-material'
 
 const PAGE_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,700;1,700&family=Jost:wght@300;400;500;600;700&display=swap');
@@ -33,6 +34,7 @@ function classifyForCount(card: RevisionCard): 'new' | 'learning' | 'review' {
 }
 
 export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeScreenProps) {
+  const router = useRouter()
   const { user } = useAuth()
   const [starting, setStarting] = useState(false)
   const sessionCache = useRevisionStore((s) => s.sessionCache)
@@ -111,7 +113,26 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
           </Box>
         </Box>
 
-        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 } }}>
+        <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: 4, display: 'flex', flexDirection: 'column', gap: { xs: 4, md: 6 } }}>
+          {/* Breadcrumbs */}
+          <Breadcrumbs
+            separator={<NavigateNext sx={{ fontSize: 16, color: '#9e8a7a' }} />}
+            sx={{
+              mb: 2,
+              '& .MuiBreadcrumbs-li': { fontFamily: 'Jost, sans-serif' },
+            }}
+          >
+            <Typography
+              onClick={() => router.push('/')}
+              sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#7a6e65', cursor: 'pointer', '&:hover': { color: '#b8860b' } }}
+            >
+              Home
+            </Typography>
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#2c1a0e', fontWeight: 600 }}>
+              Revision
+            </Typography>
+          </Breadcrumbs>
+
           <HowItWorksSection
             steps={[
               {

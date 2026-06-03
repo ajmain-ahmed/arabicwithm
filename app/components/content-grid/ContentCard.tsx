@@ -84,6 +84,9 @@ export default function ContentCard({
           component="img"
           src={cover}
           alt={title}
+          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+            e.currentTarget.style.display = 'none'
+          }}
           sx={{
             width: '100%',
             height: '100%',

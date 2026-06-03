@@ -8,6 +8,7 @@ import {
   Container,
   Drawer,
   IconButton,
+  Breadcrumbs,
 } from '@mui/material'
 import Grid from '@mui/material/Grid'
 import { useRouter } from 'next/navigation'
@@ -26,6 +27,7 @@ import {
   AutoStories,
   Close,
   Tune,
+  NavigateNext,
 } from '@mui/icons-material'
 
 /* ── Palette ── */
@@ -125,8 +127,29 @@ export default function CartoonsPage({
           gap: { xs: 4, md: 6 },
         }}
       >
-        {/* ── Section Header ── */}
-        <Box id="shows-section" sx={{ textAlign: 'center', pt: 4 }}>
+        {/* ── Content Area ── */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 3 }, pt: 4 }}>
+          {/* Breadcrumbs */}
+          <Breadcrumbs
+            separator={<NavigateNext sx={{ fontSize: 16, color: '#9e8a7a' }} />}
+            sx={{
+              mb: 2,
+              '& .MuiBreadcrumbs-li': { fontFamily: 'Jost, sans-serif' },
+            }}
+          >
+            <Typography
+              onClick={() => router.push('/')}
+              sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#7a6e65', cursor: 'pointer', '&:hover': { color: GOLD } }}
+            >
+              Home
+            </Typography>
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#2c1a0e', fontWeight: 600 }}>
+              Cartoons
+            </Typography>
+          </Breadcrumbs>
+
+          {/* ── Section Header ── */}
+          <Box id="shows-section" sx={{ textAlign: 'center' }}>
           <Typography
             sx={{
               fontFamily: '"Jost", system-ui, sans-serif',
@@ -292,6 +315,8 @@ export default function CartoonsPage({
               </Grid>
             )}
           </Box>
+        </Box>
+
         </Box>
 
         <HowItWorksSection
