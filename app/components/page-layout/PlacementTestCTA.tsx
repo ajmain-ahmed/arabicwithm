@@ -32,6 +32,7 @@ export default function PlacementTestCTA({
         textAlign: 'center',
         borderRadius: { xs: 0, md: '16px' },
         mx: { xs: -2, md: -3 },
+        mt: { xs: 3, md: 4 },
         mb: 0,
         overflow: 'hidden',
       }}

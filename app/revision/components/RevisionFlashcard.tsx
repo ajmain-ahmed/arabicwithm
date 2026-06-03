@@ -6,7 +6,7 @@ import {
 } from '@mui/material'
 import { useMediaQuery } from '@mui/material'
 import { motion } from 'framer-motion'
-import { type SessionCard, type Queue, type ModeConfig, parseExamples } from '../types'
+import { type SessionCard, type Queue, type ModeConfig, type SessionMode, parseExamples } from '../types'
 import IntegratedProgressDots from './IntegratedProgressDots'
 import BucketChips from './BucketChips'
 import AnimatedArabicWord from './AnimatedArabicWord'
@@ -67,6 +67,7 @@ export default function RevisionFlashcard({
     uniqueDoneCount, uniqueTotal,
     dialogsOpen = false,
     modeConfig,
+    sessionMode,
 }: {
     sessionCard: SessionCard
     counts: Record<Queue, number>
@@ -82,6 +83,7 @@ export default function RevisionFlashcard({
     uniqueTotal: number
     dialogsOpen?: boolean
     modeConfig: ModeConfig
+    sessionMode?: SessionMode
 }) {
     const [revealed, setRevealed] = useState(false)
     const [activeTab, setActiveTab] = useState<'definition' | 'examples' | 'forms'>('definition')
@@ -293,22 +295,24 @@ export default function RevisionFlashcard({
                     <Collapse in={revealed} timeout={{ enter: 300, exit: 0 }}>
                         <Box sx={{ borderTop: '1px solid rgba(184,134,11,0.1)', pt: '1rem', mb: '1rem' }} />
 
-                        {/* Ease Factor Meter */}
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1.5 }}>
-                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#9e8a7a', fontWeight: 500 }}>
-                                Difficulty
-                            </Typography>
-                            <Box sx={{ width: 80, height: 6, background: 'rgba(122,110,101,0.1)', borderRadius: '999px', overflow: 'hidden' }}>
-                                <Box sx={{
-                                    width: `${easePercent}%`, height: '100%',
-                                    background: easePercent > 70 ? '#2e7d32' : easePercent > 40 ? '#b8860b' : '#c62828',
-                                    borderRadius: '999px', transition: 'width 0.4s ease',
-                                }} />
+                        {/* Ease Factor Meter — hidden in custom sessions */}
+                        {sessionMode !== 'custom' && (
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1.5 }}>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#9e8a7a', fontWeight: 500 }}>
+                                    Difficulty
+                                </Typography>
+                                <Box sx={{ width: 80, height: 6, background: 'rgba(122,110,101,0.1)', borderRadius: '999px', overflow: 'hidden' }}>
+                                    <Box sx={{
+                                        width: `${easePercent}%`, height: '100%',
+                                        background: easePercent > 70 ? '#2e7d32' : easePercent > 40 ? '#b8860b' : '#c62828',
+                                        borderRadius: '999px', transition: 'width 0.4s ease',
+                                    }} />
+                                </Box>
+                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#7a6e65', fontWeight: 600, minWidth: 28 }}>
+                                    {card.ease_factor.toFixed(2)}
+                                </Typography>
                             </Box>
-                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#7a6e65', fontWeight: 600, minWidth: 28 }}>
-                                {card.ease_factor.toFixed(2)}
-                            </Typography>
-                        </Box>
+                        )}
 
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: { xs: 0.5, md: 0.75 } }}>
                             <Box sx={{ display: 'inline-flex', alignItems: 'center', fontFamily: 'Jost, sans-serif', fontSize: '11px', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase', padding: '8px 16px', borderRadius: '999px', background: 'rgba(122,110,101,0.08)', color: '#7a6e65' }}>
@@ -327,7 +331,7 @@ export default function RevisionFlashcard({
                         </Box>
 
                         <Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 2.5, flexWrap: 'wrap' }}>
                                 <Button onClick={() => setActiveTab('definition')} sx={{ ...tabButtonSx, background: activeTab === 'definition' ? 'rgba(184,134,11,0.12)' : 'transparent', color: activeTab === 'definition' ? '#b8860b' : '#7a6e65', borderColor: activeTab === 'definition' ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)' }}>Definition</Button>
                                 <Button onClick={() => setActiveTab('examples')} sx={{ ...tabButtonSx, background: activeTab === 'examples' ? 'rgba(184,134,11,0.12)' : 'transparent', color: activeTab === 'examples' ? '#b8860b' : '#7a6e65', borderColor: activeTab === 'examples' ? 'rgba(184,134,11,0.4)' : 'rgba(122,110,101,0.2)' }}>Examples</Button>
                                 {hasForms && (
@@ -336,7 +340,7 @@ export default function RevisionFlashcard({
                             </Box>
                             {activeTab === 'definition' && <DefinitionPanel card={card} showDiacritics={showDiacritics} textScale={textScale} />}
                             {activeTab === 'examples' && <ExampleSentences examples={examples} showDiacritics={showDiacritics} textScale={textScale} />}
-                            {activeTab === 'forms' && <MorphologyPanel card={card} textScale={textScale} />}
+                            {activeTab === 'forms' && <MorphologyPanel card={card} showDiacritics={showDiacritics} textScale={textScale} />}
                         </Box>
 
                         <Box sx={{ mt: { xs: '1.25rem', md: '1.5rem' }, position: 'relative' }}>

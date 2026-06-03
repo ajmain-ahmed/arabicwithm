@@ -64,7 +64,7 @@ export default function RevisionPage() {
                             priorCompleted={completedCards}
                             onRestart={restartSession}
                             isLoading={loading}
-                            sessionMode={sessionMode}
+                            sessionMode={sessionMode ?? undefined}
                         />
                     </motion.div>
                 )}
@@ -108,6 +108,7 @@ export default function RevisionPage() {
                         uniqueTotal={uniqueTotal}
                         dialogsOpen={dialogsOpen}
                         modeConfig={modeConfig}
+                        sessionMode={sessionMode ?? undefined}
                     />
                 )}
             </RevisionSessionLayout>
