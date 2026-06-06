@@ -191,7 +191,7 @@ export default function FloatingVideoPlayer() {
     }
   }, [onResize, endResize])
 
-  if (!pipOpen) return null
+  if (!pipOpen || isMobile) return null
 
   return (
     <motion.div

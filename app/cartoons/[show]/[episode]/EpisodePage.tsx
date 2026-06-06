@@ -761,6 +761,8 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
 
   const [testDialogOpen, setTestDialogOpen] = useState(false)
 
+  const theme = useTheme()
+  const disablePip = useMediaQuery(theme.breakpoints.down('md'))
   const [navbarHeight, setNavbarHeight] = useState(NAVBAR_HEIGHT);
 
   useEffect(() => {
@@ -863,7 +865,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   const [pendingResumeTime, setPendingResumeTime] = useState<number | null>(null)
 
   const handleEnterPip = useCallback(() => {
-    if (!episode.youtubeId) return
+    if (!episode.youtubeId || disablePip) return
     const now = getCurrentTime()
     pauseVideo()
     openPip({
@@ -873,7 +875,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
       showTitle,
       currentTime: now,
     })
-  }, [episode.youtubeId, episode.show, episode.slug, episode.title, showTitle, getCurrentTime, pauseVideo, openPip])
+  }, [episode.youtubeId, episode.show, episode.slug, episode.title, showTitle, getCurrentTime, pauseVideo, openPip, disablePip])
 
   const wasPipActiveRef = useRef(isPipActiveHere)
 
@@ -991,7 +993,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
           hasVideo={!!episode.youtubeId}
           onHeightChange={setMobileHeaderHeight}
           isPipActive={isPipActiveHere}
-          onPip={isPipActiveHere ? handleRestoreFromPip : handleEnterPip}
+          onPip={disablePip ? undefined : (isPipActiveHere ? handleRestoreFromPip : handleEnterPip)}
         />
       )}
 
@@ -1291,27 +1293,28 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                     </Box>
                   </Popover>
 
-                  {/* PiP button */}
-                  <Button
-                    onClick={isPipActiveHere ? handleRestoreFromPip : handleEnterPip}
-                    size="small"
-                    startIcon={<PictureInPictureAlt sx={{ fontSize: '1.1rem' }} />}
-                    sx={{
-                      color: isPipActiveHere ? '#b8860b' : '#7a6e65',
-                      border: '1px solid rgba(122,110,101,0.25)',
-                      borderRadius: '8px',
-                      fontFamily: 'Jost, sans-serif',
-                      fontSize: '0.85rem',
-                      fontWeight: 500,
-                      textTransform: 'none',
-                      px: 1.5,
-                      py: 0.5,
-                      minHeight: 34,
-                      '&:hover': { background: 'rgba(122,110,101,0.08)', borderColor: 'rgba(122,110,101,0.4)' },
-                    }}
-                  >
-                    {isPipActiveHere ? 'Resume here' : 'Pop out'}
-                  </Button>
+                  {!disablePip && (
+                    <Button
+                      onClick={isPipActiveHere ? handleRestoreFromPip : handleEnterPip}
+                      size="small"
+                      startIcon={<PictureInPictureAlt sx={{ fontSize: '1.1rem' }} />}
+                      sx={{
+                        color: isPipActiveHere ? '#b8860b' : '#7a6e65',
+                        border: '1px solid rgba(122,110,101,0.25)',
+                        borderRadius: '8px',
+                        fontFamily: 'Jost, sans-serif',
+                        fontSize: '0.85rem',
+                        fontWeight: 500,
+                        textTransform: 'none',
+                        px: 1.5,
+                        py: 0.5,
+                        minHeight: 34,
+                        '&:hover': { background: 'rgba(122,110,101,0.08)', borderColor: 'rgba(122,110,101,0.4)' },
+                      }}
+                    >
+                      {isPipActiveHere ? 'Resume here' : 'Pop out'}
+                    </Button>
+                  )}
 
                   <Button
                     variant="outlined"
