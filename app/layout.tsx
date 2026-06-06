@@ -5,6 +5,7 @@ import Navbar from "./components/navbar";
 import Footer from "./components/footer";
 import MobileBottomNav from "./components/MobileBottomNav";
 import WordBankWidget from "./components/WordBankWidget";
+import FloatingVideoPlayer from "./components/FloatingVideoPlayer";
 import { AuthProvider } from './AuthContext'
 import GlobalDataInit from '@/app/components/GlobalDataInit'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -48,6 +49,7 @@ export default function RootLayout({
           <Footer />
           <MobileBottomNav />
           <WordBankWidget />
+          <FloatingVideoPlayer />
         </AuthProvider>
       </body>
     </html>
