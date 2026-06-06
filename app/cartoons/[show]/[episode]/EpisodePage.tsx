@@ -762,7 +762,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   const [testDialogOpen, setTestDialogOpen] = useState(false)
 
   const theme = useTheme()
-  const disablePip = useMediaQuery(theme.breakpoints.down('md'))
+  const isMobileViewport = useMediaQuery(theme.breakpoints.down('md'))
   const [navbarHeight, setNavbarHeight] = useState(NAVBAR_HEIGHT);
 
   useEffect(() => {
@@ -865,7 +865,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   const [pendingResumeTime, setPendingResumeTime] = useState<number | null>(null)
 
   const handleEnterPip = useCallback(() => {
-    if (!episode.youtubeId || disablePip) return
+    if (!episode.youtubeId || isMobileViewport) return
     const now = getCurrentTime()
     pauseVideo()
     openPip({
@@ -875,7 +875,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
       showTitle,
       currentTime: now,
     })
-  }, [episode.youtubeId, episode.show, episode.slug, episode.title, showTitle, getCurrentTime, pauseVideo, openPip, disablePip])
+  }, [episode.youtubeId, episode.show, episode.slug, episode.title, showTitle, getCurrentTime, pauseVideo, openPip, isMobileViewport])
 
   const wasPipActiveRef = useRef(isPipActiveHere)
 
@@ -993,7 +993,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
           hasVideo={!!episode.youtubeId}
           onHeightChange={setMobileHeaderHeight}
           isPipActive={isPipActiveHere}
-          onPip={disablePip ? undefined : (isPipActiveHere ? handleRestoreFromPip : handleEnterPip)}
+          onPip={isMobileViewport ? undefined : (isPipActiveHere ? handleRestoreFromPip : handleEnterPip)}
         />
       )}
 
@@ -1239,7 +1239,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                 <Box sx={{ mb: { xs: 2, md: 3 }, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                   {/* Settings button */}
                   <Button
-                    onClick={(e) => setSettingsAnchor(e.currentTarget)}
+                    onClick={isMobileViewport ? () => setSettingsOpen(true) : (e) => setSettingsAnchor(e.currentTarget)}
                     size="small"
                     startIcon={<Settings sx={{ fontSize: '1.1rem' }} />}
                     sx={{
@@ -1293,7 +1293,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                     </Box>
                   </Popover>
 
-                  {!disablePip && (
+                  {!isMobileViewport && (
                     <Button
                       onClick={isPipActiveHere ? handleRestoreFromPip : handleEnterPip}
                       size="small"
@@ -1337,7 +1337,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                       },
                     }}
                   >
-                    Test Yourself
+                    Test
                   </Button>
                   {blocksWithNotes.length > 0 && (
                     <Button
@@ -1367,7 +1367,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                         },
                       }}
                     >
-                      {allNotesExpanded ? 'Collapse All Notes' : 'Expand All Notes'}
+                      {allNotesExpanded ? 'Collapse notes' : 'Notes'}
                     </Button>
                   )}
                 </Box>
