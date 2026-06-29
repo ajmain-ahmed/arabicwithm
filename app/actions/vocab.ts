@@ -2,18 +2,11 @@
 
 "use server"
 
-import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { z } from 'zod'
 import { checkRateLimit } from '@/app/lib/rateLimit'
-
-const serviceUrl = process.env.SUPABASE_URL
-const serviceKey = process.env.SUPABASE_SERVICE_KEY
-if (!serviceUrl || !serviceKey) {
-  throw new Error('Missing required env vars: SUPABASE_URL and/or SUPABASE_SERVICE_KEY')
-}
-const serviceClient = createServiceClient(serviceUrl, serviceKey)
+import { serviceClient } from "@/app/lib/supabase"
 
 async function getAuthClient() {
   const cookieStore = await cookies()
@@ -327,12 +320,14 @@ export async function fetchRevisionVocabIds(): Promise<number[]> {
 
 /* ── admin helpers ── */
 
-const ADMIN_UID = process.env.ADMIN ?? ''
+const ADMIN_UIDS = new Set(
+  [process.env.ADMIN, process.env.ADMIN2].filter((v): v is string => Boolean(v))
+)
 
 export async function isAdminUser(): Promise<boolean> {
   const userId = await getAuthenticatedUserId()
-  if (!userId || !ADMIN_UID) return false
-  return userId === ADMIN_UID
+  if (!userId || ADMIN_UIDS.size === 0) return false
+  return ADMIN_UIDS.has(userId)
 }
 
 export type VocabUpdateInput = {

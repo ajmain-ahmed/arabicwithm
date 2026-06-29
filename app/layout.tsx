@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Box } from "@mui/material";
 import "./globals.css";
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
@@ -31,25 +33,45 @@ export const viewport = {
   viewportFit: 'cover',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headersList = await headers()
+  const nextUrl = headersList.get('next-url') ?? ''
+  const isAdminRoute = nextUrl.startsWith('/admin')
+
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <AuthProvider>
-          <Navbar />
-          <ErrorBoundary>
-            <GlobalDataInit>
+          {isAdminRoute ? (
+            <ErrorBoundary>
               {children}
-            </GlobalDataInit>
-          </ErrorBoundary>
-          <Footer />
-          <MobileBottomNav />
-          <WordBankWidget />
-          <FloatingVideoPlayer />
+            </ErrorBoundary>
+          ) : (
+            <>
+              <Navbar />
+              <Box
+                component="main"
+                sx={{
+                  pt: { xs: "56px", md: "64px" },
+                  pb: { xs: "56px", md: 0 },
+                }}
+              >
+                <ErrorBoundary>
+                  <GlobalDataInit>
+                    {children}
+                  </GlobalDataInit>
+                </ErrorBoundary>
+              </Box>
+              <Footer />
+              <MobileBottomNav />
+              <WordBankWidget />
+              <FloatingVideoPlayer />
+            </>
+          )}
         </AuthProvider>
       </body>
     </html>
