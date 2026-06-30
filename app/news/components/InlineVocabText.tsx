@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 import {
   Box,
   Typography,
@@ -11,12 +11,9 @@ import {
 import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip'
 import { styled } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
-import { Close } from '@mui/icons-material'
 import { useMediaQuery } from '@mui/material'
-import { stripDiacritics, normalizeArabicToken } from '@/app/lib/arabic'
-import { useRevisionStore } from '@/store/revisionStore'
-import { useVocabStore } from '@/store/vocabStore'
-import { useAuth } from '@/app/AuthContext'
+import { Close } from '@mui/icons-material'
+import { stripDiacritics } from '@/app/lib/arabic'
 
 const LEVEL_COLORS: Record<string, string> = {
   A1: '#2d6a4f', A2: '#40916c', B1: '#b5861a', B2: '#9c6b00', C1: '#6d4c9e', C2: '#4a2f7a',
@@ -118,28 +115,19 @@ function lookupEntry(
     }
   }
 
-  const normalized = normalizeArabicToken(part)
-  return vocabMap[normalized]
+  return undefined
 }
 
 /* ── VocabDetail ── */
 function VocabDetail({
   entry,
-  toggling,
-  inRevision,
-  onToggle,
   textScale,
   onClose,
 }: {
   entry: InlineVocabEntry
-  toggling: boolean
-  inRevision: boolean
-  onToggle: () => void
   textScale: number
   onClose?: () => void
 }) {
-  const { user } = useAuth()
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
       {(entry.level || entry.theme || onClose) && (
@@ -238,39 +226,6 @@ function VocabDetail({
           {entry.definition}
         </Typography>
       </Box>
-
-      {user ? (
-        <button
-          disabled={toggling}
-          onClick={onToggle}
-          style={{
-            background: inRevision ? '#b8860b' : '#0e2e1f',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '8px 16px',
-            fontFamily: 'Jost, sans-serif',
-            fontWeight: 600,
-            fontSize: `calc(0.9rem * ${textScale})`,
-            cursor: 'pointer',
-            opacity: toggling ? 0.6 : 1,
-          }}
-        >
-          {toggling ? 'Updating…' : inRevision ? 'Remove from Revision' : 'Add to Revision'}
-        </button>
-      ) : (
-        <Typography
-          sx={{
-            fontFamily: 'Jost, sans-serif',
-            fontSize: `calc(0.78rem * ${textScale})`,
-            color: 'var(--muted)',
-            textAlign: 'center',
-            fontStyle: 'italic',
-          }}
-        >
-          Sign in to save words for revision
-        </Typography>
-      )}
     </Box>
   )
 }
@@ -289,15 +244,10 @@ export default function InlineVocabText({
 }) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
-  const isInRevision = useRevisionStore(s => s.isInRevision)
-  const toggleRevisionBuffered = useRevisionStore(s => s.toggleRevisionBuffered)
-  const flushPendingToggles = useRevisionStore(s => s.flushPendingToggles)
-  const updateUserProgressWord = useVocabStore(s => s.updateUserProgressWord)
 
   const [activeEntry, setActiveEntry] = useState<InlineVocabEntry | null>(null)
   const [activePartIndex, setActivePartIndex] = useState<number | null>(null)
   const [open, setOpen] = useState(false)
-  const [toggling, setToggling] = useState(false)
 
   const childRef = useRef<HTMLSpanElement | null>(null)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -334,35 +284,6 @@ export default function InlineVocabText({
     setActivePartIndex(null)
     childRef.current = null
   }, [clearLeaveTimer])
-
-  const handleToggle = useCallback(() => {
-    if (!activeEntry) return
-    setToggling(true)
-    const nextInRevision = !isInRevision(activeEntry.id)
-    toggleRevisionBuffered(activeEntry.id)
-    updateUserProgressWord(
-      activeEntry.id,
-      nextInRevision ? 'revision' : null,
-      nextInRevision
-        ? {
-            word_ar: activeEntry.word,
-            word_di: activeEntry.word_diacritic,
-            word_tr: activeEntry.transliteration,
-            level: activeEntry.level,
-            theme: activeEntry.theme,
-            meaning: activeEntry.definition,
-          }
-        : undefined
-    )
-    setToggling(false)
-  }, [activeEntry, toggleRevisionBuffered, isInRevision, updateUserProgressWord])
-
-  useEffect(() => {
-    return () => {
-      clearLeaveTimer()
-      flushPendingToggles()
-    }
-  }, [clearLeaveTimer, flushPendingToggles])
 
   const parts = text.split(/([\u0600-\u06FF]+)/)
 
@@ -431,9 +352,6 @@ export default function InlineVocabText({
                   {activeEntry && (
                     <VocabDetail
                       entry={activeEntry}
-                      toggling={toggling}
-                      inRevision={activeEntry ? isInRevision(activeEntry.id) : false}
-                      onToggle={handleToggle}
                       textScale={textScale}
                       onClose={handleClose}
                     />
@@ -458,9 +376,6 @@ export default function InlineVocabText({
                   <Box sx={{ p: 2.5 }}>
                     <VocabDetail
                       entry={activeEntry}
-                      toggling={toggling}
-                      inRevision={activeEntry ? isInRevision(activeEntry.id) : false}
-                      onToggle={handleToggle}
                       textScale={textScale}
                     />
                   </Box>

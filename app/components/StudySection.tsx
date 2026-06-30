@@ -8,8 +8,8 @@ import { ArrowForwardSharp } from '@mui/icons-material'
 
 const FEATURES = [
     {
-        title: 'Spaced Repetition',
-        body: 'Review vocabulary at scientifically optimal intervals to maximise retention.',
+        title: 'Themed Flashcards',
+        body: 'Browse vocabulary by real-world topics and CEFR level, with audio and example sentences.',
     },
     {
         title: 'CEFR-Graded Themes',

@@ -44,7 +44,7 @@ const MEGA_MENU_ITEMS = [
     {
         header: 'Study',
         icon: <School sx={{ fontSize: 20, color: 'var(--forest)' }} />,
-        items: ['Beginner', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'Revision']
+        items: ['Beginner', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
     },
     {
         header: 'Cartoons',
@@ -196,10 +196,6 @@ export default function Navbar() {
     };
 
     const safePush = (url: string) => {
-        if (typeof window !== 'undefined' && (window as any).__customSessionActive && url !== '/revision') {
-            window.dispatchEvent(new CustomEvent('revision-leave-requested', { detail: { url } }));
-            return;
-        }
         router.push(url);
     };
 
@@ -284,10 +280,7 @@ export default function Navbar() {
 
     const DropdownContent = ({ section, isMobile = false }: { section: typeof MEGA_MENU_ITEMS[0], isMobile?: boolean }) => {
         const handleItemClick = (item: string) => {
-            if (section.header === 'Study' && item === 'Revision') {
-                window.dispatchEvent(new CustomEvent('navigate-to-revision'))
-                safePush('/revision');
-            } else if (section.header === 'Study') {
+            if (section.header === 'Study') {
                 const slug = STUDY_LEVEL_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-');
                 safePush(`/flashcards/${slug}`);
             } else if (section.header === 'Cartoons') {

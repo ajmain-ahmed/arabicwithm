@@ -13,7 +13,6 @@ import {
 import { ArrowLeft, CalendarDays, Globe, User, Tag, BookOpen } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ParsedArticle } from '@/app/lib/news'
-import { useRevisionStore } from '@/store/revisionStore'
 import InlineMdVocab from '../components/InlineMdVocab'
 import LevelBadge from '../components/LevelBadge'
 
@@ -25,15 +24,6 @@ export default function ArticlePage({ article }: ArticlePageProps) {
   const router = useRouter()
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
-  const flushPendingToggles = useRevisionStore((s) => s.flushPendingToggles)
-
-  // Flush pending toggles on unmount / navigation away
-  useEffect(() => {
-    return () => {
-      flushPendingToggles()
-    }
-  }, [flushPendingToggles])
-
   // Build full article text from paragraphs
   const articleText = article.paragraphs.map((p) => p.arabicDi).join('\n\n')
 

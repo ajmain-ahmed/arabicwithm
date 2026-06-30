@@ -8,19 +8,15 @@ import MenuBookIcon from '@mui/icons-material/MenuBook'
 import CreateIcon from '@mui/icons-material/Create'
 import SearchIcon from '@mui/icons-material/Search'
 import BookmarkIcon from '@mui/icons-material/Bookmark'
-import TrendingUpIcon from '@mui/icons-material/TrendingUp'
-import StickyNote2Icon from '@mui/icons-material/StickyNote2'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import type { DashboardData } from '@/app/actions/dashboard'
 
 const NAV_ITEMS = [
   { key: 'home', label: 'Home', icon: <HomeIcon sx={{ fontSize: 20 }} />, href: '/' },
   { key: 'learn', label: 'Learn', icon: <MenuBookIcon sx={{ fontSize: 20 }} />, href: '/flashcards' },
-  { key: 'practice', label: 'Practice', icon: <CreateIcon sx={{ fontSize: 20 }} />, href: '/revision' },
+  { key: 'practice', label: 'Practice', icon: <CreateIcon sx={{ fontSize: 20 }} />, href: '/flashcards' },
   { key: 'dictionary', label: 'Dictionary', icon: <SearchIcon sx={{ fontSize: 20 }} />, href: '/flashcards' },
-  { key: 'saved', label: 'Saved', icon: <BookmarkIcon sx={{ fontSize: 20 }} />, href: '/profile' },
-  { key: 'progress', label: 'Progress', icon: <TrendingUpIcon sx={{ fontSize: 20 }} />, href: '/profile' },
-  { key: 'notes', label: 'Notes', icon: <StickyNote2Icon sx={{ fontSize: 20 }} />, href: '/profile' },
+  { key: 'profile', label: 'Profile', icon: <BookmarkIcon sx={{ fontSize: 20 }} />, href: '/profile' },
 ]
 
 export default function DashboardSidebar({ data }: { data: DashboardData }) {

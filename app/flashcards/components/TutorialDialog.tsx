@@ -23,17 +23,17 @@ const DESKTOP_PAGES = [
   },
   {
     title: 'Reveal & Customise',
-    body: 'Press Show answer to see the full card. Use the toolbar switches to show or hide diacritics, keep answers permanently visible, or adjust text size.',
+    body: 'Press Show answer to see the full card. Use the toolbar switches to show or hide diacritics and adjust text size.',
     image: '/themes/study.avif',
   },
   {
-    title: 'Take Action',
-    body: 'Mark a word as Complete when you know it, or save it to Revision for later review. Use Back and Next to move between cards, or jump to any theme from the sidebar.',
+    title: 'Navigate',
+    body: 'Use Back and Next to move between cards, or jump to any theme from the sidebar.',
     image: '/themes/weather.avif',
   },
   {
     title: 'Ready?',
-    body: 'Words are organised by theme and CEFR level. Finish a theme to unlock the next one. Your progress is saved automatically.',
+    body: 'Words are organised by theme and CEFR level. Pick a theme and start exploring.',
     image: '/homepage/hero.avif',
   },
 ]
@@ -46,22 +46,22 @@ const MOBILE_PAGES = [
   },
   {
     title: 'Reveal & Customise',
-    body: 'Press Show answer to see the full card. Tap the settings icon to adjust diacritics, text size, and more.',
+    body: 'Press Show answer to see the full card. Tap the settings icon to adjust diacritics and text size.',
     image: '/themes/study.avif',
   },
   {
     title: 'Swipe to Navigate',
-    body: 'Swipe left to mark a word for revision, swipe right to mark it as complete. Pull far enough and the card slides away; release early and it smoothly bounces back to centre.',
+    body: 'Swipe left for the next card and swipe right for the previous card.',
     image: '/themes/weather.avif',
   },
   {
-    title: 'Themes & Actions',
-    body: 'Tap the Themes button to switch between topics. Use the action buttons at the bottom to mark words for revision or complete them.',
+    title: 'Themes',
+    body: 'Tap the Themes button to switch between topics.',
     image: '/cartoons/al-sha3b-yurid/al-sha3b-yurid-hero.avif',
   },
   {
     title: 'Ready?',
-    body: 'Words are organised by theme and CEFR level. Finish a theme to unlock the next one. Your progress is saved automatically.',
+    body: 'Words are organised by theme and CEFR level. Pick a theme and start exploring.',
     image: '/homepage/hero.avif',
   },
 ]

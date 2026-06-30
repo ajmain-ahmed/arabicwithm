@@ -4,22 +4,19 @@ import React, { useEffect, useMemo, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Box, Container, Typography, Button, Skeleton, LinearProgress,
-  Avatar, Fade, Grid, TextField, Chip, Table, TableHead, TableBody,
-  TableRow, TableCell, TableContainer, Paper, IconButton, Tabs, Tab,
+  Avatar, Fade, Grid, Tabs, Tab,
 } from '@mui/material'
 import {
   LogoutOutlined, SettingsOutlined, SupportOutlined,
-  BarChartOutlined, CheckCircleOutlined, MailOutlineOutlined,
+  BarChartOutlined, MailOutlineOutlined,
   LocalShippingOutlined, InventoryOutlined, ShoppingBagOutlined,
-  ChevronRight, ArrowForwardIos, ExpandMore,
-  Search, Sort, FilterList, School, Bookmark,
+  ArrowForwardIos, ExpandMore,
 } from '@mui/icons-material'
 import {
   Accordion, AccordionSummary, AccordionDetails,
 } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
-import { fetchUserProfile, type ProfileData, type LevelStat, type ProgressWord } from '@/app/actions/profile'
-import { useVocabStore } from '@/store/vocabStore'
+import { fetchUserProfile, type ProfileData, type LevelStat } from '@/app/actions/profile'
 import { supabase } from '@/app/lib/supabase/client'
 
 const CSS = `
@@ -42,12 +39,11 @@ const CSS = `
   .support-card:hover{box-shadow:0 8px 32px rgba(44,26,14,0.08);}
 `
 
-type Section = 'stats' | 'words' | 'settings' | 'support'
-const validTabs: Section[] = ['stats', 'words', 'settings', 'support']
+type Section = 'stats' | 'settings' | 'support'
+const validTabs: Section[] = ['stats', 'settings', 'support']
 
 const NAV_ITEMS: { id: Section; label: string; icon: React.ReactNode }[] = [
   { id: 'stats', label: 'Stats', icon: <BarChartOutlined sx={{ fontSize: 18 }} /> },
-  { id: 'words', label: 'Words', icon: <InventoryOutlined sx={{ fontSize: 18 }} /> },
   { id: 'settings', label: 'Settings', icon: <SettingsOutlined sx={{ fontSize: 18 }} /> },
   { id: 'support', label: 'Support', icon: <SupportOutlined sx={{ fontSize: 18 }} /> },
 ]
@@ -84,23 +80,10 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 function ChartSection({ level }: { level: LevelStat | null }) {
   if (!level) return null
 
-  const completed = level.completedWords
-  const revision = level.revisionWords
   const total = level.totalWords
-
-  const accounted = completed + revision
-  const remaining = Math.max(0, total - accounted)
-
-  const progressPct = total > 0 ? Math.round((accounted / total) * 100) : 0
-
-  const color = level.color ?? '#b8860b'
   const label = level.code === 'ALL'
     ? 'All Levels'
     : `${level.label} (${level.code})`
-
-  const completedWidth = total > 0 ? (completed / total) * 100 : 0
-  const revisionWidth = total > 0 ? (revision / total) * 100 : 0
-  const remainingWidth = total > 0 ? (remaining / total) * 100 : 0
 
   return (
     <Box sx={{
@@ -123,29 +106,19 @@ function ChartSection({ level }: { level: LevelStat | null }) {
             strokeWidth={3}
             strokeDashoffset="0"
           />
-          <path
-            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-            fill="none"
-            stroke={color}
-            strokeWidth={3}
-            strokeDasharray={`${progressPct}, 100`}
-            strokeLinecap="round"
-            strokeDashoffset="0"
-            style={{ transition: 'stroke-dasharray 0.6s ease, stroke 0.3s ease' }}
-          />
         </svg>
         <Box sx={{
           position: 'absolute', inset: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
         }}>
           <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.8rem', fontWeight: 700, color: '#2c1a0e' }}>
-            {progressPct}%
+            {total.toLocaleString()}
           </Typography>
           <Typography sx={{
             fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', fontWeight: 500,
             color: '#7a6e65', textTransform: 'uppercase', letterSpacing: '0.06em',
           }}>
-            mastered
+            words
           </Typography>
         </Box>
       </Box>
@@ -157,64 +130,13 @@ function ChartSection({ level }: { level: LevelStat | null }) {
           {label}
         </Typography>
         <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: '#7a6e65', mb: 2.5 }}>
-          {total.toLocaleString()} total words
-          {level.code !== 'ALL' && ` · ${level.completedThemes}/${level.totalThemes} themes completed`}
+          {level.totalThemes} themes
         </Typography>
-
-        <Box sx={{
-          width: '100%', height: 32, borderRadius: '8px', display: 'flex', overflow: 'hidden',
-          border: '1px solid rgba(184,134,11,0.12)',
-        }}>
-          {completed > 0 && (
-            <Box sx={{
-              width: `${completedWidth}%`,
-              background: '#2e7d32',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              minWidth: completedWidth > 0 && completedWidth < 6 ? 28 : 'auto',
-            }}>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
-                {completed}
-              </Typography>
-            </Box>
-          )}
-          {revision > 0 && (
-            <Box sx={{
-              width: `${revisionWidth}%`,
-              background: '#1565c0',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              minWidth: revisionWidth > 0 && revisionWidth < 6 ? 28 : 'auto',
-            }}>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 700, color: '#fff', whiteSpace: 'nowrap' }}>
-                {revision}
-              </Typography>
-            </Box>
-          )}
-          {remaining > 0 && (
-            <Box sx={{
-              width: `${remainingWidth}%`,
-              background: 'rgba(184,134,11,0.08)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              minWidth: remainingWidth > 0 && remainingWidth < 6 ? 28 : 'auto',
-            }}>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 700, color: '#6b5f55', whiteSpace: 'nowrap' }}>
-                {remaining}
-              </Typography>
-            </Box>
-          )}
-        </Box>
 
         <Box sx={{ display: 'flex', gap: { xs: 2, sm: 3 }, mt: 1.5 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
             <Box sx={{ width: 10, height: 10, borderRadius: '2px', background: '#2e7d32' }} />
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#7a6e65' }}>Mastered</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <Box sx={{ width: 10, height: 10, borderRadius: '2px', background: '#1565c0' }} />
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#7a6e65' }}>Revision</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <Box sx={{ width: 10, height: 10, borderRadius: '2px', background: 'rgba(184,134,11,0.2)' }} />
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#7a6e65' }}>Remaining</Typography>
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#7a6e65' }}>Explore vocabulary by theme</Typography>
           </Box>
         </Box>
       </Box>
@@ -231,20 +153,13 @@ function LevelCard({
   isSelected: boolean
   onClick: () => void
 }) {
-  const isComplete = level.progressPct === 100
-  const hasStarted = level.completedWords > 0 || level.revisionWords > 0
-
   return (
     <Box
       onClick={onClick}
       sx={{
         background: '#fff',
         border: '2px solid',
-        borderColor: isSelected
-          ? '#b8860b'
-          : isComplete
-            ? 'rgba(46,125,50,0.25)'
-            : 'rgba(184,134,11,0.18)',
+        borderColor: isSelected ? '#b8860b' : 'rgba(184,134,11,0.18)',
         borderRadius: '10px',
         p: { xs: 2.5, md: 3 },
         display: 'flex',
@@ -256,7 +171,7 @@ function LevelCard({
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: '0 12px 32px rgba(44,26,14,0.08)',
-          borderColor: isSelected ? '#b8860b' : isComplete ? 'rgba(46,125,50,0.4)' : 'rgba(184,134,11,0.35)',
+          borderColor: isSelected ? '#b8860b' : 'rgba(184,134,11,0.35)',
         },
       }}
     >
@@ -279,31 +194,25 @@ function LevelCard({
         <Box sx={{
           width: 50, height: 50, borderRadius: '50%', flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: isSelected
-            ? 'rgba(184,134,11,0.12)'
-            : isComplete
-              ? 'rgba(46,125,50,0.08)'
-              : 'rgba(184,134,11,0.08)',
+          background: isSelected ? 'rgba(184,134,11,0.12)' : 'rgba(184,134,11,0.08)',
         }}>
           <Typography sx={{
             fontFamily: 'Jost, sans-serif', fontSize: '1rem',
-            fontWeight: 700, color: isSelected ? '#b8860b' : isComplete ? '#2e7d32' : '#b8860b',
+            fontWeight: 700, color: isSelected ? '#b8860b' : '#b8860b',
           }}>
-            {level.progressPct}%
+            {level.totalWords}
           </Typography>
         </Box>
       </Box>
 
       <LinearProgress
         variant="determinate"
-        value={level.progressPct}
+        value={0}
         sx={{
           height: 6, borderRadius: 3,
           backgroundColor: 'rgba(184,134,11,0.1)',
           '& .MuiLinearProgress-bar': {
-            background: isComplete
-              ? 'linear-gradient(90deg, #2e7d32, #4caf50)'
-              : 'linear-gradient(90deg, #b8860b, #d4a843)',
+            background: 'linear-gradient(90deg, #b8860b, #d4a843)',
             borderRadius: 3,
           },
         }}
@@ -313,21 +222,13 @@ function LevelCard({
         <Box>
           <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#6b5f55', fontWeight: 500 }}>Words</Typography>
           <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e' }}>
-            {level.completedWords}
-            <Box component="span" sx={{ color: '#6b5f55', fontWeight: 400 }}>/{level.totalWords}</Box>
-          </Typography>
-        </Box>
-        <Box>
-          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#6b5f55', fontWeight: 500 }}>Revision</Typography>
-          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#1565c0' }}>
-            {level.revisionWords}
+            {level.totalWords}
           </Typography>
         </Box>
         <Box>
           <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', color: '#6b5f55', fontWeight: 500 }}>Themes</Typography>
           <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e' }}>
-            {level.completedThemes}
-            <Box component="span" sx={{ color: '#6b5f55', fontWeight: 400 }}>/{level.totalThemes}</Box>
+            {level.totalThemes}
           </Typography>
         </Box>
       </Box>
@@ -339,13 +240,7 @@ function LevelCard({
           color: '#6b5f55',
           textAlign: 'center',
         }}>
-          {isSelected
-            ? 'Click again to show all stats'
-            : isComplete
-              ? 'Level complete — click to view'
-              : hasStarted
-                ? 'Click to view stats'
-                : 'Click to view stats'}
+          {isSelected ? 'Click again to show all stats' : 'Click to view stats'}
         </Typography>
       </Box>
     </Box>
@@ -416,14 +311,14 @@ function StatsSection({
           fontSize: { xs: '1.5rem', md: '2rem' },
           fontWeight: 700, color: '#2c1a0e',
         }}>
-          Level Progress
+          Levels
         </Typography>
         <Typography sx={{
           fontFamily: 'Jost, sans-serif',
           fontSize: { xs: '0.85rem', md: '0.95rem' },
           color: '#7a6e65', mt: 0.5,
         }}>
-          Click a card to filter the chart
+          Click a card to filter the overview
         </Typography>
       </Box>
 
@@ -462,11 +357,11 @@ function SettingsSection({ userEmail }: { userEmail: string }) {
       <Box sx={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '4px', p: { xs: 2, sm: 3 } }}>
         <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: 'var(--bark)', mb: 0.5 }}>Password</Typography>
         <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: 'var(--muted)', mb: 2.5, lineHeight: 1.6 }}>
-          We'll send a secure reset link to <Box component="span" sx={{ color: 'var(--bark)', fontWeight: 500 }}>{userEmail}</Box>
+          We&apos;ll send a secure reset link to <Box component="span" sx={{ color: 'var(--bark)', fontWeight: 500 }}>{userEmail}</Box>
         </Typography>
         {status === 'sent' ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 1.4, background: 'rgba(46,125,50,0.06)', border: '1px solid rgba(46,125,50,0.2)', borderRadius: '2px' }}>
-            <CheckCircleOutlined sx={{ fontSize: 16, color: '#2e7d32', flexShrink: 0 }} />
+            <Box sx={{ fontSize: 16, color: '#2e7d32', flexShrink: 0 }}>✓</Box>
             <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.82rem', color: '#2e7d32' }}>
               Reset link sent — check your inbox.
             </Typography>
@@ -489,343 +384,6 @@ function SettingsSection({ userEmail }: { userEmail: string }) {
           </Box>
         )}
       </Box>
-    </Box>
-  )
-}
-
-function WordsSection() {
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'revision' | 'completed'>('all')
-  const [sortKey, setSortKey] = useState<'word' | 'level' | 'theme' | 'date'>('word')
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
-  const [page, setPage] = useState(0)
-  const rowsPerPage = 20
-
-  const userProgressWords = useVocabStore(s => s.userProgressWords)
-  const userProgressLoading = useVocabStore(s => s.userProgressLoading)
-  const userProgressInitialized = useVocabStore(s => s.userProgressInitialized)
-  const fetchUserProgressWords = useVocabStore(s => s.fetchUserProgressWords)
-
-  useEffect(() => {
-    if (!userProgressInitialized) {
-      fetchUserProgressWords()
-    }
-  }, [userProgressInitialized, fetchUserProgressWords])
-
-  const filteredWords = useMemo(() => {
-    let words = userProgressWords ?? []
-    if (statusFilter !== 'all') {
-      words = words.filter(w => w.status === statusFilter)
-    }
-    if (search.trim()) {
-      const term = search.trim().toLowerCase()
-      words = words.filter(w =>
-        (w.word_ar ?? '').toLowerCase().includes(term) ||
-        (w.word_tr ?? '').toLowerCase().includes(term) ||
-        (w.theme ?? '').toLowerCase().includes(term)
-      )
-    }
-    return words
-  }, [userProgressWords, statusFilter, search])
-
-  const sortedWords = useMemo(() => {
-    const sorted = [...filteredWords]
-    sorted.sort((a, b) => {
-      let cmp = 0
-      if (sortKey === 'word') cmp = (a.word_ar || '').localeCompare(b.word_ar || '')
-      else if (sortKey === 'level') cmp = (a.level || '').localeCompare(b.level || '')
-      else if (sortKey === 'theme') cmp = (a.theme || '').localeCompare(b.theme || '')
-      else if (sortKey === 'date') cmp = (a.updated_at || '').localeCompare(b.updated_at || '')
-      return sortDir === 'asc' ? cmp : -cmp
-    })
-    return sorted
-  }, [filteredWords, sortKey, sortDir])
-
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(0)
-  }, [statusFilter, search, sortKey, sortDir])
-
-  const paginatedWords = useMemo(() => {
-    return sortedWords.slice(page * rowsPerPage, (page + 1) * rowsPerPage)
-  }, [sortedWords, page])
-
-  const totalPages = Math.ceil(sortedWords.length / rowsPerPage)
-
-  const toggleSort = (key: 'word' | 'level' | 'theme' | 'date') => {
-    if (sortKey === key) {
-      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortKey(key)
-      setSortDir('asc')
-    }
-  }
-
-  const statusColor = (s: string) => s === 'completed' ? '#2e7d32' : '#1565c0'
-  const statusBg = (s: string) => s === 'completed' ? 'rgba(46,125,50,0.08)' : 'rgba(21,101,192,0.08)'
-
-  return (
-    <Box className="fade-up">
-      <SectionLabel>Library</SectionLabel>
-      <SectionTitle>Your Words</SectionTitle>
-
-      <Box sx={{ background: '#fff', border: '1px solid var(--border)', borderRadius: '4px', p: { xs: 2, sm: 3 }, mb: 3 }}>
-        {/* Search + filters */}
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 2.5 }}>
-          <TextField
-            placeholder="Search words, themes…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            size="small"
-            fullWidth
-            sx={{
-              maxWidth: { sm: 320 },
-              '& .MuiInputBase-root': { fontFamily: 'Jost, sans-serif', fontSize: '0.88rem', borderRadius: '8px' },
-            }}
-            slotProps={{
-              input: {
-                startAdornment: <Search sx={{ fontSize: 18, color: 'var(--muted)', mr: 0.75 }} />,
-              },
-            }}
-          />
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {(['all', 'revision', 'completed'] as const).map(s => (
-              <Chip
-                key={s}
-                label={s === 'all' ? 'All' : s === 'revision' ? 'Revision' : 'Completed'}
-                onClick={() => setStatusFilter(s)}
-                sx={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontWeight: statusFilter === s ? 600 : 500,
-                  fontSize: '0.82rem',
-                  textTransform: 'capitalize',
-                  background: statusFilter === s ? (s === 'completed' ? 'rgba(46,125,50,0.12)' : s === 'revision' ? 'rgba(21,101,192,0.12)' : 'rgba(184,134,11,0.12)') : 'transparent',
-                  color: statusFilter === s ? (s === 'completed' ? '#2e7d32' : s === 'revision' ? '#1565c0' : '#b8860b') : 'var(--muted)',
-                  border: '1px solid',
-                  borderColor: statusFilter === s ? (s === 'completed' ? 'rgba(46,125,50,0.3)' : s === 'revision' ? 'rgba(21,101,192,0.3)' : 'rgba(184,134,11,0.3)') : 'rgba(122,110,101,0.18)',
-                  cursor: 'pointer',
-                  '&:hover': { background: s === 'completed' ? 'rgba(46,125,50,0.08)' : s === 'revision' ? 'rgba(21,101,192,0.08)' : 'rgba(184,134,11,0.08)' },
-                }}
-              />
-            ))}
-          </Box>
-        </Box>
-
-        {/* Desktop table */}
-        <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-          <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid rgba(184,134,11,0.1)', borderRadius: '8px' }}>
-            <Table size="small">
-              <TableHead>
-                <TableRow sx={{ background: 'rgba(245,237,224,0.4)' }}>
-                  {[
-                    { key: 'word' as const, label: 'Word' },
-                    { key: 'level' as const, label: 'Level' },
-                    { key: 'theme' as const, label: 'Theme' },
-                    { key: 'date' as const, label: 'Updated' },
-                  ].map(col => (
-                    <TableCell key={col.key} onClick={() => toggleSort(col.key)}
-                      sx={{
-                        fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.78rem',
-                        color: '#6b5f55', textTransform: 'uppercase', letterSpacing: '0.06em',
-                        cursor: 'pointer', userSelect: 'none', whiteSpace: 'nowrap',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        {col.label}
-                        {sortKey === col.key && (
-                          <Sort sx={{ fontSize: 14, color: '#b8860b', transform: sortDir === 'desc' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                        )}
-                      </Box>
-                    </TableCell>
-                  ))}
-                  <TableCell sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.78rem', color: '#6b5f55', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {userProgressLoading ? (
-                  [...Array(5)].map((_, i) => (
-                    <TableRow key={i}>
-                      <TableCell colSpan={5}><Skeleton variant="text" width="60%" height={20} /></TableCell>
-                    </TableRow>
-                  ))
-                ) : paginatedWords.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--muted)' }}>
-                        No words found.
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  paginatedWords.map(w => (
-                    <TableRow key={w.vocab_id} hover sx={{ '&:last-child td': { borderBottom: 'none' } }}>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                          <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.15rem', fontWeight: 700, color: '#2c1a0e', direction: 'rtl', textAlign: 'right' }}>
-                            {w.word_di || w.word_ar}
-                          </Typography>
-                          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#b8860b' }}>
-                            {w.word_tr}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: '#2c1a0e' }}>
-                          {w.level}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--muted)' }}>
-                          {w.theme}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#6b5f55' }}>
-                          {w.updated_at ? new Date(w.updated_at).toLocaleDateString() : '—'}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={w.status}
-                          size="small"
-                          sx={{
-                            fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.75rem',
-                            textTransform: 'capitalize',
-                            background: statusBg(w.status),
-                            color: statusColor(w.status),
-                            border: '1px solid',
-                            borderColor: w.status === 'completed' ? 'rgba(46,125,50,0.25)' : 'rgba(21,101,192,0.25)',
-                          }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-
-        {/* Mobile cards */}
-        <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: 1.5 }}>
-          {userProgressLoading ? (
-            [...Array(4)].map((_, i) => (
-              <Box key={i} sx={{ background: '#fff', border: '1px solid rgba(184,134,11,0.1)', borderRadius: '8px', p: 2 }}>
-                <Skeleton variant="text" width="50%" height={24} sx={{ mb: 0.5 }} />
-                <Skeleton variant="text" width="30%" height={16} />
-              </Box>
-            ))
-          ) : paginatedWords.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--muted)' }}>
-                No words found.
-              </Typography>
-            </Box>
-          ) : (
-            paginatedWords.map(w => (
-              <Box key={w.vocab_id} sx={{
-                background: '#fff', border: '1px solid rgba(184,134,11,0.1)', borderRadius: '8px', p: 2,
-                display: 'flex', flexDirection: 'column', gap: 1,
-              }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
-                    <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.3rem', fontWeight: 700, color: '#2c1a0e', direction: 'rtl', textAlign: 'right' }}>
-                      {w.word_di || w.word_ar}
-                    </Typography>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.82rem', color: '#b8860b' }}>
-                      {w.word_tr}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    label={w.status}
-                    size="small"
-                    sx={{
-                      fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.72rem',
-                      textTransform: 'capitalize',
-                      background: statusBg(w.status),
-                      color: statusColor(w.status),
-                      border: '1px solid',
-                      borderColor: w.status === 'completed' ? 'rgba(46,125,50,0.25)' : 'rgba(21,101,192,0.25)',
-                    }}
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  <Box>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#6b5f55', fontWeight: 500 }}>Level</Typography>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', fontWeight: 600, color: '#2c1a0e' }}>{w.level}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#6b5f55', fontWeight: 500 }}>Theme</Typography>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--muted)' }}>{w.theme}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: '#6b5f55', fontWeight: 500 }}>Updated</Typography>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--muted)' }}>
-                      {w.updated_at ? new Date(w.updated_at).toLocaleDateString() : '—'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            ))
-          )}
-        </Box>
-
-        {/* Pagination */}
-        {sortedWords.length > 0 && (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2, pt: 2, borderTop: '1px solid rgba(184,134,11,0.1)' }}>
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', color: '#6b5f55' }}>
-              {sortedWords.length} total · Page {page + 1} of {totalPages}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <Button
-                size="small"
-                onClick={() => setPage(p => Math.max(0, p - 1))}
-                disabled={page === 0}
-                sx={{
-                  fontFamily: 'Jost, sans-serif',
-                  textTransform: 'none',
-                  color: '#2c1a0e',
-                  border: '1px solid rgba(44,26,14,0.12)',
-                  borderRadius: '6px',
-                  px: 2,
-                  '&.Mui-disabled': { color: '#9e8a7a', borderColor: 'rgba(44,26,14,0.06)' },
-                }}
-              >
-                Previous
-              </Button>
-              <Button
-                size="small"
-                onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={page >= totalPages - 1}
-                sx={{
-                  fontFamily: 'Jost, sans-serif',
-                  textTransform: 'none',
-                  color: '#2c1a0e',
-                  border: '1px solid rgba(44,26,14,0.12)',
-                  borderRadius: '6px',
-                  px: 2,
-                  '&.Mui-disabled': { color: '#9e8a7a', borderColor: 'rgba(44,26,14,0.06)' },
-                }}
-              >
-                Next
-              </Button>
-            </Box>
-          </Box>
-        )}
-      </Box>
-    </Box>
-  )
-}
-
-function FaqItem({ q, a }: { q: string; a: string }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', '&:last-child': { borderBottom: 'none' } }}>
-      <Box onClick={() => setOpen(o => !o)} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.8, cursor: 'pointer', gap: 2 }}>
-        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.88rem', fontWeight: 500, color: 'var(--bark)' }}>{q}</Typography>
-        <ChevronRight sx={{ fontSize: 16, color: 'var(--muted)', flexShrink: 0, transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'none' }} />
-      </Box>
-      {open && <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.82rem', color: 'var(--muted)', lineHeight: 1.7, pb: 2 }}>{a}</Typography>}
     </Box>
   )
 }
@@ -863,11 +421,9 @@ function SupportSection() {
         </Box>
 
         {[
-          { q: 'How is my progress calculated?', a: 'Progress is based on the number of words you have marked as mastered across all themes and levels.' },
-          { q: 'Can I reset my progress?', a: 'Yes — email us and we can reset any level back to zero.' },
-          { q: 'What do the colours mean?', a: 'Green segments are mastered words, blue are in revision, and gold is what remains to learn.' },
+          { q: 'How is content organised?', a: 'Vocabulary is grouped by CEFR level (A0–C2) and real-world themes such as food, travel, and work.' },
           { q: 'Is my data secure?', a: 'Absolutely. Your data is stored securely and never shared with third parties.' },
-        ].map(({ q, a }, i) => (
+        ].map(({ q, a }) => (
           <Accordion
             key={q}
             disableGutters
@@ -955,13 +511,7 @@ function ProfilePageInner() {
       slug: '',
       color: '#b8860b',
       totalThemes: profile.totalThemes,
-      completedThemes: profile.completedThemes,
       totalWords: profile.totalWords,
-      completedWords: profile.completedWords,
-      revisionWords: profile.revisionWords,
-      progressPct: profile.totalWords > 0
-        ? Math.round(((profile.completedWords + profile.revisionWords) / profile.totalWords) * 100)
-        : 0,
       themes: [],
     }
   }, [profile])
@@ -1105,7 +655,6 @@ function ProfilePageInner() {
                     onCardClick={handleCardClick}
                   />
                 )}
-                {activeSection === 'words' && <WordsSection />}
                 {activeSection === 'settings' && <SettingsSection userEmail={profile.email} />}
                 {activeSection === 'support' && <SupportSection />}
               </Box>
@@ -1154,7 +703,6 @@ function ProfilePageInner() {
                 onCardClick={handleCardClick}
               />
             )}
-            {activeSection === 'words' && <WordsSection />}
             {activeSection === 'settings' && <SettingsSection userEmail={profile.email} />}
             {activeSection === 'support' && <SupportSection />}
           </Container>

@@ -124,10 +124,10 @@ const PATHS = [
   {
     key: 'ai',
     title: 'AI',
-    description: 'Smart spaced-repetition and personalised drills.',
-    href: '/revision',
+    description: 'Smart personalised drills and flashcard practice.',
+    href: '/flashcards',
     icon: <PsychologyOutlinedIcon sx={{ fontSize: 28 }} />,
-    btnLabel: 'Start Practicing',
+    btnLabel: 'Explore Flashcards',
     svg: 'brain',
   },
   {

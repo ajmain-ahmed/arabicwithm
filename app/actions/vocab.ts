@@ -142,13 +142,11 @@ function flattenForms(formsJson: any): FormRow[] | null {
   return rows.length > 0 ? rows : null
 }
 
-/* ── theme progress ── */
+/* ── theme list ── */
 export type ThemeProgress = {
   theme_id: string
   display_name: string
   total_words: number
-  completed_count: number
-  revision_count: number
 }
 
 export async function fetchThemesWithProgress(
@@ -158,71 +156,24 @@ export async function fetchThemesWithProgress(
     throw new Error('Invalid levelCode')
   }
 
-  const userId = await getAuthenticatedUserId()
-
-  if (!userId) {
-    const { data: vocabData } = await serviceClient
-      .from('vocabulary')
-      .select('theme')
-      .eq('level', levelCode)
-
-    const themeCounts = new Map<string, number>()
-    for (const v of vocabData ?? []) {
-      const t = v.theme
-      if (t) themeCounts.set(t, (themeCounts.get(t) ?? 0) + 1)
-    }
-
-    const themes = Array.from(themeCounts.entries()).sort((a, b) => a[0].localeCompare(b[0]))
-
-    return themes.map(([theme, count]) => ({
-      theme_id: theme,
-      display_name: theme,
-      total_words: count,
-      completed_count: 0,
-      revision_count: 0,
-    }))
-  }
-
-  // Authenticated: query vocabulary + progress directly
   const { data: vocabData } = await serviceClient
     .from('vocabulary')
-    .select('word_id, theme')
+    .select('theme')
     .eq('level', levelCode)
 
-  const wordIds = (vocabData ?? []).map(v => v.word_id)
-
-  const { data: progressData } = wordIds.length > 0
-    ? await serviceClient
-        .from('progress')
-        .select('vocab_id, status')
-        .eq('user_id', userId)
-        .in('vocab_id', wordIds)
-    : { data: [] }
-
-  const progressMap = new Map((progressData ?? []).map(p => [p.vocab_id, p]))
-  const themeStats = new Map<string, { total: number; completed: number; revision: number }>()
-
+  const themeCounts = new Map<string, number>()
   for (const v of vocabData ?? []) {
-    const theme = v.theme ?? 'Untitled'
-    if (!themeStats.has(theme)) {
-      themeStats.set(theme, { total: 0, completed: 0, revision: 0 })
-    }
-    const stats = themeStats.get(theme)!
-    stats.total++
-    const p = progressMap.get(v.word_id)
-    if (p?.status === 1) stats.completed++
-    if (p?.status === 0) stats.revision++
+    const t = v.theme
+    if (t) themeCounts.set(t, (themeCounts.get(t) ?? 0) + 1)
   }
 
-  return Array.from(themeStats.entries())
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([theme, stats]) => ({
-      theme_id: theme,
-      display_name: theme,
-      total_words: stats.total,
-      completed_count: stats.completed,
-      revision_count: stats.revision,
-    }))
+  const themes = Array.from(themeCounts.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+
+  return themes.map(([theme, count]) => ({
+    theme_id: theme,
+    display_name: theme,
+    total_words: count,
+  }))
 }
 
 /* ── vocabulary row shapes ── */
@@ -258,22 +209,14 @@ export type VocabRow = {
   forms: FormRow[] | null
 }
 
-export type WordProgress = {
-  vocab_id: number
-  status: number | null
-}
-
 /* ── fetch vocab + defs + examples for a theme (parallelized) ── */
 export async function fetchThemeVocabWithProgress(
   themeId: string,
   levelCode: string
 ): Promise<{
   vocab: VocabRow[]
-  progress: WordProgress[]
   examples: ExampleRow[]
 }> {
-  const userId = await getAuthenticatedUserId()
-
   // 1. Get vocab for this theme and level
   const { data: vocabData, error: vocabErr } = await serviceClient
     .from("vocabulary")
@@ -284,17 +227,10 @@ export async function fetchThemeVocabWithProgress(
 
   if (vocabErr) throw new Error(vocabErr.message)
   if (!vocabData || vocabData.length === 0) {
-    return { vocab: [], progress: [], examples: [] }
+    return { vocab: [], examples: [] }
   }
 
-  const vocabIds = vocabData.map(v => v.word_id)
-
-  // 2. Fetch progress in parallel
-  const { data: progData } = userId
-    ? await serviceClient.from("progress").select("vocab_id, status").eq("user_id", userId).in("vocab_id", vocabIds)
-    : { data: [] }
-
-  // 3. Build VocabRow and ExampleRow
+  // 2. Build VocabRow and ExampleRow
   const vocab: VocabRow[] = []
   const examples: ExampleRow[] = []
 
@@ -330,32 +266,7 @@ export async function fetchThemeVocabWithProgress(
     })
   }
 
-  // 4. Progress already fetched above
-  const progress: WordProgress[] = (progData ?? []).map((p: any) => ({
-    vocab_id: p.vocab_id,
-    status: p.status,
-  }))
-
-  return { vocab, progress, examples }
-}
-
-/* ── fetch user's revision vocab ids ── */
-export async function fetchRevisionVocabIds(): Promise<number[]> {
-  const userId = await getAuthenticatedUserId()
-  if (!userId) return []
-
-  const { data, error } = await serviceClient
-    .from("progress")
-    .select("vocab_id")
-    .eq("user_id", userId)
-    .eq("status", 0)
-
-  if (error) {
-    console.error("[fetchRevisionVocabIds] error:", error.message)
-    return []
-  }
-
-  return (data ?? []).map((r) => Number(r.vocab_id))
+  return { vocab, examples }
 }
 
 /* ── admin helpers ── */
@@ -514,106 +425,4 @@ export async function fetchRawVocabWord(wordId: number): Promise<RawVocabRow | n
     examples: snakeToCamelExamples(data.examples),
     created_at: data.created_at ?? null,
   }
-}
-
-const UpsertBatchSchema = z.array(z.object({
-  vocabId: z.number().int().positive(),
-  status: z.number().int().min(0).max(1).nullable(),
-}))
-
-export async function upsertWordProgressBatch(
-  items: { vocabId: number; status: number | null }[]
-): Promise<void> {
-  const userId = await getAuthenticatedUserId()
-  if (!userId) throw new Error('Not authenticated')
-  if (!checkRateLimit(`batch:${userId}`, 20, 60_000)) {
-    throw new Error('Rate limit exceeded. Please slow down.')
-  }
-
-  const parsed = UpsertBatchSchema.safeParse(items)
-  if (!parsed.success) {
-    console.error('[upsertWordProgressBatch] validation failed:', parsed.error.flatten())
-    throw new Error('Invalid batch items')
-  }
-  if (items.length === 0) return
-
-  const now = new Date().toISOString()
-
-  // Separate deletions from upserts
-  const toDelete = items.filter(i => i.status === null)
-  const toUpsert = items.filter(i => i.status !== null)
-
-  if (toDelete.length > 0) {
-    const vocabIds = toDelete.map(i => i.vocabId)
-    const { error: delError } = await serviceClient
-      .from("progress")
-      .delete()
-      .eq("user_id", userId)
-      .in("vocab_id", vocabIds)
-    if (delError) throw new Error(delError.message)
-  }
-
-  if (toUpsert.length > 0) {
-    const rows = toUpsert.map(({ vocabId, status }) => ({
-      user_id: userId,
-      vocab_id: vocabId,
-      status,
-      updated_at: now,
-    }))
-
-    const { error } = await serviceClient
-      .from("progress")
-      .upsert(rows, { onConflict: "user_id,vocab_id" })
-
-    if (error) throw new Error(error.message)
-  }
-}
-
-
-/* ── Remove word progress ──────────────────────────────────────────── */
-
-export async function removeWordProgress(vocabId: number): Promise<void> {
-  if (!Number.isFinite(vocabId) || vocabId <= 0) {
-    throw new Error('Invalid vocabId')
-  }
-  const userId = await getAuthenticatedUserId()
-  if (!userId) return
-
-  if (!checkRateLimit(`removeProgress:${userId}`, 30, 60_000)) {
-    throw new Error('Rate limit exceeded')
-  }
-
-  const { error } = await serviceClient
-    .from('progress')
-    .delete()
-    .eq('user_id', userId)
-    .eq('vocab_id', vocabId)
-
-  if (error) throw new Error(error.message)
-}
-
-const RemoveBatchSchema = z.array(z.number().int().positive())
-
-export async function removeWordProgressBatch(vocabIds: number[]): Promise<void> {
-  const userId = await getAuthenticatedUserId()
-  if (!userId) throw new Error('Not authenticated')
-
-  const parsed = RemoveBatchSchema.safeParse(vocabIds)
-  if (!parsed.success) {
-    console.error('[removeWordProgressBatch] validation failed:', parsed.error.flatten())
-    throw new Error('Invalid batch items')
-  }
-  if (vocabIds.length === 0) return
-
-  if (!checkRateLimit(`removeProgressBatch:${userId}`, 10, 60_000)) {
-    throw new Error('Rate limit exceeded')
-  }
-
-  const { error } = await serviceClient
-    .from('progress')
-    .delete()
-    .eq('user_id', userId)
-    .in('vocab_id', vocabIds)
-
-  if (error) throw new Error(error.message)
 }

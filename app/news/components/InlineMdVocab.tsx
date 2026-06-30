@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Box,
   Typography,
@@ -12,10 +12,7 @@ import {
 import { styled } from '@mui/material/styles'
 import { useTheme } from '@mui/material/styles'
 import { useMediaQuery } from '@mui/material'
-import { Close, Add, Check } from '@mui/icons-material'
-import { useAuth } from '@/app/AuthContext'
-import { useRevisionStore } from '@/store/revisionStore'
-import { useVocabStore } from '@/store/vocabStore'
+import { Close } from '@mui/icons-material'
 import type { WordBreakdown } from '@/app/lib/news'
 
 const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
@@ -102,26 +99,10 @@ function VocabWord({
   isMobile: boolean
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [added, setAdded] = useState(false)
-  const { user } = useAuth()
-  const canAdd = !!entry.dbWordId && !!user
-
-  const toggleRevisionBuffered = useRevisionStore((s) => s.toggleRevisionBuffered)
-  const updateUserProgressWord = useVocabStore((s) => s.updateUserProgressWord)
-
-  const handleAdd = useCallback(() => {
-    if (!entry.dbWordId || !user) return
-    toggleRevisionBuffered(entry.dbWordId)
-    updateUserProgressWord(entry.dbWordId, 'revision')
-    setAdded(true)
-  }, [entry.dbWordId, user, toggleRevisionBuffered, updateUserProgressWord])
 
   const content = (
     <VocabTooltipContent
       entry={entry}
-      canAdd={canAdd}
-      added={added}
-      onAdd={handleAdd}
       onClose={() => setDrawerOpen(false)}
       isMobile={isMobile}
     />
@@ -187,16 +168,10 @@ function VocabWord({
 
 function VocabTooltipContent({
   entry,
-  canAdd,
-  added,
-  onAdd,
   onClose,
   isMobile,
 }: {
   entry: WordBreakdown
-  canAdd: boolean
-  added: boolean
-  onAdd: () => void
   onClose: () => void
   isMobile: boolean
 }) {
@@ -244,50 +219,6 @@ function VocabTooltipContent({
           <DetailItem label="Dictionary Form" value={entry.dbLink} isGold />
         )}
       </Box>
-
-      {/* Add to Revision */}
-      {canAdd && (
-        <Box
-          component="button"
-          onClick={onAdd}
-          disabled={added}
-          sx={{
-            width: '100%',
-            py: 1,
-            borderRadius: '10px',
-            border: 'none',
-            background: added ? 'rgba(46,125,50,0.1)' : '#2c1a0e',
-            color: added ? '#2e7d32' : '#f5ede0',
-            fontFamily: 'Jost, sans-serif',
-            fontSize: '0.85rem',
-            fontWeight: 600,
-            cursor: added ? 'default' : 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 0.8,
-            transition: 'all 0.2s ease',
-            '&:hover:not(:disabled)': {
-              background: '#1a0f08',
-            },
-          }}
-        >
-          {added ? <Check sx={{ fontSize: 16 }} /> : <Add sx={{ fontSize: 16 }} />}
-          {added ? 'Added to Revision' : 'Add to Revision'}
-        </Box>
-      )}
-      {!canAdd && entry.dbLink && (
-        <Typography
-          sx={{
-            fontFamily: 'Jost, sans-serif',
-            fontSize: '0.75rem',
-            color: '#9e8a7a',
-            textAlign: 'center',
-          }}
-        >
-          Sign in to save words for revision
-        </Typography>
-      )}
     </Box>
   )
 }

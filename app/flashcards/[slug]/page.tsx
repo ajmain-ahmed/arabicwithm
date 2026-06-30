@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { isAdminUser } from '@/app/actions/vocab'
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
@@ -11,8 +11,7 @@ import {
 } from '@mui/material'
 import {
     NavigateNext, NavigateBefore,
-    Settings, Close, CheckCircle,
-    Add, NavigateNext as NavigateNextIcon,
+    Settings, Close,
 } from '@mui/icons-material'
 import { useVocabStore } from '@/store/vocabStore'
 import TutorialDialog, { useTutorialSeen } from '../components/TutorialDialog'
@@ -21,7 +20,7 @@ import LoadingView from '../components/LoadingView'
 import { PillToggle, DesktopTextScaleSlider, SettingsDialog } from '../components/QuizSettings'
 import ThemePlaylistSidebar from '../components/ThemePlaylistSidebar'
 import FlashcardQuiz from '../components/FlashcardQuiz'
-import type { VocabRow, WordProgress, ThemeProgress, ExampleRow, FormRow } from '@/app/actions/vocab'
+import type { VocabRow, ThemeProgress, ExampleRow } from '@/app/actions/vocab'
 
 
 /* ─────────────────────────────────────────────
@@ -47,42 +46,6 @@ const SLUG_LABELS: Record<string, string> = {
     Native: 'Native | C2',
 }
 
-/* ─────────────────────────────────────────────
-   Types
-───────────────────────────────────────────── */
-type CardStatus = 'new' | 'revision' | 'completed'
-type FilterType = 'all' | 'new' | 'revision' | 'completed'
-
-type CardState = VocabRow & {
-    status: CardStatus
-}
-
-function buildQueue(vocab: VocabRow[], progress: WordProgress[]): CardState[] {
-    const progressMap = new Map(progress.map(p => [p.vocab_id, p]))
-    return vocab.map(v => {
-        const p = progressMap.get(v.id)
-        const s = p?.status
-
-        let status: CardStatus = 'new'
-        if (s === 1) status = 'completed'
-        else if (s === 0) status = 'revision'
-
-        return { ...v, status }
-    })
-}
-
-function themeDoneCount(t: { completed_count: number; revision_count: number }): number {
-    return t.completed_count + t.revision_count
-}
-
-function themeProgressPct(t: { completed_count: number; revision_count: number; total_words: number }): number {
-    return t.total_words > 0 ? Math.round((themeDoneCount(t) / t.total_words) * 100) : 0
-}
-
-
-/* ─────────────────────────────────────────────
-   Page
-───────────────────────────────────────────── */
 export default function FlashcardSlugPage() {
     const [textScale, setTextScale] = useState(1.1)
     const params = useParams()
@@ -96,13 +59,12 @@ export default function FlashcardSlugPage() {
     const fetchTheme = useVocabStore(s => s.fetchTheme)
     const fetchThemeList = useVocabStore(s => s.fetchThemeList)
     const loadingThemeId = useVocabStore(s => s.loadingThemeId)
-    const themeCache = useVocabStore(s => s.themeCache)
 
     const [themes, setThemes] = useState<ThemeProgress[]>([])
     const [themesLoading, setThemesLoading] = useState(true)
     const [themesError, setThemesError] = useState<string | null>(null)
     const [selectedTheme, setSelectedTheme] = useState<ThemeProgress | null>(null)
-    const [activeQueue, setActiveQueue] = useState<CardState[]>([])
+    const [activeQueue, setActiveQueue] = useState<VocabRow[]>([])
     const [activeExamples, setActiveExamples] = useState<ExampleRow[]>([])
     const [initialCardIndex, setInitialCardIndex] = useState<number | undefined>(undefined)
     const [showDiacritics, setShowDiacritics] = useState(true)
@@ -139,21 +101,6 @@ export default function FlashcardSlugPage() {
         isAdminUser().then(setIsAdmin).catch(() => setIsAdmin(false))
     }, [])
 
-    const flushRef = useRef<(() => Promise<void>) | null>(null)
-    const flush = useCallback(() => flushRef.current?.() ?? Promise.resolve(), [])
-
-    // Flush on tab hide or page unload — covers browser navigation and closing the tab
-    useEffect(() => {
-        const onVisibility = () => { if (document.visibilityState === 'hidden') flush() }
-        const onBeforeUnload = () => { flush() }
-        document.addEventListener('visibilitychange', onVisibility)
-        window.addEventListener('beforeunload', onBeforeUnload)
-        return () => {
-            document.removeEventListener('visibilitychange', onVisibility)
-            window.removeEventListener('beforeunload', onBeforeUnload)
-        }
-    }, [flush])
-
     // Fetch themes whenever level changes
     useEffect(() => {
         let cancelled = false
@@ -173,15 +120,8 @@ export default function FlashcardSlugPage() {
 
                 if (targetTheme) {
                     await handleThemeSelect(targetTheme)
-                } else {
-                    const firstIncomplete = data.find((t: ThemeProgress) =>
-                        t?.theme_id != null &&
-                        (t.total_words === 0 || themeDoneCount(t) < t.total_words)
-                    ) ?? data[0]
-
-                    if (firstIncomplete) {
-                        await handleThemeSelect(firstIncomplete)
-                    }
+                } else if (data[0]) {
+                    await handleThemeSelect(data[0])
                 }
             })
             .catch(err => {
@@ -195,22 +135,19 @@ export default function FlashcardSlugPage() {
         return () => { cancelled = true }
     }, [slug, level, themeQueryParam])
 
-    // Flush pending writes before switching themes, then load the new one
+    // Load the selected theme's vocabulary
     const handleThemeSelect = useCallback(async (theme: ThemeProgress, cardIndex?: number) => {
         if (!theme?.theme_id) return
-        await flush()  // <-- batch write happens here on theme switch
         setSelectedTheme(theme)
         try {
-            const { vocab, progress, examples } = await fetchTheme(theme.theme_id, level)
-            const queue = buildQueue(vocab, progress)
-            setActiveQueue(queue)
+            const { vocab, examples } = await fetchTheme(theme.theme_id, level)
+            setActiveQueue(vocab)
             setActiveExamples(examples)
 
             if (cardIndex !== undefined) {
                 setInitialCardIndex(cardIndex)
             } else {
-                const firstIncomplete = queue.findIndex(c => c.status === 'new')
-                setInitialCardIndex(firstIncomplete === -1 ? 0 : firstIncomplete)
+                setInitialCardIndex(0)
             }
 
             setQuizKey(k => k + 1)
@@ -220,36 +157,9 @@ export default function FlashcardSlugPage() {
             setActiveExamples([])
             setInitialCardIndex(0)
         }
-    }, [fetchTheme, level, flush])
+    }, [fetchTheme, level])
 
-    // Keep sidebar counts in sync with quiz actions
-    const handleThemeProgressUpdate = useCallback((theme: string, progress: { completedCount: number; revisionCount: number }) => {
-        setThemes(prev => prev.map(t =>
-            t.theme_id === theme
-                ? { ...t, completed_count: progress.completedCount, revision_count: progress.revisionCount }
-                : t
-        ))
-        setSelectedTheme(prev => prev && prev.theme_id === theme
-            ? { ...prev, completed_count: progress.completedCount, revision_count: progress.revisionCount }
-            : prev
-        )
-    }, [])
-
-    // Auto-advance to next unfinished theme
-    const validThemes = useMemo(() => themes.filter((t) => t?.theme_id != null), [themes])
-
-    const themesForSidebar = useMemo(() => {
-        return validThemes.map(t => {
-            const cacheKey = `${t.theme_id}:${level}`
-            const cached = themeCache[cacheKey]
-            if (cached) {
-                const completed = cached.progress.filter(p => p.status === 1).length
-                const revision = cached.progress.filter(p => p.status === 0).length
-                return { ...t, completed_count: completed, revision_count: revision }
-            }
-            return t
-        })
-    }, [validThemes, themeCache, level])
+    const validThemes = themes.filter((t) => t?.theme_id != null)
 
     const goToPreviousTheme = useCallback(() => {
         if (!selectedTheme) return
@@ -270,20 +180,7 @@ export default function FlashcardSlugPage() {
     const handleQuizComplete = useCallback(() => {
         if (!selectedTheme) return
         const currentIdx = validThemes.findIndex(t => t.theme_id === selectedTheme.theme_id)
-        const nextTheme = validThemes.slice(currentIdx + 1).find(t =>
-            t.total_words === 0 || themeDoneCount(t) < t.total_words
-        )
-        if (nextTheme) {
-            handleThemeSelect(nextTheme)
-        }
-    }, [selectedTheme, validThemes, handleThemeSelect])
-
-    const advanceToNextTheme = useCallback(() => {
-        if (!selectedTheme) return
-        const currentIdx = validThemes.findIndex(t => t.theme_id === selectedTheme.theme_id)
-        const nextTheme = validThemes.slice(currentIdx + 1).find(t =>
-            t.total_words === 0 || themeDoneCount(t) < t.total_words
-        )
+        const nextTheme = validThemes[currentIdx + 1]
         if (nextTheme) {
             handleThemeSelect(nextTheme)
         }
@@ -334,11 +231,8 @@ export default function FlashcardSlugPage() {
                     </Box>
 
                     <Box sx={{ overflowY: 'auto', flex: 1, py: 0.5 }}>
-                        {validThemes.map((theme, idx) => {
-                            const progress = themeProgressPct(theme)
+                        {validThemes.map((theme) => {
                             const isActive = selectedTheme?.theme_id === theme.theme_id
-                            const isComplete = progress === 100
-
                             return (
                                 <Box
                                     key={theme.theme_id}
@@ -356,17 +250,6 @@ export default function FlashcardSlugPage() {
                                         '&:hover': { background: isActive ? 'rgba(184,134,11,0.1)' : 'rgba(184,134,11,0.04)' },
                                     }}
                                 >
-                                    <Box sx={{
-                                        width: 32, height: 32, flexShrink: 0,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        borderRadius: '50%',
-                                        background: isActive ? 'rgba(184,134,11,0.15)' : isComplete ? 'rgba(46,125,50,0.08)' : 'rgba(122,110,101,0.08)',
-                                    }}>
-                                        {isComplete ? <CheckCircle sx={{ fontSize: '1.1rem', color: '#2e7d32' }} />
-                                            : isActive ? <Box sx={{ width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderLeft: '8px solid #b8860b', ml: '2px' }} />
-                                                : <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', fontWeight: 600, color: '#7a6e65' }}>{idx + 1}</Typography>
-                                        }
-                                    </Box>
                                     <Box sx={{ flex: 1, minWidth: 0 }}>
                                         <Typography sx={{
                                             fontFamily: 'Jost, sans-serif', fontSize: '0.95rem',
@@ -375,30 +258,10 @@ export default function FlashcardSlugPage() {
                                         }}>
                                             {theme.display_name}
                                         </Typography>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.4 }}>
-                                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#9e8a7a' }}>
-                                                {theme.total_words} words
-                                            </Typography>
-                                            {theme.revision_count > 0 && (
-                                                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#1565c0' }}>
-                                                    · {theme.revision_count} revision
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                        <Box sx={{ mt: 0.75, height: 3, borderRadius: 2, background: 'rgba(184,134,11,0.1)', overflow: 'hidden' }}>
-                                            <Box sx={{
-                                                height: '100%', borderRadius: 2, width: `${progress}%`,
-                                                background: isComplete ? 'linear-gradient(90deg, #2e7d32, #4caf50)' : 'linear-gradient(90deg, #b8860b, #d4a843)',
-                                                transition: 'width 0.4s ease',
-                                            }} />
-                                        </Box>
+                                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#9e8a7a' }}>
+                                            {theme.total_words} words
+                                        </Typography>
                                     </Box>
-                                    <Typography sx={{
-                                        fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', fontWeight: 600,
-                                        color: isComplete ? '#2e7d32' : isActive ? '#b8860b' : '#9e8a7a', flexShrink: 0,
-                                    }}>
-                                        {progress}%
-                                    </Typography>
                                 </Box>
                             )
                         })}
@@ -416,7 +279,7 @@ export default function FlashcardSlugPage() {
                 <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3, md: 4 } }}>
                     {/* Breadcrumbs */}
                     <Breadcrumbs
-                        separator={<NavigateNextIcon sx={{ fontSize: 16, color: '#9e8a7a' }} />}
+                        separator={<NavigateNext sx={{ fontSize: 16, color: '#9e8a7a' }} />}
                         sx={{ mb: 2, '& .MuiBreadcrumbs-li': { fontFamily: 'Jost, sans-serif' } }}
                     >
                         <Link
@@ -442,7 +305,7 @@ export default function FlashcardSlugPage() {
                         )}
                     </Breadcrumbs>
 
-                    {/* Mobile controls -->
+                    {/* Mobile controls */}
                     {selectedTheme && (
                         <Box sx={{ display: { xs: 'flex', sm: 'none' }, alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
                             <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.3rem', fontWeight: 700, color: '#2c1a0e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, mr: 1 }}>
@@ -464,8 +327,7 @@ export default function FlashcardSlugPage() {
                                 {[...Array(5)].map((_, i) => (
                                     <Box key={i} sx={{ px: 2, py: 1.5, borderBottom: '1px solid rgba(184,134,11,0.07)', display: 'flex', gap: 1.5, alignItems: 'center' }}>
                                         <Skeleton variant="circular" width={28} height={28} />
-                                        <Box sx={{ flex: 1 }}><Skeleton variant="text" width="70%" height={14} /><Skeleton variant="text" width="40%" height={12} sx={{ mt: 0.5 }} /><Skeleton variant="rounded" height={3} width="100%" sx={{ mt: 0.75, borderRadius: 2 }} /></Box>
-                                        <Skeleton variant="text" width={28} height={12} />
+                                        <Box sx={{ flex: 1 }}><Skeleton variant="text" width="70%" height={14} /><Skeleton variant="text" width="40%" height={12} sx={{ mt: 0.5 }} /></Box>
                                     </Box>
                                 ))}
                             </Box>
@@ -507,33 +369,22 @@ export default function FlashcardSlugPage() {
                                         textScale={textScale}
                                         key={quizKey}
                                         initialQueue={activeQueue}
-                                        theme={selectedTheme.theme_id}
                                         allExamples={activeExamples}
                                         showDiacritics={showDiacritics}
-
                                         onComplete={handleQuizComplete}
-                                        themeLabel={selectedTheme.display_name}
-                                        totalInTheme={selectedTheme.total_words}
-                                        alreadyCompletedCount={themeDoneCount(selectedTheme)}
                                         initialCardIndex={initialCardIndex}
-                                        flushRef={flushRef}
-                                        levelCode={level}
-                                        onThemeProgressUpdate={handleThemeProgressUpdate}
-                                        onOpenAuthDialog={() => setAuthDialogOpen(true)}
                                         isAdmin={isAdmin}
                                         onWordEdited={async () => {
                                             if (!selectedTheme) return
-                                            await flush()
-                                            const { vocab, progress, examples } = await fetchTheme(selectedTheme.theme_id, level)
-                                            setActiveQueue(buildQueue(vocab, progress))
+                                            const { vocab, examples } = await fetchTheme(selectedTheme.theme_id, level)
+                                            setActiveQueue(vocab)
                                             setActiveExamples(examples)
                                             setQuizKey(k => k + 1)
                                         }}
                                         onWordDeleted={async () => {
                                             if (!selectedTheme) return
-                                            await flush()
-                                            const { vocab, progress, examples } = await fetchTheme(selectedTheme.theme_id, level)
-                                            setActiveQueue(buildQueue(vocab, progress))
+                                            const { vocab, examples } = await fetchTheme(selectedTheme.theme_id, level)
+                                            setActiveQueue(vocab)
                                             setActiveExamples(examples)
                                             setQuizKey(k => k + 1)
                                         }}
@@ -567,7 +418,7 @@ export default function FlashcardSlugPage() {
                                         </Box>
                                     </Box>
                                     <ThemePlaylistSidebar
-                                        themes={themesForSidebar}
+                                        themes={validThemes}
                                         selectedTheme={selectedTheme}
                                         onSelectTheme={(t) => handleThemeSelect(t)}
                                         label={label}

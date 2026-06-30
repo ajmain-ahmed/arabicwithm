@@ -6,7 +6,6 @@ import "./globals.css";
 import Navbar from "./components/navbar";
 import Footer from "./components/footer";
 import MobileBottomNav from "./components/MobileBottomNav";
-import WordBankWidget from "./components/WordBankWidget";
 import FloatingVideoPlayer from "./components/FloatingVideoPlayer";
 import { AuthProvider } from './AuthContext'
 import GlobalDataInit from '@/app/components/GlobalDataInit'
@@ -24,7 +23,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ArabicWithM — Learn Arabic with Cartoons",
-  description: "Master Arabic through cartoons, flashcards, and spaced repetition.",
+  description: "Master Arabic through cartoons, flashcards, and interactive reading.",
 };
 
 export const viewport = {
@@ -68,7 +67,6 @@ export default async function RootLayout({
               </Box>
               <Footer />
               <MobileBottomNav />
-              <WordBankWidget />
               <FloatingVideoPlayer />
             </>
           )}

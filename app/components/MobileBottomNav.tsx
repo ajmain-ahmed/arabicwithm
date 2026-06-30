@@ -15,10 +15,6 @@ const NAV_ITEMS = [
 ]
 
 function safePush(router: ReturnType<typeof useRouter>, url: string) {
-  if (typeof window !== 'undefined' && (window as any).__customSessionActive && url !== '/revision') {
-    window.dispatchEvent(new CustomEvent('revision-leave-requested', { detail: { url } }))
-    return
-  }
   router.push(url)
 }
 

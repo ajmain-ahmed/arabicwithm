@@ -16,7 +16,7 @@ const ACTIONS = [
     icon: <ReplayIcon sx={{ fontSize: { xs: 28, md: 32 } }} />,
     bg: '#0e2e1f',
     color: '#fff',
-    href: '/revision',
+    href: '/flashcards',
   },
   {
     key: 'learn',
@@ -34,7 +34,7 @@ const ACTIONS = [
     icon: <CreateIcon sx={{ fontSize: { xs: 28, md: 32 } }} />,
     bg: '#f5f0e0',
     color: '#b8860b',
-    href: '/revision',
+    href: '/flashcards',
   },
   {
     key: 'dictionary',

@@ -4,14 +4,11 @@
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
-import { checkRateLimit } from '@/app/lib/rateLimit'
 
 export type ThemeProgress = {
   theme_id: string
   display_name: string
   total_words: number
-  completed_count: number
-  revision_count: number
 }
 
 export type LevelStat = {
@@ -20,11 +17,7 @@ export type LevelStat = {
   slug: string
   color: string
   totalThemes: number
-  completedThemes: number
   totalWords: number
-  completedWords: number
-  revisionWords: number
-  progressPct: number
   themes: ThemeProgress[]
 }
 
@@ -32,10 +25,7 @@ export type ProfileData = {
   email: string
   joinedAt: string
   totalWords: number
-  completedWords: number
-  revisionWords: number
   totalThemes: number
-  completedThemes: number
   levels: LevelStat[]
 }
 
@@ -79,7 +69,7 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
   const { data: { user } } = await authClient.auth.getUser()
   if (!user) return null
 
-  // Fetch all vocabulary and user progress directly (paginate to avoid 1000-row limit)
+  // Fetch all vocabulary directly (paginate to avoid 1000-row limit)
   let allVocabData: { word_id: number; level: string; theme: string }[] = []
   let vocabFrom = 0
   const pageSize = 1000
@@ -94,59 +84,28 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
     vocabFrom += pageSize
   }
 
-  const { data: progressData } = await serviceClient
-    .from('progress')
-    .select('vocab_id, status')
-    .eq('user_id', user.id)
-
-  const progressMap = new Map((progressData ?? []).map(p => [p.vocab_id, p]))
-
   const levels: LevelStat[] = LEVELS.map((meta) => {
     const levelWords = allVocabData.filter(v => v.level === meta.code)
-    const themeStats = new Map<string, { total: number; completed: number; revision: number }>()
+    const themeStats = new Map<string, number>()
 
     for (const v of levelWords) {
       const theme = v.theme ?? 'Untitled'
-      if (!themeStats.has(theme)) {
-        themeStats.set(theme, { total: 0, completed: 0, revision: 0 })
-      }
-      const stats = themeStats.get(theme)!
-      stats.total++
-      const p = progressMap.get(v.word_id)
-      if (p?.status === 1) stats.completed++
-      if (p?.status === 0) stats.revision++
+      themeStats.set(theme, (themeStats.get(theme) ?? 0) + 1)
     }
 
-    const themes: ThemeProgress[] = Array.from(themeStats.entries()).map(([theme, stats]) => {
-      const clampedCompleted = Math.min(stats.completed, stats.total)
-      const clampedRevision = Math.min(stats.revision, stats.total - clampedCompleted)
-      return {
-        theme_id: theme,
-        display_name: theme,
-        total_words: stats.total,
-        completed_count: clampedCompleted,
-        revision_count: clampedRevision,
-      }
-    })
+    const themes: ThemeProgress[] = Array.from(themeStats.entries()).map(([theme, total]) => ({
+      theme_id: theme,
+      display_name: theme,
+      total_words: total,
+    }))
 
     const totalThemes = themes.length
-    const completedThemes = themes.filter(
-      (t) => t.total_words > 0 && (t.completed_count + t.revision_count) >= t.total_words
-    ).length
-
     const totalWords = themes.reduce((s, t) => s + t.total_words, 0)
-    const completedWords = themes.reduce((s, t) => s + t.completed_count, 0)
-    const revisionWords = themes.reduce((s, t) => s + t.revision_count, 0)
-    const doneWords = completedWords + revisionWords
 
     return {
       ...meta,
       totalThemes,
-      completedThemes,
       totalWords,
-      completedWords,
-      revisionWords,
-      progressPct: totalWords > 0 ? Math.round((doneWords / totalWords) * 100) : 0,
       themes,
     }
   })
@@ -155,113 +114,7 @@ export async function fetchUserProfile(): Promise<ProfileData | null> {
     email: user.email ?? '',
     joinedAt: user.created_at,
     totalWords: levels.reduce((s, l) => s + l.totalWords, 0),
-    completedWords: levels.reduce((s, l) => s + l.completedWords, 0),
-    revisionWords: levels.reduce((s, l) => s + l.revisionWords, 0),
     totalThemes: levels.reduce((s, l) => s + l.totalThemes, 0),
-    completedThemes: levels.reduce((s, l) => s + l.completedThemes, 0),
     levels,
   }
-}
-
-export type ProgressWord = {
-  vocab_id: number
-  word_ar: string
-  word_di: string
-  word_tr: string
-  level: string
-  theme: string
-  root: string | null
-  status: 'revision' | 'completed'
-  updated_at: string | null
-  meaning?: string
-}
-
-export async function fetchUserProgressWords(
-  statusFilter?: 'revision' | 'completed',
-  search?: string
-): Promise<ProgressWord[]> {
-  const cookieStore = await cookies()
-  const authClient = createServerClient(
-    process.env.SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll() {},
-      },
-    }
-  )
-
-  const { data: { user } } = await authClient.auth.getUser()
-  if (!user) return []
-
-  if (!checkRateLimit(`fetchProgress:${user.id}`, 30, 60_000)) {
-    throw new Error('Rate limit exceeded. Please slow down.')
-  }
-
-  let query = serviceClient
-    .from('progress')
-    .select('vocab_id, status, updated_at')
-    .eq('user_id', user.id)
-
-  if (statusFilter === 'revision') {
-    query = query.eq('status', 0)
-  } else if (statusFilter === 'completed') {
-    query = query.eq('status', 1)
-  } else {
-    query = query.in('status', [0, 1])
-  }
-
-  const { data: progressData, error: progressErr } = await query
-  if (progressErr) {
-    console.error('[fetchUserProgressWords] progress error:', progressErr.message)
-    return []
-  }
-
-  if (!progressData || progressData.length === 0) return []
-
-  const vocabIds = progressData.map(p => p.vocab_id)
-
-  let vocabQuery = serviceClient
-    .from('vocabulary')
-    .select('word_id, word_ar, word_di, word_tr, level, theme, root, definitions')
-    .in('word_id', vocabIds)
-
-  if (search && search.trim()) {
-    // Sanitize search term to prevent PostgREST filter injection
-    // Only allow alphanumeric, Arabic script, whitespace, and common diacritics
-    const term = search.trim().replace(/[%(),\\&|!:<>=*+\-\/\[\]{}^~`@#$]/g, '')
-    if (term.length > 0) {
-      vocabQuery = vocabQuery.or(`word_ar.ilike.%${term}%,word_tr.ilike.%${term}%,theme.ilike.%${term}%`)
-    }
-  }
-
-  const { data: vocabData, error: vocabErr } = await vocabQuery
-  if (vocabErr) {
-    console.error('[fetchUserProgressWords] vocab error:', vocabErr.message)
-    return []
-  }
-
-  const vocabMap = new Map((vocabData ?? []).map(v => [v.word_id, v]))
-
-  const result: ProgressWord[] = []
-  for (const p of progressData) {
-    const v = vocabMap.get(p.vocab_id)
-    if (!v) continue
-    const defs = v.definitions as Array<{ english?: string }> | null
-    result.push({
-      vocab_id: p.vocab_id,
-      word_ar: v.word_ar ?? '',
-      word_di: v.word_di ?? '',
-      word_tr: v.word_tr ?? '',
-      level: v.level ?? '',
-      theme: v.theme ?? '',
-      root: v.root ?? null,
-      status: p.status === 1 ? 'completed' : 'revision',
-      updated_at: p.updated_at ?? null,
-      meaning: defs?.[0]?.english ?? undefined,
-    })
-  }
-
-  return result
 }
