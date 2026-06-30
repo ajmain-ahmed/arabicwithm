@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation"
-import { Box, CssBaseline } from "@mui/material"
+import { Box, Container, CssBaseline } from "@mui/material"
 import { isAdminUser } from "@/app/actions/vocab"
 import AdminNav from "./components/AdminNav"
+import AdminThemeProvider from "./components/AdminThemeProvider"
 
 export const metadata = {
   title: "Admin | ArabicWithM",
@@ -19,20 +20,24 @@ export default async function AdminLayout({
   }
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f8f5f0" }}>
-      <CssBaseline />
-      <AdminNav />
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: { xs: 2, md: 4 },
-          ml: { md: "260px" },
-          maxWidth: { md: "calc(100% - 260px)" },
-        }}
-      >
-        {children}
+    <AdminThemeProvider>
+      <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", bgcolor: "#f8f5f0" }}>
+        <CssBaseline />
+        <AdminNav />
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            width: "100%",
+            maxWidth: "100%",
+            overflowX: "hidden",
+          }}
+        >
+          <Container maxWidth="xl" sx={{ py: { xs: 2, md: 3 } }}>
+            {children}
+          </Container>
+        </Box>
       </Box>
-    </Box>
+    </AdminThemeProvider>
   )
 }

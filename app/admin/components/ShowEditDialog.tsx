@@ -6,13 +6,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Button,
   IconButton,
   Box,
   Typography,
 } from "@mui/material"
 import { Close, Save, Delete } from "@mui/icons-material"
+import AdminTextField from "./AdminTextField"
 import {
   fetchShowForAdmin,
   createShow,
@@ -32,18 +32,6 @@ interface ShowEditDialogProps {
   showId: string | null
   onSaved?: () => void
   onDeleted?: () => void
-}
-
-const fieldSx = {
-  "& .MuiInputBase-root": {
-    fontFamily: "Jost, sans-serif",
-    fontSize: "0.9rem",
-    borderRadius: "8px",
-  },
-  "& .MuiInputLabel-root": {
-    fontFamily: "Jost, sans-serif",
-    fontSize: "0.85rem",
-  },
 }
 
 export default function ShowEditDialog({
@@ -207,18 +195,18 @@ export default function ShowEditDialog({
 
         {!loading && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField label="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} fullWidth size="small" sx={fieldSx} />
-            <TextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" sx={fieldSx} />
-            <TextField label="Title Arabic" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} fullWidth size="small" sx={fieldSx} />
-            <TextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" sx={fieldSx} />
-            <TextField label="Cover URL" value={cover} onChange={(e) => setCover(e.target.value)} fullWidth size="small" sx={fieldSx} />
+            <AdminTextField label="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} fullWidth size="small" />
+            <AdminTextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" />
+            <AdminTextField label="Title Arabic" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} fullWidth size="small" />
+            <AdminTextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" />
+            <AdminTextField label="Cover URL" value={cover} onChange={(e) => setCover(e.target.value)} fullWidth size="small" />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-              <TextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" sx={fieldSx} />
-              <TextField label="Order" type="number" value={order} onChange={(e) => setOrder(e.target.value)} fullWidth size="small" sx={fieldSx} />
+              <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />
+              <AdminTextField label="Order" type="number" value={order} onChange={(e) => setOrder(e.target.value)} fullWidth size="small" />
             </Box>
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
-              <TextField label="Category" value={category} onChange={(e) => setCategory(e.target.value)} fullWidth size="small" sx={fieldSx} />
-              <TextField label="Genre" value={genre} onChange={(e) => setGenre(e.target.value)} fullWidth size="small" sx={fieldSx} />
+              <AdminTextField label="Category" value={category} onChange={(e) => setCategory(e.target.value)} fullWidth size="small" />
+              <AdminTextField label="Genre" value={genre} onChange={(e) => setGenre(e.target.value)} fullWidth size="small" />
             </Box>
           </Box>
         )}

@@ -121,3 +121,11 @@ export function stripDiacritics(token: string): string {
 export function stripLatinDiacritics(text: string): string {
   return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
+
+export function normalizeTransliteration(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u02BE\u02BF\u02B9\u02C8\u02CC'’]/g, '')
+    .toLowerCase()
+}

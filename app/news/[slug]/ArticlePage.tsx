@@ -48,7 +48,6 @@ export default function ArticlePage({ article }: ArticlePageProps) {
         sx={{
           minHeight: '100vh',
           background: '#f5ede0',
-          pt: { xs: '56px', md: '64px' },
           pb: { xs: 8, md: 10 },
         }}
       >

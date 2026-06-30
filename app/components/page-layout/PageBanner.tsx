@@ -42,17 +42,22 @@ export default function PageBanner({
       sx={{
         position: 'relative',
         width: '100%',
-        minHeight: { xs: '280px', md: '300px' },
-        maxHeight: { xs: '50vh', md: 'none' },
+        minHeight: { xs: '320px', md: '360px' },
+        maxHeight: { xs: '55vh', md: 'none' },
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
         px: { xs: 2, md: 4 },
-        pt: { xs: 6, md: 10 },
-        pb: { xs: 10, md: 10 },
+        // Push content below the fixed navbar, then add matching bottom padding
+        // so the text block is centred in the visible banner area.
+        pt: { xs: 13, md: 14 },
+        pb: { xs: 6, md: 6 },
         overflow: 'hidden',
+        // Pull the banner up into the navbar padding area so the background
+        // starts flush with the top of the viewport (under the fixed navbar).
+        mt: { xs: '-56px', md: '-64px' },
       }}
     >
       {/* Background image */}
@@ -115,6 +120,7 @@ export default function PageBanner({
           position: 'relative',
           zIndex: 1,
           direction: 'rtl',
+          textAlign: 'center',
         }}
       >
         {titleAr}

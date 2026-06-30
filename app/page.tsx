@@ -1,5 +1,4 @@
 import { getAllLevels } from './lib/study'
-import Navbar from './components/navbar'
 import HomeHero from './components/HomeHero'
 import CefrLevelsSection from './components/CefrLevelsSection'
 import ChooseYourPath from './components/ChooseYourPath'
@@ -39,7 +38,6 @@ export default async function HomePage() {
   return (
     <>
       <style>{PAGE_CSS}</style>
-      <Navbar />
 
       <main style={{ background: '#fff', minHeight: '100vh' }}>
         <HomeHero />

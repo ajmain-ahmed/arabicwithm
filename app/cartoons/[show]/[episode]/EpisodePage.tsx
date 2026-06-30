@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useRef,
   useCallback,
+  useMemo,
 } from 'react'
 import { createPortal } from 'react-dom'
 import SafeHtml from '@/app/components/SafeHtml'
@@ -28,14 +29,18 @@ import {
   Popover,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ArrowBack, Settings, Close, ExpandMore, ExpandLess, ChevronRight, Quiz, PictureInPictureAlt } from '@mui/icons-material'
+import { ArrowBack, Settings, Close, ExpandMore, ExpandLess, ChevronRight, Quiz, PictureInPictureAlt, Edit } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { usePlayerStore } from '@/store/playerStore'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { stripDiacritics } from '@/app/lib/arabic'
-import { EpisodeFull, CartoonWordEntry } from '@/app/lib/cartoons'
+import { EpisodeFull, CartoonWordEntry, type ScriptBlock } from '@/app/lib/cartoons'
+import { type ShowRow } from '@/app/actions/admin'
 import { HtmlTooltip, WordTooltip, LEVEL_COLORS } from '@/app/components/vocab-tooltip'
 import EpisodeTestDialog from './EpisodeTestDialog'
+import EpisodeEditDialog from '@/app/admin/components/EpisodeEditDialog'
+import ScriptBlockEditor from './ScriptBlockEditor'
+import { updateEpisode } from '@/app/actions/admin'
 
 // ─── Fallback — used before we measure the real navbar ────────────────────────
 const NAVBAR_HEIGHT = 64 // px
@@ -595,21 +600,103 @@ function ArabicLineText({
     }
   }, [clearLeaveTimer])
 
-  const parts = text.split(/([\u0600-\u06FF]+)/)
+  const findEntry = useCallback(
+    (part: string): CartoonWordEntry | null => {
+      const normalized = part.normalize('NFC')
+      const stripped = normalized.replace(/^[\p{P}\p{S}]+|[\p{P}\p{S}]+$/gu, '')
+      const plain = stripDiacritics(normalized)
+      const strippedPlain = stripDiacritics(stripped)
+      return (
+        diacritizedMap[normalized] ??
+        diacritizedMap[stripped] ??
+        wordMap[plain] ??
+        wordMap[strippedPlain] ??
+        null
+      )
+    },
+    [diacritizedMap, wordMap]
+  )
+
+  const segments = useMemo(() => {
+    type Token = { type: 'word' | 'sep'; value: string }
+    const tokens: Token[] = []
+    let current = ''
+    let isWord: boolean | null = null
+    for (const char of text) {
+      const charIsWord = /[\u0600-\u06FF]/.test(char)
+      if (isWord === null) {
+        isWord = charIsWord
+        current = char
+      } else if (isWord === charIsWord) {
+        current += char
+      } else {
+        tokens.push({ type: isWord ? 'word' : 'sep', value: current })
+        isWord = charIsWord
+        current = char
+      }
+    }
+    if (current) tokens.push({ type: isWord ? 'word' : 'sep', value: current })
+
+    type Segment =
+      | { type: 'text'; text: string }
+      | { type: 'word'; text: string; entry: CartoonWordEntry; index: number }
+
+    const segs: Segment[] = []
+    let i = 0
+    let wordIndex = 0
+    while (i < tokens.length) {
+      const token = tokens[i]
+      if (token.type === 'sep') {
+        segs.push({ type: 'text', text: token.value })
+        i++
+        continue
+      }
+
+      let matchedEntry = findEntry(token.value)
+      let matchedLen = 1
+      let phrase = token.value
+      let j = i + 1
+
+      while (j < tokens.length) {
+        if (tokens[j].type === 'sep' && /^\s+$/.test(tokens[j].value)) {
+          if (j + 1 < tokens.length && tokens[j + 1].type === 'word') {
+            const candidate = phrase + tokens[j].value + tokens[j + 1].value
+            const entry = findEntry(candidate)
+            if (entry) {
+              matchedEntry = entry
+              matchedLen = j + 1 - i + 1
+              phrase = candidate
+            }
+            j += 2
+          } else {
+            break
+          }
+        } else {
+          break
+        }
+      }
+
+      if (matchedEntry) {
+        segs.push({ type: 'word', text: phrase, entry: matchedEntry, index: wordIndex })
+        wordIndex++
+        i += matchedLen
+      } else {
+        segs.push({ type: 'text', text: token.value })
+        i++
+      }
+    }
+    return segs
+  }, [text, findEntry])
 
   return (
     <>
-      {parts.map((part, i) => {
-        if (!/[\u0600-\u06FF]+/.test(part)) {
-          return <span key={i}>{part}</span>
-        }
-        const plain = stripDiacritics(part)
-        const entry = diacritizedMap[part] || wordMap[plain]
-        if (!entry) {
-          return <span key={i}>{part}</span>
+      {segments.map((seg, i) => {
+        if (seg.type === 'text') {
+          return <span key={i}>{seg.text}</span>
         }
 
-        const isActive = activeEntry === entry && open && activePartIndex === i
+        const { text: wordText, entry, index } = seg
+        const isActive = activeEntry === entry && open && activePartIndex === index
 
         /* ── Mobile: tap word → bottom sheet ── */
         if (isMobile) {
@@ -618,7 +705,7 @@ function ArabicLineText({
               <span
                 onClick={(e) => {
                   e.stopPropagation()
-                  handleOpen(entry, e.currentTarget, i)
+                  handleOpen(entry, e.currentTarget, index)
                 }}
                 className="vocab-word"
                 style={{
@@ -634,7 +721,7 @@ function ArabicLineText({
                   e.currentTarget.style.background = 'transparent'
                 }}
               >
-                {part}
+                {wordText}
               </span>
 
               <Drawer
@@ -723,7 +810,7 @@ function ArabicLineText({
               onClick={(e) => e.stopPropagation()}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
-                handleOpen(entry, e.currentTarget, i)
+                handleOpen(entry, e.currentTarget, index)
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'transparent'
@@ -737,7 +824,7 @@ function ArabicLineText({
                 transition: 'background 0.15s',
               }}
             >
-              {part}
+              {wordText}
             </span>
           </HtmlTooltip>
         )
@@ -749,7 +836,17 @@ function ArabicLineText({
 /* ─────────────────────────────────────────────
    Main Component
 ───────────────────────────────────────────── */
-export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFull; showTitle: string }) {
+export default function EpisodePage({
+  episode,
+  showTitle,
+  isAdmin,
+  allShows,
+}: {
+  episode: EpisodeFull
+  showTitle: string
+  isAdmin?: boolean
+  allShows?: ShowRow[]
+}) {
   const router = useRouter()
   const [tab, setTab] = useState(0)
   const [showDiacritics, setShowDiacritics] = useState(true)
@@ -760,6 +857,26 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   const [testDialogOpen, setTestDialogOpen] = useState(false)
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [editingBlockIndex, setEditingBlockIndex] = useState<number | null>(null)
+  const [savingBlock, setSavingBlock] = useState(false)
+
+  const handleBlockSave = async (index: number, updatedBlock: ScriptBlock) => {
+    if (!isAdmin) return
+    setSavingBlock(true)
+    try {
+      const updatedTranscript = {
+        scriptBlocks: episode.scriptBlocks.map((b, i) => (i === index ? updatedBlock : b)),
+        vocabList: episode.vocabList,
+        grammarPoints: episode.grammarPoints,
+      }
+      await updateEpisode(episode.id, { transcript: updatedTranscript })
+      setEditingBlockIndex(null)
+      router.refresh()
+    } finally {
+      setSavingBlock(false)
+    }
+  }
 
   const theme = useTheme()
   const isMobileViewport = useMediaQuery(theme.breakpoints.down('md'))
@@ -1213,6 +1330,22 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                 </Typography>
               </Breadcrumbs>
 
+              {isAdmin && (
+                <IconButton
+                  onClick={() => setEditDialogOpen(true)}
+                  size="small"
+                  sx={{
+                    color: 'var(--gold)',
+                    border: '1px solid rgba(184,134,11,0.3)',
+                    borderRadius: '8px',
+                    ml: 1,
+                    '&:hover': { bgcolor: 'rgba(184,134,11,0.08)' },
+                  }}
+                  aria-label="Edit episode"
+                >
+                  <Edit sx={{ fontSize: 18 }} />
+                </IconButton>
+              )}
             </Box>
 
             <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: '#fff', borderRadius: '12px 12px 0 0', px: { xs: 1, md: 4 }, display: 'flex', alignItems: 'center' }}>
@@ -1383,6 +1516,17 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                       const hasTimestamp = block.timestamp != null
                       const isActive = activeIndex === i
                       const isLast = i === episode.scriptBlocks.length - 1
+                      if (editingBlockIndex === i) {
+                        return (
+                          <ScriptBlockEditor
+                            key={`edit-${i}`}
+                            block={block}
+                            onSave={(updated) => handleBlockSave(i, updated)}
+                            onCancel={() => setEditingBlockIndex(null)}
+                            disabled={savingBlock}
+                          />
+                        )
+                      }
                       return (
                         <React.Fragment key={i}>
                           <Box
@@ -1392,6 +1536,7 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                               if (openVocabCount > 0) return
                               if (Date.now() - lastVocabCloseAt < 120) return
                               if ((e.target as HTMLElement).closest('.vocab-word')) return
+                              if ((e.target as HTMLElement).closest('.edit-block-btn')) return
                               if (hasTimestamp) {
                                 if (isPipActiveHere) {
                                   usePlayerStore.getState().requestSeek(block.timestamp!)
@@ -1404,14 +1549,34 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
                           >
                             {/* Block title / timestamp */}
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                              {hasTimestamp && (
-                                <Typography sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1 }}>
-                                  {(() => { const s = block.timestamp!; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` })()}
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+                                {hasTimestamp && (
+                                  <Typography sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1 }}>
+                                    {(() => { const s = block.timestamp!; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` })()}
+                                  </Typography>
+                                )}
+                                <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', fontSize: `calc(0.75rem * ${textScale})`, color: 'var(--muted)', fontWeight: 500 }}>
+                                  {block.title}
                                 </Typography>
+                              </Box>
+                              {isAdmin && (
+                                <IconButton
+                                  size="small"
+                                  className="edit-block-btn"
+                                  aria-label="Edit this sentence"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    setEditingBlockIndex(i)
+                                  }}
+                                  sx={{
+                                    color: 'var(--gold)',
+                                    p: 0.5,
+                                    '&:hover': { color: '#b8860b', bgcolor: 'rgba(184,134,11,0.1)' },
+                                  }}
+                                >
+                                  <Edit sx={{ fontSize: '1rem' }} />
+                                </IconButton>
                               )}
-                              <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', fontSize: `calc(0.75rem * ${textScale})`, color: 'var(--muted)', fontWeight: 500 }}>
-                                {block.title}
-                              </Typography>
                             </Box>
 
                             {/* Arabic */}
@@ -1684,6 +1849,21 @@ export default function EpisodePage({ episode, showTitle }: { episode: EpisodeFu
         onClose={() => setTestDialogOpen(false)}
         playSegment={playSegment}
       />
+
+      {/* ── Admin Edit Dialog ── */}
+      {isAdmin && (
+        <EpisodeEditDialog
+          open={editDialogOpen}
+          onClose={() => setEditDialogOpen(false)}
+          episodeId={episode.id}
+          showId={episode.show_id}
+          shows={allShows ?? []}
+          onSaved={() => {
+            setEditDialogOpen(false)
+            router.refresh()
+          }}
+        />
+      )}
     </>
   )
 }

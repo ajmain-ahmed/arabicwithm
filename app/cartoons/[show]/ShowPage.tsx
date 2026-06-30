@@ -13,8 +13,10 @@ import {
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
 import { ShowMeta, EpisodeMeta } from '../../lib/cartoons'
-import { PageBanner, HowItWorksSection, PlacementTestCTA } from '@/app/components/page-layout'
+import { PageBanner } from '@/app/components/page-layout'
 import { FilterSidebar, ComingSoonSection, ContentCard } from '@/app/components/content-grid'
+import EpisodeEditDialog from '../components/EpisodeEditDialog'
+import { deleteEpisode } from '@/app/actions/admin'
 
 /* ── MUI Icons ── */
 import {
@@ -22,12 +24,12 @@ import {
   Subtitles,
   MenuBook,
   School,
-  Tv,
-  TouchApp,
-  AutoStories,
   Close,
   Tune,
   NavigateNext,
+  Edit,
+  Delete,
+  Add,
 } from '@mui/icons-material'
 
 /* ── Palette ── */
@@ -46,12 +48,28 @@ const COMING_SOON = [
 interface ShowPageProps {
   show: ShowMeta
   episodes: EpisodeMeta[]
+  isAdmin?: boolean
 }
 
-export default function ShowPage({ show, episodes }: ShowPageProps) {
+export default function ShowPage({ show, episodes, isAdmin }: ShowPageProps) {
   const router = useRouter()
   const [activeLevel, setActiveLevel] = useState('')
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingEpisode, setEditingEpisode] = useState<EpisodeMeta | undefined>(undefined)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const handleDeleteEpisode = async (id: string) => {
+    if (!isAdmin) return
+    if (!confirm('Are you sure you want to delete this episode? This cannot be undone.')) return
+    setDeletingId(id)
+    try {
+      await deleteEpisode(id)
+      router.refresh()
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const LEVELS = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
@@ -75,7 +93,6 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
       sx={{
         minHeight: '100vh',
         background: WARM_WHITE,
-        pt: { xs: '56px', md: '64px' },
         pb: { xs: 0, md: 8 },
       }}
     >
@@ -220,25 +237,28 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
         {filteredEpisodes.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 12 }}>
             <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 20, color: BARK, mb: 1 }}>
-              No episodes match your filters
+              {episodes.length === 0 ? 'No episodes yet' : 'No episodes match your filters'}
             </Typography>
             <Typography sx={{ fontSize: 14, color: MUTED, mb: 2 }}>
-              Try adjusting your level selection.
+              {episodes.length === 0 ? 'Use the button below to add the first episode.' : 'Try adjusting your level selection.'}
             </Typography>
-            <Button
-              onClick={() => setActiveLevel('')}
-              sx={{
-                borderRadius: '9999px',
-                px: 3,
-                py: 1,
-                fontFamily: '"Jost", system-ui, sans-serif',
-                textTransform: 'none',
-                color: BARK,
-                border: '1px solid rgba(44,26,14,0.15)',
-              }}
-            >
-              Reset Filters
-            </Button>
+            {isAdmin && (
+              <Button
+                startIcon={<Add />}
+                onClick={() => { setEditingEpisode(undefined); setDialogOpen(true); }}
+                sx={{
+                  borderRadius: '9999px',
+                  px: 3,
+                  py: 1,
+                  fontFamily: '"Jost", system-ui, sans-serif',
+                  textTransform: 'none',
+                  color: BARK,
+                  border: '1px solid rgba(44,26,14,0.15)',
+                }}
+              >
+                Add episode
+              </Button>
+            )}
           </Box>
         ) : (
           /* ── Desktop: Sidebar + Grid Layout ── */
@@ -272,21 +292,95 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                 </Typography>
               </Box>
 
+              {isAdmin && (
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                  <Button
+                    startIcon={<Add />}
+                    onClick={() => { setEditingEpisode(undefined); setDialogOpen(true); }}
+                    sx={{
+                      textTransform: 'none',
+                      fontFamily: '"Jost", system-ui, sans-serif',
+                      color: BARK,
+                      border: '1px solid rgba(44,26,14,0.15)',
+                      borderRadius: '9999px',
+                      px: 2.5,
+                      py: 0.75,
+                    }}
+                  >
+                    Add episode
+                  </Button>
+                </Box>
+              )}
+
+              <EpisodeEditDialog
+                open={dialogOpen}
+                showId={show.id}
+                episode={editingEpisode}
+                onClose={() => setDialogOpen(false)}
+                onSaved={() => { setDialogOpen(false); router.refresh(); }}
+              />
+
               <Grid container spacing={2}>
                 {filteredEpisodes.map((ep) => (
                   <Grid size={{ xs: 12, sm: 6, xl: 3 }} key={ep.slug}>
-                    <ContentCard
-                      slug={ep.slug}
-                      hrefPrefix={`/cartoons/${show.slug}`}
-                      cover={`/cartoons/${show.slug}/${ep.slug}.avif`}
-                      title={ep.title}
-                      level={ep.level}
-                      category={ep.tags[0]}
-                      genre={ep.tags[1]}
-                      description={ep.description}
-                      overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
-                      metaItems={[]}
-                    />
+                    <Box sx={{ position: 'relative' }}>
+                      {isAdmin && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            right: 8,
+                            zIndex: 2,
+                            display: 'flex',
+                            gap: 0.5,
+                          }}
+                        >
+                          <IconButton
+                            size="small"
+                            disabled={deletingId === ep.id}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingEpisode(ep)
+                              setDialogOpen(true)
+                            }}
+                            sx={{
+                              bgcolor: 'rgba(255,255,255,0.9)',
+                              color: GOLD,
+                              '&:hover': { bgcolor: 'rgba(255,255,255,1)' },
+                            }}
+                          >
+                            <Edit sx={{ fontSize: '1.1rem' }} />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            disabled={deletingId === ep.id}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteEpisode(ep.id)
+                            }}
+                            sx={{
+                              bgcolor: 'rgba(255,255,255,0.9)',
+                              color: '#c0392b',
+                              '&:hover': { bgcolor: 'rgba(255,255,255,1)' },
+                            }}
+                          >
+                            <Delete sx={{ fontSize: '1.1rem' }} />
+                          </IconButton>
+                        </Box>
+                      )}
+                      <ContentCard
+                        slug={ep.slug}
+                        hrefPrefix={`/cartoons/${show.slug}`}
+                        cover={`/cartoons/${show.slug}/${ep.slug}.avif`}
+                        title={ep.title}
+                        level={ep.level}
+                        category={ep.tags[0]}
+                        genre={ep.tags[1]}
+                        description={ep.description}
+                        overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
+                        metaItems={[]}
+                      />
+                    </Box>
                   </Grid>
                 ))}
               </Grid>
@@ -295,32 +389,6 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
         )}
 
         </Box>
-
-        <HowItWorksSection
-          steps={[
-            {
-              icon: <Tv sx={{ fontSize: 22, color: '#b8860b' }} />,
-              title: 'Watch with Subtitles',
-              desc: 'Dual Arabic & English subtitles while you watch',
-            },
-            {
-              icon: <TouchApp sx={{ fontSize: 22, color: '#b8860b' }} />,
-              title: 'Click Any Word',
-              desc: 'Instant definitions, transliteration & audio',
-            },
-            {
-              icon: <AutoStories sx={{ fontSize: 22, color: '#b8860b' }} />,
-              title: 'Review & Learn',
-              desc: 'Save words to your personal vocabulary deck',
-            },
-          ]}
-        />
-
-        <PlacementTestCTA
-          heading="Not Sure Where to Start?"
-          description="Take a quick placement test to find shows matched to your Arabic level."
-          ctaLabel="Take Placement Test"
-        />
 
         <ComingSoonSection
           label="Coming Soon"

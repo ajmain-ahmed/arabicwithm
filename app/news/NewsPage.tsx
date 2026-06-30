@@ -47,7 +47,7 @@ export default function NewsPage({ articlesByLevel, rssArticles }: NewsPageProps
         @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Jost:wght@300;400;500;600;700&display=swap');
       `}</style>
 
-      <Box component="main" sx={{ minHeight: '100vh', background: '#f5ede0', pt: { xs: '56px', md: '64px' } }}>
+      <Box component="main" sx={{ minHeight: '100vh', background: '#f5ede0' }}>
         {/* ── Banner ── */}
         <Box
           sx={{

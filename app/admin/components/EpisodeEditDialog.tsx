@@ -6,7 +6,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Button,
   IconButton,
   Box,
@@ -19,10 +18,12 @@ import {
   Select,
   InputLabel,
   FormControl,
+  Paper,
   Chip,
   CircularProgress,
 } from "@mui/material"
 import { Close, Save, Delete, Edit, Add } from "@mui/icons-material"
+import AdminTextField from "./AdminTextField"
 import {
   fetchEpisodeForAdmin,
   createEpisode,
@@ -50,18 +51,6 @@ interface EpisodeEditDialogProps {
   onDeleted?: () => void
 }
 
-const fieldSx = {
-  "& .MuiInputBase-root": {
-    fontFamily: "Jost, sans-serif",
-    fontSize: "0.9rem",
-    borderRadius: "8px",
-  },
-  "& .MuiInputLabel-root": {
-    fontFamily: "Jost, sans-serif",
-    fontSize: "0.85rem",
-  },
-}
-
 const defaultTranscript = JSON.stringify(
   { scriptBlocks: [], vocabList: [], grammarPoints: [] },
   null,
@@ -80,6 +69,13 @@ type TranscriptWord = {
 type ScriptBlock = {
   title?: string
   words?: TranscriptWord[]
+}
+
+type GrammarPoint = {
+  number?: number
+  pattern: string
+  explanation: string
+  example: string
 }
 
 function primaryGloss(definitions: unknown): string {
@@ -113,6 +109,7 @@ export default function EpisodeEditDialog({
   const [cover, setCover] = useState("")
   const [episodeNumber, setEpisodeNumber] = useState("")
   const [transcriptJson, setTranscriptJson] = useState(defaultTranscript)
+  const [grammarPoints, setGrammarPoints] = useState<GrammarPoint[]>([])
 
   const [wordsLoading, setWordsLoading] = useState(false)
   const [wordsError, setWordsError] = useState<string | null>(null)
@@ -142,6 +139,7 @@ export default function EpisodeEditDialog({
       setCover("")
       setEpisodeNumber("")
       setTranscriptJson(defaultTranscript)
+      setGrammarPoints([])
       return
     }
 
@@ -163,6 +161,7 @@ export default function EpisodeEditDialog({
         setCover(row.cover ?? "")
         setEpisodeNumber(String(row.episode_number))
         setTranscriptJson(JSON.stringify(row.transcript ?? { scriptBlocks: [], vocabList: [], grammarPoints: [] }, null, 2))
+        setGrammarPoints(Array.isArray(row.transcript?.grammarPoints) ? (row.transcript.grammarPoints as GrammarPoint[]) : [])
       })
       .catch((e: unknown) => setError(errorMessage(e) ?? "Failed to load episode"))
       .finally(() => setLoading(false))
@@ -180,6 +179,53 @@ export default function EpisodeEditDialog({
     const blocks = parsedTranscript?.scriptBlocks
     return Array.isArray(blocks) ? blocks : []
   }, [parsedTranscript])
+
+  useEffect(() => {
+    const gp = parsedTranscript?.grammarPoints
+    setGrammarPoints(Array.isArray(gp) ? (gp as GrammarPoint[]) : [])
+  }, [parsedTranscript])
+
+  const updateGrammarPoint = (index: number, field: keyof GrammarPoint, value: string) => {
+    try {
+      const obj = JSON.parse(transcriptJson) as Record<string, unknown>
+      const current = Array.isArray(obj.grammarPoints) ? [...obj.grammarPoints] : []
+      const item = { ...(current[index] as Record<string, unknown>) }
+      if (field === "number") {
+        item.number = value === "" ? undefined : Number(value)
+      } else {
+        item[field] = value
+      }
+      current[index] = item
+      obj.grammarPoints = current
+      setTranscriptJson(JSON.stringify(obj, null, 2))
+    } catch {
+      // ignore invalid JSON
+    }
+  }
+
+  const addGrammarPoint = () => {
+    try {
+      const obj = JSON.parse(transcriptJson) as Record<string, unknown>
+      const current = Array.isArray(obj.grammarPoints) ? [...obj.grammarPoints] : []
+      current.push({ pattern: "", explanation: "", example: "" })
+      obj.grammarPoints = current
+      setTranscriptJson(JSON.stringify(obj, null, 2))
+    } catch {
+      // ignore invalid JSON
+    }
+  }
+
+  const removeGrammarPoint = (index: number) => {
+    try {
+      const obj = JSON.parse(transcriptJson) as Record<string, unknown>
+      const current = Array.isArray(obj.grammarPoints) ? [...obj.grammarPoints] : []
+      current.splice(index, 1)
+      obj.grammarPoints = current
+      setTranscriptJson(JSON.stringify(obj, null, 2))
+    } catch {
+      // ignore invalid JSON
+    }
+  }
 
   useEffect(() => {
     if (!open || tab !== 2 || scriptBlocks.length === 0) return
@@ -340,12 +386,13 @@ export default function EpisodeEditDialog({
                 <Tab label="Details" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600 }} />
                 <Tab label="Transcript JSON" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600 }} />
                 <Tab label="Words" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600 }} />
+                <Tab label="Grammar" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600 }} />
               </Tabs>
 
               {tab === 0 && (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <FormControl fullWidth size="small" sx={fieldSx}>
-                    <InputLabel id="show-select-label">Show</InputLabel>
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="show-select-label" shrink>Show</InputLabel>
                     <Select
                       labelId="show-select-label"
                       value={showId}
@@ -360,17 +407,17 @@ export default function EpisodeEditDialog({
                     </Select>
                   </FormControl>
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-                    <TextField label="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} fullWidth size="small" sx={fieldSx} />
-                    <TextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" sx={fieldSx} />
+                    <AdminTextField label="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} fullWidth size="small" />
+                    <AdminTextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" />
                   </Box>
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-                    <TextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" sx={fieldSx} />
-                    <TextField label="Episode number" type="number" value={episodeNumber} onChange={(e) => setEpisodeNumber(e.target.value)} fullWidth size="small" sx={fieldSx} />
+                    <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />
+                    <AdminTextField label="Episode number" type="number" value={episodeNumber} onChange={(e) => setEpisodeNumber(e.target.value)} fullWidth size="small" />
                   </Box>
-                  <TextField label="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} fullWidth size="small" sx={fieldSx} />
-                  <TextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" sx={fieldSx} />
+                  <AdminTextField label="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} fullWidth size="small" />
+                  <AdminTextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" />
                   <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-                    <TextField label="YouTube ID" value={youtubeId} onChange={(e) => setYoutubeId(e.target.value)} fullWidth size="small" sx={fieldSx} />
+                    <AdminTextField label="YouTube ID" value={youtubeId} onChange={(e) => setYoutubeId(e.target.value)} fullWidth size="small" />
                     <FormControlLabel
                       control={
                         <Checkbox
@@ -383,12 +430,12 @@ export default function EpisodeEditDialog({
                       sx={{ fontFamily: "Jost, sans-serif", color: "#2c1a0e" }}
                     />
                   </Box>
-                  <TextField label="Cover URL" value={cover} onChange={(e) => setCover(e.target.value)} fullWidth size="small" sx={fieldSx} />
+                  <AdminTextField label="Cover URL" value={cover} onChange={(e) => setCover(e.target.value)} fullWidth size="small" />
                 </Box>
               )}
 
               {tab === 1 && (
-                <TextField
+                <AdminTextField
                   label="Transcript JSON"
                   value={transcriptJson}
                   onChange={(e) => setTranscriptJson(e.target.value)}
@@ -396,7 +443,7 @@ export default function EpisodeEditDialog({
                   multiline
                   rows={18}
                   size="small"
-                  sx={fieldSx}
+                 
                 />
               )}
 
@@ -555,6 +602,70 @@ export default function EpisodeEditDialog({
                           </Box>
                         )
                       })}
+                    </>
+                  )}
+                </Box>
+              )}
+
+              {tab === 3 && (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {!parsedTranscript ? (
+                    <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#c0392b" }}>
+                      Transcript JSON is invalid. Fix it on the Transcript JSON tab to edit grammar notes.
+                    </Typography>
+                  ) : (
+                    <>
+                      {grammarPoints.length === 0 && (
+                        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                          No grammar points yet.
+                        </Typography>
+                      )}
+                      {grammarPoints.map((gp, idx) => (
+                        <Paper key={idx} variant="outlined" sx={{ p: 2, borderRadius: "12px", bgcolor: "#fafafa" }}>
+                          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                            <Typography sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, fontSize: "0.85rem", color: "#7a6e65" }}>
+                              Grammar point {idx + 1}
+                            </Typography>
+                            <IconButton size="small" onClick={() => removeGrammarPoint(idx)} sx={{ color: "#c0392b" }}>
+                              <Delete sx={{ fontSize: "1.1rem" }} />
+                            </IconButton>
+                          </Box>
+                          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                            <AdminTextField
+                              label="Pattern"
+                              value={gp.pattern}
+                              onChange={(e) => updateGrammarPoint(idx, "pattern", e.target.value)}
+                              fullWidth
+                              size="small"
+                            />
+                            <AdminTextField
+                              label="Explanation"
+                              value={gp.explanation}
+                              onChange={(e) => updateGrammarPoint(idx, "explanation", e.target.value)}
+                              fullWidth
+                              multiline
+                              rows={3}
+                              size="small"
+                            />
+                            <AdminTextField
+                              label="Example"
+                              value={gp.example}
+                              onChange={(e) => updateGrammarPoint(idx, "example", e.target.value)}
+                              fullWidth
+                              multiline
+                              rows={2}
+                              size="small"
+                            />
+                          </Box>
+                        </Paper>
+                      ))}
+                      <Button
+                        startIcon={<Add />}
+                        onClick={addGrammarPoint}
+                        sx={{ alignSelf: "flex-start", textTransform: "none", fontFamily: "Jost, sans-serif", color: "#2c1a0e" }}
+                      >
+                        Add grammar point
+                      </Button>
                     </>
                   )}
                 </Box>

@@ -1,10 +1,13 @@
 import { notFound } from 'next/navigation'
-import { getShowBySlug, getEpisodesForShow } from '../../lib/cartoons'
+import { fetchShowBySlugPublic, fetchEpisodesForShowPublic } from '@/app/actions/cartoons'
+import { isAdminUser } from '@/app/actions/vocab'
 import ShowPage from './ShowPage'
+
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: Promise<{ show: string }> }) {
   const { show } = await params
-  const showData = getShowBySlug(show)
+  const showData = await fetchShowBySlugPublic(show)
   if (!showData) return { title: 'Not Found' }
   return {
     title: `${showData.title} | Arabic Cartoons`,
@@ -14,9 +17,10 @@ export async function generateMetadata({ params }: { params: Promise<{ show: str
 
 export default async function Page({ params }: { params: Promise<{ show: string }> }) {
   const { show } = await params
-  const showData = getShowBySlug(show)
+  const showData = await fetchShowBySlugPublic(show)
   if (!showData) notFound()
 
-  const episodes = getEpisodesForShow(show)
-  return <ShowPage show={showData} episodes={episodes} />
+  const episodes = await fetchEpisodesForShowPublic(show)
+  const isAdmin = await isAdminUser()
+  return <ShowPage show={showData} episodes={episodes} isAdmin={isAdmin} />
 }

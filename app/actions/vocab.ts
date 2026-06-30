@@ -42,6 +42,46 @@ async function getAuthenticatedUserId(): Promise<string | null> {
 
 /* ── JSONB helpers ── */
 
+function snakeToCamelDefinitions(defs: unknown): unknown {
+  const arr = Array.isArray(defs) ? defs : []
+  return arr.map((d: any) => ({
+    english: d?.english ?? "",
+    directEnglish: d?.direct_english ?? d?.directEnglish ?? "",
+    simpleAr: d?.simple_ar ?? d?.simpleAr ?? "",
+    simpleArTr: d?.simple_ar_tr ?? d?.simpleArTr ?? "",
+  }))
+}
+
+function camelToSnakeDefinitions(defs: unknown): unknown {
+  const arr = Array.isArray(defs) ? defs : []
+  return arr.map((d: any) => ({
+    english: d?.english ?? "",
+    direct_english: d?.directEnglish ?? d?.direct_english ?? "",
+    simple_ar: d?.simpleAr ?? d?.simple_ar ?? "",
+    simple_ar_tr: d?.simpleArTr ?? d?.simple_ar_tr ?? "",
+  }))
+}
+
+function snakeToCamelExamples(exs: unknown): unknown {
+  const arr = Array.isArray(exs) ? exs : []
+  return arr.map((e: any) => ({
+    ar: e?.ar ?? "",
+    arDi: e?.ar_di ?? e?.arDi ?? "",
+    en: e?.en ?? "",
+    tr: e?.tr ?? "",
+  }))
+}
+
+function camelToSnakeExamples(exs: unknown): unknown {
+  const arr = Array.isArray(exs) ? exs : []
+  return arr.map((e: any) => ({
+    ar: e?.ar ?? "",
+    ar_di: e?.arDi ?? e?.ar_di ?? "",
+    en: e?.en ?? "",
+    tr: e?.tr ?? "",
+  }))
+}
+
 function parseJsonb(val: any): any {
   if (val == null) return null
   if (Array.isArray(val)) return val
@@ -371,11 +411,11 @@ export async function updateVocabWord(
   if (data.level !== undefined) payload.level = data.level
   if (data.theme !== undefined) payload.theme = data.theme
   if (data.forms !== undefined) payload.forms = data.forms
-  if (data.definitions !== undefined) payload.definitions = data.definitions
-  if (data.examples !== undefined) payload.examples = data.examples
+  if (data.definitions !== undefined) payload.definitions = camelToSnakeDefinitions(data.definitions)
+  if (data.examples !== undefined) payload.examples = camelToSnakeExamples(data.examples)
 
   const { error } = await serviceClient
-    .from('vocabulary')
+    .from('app_vocab')
     .update(payload)
     .eq('word_id', wordId)
 
@@ -395,7 +435,7 @@ export async function deleteVocabWord(wordId: number): Promise<void> {
   if (!isAdmin) throw new Error('Forbidden')
 
   const { error } = await serviceClient
-    .from('vocabulary')
+    .from('app_vocab')
     .delete()
     .eq('word_id', wordId)
 
@@ -416,13 +456,13 @@ export async function createVocabWord(
     level: data.level ?? 'A0',
     theme: data.theme ?? 'Untitled',
     forms: data.forms ?? [],
-    definitions: data.definitions ?? [],
-    examples: data.examples ?? [],
+    definitions: camelToSnakeDefinitions(data.definitions ?? []),
+    examples: camelToSnakeExamples(data.examples ?? []),
   }
   if (data.word_id !== undefined) payload.word_id = data.word_id
 
   const { data: result, error } = await serviceClient
-    .from('vocabulary')
+    .from('app_vocab')
     .insert(payload)
     .select('word_id')
     .single()
@@ -451,7 +491,7 @@ export async function fetchRawVocabWord(wordId: number): Promise<RawVocabRow | n
   if (!isAdmin) throw new Error('Forbidden')
 
   const { data, error } = await serviceClient
-    .from('vocabulary')
+    .from('app_vocab')
     .select('word_id, word_ar, word_di, word_tr, root, level, theme, forms, definitions, examples, created_at')
     .eq('word_id', wordId)
     .single()
@@ -470,8 +510,8 @@ export async function fetchRawVocabWord(wordId: number): Promise<RawVocabRow | n
     level: data.level ?? '',
     theme: data.theme ?? '',
     forms: data.forms,
-    definitions: data.definitions,
-    examples: data.examples,
+    definitions: snakeToCamelDefinitions(data.definitions),
+    examples: snakeToCamelExamples(data.examples),
     created_at: data.created_at ?? null,
   }
 }

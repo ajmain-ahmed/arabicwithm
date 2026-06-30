@@ -191,7 +191,7 @@ export default function EpisodesAdminPage() {
             "& .MuiInputLabel-root": { fontFamily: "Jost, sans-serif", fontSize: "0.85rem" },
           }}
         >
-          <InputLabel id="show-select-label">Show</InputLabel>
+          <InputLabel id="show-select-label" shrink>Show</InputLabel>
           <Select
             labelId="show-select-label"
             value={selectedShowId}

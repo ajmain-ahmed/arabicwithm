@@ -120,7 +120,7 @@ export async function fetchVocabForAdmin({
   const orderCol = validSortCols.has(sortKey) ? sortKey : "word_id"
 
   let builder = serviceClient
-    .from("vocabulary")
+    .from("app_vocab")
     .select("word_id, word_ar, word_di, word_tr, root, level, theme, definitions", {
       count: "exact",
     })
@@ -129,7 +129,7 @@ export async function fetchVocabForAdmin({
   if (query && query.trim()) {
     const q = `%${query.trim()}%`
     builder = builder.or(
-      `word_ar.ilike.${q},word_di.ilike.${q},word_tr.ilike.${q},level.ilike.${q},theme.ilike.${q},definitions::text.ilike.${q}`
+      `word_ar.ilike.${q},word_di.ilike.${q},word_tr.ilike.${q},level.ilike.${q},theme.ilike.${q}`
     )
   }
 
@@ -154,6 +154,44 @@ export async function fetchVocabForAdmin({
   return { rows, count: count ?? 0 }
 }
 
+export async function fetchAllVocabForAdmin(): Promise<AdminVocabRow[]> {
+  await guardAdmin()
+
+  const all: AdminVocabRow[] = []
+  const pageSize = 1000
+  let from = 0
+
+  while (true) {
+    const { data, error } = await serviceClient
+      .from("app_vocab")
+      .select("word_id, word_ar, word_di, word_tr, root, level, theme, definitions")
+      .order("word_id", { ascending: true })
+      .range(from, from + pageSize - 1)
+
+    if (error) {
+      console.error("[fetchAllVocabForAdmin] error:", error.message)
+      throw new Error(error.message)
+    }
+
+    const rows = (data ?? []).map((row) => ({
+      word_id: row.word_id,
+      word_ar: row.word_ar ?? "",
+      word_di: row.word_di ?? "",
+      word_tr: row.word_tr ?? "",
+      root: row.root ?? null,
+      level: row.level ?? "",
+      theme: row.theme ?? "",
+      primary_gloss: primaryGloss(row.definitions),
+    }))
+
+    all.push(...rows)
+    if (rows.length < pageSize) break
+    from += pageSize
+  }
+
+  return all
+}
+
 export async function findVocabIdByDiacritized(
   wordDi: string
 ): Promise<number | null> {
@@ -161,7 +199,7 @@ export async function findVocabIdByDiacritized(
   if (!wordDi) return null
 
   const { data, error } = await serviceClient
-    .from("vocabulary")
+    .from("app_vocab")
     .select("word_id")
     .eq("word_di", wordDi)
     .limit(1)
@@ -192,10 +230,10 @@ export async function fetchVocabMatchesForWords(
 
   const [diRes, arRes] = await Promise.all([
     keyList.length > 0
-      ? serviceClient.from("vocabulary").select(selectCols).in("word_di", keyList)
+      ? serviceClient.from("app_vocab").select(selectCols).in("word_di", keyList)
       : ({ data: [], error: null } as { data: unknown[]; error: null }),
     keyList.length > 0
-      ? serviceClient.from("vocabulary").select(selectCols).in("word_ar", keyList)
+      ? serviceClient.from("app_vocab").select(selectCols).in("word_ar", keyList)
       : ({ data: [], error: null } as { data: unknown[]; error: null }),
   ])
 
@@ -518,4 +556,164 @@ function mapEpisodeRow(row: Record<string, unknown>): EpisodeRow {
     cover: toStringOrNull(row.cover),
     episode_number: Number(row.episode_number) || 0,
   }
+}
+
+/* ── Duplicate detection ───────────────────────────────────────────── */
+
+export type DuplicateWord = {
+  word_id: number
+  word_ar: string
+  word_di: string
+  word_tr: string
+  gloss: string
+  level: string
+  theme: string
+  source: string | null
+}
+
+export type DuplicateGroup = {
+  key: string
+  words: DuplicateWord[]
+}
+
+function normalizeArabic(str: string): string {
+  return str
+    .normalize("NFKD")
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, "")
+    .replace(/[\u0621\u0623\u0625\u0626]/g, "\u0627")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+}
+
+export async function fetchVocabDuplicates(): Promise<{
+  exactAr: DuplicateGroup[]
+  exactDi: DuplicateGroup[]
+  byGloss: DuplicateGroup[]
+  byRoot: DuplicateGroup[]
+}> {
+  await guardAdmin()
+
+  const { data, error } = await serviceClient
+    .from("app_vocab")
+    .select("word_id, word_ar, word_di, word_tr, root, level, theme, source, definitions")
+
+  if (error) {
+    console.error("[fetchVocabDuplicates] error:", error.message)
+    throw new Error(error.message)
+  }
+
+  const rows = (data ?? []).map((row) => ({
+    word_id: Number(row.word_id),
+    word_ar: String(row.word_ar ?? ""),
+    word_di: String(row.word_di ?? ""),
+    word_tr: String(row.word_tr ?? ""),
+    root: row.root ? String(row.root) : null,
+    level: String(row.level ?? ""),
+    theme: String(row.theme ?? ""),
+    source: row.source ? String(row.source) : null,
+    gloss: primaryGloss(row.definitions),
+  }))
+
+  const groups = new Map<string, DuplicateWord[]>()
+  const exactArGroups: DuplicateGroup[] = []
+  const exactDiGroups: DuplicateGroup[] = []
+
+  // Exact duplicates by normalized plain Arabic
+  groups.clear()
+  for (const row of rows) {
+    const key = normalizeArabic(row.word_ar)
+    if (!key) continue
+    const list = groups.get(key) ?? []
+    list.push({
+      word_id: row.word_id,
+      word_ar: row.word_ar,
+      word_di: row.word_di,
+      word_tr: row.word_tr,
+      gloss: row.gloss,
+      level: row.level,
+      theme: row.theme,
+      source: row.source,
+    })
+    groups.set(key, list)
+  }
+  for (const [key, list] of groups) {
+    if (list.length > 1) exactArGroups.push({ key, words: list })
+  }
+
+  // Exact duplicates by diacritized Arabic (preserve diacritics and hamzas)
+  groups.clear()
+  for (const row of rows) {
+    const key = row.word_di
+      .normalize("NFC")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase()
+    if (!key) continue
+    const list = groups.get(key) ?? []
+    list.push({
+      word_id: row.word_id,
+      word_ar: row.word_ar,
+      word_di: row.word_di,
+      word_tr: row.word_tr,
+      gloss: row.gloss,
+      level: row.level,
+      theme: row.theme,
+      source: row.source,
+    })
+    groups.set(key, list)
+  }
+  for (const [key, list] of groups) {
+    if (list.length > 1) exactDiGroups.push({ key, words: list })
+  }
+
+  // Potential duplicates by primary English gloss
+  groups.clear()
+  for (const row of rows) {
+    const key = row.gloss.trim().toLowerCase()
+    if (!key || key.length < 3) continue
+    const list = groups.get(key) ?? []
+    list.push({
+      word_id: row.word_id,
+      word_ar: row.word_ar,
+      word_di: row.word_di,
+      word_tr: row.word_tr,
+      gloss: row.gloss,
+      level: row.level,
+      theme: row.theme,
+      source: row.source,
+    })
+    groups.set(key, list)
+  }
+  const byGloss: DuplicateGroup[] = []
+  for (const [key, list] of groups) {
+    if (list.length > 1) byGloss.push({ key, words: list })
+  }
+  byGloss.sort((a, b) => a.key.localeCompare(b.key))
+
+  // Potential duplicates by shared root
+  groups.clear()
+  for (const row of rows) {
+    if (!row.root) continue
+    const key = row.root.trim().toLowerCase()
+    const list = groups.get(key) ?? []
+    list.push({
+      word_id: row.word_id,
+      word_ar: row.word_ar,
+      word_di: row.word_di,
+      word_tr: row.word_tr,
+      gloss: row.gloss,
+      level: row.level,
+      theme: row.theme,
+      source: row.source,
+    })
+    groups.set(key, list)
+  }
+  const byRoot: DuplicateGroup[] = []
+  for (const [key, list] of groups) {
+    if (list.length > 1) byRoot.push({ key, words: list })
+  }
+  byRoot.sort((a, b) => a.key.localeCompare(b.key))
+
+  return { exactAr: exactArGroups, exactDi: exactDiGroups, byGloss, byRoot }
 }

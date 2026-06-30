@@ -53,7 +53,9 @@ export default function HomeHero() {
     <Box
       sx={{
         position: 'relative',
-        mt: { xs: '56px', md: '64px' },
+        // Pull the hero up into the navbar padding area so the background
+        // starts flush with the top of the viewport (under the fixed navbar).
+        mt: { xs: '-56px', md: '-64px' },
         height: { xs: 'calc(70vh - 56px)', md: 'calc(100vh - 64px)' },
         minHeight: { xs: 520, sm: 580, md: 640 },
         maxHeight: { xs: 800, md: 950 },

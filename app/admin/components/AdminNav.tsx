@@ -2,14 +2,9 @@
 
 import React from "react"
 import {
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
+  AppBar,
   Toolbar,
-  Typography,
+  Button,
   Box,
 } from "@mui/material"
 import {
@@ -17,15 +12,15 @@ import {
   SmartDisplay,
   VideoLibrary,
   Home,
+  ContentCopy,
 } from "@mui/icons-material"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
-const DRAWER_WIDTH = 260
-
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: <Home /> },
   { label: "Vocabulary", href: "/admin/vocabulary", icon: <MenuBook /> },
+  { label: "Duplicates", href: "/admin/duplicates", icon: <ContentCopy /> },
   { label: "Shows", href: "/admin/shows", icon: <SmartDisplay /> },
   { label: "Episodes", href: "/admin/episodes", icon: <VideoLibrary /> },
 ]
@@ -34,105 +29,55 @@ export default function AdminNav() {
   const pathname = usePathname()
 
   return (
-    <Drawer
-      variant="permanent"
+    <AppBar
+      position="static"
+      elevation={0}
       sx={{
-        width: DRAWER_WIDTH,
-        flexShrink: 0,
-        display: { xs: "none", md: "block" },
-        "& .MuiDrawer-paper": {
-          width: DRAWER_WIDTH,
-          boxSizing: "border-box",
-          bgcolor: "#2c1a0e",
-          color: "#f5ede0",
-          borderRight: "none",
-        },
+        bgcolor: "#fff",
+        color: "#2c1a0e",
+        borderBottom: "1px solid rgba(44,26,14,0.08)",
       }}
     >
-      <Toolbar sx={{ px: 3, pt: 2, pb: 1 }}>
-        <Typography
-          variant="h6"
-          sx={{
-            fontFamily: "'EB Garamond', serif",
-            fontWeight: 700,
-            color: "#f5ede0",
-            letterSpacing: 0.5,
-          }}
-        >
-          ArabicWithM Admin
-        </Typography>
-      </Toolbar>
-
-      <Box sx={{ px: 2, pb: 2 }}>
-        <Typography
-          variant="caption"
-          sx={{
-            fontFamily: "Jost, sans-serif",
-            color: "rgba(245,237,224,0.6)",
-            px: 2,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-          }}
-        >
-          Content
-        </Typography>
-      </Box>
-
-      <List disablePadding>
-        {navItems.map((item) => {
-          const active = pathname === item.href || pathname?.startsWith(`${item.href}/`)
-          return (
-            <ListItem key={item.href} disablePadding sx={{ px: 1.5, mb: 0.5 }}>
-              <ListItemButton
+      <Toolbar
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: { xs: 52, md: 60 },
+          py: 1,
+        }}
+      >
+        <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", justifyContent: "center", alignItems: "center" }}>
+          {navItems.map((item) => {
+            const active = pathname === item.href || pathname?.startsWith(`${item.href}/`)
+            return (
+              <Button
+                key={item.href}
                 component={Link}
                 href={item.href}
-                selected={active}
+                startIcon={item.icon}
                 sx={{
+                  color: active ? "#2c1a0e" : "rgba(44,26,14,0.75)",
+                  bgcolor: active ? "rgba(184,134,11,0.12)" : "transparent",
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  fontSize: "0.9rem",
                   borderRadius: "10px",
-                  color: "rgba(245,237,224,0.85)",
-                  "&.Mui-selected": {
-                    bgcolor: "rgba(184,134,11,0.25)",
-                    color: "#f5ede0",
-                  },
+                  px: 2,
+                  py: 0.75,
+                  mt: 1,
                   "&:hover": {
-                    bgcolor: "rgba(245,237,224,0.08)",
+                    bgcolor: active ? "rgba(184,134,11,0.2)" : "rgba(44,26,14,0.06)",
                   },
                 }}
               >
-                <ListItemIcon sx={{ color: "inherit", minWidth: 38 }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.label}
-                  slotProps={{
-                    primary: {
-                      sx: {
-                        fontFamily: "Jost, sans-serif",
-                        fontWeight: 600,
-                        fontSize: "0.95rem",
-                      },
-                    },
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
-          )
-        })}
-      </List>
-
-      <Box sx={{ mt: "auto", p: 3 }}>
-        <Typography
-          variant="caption"
-          sx={{
-            fontFamily: "Jost, sans-serif",
-            color: "rgba(245,237,224,0.5)",
-          }}
-        >
-          <Link href="/" style={{ color: "inherit" }}>
-            ← Back to site
-          </Link>
-        </Typography>
-      </Box>
-    </Drawer>
+                {item.label}
+              </Button>
+            )
+          })}
+        </Box>
+      </Toolbar>
+    </AppBar>
   )
 }

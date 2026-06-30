@@ -54,7 +54,6 @@ export default function FlashcardsLandingPage({ levels }: { levels: LevelMeta[] 
         sx={{
           minHeight: '100vh',
           background: 'var(--cream)',
-          pt: { xs: '56px', md: '64px' },
         }}
       >
         {/* ── Page Header ── */}

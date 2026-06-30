@@ -6,7 +6,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Button,
   IconButton,
   Box,
@@ -30,6 +29,78 @@ function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : "Something went wrong"
 }
 
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "12px 14px",
+  fontSize: "1.1rem",
+  fontFamily: "Jost, sans-serif",
+  color: "#2c1a0e",
+  backgroundColor: "#fff",
+  border: "1px solid rgba(122,110,101,0.25)",
+  borderRadius: "8px",
+  outline: "none",
+  transition: "border-color 0.15s, box-shadow 0.15s",
+  boxSizing: "border-box",
+}
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontFamily: "Jost, sans-serif",
+  fontSize: "0.85rem",
+  fontWeight: 600,
+  color: "#7a6e65",
+  textTransform: "uppercase",
+  letterSpacing: "0.06em",
+  marginBottom: "8px",
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  disabled,
+  rtl,
+  textarea,
+  type = "text",
+}: {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  disabled?: boolean
+  rtl?: boolean
+  textarea?: boolean
+  type?: string
+}) {
+  const props = {
+    value,
+    disabled,
+    type: textarea ? undefined : type,
+    style: {
+      ...inputStyle,
+      direction: rtl ? "rtl" : "ltr",
+      minHeight: textarea ? "420px" : undefined,
+      resize: textarea ? "vertical" : undefined,
+      fontFamily: textarea ? "'Fira Code', 'Courier New', monospace" : inputStyle.fontFamily,
+      fontSize: textarea ? "0.95rem" : inputStyle.fontSize,
+    } as React.CSSProperties,
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(e.target.value),
+    onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      e.currentTarget.style.borderColor = "#b8860b"
+      e.currentTarget.style.boxShadow = "0 0 0 3px rgba(184,134,11,0.12)"
+    },
+    onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      e.currentTarget.style.borderColor = "rgba(122,110,101,0.25)"
+      e.currentTarget.style.boxShadow = "none"
+    },
+  }
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
+      <label style={labelStyle}>{label}</label>
+      {textarea ? <textarea {...props} /> : <input {...props} />}
+    </Box>
+  )
+}
+
 type DefinitionItem = {
   english: string
   simpleAr?: string
@@ -51,18 +122,6 @@ interface VocabEditDialogProps {
   initialData?: Partial<RawVocabRow>
   onSaved?: () => void
   onDeleted?: () => void
-}
-
-const fieldSx = {
-  "& .MuiInputBase-root": {
-    fontFamily: "Jost, sans-serif",
-    fontSize: "0.9rem",
-    borderRadius: "8px",
-  },
-  "& .MuiInputLabel-root": {
-    fontFamily: "Jost, sans-serif",
-    fontSize: "0.85rem",
-  },
 }
 
 export default function VocabEditDialog({
@@ -224,7 +283,7 @@ export default function VocabEditDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       slotProps={{
         paper: {
@@ -239,12 +298,12 @@ export default function VocabEditDialog({
       <DialogTitle
         sx={{
           fontFamily: "'EB Garamond', serif",
-          fontSize: "1.5rem",
+          fontSize: "1.875rem",
           fontWeight: 700,
           color: "#2c1a0e",
-          pb: 2,
-          pt: 2.5,
-          px: 2.5,
+          pb: 2.5,
+          pt: 3,
+          px: 3,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -256,18 +315,18 @@ export default function VocabEditDialog({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ px: 2.5, pt: 1, pb: 2 }}>
+      <DialogContent sx={{ px: 3, pt: 1.5, pb: 2.5 }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
             <CircularProgress size={32} sx={{ color: "#b8860b" }} />
           </Box>
         ) : (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
             {error && (
               <Typography
                 sx={{
                   fontFamily: "Jost, sans-serif",
-                  fontSize: "0.85rem",
+                  fontSize: "0.95rem",
                   color: "#c0392b",
                   background: "rgba(192,57,43,0.06)",
                   border: "1px solid rgba(192,57,43,0.2)",
@@ -280,17 +339,17 @@ export default function VocabEditDialog({
               </Typography>
             )}
 
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-              <TextField label="Arabic (plain)" value={wordAr} onChange={(e) => setWordAr(e.target.value)} fullWidth size="small" sx={fieldSx} />
-              <TextField label="Arabic (diacritic)" value={wordDi} onChange={(e) => setWordDi(e.target.value)} fullWidth size="small" sx={fieldSx} />
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
+              <Field label="Arabic (plain)" value={wordAr} onChange={setWordAr} rtl />
+              <Field label="Arabic (diacritic)" value={wordDi} onChange={setWordDi} rtl />
             </Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-              <TextField label="Transliteration" value={wordTr} onChange={(e) => setWordTr(e.target.value)} fullWidth size="small" sx={fieldSx} />
-              <TextField label="Root" value={root} onChange={(e) => setRoot(e.target.value)} fullWidth size="small" sx={fieldSx} />
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
+              <Field label="Transliteration" value={wordTr} onChange={setWordTr} />
+              <Field label="Root" value={root} onChange={setRoot} rtl />
             </Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-              <TextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" sx={fieldSx} />
-              <TextField label="Theme" value={theme} onChange={(e) => setTheme(e.target.value)} fullWidth size="small" sx={fieldSx} />
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
+              <Field label="Level" value={level} onChange={setLevel} />
+              <Field label="Theme" value={theme} onChange={setTheme} />
             </Box>
 
             <Tabs
@@ -300,35 +359,35 @@ export default function VocabEditDialog({
               indicatorColor="primary"
               sx={{ mt: 1 }}
             >
-              <Tab label="Definitions" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600 }} />
-              <Tab label="Examples" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600 }} />
-              <Tab label="Forms (JSON)" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600 }} />
+              <Tab label="Definitions" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "1rem" }} />
+              <Tab label="Examples" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "1rem" }} />
+              <Tab label="Forms (JSON)" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "1rem" }} />
             </Tabs>
 
             {tab === 0 && (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
                 {definitions.map((def, idx) => (
-                  <Paper key={idx} variant="outlined" sx={{ p: 2, borderRadius: "12px", bgcolor: "#fafafa" }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                      <Typography sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, fontSize: "0.85rem", color: "#7a6e65" }}>
+                  <Paper key={idx} variant="outlined" sx={{ p: 2.5, borderRadius: "12px", bgcolor: "#fafafa" }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+                      <Typography sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, fontSize: "1rem", color: "#7a6e65" }}>
                         Definition {idx + 1}
                       </Typography>
                       <IconButton size="small" onClick={() => removeDefinition(idx)} sx={{ color: "#c0392b" }}>
                         <Delete sx={{ fontSize: "1.1rem" }} />
                       </IconButton>
                     </Box>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                      <TextField label="English" value={def.english} onChange={(e) => updateDefinition(idx, "english", e.target.value)} fullWidth size="small" sx={fieldSx} />
-                      <TextField label="Direct English (optional)" value={def.directEnglish ?? ""} onChange={(e) => updateDefinition(idx, "directEnglish", e.target.value)} fullWidth size="small" sx={fieldSx} />
-                      <TextField label="Simple Arabic (optional)" value={def.simpleAr ?? ""} onChange={(e) => updateDefinition(idx, "simpleAr", e.target.value)} fullWidth size="small" sx={fieldSx} />
-                      <TextField label="Simple Arabic Transliteration (optional)" value={def.simpleArTr ?? ""} onChange={(e) => updateDefinition(idx, "simpleArTr", e.target.value)} fullWidth size="small" sx={fieldSx} />
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <Field label="English" value={def.english} onChange={(v) => updateDefinition(idx, "english", v)} />
+                      <Field label="Direct English (optional)" value={def.directEnglish ?? ""} onChange={(v) => updateDefinition(idx, "directEnglish", v)} />
+                      <Field label="Simple Arabic (optional)" value={def.simpleAr ?? ""} onChange={(v) => updateDefinition(idx, "simpleAr", v)} rtl />
+                      <Field label="Simple Arabic Transliteration (optional)" value={def.simpleArTr ?? ""} onChange={(v) => updateDefinition(idx, "simpleArTr", v)} />
                     </Box>
                   </Paper>
                 ))}
                 <Button
                   startIcon={<Add />}
                   onClick={addDefinition}
-                  sx={{ alignSelf: "flex-start", textTransform: "none", fontFamily: "Jost, sans-serif", color: "#2c1a0e" }}
+                  sx={{ alignSelf: "flex-start", textTransform: "none", fontFamily: "Jost, sans-serif", color: "#2c1a0e", fontSize: "1rem" }}
                 >
                   Add definition
                 </Button>
@@ -336,29 +395,29 @@ export default function VocabEditDialog({
             )}
 
             {tab === 1 && (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
                 {examples.map((ex, idx) => (
-                  <Paper key={idx} variant="outlined" sx={{ p: 2, borderRadius: "12px", bgcolor: "#fafafa" }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                      <Typography sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, fontSize: "0.85rem", color: "#7a6e65" }}>
+                  <Paper key={idx} variant="outlined" sx={{ p: 2.5, borderRadius: "12px", bgcolor: "#fafafa" }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+                      <Typography sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, fontSize: "1rem", color: "#7a6e65" }}>
                         Example {idx + 1}
                       </Typography>
                       <IconButton size="small" onClick={() => removeExample(idx)} sx={{ color: "#c0392b" }}>
                         <Delete sx={{ fontSize: "1.1rem" }} />
                       </IconButton>
                     </Box>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                      <TextField label="Arabic" value={ex.ar} onChange={(e) => updateExample(idx, "ar", e.target.value)} fullWidth size="small" sx={fieldSx} />
-                      <TextField label="Arabic Diacritic (optional)" value={ex.arDi ?? ""} onChange={(e) => updateExample(idx, "arDi", e.target.value)} fullWidth size="small" sx={fieldSx} />
-                      <TextField label="English" value={ex.en} onChange={(e) => updateExample(idx, "en", e.target.value)} fullWidth size="small" sx={fieldSx} />
-                      <TextField label="Transliteration (optional)" value={ex.tr ?? ""} onChange={(e) => updateExample(idx, "tr", e.target.value)} fullWidth size="small" sx={fieldSx} />
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <Field label="Arabic" value={ex.ar} onChange={(v) => updateExample(idx, "ar", v)} rtl />
+                      <Field label="Arabic Diacritic (optional)" value={ex.arDi ?? ""} onChange={(v) => updateExample(idx, "arDi", v)} rtl />
+                      <Field label="English" value={ex.en} onChange={(v) => updateExample(idx, "en", v)} />
+                      <Field label="Transliteration (optional)" value={ex.tr ?? ""} onChange={(v) => updateExample(idx, "tr", v)} />
                     </Box>
                   </Paper>
                 ))}
                 <Button
                   startIcon={<Add />}
                   onClick={addExample}
-                  sx={{ alignSelf: "flex-start", textTransform: "none", fontFamily: "Jost, sans-serif", color: "#2c1a0e" }}
+                  sx={{ alignSelf: "flex-start", textTransform: "none", fontFamily: "Jost, sans-serif", color: "#2c1a0e", fontSize: "1rem" }}
                 >
                   Add example
                 </Button>
@@ -366,22 +425,13 @@ export default function VocabEditDialog({
             )}
 
             {tab === 2 && (
-              <TextField
-                label="Forms JSON"
-                value={formsJson}
-                onChange={(e) => setFormsJson(e.target.value)}
-                fullWidth
-                multiline
-                rows={12}
-                size="small"
-                sx={fieldSx}
-              />
+              <Field label="Forms JSON" value={formsJson} onChange={setFormsJson} textarea />
             )}
           </Box>
         )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5, flexDirection: { xs: "column", sm: "row" }, gap: 1 }}>
+      <DialogActions sx={{ px: 3, pb: 3, pt: 1, flexDirection: { xs: "column", sm: "row" }, gap: 1.5 }}>
         {!isNew && (
           <Button
             variant="outlined"
@@ -398,7 +448,7 @@ export default function VocabEditDialog({
           variant="outlined"
           onClick={onClose}
           disabled={saving}
-          sx={{ fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", borderColor: "rgba(122,110,101,0.3)", color: "#7a6e65", width: { xs: "100%", sm: "auto" } }}
+          sx={{ fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "1rem", textTransform: "none", borderRadius: "10px", borderColor: "rgba(122,110,101,0.3)", color: "#7a6e65", width: { xs: "100%", sm: "auto" } }}
         >
           Cancel
         </Button>
@@ -406,8 +456,8 @@ export default function VocabEditDialog({
           variant="contained"
           onClick={handleSave}
           disabled={saving || loading}
-          startIcon={<Save sx={{ fontSize: "1rem" }} />}
-          sx={{ background: "#2c1a0e", color: "#f5ede0", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", width: { xs: "100%", sm: "auto" }, "&:hover": { background: "#1a0f08" } }}
+          startIcon={<Save sx={{ fontSize: "1.1rem" }} />}
+          sx={{ background: "#2c1a0e", color: "#f5ede0", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "1rem", textTransform: "none", borderRadius: "10px", width: { xs: "100%", sm: "auto" }, "&:hover": { background: "#1a0f08" } }}
         >
           {saving ? "Saving…" : "Save"}
         </Button>

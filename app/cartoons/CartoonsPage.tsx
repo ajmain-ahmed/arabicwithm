@@ -15,6 +15,8 @@ import { useRouter } from 'next/navigation'
 import { ShowMeta } from '../lib/cartoons'
 import { PageBanner, HowItWorksSection, PlacementTestCTA } from '@/app/components/page-layout'
 import { FilterSidebar, ContentCard, ComingSoonSection } from '@/app/components/content-grid'
+import ShowEditDialog from './components/ShowEditDialog'
+import { deleteShow } from '@/app/actions/admin'
 
 /* ── MUI Icons ── */
 import {
@@ -22,12 +24,12 @@ import {
   Subtitles,
   MenuBook,
   School,
-  Tv,
-  TouchApp,
-  AutoStories,
   Close,
   Tune,
   NavigateNext,
+  Edit,
+  Delete,
+  Add,
 } from '@mui/icons-material'
 
 /* ── Palette ── */
@@ -59,14 +61,31 @@ const COMING_SOON = [
 export default function CartoonsPage({
   shows,
   episodesMap,
+  isAdmin,
 }: {
   shows: ShowMeta[]
   episodesMap: Record<string, string[]>
+  isAdmin?: boolean
 }) {
   const [activeCategory, setActiveCategory] = useState('All Shows')
   const [activeLevel, setActiveLevel] = useState('')
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingShow, setEditingShow] = useState<ShowMeta | undefined>(undefined)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const router = useRouter()
+
+  const handleDeleteShow = async (id: string) => {
+    if (!isAdmin) return
+    if (!confirm('Are you sure you want to delete this show? This cannot be undone.')) return
+    setDeletingId(id)
+    try {
+      await deleteShow(id)
+      router.refresh()
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const filteredShows = shows.filter((s) => {
     const catMatch = activeCategory === 'All Shows' || s.category === activeCategory
@@ -94,7 +113,6 @@ export default function CartoonsPage({
       sx={{
         minHeight: '100vh',
         background: WARM_WHITE,
-        pt: { xs: '56px', md: '64px' },
         pb: { xs: 0, md: 8 },
       }}
     >
@@ -261,6 +279,33 @@ export default function CartoonsPage({
               </Typography>
             </Box>
 
+            {isAdmin && (
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+                <Button
+                  startIcon={<Add />}
+                  onClick={() => { setEditingShow(undefined); setDialogOpen(true); }}
+                  sx={{
+                    textTransform: 'none',
+                    fontFamily: '"Jost", system-ui, sans-serif',
+                    color: BARK,
+                    border: '1px solid rgba(44,26,14,0.15)',
+                    borderRadius: '9999px',
+                    px: 2.5,
+                    py: 0.75,
+                  }}
+                >
+                  Add show
+                </Button>
+              </Box>
+            )}
+
+            <ShowEditDialog
+              open={dialogOpen}
+              show={editingShow}
+              onClose={() => setDialogOpen(false)}
+              onSaved={() => { setDialogOpen(false); router.refresh(); }}
+            />
+
             {filteredShows.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 8 }}>
                 <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 20, color: BARK, mb: 1 }}>
@@ -288,28 +333,70 @@ export default function CartoonsPage({
               <Grid container spacing={2}>
                 {filteredShows.map((show) => (
                   <Grid size={{ xs: 12, sm: 6, xl: 3 }} key={show.slug}>
-                    <ContentCard
-                      slug={show.slug}
-                      hrefPrefix="/cartoons"
-                      cover={show.cover}
-                      title={show.title}
-                      titleAr={show.titleAr}
-                      description={show.description}
-                      category={show.category}
-                      genre={show.genre}
-                      level={show.level}
-                      overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
-                      metaItems={[
-                        {
-                          icon: <MenuBook sx={{ fontSize: 14, color: '#9e8a7a' }} />,
-                          label: `${show.vocabCount ?? 0} words`,
-                        },
-                        {
-                          icon: <School sx={{ fontSize: 14, color: '#9e8a7a' }} />,
-                          label: `${show.episodeCount} ${show.episodeCount === 1 ? 'episode' : 'episodes'}`,
-                        },
-                      ]}
-                    />
+                    <Box sx={{ position: 'relative' }}>
+                      {isAdmin && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 8,
+                            left: 8,
+                            zIndex: 2,
+                            display: 'flex',
+                            gap: 0.5,
+                          }}
+                        >
+                          <IconButton
+                            size="small"
+                            disabled={deletingId === show.id}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setEditingShow(show)
+                              setDialogOpen(true)
+                            }}
+                            sx={{
+                              bgcolor: 'rgba(255,255,255,0.9)',
+                              color: GOLD,
+                              '&:hover': { bgcolor: 'rgba(255,255,255,1)' },
+                            }}
+                          >
+                            <Edit sx={{ fontSize: '1.1rem' }} />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            disabled={deletingId === show.id}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDeleteShow(show.id)
+                            }}
+                            sx={{
+                              bgcolor: 'rgba(255,255,255,0.9)',
+                              color: '#c0392b',
+                              '&:hover': { bgcolor: 'rgba(255,255,255,1)' },
+                            }}
+                          >
+                            <Delete sx={{ fontSize: '1.1rem' }} />
+                          </IconButton>
+                        </Box>
+                      )}
+                      <ContentCard
+                        slug={show.slug}
+                        hrefPrefix="/cartoons"
+                        cover={show.cover}
+                        title={show.title}
+                        titleAr={show.titleAr}
+                        description={show.description}
+                        category={show.category}
+                        genre={show.genre}
+                        level={show.level}
+                        overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
+                        metaItems={[
+                          {
+                            icon: <School sx={{ fontSize: 14, color: '#9e8a7a' }} />,
+                            label: `${show.episodeCount} ${show.episodeCount === 1 ? 'episode' : 'episodes'}`,
+                          },
+                        ]}
+                      />
+                    </Box>
                   </Grid>
                 ))}
               </Grid>
@@ -318,32 +405,6 @@ export default function CartoonsPage({
         </Box>
 
         </Box>
-
-        <HowItWorksSection
-          steps={[
-            {
-              icon: <Tv sx={{ fontSize: 22, color: '#b8860b' }} />,
-              title: 'Watch with Subtitles',
-              desc: 'Dual Arabic & English subtitles while you watch',
-            },
-            {
-              icon: <TouchApp sx={{ fontSize: 22, color: '#b8860b' }} />,
-              title: 'Click Any Word',
-              desc: 'Instant definitions, transliteration & audio',
-            },
-            {
-              icon: <AutoStories sx={{ fontSize: 22, color: '#b8860b' }} />,
-              title: 'Review & Learn',
-              desc: 'Save words to your personal vocabulary deck',
-            },
-          ]}
-        />
-
-        <PlacementTestCTA
-          heading="Not Sure Where to Start?"
-          description="Take a quick placement test to find shows matched to your Arabic level."
-          ctaLabel="Take Placement Test"
-        />
 
         <ComingSoonSection
           label="Coming Soon"

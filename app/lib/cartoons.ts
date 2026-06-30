@@ -8,6 +8,7 @@ import { stripDiacritics } from './arabic'
 const CONTENT_DIR = path.join(process.cwd(), 'content/cartoons')
 
 export interface ShowMeta {
+  id: string
   slug: string
   title: string
   titleAr?: string
@@ -23,6 +24,7 @@ export interface ShowMeta {
 }
 
 export interface EpisodeMeta {
+  id: string
   slug: string
   title: string
   episode: number
@@ -35,6 +37,7 @@ export interface EpisodeMeta {
 
 /* ── New inline word entry (parsed from markdown tables) ── */
 export interface CartoonWordEntry {
+  db?: string           // optional vocab lookup key
   arabic: string        // diacritized form from markdown
   plain: string         // stripped diacritics
   transliteration: string
@@ -68,7 +71,9 @@ export interface GrammarPoint {
 }
 
 export interface EpisodeFull extends EpisodeMeta {
+  id: string
   show: string
+  show_id: string
   scriptBlocks: ScriptBlock[]
   vocabList: VocabListItem[]
   grammarPoints: GrammarPoint[]
@@ -110,6 +115,7 @@ export function getAllShows(): ShowMeta[] {
       const episodes = getEpisodesForShow(slug)
 
       return {
+        id: slug,
         slug,
         ...meta,
         episodeCount: episodes.length,
@@ -135,6 +141,7 @@ export function getEpisodesForShow(show: string): EpisodeMeta[] {
       const { data } = matter(raw)
 
       return {
+        id: `${show}/${slug}`,
         slug,
         show,
         title: data.title ?? slug,
@@ -220,7 +227,7 @@ export function getEpisode(show: string, episode: string): EpisodeFull | null {
 
           let arabicDiacritic = ''
           let arabicPlain = ''
-          let english = ''
+          const english = ''
           const words: CartoonWordEntry[] = []
           const notes: string[] = []
 
@@ -370,8 +377,10 @@ export function getEpisode(show: string, episode: string): EpisodeFull | null {
   }
 
   return {
+    id: `${show}/${episode}`,
     slug: episode,
     show,
+    show_id: show,
     title: data.title ?? episode,
     youtubeId: data.youtubeId ?? '',
     youtubeShort: data.youtubeShort ?? false,

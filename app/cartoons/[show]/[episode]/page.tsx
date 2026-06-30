@@ -1,6 +1,11 @@
 // app/cartoons/[show]/[episode]/page.tsx
 import { notFound } from 'next/navigation'
-import { getEpisode, getShowBySlug } from '@/app/lib/cartoons';
+import {
+  fetchEpisodeForPublic,
+  fetchShowBySlugPublic,
+  fetchShowsForEpisodeEdit,
+} from '@/app/actions/cartoons'
+import { isAdminUser } from '@/app/actions/vocab'
 import EpisodePage from './EpisodePage'
 
 export const dynamic = 'force-dynamic'
@@ -11,7 +16,7 @@ export async function generateMetadata({
   params: Promise<{ show: string; episode: string }>
 }) {
   const { show, episode } = await params
-  const ep = getEpisode(show, episode)
+  const ep = await fetchEpisodeForPublic(show, episode)
   if (!ep) return { title: 'Not Found' }
   return {
     title: `${ep.title} | ArabicWithM`,
@@ -26,11 +31,14 @@ export default async function Page({
 }) {
   const { show, episode } = await params
 
-  const ep = getEpisode(show, episode)
+  const ep = await fetchEpisodeForPublic(show, episode)
   if (!ep) notFound()
 
-  const showData = getShowBySlug(show)
+  const showData = await fetchShowBySlugPublic(show)
   const showTitle = showData?.title ?? show
 
-  return <EpisodePage episode={ep} showTitle={showTitle} />
+  const isAdmin = await isAdminUser()
+  const allShows = isAdmin ? await fetchShowsForEpisodeEdit() : []
+
+  return <EpisodePage episode={ep} showTitle={showTitle} isAdmin={isAdmin} allShows={allShows} />
 }

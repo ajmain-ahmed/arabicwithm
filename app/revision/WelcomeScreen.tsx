@@ -8,12 +8,12 @@ import { useRouter } from 'next/navigation'
 import CustomSessionConfig from './CustomSessionConfig'
 import { useRevisionStore } from '@/store/revisionStore'
 
-import { PageBanner, HowItWorksSection, PlacementTestCTA } from '@/app/components/page-layout'
+import { PageBanner } from '@/app/components/page-layout'
 import type { RevisionCard } from '@/app/actions/revision'
 import type { ModeConfig } from './types'
 
 /* ── MUI Icons ── */
-import { School, MenuBook, TrendingUp, LibraryBooks, EventRepeat, NavigateNext } from '@mui/icons-material'
+import { School, MenuBook, TrendingUp, NavigateNext } from '@mui/icons-material'
 
 const PAGE_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,700;1,700&family=Jost:wght@300;400;500;600;700&display=swap');
@@ -75,7 +75,7 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
   return (
     <>
       <style>{PAGE_CSS}</style>
-      <Box component="main" sx={{ minHeight: '100vh', background: '#f5ede0', pt: { xs: '56px', md: '64px' }, pb: { xs: 0, md: 8 }, display: 'flex', flexDirection: 'column', gap: { xs: 3, md: 4 } }}>
+      <Box component="main" sx={{ minHeight: '100vh', background: '#f5ede0', pb: { xs: 0, md: 8 }, display: 'flex', flexDirection: 'column', gap: { xs: 3, md: 4 } }}>
         <PageBanner
           title="House of Cards"
           titleAr="بَيْتُ الْكَلِمَات"
@@ -133,30 +133,6 @@ export default function WelcomeScreen({ onStartDaily, onStartCustom }: WelcomeSc
             </Typography>
           </Breadcrumbs>
 
-          <HowItWorksSection
-            steps={[
-              {
-                icon: <LibraryBooks sx={{ fontSize: 22, color: '#b8860b' }} />,
-                title: 'Organise Your Words',
-                desc: 'Sort vocabulary into New, Learning, and Review buckets. Track what you know and what needs work.',
-              },
-              {
-                icon: <EventRepeat sx={{ fontSize: 22, color: '#b8860b' }} />,
-                title: 'Review Daily with SM-2',
-                desc: 'Our spaced-repetition algorithm serves the right cards at the right time so you never forget.',
-              },
-              {
-                icon: <School sx={{ fontSize: 22, color: '#b8860b' }} />,
-                title: 'Build Lasting Fluency',
-                desc: 'Solidify your Arabic vocabulary session by session, from first words to native-level mastery.',
-              },
-            ]}
-          />
-          <PlacementTestCTA
-            heading="Not Sure Where to Start?"
-            description="Take a quick placement test to find shows matched to your Arabic level."
-            ctaLabel="Take Placement Test"
-          />
         </Container>
       </Box>
 

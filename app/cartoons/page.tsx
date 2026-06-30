@@ -1,24 +1,27 @@
 // app/cartoons/page.tsx
-// This is a Server Component — no 'use client' needed.
-// It reads the filesystem and passes data to the client shell.
+// Server Component — fetches cartoon shows and episode slugs from Supabase.
 
-import { getAllShows, getEpisodesForShow } from '../lib/cartoons'
+import { fetchShowsForPublic, fetchEpisodesForShowPublic } from '@/app/actions/cartoons'
+import { isAdminUser } from '@/app/actions/vocab'
 import CartoonsPage from './CartoonsPage'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata = {
   title: 'Arabic Cartoons | ArabicWithM',
   description: 'Watch your favourite cartoons subtitled in Arabic with CEFR-graded worksheets and quizzes.',
 }
 
-export default function Page() {
-  const shows = getAllShows()
+export default async function Page() {
+  const shows = await fetchShowsForPublic()
 
   // Build a map of show slug → episode slugs for random navigation
   const episodesMap: Record<string, string[]> = {}
   for (const show of shows) {
-    const episodes = getEpisodesForShow(show.slug)
+    const episodes = await fetchEpisodesForShowPublic(show.slug)
     episodesMap[show.slug] = episodes.map((ep) => ep.slug)
   }
 
-  return <CartoonsPage shows={shows} episodesMap={episodesMap} />
+  const isAdmin = await isAdminUser()
+  return <CartoonsPage shows={shows} episodesMap={episodesMap} isAdmin={isAdmin} />
 }

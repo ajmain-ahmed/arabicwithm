@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import {
   Box,
   Typography,
@@ -17,7 +17,8 @@ import {
   Pagination,
 } from "@mui/material"
 import { Edit, Add } from "@mui/icons-material"
-import { fetchVocabForAdmin, type AdminVocabRow } from "@/app/actions/admin"
+import { fetchAllVocabForAdmin, type AdminVocabRow } from "@/app/actions/admin"
+import { stripDiacritics, normalizeTransliteration } from "@/app/lib/arabic"
 import SearchField from "../components/SearchField"
 import VocabEditDialog from "../components/VocabEditDialog"
 
@@ -39,12 +40,10 @@ const SORTABLE_COLUMNS: SortKey[] = [
 ]
 
 export default function VocabularyAdminPage() {
-  const [rows, setRows] = useState<AdminVocabRow[]>([])
-  const [count, setCount] = useState(0)
+  const [allRows, setAllRows] = useState<AdminVocabRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState("")
-  const [debouncedQuery, setDebouncedQuery] = useState("")
   const [page, setPage] = useState(1)
   const [sortKey, setSortKey] = useState<SortKey>("word_id")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
@@ -55,15 +54,8 @@ export default function VocabularyAdminPage() {
     setLoading(true)
     setError(null)
     try {
-      const result = await fetchVocabForAdmin({
-        query: debouncedQuery,
-        page,
-        pageSize: PAGE_SIZE,
-        sortKey: SORTABLE_COLUMNS.includes(sortKey) ? sortKey : "word_id",
-        sortDir,
-      })
-      setRows(result.rows)
-      setCount(result.count)
+      const rows = await fetchAllVocabForAdmin()
+      setAllRows(rows)
     } catch (e: unknown) {
       setError(errorMessage(e) ?? "Failed to load vocabulary")
     } finally {
@@ -72,20 +64,48 @@ export default function VocabularyAdminPage() {
   }
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(query.trim())
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [query])
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     setPage(1)
   }, [query])
 
-  useEffect(() => {
-    load()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery, page, sortKey, sortDir])
+  const normalizedQuery = query.trim().toLowerCase()
+  const normalizedQueryNoArabicDiacritics = stripDiacritics(normalizedQuery).toLowerCase()
+  const normalizedQueryTranslit = normalizeTransliteration(query)
+
+  const filteredRows = useMemo(() => {
+    if (!normalizedQuery) return allRows
+    return allRows.filter((row) => {
+      const arabicMatch =
+        stripDiacritics(row.word_ar).toLowerCase().includes(normalizedQueryNoArabicDiacritics) ||
+        stripDiacritics(row.word_di).toLowerCase().includes(normalizedQueryNoArabicDiacritics)
+      const translitMatch =
+        normalizeTransliteration(row.word_tr).includes(normalizedQueryTranslit)
+      const metaMatch =
+        row.level.toLowerCase().includes(normalizedQuery) ||
+        row.theme.toLowerCase().includes(normalizedQuery) ||
+        row.primary_gloss.toLowerCase().includes(normalizedQuery)
+      return arabicMatch || translitMatch || metaMatch
+    })
+  }, [allRows, normalizedQuery, normalizedQueryNoArabicDiacritics, normalizedQueryTranslit])
+
+  const sortedRows = useMemo(() => {
+    if (!SORTABLE_COLUMNS.includes(sortKey)) return filteredRows
+    return [...filteredRows].sort((a, b) => {
+      const aVal = a[sortKey] ?? ""
+      const bVal = b[sortKey] ?? ""
+      if (aVal < bVal) return sortDir === "asc" ? -1 : 1
+      if (aVal > bVal) return sortDir === "asc" ? 1 : -1
+      return 0
+    })
+  }, [filteredRows, sortKey, sortDir])
+
+  const pageCount = Math.ceil(sortedRows.length / PAGE_SIZE)
+  const rows = sortedRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const count = sortedRows.length
 
   const handleSort = (key: SortKey) => {
     if (!SORTABLE_COLUMNS.includes(key)) return
@@ -112,8 +132,6 @@ export default function VocabularyAdminPage() {
     direction: sortDir as "asc" | "desc",
     onClick: () => handleSort(key),
   })
-
-  const pageCount = Math.ceil(count / PAGE_SIZE)
 
   return (
     <Box>

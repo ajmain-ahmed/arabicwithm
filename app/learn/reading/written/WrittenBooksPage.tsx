@@ -18,14 +18,13 @@ import {
   ContentCard,
   ComingSoonSection,
 } from '@/app/components/content-grid'
-import { PageBanner, HowItWorksSection, PlacementTestCTA } from '@/app/components/page-layout'
+import { PageBanner } from '@/app/components/page-layout'
 
 /* ── MUI Icons ── */
 import {
   PlayArrow,
   MenuBook,
   School,
-  TouchApp,
   AutoStories,
   FormatListBulleted,
   Translate,
@@ -118,7 +117,6 @@ export default function WrittenBooksPage({
       sx={{
         minHeight: '100vh',
         background: WARM_WHITE,
-        pt: { xs: '56px', md: '64px' },
         pb: { xs: 0, md: 8 },
       }}
     >
@@ -353,32 +351,6 @@ export default function WrittenBooksPage({
             </Box>
           </Box>
         </Box>
-
-        <HowItWorksSection
-            steps={[
-              {
-                icon: <MenuBook sx={{ fontSize: 22, color: '#b8860b' }} />,
-                title: 'Read with Annotations',
-                desc: 'Every word is clickable — see definitions, transliteration, and grammar notes instantly',
-              },
-              {
-                icon: <TouchApp sx={{ fontSize: 22, color: '#b8860b' }} />,
-                title: 'Click Any Word',
-                desc: 'Instant definitions, transliteration & audio pronunciation',
-              },
-              {
-                icon: <AutoStories sx={{ fontSize: 22, color: '#b8860b' }} />,
-                title: 'Review & Learn',
-                desc: 'Save words to your personal vocabulary deck',
-              },
-            ]}
-          />
-
-        <PlacementTestCTA
-          heading="Not Sure Where to Start?"
-          description="Take a quick placement test to find books matched to your Arabic level."
-          ctaLabel="Take Placement Test"
-        />
 
         <ComingSoonSection
           label="Coming Soon"
