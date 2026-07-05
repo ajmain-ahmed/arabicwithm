@@ -231,7 +231,7 @@ export default function ConjugationsPage() {
 
           <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
             <Chip
-              label={`${candidates.length} new verbs`}
+              label={`${candidates.length} verb${candidates.length === 1 ? "" : "s"} without conjugations`}
               sx={{
                 bgcolor: "rgba(184,134,11,0.12)",
                 color: "#2c1a0e",
@@ -243,7 +243,7 @@ export default function ConjugationsPage() {
               }}
             />
             <Chip
-              label={`${existingCount} already have conjugations`}
+              label={`${existingCount} verb${existingCount === 1 ? "" : "s"} already conjugated`}
               sx={{
                 bgcolor: "rgba(44,26,14,0.08)",
                 color: "#2c1a0e",
@@ -257,8 +257,11 @@ export default function ConjugationsPage() {
           </Box>
 
           <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 3, fontSize: "1.1rem" }}>
-            We found {candidates.length} verb lemma{`s`} that do not yet have conjugations in{" "}
-            <strong>verb_conjugations</strong>. Click below to generate them via the conjugation API.
+            There are {candidates.length + existingCount} verb lemma{`s`} in total.
+            {candidates.length > 0
+              ? ` The ${candidates.length} listed below are not yet in ${" "}
+                <strong>verb_conjugations</strong> and will be generated.`
+              : " All verb lemmas already have conjugations."}
           </Typography>
 
           <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
@@ -280,7 +283,11 @@ export default function ConjugationsPage() {
                 "&:hover": { bgcolor: "#1a0f08" },
               }}
             >
-              {generating ? "Generating…" : `Generate ${candidates.length} verb conjugations`}
+              {generating
+                ? "Generating…"
+                : `Generate conjugations for ${candidates.length} verb${
+                    candidates.length === 1 ? "" : "s"
+                  }`}
             </Button>
           </Box>
         </Paper>
