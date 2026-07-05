@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useCallback, useRef, useState } from "react"
+import Link from "next/link"
 import {
   Box,
   Typography,
@@ -1028,28 +1029,52 @@ export default function PipelinePage() {
             variant="h5"
             sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
           >
-            Definitions saved
+            {definitionsInserted && definitionsInserted > 0 ? "Definitions saved" : "Definitions step complete"}
           </Typography>
           <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 3, fontSize: "1rem" }}>
-            {definitionsInserted} definition row{definitionsInserted === 1 ? "" : "s"} inserted into{" "}
-            <strong>vocab_definitions</strong>.
+            {definitionsInserted && definitionsInserted > 0 ? (
+              <>
+                {definitionsInserted} definition row{definitionsInserted === 1 ? "" : "s"} inserted into{" "}
+                <strong>vocab_definitions</strong>.
+              </>
+            ) : (
+              <>No definitions were inserted. If this transcript has verbs, you can still generate their conjugations.</>
+            )}
           </Typography>
-          <Button
-            variant="contained"
-            onClick={handleReset}
-            startIcon={<Replay />}
-            sx={{
-              bgcolor: "#2c1a0e",
-              color: "#f5ede0",
-              textTransform: "none",
-              fontFamily: "Jost, sans-serif",
-              fontWeight: 600,
-              borderRadius: "10px",
-              "&:hover": { bgcolor: "#1a0f08" },
-            }}
-          >
-            Process another file
-          </Button>
+          <Box sx={{ display: "flex", justifyContent: "center", gap: 1.5, flexWrap: "wrap" }}>
+            <Button
+              variant="outlined"
+              onClick={handleReset}
+              startIcon={<Replay />}
+              sx={{
+                textTransform: "none",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                borderColor: "rgba(122,110,101,0.3)",
+                color: "#7a6e65",
+                borderRadius: "10px",
+              }}
+            >
+              Process another file
+            </Button>
+            <Button
+              component={Link}
+              href="/admin/conjugations"
+              variant="contained"
+              endIcon={<ArrowForward />}
+              sx={{
+                bgcolor: "#2c1a0e",
+                color: "#f5ede0",
+                textTransform: "none",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                borderRadius: "10px",
+                "&:hover": { bgcolor: "#1a0f08" },
+              }}
+            >
+              Generate verb conjugations
+            </Button>
+          </Box>
         </Paper>
       )}
     </Box>
@@ -1133,11 +1158,11 @@ function ExistingDefinitionsList({
                 <Box>
                   <Box
                     sx={{
-                      direction: "rtl",
                       fontFamily: "'EB Garamond', serif",
-                      fontSize: "1.25rem",
+                      fontSize: "2.75rem",
                       color: "#2c1a0e",
-                      mb: 0.5,
+                      mb: 1.5,
+                      lineHeight: 1.2,
                     }}
                   >
                     {item.lemma_diacritic}
@@ -1145,17 +1170,16 @@ function ExistingDefinitionsList({
                   <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1 }}>
                     <Chip
                       label={item.entry_type}
-                      sx={{ fontFamily: "Jost, sans-serif", textTransform: "capitalize", borderRadius: "8px", fontSize: "0.95rem", py: 0.5 }}
+                      sx={{ fontFamily: "Jost, sans-serif", textTransform: "capitalize", borderRadius: "8px", fontSize: "1rem", py: 0.5 }}
                     />
                     <Chip
                       label={item.CEFR}
-                      sx={{ fontFamily: "Jost, sans-serif", borderRadius: "8px", fontSize: "0.95rem", py: 0.5 }}
+                      sx={{ fontFamily: "Jost, sans-serif", borderRadius: "8px", fontSize: "1rem", py: 0.5 }}
                     />
                     {item.arabic_root && (
                       <Chip
                         label={item.arabic_root}
-                        size="small"
-                        sx={{ fontFamily: "'EB Garamond', serif", borderRadius: "6px" }}
+                        sx={{ fontFamily: "'EB Garamond', serif", borderRadius: "10px", fontSize: "1.15rem", py: 0.75, px: 1 }}
                       />
                     )}
                   </Box>
