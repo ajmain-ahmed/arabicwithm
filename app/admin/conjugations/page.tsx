@@ -29,6 +29,7 @@ import {
   type VerbCandidate,
   type GeneratedConjugation,
 } from "@/app/actions/conjugations"
+import AdminTextField from "../components/AdminTextField"
 
 function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : "Something went wrong"
@@ -105,6 +106,20 @@ export default function ConjugationsPage() {
       return next
     })
   }, [])
+
+  const updateConjugationRow = useCallback(
+    (key: string, field: keyof GeneratedConjugation, value: string | null) => {
+      setGeneratedRows((prev) => {
+        if (!prev) return prev
+        const idx = prev.findIndex((r) => conjKey(r) === key)
+        if (idx === -1) return prev
+        const next = [...prev]
+        next[idx] = { ...next[idx], [field]: value }
+        return next
+      })
+    },
+    []
+  )
 
   const toggleLemmaExpanded = useCallback((lemma: string) => {
     setExpandedLemmas((prev) => {
@@ -450,24 +465,40 @@ export default function ConjugationsPage() {
                               bgcolor: excluded ? "rgba(122,110,101,0.03)" : "rgba(184,134,11,0.04)",
                               opacity: excluded ? 0.6 : 1,
                               display: "flex",
-                              alignItems: "center",
+                              alignItems: "flex-start",
                               justifyContent: "space-between",
                               flexWrap: "wrap",
                               gap: 1.5,
                             }}
                           >
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-                              <Box
-                                sx={{
-                                  fontFamily: "'EB Garamond', serif",
-                                  fontSize: "1.6rem",
-                                  color: "#2c1a0e",
-                                  minWidth: "140px",
-                                }}
-                              >
-                                {row.conjugation_diacritic}
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: 2,
+                                flexWrap: "wrap",
+                                flex: 1,
+                              }}
+                            >
+                              <Box sx={{ flex: "1 1 180px", minWidth: 140 }}>
+                                <AdminTextField
+                                  label="Conjugation"
+                                  value={row.conjugation_diacritic}
+                                  onChange={(e) =>
+                                    updateConjugationRow(key, "conjugation_diacritic", e.target.value)
+                                  }
+                                  fullWidth
+                                  disabled={excluded}
+                                  sx={{
+                                    "& .MuiInputBase-input": {
+                                      fontFamily: "'EB Garamond', serif",
+                                      fontSize: "1.6rem",
+                                      direction: "rtl",
+                                    },
+                                  }}
+                                />
                               </Box>
-                              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", pt: 0.5 }}>
                                 <Chip
                                   label={row.pronoun}
                                   sx={{
@@ -486,17 +517,24 @@ export default function ConjugationsPage() {
                                   }}
                                 />
                               </Box>
-                              {row.transliteration && (
-                                <Typography
-                                  sx={{
-                                    fontFamily: "Jost, sans-serif",
-                                    color: "#7a6e65",
-                                    fontSize: "1rem",
+                              <Box sx={{ flex: "1 1 160px", minWidth: 120 }}>
+                                <AdminTextField
+                                  label="Transliteration"
+                                  value={row.transliteration ?? ""}
+                                  onChange={(e) => {
+                                    const v = e.target.value.trim()
+                                    updateConjugationRow(key, "transliteration", v || null)
                                   }}
-                                >
-                                  {row.transliteration}
-                                </Typography>
-                              )}
+                                  fullWidth
+                                  disabled={excluded}
+                                  sx={{
+                                    "& .MuiInputBase-input": {
+                                      fontFamily: "Jost, sans-serif",
+                                      fontSize: "1rem",
+                                    },
+                                  }}
+                                />
+                              </Box>
                             </Box>
                             <Button
                               size="small"
