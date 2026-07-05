@@ -1,7 +1,6 @@
 "use client"
 
-import React, { useCallback, useRef, useState } from "react"
-import Link from "next/link"
+import React, { useCallback, useMemo, useRef, useState } from "react"
 import {
   Box,
   Typography,
@@ -42,6 +41,13 @@ import {
   type DefinitionOutputRow,
 } from "@/app/actions/pipeline"
 import { validateDefinitionRows } from "@/app/lib/pipelineValidation"
+import {
+  fetchConjugationCandidatesForSource,
+  generateConjugations,
+  commitConjugations,
+  type VerbCandidate,
+  type GeneratedConjugation,
+} from "@/app/actions/conjugations"
 
 function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : "Something went wrong"
@@ -53,6 +59,10 @@ function groupKey(item: PipelineItem): string {
 
 function definitionKey(row: DefinitionOutputRow, index: number): string {
   return `${index}|${row.lemma_diacritic}|${row.arabic_root ?? ""}`
+}
+
+function conjKey(row: GeneratedConjugation): string {
+  return `${row.lemma}|${row.root ?? ""}|${row.tense}|${row.pronoun}`
 }
 
 export default function PipelinePage() {
@@ -77,6 +87,17 @@ export default function PipelinePage() {
   const [insertingDefinitions, setInsertingDefinitions] = useState(false)
   const [definitionsInserted, setDefinitionsInserted] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
+
+  const [conjugationCandidates, setConjugationCandidates] = useState<VerbCandidate[] | null>(null)
+  const [conjugationExistingCount, setConjugationExistingCount] = useState(0)
+  const [conjugationLoading, setConjugationLoading] = useState(false)
+  const [generatedConjugationRows, setGeneratedConjugationRows] = useState<GeneratedConjugation[] | null>(null)
+  const [conjugationSkipped, setConjugationSkipped] = useState<{ lemma: string; reason: string }[]>([])
+  const [conjugationExcludedKeys, setConjugationExcludedKeys] = useState<Set<string>>(new Set())
+  const [conjugationExpandedLemmas, setConjugationExpandedLemmas] = useState<Set<string>>(new Set())
+  const [conjugationInserting, setConjugationInserting] = useState(false)
+  const [conjugationsInserted, setConjugationsInserted] = useState<number | null>(null)
+
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   const handleFileChange = useCallback(
@@ -99,6 +120,15 @@ export default function PipelinePage() {
         setExcludedDefinitionKeys(new Set())
         setInsertingDefinitions(false)
         setDefinitionsInserted(null)
+        setConjugationCandidates(null)
+        setConjugationExistingCount(0)
+        setConjugationLoading(false)
+        setGeneratedConjugationRows(null)
+        setConjugationSkipped([])
+        setConjugationExcludedKeys(new Set())
+        setConjugationExpandedLemmas(new Set())
+        setConjugationInserting(false)
+        setConjugationsInserted(null)
       } catch (err: unknown) {
         setError(errorMessage(err) ?? "Failed to read file")
       } finally {
@@ -122,6 +152,15 @@ export default function PipelinePage() {
     setExcludedDefinitionKeys(new Set())
     setInsertingDefinitions(false)
     setDefinitionsInserted(null)
+    setConjugationCandidates(null)
+    setConjugationExistingCount(0)
+    setConjugationLoading(false)
+    setGeneratedConjugationRows(null)
+    setConjugationSkipped([])
+    setConjugationExcludedKeys(new Set())
+    setConjugationExpandedLemmas(new Set())
+    setConjugationInserting(false)
+    setConjugationsInserted(null)
 
     if (!source.trim()) {
       setError("Please enter a source (e.g. sb-1).")
@@ -212,6 +251,15 @@ export default function PipelinePage() {
     setCopied(false)
     setExistingOpen(false)
     setNewOpen(true)
+    setConjugationCandidates(null)
+    setConjugationExistingCount(0)
+    setConjugationLoading(false)
+    setGeneratedConjugationRows(null)
+    setConjugationSkipped([])
+    setConjugationExcludedKeys(new Set())
+    setConjugationExpandedLemmas(new Set())
+    setConjugationInserting(false)
+    setConjugationsInserted(null)
   }, [])
 
   const toggleExistingExcluded = useCallback((key: string) => {
@@ -314,6 +362,117 @@ export default function PipelinePage() {
     }
   }, [definitionRows, excludedDefinitionKeys, source])
 
+  const handleStartConjugations = useCallback(async () => {
+    setConjugationLoading(true)
+    setError(null)
+    try {
+      const result = await fetchConjugationCandidatesForSource(source)
+      if (result.ok) {
+        setConjugationCandidates(result.candidates)
+        setConjugationExistingCount(result.existingCount)
+      } else {
+        setError(result.error)
+      }
+    } catch (e: unknown) {
+      setError(errorMessage(e) ?? "Failed to load conjugation candidates")
+    } finally {
+      setConjugationLoading(false)
+    }
+  }, [source])
+
+  const handleGenerateConjugations = useCallback(async () => {
+    if (!conjugationCandidates || conjugationCandidates.length === 0) return
+    setConjugationLoading(true)
+    setError(null)
+    try {
+      const result = await generateConjugations(conjugationCandidates)
+      if (result.ok) {
+        setGeneratedConjugationRows(result.rows)
+        setConjugationSkipped(result.skipped)
+        setConjugationExcludedKeys(new Set())
+        setConjugationExpandedLemmas(new Set())
+      } else {
+        setError(result.error)
+      }
+    } catch (e: unknown) {
+      setError(errorMessage(e) ?? "Failed to generate conjugations")
+    } finally {
+      setConjugationLoading(false)
+    }
+  }, [conjugationCandidates])
+
+  const toggleConjugationExcluded = useCallback((key: string) => {
+    setConjugationExcludedKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }, [])
+
+  const toggleConjugationLemmaExpanded = useCallback((lemma: string) => {
+    setConjugationExpandedLemmas((prev) => {
+      const next = new Set(prev)
+      if (next.has(lemma)) next.delete(lemma)
+      else next.add(lemma)
+      return next
+    })
+  }, [])
+
+  const toggleConjugationLemmaAll = useCallback(
+    (lemma: string, excludeAll: boolean) => {
+      setConjugationExcludedKeys((prev) => {
+        const next = new Set(prev)
+        const rowsForLemma = generatedConjugationRows?.filter((r) => r.lemma === lemma) ?? []
+        for (const row of rowsForLemma) {
+          const key = conjKey(row)
+          if (excludeAll) next.add(key)
+          else next.delete(key)
+        }
+        return next
+      })
+    },
+    [generatedConjugationRows]
+  )
+
+  const updateConjugationRow = useCallback(
+    (key: string, field: keyof GeneratedConjugation, value: string | null) => {
+      setGeneratedConjugationRows((prev) => {
+        if (!prev) return prev
+        const idx = prev.findIndex((r) => conjKey(r) === key)
+        if (idx === -1) return prev
+        const next = [...prev]
+        next[idx] = { ...next[idx], [field]: value }
+        return next
+      })
+    },
+    []
+  )
+
+  const handleInsertConjugations = useCallback(async () => {
+    if (!generatedConjugationRows) return
+    const included = generatedConjugationRows.filter((row) => !conjugationExcludedKeys.has(conjKey(row)))
+    if (included.length === 0) {
+      setError("No conjugation rows selected for insertion.")
+      return
+    }
+
+    setConjugationInserting(true)
+    setError(null)
+    try {
+      const result = await commitConjugations(included)
+      if (result.ok) {
+        setConjugationsInserted(result.inserted)
+      } else {
+        setError(result.error)
+      }
+    } catch (e: unknown) {
+      setError(errorMessage(e) ?? "Failed to insert conjugations")
+    } finally {
+      setConjugationInserting(false)
+    }
+  }, [generatedConjugationRows, conjugationExcludedKeys])
+
   const filteredPromptData = promptData
     ? {
         ...promptData,
@@ -342,7 +501,10 @@ export default function PipelinePage() {
   const promptStep = promptData !== null && promptVisible && !showDefinitionsInput && definitionRows === null && definitionsInserted === null
   const definitionsInputStep = promptData !== null && promptVisible && showDefinitionsInput && definitionRows === null && definitionsInserted === null
   const definitionsReviewStep = definitionRows !== null && definitionsInserted === null
-  const definitionsDoneStep = definitionsInserted !== null
+  const definitionsDoneStep = definitionsInserted !== null && conjugationCandidates === null
+  const conjugationCandidateStep = conjugationCandidates !== null && generatedConjugationRows === null && conjugationsInserted === null
+  const conjugationReviewStep = generatedConjugationRows !== null && conjugationsInserted === null
+  const conjugationDoneStep = conjugationsInserted !== null
 
   return (
     <Box>
@@ -1058,9 +1220,9 @@ export default function PipelinePage() {
               Process another file
             </Button>
             <Button
-              component={Link}
-              href="/admin/conjugations"
               variant="contained"
+              onClick={handleStartConjugations}
+              disabled={conjugationLoading}
               endIcon={<ArrowForward />}
               sx={{
                 bgcolor: "#2c1a0e",
@@ -1072,9 +1234,167 @@ export default function PipelinePage() {
                 "&:hover": { bgcolor: "#1a0f08" },
               }}
             >
-              Generate verb conjugations
+              {conjugationLoading ? "Loading…" : "Continue to verb conjugations"}
             </Button>
           </Box>
+        </Paper>
+      )}
+
+      {conjugationCandidateStep && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            borderRadius: "16px",
+            border: "1px solid rgba(122,110,101,0.15)",
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 2 }}
+          >
+            Verb conjugations
+          </Typography>
+
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+            <Chip
+              label={`${conjugationCandidates.length} verb${
+                conjugationCandidates.length === 1 ? "" : "s"
+              } without conjugations`}
+              sx={{
+                bgcolor: "rgba(184,134,11,0.12)",
+                color: "#2c1a0e",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                borderRadius: "8px",
+                fontSize: "1rem",
+                py: 0.5,
+              }}
+            />
+            <Chip
+              label={`${conjugationExistingCount} verb${
+                conjugationExistingCount === 1 ? "" : "s"
+              } already conjugated`}
+              sx={{
+                bgcolor: "rgba(44,26,14,0.08)",
+                color: "#2c1a0e",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                borderRadius: "8px",
+                fontSize: "1rem",
+                py: 0.5,
+              }}
+            />
+          </Box>
+
+          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 3, fontSize: "1.1rem" }}>
+            {conjugationCandidates.length > 0 ? (
+              <>
+                There are {conjugationCandidates.length + conjugationExistingCount} verb lemma{`s`} for this
+                source. The {conjugationCandidates.length} below are not yet in{" "}
+                <strong>verb_conjugations</strong> and will be generated.
+              </>
+            ) : (
+              <>All verb lemmas for this source already have conjugations.</>
+            )}
+          </Typography>
+
+          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              variant="contained"
+              onClick={handleGenerateConjugations}
+              disabled={conjugationLoading || conjugationCandidates.length === 0}
+              startIcon={<PlayArrow />}
+              sx={{
+                bgcolor: "#2c1a0e",
+                color: "#f5ede0",
+                textTransform: "none",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                fontSize: "1.1rem",
+                borderRadius: "10px",
+                px: 3,
+                py: 1,
+                "&:hover": { bgcolor: "#1a0f08" },
+              }}
+            >
+              {conjugationLoading
+                ? "Generating…"
+                : `Generate conjugations for ${conjugationCandidates.length} verb${
+                    conjugationCandidates.length === 1 ? "" : "s"
+                  }`}
+            </Button>
+          </Box>
+        </Paper>
+      )}
+
+      {conjugationReviewStep && generatedConjugationRows && (
+        <ConjugationReview
+          rows={generatedConjugationRows}
+          skipped={conjugationSkipped}
+          excludedKeys={conjugationExcludedKeys}
+          expandedLemmas={conjugationExpandedLemmas}
+          inserting={conjugationInserting}
+          onToggleExcluded={(key) => {
+            setConjugationExcludedKeys((prev) => {
+              const next = new Set(prev)
+              if (next.has(key)) next.delete(key)
+              else next.add(key)
+              return next
+            })
+          }}
+          onToggleLemmaExpanded={(lemma) => {
+            setConjugationExpandedLemmas((prev) => {
+              const next = new Set(prev)
+              if (next.has(lemma)) next.delete(lemma)
+              else next.add(lemma)
+              return next
+            })
+          }}
+          onToggleLemmaAll={toggleConjugationLemmaAll}
+          onChangeRow={updateConjugationRow}
+          onInsert={handleInsertConjugations}
+          onReset={handleReset}
+        />
+      )}
+
+      {conjugationDoneStep && conjugationsInserted !== null && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            borderRadius: "16px",
+            border: "1px solid rgba(122,110,101,0.15)",
+            textAlign: "center",
+          }}
+        >
+          <CheckCircle sx={{ fontSize: 56, color: "#b8860b", mb: 2 }} />
+          <Typography
+            variant="h5"
+            sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
+          >
+            Conjugations saved
+          </Typography>
+          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 3, fontSize: "1rem" }}>
+            {conjugationsInserted} conjugation row{conjugationsInserted === 1 ? "" : "s"} inserted into{" "}
+            <strong>verb_conjugations</strong>.
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={handleReset}
+            startIcon={<Replay />}
+            sx={{
+              bgcolor: "#2c1a0e",
+              color: "#f5ede0",
+              textTransform: "none",
+              fontFamily: "Jost, sans-serif",
+              fontWeight: 600,
+              borderRadius: "10px",
+              "&:hover": { bgcolor: "#1a0f08" },
+            }}
+          >
+            Process another file
+          </Button>
         </Paper>
       )}
     </Box>
@@ -1252,6 +1572,362 @@ function ExistingDefinitionsList({
         })}
       </Box>
     </Box>
+  )
+}
+
+function ConjugationReview({
+  rows,
+  skipped,
+  excludedKeys,
+  expandedLemmas,
+  inserting,
+  onToggleExcluded,
+  onToggleLemmaExpanded,
+  onChangeRow,
+  onInsert,
+  onReset,
+}: {
+  rows: GeneratedConjugation[]
+  skipped: { lemma: string; reason: string }[]
+  excludedKeys: Set<string>
+  expandedLemmas: Set<string>
+  inserting: boolean
+  onToggleExcluded: (key: string) => void
+  onToggleLemmaExpanded: (lemma: string) => void
+  onToggleLemmaAll: (lemma: string, excludeAll: boolean) => void
+  onChangeRow: (key: string, field: keyof GeneratedConjugation, value: string | null) => void
+  onInsert: () => void
+  onReset: () => void
+}) {
+  const groupedRows = useMemo(() => {
+    const map = new Map<string, GeneratedConjugation[]>()
+    for (const row of rows) {
+      const list = map.get(row.lemma) ?? []
+      list.push(row)
+      map.set(row.lemma, list)
+    }
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+  }, [rows])
+
+  const includedCount = rows.length - excludedKeys.size
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{
+        p: 4,
+        borderRadius: "16px",
+        border: "1px solid rgba(122,110,101,0.15)",
+      }}
+    >
+      <Typography
+        variant="h5"
+        sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 2 }}
+      >
+        Review generated conjugations
+      </Typography>
+
+      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+        <Chip
+          label={`${includedCount} rows to insert`}
+          sx={{
+            bgcolor: "rgba(184,134,11,0.12)",
+            color: "#2c1a0e",
+            fontFamily: "Jost, sans-serif",
+            fontWeight: 600,
+            borderRadius: "8px",
+            fontSize: "1rem",
+            py: 0.5,
+          }}
+        />
+        <Chip
+          label={`${excludedKeys.size} excluded`}
+          sx={{
+            bgcolor: "rgba(44,26,14,0.08)",
+            color: "#2c1a0e",
+            fontFamily: "Jost, sans-serif",
+            fontWeight: 600,
+            borderRadius: "8px",
+            fontSize: "1rem",
+            py: 0.5,
+          }}
+        />
+        {skipped.length > 0 && (
+          <Chip
+            label={`${skipped.length} verbs skipped`}
+            sx={{
+              bgcolor: "rgba(192,57,43,0.1)",
+              color: "#c0392b",
+              fontFamily: "Jost, sans-serif",
+              fontWeight: 600,
+              borderRadius: "8px",
+              fontSize: "1rem",
+              py: 0.5,
+            }}
+          />
+        )}
+      </Box>
+
+      {skipped.length > 0 && (
+        <Alert severity="warning" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>
+          <Typography sx={{ fontWeight: 600, mb: 0.5 }}>Skipped verbs</Typography>
+          <Box component="ul" sx={{ m: 0, pl: 2 }}>
+            {skipped.map((item, idx) => (
+              <li key={idx}>
+                <strong>{item.lemma}</strong> — {item.reason}
+              </li>
+            ))}
+          </Box>
+        </Alert>
+      )}
+
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 3 }}>
+        {groupedRows.map(([lemma, lemmaRows]) => {
+          const expanded = expandedLemmas.has(lemma)
+          const allExcluded = lemmaRows.every((row) => excludedKeys.has(conjKey(row)))
+
+          return (
+            <Paper
+              key={lemma}
+              variant="outlined"
+              sx={{
+                p: 3,
+                borderRadius: "14px",
+                borderColor: allExcluded ? "rgba(122,110,101,0.1)" : "rgba(122,110,101,0.15)",
+                bgcolor: allExcluded ? "rgba(122,110,101,0.03)" : "#fff",
+                opacity: allExcluded ? 0.7 : 1,
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 1.5,
+                  cursor: "pointer",
+                }}
+                onClick={() => onToggleLemmaExpanded(lemma)}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+                  <Box
+                    sx={{
+                      fontFamily: "'EB Garamond', serif",
+                      fontSize: "2.25rem",
+                      color: "#2c1a0e",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {lemma}
+                  </Box>
+                  {lemmaRows[0]?.root && (
+                    <Chip
+                      label={lemmaRows[0].root}
+                      sx={{
+                        fontFamily: "'EB Garamond', serif",
+                        borderRadius: "8px",
+                        fontSize: "1rem",
+                        py: 0.5,
+                      }}
+                    />
+                  )}
+                  <Chip
+                    label={`${lemmaRows.length} forms`}
+                    sx={{
+                      fontFamily: "Jost, sans-serif",
+                      borderRadius: "8px",
+                      fontSize: "0.95rem",
+                      py: 0.5,
+                    }}
+                  />
+                </Box>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Button
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      const allKeys = lemmaRows.map((row) => conjKey(row))
+                      const allCurrentlyExcluded = allKeys.every((k) => excludedKeys.has(k))
+                      for (const k of allKeys) {
+                        if (allCurrentlyExcluded || !excludedKeys.has(k)) onToggleExcluded(k)
+                      }
+                      // If we are including all, re-include each one.
+                      if (allCurrentlyExcluded) {
+                        for (const k of allKeys) {
+                          if (excludedKeys.has(k)) onToggleExcluded(k)
+                        }
+                      }
+                    }}
+                    startIcon={allExcluded ? <AddCircle /> : <RemoveCircle />}
+                    sx={{
+                      textTransform: "none",
+                      fontFamily: "Jost, sans-serif",
+                      fontWeight: 600,
+                      fontSize: "0.95rem",
+                      borderRadius: "8px",
+                      color: allExcluded ? "#7a6e65" : "#2c1a0e",
+                    }}
+                  >
+                    {allExcluded ? "Include all" : "Exclude all"}
+                  </Button>
+                  {expanded ? <ExpandLess sx={{ color: "#7a6e65" }} /> : <ExpandMore sx={{ color: "#7a6e65" }} />}
+                </Box>
+              </Box>
+
+              <Collapse in={expanded}>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mt: 2 }}>
+                  {lemmaRows.map((row) => {
+                    const key = conjKey(row)
+                    const excluded = excludedKeys.has(key)
+                    return (
+                      <Paper
+                        key={key}
+                        variant="outlined"
+                        sx={{
+                          p: 2,
+                          borderRadius: "10px",
+                          borderColor: excluded ? "rgba(122,110,101,0.1)" : "rgba(122,110,101,0.12)",
+                          bgcolor: excluded ? "rgba(122,110,101,0.03)" : "rgba(184,134,11,0.04)",
+                          opacity: excluded ? 0.6 : 1,
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          flexWrap: "wrap",
+                          gap: 1.5,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 2,
+                            flexWrap: "wrap",
+                            flex: 1,
+                          }}
+                        >
+                          <Box sx={{ flex: "1 1 180px", minWidth: 140 }}>
+                            <AdminTextField
+                              label="Conjugation"
+                              value={row.conjugation_diacritic}
+                              onChange={(e) => onChangeRow(key, "conjugation_diacritic", e.target.value)}
+                              fullWidth
+                              disabled={excluded}
+                              sx={{
+                                "& .MuiInputBase-input": {
+                                  fontFamily: "'EB Garamond', serif",
+                                  fontSize: "1.6rem",
+                                  direction: "rtl",
+                                },
+                              }}
+                            />
+                          </Box>
+                          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", pt: 0.5 }}>
+                            <Chip
+                              label={row.pronoun}
+                              sx={{
+                                fontFamily: "Jost, sans-serif",
+                                borderRadius: "6px",
+                                fontSize: "0.9rem",
+                              }}
+                            />
+                            <Chip
+                              label={row.tense}
+                              sx={{
+                                fontFamily: "Jost, sans-serif",
+                                borderRadius: "6px",
+                                fontSize: "0.9rem",
+                                textTransform: "capitalize",
+                              }}
+                            />
+                          </Box>
+                          <Box sx={{ flex: "1 1 160px", minWidth: 120 }}>
+                            <AdminTextField
+                              label="Transliteration"
+                              value={row.transliteration ?? ""}
+                              onChange={(e) => {
+                                const v = e.target.value.trim()
+                                onChangeRow(key, "transliteration", v || null)
+                              }}
+                              fullWidth
+                              disabled={excluded}
+                              sx={{
+                                "& .MuiInputBase-input": {
+                                  fontFamily: "Jost, sans-serif",
+                                  fontSize: "1rem",
+                                },
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                        <Button
+                          size="small"
+                          onClick={() => onToggleExcluded(key)}
+                          startIcon={excluded ? <AddCircle /> : <RemoveCircle />}
+                          sx={{
+                            textTransform: "none",
+                            fontFamily: "Jost, sans-serif",
+                            fontWeight: 600,
+                            fontSize: "0.9rem",
+                            borderRadius: "8px",
+                            color: excluded ? "#7a6e65" : "#2c1a0e",
+                          }}
+                        >
+                          {excluded ? "Include" : "Exclude"}
+                        </Button>
+                      </Paper>
+                    )
+                  })}
+                </Box>
+              </Collapse>
+            </Paper>
+          )
+        })}
+      </Box>
+
+      <Divider sx={{ my: 2, borderColor: "rgba(122,110,101,0.15)" }} />
+
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, flexWrap: "wrap" }}>
+        <Button
+          variant="outlined"
+          onClick={onReset}
+          startIcon={<Cancel />}
+          disabled={inserting}
+          sx={{
+            textTransform: "none",
+            fontFamily: "Jost, sans-serif",
+            fontWeight: 600,
+            fontSize: "1.05rem",
+            borderColor: "rgba(122,110,101,0.3)",
+            color: "#7a6e65",
+            borderRadius: "10px",
+            px: 2,
+            py: 1,
+          }}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={onInsert}
+          disabled={inserting || includedCount === 0}
+          startIcon={<Add />}
+          sx={{
+            bgcolor: "#2c1a0e",
+            color: "#f5ede0",
+            textTransform: "none",
+            fontFamily: "Jost, sans-serif",
+            fontWeight: 600,
+            fontSize: "1.05rem",
+            borderRadius: "10px",
+            px: 2,
+            py: 1,
+            "&:hover": { bgcolor: "#1a0f08" },
+          }}
+        >
+          {inserting ? "Inserting…" : `Write ${includedCount} rows to Supabase`}
+        </Button>
+      </Box>
+    </Paper>
   )
 }
 

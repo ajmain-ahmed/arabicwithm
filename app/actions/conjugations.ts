@@ -154,6 +154,91 @@ export async function fetchVerbConjugationCandidates(): Promise<
   }
 }
 
+export async function fetchConjugationCandidatesForSource(source: string): Promise<
+  | {
+      ok: true
+      candidates: VerbCandidate[]
+      existingCount: number
+    }
+  | {
+      ok: false
+      error: string
+    }
+> {
+  await guardAdmin()
+
+  const trimmedSource = source.trim()
+  if (!trimmedSource) {
+    return { ok: false, error: "Source is required" }
+  }
+
+  const [
+    { data: lemmas, error: lemmasError },
+    { data: definitions, error: defsError },
+  ] = await Promise.all([
+    serviceClient
+      .from("vocab_lemmas")
+      .select("lemma, lemma_diacritic, arabic_root")
+      .eq("source", trimmedSource),
+    serviceClient
+      .from("vocab_definitions")
+      .select("lemma_diacritic, arabic_root, part_of_speech")
+      .eq("source", trimmedSource),
+  ])
+
+  if (lemmasError) {
+    console.error("[fetchConjugationCandidatesForSource] lemmas error:", lemmasError.message)
+    return { ok: false, error: lemmasError.message }
+  }
+  if (defsError) {
+    console.error("[fetchConjugationCandidatesForSource] definitions error:", defsError.message)
+    return { ok: false, error: defsError.message }
+  }
+
+  const verbDefKeys = new Set<string>()
+  for (const def of definitions ?? []) {
+    if (String(def.part_of_speech).toLowerCase() === "verb") {
+      verbDefKeys.add(`${def.lemma_diacritic}|${def.arabic_root ?? ""}`)
+    }
+  }
+
+  const verbCandidates: VerbCandidate[] = []
+  for (const row of lemmas ?? []) {
+    const key = `${row.lemma_diacritic}|${row.arabic_root ?? ""}`
+    if (verbDefKeys.has(key)) {
+      verbCandidates.push({
+        lemma: row.lemma,
+        lemma_diacritic: row.lemma_diacritic,
+        root: row.arabic_root,
+      })
+    }
+  }
+
+  const { data: existingConjugations, error: existingError } = await serviceClient
+    .from("verb_conjugations")
+    .select("lemma, root")
+
+  if (existingError) {
+    console.error("[fetchConjugationCandidatesForSource] existing error:", existingError.message)
+    return { ok: false, error: existingError.message }
+  }
+
+  const existingKeys = new Set<string>()
+  for (const row of existingConjugations ?? []) {
+    existingKeys.add(`${row.lemma}|${row.root ?? ""}`)
+  }
+
+  const candidates = verbCandidates.filter((c) => {
+    return !existingKeys.has(`${c.lemma}|${c.root ?? ""}`)
+  })
+
+  return {
+    ok: true,
+    candidates,
+    existingCount: verbCandidates.length - candidates.length,
+  }
+}
+
 export async function generateConjugations(
   candidates: VerbCandidate[]
 ): Promise<GenerateConjugationsResult> {
