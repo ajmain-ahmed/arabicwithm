@@ -9,13 +9,12 @@ import {
   DialogActions,
   DialogContent,
   Divider,
-  IconButton,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material'
-import { Close, Edit, Save } from '@mui/icons-material'
+import { Edit, Save } from '@mui/icons-material'
 import {
   fetchDictionaryDetails,
   updateVocabDefinition,
@@ -346,16 +345,6 @@ export default function DictionaryDetailsDialog({
               </Button>
             </>
           )}
-          <IconButton
-            onClick={onClose}
-            size="small"
-            sx={{
-              color: TEXT_MUTED,
-              mr: 1.5,
-            }}
-          >
-            <Close sx={{ fontSize: '1.6rem' }} />
-          </IconButton>
         </Box>
       </Box>
 
