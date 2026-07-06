@@ -38,15 +38,6 @@ function sentenceTransliteration(words: { transliteration: string }[]): string {
   return words.map(w => w.transliteration).join(' ')
 }
 
-const LEVEL_COLORS: Record<string, string> = {
-  A1: '#2d6a4f',
-  A2: '#40916c',
-  B1: '#b5861a',
-  B2: '#9c6b00',
-  C1: '#6d4c9e',
-  C2: '#4a2f7a',
-}
-
 const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
   <Tooltip {...props} classes={{ popper: className }} />
 ))(({ theme }) => ({
@@ -79,11 +70,25 @@ function WordTooltip({ entry, textScale }: { entry: CartoonWordEntry; textScale:
           {entry.transliteration}
         </Typography>
       </Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-        <Chip label={entry.cefr} size="small" sx={{ background: LEVEL_COLORS[entry.cefr] ?? '#0e2e1f', color: '#fff', fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: `calc(0.7rem * ${textScale})`, letterSpacing: '0.04em' }} />
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
+        {entry.pos && (
+          <Chip
+            label={entry.pos}
+            size="small"
+            sx={{
+              background: 'rgba(44,26,14,0.08)',
+              color: '#2c1a0e',
+              fontFamily: 'Jost, sans-serif',
+              fontWeight: 600,
+              fontSize: `calc(0.7rem * ${textScale})`,
+              letterSpacing: '0.04em',
+              textTransform: 'capitalize',
+            }}
+          />
+        )}
       </Box>
-      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.95rem * ${textScale})`, color: '#2c1a0e', textAlign: 'center' }}>
-        {entry.english}
+      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.95rem * ${textScale})`, color: '#2c1a0e', textAlign: 'center', minHeight: `calc(0.95rem * ${textScale})` }}>
+        {entry.english || '—'}
       </Typography>
     </Box>
   )
@@ -238,7 +243,7 @@ function RecallCard({
             fontSize: `calc(${isMobile ? '1.1rem' : '1.3rem'} * ${textScale})`,
             fontWeight: 500, color: '#7a6e65', lineHeight: 1.5, fontStyle: 'italic',
           }}>
-            {block.title}
+            {block.english || block.title}
           </Typography>
         </Box>
       </Collapse>

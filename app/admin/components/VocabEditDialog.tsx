@@ -150,6 +150,7 @@ export default function VocabEditDialog({
   const isNew = wordId === null
 
   const applyRaw = (raw: Partial<RawVocabRow>) => {
+    const isNewWord = raw.word_id == null
     setWordAr(raw.word_ar ?? "")
     setWordDi(raw.word_di ?? "")
     setWordTr(raw.word_tr ?? "")
@@ -157,12 +158,26 @@ export default function VocabEditDialog({
     setLevel(raw.level ?? "")
     setTheme(raw.theme ?? "")
     setDefinitions(
-      Array.isArray(raw.definitions) ? (raw.definitions as DefinitionItem[]) : []
+      Array.isArray(raw.definitions) && (raw.definitions as DefinitionItem[]).length > 0
+        ? (raw.definitions as DefinitionItem[])
+        : isNewWord
+        ? [{ english: "", directEnglish: "", simpleAr: "", simpleArTr: "" }]
+        : []
     )
     setExamples(
-      Array.isArray(raw.examples) ? (raw.examples as ExampleItem[]) : []
+      Array.isArray(raw.examples) && (raw.examples as ExampleItem[]).length > 0
+        ? (raw.examples as ExampleItem[])
+        : isNewWord
+        ? [{ ar: "", arDi: "", en: "", tr: "" }]
+        : []
     )
-    setFormsJson(JSON.stringify(raw.forms ?? [], null, 2))
+    setFormsJson(
+      raw.forms !== undefined
+        ? JSON.stringify(raw.forms ?? [], null, 2)
+        : isNewWord
+        ? JSON.stringify([{ type: "noun" }], null, 2)
+        : "[]"
+    )
   }
 
   useEffect(() => {
@@ -366,6 +381,19 @@ export default function VocabEditDialog({
 
             {tab === 0 && (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: "12px", bgcolor: "#fafafa" }}>
+                  <Typography sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, fontSize: "0.85rem", color: "#7a6e65", mb: 1 }}>
+                    Example definition
+                  </Typography>
+                  <Box component="pre" sx={{ fontFamily: "'Fira Code', 'Courier New', monospace", fontSize: "0.8rem", color: "#2c1a0e", bgcolor: "#fff", p: 1.5, borderRadius: "8px", border: "1px solid rgba(122,110,101,0.15)", overflow: "auto" }}>
+{`{
+  "english": "a tame animal that lives with people",
+  "directEnglish": "dog",
+  "simpleAr": "حَيَوَانٌ أَلِيفٌ يَعِيشُ مَعَ النَّاسِ",
+  "simpleArTr": "ḥayawānun alīfun yaʿīshu maʿa al-nās"
+}`}
+                  </Box>
+                </Paper>
                 {definitions.map((def, idx) => (
                   <Paper key={idx} variant="outlined" sx={{ p: 2.5, borderRadius: "12px", bgcolor: "#fafafa" }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
@@ -396,6 +424,19 @@ export default function VocabEditDialog({
 
             {tab === 1 && (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: "12px", bgcolor: "#fafafa" }}>
+                  <Typography sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, fontSize: "0.85rem", color: "#7a6e65", mb: 1 }}>
+                    Example sentence
+                  </Typography>
+                  <Box component="pre" sx={{ fontFamily: "'Fira Code', 'Courier New', monospace", fontSize: "0.8rem", color: "#2c1a0e", bgcolor: "#fff", p: 1.5, borderRadius: "8px", border: "1px solid rgba(122,110,101,0.15)", overflow: "auto" }}>
+{`{
+  "ar": "هذا كلب",
+  "arDi": "هَٰذَا كَلْبٌ",
+  "en": "This is a dog.",
+  "tr": "hādhā kalbun"
+}`}
+                  </Box>
+                </Paper>
                 {examples.map((ex, idx) => (
                   <Paper key={idx} variant="outlined" sx={{ p: 2.5, borderRadius: "12px", bgcolor: "#fafafa" }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
@@ -425,7 +466,28 @@ export default function VocabEditDialog({
             )}
 
             {tab === 2 && (
-              <Field label="Forms JSON" value={formsJson} onChange={setFormsJson} textarea />
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                <Field label="Forms JSON" value={formsJson} onChange={setFormsJson} textarea />
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: "12px", bgcolor: "#fafafa" }}>
+                  <Typography sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, fontSize: "0.85rem", color: "#7a6e65", mb: 1 }}>
+                    Example shapes
+                  </Typography>
+                  <Box component="pre" sx={{ fontFamily: "'Fira Code', 'Courier New', monospace", fontSize: "0.8rem", color: "#2c1a0e", bgcolor: "#fff", p: 1.5, borderRadius: "8px", border: "1px solid rgba(122,110,101,0.15)", overflow: "auto" }}>
+{`// Part of speech only
+[{"type":"noun"}]
+
+// Verb with nested conjugations
+[
+  {
+    "type": "verb",
+    "conjugations": {
+      "past": { "con_ar": "كَتَبَ", "con_di": "كَتَبَ", "con_en": "he wrote", "con_tr": "kataba" }
+    }
+  }
+]`}
+                  </Box>
+                </Paper>
+              </Box>
             )}
           </Box>
         )}

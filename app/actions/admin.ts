@@ -7,17 +7,6 @@ import { isAdminUser, type RawVocabRow } from "./vocab"
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
-export type AdminVocabRow = {
-  word_id: number
-  word_ar: string
-  word_di: string
-  word_tr: string
-  root: string | null
-  level: string
-  theme: string
-  primary_gloss: string
-}
-
 export type ShowRow = {
   id: string
   slug: string
@@ -43,6 +32,7 @@ export type EpisodeRow = {
   youtube_short: boolean
   cover: string | null
   episode_number: number
+  unmatched_count: number
 }
 
 export type EpisodeWithTranscript = EpisodeRow & {
@@ -50,7 +40,7 @@ export type EpisodeWithTranscript = EpisodeRow & {
 }
 
 export type ShowInput = Omit<ShowRow, "id">
-export type EpisodeInput = Omit<EpisodeRow, "id"> & {
+export type EpisodeInput = Omit<EpisodeRow, "id" | "unmatched_count"> & {
   transcript?: Record<string, unknown> | null
 }
 
@@ -68,146 +58,12 @@ function parseJsonb(val: unknown): unknown {
   return val
 }
 
-function primaryGloss(definitions: unknown): string {
-  const parsed = parseJsonb(definitions)
-  if (!Array.isArray(parsed) || parsed.length === 0) return ""
-  const first = parsed[0]
-  return (
-    first?.directEnglish ??
-    first?.english ??
-    ""
-  )
-}
-
 async function guardAdmin() {
   const ok = await isAdminUser()
   if (!ok) throw new Error("Forbidden")
 }
 
-/* ── Vocabulary ────────────────────────────────────────────────────── */
-
-export type VocabListResult = {
-  rows: AdminVocabRow[]
-  count: number
-}
-
-export async function fetchVocabForAdmin({
-  query,
-  page,
-  pageSize,
-  sortKey = "word_id",
-  sortDir = "asc",
-}: {
-  query?: string
-  page: number
-  pageSize: number
-  sortKey?: string
-  sortDir?: "asc" | "desc"
-}): Promise<VocabListResult> {
-  await guardAdmin()
-
-  const from = (page - 1) * pageSize
-  const to = from + pageSize - 1
-
-  const validSortCols = new Set([
-    "word_id",
-    "word_ar",
-    "word_di",
-    "word_tr",
-    "level",
-    "theme",
-  ])
-  const orderCol = validSortCols.has(sortKey) ? sortKey : "word_id"
-
-  let builder = serviceClient
-    .from("app_vocab")
-    .select("word_id, word_ar, word_di, word_tr, root, level, theme, definitions", {
-      count: "exact",
-    })
-    .order(orderCol, { ascending: sortDir === "asc" })
-
-  if (query && query.trim()) {
-    const q = `%${query.trim()}%`
-    builder = builder.or(
-      `word_ar.ilike.${q},word_di.ilike.${q},word_tr.ilike.${q},level.ilike.${q},theme.ilike.${q}`
-    )
-  }
-
-  const { data, error, count } = await builder.range(from, to)
-
-  if (error) {
-    console.error("[fetchVocabForAdmin] error:", error.message)
-    throw new Error(error.message)
-  }
-
-  const rows = (data ?? []).map((row) => ({
-    word_id: row.word_id,
-    word_ar: row.word_ar ?? "",
-    word_di: row.word_di ?? "",
-    word_tr: row.word_tr ?? "",
-    root: row.root ?? null,
-    level: row.level ?? "",
-    theme: row.theme ?? "",
-    primary_gloss: primaryGloss(row.definitions),
-  }))
-
-  return { rows, count: count ?? 0 }
-}
-
-export async function fetchAllVocabForAdmin(): Promise<AdminVocabRow[]> {
-  await guardAdmin()
-
-  const all: AdminVocabRow[] = []
-  const pageSize = 1000
-  let from = 0
-
-  while (true) {
-    const { data, error } = await serviceClient
-      .from("app_vocab")
-      .select("word_id, word_ar, word_di, word_tr, root, level, theme, definitions")
-      .order("word_id", { ascending: true })
-      .range(from, from + pageSize - 1)
-
-    if (error) {
-      console.error("[fetchAllVocabForAdmin] error:", error.message)
-      throw new Error(error.message)
-    }
-
-    const rows = (data ?? []).map((row) => ({
-      word_id: row.word_id,
-      word_ar: row.word_ar ?? "",
-      word_di: row.word_di ?? "",
-      word_tr: row.word_tr ?? "",
-      root: row.root ?? null,
-      level: row.level ?? "",
-      theme: row.theme ?? "",
-      primary_gloss: primaryGloss(row.definitions),
-    }))
-
-    all.push(...rows)
-    if (rows.length < pageSize) break
-    from += pageSize
-  }
-
-  return all
-}
-
-export async function findVocabIdByDiacritized(
-  wordDi: string
-): Promise<number | null> {
-  await guardAdmin()
-  if (!wordDi) return null
-
-  const { data, error } = await serviceClient
-    .from("app_vocab")
-    .select("word_id")
-    .eq("word_di", wordDi)
-    .limit(1)
-    .single()
-
-  if (error || !data) return null
-  return data.word_id
-}
+/* ── Vocabulary lookups (used by episode editor) ───────────────────── */
 
 export async function fetchVocabMatchesForWords(
   keys: { di?: string; plain?: string }[]
@@ -411,6 +267,111 @@ export async function deleteShow(id: string): Promise<void> {
 
 /* ── Episodes ──────────────────────────────────────────────────────── */
 
+function normalizeArabicForMatch(str: string): string {
+  return str
+    .normalize("NFKD")
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, "")
+    .replace(/[\u0621\u0623\u0625\u0626]/g, "\u0627")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+}
+
+async function computeUnmatchedCounts(
+  rows: Record<string, unknown>[]
+): Promise<Map<string, number>> {
+  const counts = new Map<string, number>()
+  const episodeDbKeys = new Map<string, Set<string>>()
+  const allDbKeys = new Set<string>()
+
+  for (const row of rows) {
+    const id = String(row.id)
+    const transcript = parseJsonb(row.transcript) as Record<string, unknown> | null
+    const scriptBlocks = Array.isArray(transcript?.scriptBlocks)
+      ? transcript.scriptBlocks
+      : []
+    const dbKeys = new Set<string>()
+
+    for (const block of scriptBlocks) {
+      const words = (block as Record<string, unknown>).words
+      if (!Array.isArray(words)) continue
+      for (const w of words) {
+        const db = (w as Record<string, unknown>).db
+        if (typeof db === "string" && db.trim()) {
+          dbKeys.add(db.trim())
+          allDbKeys.add(db.trim())
+        }
+      }
+    }
+
+    episodeDbKeys.set(id, dbKeys)
+  }
+
+  // Fetch all word_di values once and compare locally. This avoids subtle
+  // issues with .in() on diacritized Arabic strings.
+  const allDi = new Set<string>()
+  if (allDbKeys.size > 0) {
+    const { data, error } = await serviceClient
+      .from("app_vocab")
+      .select("word_di")
+
+    if (error) {
+      console.error("[computeUnmatchedCounts] error:", error.message)
+    } else {
+      for (const row of data ?? []) {
+        const di = (row as { word_di?: string }).word_di
+        if (di) allDi.add(di)
+      }
+    }
+  }
+
+  for (const [id, keys] of episodeDbKeys) {
+    let unmatched = 0
+    for (const key of keys) {
+      if (!allDi.has(key)) unmatched++
+    }
+    counts.set(id, unmatched)
+  }
+
+  return counts
+}
+
+export async function fetchFuzzyVocabMatches(query: string): Promise<RawVocabRow[]> {
+  await guardAdmin()
+  const q = query.trim()
+  if (!q) return []
+
+  const normalized = normalizeArabicForMatch(q)
+  if (!normalized) return []
+
+  const { data, error } = await serviceClient
+    .from("app_vocab")
+    .select(
+      "word_id, word_ar, word_di, word_tr, root, level, theme, forms, definitions, examples, created_at"
+    )
+    .or(`word_ar.ilike.%${normalized}%,word_di.ilike.%${normalized}%`)
+    .limit(20)
+
+  if (error) {
+    console.error("[fetchFuzzyVocabMatches] error:", error.message)
+    throw new Error(error.message)
+  }
+
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    word_id: Number(row.word_id),
+    word_ar: String(row.word_ar ?? ""),
+    word_di: String(row.word_di ?? ""),
+    word_tr: String(row.word_tr ?? ""),
+    root: row.root ? String(row.root) : null,
+    level: String(row.level ?? ""),
+    theme: String(row.theme ?? ""),
+    forms: row.forms,
+    definitions: row.definitions,
+    examples: row.examples,
+    created_at: row.created_at ? String(row.created_at) : null,
+  }))
+}
+
 export async function fetchEpisodesForShowAdmin(
   showId: string
 ): Promise<EpisodeRow[]> {
@@ -427,7 +388,11 @@ export async function fetchEpisodesForShowAdmin(
     throw new Error(error.message)
   }
 
-  return (data ?? []).map(mapEpisodeRow)
+  const counts = await computeUnmatchedCounts(data ?? [])
+  return (data ?? []).map((row) => ({
+    ...mapEpisodeRow(row),
+    unmatched_count: counts.get(String(row.id)) ?? 0,
+  }))
 }
 
 export async function fetchAllEpisodesForAdmin(): Promise<EpisodeRow[]> {
@@ -444,7 +409,11 @@ export async function fetchAllEpisodesForAdmin(): Promise<EpisodeRow[]> {
     throw new Error(error.message)
   }
 
-  return (data ?? []).map(mapEpisodeRow)
+  const counts = await computeUnmatchedCounts(data ?? [])
+  return (data ?? []).map((row) => ({
+    ...mapEpisodeRow(row),
+    unmatched_count: counts.get(String(row.id)) ?? 0,
+  }))
 }
 
 export async function fetchEpisodeForAdmin(
@@ -555,165 +524,8 @@ function mapEpisodeRow(row: Record<string, unknown>): EpisodeRow {
     youtube_short: Boolean(row.youtube_short),
     cover: toStringOrNull(row.cover),
     episode_number: Number(row.episode_number) || 0,
+    unmatched_count: 0,
   }
 }
 
-/* ── Duplicate detection ───────────────────────────────────────────── */
 
-export type DuplicateWord = {
-  word_id: number
-  word_ar: string
-  word_di: string
-  word_tr: string
-  gloss: string
-  level: string
-  theme: string
-  source: string | null
-}
-
-export type DuplicateGroup = {
-  key: string
-  words: DuplicateWord[]
-}
-
-function normalizeArabic(str: string): string {
-  return str
-    .normalize("NFKD")
-    .replace(/[\u064B-\u065F\u0670\u0640]/g, "")
-    .replace(/[\u0621\u0623\u0625\u0626]/g, "\u0627")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase()
-}
-
-export async function fetchVocabDuplicates(): Promise<{
-  exactAr: DuplicateGroup[]
-  exactDi: DuplicateGroup[]
-  byGloss: DuplicateGroup[]
-  byRoot: DuplicateGroup[]
-}> {
-  await guardAdmin()
-
-  const { data, error } = await serviceClient
-    .from("app_vocab")
-    .select("word_id, word_ar, word_di, word_tr, root, level, theme, source, definitions")
-
-  if (error) {
-    console.error("[fetchVocabDuplicates] error:", error.message)
-    throw new Error(error.message)
-  }
-
-  const rows = (data ?? []).map((row) => ({
-    word_id: Number(row.word_id),
-    word_ar: String(row.word_ar ?? ""),
-    word_di: String(row.word_di ?? ""),
-    word_tr: String(row.word_tr ?? ""),
-    root: row.root ? String(row.root) : null,
-    level: String(row.level ?? ""),
-    theme: String(row.theme ?? ""),
-    source: row.source ? String(row.source) : null,
-    gloss: primaryGloss(row.definitions),
-  }))
-
-  const groups = new Map<string, DuplicateWord[]>()
-  const exactArGroups: DuplicateGroup[] = []
-  const exactDiGroups: DuplicateGroup[] = []
-
-  // Exact duplicates by normalized plain Arabic
-  groups.clear()
-  for (const row of rows) {
-    const key = normalizeArabic(row.word_ar)
-    if (!key) continue
-    const list = groups.get(key) ?? []
-    list.push({
-      word_id: row.word_id,
-      word_ar: row.word_ar,
-      word_di: row.word_di,
-      word_tr: row.word_tr,
-      gloss: row.gloss,
-      level: row.level,
-      theme: row.theme,
-      source: row.source,
-    })
-    groups.set(key, list)
-  }
-  for (const [key, list] of groups) {
-    if (list.length > 1) exactArGroups.push({ key, words: list })
-  }
-
-  // Exact duplicates by diacritized Arabic (preserve diacritics and hamzas)
-  groups.clear()
-  for (const row of rows) {
-    const key = row.word_di
-      .normalize("NFC")
-      .replace(/\s+/g, " ")
-      .trim()
-      .toLowerCase()
-    if (!key) continue
-    const list = groups.get(key) ?? []
-    list.push({
-      word_id: row.word_id,
-      word_ar: row.word_ar,
-      word_di: row.word_di,
-      word_tr: row.word_tr,
-      gloss: row.gloss,
-      level: row.level,
-      theme: row.theme,
-      source: row.source,
-    })
-    groups.set(key, list)
-  }
-  for (const [key, list] of groups) {
-    if (list.length > 1) exactDiGroups.push({ key, words: list })
-  }
-
-  // Potential duplicates by primary English gloss
-  groups.clear()
-  for (const row of rows) {
-    const key = row.gloss.trim().toLowerCase()
-    if (!key || key.length < 3) continue
-    const list = groups.get(key) ?? []
-    list.push({
-      word_id: row.word_id,
-      word_ar: row.word_ar,
-      word_di: row.word_di,
-      word_tr: row.word_tr,
-      gloss: row.gloss,
-      level: row.level,
-      theme: row.theme,
-      source: row.source,
-    })
-    groups.set(key, list)
-  }
-  const byGloss: DuplicateGroup[] = []
-  for (const [key, list] of groups) {
-    if (list.length > 1) byGloss.push({ key, words: list })
-  }
-  byGloss.sort((a, b) => a.key.localeCompare(b.key))
-
-  // Potential duplicates by shared root
-  groups.clear()
-  for (const row of rows) {
-    if (!row.root) continue
-    const key = row.root.trim().toLowerCase()
-    const list = groups.get(key) ?? []
-    list.push({
-      word_id: row.word_id,
-      word_ar: row.word_ar,
-      word_di: row.word_di,
-      word_tr: row.word_tr,
-      gloss: row.gloss,
-      level: row.level,
-      theme: row.theme,
-      source: row.source,
-    })
-    groups.set(key, list)
-  }
-  const byRoot: DuplicateGroup[] = []
-  for (const [key, list] of groups) {
-    if (list.length > 1) byRoot.push({ key, words: list })
-  }
-  byRoot.sort((a, b) => a.key.localeCompare(b.key))
-
-  return { exactAr: exactArGroups, exactDi: exactDiGroups, byGloss, byRoot }
-}

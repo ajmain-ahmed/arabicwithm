@@ -43,6 +43,10 @@ export interface CartoonWordEntry {
   transliteration: string
   english: string
   cefr: string
+  pos?: string          // part of speech
+  root?: string         // root letters (ف-ع-ل style)
+  lemma?: string        // dictionary lemma (diacritized)
+  listed?: boolean      // whether the word appears in the episode vocab list
 }
 
 export interface ScriptBlock {
@@ -70,6 +74,29 @@ export interface GrammarPoint {
   example: string
 }
 
+/* ── New block-based transcript format stored in Supabase ── */
+export interface NewTranscriptToken {
+  CEFR: string
+  root: string | null
+  lemma: string
+  arabic: string
+  entry_type: 'word' | 'phrase'
+  transliteration: string
+  english?: string
+}
+
+export interface NewTranscriptBlock {
+  tokens: NewTranscriptToken[]
+  timestamp: string
+  arabicPlain: string
+  arabicDiacritic: string
+  translation: string
+}
+
+export type NewTranscript = NewTranscriptBlock[]
+
+export type TranscriptFormat = 'legacy' | 'new'
+
 export interface EpisodeFull extends EpisodeMeta {
   id: string
   show: string
@@ -77,9 +104,90 @@ export interface EpisodeFull extends EpisodeMeta {
   scriptBlocks: ScriptBlock[]
   vocabList: VocabListItem[]
   grammarPoints: GrammarPoint[]
+  /* ── raw transcript from Supabase (preserve on inline edits) ── */
+  transcript?: Record<string, unknown> | NewTranscript
+  /* ── which transcript format this episode uses ── */
+  transcriptFormat: TranscriptFormat
   /* ── lookup helpers built from script block word tables ── */
   wordMap: Record<string, CartoonWordEntry>   // plain Arabic → entry
   diacritizedMap: Record<string, CartoonWordEntry> // diacritized Arabic → entry
+}
+
+export function isNewTranscript(transcript: unknown): transcript is NewTranscript {
+  if (!Array.isArray(transcript) || transcript.length === 0) return false
+  const first = transcript[0]
+  return (
+    first != null &&
+    typeof first === 'object' &&
+    'tokens' in first &&
+    Array.isArray(first.tokens) &&
+    'timestamp' in first &&
+    'arabicDiacritic' in first &&
+    'translation' in first
+  )
+}
+
+function parseNewTimestamp(timestamp: string): number | null {
+  const parts = timestamp.split(':').map((p) => Number(p))
+  if (parts.length === 2 && parts.every((n) => !isNaN(n))) {
+    return parts[0] * 60 + parts[1]
+  }
+  if (parts.length === 3 && parts.every((n) => !isNaN(n))) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2]
+  }
+  return null
+}
+
+/* ── Normalize the new block-based transcript into legacy-style script blocks ── */
+export function normalizeNewTranscript(
+  blocks: NewTranscript
+): { scriptBlocks: ScriptBlock[]; vocabList: VocabListItem[] } {
+  const scriptBlocks: ScriptBlock[] = []
+  const seenVocab = new Map<string, VocabListItem>()
+  let vocabNumber = 1
+
+  for (const block of blocks) {
+    const words: CartoonWordEntry[] = []
+
+    for (const token of block.tokens) {
+      const plain = stripDiacritics(token.arabic)
+
+      // Build a lightweight vocab list keyed by lemma (dictionary form).
+      const lemma = token.lemma?.trim() || token.arabic.trim()
+      if (!seenVocab.has(lemma)) {
+        seenVocab.set(lemma, {
+          number: vocabNumber++,
+          arabic: lemma,
+          transliteration: '', // new-format tokens carry surface-form transliterations
+          english: token.english ?? '',
+          cefr: token.CEFR,
+        })
+      }
+
+      words.push({
+        db: token.arabic,
+        arabic: token.arabic,
+        plain,
+        transliteration: token.transliteration,
+        english: token.english ?? '',
+        cefr: token.CEFR,
+        root: token.root ?? undefined,
+        lemma: token.lemma?.trim() || token.arabic.trim(),
+      })
+    }
+
+    scriptBlocks.push({
+      timestamp: parseNewTimestamp(block.timestamp),
+      title: block.translation,
+      arabicDiacritic: block.arabicDiacritic,
+      arabicPlain: block.arabicPlain,
+      english: '',
+      words,
+      notes: [],
+    })
+  }
+
+  return { scriptBlocks, vocabList: Array.from(seenVocab.values()) }
 }
 
 // ── All shows ──────────────────────────────────────────────────────────────────
@@ -391,6 +499,7 @@ export function getEpisode(show: string, episode: string): EpisodeFull | null {
     scriptBlocks,
     vocabList,
     grammarPoints,
+    transcriptFormat: 'legacy',
     wordMap,
     diacritizedMap,
   }

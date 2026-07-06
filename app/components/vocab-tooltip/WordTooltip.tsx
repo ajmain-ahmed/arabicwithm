@@ -50,19 +50,7 @@ export default function WordTooltip({
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-        <Chip
-          label={entry.cefr}
-          size="small"
-          sx={{
-            background: LEVEL_COLORS[entry.cefr] ?? 'var(--forest, #0e2e1f)',
-            color: '#fff',
-            fontFamily: 'Jost, sans-serif',
-            fontWeight: 600,
-            fontSize: `calc(0.7rem * ${textScale})`,
-            letterSpacing: '0.04em',
-          }}
-        />
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
         {entry.pos && (
           <Chip
             label={entry.pos}
@@ -86,9 +74,10 @@ export default function WordTooltip({
           fontSize: `calc(0.95rem * ${textScale})`,
           color: 'var(--bark, #2c1a0e)',
           textAlign: 'center',
+          minHeight: `calc(0.95rem * ${textScale})`,
         }}
       >
-        {entry.english}
+        {entry.english || '—'}
       </Typography>
     </Box>
   )

@@ -24,7 +24,6 @@ import {
   Divider,
   useMediaQuery,
   Chip,
-  Drawer,
   Breadcrumbs,
   Popover,
 } from '@mui/material'
@@ -34,12 +33,13 @@ import { useRouter } from 'next/navigation'
 import { usePlayerStore } from '@/store/playerStore'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { stripDiacritics } from '@/app/lib/arabic'
-import { EpisodeFull, CartoonWordEntry, type ScriptBlock } from '@/app/lib/cartoons'
+import { EpisodeFull, CartoonWordEntry, type ScriptBlock, type NewTranscript, type NewTranscriptBlock } from '@/app/lib/cartoons'
 import { type ShowRow } from '@/app/actions/admin'
 import { HtmlTooltip, WordTooltip, LEVEL_COLORS } from '@/app/components/vocab-tooltip'
 import EpisodeTestDialog from './EpisodeTestDialog'
 import EpisodeEditDialog from '@/app/admin/components/EpisodeEditDialog'
-import ScriptBlockEditor from './ScriptBlockEditor'
+import DictionaryDetailsDialog from './DictionaryDetailsDialog'
+import ScriptBlockEditor, { formatTimestamp } from './ScriptBlockEditor'
 import { updateEpisode } from '@/app/actions/admin'
 
 // ─── Fallback — used before we measure the real navbar ────────────────────────
@@ -541,12 +541,16 @@ function ArabicLineText({
   diacritizedMap,
   textScale,
   showDiacritics,
+  onDictionaryDialogChange,
+  isAdmin,
 }: {
   text: string
   wordMap: Record<string, CartoonWordEntry>
   diacritizedMap: Record<string, CartoonWordEntry>
   textScale: number
   showDiacritics: boolean
+  onDictionaryDialogChange?: (open: boolean) => void
+  isAdmin?: boolean
 }) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
@@ -554,6 +558,9 @@ function ArabicLineText({
   const [activeEntry, setActiveEntry] = useState<CartoonWordEntry | null>(null)
   const [activePartIndex, setActivePartIndex] = useState<number | null>(null)
   const [open, setOpen] = useState(false)
+
+  const [detailsEntry, setDetailsEntry] = useState<CartoonWordEntry | null>(null)
+  const [detailsOpen, setDetailsOpen] = useState(false)
 
   const childRef = useRef<HTMLSpanElement | null>(null)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -591,6 +598,18 @@ function ArabicLineText({
     childRef.current = null
     lastVocabCloseAt = Date.now()
   }, [clearLeaveTimer])
+
+  const handleShowDetails = useCallback((entry: CartoonWordEntry) => {
+    setDetailsEntry(entry)
+    setDetailsOpen(true)
+    onDictionaryDialogChange?.(true)
+    handleClose()
+  }, [handleClose, onDictionaryDialogChange])
+
+  const handleDetailsClose = useCallback(() => {
+    setDetailsOpen(false)
+    onDictionaryDialogChange?.(false)
+  }, [onDictionaryDialogChange])
 
   useVocabOpenTracker(open)
 
@@ -640,6 +659,7 @@ function ArabicLineText({
     type Segment =
       | { type: 'text'; text: string }
       | { type: 'word'; text: string; entry: CartoonWordEntry; index: number }
+      | { type: 'unmatched-word'; text: string }
 
     const segs: Segment[] = []
     let i = 0
@@ -681,7 +701,11 @@ function ArabicLineText({
         wordIndex++
         i += matchedLen
       } else {
-        segs.push({ type: 'text', text: token.value })
+        if (token.type === 'word') {
+          segs.push({ type: 'unmatched-word', text: token.value })
+        } else {
+          segs.push({ type: 'text', text: token.value })
+        }
         i++
       }
     }
@@ -695,66 +719,49 @@ function ArabicLineText({
           return <span key={i}>{seg.text}</span>
         }
 
+        /* ── Unmatched Arabic word — highlight missing app_vocab db link ── */
+        if (seg.type === 'unmatched-word') {
+          return (
+            <span
+              key={i}
+              style={{
+                borderBottom: '2px dotted #c62828',
+                paddingBottom: showDiacritics ? '5px' : '1px',
+              }}
+            >
+              {seg.text}
+            </span>
+          )
+        }
+
         const { text: wordText, entry, index } = seg
         const isActive = activeEntry === entry && open && activePartIndex === index
 
-        /* ── Mobile: tap word → bottom sheet ── */
+        /* ── Mobile: tap word → details dialog ── */
         if (isMobile) {
           return (
-            <React.Fragment key={i}>
-              <span
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleOpen(entry, e.currentTarget, index)
-                }}
-                className="vocab-word"
-                style={{
-                  cursor: 'pointer',
-                  borderBottom: '2px dotted var(--gold)',
-                  paddingBottom: showDiacritics ? '5px' : '1px',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent'
-                }}
-              >
-                {wordText}
-              </span>
-
-              <Drawer
-                anchor="bottom"
-                open={isActive}
-                onClose={() => handleClose()}
-                slotProps={{
-                  paper: {
-                    sx: {
-                      borderRadius: '16px 16px 0 0',
-                      bgcolor: '#fff',
-                      boxShadow: '0 -8px 32px rgba(44,26,14,0.15)',
-                    },
-                  },
-                }}
-              >
-                <Box sx={{ p: 2, pt: 1.5, position: 'relative' }}>
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 4,
-                      bgcolor: 'rgba(122,110,101,0.25)',
-                      borderRadius: 2,
-                      mx: 'auto',
-                      mb: 1.5,
-                    }}
-                  />
-                  {activeEntry && (
-                    <WordTooltip entry={activeEntry} textScale={textScale} />
-                  )}
-                </Box>
-              </Drawer>
-            </React.Fragment>
+            <span
+              key={i}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleShowDetails(entry)
+              }}
+              className="vocab-word"
+              style={{
+                cursor: 'pointer',
+                borderBottom: '2px dotted var(--gold)',
+                paddingBottom: showDiacritics ? '5px' : '1px',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent'
+              }}
+            >
+              {wordText}
+            </span>
           )
         }
 
@@ -807,7 +814,10 @@ function ArabicLineText({
             }}
           >
             <span
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                handleShowDetails(entry)
+              }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
                 handleOpen(entry, e.currentTarget, index)
@@ -829,6 +839,17 @@ function ArabicLineText({
           </HtmlTooltip>
         )
       })}
+
+      <DictionaryDetailsDialog
+        key={detailsEntry ? `${detailsEntry.lemma}:${detailsEntry.root ?? ''}:${detailsEntry.arabic}` : 'closed'}
+        open={detailsOpen}
+        onClose={handleDetailsClose}
+        lemma={detailsEntry?.lemma}
+        root={detailsEntry?.root}
+        surfaceArabic={detailsEntry?.arabic}
+        showDiacritics={showDiacritics}
+        isAdmin={isAdmin}
+      />
     </>
   )
 }
@@ -858,6 +879,7 @@ export default function EpisodePage({
 
   const [testDialogOpen, setTestDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [dictionaryDialogOpen, setDictionaryDialogOpen] = useState(false)
   const [editingBlockIndex, setEditingBlockIndex] = useState<number | null>(null)
   const [savingBlock, setSavingBlock] = useState(false)
 
@@ -865,12 +887,60 @@ export default function EpisodePage({
     if (!isAdmin) return
     setSavingBlock(true)
     try {
-      const updatedTranscript = {
-        scriptBlocks: episode.scriptBlocks.map((b, i) => (i === index ? updatedBlock : b)),
-        vocabList: episode.vocabList,
-        grammarPoints: episode.grammarPoints,
+      if (episode.transcriptFormat === 'legacy') {
+        // Preserve every top-level field in the original transcript (slug, tags,
+        // youtubeId, description, youtubeShort, etc.) and only replace the one
+        // edited script block in the raw scriptBlocks array. This keeps app_vocab
+        // enrichment from leaking back into persisted data.
+        const rawTranscript = { ...(episode.transcript as Record<string, unknown> ?? {}) }
+        const rawBlocks = Array.isArray(rawTranscript.scriptBlocks)
+          ? (rawTranscript.scriptBlocks as Record<string, unknown>[])
+          : []
+        const updatedRawBlocks = rawBlocks.map((b, i) =>
+          i === index ? (updatedBlock as unknown as Record<string, unknown>) : b
+        )
+        await updateEpisode(episode.id, {
+          transcript: {
+            ...rawTranscript,
+            scriptBlocks: updatedRawBlocks,
+          },
+        })
+      } else {
+        // New block-based format: map the edited ScriptBlock back to a
+        // NewTranscriptBlock, preserving original token metadata (root, lemma,
+        // entry_type, CEFR) and overwriting user-editable fields.
+        const rawBlocks = Array.isArray(episode.transcript)
+          ? (episode.transcript as NewTranscript)
+          : []
+        const originalBlock = rawBlocks[index]
+        const originalTokens = Array.isArray(originalBlock?.tokens)
+          ? originalBlock.tokens
+          : []
+
+        const updatedRawBlock: NewTranscriptBlock = {
+          timestamp: formatTimestamp(updatedBlock.timestamp),
+          arabicDiacritic: updatedBlock.arabicDiacritic,
+          arabicPlain: updatedBlock.arabicPlain,
+          translation: updatedBlock.title,
+          tokens: updatedBlock.words.map((w, wordIdx) => {
+            const original = originalTokens[wordIdx]
+            return {
+              CEFR: w.cefr || (original?.CEFR ?? 'A1'),
+              root: original?.root ?? null,
+              lemma: original?.lemma?.trim() || w.arabic.trim(),
+              arabic: w.arabic,
+              entry_type: original?.entry_type ?? 'word',
+              transliteration: w.transliteration,
+              english: w.english,
+            }
+          }),
+        }
+
+        const updatedRawBlocks = rawBlocks.map((b, i) => (i === index ? updatedRawBlock : b))
+        await updateEpisode(episode.id, {
+          transcript: updatedRawBlocks as unknown as Record<string, unknown>,
+        })
       }
-      await updateEpisode(episode.id, { transcript: updatedTranscript })
       setEditingBlockIndex(null)
       router.refresh()
     } finally {
@@ -1517,10 +1587,24 @@ export default function EpisodePage({
                       const isActive = activeIndex === i
                       const isLast = i === episode.scriptBlocks.length - 1
                       if (editingBlockIndex === i) {
+                        // For legacy format, edit the raw script block so we don't
+                        // overwrite the transcript with app_vocab-enriched values.
+                        // For the new block-based format, the normalized block maps
+                        // 1:1 to a raw block, so handleBlockSave converts it back.
+                        const rawBlock =
+                          episode.transcriptFormat === 'legacy'
+                            ? (() => {
+                                const legacyTranscript = episode.transcript as Record<string, unknown>
+                                const rawBlocks = Array.isArray(legacyTranscript.scriptBlocks)
+                                  ? (legacyTranscript.scriptBlocks as ScriptBlock[])
+                                  : []
+                                return rawBlocks[i] ?? block
+                              })()
+                            : block
                         return (
                           <ScriptBlockEditor
                             key={`edit-${i}`}
-                            block={block}
+                            block={rawBlock}
                             onSave={(updated) => handleBlockSave(i, updated)}
                             onCancel={() => setEditingBlockIndex(null)}
                             disabled={savingBlock}
@@ -1534,6 +1618,7 @@ export default function EpisodePage({
                             className={`script-block ${isActive ? 'active' : ''}`}
                             onClick={(e) => {
                               if (openVocabCount > 0) return
+                              if (dictionaryDialogOpen) return
                               if (Date.now() - lastVocabCloseAt < 120) return
                               if ((e.target as HTMLElement).closest('.vocab-word')) return
                               if ((e.target as HTMLElement).closest('.edit-block-btn')) return
@@ -1587,6 +1672,8 @@ export default function EpisodePage({
                                 wordMap={episode.wordMap}
                                 diacritizedMap={episode.diacritizedMap}
                                 showDiacritics={showDiacritics}
+                                onDictionaryDialogChange={setDictionaryDialogOpen}
+                                isAdmin={isAdmin}
                               />
                             </Typography>
 

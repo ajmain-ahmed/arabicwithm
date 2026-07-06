@@ -14,7 +14,7 @@ interface ScriptBlockEditorProps {
 
 const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
-function formatTimestamp(seconds: number | null): string {
+export function formatTimestamp(seconds: number | null): string {
   if (seconds == null) return "0:00"
   const m = Math.floor(seconds / 60)
   const s = Math.floor(seconds % 60)

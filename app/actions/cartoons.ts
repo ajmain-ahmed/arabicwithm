@@ -8,6 +8,8 @@ import {
   type EpisodeMeta,
   type EpisodeFull,
   type CartoonWordEntry,
+  isNewTranscript,
+  normalizeNewTranscript,
 } from "@/app/lib/cartoons"
 import { type ShowRow } from "@/app/actions/admin"
 import { stripDiacritics } from "@/app/lib/arabic"
@@ -206,40 +208,99 @@ export async function fetchEpisodeForPublic(
   }
 
   const meta = mapEpisodeRow(data)
-  const transcript = (data.transcript ?? {}) as Record<string, unknown>
-  const scriptBlocks = Array.isArray(transcript.scriptBlocks) ? transcript.scriptBlocks : []
-  const vocabList = Array.isArray(transcript.vocabList) ? transcript.vocabList : []
-  const grammarPoints = Array.isArray(transcript.grammarPoints) ? transcript.grammarPoints : []
+  const transcript = data.transcript ?? {}
+
+  const isNew = isNewTranscript(transcript)
+
+  let rawScriptBlocks: Record<string, unknown>[] = []
+  let vocabList: Record<string, unknown>[] = []
+  let grammarPoints: Record<string, unknown>[] = []
+
+  if (isNew) {
+    const normalized = normalizeNewTranscript(transcript)
+    rawScriptBlocks = normalized.scriptBlocks as unknown as Record<string, unknown>[]
+    vocabList = normalized.vocabList as unknown as Record<string, unknown>[]
+    grammarPoints = []
+  } else {
+    const legacyTranscript = transcript as Record<string, unknown>
+    rawScriptBlocks = Array.isArray(legacyTranscript.scriptBlocks)
+      ? legacyTranscript.scriptBlocks
+      : []
+    vocabList = Array.isArray(legacyTranscript.vocabList)
+      ? legacyTranscript.vocabList
+      : []
+    grammarPoints = Array.isArray(legacyTranscript.grammarPoints)
+      ? legacyTranscript.grammarPoints
+      : []
+  }
 
   const wordMap: Record<string, CartoonWordEntry> = {}
   const diacritizedMap: Record<string, CartoonWordEntry> = {}
 
-  for (const block of scriptBlocks) {
-    const words = (block as Record<string, unknown>).words
-    if (!Array.isArray(words)) continue
-    for (const w of words) {
-      const word = w as Record<string, string>
-      const entry: CartoonWordEntry = {
-        db: word.db ?? undefined,
-        arabic: word.arabic ?? "",
-        plain: word.plain ?? stripDiacritics(word.arabic ?? ""),
-        transliteration: word.transliteration ?? "",
-        english: word.english ?? "",
-        cefr: word.cefr ?? "",
-      }
-      if (entry.plain) wordMap[entry.plain] = entry
-      if (entry.arabic) diacritizedMap[entry.arabic] = entry
+  const enrichWord = (w: Record<string, unknown>): CartoonWordEntry => {
+    const db = typeof w.db === 'string' ? w.db.trim() : ''
+    const arabic = String(w.arabic ?? '')
+    const plain = String(w.plain ?? stripDiacritics(arabic))
+    const lemma = typeof w.lemma === 'string' ? w.lemma.trim() : ''
+    return {
+      db: db || undefined,
+      arabic,
+      plain,
+      transliteration: String(w.transliteration ?? ''),
+      english: String(w.english ?? ''),
+      cefr: String(w.cefr ?? ''),
+      pos: typeof w.pos === 'string' ? w.pos : undefined,
+      root: typeof w.root === 'string' ? w.root : undefined,
+      lemma: lemma || arabic,
     }
   }
+
+  const scriptBlocks: EpisodeFull["scriptBlocks"] = []
+  for (const block of rawScriptBlocks) {
+    const b = block as Record<string, unknown>
+    const enrichedWords: CartoonWordEntry[] = []
+    const words = b.words
+    if (Array.isArray(words)) {
+      for (const w of words) {
+        const enriched = enrichWord(w as Record<string, unknown>)
+        enrichedWords.push(enriched)
+        if (enriched.plain) wordMap[enriched.plain] = enriched
+        if (enriched.arabic) diacritizedMap[enriched.arabic] = enriched
+      }
+    }
+
+    scriptBlocks.push({
+      timestamp: b.timestamp == null ? null : Number(b.timestamp),
+      title: String(b.title ?? ''),
+      arabicDiacritic: String(b.arabicDiacritic ?? ''),
+      arabicPlain: String(b.arabicPlain ?? ''),
+      english: String(b.english ?? ''),
+      words: enrichedWords,
+      notes: Array.isArray(b.notes)
+        ? b.notes.map((n) => String(n ?? '')).filter(Boolean)
+        : [],
+    })
+  }
+
+  // Vocab list is already populated from the transcript; no external lookup needed.
+  const enrichedVocabList: EpisodeFull["vocabList"] = vocabList.map((row) => ({
+    number: Number(row.number ?? 0),
+    arabic: String(row.arabic ?? ''),
+    transliteration: String(row.transliteration ?? ''),
+    english: String(row.english ?? ''),
+    cefr: String(row.cefr ?? ''),
+  }))
 
   return {
     ...meta,
     id: String(data.id),
     show: String(show.slug),
     show_id: String(show.id),
-    scriptBlocks: scriptBlocks as EpisodeFull["scriptBlocks"],
-    vocabList: vocabList as EpisodeFull["vocabList"],
-    grammarPoints: grammarPoints as EpisodeFull["grammarPoints"],
+    scriptBlocks,
+    vocabList: enrichedVocabList,
+    grammarPoints: grammarPoints as unknown as EpisodeFull["grammarPoints"],
+    transcript,
+    transcriptFormat: isNew ? 'new' : 'legacy',
     wordMap,
     diacritizedMap,
   }

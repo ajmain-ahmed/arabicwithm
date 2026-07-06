@@ -229,13 +229,27 @@ SIWAR=<api-key>
   - `definitions` — JSONB array of meanings (e.g. `[{english, simple_ar, simple_ar_tr, direct_english}]`)
   - `examples` — JSONB array of sentences (e.g. `[{ar, en, tr, ar_di, interactive?}]`)
   - `forms` — JSONB array of POS + conjugations (e.g. `[{type: "verb", conjugations: {past: {con_ar, con_di, con_en, con_tr, type}}}]`)
+- `app_vocab` — Word data used by the cartoon episode reader and admin vocabulary tools:
+  - `word_id` (bigint, primary key)
+  - `word_ar` (plain Arabic)
+  - `word_di` (diacritic form)
+  - `word_tr` (transliteration)
+  - `root` (optional string)
+  - `level` (CEFR string)
+  - `theme` (optional theme name)
+  - `source` (optional source tag)
+  - `definitions` — JSONB array of meanings (e.g. `[{english, simple_ar, simple_ar_tr, direct_english}]`)
+  - `examples` — JSONB array of sentences (e.g. `[{ar, en, tr, ar_di}]`)
+  - `forms` — JSONB array of POS tags (e.g. `[{type: "noun"}]`)
+- `shows` — Cartoon/show metadata.
+- `episodes` — Episode metadata and transcript (the `transcript` JSONB contains `scriptBlocks`, `vocabList`, and `grammarPoints`).
 - (The `progress`, `review_logs`, and `daily_sessions` tables have been removed.)
 
 ### Server Actions pattern
 All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use server"`. They use:
 - `createClient` from `@supabase/supabase-js` with the service key for DB queries.
 - `createServerClient` from `@supabase/ssr` with cookie access for auth verification.
-- Direct queries against the `vocabulary` table. `study.ts` uses one RPC call (`get_vocab_level_theme_stats`). No other RPC calls are used.
+- Direct queries against the `vocabulary`, `app_vocab`, `shows`, and `episodes` tables. `study.ts` uses one RPC call (`get_vocab_level_theme_stats`). No other RPC calls are used.
 - `checkRateLimit` from `@/app/lib/rateLimit` guards mutation endpoints with an in-memory rate limiter.
 
 ### Client-side caching
@@ -245,7 +259,7 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 
 ### Arabic Text Processing (`app/lib/arabic.ts`)
 - `stripDiacritics(token)` — removes harakat/tatweel for matching.
-- `normalizeArabicToken(token)` — strips diacritics, definite articles (`ال`, `وال`, `بال`, etc.), single-letter proclitics (when the remaining stem is ≥ 4 chars), and common enclitic pronoun suffixes. Used for fuzzy vocabulary lookup in cartoon scripts, news articles, and books.
+- `normalizeArabicToken(token)` — strips diacritics, definite articles (`ال`, `وال`, `بال`, etc.), single-letter proclitics (when the remaining stem is ≥ 4 chars), and common enclitic pronoun suffixes. Used for fuzzy vocabulary lookup in news articles and books. Cartoon tooltips now use explicit `db` keys stored in the episode transcript to look up `app_vocab` rows.
 
 ### JSONB Parsing (`app/actions/vocab.ts`)
 - `getPos(formsJson)` — extracts POS from `forms[0].type`.
@@ -254,10 +268,10 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 
 
 ### Cartoon Content Pipeline
-1. Show metadata is read from `content/cartoons/{show}/_meta.json`.
-2. Episodes are `.md` files parsed with `gray-matter`. Frontmatter contains `youtubeId`, `youtubeShort`, `level`, `episode`, `tags`, `description`.
-3. The script body contains timestamps, Arabic (diacritic + plain), and English lines.
-4. At request time, Arabic tokens are extracted from the markdown and matched against the `vocabulary` table to build an inline `vocabMap` for tooltip lookup.
+1. Show metadata is read from the `shows` table in Supabase (cover paths are normalised against `public/cartoons/`).
+2. Episode metadata and transcripts are stored in the `episodes` table. The `transcript` JSONB column contains `scriptBlocks`, `vocabList`, and `grammarPoints`.
+3. Each script block has a timestamp, title, Arabic diacritic/plain lines, notes, and a `words` array.
+4. Each word in a script block has a `db` key. At request time, `fetchEpisodeForPublic` collects all `db` keys, looks them up in the `app_vocab` table (matching either `word_di` or `word_ar`), and enriches the word entries with English definition, transliteration, CEFR level, and part of speech. The resulting `wordMap` and `diacritizedMap` power the inline hover tooltips.
 
 ### News Content Pipeline
 1. Static articles are `.md` files in `content/news/articles/{level}/{slug}.md`.

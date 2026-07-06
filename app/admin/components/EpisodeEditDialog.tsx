@@ -30,6 +30,7 @@ import {
   updateEpisode,
   deleteEpisode,
   fetchVocabMatchesForWords,
+  fetchFuzzyVocabMatches,
   type ShowRow,
   type EpisodeWithTranscript,
   type EpisodeInput,
@@ -84,6 +85,378 @@ function primaryGloss(definitions: unknown): string {
   return first?.directEnglish ?? first?.english ?? ""
 }
 
+function transcriptWordKey(word: TranscriptWord): string {
+  return word.db?.trim() || word.arabic?.trim() || word.plain?.trim() || ""
+}
+
+function TranscriptWordRow({
+  word,
+  match,
+  onCreate,
+  onEdit,
+}: {
+  word: TranscriptWord
+  match?: RawVocabRow
+  onCreate: (word: TranscriptWord) => void
+  onEdit: (row: RawVocabRow) => void
+}) {
+  return (
+    <Box
+      sx={{
+        p: 1.5,
+        borderRadius: "12px",
+        border: "1px solid rgba(122,110,101,0.15)",
+        bgcolor: "#fafafa",
+        display: "flex",
+        flexDirection: { xs: "column", sm: "row" },
+        gap: 2,
+        alignItems: { xs: "flex-start", sm: "center" },
+        justifyContent: "space-between",
+      }}
+    >
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          sx={{
+            fontFamily: "'EB Garamond', serif",
+            fontSize: "1.15rem",
+            color: "#2c1a0e",
+            direction: "rtl",
+            cursor: "pointer",
+            display: "inline-block",
+            "&:hover": { color: "#b8860b" },
+          }}
+          onClick={() => (match ? onEdit(match) : onCreate(word))}
+          title={match ? "Edit vocab entry" : "Create vocab entry"}
+        >
+          {word.arabic || word.db || word.plain || "—"}
+        </Typography>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.5 }}>
+          {word.plain && word.plain !== word.arabic && (
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65" }}>
+              plain: {word.plain}
+            </Typography>
+          )}
+          {word.english && (
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65" }}>
+              en: {word.english}
+            </Typography>
+          )}
+          {word.transliteration && (
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65", fontStyle: "italic" }}>
+              {word.transliteration}
+            </Typography>
+          )}
+          {word.cefr && (
+            <Chip label={word.cefr} size="small" sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.7rem", height: 20 }} />
+          )}
+        </Box>
+      </Box>
+
+      <Box
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          borderLeft: { xs: "none", sm: "1px solid rgba(122,110,101,0.12)" },
+          pl: { xs: 0, sm: 2 },
+          pt: { xs: 1, sm: 0 },
+          borderTop: { xs: "1px solid rgba(122,110,101,0.12)", sm: "none" },
+        }}
+      >
+        {match ? (
+          <>
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.85rem", color: "#2c1a0e" }}>
+              <strong>DB:</strong> {match.word_di || match.word_ar}
+            </Typography>
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65" }}>
+              {match.level} · {match.theme}
+              {match.root ? ` · root: ${match.root}` : ""}
+            </Typography>
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65" }}>
+              gloss: {primaryGloss(match.definitions) || "—"}
+            </Typography>
+          </>
+        ) : (
+          <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.85rem", color: "#c0392b" }}>
+            Not in vocabulary DB
+          </Typography>
+        )}
+      </Box>
+
+      <Box sx={{ flexShrink: 0 }}>
+        <Button
+          size="small"
+          startIcon={match ? <Edit sx={{ fontSize: "0.9rem" }} /> : <Add sx={{ fontSize: "0.9rem" }} />}
+          onClick={() => (match ? onEdit(match) : onCreate(word))}
+          sx={{
+            textTransform: "none",
+            fontFamily: "Jost, sans-serif",
+            fontWeight: 600,
+            fontSize: "0.8rem",
+            color: "#2c1a0e",
+            borderRadius: "8px",
+            border: "1px solid rgba(122,110,101,0.25)",
+            px: 1.5,
+          }}
+        >
+          {match ? "Edit vocab" : "Create vocab"}
+        </Button>
+      </Box>
+    </Box>
+  )
+}
+
+function UnmatchedWordRow({
+  word,
+  dbValue,
+  occurrences,
+  onUpdateDb,
+  onCreate,
+  onEdit,
+}: {
+  word: TranscriptWord
+  dbValue: string
+  occurrences: number
+  onUpdateDb: (newDb: string) => Promise<void>
+  onCreate: () => void
+  onEdit: (row: RawVocabRow) => void
+}) {
+  const [editValue, setEditValue] = useState(dbValue)
+  const [suggestions, setSuggestions] = useState<RawVocabRow[]>([])
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    const query = dbValue.trim()
+    if (!query) {
+      setSuggestions([])
+      return
+    }
+
+    setLoading(true)
+    fetchFuzzyVocabMatches(query)
+      .then((rows) => {
+        if (!cancelled) setSuggestions(rows)
+      })
+      .catch(() => {
+        if (!cancelled) setSuggestions([])
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [dbValue])
+
+  const handleApply = async (newDb: string) => {
+    setSaving(true)
+    try {
+      await onUpdateDb(newDb)
+      setEditValue(newDb)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Box
+      sx={{
+        p: 1.5,
+        borderRadius: "12px",
+        border: "1px solid rgba(192,57,43,0.2)",
+        bgcolor: "#fffbfb",
+        display: "flex",
+        flexDirection: { xs: "column", sm: "row" },
+        gap: 2,
+        alignItems: { xs: "flex-start", sm: "flex-start" },
+      }}
+    >
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+          <Typography
+            sx={{
+              fontFamily: "'EB Garamond', serif",
+              fontSize: "1.15rem",
+              color: "#2c1a0e",
+              direction: "rtl",
+              display: "inline-block",
+            }}
+          >
+            {word.arabic || dbValue || "—"}
+          </Typography>
+          {occurrences > 1 && (
+            <Chip label={`${occurrences}×`} size="small" sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.7rem", height: 20 }} />
+          )}
+        </Box>
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.5 }}>
+          {word.plain && word.plain !== word.arabic && (
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65" }}>
+              plain: {word.plain}
+            </Typography>
+          )}
+          {word.english && (
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65" }}>
+              en: {word.english}
+            </Typography>
+          )}
+          {word.transliteration && (
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65", fontStyle: "italic" }}>
+              {word.transliteration}
+            </Typography>
+          )}
+        </Box>
+      </Box>
+
+      <Box sx={{ flex: 1.5, minWidth: 0 }}>
+        <AdminTextField
+          label="DB lookup key (word_di)"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          fullWidth
+          size="small"
+          disabled={saving}
+          sx={{ mb: 1 }}
+        />
+        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={saving || editValue === dbValue}
+            onClick={() => handleApply(editValue)}
+            sx={{
+              textTransform: "none",
+              fontFamily: "Jost, sans-serif",
+              fontWeight: 600,
+              fontSize: "0.75rem",
+              borderRadius: "8px",
+              borderColor: "rgba(122,110,101,0.3)",
+              color: "#2c1a0e",
+            }}
+          >
+            {saving ? "Saving…" : "Update db"}
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<Add sx={{ fontSize: "0.8rem" }} />}
+            onClick={onCreate}
+            sx={{
+              textTransform: "none",
+              fontFamily: "Jost, sans-serif",
+              fontWeight: 600,
+              fontSize: "0.75rem",
+              borderRadius: "8px",
+              borderColor: "rgba(122,110,101,0.3)",
+              color: "#2c1a0e",
+            }}
+          >
+            Create vocab
+          </Button>
+        </Box>
+
+        {loading && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1.5 }}>
+            <CircularProgress size={16} sx={{ color: "#b8860b" }} />
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.75rem", color: "#7a6e65" }}>
+              Looking for similar entries…
+            </Typography>
+          </Box>
+        )}
+
+        {!loading && suggestions.length > 0 && (
+          <Box sx={{ mt: 1.5 }}>
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.75rem", color: "#7a6e65", mb: 0.75 }}>
+              Suggested matches
+            </Typography>
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+              {suggestions.map((s) => (
+                <Paper
+                  key={s.word_id}
+                  variant="outlined"
+                  sx={{
+                    p: 1,
+                    borderRadius: "8px",
+                    bgcolor: "#fafafa",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 1,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontFamily: "'EB Garamond', serif",
+                        fontSize: "1rem",
+                        color: "#2c1a0e",
+                        direction: "rtl",
+                      }}
+                    >
+                      {s.word_di || s.word_ar}
+                    </Typography>
+                    <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.75rem", color: "#7a6e65" }}>
+                      {s.level} · {s.theme}
+                      {s.root ? ` · root: ${s.root}` : ""}
+                    </Typography>
+                    <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.75rem", color: "#7a6e65" }}>
+                      gloss: {primaryGloss(s.definitions) || "—"}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex", gap: 0.75 }}>
+                    <Button
+                      size="small"
+                      onClick={() => handleApply(s.word_di || s.word_ar)}
+                      disabled={saving}
+                      sx={{
+                        textTransform: "none",
+                        fontFamily: "Jost, sans-serif",
+                        fontWeight: 600,
+                        fontSize: "0.7rem",
+                        borderRadius: "6px",
+                        bgcolor: "#b8860b",
+                        color: "#fff",
+                        px: 1,
+                        "&:hover": { bgcolor: "#9a6f0a" },
+                      }}
+                    >
+                      Apply
+                    </Button>
+                    <Button
+                      size="small"
+                      onClick={() => onEdit(s)}
+                      sx={{
+                        textTransform: "none",
+                        fontFamily: "Jost, sans-serif",
+                        fontWeight: 600,
+                        fontSize: "0.7rem",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(122,110,101,0.25)",
+                        color: "#2c1a0e",
+                        px: 1,
+                      }}
+                    >
+                      Edit
+                    </Button>
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+          </Box>
+        )}
+
+        {!loading && suggestions.length === 0 && (
+          <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.75rem", color: "#9e8a7a", mt: 1 }}>
+            No similar vocabulary entries found.
+          </Typography>
+        )}
+      </Box>
+    </Box>
+  )
+}
+
 export default function EpisodeEditDialog({
   open,
   onClose,
@@ -114,6 +487,7 @@ export default function EpisodeEditDialog({
   const [wordsLoading, setWordsLoading] = useState(false)
   const [wordsError, setWordsError] = useState<string | null>(null)
   const [wordMatches, setWordMatches] = useState<Record<string, RawVocabRow>>({})
+  const [diMatchedKeys, setDiMatchedKeys] = useState<Set<string>>(new Set())
   const [vocabDialogOpen, setVocabDialogOpen] = useState(false)
   const [vocabWordId, setVocabWordId] = useState<number | null>(null)
   const [vocabInitialData, setVocabInitialData] = useState<Partial<RawVocabRow> | undefined>()
@@ -126,6 +500,7 @@ export default function EpisodeEditDialog({
     setError(null)
     setWordsError(null)
     setWordMatches({})
+    setDiMatchedKeys(new Set())
     setShowId(initialShowId ?? "")
 
     if (isNew) {
@@ -228,7 +603,7 @@ export default function EpisodeEditDialog({
   }
 
   useEffect(() => {
-    if (!open || tab !== 2 || scriptBlocks.length === 0) return
+    if (!open || (tab !== 2 && tab !== 3) || scriptBlocks.length === 0) return
 
     const keys: { di?: string; plain?: string }[] = []
     for (const block of scriptBlocks) {
@@ -247,7 +622,14 @@ export default function EpisodeEditDialog({
     setWordsLoading(true)
     setWordsError(null)
     fetchVocabMatchesForWords(keys)
-      .then((matches) => setWordMatches(matches))
+      .then((matches) => {
+        setWordMatches(matches)
+        const diKeys = new Set<string>()
+        for (const [key, match] of Object.entries(matches)) {
+          if (match.word_di === key) diKeys.add(key)
+        }
+        setDiMatchedKeys(diKeys)
+      })
       .catch((e: unknown) => setWordsError(errorMessage(e) ?? "Failed to load word matches"))
       .finally(() => setWordsLoading(false))
   }, [open, tab, scriptBlocks])
@@ -305,6 +687,47 @@ export default function EpisodeEditDialog({
     }
   }
 
+  const handleUpdateDb = async (occurrences: { blockIdx: number; wordIdx: number }[], newDb: string) => {
+    if (!episodeId || occurrences.length === 0) return
+    try {
+      const obj = JSON.parse(transcriptJson) as Record<string, unknown>
+      const blocks = Array.isArray(obj.scriptBlocks) ? [...obj.scriptBlocks] : []
+      for (const { blockIdx, wordIdx } of occurrences) {
+        const block = { ...(blocks[blockIdx] as Record<string, unknown>) }
+        const words = Array.isArray(block.words) ? [...block.words] : []
+        const word = { ...(words[wordIdx] as Record<string, unknown>) }
+        word.db = newDb
+        words[wordIdx] = word
+        block.words = words
+        blocks[blockIdx] = block
+      }
+      obj.scriptBlocks = blocks
+      setTranscriptJson(JSON.stringify(obj, null, 2))
+      await updateEpisode(episodeId, { transcript: obj })
+
+      const refreshedKeys: { di?: string; plain?: string }[] = []
+      for (const b of blocks) {
+        const ws = (b as Record<string, unknown>).words
+        if (!Array.isArray(ws)) continue
+        for (const w of ws) {
+          const di = (w as TranscriptWord).db?.trim() || (w as TranscriptWord).arabic?.trim()
+          const plain = (w as TranscriptWord).plain?.trim()
+          if (di || plain) refreshedKeys.push({ di, plain })
+        }
+      }
+      const matches = await fetchVocabMatchesForWords(refreshedKeys)
+      setWordMatches(matches)
+      const diKeys = new Set<string>()
+      for (const [key, match] of Object.entries(matches)) {
+        if (match.word_di === key) diKeys.add(key)
+      }
+      setDiMatchedKeys(diKeys)
+    } catch (e: unknown) {
+      setWordsError(errorMessage(e) ?? "Failed to update db key")
+      throw e
+    }
+  }
+
   const openEditVocab = (row: RawVocabRow) => {
     setVocabWordId(row.word_id)
     setVocabInitialData(undefined)
@@ -320,9 +743,6 @@ export default function EpisodeEditDialog({
     })
     setVocabDialogOpen(true)
   }
-
-  const wordKey = (word: TranscriptWord) =>
-    word.db?.trim() || word.arabic?.trim() || word.plain?.trim() || ""
 
   return (
     <>
@@ -386,6 +806,7 @@ export default function EpisodeEditDialog({
                 <Tab label="Details" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600 }} />
                 <Tab label="Transcript JSON" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600 }} />
                 <Tab label="Words" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600 }} />
+                <Tab label="Unmatched Words" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600 }} />
                 <Tab label="Grammar" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600 }} />
               </Tabs>
 
@@ -489,113 +910,16 @@ export default function EpisodeEditDialog({
                             </Typography>
                             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                               {words.map((word, wordIdx) => {
-                                const key = wordKey(word)
+                                const key = transcriptWordKey(word)
                                 const match = key ? wordMatches[key] : undefined
                                 return (
-                                  <Box
+                                  <TranscriptWordRow
                                     key={wordIdx}
-                                    sx={{
-                                      p: 1.5,
-                                      borderRadius: "12px",
-                                      border: "1px solid rgba(122,110,101,0.15)",
-                                      bgcolor: "#fafafa",
-                                      display: "flex",
-                                      flexDirection: { xs: "column", sm: "row" },
-                                      gap: 2,
-                                      alignItems: { xs: "flex-start", sm: "center" },
-                                      justifyContent: "space-between",
-                                    }}
-                                  >
-                                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                                      <Typography
-                                        sx={{
-                                          fontFamily: "'EB Garamond', serif",
-                                          fontSize: "1.15rem",
-                                          color: "#2c1a0e",
-                                          direction: "rtl",
-                                          cursor: "pointer",
-                                          display: "inline-block",
-                                          "&:hover": { color: "#b8860b" },
-                                        }}
-                                        onClick={() =>
-                                          match ? openEditVocab(match) : openCreateVocab(word)
-                                        }
-                                        title={match ? "Edit vocab entry" : "Create vocab entry"}
-                                      >
-                                        {word.arabic || word.db || word.plain || "—"}
-                                      </Typography>
-                                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.5 }}>
-                                        {word.plain && word.plain !== word.arabic && (
-                                          <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65" }}>
-                                            plain: {word.plain}
-                                          </Typography>
-                                        )}
-                                        {word.english && (
-                                          <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65" }}>
-                                            en: {word.english}
-                                          </Typography>
-                                        )}
-                                        {word.transliteration && (
-                                          <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65", fontStyle: "italic" }}>
-                                            {word.transliteration}
-                                          </Typography>
-                                        )}
-                                        {word.cefr && (
-                                          <Chip label={word.cefr} size="small" sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.7rem", height: 20 }} />
-                                        )}
-                                      </Box>
-                                    </Box>
-
-                                    <Box
-                                      sx={{
-                                        flex: 1,
-                                        minWidth: 0,
-                                        borderLeft: { xs: "none", sm: "1px solid rgba(122,110,101,0.12)" },
-                                        pl: { xs: 0, sm: 2 },
-                                        pt: { xs: 1, sm: 0 },
-                                        borderTop: { xs: "1px solid rgba(122,110,101,0.12)", sm: "none" },
-                                      }}
-                                    >
-                                      {match ? (
-                                        <>
-                                          <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.85rem", color: "#2c1a0e" }}>
-                                            <strong>DB:</strong> {match.word_di || match.word_ar}
-                                          </Typography>
-                                          <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65" }}>
-                                            {match.level} · {match.theme}
-                                            {match.root ? ` · root: ${match.root}` : ""}
-                                          </Typography>
-                                          <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65" }}>
-                                            gloss: {primaryGloss(match.definitions) || "—"}
-                                          </Typography>
-                                        </>
-                                      ) : (
-                                        <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.85rem", color: "#c0392b" }}>
-                                          Not in vocabulary DB
-                                        </Typography>
-                                      )}
-                                    </Box>
-
-                                    <Box sx={{ flexShrink: 0 }}>
-                                      <Button
-                                        size="small"
-                                        startIcon={match ? <Edit sx={{ fontSize: "0.9rem" }} /> : <Add sx={{ fontSize: "0.9rem" }} />}
-                                        onClick={() => (match ? openEditVocab(match) : openCreateVocab(word))}
-                                        sx={{
-                                          textTransform: "none",
-                                          fontFamily: "Jost, sans-serif",
-                                          fontWeight: 600,
-                                          fontSize: "0.8rem",
-                                          color: "#2c1a0e",
-                                          borderRadius: "8px",
-                                          border: "1px solid rgba(122,110,101,0.25)",
-                                          px: 1.5,
-                                        }}
-                                      >
-                                        {match ? "Edit vocab" : "Create vocab"}
-                                      </Button>
-                                    </Box>
-                                  </Box>
+                                    word={word}
+                                    match={match}
+                                    onCreate={openCreateVocab}
+                                    onEdit={openEditVocab}
+                                  />
                                 )
                               })}
                             </Box>
@@ -608,6 +932,78 @@ export default function EpisodeEditDialog({
               )}
 
               {tab === 3 && (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {!parsedTranscript ? (
+                    <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#c0392b" }}>
+                      Transcript JSON is invalid. Fix it on the Transcript JSON tab to view unmatched words.
+                    </Typography>
+                  ) : scriptBlocks.length === 0 ? (
+                    <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                      No script blocks found in this transcript.
+                    </Typography>
+                  ) : (
+                    <>
+                      {wordsError && (
+                        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#c0392b" }}>
+                          {wordsError}
+                        </Typography>
+                      )}
+                      {wordsLoading && (
+                        <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                          <CircularProgress size={28} sx={{ color: "#b8860b" }} />
+                        </Box>
+                      )}
+                      {(() => {
+                        type UnmatchedEntry = {
+                          key: string
+                          word: TranscriptWord
+                          occurrences: { blockIdx: number; wordIdx: number }[]
+                        }
+                        const entriesByKey = new Map<string, UnmatchedEntry>()
+                        for (let blockIdx = 0; blockIdx < scriptBlocks.length; blockIdx++) {
+                          const words = scriptBlocks[blockIdx].words ?? []
+                          for (let wordIdx = 0; wordIdx < words.length; wordIdx++) {
+                            const word = words[wordIdx]
+                            const db = word.db?.trim()
+                            if (!db || diMatchedKeys.has(db)) continue
+                            const existing = entriesByKey.get(db)
+                            if (existing) {
+                              existing.occurrences.push({ blockIdx, wordIdx })
+                            } else {
+                              entriesByKey.set(db, { key: db, word, occurrences: [{ blockIdx, wordIdx }] })
+                            }
+                          }
+                        }
+                        const entries = Array.from(entriesByKey.values())
+                        if (entries.length === 0) {
+                          return (
+                            <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                              No unmatched lookup keys found.
+                            </Typography>
+                          )
+                        }
+                        return (
+                          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                            {entries.map((entry) => (
+                              <UnmatchedWordRow
+                                key={entry.key}
+                                word={entry.word}
+                                dbValue={entry.key}
+                                occurrences={entry.occurrences.length}
+                                onUpdateDb={(newDb) => handleUpdateDb(entry.occurrences, newDb)}
+                                onCreate={() => openCreateVocab(entry.word)}
+                                onEdit={openEditVocab}
+                              />
+                            ))}
+                          </Box>
+                        )
+                      })()}
+                    </>
+                  )}
+                </Box>
+              )}
+
+              {tab === 4 && (
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                   {!parsedTranscript ? (
                     <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#c0392b" }}>
@@ -713,8 +1109,8 @@ export default function EpisodeEditDialog({
         wordId={vocabWordId}
         initialData={vocabInitialData}
         onSaved={() => {
-          // refresh matches if still on words tab
-          if (tab === 2) {
+          // refresh matches if still on words or unmatched tab
+          if (tab === 2 || tab === 3) {
             setWordsLoading(true)
             const keys: { di?: string; plain?: string }[] = []
             for (const block of scriptBlocks) {
@@ -725,7 +1121,14 @@ export default function EpisodeEditDialog({
               }
             }
             fetchVocabMatchesForWords(keys)
-              .then((matches) => setWordMatches(matches))
+              .then((matches) => {
+                setWordMatches(matches)
+                const diKeys = new Set<string>()
+                for (const [key, match] of Object.entries(matches)) {
+                  if (match.word_di === key) diKeys.add(key)
+                }
+                setDiMatchedKeys(diKeys)
+              })
               .catch((e: unknown) => setWordsError(errorMessage(e) ?? "Failed to refresh matches"))
               .finally(() => setWordsLoading(false))
           }

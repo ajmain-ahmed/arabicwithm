@@ -8,21 +8,19 @@ import {
   Box,
 } from "@mui/material"
 import {
-  MenuBook,
   SmartDisplay,
   VideoLibrary,
-  Home,
-  ContentCopy,
+  AccountTree,
+  AutoStories,
 } from "@mui/icons-material"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 const navItems = [
-  { label: "Dashboard", href: "/admin", icon: <Home /> },
-  { label: "Vocabulary", href: "/admin/vocabulary", icon: <MenuBook /> },
-  { label: "Duplicates", href: "/admin/duplicates", icon: <ContentCopy /> },
   { label: "Shows", href: "/admin/shows", icon: <SmartDisplay /> },
   { label: "Episodes", href: "/admin/episodes", icon: <VideoLibrary /> },
+  { label: "Pipeline", href: "/admin/pipeline", icon: <AccountTree /> },
+  { label: "Conjugations", href: "/admin/conjugations", icon: <AutoStories /> },
 ]
 
 export default function AdminNav() {

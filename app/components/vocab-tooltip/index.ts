@@ -10,4 +10,5 @@ export interface VocabEntry {
   english: string
   cefr: string
   pos?: string
+  root?: string
 }
