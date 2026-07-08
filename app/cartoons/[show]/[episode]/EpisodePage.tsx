@@ -3,6 +3,7 @@
 import React, {
   useState,
   useEffect,
+  useLayoutEffect,
   useRef,
   useCallback,
   useMemo,
@@ -26,9 +27,10 @@ import {
   Chip,
   Breadcrumbs,
   Popover,
+  SwipeableDrawer,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ArrowBack, Settings, Close, ExpandMore, ExpandLess, ChevronRight, Quiz, PictureInPictureAlt, Edit } from '@mui/icons-material'
+import { ArrowBack, Settings, Close, ExpandMore, ExpandLess, ChevronRight, Quiz, PictureInPictureAlt, Edit, OpenInFull } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { usePlayerStore } from '@/store/playerStore'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
@@ -74,7 +76,7 @@ const PAGE_CSS = `
     right: 0;
     z-index: 30;
     background: var(--cream);
-    padding: 4px 20px 12px;
+    padding: 4px 20px 0;
   }
   @media (min-width: 1200px) {
     #mobile-fixed-header { display: none; }
@@ -189,6 +191,12 @@ function MobileFixedHeader({
   useEffect(() => { setMounted(true) }, [])
 
   // Report height back to parent so <main> can pad itself correctly
+  useLayoutEffect(() => {
+    if (innerRef.current && onHeightChange) {
+      onHeightChange(innerRef.current.offsetHeight)
+    }
+  }, [mounted, onHeightChange])
+
   useEffect(() => {
     if (!innerRef.current || !onHeightChange) return
     const ro = new ResizeObserver(() => {
@@ -258,7 +266,7 @@ function MobileFixedHeader({
   const content = (
     <div id="mobile-fixed-header" ref={innerRef} style={{ top: `${top}px` }}>
       {/* Title row */}
-      <div style={{ display: 'flex', alignItems: 'center', position: 'relative', minHeight: 30, marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', position: 'relative', minHeight: 30, marginBottom: 4 }}>
         {/* Back button — left */}
         <button
           onClick={onBack}
@@ -341,7 +349,7 @@ function MobileFixedHeader({
             background: '#000',
             aspectRatio: isShort ? '9/16' : '16/9',
             maxHeight: maxVideoHeight,
-            boxShadow: '0 8px 32px rgba(44,26,14,0.18)',
+            boxShadow: '0 4px 16px rgba(44,26,14,0.15)',
             position: 'relative',
           }}
         >
@@ -562,6 +570,9 @@ function ArabicLineText({
   const [detailsEntry, setDetailsEntry] = useState<CartoonWordEntry | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
 
+  const [drawerEntry, setDrawerEntry] = useState<CartoonWordEntry | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
   const childRef = useRef<HTMLSpanElement | null>(null)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -610,6 +621,21 @@ function ArabicLineText({
     setDetailsOpen(false)
     onDictionaryDialogChange?.(false)
   }, [onDictionaryDialogChange])
+
+  const handleOpenDrawer = useCallback((entry: CartoonWordEntry) => {
+    setDrawerEntry(entry)
+    setDrawerOpen(true)
+  }, [])
+
+  const handleCloseDrawer = useCallback(() => {
+    setDrawerOpen(false)
+  }, [])
+
+  const handleExpandDrawer = useCallback(() => {
+    if (!drawerEntry) return
+    setDrawerOpen(false)
+    handleShowDetails(drawerEntry)
+  }, [drawerEntry, handleShowDetails])
 
   useVocabOpenTracker(open)
 
@@ -737,14 +763,14 @@ function ArabicLineText({
         const { text: wordText, entry, index } = seg
         const isActive = activeEntry === entry && open && activePartIndex === index
 
-        /* ── Mobile: tap word → details dialog ── */
+        /* ── Mobile: tap word → bottom-sheet summary ── */
         if (isMobile) {
           return (
             <span
               key={i}
               onClick={(e) => {
                 e.stopPropagation()
-                handleShowDetails(entry)
+                handleOpenDrawer(entry)
               }}
               className="vocab-word"
               style={{
@@ -839,6 +865,130 @@ function ArabicLineText({
           </HtmlTooltip>
         )
       })}
+
+      {/* Mobile bottom-sheet summary */}
+      <SwipeableDrawer
+        anchor="bottom"
+        open={drawerOpen}
+        onClose={handleCloseDrawer}
+        onOpen={() => {}}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '20px 20px 0 0',
+              bgcolor: 'var(--cream)',
+              maxHeight: '70vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            },
+          },
+        }}
+      >
+        {drawerEntry && (
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 1.5, pt: 1, pb: 0.5 }}>
+              <IconButton
+                onClick={handleExpandDrawer}
+                size="small"
+                sx={{ color: 'var(--muted)', '&:hover': { color: 'var(--gold)' } }}
+                aria-label="Open full dictionary"
+              >
+                <OpenInFull sx={{ fontSize: '1.3rem' }} />
+              </IconButton>
+            </Box>
+
+            <Box
+              sx={{
+                px: 3,
+                pb: 3.5,
+                pt: 0.5,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                gap: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: '"EB Garamond", Georgia, serif',
+                  fontSize: '2.1rem',
+                  fontWeight: 700,
+                  color: 'var(--bark)',
+                  direction: 'rtl',
+                  lineHeight: 1.25,
+                }}
+              >
+                {showDiacritics ? drawerEntry.arabic : drawerEntry.plain}
+              </Typography>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                {drawerEntry.cefr && (
+                  <Chip
+                    label={drawerEntry.cefr}
+                    size="small"
+                    sx={{
+                      bgcolor: LEVEL_COLORS[drawerEntry.cefr] ?? 'var(--forest)',
+                      color: '#fff',
+                      fontFamily: 'Jost, sans-serif',
+                      fontWeight: 700,
+                      fontSize: '0.78rem',
+                      letterSpacing: '0.04em',
+                    }}
+                  />
+                )}
+                {drawerEntry.pos && (
+                  <Chip
+                    label={drawerEntry.pos}
+                    size="small"
+                    sx={{
+                      bgcolor: 'rgba(44,26,14,0.08)',
+                      color: 'var(--bark)',
+                      fontFamily: 'Jost, sans-serif',
+                      fontWeight: 600,
+                      fontSize: '0.78rem',
+                      textTransform: 'capitalize',
+                    }}
+                  />
+                )}
+              </Box>
+
+              {drawerEntry.transliteration && (
+                <Typography
+                  sx={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: '1.1rem',
+                    color: 'var(--muted)',
+                    fontStyle: 'italic',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {drawerEntry.transliteration}
+                </Typography>
+              )}
+
+              {drawerEntry.english ? (
+                <Typography
+                  sx={{
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: '1.25rem',
+                    fontWeight: 600,
+                    color: 'var(--bark)',
+                    lineHeight: 1.45,
+                  }}
+                >
+                  {drawerEntry.english}
+                </Typography>
+              ) : (
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.05rem', color: 'var(--muted)' }}>
+                  No meaning available.
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        )}
+      </SwipeableDrawer>
 
       <DictionaryDetailsDialog
         key={detailsEntry ? `${detailsEntry.lemma}:${detailsEntry.root ?? ''}:${detailsEntry.arabic}` : 'closed'}
@@ -965,7 +1115,7 @@ export default function EpisodePage({
   }, []);
 
   // ── Mobile header height ──
-  const estimatedMobileHeader = episode.youtubeShort ? 380 : 280
+  const estimatedMobileHeader = episode.youtubeShort ? 280 : 220
   const [mobileHeaderHeight, setMobileHeaderHeight] = useState(estimatedMobileHeader)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -1188,6 +1338,9 @@ export default function EpisodePage({
         component="main"
         sx={{
           background: 'var(--cream)',
+          // Counteract the root layout main padding-top so the fixed mobile
+          // header and transcript sit flush.
+          mt: { xs: '-56px', md: '-64px' },
           pt: {
             xs: `${navbarHeight + mobileHeaderHeight}px`,
             lg: '112px',
@@ -1366,7 +1519,7 @@ export default function EpisodePage({
               flexDirection: 'column',
               minWidth: 0,
               px: { xs: 2.5, md: 5, lg: 0 },
-              mt: { xs: 1, lg: 0 },
+              mt: { xs: 0.5, lg: 0 },
             }}
           >
             <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>

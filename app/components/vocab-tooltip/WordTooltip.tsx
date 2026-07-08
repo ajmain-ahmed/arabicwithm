@@ -51,6 +51,20 @@ export default function WordTooltip({
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
+        {entry.cefr && (
+          <Chip
+            label={entry.cefr}
+            size="small"
+            sx={{
+              bgcolor: LEVEL_COLORS[entry.cefr] ?? 'rgba(44,26,14,0.08)',
+              color: '#fff',
+              fontFamily: 'Jost, sans-serif',
+              fontWeight: 700,
+              fontSize: `calc(0.7rem * ${textScale})`,
+              letterSpacing: '0.04em',
+            }}
+          />
+        )}
         {entry.pos && (
           <Chip
             label={entry.pos}

@@ -12,6 +12,14 @@ import {
   Collapse,
   Divider,
   TextField,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material"
 import {
   UploadFile,
@@ -25,6 +33,7 @@ import {
   Help,
   ContentCopy,
   ArrowForward,
+  ArrowBack,
   RemoveCircle,
   AddCircle,
 } from "@mui/icons-material"
@@ -34,13 +43,12 @@ import {
   commitPipeline,
   buildDefinitionsPromptData,
   commitDefinitions,
-  type PipelineItem,
+  checkExistingDefinitions,
   type PipelinePreviewResult,
   type DefinitionsPromptData,
   type ExistingLemmaWithDefs,
-  type DefinitionOutputRow,
 } from "@/app/actions/pipeline"
-import { validateDefinitionRows } from "@/app/lib/pipelineValidation"
+import { validateDefinitionRows, type PipelineItem, type DefinitionOutputRow } from "@/app/lib/pipelineValidation"
 import {
   fetchConjugationCandidatesForSource,
   generateConjugations,
@@ -84,6 +92,7 @@ export default function PipelinePage() {
   const [definitionRows, setDefinitionRows] = useState<DefinitionOutputRow[] | null>(null)
   const [definitionValidationError, setDefinitionValidationError] = useState<string | null>(null)
   const [excludedDefinitionKeys, setExcludedDefinitionKeys] = useState<Set<string>>(new Set())
+  const [definitionExistingKeys, setDefinitionExistingKeys] = useState<Set<string>>(new Set())
   const [insertingDefinitions, setInsertingDefinitions] = useState(false)
   const [definitionsInserted, setDefinitionsInserted] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
@@ -150,6 +159,7 @@ export default function PipelinePage() {
     setDefinitionRows(null)
     setDefinitionValidationError(null)
     setExcludedDefinitionKeys(new Set())
+    setDefinitionExistingKeys(new Set())
     setInsertingDefinitions(false)
     setDefinitionsInserted(null)
     setConjugationCandidates(null)
@@ -262,6 +272,61 @@ export default function PipelinePage() {
     setConjugationsInserted(null)
   }, [])
 
+  const handleBackToInput = useCallback(() => {
+    setPreview(null)
+    setCommittedCount(null)
+    setPromptData(null)
+    setExcludedExistingKeys(new Set())
+    setPromptVisible(false)
+    setLlmOutput("")
+    setShowDefinitionsInput(false)
+    setDefinitionRows(null)
+    setDefinitionValidationError(null)
+    setExcludedDefinitionKeys(new Set())
+    setDefinitionExistingKeys(new Set())
+    setDefinitionsInserted(null)
+  }, [])
+
+  const handleBackToReview = useCallback(() => {
+    setPromptData(null)
+    setPromptVisible(false)
+    setLlmOutput("")
+    setShowDefinitionsInput(false)
+    setDefinitionRows(null)
+    setDefinitionValidationError(null)
+    setExcludedDefinitionKeys(new Set())
+    setDefinitionExistingKeys(new Set())
+    setDefinitionsInserted(null)
+  }, [])
+
+  const handleBackToExistingDefs = useCallback(() => {
+    setPromptVisible(false)
+    setLlmOutput("")
+    setShowDefinitionsInput(false)
+    setDefinitionRows(null)
+    setDefinitionValidationError(null)
+    setExcludedDefinitionKeys(new Set())
+    setDefinitionExistingKeys(new Set())
+    setDefinitionsInserted(null)
+  }, [])
+
+  const handleBackToPrompt = useCallback(() => {
+    setShowDefinitionsInput(false)
+    setDefinitionRows(null)
+    setDefinitionValidationError(null)
+    setExcludedDefinitionKeys(new Set())
+    setDefinitionExistingKeys(new Set())
+    setDefinitionsInserted(null)
+  }, [])
+
+  const handleBackToDefinitionsInput = useCallback(() => {
+    setDefinitionRows(null)
+    setDefinitionValidationError(null)
+    setExcludedDefinitionKeys(new Set())
+    setDefinitionExistingKeys(new Set())
+    setDefinitionsInserted(null)
+  }, [])
+
   const toggleExistingExcluded = useCallback((key: string) => {
     setExcludedExistingKeys((prev) => {
       const next = new Set(prev)
@@ -269,6 +334,26 @@ export default function PipelinePage() {
       else next.add(key)
       return next
     })
+  }, [])
+
+  const selectAllExisting = useCallback(() => {
+    setExcludedExistingKeys(new Set())
+  }, [])
+
+  const deselectAllExisting = useCallback(() => {
+    if (!promptData) return
+    const keys = new Set<string>()
+    for (const item of promptData.existingLemmas) {
+      if (item.definitions.length > 0) {
+        keys.add(existingLemmaKey(item))
+      }
+    }
+    setExcludedExistingKeys(keys)
+  }, [promptData])
+
+  const handleSkipExistingDefsReview = useCallback(() => {
+    setExcludedExistingKeys(new Set())
+    setPromptVisible(true)
   }, [])
 
   const handleContinueToPrompt = useCallback(() => {
@@ -279,10 +364,11 @@ export default function PipelinePage() {
     setShowDefinitionsInput(true)
   }, [])
 
-  const handleValidateLlmOutput = useCallback(() => {
+  const handleValidateLlmOutput = useCallback(async () => {
     setDefinitionValidationError(null)
     setDefinitionRows(null)
     setExcludedDefinitionKeys(new Set())
+    setDefinitionExistingKeys(new Set())
     setDefinitionsInserted(null)
 
     if (!llmOutput.trim()) {
@@ -314,6 +400,24 @@ export default function PipelinePage() {
       source: row.source || source.trim(),
     }))
 
+    const existingResult = await checkExistingDefinitions(rowsWithSource)
+    if (!existingResult.ok) {
+      setDefinitionValidationError(existingResult.error)
+      return
+    }
+
+    const existingComposite = new Set(existingResult.existingKeys)
+    const existingUiKeys = new Set<string>()
+    for (let i = 0; i < rowsWithSource.length; i++) {
+      const row = rowsWithSource[i]
+      const composite = `${row.lemma_diacritic}|${row.arabic_root ?? ""}`
+      if (existingComposite.has(composite)) {
+        existingUiKeys.add(definitionKey(row, i))
+      }
+    }
+
+    setDefinitionExistingKeys(existingUiKeys)
+    setExcludedDefinitionKeys(existingUiKeys)
     setDefinitionRows(rowsWithSource)
   }, [llmOutput, source])
 
@@ -338,9 +442,20 @@ export default function PipelinePage() {
     })
   }, [])
 
+  const selectAllDefinitions = useCallback(() => {
+    setExcludedDefinitionKeys(new Set())
+  }, [])
+
+  const deselectAllDefinitions = useCallback(() => {
+    if (!definitionRows) return
+    setExcludedDefinitionKeys(new Set(definitionRows.map((row, idx) => definitionKey(row, idx))))
+  }, [definitionRows])
+
   const handleInsertDefinitions = useCallback(async () => {
     if (!definitionRows) return
-    const included = definitionRows.filter((row, idx) => !excludedDefinitionKeys.has(definitionKey(row, idx)))
+    const included = definitionRows.filter(
+      (row, idx) => !excludedDefinitionKeys.has(definitionKey(row, idx))
+    )
     if (included.length === 0) {
       setDefinitionValidationError("No rows selected for insertion.")
       return
@@ -448,6 +563,19 @@ export default function PipelinePage() {
     },
     []
   )
+
+  const selectAllConjugations = useCallback(() => {
+    setConjugationExcludedKeys(new Set())
+  }, [])
+
+  const deselectAllConjugations = useCallback(() => {
+    if (!generatedConjugationRows) return
+    setConjugationExcludedKeys(new Set(generatedConjugationRows.map((row) => conjKey(row))))
+  }, [generatedConjugationRows])
+
+  const handleSkipConjugationReview = useCallback(() => {
+    setConjugationsInserted(0)
+  }, [])
 
   const handleInsertConjugations = useCallback(async () => {
     if (!generatedConjugationRows) return
@@ -608,7 +736,7 @@ export default function PipelinePage() {
               <AdminTextField
                 value={jsonText}
                 onChange={(e) => setJsonText(e.target.value)}
-                placeholder='Paste JSON array here, e.g. [{ "timestamp": "0:00", "arabic": "...", ... }]'
+                placeholder='Paste transcript JSON here: an array of entries with a "tokens" array. Each token needs CEFR, root, lemma, arabic, english, entry_type, and transliteration.'
                 multiline
                 fullWidth
                 rows={14}
@@ -651,10 +779,36 @@ export default function PipelinePage() {
         >
           <Typography
             variant="h5"
-            sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 2 }}
+            sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
           >
-            Review
+            Step 1: Review extracted lemmas
           </Typography>
+
+          <Alert
+            severity="info"
+            icon={<Help />}
+            sx={{
+              mb: 3,
+              fontFamily: "Jost, sans-serif",
+              borderRadius: "10px",
+              color: "#2c1a0e",
+              "& .MuiAlert-message": { display: "flex", flexDirection: "column", gap: 0.5 },
+            }}
+          >
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "1rem" }}>
+              What happens next?
+            </Typography>
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.95rem" }}>
+              We scanned every <code>tokens</code> array in your transcript and pulled out each unique word/phrase.
+              Each card below represents one <strong>lemma</strong> (the dictionary form) that will be added to the{" "}
+              <strong>vocab_lemmas</strong> table.
+            </Typography>
+            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.95rem" }}>
+              The larger Arabic text is the lemma we will store. When the word appeared differently in the transcript,
+              we show that surface form as <em>in context</em>. The English snippet is the gloss from your transcript
+              and is shown only to help you review.
+            </Typography>
+          </Alert>
 
           <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
             <Chip
@@ -695,10 +849,8 @@ export default function PipelinePage() {
               Existing entries ({preview.existing.length})
             </Button>
             <Collapse in={existingOpen}>
-              <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 1 }}>
-                {preview.existing.map((item, idx) => (
-                  <ItemRow key={`existing-${groupKey(item)}-${idx}`} item={item} />
-                ))}
+              <Box sx={{ mt: 1 }}>
+                <LemmaTable items={preview.existing} prefix="existing" />
               </Box>
             </Collapse>
           </Box>
@@ -718,22 +870,20 @@ export default function PipelinePage() {
               New entries to add ({preview.new.length})
             </Button>
             <Collapse in={newOpen}>
-              <Box sx={{ mt: 1, display: "flex", flexDirection: "column", gap: 1 }}>
-                {preview.new.map((item, idx) => (
-                  <ItemRow key={`new-${groupKey(item)}-${idx}`} item={item} />
-                ))}
+              <Box sx={{ mt: 1 }}>
+                <LemmaTable items={preview.new} prefix="new" />
               </Box>
             </Collapse>
           </Box>
 
           <Divider sx={{ my: 2, borderColor: "rgba(122,110,101,0.15)" }} />
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap" }}>
             <Button
               variant="outlined"
-              onClick={handleReset}
-              startIcon={<Cancel />}
+              onClick={handleBackToInput}
               disabled={committing || promptLoading}
+              startIcon={<ArrowBack />}
               sx={{
                 textTransform: "none",
                 fontFamily: "Jost, sans-serif",
@@ -743,9 +893,26 @@ export default function PipelinePage() {
                 borderRadius: "10px",
               }}
             >
-              Cancel
+              Back
             </Button>
-            {preview.new.length === 0 ? (
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+              <Button
+                variant="outlined"
+                onClick={handleReset}
+                startIcon={<Cancel />}
+                disabled={committing || promptLoading}
+                sx={{
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderColor: "rgba(122,110,101,0.3)",
+                  color: "#7a6e65",
+                  borderRadius: "10px",
+                }}
+              >
+                Cancel
+              </Button>
+              {preview.new.length === 0 ? (
               <Button
                 variant="contained"
                 onClick={handleSkipToPrompt}
@@ -779,9 +946,10 @@ export default function PipelinePage() {
                   "&:hover": { bgcolor: "#1a0f08" },
                 }}
               >
-                {committing ? "Adding…" : `Add ${preview.new.length} new rows`}
+                {committing ? "Adding…" : `Add ${preview.new.length} lemmas to vocab_lemmas`}
               </Button>
             )}
+            </Box>
           </Box>
         </Paper>
       )}
@@ -819,6 +987,44 @@ export default function PipelinePage() {
             definitions.
           </Typography>
 
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, flexWrap: "wrap", mb: 2 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={selectAllExisting}
+              disabled={excludedExistingKeys.size === 0}
+              sx={{
+                textTransform: "none",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                borderColor: "rgba(122,110,101,0.3)",
+                color: "#7a6e65",
+                borderRadius: "8px",
+              }}
+            >
+              Include all
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={deselectAllExisting}
+              disabled={
+                promptData.existingLemmas.filter((item) => item.definitions.length > 0).length ===
+                excludedExistingKeys.size
+              }
+              sx={{
+                textTransform: "none",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                borderColor: "rgba(122,110,101,0.3)",
+                color: "#7a6e65",
+                borderRadius: "8px",
+              }}
+            >
+              Remove all
+            </Button>
+          </Box>
+
           <ExistingDefinitionsList
             items={promptData.existingLemmas}
             excludedKeys={excludedExistingKeys}
@@ -827,11 +1033,11 @@ export default function PipelinePage() {
 
           <Divider sx={{ my: 2, borderColor: "rgba(122,110,101,0.15)" }} />
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap" }}>
             <Button
               variant="outlined"
-              onClick={handleReset}
-              startIcon={<Cancel />}
+              onClick={handleBackToReview}
+              startIcon={<ArrowBack />}
               sx={{
                 textTransform: "none",
                 fontFamily: "Jost, sans-serif",
@@ -841,24 +1047,55 @@ export default function PipelinePage() {
                 borderRadius: "10px",
               }}
             >
-              Cancel
+              Back
             </Button>
-            <Button
-              variant="contained"
-              onClick={handleContinueToPrompt}
-              endIcon={<ArrowForward />}
-              sx={{
-                bgcolor: "#2c1a0e",
-                color: "#f5ede0",
-                textTransform: "none",
-                fontFamily: "Jost, sans-serif",
-                fontWeight: 600,
-                borderRadius: "10px",
-                "&:hover": { bgcolor: "#1a0f08" },
-              }}
-            >
-              Continue to prompt
-            </Button>
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+              <Button
+                variant="outlined"
+                onClick={handleReset}
+                startIcon={<Cancel />}
+                sx={{
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderColor: "rgba(122,110,101,0.3)",
+                  color: "#7a6e65",
+                  borderRadius: "10px",
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={handleSkipExistingDefsReview}
+                sx={{
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderColor: "rgba(122,110,101,0.3)",
+                  color: "#7a6e65",
+                  borderRadius: "10px",
+                }}
+              >
+                Skip
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleContinueToPrompt}
+                endIcon={<ArrowForward />}
+                sx={{
+                  bgcolor: "#2c1a0e",
+                  color: "#f5ede0",
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderRadius: "10px",
+                  "&:hover": { bgcolor: "#1a0f08" },
+                }}
+              >
+                Continue to prompt
+              </Button>
+            </Box>
           </Box>
         </Paper>
       )}
@@ -924,11 +1161,11 @@ export default function PipelinePage() {
             </Button>
           </Box>
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap" }}>
             <Button
               variant="outlined"
-              onClick={handleReset}
-              startIcon={<Cancel />}
+              onClick={handleBackToExistingDefs}
+              startIcon={<ArrowBack />}
               sx={{
                 textTransform: "none",
                 fontFamily: "Jost, sans-serif",
@@ -938,38 +1175,55 @@ export default function PipelinePage() {
                 borderRadius: "10px",
               }}
             >
-              Cancel
+              Back
             </Button>
-            <Button
-              variant="outlined"
-              onClick={() => setDefinitionsInserted(0)}
-              sx={{
-                textTransform: "none",
-                fontFamily: "Jost, sans-serif",
-                fontWeight: 600,
-                borderColor: "rgba(122,110,101,0.3)",
-                color: "#7a6e65",
-                borderRadius: "10px",
-              }}
-            >
-              Skip definitions
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleContinueToDefinitionsInput}
-              endIcon={<ArrowForward />}
-              sx={{
-                bgcolor: "#2c1a0e",
-                color: "#f5ede0",
-                textTransform: "none",
-                fontFamily: "Jost, sans-serif",
-                fontWeight: 600,
-                borderRadius: "10px",
-                "&:hover": { bgcolor: "#1a0f08" },
-              }}
-            >
-              Paste LLM output
-            </Button>
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+              <Button
+                variant="outlined"
+                onClick={handleReset}
+                startIcon={<Cancel />}
+                sx={{
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderColor: "rgba(122,110,101,0.3)",
+                  color: "#7a6e65",
+                  borderRadius: "10px",
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => setDefinitionsInserted(0)}
+                sx={{
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderColor: "rgba(122,110,101,0.3)",
+                  color: "#7a6e65",
+                  borderRadius: "10px",
+                }}
+              >
+                Skip definitions
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleContinueToDefinitionsInput}
+                endIcon={<ArrowForward />}
+                sx={{
+                  bgcolor: "#2c1a0e",
+                  color: "#f5ede0",
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderRadius: "10px",
+                  "&:hover": { bgcolor: "#1a0f08" },
+                }}
+              >
+                Paste LLM output
+              </Button>
+            </Box>
           </Box>
         </Paper>
       )}
@@ -1021,11 +1275,11 @@ export default function PipelinePage() {
             }}
           />
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap" }}>
             <Button
               variant="outlined"
-              onClick={handleReset}
-              startIcon={<Cancel />}
+              onClick={handleBackToPrompt}
+              startIcon={<ArrowBack />}
               sx={{
                 textTransform: "none",
                 fontFamily: "Jost, sans-serif",
@@ -1035,38 +1289,55 @@ export default function PipelinePage() {
                 borderRadius: "10px",
               }}
             >
-              Cancel
+              Back
             </Button>
-            <Button
-              variant="outlined"
-              onClick={() => setDefinitionsInserted(0)}
-              sx={{
-                textTransform: "none",
-                fontFamily: "Jost, sans-serif",
-                fontWeight: 600,
-                borderColor: "rgba(122,110,101,0.3)",
-                color: "#7a6e65",
-                borderRadius: "10px",
-              }}
-            >
-              Skip
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleValidateLlmOutput}
-              startIcon={<CheckCircle />}
-              sx={{
-                bgcolor: "#2c1a0e",
-                color: "#f5ede0",
-                textTransform: "none",
-                fontFamily: "Jost, sans-serif",
-                fontWeight: 600,
-                borderRadius: "10px",
-                "&:hover": { bgcolor: "#1a0f08" },
-              }}
-            >
-              Validate
-            </Button>
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+              <Button
+                variant="outlined"
+                onClick={handleReset}
+                startIcon={<Cancel />}
+                sx={{
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderColor: "rgba(122,110,101,0.3)",
+                  color: "#7a6e65",
+                  borderRadius: "10px",
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => setDefinitionsInserted(0)}
+                sx={{
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderColor: "rgba(122,110,101,0.3)",
+                  color: "#7a6e65",
+                  borderRadius: "10px",
+                }}
+              >
+                Skip
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleValidateLlmOutput}
+                startIcon={<CheckCircle />}
+                sx={{
+                  bgcolor: "#2c1a0e",
+                  color: "#f5ede0",
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderRadius: "10px",
+                  "&:hover": { bgcolor: "#1a0f08" },
+                }}
+              >
+                Validate
+              </Button>
+            </Box>
           </Box>
         </Paper>
       )}
@@ -1088,8 +1359,9 @@ export default function PipelinePage() {
           </Typography>
 
           <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "1.1rem" }}>
-            Inspect each definition. Edit fields if needed, and remove any rows you do not want to
-            insert.
+            Rows already in <strong>vocab_definitions</strong> are unchecked by default so a re-run
+            does not create duplicates. Tick any row, including an existing one, if you want to insert
+            it anyway (for example a new sense or context).
           </Typography>
 
           {definitionValidationError && (
@@ -1098,7 +1370,7 @@ export default function PipelinePage() {
             </Alert>
           )}
 
-          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3 }}>
+          <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 3, alignItems: "center" }}>
             <Chip
               label={`${definitionRows.length - excludedDefinitionKeys.size} rows to insert`}
               sx={{
@@ -1119,6 +1391,49 @@ export default function PipelinePage() {
                 borderRadius: "8px",
               }}
             />
+            <Chip
+              label={`${definitionExistingKeys.size} already in database`}
+              sx={{
+                bgcolor: "rgba(122,110,101,0.1)",
+                color: "#2c1a0e",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                borderRadius: "8px",
+              }}
+            />
+            <Box sx={{ flex: 1 }} />
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={selectAllDefinitions}
+              disabled={insertingDefinitions || excludedDefinitionKeys.size === 0}
+              sx={{
+                textTransform: "none",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                borderColor: "rgba(122,110,101,0.3)",
+                color: "#7a6e65",
+                borderRadius: "8px",
+              }}
+            >
+              Select all
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={deselectAllDefinitions}
+              disabled={insertingDefinitions || excludedDefinitionKeys.size === definitionRows.length}
+              sx={{
+                textTransform: "none",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                borderColor: "rgba(122,110,101,0.3)",
+                color: "#7a6e65",
+                borderRadius: "8px",
+              }}
+            >
+              Deselect all
+            </Button>
           </Box>
 
           <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mb: 3 }}>
@@ -1128,6 +1443,7 @@ export default function PipelinePage() {
                 row={row}
                 index={idx}
                 excluded={excludedDefinitionKeys.has(definitionKey(row, idx))}
+                isExisting={definitionExistingKeys.has(definitionKey(row, idx))}
                 onToggle={() => toggleDefinitionExcluded(definitionKey(row, idx))}
                 onChange={updateDefinitionRow}
               />
@@ -1136,11 +1452,11 @@ export default function PipelinePage() {
 
           <Divider sx={{ my: 2, borderColor: "rgba(122,110,101,0.15)" }} />
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap" }}>
             <Button
               variant="outlined"
-              onClick={handleReset}
-              startIcon={<Cancel />}
+              onClick={handleBackToDefinitionsInput}
+              startIcon={<ArrowBack />}
               disabled={insertingDefinitions}
               sx={{
                 textTransform: "none",
@@ -1151,27 +1467,60 @@ export default function PipelinePage() {
                 borderRadius: "10px",
               }}
             >
-              Cancel
+              Back
             </Button>
-            <Button
-              variant="contained"
-              onClick={handleInsertDefinitions}
-              disabled={insertingDefinitions || definitionRows.length - excludedDefinitionKeys.size === 0}
-              startIcon={<Add />}
-              sx={{
-                bgcolor: "#2c1a0e",
-                color: "#f5ede0",
-                textTransform: "none",
-                fontFamily: "Jost, sans-serif",
-                fontWeight: 600,
-                borderRadius: "10px",
-                "&:hover": { bgcolor: "#1a0f08" },
-              }}
-            >
-              {insertingDefinitions
-                ? "Inserting…"
-                : `Write ${definitionRows.length - excludedDefinitionKeys.size} rows to Supabase`}
-            </Button>
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+              <Button
+                variant="outlined"
+                onClick={handleReset}
+                startIcon={<Cancel />}
+                disabled={insertingDefinitions}
+                sx={{
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderColor: "rgba(122,110,101,0.3)",
+                  color: "#7a6e65",
+                  borderRadius: "10px",
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => setDefinitionsInserted(0)}
+                disabled={insertingDefinitions}
+                sx={{
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderColor: "rgba(122,110,101,0.3)",
+                  color: "#7a6e65",
+                  borderRadius: "10px",
+                }}
+              >
+                Skip
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleInsertDefinitions}
+                disabled={insertingDefinitions || definitionRows.length - excludedDefinitionKeys.size === 0}
+                startIcon={<Add />}
+                sx={{
+                  bgcolor: "#2c1a0e",
+                  color: "#f5ede0",
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  borderRadius: "10px",
+                  "&:hover": { bgcolor: "#1a0f08" },
+                }}
+              >
+                {insertingDefinitions
+                  ? "Inserting…"
+                  : `Write ${definitionRows.length - excludedDefinitionKeys.size} rows to Supabase`}
+              </Button>
+            </Box>
           </Box>
         </Paper>
       )}
@@ -1299,7 +1648,25 @@ export default function PipelinePage() {
             )}
           </Typography>
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, flexWrap: "wrap" }}>
+            <Button
+              variant="outlined"
+              onClick={() => setConjugationsInserted(0)}
+              disabled={conjugationLoading}
+              sx={{
+                textTransform: "none",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                fontSize: "1.05rem",
+                borderColor: "rgba(122,110,101,0.3)",
+                color: "#7a6e65",
+                borderRadius: "10px",
+                px: 3,
+                py: 1,
+              }}
+            >
+              Skip conjugations
+            </Button>
             <Button
               variant="contained"
               onClick={handleGenerateConjugations}
@@ -1335,25 +1702,14 @@ export default function PipelinePage() {
           excludedKeys={conjugationExcludedKeys}
           expandedLemmas={conjugationExpandedLemmas}
           inserting={conjugationInserting}
-          onToggleExcluded={(key) => {
-            setConjugationExcludedKeys((prev) => {
-              const next = new Set(prev)
-              if (next.has(key)) next.delete(key)
-              else next.add(key)
-              return next
-            })
-          }}
-          onToggleLemmaExpanded={(lemma) => {
-            setConjugationExpandedLemmas((prev) => {
-              const next = new Set(prev)
-              if (next.has(lemma)) next.delete(lemma)
-              else next.add(lemma)
-              return next
-            })
-          }}
+          onToggleExcluded={toggleConjugationExcluded}
+          onToggleLemmaExpanded={toggleConjugationLemmaExpanded}
           onToggleLemmaAll={toggleConjugationLemmaAll}
           onChangeRow={updateConjugationRow}
           onInsert={handleInsertConjugations}
+          onSelectAll={selectAllConjugations}
+          onDeselectAll={deselectAllConjugations}
+          onSkip={handleSkipConjugationReview}
           onReset={handleReset}
         />
       )}
@@ -1583,8 +1939,12 @@ function ConjugationReview({
   inserting,
   onToggleExcluded,
   onToggleLemmaExpanded,
+  onToggleLemmaAll,
   onChangeRow,
   onInsert,
+  onSelectAll,
+  onDeselectAll,
+  onSkip,
   onReset,
 }: {
   rows: GeneratedConjugation[]
@@ -1597,6 +1957,9 @@ function ConjugationReview({
   onToggleLemmaAll: (lemma: string, excludeAll: boolean) => void
   onChangeRow: (key: string, field: keyof GeneratedConjugation, value: string | null) => void
   onInsert: () => void
+  onSelectAll: () => void
+  onDeselectAll: () => void
+  onSkip: () => void
   onReset: () => void
 }) {
   const groupedRows = useMemo(() => {
@@ -1666,6 +2029,39 @@ function ConjugationReview({
             }}
           />
         )}
+        <Box sx={{ flex: 1 }} />
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={onSelectAll}
+          disabled={inserting || excludedKeys.size === 0}
+          sx={{
+            textTransform: "none",
+            fontFamily: "Jost, sans-serif",
+            fontWeight: 600,
+            borderColor: "rgba(122,110,101,0.3)",
+            color: "#7a6e65",
+            borderRadius: "8px",
+          }}
+        >
+          Select all
+        </Button>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={onDeselectAll}
+          disabled={inserting || excludedKeys.size === rows.length}
+          sx={{
+            textTransform: "none",
+            fontFamily: "Jost, sans-serif",
+            fontWeight: 600,
+            borderColor: "rgba(122,110,101,0.3)",
+            color: "#7a6e65",
+            borderRadius: "8px",
+          }}
+        >
+          Deselect all
+        </Button>
       </Box>
 
       {skipped.length > 0 && (
@@ -1746,17 +2142,7 @@ function ConjugationReview({
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation()
-                      const allKeys = lemmaRows.map((row) => conjKey(row))
-                      const allCurrentlyExcluded = allKeys.every((k) => excludedKeys.has(k))
-                      for (const k of allKeys) {
-                        if (allCurrentlyExcluded || !excludedKeys.has(k)) onToggleExcluded(k)
-                      }
-                      // If we are including all, re-include each one.
-                      if (allCurrentlyExcluded) {
-                        for (const k of allKeys) {
-                          if (excludedKeys.has(k)) onToggleExcluded(k)
-                        }
-                      }
+                      onToggleLemmaAll(lemma, !allExcluded)
                     }}
                     startIcon={allExcluded ? <AddCircle /> : <RemoveCircle />}
                     sx={{
@@ -1889,6 +2275,24 @@ function ConjugationReview({
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, flexWrap: "wrap" }}>
         <Button
           variant="outlined"
+          onClick={onSkip}
+          disabled={inserting}
+          sx={{
+            textTransform: "none",
+            fontFamily: "Jost, sans-serif",
+            fontWeight: 600,
+            fontSize: "1.05rem",
+            borderColor: "rgba(122,110,101,0.3)",
+            color: "#7a6e65",
+            borderRadius: "10px",
+            px: 2,
+            py: 1,
+          }}
+        >
+          Skip conjugations
+        </Button>
+        <Button
+          variant="outlined"
           onClick={onReset}
           startIcon={<Cancel />}
           disabled={inserting}
@@ -1935,12 +2339,14 @@ function DefinitionEditCard({
   row,
   index,
   excluded,
+  isExisting,
   onToggle,
   onChange,
 }: {
   row: DefinitionOutputRow
   index: number
   excluded: boolean
+  isExisting: boolean
   onToggle: () => void
   onChange: (index: number, field: keyof DefinitionOutputRow, value: string | null) => void
 }) {
@@ -1971,7 +2377,7 @@ function DefinitionEditCard({
               fontFamily: "'EB Garamond', serif",
               fontSize: "2.75rem",
               color: "#2c1a0e",
-              mb: 1.5,
+              mb: 2.5,
               lineHeight: 1.2,
             }}
           >
@@ -1990,29 +2396,35 @@ function DefinitionEditCard({
             />
           </Box>
         </Box>
-        <Button
-          variant={excluded ? "outlined" : "contained"}
-          size="small"
-          onClick={onToggle}
-          startIcon={excluded ? <AddCircle /> : <RemoveCircle />}
-          sx={{
-            textTransform: "none",
-            fontFamily: "Jost, sans-serif",
-            fontWeight: 600,
-            fontSize: "1.15rem",
-            borderRadius: "10px",
-            px: 2.5,
-            py: 1,
-            bgcolor: excluded ? "transparent" : "#2c1a0e",
-            color: excluded ? "#7a6e65" : "#f5ede0",
-            borderColor: excluded ? "rgba(122,110,101,0.3)" : "#2c1a0e",
-            "&:hover": {
-              bgcolor: excluded ? "rgba(122,110,101,0.06)" : "#1a0f08",
-            },
-          }}
-        >
-          {excluded ? "Include" : "Remove"}
-        </Button>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+          {isExisting && (
+            <Chip
+              label="Already in database"
+              sx={{
+                fontFamily: "Jost, sans-serif",
+                bgcolor: "rgba(184,134,11,0.12)",
+                color: "#2c1a0e",
+                borderRadius: "8px",
+                fontSize: "0.95rem",
+                py: 0.5,
+              }}
+            />
+          )}
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={!excluded}
+                onChange={onToggle}
+                sx={{ color: "#7a6e65", "&.Mui-checked": { color: "#2c1a0e" } }}
+              />
+            }
+            label={
+              <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "1rem", color: "#2c1a0e" }}>
+                {excluded ? "Excluded" : "Include"}
+              </Typography>
+            }
+          />
+        </Box>
       </Box>
 
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -2022,18 +2434,16 @@ function DefinitionEditCard({
             value={row.gloss}
             onChange={(e) => onChange(index, "gloss", e.target.value)}
             fullWidth
-            size="small"
             disabled={excluded}
-            sx={{ "& .MuiInputBase-input": { fontSize: "1.3rem" }, "& .MuiInputLabel-root": { fontSize: "1.05rem" } }}
+            sx={{ "& .MuiInputBase-input": { fontSize: "1.3rem", py: 1.5 }, "& .MuiInputLabel-root": { fontSize: "1rem" } }}
           />
           <AdminTextField
             label="Part of speech *"
             value={row.part_of_speech}
             onChange={(e) => onChange(index, "part_of_speech", e.target.value)}
             fullWidth
-            size="small"
             disabled={excluded}
-            sx={{ "& .MuiInputBase-input": { fontSize: "1.3rem" }, "& .MuiInputLabel-root": { fontSize: "1.05rem" } }}
+            sx={{ "& .MuiInputBase-input": { fontSize: "1.3rem", py: 1.5 }, "& .MuiInputLabel-root": { fontSize: "1rem" } }}
           />
         </Box>
 
@@ -2046,19 +2456,17 @@ function DefinitionEditCard({
               onChange(index, "arabic_root", v || null)
             }}
             fullWidth
-            size="small"
             disabled={excluded}
-            sx={{ "& .MuiInputBase-input": { fontSize: "1.3rem", direction: "rtl" }, "& .MuiInputLabel-root": { fontSize: "1.05rem" } }}
+            sx={{ "& .MuiInputBase-input": { fontSize: "1.3rem", direction: "rtl", py: 1.5 }, "& .MuiInputLabel-root": { fontSize: "1rem" } }}
           />
           <AdminTextField
             label="Lemma diacritic"
             value={row.lemma_diacritic}
             onChange={(e) => onChange(index, "lemma_diacritic", e.target.value)}
             fullWidth
-            size="small"
             disabled={excluded}
             slotProps={{ input: { readOnly: true } }}
-            sx={{ "& .MuiInputBase-input": { fontSize: "1.6rem", direction: "rtl" }, "& .MuiInputLabel-root": { fontSize: "1.05rem" } }}
+            sx={{ "& .MuiInputBase-input": { fontSize: "1.6rem", direction: "rtl", py: 1.5 }, "& .MuiInputLabel-root": { fontSize: "1rem" } }}
           />
         </Box>
 
@@ -2072,9 +2480,8 @@ function DefinitionEditCard({
           fullWidth
           multiline
           rows={4}
-          size="small"
           disabled={excluded}
-          sx={{ "& .MuiInputBase-input": { fontSize: "1.25rem" }, "& .MuiInputLabel-root": { fontSize: "1.05rem" } }}
+          sx={{ "& .MuiInputBase-input": { fontSize: "1.25rem", py: 1.5 }, "& .MuiInputLabel-root": { fontSize: "1rem" } }}
         />
 
         <AdminTextField
@@ -2087,54 +2494,62 @@ function DefinitionEditCard({
           fullWidth
           multiline
           rows={4}
-          size="small"
           disabled={excluded}
-          sx={{ "& .MuiInputBase-input": { fontSize: "1.45rem", direction: "rtl" }, "& .MuiInputLabel-root": { fontSize: "1.05rem" } }}
+          sx={{ "& .MuiInputBase-input": { fontSize: "1.45rem", direction: "rtl", py: 1.5 }, "& .MuiInputLabel-root": { fontSize: "1rem" } }}
         />
       </Box>
     </Paper>
   )
 }
 
-function ItemRow({ item }: { item: PipelineItem }) {
+function LemmaTable({ items, prefix }: { items: PipelineItem[]; prefix: string }) {
+  const cellSx = {
+    fontFamily: "'EB Garamond', serif",
+    fontSize: "2rem",
+    color: "#2c1a0e",
+    lineHeight: 1.3,
+  }
+
+  const headerSx = {
+    fontFamily: "'EB Garamond', serif",
+    fontWeight: 700,
+    fontSize: "1.1rem",
+    color: "#2c1a0e",
+  }
+
   return (
-    <Paper
-      variant="outlined"
-      sx={{
-        p: 1.5,
-        borderRadius: "10px",
-        borderColor: "rgba(122,110,101,0.15)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        flexWrap: "wrap",
-        gap: 1.5,
-      }}
-    >
-      <Box sx={{ fontFamily: "'EB Garamond', serif", fontSize: "1.75rem", color: "#2c1a0e", lineHeight: 1.2 }}>
-        {item.arabic}
-      </Box>
-      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-        <Chip
-          label={item.entry_type}
-          sx={{ fontFamily: "Jost, sans-serif", textTransform: "capitalize", borderRadius: "8px", fontSize: "0.95rem", py: 0.5 }}
-        />
-        <Chip
-          label={item.CEFR}
-          sx={{ fontFamily: "Jost, sans-serif", borderRadius: "8px", fontSize: "0.95rem", py: 0.5 }}
-        />
-        {item.root && (
-          <Chip
-            label={item.root}
-            size="small"
-            sx={{ fontFamily: "'EB Garamond', serif", borderRadius: "6px" }}
-          />
-        )}
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
-          {item.transliteration}
-        </Typography>
-      </Box>
-    </Paper>
+    <TableContainer sx={{ overflowX: "auto" }}>
+      <Table sx={{ minWidth: 720 }}>
+        <TableHead>
+          <TableRow>
+            <TableCell sx={headerSx}>Lemma (stored)</TableCell>
+            <TableCell sx={headerSx}>Contextual form</TableCell>
+            <TableCell sx={headerSx}>Gloss</TableCell>
+            <TableCell sx={headerSx}>Type</TableCell>
+            <TableCell sx={headerSx}>CEFR</TableCell>
+            <TableCell sx={headerSx}>Root</TableCell>
+            <TableCell sx={headerSx}>Transliteration</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {items.map((item, idx) => (
+            <TableRow key={`${prefix}-${groupKey(item)}-${idx}`}>
+              <TableCell sx={cellSx}>{item.arabic}</TableCell>
+              <TableCell sx={cellSx}>
+                {item.contextualArabic && item.contextualArabic !== item.arabic
+                  ? item.contextualArabic
+                  : "—"}
+              </TableCell>
+              <TableCell sx={cellSx}>{item.english || "—"}</TableCell>
+              <TableCell sx={{ ...cellSx, textTransform: "capitalize" }}>{item.entry_type}</TableCell>
+              <TableCell sx={cellSx}>{item.CEFR}</TableCell>
+              <TableCell sx={cellSx}>{item.root || "—"}</TableCell>
+              <TableCell sx={cellSx}>{item.transliteration}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   )
 }
 

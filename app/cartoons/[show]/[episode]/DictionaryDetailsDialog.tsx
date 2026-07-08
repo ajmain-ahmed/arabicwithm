@@ -198,7 +198,7 @@ export default function DictionaryDetailsDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
+      maxWidth={activeTab === 'conjugations' ? 'md' : 'sm'}
       fullWidth
       fullScreen={isMobile}
       slotProps={{
@@ -209,7 +209,6 @@ export default function DictionaryDetailsDialog({
             boxShadow: '0 32px 80px rgba(44,26,14,0.22)',
             m: isMobile ? 0 : 3,
             maxHeight: isMobile ? '100vh' : 'calc(100vh - 64px)',
-            maxWidth: isMobile ? '100%' : '540px',
             display: 'flex',
             flexDirection: 'column',
             bgcolor: OFF_WHITE,
@@ -217,14 +216,13 @@ export default function DictionaryDetailsDialog({
         },
       }}
     >
-      {/* Tabs + close */}
+      {/* Tabs */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           borderBottom: `2px solid ${CREAM}`,
           bgcolor: OFF_WHITE,
-          position: 'relative',
         }}
       >
         <Box
@@ -279,73 +277,6 @@ export default function DictionaryDetailsDialog({
             </Typography>
           </Box>
         )}
-        <Box
-          sx={{
-            position: 'absolute',
-            right: 0,
-            top: 0,
-            bottom: 0,
-            display: 'flex',
-            alignItems: 'center',
-            zIndex: 2,
-          }}
-        >
-          {isAdmin && !isEditing && (
-            <Button
-              size="small"
-              startIcon={<Edit sx={{ fontSize: '1.1rem' }} />}
-              onClick={startEditing}
-              sx={{
-                fontFamily: 'Jost, sans-serif',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                textTransform: 'none',
-                color: DARK_GREEN,
-                mr: 0.5,
-                '&:hover': { bgcolor: 'rgba(27,77,62,0.06)' },
-              }}
-            >
-              Edit
-            </Button>
-          )}
-          {isAdmin && isEditing && (
-            <>
-              <Button
-                size="small"
-                startIcon={<Save sx={{ fontSize: '1.1rem' }} />}
-                onClick={handleSave}
-                disabled={saving}
-                sx={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  color: DARK_GREEN,
-                  mr: 0.5,
-                  '&:hover': { bgcolor: 'rgba(27,77,62,0.06)' },
-                }}
-              >
-                Save
-              </Button>
-              <Button
-                size="small"
-                onClick={() => setIsEditing(false)}
-                disabled={saving}
-                sx={{
-                  fontFamily: 'Jost, sans-serif',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  color: TEXT_MUTED,
-                  mr: 0.5,
-                  '&:hover': { bgcolor: 'rgba(107,114,128,0.06)' },
-                }}
-              >
-                Cancel
-              </Button>
-            </>
-          )}
-        </Box>
       </Box>
 
       {/* Content */}
@@ -737,7 +668,12 @@ export default function DictionaryDetailsDialog({
                   <Box
                     sx={{
                       display: 'grid',
-                      gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+                      gridTemplateColumns: {
+                        xs: '1fr',
+                        sm: 'repeat(2, 1fr)',
+                        md: 'repeat(3, 1fr)',
+                        lg: 'repeat(4, 1fr)',
+                      },
                       gap: 1.5,
                     }}
                   >
@@ -809,9 +745,76 @@ export default function DictionaryDetailsDialog({
           px: { xs: 2.5, sm: 3.5 },
           py: 2,
           bgcolor: OFF_WHITE,
-          justifyContent: { xs: 'center', sm: 'flex-end' },
+          justifyContent: 'flex-end',
+          gap: 1.5,
+          flexWrap: 'wrap',
         }}
       >
+        {isAdmin && !isEditing && (
+          <Button
+            onClick={startEditing}
+            variant="outlined"
+            startIcon={<Edit sx={{ fontSize: '1.1rem' }} />}
+            sx={{
+              fontFamily: 'Jost, sans-serif',
+              fontSize: '1rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              color: DARK_GREEN,
+              borderColor: 'rgba(27,77,62,0.3)',
+              borderRadius: '12px',
+              px: 3,
+              py: 1,
+              '&:hover': { bgcolor: 'rgba(27,77,62,0.06)', borderColor: DARK_GREEN },
+            }}
+          >
+            Edit
+          </Button>
+        )}
+        {isAdmin && isEditing && (
+          <>
+            <Button
+              onClick={() => setIsEditing(false)}
+              disabled={saving}
+              variant="outlined"
+              sx={{
+                fontFamily: 'Jost, sans-serif',
+                fontSize: '1rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                color: TEXT_MUTED,
+                borderColor: 'rgba(107,114,128,0.3)',
+                borderRadius: '12px',
+                px: 3,
+                py: 1,
+                '&:hover': { bgcolor: 'rgba(107,114,128,0.06)', borderColor: TEXT_MUTED },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              variant="contained"
+              startIcon={<Save sx={{ fontSize: '1.1rem' }} />}
+              disableElevation
+              sx={{
+                bgcolor: DARK_GREEN,
+                color: '#fff',
+                fontFamily: 'Jost, sans-serif',
+                fontSize: '1rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: '12px',
+                px: 3,
+                py: 1,
+                '&:hover': { bgcolor: '#143d31' },
+              }}
+            >
+              Save
+            </Button>
+          </>
+        )}
         <Button
           onClick={onClose}
           variant="contained"

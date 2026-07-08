@@ -4,18 +4,16 @@
 
 import { serviceClient } from "@/app/lib/supabase"
 import { isAdminUser } from "./vocab"
-import { validateDefinitionRows, rootRegex } from "@/app/lib/pipelineValidation"
+import {
+  validateDefinitionRows,
+  validateTranscriptEntries,
+  validateItems,
+  itemKey,
+  type PipelineItem,
+  type DefinitionOutputRow,
+} from "@/app/lib/pipelineValidation"
 
 /* ── Types ─────────────────────────────────────────────────────────── */
-
-export type PipelineItem = {
-  timestamp: string
-  arabic: string
-  root: string | null
-  entry_type: "word" | "phrase"
-  CEFR: string
-  transliteration: string
-}
 
 export type PipelinePreviewResult = {
   ok: true
@@ -34,16 +32,6 @@ export type PipelineCommitResult = {
   error: string
 }
 
-export type DefinitionOutputRow = {
-  lemma_diacritic: string
-  arabic_root: string | null
-  gloss: string
-  part_of_speech: string
-  definition_en: string | null
-  definition_ar: string | null
-  source: string
-}
-
 export type DefinitionCommitResult = {
   ok: true
   inserted: number
@@ -57,91 +45,6 @@ export type DefinitionCommitResult = {
 async function guardAdmin() {
   const ok = await isAdminUser()
   if (!ok) throw new Error("Forbidden")
-}
-
-const requiredFields = [
-  "timestamp",
-  "arabic",
-  "root",
-  "entry_type",
-  "CEFR",
-  "transliteration",
-] as const
-
-const cefrRegex = /^(A[0-2]|B[1-2]|C[1-2])$/
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-}
-
-function validateItems(items: unknown[]): { ok: true; items: PipelineItem[] } | { ok: false; error: string } {
-  const seen = new Set<string>()
-  const valid: PipelineItem[] = []
-
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i]
-    if (!isPlainObject(item)) {
-      return { ok: false, error: `Item ${i + 1} is not an object.` }
-    }
-
-    for (const field of requiredFields) {
-      if (!(field in item)) {
-        return { ok: false, error: `Item ${i + 1} is missing field "${field}".` }
-      }
-    }
-
-    const timestamp = item.timestamp
-    const arabic = item.arabic
-    const root = item.root
-    const entryType = item.entry_type
-    const cefr = item.CEFR
-    const transliteration = item.transliteration
-
-    if (typeof timestamp !== "string" || !timestamp.trim()) {
-      return { ok: false, error: `Item ${i + 1}: "timestamp" must be a non-empty string.` }
-    }
-    if (typeof arabic !== "string" || !arabic.trim()) {
-      return { ok: false, error: `Item ${i + 1}: "arabic" must be a non-empty string.` }
-    }
-    if (typeof transliteration !== "string" || !transliteration.trim()) {
-      return { ok: false, error: `Item ${i + 1}: "transliteration" must be a non-empty string.` }
-    }
-    if (typeof cefr !== "string" || !cefrRegex.test(cefr)) {
-      return { ok: false, error: `Item ${i + 1}: "CEFR" must be one of A0–C2.` }
-    }
-    if (entryType !== "word" && entryType !== "phrase") {
-      return { ok: false, error: `Item ${i + 1}: "entry_type" must be "word" or "phrase".` }
-    }
-
-    let normalizedRoot: string | null = null
-    if (root !== null && root !== undefined && root !== "") {
-      if (typeof root !== "string" || !rootRegex.test(root)) {
-        return { ok: false, error: `Item ${i + 1}: "root" must match the Arabic root format (e.g. "س-ر-ع").` }
-      }
-      normalizedRoot = root
-    }
-
-    const normalized: PipelineItem = {
-      timestamp: timestamp.trim(),
-      arabic: arabic.trim(),
-      root: normalizedRoot,
-      entry_type: entryType,
-      CEFR: cefr.trim(),
-      transliteration: transliteration.trim(),
-    }
-
-    const key = `${normalized.arabic}|${normalized.root ?? ""}|${normalized.entry_type}`
-    if (!seen.has(key)) {
-      seen.add(key)
-      valid.push(normalized)
-    }
-  }
-
-  return { ok: true, items: valid }
-}
-
-function itemKey(item: PipelineItem): string {
-  return `${item.arabic}|${item.root ?? ""}|${item.entry_type}`
 }
 
 /* ── Server Actions ────────────────────────────────────────────────── */
@@ -160,10 +63,10 @@ export async function previewPipeline(
   }
 
   if (!Array.isArray(parsed)) {
-    return { ok: false, error: "JSON must be an array of objects." }
+    return { ok: false, error: "JSON must be an array of transcript entries." }
   }
 
-  const validation = validateItems(parsed)
+  const validation = validateTranscriptEntries(parsed)
   if (!validation.ok) return { ok: false, error: validation.error }
   const items = validation.items
 
@@ -380,6 +283,51 @@ export async function buildDefinitionsPromptData(
       exampleDefinitions,
     },
   }
+}
+
+/* ── Definition existence check ────────────────────────────────────── */
+
+export async function checkExistingDefinitions(
+  rows: DefinitionOutputRow[]
+): Promise<{ ok: true; existingKeys: string[] } | { ok: false; error: string }> {
+  await guardAdmin()
+
+  const validation = validateDefinitionRows(rows)
+  if (!validation.ok) return { ok: false, error: validation.error }
+  const validRows = validation.rows
+
+  if (validRows.length === 0) {
+    return { ok: true, existingKeys: [] }
+  }
+
+  const diacritics = Array.from(new Set(validRows.map((r) => r.lemma_diacritic)))
+
+  const { data, error } = await serviceClient
+    .from("vocab_definitions")
+    .select("lemma_diacritic, arabic_root")
+    .in("lemma_diacritic", diacritics)
+
+  if (error) {
+    console.error("[checkExistingDefinitions] error:", error.message)
+    return { ok: false, error: error.message }
+  }
+
+  const existingKeys = new Set<string>()
+  for (const row of data ?? []) {
+    const di = String(row.lemma_diacritic ?? "")
+    const r = row.arabic_root ? String(row.arabic_root) : ""
+    existingKeys.add(`${di}|${r}`)
+  }
+
+  const result: string[] = []
+  for (const row of validRows) {
+    const key = `${row.lemma_diacritic}|${row.arabic_root ?? ""}`
+    if (existingKeys.has(key)) {
+      result.push(key)
+    }
+  }
+
+  return { ok: true, existingKeys: result }
 }
 
 /* ── Definition commit ─────────────────────────────────────────────── */
