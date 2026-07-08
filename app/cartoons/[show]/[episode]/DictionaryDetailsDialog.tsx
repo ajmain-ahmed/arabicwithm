@@ -339,7 +339,7 @@ export default function DictionaryDetailsDialog({
                 {displayArabic(displayWord, showDiacritics)}
               </Typography>
 
-              {(cefr || partOfSpeech || root) && (
+              {root && (
                 <Box
                   sx={{
                     display: 'flex',
@@ -350,47 +350,17 @@ export default function DictionaryDetailsDialog({
                     mt: 1.5,
                   }}
                 >
-                  {cefr && (
-                    <Chip
-                      label={cefr}
-                      size="small"
-                      sx={{
-                        bgcolor: DARK_GREEN,
-                        color: '#fff',
-                        fontFamily: 'Jost, sans-serif',
-                        fontWeight: 700,
-                        fontSize: '0.82rem',
-                        letterSpacing: '0.04em',
-                        px: 0.5,
-                      }}
-                    />
-                  )}
-                  {partOfSpeech && (
-                    <Typography
-                      sx={{
-                        fontFamily: 'Jost, sans-serif',
-                        fontSize: '1.15rem',
-                        fontWeight: 600,
-                        color: TEXT_MUTED,
-                        textTransform: 'capitalize',
-                      }}
-                    >
-                      {partOfSpeech}
-                    </Typography>
-                  )}
-                  {root && (
-                    <Typography
-                      sx={{
-                        fontFamily: 'Jost, sans-serif',
-                        fontSize: '1rem',
-                        fontWeight: 600,
-                        color: GOLD,
-                        letterSpacing: '0.04em',
-                      }}
-                    >
-                      {root}
-                    </Typography>
-                  )}
+                  <Typography
+                    sx={{
+                      fontFamily: 'Jost, sans-serif',
+                      fontSize: '1rem',
+                      fontWeight: 600,
+                      color: GOLD,
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    {root}
+                  </Typography>
                 </Box>
               )}
             </Box>

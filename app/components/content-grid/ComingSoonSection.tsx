@@ -43,7 +43,7 @@ export default function ComingSoonSection({
   showNotifyButton = true,
 }: ComingSoonSectionProps) {
   return (
-    <Box>
+    <Box sx={{ pt: { xs: 5, md: 7 } }}>
       <Box
         sx={{
           display: 'flex',

@@ -152,43 +152,7 @@ export default function ShowPage({ show, episodes, isAdmin }: ShowPageProps) {
             </Typography>
           </Breadcrumbs>
 
-          {/* ── Section Header ── */}
-          <Box id="episodes-section" sx={{ textAlign: 'center' }}>
-          <Typography
-            sx={{
-              fontFamily: '"Jost", system-ui, sans-serif',
-              fontSize: { xs: 13, md: 14 },
-              textTransform: 'uppercase',
-              letterSpacing: '0.12em',
-              color: GOLD,
-              mb: 0.5,
-            }}
-          >
-            Episodes
-          </Typography>
-          <Typography
-            variant="h2"
-            sx={{
-              fontFamily: '"EB Garamond", Georgia, serif',
-              fontSize: { xs: 24, md: 32 },
-              color: BARK,
-              mb: 1,
-            }}
-          >
-            {show.title}
-          </Typography>
-          <Box
-            sx={{
-              width: 48,
-              height: 2,
-              borderRadius: '2px',
-              backgroundColor: GOLD,
-              mx: 'auto',
-            }}
-          />
-        </Box>
-
-        {/* ── Mobile Filter Button ── */}
+          {/* ── Mobile Filter Button ── */}
         <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
           <Button
             startIcon={<Tune />}
