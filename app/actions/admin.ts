@@ -41,7 +41,7 @@ export type EpisodeWithTranscript = EpisodeRow & {
 
 export type ShowInput = Omit<ShowRow, "id">
 export type EpisodeInput = Omit<EpisodeRow, "id" | "unmatched_count"> & {
-  transcript?: Record<string, unknown> | null
+  transcript?: Record<string, unknown> | unknown[] | null
 }
 
 /* ── Helpers ───────────────────────────────────────────────────────── */
@@ -140,6 +140,45 @@ export async function fetchVocabMatchesForWords(
   }
 
   return result
+}
+
+export type DefinitionKey = {
+  lemma: string
+  root: string | null
+}
+
+export async function fetchMissingDefinitions(
+  keys: DefinitionKey[]
+): Promise<DefinitionKey[]> {
+  await guardAdmin()
+
+  const valid = keys.filter((k) => k.lemma?.trim())
+  if (valid.length === 0) return []
+
+  const lemmas = Array.from(new Set(valid.map((k) => k.lemma.trim())))
+
+  const { data, error } = await serviceClient
+    .from("vocab_definitions")
+    .select("lemma_diacritic, arabic_root")
+    .in("lemma_diacritic", lemmas)
+
+  if (error) {
+    console.error("[fetchMissingDefinitions] error:", error.message)
+    throw new Error(error.message)
+  }
+
+  const existing = new Set<string>()
+  for (const row of (data ?? []) as Record<string, unknown>[]) {
+    const lemma = String(row.lemma_diacritic ?? "")
+    const root = row.arabic_root ? String(row.arabic_root) : ""
+    if (lemma) existing.add(`${lemma}|${root}`)
+  }
+
+  return valid.filter((k) => {
+    const lemma = k.lemma.trim()
+    const root = k.root?.trim() ?? ""
+    return !existing.has(`${lemma}|${root}`)
+  })
 }
 
 /* ── Shows ─────────────────────────────────────────────────────────── */
@@ -286,20 +325,34 @@ async function computeUnmatchedCounts(
 
   for (const row of rows) {
     const id = String(row.id)
-    const transcript = parseJsonb(row.transcript) as Record<string, unknown> | null
-    const scriptBlocks = Array.isArray(transcript?.scriptBlocks)
-      ? transcript.scriptBlocks
-      : []
+    const transcript = parseJsonb(row.transcript)
     const dbKeys = new Set<string>()
 
-    for (const block of scriptBlocks) {
-      const words = (block as Record<string, unknown>).words
-      if (!Array.isArray(words)) continue
-      for (const w of words) {
-        const db = (w as Record<string, unknown>).db
-        if (typeof db === "string" && db.trim()) {
-          dbKeys.add(db.trim())
-          allDbKeys.add(db.trim())
+    if (Array.isArray(transcript)) {
+      // New block-based transcript format.
+      for (const block of transcript) {
+        const tokens = (block as Record<string, unknown>).tokens
+        if (!Array.isArray(tokens)) continue
+        for (const t of tokens) {
+          const token = t as Record<string, unknown>
+          const db = (token.db || token.arabic) as string | undefined
+          if (typeof db === "string" && db.trim()) {
+            dbKeys.add(db.trim())
+            allDbKeys.add(db.trim())
+          }
+        }
+      }
+    } else if (transcript && typeof transcript === "object" && Array.isArray((transcript as Record<string, unknown>).scriptBlocks)) {
+      // Legacy transcript object.
+      for (const block of (transcript as Record<string, unknown>).scriptBlocks as Record<string, unknown>[]) {
+        const words = block.words
+        if (!Array.isArray(words)) continue
+        for (const w of words) {
+          const db = (w as Record<string, unknown>).db
+          if (typeof db === "string" && db.trim()) {
+            dbKeys.add(db.trim())
+            allDbKeys.add(db.trim())
+          }
         }
       }
     }

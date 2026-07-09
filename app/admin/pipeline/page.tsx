@@ -736,7 +736,7 @@ export default function PipelinePage() {
               <AdminTextField
                 value={jsonText}
                 onChange={(e) => setJsonText(e.target.value)}
-                placeholder='Paste transcript JSON here: an array of entries with a "tokens" array. Each token needs CEFR, root, lemma, arabic, english, entry_type, and transliteration.'
+                placeholder='Paste transcript JSON here: an array of entries with a "tokens" array. Each token needs root, lemma, arabic, english, entry_type, and transliteration. CEFR is optional.'
                 multiline
                 fullWidth
                 rows={14}
@@ -1848,10 +1848,12 @@ function ExistingDefinitionsList({
                       label={item.entry_type}
                       sx={{ fontFamily: "Jost, sans-serif", textTransform: "capitalize", borderRadius: "8px", fontSize: "1rem", py: 0.5 }}
                     />
-                    <Chip
-                      label={item.CEFR}
-                      sx={{ fontFamily: "Jost, sans-serif", borderRadius: "8px", fontSize: "1rem", py: 0.5 }}
-                    />
+                    {item.CEFR && (
+                      <Chip
+                        label={item.CEFR}
+                        sx={{ fontFamily: "Jost, sans-serif", borderRadius: "8px", fontSize: "1rem", py: 0.5 }}
+                      />
+                    )}
                     {item.arabic_root && (
                       <Chip
                         label={item.arabic_root}
@@ -2526,7 +2528,6 @@ function LemmaTable({ items, prefix }: { items: PipelineItem[]; prefix: string }
             <TableCell sx={headerSx}>Contextual form</TableCell>
             <TableCell sx={headerSx}>Gloss</TableCell>
             <TableCell sx={headerSx}>Type</TableCell>
-            <TableCell sx={headerSx}>CEFR</TableCell>
             <TableCell sx={headerSx}>Root</TableCell>
             <TableCell sx={headerSx}>Transliteration</TableCell>
           </TableRow>
@@ -2542,7 +2543,6 @@ function LemmaTable({ items, prefix }: { items: PipelineItem[]; prefix: string }
               </TableCell>
               <TableCell sx={cellSx}>{item.english || "—"}</TableCell>
               <TableCell sx={{ ...cellSx, textTransform: "capitalize" }}>{item.entry_type}</TableCell>
-              <TableCell sx={cellSx}>{item.CEFR}</TableCell>
               <TableCell sx={cellSx}>{item.root || "—"}</TableCell>
               <TableCell sx={cellSx}>{item.transliteration}</TableCell>
             </TableRow>
@@ -2556,25 +2556,31 @@ function LemmaTable({ items, prefix }: { items: PipelineItem[]; prefix: string }
 function buildPrompt(data: DefinitionsPromptData): string {
   const examplesJson = JSON.stringify(data.exampleDefinitions, null, 2)
   const newLemmasJson = JSON.stringify(
-    data.newLemmas.map((item) => ({
-      lemma_diacritic: item.arabic,
-      arabic_root: item.root,
-      entry_type: item.entry_type,
-      CEFR: item.CEFR,
-      transliteration: item.transliteration,
-    })),
+    data.newLemmas.map((item) => {
+      const row: Record<string, unknown> = {
+        lemma_diacritic: item.arabic,
+        arabic_root: item.root,
+        entry_type: item.entry_type,
+        transliteration: item.transliteration,
+      }
+      if (item.CEFR) row.CEFR = item.CEFR
+      return row
+    }),
     null,
     2
   )
   const existingLemmasJson = JSON.stringify(
-    data.existingLemmas.map((item) => ({
-      lemma_diacritic: item.lemma_diacritic,
-      arabic_root: item.arabic_root,
-      entry_type: item.entry_type,
-      CEFR: item.CEFR,
-      transliteration: item.transliteration,
-      definitions: item.definitions,
-    })),
+    data.existingLemmas.map((item) => {
+      const row: Record<string, unknown> = {
+        lemma_diacritic: item.lemma_diacritic,
+        arabic_root: item.arabic_root,
+        entry_type: item.entry_type,
+        transliteration: item.transliteration,
+        definitions: item.definitions,
+      }
+      if (item.CEFR) row.CEFR = item.CEFR
+      return row
+    }),
     null,
     2
   )

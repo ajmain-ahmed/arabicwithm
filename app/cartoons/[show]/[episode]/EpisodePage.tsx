@@ -35,7 +35,7 @@ import { useRouter } from 'next/navigation'
 import { usePlayerStore } from '@/store/playerStore'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { stripDiacritics } from '@/app/lib/arabic'
-import { EpisodeFull, CartoonWordEntry, type ScriptBlock, type NewTranscript, type NewTranscriptBlock } from '@/app/lib/cartoons'
+import { EpisodeFull, CartoonWordEntry, type ScriptBlock, type NewTranscript, type NewTranscriptBlock, type NewTranscriptToken } from '@/app/lib/cartoons'
 import { type ShowRow } from '@/app/actions/admin'
 import { HtmlTooltip, WordTooltip, LEVEL_COLORS } from '@/app/components/vocab-tooltip'
 import EpisodeTestDialog from './EpisodeTestDialog'
@@ -547,6 +547,7 @@ function ArabicLineText({
   text,
   wordMap,
   diacritizedMap,
+  definedRootLemmas,
   textScale,
   showDiacritics,
   onDictionaryDialogChange,
@@ -555,6 +556,7 @@ function ArabicLineText({
   text: string
   wordMap: Record<string, CartoonWordEntry>
   diacritizedMap: Record<string, CartoonWordEntry>
+  definedRootLemmas: string[]
   textScale: number
   showDiacritics: boolean
   onDictionaryDialogChange?: (open: boolean) => void
@@ -752,7 +754,7 @@ function ArabicLineText({
               key={i}
               style={{
                 borderBottom: '2px dotted #c62828',
-                paddingBottom: showDiacritics ? '5px' : '1px',
+                paddingBottom: showDiacritics ? '10px' : '4px',
               }}
             >
               {seg.text}
@@ -762,6 +764,9 @@ function ArabicLineText({
 
         const { text: wordText, entry, index } = seg
         const isActive = activeEntry === entry && open && activePartIndex === index
+        const rootLemmaKey = `${entry.lemma || entry.arabic}|${entry.root ?? ""}`
+        const hasDefinition = definedRootLemmas.includes(rootLemmaKey)
+        const underlineColor = hasDefinition ? 'var(--gold)' : '#c62828'
 
         /* ── Mobile: tap word → bottom-sheet summary ── */
         if (isMobile) {
@@ -775,8 +780,8 @@ function ArabicLineText({
               className="vocab-word"
               style={{
                 cursor: 'pointer',
-                borderBottom: '2px dotted var(--gold)',
-                paddingBottom: showDiacritics ? '5px' : '1px',
+                borderBottom: `2px dotted ${underlineColor}`,
+                paddingBottom: showDiacritics ? '10px' : '4px',
                 transition: 'background 0.15s',
               }}
               onMouseEnter={(e) => {
@@ -855,8 +860,8 @@ function ArabicLineText({
               className="vocab-word"
               style={{
                 cursor: 'pointer',
-                borderBottom: '2px dotted var(--gold)',
-                paddingBottom: showDiacritics ? '5px' : '1px',
+                borderBottom: `2px dotted ${underlineColor}`,
+                paddingBottom: showDiacritics ? '10px' : '4px',
                 transition: 'background 0.15s',
               }}
             >
@@ -1069,20 +1074,19 @@ export default function EpisodePage({
 
         const updatedRawBlock: NewTranscriptBlock = {
           timestamp: formatTimestamp(updatedBlock.timestamp),
-          arabicDiacritic: updatedBlock.arabicDiacritic,
-          arabicPlain: updatedBlock.arabicPlain,
           translation: updatedBlock.title,
           tokens: updatedBlock.words.map((w, wordIdx) => {
             const original = originalTokens[wordIdx]
-            return {
-              CEFR: w.cefr || (original?.CEFR ?? 'A1'),
-              root: original?.root ?? null,
-              lemma: original?.lemma?.trim() || w.arabic.trim(),
+            const token: NewTranscriptToken = {
+              root: w.root ?? original?.root ?? null,
+              lemma: w.lemma?.trim() || original?.lemma?.trim() || w.arabic.trim(),
               arabic: w.arabic,
-              entry_type: original?.entry_type ?? 'word',
+              arabicPlain: w.plain,
+              entry_type: w.entry_type || original?.entry_type || 'word',
               transliteration: w.transliteration,
               english: w.english,
             }
+            return token
           }),
         }
 
@@ -1818,12 +1822,13 @@ export default function EpisodePage({
                             </Box>
 
                             {/* Arabic */}
-                            <Typography className="arabic-line" sx={{ fontSize: `calc(1.35rem * ${textScale})`, mb: 0.5 }}>
+                            <Typography component="div" className="arabic-line" sx={{ fontSize: `calc(1.35rem * ${textScale})`, mb: 0.5 }}>
                               <ArabicLineText
                                 textScale={textScale}
                                 text={showDiacritics ? block.arabicDiacritic : block.arabicPlain}
                                 wordMap={episode.wordMap}
                                 diacritizedMap={episode.diacritizedMap}
+                                definedRootLemmas={episode.definedRootLemmas ?? []}
                                 showDiacritics={showDiacritics}
                                 onDictionaryDialogChange={setDictionaryDialogOpen}
                                 isAdmin={isAdmin}
@@ -1935,19 +1940,21 @@ export default function EpisodePage({
                         }}
                       >
                         {/* CEFR chip */}
-                        <Chip
-                          label={row.cefr}
-                          size="small"
-                          sx={{
-                            background: LEVEL_COLORS[row.cefr] ?? 'var(--forest)',
-                            color: '#fff',
-                            fontFamily: 'Jost, sans-serif',
-                            fontWeight: 600,
-                            fontSize: `calc(0.65rem * ${textScale})`,
-                            minWidth: 40,
-                            flexShrink: 0,
-                          }}
-                        />
+                        {row.cefr && (
+                          <Chip
+                            label={row.cefr}
+                            size="small"
+                            sx={{
+                              background: LEVEL_COLORS[row.cefr] ?? 'var(--forest)',
+                              color: '#fff',
+                              fontFamily: 'Jost, sans-serif',
+                              fontWeight: 600,
+                              fontSize: `calc(0.65rem * ${textScale})`,
+                              minWidth: 40,
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
 
                         {/* Arabic */}
                         <Typography

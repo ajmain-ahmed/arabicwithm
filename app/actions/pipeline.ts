@@ -160,7 +160,7 @@ export type ExistingLemmaWithDefs = {
   lemma_diacritic: string
   arabic_root: string | null
   entry_type: "word" | "phrase"
-  CEFR: string
+  CEFR?: string
   transliteration: string
   definitions: ExistingLemmaDefinition[]
 }

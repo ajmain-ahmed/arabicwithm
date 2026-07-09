@@ -42,10 +42,11 @@ export interface CartoonWordEntry {
   plain: string         // stripped diacritics
   transliteration: string
   english: string
-  cefr: string
+  cefr?: string
   pos?: string          // part of speech
-  root?: string         // root letters (ف-ع-ل style)
+  root?: string | null  // root letters (ف-ع-ل style)
   lemma?: string        // dictionary lemma (diacritized)
+  entry_type?: 'word' | 'phrase'
   listed?: boolean      // whether the word appears in the episode vocab list
 }
 
@@ -64,7 +65,7 @@ export interface VocabListItem {
   arabic: string
   transliteration: string
   english: string
-  cefr: string
+  cefr?: string
 }
 
 export interface GrammarPoint {
@@ -76,10 +77,12 @@ export interface GrammarPoint {
 
 /* ── New block-based transcript format stored in Supabase ── */
 export interface NewTranscriptToken {
-  CEFR: string
+  CEFR?: string
   root: string | null
   lemma: string
   arabic: string
+  arabicPlain?: string
+  db?: string
   entry_type: 'word' | 'phrase'
   transliteration: string
   english?: string
@@ -88,8 +91,8 @@ export interface NewTranscriptToken {
 export interface NewTranscriptBlock {
   tokens: NewTranscriptToken[]
   timestamp: string
-  arabicPlain: string
-  arabicDiacritic: string
+  arabicPlain?: string
+  arabicDiacritic?: string
   translation: string
 }
 
@@ -111,6 +114,8 @@ export interface EpisodeFull extends EpisodeMeta {
   /* ── lookup helpers built from script block word tables ── */
   wordMap: Record<string, CartoonWordEntry>   // plain Arabic → entry
   diacritizedMap: Record<string, CartoonWordEntry> // diacritized Arabic → entry
+  /* ── lemma/root pairs that exist in the definitions table ── */
+  definedRootLemmas?: string[]
 }
 
 export function isNewTranscript(transcript: unknown): transcript is NewTranscript {
@@ -122,7 +127,6 @@ export function isNewTranscript(transcript: unknown): transcript is NewTranscrip
     'tokens' in first &&
     Array.isArray(first.tokens) &&
     'timestamp' in first &&
-    'arabicDiacritic' in first &&
     'translation' in first
   )
 }
@@ -149,38 +153,47 @@ export function normalizeNewTranscript(
   for (const block of blocks) {
     const words: CartoonWordEntry[] = []
 
+    const tokenPlains: string[] = []
+    const tokenDiacritics: string[] = []
+
     for (const token of block.tokens) {
-      const plain = stripDiacritics(token.arabic)
+      const diacritic = token.arabic.trim()
+      const plain = token.arabicPlain?.trim() || stripDiacritics(diacritic)
+      tokenDiacritics.push(diacritic)
+      tokenPlains.push(plain)
 
       // Build a lightweight vocab list keyed by lemma (dictionary form).
-      const lemma = token.lemma?.trim() || token.arabic.trim()
+      const lemma = token.lemma?.trim() || diacritic
       if (!seenVocab.has(lemma)) {
-        seenVocab.set(lemma, {
+        const vocabItem: VocabListItem = {
           number: vocabNumber++,
           arabic: lemma,
           transliteration: '', // new-format tokens carry surface-form transliterations
           english: token.english ?? '',
-          cefr: token.CEFR,
-        })
+        }
+        if (token.CEFR) vocabItem.cefr = token.CEFR
+        seenVocab.set(lemma, vocabItem)
       }
 
-      words.push({
-        db: token.arabic,
-        arabic: token.arabic,
+      const wordEntry: CartoonWordEntry = {
+        db: token.db?.trim() || diacritic,
+        arabic: diacritic,
         plain,
         transliteration: token.transliteration,
         english: token.english ?? '',
-        cefr: token.CEFR,
-        root: token.root ?? undefined,
-        lemma: token.lemma?.trim() || token.arabic.trim(),
-      })
+        root: token.root ?? null,
+        lemma: token.lemma?.trim() || diacritic,
+        entry_type: token.entry_type,
+      }
+      if (token.CEFR) wordEntry.cefr = token.CEFR
+      words.push(wordEntry)
     }
 
     scriptBlocks.push({
       timestamp: parseNewTimestamp(block.timestamp),
       title: block.translation,
-      arabicDiacritic: block.arabicDiacritic,
-      arabicPlain: block.arabicPlain,
+      arabicDiacritic: tokenDiacritics.join(' '),
+      arabicPlain: tokenPlains.join(' '),
       english: '',
       words,
       notes: [],

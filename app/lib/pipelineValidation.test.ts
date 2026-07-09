@@ -234,4 +234,25 @@ describe("validateTranscriptEntries", () => {
     if (result.ok) return
     expect(result.error).toContain("CEFR")
   })
+
+  it("accepts token without CEFR", () => {
+    const result = validateTranscriptEntries([
+      {
+        timestamp: "0:00",
+        tokens: [
+          {
+            root: "س-ر-ع",
+            lemma: "سَرِيع",
+            arabic: "سَرِيع",
+            english: "fast",
+            entry_type: "word",
+            transliteration: "sarīʿ",
+          },
+        ],
+      },
+    ] as unknown[])
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.items[0].CEFR).toBeUndefined()
+  })
 })

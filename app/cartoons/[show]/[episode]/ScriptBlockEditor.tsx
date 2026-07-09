@@ -1,9 +1,10 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import { Box, Typography, Button, IconButton, Paper } from "@mui/material"
 import { Save, Cancel, Delete, Add } from "@mui/icons-material"
 import { type ScriptBlock, type CartoonWordEntry } from "@/app/lib/cartoons"
+import { stripDiacritics } from "@/app/lib/arabic"
 
 interface ScriptBlockEditorProps {
   block: ScriptBlock
@@ -11,8 +12,6 @@ interface ScriptBlockEditorProps {
   onCancel: () => void
   disabled?: boolean
 }
-
-const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
 export function formatTimestamp(seconds: number | null): string {
   if (seconds == null) return "0:00"
@@ -116,11 +115,12 @@ function Field({
 
 export default function ScriptBlockEditor({ block, onSave, onCancel, disabled }: ScriptBlockEditorProps) {
   const [title, setTitle] = useState(block.title)
-  const [arabicDiacritic, setArabicDiacritic] = useState(block.arabicDiacritic)
-  const [arabicPlain, setArabicPlain] = useState(block.arabicPlain)
   const [timestamp, setTimestamp] = useState(formatTimestamp(block.timestamp))
   const [notes, setNotes] = useState<string[]>(block.notes.length ? block.notes : [""])
   const [words, setWords] = useState<CartoonWordEntry[]>(block.words.length ? block.words : [])
+
+  const derivedDiacritic = useMemo(() => words.map((w) => w.arabic.trim()).join(' '), [words])
+  const derivedPlain = useMemo(() => words.map((w) => w.plain.trim()).join(' '), [words])
 
   const updateNote = (index: number, value: string) => {
     setNotes((prev) => {
@@ -153,28 +153,31 @@ export default function ScriptBlockEditor({ block, onSave, onCancel, disabled }:
   const addWord = () => {
     setWords((prev) => [
       ...prev,
-      { arabic: "", plain: "", transliteration: "", english: "", cefr: "A1" },
+      { arabic: "", plain: "", transliteration: "", english: "", root: null, lemma: "", entry_type: "word" },
     ])
   }
 
   const handleSave = () => {
     const filteredNotes = notes.map((n) => n.trim()).filter(Boolean)
+    const cleanedWords = words.map((w) => ({
+      ...w,
+      arabic: w.arabic.trim(),
+      plain: stripDiacritics(w.arabic.trim()),
+      transliteration: w.transliteration.trim(),
+      english: w.english.trim(),
+      root: w.root?.trim() || null,
+      lemma: w.lemma?.trim() || w.arabic.trim(),
+      entry_type: w.entry_type || "word",
+    }))
     onSave({
       ...block,
       title: title.trim(),
       english: "",
-      arabicDiacritic: arabicDiacritic.trim(),
-      arabicPlain: arabicPlain.trim(),
+      arabicDiacritic: derivedDiacritic,
+      arabicPlain: derivedPlain,
       timestamp: parseTimestamp(timestamp),
       notes: filteredNotes,
-      words: words.map((w) => ({
-        ...w,
-        arabic: w.arabic.trim(),
-        plain: w.plain.trim(),
-        transliteration: w.transliteration.trim(),
-        english: w.english.trim(),
-        cefr: w.cefr.trim(),
-      })),
+      words: cleanedWords,
     })
   }
 
@@ -195,9 +198,43 @@ export default function ScriptBlockEditor({ block, onSave, onCancel, disabled }:
           <Field label="Title / English" value={title} onChange={setTitle} disabled={disabled} />
         </Box>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-          <Field label="Arabic (diacritic)" value={arabicDiacritic} onChange={setArabicDiacritic} disabled={disabled} rtl />
-          <Field label="Arabic (plain)" value={arabicPlain} onChange={setArabicPlain} disabled={disabled} rtl />
+        <Box>
+          <Typography sx={sectionLabelStyle}>Arabic sentence (preview)</Typography>
+          <Box
+            sx={{
+              p: 1.5,
+              borderRadius: "8px",
+              border: "1px solid rgba(122,110,101,0.15)",
+              bgcolor: "rgba(122,110,101,0.03)",
+              direction: "rtl",
+              textAlign: "right",
+              fontFamily: "'EB Garamond', serif",
+              fontSize: "1.25rem",
+              color: "#2c1a0e",
+              lineHeight: 1.5,
+              minHeight: 48,
+            }}
+          >
+            {derivedDiacritic || "—"}
+          </Box>
+          <Box
+            sx={{
+              mt: 1,
+              p: 1.5,
+              borderRadius: "8px",
+              border: "1px solid rgba(122,110,101,0.15)",
+              bgcolor: "rgba(122,110,101,0.03)",
+              direction: "rtl",
+              textAlign: "right",
+              fontFamily: "'EB Garamond', serif",
+              fontSize: "1.1rem",
+              color: "#7a6e65",
+              lineHeight: 1.5,
+              minHeight: 44,
+            }}
+          >
+            {derivedPlain || "—"}
+          </Box>
         </Box>
 
         <Box>
@@ -262,19 +299,19 @@ export default function ScriptBlockEditor({ block, onSave, onCancel, disabled }:
                 </IconButton>
               </Box>
               <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr" }, gap: 1.5 }}>
-                <Field label="Arabic" value={word.arabic} onChange={(v) => updateWord(idx, { arabic: v })} disabled={disabled} rtl />
-                <Field label="Plain" value={word.plain} onChange={(v) => updateWord(idx, { plain: v })} disabled={disabled} rtl />
-                <Field label="DB key" value={word.db ?? ""} onChange={(v) => updateWord(idx, { db: v })} disabled={disabled} />
-              </Box>
-              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr" }, gap: 1.5, mt: 1.5 }}>
+                <Field label="Arabic" value={word.arabic} onChange={(v) => updateWord(idx, { arabic: v, plain: stripDiacritics(v) })} disabled={disabled} rtl />
                 <Field label="English" value={word.english} onChange={(v) => updateWord(idx, { english: v })} disabled={disabled} />
                 <Field label="Transliteration" value={word.transliteration} onChange={(v) => updateWord(idx, { transliteration: v })} disabled={disabled} />
+              </Box>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr" }, gap: 1.5, mt: 1.5 }}>
+                <Field label="Root" value={word.root ?? ""} onChange={(v) => updateWord(idx, { root: v || null })} disabled={disabled} rtl />
+                <Field label="Lemma" value={word.lemma ?? ""} onChange={(v) => updateWord(idx, { lemma: v })} disabled={disabled} rtl />
                 <Box sx={{ display: "flex", flexDirection: "column" }}>
-                  <label style={labelStyle}>CEFR</label>
+                  <label style={labelStyle}>Entry type</label>
                   <select
-                    value={word.cefr}
+                    value={word.entry_type || "word"}
                     disabled={disabled}
-                    onChange={(e) => updateWord(idx, { cefr: e.target.value })}
+                    onChange={(e) => updateWord(idx, { entry_type: e.target.value as 'word' | 'phrase' })}
                     style={{
                       ...inputStyle,
                       height: "42px",
@@ -282,13 +319,13 @@ export default function ScriptBlockEditor({ block, onSave, onCancel, disabled }:
                       appearance: "auto",
                     }}
                   >
-                    {CEFR_LEVELS.map((lvl) => (
-                      <option key={lvl} value={lvl}>
-                        {lvl}
-                      </option>
-                    ))}
+                    <option value="word">word</option>
+                    <option value="phrase">phrase</option>
                   </select>
                 </Box>
+              </Box>
+              <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr" }, gap: 1.5, mt: 1.5 }}>
+                <Field label="Plain (auto)" value={word.plain} onChange={() => {}} disabled rtl />
               </Box>
             </Paper>
           ))}

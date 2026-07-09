@@ -8,7 +8,7 @@ export interface VocabEntry {
   plain?: string
   transliteration: string
   english: string
-  cefr: string
+  cefr?: string
   pos?: string
-  root?: string
+  root?: string | null
 }

@@ -8,6 +8,7 @@ import {
   type EpisodeMeta,
   type EpisodeFull,
   type CartoonWordEntry,
+  type VocabListItem,
   isNewTranscript,
   normalizeNewTranscript,
 } from "@/app/lib/cartoons"
@@ -242,17 +243,19 @@ export async function fetchEpisodeForPublic(
     const arabic = String(w.arabic ?? '')
     const plain = String(w.plain ?? stripDiacritics(arabic))
     const lemma = typeof w.lemma === 'string' ? w.lemma.trim() : ''
-    return {
+    const entry: CartoonWordEntry = {
       db: db || undefined,
       arabic,
       plain,
       transliteration: String(w.transliteration ?? ''),
       english: String(w.english ?? ''),
-      cefr: String(w.cefr ?? ''),
       pos: typeof w.pos === 'string' ? w.pos : undefined,
       root: typeof w.root === 'string' ? w.root : undefined,
       lemma: lemma || arabic,
     }
+    const cefr = typeof w.cefr === 'string' ? w.cefr.trim() : ''
+    if (cefr) entry.cefr = cefr
+    return entry
   }
 
   const scriptBlocks: EpisodeFull["scriptBlocks"] = []
@@ -282,14 +285,55 @@ export async function fetchEpisodeForPublic(
     })
   }
 
+  // Build the set of lemma/root pairs present in the episode and check which
+  // ones exist in the vocab_definitions table. The client uses this to colour
+  // words that lack a root-lemma definition.
+  const definitionKeys: { lemma: string; root: string | null }[] = []
+  const seenDefinitionKeys = new Set<string>()
+  for (const block of scriptBlocks) {
+    for (const w of block.words) {
+      const lemma = w.lemma || w.arabic
+      const root = w.root ?? null
+      const key = `${lemma}|${root ?? ""}`
+      if (!lemma || seenDefinitionKeys.has(key)) continue
+      seenDefinitionKeys.add(key)
+      definitionKeys.push({ lemma, root })
+    }
+  }
+
+  let definedRootLemmas: string[] = []
+  if (definitionKeys.length > 0) {
+    const lemmas = Array.from(new Set(definitionKeys.map((k) => k.lemma)))
+    const { data: defRows, error: defError } = await serviceClient
+      .from("vocab_definitions")
+      .select("lemma_diacritic, arabic_root")
+      .in("lemma_diacritic", lemmas)
+
+    if (defError) {
+      console.error("[fetchEpisodeForPublic] vocab_definitions error:", defError.message)
+    }
+
+    const existing = new Set<string>()
+    for (const row of (defRows ?? []) as Record<string, unknown>[]) {
+      const lemma = String(row.lemma_diacritic ?? "")
+      const root = row.arabic_root ? String(row.arabic_root) : ""
+      if (lemma) existing.add(`${lemma}|${root}`)
+    }
+    definedRootLemmas = Array.from(existing)
+  }
+
   // Vocab list is already populated from the transcript; no external lookup needed.
-  const enrichedVocabList: EpisodeFull["vocabList"] = vocabList.map((row) => ({
-    number: Number(row.number ?? 0),
-    arabic: String(row.arabic ?? ''),
-    transliteration: String(row.transliteration ?? ''),
-    english: String(row.english ?? ''),
-    cefr: String(row.cefr ?? ''),
-  }))
+  const enrichedVocabList: EpisodeFull["vocabList"] = vocabList.map((row) => {
+    const item: VocabListItem = {
+      number: Number(row.number ?? 0),
+      arabic: String(row.arabic ?? ''),
+      transliteration: String(row.transliteration ?? ''),
+      english: String(row.english ?? ''),
+    }
+    const cefr = typeof row.cefr === 'string' ? row.cefr.trim() : ''
+    if (cefr) item.cefr = cefr
+    return item
+  })
 
   return {
     ...meta,
@@ -303,6 +347,7 @@ export async function fetchEpisodeForPublic(
     transcriptFormat: isNew ? 'new' : 'legacy',
     wordMap,
     diacritizedMap,
+    definedRootLemmas,
   }
 }
 
