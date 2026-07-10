@@ -2,7 +2,7 @@
 
 import fs from 'fs'
 import path from 'path'
-import { stripDiacritics } from './arabic'
+import { isPathContained } from './fs'
 
 const CONTENT_DIR = path.join(process.cwd(), 'content/books')
 
@@ -77,12 +77,6 @@ export interface BookFull {
 }
 
 /* ── Helpers ────────────────────────────────────────────────────────────────── */
-function isPathContained(targetPath: string, baseDir: string): boolean {
-  const resolved = path.resolve(targetPath)
-  const base = path.resolve(baseDir)
-  return resolved === base || resolved.startsWith(base + path.sep)
-}
-
 function resolveCover(_bookDir: string, _slug: string, metaCover?: string): string {
   if (metaCover) {
     const publicPath = path.join(process.cwd(), 'public', metaCover)
@@ -257,20 +251,20 @@ export function getBook(slug: string): BookFull | null {
     const raw = fs.readFileSync(path.join(bookDir, file), 'utf8')
     const data = JSON.parse(raw)
 
-    const sentences: BookSentence[] = (data.sentences ?? []).map((s: any) => ({
-      sentenceId: s.sentence_id,
-      arabic: s.arabic_di ?? '',
-      transliteration: s.transliteration ?? '',
-      english: s.english ?? '',
-      words: (s.words ?? []).map((w: any) => ({
-        arabic: w.arabic_di ?? '',
-        plain: w.arabic_plain ?? '',
-        transliteration: w.transliteration ?? '',
-        english: w.english ?? '',
-        pos: w.pos ?? '',
-        cefr: w.cefr ?? '',
-        grammarNote: w.grammar_note ?? undefined,
-        dbLink: w.db_link ?? null,
+    const sentences: BookSentence[] = (data.sentences ?? []).map((s: Record<string, unknown>) => ({
+      sentenceId: s.sentence_id as string | undefined,
+      arabic: (s.arabic_di as string) ?? '',
+      transliteration: (s.transliteration as string) ?? '',
+      english: (s.english as string) ?? '',
+      words: ((s.words ?? []) as Record<string, unknown>[]).map((w) => ({
+        arabic: (w.arabic_di as string) ?? '',
+        plain: (w.arabic_plain as string) ?? '',
+        transliteration: (w.transliteration as string) ?? '',
+        english: (w.english as string) ?? '',
+        pos: (w.pos as string) ?? '',
+        cefr: (w.cefr as string) ?? '',
+        grammarNote: w.grammar_note as string | undefined,
+        dbLink: (w.db_link as string) ?? null,
       })),
     }))
 

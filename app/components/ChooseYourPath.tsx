@@ -377,7 +377,7 @@ export default function ChooseYourPath() {
               lineHeight: 1.6,
             }}
           >
-            There's more than one way to learn
+            There&apos;s more than one way to learn
           </Typography>
 
           {/* Cards grid */}

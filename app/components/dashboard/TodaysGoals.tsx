@@ -69,7 +69,7 @@ export default function TodaysGoals({ data }: { data: DashboardData }) {
               color: 'var(--muted)',
             }}
           >
-            Today's Goals
+            Today&apos;s Goals
           </Typography>
           <Typography
             sx={{

@@ -107,7 +107,7 @@ export default function TodaysProgress({ data }: { data: DashboardData }) {
             color: 'var(--muted)',
           }}
         >
-          Today's Progress
+          Today&apos;s Progress
         </Typography>
         <Typography
           sx={{

@@ -51,6 +51,46 @@ function normalizeShowCover(cover: string | null, slug: string): string {
   return candidate
 }
 
+function normalizeEpisodeCover(
+  cover: string | null,
+  showSlug: string,
+  episodeSlug: string,
+  showCover?: string
+): string {
+  let candidate = (cover ?? "").trim()
+
+  // Normalize relative paths to be absolute against the public directory.
+  if (candidate && !candidate.startsWith("/") && !candidate.startsWith("http")) {
+    candidate = `/${candidate}`
+  }
+
+  // Rewrite legacy /assets/cartoons/ prefix.
+  if (candidate.startsWith("/assets/cartoons/")) {
+    candidate = candidate.replace("/assets/cartoons/", "/cartoons/")
+  }
+
+  // If no stored cover, fall back to the episode-specific image generated from slugs.
+  if (!candidate) {
+    candidate = `/cartoons/${showSlug}/${episodeSlug}.avif`
+  }
+
+  // If the resolved file exists on disk, return it.
+  const publicPath = path.join(process.cwd(), "public", candidate)
+  if (fs.existsSync(publicPath)) return candidate
+
+  // Try common alternative extensions.
+  const base = candidate.replace(/\.[^./]+$/, "")
+  for (const ext of [".avif", ".jpg", ".jpeg", ".png", ".webp"]) {
+    const alt = `${base}${ext}`
+    if (fs.existsSync(path.join(process.cwd(), "public", alt))) return alt
+  }
+
+  // Last resort: use the show cover if we have it.
+  if (showCover) return showCover
+
+  return candidate
+}
+
 /* ── Shows ─────────────────────────────────────────────────────────── */
 
 export async function fetchShowsForPublic(): Promise<ShowMeta[]> {
@@ -155,7 +195,7 @@ export async function fetchShowBySlugPublic(slug: string): Promise<ShowMeta | nu
 export async function fetchEpisodesForShowPublic(showSlug: string): Promise<EpisodeMeta[]> {
   const { data: show, error: showError } = await serviceClient
     .from("shows")
-    .select("id")
+    .select("id, slug, cover")
     .eq("slug", showSlug)
     .limit(1)
     .single()
@@ -167,16 +207,20 @@ export async function fetchEpisodesForShowPublic(showSlug: string): Promise<Epis
 
   const { data, error } = await serviceClient
     .from("episodes")
-    .select("id, slug, title, level, tags, description, youtube_id, youtube_short, episode_number")
+    .select("id, slug, title, level, tags, description, youtube_id, cover")
     .eq("show_id", show.id)
-    .order("episode_number", { ascending: true })
+    .order("created_at", { ascending: true })
 
   if (error) {
     console.error("[fetchEpisodesForShowPublic] error:", error.message)
     throw new Error(error.message)
   }
 
-  return (data ?? []).map(mapEpisodeRow)
+  const normalizedShowCover = normalizeShowCover(show.cover ? String(show.cover) : null, showSlug)
+
+  return (data ?? []).map((row) =>
+    mapEpisodeRow(row, showSlug, normalizedShowCover)
+  )
 }
 
 export async function fetchEpisodeForPublic(
@@ -197,7 +241,7 @@ export async function fetchEpisodeForPublic(
 
   const { data, error } = await serviceClient
     .from("episodes")
-    .select("id, slug, title, level, tags, description, youtube_id, youtube_short, episode_number, transcript")
+    .select("id, slug, title, level, tags, description, youtube_id, transcript")
     .eq("show_id", show.id)
     .eq("slug", episodeSlug)
     .limit(1)
@@ -351,16 +395,26 @@ export async function fetchEpisodeForPublic(
   }
 }
 
-function mapEpisodeRow(row: Record<string, unknown>): EpisodeMeta {
+function mapEpisodeRow(
+  row: Record<string, unknown>,
+  showSlug?: string,
+  showCover?: string
+): EpisodeMeta {
+  const episodeSlug = String(row.slug)
+  const storedCover = row.cover ? String(row.cover) : null
+  const cover =
+    showSlug != null
+      ? normalizeEpisodeCover(storedCover, showSlug, episodeSlug, showCover)
+      : storedCover ?? undefined
+
   return {
     id: String(row.id),
-    slug: String(row.slug),
+    slug: episodeSlug,
     title: String(row.title),
-    episode: Number(row.episode_number) || 0,
     level: String(row.level ?? ""),
     tags: Array.isArray(row.tags) ? row.tags.map((t) => String(t)) : [],
     description: row.description ? String(row.description) : undefined,
     youtubeId: row.youtube_id ? String(row.youtube_id) : undefined,
-    youtubeShort: Boolean(row.youtube_short),
+    cover,
   }
 }

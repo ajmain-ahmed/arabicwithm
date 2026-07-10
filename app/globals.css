@@ -1,8 +1,51 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ── ArabicWithM design tokens ───────────────────────────────────────── */
+
+  /* Palette */
+  --awm-bark: #2c1a0e;
+  --awm-bark-dark: #1a0f08;
+  --awm-gold: #b8860b;
+  --awm-gold-light: #d4a843;
+  --awm-gold-lighter: #e6c060;
+  --awm-cream: #f5ede0;
+  --awm-cream-light: #faf7f2;
+  --awm-muted: #7a6e65;
+  --awm-muted-light: #9e8a7a;
+  --awm-forest: #0e2e1f;
+  --awm-error: #c0392b;
+  --awm-white: #ffffff;
+  --awm-black: #000000;
+
+  /* Shape */
+  --awm-radius-pill: 9999px;
+  --awm-radius-xl: 24px;
+  --awm-radius-lg: 16px;
+  --awm-radius-md: 12px;
+  --awm-radius-sm: 8px;
+  --awm-radius-xs: 4px;
+  --awm-radius-none: 2px;
+
+  /* Typography */
+  --font-decorative: 'Cookie', cursive;
+  --font-serif: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Jost', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Legacy aliases (kept for backward compatibility during migration) */
+  --background: var(--awm-cream-light);
+  --foreground: var(--awm-bark);
+  --bark: var(--awm-bark);
+  --bark-dark: var(--awm-bark-dark);
+  --gold: var(--awm-gold);
+  --gold-lt: var(--awm-gold-light);
+  --gold-light: var(--awm-gold-light);
+  --cream: var(--awm-cream);
+  --cream-light: var(--awm-cream-light);
+  --muted: var(--awm-muted);
+  --muted-light: var(--awm-muted-light);
+  --forest: var(--awm-forest);
+  --sand: var(--awm-cream);
 }
 
 html {
@@ -14,7 +57,7 @@ html {
 body {
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--awm-cream-light);
+  color: var(--awm-bark);
+  font-family: var(--font-sans);
 }

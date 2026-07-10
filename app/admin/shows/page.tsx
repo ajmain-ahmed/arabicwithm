@@ -17,12 +17,10 @@ import {
 } from "@mui/material"
 import { Edit, Add } from "@mui/icons-material"
 import { fetchShowsForAdmin, type ShowRow } from "@/app/actions/admin"
+import { errorMessage } from "@/app/lib/errors"
 import SearchField from "../components/SearchField"
 import ShowEditDialog from "../components/ShowEditDialog"
 
-function errorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : "Something went wrong"
-}
 
 type SortKey = keyof ShowRow
 type SortDir = "asc" | "desc"

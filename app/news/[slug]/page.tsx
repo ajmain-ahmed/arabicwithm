@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { parseArticle, type ParsedArticle } from '@/app/lib/news'
+import { parseArticle } from '@/app/lib/news'
 import ArticlePage from './ArticlePage'
 
 export const dynamic = 'force-dynamic'

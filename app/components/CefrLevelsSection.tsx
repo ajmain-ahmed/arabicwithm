@@ -16,19 +16,6 @@ import LevelCard from './LevelCard'
 const SHARED_MX = { xs: 2, sm: 4, md: 6, lg: 8, xl: 12 }
 
 /* ─────────────────────────────────────────────
-   Level styling constants
-───────────────────────────────────────────── */
-const LEVEL_COLORS: Record<string, string> = {
-  A0: '#2d6a4f',
-  A1: '#40916c',
-  A2: '#52b788',
-  B1: '#b5861a',
-  B2: '#9c6b00',
-  C1: '#6d4c9e',
-  C2: '#4a2f7a',
-}
-
-/* ─────────────────────────────────────────────
    Shared section background — diagonal stripes
 ───────────────────────────────────────────── */
 function SectionBg() {

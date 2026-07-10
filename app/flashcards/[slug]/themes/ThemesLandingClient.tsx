@@ -10,7 +10,7 @@ import { NavigateNext } from '@mui/icons-material'
 import type { ThemeProgress } from '@/app/actions/vocab'
 
 export default function ThemesLandingClient({
-  slug, levelCode, label, themes,
+  slug, label, themes,
 }: {
   slug: string
   levelCode: string

@@ -13,7 +13,7 @@ import {
 import Grid from '@mui/material/Grid'
 import { useRouter } from 'next/navigation'
 import { ShowMeta } from '../lib/cartoons'
-import { PageBanner, HowItWorksSection, PlacementTestCTA } from '@/app/components/page-layout'
+import { PageBanner } from '@/app/components/page-layout'
 import { FilterSidebar, ContentCard, ComingSoonSection } from '@/app/components/content-grid'
 import ShowEditDialog from './components/ShowEditDialog'
 import { deleteShow } from '@/app/actions/admin'
@@ -37,13 +37,6 @@ const BARK = '#2c1a0e'
 const GOLD = '#b8860b'
 const WARM_WHITE = '#fffaf0'
 const MUTED = '#7a6e65'
-
-const DIFFICULTY_COLORS: Record<string, string> = {
-  'A1-A2': '#6b8f5e',
-  'A2-B1': '#5a7d8c',
-  'B1-B2': '#c4904a',
-  'B2-C1': '#8a6a8a',
-}
 
 const CATEGORIES = ['All Shows', 'Everyday Arabic', 'Historical', 'Islamic Heritage', 'Action']
 const LEVELS = ['A1-A2', 'A2-B1', 'B1-B2', 'B2-C1']

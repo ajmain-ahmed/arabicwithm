@@ -56,6 +56,7 @@ export default function ContentCard({
   aspectRatio = '16/9',
 }: ContentCardProps) {
   const [hovered, setHovered] = useState(false)
+  const [imgError, setImgError] = useState(false)
   const router = useRouter()
   const badgeColor = DIFFICULTY_COLORS[level ?? ''] || MUTED
 
@@ -80,21 +81,46 @@ export default function ContentCard({
     >
       {/* Thumbnail */}
       <Box sx={{ position: 'relative', aspectRatio, overflow: 'hidden' }}>
-        <Box
-          component="img"
-          src={cover}
-          alt={title}
-          onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-            e.currentTarget.style.display = 'none'
-          }}
-          sx={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            transform: hovered ? 'scale(1.03)' : 'scale(1)',
-            transition: 'transform 0.3s',
-          }}
-        />
+        {!imgError ? (
+          <Box
+            component="img"
+            src={cover}
+            alt={title}
+            onError={() => setImgError(true)}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transform: hovered ? 'scale(1.03)' : 'scale(1)',
+              transition: 'transform 0.3s',
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'linear-gradient(135deg, rgba(44,26,14,0.08) 0%, rgba(184,134,11,0.08) 100%)',
+              px: 2,
+            }}
+          >
+            <Typography
+              sx={{
+                fontFamily: '"EB Garamond", Georgia, serif',
+                fontSize: { xs: 16, md: 18 },
+                fontWeight: 600,
+                color: BARK,
+                textAlign: 'center',
+                lineHeight: 1.25,
+              }}
+            >
+              {title}
+            </Typography>
+          </Box>
+        )}
         {/* Bottom gradient */}
         <Box
           sx={{

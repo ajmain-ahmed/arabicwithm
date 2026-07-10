@@ -7,6 +7,7 @@ import { cookies } from "next/headers"
 import { z } from 'zod'
 import { checkRateLimit } from '@/app/lib/rateLimit'
 import { serviceClient } from "@/app/lib/supabase"
+import { parseJsonb } from "@/app/lib/jsonb"
 
 async function getAuthClient() {
   const cookieStore = await cookies()
@@ -42,19 +43,42 @@ async function getAuthenticatedUserId(): Promise<string | null> {
 
 /* ── JSONB helpers ── */
 
+type DefinitionItem = {
+  english?: string
+  direct_english?: string
+  simple_ar?: string
+  simple_ar_tr?: string
+}
+
+type ExampleItem = {
+  ar?: string
+  ar_di?: string
+  en?: string
+  tr?: string
+  interactive?: boolean
+}
+
+type ConjugationItem = {
+  type?: string
+  con_ar?: string
+  con_di?: string
+  con_en?: string
+  con_tr?: string
+}
+
 function snakeToCamelDefinitions(defs: unknown): unknown {
-  const arr = Array.isArray(defs) ? defs : []
-  return arr.map((d: any) => ({
+  const arr = Array.isArray(defs) ? (defs as DefinitionItem[]) : []
+  return arr.map((d) => ({
     english: d?.english ?? "",
-    directEnglish: d?.direct_english ?? d?.directEnglish ?? "",
-    simpleAr: d?.simple_ar ?? d?.simpleAr ?? "",
-    simpleArTr: d?.simple_ar_tr ?? d?.simpleArTr ?? "",
+    directEnglish: d?.direct_english ?? "",
+    simpleAr: d?.simple_ar ?? "",
+    simpleArTr: d?.simple_ar_tr ?? "",
   }))
 }
 
 function camelToSnakeDefinitions(defs: unknown): unknown {
-  const arr = Array.isArray(defs) ? defs : []
-  return arr.map((d: any) => ({
+  const arr = Array.isArray(defs) ? (defs as Record<string, unknown>[]) : []
+  return arr.map((d) => ({
     english: d?.english ?? "",
     direct_english: d?.directEnglish ?? d?.direct_english ?? "",
     simple_ar: d?.simpleAr ?? d?.simple_ar ?? "",
@@ -63,18 +87,18 @@ function camelToSnakeDefinitions(defs: unknown): unknown {
 }
 
 function snakeToCamelExamples(exs: unknown): unknown {
-  const arr = Array.isArray(exs) ? exs : []
-  return arr.map((e: any) => ({
+  const arr = Array.isArray(exs) ? (exs as ExampleItem[]) : []
+  return arr.map((e) => ({
     ar: e?.ar ?? "",
-    arDi: e?.ar_di ?? e?.arDi ?? "",
+    arDi: e?.ar_di ?? "",
     en: e?.en ?? "",
     tr: e?.tr ?? "",
   }))
 }
 
 function camelToSnakeExamples(exs: unknown): unknown {
-  const arr = Array.isArray(exs) ? exs : []
-  return arr.map((e: any) => ({
+  const arr = Array.isArray(exs) ? (exs as Record<string, unknown>[]) : []
+  return arr.map((e) => ({
     ar: e?.ar ?? "",
     ar_di: e?.arDi ?? e?.ar_di ?? "",
     en: e?.en ?? "",
@@ -82,23 +106,14 @@ function camelToSnakeExamples(exs: unknown): unknown {
   }))
 }
 
-function parseJsonb(val: any): any {
-  if (val == null) return null
-  if (Array.isArray(val)) return val
-  if (typeof val === 'object') return val
-  if (typeof val === 'string') {
-    try { return JSON.parse(val) } catch { return null }
-  }
-  return null
-}
-
-function getPos(formsJson: any): string {
+function getPos(formsJson: unknown): string {
   const parsed = parseJsonb(formsJson)
   if (!Array.isArray(parsed) || parsed.length === 0) return 'unknown'
-  return parsed[0]?.type ?? 'unknown'
+  const first = parsed[0] as { type?: string } | undefined
+  return first?.type ?? 'unknown'
 }
 
-function flattenForms(formsJson: any): FormRow[] | null {
+function flattenForms(formsJson: unknown): FormRow[] | null {
   const parsed = parseJsonb(formsJson)
   if (!Array.isArray(parsed) || parsed.length === 0) return null
 
@@ -123,8 +138,8 @@ function flattenForms(formsJson: any): FormRow[] | null {
     const conjugations = item.conjugations
     if (conjugations && typeof conjugations === 'object') {
       const entries = Array.isArray(conjugations)
-        ? conjugations.map((c: any, i: number) => [`item_${i}`, c])
-        : Object.entries(conjugations)
+        ? (conjugations as ConjugationItem[]).map((c, i) => [`item_${i}`, c] as const)
+        : Object.entries(conjugations as Record<string, ConjugationItem>)
       for (const [key, value] of entries) {
         if (value && typeof value === 'object' && value.con_ar) {
           rows.push({
@@ -235,10 +250,10 @@ export async function fetchThemeVocabWithProgress(
   const examples: ExampleRow[] = []
 
   for (const v of vocabData) {
-    const definitions = parseJsonb(v.definitions) ?? []
+    const definitions = parseJsonb<DefinitionItem[]>(v.definitions) ?? []
     const primary = definitions[0] ?? null
 
-    const exList = parseJsonb(v.examples) ?? []
+    const exList = parseJsonb<ExampleItem[]>(v.examples) ?? []
     for (const e of exList) {
       examples.push({
         vocab_id: v.word_id,

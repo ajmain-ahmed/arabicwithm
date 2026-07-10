@@ -4,6 +4,8 @@ import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
 import { normalizeArabicToken, stripDiacritics } from './arabic'
+import { parseJsonb } from './jsonb'
+import { isPathContained } from './fs'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
 const CONTENT_DIR = path.join(process.cwd(), 'content/news/articles')
@@ -15,14 +17,6 @@ if (!serviceUrl || !serviceKey) {
   throw new Error('Missing required env vars: SUPABASE_URL and/or SUPABASE_SERVICE_KEY')
 }
 const serviceClient = createServiceClient(serviceUrl, serviceKey)
-
-function parseJsonb<T = unknown>(val: unknown): T | null {
-  if (val == null) return null
-  if (typeof val === 'string') {
-    try { return JSON.parse(val) as T } catch { return null }
-  }
-  return val as T
-}
 
 export interface NewsSource {
   id: string
@@ -76,12 +70,6 @@ export function getNewsMeta(): { sources: NewsSource[]; topics: string[] } {
 }
 
 // ── All articles ──────────────────────────────────────────────────────────────
-function isPathContained(targetPath: string, baseDir: string): boolean {
-  const resolved = path.resolve(targetPath)
-  const base = path.resolve(baseDir)
-  return resolved === base || resolved.startsWith(base + path.sep)
-}
-
 export function getAllArticles(): ArticleMeta[] {
   let files: string[]
   try {

@@ -5,8 +5,9 @@ import {
     Dialog, DialogTitle, DialogContent, DialogActions,
     TextField, Button, IconButton, Box, Typography, CircularProgress,
 } from '@mui/material'
-import { Edit, Delete, Save, Close } from '@mui/icons-material'
+import { Delete, Save, Close } from '@mui/icons-material'
 import { updateVocabWord, deleteVocabWord } from '@/app/actions/vocab'
+import { errorMessage } from '@/app/lib/errors'
 
 /* ─────────────────────────────────────────────
    AdminEditDialog
@@ -54,8 +55,8 @@ function AdminEditDialog({
                 setFormsJson(JSON.stringify(raw.forms ?? [], null, 2))
                 setDefsJson(JSON.stringify(raw.definitions ?? [], null, 2))
                 setExamplesJson(JSON.stringify(raw.examples ?? [], null, 2))
-            } catch (e: any) {
-                setError(e?.message ?? 'Failed to load word')
+            } catch (e) {
+                setError(errorMessage(e) ?? 'Failed to load word')
             } finally {
                 setLoading(false)
             }
@@ -86,8 +87,8 @@ function AdminEditDialog({
             })
             onSaved?.()
             onClose()
-        } catch (e: any) {
-            setError(e?.message ?? 'Save failed')
+        } catch (e) {
+            setError(errorMessage(e) ?? 'Save failed')
         } finally {
             setSaving(false)
         }
@@ -101,8 +102,8 @@ function AdminEditDialog({
             await deleteVocabWord(wordId)
             onDeleted?.()
             onClose()
-        } catch (e: any) {
-            setError(e?.message ?? 'Delete failed')
+        } catch (e) {
+            setError(errorMessage(e) ?? 'Delete failed')
         } finally {
             setDeleting(false)
         }

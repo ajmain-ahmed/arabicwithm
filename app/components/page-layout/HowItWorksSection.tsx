@@ -5,7 +5,6 @@ import { Box, Typography } from '@mui/material'
 import Grid from '@mui/material/Grid'
 
 /* ── Palette ── */
-const GOLD = '#b8860b'
 const WARM_WHITE = '#fffaf0'
 
 /* ── How It Works background ── */

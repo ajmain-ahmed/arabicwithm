@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Box, Typography, Button } from '@mui/material'
 import { ChevronRight } from '@mui/icons-material'
 
@@ -37,6 +37,8 @@ export default function PageBanner({
   backgroundImage,
   overlayGradient = 'linear-gradient(to bottom, rgba(10,31,21,0.40) 0%, rgba(10,31,21,0.60) 55%, rgba(10,31,21,0.88) 100%)',
 }: PageBannerProps) {
+  const [imgError, setImgError] = useState(false)
+
   return (
     <Box
       sx={{
@@ -61,20 +63,32 @@ export default function PageBanner({
       }}
     >
       {/* Background image */}
-      <Box
-        component="img"
-        src={backgroundImage}
-        alt=""
-        aria-hidden="true"
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          objectPosition: 'center',
-        }}
-      />
+      {!imgError && (
+        <Box
+          component="img"
+          src={backgroundImage}
+          alt=""
+          aria-hidden="true"
+          onError={() => setImgError(true)}
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center',
+          }}
+        />
+      )}
+      {imgError && (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(135deg, #2c1a0e 0%, #0e2e1f 100%)',
+          }}
+        />
+      )}
       {/* Dark overlay */}
       <Box
         sx={{

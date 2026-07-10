@@ -1,16 +1,14 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React from 'react'
 import {
   Container,
   Box,
   Typography,
   Chip,
   IconButton,
-  useMediaQuery,
-  useTheme,
 } from '@mui/material'
-import { ArrowLeft, CalendarDays, Globe, User, Tag, BookOpen } from 'lucide-react'
+import { ArrowLeft, CalendarDays, BookOpen } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { ParsedArticle } from '@/app/lib/news'
 import InlineMdVocab from '../components/InlineMdVocab'
@@ -22,11 +20,6 @@ interface ArticlePageProps {
 
 export default function ArticlePage({ article }: ArticlePageProps) {
   const router = useRouter()
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
-  // Build full article text from paragraphs
-  const articleText = article.paragraphs.map((p) => p.arabicDi).join('\n\n')
-
   return (
     <>
       <style>{`

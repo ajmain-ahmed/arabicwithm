@@ -6,8 +6,6 @@ import {
   Typography,
   Container,
   Grid,
-  Tabs,
-  Tab,
   Button,
 } from '@mui/material'
 import { AutoStories, Public, Refresh } from '@mui/icons-material'
@@ -19,21 +17,18 @@ interface LiteraturePageProps {
   articles: WikiArticle[]
 }
 
-export default function LiteraturePage({ poems, articles }: LiteraturePageProps) {
-  const router = useRouter()
-  const [activeTab, setActiveTab] = useState(0)
-
-  const TabButton = ({
-    label,
-    icon,
-    active,
-    onClick,
-  }: {
-    label: string
-    icon: React.ReactNode
-    active: boolean
-    onClick: () => void
-  }) => (
+function TabButton({
+  label,
+  icon,
+  active,
+  onClick,
+}: {
+  label: string
+  icon: React.ReactNode
+  active: boolean
+  onClick: () => void
+}) {
+  return (
     <Box
       onClick={onClick}
       sx={{
@@ -61,6 +56,11 @@ export default function LiteraturePage({ poems, articles }: LiteraturePageProps)
       {label}
     </Box>
   )
+}
+
+export default function LiteraturePage({ poems, articles }: LiteraturePageProps) {
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState(0)
 
   return (
     <>

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { Container, Box, Typography, Grid, useMediaQuery, useTheme } from '@mui/material'
+import { Container, Box, Typography, Grid } from '@mui/material'
 import { RssArticle } from '@/app/lib/rss'
 import { ParsedArticle } from '@/app/lib/news'
 import ArticleCard from './components/ArticleCard'
@@ -24,8 +24,6 @@ interface NewsPageProps {
 }
 
 export default function NewsPage({ articlesByLevel, rssArticles }: NewsPageProps) {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [activeTab, setActiveTab] = useState<string>('live')
 
   const tabs = useMemo(

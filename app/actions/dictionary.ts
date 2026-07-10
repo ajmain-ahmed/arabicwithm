@@ -3,8 +3,11 @@
 "use server"
 
 import { z } from "zod"
+import { cookies } from "next/headers"
+import { createServerClient } from "@supabase/ssr"
 import { serviceClient } from "@/app/lib/supabase"
 import { isAdminUser } from "./vocab"
+import { checkRateLimit } from "@/app/lib/rateLimit"
 
 /* ── Row shapes ──────────────────────────────────────────────────────── */
 
@@ -194,6 +197,134 @@ export async function fetchDictionaryDetails(
     lemmas: uniqueLemmas,
     definitions: uniqueDefinitions,
     conjugations: uniqueConjugations,
+  }
+}
+
+/* ── Auth helper ─────────────────────────────────────────────────────── */
+
+async function getAuthClient() {
+  const cookieStore = await cookies()
+  return createServerClient(
+    process.env.SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() { return cookieStore.getAll() },
+        setAll() { },
+      },
+    }
+  )
+}
+
+async function getAuthenticatedUserId(): Promise<string | null> {
+  try {
+    const supabase = await getAuthClient()
+    const { data, error } = await supabase.auth.getUser()
+    if (error) {
+      if (error.message !== "Auth session missing!") {
+        console.error("[auth] getUser error:", error.message)
+      }
+      return null
+    }
+    return data.user?.id ?? null
+  } catch (e) {
+    console.error("[auth] unexpected error:", e)
+    return null
+  }
+}
+
+/* ── User-contributed definitions ────────────────────────────────────── */
+
+const UserDefinitionSchema = z.object({
+  lemma: z.string().min(1).max(200),
+  lemmaDiacritic: z.string().min(1).max(200),
+  root: z.string().max(50).nullable().optional(),
+  transliteration: z.string().max(200).optional(),
+  cefr: z.string().max(10).optional(),
+  gloss: z.string().max(500).optional(),
+  partOfSpeech: z.string().max(100).optional(),
+  definitionEn: z.string().max(2000).optional(),
+  definitionAr: z.string().max(2000).optional(),
+})
+
+export async function addUserVocabDefinition(input: {
+  lemma: string
+  lemmaDiacritic: string
+  root?: string | null
+  transliteration?: string
+  cefr?: string
+  gloss?: string
+  partOfSpeech?: string
+  definitionEn?: string
+  definitionAr?: string
+}): Promise<void> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) throw new Error('Unauthorized')
+
+  checkRateLimit(`add-def:${userId}`, 10, 60_000)
+
+  const parsed = UserDefinitionSchema.safeParse(input)
+  if (!parsed.success) {
+    throw new Error(`Invalid input: ${parsed.error.message}`)
+  }
+
+  const root = input.root ?? null
+
+  // Upsert the lemma row so we have something to attach the definition to.
+  const lemmaQuery = serviceClient
+    .from('vocab_lemmas')
+    .select('word_id')
+    .eq('lemma_diacritic', input.lemmaDiacritic)
+  if (root === null || root === '') {
+    lemmaQuery.is('arabic_root', null)
+  } else {
+    lemmaQuery.eq('arabic_root', root)
+  }
+  const { data: existingLemma } = await lemmaQuery.maybeSingle()
+
+  if (existingLemma) {
+    const { error: lemmaError } = await serviceClient
+      .from('vocab_lemmas')
+      .update({
+        transliteration: input.transliteration || null,
+        CEFR: input.cefr || null,
+      })
+      .eq('word_id', existingLemma.word_id)
+    if (lemmaError) {
+      console.error('[addUserVocabDefinition] lemma update error:', lemmaError.message)
+      throw new Error(lemmaError.message)
+    }
+  } else {
+    const { error: lemmaError } = await serviceClient.from('vocab_lemmas').insert({
+      lemma: input.lemma,
+      lemma_diacritic: input.lemmaDiacritic,
+      transliteration: input.transliteration || null,
+      arabic_root: root,
+      entry_type: input.partOfSpeech || 'word',
+      source: 'user-contributed',
+      CEFR: input.cefr || null,
+      is_active: true,
+    })
+    if (lemmaError) {
+      console.error('[addUserVocabDefinition] lemma insert error:', lemmaError.message)
+      throw new Error(lemmaError.message)
+    }
+  }
+
+  const { error: defError } = await serviceClient.from('vocab_definitions').insert({
+    lemma_diacritic: input.lemmaDiacritic,
+    arabic_root: root,
+    gloss: input.gloss || null,
+    part_of_speech: input.partOfSpeech || null,
+    definition_en: input.definitionEn || null,
+    definition_ar: input.definitionAr || null,
+    source: 'user-contributed',
+    is_active: true,
+  })
+
+  if (defError) {
+    console.error('[addUserVocabDefinition] definition insert error:', defError.message)
+    throw new Error(defError.message)
   }
 }
 

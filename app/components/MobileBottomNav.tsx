@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useSyncExternalStore } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { BottomNavigation, BottomNavigationAction, Box } from '@mui/material'
 import { Home, School, MenuBook, Movie, Person } from '@mui/icons-material'
@@ -31,12 +31,12 @@ export default function MobileBottomNav() {
   const router = useRouter()
   const pathname = usePathname()
   const { user } = useAuth()
-  const [mounted, setMounted] = useState(false)
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  )
   const activeValue = getActiveValue(pathname)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   if (!mounted) {
     return <Box sx={{ display: { xs: 'block', md: 'none' }, height: 64 }} />

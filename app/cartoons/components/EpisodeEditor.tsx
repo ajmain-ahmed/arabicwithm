@@ -20,7 +20,6 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
   const [slug, setSlug] = useState(episode?.slug ?? "")
   const [title, setTitle] = useState(episode?.title ?? "")
   const [level, setLevel] = useState(episode?.level ?? "")
-  const [episodeNumber, setEpisodeNumber] = useState(String(episode?.episode ?? 1))
   const [description, setDescription] = useState(episode?.description ?? "")
   const [youtubeId, setYoutubeId] = useState(episode?.youtubeId ?? "")
   const [tags, setTags] = useState(episode?.tags.join(", ") ?? "")
@@ -31,10 +30,8 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
     slug: slug.trim(),
     title: title.trim(),
     level: level.trim(),
-    episode_number: Number(episodeNumber) || 1,
     description: description.trim() || null,
     youtube_id: youtubeId.trim() || null,
-    youtube_short: false,
     cover: null,
     tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
   })
@@ -89,10 +86,7 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
         <NativeField label="Title" value={title} onChange={setTitle} disabled={saving} />
       </Box>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-        <NativeField label="Level" value={level} onChange={setLevel} disabled={saving} />
-        <NativeField label="Episode number" value={episodeNumber} onChange={setEpisodeNumber} type="number" disabled={saving} />
-      </Box>
+      <NativeField label="Level" value={level} onChange={setLevel} disabled={saving} />
 
       <NativeField label="YouTube ID" value={youtubeId} onChange={setYoutubeId} disabled={saving} />
       <NativeField label="Tags (comma separated)" value={tags} onChange={setTags} disabled={saving} />

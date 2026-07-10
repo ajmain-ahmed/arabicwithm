@@ -1,5 +1,5 @@
-import { getAllParsedArticlesByLevel, type ParsedArticle } from '@/app/lib/news'
-import { fetchRssArticles, type RssArticle } from '@/app/lib/rss'
+import { getAllParsedArticlesByLevel } from '@/app/lib/news'
+import { fetchRssArticles } from '@/app/lib/rss'
 import NewsPage from './NewsPage'
 
 export const dynamic = 'force-dynamic'

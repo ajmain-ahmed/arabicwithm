@@ -24,10 +24,8 @@ import {
   type RawVocabRow,
   type VocabUpdateInput,
 } from "@/app/actions/vocab"
+import { errorMessage } from "@/app/lib/errors"
 
-function errorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : "Something went wrong"
-}
 
 const inputStyle: React.CSSProperties = {
   width: "100%",

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useMemo, useCallback } from 'react'
 import {
     Box, Button, Typography, Collapse, Fade,
     IconButton, useTheme, useMediaQuery,
@@ -53,10 +53,6 @@ function FlashcardQuiz({
     const canGoBack = currentIndex > 0
     const isLastCard = currentIndex >= totalCards - 1
 
-    useEffect(() => {
-        setMobileTab('definition')
-    }, [current?.id])
-
     const currentCardExamples = useMemo(
         () => current ? allExamples.filter(e => e.vocab_id === current.id) : [],
         [current, allExamples]
@@ -69,6 +65,7 @@ function FlashcardQuiz({
             if (newIndex >= 0 && newIndex < totalCards) {
                 setCurrentIndex(newIndex)
                 setCardKey(k => k + 1)
+                setMobileTab('definition')
             }
         },
         [totalCards]

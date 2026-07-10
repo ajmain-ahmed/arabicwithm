@@ -55,14 +55,23 @@ function DraggableWord({ word, id, slotIndex, status = 'neutral', textScale = 1 
 /* ─────────────────────────────────────────────
    InteractiveSentenceBuilder
 ───────────────────────────────────────────── */
-function InteractiveSentenceBuilder({ plainWords, diacriticWords, englishTranslation, transliteration, showDiacritics, resetKey, textScale }: {
+function InteractiveSentenceBuilder({ plainWords, diacriticWords, englishTranslation, transliteration, showDiacritics, textScale }: {
     plainWords: string[]; diacriticWords: string[]; englishTranslation: string; transliteration: string
-    showDiacritics: boolean; resetKey: string | number; textScale: number
+    showDiacritics: boolean; textScale: number
 }) {
-    const [order, setOrder] = useState<number[]>([])
+    function shuffleIndices(words: string[]): number[] {
+        const indices = words.map((_, idx) => idx)
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1))
+            ;[indices[i], indices[j]] = [indices[j], indices[i]]
+        }
+        return indices
+    }
+
+    const [order, setOrder] = useState<number[]>(() => shuffleIndices(plainWords))
     const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null)
     const [checking, setChecking] = useState(false)
-    const [slotStatuses, setSlotStatuses] = useState<('correct' | 'incorrect' | 'neutral')[]>([])
+    const [slotStatuses, setSlotStatuses] = useState<('correct' | 'incorrect' | 'neutral')[]>(() => new Array(plainWords.length).fill('neutral'))
     const checkingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     useEffect(() => {
@@ -83,18 +92,6 @@ function InteractiveSentenceBuilder({ plainWords, diacriticWords, englishTransla
 
     const correctDisplayedWords = useMemo(() => showDiacritics ? diacriticWords : plainWords, [plainWords, diacriticWords, showDiacritics])
     const wordIds = useMemo(() => displayedWords.map((_, idx) => `word-${idx}`), [displayedWords])
-
-    useEffect(() => {
-        const initialOrder = plainWords.map((_, idx) => idx)
-        for (let i = initialOrder.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1))
-                ;[initialOrder[i], initialOrder[j]] = [initialOrder[j], initialOrder[i]]
-        }
-        setOrder(initialOrder)
-        setFeedback(null)
-        setChecking(false)
-        setSlotStatuses(new Array(plainWords.length).fill('neutral'))
-    }, [resetKey, plainWords.length])
 
     const handleDragEnd = (event: DragEndEvent) => {
         if (feedback === 'correct' || checking) return
@@ -221,10 +218,11 @@ function ExampleSentences({ examplesForCard, revealed, showDiacritics, textScale
 
                 {(viewMode === 'try' || !hasExamples) && hasInteractive && interactiveExample && (
                     <InteractiveSentenceBuilder
+                        key={resetKey}
                         plainWords={plainWords} diacriticWords={diacriticWords}
                         englishTranslation={interactiveExample.ex_en}
                         transliteration={interactiveExample.ex_tr || ''}
-                        showDiacritics={showDiacritics} resetKey={resetKey} textScale={textScale}
+                        showDiacritics={showDiacritics} textScale={textScale}
                     />
                 )}
             </Box>

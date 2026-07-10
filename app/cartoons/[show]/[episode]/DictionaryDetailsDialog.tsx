@@ -19,9 +19,11 @@ import {
   fetchDictionaryDetails,
   updateVocabDefinition,
   updateVocabLemma,
+  addUserVocabDefinition,
   type DictionaryDetailsResult,
 } from '@/app/actions/dictionary'
 import { stripDiacritics } from '@/app/lib/arabic'
+import { useAuth } from '@/app/AuthContext'
 
 const DARK_GREEN = '#1B4D3E'
 const GOLD = '#D4AF37'
@@ -104,9 +106,15 @@ export default function DictionaryDetailsDialog({
   const [editTransliteration, setEditTransliteration] = useState('')
   const [editCefr, setEditCefr] = useState('')
   const [editGloss, setEditGloss] = useState('')
+  const [editPartOfSpeech, setEditPartOfSpeech] = useState('')
   const [editDefinitions, setEditDefinitions] = useState<
     { definitionId: number; definitionEn: string; definitionAr: string }[]
   >([])
+
+  const { user } = useAuth()
+  const canAdminEdit = isAdmin && data !== null && data.definitions.length > 0
+  const canUserAdd = !!user && !isAdmin && data !== null && data.definitions.length === 0
+  const canEdit = canAdminEdit || canUserAdd
 
   const loading = open && !!lemma && data === null && error === null
 
@@ -138,33 +146,51 @@ export default function DictionaryDetailsDialog({
     setEditTransliteration(data.lemmas[0]?.transliteration ?? '')
     setEditCefr(data.lemmas[0]?.CEFR ?? '')
     setEditGloss(data.definitions[0]?.gloss ?? '')
+    setEditPartOfSpeech(data.definitions[0]?.part_of_speech ?? '')
     setEditDefinitions(
-      data.definitions.map((d) => ({
-        definitionId: d.definition_id,
-        definitionEn: d.definition_en ?? '',
-        definitionAr: d.definition_ar ?? '',
-      }))
+      data.definitions.length > 0
+        ? data.definitions.map((d) => ({
+            definitionId: d.definition_id,
+            definitionEn: d.definition_en ?? '',
+            definitionAr: d.definition_ar ?? '',
+          }))
+        : [{ definitionId: 0, definitionEn: '', definitionAr: '' }]
     )
     setIsEditing(true)
   }
 
   const handleSave = async () => {
-    if (!data || !primaryLemma || !primaryDefinition) return
+    if (!data) return
     setSaving(true)
     try {
-      const lemmaId = primaryLemma.word_id
-      await updateVocabLemma({
-        wordId: lemmaId,
-        transliteration: editTransliteration,
-        cefr: editCefr,
-      })
-      await updateVocabDefinition({
-        definitionId: primaryDefinition.definition_id,
-        gloss: editGloss,
-      })
-      for (const def of editDefinitions) {
+      if (canAdminEdit && primaryLemma && primaryDefinition) {
+        const lemmaId = primaryLemma.word_id
+        await updateVocabLemma({
+          wordId: lemmaId,
+          transliteration: editTransliteration,
+          cefr: editCefr,
+        })
         await updateVocabDefinition({
-          definitionId: def.definitionId,
+          definitionId: primaryDefinition.definition_id,
+          gloss: editGloss,
+        })
+        for (const def of editDefinitions) {
+          await updateVocabDefinition({
+            definitionId: def.definitionId,
+            definitionEn: def.definitionEn,
+            definitionAr: def.definitionAr,
+          })
+        }
+      } else {
+        const def = editDefinitions[0] ?? { definitionEn: '', definitionAr: '' }
+        await addUserVocabDefinition({
+          lemma: data.lemma,
+          lemmaDiacritic: displayWord,
+          root: data.root,
+          transliteration: editTransliteration,
+          cefr: editCefr,
+          gloss: editGloss,
+          partOfSpeech: editPartOfSpeech,
           definitionEn: def.definitionEn,
           definitionAr: def.definitionAr,
         })
@@ -446,18 +472,36 @@ export default function DictionaryDetailsDialog({
                         />
                       )
                     )}
-                    {partOfSpeech && !isEditing && (
-                      <Typography
+                    {isEditing ? (
+                      <TextField
+                        value={editPartOfSpeech}
+                        onChange={(e) => setEditPartOfSpeech(e.target.value)}
+                        size="small"
+                        placeholder="Part of speech"
                         sx={{
-                          fontFamily: 'Jost, sans-serif',
-                          fontSize: '1.05rem',
-                          fontWeight: 600,
-                          color: TEXT_MUTED,
-                          textTransform: 'capitalize',
+                          width: 130,
+                          '& .MuiInputBase-root': {
+                            bgcolor: '#fff',
+                            borderRadius: '10px',
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: '0.95rem',
+                          },
                         }}
-                      >
-                        {partOfSpeech}
-                      </Typography>
+                      />
+                    ) : (
+                      partOfSpeech && (
+                        <Typography
+                          sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: '1.05rem',
+                            fontWeight: 600,
+                            color: TEXT_MUTED,
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {partOfSpeech}
+                        </Typography>
+                      )
                     )}
                   </Box>
                 )}
@@ -602,11 +646,16 @@ export default function DictionaryDetailsDialog({
             )}
 
             {/* No definitions fallback */}
-            {data.definitions.length === 0 && (
+            {data.definitions.length === 0 && !isEditing && (
               <Box sx={{ textAlign: 'center', py: 2 }}>
                 <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.1rem', color: TEXT_MUTED }}>
                   No definitions available.
                 </Typography>
+                {!user && (
+                  <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: TEXT_MUTED, mt: 0.5 }}>
+                    Sign in to add one.
+                  </Typography>
+                )}
               </Box>
             )}
           </Box>
@@ -720,7 +769,7 @@ export default function DictionaryDetailsDialog({
           flexWrap: 'wrap',
         }}
       >
-        {isAdmin && !isEditing && (
+        {canEdit && !isEditing && (
           <Button
             onClick={startEditing}
             variant="outlined"
@@ -738,10 +787,10 @@ export default function DictionaryDetailsDialog({
               '&:hover': { bgcolor: 'rgba(27,77,62,0.06)', borderColor: DARK_GREEN },
             }}
           >
-            Edit
+            {canAdminEdit ? 'Edit' : 'Add definition'}
           </Button>
         )}
-        {isAdmin && isEditing && (
+        {isEditing && (
           <>
             <Button
               onClick={() => setIsEditing(false)}

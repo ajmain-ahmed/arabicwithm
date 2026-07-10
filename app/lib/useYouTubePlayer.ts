@@ -5,20 +5,18 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 /* ─────────────────────────────────────────────
    YouTube IFrame API Types
 ───────────────────────────────────────────── */
-namespace YT {
-  export interface Player {
-    getCurrentTime(): number
-    seekTo(seconds: number, allowSeekAhead: boolean): void
-    playVideo(): void
-    pauseVideo(): void
-    destroy(): void
-  }
+interface YTPlayer {
+  getCurrentTime(): number
+  seekTo(seconds: number, allowSeekAhead: boolean): void
+  playVideo(): void
+  pauseVideo(): void
+  destroy(): void
 }
 
 declare global {
   interface Window {
     YT: {
-      Player: new (element: HTMLElement, options: Record<string, unknown>) => YT.Player
+      Player: new (element: HTMLElement, options: Record<string, unknown>) => YTPlayer
       PlayerState: { PLAYING: number }
     }
     onYouTubeIframeAPIReady: (() => void) | undefined
@@ -31,7 +29,7 @@ export default function useYouTubePlayer(
   onTimeUpdate?: (time: number) => void,
   startAt?: number
 ) {
-  const playerRef = useRef<YT.Player | null>(null)
+  const playerRef = useRef<YTPlayer | null>(null)
   const wrapRef = useRef<HTMLDivElement | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const segmentPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -42,7 +40,8 @@ export default function useYouTubePlayer(
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
 
   useEffect(() => {
-    if (!videoId || !wrapRef.current) return
+    const wrap = wrapRef.current
+    if (!videoId || !wrap) return
 
     const clearWrap = (el: HTMLDivElement) => {
       while (el.firstChild) {
@@ -51,12 +50,12 @@ export default function useYouTubePlayer(
     }
 
     const initPlayer = () => {
-      if (!wrapRef.current || !videoId) return
-      clearWrap(wrapRef.current)
+      if (!wrap) return
+      clearWrap(wrap)
       const inner = document.createElement('div')
       inner.style.width = '100%'
       inner.style.height = '100%'
-      wrapRef.current.appendChild(inner)
+      wrap.appendChild(inner)
       try {
         playerRef.current = new window.YT.Player(inner, {
           videoId,
@@ -127,10 +126,10 @@ export default function useYouTubePlayer(
       try {
         playerRef.current?.destroy?.()
       } catch {}
-      if (wrapRef.current) clearWrap(wrapRef.current)
+      if (wrap) clearWrap(wrap)
       setIsReady(false)
     }
-  }, [videoId])
+  }, [videoId, startAt])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {

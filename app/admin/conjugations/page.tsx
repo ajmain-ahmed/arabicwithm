@@ -29,11 +29,9 @@ import {
   type VerbCandidate,
   type GeneratedConjugation,
 } from "@/app/actions/conjugations"
+import { errorMessage } from "@/app/lib/errors"
 import AdminTextField from "../components/AdminTextField"
 
-function errorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : "Something went wrong"
-}
 
 function conjKey(row: GeneratedConjugation): string {
   return `${row.lemma}|${row.root ?? ""}|${row.tense}|${row.pronoun}`
@@ -367,7 +365,6 @@ export default function ConjugationsPage() {
             {groupedRows.map(([lemma, rows]) => {
               const expanded = expandedLemmas.has(lemma)
               const allExcluded = rows.every((row) => excludedKeys.has(conjKey(row)))
-              const someExcluded = rows.some((row) => excludedKeys.has(conjKey(row))) && !allExcluded
 
               return (
                 <Paper

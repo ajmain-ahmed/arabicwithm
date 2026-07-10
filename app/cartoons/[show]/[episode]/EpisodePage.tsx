@@ -7,6 +7,7 @@ import React, {
   useRef,
   useCallback,
   useMemo,
+  useSyncExternalStore,
 } from 'react'
 import { createPortal } from 'react-dom'
 import SafeHtml from '@/app/components/SafeHtml'
@@ -16,12 +17,7 @@ import {
   Tabs,
   Tab,
   Button,
-  Slider,
   IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Divider,
   useMediaQuery,
   Chip,
@@ -30,17 +26,20 @@ import {
   SwipeableDrawer,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ArrowBack, Settings, Close, ExpandMore, ExpandLess, ChevronRight, Quiz, PictureInPictureAlt, Edit, OpenInFull } from '@mui/icons-material'
+import { ArrowBack, Settings, ExpandMore, ExpandLess, ChevronRight, Edit, OpenInFull } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
-import { usePlayerStore } from '@/store/playerStore'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { stripDiacritics } from '@/app/lib/arabic'
 import { EpisodeFull, CartoonWordEntry, type ScriptBlock, type NewTranscript, type NewTranscriptBlock, type NewTranscriptToken } from '@/app/lib/cartoons'
 import { type ShowRow } from '@/app/actions/admin'
 import { HtmlTooltip, WordTooltip, LEVEL_COLORS } from '@/app/components/vocab-tooltip'
-import EpisodeTestDialog from './EpisodeTestDialog'
 import EpisodeEditDialog from '@/app/admin/components/EpisodeEditDialog'
 import DictionaryDetailsDialog from './DictionaryDetailsDialog'
+import {
+  PillToggle,
+  DesktopTextScaleSlider,
+  SettingsDialog,
+} from '@/app/components/settings-controls'
 import ScriptBlockEditor, { formatTimestamp } from './ScriptBlockEditor'
 import { updateEpisode } from '@/app/actions/admin'
 
@@ -165,8 +164,7 @@ function MobileFixedHeader({
   hasVideo,
   onHeightChange,
   top,
-  isPipActive,
-  onPip,
+  overlayActive,
 }: {
   title: string
   onBack: () => void
@@ -175,20 +173,17 @@ function MobileFixedHeader({
   hasVideo: boolean
   onHeightChange?: (height: number) => void
   top: number
-  isPipActive?: boolean
-  onPip?: () => void
+  overlayActive?: boolean
 }) {
-  const [mounted, setMounted] = useState(false)
-  const innerRef = useRef<HTMLDivElement>(null)
-  const videoContainerRef = useRef<HTMLDivElement>(null)
-
-  // Draggable video height state
-  const [maxVideoHeight, setMaxVideoHeight] = useState<number | undefined>(
-    isShort ? 300 : undefined
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
   )
-  const dragState = useRef<{ startY: number; startHeight: number } | null>(null)
+  const innerRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => { setMounted(true) }, [])
+  // Fixed mobile video height (drag-to-resize removed)
+  const maxVideoHeight = isShort ? 300 : undefined
 
   // Report height back to parent so <main> can pad itself correctly
   useLayoutEffect(() => {
@@ -205,61 +200,6 @@ function MobileFixedHeader({
     ro.observe(innerRef.current)
     return () => ro.disconnect()
   }, [mounted, onHeightChange])
-
-  // ── Drag handlers ──
-  const startDrag = useCallback(
-    (clientY: number) => {
-      const currentHeight =
-        videoContainerRef.current?.offsetHeight ?? (isShort ? 300 : 200)
-      dragState.current = { startY: clientY, startHeight: currentHeight }
-      document.body.style.cursor = 'ns-resize'
-      document.body.style.userSelect = 'none'
-    },
-    [isShort]
-  )
-
-  const onDrag = useCallback(
-    (clientY: number) => {
-      if (!dragState.current) return
-      const delta = clientY - dragState.current.startY
-      const minH = isShort ? 200 : 120
-      const maxH = window.innerHeight * 0.65
-      const newH = Math.max(
-        minH,
-        Math.min(maxH, dragState.current.startHeight + delta)
-      )
-      setMaxVideoHeight(newH)
-    },
-    [isShort]
-  )
-
-  const endDrag = useCallback(() => {
-    dragState.current = null
-    document.body.style.cursor = ''
-    document.body.style.userSelect = ''
-  }, [])
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => onDrag(e.clientY)
-    const handleMouseUp = () => endDrag()
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!dragState.current) return
-      e.preventDefault()
-      onDrag(e.touches[0].clientY)
-    }
-    const handleTouchEnd = () => endDrag()
-
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
-    window.addEventListener('touchmove', handleTouchMove, { passive: false })
-    window.addEventListener('touchend', handleTouchEnd)
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-      window.removeEventListener('touchmove', handleTouchMove)
-      window.removeEventListener('touchend', handleTouchEnd)
-    }
-  }, [onDrag, endDrag])
 
   if (!mounted) return null
 
@@ -311,37 +251,11 @@ function MobileFixedHeader({
           {title}
         </span>
 
-        {/* PiP button — right */}
-        {onPip && (
-          <button
-            onClick={onPip}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 30,
-              height: 30,
-              flexShrink: 0,
-              borderRadius: '50%',
-              border: 'none',
-              background: isPipActive ? 'rgba(184,134,11,0.12)' : 'rgba(44,26,14,0.05)',
-              cursor: 'pointer',
-              color: isPipActive ? '#b8860b' : '#7a6e65',
-              zIndex: 1,
-              marginLeft: 'auto',
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 .02H3V4.97h18v14.05z" />
-            </svg>
-          </button>
-        )}
       </div>
 
-      {/* Video — moved into the fixed header on mobile, now draggable-resizable */}
+      {/* Video — moved into the fixed header on mobile */}
       {hasVideo && (
         <div
-          ref={videoContainerRef}
           style={{
             width: '100%',
             borderRadius: 12,
@@ -353,170 +267,39 @@ function MobileFixedHeader({
             position: 'relative',
           }}
         >
-          {isPipActive ? (
+          <div
+            ref={(el) => {
+              if (el && videoRef.current && el.children.length === 0) {
+                el.appendChild(videoRef.current)
+              }
+            }}
+            style={{ width: '100%', height: '100%' }}
+          />
+
+          {/* Capture touches that leak through the vocab drawer/dialog so they
+              don't reach the YouTube iframe and toggle playback. */}
+          {overlayActive && (
             <div
               style={{
-                width: '100%',
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                background: 'linear-gradient(135deg, #2c1a0e 0%, #1a0f08 100%)',
-                color: '#f5ede0',
-                padding: 16,
-                textAlign: 'center',
+                position: 'absolute',
+                inset: 0,
+                zIndex: 20,
+                background: 'transparent',
+                touchAction: 'none',
               }}
-            >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="#b8860b" style={{ opacity: 0.8 }}>
-                <path d="M19 11h-8v6h8v-6zm4 8V4.98C23 3.88 22.1 3 21 3H3c-1.1 0-2 .88-2 1.98V19c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2zm-2 .02H3V4.97h18v14.05z" />
-              </svg>
-              <span style={{ fontFamily: 'Jost, sans-serif', fontSize: '0.8rem', fontWeight: 500, color: '#f5ede0' }}>
-                Playing in picture-in-picture
-              </span>
-              {onPip && (
-                <button
-                  onClick={onPip}
-                  style={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.78rem',
-                    color: '#b8860b',
-                    background: 'transparent',
-                    border: '1px solid rgba(184,134,11,0.5)',
-                    borderRadius: 6,
-                    padding: '4px 12px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Resume here
-                </button>
-              )}
-            </div>
-          ) : (
-            <div
-              ref={(el) => {
-                if (el && videoRef.current && el.children.length === 0) {
-                  el.appendChild(videoRef.current)
-                }
-              }}
-              style={{ width: '100%', height: '100%' }}
+              onTouchStart={(e) => e.preventDefault()}
+              onTouchEnd={(e) => e.preventDefault()}
+              onClick={(e) => e.stopPropagation()}
             />
           )}
 
-          {/* Drag handle */}
-          {!isPipActive && (
-            <div
-              onMouseDown={(e) => startDrag(e.clientY)}
-              onTouchStart={(e) => startDrag(e.touches[0].clientY)}
-              style={{
-                position: 'absolute',
-                bottom: 8,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: 40,
-                height: 5,
-                borderRadius: 3,
-                background: 'rgba(255,255,255,0.65)',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
-                cursor: 'ns-resize',
-                zIndex: 10,
-                touchAction: 'none',
-              }}
-            />
-          )}
+
         </div>
       )}
     </div>
   )
 
   return createPortal(content, document.body)
-}
-
-/* ─────────────────────────────────────────────
-   Helpers
-───────────────────────────────────────────── */
-function PillToggle({
-  enabled, onToggle, label, activeColor = '#b8860b',
-}: {
-  enabled: boolean; onToggle: () => void; label: string; activeColor?: string
-}) {
-  return (
-    <Box
-      onClick={onToggle}
-      sx={{
-        display: 'inline-flex', alignItems: 'center', gap: 1, cursor: 'pointer',
-        userSelect: 'none', padding: '5px 12px 5px 6px', borderRadius: '999px',
-        border: '1px solid', borderColor: enabled ? activeColor : 'rgba(122,110,101,0.25)',
-        background: enabled ? `${activeColor}14` : 'transparent',
-        transition: 'all 0.15s',
-        '&:hover': { borderColor: activeColor, background: `${activeColor}0d` },
-      }}
-    >
-      <Box sx={{ width: 28, height: 16, borderRadius: '999px', background: enabled ? activeColor : 'rgba(122,110,101,0.2)', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
-        <Box sx={{ position: 'absolute', top: '2px', left: enabled ? '14px' : '2px', width: 12, height: 12, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.2)', transition: 'left 0.18s cubic-bezier(0.4,0,0.2,1)' }} />
-      </Box>
-      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.8rem', md: '0.95rem' }, fontWeight: 500, color: enabled ? activeColor : '#7a6e65', whiteSpace: 'nowrap', lineHeight: 1, transition: 'color 0.15s' }}>
-        {label}
-      </Typography>
-    </Box>
-  )
-}
-
-function DesktopTextScaleSlider({ textScale, onChange }: { textScale: number; onChange: (v: number) => void }) {
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 1, borderRadius: '999px', border: '1px solid rgba(122,110,101,0.2)', background: 'rgba(122,110,101,0.02)', height: 28, flex: 1, minWidth: 80, maxWidth: 160 }}>
-      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
-      <Slider value={textScale} min={1.0} max={1.4} step={0.1} size="small" onChange={(_, v) => onChange(v as number)} sx={{ color: '#b8860b', flex: 1, '& .MuiSlider-thumb': { width: 14, height: 14 } }} />
-      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
-    </Box>
-  )
-}
-
-function SettingsDialog({
-  open, onClose, showDiacritics, onToggleDiacritics, textScale, onTextScaleChange,
-}: {
-  open: boolean; onClose: () => void; showDiacritics: boolean; onToggleDiacritics: () => void; textScale: number; onTextScaleChange: (v: number) => void
-}) {
-  const ToggleRow = ({ label, description, enabled, onToggle, activeColor }: { label: string; description: string; enabled: boolean; onToggle: () => void; activeColor: string }) => (
-    <Box onClick={onToggle} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', py: 1.25, px: 1.5, borderRadius: '10px', border: '1px solid', borderColor: enabled ? `${activeColor}55` : 'rgba(122,110,101,0.15)', background: enabled ? `${activeColor}08` : 'rgba(122,110,101,0.03)', transition: 'all 0.15s', userSelect: 'none', '&:hover': { borderColor: `${activeColor}88`, background: `${activeColor}0d` } }}>
-      <Box sx={{ pr: 2 }}>
-        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e', lineHeight: 1.2 }}>{label}</Typography>
-        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#7a6e65', mt: 0.3, lineHeight: 1.4 }}>{description}</Typography>
-      </Box>
-      <Box sx={{ width: 38, height: 22, borderRadius: '999px', flexShrink: 0, background: enabled ? activeColor : 'rgba(122,110,101,0.22)', position: 'relative', transition: 'background 0.2s' }}>
-        <Box sx={{ position: 'absolute', top: '3px', left: enabled ? '19px' : '3px', width: 16, height: 16, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.22)', transition: 'left 0.18s cubic-bezier(0.4,0,0.2,1)' }} />
-      </Box>
-    </Box>
-  )
-
-  return (
-    <Dialog open={open} onClose={onClose} slotProps={{ paper: { sx: { borderRadius: '16px', width: '100%', maxWidth: 360, m: 2, overflow: 'hidden', boxShadow: '0 24px 64px rgba(44,26,14,0.2)' } } }}>
-      <DialogTitle sx={{ fontFamily: "'EB Garamond', serif", fontSize: '1.5rem', fontWeight: 700, color: '#2c1a0e', pb: 0.5, pt: 2.5, px: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        Settings
-        <IconButton onClick={onClose} size="small" sx={{ color: '#7a6e65', mr: -0.5 }}><Close sx={{ fontSize: '1.2rem' }} /></IconButton>
-      </DialogTitle>
-      <DialogContent sx={{ px: 2.5, pt: 1.5, pb: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          <ToggleRow label="Show Diacritics" description="Display vowel marks on Arabic words" enabled={showDiacritics} onToggle={onToggleDiacritics} activeColor="#b8860b" />
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.25, px: 1.5, borderRadius: '10px', border: '1px solid rgba(122,110,101,0.15)', background: 'rgba(122,110,101,0.03)', gap: 2 }}>
-            <Box sx={{ pr: 2, flex: '0 0 auto' }}>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e' }}>Text Size</Typography>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#7a6e65', mt: 0.3 }}>Adjust Arabic text size</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0, maxWidth: 180 }}>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
-              <Box sx={{ flex: 1, minWidth: 0 }}><Slider value={textScale} min={0.9} max={1.5} step={0.1} size="small" onChange={(_, v) => onTextScaleChange(v as number)} sx={{ color: '#b8860b', width: '100%', '& .MuiSlider-thumb': { width: 14, height: 14 } }} /></Box>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.1rem', fontWeight: 700, color: '#7a6e65', flexShrink: 0 }}>A</Typography>
-            </Box>
-          </Box>
-        </Box>
-      </DialogContent>
-      <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5 }}>
-        <Button fullWidth variant="contained" onClick={onClose} disableElevation sx={{ background: '#2c1a0e', color: '#f5ede0', fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.95rem', textTransform: 'none', borderRadius: '10px', py: 1.1, '&:hover': { background: '#1a0f08' } }}>Done</Button>
-      </DialogActions>
-    </Dialog>
-  )
 }
 
 /* ─────────────────────────────────────────────
@@ -551,6 +334,7 @@ function ArabicLineText({
   textScale,
   showDiacritics,
   onDictionaryDialogChange,
+  onDrawerOpenChange,
   isAdmin,
 }: {
   text: string
@@ -560,6 +344,7 @@ function ArabicLineText({
   textScale: number
   showDiacritics: boolean
   onDictionaryDialogChange?: (open: boolean) => void
+  onDrawerOpenChange?: (open: boolean) => void
   isAdmin?: boolean
 }) {
   const theme = useTheme()
@@ -627,17 +412,20 @@ function ArabicLineText({
   const handleOpenDrawer = useCallback((entry: CartoonWordEntry) => {
     setDrawerEntry(entry)
     setDrawerOpen(true)
-  }, [])
+    onDrawerOpenChange?.(true)
+  }, [onDrawerOpenChange])
 
   const handleCloseDrawer = useCallback(() => {
     setDrawerOpen(false)
-  }, [])
+    onDrawerOpenChange?.(false)
+  }, [onDrawerOpenChange])
 
   const handleExpandDrawer = useCallback(() => {
     if (!drawerEntry) return
     setDrawerOpen(false)
+    onDrawerOpenChange?.(false)
     handleShowDetails(drawerEntry)
-  }, [drawerEntry, handleShowDetails])
+  }, [drawerEntry, handleShowDetails, onDrawerOpenChange])
 
   useVocabOpenTracker(open)
 
@@ -1032,9 +820,9 @@ export default function EpisodePage({
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set())
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
-  const [testDialogOpen, setTestDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [dictionaryDialogOpen, setDictionaryDialogOpen] = useState(false)
+  const [mobileWordDrawerOpen, setMobileWordDrawerOpen] = useState(false)
   const [editingBlockIndex, setEditingBlockIndex] = useState<number | null>(null)
   const [savingBlock, setSavingBlock] = useState(false)
 
@@ -1044,7 +832,7 @@ export default function EpisodePage({
     try {
       if (episode.transcriptFormat === 'legacy') {
         // Preserve every top-level field in the original transcript (slug, tags,
-        // youtubeId, description, youtubeShort, etc.) and only replace the one
+        // youtubeId, description, etc.) and only replace the one
         // edited script block in the raw scriptBlocks array. This keeps app_vocab
         // enrichment from leaking back into persisted data.
         const rawTranscript = { ...(episode.transcript as Record<string, unknown> ?? {}) }
@@ -1119,7 +907,7 @@ export default function EpisodePage({
   }, []);
 
   // ── Mobile header height ──
-  const estimatedMobileHeader = episode.youtubeShort ? 280 : 220
+  const estimatedMobileHeader = 280
   const [mobileHeaderHeight, setMobileHeaderHeight] = useState(estimatedMobileHeader)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -1186,93 +974,31 @@ export default function EpisodePage({
     setActiveIndex(findActiveIndex(time))
   }, [findActiveIndex])
 
-  /* ── Picture-in-Picture state ── */
-  const {
-    pipOpen,
-    videoId: pipVideoId,
-    episodePath: pipEpisodePath,
-    currentTime: pipCurrentTime,
-    openPip,
-    closePip,
-  } = usePlayerStore()
-
-  const isPipActiveHere = pipOpen && pipEpisodePath === `/cartoons/${episode.show}/${episode.slug}`
-
-  const { wrapRef, seekTo, seekToOnly, playSegment, playVideo, pauseVideo, getCurrentTime, isReady } = useYouTubePlayer(
-    isPipActiveHere ? undefined : episode.youtubeId,
+  const { wrapRef, seekTo } = useYouTubePlayer(
+    episode.youtubeId,
     handleTimeUpdate
   )
 
-  const [pendingResumeTime, setPendingResumeTime] = useState<number | null>(null)
-
-  const handleEnterPip = useCallback(() => {
-    if (!episode.youtubeId || isMobileViewport) return
-    const now = getCurrentTime()
-    pauseVideo()
-    openPip({
-      videoId: episode.youtubeId,
-      episodePath: `/cartoons/${episode.show}/${episode.slug}`,
-      title: episode.title,
-      showTitle,
-      currentTime: now,
-    })
-  }, [episode.youtubeId, episode.show, episode.slug, episode.title, showTitle, getCurrentTime, pauseVideo, openPip, isMobileViewport])
-
-  const wasPipActiveRef = useRef(isPipActiveHere)
-
+  // Keep the YouTube wrapper non-interactive for a short delay after a mobile
+  // overlay (word drawer / dictionary details) closes. The tap that dismisses
+  // the overlay is sometimes re-delivered to the iframe once it unmounts,
+  // which would toggle playback.
+  const [mobileOverlayActive, setMobileOverlayActive] = useState(false)
+  const mobileOverlayOpen = mobileWordDrawerOpen || dictionaryDialogOpen
   useEffect(() => {
-    if (wasPipActiveRef.current && !isPipActiveHere) {
-      // PiP was just closed for this episode — queue a resume for when player is ready
-      if (pipCurrentTime > 0) {
-        setPendingResumeTime(pipCurrentTime)
-      }
+    if (mobileOverlayOpen) {
+      setMobileOverlayActive(true)
+      return
     }
-    wasPipActiveRef.current = isPipActiveHere
-  }, [isPipActiveHere, pipCurrentTime])
+    const t = setTimeout(() => setMobileOverlayActive(false), 250)
+    return () => clearTimeout(t)
+  }, [mobileOverlayOpen])
 
-  /* Retry seek until the time sticks — YouTube's iframe API can ignore
-     immediate seeks right after onReady */
   useEffect(() => {
-    if (!isReady || pendingResumeTime === null) return
-
-    let attempts = 0
-    const maxAttempts = 15
-
-    const interval = setInterval(() => {
-      const current = getCurrentTime()
-      if (Math.abs(current - pendingResumeTime) < 1.5) {
-        clearInterval(interval)
-        setPendingResumeTime(null)
-        playVideo()
-        return
-      }
-
-      seekToOnly(pendingResumeTime)
-
-      attempts++
-      if (attempts >= maxAttempts) {
-        clearInterval(interval)
-        setPendingResumeTime(null)
-        playVideo()
-      }
-    }, 300)
-
-    return () => clearInterval(interval)
-  }, [isReady, pendingResumeTime, seekToOnly, getCurrentTime, playVideo])
-
-  /* While PiP is active, poll the store's currentTime to keep transcript highlighting alive */
-  useEffect(() => {
-    if (!isPipActiveHere) return
-    const interval = setInterval(() => {
-      const time = usePlayerStore.getState().currentTime
-      setActiveIndex(findActiveIndex(time))
-    }, 200)
-    return () => clearInterval(interval)
-  }, [isPipActiveHere, findActiveIndex])
-
-  const handleRestoreFromPip = useCallback(() => {
-    closePip()
-  }, [closePip])
+    if (wrapRef.current) {
+      wrapRef.current.style.pointerEvents = mobileOverlayActive ? 'none' : 'auto'
+    }
+  }, [mobileOverlayActive, wrapRef])
 
   useEffect(() => {
     if (activeIndex == null) return
@@ -1330,11 +1056,10 @@ export default function EpisodePage({
           title={episode.title}
           onBack={() => router.push(`/cartoons/${episode.show}`)}
           videoRef={wrapRef}
-          isShort={!!episode.youtubeShort}
+          isShort={true}
           hasVideo={!!episode.youtubeId}
           onHeightChange={setMobileHeaderHeight}
-          isPipActive={isPipActiveHere}
-          onPip={isMobileViewport ? undefined : (isPipActiveHere ? handleRestoreFromPip : handleEnterPip)}
+          overlayActive={mobileOverlayActive}
         />
       )}
 
@@ -1410,50 +1135,12 @@ export default function EpisodePage({
                 overflow: 'hidden',
                 boxShadow: '0 12px 40px rgba(44,26,14,0.18)',
                 background: '#000',
-                aspectRatio: episode.youtubeShort ? '9/16' : '16/9',
-                maxHeight: episode.youtubeShort ? 560 : 'auto',
+                aspectRatio: '9/16',
+                maxHeight: 560,
                 position: 'relative',
               }}
             >
-              {isPipActiveHere ? (
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 2,
-                    background: 'linear-gradient(135deg, #2c1a0e 0%, #1a0f08 100%)',
-                    color: '#f5ede0',
-                    p: 3,
-                    textAlign: 'center',
-                  }}
-                >
-                  <PictureInPictureAlt sx={{ fontSize: 40, color: '#b8860b', opacity: 0.8 }} />
-                  <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', fontWeight: 500, color: '#f5ede0' }}>
-                    Playing in picture-in-picture
-                  </Typography>
-                  <Button
-                    onClick={handleRestoreFromPip}
-                    size="small"
-                    variant="outlined"
-                    sx={{
-                      color: '#b8860b',
-                      borderColor: 'rgba(184,134,11,0.5)',
-                      fontFamily: 'Jost, sans-serif',
-                      textTransform: 'none',
-                      fontSize: '0.85rem',
-                      '&:hover': { borderColor: '#b8860b', background: 'rgba(184,134,11,0.1)' },
-                    }}
-                  >
-                    Resume here
-                  </Button>
-                </Box>
-              ) : (
-                <Box ref={wrapRef} sx={{ width: '100%', height: '100%' }} />
-              )}
+              <Box ref={wrapRef} sx={{ width: '100%', height: '100%' }} />
 
               {/* Desktop resize handle */}
               <Box
@@ -1653,52 +1340,6 @@ export default function EpisodePage({
                     </Box>
                   </Popover>
 
-                  {!isMobileViewport && (
-                    <Button
-                      onClick={isPipActiveHere ? handleRestoreFromPip : handleEnterPip}
-                      size="small"
-                      startIcon={<PictureInPictureAlt sx={{ fontSize: '1.1rem' }} />}
-                      sx={{
-                        color: isPipActiveHere ? '#b8860b' : '#7a6e65',
-                        border: '1px solid rgba(122,110,101,0.25)',
-                        borderRadius: '8px',
-                        fontFamily: 'Jost, sans-serif',
-                        fontSize: '0.85rem',
-                        fontWeight: 500,
-                        textTransform: 'none',
-                        px: 1.5,
-                        py: 0.5,
-                        minHeight: 34,
-                        '&:hover': { background: 'rgba(122,110,101,0.08)', borderColor: 'rgba(122,110,101,0.4)' },
-                      }}
-                    >
-                      {isPipActiveHere ? 'Resume here' : 'Pop out'}
-                    </Button>
-                  )}
-
-                  <Button
-                    variant="outlined"
-                    onClick={() => setTestDialogOpen(true)}
-                    startIcon={<Quiz sx={{ fontSize: '1.1rem' }} />}
-                    sx={{
-                      border: '1.5px solid rgba(184,134,11,0.35)',
-                      color: '#b8860b',
-                      fontFamily: 'Jost, sans-serif',
-                      fontWeight: 600,
-                      fontSize: '0.9rem',
-                      textTransform: 'none',
-                      borderRadius: '10px',
-                      px: 2.5,
-                      py: 0.8,
-                      background: 'rgba(184,134,11,0.04)',
-                      '&:hover': {
-                        background: 'rgba(184,134,11,0.1)',
-                        borderColor: 'rgba(184,134,11,0.55)',
-                      },
-                    }}
-                  >
-                    Test
-                  </Button>
                   {blocksWithNotes.length > 0 && (
                     <Button
                       variant="outlined"
@@ -1780,11 +1421,7 @@ export default function EpisodePage({
                               if ((e.target as HTMLElement).closest('.vocab-word')) return
                               if ((e.target as HTMLElement).closest('.edit-block-btn')) return
                               if (hasTimestamp) {
-                                if (isPipActiveHere) {
-                                  usePlayerStore.getState().requestSeek(block.timestamp!)
-                                } else {
-                                  seekTo(block.timestamp!)
-                                }
+                                seekTo(block.timestamp!)
                               }
                             }}
                             sx={{ cursor: hasTimestamp ? 'pointer' : 'default', opacity: hasTimestamp ? 1 : 0.75 }}
@@ -1831,6 +1468,7 @@ export default function EpisodePage({
                                 definedRootLemmas={episode.definedRootLemmas ?? []}
                                 showDiacritics={showDiacritics}
                                 onDictionaryDialogChange={setDictionaryDialogOpen}
+                                onDrawerOpenChange={setMobileWordDrawerOpen}
                                 isAdmin={isAdmin}
                               />
                             </Typography>
@@ -2088,14 +1726,6 @@ export default function EpisodePage({
           </Box>
         </Box>
       </Box>
-
-      {/* ── Test Yourself Dialog ── */}
-      <EpisodeTestDialog
-        episode={episode}
-        open={testDialogOpen}
-        onClose={() => setTestDialogOpen(false)}
-        playSegment={playSegment}
-      />
 
       {/* ── Admin Edit Dialog ── */}
       {isAdmin && (

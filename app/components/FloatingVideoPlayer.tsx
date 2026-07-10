@@ -34,9 +34,17 @@ export default function FloatingVideoPlayer() {
   const { pipOpen, closePip, videoId, episodePath, title, currentTime, seekTarget } =
     usePlayerStore()
 
-  const [size, setSize] = useState<SavedSize>(
-    isMobile ? DEFAULT_MOBILE : DEFAULT_DESKTOP
-  )
+  const [size, setSize] = useState<SavedSize>(() => {
+    if (typeof window === 'undefined') return isMobile ? DEFAULT_MOBILE : DEFAULT_DESKTOP
+    try {
+      const sizeRaw = localStorage.getItem(SIZE_KEY)
+      if (sizeRaw) {
+        const parsed: SavedSize = JSON.parse(sizeRaw)
+        return clampSize(parsed)
+      }
+    } catch { /* ignore */ }
+    return isMobile ? DEFAULT_MOBILE : DEFAULT_DESKTOP
+  })
   const [hovered, setHovered] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const currentTimeRef = useRef(currentTime)
@@ -55,14 +63,6 @@ export default function FloatingVideoPlayer() {
       }
     } catch { /* ignore */ }
 
-    try {
-      const sizeRaw = localStorage.getItem(SIZE_KEY)
-      if (sizeRaw) {
-        const parsed: SavedSize = JSON.parse(sizeRaw)
-        const clamped = clampSize(parsed)
-        setSize(clamped)
-      }
-    } catch { /* ignore */ }
   }, [motionX, motionY])
 
   /* Track current time in a ref (don't update store every 200ms) */
@@ -70,7 +70,7 @@ export default function FloatingVideoPlayer() {
     currentTimeRef.current = time
   }, [])
 
-  const { wrapRef, seekTo, playVideo, pauseVideo, getCurrentTime, isReady } = useYouTubePlayer(
+  const { wrapRef, seekTo, playVideo, pauseVideo, isReady } = useYouTubePlayer(
     pipOpen ? videoId ?? undefined : undefined,
     handleTimeUpdate,
     currentTime

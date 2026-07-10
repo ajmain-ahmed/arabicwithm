@@ -21,10 +21,8 @@ import {
   type ShowRow,
   type ShowInput,
 } from "@/app/actions/admin"
+import { errorMessage } from "@/app/lib/errors"
 
-function errorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : "Something went wrong"
-}
 
 interface ShowEditDialogProps {
   open: boolean

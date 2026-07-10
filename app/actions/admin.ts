@@ -3,6 +3,7 @@
 "use server"
 
 import { serviceClient } from "@/app/lib/supabase"
+import { parseJsonb } from "@/app/lib/jsonb"
 import { isAdminUser, type RawVocabRow } from "./vocab"
 
 /* ── Types ─────────────────────────────────────────────────────────── */
@@ -29,9 +30,8 @@ export type EpisodeRow = {
   tags: string[]
   description: string | null
   youtube_id: string | null
-  youtube_short: boolean
   cover: string | null
-  episode_number: number
+  created_at: string | null
   unmatched_count: number
 }
 
@@ -40,23 +40,11 @@ export type EpisodeWithTranscript = EpisodeRow & {
 }
 
 export type ShowInput = Omit<ShowRow, "id">
-export type EpisodeInput = Omit<EpisodeRow, "id" | "unmatched_count"> & {
+export type EpisodeInput = Omit<EpisodeRow, "id" | "unmatched_count" | "created_at"> & {
   transcript?: Record<string, unknown> | unknown[] | null
 }
 
 /* ── Helpers ───────────────────────────────────────────────────────── */
-
-function parseJsonb(val: unknown): unknown {
-  if (val == null) return null
-  if (typeof val === "string") {
-    try {
-      return JSON.parse(val)
-    } catch {
-      return null
-    }
-  }
-  return val
-}
 
 async function guardAdmin() {
   const ok = await isAdminUser()
@@ -434,7 +422,7 @@ export async function fetchEpisodesForShowAdmin(
     .from("episodes")
     .select("*")
     .eq("show_id", showId)
-    .order("episode_number", { ascending: true })
+    .order("created_at", { ascending: true })
 
   if (error) {
     console.error("[fetchEpisodesForShowAdmin] error:", error.message)
@@ -455,7 +443,7 @@ export async function fetchAllEpisodesForAdmin(): Promise<EpisodeRow[]> {
     .from("episodes")
     .select("*")
     .order("show_id", { ascending: true })
-    .order("episode_number", { ascending: true })
+    .order("created_at", { ascending: true })
 
   if (error) {
     console.error("[fetchAllEpisodesForAdmin] error:", error.message)
@@ -504,9 +492,7 @@ export async function createEpisode(input: EpisodeInput): Promise<string> {
       tags: input.tags,
       description: input.description,
       youtube_id: input.youtube_id,
-      youtube_short: input.youtube_short,
       cover: input.cover,
-      episode_number: input.episode_number,
       transcript: input.transcript ?? { scriptBlocks: [], vocabList: [], grammarPoints: [] },
     })
     .select("id")
@@ -534,9 +520,7 @@ export async function updateEpisode(
   if (input.tags !== undefined) payload.tags = input.tags
   if (input.description !== undefined) payload.description = input.description
   if (input.youtube_id !== undefined) payload.youtube_id = input.youtube_id
-  if (input.youtube_short !== undefined) payload.youtube_short = input.youtube_short
   if (input.cover !== undefined) payload.cover = input.cover
-  if (input.episode_number !== undefined) payload.episode_number = input.episode_number
   if (input.transcript !== undefined) payload.transcript = input.transcript
 
   const { error } = await serviceClient
@@ -574,9 +558,8 @@ function mapEpisodeRow(row: Record<string, unknown>): EpisodeRow {
     tags: Array.isArray(row.tags) ? row.tags.map((t) => String(t)) : [],
     description: toStringOrNull(row.description),
     youtube_id: toStringOrNull(row.youtube_id),
-    youtube_short: Boolean(row.youtube_short),
     cover: toStringOrNull(row.cover),
-    episode_number: Number(row.episode_number) || 0,
+    created_at: toStringOrNull(row.created_at),
     unmatched_count: 0,
   }
 }

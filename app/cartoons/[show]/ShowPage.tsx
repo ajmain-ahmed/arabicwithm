@@ -335,7 +335,7 @@ export default function ShowPage({ show, episodes, isAdmin }: ShowPageProps) {
                       <ContentCard
                         slug={ep.slug}
                         hrefPrefix={`/cartoons/${show.slug}`}
-                        cover={`/cartoons/${show.slug}/${ep.slug}.avif`}
+                        cover={ep.cover ?? `/cartoons/${show.slug}/${ep.slug}.avif`}
                         title={ep.title}
                         level={ep.level}
                         category={ep.tags[0]}

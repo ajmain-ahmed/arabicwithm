@@ -51,8 +51,8 @@ export const useVocabStore = create<VocabStore>((set, get) => ({
         loadingThemeId: null,
       }))
       return { vocab, examples }
-    } catch (err: any) {
-      set({ error: err.message, loadingThemeId: null })
+    } catch (err: unknown) {
+      set({ error: err instanceof Error ? err.message : 'Failed to load theme', loadingThemeId: null })
       return { vocab: [], examples: [] }
     }
   },

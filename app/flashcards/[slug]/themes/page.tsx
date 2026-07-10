@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
-import { fetchThemesWithProgress, type ThemeProgress } from '@/app/actions/vocab'
-import { getAllLevels } from '@/app/lib/study'
+import { fetchThemesWithProgress } from '@/app/actions/vocab'
 import ThemesLandingClient from './ThemesLandingClient'
 
 const SLUG_TO_LEVEL: Record<string, string> = {

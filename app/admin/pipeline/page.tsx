@@ -38,6 +38,7 @@ import {
   AddCircle,
 } from "@mui/icons-material"
 import AdminTextField from "../components/AdminTextField"
+import { errorMessage } from "@/app/lib/errors"
 import {
   previewPipeline,
   commitPipeline,
@@ -57,9 +58,6 @@ import {
   type GeneratedConjugation,
 } from "@/app/actions/conjugations"
 
-function errorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : "Something went wrong"
-}
 
 function groupKey(item: PipelineItem): string {
   return `${item.arabic}|${item.root ?? ""}|${item.entry_type}`

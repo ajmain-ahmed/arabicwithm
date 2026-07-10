@@ -133,7 +133,7 @@ export default function StatsCard({ data }: { data: DashboardData }) {
               mb: 0.25,
             }}
           >
-            Amazing! You're on fire!
+            Amazing! You&apos;re on fire!
           </Typography>
           <Typography
             sx={{

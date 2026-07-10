@@ -5,17 +5,12 @@ import { Box, Typography, CircularProgress } from '@mui/material'
 
 interface LoadingViewProps {
     label: string
-    isLoading: boolean
+    isLoading?: boolean
 }
 
-export default function LoadingView({ label, isLoading }: LoadingViewProps) {
+export default function LoadingView({ label }: LoadingViewProps) {
     const [progress, setProgress] = useState(0)
     useEffect(() => {
-        if (!isLoading) {
-            setProgress(100)
-            return
-        }
-        setProgress(0)
         const timer = setInterval(() => {
             setProgress(prev => {
                 if (prev >= 88) return prev
@@ -25,7 +20,7 @@ export default function LoadingView({ label, isLoading }: LoadingViewProps) {
             })
         }, 100)
         return () => clearInterval(timer)
-    }, [isLoading])
+    }, [])
 
     return (
         <Box sx={{

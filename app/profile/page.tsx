@@ -476,12 +476,10 @@ function ProfilePageInner() {
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedLevelCode, setSelectedLevelCode] = useState<string | null>(null)
-  const [activeSection, setActiveSection] = useState<Section>('stats')
-
-  useEffect(() => {
+  const activeSection: Section = (() => {
     const tab = searchParams.get('tab') as Section
-    setActiveSection(validTabs.includes(tab) ? tab : 'stats')
-  }, [searchParams])
+    return validTabs.includes(tab) ? tab : 'stats'
+  })()
 
   useEffect(() => {
     if (authLoading) return

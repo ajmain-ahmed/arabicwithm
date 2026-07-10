@@ -72,6 +72,16 @@ const DIALOG_CSS = `
   }
 `
 
+function GoldDivider() {
+  return (
+    <Box sx={{
+      height: '1px',
+      background: 'linear-gradient(90deg, transparent, rgba(184,134,11,0.35), transparent)',
+      width: '100%',
+    }} />
+  )
+}
+
 // ─── component ───────────────────────────────────────────────────────────────
 export default function AuthDialog({ open, onClose }: AuthDialogProps) {
   const [authMode, setAuthMode] = useState<'register' | 'signin'>('signin')
@@ -152,7 +162,7 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
         setGoogleLoading(false)
       }
       // Note: On success, page redirects, so no need to setLoading(false)
-    } catch (err) {
+    } catch {
       showSnackbar('error', 'Failed to sign in with Google')
       setGoogleLoading(false)
     }
@@ -171,14 +181,6 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
     setForgotPassword(false)
     onClose()
   }
-
-  const GoldDivider = () => (
-    <Box sx={{
-      height: '1px',
-      background: 'linear-gradient(90deg, transparent, rgba(184,134,11,0.35), transparent)',
-      width: '100%',
-    }} />
-  )
 
   const title = forgotPassword
     ? 'Reset Password'

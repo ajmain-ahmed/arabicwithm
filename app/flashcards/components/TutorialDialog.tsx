@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
   Box,
   Dialog,
@@ -67,14 +67,13 @@ const MOBILE_PAGES = [
 ]
 
 export function useTutorialSeen() {
-  const [seen, setSeen] = useState(true)
-  useEffect(() => {
+  const [seen, setSeen] = useState(() => {
     try {
-      setSeen(localStorage.getItem(TUTORIAL_KEY) === 'true')
+      return localStorage.getItem(TUTORIAL_KEY) === 'true'
     } catch {
-      setSeen(false)
+      return false
     }
-  }, [])
+  })
 
   const markSeen = () => {
     try {

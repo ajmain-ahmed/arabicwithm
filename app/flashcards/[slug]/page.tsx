@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, startTransition } from 'react'
 import { isAdminUser } from '@/app/actions/vocab'
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
@@ -79,12 +79,9 @@ export default function FlashcardSlugPage() {
     const [vocabTransitionReady, setVocabTransitionReady] = useState(false)
 
     useEffect(() => {
-        if (!themesLoading && selectedTheme) {
-            const timer = setTimeout(() => setThemeTransitionReady(true), 400)
-            return () => clearTimeout(timer)
-        } else {
-            setThemeTransitionReady(false)
-        }
+        if (themesLoading || !selectedTheme) return
+        const timer = setTimeout(() => setThemeTransitionReady(true), 400)
+        return () => clearTimeout(timer)
     }, [themesLoading, selectedTheme])
 
     const { seen: tutorialSeen, markSeen: markTutorialSeen } = useTutorialSeen()
@@ -100,40 +97,6 @@ export default function FlashcardSlugPage() {
     useEffect(() => {
         isAdminUser().then(setIsAdmin).catch(() => setIsAdmin(false))
     }, [])
-
-    // Fetch themes whenever level changes
-    useEffect(() => {
-        let cancelled = false
-        setThemesLoading(true)
-        setThemesError(null)
-        setSelectedTheme(null)
-        fetchThemeList(level)
-            .then(async (data) => {
-                if (cancelled) return
-                setThemes(data)
-                setThemesLoading(false)
-
-                // If ?theme= query param is present, select that theme
-                const targetTheme = themeQueryParam
-                    ? data.find((t: ThemeProgress) => t?.theme_id === themeQueryParam)
-                    : null
-
-                if (targetTheme) {
-                    await handleThemeSelect(targetTheme)
-                } else if (data[0]) {
-                    await handleThemeSelect(data[0])
-                }
-            })
-            .catch(err => {
-                console.error(err)
-                if (!cancelled) {
-                    setThemes([])
-                    setThemesLoading(false)
-                    setThemesError(err?.message ?? 'Failed to load themes')
-                }
-            })
-        return () => { cancelled = true }
-    }, [slug, level, themeQueryParam])
 
     // Load the selected theme's vocabulary
     const handleThemeSelect = useCallback(async (theme: ThemeProgress, cardIndex?: number) => {
@@ -158,6 +121,41 @@ export default function FlashcardSlugPage() {
             setInitialCardIndex(0)
         }
     }, [fetchTheme, level])
+
+    // Fetch themes whenever level changes
+    useEffect(() => {
+        let cancelled = false
+        startTransition(() => {
+            setThemesLoading(true)
+            setThemesError(null)
+            setSelectedTheme(null)
+        })
+        fetchThemeList(level)
+            .then(async (data) => {
+                if (cancelled) return
+                setThemes(data)
+                setThemesLoading(false)
+
+                const targetTheme = themeQueryParam
+                    ? data.find((t: ThemeProgress) => t?.theme_id === themeQueryParam)
+                    : null
+
+                if (targetTheme) {
+                    await handleThemeSelect(targetTheme)
+                } else if (data[0]) {
+                    await handleThemeSelect(data[0])
+                }
+            })
+            .catch(err => {
+                console.error(err)
+                if (!cancelled) {
+                    setThemes([])
+                    setThemesLoading(false)
+                    setThemesError(err?.message ?? 'Failed to load themes')
+                }
+            })
+        return () => { cancelled = true }
+    }, [level, themeQueryParam, fetchThemeList, handleThemeSelect])
 
     const validThemes = themes.filter((t) => t?.theme_id != null)
 
@@ -189,12 +187,9 @@ export default function FlashcardSlugPage() {
     const isLoadingVocab = selectedTheme != null && loadingThemeId === selectedTheme.theme_id
 
     useEffect(() => {
-        if (!isLoadingVocab) {
-            const timer = setTimeout(() => setVocabTransitionReady(true), 400)
-            return () => clearTimeout(timer)
-        } else {
-            setVocabTransitionReady(false)
-        }
+        if (isLoadingVocab) return
+        const timer = setTimeout(() => setVocabTransitionReady(true), 400)
+        return () => clearTimeout(timer)
     }, [isLoadingVocab])
 
     return (

@@ -12,8 +12,6 @@ import {
   Typography,
   Tabs,
   Tab,
-  FormControlLabel,
-  Checkbox,
   MenuItem,
   Select,
   InputLabel,
@@ -42,10 +40,8 @@ import {
   type EpisodeInput,
   type DefinitionKey,
 } from "@/app/actions/admin"
+import { errorMessage } from "@/app/lib/errors"
 
-function errorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : "Something went wrong"
-}
 
 interface EpisodeEditDialogProps {
   open: boolean
@@ -147,9 +143,7 @@ export default function EpisodeEditDialog({
   const [tags, setTags] = useState("")
   const [description, setDescription] = useState("")
   const [youtubeId, setYoutubeId] = useState("")
-  const [youtubeShort, setYoutubeShort] = useState(false)
   const [cover, setCover] = useState("")
-  const [episodeNumber, setEpisodeNumber] = useState("")
   const [transcriptJson, setTranscriptJson] = useState(defaultTranscript)
   const [undefinedLoading, setUndefinedLoading] = useState(false)
   const [undefinedError, setUndefinedError] = useState<string | null>(null)
@@ -175,9 +169,7 @@ export default function EpisodeEditDialog({
       setTags("")
       setDescription("")
       setYoutubeId("")
-      setYoutubeShort(false)
       setCover("")
-      setEpisodeNumber("")
       setTranscriptJson(defaultTranscript)
       return
     }
@@ -196,9 +188,7 @@ export default function EpisodeEditDialog({
         setTags(row.tags.join(", "))
         setDescription(row.description ?? "")
         setYoutubeId(row.youtube_id ?? "")
-        setYoutubeShort(row.youtube_short)
         setCover(row.cover ?? "")
-        setEpisodeNumber(String(row.episode_number))
         setTranscriptJson(JSON.stringify(row.transcript ?? { scriptBlocks: [], vocabList: [], grammarPoints: [] }, null, 2))
       })
       .catch((e: unknown) => setError(errorMessage(e) ?? "Failed to load episode"))
@@ -293,9 +283,7 @@ export default function EpisodeEditDialog({
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
         description: description || null,
         youtube_id: youtubeId || null,
-        youtube_short: youtubeShort,
         cover: cover || null,
-        episode_number: episodeNumber ? Number(episodeNumber) : 0,
         transcript: transcript as Record<string, unknown>,
       }
 
@@ -411,26 +399,10 @@ export default function EpisodeEditDialog({
                     <AdminTextField label="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} fullWidth size="small" />
                     <AdminTextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" />
                   </Box>
-                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-                    <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />
-                    <AdminTextField label="Episode number" type="number" value={episodeNumber} onChange={(e) => setEpisodeNumber(e.target.value)} fullWidth size="small" />
-                  </Box>
+                  <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />
                   <AdminTextField label="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} fullWidth size="small" />
                   <AdminTextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" />
-                  <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-                    <AdminTextField label="YouTube ID" value={youtubeId} onChange={(e) => setYoutubeId(e.target.value)} fullWidth size="small" />
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={youtubeShort}
-                          onChange={(e) => setYoutubeShort(e.target.checked)}
-                          sx={{ color: "#7a6e65" }}
-                        />
-                      }
-                      label="YouTube Short"
-                      sx={{ fontFamily: "Jost, sans-serif", color: "#2c1a0e" }}
-                    />
-                  </Box>
+                  <AdminTextField label="YouTube ID" value={youtubeId} onChange={(e) => setYoutubeId(e.target.value)} fullWidth size="small" />
                   <AdminTextField label="Cover URL" value={cover} onChange={(e) => setCover(e.target.value)} fullWidth size="small" />
                 </Box>
               )}

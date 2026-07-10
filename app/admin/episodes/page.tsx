@@ -30,10 +30,7 @@ import {
 } from "@/app/actions/admin"
 import SearchField from "../components/SearchField"
 import EpisodeEditDialog from "../components/EpisodeEditDialog"
-
-function errorMessage(e: unknown): string {
-  return e instanceof Error ? e.message : "Something went wrong"
-}
+import { errorMessage } from "@/app/lib/errors"
 
 type SortKey = keyof EpisodeRow | "show_title"
 type SortDir = "asc" | "desc"
@@ -48,7 +45,7 @@ export default function EpisodesAdminPage() {
   const [loadingEpisodes, setLoadingEpisodes] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState("")
-  const [sortKey, setSortKey] = useState<SortKey>("episode_number")
+  const [sortKey, setSortKey] = useState<SortKey>("created_at")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [editId, setEditId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -230,9 +227,7 @@ export default function EpisodesAdminPage() {
                     <TableSortLabel {...sortProps("show_title")}>Show</TableSortLabel>
                   </TableCell>
                 )}
-                <TableCell>
-                  <TableSortLabel {...sortProps("episode_number")}>Ep #</TableSortLabel>
-                </TableCell>
+
                 <TableCell>
                   <TableSortLabel {...sortProps("title")}>Title</TableSortLabel>
                 </TableCell>
@@ -253,13 +248,13 @@ export default function EpisodesAdminPage() {
             <TableBody>
               {loadingShows || loadingEpisodes ? (
                 <TableRow>
-                  <TableCell colSpan={isAllShows ? 9 : 8} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                  <TableCell colSpan={isAllShows ? 8 : 7} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
                     Loading episodes…
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isAllShows ? 9 : 8} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                  <TableCell colSpan={isAllShows ? 8 : 7} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
                     No episodes found.
                   </TableCell>
                 </TableRow>
@@ -269,7 +264,7 @@ export default function EpisodesAdminPage() {
                     {isAllShows && (
                       <TableCell>{showMap.get(row.show_id)?.title ?? row.show_id}</TableCell>
                     )}
-                    <TableCell>{row.episode_number}</TableCell>
+
                     <TableCell sx={{ fontWeight: 600, color: "#2c1a0e" }}>{row.title}</TableCell>
                     <TableCell sx={{ color: "#7a6e65" }}>{row.slug}</TableCell>
                     <TableCell>{row.level}</TableCell>
@@ -295,7 +290,7 @@ export default function EpisodesAdminPage() {
                     <TableCell>
                       {row.youtube_id ? (
                         <a
-                          href={`https://www.youtube.com/${row.youtube_short ? "shorts/" : "watch?v="}${row.youtube_id}`}
+                          href={`https://www.youtube.com/watch?v=${row.youtube_id}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{ color: "#b8860b", textDecoration: "none" }}

@@ -42,7 +42,7 @@ export default function MotivationalQuote() {
             mb: { xs: 1, md: 1.5 },
           }}
         >
-          "
+          &ldquo;
         </Typography>
 
         <Typography
@@ -57,7 +57,7 @@ export default function MotivationalQuote() {
             mx: 'auto',
           }}
         >
-          You're showing up for your goals.
+          You&apos;re showing up for your goals.
           <br />
           Consistency today, fluency tomorrow.
         </Typography>
@@ -79,7 +79,7 @@ export default function MotivationalQuote() {
             mt: { xs: 1, md: 1.5 },
           }}
         >
-          "
+          &rdquo;
         </Typography>
       </Box>
     </Box>
