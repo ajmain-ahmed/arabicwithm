@@ -3,9 +3,11 @@
 "use server"
 
 import { serviceClient } from "@/app/lib/supabase"
+import { stripDiacritics } from "@/app/lib/arabic"
 import { isAdminUser } from "./vocab"
 import {
   buildConjugationsPrompt,
+  buildSingleConjugationPrompt,
   validateConjugationRows as validateConjugationRowsLib,
   validConjugationTypes,
   type ConjugationsPromptResult as LibConjugationsPromptResult,
@@ -56,10 +58,10 @@ export async function fetchVerbConjugationCandidates(): Promise<
     { data: lemmas, error: lemmasError },
     { data: definitions, error: defsError },
   ] = await Promise.all([
-    serviceClient.from("vocab_lemmas").select("lemma, lemma_diacritic, arabic_root"),
+    serviceClient.from("vocab_lemmas").select("lemma, lemma_plain, root"),
     serviceClient
       .from("vocab_definitions")
-      .select("lemma_diacritic, arabic_root, part_of_speech"),
+      .select("lemma, lemma_plain, root, part_of_speech"),
   ])
 
   if (lemmasError) {
@@ -73,7 +75,7 @@ export async function fetchVerbConjugationCandidates(): Promise<
 
   const verbDefs = new Map<string, boolean>()
   for (const def of definitions ?? []) {
-    const key = `${def.lemma_diacritic}|${def.arabic_root ?? ""}`
+    const key = `${def.lemma}|${def.root ?? ""}`
     if (String(def.part_of_speech).toLowerCase() === "verb") {
       verbDefs.set(key, true)
     }
@@ -81,12 +83,12 @@ export async function fetchVerbConjugationCandidates(): Promise<
 
   const verbCandidates: VerbCandidate[] = []
   for (const row of lemmas ?? []) {
-    const key = `${row.lemma_diacritic}|${row.arabic_root ?? ""}`
+    const key = `${row.lemma}|${row.root ?? ""}`
     if (verbDefs.has(key)) {
       verbCandidates.push({
         lemma: row.lemma,
-        lemma_diacritic: row.lemma_diacritic,
-        root: row.arabic_root,
+        lemma_plain: row.lemma_plain ? String(row.lemma_plain) : stripDiacritics(String(row.lemma)),
+        root: row.root,
       })
     }
   }
@@ -142,11 +144,11 @@ export async function fetchConjugationCandidatesForSource(source: string): Promi
   ] = await Promise.all([
     serviceClient
       .from("vocab_lemmas")
-      .select("lemma, lemma_diacritic, arabic_root")
+      .select("lemma, lemma_plain, root")
       .eq("source", trimmedSource),
     serviceClient
       .from("vocab_definitions")
-      .select("lemma_diacritic, arabic_root, part_of_speech")
+      .select("lemma, lemma_plain, root, part_of_speech")
       .eq("source", trimmedSource),
   ])
 
@@ -162,18 +164,18 @@ export async function fetchConjugationCandidatesForSource(source: string): Promi
   const verbDefKeys = new Set<string>()
   for (const def of definitions ?? []) {
     if (String(def.part_of_speech).toLowerCase() === "verb") {
-      verbDefKeys.add(`${def.lemma_diacritic}|${def.arabic_root ?? ""}`)
+      verbDefKeys.add(`${def.lemma}|${def.root ?? ""}`)
     }
   }
 
   const verbCandidates: VerbCandidate[] = []
   for (const row of lemmas ?? []) {
-    const key = `${row.lemma_diacritic}|${row.arabic_root ?? ""}`
+    const key = `${row.lemma}|${row.root ?? ""}`
     if (verbDefKeys.has(key)) {
       verbCandidates.push({
         lemma: row.lemma,
-        lemma_diacritic: row.lemma_diacritic,
-        root: row.arabic_root,
+        lemma_plain: row.lemma_plain ? String(row.lemma_plain) : stripDiacritics(String(row.lemma)),
+        root: row.root,
       })
     }
   }
@@ -211,6 +213,16 @@ export async function buildConjugationsPromptData(
   return buildConjugationsPrompt(candidates, source)
 }
 
+export async function buildSingleConjugationPromptData(
+  lemma: string,
+  root: string | null,
+  surfaceArabic: string | undefined,
+  source?: string | null
+): Promise<{ ok: true; prompt: string } | { ok: false; error: string }> {
+  await guardAdmin()
+  return buildSingleConjugationPrompt(lemma, root, surfaceArabic, source)
+}
+
 export async function validateConjugationRows(parsed: unknown): Promise<ValidateConjugationsResult> {
   await guardAdmin()
   return validateConjugationRowsLib(parsed)
@@ -239,6 +251,7 @@ export async function commitConjugations(
 
     insertRows.push({
       lemma: row.lemma,
+      lemma_plain: row.lemma_plain,
       root: row.root,
       form_number: row.form_number,
       type: row.type,

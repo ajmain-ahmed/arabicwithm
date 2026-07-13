@@ -75,12 +75,10 @@ function buildAdminEditPayload(data: DictionaryDetailsResult) {
 }
 
 function buildUserAddPayload(data: DictionaryDetailsResult, surfaceArabic: string | null | undefined) {
-  const lemma = data.lemma
-  const lemmaDiacritic = data.lemmas[0]?.lemma_diacritic ?? surfaceArabic ?? lemma
+  const lemma = data.lemmas[0]?.lemma ?? surfaceArabic ?? data.lemma
   const primaryDef = data.definitions[0]
   return {
     lemma,
-    lemma_diacritic: lemmaDiacritic,
     root: data.root,
     transliteration: data.lemmas[0]?.transliteration ?? null,
     CEFR: data.lemmas[0]?.CEFR ?? null,
@@ -233,8 +231,7 @@ export default function DictionaryDetailsDialog({
       } else {
         const def = editDefinitions[0] ?? { definitionEn: '', definitionAr: '' }
         await addUserVocabDefinition({
-          lemma: data.lemma,
-          lemmaDiacritic: displayWord,
+          lemma: displayWord,
           root: data.root,
           transliteration: editTransliteration,
           cefr: editCefr,
@@ -297,8 +294,7 @@ export default function DictionaryDetailsDialog({
     if (canUserAdd) {
       const def = editDefinitions[0] ?? { definitionEn: '', definitionAr: '' }
       return {
-        lemma: data.lemma,
-        lemma_diacritic: data.lemmas[0]?.lemma_diacritic ?? surfaceArabic ?? data.lemma,
+        lemma: data.lemmas[0]?.lemma ?? surfaceArabic ?? data.lemma,
         root: data.root,
         transliteration: editTransliteration,
         CEFR: editCefr,

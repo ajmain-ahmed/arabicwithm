@@ -73,7 +73,6 @@ export interface NewTranscriptToken {
   root: string | null
   lemma: string
   arabic: string
-  arabicPlain?: string
   entry_type: 'word' | 'phrase'
   transliteration: string
   english?: string
@@ -147,7 +146,7 @@ export function normalizeNewTranscript(
 
     for (const token of block.tokens) {
       const diacritic = token.arabic.trim()
-      const plain = token.arabicPlain?.trim() || stripDiacritics(diacritic)
+      const plain = stripDiacritics(diacritic)
       tokenDiacritics.push(diacritic)
       tokenPlains.push(plain)
 

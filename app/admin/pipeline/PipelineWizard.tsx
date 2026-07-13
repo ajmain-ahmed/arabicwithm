@@ -20,6 +20,7 @@ import {
   TableContainer,
   Checkbox,
   FormControlLabel,
+  Tooltip,
   Stepper,
   Step,
   StepLabel,
@@ -433,7 +434,7 @@ function groupKey(item: PipelineItem): string {
 }
 
 function definitionKey(row: DefinitionOutputRow, index: number): string {
-  return `${index}|${row.lemma_diacritic}|${row.arabic_root ?? ""}`
+  return `${index}|${row.lemma}|${row.root ?? ""}`
 }
 
 function conjKey(row: GeneratedConjugation): string {
@@ -441,7 +442,7 @@ function conjKey(row: GeneratedConjugation): string {
 }
 
 function existingLemmaKey(item: ExistingLemmaWithDefs): string {
-  return `${item.lemma_diacritic}|${item.arabic_root ?? ""}|${item.entry_type}`
+  return `${item.lemma}|${item.root ?? ""}|${item.entry_type}`
 }
 
 /* ── Example transcript ────────────────────────────────────────────── */
@@ -537,6 +538,16 @@ export default function PipelineWizard() {
     dispatch({ type: "SET_CONJUGATIONS_INSERTED", count: 0 })
     dispatch({ type: "NEXT_STEP" })
   }, [])
+
+  /* ── Scroll to top on step change ── */
+  const initialStepRef = useRef(true)
+  useEffect(() => {
+    if (initialStepRef.current) {
+      initialStepRef.current = false
+      return
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }, [currentStepIndex])
 
   /* ── Data loading effects ── */
 
@@ -793,6 +804,11 @@ export default function PipelineWizard() {
     dispatch({ type: "NEXT_STEP" })
   }, [state.episode, state.transcriptJson])
 
+  const handleSkipSaveEpisode = useCallback(() => {
+    dispatch({ type: "SET_SOURCE", source: state.episode.slug?.trim() || "" })
+    dispatch({ type: "NEXT_STEP" })
+  }, [state.episode.slug])
+
   const handleSaveEpisode = useCallback(async () => {
     if (!state.show.id) {
       dispatch({ type: "SET_ERROR", error: "Show is not selected." })
@@ -921,7 +937,7 @@ export default function PipelineWizard() {
       const existingUiKeys = new Set<string>()
       for (let i = 0; i < rowsWithSource.length; i++) {
         const row = rowsWithSource[i]
-        const composite = `${row.lemma_diacritic}|${row.arabic_root ?? ""}`
+        const composite = `${row.lemma}|${row.root ?? ""}`
         if (existingComposite.has(composite)) {
           existingUiKeys.add(definitionKey(row, i))
         }
@@ -1905,6 +1921,7 @@ export default function PipelineWizard() {
 
         <Alert severity="info" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>
           The source for this pipeline will be set to <strong>{state.episode.slug}</strong>.
+          If the episode already exists in the database, you can skip saving it and proceed to lemmas/definitions.
         </Alert>
 
         <Divider sx={{ my: 2, borderColor: "rgba(122,110,101,0.15)" }} />
@@ -1924,6 +1941,22 @@ export default function PipelineWizard() {
             Cancel
           </Button>
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+            <Button
+              variant="outlined"
+              onClick={handleSkipSaveEpisode}
+              disabled={!state.episode.slug || state.loading}
+              sx={{
+                textTransform: "none",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                borderColor: "rgba(122,110,101,0.3)",
+                color: "#7a6e65",
+                borderRadius: "10px",
+              }}
+              title="Use when the episode row already exists. Only lemmas, definitions and conjugations will be processed."
+            >
+              Skip
+            </Button>
             <Button
               variant="outlined"
               onClick={goBack}
@@ -2057,7 +2090,7 @@ export default function PipelineWizard() {
           </Button>
           <Collapse in={state.existingOpen}>
             <Box sx={{ mt: 1 }}>
-              <LemmaTable items={preview.existing} prefix="existing" />
+              <LemmaTable items={preview.existing} prefix="existing" pipelineSource={state.source} />
             </Box>
           </Collapse>
         </Box>
@@ -2078,7 +2111,7 @@ export default function PipelineWizard() {
           </Button>
           <Collapse in={state.newOpen}>
             <Box sx={{ mt: 1 }}>
-              <LemmaTable items={preview.new} prefix="new" />
+              <LemmaTable items={preview.new} prefix="new" pipelineSource={state.source} />
             </Box>
           </Collapse>
         </Box>
@@ -2466,7 +2499,7 @@ export default function PipelineWizard() {
           multiline
           fullWidth
           rows={16}
-          placeholder='[{"lemma_diacritic":"...","gloss":"...","part_of_speech":"...",...}]'
+          placeholder='[{"lemma":"...","gloss":"...","part_of_speech":"...",...}]'
           sx={{
             mb: 2,
             "& .MuiInputBase-root": {
@@ -3285,7 +3318,7 @@ function ReviewRow({ label, value }: { label: string; value: React.ReactNode }) 
 
 /* ── Reusable pipeline components ──────────────────────────────────── */
 
-function LemmaTable({ items, prefix }: { items: PipelineItem[]; prefix: string }) {
+function LemmaTable({ items, prefix, pipelineSource }: { items: PipelineItem[]; prefix: string; pipelineSource?: string }) {
   const arabicCellSx = {
     fontFamily: "'EB Garamond', serif",
     fontSize: "1.35rem",
@@ -3318,11 +3351,14 @@ function LemmaTable({ items, prefix }: { items: PipelineItem[]; prefix: string }
         <TableHead>
           <TableRow>
             <TableCell sx={headerSx}>Lemma (stored)</TableCell>
-            <TableCell sx={headerSx}>Contextual form</TableCell>
+            <Tooltip title="The exact Arabic form of this word/phrase as it appears in the transcript.">
+              <TableCell sx={headerSx}>Surface form</TableCell>
+            </Tooltip>
             <TableCell sx={headerSx}>Gloss</TableCell>
             <TableCell sx={headerSx}>Type</TableCell>
             <TableCell sx={headerSx}>Root</TableCell>
             <TableCell sx={headerSx}>Transliteration</TableCell>
+            <TableCell sx={headerSx}>Source</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -3338,6 +3374,15 @@ function LemmaTable({ items, prefix }: { items: PipelineItem[]; prefix: string }
               <TableCell sx={{ ...latinCellSx, textTransform: "capitalize" }}>{item.entry_type}</TableCell>
               <TableCell sx={arabicCellSx}>{item.root || "—"}</TableCell>
               <TableCell sx={latinCellSx}>{item.transliteration}</TableCell>
+              <TableCell
+                sx={{
+                  ...latinCellSx,
+                  color: item.source || pipelineSource ? '#2c1a0e' : '#9e8a7a',
+                  fontStyle: item.source || pipelineSource ? 'normal' : 'italic',
+                }}
+              >
+                {item.source || pipelineSource || 'Unknown'}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -3428,7 +3473,7 @@ function ExistingDefinitionsList({
                       lineHeight: 1.2,
                     }}
                   >
-                    {item.lemma_diacritic}
+                    {item.lemma}
                   </Box>
                   <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1 }}>
                     <Chip
@@ -3452,9 +3497,9 @@ function ExistingDefinitionsList({
                         }}
                       />
                     )}
-                    {item.arabic_root && (
+                    {item.root && (
                       <Chip
-                        label={item.arabic_root}
+                        label={item.root}
                         sx={{
                           fontFamily: "'EB Garamond', serif",
                           borderRadius: "10px",
@@ -3589,12 +3634,12 @@ function DefinitionEditCard({
               lineHeight: 1.2,
             }}
           >
-            {row.lemma_diacritic}
+            {row.lemma}
           </Box>
           <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap", mb: 2 }}>
-            {row.arabic_root && (
+            {row.root && (
               <Chip
-                label={row.arabic_root}
+                label={row.root}
                 sx={{
                   fontFamily: "'EB Garamond', serif",
                   borderRadius: "10px",
@@ -3676,10 +3721,10 @@ function DefinitionEditCard({
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 3 }}>
           <AdminTextField
             label="Arabic root"
-            value={row.arabic_root ?? ""}
+            value={row.root ?? ""}
             onChange={(e) => {
               const v = e.target.value.trim()
-              onChange(index, "arabic_root", v || null)
+              onChange(index, "root", v || null)
             }}
             fullWidth
             disabled={excluded}
@@ -3689,9 +3734,9 @@ function DefinitionEditCard({
             }}
           />
           <AdminTextField
-            label="Lemma diacritic"
-            value={row.lemma_diacritic}
-            onChange={(e) => onChange(index, "lemma_diacritic", e.target.value)}
+            label="Lemma"
+            value={row.lemma}
+            onChange={(e) => onChange(index, "lemma", e.target.value)}
             fullWidth
             disabled={excluded}
             slotProps={{ input: { readOnly: true } }}
@@ -4147,8 +4192,8 @@ function buildPrompt(data: DefinitionsPromptData): string {
   const newLemmasJson = JSON.stringify(
     data.newLemmas.map((item) => {
       const row: Record<string, unknown> = {
-        lemma_diacritic: item.arabic,
-        arabic_root: item.root,
+        lemma: item.arabic,
+        root: item.root,
         entry_type: item.entry_type,
         transliteration: item.transliteration,
       }
@@ -4161,8 +4206,8 @@ function buildPrompt(data: DefinitionsPromptData): string {
   const existingLemmasJson = JSON.stringify(
     data.existingLemmas.map((item) => {
       const row: Record<string, unknown> = {
-        lemma_diacritic: item.lemma_diacritic,
-        arabic_root: item.arabic_root,
+        lemma: item.lemma,
+        root: item.root,
         entry_type: item.entry_type,
         transliteration: item.transliteration,
         definitions: item.definitions,
@@ -4179,8 +4224,8 @@ function buildPrompt(data: DefinitionsPromptData): string {
 We are updating our vocabulary database for a media translation project. Below is the database schema for our target table \`public.vocab_definitions\` along with reference rows showing the exact data format required.
 
 ### Database Schema Reference:
-- \`lemma_diacritic\` (text, NOT NULL): The Arabic word with full diacritics/vowels (tashkeel).
-- \`arabic_root\` (text, NULL): The 3 or 4-letter root separated by hyphens (e.g., "س-ر-ع"). Must be NULL for phrases or particles without a clear root.
+- \`lemma\` (text, NOT NULL): The Arabic word with full diacritics/vowels (tashkeel).
+- \`root\` (text, NULL): The 3 or 4-letter root separated by hyphens (e.g., "س-ر-ع"). Must be NULL for phrases or particles without a clear root.
 - \`gloss\` (text, NOT NULL): Clean English translation snippet (semicolon separated if multiple words, e.g., "fast; quick; rapid").
 - \`part_of_speech\` (text, NOT NULL): Must STRICTLY be one of these exact values: ['noun', 'verb', 'adjective', 'adverb', 'particle', 'pronoun', 'proper_noun', 'phrase', 'interjection', 'conjunction', 'preposition', 'numeral'].
 - \`definition_en\` (text, NULL): A short English dictionary-style definition sentence.

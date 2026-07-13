@@ -1,5 +1,7 @@
 // app/lib/pipelineValidation.ts
 
+import { stripDiacritics } from "@/app/lib/arabic"
+
 export type PipelineItem = {
   timestamp: string
   arabic: string
@@ -10,6 +12,7 @@ export type PipelineItem = {
   transliteration: string
   contextualArabic?: string
   english?: string
+  source?: string
 }
 
 export type TranscriptToken = {
@@ -19,7 +22,6 @@ export type TranscriptToken = {
   root: string | null
   lemma: string
   arabic: string
-  arabicPlain?: string
   english: string
   entry_type: "word" | "phrase"
   transliteration: string
@@ -34,8 +36,9 @@ export type TranscriptEntry = {
 }
 
 export type DefinitionOutputRow = {
-  lemma_diacritic: string
-  arabic_root: string | null
+  lemma: string
+  lemma_plain: string
+  root: string | null
   gloss: string
   part_of_speech: string
   definition_en: string | null
@@ -62,6 +65,14 @@ export const validPosValues = new Set([
 
 export function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function hasDiacritics(value: string): boolean {
+  return stripDiacritics(value) !== value
+}
+
+function hasArabicScript(value: string): boolean {
+  return /[\u0600-\u06FF]/.test(value)
 }
 
 const requiredFields = [
@@ -134,6 +145,10 @@ export function validateTranscriptEntries(
       if (typeof pos !== "string" || !pos.trim()) {
         return { ok: false, error: `Entry ${i + 1}, token ${j + 1}: "pos" is required and must be a non-empty string.` }
       }
+      if (!validPosValues.has(pos.trim())) {
+        errors.push(`Entry ${i + 1}, token ${j + 1}: "pos" must be one of: ${Array.from(validPosValues).join(", ")}.`)
+        continue
+      }
 
       if (entryType !== "word" && entryType !== "phrase") {
         return { ok: false, error: `Entry ${i + 1}, token ${j + 1}: "entry_type" must be "word" or "phrase".` }
@@ -146,6 +161,20 @@ export function validateTranscriptEntries(
           continue
         }
         normalizedRoot = root
+      }
+
+      if (!hasArabicScript(lemma.trim()) || !hasDiacritics(lemma.trim())) {
+        errors.push(`Entry ${i + 1}, token ${j + 1}: "lemma" must be Arabic text with diacritics.`)
+        continue
+      }
+      if (!hasArabicScript(surface.trim()) || !hasDiacritics(surface.trim())) {
+        errors.push(`Entry ${i + 1}, token ${j + 1}: "arabic" must be Arabic text with diacritics.`)
+        continue
+      }
+
+      if (typeof english === "string" && english.trim() && hasArabicScript(english.trim())) {
+        errors.push(`Entry ${i + 1}, token ${j + 1}: "english" must not contain Arabic script.`)
+        continue
       }
 
       const normalized: PipelineItem = {
@@ -221,6 +250,10 @@ export function validateItems(items: unknown[]): { ok: true; items: PipelineItem
     if (typeof pos !== "string" || !pos.trim()) {
       return { ok: false, error: `Item ${i + 1}: "pos" is required and must be a non-empty string.` }
     }
+    if (!validPosValues.has(pos.trim())) {
+      errors.push(`Item ${i + 1}: "pos" must be one of: ${Array.from(validPosValues).join(", ")}.`)
+      continue
+    }
 
     if (entryType !== "word" && entryType !== "phrase") {
       return { ok: false, error: `Item ${i + 1}: "entry_type" must be "word" or "phrase".` }
@@ -235,6 +268,25 @@ export function validateItems(items: unknown[]): { ok: true; items: PipelineItem
       normalizedRoot = root
     }
 
+    if (!hasArabicScript(arabic.trim()) || !hasDiacritics(arabic.trim())) {
+      errors.push(`Item ${i + 1}: "arabic" (lemma) must be Arabic text with diacritics.`)
+      continue
+    }
+
+    const contextualArabic = typeof item.contextualArabic === "string" && item.contextualArabic.trim()
+      ? item.contextualArabic.trim()
+      : undefined
+    if (contextualArabic && (!hasArabicScript(contextualArabic) || !hasDiacritics(contextualArabic))) {
+      errors.push(`Item ${i + 1}: "contextualArabic" must be Arabic text with diacritics.`)
+      continue
+    }
+
+    const english = typeof item.english === "string" && item.english.trim() ? item.english.trim() : undefined
+    if (english && hasArabicScript(english)) {
+      errors.push(`Item ${i + 1}: "english" must not contain Arabic script.`)
+      continue
+    }
+
     const normalized: PipelineItem = {
       timestamp: timestamp.trim(),
       arabic: arabic.trim(),
@@ -242,10 +294,8 @@ export function validateItems(items: unknown[]): { ok: true; items: PipelineItem
       entry_type: entryType,
       pos: pos.trim(),
       transliteration: transliteration.trim(),
-      contextualArabic: typeof item.contextualArabic === "string" && item.contextualArabic.trim()
-        ? item.contextualArabic.trim()
-        : undefined,
-      english: typeof item.english === "string" && item.english.trim() ? item.english.trim() : undefined,
+      contextualArabic,
+      english,
     }
     if (normalizedCefr) normalized.cefr = normalizedCefr
 
@@ -278,12 +328,12 @@ export function validateDefinitionRows(
       return { ok: false, error: `Row ${i + 1} is not an object.` }
     }
 
-    const lemmaDi = item.lemma_diacritic
+    const lemma = item.lemma
     const gloss = item.gloss
     const pos = item.part_of_speech
 
-    if (typeof lemmaDi !== "string" || !lemmaDi.trim()) {
-      return { ok: false, error: `Row ${i + 1}: "lemma_diacritic" is required and must be a non-empty string.` }
+    if (typeof lemma !== "string" || !lemma.trim()) {
+      return { ok: false, error: `Row ${i + 1}: "lemma" is required and must be a non-empty string.` }
     }
     if (typeof gloss !== "string" || !gloss.trim()) {
       return { ok: false, error: `Row ${i + 1}: "gloss" is required and must be a non-empty string.` }
@@ -295,17 +345,19 @@ export function validateDefinitionRows(
       }
     }
 
-    let root: string | null = null
-    if (item.arabic_root !== null && item.arabic_root !== undefined && item.arabic_root !== "") {
-      if (typeof item.arabic_root !== "string" || !rootRegex.test(item.arabic_root)) {
-        return { ok: false, error: `Row ${i + 1}: "arabic_root" must match the Arabic root format (e.g. "س-ر-ع") or be null.` }
+    let normalizedRoot: string | null = null
+    if (item.root !== null && item.root !== undefined && item.root !== "") {
+      if (typeof item.root !== "string" || !rootRegex.test(item.root)) {
+        return { ok: false, error: `Row ${i + 1}: "root" must match the Arabic root format (e.g. "س-ر-ع") or be null.` }
       }
-      root = item.arabic_root
+      normalizedRoot = item.root
     }
 
+    const lemmaDi = lemma.trim()
     rows.push({
-      lemma_diacritic: lemmaDi.trim(),
-      arabic_root: root,
+      lemma: lemmaDi,
+      lemma_plain: stripDiacritics(lemmaDi),
+      root: normalizedRoot,
       gloss: gloss.trim(),
       part_of_speech: pos,
       definition_en: typeof item.definition_en === "string" && item.definition_en.trim() ? item.definition_en.trim() : null,

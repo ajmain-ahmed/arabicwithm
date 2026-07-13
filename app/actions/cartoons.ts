@@ -344,8 +344,8 @@ export async function fetchEpisodeForPublic(
     const lemmas = Array.from(new Set(definitionKeys.map((k) => k.lemma)))
     const { data: defRows, error: defError } = await serviceClient
       .from("vocab_definitions")
-      .select("lemma_diacritic, arabic_root")
-      .in("lemma_diacritic", lemmas)
+      .select("lemma, root")
+      .in("lemma", lemmas)
 
     if (defError) {
       console.error("[fetchEpisodeForPublic] vocab_definitions error:", defError.message)
@@ -353,8 +353,8 @@ export async function fetchEpisodeForPublic(
 
     const existing = new Set<string>()
     for (const row of (defRows ?? []) as Record<string, unknown>[]) {
-      const lemma = String(row.lemma_diacritic ?? "")
-      const root = row.arabic_root ? String(row.arabic_root) : ""
+      const lemma = String(row.lemma ?? "")
+      const root = row.root ? String(row.root) : ""
       if (lemma) existing.add(`${lemma}|${root}`)
     }
     definedRootLemmas = Array.from(existing)

@@ -989,7 +989,6 @@ export default function EpisodePage({
               root: w.root ?? original?.root ?? null,
               lemma: w.lemma?.trim() || original?.lemma?.trim() || w.arabic.trim(),
               arabic: w.arabic,
-              arabicPlain: w.plain,
               entry_type: w.entry_type || original?.entry_type || 'word',
               transliteration: w.transliteration,
               english: w.english,
@@ -1306,30 +1305,6 @@ export default function EpisodePage({
                   <path d="M22 22H20V20H22V22ZM22 18H20V16H22V18ZM22 14H20V12H22V14ZM18 22H16V20H18V22Z" />
                 </svg>
               </Box>
-            </Box>
-
-            {/* Desktop video resize hint */}
-            <Box sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', justifyContent: 'space-between', mt: -1 }}>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', color: 'var(--muted)', fontStyle: 'italic' }}>
-                Drag corner to resize
-              </Typography>
-              {desktopVideoWidth !== 420 && (
-                <Button
-                  size="small"
-                  onClick={() => setDesktopVideoWidth(420)}
-                  sx={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '0.7rem',
-                    color: 'var(--gold)',
-                    textTransform: 'none',
-                    py: 0,
-                    minHeight: 24,
-                    '&:hover': { background: 'transparent', color: '#9c6b00' },
-                  }}
-                >
-                  Reset size
-                </Button>
-              )}
             </Box>
 
             <Box sx={{ display: { xs: 'none', lg: 'flex' }, flexDirection: 'column', gap: 2.5 }}>

@@ -91,8 +91,8 @@ describe("validateConjugationRows", () => {
 describe("buildConjugationsPrompt", () => {
   it("includes all candidates and the source in the prompt", () => {
     const candidates: VerbCandidate[] = [
-      { lemma: "كَتَبَ", lemma_diacritic: "كَتَبَ", root: "ك-ت-ب" },
-      { lemma: "ذَهَبَ", lemma_diacritic: "ذَهَبَ", root: "ذ-ه-ب" },
+      { lemma: "كَتَبَ", lemma_plain: "كتب", root: "ك-ت-ب" },
+      { lemma: "ذَهَبَ", lemma_plain: "ذهب", root: "ذ-ه-ب" },
     ]
 
     const result = buildConjugationsPrompt(candidates, "sb-1")

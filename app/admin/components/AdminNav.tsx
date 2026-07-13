@@ -12,6 +12,8 @@ import {
   VideoLibrary,
   AccountTree,
   AutoStories,
+  MenuBook,
+  FactCheck,
 } from "@mui/icons-material"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -20,7 +22,9 @@ const navItems = [
   { label: "Shows", href: "/admin/shows", icon: <SmartDisplay /> },
   { label: "Episodes", href: "/admin/episodes", icon: <VideoLibrary /> },
   { label: "Pipeline", href: "/admin/pipeline", icon: <AccountTree /> },
+  { label: "Data Review", href: "/admin/diagnostics", icon: <FactCheck /> },
   { label: "Conjugations", href: "/admin/conjugations", icon: <AutoStories /> },
+  { label: "Lemmas", href: "/admin/lemmas", icon: <MenuBook /> },
 ]
 
 export default function AdminNav() {

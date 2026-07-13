@@ -299,4 +299,99 @@ describe("validateTranscriptEntries", () => {
     if (result.ok) return
     expect(result.error.toLowerCase()).toContain("pos")
   })
+
+  it("rejects token with invalid POS value", () => {
+    const result = validateTranscriptEntries([
+      {
+        timestamp: "0:00",
+        tokens: [
+          {
+            cefr: "A1",
+            pos: "unknown",
+            root: "س-ر-ع",
+            lemma: "سَرِيع",
+            arabic: "سَرِيع",
+            english: "fast",
+            entry_type: "word",
+            transliteration: "sarīʿ",
+          },
+        ],
+      },
+    ] as unknown[])
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error.toLowerCase()).toContain("pos")
+  })
+
+  it("rejects lemma without diacritics", () => {
+    const result = validateTranscriptEntries([
+      {
+        timestamp: "0:00",
+        tokens: [
+          {
+            cefr: "A1",
+            pos: "verb",
+            root: "ر-أ-ي",
+            lemma: "رأى",
+            arabic: "رَأَى",
+            english: "see",
+            entry_type: "word",
+            transliteration: "raʾā",
+          },
+        ],
+      },
+    ] as unknown[])
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error.toLowerCase()).toContain("lemma")
+    expect(result.error.toLowerCase()).toContain("diacritics")
+  })
+
+  it("rejects arabic without diacritics", () => {
+    const result = validateTranscriptEntries([
+      {
+        timestamp: "0:00",
+        tokens: [
+          {
+            cefr: "A1",
+            pos: "verb",
+            root: "ر-أ-ي",
+            lemma: "رَأَى",
+            arabic: "رأى",
+            english: "see",
+            entry_type: "word",
+            transliteration: "raʾā",
+          },
+        ],
+      },
+    ] as unknown[])
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error.toLowerCase()).toContain("arabic")
+    expect(result.error.toLowerCase()).toContain("diacritics")
+  })
+
+  it("rejects english containing Arabic script", () => {
+    const result = validateTranscriptEntries([
+      {
+        timestamp: "0:00",
+        tokens: [
+          {
+            cefr: "A1",
+            pos: "verb",
+            root: "ر-أ-ي",
+            lemma: "رَأَى",
+            arabic: "رَأَيْتُكُمَا",
+            english: "I saw رأى you both",
+            entry_type: "word",
+            transliteration: "raʾaytukumā",
+          },
+        ],
+      },
+    ] as unknown[])
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error.toLowerCase()).toContain("english")
+    expect(result.error.toLowerCase()).toContain("arabic")
+  })
 })

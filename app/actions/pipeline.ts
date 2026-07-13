@@ -3,6 +3,7 @@
 "use server"
 
 import { serviceClient } from "@/app/lib/supabase"
+import { stripDiacritics } from "@/app/lib/arabic"
 import { isAdminUser } from "./vocab"
 import {
   validateDefinitionRows,
@@ -76,27 +77,27 @@ export async function previewPipeline(
 
   const { data, error } = await serviceClient
     .from("vocab_lemmas")
-    .select("lemma_diacritic, arabic_root, entry_type")
+    .select("lemma, root, entry_type, source")
 
   if (error) {
     console.error("[previewPipeline] error:", error.message)
     return { ok: false, error: error.message }
   }
 
-  const dbKeys = new Set<string>()
+  const dbSourceMap = new Map<string, string>()
   for (const row of data ?? []) {
-    const di = String(row.lemma_diacritic ?? "")
-    const r = row.arabic_root ? String(row.arabic_root) : ""
+    const lemma = String(row.lemma ?? "")
+    const r = row.root ? String(row.root) : ""
     const t = String(row.entry_type ?? "")
-    if (di) dbKeys.add(`${di}|${r}|${t}`)
+    if (lemma) dbSourceMap.set(`${lemma}|${r}|${t}`, row.source ? String(row.source) : "")
   }
 
   const existing: PipelineItem[] = []
   const newItems: PipelineItem[] = []
 
   for (const item of items) {
-    if (dbKeys.has(itemKey(item))) {
-      existing.push(item)
+    if (dbSourceMap.has(itemKey(item))) {
+      existing.push({ ...item, source: dbSourceMap.get(itemKey(item)) || undefined })
     } else {
       newItems.push(item)
     }
@@ -126,9 +127,9 @@ export async function commitPipeline(
 
   const rows = validItems.map((item) => ({
     lemma: item.arabic,
-    lemma_diacritic: item.arabic,
+    lemma_plain: stripDiacritics(item.arabic),
     transliteration: item.transliteration,
-    arabic_root: item.root,
+    root: item.root,
     entry_type: item.entry_type,
     source: sourceTrimmed,
     CEFR: item.cefr,
@@ -157,8 +158,9 @@ export type ExistingLemmaDefinition = {
 }
 
 export type ExistingLemmaWithDefs = {
-  lemma_diacritic: string
-  arabic_root: string | null
+  lemma: string
+  lemma_plain: string
+  root: string | null
   entry_type: "word" | "phrase"
   cefr?: string
   transliteration: string
@@ -166,8 +168,9 @@ export type ExistingLemmaWithDefs = {
 }
 
 export type ExampleDefinitionRow = {
-  lemma_diacritic: string
-  arabic_root: string | null
+  lemma: string
+  lemma_plain: string
+  root: string | null
   gloss: string
   part_of_speech: string
   definition_en: string | null
@@ -209,14 +212,14 @@ export async function buildDefinitionsPromptData(
   const newItems = validationNew.items
 
   // Fetch definitions for existing lemmas
-  const existingLemmaDiacritics = Array.from(
+  const existingLemmasList = Array.from(
     new Set(existingItems.map((i) => i.arabic).filter(Boolean))
   )
 
   const existingDefsRes = await serviceClient
     .from("vocab_definitions")
-    .select("lemma_diacritic, arabic_root, gloss, part_of_speech, definition_en")
-    .in("lemma_diacritic", existingLemmaDiacritics)
+    .select("lemma, lemma_plain, root, gloss, part_of_speech, definition_en")
+    .in("lemma", existingLemmasList)
 
   if (existingDefsRes.error) {
     console.error("[buildDefinitionsPromptData] existing defs error:", existingDefsRes.error.message)
@@ -225,9 +228,9 @@ export async function buildDefinitionsPromptData(
 
   const defsByLemmaRoot = new Map<string, ExistingLemmaDefinition[]>()
   for (const row of (existingDefsRes.data ?? []) as Record<string, unknown>[]) {
-    const di = String(row.lemma_diacritic ?? "")
-    const r = row.arabic_root ? String(row.arabic_root) : ""
-    const key = `${di}|${r}`
+    const lemma = String(row.lemma ?? "")
+    const r = row.root ? String(row.root) : ""
+    const key = `${lemma}|${r}`
     const def: ExistingLemmaDefinition = {
       gloss: String(row.gloss ?? ""),
       part_of_speech: String(row.part_of_speech ?? ""),
@@ -241,8 +244,9 @@ export async function buildDefinitionsPromptData(
   const existingLemmas: ExistingLemmaWithDefs[] = existingItems.map((item) => {
     const key = `${item.arabic}|${item.root ?? ""}`
     return {
-      lemma_diacritic: item.arabic,
-      arabic_root: item.root,
+      lemma: item.arabic,
+      lemma_plain: stripDiacritics(item.arabic),
+      root: item.root,
       entry_type: item.entry_type,
       cefr: item.cefr,
       transliteration: item.transliteration,
@@ -253,7 +257,7 @@ export async function buildDefinitionsPromptData(
   // Fetch example definition rows (top 3)
   const examplesRes = await serviceClient
     .from("vocab_definitions")
-    .select("lemma_diacritic, arabic_root, gloss, part_of_speech, definition_en, definition_ar")
+    .select("lemma, lemma_plain, root, gloss, part_of_speech, definition_en, definition_ar")
     .order("definition_id", { ascending: true })
     .limit(3)
 
@@ -264,8 +268,9 @@ export async function buildDefinitionsPromptData(
 
   const exampleDefinitions: ExampleDefinitionRow[] = ((examplesRes.data ?? []) as Record<string, unknown>[]).map(
     (row) => ({
-      lemma_diacritic: String(row.lemma_diacritic ?? ""),
-      arabic_root: row.arabic_root ? String(row.arabic_root) : null,
+      lemma: String(row.lemma ?? ""),
+      lemma_plain: String(row.lemma_plain ?? stripDiacritics(String(row.lemma ?? ""))),
+      root: row.root ? String(row.root) : null,
       gloss: String(row.gloss ?? ""),
       part_of_speech: String(row.part_of_speech ?? ""),
       definition_en: row.definition_en ? String(row.definition_en) : null,
@@ -300,12 +305,12 @@ export async function checkExistingDefinitions(
     return { ok: true, existingKeys: [] }
   }
 
-  const diacritics = Array.from(new Set(validRows.map((r) => r.lemma_diacritic)))
+  const lemmas = Array.from(new Set(validRows.map((r) => r.lemma)))
 
   const { data, error } = await serviceClient
     .from("vocab_definitions")
-    .select("lemma_diacritic, arabic_root")
-    .in("lemma_diacritic", diacritics)
+    .select("lemma, root")
+    .in("lemma", lemmas)
 
   if (error) {
     console.error("[checkExistingDefinitions] error:", error.message)
@@ -314,14 +319,14 @@ export async function checkExistingDefinitions(
 
   const existingKeys = new Set<string>()
   for (const row of data ?? []) {
-    const di = String(row.lemma_diacritic ?? "")
-    const r = row.arabic_root ? String(row.arabic_root) : ""
-    existingKeys.add(`${di}|${r}`)
+    const lemma = String(row.lemma ?? "")
+    const r = row.root ? String(row.root) : ""
+    existingKeys.add(`${lemma}|${r}`)
   }
 
   const result: string[] = []
   for (const row of validRows) {
-    const key = `${row.lemma_diacritic}|${row.arabic_root ?? ""}`
+    const key = `${row.lemma}|${row.root ?? ""}`
     if (existingKeys.has(key)) {
       result.push(key)
     }
@@ -352,8 +357,9 @@ export async function commitDefinitions(
   }
 
   const insertRows = validRows.map((row) => ({
-    lemma_diacritic: row.lemma_diacritic,
-    arabic_root: row.arabic_root,
+    lemma: row.lemma,
+    lemma_plain: row.lemma_plain,
+    root: row.root,
     gloss: row.gloss,
     part_of_speech: row.part_of_speech,
     definition_en: row.definition_en,

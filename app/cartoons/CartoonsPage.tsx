@@ -14,7 +14,7 @@ import Grid from '@mui/material/Grid'
 import { useRouter } from 'next/navigation'
 import { ShowMeta } from '../lib/cartoons'
 import { PageBanner } from '@/app/components/page-layout'
-import { FilterSidebar, ContentCard, ComingSoonSection } from '@/app/components/content-grid'
+import { FilterSidebar, ContentCard } from '@/app/components/content-grid'
 import ShowEditDialog from './components/ShowEditDialog'
 import { deleteShow } from '@/app/actions/admin'
 
@@ -29,7 +29,6 @@ import {
   NavigateNext,
   Edit,
   Delete,
-  Add,
 } from '@mui/icons-material'
 
 /* ── Palette ── */
@@ -40,13 +39,6 @@ const MUTED = '#7a6e65'
 
 const CATEGORIES = ['All Shows', 'Everyday Arabic', 'Historical', 'Islamic Heritage', 'Action']
 const LEVELS = ['A1-A2', 'A2-B1', 'B1-B2', 'B2-C1']
-
-const COMING_SOON = [
-  { title: 'Arabic Peppa Pig', category: 'Everyday Arabic', level: 'A1-A2', date: 'Coming November 2025' },
-  { title: 'Avatar: The Last Airbender', category: 'Action', level: 'A2-B1', date: 'Coming December 2025' },
-  { title: 'Stories of the Prophets', category: 'Islamic Heritage', level: 'B1-B2', date: 'Coming January 2026' },
-  { title: 'Adventure Time', category: 'Everyday Arabic', level: 'A1-A2', date: 'Coming February 2026' },
-]
 
 /* ═══════════════════════════════════════════════
    Main Page
@@ -104,25 +96,28 @@ export default function CartoonsPage({
     <Box
       component="main"
       sx={{
-        minHeight: '100vh',
+        minHeight: { xs: 'calc(100vh - 56px)', md: '100vh' },
         background: WARM_WHITE,
         pb: { xs: 0, md: 8 },
       }}
     >
-      <PageBanner
-        title="Arabic Cartoons"
-        titleAr="الرسوم المتحركة بالعربية"
-        description="Learn Arabic naturally through your favourite shows, with interactive subtitles and vocabulary."
-        features={[
-          { icon: <Subtitles sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Interactive Subtitles' },
-          { icon: <MenuBook sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Vocabulary Builder' },
-          { icon: <School sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Grammar Notes' },
-        ]}
-        ctaLabel="Take Me Anywhere"
-        ctaAction={goToRandomEpisode}
-        ctaStartIcon={<PlayArrow sx={{ fontSize: 20 }} />}
-        backgroundImage="/cartoons/cartooons.avif"
-      />
+      {/* Desktop banner */}
+      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+        <PageBanner
+          title="Arabic Cartoons"
+          titleAr="الرسوم المتحركة بالعربية"
+          description="Learn Arabic naturally through your favourite shows, with interactive subtitles and vocabulary."
+          features={[
+            { icon: <Subtitles sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Interactive Subtitles' },
+            { icon: <MenuBook sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Vocabulary Builder' },
+            { icon: <School sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Grammar Notes' },
+            ]}
+          ctaLabel="Take Me Anywhere"
+          ctaAction={goToRandomEpisode}
+          ctaStartIcon={<PlayArrow sx={{ fontSize: 20 }} />}
+          backgroundImage="/cartoons/cartooons.avif"
+        />
+      </Box>
 
       {/* ═══════════════════════════════════════════════
           CONTENT
@@ -135,16 +130,16 @@ export default function CartoonsPage({
           px: { xs: 2, md: 3 },
           display: 'flex',
           flexDirection: 'column',
-          gap: { xs: 4, md: 6 },
         }}
       >
         {/* ── Content Area ── */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 3 }, pt: 4 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
           {/* Breadcrumbs */}
           <Breadcrumbs
             separator={<NavigateNext sx={{ fontSize: 16, color: '#9e8a7a' }} />}
             sx={{
-              mb: 2,
+              display: { xs: 'none', md: 'flex' },
+              mb: { xs: 1, md: 2 },
               '& .MuiBreadcrumbs-li': { fontFamily: 'Jost, sans-serif' },
             }}
           >
@@ -235,26 +230,6 @@ export default function CartoonsPage({
                 {filteredShows.length} {filteredShows.length === 1 ? 'show' : 'shows'}
               </Typography>
             </Box>
-
-            {isAdmin && (
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                <Button
-                  startIcon={<Add />}
-                  onClick={() => { setEditingShow(undefined); setDialogOpen(true); }}
-                  sx={{
-                    textTransform: 'none',
-                    fontFamily: '"Jost", system-ui, sans-serif',
-                    color: BARK,
-                    border: '1px solid rgba(44,26,14,0.15)',
-                    borderRadius: '9999px',
-                    px: 2.5,
-                    py: 0.75,
-                  }}
-                >
-                  Add show
-                </Button>
-              </Box>
-            )}
 
             <ShowEditDialog
               open={dialogOpen}
@@ -362,12 +337,6 @@ export default function CartoonsPage({
         </Box>
 
         </Box>
-
-        <ComingSoonSection
-          label="Coming Soon"
-          heading="More Shows on the Way"
-          items={COMING_SOON}
-        />
       </Container>
 
       {/* ═══════════════════════════════════════════════

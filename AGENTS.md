@@ -46,7 +46,7 @@ Key features:
 ├── app/                          # Next.js App Router
 │   ├── actions/                  # Server Actions (data fetching & mutations)
 │   │   ├── vocab.ts              # Vocab/theme fetching and admin CRUD on app_vocab
-│   │   ├── admin.ts              # Admin CMS for shows/episodes + fuzzy vocab matching
+│   │   ├── admin.ts              # Admin CMS for shows/episodes/lemmas + fuzzy vocab matching
 │   │   ├── cartoons.ts           # Public cartoon browsing/watching + transcript enrichment
 │   │   ├── conjugations.ts       # Verb conjugation generation + commit
 │   │   ├── dashboard.ts          # Dashboard stats aggregation (currently unused by any route)
@@ -59,6 +59,7 @@ Key features:
 │   │   ├── components/           # AdminNav, AdminThemeProvider, AdminTextField, etc.
 │   │   ├── conjugations/
 │   │   ├── episodes/
+│   │   ├── lemmas/               # Browse/search vocab_lemmas table
 │   │   ├── pipeline/
 │   │   └── shows/
 │   ├── auth/callback/page.tsx    # OAuth callback handler

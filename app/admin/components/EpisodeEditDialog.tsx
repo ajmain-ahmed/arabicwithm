@@ -40,6 +40,8 @@ import {
   type EpisodeInput,
   type DefinitionKey,
 } from "@/app/actions/admin"
+import { updateDefinitionLemma } from "@/app/actions/dictionary"
+import UndefinedWordWizardDialog from "./UndefinedWordWizardDialog"
 import { errorMessage } from "@/app/lib/errors"
 
 
@@ -86,6 +88,77 @@ function getWordFieldAtPath(
   return scriptBlocks[blockIdx]?.words?.[wordIdx]?.[field]
 }
 
+function getSurfaceArabic(
+  scriptBlocks: ScriptBlock[],
+  lemma: string,
+  root: string | null
+): string | undefined {
+  for (const block of scriptBlocks) {
+    for (const word of block.words ?? []) {
+      if ((word.lemma?.trim() || word.arabic?.trim()) === lemma && word.root?.trim() === (root ?? "")) {
+        return word.arabic?.trim()
+      }
+    }
+  }
+  return undefined
+}
+
+function amendTranscriptLemma(
+  transcript: unknown,
+  oldLemma: string,
+  root: string | null,
+  newLemma: string
+): unknown {
+  if (Array.isArray(transcript)) {
+    return transcript.map((block) => {
+      if (!block || typeof block !== "object") return block
+      const b = block as Record<string, unknown>
+      const tokens = Array.isArray(b.tokens) ? b.tokens : []
+      return {
+        ...b,
+        tokens: tokens.map((t) => {
+          if (!t || typeof t !== "object") return t
+          const token = t as Record<string, unknown>
+          const tokenLemma = typeof token.lemma === "string" ? token.lemma.trim() : ""
+          const tokenRoot = typeof token.root === "string" ? token.root.trim() : null
+          if (tokenLemma === oldLemma && tokenRoot === (root ?? "")) {
+            return { ...token, lemma: newLemma }
+          }
+          return token
+        }),
+      }
+    })
+  }
+
+  if (transcript && typeof transcript === "object") {
+    const obj = transcript as Record<string, unknown>
+    const scriptBlocks = Array.isArray(obj.scriptBlocks) ? obj.scriptBlocks : []
+    return {
+      ...obj,
+      scriptBlocks: scriptBlocks.map((block) => {
+        if (!block || typeof block !== "object") return block
+        const b = block as Record<string, unknown>
+        const words = Array.isArray(b.words) ? b.words : []
+        return {
+          ...b,
+          words: words.map((w) => {
+            if (!w || typeof w !== "object") return w
+            const word = w as Record<string, unknown>
+            const wordLemma = typeof word.lemma === "string" ? word.lemma.trim() : ""
+            const wordRoot = typeof word.root === "string" ? word.root.trim() : null
+            if (wordLemma === oldLemma && wordRoot === (root ?? "")) {
+              return { ...word, lemma: newLemma }
+            }
+            return word
+          }),
+        }
+      }),
+    }
+  }
+
+  return transcript
+}
+
 function normalizeAdminTranscript(
   input: Record<string, unknown> | null
 ): { scriptBlocks: ScriptBlock[]; grammarPoints: unknown[] } {
@@ -101,10 +174,7 @@ function normalizeAdminTranscript(
           words: tokens.map((t) => {
             const token = t as Record<string, unknown>
             const arabic = String(token.arabic ?? "")
-            const plainRaw = token.arabicPlain
-            const plain = typeof plainRaw === "string" && plainRaw.trim()
-              ? plainRaw.trim()
-              : stripDiacritics(arabic)
+            const plain = stripDiacritics(arabic)
             const cefrRaw = (token.cefr as string | undefined) || (token.CEFR as string | undefined)
             return {
               arabic,
@@ -160,6 +230,8 @@ export default function EpisodeEditDialog({
   const [undefinedLocs, setUndefinedLocs] = useState<
     Record<string, { path: string; timestamp?: string; translation?: string }[]>
   >({})
+  const [wizardOpen, setWizardOpen] = useState(false)
+  const [wizardDef, setWizardDef] = useState<DefinitionKey | null>(null)
 
 
 
@@ -271,6 +343,46 @@ export default function EpisodeEditDialog({
       .catch((e: unknown) => setUndefinedError(errorMessage(e) ?? "Failed to load undefined definitions"))
       .finally(() => setUndefinedLoading(false))
   }, [open, tab, scriptBlocks, parsedTranscript])
+
+  const removeResolvedUndefined = (lemma: string, root: string | null) => {
+    const key = `${lemma}|${root ?? ""}`
+    setUndefinedDefs((prev) => prev.filter((d) => `${d.lemma}|${d.root ?? ""}` !== key))
+    setUndefinedLocs((prev) => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+  }
+
+  const handleUseCandidate = (oldLemma: string, root: string | null, newLemma: string) => {
+    try {
+      const parsed = JSON.parse(transcriptJson)
+      const amended = amendTranscriptLemma(parsed, oldLemma, root, newLemma)
+      setTranscriptJson(JSON.stringify(amended, null, 2))
+      removeResolvedUndefined(oldLemma, root)
+    } catch {
+      setError("Transcript JSON is invalid")
+    }
+  }
+
+  const handleUpdateDefinition = async (
+    definitionId: number,
+    newLemma: string,
+    root: string | null
+  ) => {
+    await updateDefinitionLemma({ definitionId, newLemma, root })
+    removeResolvedUndefined(newLemma, root)
+  }
+
+  const openWizard = (def: DefinitionKey) => {
+    setWizardDef(def)
+    setWizardOpen(true)
+  }
+
+  const closeWizard = () => {
+    setWizardOpen(false)
+    setWizardDef(null)
+  }
 
   const handleSave = async () => {
     setSaving(true)
@@ -466,6 +578,7 @@ export default function EpisodeEditDialog({
                                 <TableCell sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e" }}>POS</TableCell>
                                 <TableCell sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e" }}>CEFR</TableCell>
                                 <TableCell sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e" }}>JSON location</TableCell>
+                                <TableCell sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e" }}>Candidates</TableCell>
                                 <TableCell sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e" }}>Status</TableCell>
                               </TableRow>
                             </TableHead>
@@ -517,6 +630,24 @@ export default function EpisodeEditDialog({
                                           </Typography>
                                         )}
                                       </Box>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Button
+                                        variant="outlined"
+                                        size="small"
+                                        onClick={() => openWizard(def)}
+                                        sx={{
+                                          fontFamily: "Jost, sans-serif",
+                                          fontSize: "0.8rem",
+                                          textTransform: "none",
+                                          borderRadius: "8px",
+                                          borderColor: "rgba(122,110,101,0.3)",
+                                          color: "#7a6e65",
+                                          width: "fit-content",
+                                        }}
+                                      >
+                                        Open wizard
+                                      </Button>
                                     </TableCell>
                                     <TableCell>
                                       <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#c0392b" }}>
@@ -571,6 +702,24 @@ export default function EpisodeEditDialog({
         </DialogActions>
       </Dialog>
 
+      {wizardDef && (
+        <UndefinedWordWizardDialog
+          open={wizardOpen}
+          onClose={closeWizard}
+          lemma={wizardDef.lemma}
+          root={wizardDef.root}
+          surfaceArabic={getSurfaceArabic(scriptBlocks, wizardDef.lemma, wizardDef.root)}
+          pos={getWordFieldAtPath(scriptBlocks, undefinedLocs[`${wizardDef.lemma}|${wizardDef.root ?? ""}`]?.[0]?.path ?? "", "pos")}
+          cefr={getWordFieldAtPath(scriptBlocks, undefinedLocs[`${wizardDef.lemma}|${wizardDef.root ?? ""}`]?.[0]?.path ?? "", "cefr")}
+          missingTable="definitions"
+          locations={undefinedLocs[`${wizardDef.lemma}|${wizardDef.root ?? ""}`] ?? []}
+          source={slug}
+          onUseCandidate={(newLemma) => handleUseCandidate(wizardDef.lemma, wizardDef.root, newLemma)}
+          onUpdateDefinition={(definitionId, newLemma, defRoot) =>
+            handleUpdateDefinition(definitionId, newLemma, defRoot)
+          }
+        />
+      )}
     </>
   )
 }

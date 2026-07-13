@@ -6,6 +6,7 @@ import { z } from "zod"
 import { cookies } from "next/headers"
 import { createServerClient } from "@supabase/ssr"
 import { serviceClient } from "@/app/lib/supabase"
+import { stripDiacritics } from "@/app/lib/arabic"
 import { isAdminUser } from "./vocab"
 import { checkRateLimit } from "@/app/lib/rateLimit"
 
@@ -14,9 +15,9 @@ import { checkRateLimit } from "@/app/lib/rateLimit"
 export type VocabLemmaRow = {
   word_id: number
   lemma: string
-  lemma_diacritic: string | null
+  lemma_plain: string
   transliteration: string | null
-  arabic_root: string | null
+  root: string | null
   entry_type: 'word' | 'phrase' | null
   source: string | null
   CEFR: string | null
@@ -25,8 +26,9 @@ export type VocabLemmaRow = {
 
 export type VocabDefinitionRow = {
   definition_id: number
-  lemma_diacritic: string
-  arabic_root: string | null
+  lemma: string
+  lemma_plain: string
+  root: string | null
   gloss: string
   part_of_speech: string
   definition_en: string | null
@@ -38,6 +40,7 @@ export type VocabDefinitionRow = {
 export type VerbConjugationRow = {
   conjugation_id: number
   lemma: string
+  lemma_plain: string
   root: string | null
   form_number: string | null
   type: 'past' | 'present' | 'imperative' | 'verbal_noun' | 'active_participle' | 'passive_participle'
@@ -105,38 +108,38 @@ export async function fetchDictionaryDetails(
   const lemmasQuery = serviceClient
     .from("vocab_lemmas")
     .select(
-      "word_id, lemma, lemma_diacritic, transliteration, arabic_root, entry_type, source, CEFR, is_active"
+      "word_id, lemma, lemma_plain, transliteration, root, entry_type, source, CEFR, is_active"
     )
     .or(lemmasFilter)
     .eq("is_active", true)
   if (normalizedRoot === null || normalizedRoot === "") {
-    lemmasQuery.is("arabic_root", null)
+    lemmasQuery.is("root", null)
   } else {
-    lemmasQuery.eq("arabic_root", normalizedRoot)
+    lemmasQuery.eq("root", normalizedRoot)
   }
 
   const definitionsFilter = buildFormFilter(
-    "lemma_diacritic",
+    "lemma",
     normalizedLemma,
     normalizedSurface
   )
   const definitionsQuery = serviceClient
     .from("vocab_definitions")
     .select(
-      "definition_id, lemma_diacritic, arabic_root, gloss, part_of_speech, definition_en, definition_ar, source, is_active"
+      "definition_id, lemma, lemma_plain, root, gloss, part_of_speech, definition_en, definition_ar, source, is_active"
     )
     .or(definitionsFilter)
     .eq("is_active", true)
   if (normalizedRoot === null || normalizedRoot === "") {
-    definitionsQuery.is("arabic_root", null)
+    definitionsQuery.is("root", null)
   } else {
-    definitionsQuery.eq("arabic_root", normalizedRoot)
+    definitionsQuery.eq("root", normalizedRoot)
   }
 
   const conjugationsQuery = serviceClient
     .from("verb_conjugations")
     .select(
-      "conjugation_id, lemma, root, form_number, type, conjugation_ar, conjugation_diacritic, transliteration, english_translation, source, is_active"
+      "conjugation_id, lemma, lemma_plain, root, form_number, type, conjugation_ar, conjugation_diacritic, transliteration, english_translation, source, is_active"
     )
     .eq("lemma", normalizedLemma)
     .eq("is_active", true)
@@ -238,7 +241,6 @@ async function getAuthenticatedUserId(): Promise<string | null> {
 
 const UserDefinitionSchema = z.object({
   lemma: z.string().min(1).max(200),
-  lemmaDiacritic: z.string().min(1).max(200),
   root: z.string().max(50).nullable().optional(),
   transliteration: z.string().max(200).optional(),
   cefr: z.string().max(10).optional(),
@@ -250,7 +252,6 @@ const UserDefinitionSchema = z.object({
 
 export async function addUserVocabDefinition(input: {
   lemma: string
-  lemmaDiacritic: string
   root?: string | null
   transliteration?: string
   cefr?: string
@@ -270,16 +271,17 @@ export async function addUserVocabDefinition(input: {
   }
 
   const root = input.root ?? null
+  const lemmaPlain = stripDiacritics(input.lemma)
 
   // Upsert the lemma row so we have something to attach the definition to.
   const lemmaQuery = serviceClient
     .from('vocab_lemmas')
     .select('word_id')
-    .eq('lemma_diacritic', input.lemmaDiacritic)
+    .eq('lemma', input.lemma)
   if (root === null || root === '') {
-    lemmaQuery.is('arabic_root', null)
+    lemmaQuery.is('root', null)
   } else {
-    lemmaQuery.eq('arabic_root', root)
+    lemmaQuery.eq('root', root)
   }
   const { data: existingLemma } = await lemmaQuery.maybeSingle()
 
@@ -287,6 +289,7 @@ export async function addUserVocabDefinition(input: {
     const { error: lemmaError } = await serviceClient
       .from('vocab_lemmas')
       .update({
+        lemma_plain: lemmaPlain,
         transliteration: input.transliteration || null,
         CEFR: input.cefr || null,
       })
@@ -298,9 +301,9 @@ export async function addUserVocabDefinition(input: {
   } else {
     const { error: lemmaError } = await serviceClient.from('vocab_lemmas').insert({
       lemma: input.lemma,
-      lemma_diacritic: input.lemmaDiacritic,
+      lemma_plain: lemmaPlain,
       transliteration: input.transliteration || null,
-      arabic_root: root,
+      root,
       entry_type: input.partOfSpeech || 'word',
       source: 'user-contributed',
       CEFR: input.cefr || null,
@@ -313,8 +316,9 @@ export async function addUserVocabDefinition(input: {
   }
 
   const { error: defError } = await serviceClient.from('vocab_definitions').insert({
-    lemma_diacritic: input.lemmaDiacritic,
-    arabic_root: root,
+    lemma: input.lemma,
+    lemma_plain: lemmaPlain,
+    root,
     gloss: input.gloss || null,
     part_of_speech: input.partOfSpeech || null,
     definition_en: input.definitionEn || null,
@@ -405,6 +409,103 @@ export async function updateVocabLemma(input: {
   }
 }
 
+const DefinitionLemmaUpdateSchema = z.object({
+  definitionId: z.number().int().positive(),
+  newLemma: z.string().min(1).max(200),
+  root: z.string().max(50).nullable().optional(),
+})
+
+export async function updateDefinitionLemma(input: {
+  definitionId: number
+  newLemma: string
+  root?: string | null
+}): Promise<void> {
+  const admin = await isAdminUser()
+  if (!admin) throw new Error('Forbidden')
+
+  const parsed = DefinitionLemmaUpdateSchema.safeParse({
+    definitionId: input.definitionId,
+    newLemma: input.newLemma,
+    root: input.root,
+  })
+  if (!parsed.success) {
+    throw new Error(`Invalid input: ${parsed.error.message}`)
+  }
+
+  const normalizedNew = input.newLemma.trim()
+  const normalizedNewPlain = stripDiacritics(normalizedNew)
+  const normalizedRoot = input.root?.trim() || null
+
+  // Fetch the existing definition so we know the old lemma and can
+  // keep vocab_lemmas in sync.
+  const { data: existingRows, error: fetchError } = await serviceClient
+    .from('vocab_definitions')
+    .select('definition_id, lemma, root')
+    .eq('definition_id', input.definitionId)
+    .single()
+
+  if (fetchError) {
+    console.error('[updateDefinitionLemma] fetch error:', fetchError.message)
+    throw new Error(fetchError.message)
+  }
+  if (!existingRows) {
+    throw new Error('Definition not found')
+  }
+
+  const oldLemma = String(existingRows.lemma ?? '')
+  const oldRoot = existingRows.root ? String(existingRows.root) : null
+
+  // Avoid collisions with another active definition at the new key.
+  const collisionQuery = serviceClient
+    .from('vocab_definitions')
+    .select('definition_id')
+    .eq('lemma', normalizedNew)
+    .eq('is_active', true)
+    .neq('definition_id', input.definitionId)
+  if (normalizedRoot === null || normalizedRoot === '') {
+    collisionQuery.is('root', null)
+  } else {
+    collisionQuery.eq('root', normalizedRoot)
+  }
+  const { data: collisionRows, error: collisionError } = await collisionQuery
+  if (collisionError) {
+    console.error('[updateDefinitionLemma] collision check error:', collisionError.message)
+    throw new Error(collisionError.message)
+  }
+  if ((collisionRows ?? []).length > 0) {
+    throw new Error('Another active definition already exists for the new lemma.')
+  }
+
+  // Update the definition row.
+  const { error: defError } = await serviceClient
+    .from('vocab_definitions')
+    .update({ lemma: normalizedNew, lemma_plain: normalizedNewPlain })
+    .eq('definition_id', input.definitionId)
+
+  if (defError) {
+    console.error('[updateDefinitionLemma] definition update error:', defError.message)
+    throw new Error(defError.message)
+  }
+
+  // Keep linked vocab_lemmas rows in sync (matched by old lemma + root).
+  if (oldLemma) {
+    const lemmaQuery = serviceClient
+      .from('vocab_lemmas')
+      .update({ lemma: normalizedNew, lemma_plain: normalizedNewPlain })
+      .eq('lemma', oldLemma)
+    if (oldRoot === null || oldRoot === '') {
+      lemmaQuery.is('root', null)
+    } else {
+      lemmaQuery.eq('root', oldRoot)
+    }
+    const { error: lemmaError } = await lemmaQuery
+    if (lemmaError) {
+      console.error('[updateDefinitionLemma] lemma sync error:', lemmaError.message)
+      throw new Error(lemmaError.message)
+    }
+  }
+}
+
 /* ── JSON bulk edit ──────────────────────────────────────────────────── */
 
 const JsonDefinitionSchema = z.object({
@@ -430,7 +531,6 @@ const AdminDictionaryJsonSchema = z.object({
 
 const UserDictionaryJsonSchema = z.object({
   lemma: z.string().min(1).max(200),
-  lemma_diacritic: z.string().min(1).max(200),
   root: z.string().max(50).nullable().optional(),
   transliteration: z.string().max(200).nullable().optional(),
   CEFR: z.string().max(10).nullable().optional(),
@@ -499,12 +599,12 @@ export async function saveDictionaryDetailsFromJson(jsonString: string): Promise
   const existingQuery = serviceClient
     .from('vocab_definitions')
     .select('definition_id')
-    .eq('lemma_diacritic', parsed.lemma_diacritic)
+    .eq('lemma', parsed.lemma)
     .eq('is_active', true)
   if (root === null || root === '') {
-    existingQuery.is('arabic_root', null)
+    existingQuery.is('root', null)
   } else {
-    existingQuery.eq('arabic_root', root)
+    existingQuery.eq('root', root)
   }
   const { data: existingDefs, error: countError } = await existingQuery
   if (countError) {
@@ -517,7 +617,6 @@ export async function saveDictionaryDetailsFromJson(jsonString: string): Promise
 
   await addUserVocabDefinition({
     lemma: parsed.lemma,
-    lemmaDiacritic: parsed.lemma_diacritic,
     root,
     transliteration: parsed.transliteration ?? undefined,
     cefr: parsed.CEFR ?? undefined,

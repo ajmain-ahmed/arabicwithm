@@ -14,7 +14,7 @@ import {
 import { useRouter } from 'next/navigation'
 import { ShowMeta, EpisodeMeta } from '../../lib/cartoons'
 import { PageBanner } from '@/app/components/page-layout'
-import { FilterSidebar, ComingSoonSection, ContentCard } from '@/app/components/content-grid'
+import { FilterSidebar, ContentCard } from '@/app/components/content-grid'
 import EpisodeEditDialog from '../components/EpisodeEditDialog'
 import { deleteEpisode } from '@/app/actions/admin'
 
@@ -29,7 +29,6 @@ import {
   NavigateNext,
   Edit,
   Delete,
-  Add,
 } from '@mui/icons-material'
 
 /* ── Palette ── */
@@ -37,13 +36,6 @@ const BARK = '#2c1a0e'
 const GOLD = '#b8860b'
 const WARM_WHITE = '#fffaf0'
 const MUTED = '#7a6e65'
-
-const COMING_SOON = [
-  { title: 'Arabic Peppa Pig', category: 'Everyday Arabic', level: 'A1-A2', date: 'Coming November 2025' },
-  { title: 'Avatar: The Last Airbender', category: 'Action', level: 'A2-B1', date: 'Coming December 2025' },
-  { title: 'Stories of the Prophets', category: 'Islamic Heritage', level: 'B1-B2', date: 'Coming January 2026' },
-  { title: 'Adventure Time', category: 'Everyday Arabic', level: 'A1-A2', date: 'Coming February 2026' },
-]
 
 interface ShowPageProps {
   show: ShowMeta
@@ -87,29 +79,38 @@ export default function ShowPage({ show, episodes, isAdmin }: ShowPageProps) {
 
   const activeFilterCount = activeLevel ? 1 : 0
 
+  const bannerFeatures = [
+    { icon: <Subtitles sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Interactive Subtitles' },
+    { icon: <MenuBook sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Vocabulary Builder' },
+    { icon: <School sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Grammar Notes' },
+  ]
+
+  const ctaLabel = episodes.length > 0 ? 'Watch a Random Episode' : 'Coming Soon'
+
   return (
     <Box
       component="main"
       sx={{
-        minHeight: '100vh',
+        minHeight: { xs: 'calc(100vh - 56px)', md: '100vh' },
         background: WARM_WHITE,
         pb: { xs: 0, md: 8 },
       }}
     >
-      <PageBanner
-        title={show.title}
-        titleAr={show.titleAr ?? ''}
-        description={show.description ?? 'Learn Arabic naturally through interactive subtitles and vocabulary.'}
-        features={[
-          { icon: <Subtitles sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Interactive Subtitles' },
-          { icon: <MenuBook sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Vocabulary Builder' },
-          { icon: <School sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Grammar Notes' },
-        ]}
-        ctaLabel={episodes.length > 0 ? 'Watch a Random Episode' : 'Coming Soon'}
-        ctaAction={goToRandomEpisode}
-        ctaStartIcon={<PlayArrow sx={{ fontSize: 20 }} />}
-        backgroundImage={show.cover}
-      />
+      {/* Desktop banner */}
+      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+        <PageBanner
+          title={show.title}
+          titleAr={show.titleAr ?? ''}
+          description={show.description ?? 'Learn Arabic naturally through interactive subtitles and vocabulary.'}
+          features={bannerFeatures}
+          ctaLabel={ctaLabel}
+          ctaAction={goToRandomEpisode}
+          ctaStartIcon={<PlayArrow sx={{ fontSize: 20 }} />}
+          backgroundImage={show.cover}
+        />
+      </Box>
+
+
 
       {/* ═══════════════════════════════════════════════
           CONTENT
@@ -122,32 +123,32 @@ export default function ShowPage({ show, episodes, isAdmin }: ShowPageProps) {
           px: { xs: 2, md: 3 },
           display: 'flex',
           flexDirection: 'column',
-          gap: { xs: 4, md: 6 },
         }}
       >
         {/* ── Content Area ── */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 3 }, pt: 4 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
           {/* Breadcrumbs */}
           <Breadcrumbs
             separator={<NavigateNext sx={{ fontSize: 16, color: '#9e8a7a' }} />}
             sx={{
-              mb: 2,
+              display: { xs: 'none', md: 'flex' },
+              mb: { xs: 1, md: 2 },
               '& .MuiBreadcrumbs-li': { fontFamily: 'Jost, sans-serif' },
             }}
           >
             <Typography
               onClick={() => router.push('/')}
-              sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#7a6e65', cursor: 'pointer', '&:hover': { color: GOLD } }}
+              sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.9rem', md: '1rem' }, color: '#7a6e65', cursor: 'pointer', '&:hover': { color: GOLD } }}
             >
               Home
             </Typography>
             <Typography
               onClick={() => router.push('/cartoons')}
-              sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#7a6e65', cursor: 'pointer', '&:hover': { color: GOLD } }}
+              sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.9rem', md: '1rem' }, color: '#7a6e65', cursor: 'pointer', '&:hover': { color: GOLD } }}
             >
               Cartoons
             </Typography>
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#2c1a0e', fontWeight: 600 }}>
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.9rem', md: '1rem' }, color: '#2c1a0e', fontWeight: 600 }}>
               {show.title}
             </Typography>
           </Breadcrumbs>
@@ -200,29 +201,12 @@ export default function ShowPage({ show, episodes, isAdmin }: ShowPageProps) {
 
         {filteredEpisodes.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 12 }}>
-            <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 20, color: BARK, mb: 1 }}>
+            <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 18, md: 20 }, color: BARK, mb: 1 }}>
               {episodes.length === 0 ? 'No episodes yet' : 'No episodes match your filters'}
             </Typography>
-            <Typography sx={{ fontSize: 14, color: MUTED, mb: 2 }}>
-              {episodes.length === 0 ? 'Use the button below to add the first episode.' : 'Try adjusting your level selection.'}
+            <Typography sx={{ fontSize: { xs: 13, md: 14 }, color: MUTED, mb: 2 }}>
+              {episodes.length === 0 ? 'Check back soon for new episodes.' : 'Try adjusting your level selection.'}
             </Typography>
-            {isAdmin && (
-              <Button
-                startIcon={<Add />}
-                onClick={() => { setEditingEpisode(undefined); setDialogOpen(true); }}
-                sx={{
-                  borderRadius: '9999px',
-                  px: 3,
-                  py: 1,
-                  fontFamily: '"Jost", system-ui, sans-serif',
-                  textTransform: 'none',
-                  color: BARK,
-                  border: '1px solid rgba(44,26,14,0.15)',
-                }}
-              >
-                Add episode
-              </Button>
-            )}
           </Box>
         ) : (
           /* ── Desktop: Sidebar + Grid Layout ── */
@@ -256,26 +240,6 @@ export default function ShowPage({ show, episodes, isAdmin }: ShowPageProps) {
                 </Typography>
               </Box>
 
-              {isAdmin && (
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                  <Button
-                    startIcon={<Add />}
-                    onClick={() => { setEditingEpisode(undefined); setDialogOpen(true); }}
-                    sx={{
-                      textTransform: 'none',
-                      fontFamily: '"Jost", system-ui, sans-serif',
-                      color: BARK,
-                      border: '1px solid rgba(44,26,14,0.15)',
-                      borderRadius: '9999px',
-                      px: 2.5,
-                      py: 0.75,
-                    }}
-                  >
-                    Add episode
-                  </Button>
-                </Box>
-              )}
-
               <EpisodeEditDialog
                 open={dialogOpen}
                 showId={show.id}
@@ -284,7 +248,7 @@ export default function ShowPage({ show, episodes, isAdmin }: ShowPageProps) {
                 onSaved={() => { setDialogOpen(false); router.refresh(); }}
               />
 
-              <Grid container spacing={2}>
+              <Grid container spacing={{ xs: 1, md: 2 }}>
                 {filteredEpisodes.map((ep) => (
                   <Grid size={{ xs: 12, sm: 6, xl: 3 }} key={ep.slug}>
                     <Box sx={{ position: 'relative' }}>
@@ -353,11 +317,7 @@ export default function ShowPage({ show, episodes, isAdmin }: ShowPageProps) {
 
         </Box>
 
-        <ComingSoonSection
-          label="Coming Soon"
-          heading="More Shows on the Way"
-          items={COMING_SOON}
-        />
+
       </Container>
 
       {/* ═══════════════════════════════════════════════
