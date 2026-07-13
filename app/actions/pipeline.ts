@@ -131,7 +131,7 @@ export async function commitPipeline(
     arabic_root: item.root,
     entry_type: item.entry_type,
     source: sourceTrimmed,
-    CEFR: item.CEFR,
+    CEFR: item.cefr,
     is_active: true,
   }))
 
@@ -160,7 +160,7 @@ export type ExistingLemmaWithDefs = {
   lemma_diacritic: string
   arabic_root: string | null
   entry_type: "word" | "phrase"
-  CEFR?: string
+  cefr?: string
   transliteration: string
   definitions: ExistingLemmaDefinition[]
 }
@@ -244,7 +244,7 @@ export async function buildDefinitionsPromptData(
       lemma_diacritic: item.arabic,
       arabic_root: item.root,
       entry_type: item.entry_type,
-      CEFR: item.CEFR,
+      cefr: item.cefr,
       transliteration: item.transliteration,
       definitions: defsByLemmaRoot.get(key) ?? [],
     }

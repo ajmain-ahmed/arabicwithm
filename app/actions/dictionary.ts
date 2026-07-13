@@ -14,10 +14,10 @@ import { checkRateLimit } from "@/app/lib/rateLimit"
 export type VocabLemmaRow = {
   word_id: number
   lemma: string
-  lemma_diacritic: string
+  lemma_diacritic: string | null
   transliteration: string | null
   arabic_root: string | null
-  entry_type: string | null
+  entry_type: 'word' | 'phrase' | null
   source: string | null
   CEFR: string | null
   is_active: boolean
@@ -27,8 +27,8 @@ export type VocabDefinitionRow = {
   definition_id: number
   lemma_diacritic: string
   arabic_root: string | null
-  gloss: string | null
-  part_of_speech: string | null
+  gloss: string
+  part_of_speech: string
   definition_en: string | null
   definition_ar: string | null
   source: string | null
@@ -39,11 +39,13 @@ export type VerbConjugationRow = {
   conjugation_id: number
   lemma: string
   root: string | null
-  tense: string
-  pronoun: string
-  pronoun_label: string | null
+  form_number: string | null
+  type: 'past' | 'present' | 'imperative' | 'verbal_noun' | 'active_participle' | 'passive_participle'
+  conjugation_ar: string
   conjugation_diacritic: string
   transliteration: string | null
+  english_translation: string | null
+  source: string | null
   is_active: boolean
 }
 
@@ -134,12 +136,11 @@ export async function fetchDictionaryDetails(
   const conjugationsQuery = serviceClient
     .from("verb_conjugations")
     .select(
-      "conjugation_id, lemma, root, tense, pronoun, pronoun_label, conjugation_diacritic, transliteration, is_active"
+      "conjugation_id, lemma, root, form_number, type, conjugation_ar, conjugation_diacritic, transliteration, english_translation, source, is_active"
     )
     .eq("lemma", normalizedLemma)
     .eq("is_active", true)
-    .order("tense", { ascending: true })
-    .order("pronoun", { ascending: true })
+    .order("type", { ascending: true })
   if (normalizedRoot === null || normalizedRoot === "") {
     conjugationsQuery.is("root", null)
   } else {
@@ -160,14 +161,14 @@ export async function fetchDictionaryDetails(
     console.error("[fetchDictionaryDetails] vocab_definitions error:", definitionError.message)
     throw new Error(definitionError.message)
   }
+  const lemmas = (lemmaRows ?? []) as unknown as VocabLemmaRow[]
+  const definitions = (definitionRows ?? []) as unknown as VocabDefinitionRow[]
+  const conjugations = (conjugationRows ?? []) as unknown as VerbConjugationRow[]
+
   if (conjugationError) {
     console.error("[fetchDictionaryDetails] verb_conjugations error:", conjugationError.message)
     throw new Error(conjugationError.message)
   }
-
-  const lemmas = (lemmaRows ?? []) as unknown as VocabLemmaRow[]
-  const definitions = (definitionRows ?? []) as unknown as VocabDefinitionRow[]
-  const conjugations = (conjugationRows ?? []) as unknown as VerbConjugationRow[]
 
   // Dedupe in case lemma and surfaceArabic happen to return the same rows.
   const seenLemmas = new Set<number>()
@@ -335,6 +336,7 @@ const DefinitionUpdateSchema = z.object({
   gloss: z.string().max(500).optional(),
   definitionEn: z.string().max(2000).optional(),
   definitionAr: z.string().max(2000).optional(),
+  partOfSpeech: z.string().max(100).optional(),
 })
 
 export async function updateVocabDefinition(input: {
@@ -342,6 +344,7 @@ export async function updateVocabDefinition(input: {
   gloss?: string
   definitionEn?: string
   definitionAr?: string
+  partOfSpeech?: string
 }): Promise<void> {
   const admin = await isAdminUser()
   if (!admin) throw new Error('Forbidden')
@@ -355,6 +358,7 @@ export async function updateVocabDefinition(input: {
   if (input.gloss !== undefined) payload.gloss = input.gloss
   if (input.definitionEn !== undefined) payload.definition_en = input.definitionEn
   if (input.definitionAr !== undefined) payload.definition_ar = input.definitionAr
+  if (input.partOfSpeech !== undefined) payload.part_of_speech = input.partOfSpeech
 
   const { error } = await serviceClient
     .from('vocab_definitions')
@@ -399,4 +403,127 @@ export async function updateVocabLemma(input: {
     console.error('[updateVocabLemma] error:', error.message)
     throw new Error(error.message)
   }
+}
+
+/* ── JSON bulk edit ──────────────────────────────────────────────────── */
+
+const JsonDefinitionSchema = z.object({
+  definition_id: z.number().int().positive(),
+  gloss: z.string().max(500).nullable().optional(),
+  part_of_speech: z.string().max(100).nullable().optional(),
+  definition_en: z.string().max(2000).nullable().optional(),
+  definition_ar: z.string().max(2000).nullable().optional(),
+})
+
+const JsonLemmaSchema = z.object({
+  word_id: z.number().int().positive(),
+  transliteration: z.string().max(200).nullable().optional(),
+  CEFR: z.string().max(10).nullable().optional(),
+})
+
+const AdminDictionaryJsonSchema = z.object({
+  lemma: z.string().min(1).max(200),
+  root: z.string().max(50).nullable().optional(),
+  lemmas: z.array(JsonLemmaSchema).max(50).optional(),
+  definitions: z.array(JsonDefinitionSchema).max(50).optional(),
+})
+
+const UserDictionaryJsonSchema = z.object({
+  lemma: z.string().min(1).max(200),
+  lemma_diacritic: z.string().min(1).max(200),
+  root: z.string().max(50).nullable().optional(),
+  transliteration: z.string().max(200).nullable().optional(),
+  CEFR: z.string().max(10).nullable().optional(),
+  gloss: z.string().max(500).nullable().optional(),
+  part_of_speech: z.string().max(100).nullable().optional(),
+  definition_en: z.string().max(2000).nullable().optional(),
+  definition_ar: z.string().max(2000).nullable().optional(),
+})
+
+export async function saveDictionaryDetailsFromJson(jsonString: string): Promise<void> {
+  const admin = await isAdminUser()
+
+  if (admin) {
+    let parsed: z.infer<typeof AdminDictionaryJsonSchema>
+    try {
+      const raw = JSON.parse(jsonString)
+      const result = AdminDictionaryJsonSchema.safeParse(raw)
+      if (!result.success) {
+        throw new Error(`Invalid JSON format: ${result.error.message}`)
+      }
+      parsed = result.data
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Invalid JSON'
+      throw new Error(message)
+    }
+
+    for (const lemma of parsed.lemmas ?? []) {
+      await updateVocabLemma({
+        wordId: lemma.word_id,
+        transliteration: lemma.transliteration ?? undefined,
+        cefr: lemma.CEFR ?? undefined,
+      })
+    }
+
+    for (const def of parsed.definitions ?? []) {
+      await updateVocabDefinition({
+        definitionId: def.definition_id,
+        gloss: def.gloss ?? undefined,
+        definitionEn: def.definition_en ?? undefined,
+        definitionAr: def.definition_ar ?? undefined,
+        partOfSpeech: def.part_of_speech ?? undefined,
+      })
+    }
+
+    return
+  }
+
+  // Non-admin users can only add a new definition when none exist.
+  const userId = await getAuthenticatedUserId()
+  if (!userId) throw new Error('Unauthorized')
+
+  let parsed: z.infer<typeof UserDictionaryJsonSchema>
+  try {
+    const raw = JSON.parse(jsonString)
+    const result = UserDictionaryJsonSchema.safeParse(raw)
+    if (!result.success) {
+      throw new Error(`Invalid JSON format: ${result.error.message}`)
+    }
+    parsed = result.data
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Invalid JSON'
+    throw new Error(message)
+  }
+
+  const root = parsed.root ?? null
+  const existingQuery = serviceClient
+    .from('vocab_definitions')
+    .select('definition_id')
+    .eq('lemma_diacritic', parsed.lemma_diacritic)
+    .eq('is_active', true)
+  if (root === null || root === '') {
+    existingQuery.is('arabic_root', null)
+  } else {
+    existingQuery.eq('arabic_root', root)
+  }
+  const { data: existingDefs, error: countError } = await existingQuery
+  if (countError) {
+    console.error('[saveDictionaryDetailsFromJson] existing definition check error:', countError.message)
+    throw new Error(countError.message)
+  }
+  if ((existingDefs ?? []).length > 0) {
+    throw new Error('A definition already exists for this word. Only admins can edit existing entries.')
+  }
+
+  await addUserVocabDefinition({
+    lemma: parsed.lemma,
+    lemmaDiacritic: parsed.lemma_diacritic,
+    root,
+    transliteration: parsed.transliteration ?? undefined,
+    cefr: parsed.CEFR ?? undefined,
+    gloss: parsed.gloss ?? undefined,
+    partOfSpeech: parsed.part_of_speech ?? undefined,
+    definitionEn: parsed.definition_en ?? undefined,
+    definitionAr: parsed.definition_ar ?? undefined,
+  })
 }

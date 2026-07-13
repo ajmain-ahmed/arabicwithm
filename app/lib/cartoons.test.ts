@@ -8,7 +8,8 @@ describe('isNewTranscript', () => {
       {
         tokens: [
           {
-            CEFR: 'A1',
+            cefr: 'a1',
+            pos: 'particle',
             root: null,
             lemma: 'هَلْ',
             arabic: 'هَلْ',
@@ -39,7 +40,8 @@ describe('normalizeNewTranscript', () => {
       {
         tokens: [
           {
-            CEFR: 'A1',
+            cefr: 'A1',
+            pos: 'particle',
             root: null,
             lemma: 'هَلْ',
             arabic: 'هَلْ',
@@ -49,6 +51,7 @@ describe('normalizeNewTranscript', () => {
           },
           {
             CEFR: 'A1',
+            pos: 'verb',
             root: 'ك-و-ن',
             lemma: 'كَانَ',
             arabic: 'سَتَكُونِينَ',
@@ -57,7 +60,8 @@ describe('normalizeNewTranscript', () => {
             transliteration: 'satakūnīna',
           },
           {
-            CEFR: 'A1',
+            cefr: 'A1',
+            pos: 'phrase',
             root: 'خ-ي-ر',
             lemma: 'بِخَيْر',
             arabic: 'بِخَيْر',
@@ -72,7 +76,8 @@ describe('normalizeNewTranscript', () => {
       {
         tokens: [
           {
-            CEFR: 'A2',
+            cefr: 'A2',
+            pos: 'phrase',
             root: null,
             lemma: 'أَعْتَقِدُ ذَلِكَ',
             arabic: 'أَعْتَقِدُ ذَلِكَ',
@@ -97,7 +102,10 @@ describe('normalizeNewTranscript', () => {
     expect(first.arabicPlain).toBe('هل ستكونين بخير')
     expect(first.words).toHaveLength(3)
     expect(first.words[0].plain).toBe('هل')
+    expect(first.words[0].pos).toBe('particle')
+    expect(first.words[0].cefr).toBe('a1')
     expect(first.words[1].root).toBe('ك-و-ن')
+    expect(first.words[1].cefr).toBe('a1')
     expect(first.words[2].plain).toBe('بخير')
 
     const second = scriptBlocks[1]
@@ -105,9 +113,10 @@ describe('normalizeNewTranscript', () => {
     expect(second.title).toBe('I think so.')
     expect(second.words[0].plain).toBe('أعتقد ذلك')
 
-    // Vocab list deduplicates by lemma.
+    // Vocab list deduplicates by lemma and lowercases cefr.
     expect(vocabList).toHaveLength(4)
     expect(vocabList.map((v) => v.arabic)).toContain('كَانَ')
+    expect(vocabList.every((v) => !v.cefr || v.cefr === v.cefr.toLowerCase())).toBe(true)
   })
 
   it('falls back to stripping diacritics when token-level plain is missing', () => {
@@ -115,6 +124,7 @@ describe('normalizeNewTranscript', () => {
       {
         tokens: [
           {
+            pos: 'particle',
             root: null,
             lemma: 'هَلْ',
             arabic: 'هَلْ',
@@ -132,6 +142,7 @@ describe('normalizeNewTranscript', () => {
     expect(scriptBlocks[0].arabicPlain).toBe(stripDiacritics('هَلْ'))
     expect(scriptBlocks[0].words[0].english).toBe('whether / is it?')
     expect(scriptBlocks[0].words[0].plain).toBe(stripDiacritics('هَلْ'))
+    expect(scriptBlocks[0].words[0].pos).toBe('particle')
     expect(vocabList[0].english).toBe('whether / is it?')
   })
 })

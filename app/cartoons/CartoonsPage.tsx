@@ -343,7 +343,7 @@ export default function CartoonsPage({
                         titleAr={show.titleAr}
                         description={show.description}
                         category={show.category}
-                        genre={show.genre}
+
                         level={show.level}
                         overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                         metaItems={[

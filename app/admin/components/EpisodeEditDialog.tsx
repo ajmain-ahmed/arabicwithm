@@ -53,19 +53,15 @@ interface EpisodeEditDialogProps {
   onDeleted?: () => void
 }
 
-const defaultTranscript = JSON.stringify(
-  { scriptBlocks: [], vocabList: [], grammarPoints: [] },
-  null,
-  2
-)
+const defaultTranscript = JSON.stringify([], null, 2)
 
 type TranscriptWord = {
-  db?: string
   arabic?: string
   plain?: string
   english?: string
   transliteration?: string
   cefr?: string
+  pos?: string
   root?: string | null
   lemma?: string
   entry_type?: string
@@ -76,6 +72,18 @@ type ScriptBlock = {
   timestamp?: string
   translation?: string
   words?: TranscriptWord[]
+}
+
+function getWordFieldAtPath(
+  scriptBlocks: ScriptBlock[],
+  path: string,
+  field: "pos" | "cefr"
+): string | undefined {
+  const m = path.match(/\[(\d+)\]\.(words|tokens)\[(\d+)\]$/)
+  if (!m) return undefined
+  const blockIdx = Number(m[1])
+  const wordIdx = Number(m[3])
+  return scriptBlocks[blockIdx]?.words?.[wordIdx]?.[field]
 }
 
 function normalizeAdminTranscript(
@@ -97,13 +105,14 @@ function normalizeAdminTranscript(
             const plain = typeof plainRaw === "string" && plainRaw.trim()
               ? plainRaw.trim()
               : stripDiacritics(arabic)
+            const cefrRaw = (token.cefr as string | undefined) || (token.CEFR as string | undefined)
             return {
-              db: typeof token.db === "string" && token.db.trim() ? token.db.trim() : arabic,
               arabic,
               plain,
               english: String(token.english ?? ""),
               transliteration: String(token.transliteration ?? ""),
-              cefr: (token.CEFR as string | undefined) || undefined,
+              cefr: cefrRaw ? cefrRaw.trim().toLowerCase() : undefined,
+              pos: typeof token.pos === "string" && token.pos.trim() ? token.pos.trim() : undefined,
               root: typeof token.root === "string" && token.root.trim() ? token.root.trim() : null,
               lemma: String(token.lemma ?? ""),
               entry_type: String(token.entry_type ?? ""),
@@ -189,7 +198,7 @@ export default function EpisodeEditDialog({
         setDescription(row.description ?? "")
         setYoutubeId(row.youtube_id ?? "")
         setCover(row.cover ?? "")
-        setTranscriptJson(JSON.stringify(row.transcript ?? { scriptBlocks: [], vocabList: [], grammarPoints: [] }, null, 2))
+        setTranscriptJson(JSON.stringify(row.transcript ?? [], null, 2))
       })
       .catch((e: unknown) => setError(errorMessage(e) ?? "Failed to load episode"))
       .finally(() => setLoading(false))
@@ -454,6 +463,8 @@ export default function EpisodeEditDialog({
                               <TableRow>
                                 <TableCell sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e" }}>Lemma</TableCell>
                                 <TableCell sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e" }}>Root</TableCell>
+                                <TableCell sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e" }}>POS</TableCell>
+                                <TableCell sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e" }}>CEFR</TableCell>
                                 <TableCell sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e" }}>JSON location</TableCell>
                                 <TableCell sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e" }}>Status</TableCell>
                               </TableRow>
@@ -477,6 +488,16 @@ export default function EpisodeEditDialog({
                                       ) : (
                                         <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#9e8a7a" }}>—</Typography>
                                       )}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65" }}>
+                                        {getWordFieldAtPath(scriptBlocks, locs[0]?.path ?? "", "pos") ?? "—"}
+                                      </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.8rem", color: "#7a6e65" }}>
+                                        {getWordFieldAtPath(scriptBlocks, locs[0]?.path ?? "", "cefr") ?? "—"}
+                                      </Typography>
                                     </TableCell>
                                     <TableCell>
                                       <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>

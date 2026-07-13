@@ -154,6 +154,101 @@ const PAGE_CSS = `
 `
 
 /* ─────────────────────────────────────────────
+   Shared action buttons
+───────────────────────────────────────────── */
+function EditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <IconButton
+      onClick={onClick}
+      size="small"
+      sx={{
+        color: 'var(--gold)',
+        border: '1px solid rgba(184,134,11,0.3)',
+        borderRadius: '8px',
+        '&:hover': { bgcolor: 'rgba(184,134,11,0.08)' },
+      }}
+      aria-label="Edit episode"
+    >
+      <Edit sx={{ fontSize: 18 }} />
+    </IconButton>
+  )
+}
+
+interface SettingsButtonProps {
+  isMobileViewport: boolean
+  settingsAnchor: HTMLElement | null
+  setSettingsAnchor: (el: HTMLElement | null) => void
+  setSettingsOpen: (open: boolean) => void
+  showDiacritics: boolean
+  setShowDiacritics: (v: boolean) => void
+  textScale: number
+  setTextScale: (v: number) => void
+}
+
+function SettingsButton({
+  isMobileViewport,
+  settingsAnchor,
+  setSettingsAnchor,
+  setSettingsOpen,
+  showDiacritics,
+  setShowDiacritics,
+  textScale,
+  setTextScale,
+}: SettingsButtonProps) {
+  return (
+    <>
+      <IconButton
+        onClick={isMobileViewport ? () => setSettingsOpen(true) : (e) => setSettingsAnchor(e.currentTarget)}
+        size="small"
+        sx={{
+          color: 'var(--gold)',
+          border: '1px solid rgba(184,134,11,0.3)',
+          borderRadius: '8px',
+          '&:hover': { bgcolor: 'rgba(184,134,11,0.08)' },
+        }}
+        aria-label="Settings"
+      >
+        <Settings sx={{ fontSize: 20 }} />
+      </IconButton>
+      <Popover
+        open={Boolean(settingsAnchor)}
+        anchorEl={settingsAnchor}
+        onClose={() => setSettingsAnchor(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '12px',
+              boxShadow: '0 12px 40px rgba(44,26,14,0.15)',
+              p: 1.5,
+              width: 'auto',
+              minWidth: 160,
+              border: '1px solid rgba(44,26,14,0.08)',
+            },
+          },
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Box>
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)', mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Text Size
+            </Typography>
+            <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
+          </Box>
+          <Box>
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)', mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Diacritics
+            </Typography>
+            <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics(!showDiacritics)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
+          </Box>
+        </Box>
+      </Popover>
+    </>
+  )
+}
+
+/* ─────────────────────────────────────────────
    MobileFixedHeader — portal into <body>
 ───────────────────────────────────────────── */
 function MobileFixedHeader({
@@ -165,6 +260,7 @@ function MobileFixedHeader({
   onHeightChange,
   top,
   overlayActive,
+  settingsProps,
 }: {
   title: string
   onBack: () => void
@@ -174,6 +270,7 @@ function MobileFixedHeader({
   onHeightChange?: (height: number) => void
   top: number
   overlayActive?: boolean
+  settingsProps: SettingsButtonProps
 }) {
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -206,7 +303,7 @@ function MobileFixedHeader({
   const content = (
     <div id="mobile-fixed-header" ref={innerRef} style={{ top: `${top}px` }}>
       {/* Title row */}
-      <div style={{ display: 'flex', alignItems: 'center', position: 'relative', minHeight: 30, marginBottom: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 30, marginBottom: 14 }}>
         {/* Back button — left */}
         <button
           onClick={onBack}
@@ -222,7 +319,6 @@ function MobileFixedHeader({
             background: 'rgba(44,26,14,0.05)',
             cursor: 'pointer',
             color: '#7a6e65',
-            zIndex: 1,
           }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -230,13 +326,12 @@ function MobileFixedHeader({
           </svg>
         </button>
 
-        {/* Title — absolutely centred */}
+        {/* Title — centred */}
         <span
           style={{
-            position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: 'calc(100% - 96px)',
+            flex: 1,
+            minWidth: 0,
+            margin: '0 12px',
             textAlign: 'center',
             fontFamily: 'Georgia, "Times New Roman", serif',
             fontWeight: 700,
@@ -251,6 +346,10 @@ function MobileFixedHeader({
           {title}
         </span>
 
+        {/* Actions — settings only on mobile */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <SettingsButton {...settingsProps} />
+        </div>
       </div>
 
       {/* Video — moved into the fixed header on mobile */}
@@ -328,6 +427,7 @@ function useVocabOpenTracker(isOpen: boolean) {
 ───────────────────────────────────────────── */
 function ArabicLineText({
   text,
+  words,
   wordMap,
   diacritizedMap,
   definedRootLemmas,
@@ -338,6 +438,7 @@ function ArabicLineText({
   isAdmin,
 }: {
   text: string
+  words?: CartoonWordEntry[]
   wordMap: Record<string, CartoonWordEntry>
   diacritizedMap: Record<string, CartoonWordEntry>
   definedRootLemmas: string[]
@@ -453,6 +554,25 @@ function ArabicLineText({
   )
 
   const segments = useMemo(() => {
+    type Segment =
+      | { type: 'text'; text: string }
+      | { type: 'word'; text: string; entry: CartoonWordEntry; index: number }
+      | { type: 'unmatched-word'; text: string }
+
+    // If we have the exact block words, use them directly so each occurrence
+    // keeps its own metadata (POS, English, CEFR, etc.) instead of being
+    // overwritten by a later occurrence in the global wordMap.
+    if (words && words.length > 0) {
+      const segs: Segment[] = []
+      words.forEach((w, idx) => {
+        if (idx > 0) {
+          segs.push({ type: 'text', text: ' ' })
+        }
+        segs.push({ type: 'word', text: showDiacritics ? w.arabic : w.plain, entry: w, index: idx })
+      })
+      return segs
+    }
+
     type Token = { type: 'word' | 'sep'; value: string }
     const tokens: Token[] = []
     let current = ''
@@ -471,11 +591,6 @@ function ArabicLineText({
       }
     }
     if (current) tokens.push({ type: isWord ? 'word' : 'sep', value: current })
-
-    type Segment =
-      | { type: 'text'; text: string }
-      | { type: 'word'; text: string; entry: CartoonWordEntry; index: number }
-      | { type: 'unmatched-word'; text: string }
 
     const segs: Segment[] = []
     let i = 0
@@ -526,7 +641,7 @@ function ArabicLineText({
       }
     }
     return segs
-  }, [text, findEntry])
+  }, [text, words, showDiacritics, findEntry])
 
   return (
     <>
@@ -535,7 +650,7 @@ function ArabicLineText({
           return <span key={i}>{seg.text}</span>
         }
 
-        /* ── Unmatched Arabic word — highlight missing app_vocab db link ── */
+        /* ── Unmatched Arabic word — highlight missing lemma match ── */
         if (seg.type === 'unmatched-word') {
           return (
             <span
@@ -790,6 +905,7 @@ function ArabicLineText({
         lemma={detailsEntry?.lemma}
         root={detailsEntry?.root}
         surfaceArabic={detailsEntry?.arabic}
+        transcriptEntry={detailsEntry}
         showDiacritics={showDiacritics}
         isAdmin={isAdmin}
       />
@@ -842,12 +958,16 @@ export default function EpisodePage({
         const updatedRawBlocks = rawBlocks.map((b, i) =>
           i === index ? (updatedBlock as unknown as Record<string, unknown>) : b
         )
-        await updateEpisode(episode.id, {
-          transcript: {
-            ...rawTranscript,
-            scriptBlocks: updatedRawBlocks,
+        await updateEpisode(
+          episode.id,
+          {
+            transcript: {
+              ...rawTranscript,
+              scriptBlocks: updatedRawBlocks,
+            },
           },
-        })
+          `/cartoons/${episode.show}/${episode.slug}`
+        )
       } else {
         // New block-based format: map the edited ScriptBlock back to a
         // NewTranscriptBlock, preserving original token metadata (root, lemma,
@@ -873,15 +993,22 @@ export default function EpisodePage({
               entry_type: w.entry_type || original?.entry_type || 'word',
               transliteration: w.transliteration,
               english: w.english,
+              pos: w.pos?.trim() || original?.pos?.trim() || 'unknown',
             }
+            const cefrRaw = w.cefr?.trim() || original?.cefr?.trim() || (original?.CEFR?.trim() ?? '')
+            if (cefrRaw) token.cefr = cefrRaw.toLowerCase()
             return token
           }),
         }
 
         const updatedRawBlocks = rawBlocks.map((b, i) => (i === index ? updatedRawBlock : b))
-        await updateEpisode(episode.id, {
-          transcript: updatedRawBlocks as unknown as Record<string, unknown>,
-        })
+        await updateEpisode(
+          episode.id,
+          {
+            transcript: updatedRawBlocks as unknown as Record<string, unknown>,
+          },
+          `/cartoons/${episode.show}/${episode.slug}`
+        )
       }
       setEditingBlockIndex(null)
       router.refresh()
@@ -1036,6 +1163,17 @@ export default function EpisodePage({
     .map((b) => b.index)
   const allNotesExpanded = blocksWithNotes.length > 0 && blocksWithNotes.every((i) => expandedNotes.has(i))
 
+  const settingsProps: SettingsButtonProps = {
+    isMobileViewport,
+    settingsAnchor,
+    setSettingsAnchor,
+    setSettingsOpen,
+    showDiacritics,
+    setShowDiacritics,
+    textScale,
+    setTextScale,
+  }
+
   return (
     <>
       <style>{PAGE_CSS}</style>
@@ -1047,6 +1185,7 @@ export default function EpisodePage({
         onToggleDiacritics={() => setShowDiacritics((p) => !p)}
         textScale={textScale}
         onTextScaleChange={setTextScale}
+        onEdit={isAdmin ? () => setEditDialogOpen(true) : undefined}
       />
 
       {/* ── Mobile fixed portal header ── */}
@@ -1060,6 +1199,7 @@ export default function EpisodePage({
           hasVideo={!!episode.youtubeId}
           onHeightChange={setMobileHeaderHeight}
           overlayActive={mobileOverlayActive}
+          settingsProps={settingsProps}
         />
       )}
 
@@ -1110,6 +1250,7 @@ export default function EpisodePage({
                 fontWeight: 700,
                 color: 'var(--bark)',
                 lineHeight: 1.15,
+                mb: 1,
               }}
             >
               {episode.title}
@@ -1244,22 +1385,10 @@ export default function EpisodePage({
                 </Typography>
               </Breadcrumbs>
 
-              {isAdmin && (
-                <IconButton
-                  onClick={() => setEditDialogOpen(true)}
-                  size="small"
-                  sx={{
-                    color: 'var(--gold)',
-                    border: '1px solid rgba(184,134,11,0.3)',
-                    borderRadius: '8px',
-                    ml: 1,
-                    '&:hover': { bgcolor: 'rgba(184,134,11,0.08)' },
-                  }}
-                  aria-label="Edit episode"
-                >
-                  <Edit sx={{ fontSize: 18 }} />
-                </IconButton>
-              )}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {isAdmin && <EditButton onClick={() => setEditDialogOpen(true)} />}
+                <SettingsButton {...settingsProps} />
+              </Box>
             </Box>
 
             <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: '#fff', borderRadius: '12px 12px 0 0', px: { xs: 1, md: 4 }, display: 'flex', alignItems: 'center' }}>
@@ -1274,8 +1403,8 @@ export default function EpisodePage({
                 }}
               >
                 <Tab label="Script" />
-                <Tab label="Vocabulary List" />
-                <Tab label="Grammar Points" />
+                <Tab label={isMobileViewport ? 'Vocab' : 'Vocabulary List'} />
+                <Tab label={isMobileViewport ? 'Grammar' : 'Grammar Points'} />
               </Tabs>
 
             </Box>
@@ -1284,62 +1413,6 @@ export default function EpisodePage({
               {/* ── Test Yourself button (Script tab only) ── */}
               {tab === 0 && episode.scriptBlocks.length > 0 && (
                 <Box sx={{ mb: { xs: 2, md: 3 }, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                  {/* Settings button */}
-                  <Button
-                    onClick={isMobileViewport ? () => setSettingsOpen(true) : (e) => setSettingsAnchor(e.currentTarget)}
-                    size="small"
-                    startIcon={<Settings sx={{ fontSize: '1.1rem' }} />}
-                    sx={{
-                      color: '#7a6e65',
-                      border: '1px solid rgba(122,110,101,0.25)',
-                      borderRadius: '8px',
-                      fontFamily: 'Jost, sans-serif',
-                      fontSize: '0.85rem',
-                      fontWeight: 500,
-                      textTransform: 'none',
-                      px: 1.5,
-                      py: 0.5,
-                      minHeight: 34,
-                      '&:hover': { background: 'rgba(122,110,101,0.08)', borderColor: 'rgba(122,110,101,0.4)' },
-                    }}
-                  >
-                    Settings
-                  </Button>
-                  <Popover
-                    open={Boolean(settingsAnchor)}
-                    anchorEl={settingsAnchor}
-                    onClose={() => setSettingsAnchor(null)}
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                    slotProps={{
-                      paper: {
-                        sx: {
-                          borderRadius: '12px',
-                          boxShadow: '0 12px 40px rgba(44,26,14,0.15)',
-                          p: 1.5,
-                          width: 'auto',
-                          minWidth: 160,
-                          border: '1px solid rgba(44,26,14,0.08)',
-                        },
-                      },
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      <Box>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)', mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                          Text Size
-                        </Typography>
-                        <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
-                      </Box>
-                      <Box>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)', mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                          Diacritics
-                        </Typography>
-                        <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics((p) => !p)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
-                      </Box>
-                    </Box>
-                  </Popover>
-
                   {blocksWithNotes.length > 0 && (
                     <Button
                       variant="outlined"
@@ -1463,6 +1536,7 @@ export default function EpisodePage({
                               <ArabicLineText
                                 textScale={textScale}
                                 text={showDiacritics ? block.arabicDiacritic : block.arabicPlain}
+                                words={block.words}
                                 wordMap={episode.wordMap}
                                 diacritizedMap={episode.diacritizedMap}
                                 definedRootLemmas={episode.definedRootLemmas ?? []}

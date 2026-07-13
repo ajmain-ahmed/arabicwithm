@@ -5,14 +5,17 @@ export type PipelineItem = {
   arabic: string
   root: string | null
   entry_type: "word" | "phrase"
-  CEFR?: string
+  pos: string
+  cefr?: string
   transliteration: string
   contextualArabic?: string
   english?: string
 }
 
 export type TranscriptToken = {
+  cefr?: string
   CEFR?: string
+  pos: string
   root: string | null
   lemma: string
   arabic: string
@@ -67,9 +70,10 @@ const requiredFields = [
   "root",
   "entry_type",
   "transliteration",
+  "pos",
 ] as const
 
-const cefrRegex = /^(A[0-2]|B[1-2]|C[1-2])$/
+const cefrRegex = /^(A[0-2]|B[1-2]|C[1-2])$/i
 
 export function validateTranscriptEntries(
   entries: unknown[]
@@ -100,13 +104,14 @@ export function validateTranscriptEntries(
         return { ok: false, error: `Entry ${i + 1}, token ${j + 1} is not an object.` }
       }
 
-      const lemma = token.lemma
+      const lemma = typeof token.lemma === "string" && token.lemma.trim() ? token.lemma : token.arabic
       const surface = token.arabic
       const root = token.root
       const entryType = token.entry_type
-      const cefr = token.CEFR
+      const cefr = token.cefr ?? token.CEFR
       const transliteration = token.transliteration
       const english = token.english
+      const pos = token.pos
 
       if (typeof lemma !== "string" || !lemma.trim()) {
         return { ok: false, error: `Entry ${i + 1}, token ${j + 1}: "lemma" must be a non-empty string.` }
@@ -121,9 +126,13 @@ export function validateTranscriptEntries(
       let normalizedCefr: string | undefined = undefined
       if (cefr !== undefined && cefr !== null && cefr !== "") {
         if (typeof cefr !== "string" || !cefrRegex.test(cefr)) {
-          return { ok: false, error: `Entry ${i + 1}, token ${j + 1}: "CEFR" must be one of A0–C2.` }
+          return { ok: false, error: `Entry ${i + 1}, token ${j + 1}: "cefr" must be one of A0–C2.` }
         }
-        normalizedCefr = cefr.trim()
+        normalizedCefr = cefr.trim().toLowerCase()
+      }
+
+      if (typeof pos !== "string" || !pos.trim()) {
+        return { ok: false, error: `Entry ${i + 1}, token ${j + 1}: "pos" is required and must be a non-empty string.` }
       }
 
       if (entryType !== "word" && entryType !== "phrase") {
@@ -144,11 +153,12 @@ export function validateTranscriptEntries(
         arabic: lemma.trim(),
         root: normalizedRoot,
         entry_type: entryType,
+        pos: pos.trim(),
         transliteration: transliteration.trim(),
         contextualArabic: surface.trim(),
         english: typeof english === "string" && english.trim() ? english.trim() : undefined,
       }
-      if (normalizedCefr) normalized.CEFR = normalizedCefr
+      if (normalizedCefr) normalized.cefr = normalizedCefr
 
       const key = `${normalized.arabic}|${normalized.root ?? ""}|${normalized.entry_type}`
       if (!seen.has(key)) {
@@ -186,7 +196,7 @@ export function validateItems(items: unknown[]): { ok: true; items: PipelineItem
     const arabic = item.arabic
     const root = item.root
     const entryType = item.entry_type
-    const cefr = item.CEFR
+    const cefr = item.cefr ?? item.CEFR
     const transliteration = item.transliteration
 
     if (typeof timestamp !== "string" || !timestamp.trim()) {
@@ -202,9 +212,14 @@ export function validateItems(items: unknown[]): { ok: true; items: PipelineItem
     let normalizedCefr: string | undefined = undefined
     if (cefr !== undefined && cefr !== null && cefr !== "") {
       if (typeof cefr !== "string" || !cefrRegex.test(cefr)) {
-        return { ok: false, error: `Item ${i + 1}: "CEFR" must be one of A0–C2.` }
+        return { ok: false, error: `Item ${i + 1}: "cefr" must be one of A0–C2.` }
       }
-      normalizedCefr = cefr.trim()
+      normalizedCefr = cefr.trim().toLowerCase()
+    }
+
+    const pos = item.pos
+    if (typeof pos !== "string" || !pos.trim()) {
+      return { ok: false, error: `Item ${i + 1}: "pos" is required and must be a non-empty string.` }
     }
 
     if (entryType !== "word" && entryType !== "phrase") {
@@ -225,13 +240,14 @@ export function validateItems(items: unknown[]): { ok: true; items: PipelineItem
       arabic: arabic.trim(),
       root: normalizedRoot,
       entry_type: entryType,
+      pos: pos.trim(),
       transliteration: transliteration.trim(),
       contextualArabic: typeof item.contextualArabic === "string" && item.contextualArabic.trim()
         ? item.contextualArabic.trim()
         : undefined,
       english: typeof item.english === "string" && item.english.trim() ? item.english.trim() : undefined,
     }
-    if (normalizedCefr) normalized.CEFR = normalizedCefr
+    if (normalizedCefr) normalized.cefr = normalizedCefr
 
     const key = `${normalized.arabic}|${normalized.root ?? ""}|${normalized.entry_type}`
     if (!seen.has(key)) {

@@ -11,9 +11,7 @@ export interface ShowMeta {
   cover: string
   level: string
   episodeCount: number
-  order?: number
   category?: string
-  genre?: string
   duration?: string
   vocabCount?: number
 }
@@ -31,7 +29,6 @@ export interface EpisodeMeta {
 
 /* ── New inline word entry (parsed from markdown tables) ── */
 export interface CartoonWordEntry {
-  db?: string           // optional vocab lookup key
   arabic: string        // diacritized form from markdown
   plain: string         // stripped diacritics
   transliteration: string
@@ -41,7 +38,6 @@ export interface CartoonWordEntry {
   root?: string | null  // root letters (ف-ع-ل style)
   lemma?: string        // dictionary lemma (diacritized)
   entry_type?: 'word' | 'phrase'
-  listed?: boolean      // whether the word appears in the episode vocab list
 }
 
 export interface ScriptBlock {
@@ -71,12 +67,13 @@ export interface GrammarPoint {
 
 /* ── New block-based transcript format stored in Supabase ── */
 export interface NewTranscriptToken {
+  cefr?: string
   CEFR?: string
+  pos: string
   root: string | null
   lemma: string
   arabic: string
   arabicPlain?: string
-  db?: string
   entry_type: 'word' | 'phrase'
   transliteration: string
   english?: string
@@ -85,8 +82,6 @@ export interface NewTranscriptToken {
 export interface NewTranscriptBlock {
   tokens: NewTranscriptToken[]
   timestamp: string
-  arabicPlain?: string
-  arabicDiacritic?: string
   translation: string
 }
 
@@ -158,6 +153,7 @@ export function normalizeNewTranscript(
 
       // Build a lightweight vocab list keyed by lemma (dictionary form).
       const lemma = token.lemma?.trim() || diacritic
+      const tokenCefr = (token.cefr ?? token.CEFR)?.trim().toLowerCase()
       if (!seenVocab.has(lemma)) {
         const vocabItem: VocabListItem = {
           number: vocabNumber++,
@@ -165,12 +161,11 @@ export function normalizeNewTranscript(
           transliteration: '', // new-format tokens carry surface-form transliterations
           english: token.english ?? '',
         }
-        if (token.CEFR) vocabItem.cefr = token.CEFR
+        if (tokenCefr) vocabItem.cefr = tokenCefr
         seenVocab.set(lemma, vocabItem)
       }
 
       const wordEntry: CartoonWordEntry = {
-        db: token.db?.trim() || diacritic,
         arabic: diacritic,
         plain,
         transliteration: token.transliteration,
@@ -178,8 +173,9 @@ export function normalizeNewTranscript(
         root: token.root ?? null,
         lemma: token.lemma?.trim() || diacritic,
         entry_type: token.entry_type,
+        pos: token.pos?.trim() || 'unknown',
       }
-      if (token.CEFR) wordEntry.cefr = token.CEFR
+      if (tokenCefr) wordEntry.cefr = tokenCefr
       words.push(wordEntry)
     }
 

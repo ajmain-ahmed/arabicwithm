@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Box,
   Button,
@@ -14,16 +14,19 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material'
-import { Edit, Save } from '@mui/icons-material'
+import { Edit, Save, Code } from '@mui/icons-material'
 import {
   fetchDictionaryDetails,
   updateVocabDefinition,
   updateVocabLemma,
   addUserVocabDefinition,
+  saveDictionaryDetailsFromJson,
   type DictionaryDetailsResult,
 } from '@/app/actions/dictionary'
 import { stripDiacritics } from '@/app/lib/arabic'
+import { formatCefr, formatPos, formatConjugationType } from '@/app/lib/display'
 import { useAuth } from '@/app/AuthContext'
+import type { CartoonWordEntry } from '@/app/lib/cartoons'
 
 const DARK_GREEN = '#1B4D3E'
 const GOLD = '#D4AF37'
@@ -32,31 +35,60 @@ const CREAM = '#F5F3EE'
 const TEXT_DARK = '#1F2937'
 const TEXT_MUTED = '#6B7280'
 
-const TENSE_ORDER: Record<string, number> = {
+const TYPE_ORDER: Record<string, number> = {
   past: 1,
   present: 2,
   imperative: 3,
+  verbal_noun: 4,
+  active_participle: 5,
+  passive_participle: 6,
 }
 
-function sortTense(a: string, b: string): number {
-  const orderA = TENSE_ORDER[a] ?? 99
-  const orderB = TENSE_ORDER[b] ?? 99
+function sortType(a: string, b: string): number {
+  const orderA = TYPE_ORDER[a] ?? 99
+  const orderB = TYPE_ORDER[b] ?? 99
   if (orderA !== orderB) return orderA - orderB
   return a.localeCompare(b)
 }
 
-function groupConjugations(rows: DictionaryDetailsResult['conjugations']) {
-  const grouped = new Map<string, DictionaryDetailsResult['conjugations']>()
-  for (const row of rows) {
-    const existing = grouped.get(row.tense) ?? []
-    existing.push(row)
-    grouped.set(row.tense, existing)
-  }
-  return Array.from(grouped.entries()).sort(([a], [b]) => sortTense(a, b))
-}
-
 function displayArabic(text: string, showDiacritics: boolean) {
   return showDiacritics ? text : stripDiacritics(text)
+}
+
+function buildAdminEditPayload(data: DictionaryDetailsResult) {
+  return {
+    lemma: data.lemma,
+    root: data.root,
+    lemmas: data.lemmas.map((l) => ({
+      word_id: l.word_id,
+      transliteration: l.transliteration,
+      CEFR: l.CEFR,
+    })),
+    definitions: data.definitions.map((d) => ({
+      definition_id: d.definition_id,
+      gloss: d.gloss,
+      part_of_speech: d.part_of_speech,
+      definition_en: d.definition_en,
+      definition_ar: d.definition_ar,
+    })),
+  }
+}
+
+function buildUserAddPayload(data: DictionaryDetailsResult, surfaceArabic: string | null | undefined) {
+  const lemma = data.lemma
+  const lemmaDiacritic = data.lemmas[0]?.lemma_diacritic ?? surfaceArabic ?? lemma
+  const primaryDef = data.definitions[0]
+  return {
+    lemma,
+    lemma_diacritic: lemmaDiacritic,
+    root: data.root,
+    transliteration: data.lemmas[0]?.transliteration ?? null,
+    CEFR: data.lemmas[0]?.CEFR ?? null,
+    gloss: primaryDef?.gloss ?? null,
+    part_of_speech: primaryDef?.part_of_speech ?? null,
+    definition_en: primaryDef?.definition_en ?? null,
+    definition_ar: primaryDef?.definition_ar ?? null,
+  }
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
@@ -83,6 +115,7 @@ export default function DictionaryDetailsDialog({
   lemma,
   root,
   surfaceArabic,
+  transcriptEntry,
   showDiacritics = true,
   isAdmin = false,
 }: {
@@ -91,6 +124,7 @@ export default function DictionaryDetailsDialog({
   lemma: string | undefined | null
   root: string | undefined | null
   surfaceArabic?: string | null
+  transcriptEntry?: CartoonWordEntry | null
   showDiacritics?: boolean
   isAdmin?: boolean
 }) {
@@ -102,6 +136,9 @@ export default function DictionaryDetailsDialog({
   const [activeTab, setActiveTab] = useState<'word' | 'conjugations'>('word')
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [viewMode, setViewMode] = useState<'ui' | 'json'>('ui')
+  const [jsonValue, setJsonValue] = useState('')
+  const [jsonError, setJsonError] = useState<string | null>(null)
 
   const [editTransliteration, setEditTransliteration] = useState('')
   const [editCefr, setEditCefr] = useState('')
@@ -136,11 +173,6 @@ export default function DictionaryDetailsDialog({
     }
   }, [open, lemma, root, surfaceArabic])
 
-  const conjugationGroups = useMemo(
-    () => (data ? groupConjugations(data.conjugations) : []),
-    [data]
-  )
-
   const startEditing = () => {
     if (!data) return
     setEditTransliteration(data.lemmas[0]?.transliteration ?? '')
@@ -157,13 +189,30 @@ export default function DictionaryDetailsDialog({
         : [{ definitionId: 0, definitionEn: '', definitionAr: '' }]
     )
     setIsEditing(true)
+    if (viewMode === 'json') {
+      const payload = canAdminEdit
+        ? buildAdminEditPayload(data)
+        : buildUserAddPayload(data, surfaceArabic)
+      setJsonValue(JSON.stringify(payload, null, 2))
+      setJsonError(null)
+    }
+  }
+
+  const cancelEditing = () => {
+    setIsEditing(false)
+    setJsonError(null)
+    if (viewMode === 'json' && data) {
+      setJsonValue(JSON.stringify(data, null, 2))
+    }
   }
 
   const handleSave = async () => {
     if (!data) return
     setSaving(true)
     try {
-      if (canAdminEdit && primaryLemma && primaryDefinition) {
+      if (viewMode === 'json') {
+        await saveDictionaryDetailsFromJson(jsonValue)
+      } else if (canAdminEdit && primaryLemma && primaryDefinition) {
         const lemmaId = primaryLemma.word_id
         await updateVocabLemma({
           wordId: lemmaId,
@@ -203,28 +252,167 @@ export default function DictionaryDetailsDialog({
       )
       setData(refreshed)
       setIsEditing(false)
+      setJsonError(null)
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Failed to save'
-      setError(message)
+      if (viewMode === 'json') {
+        setJsonError(message)
+      } else {
+        setError(message)
+      }
     } finally {
       setSaving(false)
     }
   }
 
-  const hasConjugations = conjugationGroups.length > 0
+  const hasConjugations = data ? data.conjugations.length > 0 : false
   const primaryLemma = data?.lemmas[0]
   const primaryDefinition = data?.definitions[0]
-  const displayWord = surfaceArabic ?? lemma ?? ''
-  const cefr = primaryLemma?.CEFR ?? null
-  const partOfSpeech = primaryDefinition?.part_of_speech ?? null
-  const transliteration = primaryLemma?.transliteration ?? null
-  const primaryGloss = primaryDefinition?.gloss ?? primaryDefinition?.definition_en ?? null
+  const displayWord = surfaceArabic ?? transcriptEntry?.arabic ?? lemma ?? ''
+  const cefr = transcriptEntry?.cefr ?? primaryLemma?.CEFR ?? null
+  const partOfSpeech = transcriptEntry?.pos ?? primaryDefinition?.part_of_speech ?? null
+  const transliteration = transcriptEntry?.transliteration ?? primaryLemma?.transliteration ?? null
+  const primaryGloss = transcriptEntry?.english ?? primaryDefinition?.gloss ?? primaryDefinition?.definition_en ?? null
+
+  const buildJsonFromEditState = React.useCallback(() => {
+    if (!data) return {}
+    if (canAdminEdit) {
+      return {
+        lemma: data.lemma,
+        root: data.root,
+        lemmas: data.lemmas.map((l) => ({
+          word_id: l.word_id,
+          transliteration: l.word_id === primaryLemma?.word_id ? editTransliteration : l.transliteration,
+          CEFR: l.word_id === primaryLemma?.word_id ? editCefr : l.CEFR,
+        })),
+        definitions: editDefinitions.map((def) => ({
+          definition_id: def.definitionId,
+          gloss: def.definitionId === primaryDefinition?.definition_id ? editGloss : undefined,
+          part_of_speech: def.definitionId === primaryDefinition?.definition_id ? editPartOfSpeech : undefined,
+          definition_en: def.definitionEn,
+          definition_ar: def.definitionAr,
+        })),
+      }
+    }
+    if (canUserAdd) {
+      const def = editDefinitions[0] ?? { definitionEn: '', definitionAr: '' }
+      return {
+        lemma: data.lemma,
+        lemma_diacritic: data.lemmas[0]?.lemma_diacritic ?? surfaceArabic ?? data.lemma,
+        root: data.root,
+        transliteration: editTransliteration,
+        CEFR: editCefr,
+        gloss: editGloss,
+        part_of_speech: editPartOfSpeech,
+        definition_en: def.definitionEn,
+        definition_ar: def.definitionAr,
+      }
+    }
+    return {}
+  }, [
+    data,
+    canAdminEdit,
+    canUserAdd,
+    primaryLemma,
+    primaryDefinition,
+    editTransliteration,
+    editCefr,
+    editGloss,
+    editPartOfSpeech,
+    editDefinitions,
+    surfaceArabic,
+  ])
+
+  const applyJsonToForm = React.useCallback(() => {
+    if (!data) return true
+    try {
+      const parsed = JSON.parse(jsonValue)
+      if (canAdminEdit) {
+        const payload = parsed as {
+          lemmas?: { word_id: number; transliteration?: string | null; CEFR?: string | null }[]
+          definitions?: {
+            definition_id: number
+            gloss?: string | null
+            part_of_speech?: string | null
+            definition_en?: string | null
+            definition_ar?: string | null
+          }[]
+        }
+        const lemmaUpdate = payload.lemmas?.find((l) => l.word_id === primaryLemma?.word_id)
+        if (lemmaUpdate) {
+          setEditTransliteration(lemmaUpdate.transliteration ?? '')
+          setEditCefr(lemmaUpdate.CEFR ?? '')
+        }
+        const definitionsUpdate = payload.definitions ?? []
+        setEditDefinitions((prev) =>
+          prev.map((def) => {
+            const updated = definitionsUpdate.find((d) => d.definition_id === def.definitionId)
+            if (!updated) return def
+            return {
+              definitionId: def.definitionId,
+              definitionEn: updated.definition_en ?? '',
+              definitionAr: updated.definition_ar ?? '',
+            }
+          })
+        )
+        const primaryDefUpdate = definitionsUpdate.find(
+          (d) => d.definition_id === primaryDefinition?.definition_id
+        )
+        if (primaryDefUpdate) {
+          setEditGloss(primaryDefUpdate.gloss ?? '')
+          setEditPartOfSpeech(primaryDefUpdate.part_of_speech ?? '')
+        }
+      } else if (canUserAdd) {
+        const payload = parsed as {
+          transliteration?: string | null
+          CEFR?: string | null
+          gloss?: string | null
+          part_of_speech?: string | null
+          definition_en?: string | null
+          definition_ar?: string | null
+        }
+        setEditTransliteration(payload.transliteration ?? '')
+        setEditCefr(payload.CEFR ?? '')
+        setEditGloss(payload.gloss ?? '')
+        setEditPartOfSpeech(payload.part_of_speech ?? '')
+        setEditDefinitions([
+          { definitionId: 0, definitionEn: payload.definition_en ?? '', definitionAr: payload.definition_ar ?? '' },
+        ])
+      }
+      setJsonError(null)
+      return true
+    } catch (e) {
+      setJsonError(e instanceof Error ? e.message : 'Invalid JSON')
+      return false
+    }
+  }, [jsonValue, data, canAdminEdit, canUserAdd, primaryLemma, primaryDefinition])
+
+  const getJsonPayload = React.useCallback(() => {
+    if (!data) return {}
+    if (isEditing) return buildJsonFromEditState()
+    return data
+  }, [data, isEditing, buildJsonFromEditState])
+
+  const toggleViewMode = () => {
+    if (!data) return
+    if (viewMode === 'ui') {
+      setJsonValue(JSON.stringify(getJsonPayload(), null, 2))
+      setJsonError(null)
+      setViewMode('json')
+    } else {
+      if (isEditing) {
+        const ok = applyJsonToForm()
+        if (!ok) return
+      }
+      setViewMode('ui')
+    }
+  }
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth={activeTab === 'conjugations' ? 'md' : 'sm'}
+      maxWidth="sm"
       fullWidth
       fullScreen={isMobile}
       slotProps={{
@@ -242,50 +430,24 @@ export default function DictionaryDetailsDialog({
         },
       }}
     >
-      {/* Tabs */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          borderBottom: `2px solid ${CREAM}`,
-          bgcolor: OFF_WHITE,
-        }}
-      >
+      {viewMode === 'ui' && (
         <Box
-          onClick={() => setActiveTab('word')}
           sx={{
-            flex: 1,
-            textAlign: 'center',
-            px: 3,
-            py: 1.5,
-            cursor: 'pointer',
-            borderBottom: activeTab === 'word' ? `2px solid ${DARK_GREEN}` : '2px solid transparent',
-            mb: '-2px',
+            display: 'flex',
+            alignItems: 'center',
+            borderBottom: `2px solid ${CREAM}`,
+            bgcolor: OFF_WHITE,
           }}
         >
-          <Typography
-            sx={{
-              fontFamily: 'Jost, sans-serif',
-              fontSize: '0.95rem',
-              fontWeight: activeTab === 'word' ? 700 : 600,
-              letterSpacing: '0.06em',
-              color: activeTab === 'word' ? DARK_GREEN : TEXT_MUTED,
-              textTransform: 'uppercase',
-            }}
-          >
-            Word
-          </Typography>
-        </Box>
-        {hasConjugations && (
           <Box
-            onClick={() => setActiveTab('conjugations')}
+            onClick={() => setActiveTab('word')}
             sx={{
               flex: 1,
               textAlign: 'center',
               px: 3,
               py: 1.5,
               cursor: 'pointer',
-              borderBottom: activeTab === 'conjugations' ? `2px solid ${DARK_GREEN}` : '2px solid transparent',
+              borderBottom: activeTab === 'word' ? `2px solid ${DARK_GREEN}` : '2px solid transparent',
               mb: '-2px',
             }}
           >
@@ -293,22 +455,48 @@ export default function DictionaryDetailsDialog({
               sx={{
                 fontFamily: 'Jost, sans-serif',
                 fontSize: '0.95rem',
-                fontWeight: activeTab === 'conjugations' ? 700 : 600,
+                fontWeight: activeTab === 'word' ? 700 : 600,
                 letterSpacing: '0.06em',
-                color: activeTab === 'conjugations' ? DARK_GREEN : TEXT_MUTED,
+                color: activeTab === 'word' ? DARK_GREEN : TEXT_MUTED,
                 textTransform: 'uppercase',
               }}
             >
-              Conjugations
+              Word
             </Typography>
           </Box>
-        )}
-      </Box>
+          {hasConjugations && (
+            <Box
+              onClick={() => setActiveTab('conjugations')}
+              sx={{
+                flex: 1,
+                textAlign: 'center',
+                px: 3,
+                py: 1.5,
+                cursor: 'pointer',
+                borderBottom: activeTab === 'conjugations' ? `2px solid ${DARK_GREEN}` : '2px solid transparent',
+                mb: '-2px',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontFamily: 'Jost, sans-serif',
+                  fontSize: '0.95rem',
+                  fontWeight: activeTab === 'conjugations' ? 700 : 600,
+                  letterSpacing: '0.06em',
+                  color: activeTab === 'conjugations' ? DARK_GREEN : TEXT_MUTED,
+                  textTransform: 'uppercase',
+                }}
+              >
+                Conjugations
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      )}
 
       {/* Content */}
       <DialogContent
         sx={{
-          flex: 1,
           overflowY: 'auto',
           px: { xs: 2.5, sm: 3.5 },
           py: { xs: 3, sm: 4 },
@@ -348,7 +536,58 @@ export default function DictionaryDetailsDialog({
           </Box>
         )}
 
-        {!loading && !error && data && activeTab === 'word' && (
+        {!loading && !error && data && viewMode === 'json' && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {jsonError && (
+              <Box
+                sx={{
+                  py: 2,
+                  px: 2.5,
+                  background: 'rgba(198,40,40,0.05)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(198,40,40,0.15)',
+                }}
+              >
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', color: '#c62828' }}>
+                  {jsonError}
+                </Typography>
+              </Box>
+            )}
+            <TextField
+              multiline
+              fullWidth
+              value={jsonValue}
+              onChange={(e) => setJsonValue(e.target.value)}
+              disabled={!isEditing}
+              placeholder={isEditing ? 'Edit the JSON payload…' : 'Read-only JSON view'}
+              slotProps={{
+                htmlInput: {
+                  style: {
+                    fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                    fontSize: '0.9rem',
+                    lineHeight: 1.5,
+                  },
+                },
+              }}
+              sx={{
+                '& .MuiInputBase-root': {
+                  bgcolor: '#fff',
+                  borderRadius: '14px',
+                  p: '1.25rem',
+                  alignItems: 'flex-start',
+                  minHeight: 320,
+                },
+              }}
+            />
+            {!isEditing && (
+              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: TEXT_MUTED }}>
+                Read-only JSON view. Click <strong>Edit</strong> to modify.
+              </Typography>
+            )}
+          </Box>
+        )}
+
+        {!loading && !error && data && viewMode === 'ui' && activeTab === 'word' && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {/* Arabic headline */}
             <Box sx={{ textAlign: 'center' }}>
@@ -459,7 +698,7 @@ export default function DictionaryDetailsDialog({
                     ) : (
                       cefr && (
                         <Chip
-                          label={cefr}
+                          label={formatCefr(cefr)}
                           size="small"
                           sx={{
                             bgcolor: DARK_GREEN,
@@ -490,17 +729,17 @@ export default function DictionaryDetailsDialog({
                       />
                     ) : (
                       partOfSpeech && (
-                        <Typography
+                        <Chip
+                          label={formatPos(partOfSpeech)}
+                          size="small"
                           sx={{
+                            bgcolor: 'rgba(184,134,11,0.15)',
+                            color: '#b8860b',
                             fontFamily: 'Jost, sans-serif',
-                            fontSize: '1.05rem',
                             fontWeight: 600,
-                            color: TEXT_MUTED,
-                            textTransform: 'capitalize',
+                            fontSize: '0.85rem',
                           }}
-                        >
-                          {partOfSpeech}
-                        </Typography>
+                        />
                       )
                     )}
                   </Box>
@@ -661,9 +900,9 @@ export default function DictionaryDetailsDialog({
           </Box>
         )}
 
-        {!loading && !error && data && activeTab === 'conjugations' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {conjugationGroups.length === 0 ? (
+        {!loading && !error && data && viewMode === 'ui' && activeTab === 'conjugations' && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {data.conjugations.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 6 }}>
                 <Typography
                   sx={{
@@ -681,80 +920,86 @@ export default function DictionaryDetailsDialog({
                 </Typography>
               </Box>
             ) : (
-              conjugationGroups.map(([tense, rows]) => (
-                <Box key={tense}>
-                  <SectionTitle>{tense}</SectionTitle>
-                  <Box
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: {
-                        xs: '1fr',
-                        sm: 'repeat(2, 1fr)',
-                        md: 'repeat(3, 1fr)',
-                        lg: 'repeat(4, 1fr)',
-                      },
-                      gap: 1.5,
-                    }}
-                  >
-                    {rows.map((row) => (
-                      <Box
-                        key={row.conjugation_id}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' },
+                  gap: 1.5,
+                }}
+              >
+                {data.conjugations
+                  .slice()
+                  .sort((a, b) => sortType(a.type, b.type))
+                  .map((row) => (
+                    <Box
+                      key={row.conjugation_id}
+                      sx={{
+                        bgcolor: '#fff',
+                        border: `1px solid ${CREAM}`,
+                        borderRadius: '12px',
+                        p: '1rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 0.5,
+                      }}
+                    >
+                      <Typography
                         sx={{
-                          bgcolor: '#fff',
-                          border: `1px solid ${CREAM}`,
-                          borderRadius: '14px',
-                          p: { xs: '1rem 1.25rem', sm: '1.25rem' },
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 0.75,
+                          fontFamily: 'Jost, sans-serif',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.04em',
+                          color: GOLD,
+                          textTransform: 'uppercase',
                         }}
                       >
+                        {formatConjugationType(row.type)}
+                      </Typography>
+                      {row.english_translation && (
                         <Typography
                           sx={{
                             fontFamily: 'Jost, sans-serif',
-                            fontSize: '0.85rem',
-                            fontWeight: 700,
-                            letterSpacing: '0.04em',
-                            color: GOLD,
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          {row.pronoun_label || row.pronoun}
-                        </Typography>
-                        <Typography
-                          sx={{
-                            fontFamily: '"EB Garamond", Georgia, serif',
-                            fontSize: '1.8rem',
-                            fontWeight: 700,
-                            color: DARK_GREEN,
-                            direction: 'rtl',
-                            textAlign: 'right',
+                            fontSize: '0.95rem',
+                            color: TEXT_MUTED,
                             lineHeight: 1.3,
                           }}
                         >
-                          {displayArabic(row.conjugation_diacritic, showDiacritics)}
+                          {row.english_translation}
                         </Typography>
-                        {row.transliteration && (
-                          <Typography
-                            sx={{
-                              fontFamily: 'Jost, sans-serif',
-                              fontSize: '1.05rem',
-                              color: TEXT_MUTED,
-                              fontStyle: 'italic',
-                              lineHeight: 1.3,
-                            }}
-                          >
-                            {row.transliteration}
-                          </Typography>
-                        )}
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-              ))
+                      )}
+                      <Typography
+                        sx={{
+                          fontFamily: '"EB Garamond", Georgia, serif',
+                          fontSize: '1.75rem',
+                          fontWeight: 700,
+                          color: DARK_GREEN,
+                          direction: 'rtl',
+                          textAlign: 'right',
+                          lineHeight: 1.35,
+                        }}
+                      >
+                        {displayArabic(row.conjugation_diacritic, showDiacritics)}
+                      </Typography>
+                      {row.transliteration && (
+                        <Typography
+                          sx={{
+                            fontFamily: 'Jost, sans-serif',
+                            fontSize: '1rem',
+                            color: TEXT_MUTED,
+                            fontStyle: 'italic',
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {row.transliteration}
+                        </Typography>
+                      )}
+                    </Box>
+                  ))}
+              </Box>
             )}
           </Box>
         )}
+
       </DialogContent>
 
       <Divider sx={{ borderColor: CREAM }} />
@@ -762,28 +1007,53 @@ export default function DictionaryDetailsDialog({
       <DialogActions
         sx={{
           px: { xs: 2.5, sm: 3.5 },
-          py: 2,
+          py: { xs: 1.5, sm: 2 },
           bgcolor: OFF_WHITE,
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
           gap: 1.5,
           flexWrap: 'wrap',
         }}
       >
-        {canEdit && !isEditing && (
+        {data && (
           <Button
-            onClick={startEditing}
+            onClick={toggleViewMode}
+            disabled={saving}
             variant="outlined"
-            startIcon={<Edit sx={{ fontSize: '1.1rem' }} />}
+            size={isMobile ? 'small' : 'medium'}
+            startIcon={<Code sx={{ fontSize: isMobile ? '1rem' : '1.1rem' }} />}
             sx={{
               fontFamily: 'Jost, sans-serif',
-              fontSize: '1rem',
+              fontSize: isMobile ? '0.8rem' : '1rem',
               fontWeight: 600,
               textTransform: 'none',
               color: DARK_GREEN,
               borderColor: 'rgba(27,77,62,0.3)',
-              borderRadius: '12px',
-              px: 3,
-              py: 1,
+              borderRadius: isMobile ? '10px' : '12px',
+              px: isMobile ? 1.5 : 3,
+              py: isMobile ? 0.6 : 1,
+              '&:hover': { bgcolor: 'rgba(27,77,62,0.06)', borderColor: DARK_GREEN },
+            }}
+          >
+            {viewMode === 'json' ? 'UI' : 'JSON'}
+          </Button>
+        )}
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+        {canEdit && !isEditing && (
+          <Button
+            onClick={startEditing}
+            variant="outlined"
+            size={isMobile ? 'small' : 'medium'}
+            startIcon={<Edit sx={{ fontSize: isMobile ? '1rem' : '1.1rem' }} />}
+            sx={{
+              fontFamily: 'Jost, sans-serif',
+              fontSize: isMobile ? '0.8rem' : '1rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              color: DARK_GREEN,
+              borderColor: 'rgba(27,77,62,0.3)',
+              borderRadius: isMobile ? '10px' : '12px',
+              px: isMobile ? 1.5 : 3,
+              py: isMobile ? 0.6 : 1,
               '&:hover': { bgcolor: 'rgba(27,77,62,0.06)', borderColor: DARK_GREEN },
             }}
           >
@@ -793,19 +1063,20 @@ export default function DictionaryDetailsDialog({
         {isEditing && (
           <>
             <Button
-              onClick={() => setIsEditing(false)}
+              onClick={cancelEditing}
               disabled={saving}
               variant="outlined"
+              size={isMobile ? 'small' : 'medium'}
               sx={{
                 fontFamily: 'Jost, sans-serif',
-                fontSize: '1rem',
+                fontSize: isMobile ? '0.8rem' : '1rem',
                 fontWeight: 600,
                 textTransform: 'none',
                 color: TEXT_MUTED,
                 borderColor: 'rgba(107,114,128,0.3)',
-                borderRadius: '12px',
-                px: 3,
-                py: 1,
+                borderRadius: isMobile ? '10px' : '12px',
+                px: isMobile ? 1.5 : 3,
+                py: isMobile ? 0.6 : 1,
                 '&:hover': { bgcolor: 'rgba(107,114,128,0.06)', borderColor: TEXT_MUTED },
               }}
             >
@@ -815,18 +1086,19 @@ export default function DictionaryDetailsDialog({
               onClick={handleSave}
               disabled={saving}
               variant="contained"
-              startIcon={<Save sx={{ fontSize: '1.1rem' }} />}
+              size={isMobile ? 'small' : 'medium'}
+              startIcon={<Save sx={{ fontSize: isMobile ? '1rem' : '1.1rem' }} />}
               disableElevation
               sx={{
                 bgcolor: DARK_GREEN,
                 color: '#fff',
                 fontFamily: 'Jost, sans-serif',
-                fontSize: '1rem',
+                fontSize: isMobile ? '0.85rem' : '1rem',
                 fontWeight: 600,
                 textTransform: 'none',
-                borderRadius: '12px',
-                px: 3,
-                py: 1,
+                borderRadius: isMobile ? '10px' : '12px',
+                px: isMobile ? 2 : 3,
+                py: isMobile ? 0.6 : 1,
                 '&:hover': { bgcolor: '#143d31' },
               }}
             >
@@ -837,22 +1109,24 @@ export default function DictionaryDetailsDialog({
         <Button
           onClick={onClose}
           variant="contained"
+          size={isMobile ? 'small' : 'medium'}
           disableElevation
           sx={{
             bgcolor: DARK_GREEN,
             color: '#fff',
             fontFamily: 'Jost, sans-serif',
             fontWeight: 600,
-            fontSize: '1.05rem',
+            fontSize: isMobile ? '0.85rem' : '1.05rem',
             textTransform: 'none',
-            borderRadius: '12px',
-            px: 4,
-            py: 1,
+            borderRadius: isMobile ? '10px' : '12px',
+            px: isMobile ? 2 : 4,
+            py: isMobile ? 0.65 : 1,
             '&:hover': { bgcolor: '#143d31' },
           }}
         >
           Close
         </Button>
+        </Box>
       </DialogActions>
     </Dialog>
   )

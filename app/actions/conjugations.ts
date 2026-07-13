@@ -4,35 +4,21 @@
 
 import { serviceClient } from "@/app/lib/supabase"
 import { isAdminUser } from "./vocab"
+import {
+  buildConjugationsPrompt,
+  validateConjugationRows as validateConjugationRowsLib,
+  validConjugationTypes,
+  type ConjugationsPromptResult as LibConjugationsPromptResult,
+  type ValidateConjugationsResult as LibValidateConjugationsResult,
+  type VerbCandidate,
+  type GeneratedConjugation,
+} from "@/app/lib/conjugations"
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
-export type VerbCandidate = {
-  lemma: string
-  lemma_diacritic: string
-  root: string | null
-}
-
-export type GeneratedConjugation = {
-  lemma: string
-  root: string | null
-  tense: string
-  pronoun: string
-  pronoun_label: string
-  conjugation_diacritic: string
-  transliteration: string | null
-}
-
-export type GenerateConjugationsResult =
-  | {
-      ok: true
-      rows: GeneratedConjugation[]
-      skipped: { lemma: string; reason: string }[]
-    }
-  | {
-      ok: false
-      error: string
-    }
+export type ConjugationsPromptResult = LibConjugationsPromptResult
+export type ValidateConjugationsResult = LibValidateConjugationsResult
+export type { VerbCandidate, GeneratedConjugation } from "@/app/lib/conjugations"
 
 export type CommitConjugationsResult =
   | {
@@ -50,28 +36,6 @@ async function guardAdmin() {
   const ok = await isAdminUser()
   if (!ok) throw new Error("Forbidden")
 }
-
-const validTenses = new Set(["past", "present", "imperative"])
-const validPronouns = new Set([
-  "1sg",
-  "1pl",
-  "2ms",
-  "2fs",
-  "2dl",
-  "2mp",
-  "2fp",
-  "3ms",
-  "3fs",
-  "3mdl",
-  "3fdl",
-  "3mp",
-  "3fp",
-])
-
-const AWM_PYTHON_URL =
-  process.env.AWM_PYTHON_URL ?? "https://awm-python.onrender.com/conjugate-verbs"
-
-const GENERATION_TIMEOUT_MS = 90_000
 
 /* ── Server Actions ────────────────────────────────────────────────── */
 
@@ -239,81 +203,17 @@ export async function fetchConjugationCandidatesForSource(source: string): Promi
   }
 }
 
-export async function generateConjugations(
-  candidates: VerbCandidate[]
-): Promise<GenerateConjugationsResult> {
+export async function buildConjugationsPromptData(
+  candidates: VerbCandidate[],
+  source?: string
+): Promise<ConjugationsPromptResult> {
   await guardAdmin()
+  return buildConjugationsPrompt(candidates, source)
+}
 
-  if (candidates.length === 0) {
-    return { ok: true, rows: [], skipped: [] }
-  }
-
-  const requestRows = candidates.map((c) => ({
-    lemma: c.lemma,
-    arabic_root: c.root,
-    pos: "verb",
-  }))
-
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), GENERATION_TIMEOUT_MS)
-
-  try {
-    const response = await fetch(AWM_PYTHON_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rows: requestRows }),
-      signal: controller.signal,
-    })
-
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => "")
-      console.error(
-        `[generateConjugations] API error ${response.status}:`,
-        text.slice(0, 500)
-      )
-      return {
-        ok: false,
-        error: `Conjugation service returned ${response.status}. ${text.slice(0, 200)}`,
-      }
-    }
-
-    const data = (await response.json()) as {
-      rows?: GeneratedConjugation[]
-      skipped?: { lemma: string; reason: string }[]
-      summary?: Record<string, unknown>
-    }
-
-    const rows = (data.rows ?? []).map((row) => ({
-      lemma: row.lemma,
-      root: row.root,
-      tense: row.tense,
-      pronoun: row.pronoun,
-      pronoun_label: row.pronoun_label,
-      conjugation_diacritic: row.conjugation_diacritic,
-      transliteration: row.transliteration,
-    }))
-
-    const skipped = data.skipped ?? []
-
-    console.log(
-      `[generateConjugations] generated ${rows.length} rows, skipped ${skipped.length} verbs`
-    )
-
-    return { ok: true, rows, skipped }
-  } catch (e: unknown) {
-    clearTimeout(timeoutId)
-    const message = e instanceof Error ? e.message : "Failed to generate conjugations"
-    if (message.includes("abort")) {
-      return {
-        ok: false,
-        error: "Conjugation service timed out. The API may be warming up — please try again.",
-      }
-    }
-    console.error("[generateConjugations] error:", message)
-    return { ok: false, error: message }
-  }
+export async function validateConjugationRows(parsed: unknown): Promise<ValidateConjugationsResult> {
+  await guardAdmin()
+  return validateConjugationRowsLib(parsed)
 }
 
 export async function commitConjugations(
@@ -327,11 +227,11 @@ export async function commitConjugations(
 
   const insertRows = []
   for (const row of rows) {
-    if (!validTenses.has(row.tense)) {
-      return { ok: false, error: `Invalid tense: ${row.tense}` }
+    if (!validConjugationTypes.has(row.type)) {
+      return { ok: false, error: `Invalid conjugation type: ${row.type}` }
     }
-    if (!validPronouns.has(row.pronoun)) {
-      return { ok: false, error: `Invalid pronoun: ${row.pronoun}` }
+    if (!row.conjugation_ar.trim()) {
+      return { ok: false, error: `Missing conjugation_ar for ${row.lemma}` }
     }
     if (!row.conjugation_diacritic.trim()) {
       return { ok: false, error: `Missing conjugation_diacritic for ${row.lemma}` }
@@ -340,11 +240,13 @@ export async function commitConjugations(
     insertRows.push({
       lemma: row.lemma,
       root: row.root,
-      tense: row.tense,
-      pronoun: row.pronoun,
-      pronoun_label: row.pronoun_label,
+      form_number: row.form_number,
+      type: row.type,
+      conjugation_ar: row.conjugation_ar,
       conjugation_diacritic: row.conjugation_diacritic,
       transliteration: row.transliteration,
+      english_translation: row.english_translation,
+      source: row.source ?? null,
       is_active: true,
     })
   }

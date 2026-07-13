@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useCallback, useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   Box,
   Typography,
@@ -10,8 +10,10 @@ import {
   Chip,
   Collapse,
   Divider,
+  TextField,
 } from "@mui/material"
 import {
+  UploadFile,
   PlayArrow,
   Add,
   Cancel,
@@ -21,10 +23,12 @@ import {
   Replay,
   RemoveCircle,
   AddCircle,
+  ContentCopy,
 } from "@mui/icons-material"
 import {
   fetchVerbConjugationCandidates,
-  generateConjugations,
+  buildConjugationsPromptData,
+  validateConjugationRows,
   commitConjugations,
   type VerbCandidate,
   type GeneratedConjugation,
@@ -32,9 +36,8 @@ import {
 import { errorMessage } from "@/app/lib/errors"
 import AdminTextField from "../components/AdminTextField"
 
-
 function conjKey(row: GeneratedConjugation): string {
-  return `${row.lemma}|${row.root ?? ""}|${row.tense}|${row.pronoun}`
+  return `${row.lemma}|${row.root ?? ""}|${row.type}`
 }
 
 export default function ConjugationsPage() {
@@ -43,10 +46,13 @@ export default function ConjugationsPage() {
   const [loadingCandidates, setLoadingCandidates] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const [generatedRows, setGeneratedRows] = useState<GeneratedConjugation[] | null>(null)
-  const [skippedVerbs, setSkippedVerbs] = useState<{ lemma: string; reason: string }[]>([])
-  const [generating, setGenerating] = useState(false)
+  const [prompt, setPrompt] = useState<string | null>(null)
+  const [promptCopied, setPromptCopied] = useState(false)
+  const [llmOutput, setLlmOutput] = useState("")
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
+  const [generatedRows, setGeneratedRows] = useState<GeneratedConjugation[] | null>(null)
   const [excludedKeys, setExcludedKeys] = useState<Set<string>>(new Set())
   const [expandedLemmas, setExpandedLemmas] = useState<Set<string>>(new Set())
 
@@ -75,26 +81,73 @@ export default function ConjugationsPage() {
     loadCandidates()
   }, [loadCandidates])
 
-  const handleGenerate = useCallback(async () => {
+  const handleBuildPrompt = useCallback(async () => {
     if (!candidates || candidates.length === 0) return
-    setGenerating(true)
     setError(null)
+    setValidationError(null)
     try {
-      const result = await generateConjugations(candidates)
+      const result = await buildConjugationsPromptData(candidates)
       if (result.ok) {
-        setGeneratedRows(result.rows)
-        setSkippedVerbs(result.skipped)
-        setExcludedKeys(new Set())
-        setExpandedLemmas(new Set())
+        setPrompt(result.prompt)
       } else {
         setError(result.error)
       }
     } catch (e: unknown) {
-      setError(errorMessage(e) ?? "Failed to generate conjugations")
-    } finally {
-      setGenerating(false)
+      setError(errorMessage(e) ?? "Failed to build conjugation prompt")
     }
   }, [candidates])
+
+  const handleCopyPrompt = useCallback(async () => {
+    if (!prompt) return
+    try {
+      await navigator.clipboard.writeText(prompt)
+      setPromptCopied(true)
+      setTimeout(() => setPromptCopied(false), 2000)
+    } catch {
+      setError("Failed to copy prompt to clipboard")
+    }
+  }, [prompt])
+
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const text = await file.text()
+      setLlmOutput(text)
+      setValidationError(null)
+    } catch (err: unknown) {
+      setValidationError(errorMessage(err) ?? "Failed to read file")
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }, [])
+
+  const handleValidate = useCallback(async () => {
+    setValidationError(null)
+    if (!llmOutput.trim()) {
+      setValidationError("Please paste the LLM output JSON.")
+      return
+    }
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(llmOutput)
+    } catch {
+      setValidationError("Invalid JSON. Please check the LLM output and try again.")
+      return
+    }
+    try {
+      const result = await validateConjugationRows(parsed)
+      if (result.ok) {
+        setGeneratedRows(result.rows)
+        setExcludedKeys(new Set())
+        setExpandedLemmas(new Set())
+      } else {
+        setValidationError(result.error)
+      }
+    } catch (e: unknown) {
+      setValidationError(errorMessage(e) ?? "Failed to validate conjugations")
+    }
+  }, [llmOutput])
 
   const toggleExcluded = useCallback((key: string) => {
     setExcludedKeys((prev) => {
@@ -154,10 +207,12 @@ export default function ConjugationsPage() {
 
   const handleReset = useCallback(() => {
     setGeneratedRows(null)
-    setSkippedVerbs([])
     setExcludedKeys(new Set())
     setExpandedLemmas(new Set())
     setInsertedCount(null)
+    setPrompt(null)
+    setLlmOutput("")
+    setValidationError(null)
     setError(null)
     loadCandidates()
   }, [loadCandidates])
@@ -174,7 +229,8 @@ export default function ConjugationsPage() {
   }, [generatedRows])
 
   const includedCount = generatedRows ? generatedRows.length - excludedKeys.size : 0
-  const showCandidates = generatedRows === null && insertedCount === null
+  const showCandidates = generatedRows === null && insertedCount === null && prompt === null
+  const showPrompt = prompt !== null && generatedRows === null && insertedCount === null
   const showReview = generatedRows !== null && insertedCount === null
   const showDone = insertedCount !== null
 
@@ -185,7 +241,7 @@ export default function ConjugationsPage() {
           Verb Conjugations
         </Typography>
         <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "1.1rem" }}>
-          Generate conjugation tables for verb lemmas via the remote conjugation service.
+          Build conjugation tables for verb lemmas using an LLM prompt and paste the returned JSON.
         </Typography>
       </Box>
 
@@ -258,15 +314,15 @@ export default function ConjugationsPage() {
             There are {candidates.length + existingCount} verb lemma{`s`} in total.
             {candidates.length > 0
               ? ` The ${candidates.length} listed below are not yet in ${" "}
-                <strong>verb_conjugations</strong> and will be generated.`
+                <strong>verb_conjugations</strong>.`
               : " All verb lemmas already have conjugations."}
           </Typography>
 
           <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
             <Button
               variant="contained"
-              onClick={handleGenerate}
-              disabled={generating || candidates.length === 0}
+              onClick={handleBuildPrompt}
+              disabled={candidates.length === 0}
               startIcon={<PlayArrow />}
               sx={{
                 bgcolor: "#2c1a0e",
@@ -281,12 +337,163 @@ export default function ConjugationsPage() {
                 "&:hover": { bgcolor: "#1a0f08" },
               }}
             >
-              {generating
-                ? "Generating…"
-                : `Generate conjugations for ${candidates.length} verb${
-                    candidates.length === 1 ? "" : "s"
-                  }`}
+              {`Build conjugation prompt for ${candidates.length} verb${
+                candidates.length === 1 ? "" : "s"
+              }`}
             </Button>
+          </Box>
+        </Paper>
+      )}
+
+      {showPrompt && prompt && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            borderRadius: "16px",
+            border: "1px solid rgba(122,110,101,0.15)",
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 2 }}
+          >
+            Conjugation prompt
+          </Typography>
+
+          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2 }}>
+            Copy the prompt below, paste it into your LLM, then paste the returned JSON array into the
+            text area.
+          </Typography>
+
+          <Box sx={{ position: "relative", mb: 3 }}>
+            <TextField
+              value={prompt}
+              multiline
+              rows={12}
+              fullWidth
+              slotProps={{
+                input: { readOnly: true },
+              }}
+              sx={{
+                "& .MuiInputBase-root": {
+                  fontFamily: "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+                  fontSize: "0.85rem",
+                  bgcolor: "#f8f5f0",
+                  borderRadius: "10px",
+                },
+              }}
+            />
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={handleCopyPrompt}
+              startIcon={<ContentCopy />}
+              sx={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                textTransform: "none",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                borderColor: "rgba(122,110,101,0.3)",
+                color: "#7a6e65",
+                borderRadius: "8px",
+                bgcolor: "#fff",
+              }}
+            >
+              {promptCopied ? "Copied!" : "Copy"}
+            </Button>
+          </Box>
+
+          <AdminTextField
+            label="LLM output JSON"
+            value={llmOutput}
+            onChange={(e) => setLlmOutput(e.target.value)}
+            fullWidth
+            multiline
+            rows={10}
+            sx={{
+              mb: 2,
+              "& .MuiInputBase-root": {
+                fontFamily: "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+                fontSize: "0.85rem",
+              },
+            }}
+          />
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json,.txt"
+            style={{ display: "none" }}
+            onChange={handleFileChange}
+          />
+
+          {validationError && (
+            <Alert severity="error" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>
+              <Typography sx={{ whiteSpace: "pre-wrap" }}>{validationError}</Typography>
+            </Alert>
+          )}
+
+          <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap" }}>
+            <Button
+              variant="outlined"
+              onClick={() => setPrompt(null)}
+              sx={{
+                textTransform: "none",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                fontSize: "1.05rem",
+                borderColor: "rgba(122,110,101,0.3)",
+                color: "#7a6e65",
+                borderRadius: "10px",
+                px: 3,
+                py: 1,
+              }}
+            >
+              Back to candidates
+            </Button>
+            <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+              <Button
+                variant="outlined"
+                onClick={() => fileInputRef.current?.click()}
+                startIcon={<UploadFile />}
+                sx={{
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  fontSize: "1.05rem",
+                  borderColor: "rgba(122,110,101,0.3)",
+                  color: "#7a6e65",
+                  borderRadius: "10px",
+                  px: 3,
+                  py: 1,
+                }}
+              >
+                Upload LLM output
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleValidate}
+                disabled={!llmOutput.trim()}
+                startIcon={<PlayArrow />}
+                sx={{
+                  bgcolor: "#2c1a0e",
+                  color: "#f5ede0",
+                  textTransform: "none",
+                  fontFamily: "Jost, sans-serif",
+                  fontWeight: 600,
+                  fontSize: "1.1rem",
+                  borderRadius: "10px",
+                  px: 3,
+                  py: 1,
+                  "&:hover": { bgcolor: "#1a0f08" },
+                }}
+              >
+                Validate & review
+              </Button>
+            </Box>
           </Box>
         </Paper>
       )}
@@ -332,34 +539,7 @@ export default function ConjugationsPage() {
                 py: 0.5,
               }}
             />
-            {skippedVerbs.length > 0 && (
-              <Chip
-                label={`${skippedVerbs.length} verbs skipped`}
-                sx={{
-                  bgcolor: "rgba(192,57,43,0.1)",
-                  color: "#c0392b",
-                  fontFamily: "Jost, sans-serif",
-                  fontWeight: 600,
-                  borderRadius: "8px",
-                  fontSize: "1rem",
-                  py: 0.5,
-                }}
-              />
-            )}
           </Box>
-
-          {skippedVerbs.length > 0 && (
-            <Alert severity="warning" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>
-              <Typography sx={{ fontWeight: 600, mb: 0.5 }}>Skipped verbs</Typography>
-              <Box component="ul" sx={{ m: 0, pl: 2 }}>
-                {skippedVerbs.map((item, idx) => (
-                  <li key={idx}>
-                    <strong>{item.lemma}</strong> — {item.reason}
-                  </li>
-                ))}
-              </Box>
-            </Alert>
-          )}
 
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 3 }}>
             {groupedRows.map(([lemma, rows]) => {
@@ -488,9 +668,7 @@ export default function ConjugationsPage() {
                                 <AdminTextField
                                   label="Conjugation"
                                   value={row.conjugation_diacritic}
-                                  onChange={(e) =>
-                                    updateConjugationRow(key, "conjugation_diacritic", e.target.value)
-                                  }
+                                  onChange={(e) => updateConjugationRow(key, "conjugation_diacritic", e.target.value)}
                                   fullWidth
                                   disabled={excluded}
                                   sx={{
@@ -504,15 +682,7 @@ export default function ConjugationsPage() {
                               </Box>
                               <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", pt: 0.5 }}>
                                 <Chip
-                                  label={row.pronoun}
-                                  sx={{
-                                    fontFamily: "Jost, sans-serif",
-                                    borderRadius: "6px",
-                                    fontSize: "0.9rem",
-                                  }}
-                                />
-                                <Chip
-                                  label={row.tense}
+                                  label={row.type}
                                   sx={{
                                     fontFamily: "Jost, sans-serif",
                                     borderRadius: "6px",

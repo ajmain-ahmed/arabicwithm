@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { Box, Typography, Chip } from '@mui/material'
+import { formatCefr, formatPos } from '@/app/lib/display'
 import type { VocabEntry } from './index'
 
 export const LEVEL_COLORS: Record<string, string> = {
@@ -53,10 +54,10 @@ export default function WordTooltip({
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
         {entry.cefr && (
           <Chip
-            label={entry.cefr}
+            label={formatCefr(entry.cefr)}
             size="small"
             sx={{
-              bgcolor: LEVEL_COLORS[entry.cefr] ?? 'rgba(44,26,14,0.08)',
+              bgcolor: LEVEL_COLORS[formatCefr(entry.cefr)] ?? 'rgba(44,26,14,0.08)',
               color: '#fff',
               fontFamily: 'Jost, sans-serif',
               fontWeight: 700,
@@ -67,16 +68,15 @@ export default function WordTooltip({
         )}
         {entry.pos && (
           <Chip
-            label={entry.pos}
+            label={formatPos(entry.pos)}
             size="small"
             sx={{
-              background: 'rgba(44,26,14,0.08)',
-              color: 'var(--bark, #2c1a0e)',
+              bgcolor: 'rgba(184,134,11,0.15)',
+              color: '#b8860b',
               fontFamily: 'Jost, sans-serif',
               fontWeight: 600,
               fontSize: `calc(0.7rem * ${textScale})`,
               letterSpacing: '0.04em',
-              textTransform: 'capitalize',
             }}
           />
         )}

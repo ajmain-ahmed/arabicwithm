@@ -49,9 +49,7 @@ export default function ShowEditDialog({
   const [description, setDescription] = useState("")
   const [cover, setCover] = useState("")
   const [level, setLevel] = useState("")
-  const [order, setOrder] = useState("")
   const [category, setCategory] = useState("")
-  const [genre, setGenre] = useState("")
 
   const isNew = showId === null
 
@@ -66,9 +64,7 @@ export default function ShowEditDialog({
       setDescription("")
       setCover("")
       setLevel("")
-      setOrder("")
       setCategory("")
-      setGenre("")
       return
     }
 
@@ -85,9 +81,7 @@ export default function ShowEditDialog({
         setDescription(row.description ?? "")
         setCover(row.cover ?? "")
         setLevel(row.level)
-        setOrder(String(row.order))
         setCategory(row.category ?? "")
-        setGenre(row.genre ?? "")
       })
       .catch((e: unknown) => setError(errorMessage(e) ?? "Failed to load show"))
       .finally(() => setLoading(false))
@@ -104,9 +98,7 @@ export default function ShowEditDialog({
         description: description || null,
         cover: cover || null,
         level,
-        order: order ? Number(order) : 99,
         category: category || null,
-        genre: genre || null,
       }
 
       if (isNew) {
@@ -200,11 +192,7 @@ export default function ShowEditDialog({
             <AdminTextField label="Cover URL" value={cover} onChange={(e) => setCover(e.target.value)} fullWidth size="small" />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />
-              <AdminTextField label="Order" type="number" value={order} onChange={(e) => setOrder(e.target.value)} fullWidth size="small" />
-            </Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <AdminTextField label="Category" value={category} onChange={(e) => setCategory(e.target.value)} fullWidth size="small" />
-              <AdminTextField label="Genre" value={genre} onChange={(e) => setGenre(e.target.value)} fullWidth size="small" />
             </Box>
           </Box>
         )}

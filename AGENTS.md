@@ -204,9 +204,6 @@ ADMIN2=<supabase-user-uuid>
 
 # SIWAR Arabic dictionary API key (optional)
 SIWAR=<api-key>
-
-# Python conjugation/generation service URL (optional)
-AWM_PYTHON_URL=<url>
 ```
 
 **Security note:** `SUPABASE_SERVICE_KEY` is a secret with elevated privileges. It is used only in Server Actions (`"use server"`) and in `app/lib/supabase.ts` to query the database. Never expose it to the client.
@@ -267,9 +264,10 @@ AWM_PYTHON_URL=<url>
   - `definitions` — JSONB array of meanings
   - `examples` — JSONB array of sentences
   - `forms` — JSONB array of POS tags
-- `shows` — Cartoon/show metadata.
-- `episodes` — Episode metadata and transcript (the `transcript` JSONB contains `scriptBlocks`, `vocabList`, and `grammarPoints`).
-- `vocab_lemmas` / `vocab_definitions` / `verb_conjugations` — Newer normalised vocabulary tables used by the admin pipeline and dictionary actions.
+- `shows` — Cartoon/show metadata. Columns: `id`, `slug`, `title`, `title_ar`, `description`, `cover`, `level`, `category`. (`order` and `genre` have been removed.)
+- `episodes` — Episode metadata and transcript. The `transcript` JSONB column is now a JSON array of `{ tokens, timestamp, translation }` blocks using the new token format. A legacy `{ scriptBlocks, vocabList, grammarPoints }` object is still read but not written for new episodes.
+- `vocab_lemmas` / `vocab_definitions` — Normalised lemma/definition tables used by the admin pipeline and dictionary actions.
+- `verb_conjugations` — Morphology rows for verb lemmas. Columns: `conjugation_id`, `lemma`, `root`, `form_number`, `type`, `conjugation_ar`, `conjugation_diacritic`, `transliteration`, `english_translation`, `is_active`, `source`. `type` is one of `past`, `present`, `imperative`, `verbal_noun`, `active_participle`, `passive_participle`. (The old tense/pronoun model has been replaced.)
 - (The `progress`, `review_logs`, and `daily_sessions` tables have been removed.)
 
 ### Server Actions pattern
@@ -297,9 +295,9 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 
 ### Cartoon Content Pipeline
 1. Show metadata is read from the `shows` table in Supabase (cover paths are normalised against `public/cartoons/`).
-2. Episode metadata and transcripts are stored in the `episodes` table. The `transcript` JSONB column contains `scriptBlocks`, `vocabList`, and `grammarPoints`.
-3. Each script block has a timestamp, title, Arabic diacritic/plain lines, notes, and a `words` array.
-4. Each word in a script block has a `db` key. At request time, `fetchEpisodeForPublic` collects all `db` keys, looks them up in the `app_vocab` table (matching either `word_di` or `word_ar`), and enriches the word entries with English definition, transliteration, CEFR level, and part of speech. The resulting `wordMap` and `diacritizedMap` power the inline hover tooltips.
+2. Episode metadata and transcripts are stored in the `episodes` table. New transcripts are a JSON array of `{ tokens, timestamp, translation }` blocks.
+3. Each token in the new format must include `pos` (part of speech) and lowercase `cefr`. The legacy `{ scriptBlocks, vocabList, grammarPoints }` object is still read for old episodes.
+4. At request time, `fetchEpisodeForPublic` normalises the transcript into `ScriptBlock` objects, propagating `pos` and `cefr` onto each `CartoonWordEntry`. The resulting `wordMap` and `diacritizedMap` power the inline hover tooltips.
 5. Legacy markdown episodes still exist in `content/cartoons/` but are not used by the public site.
 
 ### News Content Pipeline
@@ -319,11 +317,14 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 - Themes are identified by name (string) rather than numeric ID.
 - Level slugs (`Beginner`, `Apprentice`, etc.) are mapped to CEFR codes (`A0`–`C2`) in `SLUG_TO_LEVEL`.
 
-### Admin Pipeline (`app/actions/pipeline.ts`)
-- Bulk vocabulary import tool accessible at `/admin/pipeline`.
+### Admin Pipeline (`app/admin/pipeline/`)
+- `/admin/pipeline` is now a MUI Stepper wizard (`app/admin/pipeline/PipelineWizard.tsx`).
+- Admins can either **create a new show** or **add an episode to an existing show**, then run the shared vocabulary pipeline.
+- Episode slug auto-suggestion uses `suggestNextEpisodeSlug()` in `app/lib/slug.ts`.
 - `previewPipeline()` validates transcript tokens and returns existing/new lemma candidates.
-- `commitPipeline()` writes lemmas into `vocab_lemmas` and definitions into `vocab_definitions`.
-- `pipelineValidation.ts` handles transcript token flattening, deduplication, and schema validation.
+- `commitPipeline()` writes lemmas into `vocab_lemmas`.
+- `buildDefinitionsPromptData()` builds the LLM prompt for definitions; admins copy/paste the LLM JSON and `validateDefinitionRows()` (in `app/lib/pipelineValidation.ts`) validates it before commit via `commitDefinitions()`.
+- Conjugations are generated the same way: `buildConjugationsPrompt()` builds the prompt, `validateConjugationRows()` (in `app/lib/conjugations.ts`) validates the LLM JSON, and `commitConjugations()` writes rows to `verb_conjugations`. The old remote Python conjugation service has been removed.
 
 ## Testing
 
@@ -332,8 +333,10 @@ The project uses **Vitest** with `jsdom` and `@vitejs/plugin-react`.
 - **Config**: `vitest.config.ts` at project root.
 - **Current tests**:
   - `app/lib/arabic.test.ts` — Arabic token normalisation.
-  - `app/lib/cartoons.test.ts` — New/legacy transcript format detection and normalisation.
-  - `app/lib/pipelineValidation.test.ts` — Transcript token flattening and schema validation.
+  - `app/lib/cartoons.test.ts` — New/legacy transcript format detection, `pos`/`cefr` propagation, and normalisation.
+  - `app/lib/pipelineValidation.test.ts` — Transcript token flattening and schema validation (including required `pos` and lowercase `cefr`).
+  - `app/lib/slug.test.ts` — Episode slug auto-suggestion.
+  - `app/lib/conjugations.test.ts` — Conjugation row validation and prompt building.
 - **How to run**: `npm test`
 - There is no CI/CD pipeline configured. If you add tests, create new `*.test.ts` / `*.test.tsx` files alongside the code they test.
 

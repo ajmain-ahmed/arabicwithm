@@ -18,7 +18,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Chip,
 } from "@mui/material"
 import { Edit, Add } from "@mui/icons-material"
 import {
@@ -238,9 +237,6 @@ export default function EpisodesAdminPage() {
                   <TableSortLabel {...sortProps("level")}>Level</TableSortLabel>
                 </TableCell>
                 <TableCell>Tags</TableCell>
-                <TableCell>
-                  <TableSortLabel {...sortProps("unmatched_count")}>Unmatched</TableSortLabel>
-                </TableCell>
                 <TableCell>YouTube</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -248,13 +244,13 @@ export default function EpisodesAdminPage() {
             <TableBody>
               {loadingShows || loadingEpisodes ? (
                 <TableRow>
-                  <TableCell colSpan={isAllShows ? 8 : 7} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                  <TableCell colSpan={isAllShows ? 7 : 6} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
                     Loading episodes…
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isAllShows ? 8 : 7} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                  <TableCell colSpan={isAllShows ? 7 : 6} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
                     No episodes found.
                   </TableCell>
                 </TableRow>
@@ -269,24 +265,6 @@ export default function EpisodesAdminPage() {
                     <TableCell sx={{ color: "#7a6e65" }}>{row.slug}</TableCell>
                     <TableCell>{row.level}</TableCell>
                     <TableCell>{row.tags.join(", ")}</TableCell>
-                    <TableCell>
-                      {row.unmatched_count > 0 ? (
-                        <Chip
-                          label={row.unmatched_count}
-                          size="small"
-                          sx={{
-                            bgcolor: "#c62828",
-                            color: "#fff",
-                            fontWeight: 600,
-                            fontFamily: "Jost, sans-serif",
-                            fontSize: "0.75rem",
-                            height: 22,
-                          }}
-                        />
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
                     <TableCell>
                       {row.youtube_id ? (
                         <a

@@ -11,7 +11,7 @@ export const NAV_ROUTES: Record<string, string> = {
 }
 
 export const CARTOON_SLUG_MAP: Record<string, string> = {
-    Spongebob: 'spongebob',
+    Spongebob: 'sb',
     'Amazing World of Gumball': 'amazing-world-of-gumball',
     'Dragonball Z': 'dragonball-z',
     'Yu-Gi-Oh!': 'yu-gi-oh',

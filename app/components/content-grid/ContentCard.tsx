@@ -34,7 +34,6 @@ export interface ContentCardProps {
   titleAr?: string
   description?: string
   category?: string
-  genre?: string
   level?: string
   metaItems: ContentCardMetaItem[]
   overlayIcon?: React.ReactNode
@@ -49,7 +48,6 @@ export default function ContentCard({
   titleAr,
   description,
   category,
-  genre,
   level,
   metaItems,
   overlayIcon,
@@ -226,22 +224,7 @@ export default function ContentCard({
               }}
             />
           )}
-          {genre && (
-            <Chip
-              label={genre}
-              size="small"
-              sx={{
-                height: 24,
-                borderRadius: '9999px',
-                backgroundColor: 'transparent',
-                color: MUTED,
-                fontSize: 11,
-                fontWeight: 500,
-                border: '1px solid rgba(44,26,14,0.12)',
-                '& .MuiChip-label': { px: 1 },
-              }}
-            />
-          )}
+
         </Box>
         {/* Description */}
         {description && (

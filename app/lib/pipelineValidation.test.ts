@@ -5,7 +5,8 @@ const sampleTranscript = [
   {
     tokens: [
       {
-        CEFR: "A1",
+        cefr: "A1",
+        pos: "adjective",
         root: "س-ر-ع",
         lemma: "سَرِيع",
         arabic: "سَرِيع",
@@ -15,6 +16,7 @@ const sampleTranscript = [
       },
       {
         CEFR: "A1",
+        pos: "verb",
         root: "ل-ي-س",
         lemma: "لَيْسَ",
         arabic: "لَسْتُ",
@@ -23,7 +25,8 @@ const sampleTranscript = [
         transliteration: "lastu",
       },
       {
-        CEFR: "B1",
+        cefr: "B1",
+        pos: "verb",
         root: "م-ز-ح",
         lemma: "مَزَحَ",
         arabic: "أَمْزَحُ",
@@ -40,7 +43,8 @@ const sampleTranscript = [
   {
     tokens: [
       {
-        CEFR: "B1",
+        cefr: "B1",
+        pos: "verb",
         root: "ظ-ه-ر",
         lemma: "أَظْهَرَ",
         arabic: "أَظْهِرْ",
@@ -49,7 +53,8 @@ const sampleTranscript = [
         transliteration: "aẓhir",
       },
       {
-        CEFR: "A2",
+        cefr: "A2",
+        pos: "noun",
         root: "ن-ف-س",
         lemma: "نَفْس",
         arabic: "نَفْسَكَ",
@@ -58,7 +63,8 @@ const sampleTranscript = [
         transliteration: "nafsaka",
       },
       {
-        CEFR: "B1",
+        cefr: "B1",
+        pos: "phrase",
         root: null,
         lemma: "عَلَى الْفَوْرِ",
         arabic: "عَلَى الْفَوْرِ",
@@ -75,7 +81,8 @@ const sampleTranscript = [
   {
     tokens: [
       {
-        CEFR: "A1",
+        cefr: "A1",
+        pos: "verb",
         root: "أ-خ-ذ",
         lemma: "أَخَذَ",
         arabic: "سَآخُذُ",
@@ -84,7 +91,8 @@ const sampleTranscript = [
         transliteration: "sa-ʾākhuḏu",
       },
       {
-        CEFR: "A1",
+        cefr: "A1",
+        pos: "noun",
         root: "ك-ر-و",
         lemma: "كُرَة",
         arabic: "الْكُرَةَ",
@@ -101,7 +109,8 @@ const sampleTranscript = [
   {
     tokens: [
       {
-        CEFR: "A1",
+        cefr: "A1",
+        pos: "adjective",
         root: "س-ر-ع",
         lemma: "سَرِيع",
         arabic: "سَرِيع",
@@ -110,7 +119,8 @@ const sampleTranscript = [
         transliteration: "sarīʿ",
       },
       {
-        CEFR: "B2",
+        cefr: "B2",
+        pos: "phrase",
         root: null,
         lemma: "كَيْفَ تَجْرُؤُ",
         arabic: "كَيْفَ تَجْرُؤُ",
@@ -127,7 +137,8 @@ const sampleTranscript = [
   {
     tokens: [
       {
-        CEFR: "A1",
+        cefr: "A1",
+        pos: "verb",
         root: "أ-خ-ذ",
         lemma: "اِتَّخَذَ",
         arabic: "تَتَّخِذَ",
@@ -136,7 +147,8 @@ const sampleTranscript = [
         transliteration: "tattakhiḏa",
       },
       {
-        CEFR: "B1",
+        cefr: "B1",
+        pos: "noun",
         root: "ق-ر-ر",
         lemma: "قَرَار",
         arabic: "قَرَارًا",
@@ -153,7 +165,8 @@ const sampleTranscript = [
   {
     tokens: [
       {
-        CEFR: "A1",
+        cefr: "A1",
+        pos: "noun",
         root: "ك-ر-و",
         lemma: "كُرَة",
         arabic: "الْكُرَةُ",
@@ -189,6 +202,10 @@ describe("validateTranscriptEntries", () => {
     expect(byArabic.get("أَخَذَ")?.contextualArabic).toBe("سَآخُذُ")
     expect(byArabic.get("اِتَّخَذَ")?.contextualArabic).toBe("تَتَّخِذَ")
 
+    // POS is required and carried through.
+    expect(byArabic.get("سَرِيع")?.pos).toBe("adjective")
+    expect(byArabic.get("عَلَى الْفَوْرِ")?.pos).toBe("phrase")
+
     // Phrase with null root is accepted.
     const phrase = byArabic.get("عَلَى الْفَوْرِ")
     expect(phrase).toBeDefined()
@@ -197,6 +214,9 @@ describe("validateTranscriptEntries", () => {
 
     // English gloss is carried through.
     expect(byArabic.get("قَرَار")?.english).toBe("a decision")
+
+    // CEFR is normalised to lowercase.
+    expect(byArabic.get("لَيْسَ")?.cefr).toBe("a1")
   })
 
   it("rejects an entry that is not an object", () => {
@@ -219,7 +239,8 @@ describe("validateTranscriptEntries", () => {
         timestamp: "0:00",
         tokens: [
           {
-            CEFR: "Z9",
+            cefr: "Z9",
+            pos: "noun",
             root: null,
             lemma: "test",
             arabic: "test",
@@ -232,7 +253,7 @@ describe("validateTranscriptEntries", () => {
     ] as unknown[])
     expect(result.ok).toBe(false)
     if (result.ok) return
-    expect(result.error).toContain("CEFR")
+    expect(result.error.toLowerCase()).toContain("cefr")
   })
 
   it("accepts token without CEFR", () => {
@@ -241,6 +262,7 @@ describe("validateTranscriptEntries", () => {
         timestamp: "0:00",
         tokens: [
           {
+            pos: "adjective",
             root: "س-ر-ع",
             lemma: "سَرِيع",
             arabic: "سَرِيع",
@@ -253,6 +275,28 @@ describe("validateTranscriptEntries", () => {
     ] as unknown[])
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    expect(result.items[0].CEFR).toBeUndefined()
+    expect(result.items[0].cefr).toBeUndefined()
+  })
+
+  it("rejects token without POS", () => {
+    const result = validateTranscriptEntries([
+      {
+        timestamp: "0:00",
+        tokens: [
+          {
+            cefr: "A1",
+            root: "س-ر-ع",
+            lemma: "سَرِيع",
+            arabic: "سَرِيع",
+            english: "fast",
+            entry_type: "word",
+            transliteration: "sarīʿ",
+          },
+        ],
+      },
+    ] as unknown[])
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error.toLowerCase()).toContain("pos")
   })
 })

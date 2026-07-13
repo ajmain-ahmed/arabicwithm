@@ -339,7 +339,6 @@ export default function ShowPage({ show, episodes, isAdmin }: ShowPageProps) {
                         title={ep.title}
                         level={ep.level}
                         category={ep.tags[0]}
-                        genre={ep.tags[1]}
                         description={ep.description}
                         overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                         metaItems={[]}

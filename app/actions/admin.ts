@@ -2,6 +2,7 @@
 
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { serviceClient } from "@/app/lib/supabase"
 import { parseJsonb } from "@/app/lib/jsonb"
 import { isAdminUser, type RawVocabRow } from "./vocab"
@@ -16,9 +17,7 @@ export type ShowRow = {
   description: string | null
   cover: string | null
   level: string
-  order: number
   category: string | null
-  genre: string | null
 }
 
 export type EpisodeRow = {
@@ -32,7 +31,6 @@ export type EpisodeRow = {
   youtube_id: string | null
   cover: string | null
   created_at: string | null
-  unmatched_count: number
 }
 
 export type EpisodeWithTranscript = EpisodeRow & {
@@ -40,7 +38,7 @@ export type EpisodeWithTranscript = EpisodeRow & {
 }
 
 export type ShowInput = Omit<ShowRow, "id">
-export type EpisodeInput = Omit<EpisodeRow, "id" | "unmatched_count" | "created_at"> & {
+export type EpisodeInput = Omit<EpisodeRow, "id" | "created_at"> & {
   transcript?: Record<string, unknown> | unknown[] | null
 }
 
@@ -58,8 +56,8 @@ export async function fetchVocabMatchesForWords(
 ): Promise<Record<string, RawVocabRow>> {
   await guardAdmin()
 
-  // Collect every non-empty lookup string. A transcript "db" value may be either
-  // diacritized (matches word_di) or plain (matches word_ar), so we query both
+  // Collect every non-empty lookup string. Tokens carry diacritized (`arabic`)
+  // and plain (`arabicPlain`) forms, so we query both `word_di` and `word_ar`
   // columns against the full set and let the caller match by either key.
   const allKeys = new Set<string>()
   for (const k of keys) {
@@ -177,7 +175,7 @@ export async function fetchShowsForAdmin(): Promise<ShowRow[]> {
   const { data, error } = await serviceClient
     .from("shows")
     .select("*")
-    .order("order", { ascending: true })
+    .order("title", { ascending: true })
 
   if (error) {
     console.error("[fetchShowsForAdmin] error:", error.message)
@@ -192,9 +190,7 @@ export async function fetchShowsForAdmin(): Promise<ShowRow[]> {
     description: row.description ?? null,
     cover: row.cover ?? null,
     level: row.level,
-    order: row.order ?? 99,
     category: row.category ?? null,
-    genre: row.genre ?? null,
   }))
 }
 
@@ -220,9 +216,7 @@ export async function fetchShowForAdmin(id: string): Promise<ShowRow | null> {
     description: data.description ?? null,
     cover: data.cover ?? null,
     level: data.level,
-    order: data.order ?? 99,
     category: data.category ?? null,
-    genre: data.genre ?? null,
   }
 }
 
@@ -238,9 +232,7 @@ export async function createShow(input: ShowInput): Promise<string> {
       description: input.description,
       cover: input.cover,
       level: input.level,
-      order: input.order,
       category: input.category,
-      genre: input.genre,
     })
     .select("id")
     .single()
@@ -266,9 +258,7 @@ export async function updateShow(
   if (input.description !== undefined) payload.description = input.description
   if (input.cover !== undefined) payload.cover = input.cover
   if (input.level !== undefined) payload.level = input.level
-  if (input.order !== undefined) payload.order = input.order
   if (input.category !== undefined) payload.category = input.category
-  if (input.genre !== undefined) payload.genre = input.genre
 
   const { error } = await serviceClient
     .from("shows")
@@ -302,79 +292,6 @@ function normalizeArabicForMatch(str: string): string {
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase()
-}
-
-async function computeUnmatchedCounts(
-  rows: Record<string, unknown>[]
-): Promise<Map<string, number>> {
-  const counts = new Map<string, number>()
-  const episodeDbKeys = new Map<string, Set<string>>()
-  const allDbKeys = new Set<string>()
-
-  for (const row of rows) {
-    const id = String(row.id)
-    const transcript = parseJsonb(row.transcript)
-    const dbKeys = new Set<string>()
-
-    if (Array.isArray(transcript)) {
-      // New block-based transcript format.
-      for (const block of transcript) {
-        const tokens = (block as Record<string, unknown>).tokens
-        if (!Array.isArray(tokens)) continue
-        for (const t of tokens) {
-          const token = t as Record<string, unknown>
-          const db = (token.db || token.arabic) as string | undefined
-          if (typeof db === "string" && db.trim()) {
-            dbKeys.add(db.trim())
-            allDbKeys.add(db.trim())
-          }
-        }
-      }
-    } else if (transcript && typeof transcript === "object" && Array.isArray((transcript as Record<string, unknown>).scriptBlocks)) {
-      // Legacy transcript object.
-      for (const block of (transcript as Record<string, unknown>).scriptBlocks as Record<string, unknown>[]) {
-        const words = block.words
-        if (!Array.isArray(words)) continue
-        for (const w of words) {
-          const db = (w as Record<string, unknown>).db
-          if (typeof db === "string" && db.trim()) {
-            dbKeys.add(db.trim())
-            allDbKeys.add(db.trim())
-          }
-        }
-      }
-    }
-
-    episodeDbKeys.set(id, dbKeys)
-  }
-
-  // Fetch all word_di values once and compare locally. This avoids subtle
-  // issues with .in() on diacritized Arabic strings.
-  const allDi = new Set<string>()
-  if (allDbKeys.size > 0) {
-    const { data, error } = await serviceClient
-      .from("app_vocab")
-      .select("word_di")
-
-    if (error) {
-      console.error("[computeUnmatchedCounts] error:", error.message)
-    } else {
-      for (const row of data ?? []) {
-        const di = (row as { word_di?: string }).word_di
-        if (di) allDi.add(di)
-      }
-    }
-  }
-
-  for (const [id, keys] of episodeDbKeys) {
-    let unmatched = 0
-    for (const key of keys) {
-      if (!allDi.has(key)) unmatched++
-    }
-    counts.set(id, unmatched)
-  }
-
-  return counts
 }
 
 export async function fetchFuzzyVocabMatches(query: string): Promise<RawVocabRow[]> {
@@ -429,11 +346,7 @@ export async function fetchEpisodesForShowAdmin(
     throw new Error(error.message)
   }
 
-  const counts = await computeUnmatchedCounts(data ?? [])
-  return (data ?? []).map((row) => ({
-    ...mapEpisodeRow(row),
-    unmatched_count: counts.get(String(row.id)) ?? 0,
-  }))
+  return (data ?? []).map((row) => mapEpisodeRow(row))
 }
 
 export async function fetchAllEpisodesForAdmin(): Promise<EpisodeRow[]> {
@@ -450,11 +363,7 @@ export async function fetchAllEpisodesForAdmin(): Promise<EpisodeRow[]> {
     throw new Error(error.message)
   }
 
-  const counts = await computeUnmatchedCounts(data ?? [])
-  return (data ?? []).map((row) => ({
-    ...mapEpisodeRow(row),
-    unmatched_count: counts.get(String(row.id)) ?? 0,
-  }))
+  return (data ?? []).map((row) => mapEpisodeRow(row))
 }
 
 export async function fetchEpisodeForAdmin(
@@ -493,7 +402,7 @@ export async function createEpisode(input: EpisodeInput): Promise<string> {
       description: input.description,
       youtube_id: input.youtube_id,
       cover: input.cover,
-      transcript: input.transcript ?? { scriptBlocks: [], vocabList: [], grammarPoints: [] },
+      transcript: input.transcript ?? [],
     })
     .select("id")
     .single()
@@ -508,7 +417,8 @@ export async function createEpisode(input: EpisodeInput): Promise<string> {
 
 export async function updateEpisode(
   id: string,
-  input: Partial<EpisodeInput>
+  input: Partial<EpisodeInput>,
+  revalidate?: string
 ): Promise<void> {
   await guardAdmin()
 
@@ -531,6 +441,10 @@ export async function updateEpisode(
   if (error) {
     console.error("[updateEpisode] error:", error.message)
     throw new Error(error.message)
+  }
+
+  if (revalidate) {
+    revalidatePath(revalidate)
   }
 }
 
@@ -560,7 +474,6 @@ function mapEpisodeRow(row: Record<string, unknown>): EpisodeRow {
     youtube_id: toStringOrNull(row.youtube_id),
     cover: toStringOrNull(row.cover),
     created_at: toStringOrNull(row.created_at),
-    unmatched_count: 0,
   }
 }
 

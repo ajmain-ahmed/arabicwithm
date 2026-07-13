@@ -22,9 +22,7 @@ const emptyShow: ShowMeta = {
   cover: "",
   level: "",
   episodeCount: 0,
-  order: 0,
   category: "",
-  genre: "",
 }
 
 export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps) {
@@ -38,8 +36,6 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
   const [cover, setCover] = useState(initial.cover ?? "")
   const [level, setLevel] = useState(initial.level ?? "")
   const [category, setCategory] = useState(initial.category ?? "")
-  const [genre, setGenre] = useState(initial.genre ?? "")
-  const [order, setOrder] = useState(String(initial.order ?? 0))
   const [saving, setSaving] = useState(false)
 
   const buildPayload = () => ({
@@ -49,9 +45,7 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
     description: description.trim() || null,
     cover: cover.trim() || null,
     level: level.trim(),
-    order: Number(order) || 0,
     category: category.trim() || null,
-    genre: genre.trim() || null,
   })
 
   const handleSave = async () => {
@@ -110,17 +104,10 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
         <NativeField label="Level" value={level} onChange={setLevel} disabled={saving} />
       </Box>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-        <NativeField label="Category" value={category} onChange={setCategory} disabled={saving} />
-        <NativeField label="Genre" value={genre} onChange={setGenre} disabled={saving} />
-      </Box>
+      <NativeField label="Category" value={category} onChange={setCategory} disabled={saving} />
 
       <NativeField label="Cover URL" value={cover} onChange={setCover} disabled={saving} />
       <NativeField label="Description" value={description} onChange={setDescription} textarea disabled={saving} />
-
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "120px 1fr" }, gap: 2 }}>
-        <NativeField label="Order" value={order} onChange={setOrder} type="number" disabled={saving} />
-      </Box>
 
       <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mt: "auto", pt: 1 }}>
         {!isNew && (

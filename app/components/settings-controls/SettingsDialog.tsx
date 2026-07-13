@@ -18,6 +18,7 @@ export interface SettingsDialogProps {
   textSizeDescription?: string
   textScaleMin?: number
   textScaleMax?: number
+  onEdit?: () => void
 }
 
 export default function SettingsDialog({
@@ -27,6 +28,7 @@ export default function SettingsDialog({
   textSizeDescription = 'Adjust Arabic text size',
   textScaleMin = 0.9,
   textScaleMax = 1.5,
+  onEdit,
 }: SettingsDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} slotProps={{ paper: { sx: { borderRadius: '16px', width: '100%', maxWidth: 360, m: 2, overflow: 'hidden', boxShadow: '0 24px 64px rgba(44,26,14,0.2)' } } }}>
@@ -52,8 +54,48 @@ export default function SettingsDialog({
           </Box>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5 }}>
-        <Button fullWidth variant="contained" onClick={onClose} disableElevation sx={{ background: '#2c1a0e', color: '#f5ede0', fontFamily: 'Jost, sans-serif', fontWeight: 600, fontSize: '0.95rem', textTransform: 'none', borderRadius: '10px', py: 1.1, '&:hover': { background: '#1a0f08' } }}>Done</Button>
+      <DialogActions sx={{ px: 2.5, pb: 2.5, pt: 0.5, display: 'flex', gap: 1.5 }}>
+        {onEdit && (
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={() => { onClose(); onEdit(); }}
+            sx={{
+              flex: 1,
+              color: '#2c1a0e',
+              borderColor: 'rgba(44,26,14,0.25)',
+              fontFamily: 'Jost, sans-serif',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              textTransform: 'none',
+              borderRadius: '10px',
+              py: 1,
+              '&:hover': { background: 'rgba(44,26,14,0.06)', borderColor: 'rgba(44,26,14,0.4)' },
+            }}
+          >
+            Edit episode
+          </Button>
+        )}
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={onClose}
+          disableElevation
+          sx={{
+            flex: onEdit ? 1 : undefined,
+            background: '#2c1a0e',
+            color: '#f5ede0',
+            fontFamily: 'Jost, sans-serif',
+            fontWeight: 600,
+            fontSize: '0.95rem',
+            textTransform: 'none',
+            borderRadius: '10px',
+            py: 1.1,
+            '&:hover': { background: '#1a0f08' },
+          }}
+        >
+          Done
+        </Button>
       </DialogActions>
     </Dialog>
   )

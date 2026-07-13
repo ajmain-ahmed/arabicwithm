@@ -2,6 +2,7 @@
 
 import fs from "fs"
 import path from "path"
+import { unstable_noStore } from "next/cache"
 import { serviceClient } from "@/app/lib/supabase"
 import {
   type ShowMeta,
@@ -96,8 +97,8 @@ function normalizeEpisodeCover(
 export async function fetchShowsForPublic(): Promise<ShowMeta[]> {
   const { data: shows, error } = await serviceClient
     .from("shows")
-    .select("id, slug, title, title_ar, description, cover, level, order, category, genre")
-    .order("order", { ascending: true })
+    .select("id, slug, title, title_ar, description, cover, level, category")
+    .order("title", { ascending: true })
 
   if (error) {
     console.error("[fetchShowsForPublic] error:", error.message)
@@ -128,9 +129,7 @@ export async function fetchShowsForPublic(): Promise<ShowMeta[]> {
     description: row.description ? String(row.description) : undefined,
     cover: normalizeShowCover(row.cover ? String(row.cover) : null, String(row.slug)),
     level: String(row.level ?? ""),
-    order: row.order ? Number(row.order) : undefined,
     category: row.category ? String(row.category) : undefined,
-    genre: row.genre ? String(row.genre) : undefined,
     episodeCount: counts.get(String(row.id)) ?? 0,
   }))
 }
@@ -138,8 +137,8 @@ export async function fetchShowsForPublic(): Promise<ShowMeta[]> {
 export async function fetchShowsForEpisodeEdit(): Promise<ShowRow[]> {
   const { data, error } = await serviceClient
     .from("shows")
-    .select("id, slug, title, title_ar, description, cover, level, order, category, genre")
-    .order("order", { ascending: true })
+    .select("id, slug, title, title_ar, description, cover, level, category")
+    .order("title", { ascending: true })
 
   if (error) {
     console.error("[fetchShowsForEpisodeEdit] error:", error.message)
@@ -154,16 +153,14 @@ export async function fetchShowsForEpisodeEdit(): Promise<ShowRow[]> {
     description: row.description ? String(row.description) : null,
     cover: row.cover ? String(row.cover) : null,
     level: String(row.level ?? ""),
-    order: Number(row.order) || 0,
     category: row.category ? String(row.category) : null,
-    genre: row.genre ? String(row.genre) : null,
   }))
 }
 
 export async function fetchShowBySlugPublic(slug: string): Promise<ShowMeta | null> {
   const { data, error } = await serviceClient
     .from("shows")
-    .select("id, slug, title, title_ar, description, cover, level, order, category, genre")
+    .select("id, slug, title, title_ar, description, cover, level, category")
     .eq("slug", slug)
     .limit(1)
     .single()
@@ -183,9 +180,7 @@ export async function fetchShowBySlugPublic(slug: string): Promise<ShowMeta | nu
     description: data.description ? String(data.description) : undefined,
     cover: normalizeShowCover(data.cover ? String(data.cover) : null, String(data.slug)),
     level: String(data.level ?? ""),
-    order: data.order ? Number(data.order) : undefined,
     category: data.category ? String(data.category) : undefined,
-    genre: data.genre ? String(data.genre) : undefined,
     episodeCount: count ?? 0,
   }
 }
@@ -227,6 +222,7 @@ export async function fetchEpisodeForPublic(
   showSlug: string,
   episodeSlug: string
 ): Promise<EpisodeFull | null> {
+  unstable_noStore()
   const { data: show, error: showError } = await serviceClient
     .from("shows")
     .select("id, slug, title")
@@ -283,12 +279,10 @@ export async function fetchEpisodeForPublic(
   const diacritizedMap: Record<string, CartoonWordEntry> = {}
 
   const enrichWord = (w: Record<string, unknown>): CartoonWordEntry => {
-    const db = typeof w.db === 'string' ? w.db.trim() : ''
     const arabic = String(w.arabic ?? '')
     const plain = String(w.plain ?? stripDiacritics(arabic))
     const lemma = typeof w.lemma === 'string' ? w.lemma.trim() : ''
     const entry: CartoonWordEntry = {
-      db: db || undefined,
       arabic,
       plain,
       transliteration: String(w.transliteration ?? ''),
@@ -297,8 +291,8 @@ export async function fetchEpisodeForPublic(
       root: typeof w.root === 'string' ? w.root : undefined,
       lemma: lemma || arabic,
     }
-    const cefr = typeof w.cefr === 'string' ? w.cefr.trim() : ''
-    if (cefr) entry.cefr = cefr
+    const cefrRaw = typeof w.cefr === 'string' ? w.cefr.trim() : typeof w.CEFR === 'string' ? w.CEFR.trim() : ''
+    if (cefrRaw) entry.cefr = cefrRaw.toLowerCase()
     return entry
   }
 
@@ -374,7 +368,7 @@ export async function fetchEpisodeForPublic(
       transliteration: String(row.transliteration ?? ''),
       english: String(row.english ?? ''),
     }
-    const cefr = typeof row.cefr === 'string' ? row.cefr.trim() : ''
+    const cefr = typeof row.cefr === 'string' ? row.cefr.trim().toLowerCase() : ''
     if (cefr) item.cefr = cefr
     return item
   })

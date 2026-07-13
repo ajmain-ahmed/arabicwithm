@@ -4,13 +4,10 @@ import React from "react"
 import { TextField, type TextFieldProps } from "@mui/material"
 
 export default function AdminTextField(props: TextFieldProps) {
+  const { sx, ...rest } = props
   return (
     <TextField
-      {...props}
-      slotProps={{
-        inputLabel: { shrink: true },
-        ...props.slotProps,
-      }}
+      {...rest}
       sx={{
         "& .MuiInputBase-root": {
           fontFamily: "Jost, sans-serif",
@@ -21,7 +18,7 @@ export default function AdminTextField(props: TextFieldProps) {
           fontFamily: "Jost, sans-serif",
           fontSize: "0.85rem",
         },
-        ...props.sx,
+        ...sx,
       }}
     />
   )

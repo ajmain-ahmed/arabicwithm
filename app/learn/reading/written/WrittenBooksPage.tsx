@@ -329,7 +329,6 @@ export default function WrittenBooksPage({
                         titleAr={book.titleAr}
                         description={book.description}
                         category={book.category}
-                        genre={book.genre}
                         level={book.level}
                         overlayIcon={<AutoStories sx={{ fontSize: 20, color: BARK }} />}
                         aspectRatio="2/3"

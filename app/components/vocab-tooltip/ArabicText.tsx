@@ -3,6 +3,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { Box, Drawer, useMediaQuery, useTheme } from '@mui/material'
 import { stripDiacritics } from '@/app/lib/arabic'
+import { formatCefr, formatPos } from '@/app/lib/display'
 import HtmlTooltip from './HtmlTooltip'
 import WordTooltip from './WordTooltip'
 import type { VocabEntry } from './index'
@@ -133,7 +134,7 @@ export default function ArabicText({
                   pointerEvents: 'none',
                 }}
               >
-                {entry.pos ? `${entry.pos} · ` : ''}{entry.cefr}
+                {entry.pos ? `${formatPos(entry.pos)} · ` : ''}{entry.cefr ? formatCefr(entry.cefr) : ''}
               </span>
             )}
           </span>

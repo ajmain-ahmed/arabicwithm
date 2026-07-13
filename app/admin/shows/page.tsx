@@ -30,7 +30,7 @@ export default function ShowsAdminPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState("")
-  const [sortKey, setSortKey] = useState<SortKey>("order")
+  const [sortKey, setSortKey] = useState<SortKey>("title")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [editId, setEditId] = useState<string | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -70,8 +70,7 @@ export default function ShowsAdminPage() {
             (r.title_ar?.toLowerCase().includes(q) ?? false) ||
             r.slug.toLowerCase().includes(q) ||
             r.level.toLowerCase().includes(q) ||
-            (r.category?.toLowerCase().includes(q) ?? false) ||
-            (r.genre?.toLowerCase().includes(q) ?? false)
+            (r.category?.toLowerCase().includes(q) ?? false)
         )
       : [...rows]
     ).sort((a, b) => {
@@ -140,7 +139,7 @@ export default function ShowsAdminPage() {
         <SearchField
           value={query}
           onChange={setQuery}
-          placeholder="Search title, slug, level, category, or genre..."
+          placeholder="Search title, slug, level, or category..."
         />
       </Box>
 
@@ -153,9 +152,6 @@ export default function ShowsAdminPage() {
           <Table stickyHeader size="small">
             <TableHead>
               <TableRow>
-                <TableCell>
-                  <TableSortLabel {...sortProps("order")}>Order</TableSortLabel>
-                </TableCell>
                 <TableCell>
                   <TableSortLabel {...sortProps("title")}>Title</TableSortLabel>
                 </TableCell>
@@ -175,20 +171,19 @@ export default function ShowsAdminPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
                     Loading shows…
                   </TableCell>
                 </TableRow>
               ) : filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
                     No shows match your search.
                   </TableCell>
                 </TableRow>
               ) : (
                 filtered.map((row) => (
                   <TableRow key={row.id} hover sx={{ "& td": { fontFamily: "Jost, sans-serif" } }}>
-                    <TableCell>{row.order}</TableCell>
                     <TableCell sx={{ fontWeight: 600, color: "#2c1a0e" }}>{row.title}</TableCell>
                     <TableCell sx={{ direction: "rtl", fontFamily: "'EB Garamond', serif", fontSize: "1.05rem" }}>
                       {row.title_ar}
