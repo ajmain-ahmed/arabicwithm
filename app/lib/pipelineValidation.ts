@@ -189,7 +189,7 @@ export function validateTranscriptEntries(
       }
       if (normalizedCefr) normalized.cefr = normalizedCefr
 
-      const key = `${normalized.arabic}|${normalized.root ?? ""}|${normalized.entry_type}`
+      const key = `${stripDiacritics(normalized.arabic)}|${normalized.root ?? ""}|${normalized.entry_type}`
       if (!seen.has(key)) {
         seen.add(key)
         valid.push(normalized)
@@ -299,7 +299,7 @@ export function validateItems(items: unknown[]): { ok: true; items: PipelineItem
     }
     if (normalizedCefr) normalized.cefr = normalizedCefr
 
-    const key = `${normalized.arabic}|${normalized.root ?? ""}|${normalized.entry_type}`
+    const key = `${stripDiacritics(normalized.arabic)}|${normalized.root ?? ""}|${normalized.entry_type}`
     if (!seen.has(key)) {
       seen.add(key)
       valid.push(normalized)
@@ -314,7 +314,7 @@ export function validateItems(items: unknown[]): { ok: true; items: PipelineItem
 }
 
 export function itemKey(item: PipelineItem): string {
-  return `${item.arabic}|${item.root ?? ""}|${item.entry_type}`
+  return `${stripDiacritics(item.arabic)}|${item.root ?? ""}|${item.entry_type}`
 }
 
 export function validateDefinitionRows(

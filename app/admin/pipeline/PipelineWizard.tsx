@@ -661,7 +661,10 @@ export default function PipelineWizard() {
         if (cancelled) return
         if (result.ok) {
           dispatch({ type: "SET_PROMPT_DATA", data: result.data })
-          dispatch({ type: "SET_EXCLUDED_EXISTING", keys: new Set() })
+          dispatch({
+            type: "SET_EXCLUDED_EXISTING",
+            keys: new Set(result.data.existingLemmas.map((item) => existingLemmaKey(item))),
+          })
         } else {
           dispatch({ type: "SET_ERROR", error: result.error })
         }
@@ -1235,13 +1238,14 @@ export default function PipelineWizard() {
       >
         <Typography
           variant="h5"
+
           sx={{
             fontFamily: "'EB Garamond', serif",
             fontWeight: 700,
             color: "#2c1a0e",
             mb: 1,
-            textAlign: "center",
-          }}
+            textAlign: "center", fontSize: "1.1rem" }}
+
         >
           What would you like to do?
         </Typography>
@@ -1249,8 +1253,9 @@ export default function PipelineWizard() {
           sx={{
             fontFamily: "Jost, sans-serif",
             color: "#7a6e65",
-            mb: 4,
+            mb: 2,
             textAlign: "center",
+            fontSize: "0.95rem",
           }}
         >
           Choose whether to start with a new cartoon show or add an episode to an existing show.
@@ -1283,7 +1288,7 @@ export default function PipelineWizard() {
                   >
                     Create new show
                   </Typography>
-                  <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                  <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "0.95rem" }}>
                     Add a new cartoon series and its first episode.
                   </Typography>
                 </Box>
@@ -1317,7 +1322,7 @@ export default function PipelineWizard() {
                   >
                     Add episode to existing show
                   </Typography>
-                  <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                  <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "0.95rem" }}>
                     Add a new episode to a show that already exists.
                   </Typography>
                 </Box>
@@ -1341,11 +1346,13 @@ export default function PipelineWizard() {
       >
         <Typography
           variant="h5"
-          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
         >
           Show details
         </Typography>
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 3 }}>
+        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "0.95rem" }}>
           Enter the metadata for the new show.
         </Typography>
 
@@ -1470,11 +1477,13 @@ export default function PipelineWizard() {
       >
         <Typography
           variant="h5"
-          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
         >
           Select show
         </Typography>
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 3 }}>
+        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "0.95rem" }}>
           Choose the show this episode belongs to.
         </Typography>
 
@@ -1500,11 +1509,11 @@ export default function PipelineWizard() {
         />
 
         {state.loading && filtered.length === 0 ? (
-          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "0.95rem" }}>
             Loading shows…
           </Typography>
         ) : filtered.length === 0 ? (
-          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "0.95rem" }}>
             No shows found.
           </Typography>
         ) : (
@@ -1533,7 +1542,7 @@ export default function PipelineWizard() {
                         },
                       },
                       secondary: {
-                        sx: { fontFamily: "Jost, sans-serif", color: "#7a6e65" },
+                        sx: { fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "0.95rem" },
                       },
                     }}
                   />
@@ -1591,11 +1600,13 @@ export default function PipelineWizard() {
       >
         <Typography
           variant="h5"
-          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
         >
           Episode details
         </Typography>
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 3 }}>
+        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "0.95rem" }}>
           Enter the metadata and transcript for the new episode.
         </Typography>
 
@@ -1605,7 +1616,7 @@ export default function PipelineWizard() {
               sx={{
                 fontFamily: "Jost, sans-serif",
                 fontWeight: 600,
-                fontSize: "0.9rem",
+                fontSize: "0.95rem",
                 color: "#7a6e65",
                 mb: 1,
               }}
@@ -1650,7 +1661,7 @@ export default function PipelineWizard() {
                         },
                       },
                       secondary: {
-                        sx: { fontFamily: "Jost, sans-serif", color: "#7a6e65" },
+                        sx: { fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "0.95rem" },
                       },
                     }}
                   />
@@ -1741,7 +1752,7 @@ export default function PipelineWizard() {
                   fontFamily: "Jost, sans-serif",
                   fontWeight: 600,
                   color: "#2c1a0e",
-                  fontSize: "1.15rem",
+                  fontSize: "0.95rem",
                 }}
               >
                 Transcript JSON
@@ -1886,11 +1897,13 @@ export default function PipelineWizard() {
       >
         <Typography
           variant="h5"
-          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
         >
           Save episode
         </Typography>
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 3 }}>
+        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "0.95rem" }}>
           Review the episode details before saving.
         </Typography>
 
@@ -1919,7 +1932,7 @@ export default function PipelineWizard() {
           />
         </Box>
 
-        <Alert severity="info" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>
+        <Alert severity="info" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px", fontSize: "0.95rem" }}>
           The source for this pipeline will be set to <strong>{state.episode.slug}</strong>.
           If the episode already exists in the database, you can skip saving it and proceed to lemmas/definitions.
         </Alert>
@@ -2006,7 +2019,7 @@ export default function PipelineWizard() {
             textAlign: "center",
           }}
         >
-          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "0.95rem" }}>
             {state.loading ? "Scanning transcript for lemmas…" : "Preview is not available."}
           </Typography>
         </Paper>
@@ -2027,7 +2040,9 @@ export default function PipelineWizard() {
       >
         <Typography
           variant="h5"
-          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
         >
           Review extracted lemmas
         </Typography>
@@ -2040,9 +2055,10 @@ export default function PipelineWizard() {
             fontFamily: "Jost, sans-serif",
             borderRadius: "10px",
             color: "#2c1a0e",
+            fontSize: "0.95rem",
           }}
         >
-          <Typography sx={{ fontWeight: 600, mb: 0.5 }}>What happens next?</Typography>
+          <Typography sx={{ fontWeight: 600, mb: 0.5, fontSize: "0.95rem" }}>What happens next?</Typography>
           <Typography sx={{ fontSize: "0.95rem" }}>
             We scanned every <code>tokens</code> array in your transcript and pulled out each unique
             word/phrase. Each card below represents one <strong>lemma</strong> that will be added to
@@ -2206,7 +2222,7 @@ export default function PipelineWizard() {
             textAlign: "center",
           }}
         >
-          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "0.95rem" }}>
             {state.loading ? "Building definitions prompt…" : "Prompt data is not available."}
           </Typography>
         </Paper>
@@ -2227,11 +2243,13 @@ export default function PipelineWizard() {
       >
         <Typography
           variant="h5"
-          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
         >
           Generate definitions
         </Typography>
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2 }}>
+        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "0.95rem" }}>
           Copy the prompt below and paste it into ChatGPT, Claude, DeepSeek, Kimi, or another
           Arabic-capable LLM. Paste the returned JSON back in the next step.
         </Typography>
@@ -2302,16 +2320,15 @@ export default function PipelineWizard() {
                   <Alert
                     severity="success"
                     icon={<CheckCircle />}
-                    sx={{ mb: 2, fontFamily: "Jost, sans-serif", borderRadius: "10px" }}
+                    sx={{ mb: 2, fontFamily: "Jost, sans-serif", borderRadius: "10px", fontSize: "0.95rem" }}
                   >
                     {state.committedLemmas} new lemma row{state.committedLemmas === 1 ? "" : "s"}{" "}
                     inserted. Now review which existing words already have good definitions.
                   </Alert>
                 )}
-                <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2 }}>
-                  These transcript entries already exist in the database and have definitions. Remove
-                  any that are already covered correctly so the LLM can focus on words that actually
-                  need new definitions.
+                <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "0.95rem" }}>
+                  Existing definitions are removed from the LLM prompt by default. Add back any that
+                  need a new meaning, secondary sense, or different part of speech for this context.
                 </Typography>
                 <Box
                   sx={{
@@ -2449,19 +2466,21 @@ export default function PipelineWizard() {
       >
         <Typography
           variant="h5"
-          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
         >
           Paste LLM output
         </Typography>
         <Typography
-          sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "1.1rem" }}
+          sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "0.95rem" }}
         >
           Paste the JSON array the LLM returned. We will validate it against the{" "}
           <strong>vocab_definitions</strong> schema before letting you review and insert it.
         </Typography>
 
         {state.definitionValidationError && (
-          <Alert severity="error" sx={{ mb: 2, fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>
+          <Alert severity="error" sx={{ mb: 2, fontFamily: "Jost, sans-serif", borderRadius: "10px", fontSize: "0.95rem" }}>
             {state.definitionValidationError}
           </Alert>
         )}
@@ -2594,7 +2613,7 @@ export default function PipelineWizard() {
             textAlign: "center",
           }}
         >
-          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "0.95rem" }}>
             No definitions to review. Go back and paste LLM output.
           </Typography>
         </Paper>
@@ -2612,12 +2631,14 @@ export default function PipelineWizard() {
       >
         <Typography
           variant="h5"
-          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
         >
           Review definitions
         </Typography>
         <Typography
-          sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "1.1rem" }}
+          sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "0.95rem" }}
         >
           Rows already in <strong>vocab_definitions</strong> are unchecked by default so a re-run
           does not create duplicates. Tick any row, including an existing one, if you want to insert
@@ -2625,7 +2646,7 @@ export default function PipelineWizard() {
         </Typography>
 
         {state.definitionValidationError && (
-          <Alert severity="error" sx={{ mb: 2, fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>
+          <Alert severity="error" sx={{ mb: 2, fontFamily: "Jost, sans-serif", borderRadius: "10px", fontSize: "0.95rem" }}>
             {state.definitionValidationError}
           </Alert>
         )}
@@ -2800,7 +2821,9 @@ export default function PipelineWizard() {
           <CheckCircle sx={{ fontSize: 56, color: "#b8860b", mb: 2 }} />
           <Typography
             variant="h5"
-            sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
           >
             Conjugations saved
           </Typography>
@@ -2840,7 +2863,7 @@ export default function PipelineWizard() {
             textAlign: "center",
           }}
         >
-          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "0.95rem" }}>
             {state.loading ? "Loading verb candidates…" : "No conjugation candidates loaded."}
           </Typography>
         </Paper>
@@ -2859,12 +2882,14 @@ export default function PipelineWizard() {
         >
           <Typography
             variant="h5"
-            sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 2 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
           >
             Conjugation prompt
           </Typography>
 
-          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2 }}>
+          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "0.95rem" }}>
             Copy the prompt below, paste it into your LLM, then paste the returned JSON array into the
             text area.
           </Typography>
@@ -2934,8 +2959,8 @@ export default function PipelineWizard() {
           />
 
           {state.conjugationValidationError && (
-            <Alert severity="error" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>
-              <Typography sx={{ whiteSpace: "pre-wrap" }}>{state.conjugationValidationError}</Typography>
+            <Alert severity="error" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px", fontSize: "0.95rem" }}>
+              <Typography sx={{ whiteSpace: "pre-wrap", fontSize: "0.95rem" }}>{state.conjugationValidationError}</Typography>
             </Alert>
           )}
 
@@ -3015,7 +3040,9 @@ export default function PipelineWizard() {
       >
         <Typography
           variant="h5"
-          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 2 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
         >
           Verb conjugations
         </Typography>
@@ -3052,7 +3079,7 @@ export default function PipelineWizard() {
         </Box>
 
         <Typography
-          sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 3, fontSize: "1.1rem" }}
+          sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 2, fontSize: "0.95rem" }}
         >
           {state.conjugationCandidates.length > 0 ? (
             <>
@@ -3147,12 +3174,14 @@ export default function PipelineWizard() {
         <CheckCircle sx={{ fontSize: 64, color: "#b8860b", mb: 2 }} />
         <Typography
           variant="h5"
-          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
         >
           Pipeline complete
         </Typography>
         <Typography
-          sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 3, fontSize: "1.05rem" }}
+          sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", mb: 3, fontSize: "0.95rem" }}
         >
           The episode <strong>{state.episode.title}</strong> ({state.episode.slug}) has been saved.
           {state.definitionsInserted !== null && state.definitionsInserted > 0 && (
@@ -3232,13 +3261,13 @@ export default function PipelineWizard() {
         >
           Pipeline
         </Typography>
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
+        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "0.95rem" }}>
           Import transcript entries and generate definition prompts.
         </Typography>
       </Box>
 
       {state.error && (
-        <Alert severity="error" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>
+        <Alert severity="error" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px", fontSize: "0.95rem" }}>
           {state.error}
         </Alert>
       )}
@@ -3263,6 +3292,7 @@ export default function PipelineWizard() {
                     "& .MuiStepLabel-label": {
                       fontFamily: "Jost, sans-serif",
                       color: idx === currentStepIndex ? "#2c1a0e" : "#9e8a7a",
+                      fontSize: "0.95rem",
                     },
                   }}
                 >
@@ -3305,11 +3335,12 @@ function ReviewRow({ label, value }: { label: string; value: React.ReactNode }) 
           fontWeight: 600,
           color: "#7a6e65",
           minWidth: 140,
+          fontSize: "0.95rem",
         }}
       >
         {label}
       </Typography>
-      <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#2c1a0e", fontSize: "1.05rem" }}>
+      <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#2c1a0e", fontSize: "0.95rem" }}>
         {value}
       </Typography>
     </Box>
@@ -3338,7 +3369,7 @@ function LemmaTable({ items, prefix, pipelineSource }: { items: PipelineItem[]; 
   const headerSx = {
     fontFamily: "Jost, sans-serif",
     fontWeight: 700,
-    fontSize: "0.85rem",
+    fontSize: "0.95rem",
     color: "#7a6e65",
     textTransform: "uppercase",
     letterSpacing: "0.04em",
@@ -3407,7 +3438,7 @@ function ExistingDefinitionsList({
 
   if (withDefinitions.length === 0) {
     return (
-      <Alert severity="info" sx={{ fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>
+      <Alert severity="info" sx={{ fontFamily: "Jost, sans-serif", borderRadius: "10px", fontSize: "0.95rem" }}>
         No existing entries have definitions yet. All existing entries will be sent to the LLM.
       </Alert>
     )
@@ -3560,7 +3591,7 @@ function ExistingDefinitionsList({
                           fontFamily: "Jost, sans-serif",
                           fontWeight: 600,
                           color: "#2c1a0e",
-                          fontSize: "1.05rem",
+                          fontSize: "0.95rem",
                         }}
                       >
                         {def.gloss}
@@ -3571,7 +3602,7 @@ function ExistingDefinitionsList({
                         sx={{
                           fontFamily: "Jost, sans-serif",
                           color: "#7a6e65",
-                          fontSize: "1rem",
+                          fontSize: "0.95rem",
                         }}
                       >
                         {def.definition_en}
@@ -3684,7 +3715,7 @@ function DefinitionEditCard({
               />
             }
             label={
-              <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "1rem", color: "#2c1a0e" }}>
+              <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.95rem", color: "#2c1a0e" }}>
                 {excluded ? "Excluded" : "Include"}
               </Typography>
             }
@@ -3839,7 +3870,9 @@ function ConjugationReview({
     >
       <Typography
         variant="h5"
-        sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 2 }}
+
+          sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e", mb: 1, fontSize: "1.1rem" }}
+
       >
         Review generated conjugations
       </Typography>
@@ -3919,8 +3952,8 @@ function ConjugationReview({
       </Box>
 
       {skipped.length > 0 && (
-        <Alert severity="warning" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>
-          <Typography sx={{ fontWeight: 600, mb: 0.5 }}>Skipped verbs</Typography>
+        <Alert severity="warning" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px", fontSize: "0.95rem" }}>
+          <Typography sx={{ fontWeight: 600, mb: 0.5, fontSize: "0.95rem" }}>Skipped verbs</Typography>
           <Box component="ul" sx={{ m: 0, pl: 2 }}>
             {skipped.map((item, idx) => (
               <li key={idx}>

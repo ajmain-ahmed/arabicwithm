@@ -77,7 +77,7 @@ export async function previewPipeline(
 
   const { data, error } = await serviceClient
     .from("vocab_lemmas")
-    .select("lemma, root, entry_type, source")
+    .select("lemma, lemma_plain, root, entry_type, source")
 
   if (error) {
     console.error("[previewPipeline] error:", error.message)
@@ -86,10 +86,10 @@ export async function previewPipeline(
 
   const dbSourceMap = new Map<string, string>()
   for (const row of data ?? []) {
-    const lemma = String(row.lemma ?? "")
+    const lemmaPlain = String(row.lemma_plain ?? stripDiacritics(String(row.lemma ?? "")))
     const r = row.root ? String(row.root) : ""
     const t = String(row.entry_type ?? "")
-    if (lemma) dbSourceMap.set(`${lemma}|${r}|${t}`, row.source ? String(row.source) : "")
+    if (lemmaPlain) dbSourceMap.set(`${lemmaPlain}|${r}|${t}`, row.source ? String(row.source) : "")
   }
 
   const existing: PipelineItem[] = []
