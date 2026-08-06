@@ -129,3 +129,12 @@ export function normalizeTransliteration(text: string): string {
     .replace(/[\u02BE\u02BF\u02B9\u02C8\u02CC'’]/g, '')
     .toLowerCase()
 }
+
+/**
+ * Normalize an Arabic string for stable comparison: apply Unicode NFC and
+ * remove tatweel (kashida). This keeps diacritics intact while collapsing
+ * encoding differences (e.g. different ordering of combining marks).
+ */
+export function normalizeArabicForm(text: string): string {
+  return text.normalize('NFC').replace(/\u0640/g, '')
+}

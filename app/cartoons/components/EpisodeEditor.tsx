@@ -5,7 +5,7 @@ import { Box, Button, Paper, Typography } from "@mui/material"
 import { Save, Cancel, Delete } from "@mui/icons-material"
 import { type EpisodeMeta } from "@/app/lib/cartoons"
 import { createEpisode, updateEpisode, deleteEpisode } from "@/app/actions/admin"
-import NativeField from "@/app/admin/components/NativeField"
+import NativeField from "@/app/(admin)/admin/components/NativeField"
 
 interface EpisodeEditorProps {
   showId: string

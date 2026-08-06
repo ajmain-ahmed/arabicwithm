@@ -17,6 +17,7 @@ import { PageBanner } from '@/app/components/page-layout'
 import { FilterSidebar, ContentCard } from '@/app/components/content-grid'
 import EpisodeEditDialog from '../components/EpisodeEditDialog'
 import { deleteEpisode } from '@/app/actions/admin'
+import { useIsAdmin } from '@/app/lib/useIsAdmin'
 
 /* ── MUI Icons ── */
 import {
@@ -40,10 +41,10 @@ const MUTED = '#7a6e65'
 interface ShowPageProps {
   show: ShowMeta
   episodes: EpisodeMeta[]
-  isAdmin?: boolean
 }
 
-export default function ShowPage({ show, episodes, isAdmin }: ShowPageProps) {
+export default function ShowPage({ show, episodes }: ShowPageProps) {
+  const isAdmin = useIsAdmin()
   const router = useRouter()
   const [activeLevel, setActiveLevel] = useState('')
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)

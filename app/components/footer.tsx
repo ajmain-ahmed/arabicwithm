@@ -14,28 +14,17 @@ interface FooterProps {
 
 const FOOTER_SECTIONS = (onContactClick?: () => void) => [
   {
-    title: 'Learn',
-    links: [
-      { label: 'Beginner',          href: '/flashcards/beginner',           onClick: undefined },
-      { label: 'Elementary',        href: '/flashcards/elementary',         onClick: undefined },
-      { label: 'Intermediate',      href: '/flashcards/intermediate',       onClick: undefined },
-      { label: 'Upper Intermediate',href: '/flashcards/upper-intermediate', onClick: undefined },
-    ],
-  },
-  {
     title: 'Explore',
     links: [
-      { label: 'Cartoons', href: '/learn/cartoons', onClick: undefined },
-      { label: 'Stories',  href: '/learn/stories',  onClick: undefined },
-      { label: 'Literature',href: '/learn/literature',onClick: undefined },
+      { label: 'Cartoons', href: '/cartoons', onClick: undefined },
+      { label: 'About',    href: '/about',    onClick: undefined },
+      { label: 'FAQ',      href: '/faq',      onClick: undefined },
     ],
   },
   {
     title: 'Support',
     links: [
       { label: 'Contact Us', href: null, onClick: onContactClick },
-      { label: 'FAQ',        href: '/faq', onClick: undefined },
-      { label: 'About',      href: '/about', onClick: undefined },
     ],
   },
 ]
@@ -175,7 +164,7 @@ export default function Footer({ onContactClick }: FooterProps) {
                 fontSize: '0.88rem', fontWeight: 300,
                 color: '#7a6e65', lineHeight: 1.8,
               }}>
-                Modern Standard Arabic made accessible — through cartoons, stories, and a vocabulary system that actually sticks.
+                Modern Standard Arabic made accessible — through immersive cartoons with interactive subtitles.
               </Typography>
 
               {/* contact */}

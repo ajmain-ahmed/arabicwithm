@@ -2,7 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  poweredByHeader: false,
+  compress: true,
   images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     remotePatterns: [
       { protocol: 'https', hostname: 'i.ytimg.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
@@ -11,6 +15,15 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'cnn-arabic-images.cnn.io' },
       { protocol: 'https', hostname: 'images.skynewsarabia.com' },
       { protocol: 'https', hostname: 'www.akhbarona.com' },
+    ],
+  },
+  experimental: {
+    optimizePackageImports: [
+      '@mui/material',
+      '@mui/icons-material',
+      '@dnd-kit/core',
+      '@dnd-kit/sortable',
+      'lucide-react',
     ],
   },
   async headers() {
@@ -33,6 +46,12 @@ const nextConfig: NextConfig = {
               "frame-src https://www.youtube.com https://youtube.com",
             ].join('; '),
           },
+        ],
+      },
+      {
+        source: '/:path*\\.(woff2?|ttf|otf|eot)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
     ]

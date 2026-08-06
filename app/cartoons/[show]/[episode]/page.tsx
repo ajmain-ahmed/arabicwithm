@@ -3,13 +3,24 @@ import { notFound } from 'next/navigation'
 import {
   fetchEpisodeForPublic,
   fetchShowBySlugPublic,
-  fetchShowsForEpisodeEdit,
+  fetchShowsForPublic,
+  fetchEpisodesForShowPublic,
 } from '@/app/actions/cartoons'
-import { isAdminUser } from '@/app/actions/vocab'
 import EpisodePage from './EpisodePage'
 
-export const dynamic = 'force-dynamic'
-export const fetchCache = 'force-no-store'
+export const revalidate = 300
+
+export async function generateStaticParams() {
+  const shows = await fetchShowsForPublic()
+  const params: { show: string; episode: string }[] = []
+  for (const show of shows) {
+    const episodes = await fetchEpisodesForShowPublic(show.slug)
+    for (const ep of episodes) {
+      params.push({ show: show.slug, episode: ep.slug })
+    }
+  }
+  return params
+}
 
 export async function generateMetadata({
   params,
@@ -38,8 +49,5 @@ export default async function Page({
   const showData = await fetchShowBySlugPublic(show)
   const showTitle = showData?.title ?? show
 
-  const isAdmin = await isAdminUser()
-  const allShows = isAdmin ? await fetchShowsForEpisodeEdit() : []
-
-  return <EpisodePage episode={ep} showTitle={showTitle} isAdmin={isAdmin} allShows={allShows} />
+  return <EpisodePage episode={ep} showTitle={showTitle} />
 }

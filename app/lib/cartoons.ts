@@ -102,8 +102,13 @@ export interface EpisodeFull extends EpisodeMeta {
   /* ── lookup helpers built from script block word tables ── */
   wordMap: Record<string, CartoonWordEntry>   // plain Arabic → entry
   diacritizedMap: Record<string, CartoonWordEntry> // diacritized Arabic → entry
-  /* ── lemma/root pairs that exist in the definitions table ── */
-  definedRootLemmas?: string[]
+}
+
+export function formatTimestamp(seconds: number | null): string {
+  if (seconds == null) return "0:00"
+  const m = Math.floor(seconds / 60)
+  const s = Math.floor(seconds % 60)
+  return `${m}:${s.toString().padStart(2, "0")}`
 }
 
 export function isNewTranscript(transcript: unknown): transcript is NewTranscript {

@@ -1,6 +1,6 @@
 'use client'
 
-import { AccountCircle, LogoutSharp } from '@mui/icons-material'
+import { LogoutSharp } from '@mui/icons-material'
 import { Box, Menu, MenuItem, Typography } from '@mui/material'
 import { User } from '@supabase/supabase-js'
 
@@ -8,11 +8,10 @@ interface UserMenuProps {
     anchorEl: HTMLElement | null
     onClose: () => void
     user: User | null
-    onProfile: () => void
     onLogout: () => void
 }
 
-export default function UserMenu({ anchorEl, onClose, user, onProfile, onLogout }: UserMenuProps) {
+export default function UserMenu({ anchorEl, onClose, user, onLogout }: UserMenuProps) {
     return (
         <Menu
             anchorEl={anchorEl}
@@ -48,20 +47,6 @@ export default function UserMenu({ anchorEl, onClose, user, onProfile, onLogout 
                         'linear-gradient(90deg, transparent, color-mix(in srgb, var(--awm-gold) 30%, transparent), transparent)',
                 }}
             />
-            <MenuItem
-                onClick={onProfile}
-                sx={{
-                    py: 1.2,
-                    gap: 1.5,
-                    '&:hover': { background: 'color-mix(in srgb, var(--awm-gold) 6%, transparent)' },
-                }}
-            >
-                <AccountCircle sx={{ fontSize: 18, color: 'var(--awm-forest)' }} />
-                <Typography variant="body2" sx={{ color: 'var(--awm-bark)' }}>
-                    My Profile
-                </Typography>
-            </MenuItem>
-            <Box sx={{ height: '1px', background: 'color-mix(in srgb, var(--awm-bark) 7%, transparent)', mx: 2 }} />
             <MenuItem
                 onClick={onLogout}
                 sx={{

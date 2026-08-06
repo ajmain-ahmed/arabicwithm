@@ -29,7 +29,7 @@ export default function Navbar() {
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [contactOpen, setContactOpen] = useState(false)
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
-    const [learnMenuOpen, setLearnMenuOpen] = useState(false)
+    const [cartoonsMenuOpen, setCartoonsMenuOpen] = useState(false)
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
 
     const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -54,7 +54,7 @@ export default function Navbar() {
     const scheduleClose = useCallback(() => {
         if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
         closeTimerRef.current = setTimeout(() => {
-            setLearnMenuOpen(false)
+            setCartoonsMenuOpen(false)
         }, 150)
     }, [])
 
@@ -74,14 +74,14 @@ export default function Navbar() {
     const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M'
 
     const closeAll = () => {
-        setLearnMenuOpen(false)
+        setCartoonsMenuOpen(false)
         setDrawerOpen(false)
     }
 
     const handleBrandClick = () => {
         safePush('/')
         setDrawerOpen(false)
-        setLearnMenuOpen(false)
+        setCartoonsMenuOpen(false)
     }
 
     return (
@@ -106,10 +106,6 @@ export default function Navbar() {
                 anchorEl={userMenuAnchor}
                 onClose={() => setUserMenuAnchor(null)}
                 user={user}
-                onProfile={() => {
-                    setUserMenuAnchor(null)
-                    safePush('/profile')
-                }}
                 onLogout={() => {
                     setUserMenuAnchor(null)
                     handleLogout()
@@ -172,12 +168,12 @@ export default function Navbar() {
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                     {NAV_ITEMS.map((item) => (
                                         <Box key={item} sx={{ position: 'relative' }}>
-                                            {item === 'Learn' ? (
+                                            {item === 'Cartoons' ? (
                                                 <Box
-                                                    className="learn-trigger"
+                                                    className="cartoons-trigger"
                                                     onMouseEnter={() => {
                                                         cancelClose()
-                                                        setLearnMenuOpen(true)
+                                                        setCartoonsMenuOpen(true)
                                                     }}
                                                     onMouseLeave={scheduleClose}
                                                 >
@@ -270,7 +266,7 @@ export default function Navbar() {
                 </Container>
 
                 <AnimatePresence>
-                    {learnMenuOpen && !isMobile && (
+                    {cartoonsMenuOpen && !isMobile && (
                         <motion.div
                             ref={menuContainerRef}
                             initial={{ opacity: 0, y: -20, height: 0 }}

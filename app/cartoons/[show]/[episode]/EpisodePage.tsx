@@ -17,31 +17,26 @@ import {
   Tabs,
   Tab,
   Button,
-  IconButton,
   Divider,
   useMediaQuery,
   Chip,
   Breadcrumbs,
-  Popover,
   SwipeableDrawer,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ArrowBack, Settings, ExpandMore, ExpandLess, ChevronRight, Edit, OpenInFull } from '@mui/icons-material'
+import { ArrowBack, Settings, ExpandMore, ExpandLess, ChevronRight } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { stripDiacritics } from '@/app/lib/arabic'
-import { EpisodeFull, CartoonWordEntry, type ScriptBlock, type NewTranscript, type NewTranscriptBlock, type NewTranscriptToken } from '@/app/lib/cartoons'
+import { EpisodeFull, CartoonWordEntry } from '@/app/lib/cartoons'
 import { type ShowRow } from '@/app/actions/admin'
+import { fetchShowsForEpisodeEdit } from '@/app/actions/cartoons'
 import { HtmlTooltip, WordTooltip, LEVEL_COLORS } from '@/app/components/vocab-tooltip'
-import EpisodeEditDialog from '@/app/admin/components/EpisodeEditDialog'
-import DictionaryDetailsDialog from './DictionaryDetailsDialog'
-import {
-  PillToggle,
-  DesktopTextScaleSlider,
-  SettingsDialog,
-} from '@/app/components/settings-controls'
-import ScriptBlockEditor, { formatTimestamp } from './ScriptBlockEditor'
-import { updateEpisode } from '@/app/actions/admin'
+import { SettingsDialog } from '@/app/components/settings-controls'
+import { useIsAdmin } from '@/app/lib/useIsAdmin'
+
+const EpisodeEditDialog = dynamic(() => import('@/app/(admin)/admin/components/EpisodeEditDialog'), { ssr: false })
 
 // ─── Fallback — used before we measure the real navbar ────────────────────────
 const NAVBAR_HEIGHT = 64 // px
@@ -154,97 +149,34 @@ const PAGE_CSS = `
 `
 
 /* ─────────────────────────────────────────────
-   Shared action buttons
+   Settings button — opens the settings dialog
 ───────────────────────────────────────────── */
-function EditButton({ onClick }: { onClick: () => void }) {
+interface SettingsButtonProps {
+  onClick: () => void
+}
+
+function SettingsButton({ onClick }: SettingsButtonProps) {
   return (
-    <IconButton
+    <Button
       onClick={onClick}
       size="small"
+      startIcon={<Settings sx={{ fontSize: 18 }} />}
       sx={{
         color: 'var(--gold)',
         border: '1px solid rgba(184,134,11,0.3)',
         borderRadius: '8px',
+        textTransform: 'none',
+        fontFamily: 'Jost, sans-serif',
+        fontWeight: 600,
+        fontSize: '0.85rem',
+        px: 1.5,
+        minWidth: 0,
         '&:hover': { bgcolor: 'rgba(184,134,11,0.08)' },
       }}
-      aria-label="Edit episode"
+      aria-label="Settings"
     >
-      <Edit sx={{ fontSize: 18 }} />
-    </IconButton>
-  )
-}
-
-interface SettingsButtonProps {
-  isMobileViewport: boolean
-  settingsAnchor: HTMLElement | null
-  setSettingsAnchor: (el: HTMLElement | null) => void
-  setSettingsOpen: (open: boolean) => void
-  showDiacritics: boolean
-  setShowDiacritics: (v: boolean) => void
-  textScale: number
-  setTextScale: (v: number) => void
-}
-
-function SettingsButton({
-  isMobileViewport,
-  settingsAnchor,
-  setSettingsAnchor,
-  setSettingsOpen,
-  showDiacritics,
-  setShowDiacritics,
-  textScale,
-  setTextScale,
-}: SettingsButtonProps) {
-  return (
-    <>
-      <IconButton
-        onClick={isMobileViewport ? () => setSettingsOpen(true) : (e) => setSettingsAnchor(e.currentTarget)}
-        size="small"
-        sx={{
-          color: 'var(--gold)',
-          border: '1px solid rgba(184,134,11,0.3)',
-          borderRadius: '8px',
-          '&:hover': { bgcolor: 'rgba(184,134,11,0.08)' },
-        }}
-        aria-label="Settings"
-      >
-        <Settings sx={{ fontSize: 20 }} />
-      </IconButton>
-      <Popover
-        open={Boolean(settingsAnchor)}
-        anchorEl={settingsAnchor}
-        onClose={() => setSettingsAnchor(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: '12px',
-              boxShadow: '0 12px 40px rgba(44,26,14,0.15)',
-              p: 1.5,
-              width: 'auto',
-              minWidth: 160,
-              border: '1px solid rgba(44,26,14,0.08)',
-            },
-          },
-        }}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box>
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)', mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Text Size
-            </Typography>
-            <DesktopTextScaleSlider textScale={textScale} onChange={setTextScale} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.7rem', fontWeight: 600, color: 'var(--muted)', mb: 0.5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Diacritics
-            </Typography>
-            <PillToggle enabled={showDiacritics} onToggle={() => setShowDiacritics(!showDiacritics)} label={showDiacritics ? 'Hide diacritics' : 'Show diacritics'} activeColor="#b8860b" />
-          </Box>
-        </Box>
-      </Popover>
-    </>
+      Settings
+    </Button>
   )
 }
 
@@ -259,8 +191,7 @@ function MobileFixedHeader({
   hasVideo,
   onHeightChange,
   top,
-  overlayActive,
-  settingsProps,
+  onSettingsClick,
 }: {
   title: string
   onBack: () => void
@@ -269,8 +200,7 @@ function MobileFixedHeader({
   hasVideo: boolean
   onHeightChange?: (height: number) => void
   top: number
-  overlayActive?: boolean
-  settingsProps: SettingsButtonProps
+  onSettingsClick: () => void
 }) {
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -348,7 +278,7 @@ function MobileFixedHeader({
 
         {/* Actions — settings only on mobile */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          <SettingsButton {...settingsProps} />
+          <SettingsButton onClick={onSettingsClick} />
         </div>
       </div>
 
@@ -374,24 +304,6 @@ function MobileFixedHeader({
             }}
             style={{ width: '100%', height: '100%' }}
           />
-
-          {/* Capture touches that leak through the vocab drawer/dialog so they
-              don't reach the YouTube iframe and toggle playback. */}
-          {overlayActive && (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                zIndex: 20,
-                background: 'transparent',
-                touchAction: 'none',
-              }}
-              onTouchStart={(e) => e.preventDefault()}
-              onTouchEnd={(e) => e.preventDefault()}
-              onClick={(e) => e.stopPropagation()}
-            />
-          )}
-
 
         </div>
       )}
@@ -430,23 +342,17 @@ function ArabicLineText({
   words,
   wordMap,
   diacritizedMap,
-  definedRootLemmas,
   textScale,
   showDiacritics,
-  onDictionaryDialogChange,
   onDrawerOpenChange,
-  isAdmin,
 }: {
   text: string
   words?: CartoonWordEntry[]
   wordMap: Record<string, CartoonWordEntry>
   diacritizedMap: Record<string, CartoonWordEntry>
-  definedRootLemmas: string[]
   textScale: number
   showDiacritics: boolean
-  onDictionaryDialogChange?: (open: boolean) => void
   onDrawerOpenChange?: (open: boolean) => void
-  isAdmin?: boolean
 }) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
@@ -454,9 +360,6 @@ function ArabicLineText({
   const [activeEntry, setActiveEntry] = useState<CartoonWordEntry | null>(null)
   const [activePartIndex, setActivePartIndex] = useState<number | null>(null)
   const [open, setOpen] = useState(false)
-
-  const [detailsEntry, setDetailsEntry] = useState<CartoonWordEntry | null>(null)
-  const [detailsOpen, setDetailsOpen] = useState(false)
 
   const [drawerEntry, setDrawerEntry] = useState<CartoonWordEntry | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -489,27 +392,6 @@ function ArabicLineText({
     childRef.current = el
   }, [clearLeaveTimer])
 
-  const handleClose = useCallback(() => {
-    clearLeaveTimer()
-    setOpen(false)
-    setActiveEntry(null)
-    setActivePartIndex(null)
-    childRef.current = null
-    lastVocabCloseAt = Date.now()
-  }, [clearLeaveTimer])
-
-  const handleShowDetails = useCallback((entry: CartoonWordEntry) => {
-    setDetailsEntry(entry)
-    setDetailsOpen(true)
-    onDictionaryDialogChange?.(true)
-    handleClose()
-  }, [handleClose, onDictionaryDialogChange])
-
-  const handleDetailsClose = useCallback(() => {
-    setDetailsOpen(false)
-    onDictionaryDialogChange?.(false)
-  }, [onDictionaryDialogChange])
-
   const handleOpenDrawer = useCallback((entry: CartoonWordEntry) => {
     setDrawerEntry(entry)
     setDrawerOpen(true)
@@ -520,13 +402,6 @@ function ArabicLineText({
     setDrawerOpen(false)
     onDrawerOpenChange?.(false)
   }, [onDrawerOpenChange])
-
-  const handleExpandDrawer = useCallback(() => {
-    if (!drawerEntry) return
-    setDrawerOpen(false)
-    onDrawerOpenChange?.(false)
-    handleShowDetails(drawerEntry)
-  }, [drawerEntry, handleShowDetails, onDrawerOpenChange])
 
   useVocabOpenTracker(open)
 
@@ -667,9 +542,7 @@ function ArabicLineText({
 
         const { text: wordText, entry, index } = seg
         const isActive = activeEntry === entry && open && activePartIndex === index
-        const rootLemmaKey = `${entry.lemma || entry.arabic}|${entry.root ?? ""}`
-        const hasDefinition = definedRootLemmas.includes(rootLemmaKey)
-        const underlineColor = hasDefinition ? 'var(--gold)' : '#c62828'
+        const underlineColor = 'var(--gold)'
 
         /* ── Mobile: tap word → bottom-sheet summary ── */
         if (isMobile) {
@@ -748,10 +621,6 @@ function ArabicLineText({
             }}
           >
             <span
-              onClick={(e) => {
-                e.stopPropagation()
-                handleShowDetails(entry)
-              }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
                 handleOpen(entry, e.currentTarget, index)
@@ -795,17 +664,6 @@ function ArabicLineText({
       >
         {drawerEntry && (
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', px: 1.5, pt: 1, pb: 0.5 }}>
-              <IconButton
-                onClick={handleExpandDrawer}
-                size="small"
-                sx={{ color: 'var(--muted)', '&:hover': { color: 'var(--gold)' } }}
-                aria-label="Open full dictionary"
-              >
-                <OpenInFull sx={{ fontSize: '1.3rem' }} />
-              </IconButton>
-            </Box>
-
             <Box
               sx={{
                 px: 3,
@@ -898,17 +756,6 @@ function ArabicLineText({
         )}
       </SwipeableDrawer>
 
-      <DictionaryDetailsDialog
-        key={detailsEntry ? `${detailsEntry.lemma}:${detailsEntry.root ?? ''}:${detailsEntry.arabic}` : 'closed'}
-        open={detailsOpen}
-        onClose={handleDetailsClose}
-        lemma={detailsEntry?.lemma}
-        root={detailsEntry?.root}
-        surfaceArabic={detailsEntry?.arabic}
-        transcriptEntry={detailsEntry}
-        showDiacritics={showDiacritics}
-        isAdmin={isAdmin}
-      />
     </>
   )
 }
@@ -919,102 +766,37 @@ function ArabicLineText({
 export default function EpisodePage({
   episode,
   showTitle,
-  isAdmin,
-  allShows,
 }: {
   episode: EpisodeFull
   showTitle: string
-  isAdmin?: boolean
-  allShows?: ShowRow[]
 }) {
   const router = useRouter()
+  const isAdmin = useIsAdmin()
   const [tab, setTab] = useState(0)
   const [showDiacritics, setShowDiacritics] = useState(true)
   const [textScale, setTextScale] = useState(1.3)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement | null>(null)
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set())
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
 
   const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [dictionaryDialogOpen, setDictionaryDialogOpen] = useState(false)
   const [mobileWordDrawerOpen, setMobileWordDrawerOpen] = useState(false)
-  const [editingBlockIndex, setEditingBlockIndex] = useState<number | null>(null)
-  const [savingBlock, setSavingBlock] = useState(false)
+  const [allShows, setAllShows] = useState<ShowRow[]>([])
 
-  const handleBlockSave = async (index: number, updatedBlock: ScriptBlock) => {
+  useEffect(() => {
     if (!isAdmin) return
-    setSavingBlock(true)
-    try {
-      if (episode.transcriptFormat === 'legacy') {
-        // Preserve every top-level field in the original transcript (slug, tags,
-        // youtubeId, description, etc.) and only replace the one
-        // edited script block in the raw scriptBlocks array. This keeps app_vocab
-        // enrichment from leaking back into persisted data.
-        const rawTranscript = { ...(episode.transcript as Record<string, unknown> ?? {}) }
-        const rawBlocks = Array.isArray(rawTranscript.scriptBlocks)
-          ? (rawTranscript.scriptBlocks as Record<string, unknown>[])
-          : []
-        const updatedRawBlocks = rawBlocks.map((b, i) =>
-          i === index ? (updatedBlock as unknown as Record<string, unknown>) : b
-        )
-        await updateEpisode(
-          episode.id,
-          {
-            transcript: {
-              ...rawTranscript,
-              scriptBlocks: updatedRawBlocks,
-            },
-          },
-          `/cartoons/${episode.show}/${episode.slug}`
-        )
-      } else {
-        // New block-based format: map the edited ScriptBlock back to a
-        // NewTranscriptBlock, preserving original token metadata (root, lemma,
-        // entry_type, CEFR) and overwriting user-editable fields.
-        const rawBlocks = Array.isArray(episode.transcript)
-          ? (episode.transcript as NewTranscript)
-          : []
-        const originalBlock = rawBlocks[index]
-        const originalTokens = Array.isArray(originalBlock?.tokens)
-          ? originalBlock.tokens
-          : []
-
-        const updatedRawBlock: NewTranscriptBlock = {
-          timestamp: formatTimestamp(updatedBlock.timestamp),
-          translation: updatedBlock.title,
-          tokens: updatedBlock.words.map((w, wordIdx) => {
-            const original = originalTokens[wordIdx]
-            const token: NewTranscriptToken = {
-              root: w.root ?? original?.root ?? null,
-              lemma: w.lemma?.trim() || original?.lemma?.trim() || w.arabic.trim(),
-              arabic: w.arabic,
-              entry_type: w.entry_type || original?.entry_type || 'word',
-              transliteration: w.transliteration,
-              english: w.english,
-              pos: w.pos?.trim() || original?.pos?.trim() || 'unknown',
-            }
-            const cefrRaw = w.cefr?.trim() || original?.cefr?.trim() || (original?.CEFR?.trim() ?? '')
-            if (cefrRaw) token.cefr = cefrRaw.toLowerCase()
-            return token
-          }),
-        }
-
-        const updatedRawBlocks = rawBlocks.map((b, i) => (i === index ? updatedRawBlock : b))
-        await updateEpisode(
-          episode.id,
-          {
-            transcript: updatedRawBlocks as unknown as Record<string, unknown>,
-          },
-          `/cartoons/${episode.show}/${episode.slug}`
-        )
-      }
-      setEditingBlockIndex(null)
-      router.refresh()
-    } finally {
-      setSavingBlock(false)
+    let cancelled = false
+    fetchShowsForEpisodeEdit()
+      .then((shows) => {
+        if (!cancelled) setAllShows(shows)
+      })
+      .catch((err) => {
+        console.error("[EpisodePage] failed to load shows for edit:", err)
+      })
+    return () => {
+      cancelled = true
     }
-  }
+  }, [isAdmin])
 
   const theme = useTheme()
   const isMobileViewport = useMediaQuery(theme.breakpoints.down('md'))
@@ -1105,26 +887,21 @@ export default function EpisodePage({
     handleTimeUpdate
   )
 
-  // Keep the YouTube wrapper non-interactive for a short delay after a mobile
-  // overlay (word drawer / dictionary details) closes. The tap that dismisses
-  // the overlay is sometimes re-delivered to the iframe once it unmounts,
-  // which would toggle playback.
-  const [mobileOverlayActive, setMobileOverlayActive] = useState(false)
-  const mobileOverlayOpen = mobileWordDrawerOpen || dictionaryDialogOpen
+  // Keep the YouTube wrapper non-interactive for a short delay after the mobile
+  // word drawer closes. The tap that dismisses the drawer is sometimes
+  // re-delivered to the iframe once it unmounts, which would toggle playback.
+  const mobileOverlayOpen = mobileWordDrawerOpen
   useEffect(() => {
+    if (!wrapRef.current) return
     if (mobileOverlayOpen) {
-      setMobileOverlayActive(true)
+      wrapRef.current.style.pointerEvents = 'none'
       return
     }
-    const t = setTimeout(() => setMobileOverlayActive(false), 250)
+    const t = setTimeout(() => {
+      if (wrapRef.current) wrapRef.current.style.pointerEvents = 'auto'
+    }, 250)
     return () => clearTimeout(t)
-  }, [mobileOverlayOpen])
-
-  useEffect(() => {
-    if (wrapRef.current) {
-      wrapRef.current.style.pointerEvents = mobileOverlayActive ? 'none' : 'auto'
-    }
-  }, [mobileOverlayActive, wrapRef])
+  }, [mobileOverlayOpen, wrapRef])
 
   useEffect(() => {
     if (activeIndex == null) return
@@ -1162,16 +939,7 @@ export default function EpisodePage({
     .map((b) => b.index)
   const allNotesExpanded = blocksWithNotes.length > 0 && blocksWithNotes.every((i) => expandedNotes.has(i))
 
-  const settingsProps: SettingsButtonProps = {
-    isMobileViewport,
-    settingsAnchor,
-    setSettingsAnchor,
-    setSettingsOpen,
-    showDiacritics,
-    setShowDiacritics,
-    textScale,
-    setTextScale,
-  }
+  const openSettings = useCallback(() => setSettingsOpen(true), [])
 
   return (
     <>
@@ -1197,8 +965,7 @@ export default function EpisodePage({
           isShort={true}
           hasVideo={!!episode.youtubeId}
           onHeightChange={setMobileHeaderHeight}
-          overlayActive={mobileOverlayActive}
-          settingsProps={settingsProps}
+          onSettingsClick={openSettings}
         />
       )}
 
@@ -1361,8 +1128,7 @@ export default function EpisodePage({
               </Breadcrumbs>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                {isAdmin && <EditButton onClick={() => setEditDialogOpen(true)} />}
-                <SettingsButton {...settingsProps} />
+                <SettingsButton onClick={openSettings} />
               </Box>
             </Box>
 
@@ -1432,31 +1198,6 @@ export default function EpisodePage({
                       const hasTimestamp = block.timestamp != null
                       const isActive = activeIndex === i
                       const isLast = i === episode.scriptBlocks.length - 1
-                      if (editingBlockIndex === i) {
-                        // For legacy format, edit the raw script block so we don't
-                        // overwrite the transcript with app_vocab-enriched values.
-                        // For the new block-based format, the normalized block maps
-                        // 1:1 to a raw block, so handleBlockSave converts it back.
-                        const rawBlock =
-                          episode.transcriptFormat === 'legacy'
-                            ? (() => {
-                                const legacyTranscript = episode.transcript as Record<string, unknown>
-                                const rawBlocks = Array.isArray(legacyTranscript.scriptBlocks)
-                                  ? (legacyTranscript.scriptBlocks as ScriptBlock[])
-                                  : []
-                                return rawBlocks[i] ?? block
-                              })()
-                            : block
-                        return (
-                          <ScriptBlockEditor
-                            key={`edit-${i}`}
-                            block={rawBlock}
-                            onSave={(updated) => handleBlockSave(i, updated)}
-                            onCancel={() => setEditingBlockIndex(null)}
-                            disabled={savingBlock}
-                          />
-                        )
-                      }
                       return (
                         <React.Fragment key={i}>
                           <Box
@@ -1464,10 +1205,8 @@ export default function EpisodePage({
                             className={`script-block ${isActive ? 'active' : ''}`}
                             onClick={(e) => {
                               if (openVocabCount > 0) return
-                              if (dictionaryDialogOpen) return
                               if (Date.now() - lastVocabCloseAt < 120) return
                               if ((e.target as HTMLElement).closest('.vocab-word')) return
-                              if ((e.target as HTMLElement).closest('.edit-block-btn')) return
                               if (hasTimestamp) {
                                 seekTo(block.timestamp!)
                               }
@@ -1486,24 +1225,6 @@ export default function EpisodePage({
                                   {block.title}
                                 </Typography>
                               </Box>
-                              {isAdmin && (
-                                <IconButton
-                                  size="small"
-                                  className="edit-block-btn"
-                                  aria-label="Edit this sentence"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setEditingBlockIndex(i)
-                                  }}
-                                  sx={{
-                                    color: 'var(--gold)',
-                                    p: 0.5,
-                                    '&:hover': { color: '#b8860b', bgcolor: 'rgba(184,134,11,0.1)' },
-                                  }}
-                                >
-                                  <Edit sx={{ fontSize: '1rem' }} />
-                                </IconButton>
-                              )}
                             </Box>
 
                             {/* Arabic */}
@@ -1514,11 +1235,8 @@ export default function EpisodePage({
                                 words={block.words}
                                 wordMap={episode.wordMap}
                                 diacritizedMap={episode.diacritizedMap}
-                                definedRootLemmas={episode.definedRootLemmas ?? []}
                                 showDiacritics={showDiacritics}
-                                onDictionaryDialogChange={setDictionaryDialogOpen}
                                 onDrawerOpenChange={setMobileWordDrawerOpen}
-                                isAdmin={isAdmin}
                               />
                             </Typography>
 

@@ -1,9 +1,5 @@
-import { getAllLevels } from './lib/study'
 import HomeHero from './components/HomeHero'
-import CefrLevelsSection from './components/CefrLevelsSection'
-import ChooseYourPath from './components/ChooseYourPath'
 import CartoonSection from './components/CartoonSection'
-import StudySection from './components/StudySection'
 
 /* ─────────────────────────────────────────────
    Global CSS — system fonts only
@@ -33,18 +29,13 @@ const PAGE_CSS = `
 `
 
 export default async function HomePage() {
-  const levels = await getAllLevels()
-
   return (
     <>
       <style>{PAGE_CSS}</style>
 
       <main style={{ background: '#fff', minHeight: '100vh' }}>
         <HomeHero />
-        <CefrLevelsSection levels={levels} />
-        <ChooseYourPath />
         <CartoonSection />
-        <StudySection />
       </main>
     </>
   )

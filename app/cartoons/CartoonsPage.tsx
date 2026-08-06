@@ -17,6 +17,7 @@ import { PageBanner } from '@/app/components/page-layout'
 import { FilterSidebar, ContentCard } from '@/app/components/content-grid'
 import ShowEditDialog from './components/ShowEditDialog'
 import { deleteShow } from '@/app/actions/admin'
+import { useIsAdmin } from '@/app/lib/useIsAdmin'
 
 /* ── MUI Icons ── */
 import {
@@ -46,12 +47,11 @@ const LEVELS = ['A1-A2', 'A2-B1', 'B1-B2', 'B2-C1']
 export default function CartoonsPage({
   shows,
   episodesMap,
-  isAdmin,
 }: {
   shows: ShowMeta[]
   episodesMap: Record<string, string[]>
-  isAdmin?: boolean
 }) {
+  const isAdmin = useIsAdmin()
   const [activeCategory, setActiveCategory] = useState('All Shows')
   const [activeLevel, setActiveLevel] = useState('')
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)

@@ -2,10 +2,9 @@
 // Server Component — fetches cartoon shows and episode slugs from Supabase.
 
 import { fetchShowsForPublic, fetchEpisodesForShowPublic } from '@/app/actions/cartoons'
-import { isAdminUser } from '@/app/actions/vocab'
 import CartoonsPage from './CartoonsPage'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export const metadata = {
   title: 'Arabic Cartoons | ArabicWithM',
@@ -22,6 +21,5 @@ export default async function Page() {
     episodesMap[show.slug] = episodes.map((ep) => ep.slug)
   }
 
-  const isAdmin = await isAdminUser()
-  return <CartoonsPage shows={shows} episodesMap={episodesMap} isAdmin={isAdmin} />
+  return <CartoonsPage shows={shows} episodesMap={episodesMap} />
 }

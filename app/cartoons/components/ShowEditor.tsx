@@ -5,7 +5,7 @@ import { Box, Button, Paper, Typography } from "@mui/material"
 import { Save, Cancel, Delete } from "@mui/icons-material"
 import { type ShowMeta } from "@/app/lib/cartoons"
 import { createShow, updateShow, deleteShow } from "@/app/actions/admin"
-import NativeField from "@/app/admin/components/NativeField"
+import NativeField from "@/app/(admin)/admin/components/NativeField"
 
 interface ShowEditorProps {
   show?: ShowMeta

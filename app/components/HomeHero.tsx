@@ -12,10 +12,6 @@ import React, { useState, useEffect } from "react";
 const SUBHEADLINES = [
   "with movies",
   "with cartoons",
-  "with poetry",
-  "with quotes",
-  "with stories",
-  "with flashcards",
 ];
 
 /* ─────────────────────────────────────────────
@@ -26,10 +22,7 @@ function getCtaConfig(subheadline: string) {
   if (sh.includes("movies") || sh.includes("cartoons")) {
     return { label: "Start Watching", href: "/cartoons" };
   }
-  if (sh.includes("flashcards")) {
-    return { label: "Start Learning", href: "/flashcards" };
-  }
-  return { label: "Start Reading", href: "/" };
+  return { label: "Start Watching", href: "/cartoons" };
 }
 
 export default function HomeHero() {
@@ -185,7 +178,7 @@ export default function HomeHero() {
             textShadow: '0 1px 8px rgba(0,0,0,0.4)',
           }}
         >
-          CEFR-based flashcards, worksheets, subbed animations and more.
+          CEFR-based cartoons with interactive Arabic subtitles.
         </Typography>
 
         {/* CTA pill button — fixed width, dynamic label + route */}

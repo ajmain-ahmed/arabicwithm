@@ -3,15 +3,11 @@
 import React, { useSyncExternalStore } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { BottomNavigation, BottomNavigationAction, Box } from '@mui/material'
-import { Home, School, MenuBook, Movie, Person } from '@mui/icons-material'
-import { useAuth } from '@/app/AuthContext'
+import { Home, Movie } from '@mui/icons-material'
 
 const NAV_ITEMS = [
   { value: '/', label: 'Home', icon: <Home sx={{ fontSize: 22 }} /> },
-  { value: '/flashcards', label: 'Study', icon: <School sx={{ fontSize: 22 }} /> },
-  { value: '/news', label: 'News', icon: <MenuBook sx={{ fontSize: 22 }} /> },
   { value: '/cartoons', label: 'Cartoons', icon: <Movie sx={{ fontSize: 22 }} /> },
-  { value: '/profile', label: 'Profile', icon: <Person sx={{ fontSize: 22 }} /> },
 ]
 
 function safePush(router: ReturnType<typeof useRouter>, url: string) {
@@ -20,17 +16,13 @@ function safePush(router: ReturnType<typeof useRouter>, url: string) {
 
 function getActiveValue(pathname: string): string {
   if (pathname === '/') return '/'
-  if (pathname.startsWith('/flashcards')) return '/flashcards'
-  if (pathname.startsWith('/news')) return '/news'
   if (pathname.startsWith('/cartoons')) return '/cartoons'
-  if (pathname.startsWith('/profile')) return '/profile'
   return ''
 }
 
 export default function MobileBottomNav() {
   const router = useRouter()
   const pathname = usePathname()
-  const { user } = useAuth()
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -44,10 +36,6 @@ export default function MobileBottomNav() {
 
   const handleChange = (_: React.SyntheticEvent, newValue: string) => {
     if (!newValue || newValue === activeValue) return
-    if (newValue === '/profile' && !user) {
-      window.dispatchEvent(new CustomEvent('open-auth-dialog'))
-      return
-    }
     safePush(router, newValue)
   }
 

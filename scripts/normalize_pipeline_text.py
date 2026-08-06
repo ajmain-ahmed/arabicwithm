@@ -95,11 +95,6 @@ alert_replacements = [
         '<Alert severity="error" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>',
         '<Alert severity="error" sx={{ mb: 3, fontFamily: "Jost, sans-serif", borderRadius: "10px", fontSize: "0.95rem" }}>',
     ),
-    # ExistingDefinitionsList info alert
-    (
-        '<Alert severity="info" sx={{ fontFamily: "Jost, sans-serif", borderRadius: "10px" }}>',
-        '<Alert severity="info" sx={{ fontFamily: "Jost, sans-serif", borderRadius: "10px", fontSize: "0.95rem" }}>',
-    ),
 ]
 
 for old, new in alert_replacements:

@@ -1,9 +1,13 @@
 import { notFound } from 'next/navigation'
-import { fetchShowBySlugPublic, fetchEpisodesForShowPublic } from '@/app/actions/cartoons'
-import { isAdminUser } from '@/app/actions/vocab'
+import { fetchShowBySlugPublic, fetchEpisodesForShowPublic, fetchShowsForPublic } from '@/app/actions/cartoons'
 import ShowPage from './ShowPage'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
+
+export async function generateStaticParams() {
+  const shows = await fetchShowsForPublic()
+  return shows.map((show) => ({ show: show.slug }))
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ show: string }> }) {
   const { show } = await params
@@ -21,6 +25,5 @@ export default async function Page({ params }: { params: Promise<{ show: string 
   if (!showData) notFound()
 
   const episodes = await fetchEpisodesForShowPublic(show)
-  const isAdmin = await isAdminUser()
-  return <ShowPage show={showData} episodes={episodes} isAdmin={isAdmin} />
+  return <ShowPage show={showData} episodes={episodes} />
 }

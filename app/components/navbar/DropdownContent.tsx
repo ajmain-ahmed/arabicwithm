@@ -1,7 +1,7 @@
 'use client'
 
 import { Box, Typography } from '@mui/material'
-import { MegaSection, NavigateFn, CARTOON_SLUG_MAP, STUDY_LEVEL_MAP } from './constants'
+import { MegaSection, NavigateFn, CARTOON_SLUG_MAP } from './constants'
 
 interface DropdownContentProps {
     section: MegaSection
@@ -12,34 +12,13 @@ interface DropdownContentProps {
 
 export default function DropdownContent({ section, isMobile = false, navigate, closeAll }: DropdownContentProps) {
     const handleItemClick = (item: string) => {
-        if (section.header === 'Study') {
-            const slug = STUDY_LEVEL_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-')
-            navigate(`/flashcards/${slug}`)
-        } else if (section.header === 'Cartoons') {
-            const slug = CARTOON_SLUG_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-')
-            navigate(`/cartoons/${slug}`)
-        } else if (section.header === 'Reading' && item === 'News') {
-            navigate('/news')
-        } else if (section.header === 'Reading' && item === 'Literature') {
-            navigate('/literature')
-        } else if (section.header === 'Reading') {
-            const key = item.toLowerCase().replace(/\s+/g, '-')
-            navigate(`/learn/reading/${key}`)
-        } else {
-            const key = item.toLowerCase().replace(/\s+/g, '-')
-            navigate(`/learn/${section.header.toLowerCase()}/${key}`)
-        }
+        const slug = CARTOON_SLUG_MAP[item] ?? item.toLowerCase().replace(/\s+/g, '-')
+        navigate(`/cartoons/${slug}`)
         closeAll()
     }
 
     const handleHeaderClick = () => {
-        if (section.header === 'Cartoons') {
-            navigate('/cartoons')
-        } else if (section.header === 'Study') {
-            navigate('/flashcards')
-        } else if (section.header === 'Reading') {
-            navigate('/news')
-        }
+        navigate('/cartoons')
         closeAll()
     }
 
@@ -57,12 +36,12 @@ export default function DropdownContent({ section, isMobile = false, navigate, c
             >
                 {!isMobile && section.icon}
                 <Typography
-                    className={section.header === 'Cartoons' ? 'cartoon-header-link' : undefined}
+                    className="cartoon-header-link"
                     onClick={handleHeaderClick}
                     variant="h6"
                     sx={{
                         letterSpacing: '0.02em',
-                        cursor: section.header === 'Cartoons' || section.header === 'Study' ? 'pointer' : 'default',
+                        cursor: 'pointer',
                     }}
                 >
                     {section.header}

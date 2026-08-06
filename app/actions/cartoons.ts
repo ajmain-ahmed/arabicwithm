@@ -2,7 +2,7 @@
 
 import fs from "fs"
 import path from "path"
-import { unstable_noStore } from "next/cache"
+import { unstable_cache } from "next/cache"
 import { serviceClient } from "@/app/lib/supabase"
 import {
   type ShowMeta,
@@ -94,45 +94,49 @@ function normalizeEpisodeCover(
 
 /* ── Shows ─────────────────────────────────────────────────────────── */
 
-export async function fetchShowsForPublic(): Promise<ShowMeta[]> {
-  const { data: shows, error } = await serviceClient
-    .from("shows")
-    .select("id, slug, title, title_ar, description, cover, level, category")
-    .order("title", { ascending: true })
+export const fetchShowsForPublic = unstable_cache(
+  async (): Promise<ShowMeta[]> => {
+    const { data: shows, error } = await serviceClient
+      .from("shows")
+      .select("id, slug, title, title_ar, description, cover, level, category")
+      .order("title", { ascending: true })
 
-  if (error) {
-    console.error("[fetchShowsForPublic] error:", error.message)
-    throw new Error(error.message)
-  }
+    if (error) {
+      console.error("[fetchShowsForPublic] error:", error.message)
+      throw new Error(error.message)
+    }
 
-  // Count episodes per show in one query.
-  const { data: episodes, error: epError } = await serviceClient
-    .from("episodes")
-    .select("show_id")
+    // Count episodes per show in one query.
+    const { data: episodes, error: epError } = await serviceClient
+      .from("episodes")
+      .select("show_id")
 
-  if (epError) {
-    console.error("[fetchShowsForPublic] episodes error:", epError.message)
-    throw new Error(epError.message)
-  }
+    if (epError) {
+      console.error("[fetchShowsForPublic] episodes error:", epError.message)
+      throw new Error(epError.message)
+    }
 
-  const counts = new Map<string, number>()
-  for (const ep of episodes ?? []) {
-    const id = String(ep.show_id)
-    counts.set(id, (counts.get(id) ?? 0) + 1)
-  }
+    const counts = new Map<string, number>()
+    for (const ep of episodes ?? []) {
+      const id = String(ep.show_id)
+      counts.set(id, (counts.get(id) ?? 0) + 1)
+    }
 
-  return (shows ?? []).map((row) => ({
-    id: String(row.id),
-    slug: String(row.slug),
-    title: String(row.title),
-    titleAr: row.title_ar ? String(row.title_ar) : undefined,
-    description: row.description ? String(row.description) : undefined,
-    cover: normalizeShowCover(row.cover ? String(row.cover) : null, String(row.slug)),
-    level: String(row.level ?? ""),
-    category: row.category ? String(row.category) : undefined,
-    episodeCount: counts.get(String(row.id)) ?? 0,
-  }))
-}
+    return (shows ?? []).map((row) => ({
+      id: String(row.id),
+      slug: String(row.slug),
+      title: String(row.title),
+      titleAr: row.title_ar ? String(row.title_ar) : undefined,
+      description: row.description ? String(row.description) : undefined,
+      cover: normalizeShowCover(row.cover ? String(row.cover) : null, String(row.slug)),
+      level: String(row.level ?? ""),
+      category: row.category ? String(row.category) : undefined,
+      episodeCount: counts.get(String(row.id)) ?? 0,
+    }))
+  },
+  ["cartoons", "shows", "public"],
+  { revalidate: 300 }
+)
 
 export async function fetchShowsForEpisodeEdit(): Promise<ShowRow[]> {
   const { data, error } = await serviceClient
@@ -157,237 +161,210 @@ export async function fetchShowsForEpisodeEdit(): Promise<ShowRow[]> {
   }))
 }
 
-export async function fetchShowBySlugPublic(slug: string): Promise<ShowMeta | null> {
-  const { data, error } = await serviceClient
-    .from("shows")
-    .select("id, slug, title, title_ar, description, cover, level, category")
-    .eq("slug", slug)
-    .limit(1)
-    .single()
+export const fetchShowBySlugPublic = unstable_cache(
+  async (slug: string): Promise<ShowMeta | null> => {
+    const { data, error } = await serviceClient
+      .from("shows")
+      .select("id, slug, title, title_ar, description, cover, level, category")
+      .eq("slug", slug)
+      .limit(1)
+      .single()
 
-  if (error || !data) return null
+    if (error || !data) return null
 
-  const { count } = await serviceClient
-    .from("episodes")
-    .select("id", { count: "exact", head: true })
-    .eq("show_id", data.id)
+    const { count } = await serviceClient
+      .from("episodes")
+      .select("id", { count: "exact", head: true })
+      .eq("show_id", data.id)
 
-  return {
-    id: String(data.id),
-    slug: String(data.slug),
-    title: String(data.title),
-    titleAr: data.title_ar ? String(data.title_ar) : undefined,
-    description: data.description ? String(data.description) : undefined,
-    cover: normalizeShowCover(data.cover ? String(data.cover) : null, String(data.slug)),
-    level: String(data.level ?? ""),
-    category: data.category ? String(data.category) : undefined,
-    episodeCount: count ?? 0,
-  }
-}
+    return {
+      id: String(data.id),
+      slug: String(data.slug),
+      title: String(data.title),
+      titleAr: data.title_ar ? String(data.title_ar) : undefined,
+      description: data.description ? String(data.description) : undefined,
+      cover: normalizeShowCover(data.cover ? String(data.cover) : null, String(data.slug)),
+      level: String(data.level ?? ""),
+      category: data.category ? String(data.category) : undefined,
+      episodeCount: count ?? 0,
+    }
+  },
+  ["cartoons", "show"],
+  { revalidate: 300 }
+)
 
 /* ── Episodes ──────────────────────────────────────────────────────── */
 
-export async function fetchEpisodesForShowPublic(showSlug: string): Promise<EpisodeMeta[]> {
-  const { data: show, error: showError } = await serviceClient
-    .from("shows")
-    .select("id, slug, cover")
-    .eq("slug", showSlug)
-    .limit(1)
-    .single()
+export const fetchEpisodesForShowPublic = unstable_cache(
+  async (showSlug: string): Promise<EpisodeMeta[]> => {
+    const { data: show, error: showError } = await serviceClient
+      .from("shows")
+      .select("id, slug, cover")
+      .eq("slug", showSlug)
+      .limit(1)
+      .single()
 
-  if (showError || !show) {
-    console.error("[fetchEpisodesForShowPublic] show error:", showError?.message)
-    return []
-  }
-
-  const { data, error } = await serviceClient
-    .from("episodes")
-    .select("id, slug, title, level, tags, description, youtube_id, cover")
-    .eq("show_id", show.id)
-    .order("created_at", { ascending: true })
-
-  if (error) {
-    console.error("[fetchEpisodesForShowPublic] error:", error.message)
-    throw new Error(error.message)
-  }
-
-  const normalizedShowCover = normalizeShowCover(show.cover ? String(show.cover) : null, showSlug)
-
-  return (data ?? []).map((row) =>
-    mapEpisodeRow(row, showSlug, normalizedShowCover)
-  )
-}
-
-export async function fetchEpisodeForPublic(
-  showSlug: string,
-  episodeSlug: string
-): Promise<EpisodeFull | null> {
-  unstable_noStore()
-  const { data: show, error: showError } = await serviceClient
-    .from("shows")
-    .select("id, slug, title")
-    .eq("slug", showSlug)
-    .limit(1)
-    .single()
-
-  if (showError || !show) {
-    console.error("[fetchEpisodeForPublic] show error:", showError?.message)
-    return null
-  }
-
-  const { data, error } = await serviceClient
-    .from("episodes")
-    .select("id, slug, title, level, tags, description, youtube_id, transcript")
-    .eq("show_id", show.id)
-    .eq("slug", episodeSlug)
-    .limit(1)
-    .single()
-
-  if (error || !data) {
-    console.error("[fetchEpisodeForPublic] error:", error?.message)
-    return null
-  }
-
-  const meta = mapEpisodeRow(data)
-  const transcript = data.transcript ?? {}
-
-  const isNew = isNewTranscript(transcript)
-
-  let rawScriptBlocks: Record<string, unknown>[] = []
-  let vocabList: Record<string, unknown>[] = []
-  let grammarPoints: Record<string, unknown>[] = []
-
-  if (isNew) {
-    const normalized = normalizeNewTranscript(transcript)
-    rawScriptBlocks = normalized.scriptBlocks as unknown as Record<string, unknown>[]
-    vocabList = normalized.vocabList as unknown as Record<string, unknown>[]
-    grammarPoints = []
-  } else {
-    const legacyTranscript = transcript as Record<string, unknown>
-    rawScriptBlocks = Array.isArray(legacyTranscript.scriptBlocks)
-      ? legacyTranscript.scriptBlocks
-      : []
-    vocabList = Array.isArray(legacyTranscript.vocabList)
-      ? legacyTranscript.vocabList
-      : []
-    grammarPoints = Array.isArray(legacyTranscript.grammarPoints)
-      ? legacyTranscript.grammarPoints
-      : []
-  }
-
-  const wordMap: Record<string, CartoonWordEntry> = {}
-  const diacritizedMap: Record<string, CartoonWordEntry> = {}
-
-  const enrichWord = (w: Record<string, unknown>): CartoonWordEntry => {
-    const arabic = String(w.arabic ?? '')
-    const plain = String(w.plain ?? stripDiacritics(arabic))
-    const lemma = typeof w.lemma === 'string' ? w.lemma.trim() : ''
-    const entry: CartoonWordEntry = {
-      arabic,
-      plain,
-      transliteration: String(w.transliteration ?? ''),
-      english: String(w.english ?? ''),
-      pos: typeof w.pos === 'string' ? w.pos : undefined,
-      root: typeof w.root === 'string' ? w.root : undefined,
-      lemma: lemma || arabic,
+    if (showError || !show) {
+      console.error("[fetchEpisodesForShowPublic] show error:", showError?.message)
+      return []
     }
-    const cefrRaw = typeof w.cefr === 'string' ? w.cefr.trim() : typeof w.CEFR === 'string' ? w.CEFR.trim() : ''
-    if (cefrRaw) entry.cefr = cefrRaw.toLowerCase()
-    return entry
-  }
 
-  const scriptBlocks: EpisodeFull["scriptBlocks"] = []
-  for (const block of rawScriptBlocks) {
-    const b = block as Record<string, unknown>
-    const enrichedWords: CartoonWordEntry[] = []
-    const words = b.words
-    if (Array.isArray(words)) {
-      for (const w of words) {
-        const enriched = enrichWord(w as Record<string, unknown>)
-        enrichedWords.push(enriched)
-        if (enriched.plain) wordMap[enriched.plain] = enriched
-        if (enriched.arabic) diacritizedMap[enriched.arabic] = enriched
+    const { data, error } = await serviceClient
+      .from("episodes")
+      .select("id, slug, title, level, tags, description, youtube_id, cover")
+      .eq("show_id", show.id)
+      .order("created_at", { ascending: true })
+
+    if (error) {
+      console.error("[fetchEpisodesForShowPublic] error:", error.message)
+      throw new Error(error.message)
+    }
+
+    const normalizedShowCover = normalizeShowCover(show.cover ? String(show.cover) : null, showSlug)
+
+    return (data ?? []).map((row) =>
+      mapEpisodeRow(row, showSlug, normalizedShowCover)
+    )
+  },
+  ["cartoons", "episodes"],
+  { revalidate: 300 }
+)
+
+export const fetchEpisodeForPublic = unstable_cache(
+  async (
+    showSlug: string,
+    episodeSlug: string
+  ): Promise<EpisodeFull | null> => {
+    const { data: show, error: showError } = await serviceClient
+      .from("shows")
+      .select("id, slug, title")
+      .eq("slug", showSlug)
+      .limit(1)
+      .single()
+
+    if (showError || !show) {
+      console.error("[fetchEpisodeForPublic] show error:", showError?.message)
+      return null
+    }
+
+    const { data, error } = await serviceClient
+      .from("episodes")
+      .select("id, slug, title, level, tags, description, youtube_id, transcript")
+      .eq("show_id", show.id)
+      .eq("slug", episodeSlug)
+      .limit(1)
+      .single()
+
+    if (error || !data) {
+      console.error("[fetchEpisodeForPublic] error:", error?.message)
+      return null
+    }
+
+    const meta = mapEpisodeRow(data)
+    const transcript = data.transcript ?? {}
+
+    const isNew = isNewTranscript(transcript)
+
+    let rawScriptBlocks: Record<string, unknown>[] = []
+    let vocabList: Record<string, unknown>[] = []
+    let grammarPoints: Record<string, unknown>[] = []
+
+    if (isNew) {
+      const normalized = normalizeNewTranscript(transcript)
+      rawScriptBlocks = normalized.scriptBlocks as unknown as Record<string, unknown>[]
+      vocabList = normalized.vocabList as unknown as Record<string, unknown>[]
+      grammarPoints = []
+    } else {
+      const legacyTranscript = transcript as Record<string, unknown>
+      rawScriptBlocks = Array.isArray(legacyTranscript.scriptBlocks)
+        ? legacyTranscript.scriptBlocks
+        : []
+      vocabList = Array.isArray(legacyTranscript.vocabList)
+        ? legacyTranscript.vocabList
+        : []
+      grammarPoints = Array.isArray(legacyTranscript.grammarPoints)
+        ? legacyTranscript.grammarPoints
+        : []
+    }
+
+    const wordMap: Record<string, CartoonWordEntry> = {}
+    const diacritizedMap: Record<string, CartoonWordEntry> = {}
+
+    const enrichWord = (w: Record<string, unknown>): CartoonWordEntry => {
+      const arabic = String(w.arabic ?? '')
+      const plain = String(w.plain ?? stripDiacritics(arabic))
+      const lemma = typeof w.lemma === 'string' ? w.lemma.trim() : ''
+      const entry: CartoonWordEntry = {
+        arabic,
+        plain,
+        transliteration: String(w.transliteration ?? ''),
+        english: String(w.english ?? ''),
+        pos: typeof w.pos === 'string' ? w.pos : undefined,
+        root: typeof w.root === 'string' ? w.root : undefined,
+        lemma: lemma || arabic,
       }
+      const cefrRaw = typeof w.cefr === 'string' ? w.cefr.trim() : typeof w.CEFR === 'string' ? w.CEFR.trim() : ''
+      if (cefrRaw) entry.cefr = cefrRaw.toLowerCase()
+      return entry
     }
 
-    scriptBlocks.push({
-      timestamp: b.timestamp == null ? null : Number(b.timestamp),
-      title: String(b.title ?? ''),
-      arabicDiacritic: String(b.arabicDiacritic ?? ''),
-      arabicPlain: String(b.arabicPlain ?? ''),
-      english: String(b.english ?? ''),
-      words: enrichedWords,
-      notes: Array.isArray(b.notes)
-        ? b.notes.map((n) => String(n ?? '')).filter(Boolean)
-        : [],
+    const scriptBlocks: EpisodeFull["scriptBlocks"] = []
+    for (const block of rawScriptBlocks) {
+      const b = block as Record<string, unknown>
+      const enrichedWords: CartoonWordEntry[] = []
+      const words = b.words
+      if (Array.isArray(words)) {
+        for (const w of words) {
+          const enriched = enrichWord(w as Record<string, unknown>)
+          enrichedWords.push(enriched)
+          if (enriched.plain) wordMap[enriched.plain] = enriched
+          if (enriched.arabic) diacritizedMap[enriched.arabic] = enriched
+        }
+      }
+
+      scriptBlocks.push({
+        timestamp: b.timestamp == null ? null : Number(b.timestamp),
+        title: String(b.title ?? ''),
+        arabicDiacritic: String(b.arabicDiacritic ?? ''),
+        arabicPlain: String(b.arabicPlain ?? ''),
+        english: String(b.english ?? ''),
+        words: enrichedWords,
+        notes: Array.isArray(b.notes)
+          ? b.notes.map((n) => String(n ?? '')).filter(Boolean)
+          : [],
+      })
+    }
+
+    // Vocab list is already populated from the transcript; no external lookup needed.
+    const enrichedVocabList: EpisodeFull["vocabList"] = vocabList.map((row) => {
+      const item: VocabListItem = {
+        number: Number(row.number ?? 0),
+        arabic: String(row.arabic ?? ''),
+        transliteration: String(row.transliteration ?? ''),
+        english: String(row.english ?? ''),
+      }
+      const cefr = typeof row.cefr === 'string' ? row.cefr.trim().toLowerCase() : ''
+      if (cefr) item.cefr = cefr
+      return item
     })
-  }
 
-  // Build the set of lemma/root pairs present in the episode and check which
-  // ones exist in the vocab_definitions table. The client uses this to colour
-  // words that lack a root-lemma definition.
-  const definitionKeys: { lemma: string; root: string | null }[] = []
-  const seenDefinitionKeys = new Set<string>()
-  for (const block of scriptBlocks) {
-    for (const w of block.words) {
-      const lemma = w.lemma || w.arabic
-      const root = w.root ?? null
-      const key = `${lemma}|${root ?? ""}`
-      if (!lemma || seenDefinitionKeys.has(key)) continue
-      seenDefinitionKeys.add(key)
-      definitionKeys.push({ lemma, root })
+    return {
+      ...meta,
+      id: String(data.id),
+      show: String(show.slug),
+      show_id: String(show.id),
+      scriptBlocks,
+      vocabList: enrichedVocabList,
+      grammarPoints: grammarPoints as unknown as EpisodeFull["grammarPoints"],
+      transcript,
+      transcriptFormat: isNew ? 'new' : 'legacy',
+      wordMap,
+      diacritizedMap,
     }
-  }
-
-  let definedRootLemmas: string[] = []
-  if (definitionKeys.length > 0) {
-    const lemmas = Array.from(new Set(definitionKeys.map((k) => k.lemma)))
-    const { data: defRows, error: defError } = await serviceClient
-      .from("vocab_definitions")
-      .select("lemma, root")
-      .in("lemma", lemmas)
-
-    if (defError) {
-      console.error("[fetchEpisodeForPublic] vocab_definitions error:", defError.message)
-    }
-
-    const existing = new Set<string>()
-    for (const row of (defRows ?? []) as Record<string, unknown>[]) {
-      const lemma = String(row.lemma ?? "")
-      const root = row.root ? String(row.root) : ""
-      if (lemma) existing.add(`${lemma}|${root}`)
-    }
-    definedRootLemmas = Array.from(existing)
-  }
-
-  // Vocab list is already populated from the transcript; no external lookup needed.
-  const enrichedVocabList: EpisodeFull["vocabList"] = vocabList.map((row) => {
-    const item: VocabListItem = {
-      number: Number(row.number ?? 0),
-      arabic: String(row.arabic ?? ''),
-      transliteration: String(row.transliteration ?? ''),
-      english: String(row.english ?? ''),
-    }
-    const cefr = typeof row.cefr === 'string' ? row.cefr.trim().toLowerCase() : ''
-    if (cefr) item.cefr = cefr
-    return item
-  })
-
-  return {
-    ...meta,
-    id: String(data.id),
-    show: String(show.slug),
-    show_id: String(show.id),
-    scriptBlocks,
-    vocabList: enrichedVocabList,
-    grammarPoints: grammarPoints as unknown as EpisodeFull["grammarPoints"],
-    transcript,
-    transcriptFormat: isNew ? 'new' : 'legacy',
-    wordMap,
-    diacritizedMap,
-    definedRootLemmas,
-  }
-}
+  },
+  ["cartoons", "episode"],
+  { revalidate: 300 }
+)
 
 function mapEpisodeRow(
   row: Record<string, unknown>,
