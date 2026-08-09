@@ -1,7 +1,5 @@
 "use server"
 
-import fs from "fs"
-import path from "path"
 import { unstable_cache } from "next/cache"
 import { serviceClient } from "@/app/lib/supabase"
 import {
@@ -10,87 +8,15 @@ import {
   type EpisodeFull,
   type CartoonWordEntry,
   type VocabListItem,
+  type GrammarPoint,
   isNewTranscript,
   normalizeNewTranscript,
+  getShowCoverPath,
+  getEpisodeCoverPath,
 } from "@/app/lib/cartoons"
 import { type ShowRow } from "@/app/actions/admin"
+import { guardAdmin } from "@/app/actions/auth"
 import { stripDiacritics } from "@/app/lib/arabic"
-
-function normalizeShowCover(cover: string | null, slug: string): string {
-  let candidate = (cover ?? "").trim()
-
-  // Some stored cover values omit the leading slash; ensure one is present
-  // so they resolve against the public directory.
-  if (candidate && !candidate.startsWith("/") && !candidate.startsWith("http")) {
-    candidate = `/${candidate}`
-  }
-
-  // Legacy data imported from the filesystem used /assets/cartoons/... paths,
-  // but the public files live under /cartoons/... Fix that prefix.
-  if (candidate.startsWith("/assets/cartoons/")) {
-    candidate = candidate.replace("/assets/cartoons/", "/cartoons/")
-  }
-
-  if (!candidate) {
-    candidate = `/cartoons/${slug}/${slug}_cover.avif`
-  }
-
-  const publicPath = path.join(process.cwd(), "public", candidate)
-  if (fs.existsSync(publicPath)) return candidate
-
-  // Try common alternative extensions if the stored extension is wrong.
-  const base = candidate.replace(/\.[^./]+$/, "")
-  for (const ext of [".avif", ".jpg", ".jpeg", ".png", ".webp"]) {
-    const alt = `${base}${ext}`
-    if (fs.existsSync(path.join(process.cwd(), "public", alt))) return alt
-  }
-
-  // Fallback for TMNT which uses _cover.avif.
-  const fallback = `/cartoons/${slug}/_cover.avif`
-  if (fs.existsSync(path.join(process.cwd(), "public", fallback))) return fallback
-
-  return candidate
-}
-
-function normalizeEpisodeCover(
-  cover: string | null,
-  showSlug: string,
-  episodeSlug: string,
-  showCover?: string
-): string {
-  let candidate = (cover ?? "").trim()
-
-  // Normalize relative paths to be absolute against the public directory.
-  if (candidate && !candidate.startsWith("/") && !candidate.startsWith("http")) {
-    candidate = `/${candidate}`
-  }
-
-  // Rewrite legacy /assets/cartoons/ prefix.
-  if (candidate.startsWith("/assets/cartoons/")) {
-    candidate = candidate.replace("/assets/cartoons/", "/cartoons/")
-  }
-
-  // If no stored cover, fall back to the episode-specific image generated from slugs.
-  if (!candidate) {
-    candidate = `/cartoons/${showSlug}/${episodeSlug}.avif`
-  }
-
-  // If the resolved file exists on disk, return it.
-  const publicPath = path.join(process.cwd(), "public", candidate)
-  if (fs.existsSync(publicPath)) return candidate
-
-  // Try common alternative extensions.
-  const base = candidate.replace(/\.[^./]+$/, "")
-  for (const ext of [".avif", ".jpg", ".jpeg", ".png", ".webp"]) {
-    const alt = `${base}${ext}`
-    if (fs.existsSync(path.join(process.cwd(), "public", alt))) return alt
-  }
-
-  // Last resort: use the show cover if we have it.
-  if (showCover) return showCover
-
-  return candidate
-}
 
 /* ── Shows ─────────────────────────────────────────────────────────── */
 
@@ -98,7 +24,7 @@ export const fetchShowsForPublic = unstable_cache(
   async (): Promise<ShowMeta[]> => {
     const { data: shows, error } = await serviceClient
       .from("shows")
-      .select("id, slug, title, title_ar, description, cover, level, category")
+      .select("id, slug, title, title_ar, description, level, category")
       .order("title", { ascending: true })
 
     if (error) {
@@ -128,7 +54,7 @@ export const fetchShowsForPublic = unstable_cache(
       title: String(row.title),
       titleAr: row.title_ar ? String(row.title_ar) : undefined,
       description: row.description ? String(row.description) : undefined,
-      cover: normalizeShowCover(row.cover ? String(row.cover) : null, String(row.slug)),
+      cover: getShowCoverPath(String(row.slug)),
       level: String(row.level ?? ""),
       category: row.category ? String(row.category) : undefined,
       episodeCount: counts.get(String(row.id)) ?? 0,
@@ -139,6 +65,8 @@ export const fetchShowsForPublic = unstable_cache(
 )
 
 export async function fetchShowsForEpisodeEdit(): Promise<ShowRow[]> {
+  await guardAdmin()
+
   const { data, error } = await serviceClient
     .from("shows")
     .select("id, slug, title, title_ar, description, cover, level, category")
@@ -165,7 +93,7 @@ export const fetchShowBySlugPublic = unstable_cache(
   async (slug: string): Promise<ShowMeta | null> => {
     const { data, error } = await serviceClient
       .from("shows")
-      .select("id, slug, title, title_ar, description, cover, level, category")
+      .select("id, slug, title, title_ar, description, level, category")
       .eq("slug", slug)
       .limit(1)
       .single()
@@ -183,7 +111,7 @@ export const fetchShowBySlugPublic = unstable_cache(
       title: String(data.title),
       titleAr: data.title_ar ? String(data.title_ar) : undefined,
       description: data.description ? String(data.description) : undefined,
-      cover: normalizeShowCover(data.cover ? String(data.cover) : null, String(data.slug)),
+      cover: getShowCoverPath(String(data.slug)),
       level: String(data.level ?? ""),
       category: data.category ? String(data.category) : undefined,
       episodeCount: count ?? 0,
@@ -199,7 +127,7 @@ export const fetchEpisodesForShowPublic = unstable_cache(
   async (showSlug: string): Promise<EpisodeMeta[]> => {
     const { data: show, error: showError } = await serviceClient
       .from("shows")
-      .select("id, slug, cover")
+      .select("id, slug")
       .eq("slug", showSlug)
       .limit(1)
       .single()
@@ -211,7 +139,7 @@ export const fetchEpisodesForShowPublic = unstable_cache(
 
     const { data, error } = await serviceClient
       .from("episodes")
-      .select("id, slug, title, level, tags, description, youtube_id, cover")
+      .select("id, slug, title, level, tags, description, youtube_id")
       .eq("show_id", show.id)
       .order("created_at", { ascending: true })
 
@@ -220,11 +148,7 @@ export const fetchEpisodesForShowPublic = unstable_cache(
       throw new Error(error.message)
     }
 
-    const normalizedShowCover = normalizeShowCover(show.cover ? String(show.cover) : null, showSlug)
-
-    return (data ?? []).map((row) =>
-      mapEpisodeRow(row, showSlug, normalizedShowCover)
-    )
+    return (data ?? []).map((row) => mapEpisodeRow(row, showSlug))
   },
   ["cartoons", "episodes"],
   { revalidate: 300 }
@@ -308,6 +232,13 @@ export const fetchEpisodeForPublic = unstable_cache(
       return entry
     }
 
+    const enrichGrammarPoint = (row: Record<string, unknown>): GrammarPoint => ({
+      number: Number(row.number ?? 0),
+      pattern: String(row.pattern ?? ''),
+      explanation: String(row.explanation ?? ''),
+      example: String(row.example ?? ''),
+    })
+
     const scriptBlocks: EpisodeFull["scriptBlocks"] = []
     for (const block of rawScriptBlocks) {
       const b = block as Record<string, unknown>
@@ -355,7 +286,7 @@ export const fetchEpisodeForPublic = unstable_cache(
       show_id: String(show.id),
       scriptBlocks,
       vocabList: enrichedVocabList,
-      grammarPoints: grammarPoints as unknown as EpisodeFull["grammarPoints"],
+      grammarPoints: grammarPoints.map(enrichGrammarPoint),
       transcript,
       transcriptFormat: isNew ? 'new' : 'legacy',
       wordMap,
@@ -368,15 +299,10 @@ export const fetchEpisodeForPublic = unstable_cache(
 
 function mapEpisodeRow(
   row: Record<string, unknown>,
-  showSlug?: string,
-  showCover?: string
+  showSlug?: string
 ): EpisodeMeta {
   const episodeSlug = String(row.slug)
-  const storedCover = row.cover ? String(row.cover) : null
-  const cover =
-    showSlug != null
-      ? normalizeEpisodeCover(storedCover, showSlug, episodeSlug, showCover)
-      : storedCover ?? undefined
+  const cover = showSlug != null ? getEpisodeCoverPath(showSlug, episodeSlug) : undefined
 
   return {
     id: String(row.id),

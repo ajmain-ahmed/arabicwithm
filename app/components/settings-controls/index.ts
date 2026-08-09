@@ -1,6 +1,2 @@
-export { default as PillToggle } from './PillToggle'
-export { default as DesktopTextScaleSlider } from './DesktopTextScaleSlider'
 export { default as SettingsDialog } from './SettingsDialog'
-export type { PillToggleProps } from './PillToggle'
-export type { DesktopTextScaleSliderProps } from './DesktopTextScaleSlider'
 export type { SettingsDialogProps } from './SettingsDialog'

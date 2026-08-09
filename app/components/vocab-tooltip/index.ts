@@ -1,6 +1,5 @@
 export { default as HtmlTooltip } from './HtmlTooltip'
 export { default as WordTooltip } from './WordTooltip'
-export { default as ArabicText } from './ArabicText'
 export { LEVEL_COLORS } from './WordTooltip'
 
 export interface VocabEntry {

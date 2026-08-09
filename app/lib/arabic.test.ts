@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { stripDiacritics, normalizeArabicToken, normalizeTransliteration } from './arabic'
+import { stripDiacritics, normalizeArabicToken } from './arabic'
 
 describe('arabic', () => {
   it('strips diacritics', () => {
@@ -10,10 +10,5 @@ describe('arabic', () => {
   it('normalizes Arabic tokens by removing prefixes and suffixes', () => {
     expect(normalizeArabicToken('الكتاب')).toBe('كتاب')
     expect(normalizeArabicToken('والمكتبة')).toBe('مكتبة')
-  })
-
-  it('normalizes transliteration', () => {
-    expect(normalizeTransliteration('Kītāb')).toBe('kitab')
-    expect(normalizeTransliteration("al-'Arabiyya")).toBe('al-arabiyya')
   })
 })

@@ -34,11 +34,11 @@ export type EpisodeRow = {
 }
 
 export type EpisodeWithTranscript = EpisodeRow & {
-  transcript: Record<string, unknown> | null
+  transcript: Record<string, unknown> | unknown[] | null
 }
 
-export type ShowInput = Omit<ShowRow, "id">
-export type EpisodeInput = Omit<EpisodeRow, "id" | "created_at"> & {
+export type ShowInput = Omit<ShowRow, "id" | "cover">
+export type EpisodeInput = Omit<EpisodeRow, "id" | "created_at" | "cover"> & {
   transcript?: Record<string, unknown> | unknown[] | null
 }
 
@@ -105,7 +105,6 @@ export async function createShow(input: ShowInput): Promise<string> {
       title: input.title,
       title_ar: input.title_ar,
       description: input.description,
-      cover: input.cover,
       level: input.level,
       category: input.category,
     })
@@ -131,7 +130,6 @@ export async function updateShow(
   if (input.title !== undefined) payload.title = input.title
   if (input.title_ar !== undefined) payload.title_ar = input.title_ar
   if (input.description !== undefined) payload.description = input.description
-  if (input.cover !== undefined) payload.cover = input.cover
   if (input.level !== undefined) payload.level = input.level
   if (input.category !== undefined) payload.category = input.category
 
@@ -158,25 +156,6 @@ export async function deleteShow(id: string): Promise<void> {
 }
 
 /* ── Episodes ──────────────────────────────────────────────────────── */
-
-export async function fetchEpisodesForShowAdmin(
-  showId: string
-): Promise<EpisodeRow[]> {
-  await guardAdmin()
-
-  const { data, error } = await serviceClient
-    .from("episodes")
-    .select("*")
-    .eq("show_id", showId)
-    .order("created_at", { ascending: true })
-
-  if (error) {
-    console.error("[fetchEpisodesForShowAdmin] error:", error.message)
-    throw new Error(error.message)
-  }
-
-  return (data ?? []).map((row) => mapEpisodeRow(row))
-}
 
 export async function fetchAllEpisodesForAdmin(): Promise<EpisodeRow[]> {
   await guardAdmin()
@@ -213,7 +192,7 @@ export async function fetchEpisodeForAdmin(
 
   return {
     ...mapEpisodeRow(data),
-    transcript: parseJsonb(data.transcript) as Record<string, unknown> | null,
+    transcript: parseJsonb(data.transcript),
   }
 }
 
@@ -230,7 +209,6 @@ export async function createEpisode(input: EpisodeInput): Promise<string> {
       tags: input.tags,
       description: input.description,
       youtube_id: input.youtube_id,
-      cover: input.cover,
       transcript: input.transcript ?? [],
     })
     .select("id")
@@ -259,7 +237,6 @@ export async function updateEpisode(
   if (input.tags !== undefined) payload.tags = input.tags
   if (input.description !== undefined) payload.description = input.description
   if (input.youtube_id !== undefined) payload.youtube_id = input.youtube_id
-  if (input.cover !== undefined) payload.cover = input.cover
   if (input.transcript !== undefined) payload.transcript = input.transcript
 
   const { error } = await serviceClient
@@ -430,7 +407,7 @@ export type ChapterRow = {
 }
 
 export type ChapterWithContent = ChapterRow & {
-  content: Record<string, unknown> | null
+  content: Record<string, unknown> | unknown[] | null
 }
 
 export type ChapterInput = Omit<ChapterRow, "id" | "created_at" | "updated_at"> & {
@@ -474,7 +451,7 @@ export async function fetchChapterForAdmin(
 
   return {
     ...mapChapterRow(data),
-    content: parseJsonb(data.content) as Record<string, unknown> | null,
+    content: parseJsonb(data.content),
   }
 }
 

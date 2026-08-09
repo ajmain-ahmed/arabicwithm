@@ -12,12 +12,13 @@ import {
   Breadcrumbs,
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
-import { ShowMeta, EpisodeMeta } from '../../lib/cartoons'
+import { ShowMeta, EpisodeMeta, getEpisodeCoverPath } from '../../lib/cartoons'
 import { PageBanner } from '@/app/components/page-layout'
 import { FilterSidebar, ContentCard } from '@/app/components/content-grid'
 import EpisodeEditDialog from '../components/EpisodeEditDialog'
 import { deleteEpisode } from '@/app/actions/admin'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
+import { errorMessage } from '@/app/lib/errors'
 
 /* ── MUI Icons ── */
 import {
@@ -59,6 +60,8 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
     try {
       await deleteEpisode(id)
       router.refresh()
+    } catch (e: unknown) {
+      alert(errorMessage(e) ?? 'Failed to delete episode')
     } finally {
       setDeletingId(null)
     }
@@ -300,7 +303,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                       <ContentCard
                         slug={ep.slug}
                         hrefPrefix={`/cartoons/${show.slug}`}
-                        cover={ep.cover ?? `/cartoons/${show.slug}/${ep.slug}.avif`}
+                        cover={getEpisodeCoverPath(show.slug, ep.slug)}
                         title={ep.title}
                         level={ep.level}
                         category={ep.tags[0]}

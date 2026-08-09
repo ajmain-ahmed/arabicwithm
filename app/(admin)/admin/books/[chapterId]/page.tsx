@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo, useState, useCallback } from "react"
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import {
   Box,
@@ -53,6 +53,7 @@ export default function ChapterHeadwordsPage() {
 
   const [savingContent, setSavingContent] = useState<Record<string, boolean>>({})
   const [savingHans, setSavingHans] = useState<Record<number, boolean>>({})
+  const cancelledRef = useRef(false)
 
   const loadChapter = useCallback(async () => {
     if (!chapterId) return
@@ -62,6 +63,7 @@ export default function ChapterHeadwordsPage() {
 
     try {
       const ch = await fetchChapterForAdmin(chapterId)
+      if (cancelledRef.current) return
       if (!ch) {
         setError("Chapter not found")
         setLoading(false)
@@ -73,6 +75,8 @@ export default function ChapterHeadwordsPage() {
       const headwords = Array.from(new Set(tokens.map((t) => t.headword).filter(Boolean)))
       const entries = headwords.length > 0 ? await fetchHansWehrEntries(headwords) : []
 
+      if (cancelledRef.current) return
+
       const entryByWord = new Map(entries.map((e) => [e.word, e]))
 
       setRows(
@@ -82,23 +86,18 @@ export default function ChapterHeadwordsPage() {
         }))
       )
     } catch (e: unknown) {
+      if (cancelledRef.current) return
       setError(errorMessage(e) ?? "Failed to load chapter")
     } finally {
-      setLoading(false)
+      if (!cancelledRef.current) setLoading(false)
     }
   }, [chapterId])
 
   useEffect(() => {
-    let cancelled = false
-
-    const run = async () => {
-      if (cancelled) return
-      await loadChapter()
-    }
-
-    run()
+    cancelledRef.current = false
+    loadChapter()
     return () => {
-      cancelled = true
+      cancelledRef.current = true
     }
   }, [loadChapter])
 

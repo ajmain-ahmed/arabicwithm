@@ -66,7 +66,6 @@ export default function EpisodeEditDialog({
   const [tags, setTags] = useState("")
   const [description, setDescription] = useState("")
   const [youtubeId, setYoutubeId] = useState("")
-  const [cover, setCover] = useState("")
   const [transcriptJson, setTranscriptJson] = useState(defaultTranscript)
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("md"))
@@ -86,7 +85,6 @@ export default function EpisodeEditDialog({
       setTags("")
       setDescription("")
       setYoutubeId("")
-      setCover("")
       setTranscriptJson(defaultTranscript)
       return
     }
@@ -105,7 +103,6 @@ export default function EpisodeEditDialog({
         setTags(row.tags.join(", "))
         setDescription(row.description ?? "")
         setYoutubeId(row.youtube_id ?? "")
-        setCover(row.cover ?? "")
         setTranscriptJson(JSON.stringify(row.transcript ?? [], null, 2))
       })
       .catch((e: unknown) => setError(errorMessage(e) ?? "Failed to load episode"))
@@ -132,7 +129,6 @@ export default function EpisodeEditDialog({
         tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
         description: description || null,
         youtube_id: youtubeId || null,
-        cover: cover || null,
         transcript: transcript as Record<string, unknown>,
       }
 
@@ -254,7 +250,6 @@ export default function EpisodeEditDialog({
                 <AdminTextField label="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
                 <AdminTextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
                 <AdminTextField label="YouTube ID" value={youtubeId} onChange={(e) => setYoutubeId(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
-                <AdminTextField label="Cover URL" value={cover} onChange={(e) => setCover(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
               </Box>
             )}
 

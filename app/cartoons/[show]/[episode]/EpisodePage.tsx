@@ -317,18 +317,18 @@ function MobileFixedHeader({
    WordTooltip — inline markdown word popup
 ───────────────────────────────────────────── */
 /* ─────────────────────────────────────────────
-   Global guard — disable script-line clicks while any vocab UI is open
+   Global guard — disable script-line clicks while any vocab UI is open.
+   Lives outside component instances so multiple tooltips share state.
 ───────────────────────────────────────────── */
-let openVocabCount = 0
-let lastVocabCloseAt = 0
+const vocabTrackerRef = { openCount: 0, lastCloseAt: 0 }
 
 function useVocabOpenTracker(isOpen: boolean) {
   useEffect(() => {
     if (isOpen) {
-      openVocabCount++
+      vocabTrackerRef.openCount++
       return () => {
-        openVocabCount--
-        lastVocabCloseAt = Date.now()
+        vocabTrackerRef.openCount--
+        vocabTrackerRef.lastCloseAt = Date.now()
       }
     }
   }, [isOpen])
@@ -1204,8 +1204,8 @@ export default function EpisodePage({
                             ref={isActive ? activeBlockRef : undefined}
                             className={`script-block ${isActive ? 'active' : ''}`}
                             onClick={(e) => {
-                              if (openVocabCount > 0) return
-                              if (Date.now() - lastVocabCloseAt < 120) return
+                              if (vocabTrackerRef.openCount > 0) return
+                              if (Date.now() - vocabTrackerRef.lastCloseAt < 120) return
                               if ((e.target as HTMLElement).closest('.vocab-word')) return
                               if (hasTimestamp) {
                                 seekTo(block.timestamp!)

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo, useState, useCallback } from "react"
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import {
   Box,
@@ -55,6 +55,7 @@ export default function EpisodeHeadwordsPage() {
 
   const [savingTranscript, setSavingTranscript] = useState<Record<string, boolean>>({})
   const [savingDefinition, setSavingDefinition] = useState<Record<number, boolean>>({})
+  const cancelledRef = useRef(false)
 
   const loadEpisode = useCallback(async () => {
     if (!episodeId) return
@@ -64,6 +65,7 @@ export default function EpisodeHeadwordsPage() {
 
     try {
       const ep = await fetchEpisodeForAdmin(episodeId)
+      if (cancelledRef.current) return
       if (!ep) {
         setError("Episode not found")
         setLoading(false)
@@ -86,6 +88,8 @@ export default function EpisodeHeadwordsPage() {
         wordHeadwords.length > 0 ? fetchHansWehrEntries(wordHeadwords) : [],
         phraseIds.length > 0 ? fetchPhrases(phraseIds) : [],
       ])
+
+      if (cancelledRef.current) return
 
       const entryByWord = new Map(hansEntries.map((e) => [e.word, e]))
       const phraseById = new Map(phraseRows.map((p) => [p.id, p]))
@@ -114,23 +118,18 @@ export default function EpisodeHeadwordsPage() {
         })
       )
     } catch (e: unknown) {
+      if (cancelledRef.current) return
       setError(errorMessage(e) ?? "Failed to load episode")
     } finally {
-      setLoading(false)
+      if (!cancelledRef.current) setLoading(false)
     }
   }, [episodeId])
 
   useEffect(() => {
-    let cancelled = false
-
-    const run = async () => {
-      if (cancelled) return
-      await loadEpisode()
-    }
-
-    run()
+    cancelledRef.current = false
+    loadEpisode()
     return () => {
-      cancelled = true
+      cancelledRef.current = true
     }
   }, [loadEpisode])
 

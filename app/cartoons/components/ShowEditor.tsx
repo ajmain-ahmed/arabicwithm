@@ -5,6 +5,7 @@ import { Box, Button, Paper, Typography } from "@mui/material"
 import { Save, Cancel, Delete } from "@mui/icons-material"
 import { type ShowMeta } from "@/app/lib/cartoons"
 import { createShow, updateShow, deleteShow } from "@/app/actions/admin"
+import { errorMessage } from "@/app/lib/errors"
 import NativeField from "@/app/(admin)/admin/components/NativeField"
 
 interface ShowEditorProps {
@@ -33,7 +34,6 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
   const [title, setTitle] = useState(initial.title)
   const [titleAr, setTitleAr] = useState(initial.titleAr ?? "")
   const [description, setDescription] = useState(initial.description ?? "")
-  const [cover, setCover] = useState(initial.cover ?? "")
   const [level, setLevel] = useState(initial.level ?? "")
   const [category, setCategory] = useState(initial.category ?? "")
   const [saving, setSaving] = useState(false)
@@ -43,7 +43,6 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
     title: title.trim(),
     title_ar: titleAr.trim() || null,
     description: description.trim() || null,
-    cover: cover.trim() || null,
     level: level.trim(),
     category: category.trim() || null,
   })
@@ -71,6 +70,8 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
     try {
       await deleteShow(initial.id)
       onSaved()
+    } catch (e: unknown) {
+      alert(errorMessage(e) ?? "Failed to delete show")
     } finally {
       setSaving(false)
     }
@@ -105,8 +106,6 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
       </Box>
 
       <NativeField label="Category" value={category} onChange={setCategory} disabled={saving} />
-
-      <NativeField label="Cover URL" value={cover} onChange={setCover} disabled={saving} />
       <NativeField label="Description" value={description} onChange={setDescription} textarea disabled={saving} />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mt: "auto", pt: 1 }}>

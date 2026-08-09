@@ -27,6 +27,20 @@ export interface EpisodeMeta {
   cover?: string
 }
 
+/* ── Cover image paths ── */
+
+const SHOW_COVERS_DIR = '/covers/shows'
+const EPISODE_COVERS_DIR = '/covers/episodes'
+export const CARTOONS_BANNER_PATH = '/covers/cartoons-banner.avif'
+
+export function getShowCoverPath(slug: string): string {
+  return `${SHOW_COVERS_DIR}/${slug}.avif`
+}
+
+export function getEpisodeCoverPath(showSlug: string, episodeSlug: string): string {
+  return `${EPISODE_COVERS_DIR}/${showSlug}/${episodeSlug}.avif`
+}
+
 /* ── New inline word entry (parsed from markdown tables) ── */
 export interface CartoonWordEntry {
   arabic: string        // diacritized form from markdown
@@ -104,13 +118,6 @@ export interface EpisodeFull extends EpisodeMeta {
   diacritizedMap: Record<string, CartoonWordEntry> // diacritized Arabic → entry
 }
 
-export function formatTimestamp(seconds: number | null): string {
-  if (seconds == null) return "0:00"
-  const m = Math.floor(seconds / 60)
-  const s = Math.floor(seconds % 60)
-  return `${m}:${s.toString().padStart(2, "0")}`
-}
-
 export function isNewTranscript(transcript: unknown): transcript is NewTranscript {
   if (!Array.isArray(transcript) || transcript.length === 0) return false
   const first = transcript[0]
@@ -126,11 +133,18 @@ export function isNewTranscript(transcript: unknown): transcript is NewTranscrip
 
 function parseNewTimestamp(timestamp: string): number | null {
   const parts = timestamp.split(':').map((p) => Number(p))
-  if (parts.length === 2 && parts.every((n) => !isNaN(n))) {
+  if (!parts.every((n) => !isNaN(n))) return null
+
+  if (parts.length === 2) {
     return parts[0] * 60 + parts[1]
   }
-  if (parts.length === 3 && parts.every((n) => !isNaN(n))) {
+  if (parts.length === 3) {
     return parts[0] * 3600 + parts[1] * 60 + parts[2]
+  }
+  if (parts.length === 4) {
+    // Treat the fourth part as a frame number and assume 25 fps.
+    const [h, m, s, frames] = parts
+    return h * 3600 + m * 60 + s + frames / 25
   }
   return null
 }

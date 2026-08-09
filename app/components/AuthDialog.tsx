@@ -169,6 +169,7 @@ export default function AuthDialog({ open, onClose }: AuthDialogProps) {
   }
 
   const handleSubmit = () => {
+    if (loading || googleLoading) return
     if (!formData.email) { showSnackbar('warning', 'Please enter your email.'); return }
     if (!forgotPassword && !formData.password) { showSnackbar('warning', 'Please enter your password.'); return }
     if (forgotPassword) handleForgotPassword()

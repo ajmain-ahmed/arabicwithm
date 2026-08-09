@@ -140,4 +140,36 @@ describe('normalizeNewTranscript', () => {
     expect(scriptBlocks[0].words[0].pos).toBe('particle')
     expect(vocabList[0].english).toBe('whether / is it?')
   })
+
+  it('parses 4-part timecode timestamps assuming 25 fps', () => {
+    const transcript: NewTranscript = [
+      {
+        tokens: [{ cefr: 'A1', pos: 'particle', root: null, lemma: 'هَلْ', arabic: 'هَلْ', entry_type: 'word', transliteration: 'hal' }],
+        timestamp: '00:00:03:16',
+        translation: 'Block at 3.64s',
+      },
+    ]
+
+    const { scriptBlocks } = normalizeNewTranscript(transcript)
+    expect(scriptBlocks[0].timestamp).toBe(3 + 16 / 25)
+  })
+
+  it('falls back to null for unrecognised timestamp formats', () => {
+    const transcript: NewTranscript = [
+      {
+        tokens: [{ cefr: 'A1', pos: 'particle', root: null, lemma: 'هَلْ', arabic: 'هَلْ', entry_type: 'word', transliteration: 'hal' }],
+        timestamp: 'not-a-time',
+        translation: 'No valid time',
+      },
+      {
+        tokens: [{ cefr: 'A1', pos: 'particle', root: null, lemma: 'هَلْ', arabic: 'هَلْ', entry_type: 'word', transliteration: 'hal' }],
+        timestamp: '00:00:00:00:00',
+        translation: 'Too many parts',
+      },
+    ]
+
+    const { scriptBlocks } = normalizeNewTranscript(transcript)
+    expect(scriptBlocks[0].timestamp).toBeNull()
+    expect(scriptBlocks[1].timestamp).toBeNull()
+  })
 })

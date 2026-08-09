@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
 import { motion, useMotionValue } from 'framer-motion'
 import { Box, IconButton, Typography, useMediaQuery, useTheme } from '@mui/material'
 import { Close, OpenInFull, Pause, PlayArrow } from '@mui/icons-material'
@@ -34,17 +34,9 @@ export default function FloatingVideoPlayer() {
   const { pipOpen, closePip, videoId, episodePath, title, currentTime, seekTarget } =
     usePlayerStore()
 
-  const [size, setSize] = useState<SavedSize>(() => {
-    if (typeof window === 'undefined') return isMobile ? DEFAULT_MOBILE : DEFAULT_DESKTOP
-    try {
-      const sizeRaw = localStorage.getItem(SIZE_KEY)
-      if (sizeRaw) {
-        const parsed: SavedSize = JSON.parse(sizeRaw)
-        return clampSize(parsed)
-      }
-    } catch { /* ignore */ }
-    return isMobile ? DEFAULT_MOBILE : DEFAULT_DESKTOP
-  })
+  const [size, setSize] = useState<SavedSize>(() =>
+    isMobile ? DEFAULT_MOBILE : DEFAULT_DESKTOP
+  )
   const [hovered, setHovered] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const currentTimeRef = useRef(currentTime)
@@ -52,7 +44,7 @@ export default function FloatingVideoPlayer() {
   const motionX = useMotionValue(0)
   const motionY = useMotionValue(0)
 
-  /* Load persisted position and size */
+  /* Load persisted position */
   useEffect(() => {
     try {
       const posRaw = localStorage.getItem(POS_KEY)
@@ -62,8 +54,21 @@ export default function FloatingVideoPlayer() {
         motionY.set(pos.y)
       }
     } catch { /* ignore */ }
-
   }, [motionX, motionY])
+
+  /* Load persisted size before first paint to avoid hydration flash.
+     Reading localStorage during render causes mismatches; reading in an
+     effect and suppressing the lint rule is the standard workaround here. */
+  useLayoutEffect(() => {
+    try {
+      const sizeRaw = localStorage.getItem(SIZE_KEY)
+      if (sizeRaw) {
+        const parsed: SavedSize = JSON.parse(sizeRaw)
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSize(clampSize(parsed))
+      }
+    } catch { /* ignore */ }
+  }, [])
 
   /* Track current time in a ref (don't update store every 200ms) */
   const handleTimeUpdate = useCallback((time: number) => {

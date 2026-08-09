@@ -5,6 +5,7 @@ import { Box, Button, Paper, Typography } from "@mui/material"
 import { Save, Cancel, Delete } from "@mui/icons-material"
 import { type EpisodeMeta } from "@/app/lib/cartoons"
 import { createEpisode, updateEpisode, deleteEpisode } from "@/app/actions/admin"
+import { errorMessage } from "@/app/lib/errors"
 import NativeField from "@/app/(admin)/admin/components/NativeField"
 
 interface EpisodeEditorProps {
@@ -32,7 +33,6 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
     level: level.trim(),
     description: description.trim() || null,
     youtube_id: youtubeId.trim() || null,
-    cover: null,
     tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
   })
 
@@ -58,6 +58,8 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
     try {
       await deleteEpisode(episode.id)
       onSaved()
+    } catch (e: unknown) {
+      alert(errorMessage(e) ?? "Failed to delete episode")
     } finally {
       setSaving(false)
     }

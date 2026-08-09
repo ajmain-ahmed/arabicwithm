@@ -12,12 +12,13 @@ import {
 } from '@mui/material'
 import Grid from '@mui/material/Grid'
 import { useRouter } from 'next/navigation'
-import { ShowMeta } from '../lib/cartoons'
+import { ShowMeta, CARTOONS_BANNER_PATH } from '../lib/cartoons'
 import { PageBanner } from '@/app/components/page-layout'
 import { FilterSidebar, ContentCard } from '@/app/components/content-grid'
 import ShowEditDialog from './components/ShowEditDialog'
 import { deleteShow } from '@/app/actions/admin'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
+import { errorMessage } from '@/app/lib/errors'
 
 /* ── MUI Icons ── */
 import {
@@ -67,6 +68,8 @@ export default function CartoonsPage({
     try {
       await deleteShow(id)
       router.refresh()
+    } catch (e: unknown) {
+      alert(errorMessage(e) ?? 'Failed to delete show')
     } finally {
       setDeletingId(null)
     }
@@ -115,7 +118,7 @@ export default function CartoonsPage({
           ctaLabel="Take Me Anywhere"
           ctaAction={goToRandomEpisode}
           ctaStartIcon={<PlayArrow sx={{ fontSize: 20 }} />}
-          backgroundImage="/cartoons/cartooons.avif"
+          backgroundImage={CARTOONS_BANNER_PATH}
         />
       </Box>
 

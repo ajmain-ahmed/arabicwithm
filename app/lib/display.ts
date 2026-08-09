@@ -12,6 +12,4 @@ export function formatPos(pos: string | undefined | null): string {
     .join(" ")
 }
 
-export function formatConjugationType(type: string | undefined | null): string {
-  return formatPos(type)
-}
+
