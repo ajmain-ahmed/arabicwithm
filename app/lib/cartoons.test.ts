@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { isNewTranscript, normalizeNewTranscript, type NewTranscript } from './cartoons'
+import { isNewTranscript, normalizeNewTranscript, type NewTranscript, getShowCoverPath, getEpisodeCoverPath } from './cartoons'
 import { stripDiacritics } from './arabic'
 
 describe('isNewTranscript', () => {
@@ -171,5 +171,15 @@ describe('normalizeNewTranscript', () => {
     const { scriptBlocks } = normalizeNewTranscript(transcript)
     expect(scriptBlocks[0].timestamp).toBeNull()
     expect(scriptBlocks[1].timestamp).toBeNull()
+  })
+})
+
+describe('cover paths', () => {
+  it('derives show cover from slug', () => {
+    expect(getShowCoverPath('tmnt')).toBe('/covers/shows/tmnt.avif')
+  })
+
+  it('derives episode cover from show and episode slugs', () => {
+    expect(getEpisodeCoverPath('cotp', 'cotp-1')).toBe('/covers/episodes/cotp/cotp-1.avif')
   })
 })
