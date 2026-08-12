@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Grab the current session on mount
     supabase.auth.getSession()
-      .then(({ data: { session } }) => {
+      .then(({ data: { session } }: { data: { session: Session | null } }) => {
         // Only apply getSession result if onAuthStateChange hasn't already fired
         if (!stateChanged) {
           setSession(session)
@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false)
         }
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         console.error('Auth session error:', err)
         if (!stateChanged) {
           setLoading(false)
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth state changes (sign in, sign out, token refresh)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
       stateChanged = true
       setSession(session)
       setUser(session?.user ?? null)

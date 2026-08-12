@@ -49,7 +49,7 @@ export async function fetchShowsForAdmin(): Promise<ShowRow[]> {
 
   const { data, error } = await serviceClient
     .from("shows")
-    .select("*")
+    .select("id, slug, title, title_ar, description, cover, level, category")
     .order("title", { ascending: true })
 
   if (error) {
@@ -57,7 +57,7 @@ export async function fetchShowsForAdmin(): Promise<ShowRow[]> {
     throw new Error(error.message)
   }
 
-  return (data ?? []).map((row) => ({
+  return ((data ?? []) as ShowRow[]).map((row) => ({
     id: row.id,
     slug: row.slug,
     title: row.title,
@@ -83,15 +83,16 @@ export async function fetchShowForAdmin(id: string): Promise<ShowRow | null> {
     return null
   }
 
+  const row = data as ShowRow
   return {
-    id: data.id,
-    slug: data.slug,
-    title: data.title,
-    title_ar: data.title_ar ?? null,
-    description: data.description ?? null,
-    cover: data.cover ?? null,
-    level: data.level,
-    category: data.category ?? null,
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    title_ar: row.title_ar ?? null,
+    description: row.description ?? null,
+    cover: row.cover ?? null,
+    level: row.level,
+    category: row.category ?? null,
   }
 }
 
@@ -135,7 +136,7 @@ export async function updateShow(
 
   const { error } = await serviceClient
     .from("shows")
-    .update(payload)
+    .update(payload as never)
     .eq("id", id)
 
   if (error) {
@@ -171,7 +172,7 @@ export async function fetchAllEpisodesForAdmin(): Promise<EpisodeRow[]> {
     throw new Error(error.message)
   }
 
-  return (data ?? []).map((row) => mapEpisodeRow(row))
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => mapEpisodeRow(row))
 }
 
 export async function fetchEpisodeForAdmin(
@@ -191,8 +192,8 @@ export async function fetchEpisodeForAdmin(
   }
 
   return {
-    ...mapEpisodeRow(data),
-    transcript: parseJsonb(data.transcript),
+    ...mapEpisodeRow(data as Record<string, unknown>),
+    transcript: parseJsonb((data as Record<string, unknown>).transcript),
   }
 }
 
@@ -209,8 +210,8 @@ export async function createEpisode(input: EpisodeInput): Promise<string> {
       tags: input.tags,
       description: input.description,
       youtube_id: input.youtube_id,
-      transcript: input.transcript ?? [],
-    })
+      transcript: (input.transcript ?? []) as never,
+    } as never)
     .select("id")
     .single()
 
@@ -241,7 +242,7 @@ export async function updateEpisode(
 
   const { error } = await serviceClient
     .from("episodes")
-    .update(payload)
+    .update(payload as never)
     .eq("id", id)
 
   if (error) {
@@ -273,7 +274,7 @@ export async function updateEpisodeTranscript(
 
   const { error } = await serviceClient
     .from("episodes")
-    .update({ transcript })
+    .update({ transcript } as never)
     .eq("id", id)
 
   if (error) {
@@ -312,7 +313,7 @@ export async function fetchBooksForAdmin(): Promise<BookRow[]> {
     throw new Error(error.message)
   }
 
-  return (data ?? []).map((row) => mapBookRow(row))
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => mapBookRow(row))
 }
 
 export async function fetchBookForAdmin(id: string): Promise<BookRow | null> {
@@ -329,7 +330,7 @@ export async function fetchBookForAdmin(id: string): Promise<BookRow | null> {
     return null
   }
 
-  return mapBookRow(data)
+  return mapBookRow(data as Record<string, unknown>)
 }
 
 export async function createBook(input: BookInput): Promise<string> {
@@ -374,7 +375,7 @@ export async function updateBook(
 
   const { error } = await serviceClient
     .from("books")
-    .update(payload)
+    .update(payload as never)
     .eq("id", id)
 
   if (error) {
@@ -430,7 +431,7 @@ export async function fetchChaptersForBookAdmin(
     throw new Error(error.message)
   }
 
-  return (data ?? []).map((row) => mapChapterRow(row))
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => mapChapterRow(row))
 }
 
 export async function fetchChapterForAdmin(
@@ -450,8 +451,8 @@ export async function fetchChapterForAdmin(
   }
 
   return {
-    ...mapChapterRow(data),
-    content: parseJsonb(data.content),
+    ...mapChapterRow(data as Record<string, unknown>),
+    content: parseJsonb((data as Record<string, unknown>).content),
   }
 }
 
@@ -465,8 +466,8 @@ export async function createChapter(input: ChapterInput): Promise<string> {
       slug: input.slug,
       title: input.title,
       chapter_number: input.chapter_number,
-      content: input.content ?? [],
-    })
+      content: (input.content ?? []) as never,
+    } as never)
     .select("id")
     .single()
 
@@ -493,7 +494,7 @@ export async function updateChapter(
 
   const { error } = await serviceClient
     .from("chapters")
-    .update(payload)
+    .update(payload as never)
     .eq("id", id)
 
   if (error) {
@@ -521,7 +522,7 @@ export async function updateChapterContent(
 
   const { error } = await serviceClient
     .from("chapters")
-    .update({ content })
+    .update({ content } as never)
     .eq("id", id)
 
   if (error) {
@@ -718,7 +719,7 @@ export async function updatePhrase(
 
   const { error } = await serviceClient
     .from("phrases")
-    .update(payload)
+    .update(payload as never)
     .eq("id", id)
 
   if (error) {

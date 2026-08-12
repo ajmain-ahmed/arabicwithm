@@ -12,19 +12,30 @@ export const NAV_ROUTES: Record<string, string> = {
 }
 
 export const CARTOON_SLUG_MAP: Record<string, string> = {
-    Spongebob: 'sb',
-    'Amazing World of Gumball': 'amazing-world-of-gumball',
-    'Dragonball Z': 'dragonball-z',
-    'Yu-Gi-Oh!': 'yu-gi-oh',
-    TMNT: 'tmnt',
-    Others: 'others',
+    'Teenage Mutant Ninja Turtles': 'tmnt',
+    'Islamic Stories': 'qss',
+    'Naruto': 'nar',
+    'The Omar Series': 'omar',
+    'Companions of the Prophet': 'cotp',
+    'Spongebob Squarepants': 'sb',
+    'Invincible': 'inv',
+    'Spy Family': 'spyx',
 }
 
 export const MEGA_MENU_ITEMS = [
     {
         header: 'Cartoons',
         icon: React.createElement(Movie, { sx: { fontSize: 20, color: 'var(--awm-forest)' } }),
-        items: ['Spongebob', 'Amazing World of Gumball', 'Dragonball Z', 'Yu-Gi-Oh!', 'TMNT', 'Others'],
+        items: [
+            'Teenage Mutant Ninja Turtles',
+            'Islamic Stories',
+            'Naruto',
+            'The Omar Series',
+            'Companions of the Prophet',
+            'Spongebob Squarepants',
+            'Invincible',
+            'Spy Family',
+        ],
     },
 ]
 

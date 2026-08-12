@@ -1,7 +1,7 @@
 "use server"
 
 import { unstable_cache } from "next/cache"
-import { serviceClient } from "@/app/lib/supabase"
+import { serviceClient, hasServiceClientConfig } from "@/app/lib/supabase"
 import {
   type ShowMeta,
   type EpisodeMeta,
@@ -9,6 +9,7 @@ import {
   type CartoonWordEntry,
   type VocabListItem,
   type GrammarPoint,
+  type NewTranscript,
   isNewTranscript,
   normalizeNewTranscript,
   getShowCoverPath,
@@ -22,6 +23,11 @@ import { stripDiacritics } from "@/app/lib/arabic"
 
 export const fetchShowsForPublic = unstable_cache(
   async (): Promise<ShowMeta[]> => {
+    if (!hasServiceClientConfig()) {
+      console.warn("[fetchShowsForPublic] Supabase service client not configured")
+      return []
+    }
+
     const { data: shows, error } = await serviceClient
       .from("shows")
       .select("id, slug, title, title_ar, description, level, category")
@@ -91,6 +97,11 @@ export async function fetchShowsForEpisodeEdit(): Promise<ShowRow[]> {
 
 export const fetchShowBySlugPublic = unstable_cache(
   async (slug: string): Promise<ShowMeta | null> => {
+    if (!hasServiceClientConfig()) {
+      console.warn("[fetchShowBySlugPublic] Supabase service client not configured")
+      return null
+    }
+
     const { data, error } = await serviceClient
       .from("shows")
       .select("id, slug, title, title_ar, description, level, category")
@@ -125,6 +136,11 @@ export const fetchShowBySlugPublic = unstable_cache(
 
 export const fetchEpisodesForShowPublic = unstable_cache(
   async (showSlug: string): Promise<EpisodeMeta[]> => {
+    if (!hasServiceClientConfig()) {
+      console.warn("[fetchEpisodesForShowPublic] Supabase service client not configured")
+      return []
+    }
+
     const { data: show, error: showError } = await serviceClient
       .from("shows")
       .select("id, slug")
@@ -159,6 +175,11 @@ export const fetchEpisodeForPublic = unstable_cache(
     showSlug: string,
     episodeSlug: string
   ): Promise<EpisodeFull | null> => {
+    if (!hasServiceClientConfig()) {
+      console.warn("[fetchEpisodeForPublic] Supabase service client not configured")
+      return null
+    }
+
     const { data: show, error: showError } = await serviceClient
       .from("shows")
       .select("id, slug, title")
@@ -287,7 +308,7 @@ export const fetchEpisodeForPublic = unstable_cache(
       scriptBlocks,
       vocabList: enrichedVocabList,
       grammarPoints: grammarPoints.map(enrichGrammarPoint),
-      transcript,
+      transcript: transcript as Record<string, unknown> | NewTranscript | undefined,
       transcriptFormat: isNew ? 'new' : 'legacy',
       wordMap,
       diacritizedMap,
