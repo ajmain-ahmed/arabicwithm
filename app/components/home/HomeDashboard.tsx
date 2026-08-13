@@ -299,13 +299,22 @@ export default function HomeDashboard({ books, featuredEpisode, chaptersByBook, 
         <SectionHeading eyebrow="Continue learning" title={recentReading ? 'Your next step is ready' : 'Start your next lesson'} />
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
           {recentReading ? (
-            <Paper elevation={0} sx={{ p: { xs: 3, md: 4 }, border: '1px solid rgba(44,26,14,0.08)', borderRadius: '15px', bgcolor: '#fff' }}>
-              <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 11, letterSpacing: '0.13em', textTransform: 'uppercase' }}>Continue reading</Typography>
-              {recentReading.book.titleAr && <Typography lang="ar" dir="rtl" sx={{ mt: 1.5, textAlign: 'left', fontFamily: '"EB Garamond", Georgia, serif', fontSize: 28, fontWeight: 700, color: '#2c1a0e' }}>{recentReading.book.titleAr}</Typography>}
-              <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 25, fontWeight: 700, color: '#2c1a0e' }}>{recentReading.book.title}</Typography>
-              <Typography sx={{ mt: 0.5, color: '#7a6e65', fontFamily: 'Jost, sans-serif' }}>{recentReading.chapter.title}</Typography>
-              <LinearProgress variant="determinate" value={Math.round(recentReading.chapter.chapterNumber / Math.max(recentReading.book.chapterCount, 1) * 100)} sx={{ mt: 2.5, height: 7, borderRadius: 99, bgcolor: '#eee7dc', '& .MuiLinearProgress-bar': { bgcolor: '#b8860b', borderRadius: 99 } }} />
-              <Button component={Link} href={`/books/${recentReading.book.slug}/${recentReading.chapter.slug}`} variant="contained" endIcon={<ArrowForward />} sx={{ mt: 2.5, bgcolor: '#0e2e1f', borderRadius: '9999px', textTransform: 'none' }}>Continue Reading</Button>
+            <Paper elevation={0} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px minmax(0,1fr)', sm: '180px minmax(0,1fr)' }, minHeight: 240, overflow: 'hidden', border: '1px solid rgba(44,26,14,0.08)', borderRadius: '15px', bgcolor: '#fff' }}>
+              {recentReading.book.cover ? (
+                <Box component="img" src={recentReading.book.cover} alt={`${recentReading.book.title} cover`} sx={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+              ) : (
+                <Box sx={{ display: 'grid', placeItems: 'center', bgcolor: '#0e2e1f' }}>
+                  <AutoStories sx={{ color: '#d4a843', fontSize: { xs: 34, sm: 46 } }} />
+                </Box>
+              )}
+              <Box sx={{ p: { xs: 2.25, sm: 3, md: 4 }, minWidth: 0 }}>
+                <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 11, letterSpacing: '0.13em', textTransform: 'uppercase' }}>Continue reading</Typography>
+                {recentReading.book.titleAr && <Typography lang="ar" dir="rtl" sx={{ mt: 1.5, textAlign: 'left', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 23, sm: 28 }, fontWeight: 700, color: '#2c1a0e' }}>{recentReading.book.titleAr}</Typography>}
+                <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 21, sm: 25 }, fontWeight: 700, color: '#2c1a0e', lineHeight: 1.2 }}>{recentReading.book.title}</Typography>
+                <Typography sx={{ mt: 0.5, color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: { xs: 13, sm: 16 } }}>{recentReading.chapter.title}</Typography>
+                <LinearProgress variant="determinate" value={Math.round(recentReading.chapter.chapterNumber / Math.max(recentReading.book.chapterCount, 1) * 100)} sx={{ mt: 2.5, height: 7, borderRadius: 99, bgcolor: '#eee7dc', '& .MuiLinearProgress-bar': { bgcolor: '#b8860b', borderRadius: 99 } }} />
+                <Button component={Link} href={`/books/${recentReading.book.slug}/${recentReading.chapter.slug}`} variant="contained" endIcon={<ArrowForward />} sx={{ mt: 2.5, bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', textTransform: 'none', '& .MuiButton-endIcon': { color: '#fff' }, '&:hover': { bgcolor: '#173f2d', color: '#fff' } }}>Continue Reading</Button>
+              </Box>
             </Paper>
           ) : featuredBook ? <ContentCard type="Start reading" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} /> : null}
           {featuredEpisode && <ContentCard type={`Watch next · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} actionLabel="Play episode" />}

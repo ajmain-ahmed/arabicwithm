@@ -273,13 +273,26 @@ export default function CartoonsPage({
             ) : (
               <Box
                 sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: 'repeat(5, minmax(0, 1fr))', sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' },
+                  display: { xs: 'flex', sm: 'grid' },
+                  gridTemplateColumns: { sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' },
                   gap: { xs: 0.75, sm: 2 },
+                  overflowX: { xs: 'auto', sm: 'visible' },
+                  pb: { xs: 1.5, sm: 0 },
+                  scrollSnapType: { xs: 'x mandatory', sm: 'none' },
+                  scrollbarWidth: 'none',
+                  '&::-webkit-scrollbar': { display: 'none' },
                 }}
               >
                 {filteredShows.map((show) => (
-                  <Box sx={{ position: 'relative', minWidth: 0 }} key={show.slug}>
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      minWidth: 0,
+                      flex: { xs: '0 0 calc((100% - 24px) / 5)', sm: 'initial' },
+                      scrollSnapAlign: { xs: 'start', sm: 'none' },
+                    }}
+                    key={show.slug}
+                  >
                       {isAdmin && (
                         <Box
                           sx={{
@@ -335,7 +348,7 @@ export default function CartoonsPage({
 
                         level={show.level}
                         denseMobileTile
-                        mobileAspectRatio="4 / 3"
+                        mobileAspectRatio="2 / 3"
                         mobileImagePosition="center"
                         overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                         metaItems={[

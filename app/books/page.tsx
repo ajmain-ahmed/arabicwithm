@@ -52,12 +52,23 @@ export default async function BooksPage() {
             <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 24, color: '#2c1a0e' }}>No books yet</Typography>
           </Paper>
         ) : (
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(5, minmax(0, 1fr))', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: { xs: 0.75, sm: 3 } }}>
+          <Box
+            sx={{
+              display: { xs: 'flex', sm: 'grid' },
+              gridTemplateColumns: { sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
+              gap: { xs: 0.75, sm: 3 },
+              overflowX: { xs: 'auto', sm: 'visible' },
+              pb: { xs: 1.5, sm: 0 },
+              scrollSnapType: { xs: 'x mandatory', sm: 'none' },
+              scrollbarWidth: 'none',
+              '&::-webkit-scrollbar': { display: 'none' },
+            }}
+          >
             {books.map((book) => (
               <Link
                 key={book.id}
                 href={`/books/${encodeURIComponent(book.slug)}`}
-                style={{ color: 'inherit', textDecoration: 'none' }}
+                style={{ color: 'inherit', textDecoration: 'none', flex: '0 0 calc((100% - 24px) / 5)', minWidth: 0, scrollSnapAlign: 'start' }}
               >
                 <Paper
                   elevation={0}
