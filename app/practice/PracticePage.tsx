@@ -28,6 +28,7 @@ import { practiceCategoryFor, type PracticeCategory, type PracticeWord } from '@
 import { supabase } from '@/app/lib/supabase/client'
 
 type Filter = 'all' | Exclude<PracticeCategory, 'other'>
+type CefrFilter = 'all' | 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2'
 
 const FILTERS: Array<{ value: Filter; label: string }> = [
   { value: 'all', label: 'All Words' },
@@ -36,9 +37,16 @@ const FILTERS: Array<{ value: Filter; label: string }> = [
   { value: 'phrases', label: 'Phrases' },
 ]
 
+const CEFR_LEVELS: Exclude<CefrFilter, 'all'>[] = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+const PRACTICE_AMOUNTS = [5, 10, 15, 20, 25, 30]
+
+function wordMatchesCefr(word: PracticeWord, level: Exclude<CefrFilter, 'all'>): boolean {
+  return formatCefr(word.cefr).split(/[-/\s]+/).includes(level)
+}
+
 function amountOptions(total: number): number[] {
   if (total <= 0) return []
-  return [...new Set([5, 10, 15, 20, 25, total].filter((amount) => amount <= total))].sort((a, b) => a - b)
+  return total < 5 ? [total] : PRACTICE_AMOUNTS
 }
 
 function RegisterPrompt() {
@@ -65,6 +73,7 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
   const router = useRouter()
   const [words, setWords] = useState(initialWords)
   const [filter, setFilter] = useState<Filter>('all')
+  const [cefrFilter, setCefrFilter] = useState<CefrFilter>('all')
   const options = amountOptions(words.length)
   const [amount, setAmount] = useState(options[0] ?? 0)
   const [removing, setRemoving] = useState<string | null>(null)
@@ -79,7 +88,15 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
     return next
   }, [words])
 
-  const visibleWords = filter === 'all' ? words : words.filter((word) => practiceCategoryFor(word) === filter)
+  const cefrCounts = useMemo(() => Object.fromEntries(
+    CEFR_LEVELS.map((level) => [level, words.filter((word) => wordMatchesCefr(word, level)).length])
+  ) as Record<Exclude<CefrFilter, 'all'>, number>, [words])
+
+  const visibleWords = useMemo(() => words.filter((word) => {
+    const matchesCategory = filter === 'all' || practiceCategoryFor(word) === filter
+    const matchesLevel = cefrFilter === 'all' || wordMatchesCefr(word, cefrFilter)
+    return matchesCategory && matchesLevel
+  }), [cefrFilter, filter, words])
 
   if (!authenticated) return <RegisterPrompt />
 
@@ -90,7 +107,8 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
       const remaining = words.filter((word) => word.id !== wordId)
       setWords(remaining)
       const nextOptions = amountOptions(remaining.length)
-      if (!nextOptions.includes(amount)) setAmount(nextOptions.at(-1) ?? 0)
+      const availableOptions = nextOptions.filter((option) => option <= remaining.length)
+      if (!availableOptions.includes(amount)) setAmount(availableOptions.at(-1) ?? 0)
       await supabase.auth.refreshSession()
     } catch {
       setError('That word could not be removed. Please try again.')
@@ -108,7 +126,7 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
               <Typography sx={{ fontFamily: 'Jost, sans-serif', color: '#d4a843', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', fontSize: 12 }}>
                 My vocabulary
               </Typography>
-              <Typography component="h1" sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontWeight: 700, fontSize: { xs: 38, md: 52 }, lineHeight: 1.05, mt: 0.75 }}>
+              <Typography component="h1" sx={{ fontFamily: '"EB Garamond", Georgia, serif', color: '#fff', fontWeight: 700, fontSize: { xs: 38, md: 52 }, lineHeight: 1.05, mt: 0.75 }}>
                 Practice
               </Typography>
               <Typography sx={{ fontFamily: 'Jost, sans-serif', color: 'rgba(255,255,255,0.7)', mt: 1, maxWidth: 520 }}>
@@ -135,7 +153,7 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <FormControl size="small" sx={{ minWidth: 80, bgcolor: '#fff' }}>
                   <Select value={amount} onChange={(event) => setAmount(Number(event.target.value))} disabled={!words.length} aria-label="Number of words to practise">
-                    {options.map((option) => <MenuItem key={option} value={option}>{option}</MenuItem>)}
+                    {options.map((option) => <MenuItem key={option} value={option} disabled={option > words.length}>{option}</MenuItem>)}
                   </Select>
                 </FormControl>
                 <Button
@@ -153,22 +171,46 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
         </Paper>
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '220px minmax(0, 1fr)' }, gap: 3, alignItems: 'start' }}>
-          <Paper component="aside" elevation={0} sx={{ p: 1.5, border: '1px solid rgba(44,26,14,0.09)', borderRadius: '10px', position: { md: 'sticky' }, top: { md: 88 } }}>
-            <Typography sx={{ px: 1.5, pt: 1, pb: 1.25, fontFamily: 'Jost, sans-serif', fontWeight: 700, color: '#2c1a0e', fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Categories</Typography>
-            {FILTERS.map((item) => {
-              const count = item.value === 'all' ? words.length : counts[item.value]
-              return (
-                <Button
-                  key={item.value}
-                  fullWidth
-                  onClick={() => setFilter(item.value)}
-                  sx={{ justifyContent: 'space-between', color: filter === item.value ? '#0e2e1f' : '#7a6e65', bgcolor: filter === item.value ? 'rgba(184,134,11,0.12)' : 'transparent', textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: filter === item.value ? 700 : 500, px: 1.5, my: 0.25 }}
-                >
-                  <span>{item.label}</span><Chip label={count} size="small" sx={{ height: 22, fontSize: 11 }} />
-                </Button>
-              )
-            })}
-          </Paper>
+          <Box component="aside" sx={{ display: 'flex', flexDirection: 'column', gap: 2, position: { md: 'sticky' }, top: { md: 88 } }}>
+            <Paper elevation={0} sx={{ p: 1.5, border: '1px solid rgba(44,26,14,0.09)', borderRadius: '10px' }}>
+              <Typography sx={{ px: 1.5, pt: 1, pb: 1.25, fontFamily: 'Jost, sans-serif', fontWeight: 700, color: '#2c1a0e', fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Categories</Typography>
+              {FILTERS.map((item) => {
+                const count = item.value === 'all' ? words.length : counts[item.value]
+                return (
+                  <Button
+                    key={item.value}
+                    fullWidth
+                    onClick={() => setFilter(item.value)}
+                    sx={{ justifyContent: 'space-between', color: filter === item.value ? '#0e2e1f' : '#7a6e65', bgcolor: filter === item.value ? 'rgba(184,134,11,0.12)' : 'transparent', textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: filter === item.value ? 700 : 500, px: 1.5, my: 0.25 }}
+                  >
+                    <span>{item.label}</span><Chip label={count} size="small" sx={{ height: 22, fontSize: 11 }} />
+                  </Button>
+                )
+              })}
+            </Paper>
+
+            <Paper elevation={0} sx={{ p: 1.5, border: '1px solid rgba(44,26,14,0.09)', borderRadius: '10px' }}>
+              <Typography sx={{ px: 1.5, pt: 1, pb: 1.25, fontFamily: 'Jost, sans-serif', fontWeight: 700, color: '#2c1a0e', fontSize: 13, letterSpacing: '0.06em', textTransform: 'uppercase' }}>CEFR Level</Typography>
+              <Button
+                fullWidth
+                onClick={() => setCefrFilter('all')}
+                sx={{ justifyContent: 'space-between', color: cefrFilter === 'all' ? '#0e2e1f' : '#7a6e65', bgcolor: cefrFilter === 'all' ? 'rgba(184,134,11,0.12)' : 'transparent', textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: cefrFilter === 'all' ? 700 : 500, px: 1.5, mb: 0.75 }}
+              >
+                <span>All Levels</span><Chip label={words.length} size="small" sx={{ height: 22, fontSize: 11 }} />
+              </Button>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.75 }}>
+                {CEFR_LEVELS.map((level) => (
+                  <Button
+                    key={level}
+                    onClick={() => setCefrFilter(level)}
+                    sx={{ minWidth: 0, justifyContent: 'space-between', color: cefrFilter === level ? '#0e2e1f' : '#7a6e65', bgcolor: cefrFilter === level ? 'rgba(184,134,11,0.12)' : 'transparent', border: '1px solid rgba(44,26,14,0.08)', textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: cefrFilter === level ? 700 : 500, px: 1, py: 0.75 }}
+                  >
+                    <span>{level}</span><Typography component="span" sx={{ fontSize: 11, color: 'inherit' }}>{cefrCounts[level]}</Typography>
+                  </Button>
+                ))}
+              </Box>
+            </Paper>
+          </Box>
 
           <Box>
             {visibleWords.length === 0 ? (
