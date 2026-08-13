@@ -18,28 +18,28 @@ export default async function BooksPage() {
       <Box
         sx={{
           mt: { xs: '-56px', md: '-64px' },
-          pt: { xs: 14, md: 17 },
-          pb: { xs: 6, md: 8 },
+          pt: { xs: 10, md: 17 },
+          pb: { xs: 2.5, md: 8 },
           px: 2,
           textAlign: 'center',
           background: 'linear-gradient(135deg, #0e2e1f 0%, #173f2d 55%, #2c1a0e 100%)',
         }}
       >
-        <MenuBook sx={{ color: '#d4a843', fontSize: { xs: 38, md: 48 }, mb: 1 }} />
-        <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 38, md: 58 }, fontWeight: 700, color: '#fff' }}>
+        <MenuBook sx={{ display: { xs: 'none', md: 'inline-block' }, color: '#d4a843', fontSize: { xs: 38, md: 48 }, mb: 1 }} />
+        <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 27, md: 58 }, fontWeight: 700, color: '#fff', lineHeight: 1.15 }}>
           Arabic Books
         </Typography>
-        <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 23, md: 30 }, color: '#d4a843', direction: 'rtl' }}>
+        <Typography sx={{ display: { xs: 'none', md: 'block' }, fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 23, md: 30 }, color: '#d4a843', direction: 'rtl' }}>
           كتب عربية
         </Typography>
-        <Typography sx={{ mt: 1.5, mx: 'auto', maxWidth: 560, color: 'rgba(255,255,255,0.78)', fontFamily: 'Jost, sans-serif' }}>
+        <Typography sx={{ display: { xs: 'none', md: 'block' }, mt: 1.5, mx: 'auto', maxWidth: 560, color: 'rgba(255,255,255,0.78)', fontFamily: 'Jost, sans-serif' }}>
           Build your reading confidence with graded Arabic stories.
         </Typography>
       </Box>
 
-      <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 6 } }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 3 }}>
-          <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 28, md: 36 }, fontWeight: 700, color: '#2c1a0e' }}>
+      <Container maxWidth="lg" sx={{ pt: { xs: 2.5, md: 6 }, px: { xs: 2, sm: 3 } }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: { xs: 1.5, sm: 3 } }}>
+          <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 24, md: 36 }, fontWeight: 700, color: '#2c1a0e' }}>
             Library
           </Typography>
           <Typography sx={{ color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: 14 }}>
@@ -52,7 +52,7 @@ export default async function BooksPage() {
             <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 24, color: '#2c1a0e' }}>No books yet</Typography>
           </Paper>
         ) : (
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: 3 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(5, minmax(0, 1fr))', sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: { xs: 0.75, sm: 3 } }}>
             {books.map((book) => (
               <Link
                 key={book.id}
@@ -66,11 +66,11 @@ export default async function BooksPage() {
                     flexDirection: 'column',
                     overflow: 'hidden',
                     height: '100%',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(44,26,14,0.08)',
-                    bgcolor: '#fff',
+                    borderRadius: { xs: '4px', sm: '12px' },
+                    border: { xs: 0, sm: '1px solid rgba(44,26,14,0.08)' },
+                    bgcolor: { xs: 'transparent', sm: '#fff' },
                     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                    '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 28px rgba(44,26,14,0.12)' },
+                    '&:hover': { transform: { xs: 'none', sm: 'translateY(-4px)' }, boxShadow: { xs: 'none', sm: '0 12px 28px rgba(44,26,14,0.12)' } },
                   }}
                 >
                   {book.cover ? (
@@ -78,28 +78,28 @@ export default async function BooksPage() {
                       component="img"
                       src={book.cover}
                       alt={`${book.title} cover`}
-                      sx={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', objectPosition: 'center' }}
+                      sx={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', objectPosition: 'center', borderRadius: { xs: '4px', sm: 0 } }}
                     />
                   ) : (
-                    <Box sx={{ minHeight: 300, p: 3, display: 'grid', placeItems: 'center', textAlign: 'center', background: 'linear-gradient(145deg, #173f2d, #0e2e1f 62%, #2c1a0e)' }}>
+                    <Box sx={{ minHeight: { xs: 76, sm: 300 }, aspectRatio: { xs: '3 / 4', sm: 'auto' }, p: { xs: 0.5, sm: 3 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: { xs: '4px', sm: 0 }, background: 'linear-gradient(145deg, #173f2d, #0e2e1f 62%, #2c1a0e)' }}>
                       <Box>
-                        <AutoStories sx={{ color: '#d4a843', fontSize: 44, mb: 2 }} />
-                        <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 28, lineHeight: 1.15, fontWeight: 700, color: '#fff' }}>
+                        <AutoStories sx={{ color: '#d4a843', fontSize: { xs: 20, sm: 44 }, mb: { xs: 0, sm: 2 } }} />
+                        <Typography sx={{ display: { xs: 'none', sm: 'block' }, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 28, lineHeight: 1.15, fontWeight: 700, color: '#fff' }}>
                           {book.title}
                         </Typography>
                       </Box>
                     </Box>
                   )}
 
-                  <Box sx={{ p: 2.5 }}>
-                    <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 24, lineHeight: 1.2, fontWeight: 700, color: '#2c1a0e', mb: 1.5 }}>
+                  <Box sx={{ p: { xs: '5px 1px 0', sm: 2.5 } }}>
+                    <Typography sx={{ fontFamily: { xs: 'Jost, sans-serif', sm: '"EB Garamond", Georgia, serif' }, fontSize: { xs: 10, sm: 24 }, lineHeight: { xs: 1.2, sm: 1.2 }, fontWeight: { xs: 600, sm: 700 }, color: '#2c1a0e', mb: { xs: 0, sm: 1.5 }, minHeight: { xs: '2.4em', sm: 0 }, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: { xs: 2, sm: 'unset' }, WebkitBoxOrient: 'vertical' }}>
                       {book.title}
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                    <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1, flexWrap: 'wrap', mb: 2 }}>
                       {book.level && <Chip label={book.level} size="small" sx={{ bgcolor: '#6b8f5e', color: '#fff', fontWeight: 700 }} />}
                       {book.category && <Chip label={book.category} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />}
                     </Box>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1.5, borderTop: '1px solid rgba(44,26,14,0.07)' }}>
+                    <Box sx={{ display: { xs: 'none', sm: 'flex' }, justifyContent: 'space-between', alignItems: 'center', pt: 1.5, borderTop: '1px solid rgba(44,26,14,0.07)' }}>
                       <Typography sx={{ color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: 14 }}>
                         {book.chapterCount} {book.chapterCount === 1 ? 'chapter' : 'chapters'}
                       </Typography>

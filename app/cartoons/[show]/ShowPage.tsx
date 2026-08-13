@@ -6,7 +6,6 @@ import {
   Typography,
   Button,
   Container,
-  Grid,
   Drawer,
   IconButton,
   Breadcrumbs,
@@ -252,10 +251,22 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                 onSaved={() => { setDialogOpen(false); router.refresh(); }}
               />
 
-              <Grid container spacing={{ xs: 1, md: 2 }}>
+              <Box
+                sx={{
+                  display: { xs: 'flex', sm: 'grid' },
+                  gridTemplateColumns: { sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' },
+                  gap: { xs: 1.25, sm: 2 },
+                  overflowX: { xs: 'auto', sm: 'visible' },
+                  mx: { xs: -2, sm: 0 },
+                  px: { xs: 2, sm: 0 },
+                  pb: { xs: 1.5, sm: 0 },
+                  scrollSnapType: { xs: 'x mandatory', sm: 'none' },
+                  scrollbarWidth: 'none',
+                  '&::-webkit-scrollbar': { display: 'none' },
+                }}
+              >
                 {filteredEpisodes.map((ep) => (
-                  <Grid size={{ xs: 12, sm: 6, xl: 3 }} key={ep.slug}>
-                    <Box sx={{ position: 'relative' }}>
+                  <Box key={ep.slug} sx={{ position: 'relative', flex: { xs: '0 0 148px', sm: 'initial' }, minWidth: 0, scrollSnapAlign: { xs: 'start', sm: 'none' } }}>
                       {isAdmin && (
                         <Box
                           sx={{
@@ -263,7 +274,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                             top: 8,
                             right: 8,
                             zIndex: 2,
-                            display: 'flex',
+                            display: { xs: 'none', sm: 'flex' },
                             gap: 0.5,
                           }}
                         >
@@ -309,14 +320,16 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                         category={ep.tags[0]}
                         description={ep.description}
                         imageFit="natural"
-                        compactMobileRow
+                        denseMobileTile
+                        mobileAspectRatio="16 / 9"
+                        mobileImagePosition="center"
+                        mobileTitleSize={12}
                         overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                         metaItems={[]}
                       />
-                    </Box>
-                  </Grid>
+                  </Box>
                 ))}
-              </Grid>
+              </Box>
             </Box>
           </Box>
         )}

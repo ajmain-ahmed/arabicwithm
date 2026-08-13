@@ -40,6 +40,10 @@ export interface ContentCardProps {
   aspectRatio?: string
   imageFit?: 'cover' | 'contain' | 'natural'
   compactMobileRow?: boolean
+  denseMobileTile?: boolean
+  mobileAspectRatio?: string
+  mobileImagePosition?: string
+  mobileTitleSize?: number
 }
 
 export default function ContentCard({
@@ -56,6 +60,10 @@ export default function ContentCard({
   aspectRatio = '16/9',
   imageFit = 'cover',
   compactMobileRow = false,
+  denseMobileTile = false,
+  mobileAspectRatio = '4 / 3',
+  mobileImagePosition = 'center',
+  mobileTitleSize = 10,
 }: ContentCardProps) {
   const [hovered, setHovered] = useState(false)
   const [imgError, setImgError] = useState(false)
@@ -70,34 +78,39 @@ export default function ContentCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       sx={{
-        display: compactMobileRow ? { xs: 'flex', sm: 'block' } : 'block',
-        alignItems: compactMobileRow ? { xs: 'stretch', sm: 'initial' } : undefined,
+        display: denseMobileTile ? 'block' : compactMobileRow ? { xs: 'flex', sm: 'block' } : 'block',
+        alignItems: denseMobileTile ? undefined : compactMobileRow ? { xs: 'stretch', sm: 'initial' } : undefined,
         color: 'inherit',
         textDecoration: 'none',
-        borderRadius: '10px',
+        borderRadius: denseMobileTile ? { xs: '4px', sm: '10px' } : '10px',
         overflow: 'hidden',
-        backgroundColor: WARM_WHITE,
-        border: '1px solid rgba(44,26,14,0.04)',
-        boxShadow: hovered
-          ? '0 8px 24px rgba(44,26,14,0.1)'
-          : '0 1px 4px rgba(44,26,14,0.06)',
-        transform: hovered ? 'translateY(-3px)' : 'none',
+        backgroundColor: denseMobileTile ? { xs: 'transparent', sm: WARM_WHITE } : WARM_WHITE,
+        border: denseMobileTile ? { xs: 0, sm: '1px solid rgba(44,26,14,0.04)' } : '1px solid rgba(44,26,14,0.04)',
+        boxShadow: denseMobileTile
+          ? { xs: 'none', sm: hovered ? '0 8px 24px rgba(44,26,14,0.1)' : '0 1px 4px rgba(44,26,14,0.06)' }
+          : hovered ? '0 8px 24px rgba(44,26,14,0.1)' : '0 1px 4px rgba(44,26,14,0.06)',
+        transform: denseMobileTile ? { xs: 'none', sm: hovered ? 'translateY(-3px)' : 'none' } : hovered ? 'translateY(-3px)' : 'none',
         transition: 'all 0.2s ease',
         cursor: 'pointer',
-        minHeight: compactMobileRow ? { xs: 148, sm: 0 } : undefined,
+        minHeight: denseMobileTile ? undefined : compactMobileRow ? { xs: 148, sm: 0 } : undefined,
       }}
     >
       {/* Thumbnail */}
       <Box
         sx={{
           position: 'relative',
-          width: compactMobileRow ? { xs: 'clamp(108px, 34vw, 132px)', sm: '100%' } : '100%',
-          flexShrink: compactMobileRow ? 0 : undefined,
-          aspectRatio: compactMobileRow
+          width: denseMobileTile ? '100%' : compactMobileRow ? { xs: 'clamp(108px, 34vw, 132px)', sm: '100%' } : '100%',
+          flexShrink: denseMobileTile ? undefined : compactMobileRow ? 0 : undefined,
+          aspectRatio: denseMobileTile
+            ? { xs: mobileAspectRatio, sm: imageFit === 'natural' ? 'auto' : aspectRatio }
+            : compactMobileRow
             ? { xs: '3 / 4', sm: imageFit === 'natural' ? 'auto' : aspectRatio }
             : imageFit === 'natural' ? 'auto' : aspectRatio,
           overflow: 'hidden',
-          backgroundColor: compactMobileRow
+          borderRadius: denseMobileTile ? { xs: '4px', sm: 0 } : 0,
+          backgroundColor: denseMobileTile
+            ? { xs: '#efe5d6', sm: imageFit === 'contain' ? '#efe5d6' : 'transparent' }
+            : compactMobileRow
             ? { xs: '#efe5d6', sm: imageFit === 'contain' ? '#efe5d6' : 'transparent' }
             : imageFit === 'contain' ? '#efe5d6' : 'transparent',
         }}
@@ -110,13 +123,18 @@ export default function ContentCard({
             onError={() => setImgError(true)}
             sx={{
               width: '100%',
-              height: compactMobileRow
+              height: denseMobileTile
+                ? { xs: '100%', sm: imageFit === 'natural' ? 'auto' : '100%' }
+                : compactMobileRow
                 ? { xs: '100%', sm: imageFit === 'natural' ? 'auto' : '100%' }
                 : imageFit === 'natural' ? 'auto' : '100%',
               display: 'block',
-              objectFit: compactMobileRow
+              objectFit: denseMobileTile
+                ? { xs: 'cover', sm: imageFit === 'natural' ? undefined : imageFit }
+                : compactMobileRow
                 ? { xs: 'contain', sm: imageFit === 'natural' ? undefined : imageFit }
                 : imageFit === 'natural' ? undefined : imageFit,
+              objectPosition: denseMobileTile ? { xs: mobileImagePosition, sm: 'center' } : 'center',
               transform: hovered && imageFit !== 'natural' ? 'scale(1.03)' : 'scale(1)',
               transition: 'transform 0.3s',
             }}
@@ -125,10 +143,14 @@ export default function ContentCard({
           <Box
             sx={{
               width: '100%',
-              height: compactMobileRow
+              height: denseMobileTile
+                ? { xs: '100%', sm: imageFit === 'natural' ? 'auto' : '100%' }
+                : compactMobileRow
                 ? { xs: '100%', sm: imageFit === 'natural' ? 'auto' : '100%' }
                 : imageFit === 'natural' ? 'auto' : '100%',
-              minHeight: compactMobileRow
+              minHeight: denseMobileTile
+                ? { xs: 0, sm: imageFit === 'natural' ? 180 : 0 }
+                : compactMobileRow
                 ? { xs: 0, sm: imageFit === 'natural' ? 180 : 0 }
                 : imageFit === 'natural' ? 180 : undefined,
               display: 'flex',
@@ -157,6 +179,7 @@ export default function ContentCard({
           sx={{
             position: 'absolute',
             inset: 0,
+            display: denseMobileTile ? { xs: 'none', sm: 'block' } : 'block',
             background: compactMobileRow
               ? { xs: 'linear-gradient(transparent 72%, rgba(44,26,14,0.35))', sm: 'linear-gradient(transparent 60%, rgba(44,26,14,0.5))' }
               : 'linear-gradient(transparent 60%, rgba(44,26,14,0.5))',
@@ -169,7 +192,7 @@ export default function ContentCard({
             sx={{
               position: 'absolute',
               inset: 0,
-              display: 'flex',
+              display: denseMobileTile ? { xs: 'none', sm: 'flex' } : 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: hovered ? 'rgba(44,26,14,0.2)' : 'rgba(44,26,14,0.1)',
@@ -198,6 +221,7 @@ export default function ContentCard({
             size="small"
             sx={{
               position: 'absolute',
+              display: denseMobileTile ? { xs: 'none', sm: 'inline-flex' } : 'inline-flex',
               top: 8,
               right: 8,
               backgroundColor: badgeColor,
@@ -213,24 +237,31 @@ export default function ContentCard({
       </Box>
 
       {/* Card Body */}
-      <Box sx={{ p: compactMobileRow ? { xs: 1.5, sm: 2 } : 2, flex: compactMobileRow ? 1 : undefined, minWidth: 0 }}>
+      <Box sx={{ p: denseMobileTile ? { xs: '5px 1px 0', sm: 2 } : compactMobileRow ? { xs: 1.5, sm: 2 } : 2, flex: denseMobileTile ? undefined : compactMobileRow ? 1 : undefined, minWidth: 0 }}>
         <Typography
           sx={{
-            fontFamily: '"EB Garamond", Georgia, serif',
-            fontSize: compactMobileRow ? { xs: 16, sm: 18, md: 20 } : { xs: 18, md: 20 },
-            fontWeight: 500,
+            fontFamily: denseMobileTile ? { xs: 'Jost, sans-serif', sm: '"EB Garamond", Georgia, serif' } : '"EB Garamond", Georgia, serif',
+            fontSize: denseMobileTile ? { xs: mobileTitleSize, sm: 18, md: 20 } : compactMobileRow ? { xs: 16, sm: 18, md: 20 } : { xs: 18, md: 20 },
+            fontWeight: denseMobileTile ? { xs: 600, sm: 500 } : 500,
             letterSpacing: '-0.01em',
-            lineHeight: 1.25,
+            lineHeight: denseMobileTile ? { xs: 1.2, sm: 1.25 } : 1.25,
             color: BARK,
-            mb: 0.5,
+            mb: denseMobileTile ? { xs: 0, sm: 0.5 } : 0.5,
+            minHeight: denseMobileTile ? { xs: '2.4em', sm: 0 } : 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: denseMobileTile ? { xs: '-webkit-box', sm: 'block' } : 'block',
+            WebkitLineClamp: denseMobileTile ? { xs: 2, sm: 'unset' } : 'unset',
+            WebkitBoxOrient: 'vertical',
+            whiteSpace: denseMobileTile ? { xs: 'normal', sm: 'nowrap' } : 'nowrap',
           }}
-          noWrap
         >
           {title}
         </Typography>
         {titleAr && (
           <Typography
             sx={{
+              display: denseMobileTile ? { xs: 'none', sm: 'block' } : 'block',
               fontFamily: '"EB Garamond", Georgia, serif',
               fontSize: { xs: 15, md: 18 },
               color: GOLD,
@@ -242,7 +273,7 @@ export default function ContentCard({
           </Typography>
         )}
         {/* Tags */}
-        <Box sx={{ display: 'flex', gap: 1, mb: compactMobileRow ? { xs: 0.75, sm: 1.5 } : 1.5, flexWrap: 'wrap' }}>
+        <Box sx={{ display: denseMobileTile ? { xs: 'none', sm: 'flex' } : 'flex', gap: 1, mb: compactMobileRow ? { xs: 0.75, sm: 1.5 } : 1.5, flexWrap: 'wrap' }}>
           {category && (
             <Chip
               label={category}
@@ -265,13 +296,13 @@ export default function ContentCard({
         {description && (
           <Typography
             sx={{
+              display: denseMobileTile ? { xs: 'none', sm: '-webkit-box' } : '-webkit-box',
               fontSize: compactMobileRow ? { xs: 12.5, sm: 14, md: 15 } : { xs: 14, md: 15 },
               lineHeight: 1.45,
               color: MUTED,
               mb: compactMobileRow ? { xs: 0, sm: 1.5 } : 1.5,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              display: '-webkit-box',
               WebkitLineClamp: 2,
               WebkitBoxOrient: 'vertical',
             }}
@@ -283,7 +314,7 @@ export default function ContentCard({
         {metaItems.length > 0 && (
           <Box
             sx={{
-              display: 'flex',
+              display: denseMobileTile ? { xs: 'none', sm: 'flex' } : 'flex',
               alignItems: 'center',
               gap: 3,
               pt: 1.5,

@@ -10,7 +10,6 @@ import {
   IconButton,
   Breadcrumbs,
 } from '@mui/material'
-import Grid from '@mui/material/Grid'
 import { useRouter } from 'next/navigation'
 import { ShowMeta, CARTOONS_BANNER_PATH } from '../lib/cartoons'
 import { PageBanner } from '@/app/components/page-layout'
@@ -272,10 +271,15 @@ export default function CartoonsPage({
                 </Button>
               </Box>
             ) : (
-              <Grid container spacing={2}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: 'repeat(5, minmax(0, 1fr))', sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' },
+                  gap: { xs: 0.75, sm: 2 },
+                }}
+              >
                 {filteredShows.map((show) => (
-                  <Grid size={{ xs: 12, sm: 6, xl: 3 }} key={show.slug}>
-                    <Box sx={{ position: 'relative' }}>
+                  <Box sx={{ position: 'relative', minWidth: 0 }} key={show.slug}>
                       {isAdmin && (
                         <Box
                           sx={{
@@ -283,7 +287,7 @@ export default function CartoonsPage({
                             top: 8,
                             left: 8,
                             zIndex: 2,
-                            display: 'flex',
+                            display: { xs: 'none', sm: 'flex' },
                             gap: 0.5,
                           }}
                         >
@@ -330,6 +334,9 @@ export default function CartoonsPage({
                         category={show.category}
 
                         level={show.level}
+                        denseMobileTile
+                        mobileAspectRatio="4 / 3"
+                        mobileImagePosition="center"
                         overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                         metaItems={[
                           {
@@ -338,10 +345,9 @@ export default function CartoonsPage({
                           },
                         ]}
                       />
-                    </Box>
-                  </Grid>
+                  </Box>
                 ))}
-              </Grid>
+              </Box>
             )}
           </Box>
         </Box>

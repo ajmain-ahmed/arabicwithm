@@ -78,24 +78,38 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
           </Box>
         </Paper>
 
-        <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 30, fontWeight: 700, color: '#2c1a0e', mb: 2 }}>
+        <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 25, sm: 30 }, fontWeight: 700, color: '#2c1a0e', mb: 2 }}>
           Chapters
         </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'row', sm: 'column' },
+            gap: { xs: 1.25, sm: 1.25 },
+            overflowX: { xs: 'auto', sm: 'visible' },
+            mx: { xs: -2, sm: 0 },
+            px: { xs: 2, sm: 0 },
+            pb: { xs: 1.5, sm: 0 },
+            scrollSnapType: { xs: 'x mandatory', sm: 'none' },
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { display: 'none' },
+          }}
+        >
           {chapters.map((chapter) => (
-            <Link
-              key={chapter.id}
-              href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`}
-              style={{ color: 'inherit', textDecoration: 'none' }}
-            >
-              <Paper elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, borderRadius: '10px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: '#fff', transition: 'border-color 0.15s ease, transform 0.15s ease', '&:hover': { borderColor: 'rgba(184,134,11,0.45)', transform: 'translateX(3px)' } }}>
-                <Box sx={{ width: 38, height: 38, borderRadius: '50%', display: 'grid', placeItems: 'center', bgcolor: 'rgba(184,134,11,0.1)', color: '#b8860b', fontWeight: 700, flexShrink: 0 }}>
-                  {chapter.chapterNumber}
-                </Box>
-                <Typography sx={{ flex: 1, fontFamily: 'Jost, sans-serif', fontWeight: 600, color: '#2c1a0e' }}>{chapter.title}</Typography>
-                <ChevronRight sx={{ color: '#9e8a7a' }} />
-              </Paper>
-            </Link>
+            <Box key={chapter.id} sx={{ flex: { xs: '0 0 142px', sm: 'initial' }, scrollSnapAlign: { xs: 'start', sm: 'none' } }}>
+              <Link
+                href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`}
+                style={{ color: 'inherit', textDecoration: 'none' }}
+              >
+                <Paper elevation={0} sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', justifyContent: { xs: 'center', sm: 'flex-start' }, gap: { xs: 1.25, sm: 2 }, p: { xs: 1.5, sm: 2 }, minHeight: { xs: 100, sm: 0 }, height: '100%', textAlign: { xs: 'center', sm: 'left' }, borderRadius: '10px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: '#fff', transition: 'border-color 0.15s ease, transform 0.15s ease', '&:hover': { borderColor: 'rgba(184,134,11,0.45)', transform: { xs: 'none', sm: 'translateX(3px)' } } }}>
+                  <Box sx={{ width: { xs: 34, sm: 38 }, height: { xs: 34, sm: 38 }, borderRadius: '50%', display: 'grid', placeItems: 'center', bgcolor: 'rgba(184,134,11,0.1)', color: '#b8860b', fontWeight: 700, flexShrink: 0 }}>
+                    {chapter.chapterNumber}
+                  </Box>
+                  <Typography sx={{ flex: { sm: 1 }, fontFamily: 'Jost, sans-serif', fontSize: { xs: 12, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: '#2c1a0e', display: '-webkit-box', WebkitLineClamp: { xs: 2, sm: 'unset' }, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{chapter.title}</Typography>
+                  <ChevronRight sx={{ display: { xs: 'none', sm: 'block' }, color: '#9e8a7a' }} />
+                </Paper>
+              </Link>
+            </Box>
           ))}
         </Box>
       </Container>
