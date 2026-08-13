@@ -4,6 +4,8 @@
 
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { unstable_rethrow } from "next/navigation"
+import type { User } from "@supabase/supabase-js"
 
 async function getAuthClient() {
   const cookieStore = await cookies()
@@ -19,7 +21,7 @@ async function getAuthClient() {
   )
 }
 
-export async function getAuthenticatedUserId(): Promise<string | null> {
+async function getAuthenticatedUser(): Promise<User | null> {
   try {
     const supabase = await getAuthClient()
     const { data, error } = await supabase.auth.getUser()
@@ -29,11 +31,17 @@ export async function getAuthenticatedUserId(): Promise<string | null> {
       }
       return null
     }
-    return data.user?.id ?? null
+    return data.user ?? null
   } catch (e) {
+    unstable_rethrow(e)
     console.error("[auth] unexpected error:", e)
     return null
   }
+}
+
+export async function getAuthenticatedUserId(): Promise<string | null> {
+  const user = await getAuthenticatedUser()
+  return user?.id ?? null
 }
 
 const ADMIN_UIDS = new Set(
@@ -41,9 +49,13 @@ const ADMIN_UIDS = new Set(
 )
 
 export async function isAdminUser(): Promise<boolean> {
-  const userId = await getAuthenticatedUserId()
-  if (!userId || ADMIN_UIDS.size === 0) return false
-  return ADMIN_UIDS.has(userId)
+  const user = await getAuthenticatedUser()
+  if (!user) return false
+
+  const hasAdminRole = user.app_metadata?.role === "admin"
+    || user.app_metadata?.is_admin === true
+
+  return hasAdminRole || ADMIN_UIDS.has(user.id)
 }
 
 export async function guardAdmin(): Promise<void> {

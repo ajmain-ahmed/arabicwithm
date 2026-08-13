@@ -1,8 +1,10 @@
 'use client'
 
-import { LogoutSharp } from '@mui/icons-material'
+import { AdminPanelSettings, LogoutSharp } from '@mui/icons-material'
 import { Box, Menu, MenuItem, Typography } from '@mui/material'
 import { User } from '@supabase/supabase-js'
+import Link from 'next/link'
+import { useIsAdmin } from '@/app/lib/useIsAdmin'
 
 interface UserMenuProps {
     anchorEl: HTMLElement | null
@@ -12,6 +14,8 @@ interface UserMenuProps {
 }
 
 export default function UserMenu({ anchorEl, onClose, user, onLogout }: UserMenuProps) {
+    const isAdmin = useIsAdmin()
+
     return (
         <Menu
             anchorEl={anchorEl}
@@ -47,6 +51,19 @@ export default function UserMenu({ anchorEl, onClose, user, onLogout }: UserMenu
                         'linear-gradient(90deg, transparent, color-mix(in srgb, var(--awm-gold) 30%, transparent), transparent)',
                 }}
             />
+            {isAdmin && (
+                <MenuItem
+                    component={Link}
+                    href="/admin"
+                    onClick={onClose}
+                    sx={{ py: 1.2, gap: 1.5, '&:hover': { background: 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' } }}
+                >
+                    <AdminPanelSettings sx={{ fontSize: 18, color: 'var(--awm-gold)' }} />
+                    <Typography variant="body2" sx={{ color: 'var(--awm-bark)', fontWeight: 600 }}>
+                        Admin dashboard
+                    </Typography>
+                </MenuItem>
+            )}
             <MenuItem
                 onClick={onLogout}
                 sx={{
