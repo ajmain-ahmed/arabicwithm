@@ -1,13 +1,17 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
+  AccessTimeRounded,
   ArrowForward,
   AutoStories,
+  FavoriteRounded,
   Headphones,
+  LocalFireDepartmentRounded,
   MenuBook,
   Movie,
+  NewReleasesOutlined,
   SchoolOutlined,
   Search,
   Translate,
@@ -18,10 +22,19 @@ import { useAuth } from '@/app/AuthContext'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { VocabularyEntry } from '@/app/actions/vocabulary'
 import PracticeWordButton from '@/app/components/vocab-tooltip/PracticeWordButton'
-import type { ShowMeta } from '@/app/lib/cartoons'
+import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
+import {
+  LEARNING_ACTIVITY_EVENT,
+  calculateLearningStreak,
+  formatLearningTime,
+  parseLearningActivity,
+  type LearningActivity,
+} from '@/app/lib/activity'
 import { parsePracticeWords } from '@/app/lib/practice'
 
 interface ProgressEntry { chapterSlug: string; updatedAt?: string }
+interface FeaturedEpisode { show: ShowMeta; episode: EpisodeMeta }
+interface ActivityUpdate { userId: string; activity: LearningActivity }
 
 const LEARNING_AREAS = [
   { title: 'Cartoons', body: 'Watch entertaining Arabic content with interactive subtitles.', href: '/cartoons', icon: Movie },
@@ -104,9 +117,9 @@ function LearningAreaCards() {
       {LEARNING_AREAS.map((area) => {
         const Icon = area.icon
         return (
-          <Paper key={area.title} component={Link} href={area.href} elevation={0} sx={{ p: 2.75, color: 'inherit', textDecoration: 'none', border: '1px solid rgba(44,26,14,0.08)', borderRadius: '13px', bgcolor: '#fff', transition: 'transform .2s ease, box-shadow .2s ease', '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 12px 30px rgba(44,26,14,0.09)' } }}>
-            <Box sx={{ width: 44, height: 44, borderRadius: '11px', display: 'grid', placeItems: 'center', bgcolor: 'rgba(184,134,11,0.1)', color: '#b8860b' }}><Icon /></Box>
-            <Typography sx={{ mt: 2, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 24, fontWeight: 700, color: '#2c1a0e' }}>{area.title}</Typography>
+          <Paper key={area.title} component={Link} href={area.href} elevation={0} sx={{ p: { xs: 2.25, sm: 2.75 }, color: 'inherit', textDecoration: 'none', border: '1px solid rgba(44,26,14,0.08)', borderRadius: '13px', bgcolor: '#fff', transition: 'transform .2s ease, box-shadow .2s ease', '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 12px 30px rgba(44,26,14,0.09)' } }}>
+            <Box sx={{ width: { xs: 38, sm: 44 }, height: { xs: 38, sm: 44 }, borderRadius: '10px', display: 'grid', placeItems: 'center', bgcolor: 'rgba(184,134,11,0.1)', color: '#b8860b' }}><Icon sx={{ fontSize: { xs: 20, sm: 24 } }} /></Box>
+            <Typography sx={{ mt: { xs: 1.5, sm: 2 }, fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 22, sm: 24 }, fontWeight: 700, color: '#2c1a0e' }}>{area.title}</Typography>
             <Typography sx={{ mt: 0.5, fontFamily: 'Jost, sans-serif', fontSize: 14, color: '#7a6e65', lineHeight: 1.6 }}>{area.body}</Typography>
           </Paper>
         )
@@ -122,7 +135,7 @@ function QuickPractice() {
         const Icon = item.icon
         return (
           <Paper key={item.title} component={Link} href={item.href} elevation={0} sx={{ p: { xs: 2, md: 2.5 }, textDecoration: 'none', border: '1px solid rgba(44,26,14,0.08)', borderRadius: '12px', color: '#2c1a0e', '&:hover': { borderColor: 'rgba(184,134,11,0.5)' } }}>
-            <Icon sx={{ color: '#b8860b' }} />
+            <Icon sx={{ color: '#b8860b', fontSize: { xs: 19, md: 24 } }} />
             <Typography sx={{ mt: 1, fontFamily: 'Jost, sans-serif', fontWeight: 700 }}>{item.title}</Typography>
             <Typography sx={{ mt: 0.25, fontFamily: 'Jost, sans-serif', color: '#7a6e65', fontSize: 12 }}>{item.label}</Typography>
           </Paper>
@@ -132,24 +145,62 @@ function QuickPractice() {
   )
 }
 
-function ContentCard({ type, title, titleAr, description, level, href, image }: { type: string; title: string; titleAr?: string; description?: string; level?: string; href: string; image?: string }) {
+function ContentCard({ type, title, titleAr, description, level, href, image, actionLabel = 'Explore' }: { type: string; title: string; titleAr?: string; description?: string; level?: string; href: string; image?: string; actionLabel?: string }) {
   return (
     <Paper elevation={0} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px minmax(0,1fr)', sm: '180px minmax(0,1fr)' }, minHeight: 220, overflow: 'hidden', border: '1px solid rgba(44,26,14,0.08)', borderRadius: '14px', bgcolor: '#fff' }}>
-      {image ? <Box component="img" src={image} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Box sx={{ display: 'grid', placeItems: 'center', bgcolor: '#0e2e1f' }}><AutoStories sx={{ color: '#d4a843', fontSize: 46 }} /></Box>}
+      {image ? <Box component="img" src={image} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Box sx={{ display: 'grid', placeItems: 'center', bgcolor: '#0e2e1f' }}><AutoStories sx={{ color: '#d4a843', fontSize: { xs: 34, sm: 46 } }} /></Box>}
       <Box sx={{ p: { xs: 2, sm: 3 }, minWidth: 0 }}>
         <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{type}</Typography>
         {titleAr && <Typography lang="ar" dir="rtl" sx={{ mt: 0.5, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 23, fontWeight: 700, color: '#2c1a0e', textAlign: 'left' }}>{titleAr}</Typography>}
         <Typography sx={{ mt: titleAr ? 0 : 0.75, fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 20, sm: 24 }, fontWeight: 700, color: '#2c1a0e', lineHeight: 1.2 }}>{title}</Typography>
         {description && <Typography sx={{ mt: 0.75, color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: 13, lineHeight: 1.55, display: { xs: 'none', sm: '-webkit-box' }, WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{description}</Typography>}
         {level && <Chip size="small" label={level} sx={{ mt: 1.5, bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508', fontWeight: 700 }} />}
-        <Button component={Link} href={href} endIcon={<ArrowForward />} sx={{ display: 'flex', width: 'fit-content', mt: 1.5, px: 0, color: '#0e2e1f', fontWeight: 700, textTransform: 'none' }}>Explore</Button>
+        <Button component={Link} href={href} endIcon={<ArrowForward sx={{ fontSize: { xs: 17, sm: 20 } }} />} sx={{ display: 'flex', width: 'fit-content', mt: 1.5, px: 0, color: '#0e2e1f', fontWeight: 700, textTransform: 'none' }}>{actionLabel}</Button>
       </Box>
     </Paper>
   )
 }
 
-export default function HomeDashboard({ books, shows, chaptersByBook, wordOfTheDay }: { books: PublicBook[]; shows: ShowMeta[]; chaptersByBook: Record<string, PublicChapter[]>; wordOfTheDay: VocabularyEntry | null }) {
+function LearningStats({ totalSeconds, newWords, favourites, streak }: { totalSeconds: number; newWords: number; favourites: number; streak: number }) {
+  const stats = [
+    { label: 'Learning time', detail: 'Active study', value: formatLearningTime(totalSeconds), icon: AccessTimeRounded, colour: '#0e2e1f', background: 'rgba(14,46,31,0.09)' },
+    { label: 'New words', detail: 'Collected this week', value: newWords, icon: NewReleasesOutlined, colour: '#b8860b', background: 'rgba(184,134,11,0.1)' },
+    { label: 'Favourited', detail: 'Saved for practice', value: favourites, icon: FavoriteRounded, colour: '#9c4f52', background: 'rgba(156,79,82,0.09)' },
+    { label: 'Current streak', detail: streak === 1 ? '1 active day' : `${streak} active days`, value: `${streak}d`, icon: LocalFireDepartmentRounded, colour: '#c66a28', background: 'rgba(198,106,40,0.1)' },
+  ]
+
+  return (
+    <Paper elevation={0} sx={{ p: { xs: 2.25, sm: 3, md: 3.5 }, border: '1px solid rgba(44,26,14,0.08)', borderRadius: '15px', bgcolor: '#fff' }}>
+      <Box sx={{ mb: { xs: 2.25, md: 3 }, display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 2 }}>
+        <Box>
+          <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase' }}>At a glance</Typography>
+          <Typography component="h2" sx={{ mt: 0.4, color: '#2c1a0e', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 27, md: 32 }, fontWeight: 700, lineHeight: 1.15 }}>Your learning activity</Typography>
+        </Box>
+        <Button component={Link} href="/practice" endIcon={<ArrowForward sx={{ fontSize: 17 }} />} sx={{ display: { xs: 'none', sm: 'flex' }, color: '#0e2e1f', fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700, textTransform: 'none' }}>View practice</Button>
+      </Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', md: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 1, sm: 1.5 } }}>
+        {stats.map((stat) => {
+          const Icon = stat.icon
+          return (
+            <Box key={stat.label} sx={{ minWidth: 0, p: { xs: 1.5, sm: 2 }, borderRadius: '11px', bgcolor: '#faf7f2' }}>
+              <Box sx={{ width: { xs: 30, sm: 34 }, height: { xs: 30, sm: 34 }, display: 'grid', placeItems: 'center', borderRadius: '9px', color: stat.colour, bgcolor: stat.background }}>
+                <Icon sx={{ fontSize: { xs: 17, sm: 19 } }} />
+              </Box>
+              <Typography sx={{ mt: 1.25, color: '#2c1a0e', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 25, sm: 30 }, fontWeight: 700, lineHeight: 1 }}>{stat.value}</Typography>
+              <Typography sx={{ mt: 0.8, color: '#2c1a0e', fontFamily: 'Jost, sans-serif', fontSize: { xs: 11, sm: 12 }, fontWeight: 700 }}>{stat.label}</Typography>
+              <Typography sx={{ mt: 0.2, color: '#8b7d72', fontFamily: 'Jost, sans-serif', fontSize: { xs: 9.5, sm: 10.5 }, lineHeight: 1.35 }}>{stat.detail}</Typography>
+            </Box>
+          )
+        })}
+      </Box>
+    </Paper>
+  )
+}
+
+export default function HomeDashboard({ books, featuredEpisode, chaptersByBook, wordOfTheDay }: { books: PublicBook[]; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; wordOfTheDay: VocabularyEntry | null }) {
   const { user, loading } = useAuth()
+  const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
+  const [dashboardLoadedAt] = useState(Date.now)
   const words = useMemo(() => parsePracticeWords(user?.user_metadata), [user])
   const progress = useMemo(() => {
     const raw = user?.user_metadata?.book_progress
@@ -165,13 +216,18 @@ export default function HomeDashboard({ books, shows, chaptersByBook, wordOfTheD
     return null
   })()
 
+  useEffect(() => {
+    const handleActivityUpdate = (event: Event) => {
+      setActivityUpdate((event as CustomEvent<ActivityUpdate>).detail)
+    }
+    window.addEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
+    return () => window.removeEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
+  }, [])
+
   if (loading) return <Box sx={{ minHeight: '65vh', display: 'grid', placeItems: 'center' }}><CircularProgress sx={{ color: '#b8860b' }} /></Box>
 
-  const featuredShow = shows[0]
   const featuredBook = books[0]
   const displayName = String(user?.user_metadata?.full_name ?? user?.email?.split('@')[0] ?? 'learner').split(' ')[0]
-  const practised = words.reduce((sum, word) => sum + word.practiceCount, 0)
-  const mastered = words.filter((word) => word.mastery >= 6).length
 
   if (!user) {
     return (
@@ -195,7 +251,7 @@ export default function HomeDashboard({ books, shows, chaptersByBook, wordOfTheD
           <LearningAreaCards />
           <Box sx={{ mt: { xs: 7, md: 10 } }}><SectionHeading eyebrow="Start exploring" title="Featured learning" detail="A simple place to begin—no account history required." />
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
-              {featuredShow && <ContentCard type="Featured cartoon" title={featuredShow.title} titleAr={featuredShow.titleAr} description={featuredShow.description} level={featuredShow.level} href={`/cartoons/${featuredShow.slug}`} image={featuredShow.cover} />}
+              {featuredEpisode && <ContentCard type={`Featured episode · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} actionLabel="Play episode" />}
               {featuredBook && <ContentCard type="Featured book" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} />}
             </Box>
           </Box>
@@ -213,6 +269,21 @@ export default function HomeDashboard({ books, shows, chaptersByBook, wordOfTheD
       </Box>
     )
   }
+
+  const activity = activityUpdate?.userId === user.id
+    ? activityUpdate.activity
+    : parseLearningActivity(user.user_metadata)
+  const recentWordCutoff = dashboardLoadedAt - 7 * 86_400_000
+  const newWords = words.filter((word) => {
+    const addedAt = Date.parse(word.addedAt)
+    return Number.isFinite(addedAt) && addedAt >= recentWordCutoff
+  }).length
+  const activityDates = [
+    ...activity.activeDates,
+    ...words.flatMap((word) => [word.addedAt, word.lastPracticedAt]),
+    ...Object.values(progress).map((entry) => entry.updatedAt),
+  ]
+  const streak = calculateLearningStreak(activityDates, new Date(dashboardLoadedAt))
 
   return (
     <Box component="main" sx={{ bgcolor: '#faf7f2', pb: { xs: 7, md: 11 } }}>
@@ -237,19 +308,11 @@ export default function HomeDashboard({ books, shows, chaptersByBook, wordOfTheD
               <Button component={Link} href={`/books/${recentReading.book.slug}/${recentReading.chapter.slug}`} variant="contained" endIcon={<ArrowForward />} sx={{ mt: 2.5, bgcolor: '#0e2e1f', borderRadius: '9999px', textTransform: 'none' }}>Continue Reading</Button>
             </Paper>
           ) : featuredBook ? <ContentCard type="Start reading" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} /> : null}
-          {featuredShow && <ContentCard type="Watch next" title={featuredShow.title} titleAr={featuredShow.titleAr} description={featuredShow.description} level={featuredShow.level} href={`/cartoons/${featuredShow.slug}`} image={featuredShow.cover} />}
+          {featuredEpisode && <ContentCard type={`Watch next · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} actionLabel="Play episode" />}
         </Box>
 
         <Box sx={{ mt: { xs: 5, md: 7 } }}>
-          <SectionHeading eyebrow="At a glance" title="Your learning activity" />
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', md: 'repeat(4,minmax(0,1fr))' }, gap: 1.5 }}>
-            {[['Saved words', words.length], ['Practice answers', practised], ['Mastered words', mastered], ['Books started', Object.keys(progress).length]].map(([label, value]) => (
-              <Paper key={label} elevation={0} sx={{ p: { xs: 2, md: 2.5 }, border: '1px solid rgba(44,26,14,0.08)', borderRadius: '12px', bgcolor: '#fff' }}>
-                <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 30, md: 37 }, fontWeight: 700, color: '#2c1a0e' }}>{value}</Typography>
-                <Typography sx={{ color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: 12 }}>{label}</Typography>
-              </Paper>
-            ))}
-          </Box>
+          <LearningStats totalSeconds={activity.totalSeconds} newWords={newWords} favourites={words.length} streak={streak} />
         </Box>
         <Box sx={{ mt: { xs: 6, md: 9 } }}><WordOfDayCard entry={wordOfTheDay} guest={false} /></Box>
         <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading eyebrow="Quick practice" title="Keep your momentum" /><QuickPractice /></Box>

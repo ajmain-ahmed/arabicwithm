@@ -141,8 +141,8 @@ export default function Navbar() {
                     <Toolbar disableGutters sx={{ py: { xs: 0.5, md: 1 }, minHeight: { xs: 56, md: 64 } }}>
                         {isMobile ? (
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                <IconButton onClick={() => setDrawerOpen(true)} sx={{ color: 'var(--awm-forest)' }} aria-label="Open menu">
-                                    <MenuOutlined />
+                                <IconButton onClick={() => setDrawerOpen(true)} sx={{ p: 0.75, color: 'var(--awm-forest)' }} aria-label="Open menu">
+                                    <MenuOutlined sx={{ fontSize: 21 }} />
                                 </IconButton>
 
                                 <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} />
@@ -156,8 +156,8 @@ export default function Navbar() {
                                     >
                                         <Avatar
                                             sx={{
-                                                width: 30,
-                                                height: 30,
+                                                width: 28,
+                                                height: 28,
                                                 background: 'linear-gradient(135deg, var(--awm-gold), var(--awm-gold-light))',
                                                 color: 'var(--awm-forest)',
                                                 fontFamily: 'var(--font-sans)',
@@ -169,8 +169,8 @@ export default function Navbar() {
                                         </Avatar>
                                     </IconButton>
                                 ) : (
-                                    <IconButton onClick={openSignIn} sx={{ color: 'var(--awm-forest)' }} aria-label="Sign in">
-                                        <Person />
+                                    <IconButton onClick={openSignIn} sx={{ p: 0.75, color: 'var(--awm-forest)' }} aria-label="Sign in">
+                                        <Person sx={{ fontSize: 21 }} />
                                     </IconButton>
                                 )}
                             </Box>

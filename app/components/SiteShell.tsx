@@ -9,6 +9,7 @@ import LazyFloatingVideoPlayer from './LazyFloatingVideoPlayer'
 import GlobalDataInit from './GlobalDataInit'
 import ErrorBoundary from './ErrorBoundary'
 import PracticePendingWordSync from './PracticePendingWordSync'
+import LearningActivityTracker from './LearningActivityTracker'
 
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -26,6 +27,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     <>
       <Navbar />
       <PracticePendingWordSync />
+      <LearningActivityTracker />
       <Box
         component="main"
         sx={{

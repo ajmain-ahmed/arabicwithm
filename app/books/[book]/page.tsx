@@ -35,8 +35,16 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
         </Link>
 
         <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: '#fff', mb: 3 }}>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', gap: 3 }}>
-            <Box>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: book.cover ? '180px minmax(0, 1fr)' : '1fr' }, gap: { xs: 3, md: 4 }, alignItems: 'start' }}>
+            {book.cover && (
+              <Box
+                component="img"
+                src={book.cover}
+                alt={`${book.title} cover`}
+                sx={{ width: '100%', maxWidth: { xs: 240, sm: 180 }, mx: { xs: 'auto', sm: 0 }, aspectRatio: '3 / 4', objectFit: 'cover', borderRadius: '10px', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}
+              />
+            )}
+            <Box sx={{ minWidth: 0 }}>
               <MenuBook sx={{ color: '#b8860b', fontSize: 38, mb: 1 }} />
               <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 36, md: 48 }, fontWeight: 700, color: '#2c1a0e', lineHeight: 1.1 }}>
                 {book.title}
@@ -63,8 +71,10 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                 {book.level && <Chip label={book.level} size="small" sx={{ bgcolor: '#6b8f5e', color: '#fff', fontWeight: 700 }} />}
                 {book.category && <Chip label={book.category} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />}
               </Box>
+              <Box sx={{ mt: 3 }}>
+                <BookReadingCta bookSlug={book.slug} chapterSlugs={chapters.map((chapter) => chapter.slug)} />
+              </Box>
             </Box>
-            <BookReadingCta bookSlug={book.slug} chapterSlugs={chapters.map((chapter) => chapter.slug)} />
           </Box>
         </Paper>
 

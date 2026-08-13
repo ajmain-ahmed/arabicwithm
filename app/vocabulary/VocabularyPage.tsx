@@ -33,7 +33,7 @@ export default function VocabularyPage({ initialQuery = '' }: { initialQuery?: s
       <Box sx={{ mt: { xs: '-56px', md: '-64px' }, pt: { xs: 14, md: 17 }, pb: { xs: 7, md: 9 }, px: 2, bgcolor: '#0e2e1f', color: '#fff' }}>
         <Container maxWidth="md" sx={{ textAlign: 'center' }}>
           <Typography sx={{ color: '#d4a843', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Hans Wehr dictionary</Typography>
-          <Typography component="h1" sx={{ mt: 1, fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 39, md: 58 }, fontWeight: 700 }}>Arabic Vocabulary</Typography>
+          <Typography component="h1" sx={{ mt: 1, color: '#fff', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 39, md: 58 }, fontWeight: 700 }}>Arabic Vocabulary</Typography>
           <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.72)', fontFamily: 'Jost, sans-serif' }}>Search Arabic—with or without vowel marks—or search by an English meaning.</Typography>
           <TextField
             fullWidth

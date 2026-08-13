@@ -61,8 +61,9 @@ function extractTransliteration(value: string): string | undefined {
   const afterArabic = mainEntry.replace(/^[\u0600-\u06ff\s]+/, "").trim()
   if (!afterArabic) return undefined
   const beforeGrammar = afterArabic.split(/\s+(?:pl|f|m|coll|n)\.\s/i)[0]
-  const transliteration = (beforeGrammar.includes(',') ? beforeGrammar : beforeGrammar.split(/\s+/)[0])
-    .replace(/,\s*/g, " / ")
+  const transliteration = beforeGrammar
+    .split(/\s+/)[0]
+    .replace(/[,;:]+$/, "")
     .trim()
   return transliteration || undefined
 }

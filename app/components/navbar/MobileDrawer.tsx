@@ -201,13 +201,13 @@ export default function MobileDrawer({
                 <GoldLine />
 
                 {[
-                    { label: 'Home', icon: <HomeOutlined sx={{ fontSize: 20 }} />, onClick: () => pushAndClose('/') },
-                    { label: 'Books', icon: <BookOutlined sx={{ fontSize: 20 }} />, onClick: () => pushAndClose('/books') },
-                    { label: 'Practice', icon: <FavoriteBorder sx={{ fontSize: 20 }} />, onClick: () => pushAndClose('/practice') },
-                    { label: 'Vocabulary', icon: <Translate sx={{ fontSize: 20 }} />, onClick: () => pushAndClose('/vocabulary') },
-                    { label: 'About', icon: <InfoOutlined sx={{ fontSize: 20 }} />, onClick: () => pushAndClose('/about') },
-                    { label: 'Contact', icon: <EmailSharp sx={{ fontSize: 20 }} />, onClick: onContactOpen },
-                    { label: 'FAQ', icon: <HelpSharp sx={{ fontSize: 20 }} />, onClick: () => pushAndClose('/faq') },
+                    { label: 'Home', icon: <HomeOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/') },
+                    { label: 'Books', icon: <BookOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/books') },
+                    { label: 'Practice', icon: <FavoriteBorder sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/practice') },
+                    { label: 'Vocabulary', icon: <Translate sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/vocabulary') },
+                    { label: 'About', icon: <InfoOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/about') },
+                    { label: 'Contact', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: onContactOpen },
+                    { label: 'FAQ', icon: <HelpSharp sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/faq') },
                 ].map((item) => (
                     <ListItem disablePadding key={item.label}>
                         <ListItemButton
@@ -238,7 +238,7 @@ export default function MobileDrawer({
                             sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
                         >
                             <ListItemIcon sx={{ color: 'var(--awm-error)' }}>
-                                <LogoutSharp sx={{ fontSize: 20 }} />
+                                <LogoutSharp sx={{ fontSize: 18 }} />
                             </ListItemIcon>
                             <ListItemText
                                 primary={

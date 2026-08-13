@@ -6,11 +6,11 @@ import { BottomNavigation, BottomNavigationAction, Box } from '@mui/material'
 import { FavoriteBorder, Home, MenuBook, Movie, Translate } from '@mui/icons-material'
 
 const NAV_ITEMS = [
-  { value: '/', label: 'Home', icon: <Home sx={{ fontSize: 22 }} /> },
-  { value: '/cartoons', label: 'Cartoons', icon: <Movie sx={{ fontSize: 22 }} /> },
-  { value: '/books', label: 'Books', icon: <MenuBook sx={{ fontSize: 22 }} /> },
-  { value: '/practice', label: 'Practice', icon: <FavoriteBorder sx={{ fontSize: 22 }} /> },
-  { value: '/vocabulary', label: 'Vocabulary', icon: <Translate sx={{ fontSize: 22 }} /> },
+  { value: '/', label: 'Home', icon: <Home sx={{ fontSize: 19 }} /> },
+  { value: '/cartoons', label: 'Cartoons', icon: <Movie sx={{ fontSize: 19 }} /> },
+  { value: '/books', label: 'Books', icon: <MenuBook sx={{ fontSize: 19 }} /> },
+  { value: '/practice', label: 'Practice', icon: <FavoriteBorder sx={{ fontSize: 19 }} /> },
+  { value: '/vocabulary', label: 'Vocabulary', icon: <Translate sx={{ fontSize: 19 }} /> },
 ]
 
 function safePush(router: ReturnType<typeof useRouter>, url: string) {
@@ -66,16 +66,16 @@ export default function MobileBottomNav() {
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
             borderTop: '1px solid rgba(184,134,11,0.15)',
-            height: 56,
+            height: 54,
             pb: 'env(safe-area-inset-bottom)',
             '& .MuiBottomNavigationAction-root': {
               fontFamily: 'Jost, sans-serif',
-              fontSize: '0.62rem',
+              fontSize: '0.58rem',
               fontWeight: 500,
               letterSpacing: '0.03em',
               color: '#7a6e65',
               minWidth: 0,
-              padding: '6px 0',
+              padding: '5px 0',
               '&.Mui-selected': {
                 color: '#b8860b',
                 fontWeight: 600,
@@ -83,9 +83,9 @@ export default function MobileBottomNav() {
             },
             '& .MuiBottomNavigationAction-label': {
               fontFamily: 'Jost, sans-serif',
-              fontSize: '0.62rem',
+              fontSize: '0.58rem',
             },
-            '& .MuiSvgIcon-root': { fontSize: 22 },
+            '& .MuiSvgIcon-root': { fontSize: 19 },
           }}
         >
           {NAV_ITEMS.map((item) => (

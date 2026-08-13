@@ -73,21 +73,28 @@ export default async function BooksPage() {
                     '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 12px 28px rgba(44,26,14,0.12)' },
                   }}
                 >
-                  <Box sx={{ minHeight: 230, p: 3, display: 'grid', placeItems: 'center', textAlign: 'center', background: 'linear-gradient(145deg, #173f2d, #0e2e1f 62%, #2c1a0e)' }}>
-                    <Box>
-                      <AutoStories sx={{ color: '#d4a843', fontSize: 44, mb: 2 }} />
-                      <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 28, lineHeight: 1.15, fontWeight: 700, color: '#fff' }}>
-                        {book.title}
-                      </Typography>
-                      {book.description && (
-                        <Typography sx={{ mt: 1, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 21, color: '#d4a843', direction: 'rtl' }}>
-                          {book.description}
+                  {book.cover ? (
+                    <Box
+                      component="img"
+                      src={book.cover}
+                      alt={`${book.title} cover`}
+                      sx={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', objectPosition: 'center' }}
+                    />
+                  ) : (
+                    <Box sx={{ minHeight: 300, p: 3, display: 'grid', placeItems: 'center', textAlign: 'center', background: 'linear-gradient(145deg, #173f2d, #0e2e1f 62%, #2c1a0e)' }}>
+                      <Box>
+                        <AutoStories sx={{ color: '#d4a843', fontSize: 44, mb: 2 }} />
+                        <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 28, lineHeight: 1.15, fontWeight: 700, color: '#fff' }}>
+                          {book.title}
                         </Typography>
-                      )}
+                      </Box>
                     </Box>
-                  </Box>
+                  )}
 
                   <Box sx={{ p: 2.5 }}>
+                    <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 24, lineHeight: 1.2, fontWeight: 700, color: '#2c1a0e', mb: 1.5 }}>
+                      {book.title}
+                    </Typography>
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
                       {book.level && <Chip label={book.level} size="small" sx={{ bgcolor: '#6b8f5e', color: '#fff', fontWeight: 700 }} />}
                       {book.category && <Chip label={book.category} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />}

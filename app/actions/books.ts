@@ -80,7 +80,7 @@ export const fetchBooksForPublic = unstable_cache(
       mapBook(book, chapterCounts.get(String(book.id)) ?? 0)
     )
   },
-  ["books", "public"],
+  ["books", "public", "book-covers-v1"],
   { revalidate: 300, tags: ["books-public"] }
 )
 
@@ -104,7 +104,7 @@ export const fetchBookBySlugPublic = unstable_cache(
     if (countError) throw new Error(countError.message)
     return mapBook(book as Record<string, unknown>, count ?? 0)
   },
-  ["books", "public", "detail"],
+  ["books", "public", "detail", "book-covers-v1"],
   { revalidate: 300, tags: ["books-public"] }
 )
 
@@ -181,6 +181,6 @@ export const fetchChapterForPublic = unstable_cache(
       content,
     }
   },
-  ["books", "public", "chapter", "cartoon-tooltip-v1"],
+  ["books", "public", "chapter", "cartoon-tooltip-v1", "book-punctuation-v1"],
   { revalidate: 300, tags: ["books-public"] }
 )
