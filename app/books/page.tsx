@@ -56,7 +56,7 @@ export default async function BooksPage() {
             sx={{
               display: { xs: 'flex', sm: 'grid' },
               gridTemplateColumns: { sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
-              gap: { xs: 0.75, sm: 3 },
+              gap: { xs: 1, sm: 3 },
               overflowX: { xs: 'auto', sm: 'visible' },
               pb: { xs: 1.5, sm: 0 },
               scrollSnapType: { xs: 'x mandatory', sm: 'none' },
@@ -68,7 +68,7 @@ export default async function BooksPage() {
               <Link
                 key={book.id}
                 href={`/books/${encodeURIComponent(book.slug)}`}
-                style={{ color: 'inherit', textDecoration: 'none', flex: '0 0 calc((100% - 24px) / 5)', minWidth: 0, scrollSnapAlign: 'start' }}
+                style={{ color: 'inherit', textDecoration: 'none', flex: '0 0 calc((100% - 24px) / 4)', minWidth: 0, scrollSnapAlign: 'start' }}
               >
                 <Paper
                   elevation={0}
@@ -92,9 +92,9 @@ export default async function BooksPage() {
                       sx={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', objectPosition: 'center', borderRadius: { xs: '4px', sm: 0 } }}
                     />
                   ) : (
-                    <Box sx={{ minHeight: { xs: 76, sm: 300 }, aspectRatio: { xs: '3 / 4', sm: 'auto' }, p: { xs: 0.5, sm: 3 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: { xs: '4px', sm: 0 }, background: 'linear-gradient(145deg, #173f2d, #0e2e1f 62%, #2c1a0e)' }}>
+                    <Box sx={{ minHeight: { xs: 92, sm: 300 }, aspectRatio: { xs: '3 / 4', sm: 'auto' }, p: { xs: 0.75, sm: 3 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: { xs: '5px', sm: 0 }, background: 'linear-gradient(145deg, #173f2d, #0e2e1f 62%, #2c1a0e)' }}>
                       <Box>
-                        <AutoStories sx={{ color: '#d4a843', fontSize: { xs: 20, sm: 44 }, mb: { xs: 0, sm: 2 } }} />
+                        <AutoStories sx={{ color: '#d4a843', fontSize: { xs: 24, sm: 44 }, mb: { xs: 0, sm: 2 } }} />
                         <Typography sx={{ display: { xs: 'none', sm: 'block' }, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 28, lineHeight: 1.15, fontWeight: 700, color: '#fff' }}>
                           {book.title}
                         </Typography>
@@ -103,7 +103,7 @@ export default async function BooksPage() {
                   )}
 
                   <Box sx={{ p: { xs: '5px 1px 0', sm: 2.5 } }}>
-                    <Typography sx={{ fontFamily: { xs: 'Jost, sans-serif', sm: '"EB Garamond", Georgia, serif' }, fontSize: { xs: 10, sm: 24 }, lineHeight: { xs: 1.2, sm: 1.2 }, fontWeight: { xs: 600, sm: 700 }, color: '#2c1a0e', mb: { xs: 0, sm: 1.5 }, minHeight: { xs: '2.4em', sm: 0 }, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: { xs: 2, sm: 'unset' }, WebkitBoxOrient: 'vertical' }}>
+                    <Typography sx={{ fontFamily: { xs: 'Jost, sans-serif', sm: '"EB Garamond", Georgia, serif' }, fontSize: { xs: 11.5, sm: 24 }, lineHeight: { xs: 1.25, sm: 1.2 }, fontWeight: { xs: 600, sm: 700 }, color: '#2c1a0e', mb: { xs: 0, sm: 1.5 }, minHeight: { xs: '2.5em', sm: 0 }, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: { xs: 2, sm: 'unset' }, WebkitBoxOrient: 'vertical' }}>
                       {book.title}
                     </Typography>
                     <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1, flexWrap: 'wrap', mb: 2 }}>

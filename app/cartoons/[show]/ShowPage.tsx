@@ -314,13 +314,10 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                         cover={getEpisodeCoverPath(show.slug, ep.slug)}
                         title={ep.title}
                         level={ep.level}
-                        category={ep.tags[0]}
+                        tags={ep.tags}
                         description={ep.description}
                         imageFit="natural"
-                        denseMobileTile
-                        mobileAspectRatio="16 / 9"
-                        mobileImagePosition="center"
-                        mobileTitleSize={12}
+                        compactMobileRow
                         overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                         metaItems={[]}
                       />

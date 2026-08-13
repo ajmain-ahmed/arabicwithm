@@ -34,6 +34,7 @@ export interface ContentCardProps {
   titleAr?: string
   description?: string
   category?: string
+  tags?: string[]
   level?: string
   metaItems: ContentCardMetaItem[]
   overlayIcon?: React.ReactNode
@@ -54,6 +55,7 @@ export default function ContentCard({
   titleAr,
   description,
   category,
+  tags = [],
   level,
   metaItems,
   overlayIcon,
@@ -69,6 +71,7 @@ export default function ContentCard({
   const [imgError, setImgError] = useState(false)
   const badgeColor = DIFFICULTY_COLORS[level ?? ''] || MUTED
   const href = `${hrefPrefix}/${encodeURIComponent(slug)}`
+  const displayTags = Array.from(new Set([category, ...tags].filter((tag): tag is string => Boolean(tag?.trim()))))
 
   return (
     <Paper
@@ -78,7 +81,8 @@ export default function ContentCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       sx={{
-        display: denseMobileTile ? 'block' : compactMobileRow ? { xs: 'flex', sm: 'block' } : 'block',
+        display: denseMobileTile ? 'block' : compactMobileRow ? { xs: 'grid', sm: 'block' } : 'block',
+        gridTemplateColumns: compactMobileRow ? { xs: '34% minmax(0, 1fr)', sm: 'none' } : undefined,
         alignItems: denseMobileTile ? undefined : compactMobileRow ? { xs: 'stretch', sm: 'initial' } : undefined,
         color: 'inherit',
         textDecoration: 'none',
@@ -99,13 +103,14 @@ export default function ContentCard({
       <Box
         sx={{
           position: 'relative',
-          width: denseMobileTile ? '100%' : compactMobileRow ? { xs: 'clamp(108px, 34vw, 132px)', sm: '100%' } : '100%',
+          width: '100%',
           flexShrink: denseMobileTile ? undefined : compactMobileRow ? 0 : undefined,
           aspectRatio: denseMobileTile
             ? { xs: mobileAspectRatio, sm: imageFit === 'natural' ? 'auto' : aspectRatio }
             : compactMobileRow
-            ? { xs: '3 / 4', sm: imageFit === 'natural' ? 'auto' : aspectRatio }
+            ? { xs: 'auto', sm: imageFit === 'natural' ? 'auto' : aspectRatio }
             : imageFit === 'natural' ? 'auto' : aspectRatio,
+          minHeight: compactMobileRow ? { xs: 148, sm: 0 } : undefined,
           overflow: 'hidden',
           borderRadius: denseMobileTile ? { xs: '4px', sm: 0 } : 0,
           backgroundColor: denseMobileTile
@@ -221,7 +226,7 @@ export default function ContentCard({
             size="small"
             sx={{
               position: 'absolute',
-              display: denseMobileTile ? { xs: 'none', sm: 'inline-flex' } : 'inline-flex',
+              display: denseMobileTile || compactMobileRow ? { xs: 'none', sm: 'inline-flex' } : 'inline-flex',
               top: 8,
               right: 8,
               backgroundColor: badgeColor,
@@ -250,10 +255,10 @@ export default function ContentCard({
             minHeight: denseMobileTile ? { xs: '2.4em', sm: 0 } : 0,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            display: denseMobileTile ? { xs: '-webkit-box', sm: 'block' } : 'block',
-            WebkitLineClamp: denseMobileTile ? { xs: 2, sm: 'unset' } : 'unset',
+            display: denseMobileTile || compactMobileRow ? { xs: '-webkit-box', sm: 'block' } : 'block',
+            WebkitLineClamp: denseMobileTile || compactMobileRow ? { xs: 2, sm: 'unset' } : 'unset',
             WebkitBoxOrient: 'vertical',
-            whiteSpace: denseMobileTile ? { xs: 'normal', sm: 'nowrap' } : 'nowrap',
+            whiteSpace: denseMobileTile || compactMobileRow ? { xs: 'normal', sm: 'nowrap' } : 'nowrap',
           }}
         >
           {title}
@@ -272,31 +277,66 @@ export default function ContentCard({
             {titleAr}
           </Typography>
         )}
+        {/* Mobile row description */}
+        {description && compactMobileRow && (
+          <Typography
+            sx={{
+              display: { xs: '-webkit-box', sm: 'none' },
+              mb: 1,
+              overflow: 'hidden',
+              color: MUTED,
+              fontFamily: 'Jost, sans-serif',
+              fontSize: 11.5,
+              lineHeight: 1.4,
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
+            {description}
+          </Typography>
+        )}
         {/* Tags */}
         <Box sx={{ display: denseMobileTile ? { xs: 'none', sm: 'flex' } : 'flex', gap: 1, mb: compactMobileRow ? { xs: 0.75, sm: 1.5 } : 1.5, flexWrap: 'wrap' }}>
-          {category && (
+          {level && compactMobileRow && (
             <Chip
-              label={category}
+              label={level}
               size="small"
               sx={{
-                height: 24,
+                display: { xs: 'inline-flex', sm: 'none' },
+                height: 21,
                 borderRadius: '9999px',
-                backgroundColor: 'rgba(184,134,11,0.08)',
-                color: GOLD,
-                fontSize: 11,
-                fontWeight: 500,
-                border: '1px solid rgba(184,134,11,0.12)',
-                '& .MuiChip-label': { px: 1 },
+                backgroundColor: badgeColor,
+                color: '#fff',
+                fontSize: 10,
+                fontWeight: 700,
+                '& .MuiChip-label': { px: 0.9 },
               }}
             />
           )}
+          {displayTags.map((tag) => (
+            <Chip
+              key={tag}
+              label={tag}
+              size="small"
+              sx={{
+                height: compactMobileRow ? { xs: 21, sm: 24 } : 24,
+                borderRadius: '9999px',
+                backgroundColor: 'rgba(184,134,11,0.08)',
+                color: GOLD,
+                fontSize: compactMobileRow ? { xs: 10, sm: 11 } : 11,
+                fontWeight: 500,
+                border: '1px solid rgba(184,134,11,0.12)',
+                '& .MuiChip-label': { px: compactMobileRow ? { xs: 0.9, sm: 1 } : 1 },
+              }}
+            />
+          ))}
 
         </Box>
         {/* Description */}
         {description && (
           <Typography
             sx={{
-              display: denseMobileTile ? { xs: 'none', sm: '-webkit-box' } : '-webkit-box',
+              display: denseMobileTile ? { xs: 'none', sm: '-webkit-box' } : compactMobileRow ? { xs: 'none', sm: '-webkit-box' } : '-webkit-box',
               fontSize: compactMobileRow ? { xs: 12.5, sm: 14, md: 15 } : { xs: 14, md: 15 },
               lineHeight: 1.45,
               color: MUTED,
