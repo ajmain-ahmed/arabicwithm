@@ -273,14 +273,13 @@ export default function CartoonsPage({
             ) : (
               <Box
                 sx={{
-                  display: { xs: 'flex', sm: 'grid' },
-                  gridTemplateColumns: { sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' },
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: 'repeat(4, minmax(0, 1fr))',
+                    sm: 'repeat(2, minmax(0, 1fr))',
+                    xl: 'repeat(4, minmax(0, 1fr))',
+                  },
                   gap: { xs: 0.75, sm: 2 },
-                  overflowX: { xs: 'auto', sm: 'visible' },
-                  pb: { xs: 1.5, sm: 0 },
-                  scrollSnapType: { xs: 'x mandatory', sm: 'none' },
-                  scrollbarWidth: 'none',
-                  '&::-webkit-scrollbar': { display: 'none' },
                 }}
               >
                 {filteredShows.map((show) => (
@@ -288,8 +287,6 @@ export default function CartoonsPage({
                     sx={{
                       position: 'relative',
                       minWidth: 0,
-                      flex: { xs: '0 0 calc((100% - 24px) / 5)', sm: 'initial' },
-                      scrollSnapAlign: { xs: 'start', sm: 'none' },
                     }}
                     key={show.slug}
                   >

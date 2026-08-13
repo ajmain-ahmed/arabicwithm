@@ -253,20 +253,17 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
 
               <Box
                 sx={{
-                  display: { xs: 'flex', sm: 'grid' },
-                  gridTemplateColumns: { sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' },
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: 'minmax(0, 1fr)',
+                    sm: 'repeat(2, minmax(0, 1fr))',
+                    xl: 'repeat(4, minmax(0, 1fr))',
+                  },
                   gap: { xs: 1.25, sm: 2 },
-                  overflowX: { xs: 'auto', sm: 'visible' },
-                  mx: { xs: -2, sm: 0 },
-                  px: { xs: 2, sm: 0 },
-                  pb: { xs: 1.5, sm: 0 },
-                  scrollSnapType: { xs: 'x mandatory', sm: 'none' },
-                  scrollbarWidth: 'none',
-                  '&::-webkit-scrollbar': { display: 'none' },
                 }}
               >
                 {filteredEpisodes.map((ep) => (
-                  <Box key={ep.slug} sx={{ position: 'relative', flex: { xs: '0 0 148px', sm: 'initial' }, minWidth: 0, scrollSnapAlign: { xs: 'start', sm: 'none' } }}>
+                  <Box key={ep.slug} sx={{ position: 'relative', minWidth: 0 }}>
                       {isAdmin && (
                         <Box
                           sx={{
