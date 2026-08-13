@@ -91,7 +91,7 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
         gap: 2,
       }}
     >
-      <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: "1.1rem", fontWeight: 700, color: "#2c1a0e" }}>
+      <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: "1.1rem", fontWeight: 600, color: "#2c1a0e" }}>
         {isNew ? "New Show" : "Edit Show"}
       </Typography>
 

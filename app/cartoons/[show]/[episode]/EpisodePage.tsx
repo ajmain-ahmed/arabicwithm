@@ -43,7 +43,7 @@ const NAVBAR_HEIGHT = 64 // px
 // ──────────────────────────────────────────────────────────────────────────────
 
 const PAGE_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,700;1,700&family=Jost:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@700&family=Jost:wght@300;400;500;600&display=swap');
 
   :root {
     --navbar-height: ${NAVBAR_HEIGHT}px;
@@ -726,7 +726,7 @@ function ArabicLineText({
                     fontFamily: 'Jost, sans-serif',
                     fontSize: '1.1rem',
                     color: 'var(--muted)',
-                    fontStyle: 'italic',
+                    fontStyle: 'normal',
                     lineHeight: 1.4,
                   }}
                 >
@@ -1011,9 +1011,9 @@ export default function EpisodePage({
               component="h1"
               sx={{
                 display: { xs: 'none', lg: 'block' },
-                fontFamily: 'var(--font-serif)',
+                fontFamily: 'var(--font-heading)',
                 fontSize: '2rem',
-                fontWeight: 700,
+                fontWeight: 600,
                 color: 'var(--bark)',
                 lineHeight: 1.15,
                 mb: 1,

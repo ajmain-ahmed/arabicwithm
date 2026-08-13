@@ -167,7 +167,7 @@ export default function ContentCard({
           >
             <Typography
               sx={{
-                fontFamily: '"EB Garamond", Georgia, serif',
+                fontFamily: 'var(--font-heading)',
                 fontSize: { xs: 16, md: 18 },
                 fontWeight: 600,
                 color: BARK,
@@ -245,7 +245,7 @@ export default function ContentCard({
       <Box sx={{ p: denseMobileTile ? { xs: '5px 1px 0', sm: 2 } : compactMobileRow ? { xs: 1.5, sm: 2 } : 2, flex: denseMobileTile ? undefined : compactMobileRow ? 1 : undefined, minWidth: 0 }}>
         <Typography
           sx={{
-            fontFamily: denseMobileTile ? { xs: 'Jost, sans-serif', sm: '"EB Garamond", Georgia, serif' } : '"EB Garamond", Georgia, serif',
+            fontFamily: 'var(--font-heading)',
             fontSize: denseMobileTile ? { xs: mobileTitleSize, sm: 18, md: 20 } : compactMobileRow ? { xs: 16, sm: 18, md: 20 } : { xs: 18, md: 20 },
             fontWeight: denseMobileTile ? { xs: 600, sm: 500 } : 500,
             letterSpacing: '-0.01em',
@@ -267,7 +267,7 @@ export default function ContentCard({
           <Typography
             sx={{
               display: denseMobileTile ? { xs: 'none', sm: 'block' } : 'block',
-              fontFamily: '"EB Garamond", Georgia, serif',
+              fontFamily: 'var(--font-heading)',
               fontSize: { xs: 15, md: 18 },
               color: GOLD,
               mb: compactMobileRow ? { xs: 1, sm: 1.5 } : 1.5,

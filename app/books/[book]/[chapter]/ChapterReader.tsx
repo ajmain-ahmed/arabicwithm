@@ -161,7 +161,7 @@ export default function ChapterReader({
             <Typography sx={{ color: '#d4a843', fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.75 }}>
               {bookTitle}
             </Typography>
-            <Typography component="h1" sx={{ color: '#fff', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 28, md: 38 }, lineHeight: 1.15, fontWeight: 700 }}>
+            <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 28, md: 38 }, lineHeight: 1.15, fontWeight: 600 }}>
               {chapterTitle}
             </Typography>
           </Box>

@@ -79,7 +79,7 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
         gap: 2,
       }}
     >
-      <Typography sx={{ fontFamily: "'EB Garamond', serif", fontSize: "1.1rem", fontWeight: 700, color: "#2c1a0e" }}>
+      <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: "1.1rem", fontWeight: 600, color: "#2c1a0e" }}>
         {isNew ? "New Episode" : "Edit Episode"}
       </Typography>
 

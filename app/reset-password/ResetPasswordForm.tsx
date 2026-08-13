@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase/client'
 
 const PAGE_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Cookie&family=EB+Garamond:ital,wght@0,700;1,700&family=Jost:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@700&family=Jost:wght@300;400;500;600&display=swap');
   :root {
     --cream: #faf7f2; --bark: #2c1a0e; --forest: #0e2e1f;
     --gold: #b8860b; --gold-lt: #d4a843; --muted: #7a6e65;
@@ -115,7 +115,8 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
               <Box component="img" src="/homepage/arabicwithm-notext.png" alt="ArabicWithM"
                 sx={{ height: 26, width: 'auto', objectFit: 'contain' }} />
               <Typography sx={{
-                fontFamily: '"Cookie", cursive', fontSize: '1.6rem', fontWeight: 500,
+                fontFamily: 'var(--font-decorative)', fontSize: '1.35rem', fontWeight: 700,
+                letterSpacing: '-0.025em',
                 background: 'linear-gradient(135deg, var(--bark) 0%, var(--forest) 100%)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
                 lineHeight: 1, mt: '0.15em',
@@ -124,8 +125,8 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
               </Typography>
             </Box>
             <Typography sx={{
-              fontFamily: '"EB Garamond", serif', fontSize: '1.75rem',
-              fontWeight: 700, color: 'var(--bark)', lineHeight: 1.15, mb: 0.5,
+              fontFamily: 'var(--font-heading)', fontSize: '1.75rem',
+              fontWeight: 600, color: 'var(--bark)', lineHeight: 1.15, mb: 0.5,
             }}>
               Set New Password
             </Typography>

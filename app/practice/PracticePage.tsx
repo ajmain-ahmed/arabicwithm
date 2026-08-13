@@ -58,7 +58,7 @@ function RegisterPrompt() {
     <Container maxWidth="md" sx={{ py: { xs: 7, md: 11 } }}>
       <Paper elevation={0} sx={{ p: { xs: 4, md: 7 }, textAlign: 'center', border: '1px solid rgba(184,134,11,0.2)', bgcolor: '#fff', borderRadius: '14px' }}>
         <FavoriteBorder sx={{ fontSize: 48, color: '#b8860b', mb: 2 }} />
-        <Typography component="h1" sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 36, md: 48 }, fontWeight: 700, color: '#2c1a0e' }}>Your Favourite Words</Typography>
+        <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 36, md: 48 }, fontWeight: 600, color: '#2c1a0e' }}>Your Favourite Words</Typography>
         <Typography sx={{ fontFamily: 'Jost, sans-serif', color: '#7a6e65', maxWidth: 560, mx: 'auto', mt: 1.5, mb: 3 }}>Create an account to favourite words from cartoons and books, then practise them here with personalised flashcards.</Typography>
         <Button variant="contained" onClick={openRegister} sx={{ bgcolor: '#0e2e1f', color: '#fff', textTransform: 'none', borderRadius: '9999px', px: 4, '&:hover': { bgcolor: '#173f2d' } }}>Create a Free Account</Button>
       </Paper>
@@ -126,7 +126,7 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
               <Typography sx={{ fontFamily: 'Jost, sans-serif', color: '#d4a843', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', fontSize: 12 }}>
                 My vocabulary
               </Typography>
-              <Typography component="h1" sx={{ fontFamily: '"EB Garamond", Georgia, serif', color: '#fff', fontWeight: 700, fontSize: { xs: 38, md: 52 }, lineHeight: 1.05, mt: 0.75 }}>
+              <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', color: '#fff', fontWeight: 600, fontSize: { xs: 38, md: 52 }, lineHeight: 1.05, mt: 0.75 }}>
                 Practice
               </Typography>
               <Typography sx={{ fontFamily: 'Jost, sans-serif', color: 'rgba(255,255,255,0.7)', mt: 1, maxWidth: 520 }}>
@@ -142,7 +142,7 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
                 ['Phrases', counts.phrases],
               ].map(([label, value]) => (
                 <Box key={label} sx={{ minWidth: 90, px: 2, py: 1.5, border: '1px solid rgba(212,168,67,0.3)', bgcolor: 'rgba(255,255,255,0.05)', textAlign: 'center' }}>
-                  <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', color: '#fff', fontSize: 28, fontWeight: 700 }}>{value}</Typography>
+                  <Typography sx={{ fontFamily: 'var(--font-heading)', color: '#fff', fontSize: 28, fontWeight: 600 }}>{value}</Typography>
                   <Typography sx={{ fontFamily: 'Jost, sans-serif', color: '#d4a843', fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{label}</Typography>
                 </Box>
               ))}
@@ -225,7 +225,7 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
             {visibleWords.length === 0 ? (
               <Paper elevation={0} sx={{ p: { xs: 4, md: 7 }, textAlign: 'center', border: '1px dashed rgba(184,134,11,0.35)', borderRadius: '12px' }}>
                 <LocalLibraryOutlined sx={{ fontSize: 44, color: '#b8860b', mb: 1.5 }} />
-                <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', color: '#2c1a0e', fontSize: 28, fontWeight: 700 }}>{query ? 'We couldn\'t find that word' : 'No saved words here yet'}</Typography>
+                <Typography sx={{ fontFamily: 'var(--font-heading)', color: '#2c1a0e', fontSize: 28, fontWeight: 600 }}>{query ? 'We couldn\'t find that word' : 'No saved words here yet'}</Typography>
                 <Typography sx={{ fontFamily: 'Jost, sans-serif', color: '#7a6e65', mt: 1 }}>{query ? 'Try another Arabic or English spelling, or clear your filters.' : 'Hover over Arabic words in cartoons or books and select the heart.'}</Typography>
               </Paper>
             ) : (

@@ -181,9 +181,9 @@ export default function CartoonSection() {
         <Typography
           component="h2"
           sx={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-heading)',
             fontSize: { xs: '1.9rem', sm: '2.5rem', md: '3.2rem' },
-            fontWeight: 700,
+            fontWeight: 600,
             lineHeight: 1.12,
             color: 'var(--bark)',
             textAlign: 'center',

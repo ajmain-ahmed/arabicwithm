@@ -16,9 +16,12 @@ const FOOTER_SECTIONS = (onContactClick?: () => void) => [
   {
     title: 'Explore',
     links: [
+      { label: 'Home',     href: '/',         onClick: undefined },
       { label: 'Cartoons', href: '/cartoons', onClick: undefined },
+      { label: 'Books',    href: '/books',    onClick: undefined },
+      { label: 'Practice', href: '/practice', onClick: undefined },
+      { label: 'Vocabulary', href: '/vocabulary', onClick: undefined },
       { label: 'About',    href: '/about',    onClick: undefined },
-      { label: 'FAQ',      href: '/faq',      onClick: undefined },
     ],
   },
   {
@@ -68,7 +71,7 @@ const SOCIALS = [
    CSS
 ───────────────────────────────────────────── */
 const FOOTER_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap');
 
   .awm-footer-link {
     font-family: 'Jost', sans-serif;
@@ -147,8 +150,9 @@ export default function Footer({ onContactClick }: FooterProps) {
                 />
                 {/* wordmark */}
                 <Typography sx={{
-                  fontFamily: '"Cookie", cursive',
-                  fontSize: '2rem', fontWeight: 500,
+                  fontFamily: 'var(--font-decorative)',
+                  fontSize: '1.8rem', fontWeight: 700,
+                  letterSpacing: '-0.025em',
                   background: 'linear-gradient(135deg, #2c1a0e 0%, #0e2e1f 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',

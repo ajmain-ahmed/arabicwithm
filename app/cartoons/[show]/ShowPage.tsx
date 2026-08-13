@@ -204,7 +204,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
 
         {filteredEpisodes.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 12 }}>
-            <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 18, md: 20 }, color: BARK, mb: 1 }}>
+            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 18, md: 20 }, color: BARK, mb: 1 }}>
               {episodes.length === 0 ? 'No episodes yet' : 'No episodes match your filters'}
             </Typography>
             <Typography sx={{ fontSize: { xs: 13, md: 14 }, color: MUTED, mb: 2 }}>
@@ -353,7 +353,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Typography
             sx={{
-              fontFamily: '"EB Garamond", Georgia, serif',
+              fontFamily: 'var(--font-heading)',
               fontSize: 20,
               color: BARK,
             }}

@@ -197,7 +197,7 @@ export default function ShowsAdminPage() {
     <Box>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontFamily: "'EB Garamond', serif", fontWeight: 700, color: "#2c1a0e" }}>
+          <Typography variant="h4" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 600, color: "#2c1a0e" }}>
             Shows
           </Typography>
           <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>

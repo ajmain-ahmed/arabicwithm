@@ -46,7 +46,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
             )}
             <Box sx={{ minWidth: 0 }}>
               <MenuBook sx={{ color: '#b8860b', fontSize: 38, mb: 1 }} />
-              <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 36, md: 48 }, fontWeight: 700, color: '#2c1a0e', lineHeight: 1.1 }}>
+              <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 36, md: 48 }, fontWeight: 600, color: '#2c1a0e', lineHeight: 1.1 }}>
                 {book.title}
               </Typography>
               {book.description && (
@@ -78,7 +78,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
           </Box>
         </Paper>
 
-        <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 25, sm: 30 }, fontWeight: 700, color: '#2c1a0e', mb: 2 }}>
+        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 25, sm: 30 }, fontWeight: 600, color: '#2c1a0e', mb: 2 }}>
           Chapters
         </Typography>
         <Box

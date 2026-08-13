@@ -50,9 +50,9 @@ export default class ErrorBoundary extends Component<Props, State> {
           <Typography
             component="h2"
             sx={{
-              fontFamily: "'EB Garamond', serif",
+              fontFamily: 'var(--font-heading)',
               fontSize: '1.75rem',
-              fontWeight: 700,
+              fontWeight: 600,
               color: '#2c1a0e',
             }}
           >

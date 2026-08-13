@@ -111,9 +111,9 @@ export default function PageBanner({
       <Typography
         variant="h1"
         sx={{
-          fontFamily: '"EB Garamond", Georgia, serif',
+          fontFamily: 'var(--font-heading)',
           fontSize: { xs: '32px', sm: '48px', md: '72px' },
-          fontWeight: 700,
+          fontWeight: 600,
           color: '#fff',
           mb: 1,
           position: 'relative',
@@ -185,7 +185,7 @@ export default function PageBanner({
           sx={{
             display: { xs: 'block', lg: 'none' },
             fontSize: 12,
-            fontStyle: 'italic',
+            fontStyle: 'normal',
             color: GOLD_LT,
             mb: 2,
             position: 'relative',

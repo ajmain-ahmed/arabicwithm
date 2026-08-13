@@ -246,7 +246,7 @@ export default function CartoonsPage({
 
             {filteredShows.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 8 }}>
-                <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 20, color: BARK, mb: 1 }}>
+                <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 20, color: BARK, mb: 1 }}>
                   No shows match your filters
                 </Typography>
                 <Typography sx={{ fontSize: 14, color: MUTED, mb: 2 }}>
@@ -385,7 +385,7 @@ export default function CartoonsPage({
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Typography
             sx={{
-              fontFamily: '"EB Garamond", Georgia, serif',
+              fontFamily: 'var(--font-heading)',
               fontSize: 20,
               color: BARK,
             }}

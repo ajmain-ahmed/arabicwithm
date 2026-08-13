@@ -142,9 +142,9 @@ export default function ShowEditDialog({
     >
       <DialogTitle
         sx={{
-          fontFamily: "'EB Garamond', serif",
+          fontFamily: 'var(--font-heading)',
           fontSize: "1.5rem",
-          fontWeight: 700,
+          fontWeight: 600,
           color: "#2c1a0e",
           pb: 2,
           pt: 2.5,

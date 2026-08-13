@@ -70,7 +70,7 @@ function SectionHeading({ eyebrow, title, detail }: { eyebrow?: string; title: s
   return (
     <Box sx={{ mb: 3 }}>
       {eyebrow && <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{eyebrow}</Typography>}
-      <Typography component="h2" sx={{ mt: eyebrow ? 0.5 : 0, fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 30, md: 39 }, fontWeight: 700, color: '#2c1a0e', lineHeight: 1.15 }}>{title}</Typography>
+      <Typography component="h2" sx={{ mt: eyebrow ? 0.5 : 0, fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 39 }, fontWeight: 600, color: '#2c1a0e', lineHeight: 1.15 }}>{title}</Typography>
       {detail && <Typography sx={{ mt: 0.75, color: '#7a6e65', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>{detail}</Typography>}
     </Box>
   )
@@ -99,8 +99,8 @@ function WordOfDayCard({ entry, guest }: { entry: VocabularyEntry | null; guest:
           <PracticeWordButton entry={{ arabic: entry.arabic, plain: entry.arabic, headword: entry.arabic, transliteration: entry.transliteration ?? '', english: definition, pos: entry.isRoot ? 'root' : 'word', entry_type: 'word' }} />
         </Box>
         <Typography sx={{ color: 'rgba(255,255,255,0.62)', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase' }}>English</Typography>
-        <Typography sx={{ mt: 0.75, pr: 4, fontFamily: '"EB Garamond", Georgia, serif', color: '#fff', fontSize: { xs: 25, md: 29 }, fontWeight: 600, lineHeight: 1.35 }}>{definition}</Typography>
-        {entry.transliteration && <Typography sx={{ mt: 1.25, color: '#d4a843', fontFamily: 'Jost, sans-serif', fontSize: 15, fontStyle: 'italic' }}>{entry.transliteration}</Typography>}
+        <Typography sx={{ mt: 0.75, pr: 4, fontFamily: 'var(--font-heading)', color: '#fff', fontSize: { xs: 25, md: 29 }, fontWeight: 600, lineHeight: 1.35 }}>{definition}</Typography>
+        {entry.transliteration && <Typography sx={{ mt: 1.25, color: '#d4a843', fontFamily: 'Jost, sans-serif', fontSize: 15 }}>{entry.transliteration}</Typography>}
         {guest && <Typography sx={{ mt: 1.5, color: 'rgba(255,255,255,0.7)', fontFamily: 'Jost, sans-serif', fontSize: 13 }}>Create a free account to save vocabulary.</Typography>}
         <Box sx={{ mt: 2.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Button onClick={speak} startIcon={<VolumeUp />} variant="outlined" sx={{ borderColor: 'rgba(255,255,255,0.45)', color: '#fff', textTransform: 'none', borderRadius: '9999px' }}>Listen</Button>
@@ -119,7 +119,7 @@ function LearningAreaCards() {
         return (
           <Paper key={area.title} component={Link} href={area.href} elevation={0} sx={{ p: { xs: 2.25, sm: 2.75 }, color: 'inherit', textDecoration: 'none', border: '1px solid rgba(44,26,14,0.08)', borderRadius: '13px', bgcolor: '#fff', transition: 'transform .2s ease, box-shadow .2s ease', '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 12px 30px rgba(44,26,14,0.09)' } }}>
             <Box sx={{ width: { xs: 38, sm: 44 }, height: { xs: 38, sm: 44 }, borderRadius: '10px', display: 'grid', placeItems: 'center', bgcolor: 'rgba(184,134,11,0.1)', color: '#b8860b' }}><Icon sx={{ fontSize: { xs: 20, sm: 24 } }} /></Box>
-            <Typography sx={{ mt: { xs: 1.5, sm: 2 }, fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 22, sm: 24 }, fontWeight: 700, color: '#2c1a0e' }}>{area.title}</Typography>
+            <Typography sx={{ mt: { xs: 1.5, sm: 2 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 22, sm: 24 }, fontWeight: 600, color: '#2c1a0e' }}>{area.title}</Typography>
             <Typography sx={{ mt: 0.5, fontFamily: 'Jost, sans-serif', fontSize: 14, color: '#7a6e65', lineHeight: 1.6 }}>{area.body}</Typography>
           </Paper>
         )
@@ -152,7 +152,7 @@ function ContentCard({ type, title, titleAr, description, level, href, image, ac
       <Box sx={{ p: { xs: 2, sm: 3 }, minWidth: 0 }}>
         <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{type}</Typography>
         {titleAr && <Typography lang="ar" dir="rtl" sx={{ mt: 0.5, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 23, fontWeight: 700, color: '#2c1a0e', textAlign: 'left' }}>{titleAr}</Typography>}
-        <Typography sx={{ mt: titleAr ? 0 : 0.75, fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 20, sm: 24 }, fontWeight: 700, color: '#2c1a0e', lineHeight: 1.2 }}>{title}</Typography>
+        <Typography sx={{ mt: titleAr ? 0 : 0.75, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, sm: 24 }, fontWeight: 600, color: '#2c1a0e', lineHeight: 1.2 }}>{title}</Typography>
         {description && <Typography sx={{ mt: 0.75, color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: 13, lineHeight: 1.55, display: { xs: 'none', sm: '-webkit-box' }, WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{description}</Typography>}
         {level && <Chip size="small" label={level} sx={{ mt: 1.5, bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508', fontWeight: 700 }} />}
         <Button component={Link} href={href} endIcon={<ArrowForward sx={{ fontSize: { xs: 17, sm: 20 } }} />} sx={{ display: 'flex', width: 'fit-content', mt: 1.5, px: 0, color: '#0e2e1f', fontWeight: 700, textTransform: 'none' }}>{actionLabel}</Button>
@@ -174,7 +174,7 @@ function LearningStats({ totalSeconds, newWords, favourites, streak }: { totalSe
       <Box sx={{ mb: { xs: 2.25, md: 3 }, display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 2 }}>
         <Box>
           <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase' }}>At a glance</Typography>
-          <Typography component="h2" sx={{ mt: 0.4, color: '#2c1a0e', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 27, md: 32 }, fontWeight: 700, lineHeight: 1.15 }}>Your learning activity</Typography>
+          <Typography component="h2" sx={{ mt: 0.4, color: '#2c1a0e', fontFamily: 'var(--font-heading)', fontSize: { xs: 27, md: 32 }, fontWeight: 600, lineHeight: 1.15 }}>Your learning activity</Typography>
         </Box>
         <Button component={Link} href="/practice" endIcon={<ArrowForward sx={{ fontSize: 17 }} />} sx={{ display: { xs: 'none', sm: 'flex' }, color: '#0e2e1f', fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700, textTransform: 'none' }}>View practice</Button>
       </Box>
@@ -186,7 +186,7 @@ function LearningStats({ totalSeconds, newWords, favourites, streak }: { totalSe
               <Box sx={{ width: { xs: 30, sm: 34 }, height: { xs: 30, sm: 34 }, display: 'grid', placeItems: 'center', borderRadius: '9px', color: stat.colour, bgcolor: stat.background }}>
                 <Icon sx={{ fontSize: { xs: 17, sm: 19 } }} />
               </Box>
-              <Typography sx={{ mt: 1.25, color: '#2c1a0e', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 25, sm: 30 }, fontWeight: 700, lineHeight: 1 }}>{stat.value}</Typography>
+              <Typography sx={{ mt: 1.25, color: '#2c1a0e', fontFamily: 'var(--font-heading)', fontSize: { xs: 25, sm: 30 }, fontWeight: 600, lineHeight: 1 }}>{stat.value}</Typography>
               <Typography sx={{ mt: 0.8, color: '#2c1a0e', fontFamily: 'Jost, sans-serif', fontSize: { xs: 11, sm: 12 }, fontWeight: 700 }}>{stat.label}</Typography>
               <Typography sx={{ mt: 0.2, color: '#8b7d72', fontFamily: 'Jost, sans-serif', fontSize: { xs: 9.5, sm: 10.5 }, lineHeight: 1.35 }}>{stat.detail}</Typography>
             </Box>
@@ -237,7 +237,7 @@ export default function HomeDashboard({ books, featuredEpisode, chaptersByBook, 
           <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 14 }, pb: { xs: 7, md: 9 } }}>
             <Box sx={{ maxWidth: 720 }}>
               <Typography sx={{ color: '#d4a843', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', textShadow: '0 2px 12px rgba(0,0,0,0.45)' }}>Watch · Read · Practise</Typography>
-              <Typography component="h1" sx={{ mt: 1.5, color: '#fff', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 42, sm: 54, md: 67 }, fontWeight: 700, lineHeight: 1.02, textShadow: '0 3px 22px rgba(0,0,0,0.55)' }}>Learn Arabic through cartoons, books, and practice</Typography>
+              <Typography component="h1" sx={{ mt: 1.5, color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 42, sm: 54, md: 67 }, fontWeight: 600, lineHeight: 1.02, textShadow: '0 3px 22px rgba(0,0,0,0.55)' }}>Learn Arabic through cartoons, books, and practice</Typography>
               <Typography sx={{ mt: 2, maxWidth: 610, color: 'rgba(255,255,255,0.86)', fontFamily: 'Jost, sans-serif', lineHeight: 1.75, textShadow: '0 2px 12px rgba(0,0,0,0.45)' }}>Build your Arabic naturally through entertaining content, graded stories, vocabulary and interactive review.</Typography>
               <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                 <Button onClick={() => openAuth('register')} variant="contained" endIcon={<ArrowForward />} sx={{ bgcolor: '#d4a843', color: '#0e2e1f', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#e3bb58' } }}>Start Learning</Button>
@@ -258,7 +258,7 @@ export default function HomeDashboard({ books, featuredEpisode, chaptersByBook, 
           <Box sx={{ mt: { xs: 7, md: 10 } }}><WordOfDayCard entry={wordOfTheDay} guest /></Box>
           <Box sx={{ mt: { xs: 7, md: 10 } }}><SectionHeading eyebrow="Quick practice" title="Choose how you want to learn" /><QuickPractice /></Box>
           <Paper elevation={0} sx={{ mt: { xs: 7, md: 10 }, p: { xs: 3, md: 5 }, borderRadius: '16px', bgcolor: '#f2e9da', border: '1px solid rgba(184,134,11,0.18)', textAlign: 'center' }}>
-            <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 30, md: 40 }, fontWeight: 700, color: '#2c1a0e' }}>Create an account to track your learning</Typography>
+            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 40 }, fontWeight: 600, color: '#2c1a0e' }}>Create an account to track your learning</Typography>
             <Typography sx={{ mt: 1, color: '#7a6e65', fontFamily: 'Jost, sans-serif' }}>Save words, continue reading, keep practice history, and return to your learning whenever you like.</Typography>
             <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
               <Button onClick={() => openAuth('register')} variant="contained" sx={{ bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', px: 3, textTransform: 'none', '&:hover': { bgcolor: '#173f2d', color: '#fff' } }}>Sign Up for Free</Button>
@@ -291,7 +291,7 @@ export default function HomeDashboard({ books, featuredEpisode, chaptersByBook, 
         <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(5,23,15,0.82)' }} />
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Typography sx={{ color: '#d4a843', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Your learning</Typography>
-          <Typography component="h1" sx={{ mt: 0.75, color: '#fff', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 40, md: 58 }, fontWeight: 700, lineHeight: 1.08 }}>Welcome back, {displayName}</Typography>
+          <Typography component="h1" sx={{ mt: 0.75, color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 40, md: 58 }, fontWeight: 600, lineHeight: 1.08 }}>Welcome back, {displayName}</Typography>
           <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.68)', fontFamily: 'Jost, sans-serif' }}>Pick up where you left off or choose something new.</Typography>
         </Container>
       </Box>
@@ -310,7 +310,7 @@ export default function HomeDashboard({ books, featuredEpisode, chaptersByBook, 
               <Box sx={{ p: { xs: 2.25, sm: 3, md: 4 }, minWidth: 0 }}>
                 <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 11, letterSpacing: '0.13em', textTransform: 'uppercase' }}>Continue reading</Typography>
                 {recentReading.book.titleAr && <Typography lang="ar" dir="rtl" sx={{ mt: 1.5, textAlign: 'left', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 23, sm: 28 }, fontWeight: 700, color: '#2c1a0e' }}>{recentReading.book.titleAr}</Typography>}
-                <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 21, sm: 25 }, fontWeight: 700, color: '#2c1a0e', lineHeight: 1.2 }}>{recentReading.book.title}</Typography>
+                <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 21, sm: 25 }, fontWeight: 600, color: '#2c1a0e', lineHeight: 1.2 }}>{recentReading.book.title}</Typography>
                 <Typography sx={{ mt: 0.5, color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: { xs: 13, sm: 16 } }}>{recentReading.chapter.title}</Typography>
                 <LinearProgress variant="determinate" value={Math.round(recentReading.chapter.chapterNumber / Math.max(recentReading.book.chapterCount, 1) * 100)} sx={{ mt: 2.5, height: 7, borderRadius: 99, bgcolor: '#eee7dc', '& .MuiLinearProgress-bar': { bgcolor: '#b8860b', borderRadius: 99 } }} />
                 <Button component={Link} href={`/books/${recentReading.book.slug}/${recentReading.chapter.slug}`} variant="contained" endIcon={<ArrowForward />} sx={{ mt: 2.5, bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', textTransform: 'none', '& .MuiButton-endIcon': { color: '#fff' }, '&:hover': { bgcolor: '#173f2d', color: '#fff' } }}>Continue Reading</Button>

@@ -26,7 +26,7 @@ export default async function BooksPage() {
         }}
       >
         <MenuBook sx={{ display: { xs: 'none', md: 'inline-block' }, color: '#d4a843', fontSize: { xs: 38, md: 48 }, mb: 1 }} />
-        <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 27, md: 58 }, fontWeight: 700, color: '#fff', lineHeight: 1.15 }}>
+        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 27, md: 58 }, fontWeight: 600, color: '#fff', lineHeight: 1.15 }}>
           Arabic Books
         </Typography>
         <Typography sx={{ display: { xs: 'none', md: 'block' }, fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 23, md: 30 }, color: '#d4a843', direction: 'rtl' }}>
@@ -39,7 +39,7 @@ export default async function BooksPage() {
 
       <Container maxWidth="lg" sx={{ pt: { xs: 2.5, md: 6 }, px: { xs: 2, sm: 3 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: { xs: 1.5, sm: 3 } }}>
-          <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 24, md: 36 }, fontWeight: 700, color: '#2c1a0e' }}>
+          <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 36 }, fontWeight: 600, color: '#2c1a0e' }}>
             Library
           </Typography>
           <Typography sx={{ color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: 14 }}>
@@ -49,7 +49,7 @@ export default async function BooksPage() {
 
         {books.length === 0 ? (
           <Paper elevation={0} sx={{ p: 5, textAlign: 'center', border: '1px solid rgba(44,26,14,0.08)', bgcolor: '#fff' }}>
-            <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 24, color: '#2c1a0e' }}>No books yet</Typography>
+            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 24, color: '#2c1a0e' }}>No books yet</Typography>
           </Paper>
         ) : (
           <Box
@@ -95,7 +95,7 @@ export default async function BooksPage() {
                     <Box sx={{ minHeight: { xs: 92, sm: 300 }, aspectRatio: { xs: '3 / 4', sm: 'auto' }, p: { xs: 0.75, sm: 3 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: { xs: '5px', sm: 0 }, background: 'linear-gradient(145deg, #173f2d, #0e2e1f 62%, #2c1a0e)' }}>
                       <Box>
                         <AutoStories sx={{ color: '#d4a843', fontSize: { xs: 24, sm: 44 }, mb: { xs: 0, sm: 2 } }} />
-                        <Typography sx={{ display: { xs: 'none', sm: 'block' }, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 28, lineHeight: 1.15, fontWeight: 700, color: '#fff' }}>
+                        <Typography sx={{ display: { xs: 'none', sm: 'block' }, fontFamily: 'var(--font-heading)', fontSize: 28, lineHeight: 1.15, fontWeight: 600, color: '#fff' }}>
                           {book.title}
                         </Typography>
                       </Box>
@@ -103,7 +103,7 @@ export default async function BooksPage() {
                   )}
 
                   <Box sx={{ p: { xs: '5px 1px 0', sm: 2.5 } }}>
-                    <Typography sx={{ fontFamily: { xs: 'Jost, sans-serif', sm: '"EB Garamond", Georgia, serif' }, fontSize: { xs: 11.5, sm: 24 }, lineHeight: { xs: 1.25, sm: 1.2 }, fontWeight: { xs: 600, sm: 700 }, color: '#2c1a0e', mb: { xs: 0, sm: 1.5 }, minHeight: { xs: '2.5em', sm: 0 }, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: { xs: 2, sm: 'unset' }, WebkitBoxOrient: 'vertical' }}>
+                    <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 11.5, sm: 24 }, lineHeight: { xs: 1.25, sm: 1.2 }, fontWeight: 600, color: '#2c1a0e', mb: { xs: 0, sm: 1.5 }, minHeight: { xs: '2.5em', sm: 0 }, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: { xs: 2, sm: 'unset' }, WebkitBoxOrient: 'vertical' }}>
                       {book.title}
                     </Typography>
                     <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1, flexWrap: 'wrap', mb: 2 }}>

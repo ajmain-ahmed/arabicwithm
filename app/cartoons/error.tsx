@@ -20,9 +20,9 @@ export default function CartoonsError({ reset }: { reset: () => void }) {
       <Typography
         component="h2"
         sx={{
-          fontFamily: "'EB Garamond', serif",
+          fontFamily: 'var(--font-heading)',
           fontSize: '1.75rem',
-          fontWeight: 700,
+          fontWeight: 600,
           color: '#2c1a0e',
         }}
       >

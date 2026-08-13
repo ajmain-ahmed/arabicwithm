@@ -42,7 +42,7 @@ interface SnackbarMessage {
 
 // ─── styles ─────────────────────────────────────────────────────────────────
 const DIALOG_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Cookie&family=EB+Garamond:ital,wght@0,700;1,700&family=Jost:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@700&family=Jost:wght@300;400;500;600&display=swap');
 
   :root {
     --sand:   #f5ede0;
@@ -259,9 +259,9 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
           </IconButton>
 
           <Typography sx={{
-            fontFamily: '"EB Garamond", serif',
+            fontFamily: 'var(--font-heading)',
             fontSize: '1.75rem',
-            fontWeight: 700,
+            fontWeight: 600,
             color: 'var(--bark)',
             lineHeight: 1.15,
             mb: 0.5,

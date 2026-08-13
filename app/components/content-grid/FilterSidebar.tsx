@@ -115,7 +115,7 @@ export default function FilterSidebar({
         <>
           <Typography
             sx={{
-              fontFamily: '"EB Garamond", Georgia, serif',
+              fontFamily: 'var(--font-heading)',
               fontSize: 20,
               color: BARK,
               mb: 1.5,

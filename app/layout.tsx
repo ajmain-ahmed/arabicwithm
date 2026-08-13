@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { geistSans, geistMono, ebGaramond, jost, cookie } from "@/app/lib/fonts"
+import { geistSans, geistMono, ebGaramond, jost, brandFont, headingFont } from "@/app/lib/fonts"
 import "./globals.css"
 import ThemeProvider from "./components/ThemeProvider"
 import { AuthProvider } from "./AuthContext"
@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${ebGaramond.variable} ${jost.variable} ${cookie.variable}`}
+        className={`${geistSans.variable} ${geistMono.variable} ${ebGaramond.variable} ${jost.variable} ${brandFont.variable} ${headingFont.variable}`}
       >
         <AuthProvider>
           <ThemeProvider>

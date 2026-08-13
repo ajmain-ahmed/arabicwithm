@@ -33,7 +33,7 @@ export default function VocabularyPage({ initialQuery = '' }: { initialQuery?: s
       <Box sx={{ mt: { xs: '-56px', md: '-64px' }, pt: { xs: 14, md: 17 }, pb: { xs: 7, md: 9 }, px: 2, bgcolor: '#0e2e1f', color: '#fff' }}>
         <Container maxWidth="md" sx={{ textAlign: 'center' }}>
           <Typography sx={{ color: '#d4a843', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Hans Wehr dictionary</Typography>
-          <Typography component="h1" sx={{ mt: 1, color: '#fff', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 39, md: 58 }, fontWeight: 700 }}>Arabic Vocabulary</Typography>
+          <Typography component="h1" sx={{ mt: 1, color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 39, md: 58 }, fontWeight: 600 }}>Arabic Vocabulary</Typography>
           <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.72)', fontFamily: 'Jost, sans-serif' }}>Search Arabic—with or without vowel marks—or search by an English meaning.</Typography>
           <TextField
             fullWidth
@@ -64,12 +64,12 @@ export default function VocabularyPage({ initialQuery = '' }: { initialQuery?: s
         {!searched && !isPending ? (
           <Paper elevation={0} sx={{ p: { xs: 4, md: 6 }, border: '1px solid rgba(44,26,14,0.08)', borderRadius: '14px', textAlign: 'center' }}>
             <MenuBook sx={{ color: '#b8860b', fontSize: 42 }} />
-            <Typography sx={{ mt: 1, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 27, fontWeight: 700, color: '#2c1a0e' }}>Search the vocabulary library</Typography>
+            <Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 27, fontWeight: 600, color: '#2c1a0e' }}>Search the vocabulary library</Typography>
             <Typography sx={{ mt: 0.75, color: '#7a6e65', fontFamily: 'Jost, sans-serif' }}>Try “book”, “travel”, كِتَاب, or سفر.</Typography>
           </Paper>
         ) : searched && results.length === 0 && !isPending ? (
           <Paper elevation={0} sx={{ p: { xs: 4, md: 6 }, border: '1px dashed rgba(184,134,11,0.35)', borderRadius: '14px', textAlign: 'center' }}>
-            <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: 27, fontWeight: 700, color: '#2c1a0e' }}>We couldn&apos;t find that word.</Typography>
+            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 27, fontWeight: 600, color: '#2c1a0e' }}>We couldn&apos;t find that word.</Typography>
             <Typography sx={{ mt: 1, color: '#7a6e65', fontFamily: 'Jost, sans-serif' }}>Try another Arabic or English spelling, or use a shorter form of the word.</Typography>
           </Paper>
         ) : (
@@ -81,7 +81,7 @@ export default function VocabularyPage({ initialQuery = '' }: { initialQuery?: s
                   <Chip size="small" label={entry.isRoot ? 'Root' : 'Word'} sx={{ bgcolor: entry.isRoot ? '#0e2e1f' : 'rgba(184,134,11,0.12)', color: entry.isRoot ? '#fff' : '#8b6508' }} />
                 </Box>
                 {entry.root && <Typography lang="ar" dir="rtl" sx={{ mt: 0.75, color: '#b8860b', fontFamily: '"EB Garamond", Georgia, serif', fontSize: 18, textAlign: 'left' }}>Root: {entry.root}</Typography>}
-                {entry.transliteration && <Typography sx={{ mt: 0.5, color: '#9e8a7a', fontFamily: 'Jost, sans-serif', fontStyle: 'italic' }}>{entry.transliteration}</Typography>}
+                {entry.transliteration && <Typography sx={{ mt: 0.5, color: '#9e8a7a', fontFamily: 'Jost, sans-serif' }}>{entry.transliteration}</Typography>}
                 <Typography sx={{ mt: 1.5, color: '#5f554d', fontFamily: 'Jost, sans-serif', lineHeight: 1.7 }}>{entry.english || 'Definition unavailable'}</Typography>
               </Paper>
             ))}

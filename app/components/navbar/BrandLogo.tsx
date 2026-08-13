@@ -60,14 +60,14 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate }: BrandLog
                         display: 'flex',
                         position: 'relative',
                         fontFamily: 'var(--font-decorative)',
-                        fontSize: isMobile ? '2rem' : '2.6rem',
-                        fontWeight: 500,
+                        fontSize: isMobile ? '1.45rem' : '2rem',
+                        fontWeight: 700,
                         background: 'linear-gradient(135deg, var(--awm-bark) 0%, var(--awm-forest) 100%)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
-                        letterSpacing: '0.01em',
+                        letterSpacing: '-0.035em',
                         lineHeight: 1,
-                        marginTop: '0.15em',
+                        marginTop: '0.1em',
                     }}
                 >
                     {letters.map((letter, index) => (

@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono, EB_Garamond, Jost, Cookie } from "next/font/google"
+import { Geist, Geist_Mono, EB_Garamond, Jost, Baloo_Bhaijaan_2, Nunito_Sans } from "next/font/google"
 
 export const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,8 +22,14 @@ export const jost = Jost({
   weight: ["300", "400", "500", "600", "700"],
 })
 
-export const cookie = Cookie({
+export const brandFont = Baloo_Bhaijaan_2({
   variable: "--font-decorative",
+  subsets: ["arabic", "latin"],
+  weight: ["500", "600", "700"],
+})
+
+export const headingFont = Nunito_Sans({
+  variable: "--font-heading",
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["400", "500", "600"],
 })

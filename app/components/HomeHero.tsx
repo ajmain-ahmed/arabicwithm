@@ -108,9 +108,9 @@ export default function HomeHero() {
         <Typography
           component="h1"
           sx={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-heading)',
             fontSize: { xs: '2.6rem', sm: '3.4rem', md: '4.6rem', lg: '5.6rem' },
-            fontWeight: 700,
+            fontWeight: 600,
             lineHeight: 1.08,
             color: '#fff',
             textShadow: '0 2px 18px rgba(0,0,0,0.55)',
@@ -148,10 +148,10 @@ export default function HomeHero() {
               <Typography
                 component="span"
                 sx={{
-                  fontFamily: 'var(--font-serif)',
+                  fontFamily: 'var(--font-heading)',
                   fontSize: { xs: '2.6rem', sm: '3.4rem', md: '4.6rem', lg: '5.6rem' },
-                  fontWeight: 700,
-                  fontStyle: 'italic',
+                  fontWeight: 600,
+                  fontStyle: 'normal',
                   lineHeight: 1.08,
                   color: 'var(--gold-lt)',
                   textShadow: '0 2px 18px rgba(0,0,0,0.55)',

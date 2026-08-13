@@ -1,6 +1,4 @@
 export const NAV_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Cookie&display=swap');
-
   .nav-link {
     position: relative;
     cursor: pointer;
