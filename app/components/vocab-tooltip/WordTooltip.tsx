@@ -4,6 +4,7 @@ import React from 'react'
 import { Box, Typography, Chip } from '@mui/material'
 import { formatCefr, formatPos } from '@/app/lib/display'
 import type { VocabEntry } from './index'
+import PracticeWordButton from './PracticeWordButton'
 
 export const LEVEL_COLORS: Record<string, string> = {
   A0: '#5c8a6f',
@@ -26,7 +27,8 @@ export default function WordTooltip({
   textScale?: number
 }) {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, minWidth: 200 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, minWidth: 200, position: 'relative', pt: 0.5 }}>
+      <PracticeWordButton entry={entry} />
       <Box sx={{ textAlign: 'center' }}>
         <Typography
           sx={{

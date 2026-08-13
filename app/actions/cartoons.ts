@@ -67,7 +67,7 @@ export const fetchShowsForPublic = unstable_cache(
     }))
   },
   ["cartoons", "shows", "public"],
-  { revalidate: 300 }
+  { revalidate: 300, tags: ["cartoons-public"] }
 )
 
 export async function fetchShowsForEpisodeEdit(): Promise<ShowRow[]> {
@@ -129,7 +129,7 @@ export const fetchShowBySlugPublic = unstable_cache(
     }
   },
   ["cartoons", "show"],
-  { revalidate: 300 }
+  { revalidate: 300, tags: ["cartoons-public"] }
 )
 
 /* ── Episodes ──────────────────────────────────────────────────────── */
@@ -167,7 +167,7 @@ export const fetchEpisodesForShowPublic = unstable_cache(
     return (data ?? []).map((row) => mapEpisodeRow(row, showSlug))
   },
   ["cartoons", "episodes"],
-  { revalidate: 300 }
+  { revalidate: 300, tags: ["cartoons-public"] }
 )
 
 export const fetchEpisodeForPublic = unstable_cache(
@@ -315,7 +315,7 @@ export const fetchEpisodeForPublic = unstable_cache(
     }
   },
   ["cartoons", "episode"],
-  { revalidate: 300 }
+  { revalidate: 300, tags: ["cartoons-public"] }
 )
 
 function mapEpisodeRow(

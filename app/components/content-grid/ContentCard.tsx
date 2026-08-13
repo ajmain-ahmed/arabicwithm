@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Box, Typography, Chip, Paper } from '@mui/material'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 /* ── Palette ── */
 const BARK = '#2c1a0e'
@@ -38,6 +38,7 @@ export interface ContentCardProps {
   metaItems: ContentCardMetaItem[]
   overlayIcon?: React.ReactNode
   aspectRatio?: string
+  imageFit?: 'cover' | 'contain' | 'natural'
 }
 
 export default function ContentCard({
@@ -52,19 +53,24 @@ export default function ContentCard({
   metaItems,
   overlayIcon,
   aspectRatio = '16/9',
+  imageFit = 'cover',
 }: ContentCardProps) {
   const [hovered, setHovered] = useState(false)
   const [imgError, setImgError] = useState(false)
-  const router = useRouter()
   const badgeColor = DIFFICULTY_COLORS[level ?? ''] || MUTED
+  const href = `${hrefPrefix}/${encodeURIComponent(slug)}`
 
   return (
     <Paper
+      component={Link}
+      href={href}
       elevation={0}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={() => router.push(`${hrefPrefix}/${slug}`)}
       sx={{
+        display: 'block',
+        color: 'inherit',
+        textDecoration: 'none',
         borderRadius: '10px',
         overflow: 'hidden',
         backgroundColor: WARM_WHITE,
@@ -78,7 +84,14 @@ export default function ContentCard({
       }}
     >
       {/* Thumbnail */}
-      <Box sx={{ position: 'relative', aspectRatio, overflow: 'hidden' }}>
+      <Box
+        sx={{
+          position: 'relative',
+          aspectRatio: imageFit === 'natural' ? 'auto' : aspectRatio,
+          overflow: 'hidden',
+          backgroundColor: imageFit === 'contain' ? '#efe5d6' : 'transparent',
+        }}
+      >
         {!imgError ? (
           <Box
             component="img"
@@ -87,9 +100,10 @@ export default function ContentCard({
             onError={() => setImgError(true)}
             sx={{
               width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              transform: hovered ? 'scale(1.03)' : 'scale(1)',
+              height: imageFit === 'natural' ? 'auto' : '100%',
+              display: 'block',
+              objectFit: imageFit === 'natural' ? undefined : imageFit,
+              transform: hovered && imageFit !== 'natural' ? 'scale(1.03)' : 'scale(1)',
               transition: 'transform 0.3s',
             }}
           />
@@ -97,7 +111,8 @@ export default function ContentCard({
           <Box
             sx={{
               width: '100%',
-              height: '100%',
+              height: imageFit === 'natural' ? 'auto' : '100%',
+              minHeight: imageFit === 'natural' ? 180 : undefined,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

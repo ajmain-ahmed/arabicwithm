@@ -3,10 +3,12 @@
 import { Movie } from '@mui/icons-material'
 import React from 'react'
 
-export const NAV_ITEMS = ['Cartoons', 'About', 'Contact'] as const
+export const NAV_ITEMS = ['Cartoons', 'Books', 'Practice', 'About', 'Contact'] as const
 
 export const NAV_ROUTES: Record<string, string> = {
     Cartoons: '/cartoons',
+    Books: '/books',
+    Practice: '/practice',
     About: '/about',
     Contact: '/contact',
 }

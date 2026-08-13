@@ -39,7 +39,6 @@ const GOLD = '#b8860b'
 const WARM_WHITE = '#fffaf0'
 const MUTED = '#7a6e65'
 
-const CATEGORIES = ['All Shows', 'Everyday Arabic', 'Historical', 'Islamic Heritage', 'Action']
 const LEVELS = ['A1-A2', 'A2-B1', 'B1-B2', 'B2-C1']
 
 /* ═══════════════════════════════════════════════
@@ -48,9 +47,13 @@ const LEVELS = ['A1-A2', 'A2-B1', 'B1-B2', 'B2-C1']
 export default function CartoonsPage({
   shows,
   episodesMap,
+  showCategories,
+  availableCategories,
 }: {
   shows: ShowMeta[]
   episodesMap: Record<string, string[]>
+  showCategories: Record<string, string[]>
+  availableCategories: string[]
 }) {
   const isAdmin = useIsAdmin()
   const [activeCategory, setActiveCategory] = useState('All Shows')
@@ -76,7 +79,8 @@ export default function CartoonsPage({
   }
 
   const filteredShows = shows.filter((s) => {
-    const catMatch = activeCategory === 'All Shows' || s.category === activeCategory
+    const catMatch = activeCategory === 'All Shows'
+      || (showCategories[s.slug] ?? []).includes(activeCategory)
     const levelMatch = !activeLevel || s.level === activeLevel
     return catMatch && levelMatch
   })
@@ -215,7 +219,7 @@ export default function CartoonsPage({
           >
             <Box sx={{ position: 'sticky', top: 100, alignSelf: 'flex-start' }}>
               <FilterSidebar
-                categories={CATEGORIES}
+                categories={availableCategories}
                 levels={LEVELS}
                 activeCategory={activeCategory}
                 setActiveCategory={setActiveCategory}
@@ -247,10 +251,13 @@ export default function CartoonsPage({
                   No shows match your filters
                 </Typography>
                 <Typography sx={{ fontSize: 14, color: MUTED, mb: 2 }}>
-                  Try adjusting your category or level selection.
+                  Try adjusting your filters.
                 </Typography>
                 <Button
-                  onClick={() => { setActiveCategory('All Shows'); setActiveLevel('') }}
+                  onClick={() => {
+                    setActiveCategory('All Shows')
+                    setActiveLevel('')
+                  }}
                   sx={{
                     borderRadius: '9999px',
                     px: 3,
@@ -374,7 +381,7 @@ export default function CartoonsPage({
           </IconButton>
         </Box>
         <FilterSidebar
-          categories={CATEGORIES}
+          categories={availableCategories}
           levels={LEVELS}
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}

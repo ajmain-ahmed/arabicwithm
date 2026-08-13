@@ -27,6 +27,7 @@ import { supabase } from '../lib/supabase/client'
 interface AuthDialogProps {
   open: boolean
   onClose: () => void
+  initialMode?: 'register' | 'signin'
 }
 
 interface FormData {
@@ -83,8 +84,8 @@ function GoldDivider() {
 }
 
 // ─── component ───────────────────────────────────────────────────────────────
-export default function AuthDialog({ open, onClose }: AuthDialogProps) {
-  const [authMode, setAuthMode] = useState<'register' | 'signin'>('signin')
+export default function AuthDialog({ open, onClose, initialMode = 'signin' }: AuthDialogProps) {
+  const [authMode, setAuthMode] = useState<'register' | 'signin'>(initialMode)
   const [forgotPassword, setForgotPassword] = useState(false)
   const [formData, setFormData] = useState<FormData>({ email: '', password: '' })
   const [loading, setLoading] = useState(false)

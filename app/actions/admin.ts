@@ -2,7 +2,7 @@
 
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, updateTag } from "next/cache"
 import { serviceClient } from "@/app/lib/supabase"
 import { parseJsonb } from "@/app/lib/jsonb"
 import { guardAdmin } from "@/app/actions/auth"
@@ -117,6 +117,7 @@ export async function createShow(input: ShowInput): Promise<string> {
     throw new Error(error?.message ?? "Failed to create show")
   }
 
+  updateTag("cartoons-public")
   return data.id
 }
 
@@ -143,6 +144,8 @@ export async function updateShow(
     console.error("[updateShow] error:", error.message)
     throw new Error(error.message)
   }
+
+  updateTag("cartoons-public")
 }
 
 export async function deleteShow(id: string): Promise<void> {
@@ -154,6 +157,8 @@ export async function deleteShow(id: string): Promise<void> {
     console.error("[deleteShow] error:", error.message)
     throw new Error(error.message)
   }
+
+  updateTag("cartoons-public")
 }
 
 /* ── Episodes ──────────────────────────────────────────────────────── */
@@ -220,6 +225,7 @@ export async function createEpisode(input: EpisodeInput): Promise<string> {
     throw new Error(error?.message ?? "Failed to create episode")
   }
 
+  updateTag("cartoons-public")
   return data.id
 }
 
@@ -250,6 +256,7 @@ export async function updateEpisode(
     throw new Error(error.message)
   }
 
+  updateTag("cartoons-public")
   if (revalidate) {
     revalidatePath(revalidate)
   }
@@ -264,6 +271,8 @@ export async function deleteEpisode(id: string): Promise<void> {
     console.error("[deleteEpisode] error:", error.message)
     throw new Error(error.message)
   }
+
+  updateTag("cartoons-public")
 }
 
 export async function updateEpisodeTranscript(
@@ -281,6 +290,8 @@ export async function updateEpisodeTranscript(
     console.error("[updateEpisodeTranscript] error:", error.message)
     throw new Error(error.message)
   }
+
+  updateTag("cartoons-public")
 }
 
 /* ── Books ─────────────────────────────────────────────────────────── */
@@ -355,6 +366,7 @@ export async function createBook(input: BookInput): Promise<string> {
     throw new Error(error?.message ?? "Failed to create book")
   }
 
+  updateTag("books-public")
   return data.id
 }
 
@@ -382,6 +394,8 @@ export async function updateBook(
     console.error("[updateBook] error:", error.message)
     throw new Error(error.message)
   }
+
+  updateTag("books-public")
 }
 
 export async function deleteBook(id: string): Promise<void> {
@@ -393,6 +407,8 @@ export async function deleteBook(id: string): Promise<void> {
     console.error("[deleteBook] error:", error.message)
     throw new Error(error.message)
   }
+
+  updateTag("books-public")
 }
 
 /* ── Chapters ──────────────────────────────────────────────────────── */
@@ -476,6 +492,7 @@ export async function createChapter(input: ChapterInput): Promise<string> {
     throw new Error(error?.message ?? "Failed to create chapter")
   }
 
+  updateTag("books-public")
   return data.id
 }
 
@@ -501,6 +518,8 @@ export async function updateChapter(
     console.error("[updateChapter] error:", error.message)
     throw new Error(error.message)
   }
+
+  updateTag("books-public")
 }
 
 export async function deleteChapter(id: string): Promise<void> {
@@ -512,6 +531,8 @@ export async function deleteChapter(id: string): Promise<void> {
     console.error("[deleteChapter] error:", error.message)
     throw new Error(error.message)
   }
+
+  updateTag("books-public")
 }
 
 export async function updateChapterContent(
@@ -529,6 +550,8 @@ export async function updateChapterContent(
     console.error("[updateChapterContent] error:", error.message)
     throw new Error(error.message)
   }
+
+  updateTag("books-public")
 }
 
 /* ── Hans Wehr ─────────────────────────────────────────────────────── */

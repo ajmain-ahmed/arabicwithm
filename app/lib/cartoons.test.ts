@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { isNewTranscript, normalizeNewTranscript, type NewTranscript, getShowCoverPath, getEpisodeCoverPath } from './cartoons'
+import {
+  canonicalizeCartoonCategory,
+  getEpisodeCoverPath,
+  getShowCoverPath,
+  isNewTranscript,
+  normalizeNewTranscript,
+  type NewTranscript,
+} from './cartoons'
 import { stripDiacritics } from './arabic'
 
 describe('isNewTranscript', () => {
@@ -181,5 +188,21 @@ describe('cover paths', () => {
 
   it('derives episode cover from show and episode slugs', () => {
     expect(getEpisodeCoverPath('cotp', 'cotp-1')).toBe('/covers/episodes/cotp/cotp-1.avif')
+  })
+})
+
+describe('canonicalizeCartoonCategory', () => {
+  it('merges logical duplicates into the preferred public labels', () => {
+    expect(canonicalizeCartoonCategory('Historical')).toBe('History')
+    expect(canonicalizeCartoonCategory('history')).toBe('History')
+    expect(canonicalizeCartoonCategory('Islamic History')).toBe('Islamic Heritage')
+    expect(canonicalizeCartoonCategory('Islamic Heritage')).toBe('Islamic Heritage')
+  })
+
+  it('removes dialogue and capitalizes retained categories', () => {
+    expect(canonicalizeCartoonCategory('dialogue')).toBeNull()
+    expect(canonicalizeCartoonCategory(' comedy ')).toBe('Comedy')
+    expect(canonicalizeCartoonCategory('biography')).toBe('Biography')
+    expect(canonicalizeCartoonCategory('anime')).toBe('Anime')
   })
 })

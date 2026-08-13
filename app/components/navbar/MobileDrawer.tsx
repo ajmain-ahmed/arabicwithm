@@ -1,6 +1,6 @@
 'use client'
 
-import { EmailSharp, ExpandLess, ExpandMore, HelpSharp, InfoOutlined, LogoutSharp, Person } from '@mui/icons-material'
+import { BookOutlined, EmailSharp, ExpandLess, ExpandMore, FavoriteBorder, HelpSharp, InfoOutlined, LogoutSharp, Person } from '@mui/icons-material'
 import {
     Avatar,
     Box,
@@ -201,6 +201,8 @@ export default function MobileDrawer({
                 <GoldLine />
 
                 {[
+                    { label: 'Books', icon: <BookOutlined sx={{ fontSize: 20 }} />, onClick: () => pushAndClose('/books') },
+                    { label: 'Practice', icon: <FavoriteBorder sx={{ fontSize: 20 }} />, onClick: () => pushAndClose('/practice') },
                     { label: 'About', icon: <InfoOutlined sx={{ fontSize: 20 }} />, onClick: () => pushAndClose('/about') },
                     { label: 'Contact', icon: <EmailSharp sx={{ fontSize: 20 }} />, onClick: onContactOpen },
                     { label: 'FAQ', icon: <HelpSharp sx={{ fontSize: 20 }} />, onClick: () => pushAndClose('/faq') },

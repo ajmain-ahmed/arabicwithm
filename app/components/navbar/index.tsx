@@ -3,6 +3,7 @@
 import { MenuOutlined, Person } from '@mui/icons-material'
 import { AppBar, Avatar, Box, Button, Container, IconButton, Toolbar, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -29,6 +30,7 @@ export default function Navbar() {
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [contactOpen, setContactOpen] = useState(false)
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
+    const [authDialogMode, setAuthDialogMode] = useState<'register' | 'signin'>('signin')
     const [cartoonsMenuOpen, setCartoonsMenuOpen] = useState(false)
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
 
@@ -46,7 +48,11 @@ export default function Navbar() {
     }, [])
 
     useEffect(() => {
-        const handler = () => setAuthDialogOpen(true)
+        const handler = (event: Event) => {
+            const mode = (event as CustomEvent<{ mode?: 'register' | 'signin' }>).detail?.mode
+            setAuthDialogMode(mode === 'register' ? 'register' : 'signin')
+            setAuthDialogOpen(true)
+        }
         window.addEventListener('open-auth-dialog', handler)
         return () => window.removeEventListener('open-auth-dialog', handler)
     }, [])
@@ -71,6 +77,11 @@ export default function Navbar() {
         router.push(url)
     }
 
+    const openSignIn = () => {
+        setAuthDialogMode('signin')
+        setAuthDialogOpen(true)
+    }
+
     const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M'
 
     const closeAll = () => {
@@ -93,7 +104,7 @@ export default function Navbar() {
                 onClose={() => setDrawerOpen(false)}
                 isLoggedIn={isLoggedIn}
                 user={user}
-                onAuthOpen={() => setAuthDialogOpen(true)}
+                onAuthOpen={openSignIn}
                 onLogout={handleLogout}
                 onContactOpen={() => setContactOpen(true)}
                 navigate={safePush}
@@ -112,7 +123,7 @@ export default function Navbar() {
                 }}
             />
 
-            <AuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
+            <AuthDialog key={authDialogMode} open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} initialMode={authDialogMode} />
 
             <AppBar
                 id="main-navbar"
@@ -158,7 +169,7 @@ export default function Navbar() {
                                         </Avatar>
                                     </IconButton>
                                 ) : (
-                                    <IconButton onClick={() => setAuthDialogOpen(true)} sx={{ color: 'var(--awm-forest)' }} aria-label="Sign in">
+                                    <IconButton onClick={openSignIn} sx={{ color: 'var(--awm-forest)' }} aria-label="Sign in">
                                         <Person />
                                     </IconButton>
                                 )}
@@ -193,20 +204,38 @@ export default function Navbar() {
                                                     </Typography>
                                                 </Box>
                                             ) : (
-                                                <Typography
-                                                    className="nav-link"
-                                                    variant="body2"
-                                                    onClick={() => (item === 'Contact' ? setContactOpen(true) : safePush(NAV_ROUTES[item]))}
-                                                    sx={{
-                                                        fontWeight: 500,
-                                                        letterSpacing: '0.06em',
-                                                        color: 'var(--awm-forest)',
-                                                        cursor: 'pointer',
-                                                        py: 2,
-                                                    }}
-                                                >
-                                                    {item}
-                                                </Typography>
+                                                item === 'Contact' ? (
+                                                    <Typography
+                                                        className="nav-link"
+                                                        variant="body2"
+                                                        onClick={() => setContactOpen(true)}
+                                                        sx={{
+                                                            fontWeight: 500,
+                                                            letterSpacing: '0.06em',
+                                                            color: 'var(--awm-forest)',
+                                                            cursor: 'pointer',
+                                                            py: 2,
+                                                        }}
+                                                    >
+                                                        {item}
+                                                    </Typography>
+                                                ) : (
+                                                    <Link href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
+                                                        <Typography
+                                                            className="nav-link"
+                                                            variant="body2"
+                                                            sx={{
+                                                                fontWeight: 500,
+                                                                letterSpacing: '0.06em',
+                                                                color: 'var(--awm-forest)',
+                                                                cursor: 'pointer',
+                                                                py: 2,
+                                                            }}
+                                                        >
+                                                            {item}
+                                                        </Typography>
+                                                    </Link>
+                                                )
                                             )}
                                         </Box>
                                     ))}
@@ -237,7 +266,7 @@ export default function Navbar() {
                                         </IconButton>
                                     ) : (
                                         <Button
-                                            onClick={() => setAuthDialogOpen(true)}
+                                            onClick={openSignIn}
                                             variant="outlined"
                                             size="small"
                                             startIcon={<Person sx={{ fontSize: 16 }} />}

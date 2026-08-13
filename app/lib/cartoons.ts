@@ -41,6 +41,27 @@ export function getEpisodeCoverPath(showSlug: string, episodeSlug: string): stri
   return `${EPISODE_COVERS_DIR}/${showSlug}/${episodeSlug}.avif`
 }
 
+const CARTOON_CATEGORY_ALIASES: Record<string, string | null> = {
+  dialogue: null,
+  historical: 'History',
+  history: 'History',
+  'islamic history': 'Islamic Heritage',
+  'islamic heritage': 'Islamic Heritage',
+  'everyday arabic': 'Everyday Arabic',
+}
+
+export function canonicalizeCartoonCategory(value?: string | null): string | null {
+  const trimmed = value?.trim().replace(/\s+/g, ' ')
+  if (!trimmed) return null
+
+  const key = trimmed.toLowerCase()
+  if (Object.prototype.hasOwnProperty.call(CARTOON_CATEGORY_ALIASES, key)) {
+    return CARTOON_CATEGORY_ALIASES[key]
+  }
+
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1)
+}
+
 /* ── New inline word entry (parsed from markdown tables) ── */
 export interface CartoonWordEntry {
   arabic: string        // diacritized form from markdown

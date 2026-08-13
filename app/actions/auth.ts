@@ -19,7 +19,7 @@ async function getAuthClient() {
   )
 }
 
-async function getAuthenticatedUserId(): Promise<string | null> {
+export async function getAuthenticatedUserId(): Promise<string | null> {
   try {
     const supabase = await getAuthClient()
     const { data, error } = await supabase.auth.getUser()
