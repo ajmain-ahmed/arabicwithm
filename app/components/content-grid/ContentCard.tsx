@@ -39,6 +39,7 @@ export interface ContentCardProps {
   overlayIcon?: React.ReactNode
   aspectRatio?: string
   imageFit?: 'cover' | 'contain' | 'natural'
+  compactMobileRow?: boolean
 }
 
 export default function ContentCard({
@@ -54,6 +55,7 @@ export default function ContentCard({
   overlayIcon,
   aspectRatio = '16/9',
   imageFit = 'cover',
+  compactMobileRow = false,
 }: ContentCardProps) {
   const [hovered, setHovered] = useState(false)
   const [imgError, setImgError] = useState(false)
@@ -68,7 +70,8 @@ export default function ContentCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       sx={{
-        display: 'block',
+        display: compactMobileRow ? { xs: 'flex', sm: 'block' } : 'block',
+        alignItems: compactMobileRow ? { xs: 'stretch', sm: 'initial' } : undefined,
         color: 'inherit',
         textDecoration: 'none',
         borderRadius: '10px',
@@ -81,15 +84,22 @@ export default function ContentCard({
         transform: hovered ? 'translateY(-3px)' : 'none',
         transition: 'all 0.2s ease',
         cursor: 'pointer',
+        minHeight: compactMobileRow ? { xs: 148, sm: 0 } : undefined,
       }}
     >
       {/* Thumbnail */}
       <Box
         sx={{
           position: 'relative',
-          aspectRatio: imageFit === 'natural' ? 'auto' : aspectRatio,
+          width: compactMobileRow ? { xs: 'clamp(108px, 34vw, 132px)', sm: '100%' } : '100%',
+          flexShrink: compactMobileRow ? 0 : undefined,
+          aspectRatio: compactMobileRow
+            ? { xs: '3 / 4', sm: imageFit === 'natural' ? 'auto' : aspectRatio }
+            : imageFit === 'natural' ? 'auto' : aspectRatio,
           overflow: 'hidden',
-          backgroundColor: imageFit === 'contain' ? '#efe5d6' : 'transparent',
+          backgroundColor: compactMobileRow
+            ? { xs: '#efe5d6', sm: imageFit === 'contain' ? '#efe5d6' : 'transparent' }
+            : imageFit === 'contain' ? '#efe5d6' : 'transparent',
         }}
       >
         {!imgError ? (
@@ -100,9 +110,13 @@ export default function ContentCard({
             onError={() => setImgError(true)}
             sx={{
               width: '100%',
-              height: imageFit === 'natural' ? 'auto' : '100%',
+              height: compactMobileRow
+                ? { xs: '100%', sm: imageFit === 'natural' ? 'auto' : '100%' }
+                : imageFit === 'natural' ? 'auto' : '100%',
               display: 'block',
-              objectFit: imageFit === 'natural' ? undefined : imageFit,
+              objectFit: compactMobileRow
+                ? { xs: 'contain', sm: imageFit === 'natural' ? undefined : imageFit }
+                : imageFit === 'natural' ? undefined : imageFit,
               transform: hovered && imageFit !== 'natural' ? 'scale(1.03)' : 'scale(1)',
               transition: 'transform 0.3s',
             }}
@@ -111,8 +125,12 @@ export default function ContentCard({
           <Box
             sx={{
               width: '100%',
-              height: imageFit === 'natural' ? 'auto' : '100%',
-              minHeight: imageFit === 'natural' ? 180 : undefined,
+              height: compactMobileRow
+                ? { xs: '100%', sm: imageFit === 'natural' ? 'auto' : '100%' }
+                : imageFit === 'natural' ? 'auto' : '100%',
+              minHeight: compactMobileRow
+                ? { xs: 0, sm: imageFit === 'natural' ? 180 : 0 }
+                : imageFit === 'natural' ? 180 : undefined,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -139,7 +157,9 @@ export default function ContentCard({
           sx={{
             position: 'absolute',
             inset: 0,
-            background: 'linear-gradient(transparent 60%, rgba(44,26,14,0.5))',
+            background: compactMobileRow
+              ? { xs: 'linear-gradient(transparent 72%, rgba(44,26,14,0.35))', sm: 'linear-gradient(transparent 60%, rgba(44,26,14,0.5))' }
+              : 'linear-gradient(transparent 60%, rgba(44,26,14,0.5))',
             pointerEvents: 'none',
           }}
         />
@@ -158,8 +178,8 @@ export default function ContentCard({
           >
             <Box
               sx={{
-                width: 44,
-                height: 44,
+                width: compactMobileRow ? { xs: 34, sm: 44 } : 44,
+                height: compactMobileRow ? { xs: 34, sm: 44 } : 44,
                 borderRadius: '50%',
                 backgroundColor: 'rgba(255,255,255,0.92)',
                 display: 'flex',
@@ -193,11 +213,11 @@ export default function ContentCard({
       </Box>
 
       {/* Card Body */}
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: compactMobileRow ? { xs: 1.5, sm: 2 } : 2, flex: compactMobileRow ? 1 : undefined, minWidth: 0 }}>
         <Typography
           sx={{
             fontFamily: '"EB Garamond", Georgia, serif',
-            fontSize: { xs: 18, md: 20 },
+            fontSize: compactMobileRow ? { xs: 16, sm: 18, md: 20 } : { xs: 18, md: 20 },
             fontWeight: 500,
             letterSpacing: '-0.01em',
             lineHeight: 1.25,
@@ -214,7 +234,7 @@ export default function ContentCard({
               fontFamily: '"EB Garamond", Georgia, serif',
               fontSize: { xs: 15, md: 18 },
               color: GOLD,
-              mb: 1.5,
+              mb: compactMobileRow ? { xs: 1, sm: 1.5 } : 1.5,
             }}
             noWrap
           >
@@ -222,7 +242,7 @@ export default function ContentCard({
           </Typography>
         )}
         {/* Tags */}
-        <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', gap: 1, mb: compactMobileRow ? { xs: 0.75, sm: 1.5 } : 1.5, flexWrap: 'wrap' }}>
           {category && (
             <Chip
               label={category}
@@ -245,10 +265,10 @@ export default function ContentCard({
         {description && (
           <Typography
             sx={{
-              fontSize: { xs: 14, md: 15 },
+              fontSize: compactMobileRow ? { xs: 12.5, sm: 14, md: 15 } : { xs: 14, md: 15 },
               lineHeight: 1.45,
               color: MUTED,
-              mb: 1.5,
+              mb: compactMobileRow ? { xs: 0, sm: 1.5 } : 1.5,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               display: '-webkit-box',
