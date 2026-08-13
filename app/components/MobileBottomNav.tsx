@@ -3,13 +3,14 @@
 import React, { useSyncExternalStore } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { BottomNavigation, BottomNavigationAction, Box } from '@mui/material'
-import { FavoriteBorder, Home, MenuBook, Movie } from '@mui/icons-material'
+import { FavoriteBorder, Home, MenuBook, Movie, Translate } from '@mui/icons-material'
 
 const NAV_ITEMS = [
   { value: '/', label: 'Home', icon: <Home sx={{ fontSize: 22 }} /> },
   { value: '/cartoons', label: 'Cartoons', icon: <Movie sx={{ fontSize: 22 }} /> },
   { value: '/books', label: 'Books', icon: <MenuBook sx={{ fontSize: 22 }} /> },
   { value: '/practice', label: 'Practice', icon: <FavoriteBorder sx={{ fontSize: 22 }} /> },
+  { value: '/vocabulary', label: 'Vocabulary', icon: <Translate sx={{ fontSize: 22 }} /> },
 ]
 
 function safePush(router: ReturnType<typeof useRouter>, url: string) {
@@ -21,6 +22,7 @@ function getActiveValue(pathname: string): string {
   if (pathname.startsWith('/cartoons')) return '/cartoons'
   if (pathname.startsWith('/books')) return '/books'
   if (pathname.startsWith('/practice')) return '/practice'
+  if (pathname.startsWith('/vocabulary')) return '/vocabulary'
   return ''
 }
 

@@ -204,11 +204,10 @@ export default function Navbar() {
                                                     </Typography>
                                                 </Box>
                                             ) : (
-                                                item === 'Contact' ? (
+                                                <Link href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
                                                     <Typography
                                                         className="nav-link"
                                                         variant="body2"
-                                                        onClick={() => setContactOpen(true)}
                                                         sx={{
                                                             fontWeight: 500,
                                                             letterSpacing: '0.06em',
@@ -219,23 +218,7 @@ export default function Navbar() {
                                                     >
                                                         {item}
                                                     </Typography>
-                                                ) : (
-                                                    <Link href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
-                                                        <Typography
-                                                            className="nav-link"
-                                                            variant="body2"
-                                                            sx={{
-                                                                fontWeight: 500,
-                                                                letterSpacing: '0.06em',
-                                                                color: 'var(--awm-forest)',
-                                                                cursor: 'pointer',
-                                                                py: 2,
-                                                            }}
-                                                        >
-                                                            {item}
-                                                        </Typography>
-                                                    </Link>
-                                                )
+                                                </Link>
                                             )}
                                         </Box>
                                     ))}

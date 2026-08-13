@@ -1,42 +1,16 @@
-import HomeHero from './components/HomeHero'
-import CartoonSection from './components/CartoonSection'
+import { fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
+import { fetchShowsForPublic } from '@/app/actions/cartoons'
+import { fetchWordOfTheDay } from '@/app/actions/vocabulary'
+import HomeDashboard from '@/app/components/home/HomeDashboard'
 
-/* ─────────────────────────────────────────────
-   Global CSS — system fonts only
-───────────────────────────────────────────── */
-const PAGE_CSS = `
-  :root {
-    --bark:   #2c1a0e;
-    --forest: #0e2e1f;
-    --gold:   #b8860b;
-    --gold-lt:#d4a843;
-    --muted:  #7a6e65;
-    --font-serif: Georgia, "Times New Roman", serif;
-    --font-sans:  system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  }
-
-  html, body { background: #fff; margin: 0; }
-
-  @keyframes heroZoom {
-    from { transform: scale(1.04); }
-    to   { transform: scale(1); }
-  }
-
-  /* Pill shape for every MUI button on this page */
-  .MuiButton-root {
-    border-radius: 9999px !important;
-  }
-`
+export const revalidate = 300
 
 export default async function HomePage() {
-  return (
-    <>
-      <style>{PAGE_CSS}</style>
-
-      <main style={{ background: '#fff', minHeight: '100vh' }}>
-        <HomeHero />
-        <CartoonSection />
-      </main>
-    </>
-  )
+  const [books, shows, wordOfTheDay] = await Promise.all([
+    fetchBooksForPublic(),
+    fetchShowsForPublic(),
+    fetchWordOfTheDay(),
+  ])
+  const chapterEntries = await Promise.all(books.map(async (book) => [book.slug, await fetchChaptersForBookPublic(book.id)] as const))
+  return <HomeDashboard books={books} shows={shows} chaptersByBook={Object.fromEntries(chapterEntries)} wordOfTheDay={wordOfTheDay} />
 }

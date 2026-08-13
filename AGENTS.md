@@ -253,3 +253,11 @@ The project is designed for deployment on **Vercel** (standard Next.js target). 
 5. **Respect the path alias**: Always use `@/` imports rather than relative paths when crossing top-level directories.
 6. **Testing**: Run `npm test` after modifying shared utilities. Add new test cases for new edge cases.
 7. **Database scope**: The application only uses the `shows` and `episodes` Supabase tables. Do not introduce queries against other tables without explicit direction.
+
+## Arabic Content Ingestion
+
+When the user supplies Arabic/English material for a cartoon transcript or book
+chapter, read and follow `docs/content-ingestion.md`. Treat it as the canonical
+schema, Hans Wehr matching policy, validation checklist, and Supabase routing
+guide. Do not guess ambiguous dictionary senses, and do not mutate content until
+the user identifies the target and explicitly asks for it to be added or updated.

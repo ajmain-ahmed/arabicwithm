@@ -76,14 +76,15 @@ function DictionaryWord({ token }: { token: PublicBookToken }) {
   )
 }
 
-function ArabicTokens({ tokens }: { tokens: PublicBookToken[] }) {
+function ArabicTokens({ tokens, punctuation }: { tokens: PublicBookToken[]; punctuation?: string }) {
   return (
     <>
       {tokens.map((token, index) => (
         <span key={`${token.headword ?? token.arabic}-${index}`}>
-          {index > 0 ? ' ' : ''}<DictionaryWord token={token} />
+          {index > 0 ? ' ' : ''}{token.prefix}<DictionaryWord token={token} />{token.suffix}
         </span>
       ))}
+      {punctuation && <span aria-hidden="true">{punctuation}</span>}
     </>
   )
 }
@@ -147,7 +148,7 @@ export default function ChapterReader({
           {content.map((block, index) => (
             <Box key={index} sx={{ py: 2.5 }}>
               <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 27, md: 34 }, fontWeight: 700, lineHeight: 1.9, color: '#2c1a0e', textAlign: 'right' }}>
-                <ArabicTokens tokens={block.tokens} />
+                <ArabicTokens tokens={block.tokens} punctuation={block.punctuation} />
               </Typography>
               {block.translation && (
                 <Typography sx={{ mt: 1, color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: { xs: 15, md: 16 }, lineHeight: 1.7 }}>
@@ -163,7 +164,7 @@ export default function ChapterReader({
           <Typography component="div" lang="ar" dir="rtl" sx={{ maxWidth: 720, mx: 'auto', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 27, md: 33 }, fontWeight: 600, lineHeight: 2.05, color: '#2c1a0e', textAlign: 'right' }}>
             {content.map((block, blockIndex) => (
               <span key={blockIndex}>
-                {blockIndex > 0 ? ' ' : ''}<ArabicTokens tokens={block.tokens} />
+                {blockIndex > 0 ? ' ' : ''}<ArabicTokens tokens={block.tokens} punctuation={block.punctuation} />
               </span>
             ))}
           </Typography>

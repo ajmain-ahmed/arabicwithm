@@ -169,6 +169,7 @@ export interface Database {
           is_root: boolean
           parent_id: number
           quran_occurrence: number | null
+          search_vector: string | null
         }
         Insert: {
           id?: number
@@ -177,6 +178,7 @@ export interface Database {
           is_root?: boolean
           parent_id?: number
           quran_occurrence?: number | null
+          search_vector?: string | null
         }
         Update: {
           id?: number
@@ -185,6 +187,7 @@ export interface Database {
           is_root?: boolean
           parent_id?: number
           quran_occurrence?: number | null
+          search_vector?: string | null
         }
         Relationships: []
       }

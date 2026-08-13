@@ -5,6 +5,7 @@ import {
   FavoriteBorder,
   LocalLibraryOutlined,
   PlayArrow,
+  Search,
 } from '@mui/icons-material'
 import {
   Alert,
@@ -14,10 +15,12 @@ import {
   Container,
   FormControl,
   IconButton,
+  InputAdornment,
   MenuItem,
   Paper,
   Select,
   Snackbar,
+  TextField,
   Typography,
 } from '@mui/material'
 import { useMemo, useState } from 'react'
@@ -55,15 +58,9 @@ function RegisterPrompt() {
     <Container maxWidth="md" sx={{ py: { xs: 7, md: 11 } }}>
       <Paper elevation={0} sx={{ p: { xs: 4, md: 7 }, textAlign: 'center', border: '1px solid rgba(184,134,11,0.2)', bgcolor: '#fff', borderRadius: '14px' }}>
         <FavoriteBorder sx={{ fontSize: 48, color: '#b8860b', mb: 2 }} />
-        <Typography component="h1" sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 36, md: 48 }, fontWeight: 700, color: '#2c1a0e' }}>
-          Your Practice Library
-        </Typography>
-        <Typography sx={{ fontFamily: 'Jost, sans-serif', color: '#7a6e65', maxWidth: 560, mx: 'auto', mt: 1.5, mb: 3 }}>
-          Create an account to save words from cartoons and books, then practise them with personalised flashcards.
-        </Typography>
-        <Button variant="contained" onClick={openRegister} sx={{ bgcolor: '#b8860b', color: '#fff', textTransform: 'none', borderRadius: '9999px', px: 4, '&:hover': { bgcolor: '#966d09' } }}>
-          Create an Account
-        </Button>
+        <Typography component="h1" sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 36, md: 48 }, fontWeight: 700, color: '#2c1a0e' }}>Your Favourite Words</Typography>
+        <Typography sx={{ fontFamily: 'Jost, sans-serif', color: '#7a6e65', maxWidth: 560, mx: 'auto', mt: 1.5, mb: 3 }}>Create an account to favourite words from cartoons and books, then practise them here with personalised flashcards.</Typography>
+        <Button variant="contained" onClick={openRegister} sx={{ bgcolor: '#0e2e1f', color: '#fff', textTransform: 'none', borderRadius: '9999px', px: 4, '&:hover': { bgcolor: '#173f2d' } }}>Create a Free Account</Button>
       </Paper>
     </Container>
   )
@@ -74,6 +71,7 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
   const [words, setWords] = useState(initialWords)
   const [filter, setFilter] = useState<Filter>('all')
   const [cefrFilter, setCefrFilter] = useState<CefrFilter>('all')
+  const [query, setQuery] = useState('')
   const options = amountOptions(words.length)
   const [amount, setAmount] = useState(options[0] ?? 0)
   const [removing, setRemoving] = useState<string | null>(null)
@@ -95,8 +93,10 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
   const visibleWords = useMemo(() => words.filter((word) => {
     const matchesCategory = filter === 'all' || practiceCategoryFor(word) === filter
     const matchesLevel = cefrFilter === 'all' || wordMatchesCefr(word, cefrFilter)
-    return matchesCategory && matchesLevel
-  }), [cefrFilter, filter, words])
+    const searchText = `${word.arabic} ${word.plain} ${word.headword ?? ''} ${word.english} ${word.transliteration}`.toLocaleLowerCase()
+    const matchesQuery = !query.trim() || searchText.includes(query.trim().toLocaleLowerCase())
+    return matchesCategory && matchesLevel && matchesQuery
+  }), [cefrFilter, filter, query, words])
 
   if (!authenticated) return <RegisterPrompt />
 
@@ -170,6 +170,15 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
           </Box>
         </Paper>
 
+        <TextField
+          fullWidth
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search saved words in Arabic or English…"
+          slotProps={{ htmlInput: { dir: 'auto', 'aria-label': 'Search saved words in Arabic or English' }, input: { startAdornment: <InputAdornment position="start"><Search sx={{ color: '#b8860b' }} /></InputAdornment> } }}
+          sx={{ mb: 3, '& .MuiOutlinedInput-root': { bgcolor: '#fff', borderRadius: '12px', minHeight: 54 } }}
+        />
+
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '220px minmax(0, 1fr)' }, gap: 3, alignItems: 'start' }}>
           <Box component="aside" sx={{ display: 'flex', flexDirection: 'column', gap: 2, position: { md: 'sticky' }, top: { md: 88 } }}>
             <Paper elevation={0} sx={{ p: 1.5, border: '1px solid rgba(44,26,14,0.09)', borderRadius: '10px' }}>
@@ -216,8 +225,8 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
             {visibleWords.length === 0 ? (
               <Paper elevation={0} sx={{ p: { xs: 4, md: 7 }, textAlign: 'center', border: '1px dashed rgba(184,134,11,0.35)', borderRadius: '12px' }}>
                 <LocalLibraryOutlined sx={{ fontSize: 44, color: '#b8860b', mb: 1.5 }} />
-                <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', color: '#2c1a0e', fontSize: 28, fontWeight: 700 }}>No saved words here yet</Typography>
-                <Typography sx={{ fontFamily: 'Jost, sans-serif', color: '#7a6e65', mt: 1 }}>Hover over Arabic words in cartoons or books and select the heart.</Typography>
+                <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', color: '#2c1a0e', fontSize: 28, fontWeight: 700 }}>{query ? 'We couldn\'t find that word' : 'No saved words here yet'}</Typography>
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', color: '#7a6e65', mt: 1 }}>{query ? 'Try another Arabic or English spelling, or clear your filters.' : 'Hover over Arabic words in cartoons or books and select the heart.'}</Typography>
               </Paper>
             ) : (
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' }, gap: 2 }}>

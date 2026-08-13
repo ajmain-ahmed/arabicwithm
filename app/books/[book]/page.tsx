@@ -41,7 +41,24 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
               <Typography sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 36, md: 48 }, fontWeight: 700, color: '#2c1a0e', lineHeight: 1.1 }}>
                 {book.title}
               </Typography>
-              {book.description && <Typography sx={{ mt: 1, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 25, color: '#b8860b', direction: 'rtl', textAlign: 'left' }}>{book.description}</Typography>}
+              {book.description && (
+                <Typography
+                  dir="ltr"
+                  sx={{
+                    mt: 1.25,
+                    maxWidth: 600,
+                    fontFamily: '"EB Garamond", Georgia, serif',
+                    fontSize: { xs: 17, md: 19 },
+                    lineHeight: 1.5,
+                    color: '#b8860b',
+                    direction: 'ltr',
+                    unicodeBidi: 'plaintext',
+                    textAlign: 'left',
+                  }}
+                >
+                  {book.description}
+                </Typography>
+              )}
               <Box sx={{ display: 'flex', gap: 1, mt: 2.5 }}>
                 {book.level && <Chip label={book.level} size="small" sx={{ bgcolor: '#6b8f5e', color: '#fff', fontWeight: 700 }} />}
                 {book.category && <Chip label={book.category} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />}

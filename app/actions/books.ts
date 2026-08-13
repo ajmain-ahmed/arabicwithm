@@ -24,6 +24,8 @@ export interface PublicChapter {
 
 export interface PublicBookToken {
   arabic: string
+  prefix?: string
+  suffix?: string
   headword?: string
   english?: string
   transliteration?: string
@@ -35,6 +37,7 @@ export interface PublicBookToken {
 export interface PublicBookBlock {
   tokens: PublicBookToken[]
   translation: string
+  punctuation?: string
 }
 
 export interface PublicChapterWithContent extends PublicChapter {
@@ -150,12 +153,15 @@ export const fetchChapterForPublic = unstable_cache(
 
       return {
         translation: typeof block.translation === "string" ? block.translation : "",
+        punctuation: typeof block.punctuation === "string" ? block.punctuation : undefined,
         tokens: rawTokens.map((rawToken) => {
           const token = rawToken && typeof rawToken === "object" && !Array.isArray(rawToken)
             ? rawToken as Record<string, unknown>
             : {}
           return {
             arabic: typeof token.arabic === "string" ? token.arabic : "",
+            prefix: typeof token.prefix === "string" ? token.prefix : undefined,
+            suffix: typeof token.suffix === "string" ? token.suffix : undefined,
             headword: typeof token.headword === "string" ? token.headword.trim() : undefined,
             english: typeof token.english === "string" ? token.english : undefined,
             transliteration: typeof token.transliteration === "string" ? token.transliteration : undefined,
