@@ -6,6 +6,7 @@ interface PipPayload {
   title: string
   showTitle: string
   currentTime: number
+  orientation?: 'landscape' | 'portrait'
 }
 
 interface SeekTarget {
@@ -20,6 +21,7 @@ interface PlayerState {
   title: string
   showTitle: string
   currentTime: number
+  orientation: 'landscape' | 'portrait'
   isPlaying: boolean
   seekTarget: SeekTarget | null
   openPip: (payload: PipPayload) => void
@@ -36,6 +38,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   title: '',
   showTitle: '',
   currentTime: 0,
+  orientation: 'landscape',
   isPlaying: false,
   seekTarget: null,
 
@@ -47,6 +50,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       title: payload.title,
       showTitle: payload.showTitle,
       currentTime: payload.currentTime,
+      orientation: payload.orientation ?? 'landscape',
       isPlaying: true,
     }),
 
@@ -58,6 +62,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       title: '',
       showTitle: '',
       currentTime: 0,
+      orientation: 'landscape',
       isPlaying: false,
     }),
 

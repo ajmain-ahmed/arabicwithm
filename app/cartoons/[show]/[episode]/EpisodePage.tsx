@@ -35,6 +35,7 @@ import { fetchShowsForEpisodeEdit } from '@/app/actions/cartoons'
 import { HtmlTooltip, WordTooltip, LEVEL_COLORS } from '@/app/components/vocab-tooltip'
 import { SettingsDialog } from '@/app/components/settings-controls'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
+import { usePlayerStore } from '@/store/playerStore'
 
 const EpisodeEditDialog = dynamic(() => import('@/app/(admin)/admin/components/EpisodeEditDialog'), { ssr: false })
 
@@ -70,7 +71,7 @@ const PAGE_CSS = `
     right: 0;
     z-index: 30;
     background: var(--cream);
-    padding: 4px 20px 0;
+    padding: 4px 20px 8px;
   }
   @media (min-width: 1200px) {
     #mobile-fixed-header { display: none; }
@@ -186,18 +187,12 @@ function SettingsButton({ onClick }: SettingsButtonProps) {
 function MobileFixedHeader({
   title,
   onBack,
-  videoRef,
-  isShort,
-  hasVideo,
   onHeightChange,
   top,
   onSettingsClick,
 }: {
   title: string
   onBack: () => void
-  videoRef: React.RefObject<HTMLDivElement | null>
-  isShort: boolean
-  hasVideo: boolean
   onHeightChange?: (height: number) => void
   top: number
   onSettingsClick: () => void
@@ -208,9 +203,6 @@ function MobileFixedHeader({
     () => false
   )
   const innerRef = useRef<HTMLDivElement>(null)
-
-  // Fixed mobile video height (drag-to-resize removed)
-  const maxVideoHeight = isShort ? 300 : undefined
 
   // Report height back to parent so <main> can pad itself correctly
   useLayoutEffect(() => {
@@ -283,30 +275,6 @@ function MobileFixedHeader({
       </div>
 
       {/* Video — moved into the fixed header on mobile */}
-      {hasVideo && (
-        <div
-          style={{
-            width: '100%',
-            borderRadius: 12,
-            overflow: 'hidden',
-            background: '#000',
-            aspectRatio: isShort ? '9/16' : '16/9',
-            maxHeight: maxVideoHeight,
-            boxShadow: '0 4px 16px rgba(44,26,14,0.15)',
-            position: 'relative',
-          }}
-        >
-          <div
-            ref={(el) => {
-              if (el && videoRef.current && el.children.length === 0) {
-                el.appendChild(videoRef.current)
-              }
-            }}
-            style={{ width: '100%', height: '100%' }}
-          />
-
-        </div>
-      )}
     </div>
   )
 
@@ -772,12 +740,17 @@ export default function EpisodePage({
 }) {
   const router = useRouter()
   const isAdmin = useIsAdmin()
+  const openPip = usePlayerStore((state) => state.openPip)
+  const closePip = usePlayerStore((state) => state.closePip)
+  const requestPipSeek = usePlayerStore((state) => state.requestSeek)
+  const pipCurrentTime = usePlayerStore((state) => state.currentTime)
+  const pipVideoId = usePlayerStore((state) => state.videoId)
   const [tab, setTab] = useState(0)
   const [showDiacritics, setShowDiacritics] = useState(true)
   const [textScale, setTextScale] = useState(1.3)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set())
-  const [activeIndex, setActiveIndex] = useState<number | null>(null)
+  const [localActiveIndex, setLocalActiveIndex] = useState<number | null>(null)
 
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [mobileWordDrawerOpen, setMobileWordDrawerOpen] = useState(false)
@@ -800,6 +773,7 @@ export default function EpisodePage({
 
   const theme = useTheme()
   const isMobileViewport = useMediaQuery(theme.breakpoints.down('md'))
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
   const [navbarHeight, setNavbarHeight] = useState(NAVBAR_HEIGHT);
 
   useEffect(() => {
@@ -815,9 +789,8 @@ export default function EpisodePage({
   }, []);
 
   // ── Mobile header height ──
-  const estimatedMobileHeader = 280
+  const estimatedMobileHeader = 56
   const [mobileHeaderHeight, setMobileHeaderHeight] = useState(estimatedMobileHeader)
-  const [isMobile, setIsMobile] = useState(false)
 
   const activeBlockRef = useRef<HTMLDivElement | null>(null)
   const skipInitialScroll = useRef(true)
@@ -879,13 +852,38 @@ export default function EpisodePage({
   }, [episode.scriptBlocks])
 
   const handleTimeUpdate = useCallback((time: number) => {
-    setActiveIndex(findActiveIndex(time))
+    setLocalActiveIndex(findActiveIndex(time))
   }, [findActiveIndex])
 
+  const activeIndex = isMobile && pipVideoId === episode.youtubeId
+    ? findActiveIndex(pipCurrentTime)
+    : localActiveIndex
+
   const { wrapRef, seekTo } = useYouTubePlayer(
-    episode.youtubeId,
+    isMobile ? undefined : episode.youtubeId,
     handleTimeUpdate
   )
+
+  useEffect(() => {
+    if (!episode.youtubeId) return
+
+    if (isMobile) {
+      const currentPlayer = usePlayerStore.getState()
+      if (!currentPlayer.pipOpen || currentPlayer.videoId !== episode.youtubeId) {
+        openPip({
+          videoId: episode.youtubeId,
+          episodePath: `/cartoons/${episode.show}/${episode.slug}`,
+          title: episode.title,
+          showTitle,
+          currentTime: 0,
+          orientation: 'portrait',
+        })
+      }
+    } else {
+      const currentPlayer = usePlayerStore.getState()
+      if (currentPlayer.pipOpen && currentPlayer.videoId === episode.youtubeId) closePip()
+    }
+  }, [closePip, episode.show, episode.slug, episode.title, episode.youtubeId, isMobile, openPip, showTitle])
 
   // Keep the YouTube wrapper non-interactive for a short delay after the mobile
   // word drawer closes. The tap that dismisses the drawer is sometimes
@@ -926,13 +924,6 @@ export default function EpisodePage({
     }
   }, [activeIndex, isMobile])
 
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 1200)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
-
   const blocksWithNotes = episode.scriptBlocks
     .map((block, i) => ({ hasNotes: block.notes.length > 0, index: i }))
     .filter((b) => b.hasNotes)
@@ -961,9 +952,6 @@ export default function EpisodePage({
           top={navbarHeight}
           title={episode.title}
           onBack={() => router.push(`/cartoons/${episode.show}`)}
-          videoRef={wrapRef}
-          isShort={true}
-          hasVideo={!!episode.youtubeId}
           onHeightChange={setMobileHeaderHeight}
           onSettingsClick={openSettings}
         />
@@ -1208,7 +1196,8 @@ export default function EpisodePage({
                               if (Date.now() - vocabTrackerRef.lastCloseAt < 120) return
                               if ((e.target as HTMLElement).closest('.vocab-word')) return
                               if (hasTimestamp) {
-                                seekTo(block.timestamp!)
+                                if (isMobile) requestPipSeek(block.timestamp!)
+                                else seekTo(block.timestamp!)
                               }
                             }}
                             sx={{ cursor: hasTimestamp ? 'pointer' : 'default', opacity: hasTimestamp ? 1 : 0.75 }}

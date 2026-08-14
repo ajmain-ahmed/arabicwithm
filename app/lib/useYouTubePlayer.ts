@@ -35,9 +35,11 @@ export default function useYouTubePlayer(
   const segmentPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const segmentSafetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onTimeUpdateRef = useRef(onTimeUpdate)
+  const startAtRef = useRef(startAt)
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
+  useEffect(() => { startAtRef.current = startAt }, [startAt])
 
   useEffect(() => {
     const wrap = wrapRef.current
@@ -64,7 +66,7 @@ export default function useYouTubePlayer(
             modestbranding: 1,
             enablejsapi: 1,
             playsinline: 1,
-            start: startAt && startAt > 0 ? Math.floor(startAt) : undefined,
+            start: startAtRef.current && startAtRef.current > 0 ? Math.floor(startAtRef.current) : undefined,
             origin: typeof window !== 'undefined' ? window.location.origin : undefined,
           },
           events: {
@@ -129,7 +131,7 @@ export default function useYouTubePlayer(
       if (wrap) clearWrap(wrap)
       setIsReady(false)
     }
-  }, [videoId, startAt])
+  }, [videoId])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {

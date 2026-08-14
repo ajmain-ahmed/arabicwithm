@@ -1,7 +1,7 @@
 'use client'
 
 import { Favorite, FavoriteBorder } from '@mui/icons-material'
-import { CircularProgress, IconButton, Tooltip } from '@mui/material'
+import { CircularProgress, IconButton, Snackbar, Tooltip } from '@mui/material'
 import { useMemo, useState } from 'react'
 import { removePracticeWord, savePracticeWord } from '@/app/actions/practice'
 import { useAuth } from '@/app/AuthContext'
@@ -38,6 +38,7 @@ export default function PracticeWordButton({ entry }: { entry: VocabEntry }) {
   const stored = user ? parsePracticeWords(user.user_metadata).some((word) => word.id === practiceWord.id) : false
   const [override, setOverride] = useState<{ id: string; value: boolean } | null>(null)
   const [saving, setSaving] = useState(false)
+  const [feedback, setFeedback] = useState<string | null>(null)
   const saved = override?.id === practiceWord.id ? override.value : stored
 
   const handleClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -61,31 +62,56 @@ export default function PracticeWordButton({ entry }: { entry: VocabEntry }) {
       if (nextSaved) await savePracticeWord(practiceWord)
       else await removePracticeWord(practiceWord.id)
       await supabase.auth.refreshSession()
+      setFeedback(nextSaved ? 'Word liked' : 'Word unliked')
     } catch {
       setOverride({ id: practiceWord.id, value: saved })
+      setFeedback('Could not update this word')
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <Tooltip title={saved ? 'Remove from Practice' : 'Save to Practice'} placement="top">
-      <IconButton
-        size="small"
-        onClick={handleClick}
-        disabled={saving}
-        aria-label={saved ? 'Remove word from Practice' : 'Save word to Practice'}
+    <>
+      <Tooltip title={saved ? 'Remove from Practice' : 'Save to Practice'} placement="top">
+        <IconButton
+          size="small"
+          onClick={handleClick}
+          disabled={saving}
+          aria-label={saved ? 'Remove word from Practice' : 'Save word to Practice'}
+          sx={{
+            position: 'absolute',
+            top: -8,
+            right: -8,
+            color: saved ? '#b44a47' : '#9e8a7a',
+            bgcolor: 'rgba(255,255,255,0.86)',
+            '&:hover': { bgcolor: '#fff', color: '#b44a47' },
+          }}
+        >
+          {saving ? <CircularProgress size={18} color="inherit" /> : saved ? <Favorite fontSize="small" /> : <FavoriteBorder fontSize="small" />}
+        </IconButton>
+      </Tooltip>
+      <Snackbar
+        open={feedback !== null}
+        message={feedback}
+        autoHideDuration={1600}
+        onClose={() => setFeedback(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         sx={{
-          position: 'absolute',
-          top: -8,
-          right: -8,
-          color: saved ? '#b44a47' : '#9e8a7a',
-          bgcolor: 'rgba(255,255,255,0.86)',
-          '&:hover': { bgcolor: '#fff', color: '#b44a47' },
+          bottom: { xs: '82px!important', md: '24px!important' },
+          '& .MuiSnackbarContent-root': {
+            minWidth: 0,
+            px: 2,
+            py: 0.5,
+            borderRadius: '9999px',
+            bgcolor: '#0e2e1f',
+            color: '#fff',
+            fontFamily: 'Jost, sans-serif',
+            fontSize: 13,
+            justifyContent: 'center',
+          },
         }}
-      >
-        {saving ? <CircularProgress size={18} color="inherit" /> : saved ? <Favorite fontSize="small" /> : <FavoriteBorder fontSize="small" />}
-      </IconButton>
-    </Tooltip>
+      />
+    </>
   )
 }

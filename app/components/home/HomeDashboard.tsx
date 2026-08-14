@@ -197,7 +197,7 @@ function LearningStats({ totalSeconds, newWords, favourites, streak }: { totalSe
   )
 }
 
-export default function HomeDashboard({ books, featuredEpisode, chaptersByBook, wordOfTheDay }: { books: PublicBook[]; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; wordOfTheDay: VocabularyEntry | null }) {
+export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook, wordOfTheDay }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; wordOfTheDay: VocabularyEntry | null }) {
   const { user, loading } = useAuth()
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
   const [dashboardLoadedAt] = useState(Date.now)
@@ -226,7 +226,6 @@ export default function HomeDashboard({ books, featuredEpisode, chaptersByBook, 
 
   if (loading) return <Box sx={{ minHeight: '65vh', display: 'grid', placeItems: 'center' }}><CircularProgress sx={{ color: '#b8860b' }} /></Box>
 
-  const featuredBook = books[0]
   const displayName = String(user?.user_metadata?.full_name ?? user?.email?.split('@')[0] ?? 'learner').split(' ')[0]
 
   if (!user) {
@@ -309,9 +308,23 @@ export default function HomeDashboard({ books, featuredEpisode, chaptersByBook, 
               )}
               <Box sx={{ p: { xs: 2.25, sm: 3, md: 4 }, minWidth: 0 }}>
                 <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 11, letterSpacing: '0.13em', textTransform: 'uppercase' }}>Continue reading</Typography>
-                {recentReading.book.titleAr && <Typography lang="ar" dir="rtl" sx={{ mt: 1.5, textAlign: 'left', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 23, sm: 28 }, fontWeight: 700, color: '#2c1a0e' }}>{recentReading.book.titleAr}</Typography>}
-                <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 21, sm: 25 }, fontWeight: 600, color: '#2c1a0e', lineHeight: 1.2 }}>{recentReading.book.title}</Typography>
-                <Typography sx={{ mt: 0.5, color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: { xs: 13, sm: 16 } }}>{recentReading.chapter.title}</Typography>
+                <Typography sx={{ mt: 1.25, fontFamily: 'var(--font-heading)', fontSize: { xs: 21, sm: 25 }, fontWeight: 600, color: '#2c1a0e', lineHeight: 1.2 }}>{recentReading.book.title}</Typography>
+                <Typography
+                  sx={{
+                    mt: 1,
+                    color: '#65584f',
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: { xs: 13, sm: 15 },
+                    lineHeight: 1.55,
+                    display: '-webkit-box',
+                    WebkitBoxOrient: 'vertical',
+                    WebkitLineClamp: 3,
+                    overflow: 'hidden',
+                  }}
+                >
+                  “{recentReading.chapter.teaser ?? recentReading.chapter.title}”
+                </Typography>
+                <Typography sx={{ mt: 0.75, color: '#8b7d72', fontFamily: 'Jost, sans-serif', fontSize: { xs: 11, sm: 12 }, fontWeight: 600 }}>{recentReading.chapter.title}</Typography>
                 <LinearProgress variant="determinate" value={Math.round(recentReading.chapter.chapterNumber / Math.max(recentReading.book.chapterCount, 1) * 100)} sx={{ mt: 2.5, height: 7, borderRadius: 99, bgcolor: '#eee7dc', '& .MuiLinearProgress-bar': { bgcolor: '#b8860b', borderRadius: 99 } }} />
                 <Button component={Link} href={`/books/${recentReading.book.slug}/${recentReading.chapter.slug}`} variant="contained" endIcon={<ArrowForward />} sx={{ mt: 2.5, bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', textTransform: 'none', '& .MuiButton-endIcon': { color: '#fff' }, '&:hover': { bgcolor: '#173f2d', color: '#fff' } }}>Continue Reading</Button>
               </Box>

@@ -2,6 +2,7 @@ import { fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/b
 import { fetchEpisodesForShowPublic, fetchShowsForPublic } from '@/app/actions/cartoons'
 import { fetchWordOfTheDay } from '@/app/actions/vocabulary'
 import HomeDashboard from '@/app/components/home/HomeDashboard'
+import { dailyRotationIndex } from '@/app/lib/dailyRotation'
 
 export const revalidate = 300
 
@@ -17,14 +18,19 @@ export default async function HomePage() {
       .filter((show) => show.episodeCount > 0)
       .map(async (show) => ({ show, episodes: await fetchEpisodesForShowPublic(show.slug) }))
   )
-  const firstEpisodeEntry = episodeEntries.find(({ episodes }) => episodes.length > 0)
-  const featuredEpisode = firstEpisodeEntry
-    ? { show: firstEpisodeEntry.show, episode: firstEpisodeEntry.episodes[0] }
-    : null
+  const rotationDate = new Date()
+  const availableEpisodes = episodeEntries.flatMap(({ show, episodes }) =>
+    episodes.map((episode) => ({ show, episode }))
+  )
+  const featuredEpisodeIndex = dailyRotationIndex(availableEpisodes.length, rotationDate)
+  const featuredBookIndex = dailyRotationIndex(books.length, rotationDate, 'Europe/London', 11)
+  const featuredEpisode = featuredEpisodeIndex >= 0 ? availableEpisodes[featuredEpisodeIndex] : null
+  const featuredBook = featuredBookIndex >= 0 ? books[featuredBookIndex] : null
 
   return (
     <HomeDashboard
       books={books}
+      featuredBook={featuredBook}
       featuredEpisode={featuredEpisode}
       chaptersByBook={Object.fromEntries(chapterEntries)}
       wordOfTheDay={wordOfTheDay}

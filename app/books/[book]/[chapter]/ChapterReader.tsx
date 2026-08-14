@@ -1,17 +1,20 @@
 'use client'
 
 import { useSyncExternalStore } from 'react'
-import { Box, Button, ButtonGroup, Divider, IconButton, Paper, Typography } from '@mui/material'
+import { Box, Button, ButtonGroup, Divider, IconButton, MenuItem, Paper, Select, Typography } from '@mui/material'
 import { MenuBook, ViewAgenda } from '@mui/icons-material'
 import { HtmlTooltip, WordTooltip } from '@/app/components/vocab-tooltip'
 import type { PublicBookBlock, PublicBookToken } from '@/app/actions/books'
 import { groupChapterBlocks } from '@/app/lib/bookParagraphs'
 import {
   BOOK_TEXT_SCALE_STEP,
+  DEFAULT_BOOK_READER_FONT,
   DEFAULT_BOOK_TEXT_SCALE,
   MAX_BOOK_TEXT_SCALE,
   MIN_BOOK_TEXT_SCALE,
+  normalizeBookReaderFont,
   normalizeBookTextScale,
+  type BookReaderFont,
 } from '@/app/lib/bookReaderSettings'
 
 type ReaderView = 'lines' | 'book'
@@ -19,6 +22,14 @@ const READER_VIEW_STORAGE_KEY = 'awm-book-reader-view'
 const READER_VIEW_CHANGE_EVENT = 'awm-book-reader-view-change'
 const TEXT_SCALE_STORAGE_KEY = 'awm-book-reader-text-scale'
 const TEXT_SCALE_CHANGE_EVENT = 'awm-book-reader-text-scale-change'
+const READER_FONT_STORAGE_KEY = 'awm-book-reader-font'
+const READER_FONT_CHANGE_EVENT = 'awm-book-reader-font-change'
+
+const READER_FONT_FAMILIES: Record<BookReaderFont, string> = {
+  naskh: 'var(--font-book-naskh), serif',
+  sans: 'var(--font-book-sans), sans-serif',
+  amiri: 'var(--font-book-amiri), serif',
+}
 
 function isReaderView(value: string | null): value is ReaderView {
   return value === 'lines' || value === 'book'
@@ -62,6 +73,26 @@ function subscribeToTextScale(onStoreChange: () => void) {
   return () => {
     window.removeEventListener('storage', handleStorage)
     window.removeEventListener(TEXT_SCALE_CHANGE_EVENT, onStoreChange)
+  }
+}
+
+function getReaderFontSnapshot(): BookReaderFont {
+  try {
+    return normalizeBookReaderFont(window.localStorage.getItem(READER_FONT_STORAGE_KEY))
+  } catch {
+    return DEFAULT_BOOK_READER_FONT
+  }
+}
+
+function subscribeToReaderFont(onStoreChange: () => void) {
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === READER_FONT_STORAGE_KEY) onStoreChange()
+  }
+  window.addEventListener('storage', handleStorage)
+  window.addEventListener(READER_FONT_CHANGE_EVENT, onStoreChange)
+  return () => {
+    window.removeEventListener('storage', handleStorage)
+    window.removeEventListener(READER_FONT_CHANGE_EVENT, onStoreChange)
   }
 }
 
@@ -132,6 +163,7 @@ export default function ChapterReader({
 }) {
   const view = useSyncExternalStore(subscribeToReaderView, getReaderViewSnapshot, () => 'lines')
   const textScale = useSyncExternalStore(subscribeToTextScale, getTextScaleSnapshot, () => DEFAULT_BOOK_TEXT_SCALE)
+  const readerFont = useSyncExternalStore(subscribeToReaderFont, getReaderFontSnapshot, () => DEFAULT_BOOK_READER_FONT)
   const paragraphs = groupChapterBlocks(chapterSlug, content)
 
   const selectView = (nextView: ReaderView) => {
@@ -153,6 +185,16 @@ export default function ChapterReader({
     }
   }
 
+  const selectReaderFont = (nextFont: unknown) => {
+    const normalizedFont = normalizeBookReaderFont(nextFont)
+    try {
+      window.localStorage.setItem(READER_FONT_STORAGE_KEY, normalizedFont)
+      window.dispatchEvent(new Event(READER_FONT_CHANGE_EVENT))
+    } catch {
+      // Keep the current font when browser storage is unavailable.
+    }
+  }
+
   return (
     <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: '#fff', overflow: 'hidden' }}>
       <Box sx={{ px: { xs: 2.5, md: 5 }, py: { xs: 3, md: 4 }, bgcolor: '#0e2e1f' }}>
@@ -166,7 +208,7 @@ export default function ChapterReader({
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', gap: 1, alignSelf: { xs: 'center', sm: 'flex-start' } }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 1, alignSelf: { xs: 'center', sm: 'flex-start' } }}>
             <ButtonGroup
               aria-label="Reading view"
               sx={{
@@ -193,6 +235,30 @@ export default function ChapterReader({
                 Book view
               </Button>
             </ButtonGroup>
+
+            <Select
+              size="small"
+              value={readerFont}
+              onChange={(event) => selectReaderFont(event.target.value)}
+              inputProps={{ 'aria-label': 'Book font' }}
+              sx={{
+                height: 38,
+                minWidth: 118,
+                color: '#fff',
+                bgcolor: 'rgba(255,255,255,0.08)',
+                borderRadius: '8px',
+                fontFamily: 'Jost, sans-serif',
+                fontSize: 13,
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.25)' },
+                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.45)' },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#d4a843' },
+                '& .MuiSelect-icon': { color: '#fff' },
+              }}
+            >
+              <MenuItem value="naskh">Naskh</MenuItem>
+              <MenuItem value="sans">Modern</MenuItem>
+              <MenuItem value="amiri">Classic</MenuItem>
+            </Select>
 
             <Box
               role="group"
@@ -231,7 +297,7 @@ export default function ChapterReader({
             <Box key={paragraphIndex} sx={{ '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
               {paragraph.map((block, blockIndex) => (
                 <Box key={blockIndex} sx={{ py: 2.5 }}>
-                  <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 23 * textScale, md: 29 * textScale }, fontWeight: 700, lineHeight: 1.9, color: '#2c1a0e', textAlign: 'right' }}>
+                  <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 29 * textScale }, fontWeight: 500, lineHeight: 1.9, color: '#2c1a0e', textAlign: 'right' }}>
                     <ArabicTokens tokens={block.tokens} punctuation={block.punctuation} />
                   </Typography>
                   {block.translation && (
@@ -247,7 +313,7 @@ export default function ChapterReader({
         </Box>
       ) : (
         <Box sx={{ px: { xs: 2.5, md: 7 }, py: { xs: 4, md: 7 }, background: '#fffdf8' }}>
-          <Box lang="ar" dir="rtl" sx={{ maxWidth: 720, mx: 'auto', fontFamily: '"EB Garamond", Georgia, serif', fontSize: { xs: 23 * textScale, md: 28 * textScale }, fontWeight: 600, lineHeight: 2.05, color: '#2c1a0e', textAlign: 'right' }}>
+          <Box lang="ar" dir="rtl" sx={{ maxWidth: 720, mx: 'auto', fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 28 * textScale }, fontWeight: 500, lineHeight: 2.05, color: '#2c1a0e', textAlign: 'justify', textAlignLast: 'right', textJustify: 'inter-word' }}>
             {paragraphs.map((paragraph, paragraphIndex) => (
               <Box component="p" key={paragraphIndex} sx={{ m: 0, '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
                 {paragraph.map((block, blockIndex) => (

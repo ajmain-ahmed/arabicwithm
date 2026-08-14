@@ -2,6 +2,7 @@
 
 import { unstable_cache } from "next/cache"
 import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
+import { extractChapterTeaser } from "@/app/lib/bookChapterTeaser"
 
 export interface PublicBook {
   id: string
@@ -20,6 +21,7 @@ export interface PublicChapter {
   slug: string
   title: string
   chapterNumber: number
+  teaser?: string
 }
 
 export interface PublicBookToken {
@@ -114,7 +116,7 @@ export const fetchChaptersForBookPublic = unstable_cache(
 
     const { data, error } = await serviceClient
       .from("chapters")
-      .select("id, slug, title, chapter_number")
+      .select("id, slug, title, chapter_number, content")
       .eq("book_id", bookId)
       .order("chapter_number")
 
@@ -125,9 +127,10 @@ export const fetchChaptersForBookPublic = unstable_cache(
       slug: String(chapter.slug),
       title: String(chapter.title),
       chapterNumber: Number(chapter.chapter_number),
+      teaser: extractChapterTeaser(chapter.content),
     }))
   },
-  ["books", "public", "chapters"],
+  ["books", "public", "chapters", "chapter-teasers-v1"],
   { revalidate: 300, tags: ["books-public"] }
 )
 
