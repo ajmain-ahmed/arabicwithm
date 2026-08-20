@@ -1,6 +1,6 @@
 "use client"
 
-import React, { type ReactNode, useEffect, useMemo } from "react"
+import React, { type ReactNode, useMemo } from "react"
 import { ThemeProvider, createTheme } from "@mui/material/styles"
 import { useColorMode } from "@/app/components/ThemeProvider"
 import { createAwmTheme } from "@/app/theme"
@@ -32,11 +32,6 @@ export default function AdminThemeProvider({ children }: { children: ReactNode }
       },
     },
   }), [mode])
-
-  useEffect(() => {
-    document.body.classList.add("awm-admin-active")
-    return () => document.body.classList.remove("awm-admin-active")
-  }, [])
 
   return <ThemeProvider theme={adminTheme}>{children}</ThemeProvider>
 }

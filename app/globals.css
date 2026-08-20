@@ -122,39 +122,66 @@ html[data-theme='dark'] a {
 
 /* Admin pages contain older one-off colours. Keep every CMS surface legible while
    those screens are progressively moved onto the shared design tokens. */
-html[data-theme='dark'] body.awm-admin-active .awm-admin-shell .MuiTypography-root,
-html[data-theme='dark'] body.awm-admin-active .MuiDialog-root .MuiTypography-root,
-html[data-theme='dark'] body.awm-admin-active .MuiTableCell-root,
-html[data-theme='dark'] body.awm-admin-active .MuiTableSortLabel-root,
-html[data-theme='dark'] body.awm-admin-active .MuiFormControlLabel-label,
-html[data-theme='dark'] body.awm-admin-active label {
+html[data-theme='dark'] .awm-admin-shell,
+html[data-theme='dark'] .awm-admin-shell .MuiTypography-root,
+html[data-theme='dark'] .MuiDialog-root .MuiTypography-root,
+html[data-theme='dark'] .awm-admin-shell .MuiTableCell-root,
+html[data-theme='dark'] .awm-admin-shell .MuiTableSortLabel-root,
+html[data-theme='dark'] .awm-admin-shell .MuiFormControlLabel-label,
+html[data-theme='dark'] .awm-admin-shell label,
+html[data-theme='dark'] .MuiDialog-root label,
+html[data-theme='dark'] .awm-admin-shell strong,
+html[data-theme='dark'] .MuiDialog-root strong,
+html[data-theme='dark'] .awm-admin-shell a {
   color: var(--awm-bark) !important;
 }
 
-html[data-theme='dark'] body.awm-admin-active .MuiTableHead-root .MuiTableCell-root,
-html[data-theme='dark'] body.awm-admin-active .MuiTableRow-root,
-html[data-theme='dark'] body.awm-admin-active [contenteditable='true'] {
+html[data-theme='dark'] .awm-admin-shell .MuiTableContainer-root,
+html[data-theme='dark'] .awm-admin-shell .MuiTableHead-root,
+html[data-theme='dark'] .awm-admin-shell .MuiTableHead-root .MuiTableCell-root,
+html[data-theme='dark'] .awm-admin-shell .MuiTableBody-root .MuiTableRow-root,
+html[data-theme='dark'] .awm-admin-shell [contenteditable='true'] {
   background-color: var(--awm-white) !important;
   border-color: color-mix(in srgb, var(--awm-gold) 22%, transparent) !important;
 }
 
-html[data-theme='dark'] body.awm-admin-active input,
-html[data-theme='dark'] body.awm-admin-active textarea,
-html[data-theme='dark'] body.awm-admin-active select {
+html[data-theme='dark'] .awm-admin-shell .MuiInputBase-root,
+html[data-theme='dark'] .awm-admin-shell .MuiInputBase-input,
+html[data-theme='dark'] .MuiDialog-root .MuiInputBase-root,
+html[data-theme='dark'] .MuiDialog-root .MuiInputBase-input,
+html[data-theme='dark'] .awm-admin-shell input,
+html[data-theme='dark'] .awm-admin-shell textarea,
+html[data-theme='dark'] .awm-admin-shell select {
   color: var(--awm-bark) !important;
   background-color: var(--awm-cream) !important;
   border-color: color-mix(in srgb, var(--awm-gold) 28%, transparent) !important;
 }
 
-html[data-theme='dark'] body.awm-admin-active input::placeholder,
-html[data-theme='dark'] body.awm-admin-active textarea::placeholder {
+html[data-theme='dark'] .awm-admin-shell input::placeholder,
+html[data-theme='dark'] .awm-admin-shell textarea::placeholder {
   color: var(--awm-muted-light) !important;
   opacity: 1;
 }
 
-html[data-theme='dark'] body.awm-admin-active .Mui-disabled,
-html[data-theme='dark'] body.awm-admin-active input:disabled,
-html[data-theme='dark'] body.awm-admin-active textarea:disabled {
+html[data-theme='dark'] .awm-admin-shell .MuiButton-contained {
+  color: #101713 !important;
+  background-color: var(--awm-gold) !important;
+}
+
+html[data-theme='dark'] .awm-admin-shell .MuiButton-outlined,
+html[data-theme='dark'] .awm-admin-shell .MuiIconButton-root {
+  color: var(--awm-gold-light) !important;
+  border-color: color-mix(in srgb, var(--awm-gold) 45%, transparent) !important;
+}
+
+html[data-theme='dark'] .awm-admin-shell .MuiChip-root {
+  color: var(--awm-gold-light) !important;
+  border-color: color-mix(in srgb, var(--awm-gold) 38%, transparent) !important;
+}
+
+html[data-theme='dark'] .awm-admin-shell .Mui-disabled,
+html[data-theme='dark'] .awm-admin-shell input:disabled,
+html[data-theme='dark'] .awm-admin-shell textarea:disabled {
   -webkit-text-fill-color: var(--awm-muted-light) !important;
   color: var(--awm-muted-light) !important;
   opacity: 0.75;
