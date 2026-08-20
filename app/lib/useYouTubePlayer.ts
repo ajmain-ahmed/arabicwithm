@@ -19,7 +19,7 @@ declare global {
   interface Window {
     YT: {
       Player: new (element: HTMLElement, options: Record<string, unknown>) => YTPlayer
-      PlayerState: { PLAYING: number }
+      PlayerState: { ENDED: number; PLAYING: number }
     }
     onYouTubeIframeAPIReady: (() => void) | undefined
     __ytApiReady?: boolean
@@ -29,6 +29,8 @@ declare global {
 interface YouTubePlayerOptions {
   autoplay?: boolean
   muted?: boolean
+  onEnded?: () => void
+  reloadKey?: string | number
 }
 
 let youtubeApiPromise: Promise<void> | null = null
@@ -72,6 +74,7 @@ export default function useYouTubePlayer(
   const segmentPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const segmentSafetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onTimeUpdateRef = useRef(onTimeUpdate)
+  const onEndedRef = useRef(options.onEnded)
   const startAtRef = useRef(startAt)
   const fallbackHostRef = useRef(false)
   const fallbackVideoRef = useRef<string | undefined>(undefined)
@@ -84,6 +87,7 @@ export default function useYouTubePlayer(
   const muted = options.muted === true
 
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
+  useEffect(() => { onEndedRef.current = options.onEnded }, [options.onEnded])
   useEffect(() => { startAtRef.current = startAt }, [startAt])
 
   useEffect(() => {
@@ -148,6 +152,9 @@ export default function useYouTubePlayer(
                 setIsPlaying(false)
                 if (intervalRef.current) clearInterval(intervalRef.current)
                 intervalRef.current = null
+                if (event.data === window.YT.PlayerState.ENDED) {
+                  onEndedRef.current?.()
+                }
               }
             },
             onError: (e: { data: number }) => {
@@ -200,7 +207,7 @@ export default function useYouTubePlayer(
       setIsReady(false)
       setIsPlaying(false)
     }
-  }, [autoplay, muted, retryNonce, videoId])
+  }, [autoplay, muted, options.reloadKey, retryNonce, videoId])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {

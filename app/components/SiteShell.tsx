@@ -13,6 +13,7 @@ import LearningActivityTracker from './LearningActivityTracker'
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isAdminRoute = pathname?.startsWith('/admin') ?? false
+  const isExploreRoute = pathname === '/explore'
 
   if (isAdminRoute) {
     return (
@@ -24,12 +25,12 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <Navbar />
+      {!isExploreRoute && <Navbar />}
       <LearningActivityTracker />
       <Box
         component="main"
         sx={{
-          pt: { xs: '56px', md: '64px' },
+          pt: isExploreRoute ? 0 : { xs: '56px', md: '64px' },
           pb: { xs: '56px', md: 0 },
         }}
       >
@@ -37,9 +38,9 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           <GlobalDataInit>{children}</GlobalDataInit>
         </ErrorBoundary>
       </Box>
-      <Footer />
+      {!isExploreRoute && <Footer />}
       <MobileBottomNav />
-      <LazyFloatingVideoPlayer />
+      {!isExploreRoute && <LazyFloatingVideoPlayer />}
     </>
   )
 }

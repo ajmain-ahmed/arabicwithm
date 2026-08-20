@@ -28,4 +28,34 @@ describe('groupChapterBlocks', () => {
   it('handles an empty chapter', () => {
     expect(groupChapterBlocks('lay-1', [])).toEqual([])
   })
+
+  it('uses paragraph numbers saved by the chapter editor', () => {
+    const blocks = [
+      { text: 'one', paragraph: 1 },
+      { text: 'two', paragraph: 1 },
+      { text: 'three', paragraph: 2 },
+      { text: 'four', paragraph: 3 },
+      { text: 'five', paragraph: 3 },
+    ]
+
+    expect(groupChapterBlocks('any-chapter', blocks).map((paragraph) => paragraph.map((block) => block.text))).toEqual([
+      ['one', 'two'],
+      ['three'],
+      ['four', 'five'],
+    ])
+  })
+
+  it('keeps unnumbered blocks with the preceding explicit paragraph', () => {
+    const blocks = [
+      { text: 'one', paragraph: 1 },
+      { text: 'two' },
+      { text: 'three', paragraph: 2 },
+    ]
+
+    expect(groupChapterBlocks('any-chapter', blocks).map((paragraph) => paragraph.map((block) => block.text))).toEqual([
+      ['one', 'two'],
+      ['three'],
+    ])
+  })
+
 })

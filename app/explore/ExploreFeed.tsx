@@ -19,7 +19,15 @@ function shuffled<T>(items: readonly T[]): T[] {
   return result
 }
 
-function ExploreVideo({ episode, active }: { episode: ExploreEpisode; active: boolean }) {
+function ExploreVideo({
+  episode,
+  active,
+  onEnded,
+}: {
+  episode: ExploreEpisode
+  active: boolean
+  onEnded: () => void
+}) {
   const [currentTime, setCurrentTime] = useState(0)
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
@@ -41,7 +49,7 @@ function ExploreVideo({ episode, active }: { episode: ExploreEpisode; active: bo
     active && isYouTube ? source.id : undefined,
     setCurrentTime,
     undefined,
-    { autoplay: active, muted: false }
+    { autoplay: active, muted: false, onEnded }
   )
 
   useEffect(() => {
@@ -185,7 +193,7 @@ function ExploreVideo({ episode, active }: { episode: ExploreEpisode; active: bo
           display: { xs: 'none', md: 'flex' },
           minWidth: 0,
           height: '100%',
-          maxHeight: 'calc(100dvh - 112px)',
+          maxHeight: 'calc(100dvh - 48px)',
           flexDirection: 'column',
           overflow: 'hidden',
           border: '1px solid rgba(44,26,14,0.08)',
@@ -383,6 +391,17 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
     else itemRefs.current.delete(index)
   }, [])
 
+  const playNextVideo = useCallback((fromIndex: number) => {
+    if (!orderedItems) return
+
+    let nextIndex = orderedItems.findIndex((item, index) => index > fromIndex && item.kind === 'video')
+    if (nextIndex < 0) nextIndex = orderedItems.findIndex((item) => item.kind === 'video')
+    if (nextIndex < 0 || nextIndex === fromIndex) return
+
+    setActiveIndex(nextIndex)
+    itemRefs.current.get(nextIndex)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [orderedItems])
+
   useEffect(() => {
     const root = feedRef.current
     if (!root) return
@@ -397,7 +416,7 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
   }, [orderedItems])
 
   if (orderedItems == null) {
-    return <Box component="main" sx={{ height: { xs: 'calc(100dvh - 112px)', md: 'calc(100dvh - 64px)' }, bgcolor: 'var(--awm-cream-light)' }} />
+    return <Box component="main" sx={{ height: { xs: 'calc(100dvh - 56px)', md: '100dvh' }, bgcolor: 'var(--awm-cream-light)' }} />
   }
 
   if (orderedItems.length === 0) {
@@ -413,7 +432,7 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
       ref={feedRef}
       component="main"
       sx={{
-        height: { xs: 'calc(100dvh - 112px)', md: 'calc(100dvh - 64px)' },
+        height: { xs: 'calc(100dvh - 56px)', md: '100dvh' },
         overflowY: 'auto',
         scrollSnapType: 'y mandatory',
         overscrollBehaviorY: 'contain',
@@ -443,7 +462,11 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
         >
           {item.kind === 'video' ? (
             <>
-              <ExploreVideo episode={item.episode} active={index === activeIndex} />
+              <ExploreVideo
+                episode={item.episode}
+                active={index === activeIndex}
+                onEnded={() => playNextVideo(index)}
+              />
               <Button
                 component={Link}
                 href={`/cartoons/${item.episode.showSlug}/${item.episode.slug}`}

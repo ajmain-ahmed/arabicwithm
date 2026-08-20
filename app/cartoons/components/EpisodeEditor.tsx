@@ -28,6 +28,7 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
   const [facebookId, setFacebookId] = useState(episode?.facebookId ?? "")
   const [tags, setTags] = useState(episode?.tags.join(", ") ?? "")
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const buildPayload = () => ({
     show_id: showId,
@@ -45,13 +46,18 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
   const handleSave = async () => {
     if (!slug.trim() || !title.trim()) return
     setSaving(true)
+    setError(null)
     try {
-      if (isNew) {
-        await createEpisode(buildPayload())
-      } else {
-        await updateEpisode(episode.id, buildPayload())
+      const result = isNew
+        ? await createEpisode(buildPayload())
+        : await updateEpisode(episode.id, buildPayload())
+      if (!result.ok) {
+        setError(result.error)
+        return
       }
       onSaved()
+    } catch (e: unknown) {
+      setError(errorMessage(e) ?? "Failed to save episode")
     } finally {
       setSaving(false)
     }
@@ -88,6 +94,12 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
       <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: "1.1rem", fontWeight: 600, color: "#2c1a0e" }}>
         {isNew ? "New Episode" : "Edit Episode"}
       </Typography>
+
+      {error && (
+        <Typography role="alert" sx={{ p: 1.25, borderRadius: "8px", color: "var(--awm-error)", bgcolor: "color-mix(in srgb, var(--awm-error) 8%, transparent)", fontFamily: "Jost, sans-serif", fontSize: "0.9rem" }}>
+          {error}
+        </Typography>
+      )}
 
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
         <NativeField label="Slug" value={slug} onChange={setSlug} disabled={saving} />

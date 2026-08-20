@@ -21,7 +21,7 @@ export default async function AdminLayout({
 
   return (
     <AdminThemeProvider>
-      <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", bgcolor: "#f8f5f0" }}>
+      <Box className="awm-admin-shell" sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", bgcolor: "var(--awm-cream-light)", color: "var(--awm-bark)" }}>
         <CssBaseline />
         <AdminNav />
         <Box

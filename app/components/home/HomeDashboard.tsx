@@ -6,6 +6,7 @@ import {
   AccessTimeRounded,
   ArrowForward,
   AutoStories,
+  Bookmark,
   ExploreOutlined,
   Headphones,
   LocalFireDepartmentRounded,
@@ -23,6 +24,14 @@ import {
   parseLearningActivity,
   type LearningActivity,
 } from '@/app/lib/activity'
+import {
+  BOOK_SENTENCE_BOOKMARK_EVENT,
+  BOOK_SENTENCE_BOOKMARK_STORAGE_KEY,
+  bookSentenceBookmarkHref,
+  latestBookSentenceBookmark,
+  parseBookSentenceBookmark,
+  type BookSentenceBookmark,
+} from '@/app/lib/bookSentenceBookmark'
 
 interface ProgressEntry { chapterSlug: string; updatedAt?: string }
 interface FeaturedEpisode {
@@ -107,6 +116,33 @@ function ContentCard({ type, title, titleAr, description, level, href, image, ac
   )
 }
 
+function BookmarkContinueCard({ bookmark }: { bookmark: BookSentenceBookmark }) {
+  return (
+    <Paper elevation={0} sx={{ minHeight: 220, p: { xs: 2.5, sm: 3.5 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 30%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)', display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'var(--awm-gold)' }}>
+        <Bookmark sx={{ fontSize: 20 }} />
+        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          Your reading bookmark
+        </Typography>
+      </Box>
+      <Typography lang="ar" dir="rtl" sx={{ mt: 2, fontFamily: 'var(--font-serif)', fontSize: { xs: 24, sm: 28 }, fontWeight: 600, lineHeight: 1.75, color: 'var(--awm-bark)', textAlign: 'right' }}>
+        {bookmark.arabic}
+      </Typography>
+      {bookmark.translation && (
+        <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 14, lineHeight: 1.6 }}>
+          {bookmark.translation}
+        </Typography>
+      )}
+      <Typography sx={{ mt: 1, color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 600 }}>
+        {bookmark.bookTitle} · {bookmark.chapterTitle}
+      </Typography>
+      <Button component={Link} href={bookSentenceBookmarkHref(bookmark)} endIcon={<ArrowForward />} sx={{ mt: 'auto', pt: 2, px: 0, width: 'fit-content', color: 'var(--awm-forest)', fontWeight: 700, textTransform: 'none' }}>
+        Continue from bookmark
+      </Button>
+    </Paper>
+  )
+}
+
 function LearningStats({ totalSeconds, streak }: { totalSeconds: number; streak: number }) {
   const stats = [
     { label: 'Learning time', detail: 'Active study', value: formatLearningTime(totalSeconds), icon: AccessTimeRounded, colour: '#0e2e1f', background: 'rgba(14,46,31,0.09)' },
@@ -143,6 +179,7 @@ function LearningStats({ totalSeconds, streak }: { totalSeconds: number; streak:
 export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]> }) {
   const { user, loading } = useAuth()
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
+  const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
   const [dashboardLoadedAt] = useState(Date.now)
   const progress = useMemo(() => {
     const raw = user?.user_metadata?.book_progress
@@ -165,6 +202,33 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
     window.addEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
     return () => window.removeEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
   }, [])
+
+  useEffect(() => {
+    const readBookmark = (event?: Event) => {
+      let localBookmark: BookSentenceBookmark | null = null
+      try {
+        localBookmark = parseBookSentenceBookmark(window.localStorage.getItem(BOOK_SENTENCE_BOOKMARK_STORAGE_KEY))
+      } catch {
+        // Signed-in account metadata can still provide the bookmark.
+      }
+      const eventBookmark = event instanceof CustomEvent
+        ? parseBookSentenceBookmark(event.detail)
+        : null
+      const accountBookmark = parseBookSentenceBookmark(user?.user_metadata?.book_sentence_bookmark)
+      setBookmark(latestBookSentenceBookmark(latestBookSentenceBookmark(localBookmark, accountBookmark), eventBookmark))
+    }
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === BOOK_SENTENCE_BOOKMARK_STORAGE_KEY) readBookmark()
+    }
+
+    readBookmark()
+    window.addEventListener(BOOK_SENTENCE_BOOKMARK_EVENT, readBookmark)
+    window.addEventListener('storage', handleStorage)
+    return () => {
+      window.removeEventListener(BOOK_SENTENCE_BOOKMARK_EVENT, readBookmark)
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [user])
 
   if (loading) return <Box sx={{ minHeight: '65vh', display: 'grid', placeItems: 'center' }}><CircularProgress sx={{ color: '#b8860b' }} /></Box>
 
@@ -190,6 +254,11 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
 
         <Container maxWidth="lg" sx={{ pt: { xs: 5, md: 8 } }}>
           <LearningAreaCards />
+          {bookmark && (
+            <Box sx={{ mt: { xs: 5, md: 7 }, maxWidth: 720 }}>
+              <BookmarkContinueCard bookmark={bookmark} />
+            </Box>
+          )}
           <Box sx={{ mt: { xs: 7, md: 10 } }}><SectionHeading eyebrow="Start exploring" title="Featured learning" detail="A simple place to begin—no account history required." />
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
               {featuredEpisode && <ContentCard type={`Featured episode · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} actionLabel="Play episode" />}
@@ -232,6 +301,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
       <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 6 } }}>
         <SectionHeading eyebrow="Continue learning" title={recentReading ? 'Your next step is ready' : 'Start your next lesson'} />
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
+          {bookmark && <BookmarkContinueCard bookmark={bookmark} />}
           {recentReading ? (
             <Paper elevation={0} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px minmax(0,1fr)', sm: '180px minmax(0,1fr)' }, minHeight: 240, overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '15px', bgcolor: 'var(--awm-white)' }}>
               {recentReading.book.cover ? (

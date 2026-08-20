@@ -1,11 +1,22 @@
 'use client'
 
-import { useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { Box, Button, ButtonGroup, Divider, IconButton, MenuItem, Paper, Select, Typography } from '@mui/material'
-import { MenuBook, ViewAgenda } from '@mui/icons-material'
+import { Bookmark, BookmarkBorder, Edit, MenuBook, ViewAgenda } from '@mui/icons-material'
 import { HtmlTooltip, WordTooltip } from '@/app/components/vocab-tooltip'
 import type { PublicBookBlock, PublicBookToken } from '@/app/actions/books'
 import { groupChapterBlocks } from '@/app/lib/bookParagraphs'
+import { useAuth } from '@/app/AuthContext'
+import { supabase } from '@/app/lib/supabase/client'
+import {
+  BOOK_SENTENCE_BOOKMARK_EVENT,
+  BOOK_SENTENCE_BOOKMARK_STORAGE_KEY,
+  latestBookSentenceBookmark,
+  parseBookSentenceBookmark,
+  type BookSentenceBookmark,
+} from '@/app/lib/bookSentenceBookmark'
+import { useIsAdmin } from '@/app/lib/useIsAdmin'
+import InlineChapterAdminEditor from './InlineChapterAdminEditor'
 import {
   BOOK_TEXT_SCALE_STEP,
   DEFAULT_BOOK_READER_FONT,
@@ -96,7 +107,17 @@ function subscribeToReaderFont(onStoreChange: () => void) {
   }
 }
 
-function DictionaryWord({ token }: { token: PublicBookToken }) {
+function DictionaryWord({
+  token,
+  bookmarkEnabled,
+  bookmarked,
+  onBookmark,
+}: {
+  token: PublicBookToken
+  bookmarkEnabled: boolean
+  bookmarked: boolean
+  onBookmark: () => void
+}) {
   return (
     <HtmlTooltip
       title={
@@ -112,6 +133,19 @@ function DictionaryWord({ token }: { token: PublicBookToken }) {
               entry_type: token.entryType,
             }}
           />
+          {bookmarkEnabled && (
+            <Button
+              onClick={(event) => {
+                event.stopPropagation()
+                onBookmark()
+              }}
+              startIcon={bookmarked ? <Bookmark /> : <BookmarkBorder />}
+              fullWidth
+              sx={{ mt: 1.5, color: 'var(--awm-bark)', bgcolor: 'var(--awm-cream)', borderRadius: '8px', textTransform: 'none', '&:hover': { bgcolor: 'color-mix(in srgb, var(--awm-gold) 18%, var(--awm-cream))' } }}
+            >
+              {bookmarked ? 'Sentence bookmarked' : 'Bookmark this sentence'}
+            </Button>
+          )}
         </Box>
       }
       arrow
@@ -137,12 +171,24 @@ function DictionaryWord({ token }: { token: PublicBookToken }) {
   )
 }
 
-function ArabicTokens({ tokens, punctuation }: { tokens: PublicBookToken[]; punctuation?: string }) {
+function ArabicTokens({
+  tokens,
+  punctuation,
+  bookmarkEnabled = false,
+  bookmarked = false,
+  onBookmark = () => undefined,
+}: {
+  tokens: PublicBookToken[]
+  punctuation?: string
+  bookmarkEnabled?: boolean
+  bookmarked?: boolean
+  onBookmark?: () => void
+}) {
   return (
     <>
       {tokens.map((token, index) => (
         <span key={`${token.headword ?? token.arabic}-${index}`}>
-          {index > 0 ? ' ' : ''}{token.prefix}<DictionaryWord token={token} />{token.suffix}
+          {index > 0 ? ' ' : ''}{token.prefix}<DictionaryWord token={token} bookmarkEnabled={bookmarkEnabled} bookmarked={bookmarked} onBookmark={onBookmark} />{token.suffix}
         </span>
       ))}
       {punctuation && <span aria-hidden="true">{punctuation}</span>}
@@ -151,20 +197,105 @@ function ArabicTokens({ tokens, punctuation }: { tokens: PublicBookToken[]; punc
 }
 
 export default function ChapterReader({
+  chapterId,
+  bookSlug,
   bookTitle,
   chapterTitle,
   chapterSlug,
   content,
 }: {
+  chapterId: string
+  bookSlug: string
   bookTitle: string
   chapterTitle: string
   chapterSlug: string
   content: PublicBookBlock[]
 }) {
+  const { user } = useAuth()
+  const isAdmin = useIsAdmin()
+  const [editingChapter, setEditingChapter] = useState(false)
+  const [readerContent, setReaderContent] = useState(content)
+  const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
   const view = useSyncExternalStore(subscribeToReaderView, getReaderViewSnapshot, () => 'lines')
   const textScale = useSyncExternalStore(subscribeToTextScale, getTextScaleSnapshot, () => DEFAULT_BOOK_TEXT_SCALE)
   const readerFont = useSyncExternalStore(subscribeToReaderFont, getReaderFontSnapshot, () => DEFAULT_BOOK_READER_FONT)
-  const paragraphs = groupChapterBlocks(chapterSlug, content)
+  const paragraphs = groupChapterBlocks(chapterSlug, readerContent)
+  const blockIndexByBlock = new Map(readerContent.map((block, index) => [block, index]))
+
+  useEffect(() => {
+    setReaderContent(content)
+  }, [content])
+
+  useEffect(() => {
+    let localBookmark: BookSentenceBookmark | null = null
+    try {
+      localBookmark = parseBookSentenceBookmark(window.localStorage.getItem(BOOK_SENTENCE_BOOKMARK_STORAGE_KEY))
+    } catch {
+      // Account metadata can still supply a bookmark when browser storage is unavailable.
+    }
+
+    const accountBookmark = parseBookSentenceBookmark(user?.user_metadata?.book_sentence_bookmark)
+    const newestBookmark = latestBookSentenceBookmark(localBookmark, accountBookmark)
+    setBookmark(newestBookmark)
+
+    if (newestBookmark) {
+      try {
+        window.localStorage.setItem(BOOK_SENTENCE_BOOKMARK_STORAGE_KEY, JSON.stringify(newestBookmark))
+      } catch {
+        // The bookmark remains available in memory for this visit.
+      }
+    }
+  }, [user])
+
+  useEffect(() => {
+    const sentenceHash = window.location.hash.match(/^#sentence-(\d+)$/)
+    if (!sentenceHash) return
+
+    if (view !== 'lines') {
+      try {
+        window.localStorage.setItem(READER_VIEW_STORAGE_KEY, 'lines')
+        window.dispatchEvent(new Event(READER_VIEW_CHANGE_EVENT))
+      } catch {
+        // The reader can still be switched manually when storage is unavailable.
+      }
+      return
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(sentenceHash[0].slice(1))?.scrollIntoView({ block: 'center' })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [view, readerContent])
+
+  const bookmarkSentence = (block: PublicBookBlock, blockIndex: number) => {
+    const arabic = `${block.tokens.map((token) => `${token.prefix ?? ''}${token.arabic}${token.suffix ?? ''}`).join(' ')}${block.punctuation ?? ''}`
+    const nextBookmark: BookSentenceBookmark = {
+      bookSlug,
+      bookTitle,
+      chapterSlug,
+      chapterTitle,
+      blockIndex,
+      arabic,
+      translation: block.translation,
+      savedAt: new Date().toISOString(),
+    }
+
+    setBookmark(nextBookmark)
+    try {
+      window.localStorage.setItem(BOOK_SENTENCE_BOOKMARK_STORAGE_KEY, JSON.stringify(nextBookmark))
+      window.dispatchEvent(new CustomEvent(BOOK_SENTENCE_BOOKMARK_EVENT, { detail: nextBookmark }))
+    } catch {
+      // The bookmark remains available in memory for this visit.
+    }
+
+    if (user) {
+      void supabase.auth.updateUser({ data: { book_sentence_bookmark: nextBookmark } })
+    }
+  }
+
+  const isBookmarkedSentence = (blockIndex: number) => bookmark?.bookSlug === bookSlug
+    && bookmark.chapterSlug === chapterSlug
+    && bookmark.blockIndex === blockIndex
 
   const selectView = (nextView: ReaderView) => {
     try {
@@ -209,6 +340,15 @@ export default function ChapterReader({
           </Box>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 1, alignSelf: { xs: 'center', sm: 'flex-start' } }}>
+            {isAdmin && (
+              <Button
+                onClick={() => setEditingChapter((current) => !current)}
+                startIcon={<Edit sx={{ fontSize: 17 }} />}
+                sx={{ height: 38, color: editingChapter ? '#0e2e1f' : '#fff', bgcolor: editingChapter ? '#d4a843' : 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: '8px', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: editingChapter ? '#d4a843' : 'rgba(255,255,255,0.16)' } }}
+              >
+                {editingChapter ? 'Editing chapter' : 'Edit chapter'}
+              </Button>
+            )}
             <ButtonGroup
               aria-label="Reading view"
               sx={{
@@ -291,15 +431,36 @@ export default function ChapterReader({
         </Box>
       </Box>
 
-      {view === 'lines' ? (
+      {editingChapter ? (
+        <InlineChapterAdminEditor
+          chapterId={chapterId}
+          chapterSlug={chapterSlug}
+          content={readerContent}
+          onClose={() => setEditingChapter(false)}
+          onSaved={setReaderContent}
+        />
+      ) : view === 'lines' ? (
         <Box sx={{ px: { xs: 2.5, md: 6 }, py: { xs: 3, md: 5 } }}>
           {paragraphs.map((paragraph, paragraphIndex) => (
             <Box key={paragraphIndex} sx={{ '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
-              {paragraph.map((block, blockIndex) => (
-                <Box key={blockIndex} sx={{ py: 2.5 }}>
-                  <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 29 * textScale }, fontWeight: 500, lineHeight: 1.9, color: 'var(--awm-bark)', textAlign: 'right' }}>
-                    <ArabicTokens tokens={block.tokens} punctuation={block.punctuation} />
-                  </Typography>
+              {paragraph.map((block, blockIndex) => {
+                const sentenceIndex = blockIndexByBlock.get(block) ?? blockIndex
+                const sentenceBookmarked = isBookmarkedSentence(sentenceIndex)
+                return (
+                <Box key={sentenceIndex} id={`sentence-${sentenceIndex}`} sx={{ position: 'relative', py: 2.5, scrollMarginTop: '96px' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                    <IconButton
+                      onClick={() => bookmarkSentence(block, sentenceIndex)}
+                      aria-label={sentenceBookmarked ? 'Sentence bookmarked' : 'Bookmark this sentence'}
+                      title={sentenceBookmarked ? 'Sentence bookmarked' : 'Bookmark this sentence'}
+                      sx={{ mt: 0.5, flexShrink: 0, color: sentenceBookmarked ? 'var(--awm-gold)' : 'var(--awm-muted-light)', bgcolor: sentenceBookmarked ? 'color-mix(in srgb, var(--awm-gold) 12%, transparent)' : 'transparent', '&:hover': { color: 'var(--awm-gold)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)' } }}
+                    >
+                      {sentenceBookmarked ? <Bookmark /> : <BookmarkBorder />}
+                    </IconButton>
+                    <Typography component="div" lang="ar" dir="rtl" sx={{ flex: 1, minWidth: 0, fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 29 * textScale }, fontWeight: 500, lineHeight: 1.9, color: 'var(--awm-bark)', textAlign: 'right' }}>
+                      <ArabicTokens tokens={block.tokens} punctuation={block.punctuation} bookmarkEnabled bookmarked={sentenceBookmarked} onBookmark={() => bookmarkSentence(block, sentenceIndex)} />
+                    </Typography>
+                  </Box>
                   {block.translation && (
                     <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 14 * textScale, md: 15 * textScale }, lineHeight: 1.7 }}>
                       {block.translation}
@@ -307,7 +468,8 @@ export default function ChapterReader({
                   )}
                   {blockIndex < paragraph.length - 1 && <Divider sx={{ mt: 3, borderColor: 'rgba(44,26,14,0.07)' }} />}
                 </Box>
-              ))}
+                )
+              })}
             </Box>
           ))}
         </Box>

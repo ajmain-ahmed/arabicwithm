@@ -144,10 +144,13 @@ export default function EpisodeEditDialog({
         transcript: transcript as Record<string, unknown>,
       }
 
-      if (isNew) {
-        await createEpisode(input)
-      } else {
-        await updateEpisode(episodeId!, input)
+      const result = isNew
+        ? await createEpisode(input)
+        : await updateEpisode(episodeId!, input)
+
+      if (!result.ok) {
+        setError(result.error)
+        return
       }
 
       onSaved?.()
@@ -267,11 +270,11 @@ export default function EpisodeEditDialog({
                 <Typography sx={{ mt: -1.5, fontFamily: "Jost, sans-serif", fontSize: "0.82rem", color: "#7a6e65" }}>
                   Add one or more sources. Viewers can switch between them without leaving the episode page.
                 </Typography>
-                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: 2 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 2 }}>
                   <AdminTextField label="YouTube link or ID" helperText="The YouTube thumbnail is used automatically when there is no committed cover." value={youtubeId} onChange={(e) => setYoutubeId(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
-                  <AdminTextField label="Instagram Reel link or ID" helperText="Paste a Reel URL or its shortcode." value={instagramId} onChange={(e) => setInstagramId(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
-                  <AdminTextField label="TikTok link or ID" helperText="A public link may also supply its thumbnail." value={tiktokId} onChange={(e) => setTiktokId(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
-                  <AdminTextField label="Facebook video link or ID" helperText="Paste a public Facebook video URL or numeric ID." value={facebookId} onChange={(e) => setFacebookId(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
+                  <AdminTextField label="Instagram video ID" helperText="Paste an Instagram Reel URL or its shortcode." value={instagramId} onChange={(e) => setInstagramId(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
+                  <AdminTextField label="TikTok video ID" helperText="Paste a TikTok URL or its video ID." value={tiktokId} onChange={(e) => setTiktokId(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
+                  <AdminTextField label="Facebook video ID" helperText="Paste a public Facebook video URL or numeric ID." value={facebookId} onChange={(e) => setFacebookId(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
                 </Box>
               </Box>
             )}

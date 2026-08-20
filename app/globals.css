@@ -120,6 +120,46 @@ html[data-theme='dark'] a {
   color: inherit;
 }
 
+/* Admin pages contain older one-off colours. Keep every CMS surface legible while
+   those screens are progressively moved onto the shared design tokens. */
+html[data-theme='dark'] body.awm-admin-active .awm-admin-shell .MuiTypography-root,
+html[data-theme='dark'] body.awm-admin-active .MuiDialog-root .MuiTypography-root,
+html[data-theme='dark'] body.awm-admin-active .MuiTableCell-root,
+html[data-theme='dark'] body.awm-admin-active .MuiTableSortLabel-root,
+html[data-theme='dark'] body.awm-admin-active .MuiFormControlLabel-label,
+html[data-theme='dark'] body.awm-admin-active label {
+  color: var(--awm-bark) !important;
+}
+
+html[data-theme='dark'] body.awm-admin-active .MuiTableHead-root .MuiTableCell-root,
+html[data-theme='dark'] body.awm-admin-active .MuiTableRow-root,
+html[data-theme='dark'] body.awm-admin-active [contenteditable='true'] {
+  background-color: var(--awm-white) !important;
+  border-color: color-mix(in srgb, var(--awm-gold) 22%, transparent) !important;
+}
+
+html[data-theme='dark'] body.awm-admin-active input,
+html[data-theme='dark'] body.awm-admin-active textarea,
+html[data-theme='dark'] body.awm-admin-active select {
+  color: var(--awm-bark) !important;
+  background-color: var(--awm-cream) !important;
+  border-color: color-mix(in srgb, var(--awm-gold) 28%, transparent) !important;
+}
+
+html[data-theme='dark'] body.awm-admin-active input::placeholder,
+html[data-theme='dark'] body.awm-admin-active textarea::placeholder {
+  color: var(--awm-muted-light) !important;
+  opacity: 1;
+}
+
+html[data-theme='dark'] body.awm-admin-active .Mui-disabled,
+html[data-theme='dark'] body.awm-admin-active input:disabled,
+html[data-theme='dark'] body.awm-admin-active textarea:disabled {
+  -webkit-text-fill-color: var(--awm-muted-light) !important;
+  color: var(--awm-muted-light) !important;
+  opacity: 0.75;
+}
+
 h1,
 h2,
 h3,

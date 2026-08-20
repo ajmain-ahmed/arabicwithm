@@ -42,6 +42,7 @@ export interface PublicBookBlock {
   tokens: PublicBookToken[]
   translation: string
   punctuation?: string
+  paragraph?: number
 }
 
 export interface PublicChapterWithContent extends PublicChapter {
@@ -178,6 +179,9 @@ export const fetchChapterForPublic = unstable_cache(
       return {
         translation: typeof block.translation === "string" ? block.translation : "",
         punctuation: typeof block.punctuation === "string" ? block.punctuation : undefined,
+        paragraph: typeof block.paragraph === "number" && Number.isFinite(block.paragraph)
+          ? Math.max(1, Math.trunc(block.paragraph))
+          : undefined,
         tokens: rawTokens.map((rawToken) => {
           const token = rawToken && typeof rawToken === "object" && !Array.isArray(rawToken)
             ? rawToken as Record<string, unknown>

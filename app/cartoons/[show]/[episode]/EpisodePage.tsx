@@ -24,7 +24,6 @@ import {
   Chip,
   Breadcrumbs,
   SwipeableDrawer,
-  Slider,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { ArrowBack, Settings, ExpandMore, ExpandLess, ChevronRight, Refresh } from '@mui/icons-material'
@@ -748,11 +747,7 @@ export default function EpisodePage({
 }) {
   const router = useRouter()
   const isAdmin = useIsAdmin()
-  const openPip = usePlayerStore((state) => state.openPip)
   const closePip = usePlayerStore((state) => state.closePip)
-  const requestPipSeek = usePlayerStore((state) => state.requestSeek)
-  const pipCurrentTime = usePlayerStore((state) => state.currentTime)
-  const pipVideoId = usePlayerStore((state) => state.videoId)
   const [tab, setTab] = useState(0)
   const [showDiacritics, setShowDiacritics] = useState(true)
   const [textScale, setTextScale] = useState(1.3)
@@ -839,41 +834,18 @@ export default function EpisodePage({
     setLocalActiveIndex(findActiveIndex(time))
   }, [findActiveIndex])
 
-  const activeIndex = !isYouTubeSource
-    ? null
-    : isMobile && pipVideoId === selectedSource?.id
-      ? findActiveIndex(pipCurrentTime)
-      : localActiveIndex
+  const activeIndex = isYouTubeSource ? localActiveIndex : null
 
   const { wrapRef, seekTo, errorCode, retry } = useYouTubePlayer(
-    !isMobile && isYouTubeSource ? selectedSource.id : undefined,
-    handleTimeUpdate
+    isYouTubeSource && (!isMobile || tab === 0) ? selectedSource.id : undefined,
+    handleTimeUpdate,
+    undefined,
+    { reloadKey: isMobile ? 'mobile' : 'desktop' }
   )
 
   useEffect(() => {
-    if (!isYouTubeSource || !selectedSource) {
-      const currentPlayer = usePlayerStore.getState()
-      if (currentPlayer.pipOpen) closePip()
-      return
-    }
-
-    if (isMobile) {
-      const currentPlayer = usePlayerStore.getState()
-      if (!currentPlayer.pipOpen || currentPlayer.videoId !== selectedSource.id) {
-        openPip({
-          videoId: selectedSource.id,
-          episodePath: `/cartoons/${episode.show}/${episode.slug}`,
-          title: episode.title,
-          showTitle,
-          currentTime: 0,
-          orientation: 'portrait',
-        })
-      }
-    } else {
-      const currentPlayer = usePlayerStore.getState()
-      if (currentPlayer.pipOpen && currentPlayer.videoId === selectedSource.id) closePip()
-    }
-  }, [closePip, episode.show, episode.slug, episode.title, isMobile, isYouTubeSource, openPip, selectedSource, showTitle])
+    closePip()
+  }, [closePip])
 
   // Keep the YouTube wrapper non-interactive for a short delay after the mobile
   // word drawer closes. The tap that dismisses the drawer is sometimes
@@ -933,6 +905,10 @@ export default function EpisodePage({
         onToggleDiacritics={() => setShowDiacritics((p) => !p)}
         textScale={textScale}
         onTextScaleChange={setTextScale}
+        textScaleMax={1.6}
+        textSizeDescription="Adjust Arabic, translation, vocabulary, and grammar text"
+        textFont={textFont}
+        onTextFontChange={setTextFont}
         onEdit={isAdmin ? () => setEditDialogOpen(true) : undefined}
       />
 
@@ -965,7 +941,7 @@ export default function EpisodePage({
           sx={{
             display: { xs: 'flex', md: 'grid' },
             flexDirection: { xs: 'column', md: 'unset' },
-            gridTemplateColumns: { md: 'minmax(320px, 410px) minmax(0, 1fr)' },
+            gridTemplateColumns: { md: 'minmax(360px, 500px) minmax(0, 1fr)' },
             gap: { xs: 0, md: 3, lg: 5 },
             maxWidth: 1536,
             mx: 'auto',
@@ -974,31 +950,35 @@ export default function EpisodePage({
           }}
         >
           {/* ── Left column (desktop only) ── */}
+          {!isMobile && (
           <Box
             sx={{
+              display: { xs: 'none', md: 'flex' },
               position: { md: 'sticky' },
               top: { md: 84 },
-              display: 'flex',
               flexDirection: 'column',
               gap: 2.5,
-              px: { xs: 2.5, md: 0 },
-              pt: { xs: 2, md: 0 },
+              px: 0,
+              pt: 0,
             }}
           >
-            <Typography
-              component="h1"
-              sx={{
-                display: { xs: 'none', md: 'block' },
-                fontFamily: 'var(--font-heading)',
-                fontSize: '2rem',
-                fontWeight: 600,
-                color: 'var(--bark)',
-                lineHeight: 1.15,
-                mb: 1,
-              }}
-            >
-              {episode.title}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+              <Typography
+                component="h1"
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: '2rem',
+                  fontWeight: 600,
+                  color: 'var(--bark)',
+                  lineHeight: 1.15,
+                }}
+              >
+                {episode.title}
+              </Typography>
+              <SettingsButton onClick={openSettings} />
+            </Box>
 
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
               <Box sx={{ background: LEVEL_COLORS[episode.level] ?? 'var(--forest)', color: '#fff', fontFamily: 'Jost, var(--font-sans)', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', px: 1.2, py: 0.4, borderRadius: '4px' }}>
@@ -1013,15 +993,13 @@ export default function EpisodePage({
 
             <Box
               sx={{
-                display: { xs: isYouTubeSource ? 'none' : 'block', md: 'block' },
                 order: { md: -1 },
                 width: '100%',
                 borderRadius: '16px',
                 overflow: 'hidden',
                 boxShadow: '0 12px 40px rgba(44,26,14,0.18)',
                 background: '#000',
-                aspectRatio: '9/16',
-                maxHeight: 560,
+                height: 'min(76dvh, 760px)',
                 position: 'relative',
               }}
             >
@@ -1070,6 +1048,7 @@ export default function EpisodePage({
               </Button>
             </Box>
           </Box>
+          )}
 
           {/* ── Right: Tabs ── */}
           <Box
@@ -1112,9 +1091,6 @@ export default function EpisodePage({
                 </Typography>
               </Breadcrumbs>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <SettingsButton onClick={openSettings} />
-              </Box>
             </Box>
 
             <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: 'var(--awm-white)', borderRadius: '12px 12px 0 0', px: { xs: 1, md: 4 }, display: 'flex', alignItems: 'center' }}>
@@ -1131,7 +1107,6 @@ export default function EpisodePage({
                 <Tab label="Script" />
                 <Tab label={isMobileViewport ? 'Vocab' : 'Vocabulary List'} />
                 <Tab label={isMobileViewport ? 'Grammar' : 'Grammar Points'} />
-                <Tab label="Settings" />
               </Tabs>
 
             </Box>
@@ -1176,7 +1151,64 @@ export default function EpisodePage({
 
               {/* ── Script Tab ── */}
               {tab === 0 && (
-                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                <Box
+                  sx={{
+                    display: { xs: 'block', md: 'flex' },
+                    flexDirection: { md: 'column' },
+                    '&::after': { content: '""', display: 'table', clear: 'both' },
+                  }}
+                >
+                  {isMobile && (
+                    <>
+                      {videoSources.length > 1 && (
+                        <Box sx={{ display: 'flex', gap: 0.65, flexWrap: 'wrap', mb: 1.25 }}>
+                          {videoSources.map((source) => (
+                            <Chip
+                              key={source.provider}
+                              label={source.label}
+                              clickable
+                              size="small"
+                              onClick={() => setSelectedProvider(source.provider)}
+                              color={source.provider === selectedSource?.provider ? 'primary' : 'default'}
+                              variant={source.provider === selectedSource?.provider ? 'filled' : 'outlined'}
+                              sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 600 }}
+                            />
+                          ))}
+                        </Box>
+                      )}
+
+                      <Box
+                        sx={{
+                          float: 'left',
+                          width: '50%',
+                          aspectRatio: '9/16',
+                          mr: 1.5,
+                          mb: 1,
+                          borderRadius: '10px',
+                          overflow: 'hidden',
+                          boxShadow: '0 8px 24px rgba(44,26,14,0.2)',
+                          background: '#000',
+                          position: 'relative',
+                        }}
+                      >
+                        {selectedSource?.provider !== 'youtube' && selectedSource ? (
+                          <SocialVideoEmbed source={selectedSource} title={episode.title} />
+                        ) : (
+                          <Box ref={wrapRef} sx={{ width: '100%', height: '100%' }} />
+                        )}
+                        {errorCode != null && isYouTubeSource && (
+                          <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 1.25 }}>
+                            <Box sx={{ textAlign: 'center', color: '#fff' }}>
+                              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700 }}>Video unavailable</Typography>
+                              <Button onClick={retry} size="small" startIcon={<Refresh />} sx={{ mt: 0.75, color: '#fff', fontSize: 10, textTransform: 'none' }}>
+                                Retry
+                              </Button>
+                            </Box>
+                          </Box>
+                        )}
+                      </Box>
+                    </>
+                  )}
                   {episode.scriptBlocks.length === 0 ? (
                     <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No script found in this episode file.</Typography>
                   ) : (
@@ -1194,8 +1226,7 @@ export default function EpisodePage({
                               if (Date.now() - vocabTrackerRef.lastCloseAt < 120) return
                               if ((e.target as HTMLElement).closest('.vocab-word')) return
                               if (hasTimestamp && isYouTubeSource) {
-                                if (isMobile) requestPipSeek(block.timestamp!)
-                                else seekTo(block.timestamp!)
+                                seekTo(block.timestamp!)
                               }
                             }}
                             sx={{ cursor: hasTimestamp ? 'pointer' : 'default', opacity: hasTimestamp ? 1 : 0.75 }}
@@ -1477,78 +1508,6 @@ export default function EpisodePage({
                 </Box>
               )}
 
-              {tab === 3 && (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, maxWidth: 720 }}>
-                  <Box>
-                    <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 24, fontWeight: 600, color: 'var(--bark)' }}>
-                      Reading settings
-                    </Typography>
-                    <Typography sx={{ mt: 0.5, fontFamily: 'Jost, sans-serif', fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.6 }}>
-                      Adjust the episode transcript without changing the video.
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ p: 2, border: '1px solid rgba(44,26,14,0.09)', borderRadius: '12px', bgcolor: 'rgba(44,26,14,0.02)' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
-                      <Box>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 15, fontWeight: 600, color: 'var(--bark)' }}>Diacritics</Typography>
-                        <Typography sx={{ mt: 0.25, fontFamily: 'Jost, sans-serif', fontSize: 12, color: 'var(--muted)' }}>Show or hide Arabic vowel marks.</Typography>
-                      </Box>
-                      <Button
-                        variant={showDiacritics ? 'contained' : 'outlined'}
-                        onClick={() => setShowDiacritics((current) => !current)}
-                        sx={{ minWidth: 88, bgcolor: showDiacritics ? 'var(--forest)' : undefined, color: showDiacritics ? '#fff' : 'var(--forest)', borderColor: 'rgba(14,46,31,0.35)', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: showDiacritics ? '#174832' : 'rgba(14,46,31,0.05)' } }}
-                      >
-                        {showDiacritics ? 'Shown' : 'Hidden'}
-                      </Button>
-                    </Box>
-                  </Box>
-
-                  <Box sx={{ p: 2, border: '1px solid rgba(44,26,14,0.09)', borderRadius: '12px' }}>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 15, fontWeight: 600, color: 'var(--bark)' }}>Arabic font</Typography>
-                    <Typography lang="ar" dir="rtl" sx={{ my: 1.5, fontFamily: textFontFamily, fontSize: 28, color: 'var(--bark)', textAlign: 'center' }}>
-                      العَرَبِيَّةُ لُغَةٌ جَمِيلَةٌ
-                    </Typography>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1 }}>
-                      {([
-                        ['naskh', 'Naskh'],
-                        ['garamond', 'Garamond'],
-                        ['amiri', 'Amiri'],
-                      ] as const).map(([value, label]) => (
-                        <Button
-                          key={value}
-                          variant={textFont === value ? 'contained' : 'outlined'}
-                          onClick={() => setTextFont(value)}
-                          sx={{ bgcolor: textFont === value ? 'var(--gold)' : 'transparent', color: textFont === value ? '#fff' : 'var(--bark)', borderColor: 'rgba(184,134,11,0.35)', borderRadius: '9px', textTransform: 'none', '&:hover': { bgcolor: textFont === value ? '#966d09' : 'rgba(184,134,11,0.06)' } }}
-                        >
-                          {label}
-                        </Button>
-                      ))}
-                    </Box>
-                  </Box>
-
-                  <Box sx={{ p: 2, border: '1px solid rgba(44,26,14,0.09)', borderRadius: '12px' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
-                      <Box>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 15, fontWeight: 600, color: 'var(--bark)' }}>Text size</Typography>
-                        <Typography sx={{ mt: 0.25, fontFamily: 'Jost, sans-serif', fontSize: 12, color: 'var(--muted)' }}>Adjust Arabic, translation, vocabulary, and grammar text.</Typography>
-                      </Box>
-                      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700, color: 'var(--gold)' }}>{Math.round(textScale * 100)}%</Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 2 }}>
-                      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700, color: 'var(--muted)' }}>A</Typography>
-                      <Slider value={textScale} min={0.9} max={1.6} step={0.1} onChange={(_, value) => setTextScale(value as number)} sx={{ color: 'var(--gold)' }} />
-                      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 20, fontWeight: 700, color: 'var(--muted)' }}>A</Typography>
-                    </Box>
-                  </Box>
-
-                  {isAdmin && (
-                    <Button variant="outlined" onClick={() => setEditDialogOpen(true)} sx={{ alignSelf: 'flex-start', color: 'var(--bark)', borderColor: 'rgba(44,26,14,0.25)', textTransform: 'none', borderRadius: '9px' }}>
-                      Edit episode content
-                    </Button>
-                  )}
-                </Box>
-              )}
             </Box>
           </Box>
         </Box>

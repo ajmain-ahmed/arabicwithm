@@ -1,39 +1,42 @@
 "use client"
 
-import React from "react"
-import { ThemeProvider, createTheme } from "@mui/material"
-import { type ReactNode } from "react"
-
-const adminTheme = createTheme({
-  typography: {
-    fontSize: 16,
-    fontFamily: "Jost, 'EB Garamond', sans-serif",
-    h4: { fontSize: "2rem" },
-    h5: { fontSize: "1.5rem" },
-    h6: { fontSize: "1.25rem" },
-    body1: { fontSize: "1rem" },
-    body2: { fontSize: "0.95rem" },
-    button: { fontSize: "0.95rem" },
-    caption: { fontSize: "0.85rem" },
-  },
-  components: {
-    MuiTableCell: {
-      styleOverrides: {
-        root: {
-          fontSize: "0.95rem",
-        },
-      },
-    },
-    MuiChip: {
-      styleOverrides: {
-        root: {
-          fontSize: "0.85rem",
-        },
-      },
-    },
-  },
-})
+import React, { type ReactNode, useEffect, useMemo } from "react"
+import { ThemeProvider, createTheme } from "@mui/material/styles"
+import { useColorMode } from "@/app/components/ThemeProvider"
+import { createAwmTheme } from "@/app/theme"
 
 export default function AdminThemeProvider({ children }: { children: ReactNode }) {
+  const { mode } = useColorMode()
+  const adminTheme = useMemo(() => createTheme(createAwmTheme(mode), {
+    typography: {
+      fontSize: 16,
+      fontFamily: "Jost, 'EB Garamond', sans-serif",
+      h4: { fontSize: "2rem" },
+      h5: { fontSize: "1.5rem" },
+      h6: { fontSize: "1.25rem" },
+      body1: { fontSize: "1rem" },
+      body2: { fontSize: "0.95rem" },
+      button: { fontSize: "0.95rem" },
+      caption: { fontSize: "0.85rem" },
+    },
+    components: {
+      MuiTableCell: {
+        styleOverrides: {
+          root: { fontSize: "0.95rem" },
+        },
+      },
+      MuiChip: {
+        styleOverrides: {
+          root: { fontSize: "0.85rem" },
+        },
+      },
+    },
+  }), [mode])
+
+  useEffect(() => {
+    document.body.classList.add("awm-admin-active")
+    return () => document.body.classList.remove("awm-admin-active")
+  }, [])
+
   return <ThemeProvider theme={adminTheme}>{children}</ThemeProvider>
 }

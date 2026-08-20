@@ -28,6 +28,26 @@ const PARAGRAPH_STARTS_BY_CHAPTER: Readonly<Record<string, readonly number[]>> =
 export function groupChapterBlocks<T>(chapterSlug: string, blocks: readonly T[]): T[][] {
   if (blocks.length === 0) return []
 
+  const explicitParagraphs = blocks.map((block) => {
+    if (block == null || typeof block !== 'object' || Array.isArray(block)) return null
+    const value = (block as Record<string, unknown>).paragraph
+    return typeof value === 'number' && Number.isFinite(value) ? Math.max(1, Math.trunc(value)) : null
+  })
+
+  if (explicitParagraphs.some((paragraph) => paragraph != null)) {
+    const paragraphs: T[][] = []
+    let previousParagraph: number | null = null
+
+    blocks.forEach((block, index) => {
+      const paragraph = explicitParagraphs[index] ?? previousParagraph ?? 1
+      if (index === 0 || paragraph !== previousParagraph) paragraphs.push([])
+      paragraphs[paragraphs.length - 1].push(block)
+      previousParagraph = paragraph
+    })
+
+    return paragraphs
+  }
+
   const configuredStarts = PARAGRAPH_STARTS_BY_CHAPTER[chapterSlug]
   if (!configuredStarts) return [Array.from(blocks)]
 

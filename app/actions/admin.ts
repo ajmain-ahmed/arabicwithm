@@ -52,6 +52,37 @@ export type EpisodeInput = Omit<EpisodeRow, "id" | "created_at" | "cover"> & {
   transcript?: Record<string, unknown> | unknown[] | null
 }
 
+export type EpisodeSaveResult =
+  | { ok: true; id?: string }
+  | { ok: false; error: string }
+
+type EpisodeDatabaseError = {
+  code?: string
+  message?: string
+}
+
+function isMissingSocialVideoColumn(error: EpisodeDatabaseError | null): boolean {
+  return Boolean(
+    error &&
+    (error.code === "42703" || error.code === "PGRST204") &&
+    /(?:instagram_id|tiktok_id|facebook_id)/i.test(error.message ?? "")
+  )
+}
+
+function episodeSaveError(error: EpisodeDatabaseError | null): string {
+  if (error?.code === "23505") return "An episode with this slug already exists for the selected show."
+  if (error?.code === "23503") return "The selected show no longer exists. Refresh the page and try again."
+  if (error?.code === "23502") return "A required episode field is missing. Please complete the show, slug, and title fields."
+  return "The episode could not be saved. Please check the episode details and try again."
+}
+
+function validateEpisodeInput(input: Partial<EpisodeInput>): string | null {
+  if (!input.show_id?.trim()) return "Please select a show."
+  if (!input.slug?.trim()) return "Please enter an episode slug."
+  if (!input.title?.trim()) return "Please enter an episode title."
+  return null
+}
+
 async function fetchOEmbedThumbnail(endpoint: string): Promise<string | null> {
   try {
     const response = await fetch(endpoint, {
@@ -266,45 +297,78 @@ export async function fetchEpisodeForAdmin(
   }
 }
 
-export async function createEpisode(input: EpisodeInput): Promise<string> {
+export async function createEpisode(input: EpisodeInput): Promise<EpisodeSaveResult> {
   await guardAdmin()
+
+  const validationError = validateEpisodeInput(input)
+  if (validationError) return { ok: false, error: validationError }
 
   const cover = await resolveEpisodeThumbnail(input)
 
-  const { data, error } = await serviceClient
+  const instagramId = normalizeInstagramId(input.instagram_id) ?? null
+  const tiktokId = normalizeTikTokId(input.tiktok_id) ?? null
+  const facebookId = normalizeFacebookId(input.facebook_id) ?? null
+  const requestedSocialVideo = Boolean(instagramId || tiktokId || facebookId)
+
+  const basePayload = {
+    show_id: input.show_id.trim(),
+    slug: input.slug.trim(),
+    title: input.title.trim(),
+    level: input.level.trim(),
+    tags: input.tags,
+    description: input.description,
+    youtube_id: normalizeYouTubeId(input.youtube_id) ?? null,
+    cover,
+    transcript: (input.transcript ?? []) as never,
+  }
+
+  let { data, error } = await serviceClient
     .from("episodes")
     .insert({
-      show_id: input.show_id,
-      slug: input.slug,
-      title: input.title,
-      level: input.level,
-      tags: input.tags,
-      description: input.description,
-      youtube_id: normalizeYouTubeId(input.youtube_id) ?? null,
-      instagram_id: normalizeInstagramId(input.instagram_id) ?? null,
-      tiktok_id: normalizeTikTokId(input.tiktok_id) ?? null,
-      facebook_id: normalizeFacebookId(input.facebook_id) ?? null,
-      cover,
-      transcript: (input.transcript ?? []) as never,
+      ...basePayload,
+      instagram_id: instagramId,
+      tiktok_id: tiktokId,
+      facebook_id: facebookId,
     } as never)
     .select("id")
     .single()
 
+  if (isMissingSocialVideoColumn(error)) {
+    if (requestedSocialVideo) {
+      console.error("[createEpisode] social video columns are missing from the live database")
+      return {
+        ok: false,
+        error: "Social video IDs are not enabled in the live database yet. Apply the episode social-video migration, or clear those three fields to save this episode with YouTube only.",
+      }
+    }
+
+    const legacyResult = await serviceClient
+      .from("episodes")
+      .insert(basePayload as never)
+      .select("id")
+      .single()
+    data = legacyResult.data
+    error = legacyResult.error
+  }
+
   if (error || !data) {
     console.error("[createEpisode] error:", error?.message)
-    throw new Error(error?.message ?? "Failed to create episode")
+    return { ok: false, error: episodeSaveError(error) }
   }
 
   updateTag("cartoons-public")
-  return data.id
+  return { ok: true, id: String(data.id) }
 }
 
 export async function updateEpisode(
   id: string,
   input: Partial<EpisodeInput>,
   revalidate?: string
-): Promise<void> {
+): Promise<EpisodeSaveResult> {
   await guardAdmin()
+
+  const validationError = validateEpisodeInput(input)
+  if (validationError) return { ok: false, error: validationError }
 
   const payload: Record<string, unknown> = {}
   if (input.show_id !== undefined) payload.show_id = input.show_id
@@ -314,9 +378,13 @@ export async function updateEpisode(
   if (input.tags !== undefined) payload.tags = input.tags
   if (input.description !== undefined) payload.description = input.description
   if (input.youtube_id !== undefined) payload.youtube_id = normalizeYouTubeId(input.youtube_id) ?? null
-  if (input.instagram_id !== undefined) payload.instagram_id = normalizeInstagramId(input.instagram_id) ?? null
-  if (input.tiktok_id !== undefined) payload.tiktok_id = normalizeTikTokId(input.tiktok_id) ?? null
-  if (input.facebook_id !== undefined) payload.facebook_id = normalizeFacebookId(input.facebook_id) ?? null
+  const instagramId = input.instagram_id === undefined ? undefined : normalizeInstagramId(input.instagram_id) ?? null
+  const tiktokId = input.tiktok_id === undefined ? undefined : normalizeTikTokId(input.tiktok_id) ?? null
+  const facebookId = input.facebook_id === undefined ? undefined : normalizeFacebookId(input.facebook_id) ?? null
+  if (instagramId !== undefined) payload.instagram_id = instagramId
+  if (tiktokId !== undefined) payload.tiktok_id = tiktokId
+  if (facebookId !== undefined) payload.facebook_id = facebookId
+  const requestedSocialVideo = Boolean(instagramId || tiktokId || facebookId)
   if (
     input.youtube_id !== undefined ||
     input.instagram_id !== undefined ||
@@ -327,20 +395,40 @@ export async function updateEpisode(
   }
   if (input.transcript !== undefined) payload.transcript = input.transcript
 
-  const { error } = await serviceClient
+  let { error } = await serviceClient
     .from("episodes")
     .update(payload as never)
     .eq("id", id)
 
+  if (isMissingSocialVideoColumn(error)) {
+    if (requestedSocialVideo) {
+      console.error("[updateEpisode] social video columns are missing from the live database")
+      return {
+        ok: false,
+        error: "Social video IDs are not enabled in the live database yet. Apply the episode social-video migration, or clear those three fields to save this episode with YouTube only.",
+      }
+    }
+
+    delete payload.instagram_id
+    delete payload.tiktok_id
+    delete payload.facebook_id
+    const legacyResult = await serviceClient
+      .from("episodes")
+      .update(payload as never)
+      .eq("id", id)
+    error = legacyResult.error
+  }
+
   if (error) {
     console.error("[updateEpisode] error:", error.message)
-    throw new Error(error.message)
+    return { ok: false, error: episodeSaveError(error) }
   }
 
   updateTag("cartoons-public")
   if (revalidate) {
     revalidatePath(revalidate)
   }
+  return { ok: true, id }
 }
 
 export async function deleteEpisode(id: string): Promise<void> {

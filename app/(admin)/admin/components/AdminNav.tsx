@@ -31,9 +31,9 @@ export default function AdminNav() {
       position="static"
       elevation={0}
       sx={{
-        bgcolor: "#fff",
-        color: "#2c1a0e",
-        borderBottom: "1px solid rgba(44,26,14,0.08)",
+        bgcolor: "var(--awm-white)",
+        color: "var(--awm-bark)",
+        borderBottom: "1px solid color-mix(in srgb, var(--awm-bark) 10%, transparent)",
       }}
     >
       <Toolbar
@@ -55,8 +55,8 @@ export default function AdminNav() {
                 href={item.href}
                 startIcon={item.icon}
                 sx={{
-                  color: active ? "#2c1a0e" : "rgba(44,26,14,0.75)",
-                  bgcolor: active ? "rgba(184,134,11,0.12)" : "transparent",
+                  color: active ? "var(--awm-bark)" : "var(--awm-muted)",
+                  bgcolor: active ? "color-mix(in srgb, var(--awm-gold) 14%, transparent)" : "transparent",
                   textTransform: "none",
                   fontFamily: "Jost, sans-serif",
                   fontWeight: 600,
@@ -66,7 +66,7 @@ export default function AdminNav() {
                   py: 0.75,
                   mt: 1,
                   "&:hover": {
-                    bgcolor: active ? "rgba(184,134,11,0.2)" : "rgba(44,26,14,0.06)",
+                    bgcolor: active ? "color-mix(in srgb, var(--awm-gold) 22%, transparent)" : "color-mix(in srgb, var(--awm-bark) 7%, transparent)",
                   },
                 }}
               >
