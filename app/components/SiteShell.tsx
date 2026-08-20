@@ -25,12 +25,12 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      {!isExploreRoute && <Navbar />}
+      <Navbar />
       <LearningActivityTracker />
       <Box
         component="main"
         sx={{
-          pt: isExploreRoute ? 0 : { xs: '56px', md: '64px' },
+          pt: { xs: '56px', md: '64px' },
           pb: { xs: '56px', md: 0 },
         }}
       >

@@ -45,6 +45,8 @@ export interface ContentCardProps {
   mobileAspectRatio?: string
   mobileImagePosition?: string
   mobileTitleSize?: number
+  showTags?: boolean
+  maxVisibleTags?: number
 }
 
 export default function ContentCard({
@@ -66,12 +68,15 @@ export default function ContentCard({
   mobileAspectRatio = '4 / 3',
   mobileImagePosition = 'center',
   mobileTitleSize = 10,
+  showTags = true,
+  maxVisibleTags,
 }: ContentCardProps) {
   const [hovered, setHovered] = useState(false)
   const [imgError, setImgError] = useState(false)
   const badgeColor = DIFFICULTY_COLORS[level ?? ''] || MUTED
   const href = `${hrefPrefix}/${encodeURIComponent(slug)}`
-  const displayTags = Array.from(new Set([category, ...tags].filter((tag): tag is string => Boolean(tag?.trim()))))
+  const allDisplayTags = Array.from(new Set([category, ...tags].filter((tag): tag is string => Boolean(tag?.trim()))))
+  const displayTags = maxVisibleTags == null ? allDisplayTags : allDisplayTags.slice(0, maxVisibleTags)
 
   return (
     <Paper
@@ -296,7 +301,7 @@ export default function ContentCard({
           </Typography>
         )}
         {/* Tags */}
-        <Box sx={{ display: denseMobileTile ? { xs: 'none', sm: 'flex' } : 'flex', gap: 1, mb: compactMobileRow ? { xs: 0.75, sm: 1.5 } : 1.5, flexWrap: 'wrap' }}>
+        <Box sx={{ display: showTags ? (denseMobileTile ? { xs: 'none', sm: 'flex' } : 'flex') : 'none', gap: 1, mb: compactMobileRow ? { xs: 0.75, sm: 1.5 } : 1.5, flexWrap: 'wrap' }}>
           {level && compactMobileRow && (
             <Chip
               label={level}

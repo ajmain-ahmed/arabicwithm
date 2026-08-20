@@ -343,6 +343,7 @@ export default function CartoonsPage({
                         description={show.description}
                         category={show.category}
                         tags={show.tags}
+                        maxVisibleTags={2}
 
                         level={show.level}
                         denseMobileTile

@@ -26,7 +26,7 @@ import {
   SwipeableDrawer,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ArrowBack, Settings, ExpandMore, ExpandLess, ChevronRight, Refresh } from '@mui/icons-material'
+import { ArrowBack, Settings, ExpandMore, ExpandLess, ChevronRight, Fullscreen, Refresh } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
@@ -753,6 +753,7 @@ export default function EpisodePage({
   const [textScale, setTextScale] = useState(1.3)
   const [textFont, setTextFont] = useState<'naskh' | 'garamond' | 'amiri'>('naskh')
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [mobileVideoMinimized, setMobileVideoMinimized] = useState(false)
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set())
   const [localActiveIndex, setLocalActiveIndex] = useState<number | null>(null)
   const videoSources = useMemo(() => getEpisodeVideoSources(episode), [episode])
@@ -799,6 +800,7 @@ export default function EpisodePage({
   // ── Mobile header height ──
   const estimatedMobileHeader = 56
   const [mobileHeaderHeight, setMobileHeaderHeight] = useState(estimatedMobileHeader)
+  const mobileVideoContainerRef = useRef<HTMLDivElement | null>(null)
 
   const activeBlockRef = useRef<HTMLDivElement | null>(null)
   const skipInitialScroll = useRef(true)
@@ -837,7 +839,7 @@ export default function EpisodePage({
   const activeIndex = isYouTubeSource ? localActiveIndex : null
 
   const { wrapRef, seekTo, errorCode, retry } = useYouTubePlayer(
-    isYouTubeSource && (!isMobile || tab === 0) ? selectedSource.id : undefined,
+    isYouTubeSource ? selectedSource.id : undefined,
     handleTimeUpdate,
     undefined,
     { reloadKey: isMobile ? 'mobile' : 'desktop' }
@@ -893,6 +895,11 @@ export default function EpisodePage({
   const allNotesExpanded = blocksWithNotes.length > 0 && blocksWithNotes.every((i) => expandedNotes.has(i))
 
   const openSettings = useCallback(() => setSettingsOpen(true), [])
+  const openMobileVideoFullscreen = useCallback(() => {
+    const container = mobileVideoContainerRef.current
+    if (!container?.requestFullscreen) return
+    void container.requestFullscreen().catch(() => undefined)
+  }, [])
 
   return (
     <>
@@ -1093,6 +1100,85 @@ export default function EpisodePage({
 
             </Box>
 
+            {isMobile && (
+              <Box sx={{ mb: 2, borderRadius: '12px', bgcolor: 'var(--awm-white)', border: '1px solid rgba(44,26,14,0.08)', overflow: 'hidden' }}>
+                <Box sx={{ px: 1.5, py: 1.1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+                  <Typography sx={{ color: 'var(--bark)', fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700 }}>
+                    Video
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {!mobileVideoMinimized && (
+                      <Button
+                        size="small"
+                        onClick={openMobileVideoFullscreen}
+                        startIcon={<Fullscreen sx={{ fontSize: 18 }} />}
+                        sx={{ minWidth: 0, color: 'var(--muted)', fontSize: 11.5, textTransform: 'none' }}
+                      >
+                        Full screen
+                      </Button>
+                    )}
+                    <Button
+                      size="small"
+                      onClick={() => setMobileVideoMinimized((current) => !current)}
+                      startIcon={mobileVideoMinimized ? <ExpandMore sx={{ fontSize: 18 }} /> : <ExpandLess sx={{ fontSize: 18 }} />}
+                      aria-expanded={!mobileVideoMinimized}
+                      sx={{ minWidth: 0, color: 'var(--muted)', fontSize: 11.5, textTransform: 'none' }}
+                    >
+                      {mobileVideoMinimized ? 'Expand' : 'Minimize'}
+                    </Button>
+                  </Box>
+                </Box>
+
+                {videoSources.length > 1 && (
+                  <Box sx={{ display: 'flex', gap: 0.65, flexWrap: 'wrap', px: 1.5, pb: 1.25 }}>
+                    {videoSources.map((source) => (
+                      <Chip
+                        key={source.provider}
+                        label={source.label}
+                        clickable
+                        size="small"
+                        onClick={() => setSelectedProvider(source.provider)}
+                        color={source.provider === selectedSource?.provider ? 'primary' : 'default'}
+                        variant={source.provider === selectedSource?.provider ? 'filled' : 'outlined'}
+                        sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 600 }}
+                      />
+                    ))}
+                  </Box>
+                )}
+
+                <Box
+                  ref={mobileVideoContainerRef}
+                  sx={{
+                    width: '100%',
+                    height: mobileVideoMinimized ? 0 : 'min(68dvh, 640px)',
+                    minHeight: mobileVideoMinimized ? 0 : 260,
+                    opacity: mobileVideoMinimized ? 0 : 1,
+                    overflow: 'hidden',
+                    bgcolor: '#000',
+                    position: 'relative',
+                    transition: 'height 220ms ease, min-height 220ms ease, opacity 150ms ease',
+                    '&:fullscreen': { width: '100vw', height: '100vh', minHeight: '100vh' },
+                  }}
+                >
+                  {selectedSource?.provider !== 'youtube' && selectedSource ? (
+                    <SocialVideoEmbed source={selectedSource} title={episode.title} />
+                  ) : (
+                    <Box ref={wrapRef} sx={{ width: '100%', height: '100%' }} />
+                  )}
+                  {errorCode != null && isYouTubeSource && (
+                    <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 2 }}>
+                      <Box sx={{ textAlign: 'center', color: '#fff' }}>
+                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700 }}>Video unavailable</Typography>
+                        <Button onClick={retry} size="small" startIcon={<Refresh />} sx={{ mt: 0.75, color: '#fff', fontSize: 11, textTransform: 'none' }}>
+                          Retry
+                        </Button>
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              </Box>
+            )}
+
             <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: 'var(--awm-white)', borderRadius: '12px 12px 0 0', px: { xs: 1, md: 4 }, display: 'flex', alignItems: 'center' }}>
               <Tabs
                 value={tab}
@@ -1158,57 +1244,6 @@ export default function EpisodePage({
                     '&::after': { content: '""', display: 'table', clear: 'both' },
                   }}
                 >
-                  {isMobile && (
-                    <>
-                      {videoSources.length > 1 && (
-                        <Box sx={{ display: 'flex', gap: 0.65, flexWrap: 'wrap', mb: 1.25 }}>
-                          {videoSources.map((source) => (
-                            <Chip
-                              key={source.provider}
-                              label={source.label}
-                              clickable
-                              size="small"
-                              onClick={() => setSelectedProvider(source.provider)}
-                              color={source.provider === selectedSource?.provider ? 'primary' : 'default'}
-                              variant={source.provider === selectedSource?.provider ? 'filled' : 'outlined'}
-                              sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 600 }}
-                            />
-                          ))}
-                        </Box>
-                      )}
-
-                      <Box
-                        sx={{
-                          float: 'left',
-                          width: '50%',
-                          aspectRatio: '9/16',
-                          mr: 1.5,
-                          mb: 1,
-                          borderRadius: '10px',
-                          overflow: 'hidden',
-                          boxShadow: '0 8px 24px rgba(44,26,14,0.2)',
-                          background: '#000',
-                          position: 'relative',
-                        }}
-                      >
-                        {selectedSource?.provider !== 'youtube' && selectedSource ? (
-                          <SocialVideoEmbed source={selectedSource} title={episode.title} />
-                        ) : (
-                          <Box ref={wrapRef} sx={{ width: '100%', height: '100%' }} />
-                        )}
-                        {errorCode != null && isYouTubeSource && (
-                          <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 1.25 }}>
-                            <Box sx={{ textAlign: 'center', color: '#fff' }}>
-                              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700 }}>Video unavailable</Typography>
-                              <Button onClick={retry} size="small" startIcon={<Refresh />} sx={{ mt: 0.75, color: '#fff', fontSize: 10, textTransform: 'none' }}>
-                                Retry
-                              </Button>
-                            </Box>
-                          </Box>
-                        )}
-                      </Box>
-                    </>
-                  )}
                   {episode.scriptBlocks.length === 0 ? (
                     <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No script found in this episode file.</Typography>
                   ) : (

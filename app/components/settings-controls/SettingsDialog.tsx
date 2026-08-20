@@ -68,17 +68,20 @@ export default function SettingsDialog({
               ))}
             </Box>
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.25, px: 1.5, borderRadius: '10px', border: '1px solid rgba(122,110,101,0.15)', background: 'rgba(122,110,101,0.03)', gap: 2 }}>
-            <Box sx={{ pr: 2, flex: '0 0 auto' }}>
+          <Box sx={{ py: 1.5, px: 1.5, borderRadius: '10px', border: '1px solid rgba(122,110,101,0.15)', background: 'rgba(122,110,101,0.03)' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 2 }}>
+              <Box>
               <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: 'var(--awm-bark)' }}>Text Size</Typography>
               <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)', mt: 0.3 }}>{textSizeDescription}</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, minWidth: 0, maxWidth: 180 }}>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', fontWeight: 700, color: 'var(--awm-muted)', flexShrink: 0 }}>A</Typography>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Slider value={textScale} min={textScaleMin} max={textScaleMax} step={0.1} size="small" onChange={(_, v) => onTextScaleChange(v as number)} sx={{ color: '#b8860b', width: '100%', '& .MuiSlider-thumb': { width: 14, height: 14 } }} />
               </Box>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.1rem', fontWeight: 700, color: 'var(--awm-muted)', flexShrink: 0 }}>A</Typography>
+              <Typography aria-live="polite" sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700 }}>
+                {Math.round(textScale * 100)}%
+              </Typography>
+            </Box>
+            <Box sx={{ mt: 1.5, display: 'grid', gridTemplateColumns: '32px minmax(150px, 1fr) 42px', alignItems: 'center', columnGap: { xs: 1.5, sm: 2.5 } }}>
+              <Typography aria-hidden="true" sx={{ fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700, color: 'var(--awm-muted)', textAlign: 'center' }}>A</Typography>
+              <Slider value={textScale} min={textScaleMin} max={textScaleMax} step={0.1} onChange={(_, v) => onTextScaleChange(v as number)} sx={{ color: '#b8860b', width: '100%', '& .MuiSlider-thumb': { width: 18, height: 18 }, '& .MuiSlider-track, & .MuiSlider-rail': { height: 5 } }} />
+              <Typography aria-hidden="true" sx={{ fontFamily: 'Jost, sans-serif', fontSize: 24, lineHeight: 1, fontWeight: 700, color: 'var(--awm-muted)', textAlign: 'center' }}>A</Typography>
             </Box>
           </Box>
         </Box>

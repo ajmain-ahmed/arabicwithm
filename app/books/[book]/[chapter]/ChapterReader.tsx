@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { Box, Button, ButtonGroup, Divider, IconButton, MenuItem, Paper, Select, Typography } from '@mui/material'
-import { Bookmark, BookmarkBorder, Edit, MenuBook, ViewAgenda } from '@mui/icons-material'
+import { Box, Button, ButtonGroup, Divider, IconButton, Paper, Typography } from '@mui/material'
+import { Bookmark, BookmarkBorder, MenuBook, Settings, ViewAgenda } from '@mui/icons-material'
 import { HtmlTooltip, WordTooltip } from '@/app/components/vocab-tooltip'
 import type { PublicBookBlock, PublicBookToken } from '@/app/actions/books'
 import { groupChapterBlocks } from '@/app/lib/bookParagraphs'
@@ -15,18 +15,14 @@ import {
   parseBookSentenceBookmark,
   type BookSentenceBookmark,
 } from '@/app/lib/bookSentenceBookmark'
-import { useIsAdmin } from '@/app/lib/useIsAdmin'
-import InlineChapterAdminEditor from './InlineChapterAdminEditor'
 import {
-  BOOK_TEXT_SCALE_STEP,
   DEFAULT_BOOK_READER_FONT,
   DEFAULT_BOOK_TEXT_SCALE,
-  MAX_BOOK_TEXT_SCALE,
-  MIN_BOOK_TEXT_SCALE,
   normalizeBookReaderFont,
   normalizeBookTextScale,
   type BookReaderFont,
 } from '@/app/lib/bookReaderSettings'
+import BookReaderSettingsDialog from './BookReaderSettingsDialog'
 
 type ReaderView = 'lines' | 'book'
 const READER_VIEW_STORAGE_KEY = 'awm-book-reader-view'
@@ -197,14 +193,12 @@ function ArabicTokens({
 }
 
 export default function ChapterReader({
-  chapterId,
   bookSlug,
   bookTitle,
   chapterTitle,
   chapterSlug,
   content,
 }: {
-  chapterId: string
   bookSlug: string
   bookTitle: string
   chapterTitle: string
@@ -212,19 +206,13 @@ export default function ChapterReader({
   content: PublicBookBlock[]
 }) {
   const { user } = useAuth()
-  const isAdmin = useIsAdmin()
-  const [editingChapter, setEditingChapter] = useState(false)
-  const [readerContent, setReaderContent] = useState(content)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
   const view = useSyncExternalStore(subscribeToReaderView, getReaderViewSnapshot, () => 'lines')
   const textScale = useSyncExternalStore(subscribeToTextScale, getTextScaleSnapshot, () => DEFAULT_BOOK_TEXT_SCALE)
   const readerFont = useSyncExternalStore(subscribeToReaderFont, getReaderFontSnapshot, () => DEFAULT_BOOK_READER_FONT)
-  const paragraphs = groupChapterBlocks(chapterSlug, readerContent)
-  const blockIndexByBlock = new Map(readerContent.map((block, index) => [block, index]))
-
-  useEffect(() => {
-    setReaderContent(content)
-  }, [content])
+  const paragraphs = groupChapterBlocks(chapterSlug, content)
+  const blockIndexByBlock = new Map(content.map((block, index) => [block, index]))
 
   useEffect(() => {
     let localBookmark: BookSentenceBookmark | null = null
@@ -236,7 +224,7 @@ export default function ChapterReader({
 
     const accountBookmark = parseBookSentenceBookmark(user?.user_metadata?.book_sentence_bookmark)
     const newestBookmark = latestBookSentenceBookmark(localBookmark, accountBookmark)
-    setBookmark(newestBookmark)
+    const frame = window.requestAnimationFrame(() => setBookmark(newestBookmark))
 
     if (newestBookmark) {
       try {
@@ -245,6 +233,7 @@ export default function ChapterReader({
         // The bookmark remains available in memory for this visit.
       }
     }
+    return () => window.cancelAnimationFrame(frame)
   }, [user])
 
   useEffect(() => {
@@ -265,7 +254,7 @@ export default function ChapterReader({
       document.getElementById(sentenceHash[0].slice(1))?.scrollIntoView({ block: 'center' })
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [view, readerContent])
+  }, [view, content])
 
   const bookmarkSentence = (block: PublicBookBlock, blockIndex: number) => {
     const arabic = `${block.tokens.map((token) => `${token.prefix ?? ''}${token.arabic}${token.suffix ?? ''}`).join(' ')}${block.punctuation ?? ''}`
@@ -306,8 +295,8 @@ export default function ChapterReader({
     }
   }
 
-  const changeTextScale = (change: number) => {
-    const nextScale = normalizeBookTextScale(textScale + change)
+  const setReaderTextScale = (value: number) => {
+    const nextScale = normalizeBookTextScale(value)
     try {
       window.localStorage.setItem(TEXT_SCALE_STORAGE_KEY, String(nextScale))
       window.dispatchEvent(new Event(TEXT_SCALE_CHANGE_EVENT))
@@ -327,7 +316,16 @@ export default function ChapterReader({
   }
 
   return (
-    <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', overflow: 'hidden' }}>
+    <>
+      <BookReaderSettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        readerFont={readerFont}
+        onReaderFontChange={selectReaderFont}
+        textScale={textScale}
+        onTextScaleChange={setReaderTextScale}
+      />
+      <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', overflow: 'hidden' }}>
       <Box sx={{ px: { xs: 2.5, md: 5 }, py: { xs: 3, md: 4 }, bgcolor: '#0e2e1f' }}>
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'flex-start' }, gap: 2.5 }}>
           <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
@@ -340,15 +338,6 @@ export default function ChapterReader({
           </Box>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 1, alignSelf: { xs: 'center', sm: 'flex-start' } }}>
-            {isAdmin && (
-              <Button
-                onClick={() => setEditingChapter((current) => !current)}
-                startIcon={<Edit sx={{ fontSize: 17 }} />}
-                sx={{ height: 38, color: editingChapter ? '#0e2e1f' : '#fff', bgcolor: editingChapter ? '#d4a843' : 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: '8px', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: editingChapter ? '#d4a843' : 'rgba(255,255,255,0.16)' } }}
-              >
-                {editingChapter ? 'Editing chapter' : 'Edit chapter'}
-              </Button>
-            )}
             <ButtonGroup
               aria-label="Reading view"
               sx={{
@@ -376,70 +365,19 @@ export default function ChapterReader({
               </Button>
             </ButtonGroup>
 
-            <Select
-              size="small"
-              value={readerFont}
-              onChange={(event) => selectReaderFont(event.target.value)}
-              inputProps={{ 'aria-label': 'Book font' }}
-              sx={{
-                height: 38,
-                minWidth: 118,
-                color: '#fff',
-                bgcolor: 'rgba(255,255,255,0.08)',
-                borderRadius: '8px',
-                fontFamily: 'Jost, sans-serif',
-                fontSize: 13,
-                '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.25)' },
-                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.45)' },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#d4a843' },
-                '& .MuiSelect-icon': { color: '#fff' },
-              }}
+            <Button
+              onClick={() => setSettingsOpen(true)}
+              startIcon={<Settings sx={{ fontSize: 17 }} />}
+              sx={{ height: 38, color: '#fff', bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: '8px', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: 'rgba(255,255,255,0.16)' } }}
             >
-              <MenuItem value="naskh">Naskh</MenuItem>
-              <MenuItem value="sans">Modern</MenuItem>
-              <MenuItem value="amiri">Classic</MenuItem>
-            </Select>
+              Settings
+            </Button>
 
-            <Box
-              role="group"
-              aria-label="Book text size"
-              sx={{ display: 'flex', alignItems: 'center', height: 38, border: '1px solid rgba(255,255,255,0.25)', borderRadius: '8px', bgcolor: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}
-            >
-              <IconButton
-                size="small"
-                aria-label="Decrease book text size"
-                disabled={textScale <= MIN_BOOK_TEXT_SCALE}
-                onClick={() => changeTextScale(-BOOK_TEXT_SCALE_STEP)}
-                sx={{ width: 38, height: 38, borderRadius: 0, color: '#fff', '&.Mui-disabled': { color: 'rgba(255,255,255,0.3)' }, '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
-              >
-                <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700 }}>A−</Typography>
-              </IconButton>
-              <Typography aria-live="polite" sx={{ minWidth: 44, px: 0.75, color: '#fff', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 600, textAlign: 'center', borderInline: '1px solid rgba(255,255,255,0.18)' }}>
-                {Math.round(textScale * 100)}%
-              </Typography>
-              <IconButton
-                size="small"
-                aria-label="Increase book text size"
-                disabled={textScale >= MAX_BOOK_TEXT_SCALE}
-                onClick={() => changeTextScale(BOOK_TEXT_SCALE_STEP)}
-                sx={{ width: 38, height: 38, borderRadius: 0, color: '#fff', '&.Mui-disabled': { color: 'rgba(255,255,255,0.3)' }, '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
-              >
-                <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: 16, fontWeight: 700 }}>A+</Typography>
-              </IconButton>
-            </Box>
           </Box>
         </Box>
       </Box>
 
-      {editingChapter ? (
-        <InlineChapterAdminEditor
-          chapterId={chapterId}
-          chapterSlug={chapterSlug}
-          content={readerContent}
-          onClose={() => setEditingChapter(false)}
-          onSaved={setReaderContent}
-        />
-      ) : view === 'lines' ? (
+      {view === 'lines' ? (
         <Box sx={{ px: { xs: 2.5, md: 6 }, py: { xs: 3, md: 5 } }}>
           {paragraphs.map((paragraph, paragraphIndex) => (
             <Box key={paragraphIndex} sx={{ '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
@@ -447,13 +385,23 @@ export default function ChapterReader({
                 const sentenceIndex = blockIndexByBlock.get(block) ?? blockIndex
                 const sentenceBookmarked = isBookmarkedSentence(sentenceIndex)
                 return (
-                <Box key={sentenceIndex} id={`sentence-${sentenceIndex}`} sx={{ position: 'relative', py: 2.5, scrollMarginTop: '96px' }}>
+                <Box
+                  key={sentenceIndex}
+                  id={`sentence-${sentenceIndex}`}
+                  sx={{
+                    position: 'relative',
+                    py: 2.5,
+                    scrollMarginTop: '96px',
+                    '&:hover .sentence-bookmark, &:focus-within .sentence-bookmark': { opacity: 1, pointerEvents: 'auto' },
+                  }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                     <IconButton
+                      className="sentence-bookmark"
                       onClick={() => bookmarkSentence(block, sentenceIndex)}
                       aria-label={sentenceBookmarked ? 'Sentence bookmarked' : 'Bookmark this sentence'}
                       title={sentenceBookmarked ? 'Sentence bookmarked' : 'Bookmark this sentence'}
-                      sx={{ mt: 0.5, flexShrink: 0, color: sentenceBookmarked ? 'var(--awm-gold)' : 'var(--awm-muted-light)', bgcolor: sentenceBookmarked ? 'color-mix(in srgb, var(--awm-gold) 12%, transparent)' : 'transparent', '&:hover': { color: 'var(--awm-gold)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)' } }}
+                      sx={{ mt: 0.5, flexShrink: 0, opacity: 0, pointerEvents: 'none', transition: 'opacity 150ms ease', color: sentenceBookmarked ? 'var(--awm-gold)' : 'var(--awm-muted-light)', bgcolor: sentenceBookmarked ? 'color-mix(in srgb, var(--awm-gold) 12%, transparent)' : 'transparent', '&:hover': { color: 'var(--awm-gold)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)' } }}
                     >
                       {sentenceBookmarked ? <Bookmark /> : <BookmarkBorder />}
                     </IconButton>
@@ -475,7 +423,7 @@ export default function ChapterReader({
         </Box>
       ) : (
         <Box sx={{ px: { xs: 2.5, md: 7 }, py: { xs: 4, md: 7 }, background: 'var(--awm-white)' }}>
-          <Box lang="ar" dir="rtl" sx={{ maxWidth: 720, mx: 'auto', fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 28 * textScale }, fontWeight: 500, lineHeight: 2.05, color: 'var(--awm-bark)', textAlign: 'justify', textAlignLast: 'right', textJustify: 'inter-word' }}>
+          <Box lang="ar" dir="rtl" sx={{ maxWidth: 1120, mx: 'auto', fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 28 * textScale }, fontWeight: 500, lineHeight: 2.05, color: 'var(--awm-bark)', textAlign: 'justify', textAlignLast: 'right', textJustify: 'inter-word' }}>
             {paragraphs.map((paragraph, paragraphIndex) => (
               <Box component="p" key={paragraphIndex} sx={{ m: 0, '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
                 {paragraph.map((block, blockIndex) => (
@@ -488,6 +436,7 @@ export default function ChapterReader({
           </Box>
         </Box>
       )}
-    </Paper>
+      </Paper>
+    </>
   )
 }

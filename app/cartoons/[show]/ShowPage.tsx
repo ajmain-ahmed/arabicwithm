@@ -315,6 +315,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                         title={ep.title}
                         level={ep.level}
                         tags={ep.tags}
+                        showTags={false}
                         description={ep.description}
                         imageFit="natural"
                         compactMobileRow

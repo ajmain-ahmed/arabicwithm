@@ -31,7 +31,7 @@ function ExploreVideo({
   const [currentTime, setCurrentTime] = useState(0)
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
-  const [soundMuted, setSoundMuted] = useState(false)
+  const [soundMuted, setSoundMuted] = useState(true)
   const source = sources.find((candidate) => candidate.provider === selectedProvider) ?? sources[0]
   const isYouTube = source?.provider === 'youtube'
   const {
@@ -49,7 +49,7 @@ function ExploreVideo({
     active && isYouTube ? source.id : undefined,
     setCurrentTime,
     undefined,
-    { autoplay: active, muted: false, onEnded }
+    { autoplay: active, muted: true, onEnded }
   )
 
   useEffect(() => {
@@ -193,7 +193,7 @@ function ExploreVideo({
           display: { xs: 'none', md: 'flex' },
           minWidth: 0,
           height: '100%',
-          maxHeight: 'calc(100dvh - 48px)',
+          maxHeight: 'calc(100dvh - 64px)',
           flexDirection: 'column',
           overflow: 'hidden',
           border: '1px solid rgba(44,26,14,0.08)',
@@ -416,7 +416,7 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
   }, [orderedItems])
 
   if (orderedItems == null) {
-    return <Box component="main" sx={{ height: { xs: 'calc(100dvh - 56px)', md: '100dvh' }, bgcolor: 'var(--awm-cream-light)' }} />
+    return <Box component="main" sx={{ height: { xs: 'calc(100dvh - 112px)', md: 'calc(100dvh - 64px)' }, bgcolor: 'var(--awm-cream-light)' }} />
   }
 
   if (orderedItems.length === 0) {
@@ -432,7 +432,7 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
       ref={feedRef}
       component="main"
       sx={{
-        height: { xs: 'calc(100dvh - 56px)', md: '100dvh' },
+        height: { xs: 'calc(100dvh - 112px)', md: 'calc(100dvh - 64px)' },
         overflowY: 'auto',
         scrollSnapType: 'y mandatory',
         overscrollBehaviorY: 'contain',

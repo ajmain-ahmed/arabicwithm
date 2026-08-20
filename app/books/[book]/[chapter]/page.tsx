@@ -50,7 +50,7 @@ export default async function ChapterPage({ params }: { params: Promise<{ book: 
   return (
     <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 2.5, md: 5 } }}>
       <ReadingProgress bookSlug={book.slug} chapterSlug={chapter.slug} />
-      <Container maxWidth="md">
+      <Container maxWidth="xl">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>
           <Link href={`/books/${encodeURIComponent(book.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
             <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', '&:hover': { color: '#b8860b' } }}>
@@ -62,7 +62,7 @@ export default async function ChapterPage({ params }: { params: Promise<{ book: 
           </Typography>
         </Box>
 
-        <ChapterReader chapterId={chapter.id} bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} />
+        <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} />
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr auto 1fr' }, gap: 1.5, alignItems: 'center', mt: 3 }}>
           <Box>
