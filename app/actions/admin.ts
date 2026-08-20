@@ -6,6 +6,13 @@ import { revalidatePath, updateTag } from "next/cache"
 import { serviceClient } from "@/app/lib/supabase"
 import { parseJsonb } from "@/app/lib/jsonb"
 import { guardAdmin } from "@/app/actions/auth"
+import {
+  getYouTubeThumbnailUrl,
+  normalizeFacebookId,
+  normalizeInstagramId,
+  normalizeTikTokId,
+  normalizeYouTubeId,
+} from "@/app/lib/cartoons"
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -29,6 +36,9 @@ export type EpisodeRow = {
   tags: string[]
   description: string | null
   youtube_id: string | null
+  instagram_id: string | null
+  tiktok_id: string | null
+  facebook_id: string | null
   cover: string | null
   created_at: string | null
 }
@@ -40,6 +50,60 @@ export type EpisodeWithTranscript = EpisodeRow & {
 export type ShowInput = Omit<ShowRow, "id" | "cover">
 export type EpisodeInput = Omit<EpisodeRow, "id" | "created_at" | "cover"> & {
   transcript?: Record<string, unknown> | unknown[] | null
+}
+
+async function fetchOEmbedThumbnail(endpoint: string): Promise<string | null> {
+  try {
+    const response = await fetch(endpoint, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(4500),
+    })
+    if (!response.ok) return null
+    const data = await response.json() as { thumbnail_url?: unknown }
+    return typeof data.thumbnail_url === "string" && /^https:\/\//i.test(data.thumbnail_url)
+      ? data.thumbnail_url
+      : null
+  } catch {
+    return null
+  }
+}
+
+async function resolveEpisodeThumbnail(input: Partial<EpisodeInput>): Promise<string | null> {
+  const youtubeThumbnail = getYouTubeThumbnailUrl(input.youtube_id)
+  if (youtubeThumbnail) return youtubeThumbnail
+
+  const tiktokId = normalizeTikTokId(input.tiktok_id)
+  if (tiktokId) {
+    const original = input.tiktok_id?.trim()
+    const publicUrl = original && /^https?:\/\//i.test(original)
+      ? original
+      : `https://www.tiktok.com/@video/video/${tiktokId}`
+    const thumbnail = await fetchOEmbedThumbnail(
+      `https://www.tiktok.com/oembed?url=${encodeURIComponent(publicUrl)}`
+    )
+    if (thumbnail) return thumbnail
+  }
+
+  const instagramId = normalizeInstagramId(input.instagram_id)
+  if (instagramId) {
+    const publicUrl = `https://www.instagram.com/reel/${instagramId}/`
+    const thumbnail = await fetchOEmbedThumbnail(
+      `https://www.instagram.com/oembed/?url=${encodeURIComponent(publicUrl)}`
+    )
+    if (thumbnail) return thumbnail
+  }
+
+  const facebookId = normalizeFacebookId(input.facebook_id)
+  if (facebookId) {
+    const publicUrl = /^\d+$/.test(facebookId)
+      ? `https://www.facebook.com/watch/?v=${facebookId}`
+      : facebookId
+    return fetchOEmbedThumbnail(
+      `https://www.facebook.com/plugins/video/oembed.json/?url=${encodeURIComponent(publicUrl)}`
+    )
+  }
+
+  return null
 }
 
 /* ── Shows ─────────────────────────────────────────────────────────── */
@@ -205,6 +269,8 @@ export async function fetchEpisodeForAdmin(
 export async function createEpisode(input: EpisodeInput): Promise<string> {
   await guardAdmin()
 
+  const cover = await resolveEpisodeThumbnail(input)
+
   const { data, error } = await serviceClient
     .from("episodes")
     .insert({
@@ -214,7 +280,11 @@ export async function createEpisode(input: EpisodeInput): Promise<string> {
       level: input.level,
       tags: input.tags,
       description: input.description,
-      youtube_id: input.youtube_id,
+      youtube_id: normalizeYouTubeId(input.youtube_id) ?? null,
+      instagram_id: normalizeInstagramId(input.instagram_id) ?? null,
+      tiktok_id: normalizeTikTokId(input.tiktok_id) ?? null,
+      facebook_id: normalizeFacebookId(input.facebook_id) ?? null,
+      cover,
       transcript: (input.transcript ?? []) as never,
     } as never)
     .select("id")
@@ -243,7 +313,18 @@ export async function updateEpisode(
   if (input.level !== undefined) payload.level = input.level
   if (input.tags !== undefined) payload.tags = input.tags
   if (input.description !== undefined) payload.description = input.description
-  if (input.youtube_id !== undefined) payload.youtube_id = input.youtube_id
+  if (input.youtube_id !== undefined) payload.youtube_id = normalizeYouTubeId(input.youtube_id) ?? null
+  if (input.instagram_id !== undefined) payload.instagram_id = normalizeInstagramId(input.instagram_id) ?? null
+  if (input.tiktok_id !== undefined) payload.tiktok_id = normalizeTikTokId(input.tiktok_id) ?? null
+  if (input.facebook_id !== undefined) payload.facebook_id = normalizeFacebookId(input.facebook_id) ?? null
+  if (
+    input.youtube_id !== undefined ||
+    input.instagram_id !== undefined ||
+    input.tiktok_id !== undefined ||
+    input.facebook_id !== undefined
+  ) {
+    payload.cover = await resolveEpisodeThumbnail(input)
+  }
   if (input.transcript !== undefined) payload.transcript = input.transcript
 
   const { error } = await serviceClient
@@ -766,6 +847,9 @@ function mapEpisodeRow(row: Record<string, unknown>): EpisodeRow {
     tags: Array.isArray(row.tags) ? row.tags.map((t) => String(t)) : [],
     description: toStringOrNull(row.description),
     youtube_id: toStringOrNull(row.youtube_id),
+    instagram_id: toStringOrNull(row.instagram_id),
+    tiktok_id: toStringOrNull(row.tiktok_id),
+    facebook_id: toStringOrNull(row.facebook_id),
     cover: toStringOrNull(row.cover),
     created_at: toStringOrNull(row.created_at),
   }

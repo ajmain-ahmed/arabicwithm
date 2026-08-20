@@ -196,7 +196,7 @@ export default function ChapterReader({
   }
 
   return (
-    <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: '#fff', overflow: 'hidden' }}>
+    <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', overflow: 'hidden' }}>
       <Box sx={{ px: { xs: 2.5, md: 5 }, py: { xs: 3, md: 4 }, bgcolor: '#0e2e1f' }}>
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'flex-start' }, gap: 2.5 }}>
           <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
@@ -297,11 +297,11 @@ export default function ChapterReader({
             <Box key={paragraphIndex} sx={{ '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
               {paragraph.map((block, blockIndex) => (
                 <Box key={blockIndex} sx={{ py: 2.5 }}>
-                  <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 29 * textScale }, fontWeight: 500, lineHeight: 1.9, color: '#2c1a0e', textAlign: 'right' }}>
+                  <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 29 * textScale }, fontWeight: 500, lineHeight: 1.9, color: 'var(--awm-bark)', textAlign: 'right' }}>
                     <ArabicTokens tokens={block.tokens} punctuation={block.punctuation} />
                   </Typography>
                   {block.translation && (
-                    <Typography sx={{ mt: 1, color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: { xs: 14 * textScale, md: 15 * textScale }, lineHeight: 1.7 }}>
+                    <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 14 * textScale, md: 15 * textScale }, lineHeight: 1.7 }}>
                       {block.translation}
                     </Typography>
                   )}
@@ -312,8 +312,8 @@ export default function ChapterReader({
           ))}
         </Box>
       ) : (
-        <Box sx={{ px: { xs: 2.5, md: 7 }, py: { xs: 4, md: 7 }, background: '#fffdf8' }}>
-          <Box lang="ar" dir="rtl" sx={{ maxWidth: 720, mx: 'auto', fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 28 * textScale }, fontWeight: 500, lineHeight: 2.05, color: '#2c1a0e', textAlign: 'justify', textAlignLast: 'right', textJustify: 'inter-word' }}>
+        <Box sx={{ px: { xs: 2.5, md: 7 }, py: { xs: 4, md: 7 }, background: 'var(--awm-white)' }}>
+          <Box lang="ar" dir="rtl" sx={{ maxWidth: 720, mx: 'auto', fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 28 * textScale }, fontWeight: 500, lineHeight: 2.05, color: 'var(--awm-bark)', textAlign: 'justify', textAlignLast: 'right', textJustify: 'inter-word' }}>
             {paragraphs.map((paragraph, paragraphIndex) => (
               <Box component="p" key={paragraphIndex} sx={{ m: 0, '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
                 {paragraph.map((block, blockIndex) => (

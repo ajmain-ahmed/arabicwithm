@@ -5,11 +5,11 @@ import { Box, Typography, Chip, Paper } from '@mui/material'
 import Link from 'next/link'
 
 /* ── Palette ── */
-const BARK = '#2c1a0e'
-const GOLD = '#b8860b'
-const WARM_WHITE = '#fffaf0'
-const MUTED = '#7a6e65'
-const LABEL = '#9e8a7a'
+const BARK = 'var(--awm-bark)'
+const GOLD = 'var(--awm-gold)'
+const WARM_WHITE = 'var(--awm-cream-light)'
+const MUTED = 'var(--awm-muted)'
+const LABEL = 'var(--awm-muted-light)'
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   'A1-A2': '#6b8f5e',

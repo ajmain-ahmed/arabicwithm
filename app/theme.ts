@@ -209,4 +209,38 @@ export const awmTheme = responsiveFontSizes(baseTheme, {
   variants: ["h1", "h2", "h3", "h4", "h5", "h6"],
 });
 
+export type AwmColorMode = "light" | "dark";
+
+export function createAwmTheme(mode: AwmColorMode) {
+  if (mode === "light") return awmTheme;
+
+  return createTheme(awmTheme, {
+    palette: {
+      mode: "dark",
+      primary: {
+        main: "#e1b957",
+        light: "#f0cf7a",
+        dark: "#b78b2d",
+        contrastText: "#101713",
+      },
+      secondary: {
+        main: "#9bd5b5",
+        light: "#c7ead6",
+        dark: "#5c9878",
+        contrastText: "#101713",
+      },
+      background: {
+        default: "#101713",
+        paper: "#18211c",
+      },
+      text: {
+        primary: "#f4eadb",
+        secondary: "#c5b9ae",
+      },
+      divider: "rgba(240, 207, 122, 0.18)",
+      awm: awmTokens.palette,
+    },
+  });
+}
+
 export type AwmTheme = typeof awmTheme;

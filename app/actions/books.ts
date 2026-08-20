@@ -3,6 +3,8 @@
 import { unstable_cache } from "next/cache"
 import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
 import { extractChapterTeaser } from "@/app/lib/bookChapterTeaser"
+import { stripDiacritics } from "@/app/lib/arabic"
+import type { CartoonWordEntry } from "@/app/lib/cartoons"
 
 export interface PublicBook {
   id: string
@@ -44,6 +46,25 @@ export interface PublicBookBlock {
 
 export interface PublicChapterWithContent extends PublicChapter {
   content: PublicBookBlock[]
+}
+
+export interface ExploreBookBlock {
+  words: CartoonWordEntry[]
+  translation: string
+  punctuation?: string
+}
+
+export interface ExploreBookPage {
+  id: string
+  bookSlug: string
+  bookTitle: string
+  chapterSlug: string
+  chapterTitle: string
+  chapterNumber: number
+  pageNumber: number
+  cover?: string
+  level: string
+  blocks: ExploreBookBlock[]
 }
 
 function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook {
@@ -185,5 +206,96 @@ export const fetchChapterForPublic = unstable_cache(
     }
   },
   ["books", "public", "chapter", "cartoon-tooltip-v1", "book-punctuation-v1"],
+  { revalidate: 300, tags: ["books-public"] }
+)
+
+const EXPLORE_BLOCKS_PER_PAGE = 5
+
+export const fetchBookPagesForExplorePublic = unstable_cache(
+  async (): Promise<ExploreBookPage[]> => {
+    if (!hasServiceClientConfig()) return []
+
+    const [{ data: books, error: booksError }, { data: chapters, error: chaptersError }] = await Promise.all([
+      serviceClient.from("books").select("id, slug, title, cover, level"),
+      serviceClient.from("chapters").select("id, book_id, slug, title, chapter_number, content"),
+    ])
+
+    if (booksError) throw new Error(booksError.message)
+    if (chaptersError) throw new Error(chaptersError.message)
+
+    const booksById = new Map(
+      ((books ?? []) as Record<string, unknown>[]).map((book) => [
+        String(book.id),
+        {
+          slug: String(book.slug),
+          title: String(book.title),
+          cover: book.cover ? String(book.cover) : undefined,
+          level: String(book.level ?? ""),
+        },
+      ])
+    )
+
+    return ((chapters ?? []) as Record<string, unknown>[]).flatMap((chapter) => {
+      const book = booksById.get(String(chapter.book_id))
+      if (!book) return []
+
+      const rawBlocks = Array.isArray(chapter.content) ? chapter.content : []
+      const blocks: ExploreBookBlock[] = rawBlocks.flatMap((rawBlock) => {
+        const block = rawBlock && typeof rawBlock === "object" && !Array.isArray(rawBlock)
+          ? rawBlock as Record<string, unknown>
+          : null
+        if (!block) return []
+
+        const words: CartoonWordEntry[] = (Array.isArray(block.tokens) ? block.tokens : []).flatMap((rawToken) => {
+          const token = rawToken && typeof rawToken === "object" && !Array.isArray(rawToken)
+            ? rawToken as Record<string, unknown>
+            : null
+          if (!token) return []
+          const core = typeof token.arabic === "string" ? token.arabic : ""
+          if (!core) return []
+          const arabic = `${typeof token.prefix === "string" ? token.prefix : ""}${core}${typeof token.suffix === "string" ? token.suffix : ""}`
+          const lemma = typeof token.headword === "string" ? token.headword.trim() : ""
+          return [{
+            arabic,
+            plain: stripDiacritics(arabic),
+            transliteration: typeof token.transliteration === "string" ? token.transliteration : "",
+            english: typeof token.english === "string" ? token.english : "",
+            cefr: typeof token.cefr === "string" ? token.cefr.toLowerCase() : undefined,
+            pos: typeof token.pos === "string" ? token.pos : undefined,
+            lemma: lemma || core,
+            entry_type: token.entry_type === "phrase" ? "phrase" : "word",
+          }]
+        })
+
+        const translation = typeof block.translation === "string" ? block.translation : ""
+        if (words.length === 0 && !translation) return []
+        return [{
+          words,
+          translation,
+          punctuation: typeof block.punctuation === "string" ? block.punctuation : undefined,
+        }]
+      })
+
+      const pages: ExploreBookPage[] = []
+      for (let start = 0; start < blocks.length; start += EXPLORE_BLOCKS_PER_PAGE) {
+        const pageBlocks = blocks.slice(start, start + EXPLORE_BLOCKS_PER_PAGE)
+        if (pageBlocks.length === 0) continue
+        pages.push({
+          id: `${String(chapter.id)}-${start}`,
+          bookSlug: book.slug,
+          bookTitle: book.title,
+          chapterSlug: String(chapter.slug),
+          chapterTitle: String(chapter.title),
+          chapterNumber: Number(chapter.chapter_number),
+          pageNumber: Math.floor(start / EXPLORE_BLOCKS_PER_PAGE) + 1,
+          cover: book.cover,
+          level: book.level,
+          blocks: pageBlocks,
+        })
+      }
+      return pages
+    })
+  },
+  ["books", "public", "explore-pages-v1"],
   { revalidate: 300, tags: ["books-public"] }
 )

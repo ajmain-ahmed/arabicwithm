@@ -1,5 +1,7 @@
 "use server"
 
+import { existsSync } from "node:fs"
+import path from "node:path"
 import { unstable_cache } from "next/cache"
 import { serviceClient, hasServiceClientConfig } from "@/app/lib/supabase"
 import {
@@ -10,14 +12,51 @@ import {
   type VocabListItem,
   type GrammarPoint,
   type NewTranscript,
+  type ExploreEpisode,
   isNewTranscript,
   normalizeNewTranscript,
   getShowCoverPath,
   getEpisodeCoverPath,
+  getYouTubeThumbnailUrl,
+  normalizeYouTubeId,
+  normalizeInstagramId,
+  normalizeTikTokId,
+  normalizeFacebookId,
+  getEpisodeVideoSources,
+  canonicalizeCartoonCategory,
 } from "@/app/lib/cartoons"
 import { type ShowRow } from "@/app/actions/admin"
 import { guardAdmin } from "@/app/actions/auth"
 import { stripDiacritics } from "@/app/lib/arabic"
+
+function uniqueTags(values: Array<string | null | undefined>): string[] {
+  const tags = new Map<string, string>()
+  for (const value of values) {
+    const tag = canonicalizeCartoonCategory(value)
+    if (!tag) continue
+    tags.set(tag.toLowerCase(), tag)
+  }
+  return Array.from(tags.values())
+}
+
+function episodeCover(showSlug: string, episodeSlug: string, youtubeId?: string, storedCover?: string): string | undefined {
+  const preferredCover = getEpisodeCoverPath(showSlug, episodeSlug)
+  const baseCover = preferredCover.replace(/\.avif$/, "")
+  for (const extension of ["avif", "webp", "png", "jpg", "jpeg"]) {
+    const localCover = `${baseCover}.${extension}`
+    const absoluteCover = path.join(process.cwd(), "public", localCover.replace(/^\//, ""))
+    if (existsSync(absoluteCover)) return localCover
+  }
+  return getYouTubeThumbnailUrl(youtubeId) ?? (/^https:\/\//i.test(storedCover ?? "") ? storedCover : undefined)
+}
+
+function isMissingSocialVideoColumn(error: { code?: string; message?: string } | null): boolean {
+  return Boolean(
+    error &&
+    (error.code === "42703" || error.code === "PGRST204") &&
+    /(?:instagram_id|tiktok_id|facebook_id)/i.test(error.message ?? "")
+  )
+}
 
 /* ── Shows ─────────────────────────────────────────────────────────── */
 
@@ -41,7 +80,7 @@ export const fetchShowsForPublic = unstable_cache(
     // Count episodes per show in one query.
     const { data: episodes, error: epError } = await serviceClient
       .from("episodes")
-      .select("show_id")
+      .select("show_id, tags")
 
     if (epError) {
       console.error("[fetchShowsForPublic] episodes error:", epError.message)
@@ -49,9 +88,12 @@ export const fetchShowsForPublic = unstable_cache(
     }
 
     const counts = new Map<string, number>()
+    const tagsByShow = new Map<string, string[]>()
     for (const ep of episodes ?? []) {
       const id = String(ep.show_id)
       counts.set(id, (counts.get(id) ?? 0) + 1)
+      const episodeTags = Array.isArray(ep.tags) ? ep.tags.map((tag) => String(tag)) : []
+      tagsByShow.set(id, [...(tagsByShow.get(id) ?? []), ...episodeTags])
     }
 
     return (shows ?? []).map((row) => ({
@@ -63,6 +105,10 @@ export const fetchShowsForPublic = unstable_cache(
       cover: getShowCoverPath(String(row.slug)),
       level: String(row.level ?? ""),
       category: row.category ? String(row.category) : undefined,
+      tags: uniqueTags([
+        row.category ? String(row.category) : undefined,
+        ...(tagsByShow.get(String(row.id)) ?? []),
+      ]),
       episodeCount: counts.get(String(row.id)) ?? 0,
     }))
   },
@@ -111,9 +157,9 @@ export const fetchShowBySlugPublic = unstable_cache(
 
     if (error || !data) return null
 
-    const { count } = await serviceClient
+    const { data: episodes } = await serviceClient
       .from("episodes")
-      .select("id", { count: "exact", head: true })
+      .select("id, tags")
       .eq("show_id", data.id)
 
     return {
@@ -125,7 +171,13 @@ export const fetchShowBySlugPublic = unstable_cache(
       cover: getShowCoverPath(String(data.slug)),
       level: String(data.level ?? ""),
       category: data.category ? String(data.category) : undefined,
-      episodeCount: count ?? 0,
+      tags: uniqueTags([
+        data.category ? String(data.category) : undefined,
+        ...(episodes ?? []).flatMap((episode) =>
+          Array.isArray(episode.tags) ? episode.tags.map((tag) => String(tag)) : []
+        ),
+      ]),
+      episodeCount: episodes?.length ?? 0,
     }
   },
   ["cartoons", "show"],
@@ -153,11 +205,21 @@ export const fetchEpisodesForShowPublic = unstable_cache(
       return []
     }
 
-    const { data, error } = await serviceClient
+    const withSocial = await serviceClient
       .from("episodes")
-      .select("id, slug, title, level, tags, description, youtube_id")
+      .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover")
       .eq("show_id", show.id)
       .order("created_at", { ascending: true })
+
+    const fallback = isMissingSocialVideoColumn(withSocial.error)
+      ? await serviceClient
+          .from("episodes")
+          .select("id, slug, title, level, tags, description, youtube_id, cover")
+          .eq("show_id", show.id)
+          .order("created_at", { ascending: true })
+      : null
+    const data = (fallback?.data ?? withSocial.data) as unknown as Record<string, unknown>[] | null
+    const error = fallback ? fallback.error : withSocial.error
 
     if (error) {
       console.error("[fetchEpisodesForShowPublic] error:", error.message)
@@ -192,13 +254,25 @@ export const fetchEpisodeForPublic = unstable_cache(
       return null
     }
 
-    const { data, error } = await serviceClient
+    const withSocial = await serviceClient
       .from("episodes")
-      .select("id, slug, title, level, tags, description, youtube_id, transcript")
+      .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript")
       .eq("show_id", show.id)
       .eq("slug", episodeSlug)
       .limit(1)
       .single()
+
+    const fallback = isMissingSocialVideoColumn(withSocial.error)
+      ? await serviceClient
+          .from("episodes")
+          .select("id, slug, title, level, tags, description, youtube_id, cover, transcript")
+          .eq("show_id", show.id)
+          .eq("slug", episodeSlug)
+          .limit(1)
+          .single()
+      : null
+    const data = (fallback?.data ?? withSocial.data) as unknown as Record<string, unknown> | null
+    const error = fallback ? fallback.error : withSocial.error
 
     if (error || !data) {
       console.error("[fetchEpisodeForPublic] error:", error?.message)
@@ -318,12 +392,94 @@ export const fetchEpisodeForPublic = unstable_cache(
   { revalidate: 300, tags: ["cartoons-public"] }
 )
 
+export const fetchEpisodesForExplorePublic = unstable_cache(
+  async (): Promise<ExploreEpisode[]> => {
+    if (!hasServiceClientConfig()) {
+      console.warn("[fetchEpisodesForExplorePublic] Supabase service client not configured")
+      return []
+    }
+
+    const [showResult, socialEpisodeResult] = await Promise.all([
+      serviceClient.from("shows").select("id, slug, title"),
+      serviceClient
+        .from("episodes")
+        .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript")
+        .order("created_at", { ascending: true }),
+    ])
+
+    const legacyEpisodeResult = isMissingSocialVideoColumn(socialEpisodeResult.error)
+      ? await serviceClient
+          .from("episodes")
+          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, transcript")
+          .order("created_at", { ascending: true })
+      : null
+    const shows = showResult.data
+    const showError = showResult.error
+    const episodes = (legacyEpisodeResult?.data ?? socialEpisodeResult.data) as unknown as Record<string, unknown>[] | null
+    const episodeError = legacyEpisodeResult ? legacyEpisodeResult.error : socialEpisodeResult.error
+
+    if (showError || episodeError) {
+      const message = showError?.message ?? episodeError?.message ?? "Unable to load Explore episodes"
+      console.error("[fetchEpisodesForExplorePublic] error:", message)
+      throw new Error(message)
+    }
+
+    const showsById = new Map(
+      (shows ?? []).map((show) => [
+        String(show.id),
+        { slug: String(show.slug), title: String(show.title) },
+      ])
+    )
+
+    return (episodes ?? []).flatMap((row) => {
+      const show = showsById.get(String(row.show_id))
+      const meta = mapEpisodeRow(row, show?.slug)
+      if (!show || getEpisodeVideoSources(meta).length === 0) return []
+
+      const transcript = row.transcript as unknown
+      const normalizedBlocks = isNewTranscript(transcript)
+        ? normalizeNewTranscript(transcript).scriptBlocks
+        : Array.isArray((transcript as Record<string, unknown> | null)?.scriptBlocks)
+          ? ((transcript as Record<string, unknown>).scriptBlocks as Record<string, unknown>[]).map((block) => ({
+              timestamp: block.timestamp == null ? null : Number(block.timestamp),
+              title: String(block.title ?? ""),
+              arabicDiacritic: String(block.arabicDiacritic ?? ""),
+              arabicPlain: String(block.arabicPlain ?? ""),
+              english: String(block.english ?? ""),
+              words: [],
+              notes: [],
+            }))
+          : []
+
+      return [{
+        ...meta,
+        showSlug: show.slug,
+        showTitle: show.title,
+        transcriptLines: normalizedBlocks.map((block) => ({
+          timestamp: block.timestamp,
+          arabic: block.arabicDiacritic,
+          arabicPlain: block.arabicPlain,
+          translation: block.english || block.title,
+          words: block.words,
+        })),
+      }]
+    })
+  },
+  ["cartoons", "explore"],
+  { revalidate: 300, tags: ["cartoons-public"] }
+)
+
 function mapEpisodeRow(
   row: Record<string, unknown>,
   showSlug?: string
 ): EpisodeMeta {
   const episodeSlug = String(row.slug)
-  const cover = showSlug != null ? getEpisodeCoverPath(showSlug, episodeSlug) : undefined
+  const youtubeId = normalizeYouTubeId(row.youtube_id ? String(row.youtube_id) : undefined)
+  const instagramId = normalizeInstagramId(row.instagram_id ? String(row.instagram_id) : undefined)
+  const tiktokId = normalizeTikTokId(row.tiktok_id ? String(row.tiktok_id) : undefined)
+  const facebookId = normalizeFacebookId(row.facebook_id ? String(row.facebook_id) : undefined)
+  const storedCover = row.cover ? String(row.cover) : undefined
+  const cover = showSlug != null ? episodeCover(showSlug, episodeSlug, youtubeId, storedCover) : storedCover
 
   return {
     id: String(row.id),
@@ -332,7 +488,10 @@ function mapEpisodeRow(
     level: String(row.level ?? ""),
     tags: Array.isArray(row.tags) ? row.tags.map((t) => String(t)) : [],
     description: row.description ? String(row.description) : undefined,
-    youtubeId: row.youtube_id ? String(row.youtube_id) : undefined,
+    youtubeId,
+    instagramId,
+    tiktokId,
+    facebookId,
     cover,
   }
 }

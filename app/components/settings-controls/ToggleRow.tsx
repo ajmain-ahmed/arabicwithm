@@ -24,8 +24,8 @@ export default function ToggleRow({
       '&:hover': { borderColor: `${activeColor}88`, background: `${activeColor}0d` },
     }}>
       <Box sx={{ pr: 2 }}>
-        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: '#2c1a0e', lineHeight: 1.2 }}>{label}</Typography>
-        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: '#7a6e65', mt: 0.3, lineHeight: 1.4 }}>{description}</Typography>
+        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>{label}</Typography>
+        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)', mt: 0.3, lineHeight: 1.4 }}>{description}</Typography>
       </Box>
       <Box sx={{
         width: 38, height: 22, borderRadius: '999px', flexShrink: 0,
@@ -35,7 +35,7 @@ export default function ToggleRow({
         <Box sx={{
           position: 'absolute', top: '3px', left: enabled ? '19px' : '3px',
           width: 16, height: 16, borderRadius: '50%',
-          background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.22)',
+          background: 'var(--awm-white)', boxShadow: '0 1px 4px rgba(0,0,0,0.22)',
           transition: 'left 0.18s cubic-bezier(0.4,0,0.2,1)',
         }} />
       </Box>

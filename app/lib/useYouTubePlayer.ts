@@ -10,6 +10,8 @@ interface YTPlayer {
   seekTo(seconds: number, allowSeekAhead: boolean): void
   playVideo(): void
   pauseVideo(): void
+  mute(): void
+  unMute(): void
   destroy(): void
 }
 
@@ -24,10 +26,45 @@ declare global {
   }
 }
 
+interface YouTubePlayerOptions {
+  autoplay?: boolean
+  muted?: boolean
+}
+
+let youtubeApiPromise: Promise<void> | null = null
+
+function ensureYouTubeApi(): Promise<void> {
+  if (window.YT?.Player) return Promise.resolve()
+  if (youtubeApiPromise) return youtubeApiPromise
+
+  youtubeApiPromise = new Promise<void>((resolve, reject) => {
+    window.onYouTubeIframeAPIReady = () => {
+      window.__ytApiReady = true
+      resolve()
+    }
+
+    let tag = document.getElementById('youtube-iframe-api') as HTMLScriptElement | null
+    if (!tag) {
+      tag = document.createElement('script')
+      tag.id = 'youtube-iframe-api'
+      tag.src = 'https://www.youtube.com/iframe_api'
+      document.head.appendChild(tag)
+    }
+
+    tag.addEventListener('error', () => {
+      youtubeApiPromise = null
+      reject(new Error('Unable to load the YouTube player API'))
+    }, { once: true })
+  })
+
+  return youtubeApiPromise
+}
+
 export default function useYouTubePlayer(
   videoId: string | undefined,
   onTimeUpdate?: (time: number) => void,
-  startAt?: number
+  startAt?: number,
+  options: YouTubePlayerOptions = {}
 ) {
   const playerRef = useRef<YTPlayer | null>(null)
   const wrapRef = useRef<HTMLDivElement | null>(null)
@@ -36,7 +73,15 @@ export default function useYouTubePlayer(
   const segmentSafetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onTimeUpdateRef = useRef(onTimeUpdate)
   const startAtRef = useRef(startAt)
+  const fallbackHostRef = useRef(false)
+  const fallbackVideoRef = useRef<string | undefined>(undefined)
   const [isReady, setIsReady] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false)
+  const [errorCode, setErrorCode] = useState<number | null>(null)
+  const [retryNonce, setRetryNonce] = useState(0)
+  const autoplay = options.autoplay === true
+  const muted = options.muted === true
 
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
   useEffect(() => { startAtRef.current = startAt }, [startAt])
@@ -45,14 +90,19 @@ export default function useYouTubePlayer(
     const wrap = wrapRef.current
     if (!videoId || !wrap) return
 
+    if (fallbackVideoRef.current !== videoId) {
+      fallbackVideoRef.current = videoId
+      fallbackHostRef.current = false
+    }
+
+    let cancelled = false
+
     const clearWrap = (el: HTMLDivElement) => {
-      while (el.firstChild) {
-        el.removeChild(el.firstChild)
-      }
+      el.replaceChildren()
     }
 
     const initPlayer = () => {
-      if (!wrap) return
+      if (cancelled || !wrap.isConnected || !window.YT?.Player) return
       clearWrap(wrap)
       const inner = document.createElement('div')
       inner.style.width = '100%'
@@ -60,8 +110,10 @@ export default function useYouTubePlayer(
       wrap.appendChild(inner)
       try {
         playerRef.current = new window.YT.Player(inner, {
+          ...(fallbackHostRef.current ? { host: 'https://www.youtube-nocookie.com' } : {}),
           videoId,
           playerVars: {
+            autoplay: autoplay ? 1 : 0,
             rel: 0,
             modestbranding: 1,
             enablejsapi: 1,
@@ -71,6 +123,11 @@ export default function useYouTubePlayer(
           },
           events: {
             onReady: () => {
+              if (cancelled) return
+              setErrorCode(null)
+              setAutoplayBlocked(false)
+              if (muted) playerRef.current?.mute?.()
+              if (autoplay) playerRef.current?.playVideo?.()
               setIsReady(true)
               intervalRef.current = setInterval(() => {
                 const t = playerRef.current?.getCurrentTime?.()
@@ -78,46 +135,55 @@ export default function useYouTubePlayer(
               }, 200)
             },
             onStateChange: (event: { data: number }) => {
+              if (cancelled) return
               if (event.data === window.YT.PlayerState.PLAYING) {
+                setIsPlaying(true)
+                setAutoplayBlocked(false)
                 if (!intervalRef.current)
                   intervalRef.current = setInterval(() => {
                     const t = playerRef.current?.getCurrentTime?.()
                     if (typeof t === 'number') onTimeUpdateRef.current?.(t)
                   }, 200)
               } else {
+                setIsPlaying(false)
                 if (intervalRef.current) clearInterval(intervalRef.current)
                 intervalRef.current = null
               }
             },
-            onError: (e: { data: number }) => console.error('YT Error:', e.data),
+            onError: (e: { data: number }) => {
+              if (cancelled) return
+              setIsPlaying(false)
+              if (e.data === 5 && !fallbackHostRef.current) {
+                fallbackHostRef.current = true
+                setRetryNonce((value) => value + 1)
+                return
+              }
+              setErrorCode(e.data)
+              console.error('YT Error:', e.data)
+            },
+            onAutoplayBlocked: () => {
+              if (cancelled) return
+              setIsPlaying(false)
+              setAutoplayBlocked(true)
+            },
           },
         })
       } catch (e) {
+        setErrorCode(-1)
         console.error('YT init error:', e)
       }
     }
 
-    const loadApi = () => {
-      if (window.YT?.Player || window.__ytApiReady) {
-        initPlayer()
-        return
-      }
-      const prev = window.onYouTubeIframeAPIReady
-      window.onYouTubeIframeAPIReady = () => {
-        window.__ytApiReady = true
-        prev?.()
-        initPlayer()
-      }
-      if (!document.getElementById('youtube-iframe-api')) {
-        const tag = document.createElement('script')
-        tag.id = 'youtube-iframe-api'
-        tag.src = 'https://www.youtube.com/iframe_api'
-        document.body.appendChild(tag)
-      }
-    }
-
-    const timer = setTimeout(loadApi, 50)
+    const timer = setTimeout(() => {
+      void ensureYouTubeApi().then(initPlayer).catch((error: unknown) => {
+        if (!cancelled) {
+          setErrorCode(-1)
+          console.error('YT API error:', error)
+        }
+      })
+    }, 50)
     return () => {
+      cancelled = true
       clearTimeout(timer)
       if (intervalRef.current) clearInterval(intervalRef.current)
       intervalRef.current = null
@@ -125,13 +191,16 @@ export default function useYouTubePlayer(
       segmentPollRef.current = null
       if (segmentSafetyRef.current) clearTimeout(segmentSafetyRef.current)
       segmentSafetyRef.current = null
+      const player = playerRef.current
+      playerRef.current = null
       try {
-        playerRef.current?.destroy?.()
+        player?.destroy?.()
       } catch {}
-      if (wrap) clearWrap(wrap)
+      if (!player && wrap.isConnected) clearWrap(wrap)
       setIsReady(false)
+      setIsPlaying(false)
     }
-  }, [videoId])
+  }, [autoplay, muted, retryNonce, videoId])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {
@@ -178,9 +247,45 @@ export default function useYouTubePlayer(
     playerRef.current?.pauseVideo?.()
   }, [])
 
+  const mute = useCallback(() => {
+    playerRef.current?.mute?.()
+  }, [])
+
+  const unMute = useCallback(() => {
+    playerRef.current?.unMute?.()
+  }, [])
+
+  const playWithSound = useCallback(() => {
+    playerRef.current?.unMute?.()
+    playerRef.current?.playVideo?.()
+    setAutoplayBlocked(false)
+  }, [])
+
   const getCurrentTime = useCallback(() => {
     return playerRef.current?.getCurrentTime?.() ?? 0
   }, [])
 
-  return { wrapRef, seekTo, seekToOnly, playSegment, playVideo, pauseVideo, getCurrentTime, isReady }
+  const retry = useCallback(() => {
+    setErrorCode(null)
+    setAutoplayBlocked(false)
+    setRetryNonce((value) => value + 1)
+  }, [])
+
+  return {
+    wrapRef,
+    seekTo,
+    seekToOnly,
+    playSegment,
+    playVideo,
+    pauseVideo,
+    mute,
+    unMute,
+    playWithSound,
+    getCurrentTime,
+    isReady,
+    isPlaying,
+    autoplayBlocked,
+    errorCode,
+    retry,
+  }
 }

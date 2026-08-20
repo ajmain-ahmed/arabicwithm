@@ -2,6 +2,13 @@ import { describe, it, expect } from 'vitest'
 import {
   canonicalizeCartoonCategory,
   getEpisodeCoverPath,
+  getYouTubeThumbnailUrl,
+  getEpisodeVideoSources,
+  getSocialVideoEmbedUrl,
+  normalizeFacebookId,
+  normalizeInstagramId,
+  normalizeTikTokId,
+  normalizeYouTubeId,
   getShowCoverPath,
   isNewTranscript,
   normalizeNewTranscript,
@@ -187,7 +194,39 @@ describe('cover paths', () => {
   })
 
   it('derives episode cover from show and episode slugs', () => {
-    expect(getEpisodeCoverPath('cotp', 'cotp-1')).toBe('/covers/episodes/cotp/cotp-1.avif')
+  expect(getEpisodeCoverPath('cotp', 'cotp-1')).toBe('/covers/episodes/cotp/cotp-1.avif')
+  })
+})
+
+describe('YouTube media helpers', () => {
+  it('accepts IDs and extracts IDs from common YouTube links', () => {
+    expect(normalizeYouTubeId(' PcstB8t_Dlc ')).toBe('PcstB8t_Dlc')
+    expect(normalizeYouTubeId('https://youtu.be/PcstB8t_Dlc?t=3')).toBe('PcstB8t_Dlc')
+    expect(normalizeYouTubeId('https://www.youtube.com/watch?v=PcstB8t_Dlc')).toBe('PcstB8t_Dlc')
+    expect(normalizeYouTubeId('https://youtube.com/shorts/PcstB8t_Dlc')).toBe('PcstB8t_Dlc')
+  })
+
+  it('builds the matching YouTube thumbnail URL', () => {
+    expect(getYouTubeThumbnailUrl('PcstB8t_Dlc')).toBe('https://i.ytimg.com/vi/PcstB8t_Dlc/hqdefault.jpg')
+  })
+})
+
+describe('social video helpers', () => {
+  it('extracts provider IDs from public video links', () => {
+    expect(normalizeInstagramId('https://www.instagram.com/reel/C8abc_12-/')).toBe('C8abc_12-')
+    expect(normalizeTikTokId('https://www.tiktok.com/@arabic/video/7391234567890123456')).toBe('7391234567890123456')
+    expect(normalizeFacebookId('1234567890')).toBe('1234567890')
+    expect(normalizeFacebookId('https://www.facebook.com/watch/?v=1234567890')).toContain('facebook.com/watch/')
+  })
+
+  it('orders all available inline sources and builds autoplay embed URLs', () => {
+    const sources = getEpisodeVideoSources({
+      instagramId: 'C8abc_12-',
+      tiktokId: '7391234567890123456',
+    })
+    expect(sources.map((source) => source.provider)).toEqual(['instagram', 'tiktok'])
+    expect(getSocialVideoEmbedUrl(sources[0], { autoplay: true })).toContain('autoplay=1')
+    expect(getSocialVideoEmbedUrl(sources[1], { autoplay: true, muted: true })).toContain('muted=1')
   })
 })
 

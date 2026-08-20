@@ -33,10 +33,10 @@ import {
 } from '@mui/icons-material'
 
 /* ── Palette ── */
-const BARK = '#2c1a0e'
-const GOLD = '#b8860b'
-const WARM_WHITE = '#fffaf0'
-const MUTED = '#7a6e65'
+const BARK = 'var(--awm-bark)'
+const GOLD = 'var(--awm-gold)'
+const WARM_WHITE = 'var(--awm-cream-light)'
+const MUTED = 'var(--awm-muted)'
 
 const LEVELS = ['A1-A2', 'A2-B1', 'B1-B2', 'B2-C1']
 
@@ -142,7 +142,7 @@ export default function CartoonsPage({
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
           {/* Breadcrumbs */}
           <Breadcrumbs
-            separator={<NavigateNext sx={{ fontSize: 16, color: '#9e8a7a' }} />}
+            separator={<NavigateNext sx={{ fontSize: 16, color: 'var(--awm-muted-light)' }} />}
             sx={{
               display: { xs: 'none', md: 'flex' },
               mb: { xs: 1, md: 2 },
@@ -151,11 +151,11 @@ export default function CartoonsPage({
           >
             <Typography
               onClick={() => router.push('/')}
-              sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#7a6e65', cursor: 'pointer', '&:hover': { color: GOLD } }}
+              sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: 'var(--awm-muted)', cursor: 'pointer', '&:hover': { color: GOLD } }}
             >
               Home
             </Typography>
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: '#2c1a0e', fontWeight: 600 }}>
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: 'var(--awm-bark)', fontWeight: 600 }}>
               Cartoons
             </Typography>
           </Breadcrumbs>
@@ -342,6 +342,7 @@ export default function CartoonsPage({
                         titleAr={show.titleAr}
                         description={show.description}
                         category={show.category}
+                        tags={show.tags}
 
                         level={show.level}
                         denseMobileTile
@@ -350,7 +351,7 @@ export default function CartoonsPage({
                         overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                         metaItems={[
                           {
-                            icon: <School sx={{ fontSize: 14, color: '#9e8a7a' }} />,
+                            icon: <School sx={{ fontSize: 14, color: 'var(--awm-muted-light)' }} />,
                             label: `${show.episodeCount} ${show.episodeCount === 1 ? 'episode' : 'episodes'}`,
                           },
                         ]}

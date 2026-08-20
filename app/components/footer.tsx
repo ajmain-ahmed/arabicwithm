@@ -4,6 +4,7 @@ import React from 'react'
 import { Box, Container, Grid, IconButton, Typography } from '@mui/material'
 import { Email } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
+import ClientStyles from '@/app/components/ClientStyles'
 
 /* ─────────────────────────────────────────────
    Types & data
@@ -17,10 +18,9 @@ const FOOTER_SECTIONS = (onContactClick?: () => void) => [
     title: 'Explore',
     links: [
       { label: 'Home',     href: '/',         onClick: undefined },
-      { label: 'Cartoons', href: '/cartoons', onClick: undefined },
-      { label: 'Books',    href: '/books',    onClick: undefined },
-      { label: 'Practice', href: '/practice', onClick: undefined },
-      { label: 'Vocabulary', href: '/vocabulary', onClick: undefined },
+      { label: 'Explore',  href: '/explore',  onClick: undefined },
+      { label: 'Watch',    href: '/cartoons', onClick: undefined },
+      { label: 'Read',     href: '/books',    onClick: undefined },
       { label: 'About',    href: '/about',    onClick: undefined },
     ],
   },
@@ -77,7 +77,7 @@ const FOOTER_CSS = `
     font-family: 'Jost', sans-serif;
     font-size: 0.85rem;
     font-weight: 400;
-    color: #7a6e65;
+    color: var(--awm-muted);
     cursor: pointer;
     transition: color 0.2s;
     text-decoration: none;
@@ -87,19 +87,19 @@ const FOOTER_CSS = `
     padding: 0;
     text-align: left;
   }
-  .awm-footer-link:hover { color: #b8860b; }
+  .awm-footer-link:hover { color: var(--awm-gold); }
 
   .awm-legal-link {
     font-family: 'Jost', sans-serif;
     font-size: 0.72rem;
-    color: #767676;
+    color: var(--awm-muted-light);
     cursor: pointer;
     transition: color 0.2s;
     background: none;
     border: none;
     padding: 0;
   }
-  .awm-legal-link:hover { color: #2c1a0e; }
+  .awm-legal-link:hover { color: var(--awm-bark); }
 
   .awm-social-btn {
     transition: transform 0.2s, color 0.2s, border-color 0.2s !important;
@@ -107,7 +107,7 @@ const FOOTER_CSS = `
   .awm-social-btn:hover {
     transform: translateY(-3px);
     border-color: rgba(184,134,11,0.5) !important;
-    color: #b8860b !important;
+    color: var(--awm-gold) !important;
   }
 
   @keyframes shimmer-awm-footer {
@@ -130,8 +130,8 @@ export default function Footer({ onContactClick }: FooterProps) {
   const sections = FOOTER_SECTIONS(onContactClick)
 
   return (
-    <Box component="footer" sx={{ display: { xs: 'none', md: 'block' }, background: '#ffffff', borderTop: '1px solid rgba(184,134,11,0.12)' }}>
-      <style>{FOOTER_CSS}</style>
+    <Box component="footer" sx={{ display: { xs: 'none', md: 'block' }, background: 'var(--awm-white)', borderTop: '1px solid color-mix(in srgb, var(--awm-gold) 18%, transparent)' }}>
+      <ClientStyles id="awm-footer-styles" css={FOOTER_CSS} />
 
       {/* ── main columns ── */}
       <Container maxWidth="xl" sx={{ py: { xs: 7, md: 9 } }}>
@@ -166,7 +166,7 @@ export default function Footer({ onContactClick }: FooterProps) {
               <Typography sx={{
                 fontFamily: 'Jost, sans-serif',
                 fontSize: '0.88rem', fontWeight: 300,
-                color: '#7a6e65', lineHeight: 1.8,
+                color: 'var(--awm-muted)', lineHeight: 1.8,
               }}>
                 Modern Standard Arabic made accessible — through immersive cartoons with interactive subtitles.
               </Typography>
@@ -174,7 +174,7 @@ export default function Footer({ onContactClick }: FooterProps) {
               {/* contact */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Email sx={{ fontSize: 15, color: 'rgba(184,134,11,0.7)' }} />
-                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.83rem', color: '#7a6e65' }}>
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.83rem', color: 'var(--awm-muted)' }}>
                   hello@arabicwithm.com
                 </Typography>
               </Box>
@@ -189,7 +189,7 @@ export default function Footer({ onContactClick }: FooterProps) {
                     size="small"
                     onClick={() => window.open(s.href, '_blank', 'noopener noreferrer')}
                     sx={{
-                      color: '#7a6e65',
+                      color: 'var(--awm-muted)',
                       border: '1px solid rgba(44,26,14,0.12)',
                       borderRadius: '2px',
                       width: 34, height: 34,

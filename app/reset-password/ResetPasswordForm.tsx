@@ -5,12 +5,13 @@ import { Alert, Box, Button, IconButton, TextField, Typography } from '@mui/mate
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase/client'
+import ClientStyles from '@/app/components/ClientStyles'
 
 const PAGE_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@700&family=Jost:wght@300;400;500;600&display=swap');
   :root {
-    --cream: #faf7f2; --bark: #2c1a0e; --forest: #0e2e1f;
-    --gold: #b8860b; --gold-lt: #d4a843; --muted: #7a6e65;
+    --cream: var(--awm-cream-light); --bark: var(--awm-bark); --forest: var(--awm-forest);
+    --gold: var(--awm-gold); --gold-lt: var(--awm-gold-light); --muted: var(--awm-muted);
   }
   .rp-input .MuiFilledInput-root {
     background: rgba(44,26,14,0.04); border-radius: 2px;
@@ -91,7 +92,7 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
 
   return (
     <>
-      <style>{PAGE_CSS}</style>
+      <ClientStyles id="awm-reset-password-styles" css={PAGE_CSS} />
       <Box sx={{
         minHeight: '100vh',
         display: 'flex',
@@ -103,7 +104,7 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
         <Box sx={{
           width: '100%',
           maxWidth: 420,
-          background: '#ffffff',
+          background: 'var(--awm-white)',
           border: '1px solid rgba(184,134,11,0.18)',
           borderRadius: '4px',
           overflow: 'hidden',

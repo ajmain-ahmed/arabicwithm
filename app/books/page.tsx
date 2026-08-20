@@ -14,7 +14,7 @@ export default async function BooksPage() {
   const books = await fetchBooksForPublic()
 
   return (
-    <Box component="main" sx={{ minHeight: '100vh', bgcolor: '#fffaf0', pb: { xs: 5, md: 9 } }}>
+    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pb: { xs: 5, md: 9 } }}>
       <Box
         sx={{
           mt: { xs: '-56px', md: '-64px' },
@@ -39,17 +39,17 @@ export default async function BooksPage() {
 
       <Container maxWidth="lg" sx={{ pt: { xs: 2.5, md: 6 }, px: { xs: 2, sm: 3 } }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: { xs: 1.5, sm: 3 } }}>
-          <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 36 }, fontWeight: 600, color: '#2c1a0e' }}>
+          <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 36 }, fontWeight: 600, color: 'var(--awm-bark)' }}>
             Library
           </Typography>
-          <Typography sx={{ color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: 14 }}>
+          <Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 14 }}>
             {books.length} {books.length === 1 ? 'book' : 'books'}
           </Typography>
         </Box>
 
         {books.length === 0 ? (
-          <Paper elevation={0} sx={{ p: 5, textAlign: 'center', border: '1px solid rgba(44,26,14,0.08)', bgcolor: '#fff' }}>
-            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 24, color: '#2c1a0e' }}>No books yet</Typography>
+          <Paper elevation={0} sx={{ p: 5, textAlign: 'center', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)' }}>
+            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 24, color: 'var(--awm-bark)' }}>No books yet</Typography>
           </Paper>
         ) : (
           <Box
@@ -103,7 +103,7 @@ export default async function BooksPage() {
                   )}
 
                   <Box sx={{ p: { xs: '5px 1px 0', sm: 2.5 } }}>
-                    <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 11.5, sm: 24 }, lineHeight: { xs: 1.25, sm: 1.2 }, fontWeight: 600, color: '#2c1a0e', mb: { xs: 0, sm: 1.5 }, minHeight: { xs: '2.5em', sm: 0 }, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: { xs: 2, sm: 'unset' }, WebkitBoxOrient: 'vertical' }}>
+                    <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 11.5, sm: 24 }, lineHeight: { xs: 1.25, sm: 1.2 }, fontWeight: 600, color: 'var(--awm-bark)', mb: { xs: 0, sm: 1.5 }, minHeight: { xs: '2.5em', sm: 0 }, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: { xs: 2, sm: 'unset' }, WebkitBoxOrient: 'vertical' }}>
                       {book.title}
                     </Typography>
                     <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1, flexWrap: 'wrap', mb: 2 }}>
@@ -111,7 +111,7 @@ export default async function BooksPage() {
                       {book.category && <Chip label={book.category} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />}
                     </Box>
                     <Box sx={{ display: { xs: 'none', sm: 'flex' }, justifyContent: 'space-between', alignItems: 'center', pt: 1.5, borderTop: '1px solid rgba(44,26,14,0.07)' }}>
-                      <Typography sx={{ color: '#7a6e65', fontFamily: 'Jost, sans-serif', fontSize: 14 }}>
+                      <Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 14 }}>
                         {book.chapterCount} {book.chapterCount === 1 ? 'chapter' : 'chapters'}
                       </Typography>
                       <ChevronRight sx={{ color: '#b8860b' }} />

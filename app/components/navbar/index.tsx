@@ -1,18 +1,18 @@
 'use client'
 
-import { MenuOutlined, Person } from '@mui/icons-material'
-import { AppBar, Avatar, Box, Button, Container, IconButton, Toolbar, Typography, useMediaQuery } from '@mui/material'
+import { DarkModeOutlined, LightModeOutlined, MenuOutlined, Person } from '@mui/icons-material'
+import { AppBar, Avatar, Box, Button, Container, IconButton, Toolbar, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/app/AuthContext'
+import { useColorMode } from '@/app/components/ThemeProvider'
 import { supabase } from '@/app/lib/supabase/client'
 import AuthDialog from '@/app/components/AuthDialog'
+import ClientStyles from '@/app/components/ClientStyles'
 import BrandLogo from './BrandLogo'
 import ContactDialog from './ContactDialog'
-import MegaMenuGrid from './MegaMenuGrid'
 import MobileDrawer from './MobileDrawer'
 import UserMenu from './UserMenu'
 import { NAV_ITEMS, NAV_ROUTES } from './constants'
@@ -25,26 +25,17 @@ export default function Navbar() {
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
     const router = useRouter()
     const { user } = useAuth()
+    const { mode, toggleColorMode } = useColorMode()
     const isLoggedIn = Boolean(user)
 
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [contactOpen, setContactOpen] = useState(false)
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
     const [authDialogMode, setAuthDialogMode] = useState<'register' | 'signin'>('signin')
-    const [cartoonsMenuOpen, setCartoonsMenuOpen] = useState(false)
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
-
-    const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-    const menuContainerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         hasAnimated = true
-    }, [])
-
-    useEffect(() => {
-        return () => {
-            if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
-        }
     }, [])
 
     useEffect(() => {
@@ -55,17 +46,6 @@ export default function Navbar() {
         }
         window.addEventListener('open-auth-dialog', handler)
         return () => window.removeEventListener('open-auth-dialog', handler)
-    }, [])
-
-    const scheduleClose = useCallback(() => {
-        if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
-        closeTimerRef.current = setTimeout(() => {
-            setCartoonsMenuOpen(false)
-        }, 150)
-    }, [])
-
-    const cancelClose = useCallback(() => {
-        if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     }, [])
 
     const handleLogout = async () => {
@@ -84,20 +64,14 @@ export default function Navbar() {
 
     const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M'
 
-    const closeAll = () => {
-        setCartoonsMenuOpen(false)
-        setDrawerOpen(false)
-    }
-
     const handleBrandClick = () => {
         safePush('/')
         setDrawerOpen(false)
-        setCartoonsMenuOpen(false)
     }
 
     return (
         <>
-            <style>{NAV_CSS}</style>
+            <ClientStyles id="awm-navbar-styles" css={NAV_CSS} />
 
             <MobileDrawer
                 open={drawerOpen}
@@ -108,7 +82,6 @@ export default function Navbar() {
                 onLogout={handleLogout}
                 onContactOpen={() => setContactOpen(true)}
                 navigate={safePush}
-                closeAll={closeAll}
             />
 
             <ContactDialog open={contactOpen} onClose={() => setContactOpen(false)} />
@@ -147,86 +120,68 @@ export default function Navbar() {
 
                                 <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} />
 
-                                {isLoggedIn ? (
-                                    <IconButton
-                                        onClick={(e) => setUserMenuAnchor(e.currentTarget)}
-                                        size="small"
-                                        sx={{ position: 'relative' }}
-                                        aria-label="Open user menu"
-                                    >
-                                        <Avatar
-                                            sx={{
-                                                width: 28,
-                                                height: 28,
-                                                background: 'linear-gradient(135deg, var(--awm-gold), var(--awm-gold-light))',
-                                                color: 'var(--awm-forest)',
-                                                fontFamily: 'var(--font-sans)',
-                                                fontWeight: 700,
-                                                fontSize: '0.85rem',
-                                            }}
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                                    <IconButton onClick={toggleColorMode} sx={{ p: 0.65, color: 'var(--awm-forest)' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
+                                        {mode === 'dark' ? <LightModeOutlined sx={{ fontSize: 20 }} /> : <DarkModeOutlined sx={{ fontSize: 20 }} />}
+                                    </IconButton>
+                                    {isLoggedIn ? (
+                                        <IconButton
+                                            onClick={(e) => setUserMenuAnchor(e.currentTarget)}
+                                            size="small"
+                                            sx={{ position: 'relative' }}
+                                            aria-label="Open user menu"
                                         >
-                                            {userInitial}
-                                        </Avatar>
-                                    </IconButton>
-                                ) : (
-                                    <IconButton onClick={openSignIn} sx={{ p: 0.75, color: 'var(--awm-forest)' }} aria-label="Sign in">
-                                        <Person sx={{ fontSize: 21 }} />
-                                    </IconButton>
-                                )}
+                                            <Avatar
+                                                sx={{
+                                                    width: 28,
+                                                    height: 28,
+                                                    background: 'linear-gradient(135deg, var(--awm-gold), var(--awm-gold-light))',
+                                                    color: '#0e2e1f',
+                                                    fontFamily: 'var(--font-sans)',
+                                                    fontWeight: 700,
+                                                    fontSize: '0.85rem',
+                                                }}
+                                            >
+                                                {userInitial}
+                                            </Avatar>
+                                        </IconButton>
+                                    ) : (
+                                        <IconButton onClick={openSignIn} sx={{ p: 0.75, color: 'var(--awm-forest)' }} aria-label="Sign in">
+                                            <Person sx={{ fontSize: 21 }} />
+                                        </IconButton>
+                                    )}
+                                </Box>
                             </Box>
                         ) : (
                             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', width: '100%', alignItems: 'center' }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                     {NAV_ITEMS.map((item) => (
-                                        <Box key={item} sx={{ position: 'relative' }}>
-                                            {item === 'Cartoons' ? (
-                                                <Box
-                                                    className="cartoons-trigger"
-                                                    onMouseEnter={() => {
-                                                        cancelClose()
-                                                        setCartoonsMenuOpen(true)
-                                                    }}
-                                                    onMouseLeave={scheduleClose}
-                                                >
-                                                    <Typography
-                                                        className="nav-link"
-                                                        variant="body2"
-                                                        sx={{
-                                                            fontWeight: 500,
-                                                            letterSpacing: '0.06em',
-                                                            color: 'var(--awm-forest)',
-                                                            cursor: 'pointer',
-                                                            py: 2,
-                                                            display: 'inline-block',
-                                                        }}
-                                                    >
-                                                        {item}
-                                                    </Typography>
-                                                </Box>
-                                            ) : (
-                                                <Link href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
-                                                    <Typography
-                                                        className="nav-link"
-                                                        variant="body2"
-                                                        sx={{
-                                                            fontWeight: 500,
-                                                            letterSpacing: '0.06em',
-                                                            color: 'var(--awm-forest)',
-                                                            cursor: 'pointer',
-                                                            py: 2,
-                                                        }}
-                                                    >
-                                                        {item}
-                                                    </Typography>
-                                                </Link>
-                                            )}
-                                        </Box>
+                                        <Link key={item} href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
+                                            <Typography
+                                                className="nav-link"
+                                                variant="body2"
+                                                sx={{
+                                                    fontWeight: 500,
+                                                    letterSpacing: '0.06em',
+                                                    color: 'var(--awm-forest)',
+                                                    cursor: 'pointer',
+                                                    py: 2,
+                                                }}
+                                            >
+                                                {item}
+                                            </Typography>
+                                        </Link>
                                     ))}
                                 </Box>
 
                                 <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} />
 
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 0.75 }}>
+                                    <Tooltip title={mode === 'dark' ? 'Use light mode' : 'Use dark mode'}>
+                                        <IconButton onClick={toggleColorMode} sx={{ color: 'var(--awm-forest)' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
+                                            {mode === 'dark' ? <LightModeOutlined /> : <DarkModeOutlined />}
+                                        </IconButton>
+                                    </Tooltip>
                                     {isLoggedIn ? (
                                         <IconButton
                                             onClick={(e) => setUserMenuAnchor(e.currentTarget)}
@@ -276,37 +231,6 @@ export default function Navbar() {
                         )}
                     </Toolbar>
                 </Container>
-
-                <AnimatePresence>
-                    {cartoonsMenuOpen && !isMobile && (
-                        <motion.div
-                            ref={menuContainerRef}
-                            initial={{ opacity: 0, y: -20, height: 0 }}
-                            animate={{ opacity: 1, y: 0, height: 'auto' }}
-                            exit={{ opacity: 0, y: -10, height: 0 }}
-                            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1], opacity: { duration: 0.2 } }}
-                            onMouseEnter={cancelClose}
-                            onMouseLeave={scheduleClose}
-                            style={{
-                                position: 'absolute',
-                                top: '100%',
-                                left: 0,
-                                right: 0,
-                                background: 'color-mix(in srgb, var(--awm-white) 98%, transparent)',
-                                backdropFilter: 'blur(20px)',
-                                borderBottom: '1px solid color-mix(in srgb, var(--awm-gold) 15%, transparent)',
-                                boxShadow: '0 20px 40px color-mix(in srgb, var(--awm-bark) 8%, transparent)',
-                                zIndex: 1199,
-                                overflow: 'hidden',
-                                transformOrigin: 'top',
-                            }}
-                        >
-                            <Container maxWidth="xl">
-                                <MegaMenuGrid navigate={safePush} closeAll={closeAll} />
-                            </Container>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
 
                 {isMobile && isLoggedIn && <Box sx={{ height: 2, background: 'color-mix(in srgb, var(--awm-gold) 15%, transparent)' }} />}
             </AppBar>

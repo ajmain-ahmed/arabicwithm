@@ -23,6 +23,9 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
   const [level, setLevel] = useState(episode?.level ?? "")
   const [description, setDescription] = useState(episode?.description ?? "")
   const [youtubeId, setYoutubeId] = useState(episode?.youtubeId ?? "")
+  const [instagramId, setInstagramId] = useState(episode?.instagramId ?? "")
+  const [tiktokId, setTiktokId] = useState(episode?.tiktokId ?? "")
+  const [facebookId, setFacebookId] = useState(episode?.facebookId ?? "")
   const [tags, setTags] = useState(episode?.tags.join(", ") ?? "")
   const [saving, setSaving] = useState(false)
 
@@ -33,6 +36,9 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
     level: level.trim(),
     description: description.trim() || null,
     youtube_id: youtubeId.trim() || null,
+    instagram_id: instagramId.trim() || null,
+    tiktok_id: tiktokId.trim() || null,
+    facebook_id: facebookId.trim() || null,
     tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
   })
 
@@ -91,6 +97,9 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
       <NativeField label="Level" value={level} onChange={setLevel} disabled={saving} />
 
       <NativeField label="YouTube ID" value={youtubeId} onChange={setYoutubeId} disabled={saving} />
+      <NativeField label="Instagram Reel ID" value={instagramId} onChange={setInstagramId} disabled={saving} />
+      <NativeField label="TikTok video ID" value={tiktokId} onChange={setTiktokId} disabled={saving} />
+      <NativeField label="Facebook video ID" value={facebookId} onChange={setFacebookId} disabled={saving} />
       <NativeField label="Tags (comma separated)" value={tags} onChange={setTags} disabled={saving} />
       <NativeField label="Description" value={description} onChange={setDescription} textarea disabled={saving} />
 

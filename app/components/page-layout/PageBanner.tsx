@@ -5,9 +5,9 @@ import { Box, Typography, Button } from '@mui/material'
 import { ChevronRight } from '@mui/icons-material'
 
 /* ── Palette ── */
-const BARK = '#2c1a0e'
-const GOLD = '#b8860b'
-const GOLD_LT = '#d4a843'
+const BARK = 'var(--awm-bark)'
+const GOLD = 'var(--awm-gold)'
+const GOLD_LT = 'var(--awm-gold-light)'
 
 export interface PageBannerFeature {
   icon: React.ReactNode

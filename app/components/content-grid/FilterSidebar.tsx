@@ -4,10 +4,10 @@ import React from 'react'
 import { Box, Typography, Button, Divider } from '@mui/material'
 
 /* ── Palette ── */
-const BARK = '#2c1a0e'
-const GOLD = '#b8860b'
-const WARM_WHITE = '#fffaf0'
-const MUTED = '#7a6e65'
+const BARK = 'var(--awm-bark)'
+const GOLD = 'var(--awm-gold)'
+const WARM_WHITE = 'var(--awm-cream-light)'
+const MUTED = 'var(--awm-muted)'
 
 /* ═══════════════════════════════════════════════
    Filter Sidebar (shared desktop + drawer)

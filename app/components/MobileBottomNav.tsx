@@ -3,14 +3,13 @@
 import React, { useSyncExternalStore } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { BottomNavigation, BottomNavigationAction, Box } from '@mui/material'
-import { FavoriteBorder, Home, MenuBook, Movie, Translate } from '@mui/icons-material'
+import { ExploreOutlined, Home, MenuBook, Movie } from '@mui/icons-material'
 
 const NAV_ITEMS = [
   { value: '/', label: 'Home', icon: <Home sx={{ fontSize: 19 }} /> },
-  { value: '/cartoons', label: 'Cartoons', icon: <Movie sx={{ fontSize: 19 }} /> },
-  { value: '/books', label: 'Books', icon: <MenuBook sx={{ fontSize: 19 }} /> },
-  { value: '/practice', label: 'Practice', icon: <FavoriteBorder sx={{ fontSize: 19 }} /> },
-  { value: '/vocabulary', label: 'Vocabulary', icon: <Translate sx={{ fontSize: 19 }} /> },
+  { value: '/explore', label: 'Explore', icon: <ExploreOutlined sx={{ fontSize: 19 }} /> },
+  { value: '/cartoons', label: 'Watch', icon: <Movie sx={{ fontSize: 19 }} /> },
+  { value: '/books', label: 'Read', icon: <MenuBook sx={{ fontSize: 19 }} /> },
 ]
 
 function safePush(router: ReturnType<typeof useRouter>, url: string) {
@@ -21,8 +20,7 @@ function getActiveValue(pathname: string): string {
   if (pathname === '/') return '/'
   if (pathname.startsWith('/cartoons')) return '/cartoons'
   if (pathname.startsWith('/books')) return '/books'
-  if (pathname.startsWith('/practice')) return '/practice'
-  if (pathname.startsWith('/vocabulary')) return '/vocabulary'
+  if (pathname.startsWith('/explore')) return '/explore'
   return ''
 }
 
@@ -73,7 +71,7 @@ export default function MobileBottomNav() {
               fontSize: '0.58rem',
               fontWeight: 500,
               letterSpacing: '0.03em',
-              color: '#7a6e65',
+              color: 'var(--awm-muted)',
               minWidth: 0,
               padding: '5px 0',
               '&.Mui-selected': {

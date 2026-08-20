@@ -3,14 +3,13 @@
 import { Movie } from '@mui/icons-material'
 import React from 'react'
 
-export const NAV_ITEMS = ['Home', 'Cartoons', 'Books', 'Practice', 'Vocabulary'] as const
+export const NAV_ITEMS = ['Home', 'Explore', 'Watch', 'Read'] as const
 
 export const NAV_ROUTES: Record<string, string> = {
     Home: '/',
-    Cartoons: '/cartoons',
-    Books: '/books',
-    Practice: '/practice',
-    Vocabulary: '/vocabulary',
+    Explore: '/explore',
+    Watch: '/cartoons',
+    Read: '/books',
     About: '/about',
     Contact: '/contact',
 }
@@ -28,7 +27,7 @@ export const CARTOON_SLUG_MAP: Record<string, string> = {
 
 export const MEGA_MENU_ITEMS = [
     {
-        header: 'Cartoons',
+        header: 'Watch',
         icon: React.createElement(Movie, { sx: { fontSize: 20, color: 'var(--awm-forest)' } }),
         items: [
             'Teenage Mutant Ninja Turtles',

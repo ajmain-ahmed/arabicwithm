@@ -57,6 +57,9 @@ export interface Database {
           tags: string[] | null
           description: string | null
           youtube_id: string | null
+          instagram_id: string | null
+          tiktok_id: string | null
+          facebook_id: string | null
           cover: string | null
           created_at: string | null
           transcript: Json | null
@@ -70,6 +73,9 @@ export interface Database {
           tags?: string[] | null
           description?: string | null
           youtube_id?: string | null
+          instagram_id?: string | null
+          tiktok_id?: string | null
+          facebook_id?: string | null
           cover?: string | null
           created_at?: string | null
           transcript?: Json | null
@@ -83,6 +89,9 @@ export interface Database {
           tags?: string[] | null
           description?: string | null
           youtube_id?: string | null
+          instagram_id?: string | null
+          tiktok_id?: string | null
+          facebook_id?: string | null
           cover?: string | null
           created_at?: string | null
           transcript?: Json | null

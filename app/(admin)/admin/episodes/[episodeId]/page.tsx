@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
+import dynamic from "next/dynamic"
 import {
   Box,
   Typography,
@@ -28,7 +29,9 @@ import {
   updateHansWehrDefinition,
   updatePhrase,
   type EpisodeWithTranscript,
+  type ShowRow,
 } from "@/app/actions/admin"
+import { fetchShowsForEpisodeEdit } from "@/app/actions/cartoons"
 import {
   extractHeadwordTokens,
   type TokenRow,
@@ -36,6 +39,8 @@ import {
 } from "@/app/lib/admin-headwords"
 import { errorMessage } from "@/app/lib/errors"
 import TokenHeadwordDialog from "../../components/TokenHeadwordDialog"
+
+const EpisodeEditDialog = dynamic(() => import("../../components/EpisodeEditDialog"), { ssr: false })
 
 export default function EpisodeHeadwordsPage() {
   const params = useParams()
@@ -52,6 +57,8 @@ export default function EpisodeHeadwordsPage() {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   const [dialogRowKey, setDialogRowKey] = useState<string | null>(null)
   const [dialogEditing, setDialogEditing] = useState(false)
+  const [episodeEditOpen, setEpisodeEditOpen] = useState(false)
+  const [shows, setShows] = useState<ShowRow[]>([])
 
   const [savingTranscript, setSavingTranscript] = useState<Record<string, boolean>>({})
   const [savingDefinition, setSavingDefinition] = useState<Record<number, boolean>>({})
@@ -132,6 +139,16 @@ export default function EpisodeHeadwordsPage() {
       cancelledRef.current = true
     }
   }, [loadEpisode])
+
+  const openEpisodeEditor = async () => {
+    setEpisodeEditOpen(true)
+    if (shows.length > 0) return
+    try {
+      setShows(await fetchShowsForEpisodeEdit())
+    } catch (e: unknown) {
+      setError(errorMessage(e) ?? "Failed to load shows for episode editor")
+    }
+  }
 
   const unmatchedCount = useMemo(() => rows.filter((r) => !r.entry).length, [rows])
   const phraseCount = useMemo(() => rows.filter((r) => r.entry?.isPhrase).length, [rows])
@@ -335,6 +352,15 @@ export default function EpisodeHeadwordsPage() {
               : `${rows.length.toLocaleString()} word${rows.length === 1 ? "" : "s"} · ${unmatchedCount} unmatched${phraseCount > 0 ? ` · ${phraseCount} phrase${phraseCount === 1 ? "" : "s"}` : ""}`}
           </Typography>
         </Box>
+        <Button
+          variant="contained"
+          startIcon={<Edit />}
+          onClick={openEpisodeEditor}
+          disabled={!episode}
+          sx={{ bgcolor: "#2c1a0e", color: "#f5ede0", borderRadius: "10px", textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 700, "&:hover": { bgcolor: "#1a0f08" } }}
+        >
+          Edit episode details
+        </Button>
       </Box>
 
       {error && (
@@ -494,6 +520,14 @@ export default function EpisodeHeadwordsPage() {
         onUpdateHansDefinition={handleDialogUpdateDefinition}
         savingTokenField={dialogRow ? getSavingField(dialogRow, savingTranscript) : null}
         savingHans={dialogRow && dialogRow.entry ? Boolean(savingDefinition[dialogRow.entry.id]) : false}
+      />
+      <EpisodeEditDialog
+        open={episodeEditOpen}
+        onClose={() => setEpisodeEditOpen(false)}
+        episodeId={episodeId}
+        showId={episode?.show_id}
+        shows={shows}
+        onSaved={loadEpisode}
       />
     </Box>
   )

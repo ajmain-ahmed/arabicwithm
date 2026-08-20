@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ show: str
   if (!showData) return { title: 'Not Found' }
   return {
     title: `${showData.title} | Arabic Cartoons`,
-    description: `Watch ${showData.title} subtitled in Arabic with CEFR-graded worksheets and quizzes.`,
+    description: showData.description ?? `Watch ${showData.title} with interactive Arabic transcripts.`,
   }
 }
 

@@ -22,6 +22,7 @@ import {
 } from '@mui/material'
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase/client'
+import ClientStyles from '@/app/components/ClientStyles'
 
 // ─── types ─────────────────────────────────────────────────────────────────
 interface AuthDialogProps {
@@ -45,13 +46,13 @@ const DIALOG_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@700&family=Jost:wght@300;400;500;600&display=swap');
 
   :root {
-    --sand:   #f5ede0;
-    --cream:  #faf7f2;
-    --bark:   #2c1a0e;
-    --forest: #0e2e1f;
-    --gold:   #b8860b;
-    --gold-lt:#d4a843;
-    --muted:  #7a6e65;
+    --sand:   var(--awm-cream);
+    --cream:  var(--awm-cream-light);
+    --bark:   var(--awm-bark);
+    --forest: var(--awm-forest);
+    --gold:   var(--awm-gold);
+    --gold-lt:var(--awm-gold-light);
+    --muted:  var(--awm-muted);
   }
 
   .auth-input-awm .MuiFilledInput-root {
@@ -204,7 +205,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
 
   return (
     <>
-      <style>{DIALOG_CSS}</style>
+      <ClientStyles id="awm-auth-dialog-styles" css={DIALOG_CSS} />
 
       {/* ── Snackbar ── */}
       <Snackbar
@@ -242,7 +243,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
         }}
       >
         {/* ── Header ── */}
-        <Box sx={{ px: 4, pt: 4, pb: 2.5, position: 'relative', background: '#ffffff' }}>
+        <Box sx={{ px: 4, pt: 4, pb: 2.5, position: 'relative', background: 'var(--awm-white)' }}>
           <IconButton
             onClick={handleClose}
             size="small"

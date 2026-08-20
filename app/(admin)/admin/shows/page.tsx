@@ -107,7 +107,10 @@ export default function ShowsAdminPage() {
       episode.slug.toLowerCase().includes(q) ||
       episode.level.toLowerCase().includes(q) ||
       episode.tags.some((t) => t.toLowerCase().includes(q)) ||
-      (episode.youtube_id?.toLowerCase().includes(q) ?? false)
+      (episode.youtube_id?.toLowerCase().includes(q) ?? false) ||
+      (episode.instagram_id?.toLowerCase().includes(q) ?? false) ||
+      (episode.tiktok_id?.toLowerCase().includes(q) ?? false) ||
+      (episode.facebook_id?.toLowerCase().includes(q) ?? false)
     )
   }
 
@@ -353,7 +356,7 @@ export default function ShowsAdminPage() {
                                         <TableCell sx={{ fontWeight: 600 }}>Slug</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Level</TableCell>
                                         <TableCell sx={{ fontWeight: 600 }}>Tags</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>YouTube</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Video sources</TableCell>
                                         <TableCell align="right" sx={{ fontWeight: 600 }}>Actions</TableCell>
                                       </TableRow>
                                     </TableHead>
@@ -380,18 +383,13 @@ export default function ShowsAdminPage() {
                                             <TableCell>{episode.level}</TableCell>
                                             <TableCell>{episode.tags.join(", ")}</TableCell>
                                             <TableCell>
-                                              {episode.youtube_id ? (
-                                                <a
-                                                  href={`https://www.youtube.com/watch?v=${episode.youtube_id}`}
-                                                  target="_blank"
-                                                  rel="noopener noreferrer"
-                                                  style={{ color: "#b8860b", textDecoration: "none" }}
-                                                >
-                                                  {episode.youtube_id}
-                                                </a>
-                                              ) : (
-                                                "—"
-                                              )}
+                                              <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>
+                                                {episode.youtube_id && <Typography component="span" sx={{ fontSize: "0.75rem", color: "#b8860b" }}>YouTube</Typography>}
+                                                {episode.instagram_id && <Typography component="span" sx={{ fontSize: "0.75rem", color: "#b8860b" }}>Instagram</Typography>}
+                                                {episode.tiktok_id && <Typography component="span" sx={{ fontSize: "0.75rem", color: "#b8860b" }}>TikTok</Typography>}
+                                                {episode.facebook_id && <Typography component="span" sx={{ fontSize: "0.75rem", color: "#b8860b" }}>Facebook</Typography>}
+                                                {!episode.youtube_id && !episode.instagram_id && !episode.tiktok_id && !episode.facebook_id && "—"}
+                                              </Box>
                                             </TableCell>
                                             <TableCell align="right">
                                               <IconButton

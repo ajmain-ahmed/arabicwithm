@@ -9,7 +9,7 @@ export const revalidate = 300
 
 export const metadata = {
   title: 'Arabic Cartoons | ArabicWithM',
-  description: 'Watch your favourite cartoons subtitled in Arabic with CEFR-graded worksheets and quizzes.',
+  description: 'Watch your favourite cartoons with interactive Arabic transcripts.',
 }
 
 export default async function Page() {

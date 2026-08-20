@@ -2,8 +2,8 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
 import { motion, useDragControls, useMotionValue } from 'framer-motion'
-import { Box, IconButton, Typography, useMediaQuery, useTheme } from '@mui/material'
-import { Close, DragIndicator, OpenInFull, Pause, PlayArrow } from '@mui/icons-material'
+import { Box, Button, IconButton, Typography, useMediaQuery, useTheme } from '@mui/material'
+import { Close, DragIndicator, OpenInFull, Pause, PlayArrow, Refresh } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { usePlayerStore } from '@/store/playerStore'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
@@ -94,7 +94,17 @@ export default function FloatingVideoPlayer() {
     currentTimeRef.current = time
   }, [])
 
-  const { wrapRef, seekTo, playVideo, pauseVideo, isReady } = useYouTubePlayer(
+  const {
+    wrapRef,
+    seekTo,
+    playVideo,
+    pauseVideo,
+    playWithSound,
+    isReady,
+    autoplayBlocked,
+    errorCode,
+    retry,
+  } = useYouTubePlayer(
     pipOpen ? videoId ?? undefined : undefined,
     handleTimeUpdate,
     currentTime
@@ -352,6 +362,25 @@ export default function FloatingVideoPlayer() {
             height: '100%',
           }}
         />
+
+        {(errorCode != null || autoplayBlocked) && (
+          <Box sx={{ position: 'absolute', zIndex: 4, inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.78)', p: 2, textAlign: 'center' }}>
+            <Box>
+              <Typography sx={{ mb: 1.25, color: '#fff', fontFamily: 'Jost, sans-serif', fontSize: 12.5, fontWeight: 700 }}>
+                {errorCode != null ? `YouTube player error ${errorCode}` : 'Your browser blocked playback with sound.'}
+              </Typography>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={errorCode != null ? <Refresh /> : <PlayArrow />}
+                onClick={errorCode != null ? retry : playWithSound}
+                sx={{ bgcolor: '#d4a843', color: '#0e2e1f', borderRadius: '9999px', textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#e2bd62' } }}
+              >
+                {errorCode != null ? 'Retry video' : 'Play with sound'}
+              </Button>
+            </Box>
+          </Box>
+        )}
 
         {/* Top overlay — title + close */}
         <Box

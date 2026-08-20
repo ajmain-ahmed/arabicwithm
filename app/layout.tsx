@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter"
 import {
   bookAmiriFont,
   bookNaskhFont,
@@ -32,15 +33,17 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${ebGaramond.variable} ${jost.variable} ${brandFont.variable} ${headingFont.variable} ${bookNaskhFont.variable} ${bookSansFont.variable} ${bookAmiriFont.variable}`}
       >
-        <AuthProvider>
-          <ThemeProvider>
-            <SiteShell>{children}</SiteShell>
-          </ThemeProvider>
-        </AuthProvider>
+        <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+          <AuthProvider>
+            <ThemeProvider>
+              <SiteShell>{children}</SiteShell>
+            </ThemeProvider>
+          </AuthProvider>
+        </AppRouterCacheProvider>
       </body>
     </html>
   )

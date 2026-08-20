@@ -49,6 +49,22 @@
   --sand: var(--awm-cream);
 }
 
+html[data-theme='dark'] {
+  --awm-bark: #f4eadb;
+  --awm-bark-dark: #fff8ec;
+  --awm-gold: #e1b957;
+  --awm-gold-light: #f0cf7a;
+  --awm-gold-lighter: #f5dda1;
+  --awm-cream: #202b25;
+  --awm-cream-light: #101713;
+  --awm-muted: #c5b9ae;
+  --awm-muted-light: #a99d93;
+  --awm-forest: #9bd5b5;
+  --awm-error: #ff8e82;
+  --awm-white: #18211c;
+  --awm-black: #f8f3ea;
+}
+
 html {
   min-height: 100vh;
   min-height: 100dvh;
@@ -61,6 +77,47 @@ body {
   background: var(--awm-cream-light);
   color: var(--awm-bark);
   font-family: var(--font-sans);
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+html[data-theme='dark'] .MuiPaper-root,
+html[data-theme='dark'] .MuiDrawer-paper,
+html[data-theme='dark'] .MuiDialog-paper,
+html[data-theme='dark'] .MuiMenu-paper {
+  background-color: var(--awm-white) !important;
+  color: var(--awm-bark) !important;
+}
+
+html[data-theme='dark'] main {
+  background-color: var(--awm-cream-light) !important;
+  color: var(--awm-bark);
+}
+
+html[data-theme='dark'] .MuiInputBase-root,
+html[data-theme='dark'] .MuiFilledInput-root,
+html[data-theme='dark'] .MuiOutlinedInput-root {
+  background-color: var(--awm-cream) !important;
+  color: var(--awm-bark) !important;
+}
+
+html[data-theme='dark'] .MuiInputLabel-root,
+html[data-theme='dark'] .MuiFormLabel-root,
+html[data-theme='dark'] .MuiFormHelperText-root,
+html[data-theme='dark'] .MuiSvgIcon-root {
+  color: inherit;
+}
+
+html[data-theme='dark'] .MuiOutlinedInput-notchedOutline,
+html[data-theme='dark'] .MuiDivider-root {
+  border-color: color-mix(in srgb, var(--awm-gold) 24%, transparent) !important;
+}
+
+html[data-theme='dark'] .MuiChip-root:not([class*='MuiChip-color']) {
+  border-color: color-mix(in srgb, var(--awm-gold) 24%, transparent);
+}
+
+html[data-theme='dark'] a {
+  color: inherit;
 }
 
 h1,

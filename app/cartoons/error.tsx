@@ -14,7 +14,7 @@ export default function CartoonsError({ reset }: { reset: () => void }) {
         px: 3,
         textAlign: 'center',
         gap: 2,
-        background: '#f5ede0',
+        background: 'var(--awm-cream)',
       }}
     >
       <Typography
@@ -23,7 +23,7 @@ export default function CartoonsError({ reset }: { reset: () => void }) {
           fontFamily: 'var(--font-heading)',
           fontSize: '1.75rem',
           fontWeight: 600,
-          color: '#2c1a0e',
+          color: 'var(--awm-bark)',
         }}
       >
         Cartoons Error
@@ -32,7 +32,7 @@ export default function CartoonsError({ reset }: { reset: () => void }) {
         sx={{
           fontFamily: 'Jost, sans-serif',
           fontSize: '0.95rem',
-          color: '#7a6e65',
+          color: 'var(--awm-muted)',
           maxWidth: 400,
         }}
       >

@@ -53,7 +53,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               fontFamily: 'var(--font-heading)',
               fontSize: '1.75rem',
               fontWeight: 600,
-              color: '#2c1a0e',
+              color: 'var(--awm-bark)',
             }}
           >
             Something went wrong
@@ -62,7 +62,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             sx={{
               fontFamily: 'Jost, sans-serif',
               fontSize: '0.95rem',
-              color: '#7a6e65',
+              color: 'var(--awm-muted)',
               maxWidth: 400,
             }}
           >

@@ -12,6 +12,9 @@ function makeEpisode(slug: string): EpisodeRow {
     tags: [],
     description: null,
     youtube_id: null,
+    instagram_id: null,
+    tiktok_id: null,
+    facebook_id: null,
     cover: null,
     created_at: null,
   }

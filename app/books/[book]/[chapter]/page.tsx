@@ -48,16 +48,16 @@ export default async function ChapterPage({ params }: { params: Promise<{ book: 
   const nextChapter = chapterIndex >= 0 && chapterIndex < chapters.length - 1 ? chapters[chapterIndex + 1] : null
 
   return (
-    <Box component="main" sx={{ minHeight: '100vh', bgcolor: '#faf7f2', py: { xs: 2.5, md: 5 } }}>
+    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 2.5, md: 5 } }}>
       <ReadingProgress bookSlug={book.slug} chapterSlug={chapter.slug} />
       <Container maxWidth="md">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>
           <Link href={`/books/${encodeURIComponent(book.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: '#7a6e65', fontFamily: 'Jost, sans-serif', '&:hover': { color: '#b8860b' } }}>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', '&:hover': { color: '#b8860b' } }}>
               <ArrowBack sx={{ fontSize: 18 }} /> {book.title}
             </Box>
           </Link>
-          <Typography sx={{ color: '#9e8a7a', fontFamily: 'Jost, sans-serif', fontSize: 13 }}>
+          <Typography sx={{ color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 13 }}>
             {chapter.chapterNumber} of {chapters.length}
           </Typography>
         </Box>
@@ -68,14 +68,14 @@ export default async function ChapterPage({ params }: { params: Promise<{ book: 
           <Box>
             {previousChapter && (
               <Link href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(previousChapter.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                <Button startIcon={<ArrowBack />} sx={{ color: '#2c1a0e', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
+                <Button startIcon={<ArrowBack />} sx={{ color: 'var(--awm-bark)', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
                   {previousChapter.title}
                 </Button>
               </Link>
             )}
           </Box>
           <Link href={`/books/${encodeURIComponent(book.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-            <Button startIcon={<FormatListBulleted />} sx={{ color: '#7a6e65', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
+            <Button startIcon={<FormatListBulleted />} sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
               All chapters
             </Button>
           </Link>

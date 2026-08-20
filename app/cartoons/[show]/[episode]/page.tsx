@@ -32,7 +32,7 @@ export async function generateMetadata({
   if (!ep) return { title: 'Not Found' }
   return {
     title: `${ep.title} | ArabicWithM`,
-    description: `Watch ${ep.title} with Arabic subtitles and CEFR-graded worksheets.`,
+    description: ep.description ?? `Watch ${ep.title} with an interactive Arabic transcript.`,
   }
 }
 

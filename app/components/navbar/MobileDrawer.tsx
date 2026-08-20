@@ -1,11 +1,10 @@
 'use client'
 
-import { BookOutlined, EmailSharp, ExpandLess, ExpandMore, FavoriteBorder, HelpSharp, HomeOutlined, InfoOutlined, LogoutSharp, Person, Translate } from '@mui/icons-material'
+import { BookOutlined, EmailSharp, ExploreOutlined, HelpSharp, HomeOutlined, InfoOutlined, LogoutSharp, Movie, Person } from '@mui/icons-material'
 import {
     Avatar,
     Box,
     Button,
-    Collapse,
     Drawer,
     List,
     ListItem,
@@ -14,11 +13,9 @@ import {
     ListItemText,
     Typography,
 } from '@mui/material'
-import React, { useState } from 'react'
 import { User } from '@supabase/supabase-js'
-import DropdownContent from './DropdownContent'
 import GoldLine from './GoldLine'
-import { MEGA_MENU_ITEMS, NavigateFn } from './constants'
+import { NavigateFn } from './constants'
 
 interface MobileDrawerProps {
     open: boolean
@@ -29,7 +26,6 @@ interface MobileDrawerProps {
     onLogout: () => void
     onContactOpen: () => void
     navigate: NavigateFn
-    closeAll: () => void
 }
 
 export default function MobileDrawer({
@@ -41,20 +37,8 @@ export default function MobileDrawer({
     onLogout,
     onContactOpen,
     navigate,
-    closeAll,
 }: MobileDrawerProps) {
-    const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-        Study: false,
-        Cartoons: false,
-        Reading: false,
-        Stories: false,
-    })
-
     const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M'
-
-    const toggleSection = (section: string) => {
-        setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }))
-    }
 
     const pushAndClose = (url: string) => {
         navigate(url)
@@ -163,48 +147,13 @@ export default function MobileDrawer({
             )}
 
             <List disablePadding>
-                {MEGA_MENU_ITEMS.map((section) => (
-                    <React.Fragment key={section.header}>
-                        <ListItem disablePadding>
-                            <ListItemButton
-                                onClick={() => toggleSection(section.header)}
-                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
-                            >
-                                <ListItemIcon sx={{ color: 'var(--awm-forest)' }}>{section.icon}</ListItemIcon>
-                                <ListItemText
-                                    primary={
-                                        <Typography variant="body2" sx={{ fontWeight: 500, color: 'var(--awm-bark)' }}>
-                                            {section.header}
-                                        </Typography>
-                                    }
-                                />
-                                {openSections[section.header] ? (
-                                    <ExpandLess sx={{ color: 'var(--awm-muted)' }} />
-                                ) : (
-                                    <ExpandMore sx={{ color: 'var(--awm-muted)' }} />
-                                )}
-                            </ListItemButton>
-                        </ListItem>
-                        <Collapse in={openSections[section.header]} timeout="auto" unmountOnExit>
-                            <Box sx={{ px: 3, pb: 2 }}>
-                                <DropdownContent
-                                    section={section}
-                                    isMobile={true}
-                                    navigate={navigate}
-                                    closeAll={closeAll}
-                                />
-                            </Box>
-                        </Collapse>
-                    </React.Fragment>
-                ))}
-
                 <GoldLine />
 
                 {[
                     { label: 'Home', icon: <HomeOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/') },
-                    { label: 'Books', icon: <BookOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/books') },
-                    { label: 'Practice', icon: <FavoriteBorder sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/practice') },
-                    { label: 'Vocabulary', icon: <Translate sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/vocabulary') },
+                    { label: 'Explore', icon: <ExploreOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/explore') },
+                    { label: 'Watch', icon: <Movie sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/cartoons') },
+                    { label: 'Read', icon: <BookOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/books') },
                     { label: 'About', icon: <InfoOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/about') },
                     { label: 'Contact', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: onContactOpen },
                     { label: 'FAQ', icon: <HelpSharp sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/faq') },
