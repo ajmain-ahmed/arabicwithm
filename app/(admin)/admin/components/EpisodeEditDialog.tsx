@@ -21,6 +21,7 @@ import {
 import { useTheme } from "@mui/material/styles"
 import { Close, Save, Delete } from "@mui/icons-material"
 import AdminTextField from "./AdminTextField"
+import ImageUploadField from "./ImageUploadField"
 import {
   fetchEpisodeForAdmin,
   createEpisode,
@@ -31,6 +32,7 @@ import {
   type EpisodeInput,
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
+import { getEpisodeCoverUrl } from "@/app/lib/storage"
 
 
 interface EpisodeEditDialogProps {
@@ -250,6 +252,12 @@ export default function EpisodeEditDialog({
                 <AdminTextField label="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
                 <AdminTextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
                 <AdminTextField label="YouTube ID" value={youtubeId} onChange={(e) => setYoutubeId(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
+                <ImageUploadField
+                  label="Cover image"
+                  bucket="covers"
+                  path={slug ? `episodes/${slug}.webp` : ""}
+                  previewUrl={slug ? getEpisodeCoverUrl(slug) : null}
+                />
               </Box>
             )}
 

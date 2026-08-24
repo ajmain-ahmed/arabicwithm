@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Box, Typography, Chip, Paper } from '@mui/material'
+import { Box, Typography, Chip, Paper, Skeleton } from '@mui/material'
 import { useRouter } from 'next/navigation'
 
 /* ── Palette ── */
@@ -54,6 +54,7 @@ export default function ContentCard({
   aspectRatio = '16/9',
 }: ContentCardProps) {
   const [hovered, setHovered] = useState(false)
+  const [imgLoading, setImgLoading] = useState(true)
   const [imgError, setImgError] = useState(false)
   const router = useRouter()
   const badgeColor = DIFFICULTY_COLORS[level ?? ''] || MUTED
@@ -79,18 +80,32 @@ export default function ContentCard({
     >
       {/* Thumbnail */}
       <Box sx={{ position: 'relative', aspectRatio, overflow: 'hidden' }}>
+        {imgLoading && !imgError && (
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height="100%"
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              bgcolor: 'rgba(44,26,14,0.08)',
+            }}
+          />
+        )}
         {!imgError ? (
           <Box
             component="img"
             src={cover}
             alt={title}
-            onError={() => setImgError(true)}
+            onLoad={() => setImgLoading(false)}
+            onError={() => { setImgLoading(false); setImgError(true) }}
             sx={{
               width: '100%',
               height: '100%',
               objectFit: 'cover',
               transform: hovered ? 'scale(1.03)' : 'scale(1)',
               transition: 'transform 0.3s',
+              opacity: imgLoading ? 0 : 1,
             }}
           />
         ) : (

@@ -12,7 +12,7 @@ import {
   Breadcrumbs,
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
-import { ShowMeta, EpisodeMeta, getEpisodeCoverPath } from '../../lib/cartoons'
+import { ShowMeta, EpisodeMeta } from '../../lib/cartoons'
 import { PageBanner } from '@/app/components/page-layout'
 import { FilterSidebar, ContentCard } from '@/app/components/content-grid'
 import EpisodeEditDialog from '../components/EpisodeEditDialog'
@@ -303,7 +303,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                       <ContentCard
                         slug={ep.slug}
                         hrefPrefix={`/cartoons/${show.slug}`}
-                        cover={getEpisodeCoverPath(show.slug, ep.slug)}
+                        cover={ep.cover ?? ''}
                         title={ep.title}
                         level={ep.level}
                         category={ep.tags[0]}

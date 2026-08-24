@@ -7,6 +7,8 @@ import { type EpisodeMeta } from "@/app/lib/cartoons"
 import { createEpisode, updateEpisode, deleteEpisode } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
 import NativeField from "@/app/(admin)/admin/components/NativeField"
+import ImageUploadField from "@/app/(admin)/admin/components/ImageUploadField"
+import { getEpisodeCoverUrl } from "@/app/lib/storage"
 
 interface EpisodeEditorProps {
   showId: string
@@ -93,6 +95,12 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
       <NativeField label="YouTube ID" value={youtubeId} onChange={setYoutubeId} disabled={saving} />
       <NativeField label="Tags (comma separated)" value={tags} onChange={setTags} disabled={saving} />
       <NativeField label="Description" value={description} onChange={setDescription} textarea disabled={saving} />
+      <ImageUploadField
+        label="Cover image"
+        bucket="covers"
+        path={slug ? `episodes/${slug}.webp` : ""}
+        previewUrl={slug ? getEpisodeCoverUrl(slug) : null}
+      />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mt: "auto", pt: 1 }}>
         {!isNew && (

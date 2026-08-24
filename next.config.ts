@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : null
+
 const nextConfig: NextConfig = {
   reactStrictMode: false,
   poweredByHeader: false,
@@ -15,6 +18,7 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'cnn-arabic-images.cnn.io' },
       { protocol: 'https', hostname: 'images.skynewsarabia.com' },
       { protocol: 'https', hostname: 'www.akhbarona.com' },
+      ...(supabaseHostname ? [{ protocol: 'https' as const, hostname: supabaseHostname }] : []),
     ],
   },
   experimental: {
@@ -41,8 +45,8 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com https://s.ytimg.com https://www.youtube.com/iframe_api",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob: https://i.ytimg.com https://images.unsplash.com https://ichef.bbci.co.uk https://s.france24.com https://cnn-arabic-images.cnn.io https://images.skynewsarabia.com https://www.akhbarona.com",
-              "connect-src 'self' https://whbxgwucsoguqzpnpzjd.supabase.co",
+              `img-src 'self' data: blob: https://i.ytimg.com https://images.unsplash.com https://ichef.bbci.co.uk https://s.france24.com https://cnn-arabic-images.cnn.io https://images.skynewsarabia.com https://www.akhbarona.com${supabaseUrl ? ` ${supabaseUrl}` : ''}`,
+              `connect-src 'self' ${supabaseUrl ?? 'https://whbxgwucsoguqzpnpzjd.supabase.co'}`,
               "frame-src https://www.youtube.com https://youtube.com",
             ].join('; '),
           },

@@ -7,6 +7,8 @@ import { type ShowMeta } from "@/app/lib/cartoons"
 import { createShow, updateShow, deleteShow } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
 import NativeField from "@/app/(admin)/admin/components/NativeField"
+import ImageUploadField from "@/app/(admin)/admin/components/ImageUploadField"
+import { getShowCoverUrl } from "@/app/lib/storage"
 
 interface ShowEditorProps {
   show?: ShowMeta
@@ -106,6 +108,12 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
       </Box>
 
       <NativeField label="Category" value={category} onChange={setCategory} disabled={saving} />
+      <ImageUploadField
+        label="Cover image"
+        bucket="covers"
+        path={slug ? `cartoons/${slug}.webp` : ""}
+        previewUrl={slug ? getShowCoverUrl(slug) : null}
+      />
       <NativeField label="Description" value={description} onChange={setDescription} textarea disabled={saving} />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mt: "auto", pt: 1 }}>

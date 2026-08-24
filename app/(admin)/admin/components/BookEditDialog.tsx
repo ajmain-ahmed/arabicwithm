@@ -13,6 +13,7 @@ import {
 } from "@mui/material"
 import { Close, Save, Delete } from "@mui/icons-material"
 import AdminTextField from "./AdminTextField"
+import ImageUploadField from "./ImageUploadField"
 import {
   fetchBookForAdmin,
   createBook,
@@ -22,6 +23,7 @@ import {
   type BookInput,
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
+import { getBookCoverUrl } from "@/app/lib/storage"
 
 interface BookEditDialogProps {
   open: boolean
@@ -46,7 +48,6 @@ export default function BookEditDialog({
   const [title, setTitle] = useState("")
   const [titleAr, setTitleAr] = useState("")
   const [description, setDescription] = useState("")
-  const [cover, setCover] = useState("")
   const [level, setLevel] = useState("")
   const [category, setCategory] = useState("")
 
@@ -61,7 +62,6 @@ export default function BookEditDialog({
       setTitle("")
       setTitleAr("")
       setDescription("")
-      setCover("")
       setLevel("")
       setCategory("")
       return
@@ -78,7 +78,6 @@ export default function BookEditDialog({
         setTitle(row.title)
         setTitleAr(row.title_ar ?? "")
         setDescription(row.description ?? "")
-        setCover(row.cover ?? "")
         setLevel(row.level)
         setCategory(row.category ?? "")
       })
@@ -95,7 +94,7 @@ export default function BookEditDialog({
         title,
         title_ar: titleAr || null,
         description: description || null,
-        cover: cover || null,
+        cover: slug ? getBookCoverUrl(slug) : null,
         level,
         category: category || null,
       }
@@ -188,7 +187,12 @@ export default function BookEditDialog({
             <AdminTextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" />
             <AdminTextField label="Title Arabic" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} fullWidth size="small" />
             <AdminTextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" />
-            <AdminTextField label="Cover URL" value={cover} onChange={(e) => setCover(e.target.value)} fullWidth size="small" />
+            <ImageUploadField
+              label="Cover image"
+              bucket="covers"
+              path={slug ? `books/${slug}.webp` : ""}
+              previewUrl={slug ? getBookCoverUrl(slug) : null}
+            />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />
               <AdminTextField label="Category" value={category} onChange={(e) => setCategory(e.target.value)} fullWidth size="small" />
