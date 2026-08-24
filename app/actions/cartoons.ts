@@ -135,7 +135,7 @@ export async function fetchShowsForEpisodeEdit(): Promise<ShowRow[]> {
     title: String(row.title),
     title_ar: row.title_ar ? String(row.title_ar) : null,
     description: row.description ? String(row.description) : null,
-    cover: row.cover ? String(row.cover) : null,
+    cover: getShowCoverPath(String(row.slug)),
     level: String(row.level ?? ""),
     category: row.category ? String(row.category) : null,
   }))

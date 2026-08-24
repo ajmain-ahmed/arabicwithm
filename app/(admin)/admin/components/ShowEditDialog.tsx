@@ -13,6 +13,7 @@ import {
 } from "@mui/material"
 import { Close, Save, Delete } from "@mui/icons-material"
 import AdminTextField from "./AdminTextField"
+import ImageUploadField from "./ImageUploadField"
 import {
   fetchShowForAdmin,
   createShow,
@@ -22,6 +23,7 @@ import {
   type ShowInput,
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
+import { getShowCoverUrl } from "@/app/lib/storage"
 
 
 interface ShowEditDialogProps {
@@ -185,6 +187,12 @@ export default function ShowEditDialog({
             <AdminTextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" />
             <AdminTextField label="Title Arabic" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} fullWidth size="small" />
             <AdminTextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" />
+            <ImageUploadField
+              label="Cover image"
+              bucket="covers"
+              path={slug ? `cartoons/${slug}.webp` : ""}
+              previewUrl={slug ? getShowCoverUrl(slug) : null}
+            />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />
               <AdminTextField label="Category" value={category} onChange={(e) => setCategory(e.target.value)} fullWidth size="small" />

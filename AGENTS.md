@@ -205,7 +205,7 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 - `normalizeTransliteration(token)` — strips Latin diacritics for loose transliteration matching.
 
 ### Cartoon Content Pipeline
-1. Show metadata is read from the `shows` table in Supabase (cover paths are normalised against `public/cartoons/`).
+1. Show, episode, and book covers are stored in the public Supabase Storage `covers` bucket at `cartoons/{slug}.webp`, `episodes/{episodeSlug}.webp`, and `books/{slug}.webp`. Public pages derive the cover URL from the slug; admins upload covers directly from the edit dialogs.
 2. Episode metadata and transcripts are stored in the `episodes` table. New transcripts are a JSON array of `{ tokens, timestamp, translation }` blocks.
 3. Each token in the new format must include `pos` (part of speech) and lowercase `cefr`. The legacy `{ scriptBlocks, vocabList, grammarPoints }` object is still read for old episodes.
 4. At request time, `fetchEpisodeForPublic` normalises the transcript into `ScriptBlock` objects, propagating `pos` and `cefr` onto each `CartoonWordEntry`. The resulting `wordMap` and `diacritizedMap` power the inline hover tooltips.
@@ -215,6 +215,7 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 - `/admin` redirects to `/admin/shows`.
 - `/admin/shows` lists shows and allows create/edit/delete.
 - `/admin/episodes` lists episodes and allows create/edit/delete.
+- Show, episode, and book edit dialogs include an image upload that converts the selected image to WebP and uploads it to Supabase Storage.
 - `app/(admin)/admin/components/EpisodeEditDialog.tsx` provides a transcript JSON editor for episode content.
 - Episode slug auto-suggestion uses `suggestNextEpisodeSlug()` in `app/lib/slug.ts`.
 

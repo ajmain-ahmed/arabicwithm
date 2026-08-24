@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Box, Typography, Button } from '@mui/material'
+import { Box, Typography, Button, Skeleton } from '@mui/material'
 import { ChevronRight } from '@mui/icons-material'
 
 /* ── Palette ── */
@@ -37,6 +37,7 @@ export default function PageBanner({
   backgroundImage,
   overlayGradient = 'linear-gradient(to bottom, rgba(10,31,21,0.40) 0%, rgba(10,31,21,0.60) 55%, rgba(10,31,21,0.88) 100%)',
 }: PageBannerProps) {
+  const [imgLoading, setImgLoading] = useState(true)
   const [imgError, setImgError] = useState(false)
 
   return (
@@ -63,13 +64,26 @@ export default function PageBanner({
       }}
     >
       {/* Background image */}
+      {imgLoading && !imgError && (
+        <Skeleton
+          variant="rectangular"
+          width="100%"
+          height="100%"
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            bgcolor: '#2c1a0e',
+          }}
+        />
+      )}
       {!imgError && (
         <Box
           component="img"
           src={backgroundImage}
           alt=""
           aria-hidden="true"
-          onError={() => setImgError(true)}
+          onLoad={() => setImgLoading(false)}
+          onError={() => { setImgLoading(false); setImgError(true) }}
           sx={{
             position: 'absolute',
             inset: 0,
@@ -77,6 +91,8 @@ export default function PageBanner({
             height: '100%',
             objectFit: 'cover',
             objectPosition: 'center',
+            opacity: imgLoading ? 0 : 1,
+            transition: 'opacity 0.3s',
           }}
         />
       )}
