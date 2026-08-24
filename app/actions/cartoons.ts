@@ -1,7 +1,5 @@
 "use server"
 
-import { existsSync } from "node:fs"
-import path from "node:path"
 import { unstable_cache } from "next/cache"
 import { serviceClient, hasServiceClientConfig } from "@/app/lib/supabase"
 import {
@@ -17,7 +15,6 @@ import {
   normalizeNewTranscript,
   getShowCoverPath,
   getEpisodeCoverPath,
-  getYouTubeThumbnailUrl,
   normalizeYouTubeId,
   normalizeInstagramId,
   normalizeTikTokId,
@@ -37,17 +34,6 @@ function uniqueTags(values: Array<string | null | undefined>): string[] {
     tags.set(tag.toLowerCase(), tag)
   }
   return Array.from(tags.values())
-}
-
-function episodeCover(showSlug: string, episodeSlug: string, youtubeId?: string, storedCover?: string): string | undefined {
-  const preferredCover = getEpisodeCoverPath(showSlug, episodeSlug)
-  const baseCover = preferredCover.replace(/\.avif$/, "")
-  for (const extension of ["avif", "webp", "png", "jpg", "jpeg"]) {
-    const localCover = `${baseCover}.${extension}`
-    const absoluteCover = path.join(process.cwd(), "public", localCover.replace(/^\//, ""))
-    if (existsSync(absoluteCover)) return localCover
-  }
-  return getYouTubeThumbnailUrl(youtubeId) ?? (/^https:\/\//i.test(storedCover ?? "") ? storedCover : undefined)
 }
 
 function isMissingSocialVideoColumn(error: { code?: string; message?: string } | null): boolean {
@@ -478,8 +464,7 @@ function mapEpisodeRow(
   const instagramId = normalizeInstagramId(row.instagram_id ? String(row.instagram_id) : undefined)
   const tiktokId = normalizeTikTokId(row.tiktok_id ? String(row.tiktok_id) : undefined)
   const facebookId = normalizeFacebookId(row.facebook_id ? String(row.facebook_id) : undefined)
-  const storedCover = row.cover ? String(row.cover) : undefined
-  const cover = showSlug != null ? episodeCover(showSlug, episodeSlug, youtubeId, storedCover) : storedCover
+  const cover = showSlug != null ? getEpisodeCoverPath(showSlug, episodeSlug) : undefined
 
   return {
     id: String(row.id),

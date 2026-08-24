@@ -5,6 +5,7 @@ import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
 import { extractChapterTeaser } from "@/app/lib/bookChapterTeaser"
 import { stripDiacritics } from "@/app/lib/arabic"
 import type { CartoonWordEntry } from "@/app/lib/cartoons"
+import { getBookCoverUrl } from "@/app/lib/storage"
 
 export interface PublicBook {
   id: string
@@ -71,13 +72,14 @@ export interface ExploreBookPage {
 }
 
 function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook {
+  const slug = String(row.slug)
   return {
     id: String(row.id),
-    slug: String(row.slug),
+    slug,
     title: String(row.title),
     titleAr: row.title_ar ? String(row.title_ar) : undefined,
     description: row.description ? String(row.description) : undefined,
-    cover: row.cover ? String(row.cover) : undefined,
+    cover: getBookCoverUrl(slug),
     level: String(row.level ?? ""),
     category: row.category ? String(row.category) : undefined,
     tags: Array.isArray(row.tags) ? row.tags.map((tag) => String(tag)).filter(Boolean) : [],
@@ -248,15 +250,18 @@ export const fetchBookPagesForExplorePublic = unstable_cache(
     if (chaptersError) throw new Error(chaptersError.message)
 
     const booksById = new Map(
-      ((books ?? []) as Record<string, unknown>[]).map((book) => [
-        String(book.id),
-        {
-          slug: String(book.slug),
-          title: String(book.title),
-          cover: book.cover ? String(book.cover) : undefined,
-          level: String(book.level ?? ""),
-        },
-      ])
+      ((books ?? []) as Record<string, unknown>[]).map((book) => {
+        const slug = String(book.slug)
+        return [
+          String(book.id),
+          {
+            slug,
+            title: String(book.title),
+            cover: getBookCoverUrl(slug),
+            level: String(book.level ?? ""),
+          },
+        ]
+      })
     )
 
     return ((chapters ?? []) as Record<string, unknown>[]).flatMap((chapter) => {

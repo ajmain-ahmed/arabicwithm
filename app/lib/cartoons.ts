@@ -1,6 +1,7 @@
 // app/lib/cartoons.ts — shared types and transcript helpers for cartoon episodes.
 
 import { stripDiacritics } from './arabic'
+import { getShowCoverUrl, getEpisodeCoverUrl } from './storage'
 
 export interface ShowMeta {
   id: string
@@ -53,18 +54,16 @@ export interface ExploreEpisode extends EpisodeMeta {
   transcriptLines: ExploreTranscriptLine[]
 }
 
-/* ── Cover image paths ── */
+/* ── Cover image URLs ── */
 
-const SHOW_COVERS_DIR = '/covers/shows'
-const EPISODE_COVERS_DIR = '/covers/episodes'
 export const CARTOONS_BANNER_PATH = '/covers/cartoons-banner.avif'
 
 export function getShowCoverPath(slug: string): string {
-  return `${SHOW_COVERS_DIR}/${slug}.avif`
+  return getShowCoverUrl(slug)
 }
 
-export function getEpisodeCoverPath(showSlug: string, episodeSlug: string): string {
-  return `${EPISODE_COVERS_DIR}/${showSlug}/${episodeSlug}.avif`
+export function getEpisodeCoverPath(_showSlug: string, episodeSlug: string): string {
+  return getEpisodeCoverUrl(episodeSlug)
 }
 
 export function normalizeYouTubeId(value?: string | null): string | undefined {

@@ -189,12 +189,18 @@ describe('normalizeNewTranscript', () => {
 })
 
 describe('cover paths', () => {
+  const baseUrl = 'https://example.supabase.co'
+
+  beforeAll(() => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = baseUrl
+  })
+
   it('derives show cover from slug', () => {
-    expect(getShowCoverPath('tmnt')).toBe('/covers/shows/tmnt.avif')
+    expect(getShowCoverPath('tmnt')).toBe(`${baseUrl}/storage/v1/object/public/covers/cartoons/tmnt.webp`)
   })
 
   it('derives episode cover from show and episode slugs', () => {
-  expect(getEpisodeCoverPath('cotp', 'cotp-1')).toBe('/covers/episodes/cotp/cotp-1.avif')
+    expect(getEpisodeCoverPath('cotp', 'cotp-1')).toBe(`${baseUrl}/storage/v1/object/public/covers/episodes/cotp-1.webp`)
   })
 })
 

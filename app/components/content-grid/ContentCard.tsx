@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Box, Typography, Chip, Paper } from '@mui/material'
+import { Box, Typography, Chip, Paper, Skeleton } from '@mui/material'
 import Link from 'next/link'
 
 /* ── Palette ── */
@@ -72,6 +72,7 @@ export default function ContentCard({
   maxVisibleTags,
 }: ContentCardProps) {
   const [hovered, setHovered] = useState(false)
+  const [imgLoading, setImgLoading] = useState(true)
   const [imgError, setImgError] = useState(false)
   const badgeColor = DIFFICULTY_COLORS[level ?? ''] || MUTED
   const href = `${hrefPrefix}/${encodeURIComponent(slug)}`
@@ -125,12 +126,25 @@ export default function ContentCard({
             : imageFit === 'contain' ? '#efe5d6' : 'transparent',
         }}
       >
+        {imgLoading && !imgError && (
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height="100%"
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              bgcolor: 'rgba(44,26,14,0.08)',
+            }}
+          />
+        )}
         {!imgError ? (
           <Box
             component="img"
             src={cover}
             alt={title}
-            onError={() => setImgError(true)}
+            onLoad={() => setImgLoading(false)}
+            onError={() => { setImgLoading(false); setImgError(true) }}
             sx={{
               width: '100%',
               height: denseMobileTile
@@ -146,7 +160,8 @@ export default function ContentCard({
                 : imageFit === 'natural' ? undefined : imageFit,
               objectPosition: denseMobileTile ? { xs: mobileImagePosition, sm: 'center' } : 'center',
               transform: hovered && imageFit !== 'natural' ? 'scale(1.03)' : 'scale(1)',
-              transition: 'transform 0.3s',
+              transition: 'transform 0.3s, opacity 0.3s',
+              opacity: imgLoading ? 0 : 1,
             }}
           />
         ) : (
