@@ -27,7 +27,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
 
   return (
     <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 3, md: 6 } }}>
-      <Container maxWidth="md">
+      <Container maxWidth="lg">
         <Link href="/books" style={{ color: 'inherit', textDecoration: 'none' }}>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', mb: 3, '&:hover': { color: '#b8860b' } }}>
             <ArrowBack sx={{ fontSize: 18 }} /> Back to books
@@ -35,13 +35,13 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
         </Link>
 
         <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', mb: 3 }}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: book.cover ? '180px minmax(0, 1fr)' : '1fr' }, gap: { xs: 3, md: 4 }, alignItems: 'start' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: book.cover ? '240px minmax(0, 1fr)' : '1fr' }, gap: { xs: 3, md: 5 }, alignItems: 'start' }}>
             {book.cover && (
               <Box
                 component="img"
                 src={book.cover}
                 alt={`${book.title} cover`}
-                sx={{ width: '100%', maxWidth: { xs: 240, sm: 180 }, mx: { xs: 'auto', sm: 0 }, aspectRatio: '3 / 4', objectFit: 'cover', borderRadius: '10px', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}
+                sx={{ width: '100%', maxWidth: { xs: 280, sm: 240 }, mx: { xs: 'auto', sm: 0 }, aspectRatio: '3 / 4', objectFit: 'cover', borderRadius: '10px', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}
               />
             )}
             <Box sx={{ minWidth: 0 }}>
@@ -67,12 +67,12 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                   {book.description}
                 </Typography>
               )}
-              <Box sx={{ display: 'flex', gap: 1, mt: 2.5 }}>
+              <Box sx={{ display: 'flex', gap: 1, mt: 2.5, flexWrap: 'wrap' }}>
                 {book.level && <Chip label={book.level} size="small" sx={{ bgcolor: '#6b8f5e', color: '#fff', fontWeight: 700 }} />}
-                {book.category && <Chip label={book.category} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />}
+                {book.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />)}
               </Box>
               <Box sx={{ mt: 3 }}>
-                <BookReadingCta bookSlug={book.slug} chapterSlugs={chapters.map((chapter) => chapter.slug)} />
+                <BookReadingCta bookSlug={book.slug} chapters={chapters} />
               </Box>
             </Box>
           </Box>
@@ -84,29 +84,25 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
         <Box
           sx={{
             display: 'flex',
-            flexDirection: { xs: 'row', sm: 'column' },
-            gap: { xs: 1.25, sm: 1.25 },
-            overflowX: { xs: 'auto', sm: 'visible' },
-            mx: { xs: -2, sm: 0 },
-            px: { xs: 2, sm: 0 },
-            pb: { xs: 1.5, sm: 0 },
-            scrollSnapType: { xs: 'x mandatory', sm: 'none' },
-            scrollbarWidth: 'none',
-            '&::-webkit-scrollbar': { display: 'none' },
+            flexDirection: 'column',
+            gap: 1.25,
           }}
         >
           {chapters.map((chapter) => (
-            <Box key={chapter.id} sx={{ flex: { xs: '0 0 142px', sm: 'initial' }, scrollSnapAlign: { xs: 'start', sm: 'none' } }}>
+            <Box key={chapter.id}>
               <Link
                 href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`}
                 style={{ color: 'inherit', textDecoration: 'none' }}
               >
-                <Paper elevation={0} sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', justifyContent: { xs: 'center', sm: 'flex-start' }, gap: { xs: 1.25, sm: 2 }, p: { xs: 1.5, sm: 2 }, minHeight: { xs: 100, sm: 0 }, height: '100%', textAlign: { xs: 'center', sm: 'left' }, borderRadius: '10px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', transition: 'border-color 0.15s ease, transform 0.15s ease', '&:hover': { borderColor: 'rgba(184,134,11,0.45)', transform: { xs: 'none', sm: 'translateX(3px)' } } }}>
+                <Paper elevation={0} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, p: { xs: 1.5, sm: 2 }, textAlign: 'left', borderRadius: '10px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', transition: 'border-color 0.15s ease, transform 0.15s ease', '&:hover': { borderColor: 'rgba(184,134,11,0.45)', transform: { sm: 'translateX(3px)' } } }}>
                   <Box sx={{ width: { xs: 34, sm: 38 }, height: { xs: 34, sm: 38 }, borderRadius: '50%', display: 'grid', placeItems: 'center', bgcolor: 'rgba(184,134,11,0.1)', color: '#b8860b', fontWeight: 700, flexShrink: 0 }}>
                     {chapter.chapterNumber}
                   </Box>
-                  <Typography sx={{ flex: { sm: 1 }, fontFamily: 'Jost, sans-serif', fontSize: { xs: 12, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)', display: '-webkit-box', WebkitLineClamp: { xs: 2, sm: 'unset' }, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{chapter.title}</Typography>
-                  <ChevronRight sx={{ display: { xs: 'none', sm: 'block' }, color: 'var(--awm-muted-light)' }} />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}>{chapter.title}</Typography>
+                    {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
+                  </Box>
+                  <ChevronRight sx={{ color: 'var(--awm-muted-light)' }} />
                 </Paper>
               </Link>
             </Box>

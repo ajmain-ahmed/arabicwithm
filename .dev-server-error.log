@@ -1,0 +1,176 @@
+[browser] Uncaught Error: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ThemeProvider>
+      <ThemeProvider theme={{...}}>
+        <ThemeProviderNoVars theme={{...}}>
+          <ThemeProvider themeId={undefined} theme={{...}}>
+            <ThemeProvider theme={{...}}>
+              <RtlProvider value={false}>
+                <DefaultPropsProvider value={{...}}>
+                  <CssBaseline>
+                  <SiteShell>
+                    <Navbar>
+                      <style
+-                       data-emotion="css-global 1hbwmfy"
+-                       data-s=""
+                      >
++                       {"\n  .nav-link {\n    position: relative;\n    cursor: pointer;\n    padding-bottom: 2px;\n..."}
+-                       {"html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;box-sizing:borde..."}
+                      ...
+                    ...
+
+    at <unknown> (https://react.dev/link/hydration-mismatch)
+    at throwOnHydrationMismatch (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3318:56)
+    at prepareToHydrateHostInstance (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3372:23)
+    at completeWork (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6922:60)
+    at runWithFiberInDEV (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at completeUnitOfWork (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9622:23)
+    at performUnitOfWork (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9557:28)
+    at workLoopConcurrentByScheduler (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9551:58)
+    at renderRootConcurrent (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9534:71)
+    at performWorkOnRoot (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+    at style (<anonymous>)
+    at Navbar (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/app_0nsuolh._.js:2703:215)
+    at SiteShell (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/app_0nsuolh._.js:4687:215)
+    at RootLayout (app\layout.tsx:41:13)
+  39 |         <AuthProvider>
+  40 |           <ThemeProvider>
+> 41 |             <SiteShell>{children}</SiteShell>
+     |             ^
+  42 |           </ThemeProvider>
+  43 |         </AuthProvider>
+  44 |       </body>
+⚠ Blocked cross-origin request to Next.js dev resource /_next/webpack-hmr from "192.168.1.47".
+Cross-origin access to Next.js dev resources is blocked by default for safety.
+
+To allow this host in development, add it to "allowedDevOrigins" in next.config.js and restart the dev server:
+
+// next.config.js
+module.exports = {
+  allowedDevOrigins: ['192.168.1.47'],
+}
+
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+[browser] Uncaught Error: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ThemeProvider>
+      <ThemeProvider theme={{...}}>
+        <ThemeProviderNoVars theme={{...}}>
+          <ThemeProvider themeId={undefined} theme={{...}}>
+            <ThemeProvider theme={{...}}>
+              <RtlProvider value={false}>
+                <DefaultPropsProvider value={{...}}>
+                  <CssBaseline>
+                  <SiteShell>
+                    <Navbar>
+                      <style
+-                       data-emotion="css-global 1hbwmfy"
+-                       data-s=""
+                      >
++                       {"\n  .nav-link {\n    position: relative;\n    cursor: pointer;\n    padding-bottom: 2px;\n..."}
+-                       {"html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;box-sizing:borde..."}
+                      ...
+                    ...
+
+    at <unknown> (https://react.dev/link/hydration-mismatch)
+    at throwOnHydrationMismatch (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3318:56)
+    at prepareToHydrateHostInstance (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3372:23)
+    at completeWork (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6922:60)
+    at runWithFiberInDEV (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at completeUnitOfWork (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9622:23)
+    at performUnitOfWork (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9557:28)
+    at workLoopConcurrentByScheduler (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9551:58)
+    at renderRootConcurrent (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9534:71)
+    at performWorkOnRoot (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+    at style (<anonymous>)
+    at Navbar (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/app_0nsuolh._.js:2703:215)
+    at SiteShell (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/app_0nsuolh._.js:4687:215)
+    at RootLayout (app\layout.tsx:41:13)
+  39 |         <AuthProvider>
+  40 |           <ThemeProvider>
+> 41 |             <SiteShell>{children}</SiteShell>
+     |             ^
+  42 |           </ThemeProvider>
+  43 |         </AuthProvider>
+  44 |       </body>
+[browser] Uncaught Error: Hydration failed because the server rendered text didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <ThemeProvider>
+      <ThemeProvider theme={{...}}>
+        <ThemeProviderNoVars theme={{...}}>
+          <ThemeProvider themeId={undefined} theme={{...}}>
+            <ThemeProvider theme={{...}}>
+              <RtlProvider value={false}>
+                <DefaultPropsProvider value={{...}}>
+                  <CssBaseline>
+                  <SiteShell>
+                    <Navbar>
+                      <style
+-                       data-emotion="css-global 1hbwmfy"
+-                       data-s=""
+                      >
++                       {"\n  .nav-link {\n    position: relative;\n    cursor: pointer;\n    padding-bottom: 2px;\n..."}
+-                       {"html{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;box-sizing:borde..."}
+                      ...
+                    ...
+
+    at <unknown> (https://react.dev/link/hydration-mismatch)
+    at throwOnHydrationMismatch (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3318:56)
+    at prepareToHydrateHostInstance (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:3372:23)
+    at completeWork (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:6922:60)
+    at runWithFiberInDEV (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:965:74)
+    at completeUnitOfWork (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9622:23)
+    at performUnitOfWork (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9557:28)
+    at workLoopConcurrentByScheduler (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9551:58)
+    at renderRootConcurrent (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9534:71)
+    at performWorkOnRoot (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:9061:150)
+    at performWorkOnRootViaSchedulerTask (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_react-dom_058-ah~._.js:10255:9)
+    at MessagePort.performWorkUntilDeadline (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/node_modules_next_dist_compiled_0rpq4pf._.js:2647:64)
+    at style (<anonymous>)
+    at Navbar (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/app_0nsuolh._.js:2703:215)
+    at SiteShell (file://C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/.next/dev/static/chunks/app_0nsuolh._.js:4687:215)
+    at RootLayout (app\layout.tsx:41:13)
+  39 |         <AuthProvider>
+  40 |           <ThemeProvider>
+> 41 |             <SiteShell>{children}</SiteShell>
+     |             ^
+  42 |           </ThemeProvider>
+  43 |         </AuthProvider>
+  44 |       </body>

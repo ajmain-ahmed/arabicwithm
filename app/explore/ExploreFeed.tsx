@@ -1,14 +1,24 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { ArrowForward, ExploreOutlined, MenuBook, PlayArrow, Refresh, VolumeOff, VolumeUp } from '@mui/icons-material'
-import { Box, Button, Chip, Typography } from '@mui/material'
-import { HtmlTooltip, WordTooltip } from '@/app/components/vocab-tooltip'
+import { ArrowForward, ExploreOutlined, LaunchRounded, MenuBook, Refresh, VolumeOff, VolumeUp } from '@mui/icons-material'
+import { Box, Button, Chip, IconButton, Popover, Tooltip, Typography } from '@mui/material'
+import { WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
 import SocialVideoEmbed from '@/app/components/SocialVideoEmbed'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { getEpisodeVideoSources, getYouTubeThumbnailUrl, type ExploreEpisode, type VideoProvider } from '@/app/lib/cartoons'
 import type { ExploreBookPage } from '@/app/actions/books'
+import { dispatchWordLookup } from '@/app/lib/activity'
+import { usePlayerStore } from '@/store/playerStore'
+import {
+  EXPLORE_READING_DURATION_MS,
+  definitionCacheKey,
+  getExploreSoundPreference,
+  nextExploreIndex,
+  setExploreSoundPreference,
+  subscribeToExploreSoundPreference,
+} from '@/app/lib/explore'
 
 function shuffled<T>(items: readonly T[]): T[] {
   const result = [...items]
@@ -19,24 +29,91 @@ function shuffled<T>(items: readonly T[]): T[] {
   return result
 }
 
+type OpenDefinition = (
+  entry: VocabEntry,
+  anchor: HTMLElement,
+  context: string,
+  itemIndex: number,
+) => void
+
+interface SelectedDefinition {
+  cacheKey: string
+  entry: VocabEntry
+  anchor: HTMLElement
+  itemIndex: number
+}
+
+function ExploreDefinitionWord({
+  entry,
+  context,
+  itemIndex,
+  onOpen,
+}: {
+  entry: VocabEntry
+  context: string
+  itemIndex: number
+  onOpen: OpenDefinition
+}) {
+  const open = (target: HTMLElement) => onOpen(entry, target, context, itemIndex)
+  return (
+    <Box
+      component="span"
+      className="vocab-word"
+      role="button"
+      tabIndex={0}
+      aria-label={`Show definition for ${entry.arabic}`}
+      onClick={(event) => {
+        event.stopPropagation()
+        open(event.currentTarget)
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return
+        event.preventDefault()
+        open(event.currentTarget)
+      }}
+      sx={{
+        display: 'inline-block',
+        mx: '0.1em',
+        cursor: 'pointer',
+        borderBottom: '2px dotted var(--awm-gold)',
+        transition: 'background-color .12s ease',
+        '&:hover, &:focus-visible': { bgcolor: 'color-mix(in srgb, var(--awm-gold) 14%, transparent)', outline: 'none' },
+      }}
+    >
+      {entry.arabic}
+    </Box>
+  )
+}
+
 function ExploreVideo({
   episode,
   active,
   onEnded,
+  onPlaybackChange,
+  soundEnabled,
+  itemIndex,
+  onDefinitionOpen,
 }: {
   episode: ExploreEpisode
   active: boolean
   onEnded: () => void
+  onPlaybackChange: (playing: boolean) => void
+  soundEnabled: boolean
+  itemIndex: number
+  onDefinitionOpen: OpenDefinition
 }) {
   const [currentTime, setCurrentTime] = useState(0)
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
-  const [soundMuted, setSoundMuted] = useState(true)
+  const [fallbackMutedFor, setFallbackMutedFor] = useState<string | null>(null)
   const source = sources.find((candidate) => candidate.provider === selectedProvider) ?? sources[0]
+  const activeSourceKey = active && source ? `${source.provider}:${source.id}` : null
+  const fallbackMuted = activeSourceKey != null && fallbackMutedFor === activeSourceKey
   const isYouTube = source?.provider === 'youtube'
   const {
     wrapRef,
     isReady,
+    isPlaying,
     playVideo,
     pauseVideo,
     mute,
@@ -49,26 +126,54 @@ function ExploreVideo({
     active && isYouTube ? source.id : undefined,
     setCurrentTime,
     undefined,
-    { autoplay: active, muted: true, onEnded }
+    { autoplay: active, muted: !soundEnabled, onEnded }
   )
+  const soundMuted = !soundEnabled || fallbackMuted
+
+  useEffect(() => {
+    if (!active) return
+    onPlaybackChange(isPlaying)
+    return () => onPlaybackChange(false)
+  }, [active, isPlaying, onPlaybackChange])
 
   useEffect(() => {
     if (!isReady) return
     if (active) {
+      if (soundEnabled && !fallbackMuted) unMute()
+      else mute()
       playVideo()
     } else {
       pauseVideo()
     }
-  }, [active, isReady, pauseVideo, playVideo])
+  }, [active, fallbackMuted, isReady, mute, pauseVideo, playVideo, soundEnabled, unMute])
+
+  useEffect(() => {
+    if (!active || !autoplayBlocked || !activeSourceKey) return
+    mute()
+    playVideo()
+    const timer = window.setTimeout(() => setFallbackMutedFor(activeSourceKey), 0)
+    return () => window.clearTimeout(timer)
+  }, [active, activeSourceKey, autoplayBlocked, mute, playVideo])
+
+  useEffect(() => {
+    if (!active || !isYouTube || !isReady || isPlaying || !soundEnabled || fallbackMuted || !activeSourceKey) return
+    const timer = window.setTimeout(() => {
+      setFallbackMutedFor(activeSourceKey)
+      mute()
+      playVideo()
+    }, 1_500)
+    return () => window.clearTimeout(timer)
+  }, [active, activeSourceKey, fallbackMuted, isPlaying, isReady, isYouTube, mute, playVideo, soundEnabled])
 
   const toggleSound = () => {
     if (soundMuted) {
-      unMute()
-      playVideo()
-      setSoundMuted(false)
+      setExploreSoundPreference(true)
+      setFallbackMutedFor(null)
+      playWithSound()
     } else {
+      setExploreSoundPreference(false)
+      setFallbackMutedFor(null)
       mute()
-      setSoundMuted(true)
     }
   }
 
@@ -117,16 +222,8 @@ function ExploreVideo({
             height: '100%',
           }}
         />
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.18), transparent 36%, rgba(0,0,0,0.78))',
-          }}
-        />
         {sources.length > 1 && (
-          <Box sx={{ position: 'absolute', zIndex: 3, top: 14, left: 14, right: 108, display: 'flex', gap: 0.65, flexWrap: 'wrap' }}>
+          <Box sx={{ position: 'absolute', zIndex: 3, bottom: 14, left: 14, right: 76, display: 'flex', gap: 0.65, flexWrap: 'wrap' }}>
             {sources.map((candidate) => (
               <Chip
                 key={candidate.provider}
@@ -146,27 +243,27 @@ function ExploreVideo({
             ))}
           </Box>
         )}
-        <Box
-          component="button"
-          type="button"
-          onClick={toggleSound}
-          sx={{ position: 'absolute', zIndex: 3, top: 14, right: 14, display: 'flex', alignItems: 'center', gap: 0.7, px: 1.1, py: 0.55, border: 0, borderRadius: '9999px', bgcolor: 'rgba(0,0,0,0.62)', color: '#fff', cursor: 'pointer' }}
-        >
-          {soundMuted ? <VolumeOff sx={{ fontSize: 15 }} /> : <VolumeUp sx={{ fontSize: 15 }} />}
-          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 10.5, fontWeight: 600 }}>{soundMuted ? 'Muted' : 'Sound on'}</Typography>
-        </Box>
-        {autoplayBlocked && errorCode == null && isYouTube && (
-          <Box sx={{ position: 'absolute', zIndex: 2, inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.58)', p: 3 }}>
-            <Button
-              onClick={playWithSound}
-              variant="contained"
-              startIcon={<PlayArrow />}
-              sx={{ bgcolor: '#d4a843', color: '#0e2e1f', borderRadius: '9999px', px: 2.5, py: 1.1, textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#e2bd62' } }}
+        <Box sx={{ position: 'absolute', zIndex: 4, right: { xs: 12, md: 14 }, bottom: { xs: 14, md: 16 }, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
+            <IconButton
+              onClick={toggleSound}
+              aria-label={soundMuted ? 'Turn Explore sound on' : 'Mute Explore video'}
+              sx={{ width: 48, height: 48, bgcolor: 'rgba(14,46,31,.76)', color: '#fff', border: '1px solid rgba(255,255,255,.28)', backdropFilter: 'blur(10px)', '&:hover': { bgcolor: 'rgba(14,46,31,.9)' } }}
             >
-              Play with sound
-            </Button>
-          </Box>
-        )}
+              {soundMuted ? <VolumeOff /> : <VolumeUp />}
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Go to episode" placement="left">
+            <IconButton
+              component={Link}
+              href={`/cartoons/${episode.showSlug}/${episode.slug}`}
+              aria-label={`Go to episode: ${episode.title}`}
+              sx={{ width: 48, height: 48, bgcolor: 'rgba(245,237,224,.9)', color: '#0e2e1f', border: '1px solid rgba(184,134,11,.38)', backdropFilter: 'blur(10px)', '&:hover': { bgcolor: '#fff' } }}
+            >
+              <LaunchRounded />
+            </IconButton>
+          </Tooltip>
+        </Box>
         {errorCode != null && isYouTube && (
           <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.78)', p: 3 }}>
             <Box sx={{ textAlign: 'center', color: '#fff' }}>
@@ -178,14 +275,6 @@ function ExploreVideo({
             </Box>
           </Box>
         )}
-        <Box sx={{ position: 'absolute', left: 18, right: 18, bottom: { xs: 78, md: 20 }, color: '#fff' }}>
-          <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#d4a843' }}>
-            {episode.showTitle}
-          </Typography>
-          <Typography component="h2" sx={{ mt: 0.5, fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 28 }, fontWeight: 600, lineHeight: 1.12 }}>
-            {episode.title}
-          </Typography>
-        </Box>
       </Box>
 
       <Box
@@ -228,29 +317,13 @@ function ExploreVideo({
               <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), "EB Garamond", serif', fontSize: 22, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.65, textAlign: 'right' }}>
                 {(line.words?.length ?? 0) > 0
                   ? (line.words ?? []).map((word, wordIndex) => (
-                      <HtmlTooltip
+                      <ExploreDefinitionWord
                         key={`${word.plain}-${wordIndex}`}
-                        title={<Box sx={{ p: 2.5 }}><WordTooltip entry={word} /></Box>}
-                        placement="top"
-                        arrow
-                        describeChild
-                      >
-                        <Box
-                          component="span"
-                          className="vocab-word"
-                          tabIndex={0}
-                          sx={{
-                            display: 'inline-block',
-                            mx: '0.12em',
-                            cursor: 'help',
-                            borderBottom: '2px dotted var(--awm-gold)',
-                            transition: 'background-color .15s ease',
-                            '&:hover, &:focus-visible': { bgcolor: 'color-mix(in srgb, var(--awm-gold) 14%, transparent)' },
-                          }}
-                        >
-                          {word.arabic}
-                        </Box>
-                      </HtmlTooltip>
+                        entry={word}
+                        context={`episode:${episode.id}:line:${index}`}
+                        itemIndex={itemIndex}
+                        onOpen={onDefinitionOpen}
+                      />
                     ))
                   : line.arabic}
               </Typography>
@@ -259,11 +332,6 @@ function ExploreVideo({
           ))}
         </Box>
 
-        <Box sx={{ px: 3, py: 2, borderTop: '1px solid rgba(44,26,14,0.07)' }}>
-          <Button component={Link} href={`/cartoons/${episode.showSlug}/${episode.slug}`} fullWidth variant="contained" endIcon={<ArrowForward />} sx={{ bgcolor: '#0e2e1f', color: '#fff', borderRadius: '10px', py: 1.15, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' } }}>
-            Go to episode
-          </Button>
-        </Box>
       </Box>
     </>
   )
@@ -290,7 +358,7 @@ function buildExploreItems(episodes: readonly ExploreEpisode[], bookPages: reado
   return items
 }
 
-function ExploreBookPageSlide({ page }: { page: ExploreBookPage }) {
+function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen }: { page: ExploreBookPage; itemIndex: number; onDefinitionOpen: OpenDefinition }) {
   return (
     <Box
       sx={{
@@ -335,17 +403,13 @@ function ExploreBookPageSlide({ page }: { page: ExploreBookPage }) {
             <Box key={blockIndex} sx={{ py: { xs: 1, md: 1.35 }, borderBottom: blockIndex < page.blocks.length - 1 ? '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)' : 0 }}>
               <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), "EB Garamond", serif', fontSize: { xs: 22, md: 28 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.85, textAlign: 'right' }}>
                 {block.words.map((word, wordIndex) => (
-                  <HtmlTooltip
+                  <ExploreDefinitionWord
                     key={`${word.plain}-${wordIndex}`}
-                    title={<Box sx={{ p: 2.5 }}><WordTooltip entry={word} /></Box>}
-                    placement="top"
-                    arrow
-                    describeChild
-                  >
-                    <Box component="span" tabIndex={0} sx={{ display: 'inline-block', mx: '0.1em', cursor: 'help', borderBottom: '2px dotted var(--awm-gold)' }}>
-                      {word.arabic}
-                    </Box>
-                  </HtmlTooltip>
+                    entry={word}
+                    context={`book:${page.id}:block:${blockIndex}`}
+                    itemIndex={itemIndex}
+                    onOpen={onDefinitionOpen}
+                  />
                 ))}
                 {block.punctuation}
               </Typography>
@@ -376,10 +440,19 @@ function ExploreBookPageSlide({ page }: { page: ExploreBookPage }) {
 }
 
 export default function ExploreFeed({ episodes, bookPages }: { episodes: ExploreEpisode[]; bookPages: ExploreBookPage[] }) {
+  const setGlobalVideoPlaying = usePlayerStore((state) => state.setIsPlaying)
+  const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
   const [orderedItems, setOrderedItems] = useState<ExploreItem[] | null>(null)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [selectedDefinition, setSelectedDefinition] = useState<SelectedDefinition | null>(null)
+  const [pageVisible, setPageVisible] = useState(true)
   const feedRef = useRef<HTMLDivElement | null>(null)
   const itemRefs = useRef(new Map<number, HTMLElement>())
+  const definitionCacheRef = useRef(new Map<string, VocabEntry>())
+  const activeIndexRef = useRef(0)
+  const advancedFromRef = useRef<number | null>(null)
+  const programmaticTargetRef = useRef<number | null>(null)
+  const scrollLockUntilRef = useRef(0)
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setOrderedItems(buildExploreItems(episodes, bookPages)))
@@ -391,16 +464,52 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
     else itemRefs.current.delete(index)
   }, [])
 
-  const playNextVideo = useCallback((fromIndex: number) => {
+  const activateIndex = useCallback((index: number) => {
+    if (activeIndexRef.current === index) return
+    activeIndexRef.current = index
+    advancedFromRef.current = null
+    setSelectedDefinition(null)
+    setActiveIndex(index)
+  }, [])
+
+  const advanceOnce = useCallback((fromIndex: number) => {
     if (!orderedItems) return
+    if (activeIndexRef.current !== fromIndex || advancedFromRef.current === fromIndex) return
+    const nextIndex = nextExploreIndex(fromIndex, orderedItems.length)
+    if (nextIndex === null) return
 
-    let nextIndex = orderedItems.findIndex((item, index) => index > fromIndex && item.kind === 'video')
-    if (nextIndex < 0) nextIndex = orderedItems.findIndex((item) => item.kind === 'video')
-    if (nextIndex < 0 || nextIndex === fromIndex) return
-
+    advancedFromRef.current = fromIndex
+    activeIndexRef.current = nextIndex
+    programmaticTargetRef.current = nextIndex
+    scrollLockUntilRef.current = Date.now() + 1_000
+    setSelectedDefinition(null)
     setActiveIndex(nextIndex)
     itemRefs.current.get(nextIndex)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [orderedItems])
+
+  const openDefinition = useCallback<OpenDefinition>((entry, anchor, context, itemIndex) => {
+    const cacheKey = definitionCacheKey(context, entry)
+    const cachedEntry = definitionCacheRef.current.get(cacheKey) ?? entry
+    definitionCacheRef.current.set(cacheKey, cachedEntry)
+    setSelectedDefinition({ cacheKey, entry: cachedEntry, anchor, itemIndex })
+    dispatchWordLookup()
+  }, [])
+
+  useEffect(() => () => setGlobalVideoPlaying(false), [setGlobalVideoPlaying])
+
+  useEffect(() => {
+    const handleVisibility = () => setPageVisible(document.visibilityState === 'visible')
+    handleVisibility()
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [])
+
+  useEffect(() => {
+    if (!orderedItems || !pageVisible || orderedItems[activeIndex]?.kind !== 'book') return
+    if (selectedDefinition?.itemIndex === activeIndex) return
+    const timer = window.setTimeout(() => advanceOnce(activeIndex), EXPLORE_READING_DURATION_MS)
+    return () => window.clearTimeout(timer)
+  }, [activeIndex, advanceOnce, orderedItems, pageVisible, selectedDefinition?.itemIndex])
 
   useEffect(() => {
     const root = feedRef.current
@@ -409,14 +518,18 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
       const visible = entries
         .filter((entry) => entry.isIntersecting)
         .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0]
-      if (visible) setActiveIndex(Number((visible.target as HTMLElement).dataset.index ?? 0))
+      if (!visible) return
+      const visibleIndex = Number((visible.target as HTMLElement).dataset.index ?? 0)
+      if (Date.now() < scrollLockUntilRef.current && programmaticTargetRef.current !== visibleIndex) return
+      if (programmaticTargetRef.current === visibleIndex) programmaticTargetRef.current = null
+      activateIndex(visibleIndex)
     }, { root, threshold: [0.55, 0.7, 0.85] })
     itemRefs.current.forEach((node) => observer.observe(node))
     return () => observer.disconnect()
-  }, [orderedItems])
+  }, [activateIndex, orderedItems])
 
   if (orderedItems == null) {
-    return <Box component="main" sx={{ height: { xs: 'calc(100dvh - 112px)', md: 'calc(100dvh - 64px)' }, bgcolor: 'var(--awm-cream-light)' }} />
+    return <Box component="main" sx={{ height: { xs: 'calc(100dvh - 138px - env(safe-area-inset-bottom))', md: 'calc(100dvh - 64px)' }, bgcolor: 'var(--awm-cream-light)' }} />
   }
 
   if (orderedItems.length === 0) {
@@ -432,7 +545,7 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
       ref={feedRef}
       component="main"
       sx={{
-        height: { xs: 'calc(100dvh - 112px)', md: 'calc(100dvh - 64px)' },
+        height: { xs: 'calc(100dvh - 138px - env(safe-area-inset-bottom))', md: 'calc(100dvh - 64px)' },
         overflowY: 'auto',
         scrollSnapType: 'y mandatory',
         overscrollBehaviorY: 'contain',
@@ -464,37 +577,30 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
             <>
               <ExploreVideo
                 episode={item.episode}
-                active={index === activeIndex}
-                onEnded={() => playNextVideo(index)}
+                active={index === activeIndex && pageVisible}
+                onEnded={() => advanceOnce(index)}
+                onPlaybackChange={setGlobalVideoPlaying}
+                soundEnabled={soundEnabled}
+                itemIndex={index}
+                onDefinitionOpen={openDefinition}
               />
-              <Button
-                component={Link}
-                href={`/cartoons/${item.episode.showSlug}/${item.episode.slug}`}
-                variant="contained"
-                endIcon={<ArrowForward />}
-                sx={{
-                  display: { xs: 'flex', md: 'none' },
-                  position: 'absolute',
-                  left: 18,
-                  right: 18,
-                  bottom: 18,
-                  bgcolor: 'var(--awm-cream)',
-                  color: '#0e2e1f',
-                  borderRadius: '10px',
-                  py: 1.15,
-                  textTransform: 'none',
-                  fontWeight: 700,
-                  '&:hover': { bgcolor: 'var(--awm-white)' },
-                }}
-              >
-                Go to episode
-              </Button>
             </>
           ) : (
-            <ExploreBookPageSlide page={item.page} />
+            <ExploreBookPageSlide page={item.page} itemIndex={index} onDefinitionOpen={openDefinition} />
           )}
         </Box>
       ))}
+      <Popover
+        open={Boolean(selectedDefinition)}
+        anchorEl={selectedDefinition?.anchor ?? null}
+        onClose={() => setSelectedDefinition(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+        disableRestoreFocus
+        slotProps={{ paper: { sx: { mt: 1, width: 'min(320px, calc(100vw - 28px))', borderRadius: '12px', border: '1px solid color-mix(in srgb, var(--awm-bark) 10%, transparent)', boxShadow: '0 14px 42px rgba(44,26,14,.2)' } } }}
+      >
+        {selectedDefinition && <Box key={selectedDefinition.cacheKey} sx={{ p: 2.5 }}><WordTooltip entry={selectedDefinition.entry} /></Box>}
+      </Popover>
     </Box>
   )
 }

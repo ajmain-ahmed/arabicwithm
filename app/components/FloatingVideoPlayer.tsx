@@ -30,13 +30,12 @@ export default function FloatingVideoPlayer() {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
 
-  const { pipOpen, closePip, videoId, episodePath, title, currentTime, seekTarget, orientation } =
+  const { pipOpen, closePip, videoId, episodePath, title, currentTime, seekTarget, orientation, setIsPlaying: setGlobalVideoPlaying } =
     usePlayerStore()
 
   const [size, setSize] = useState<SavedSize>(DEFAULT_DESKTOP)
   const [viewport, setViewport] = useState({ width: 0, height: 0 })
   const [hovered, setHovered] = useState(false)
-  const [isPaused, setIsPaused] = useState(false)
   const currentTimeRef = useRef(currentTime)
 
   const motionX = useMotionValue(0)
@@ -101,6 +100,7 @@ export default function FloatingVideoPlayer() {
     pauseVideo,
     playWithSound,
     isReady,
+    isPlaying,
     autoplayBlocked,
     errorCode,
     retry,
@@ -109,6 +109,11 @@ export default function FloatingVideoPlayer() {
     handleTimeUpdate,
     currentTime
   )
+
+  useEffect(() => {
+    setGlobalVideoPlaying(pipOpen && isPlaying)
+    return () => setGlobalVideoPlaying(false)
+  }, [isPlaying, pipOpen, setGlobalVideoPlaying])
 
   /* playerVars.start already positions the video; just press play once ready */
   useEffect(() => {
@@ -161,12 +166,10 @@ export default function FloatingVideoPlayer() {
   }, [seekTarget, seekTo])
 
   const handleTogglePlay = () => {
-    if (isPaused) {
+    if (!isPlaying) {
       playVideo()
-      setIsPaused(false)
     } else {
       pauseVideo()
-      setIsPaused(true)
     }
   }
 
@@ -317,12 +320,12 @@ export default function FloatingVideoPlayer() {
           </Typography>
           <IconButton
             size="small"
-            aria-label={isPaused ? 'Play video' : 'Pause video'}
+            aria-label={isPlaying ? 'Pause video' : 'Play video'}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={handleTogglePlay}
             sx={{ width: 26, height: 26, color: '#fff' }}
           >
-            {isPaused ? <PlayArrow sx={{ fontSize: 17 }} /> : <Pause sx={{ fontSize: 17 }} />}
+            {isPlaying ? <Pause sx={{ fontSize: 17 }} /> : <PlayArrow sx={{ fontSize: 17 }} />}
           </IconButton>
           <IconButton
             size="small"
@@ -456,10 +459,10 @@ export default function FloatingVideoPlayer() {
               '&:hover': { background: 'rgba(0,0,0,0.55)' },
             }}
           >
-            {isPaused ? (
-              <PlayArrow sx={{ fontSize: 18 }} />
-            ) : (
+            {isPlaying ? (
               <Pause sx={{ fontSize: 18 }} />
+            ) : (
+              <PlayArrow sx={{ fontSize: 18 }} />
             )}
           </IconButton>
 

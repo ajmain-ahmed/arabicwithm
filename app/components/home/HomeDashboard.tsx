@@ -7,21 +7,27 @@ import {
   ArrowForward,
   AutoStories,
   Bookmark,
+  CalendarMonthRounded,
   ExploreOutlined,
   Headphones,
   LocalFireDepartmentRounded,
   MenuBook,
   Movie,
+  TrendingDownRounded,
+  TrendingUpRounded,
 } from '@mui/icons-material'
-import { Box, Button, Chip, CircularProgress, Container, LinearProgress, Paper, Typography } from '@mui/material'
+import { Box, Button, Chip, CircularProgress, Container, LinearProgress, MenuItem, Select, Typography, Paper } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
+import { fetchLearningActivity, updateWeeklyLearningGoal } from '@/app/actions/activity'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 import {
   LEARNING_ACTIVITY_EVENT,
+  calculateLearningLevel,
   calculateLearningStreak,
   formatLearningTime,
   parseLearningActivity,
+  summarizeWeeklyActivity,
   type LearningActivity,
 } from '@/app/lib/activity'
 import {
@@ -118,7 +124,8 @@ function ContentCard({ type, title, titleAr, description, level, href, image, ac
 
 function BookmarkContinueCard({ bookmark }: { bookmark: BookSentenceBookmark }) {
   return (
-    <Paper elevation={0} sx={{ minHeight: 220, p: { xs: 2.5, sm: 3.5 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 30%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)', display: 'flex', flexDirection: 'column' }}>
+    <Paper elevation={0} sx={{ minHeight: { xs: 190, md: 178 }, p: { xs: 2.5, sm: 3.5 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 30%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)', display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0,1fr) auto' }, columnGap: 4, alignItems: 'end' }}>
+      <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'var(--awm-gold)' }}>
         <Bookmark sx={{ fontSize: 20 }} />
         <Typography sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
@@ -134,20 +141,71 @@ function BookmarkContinueCard({ bookmark }: { bookmark: BookSentenceBookmark }) 
         </Typography>
       )}
       <Typography sx={{ mt: 1, color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 600 }}>
-        {bookmark.bookTitle} · {bookmark.chapterTitle}
+        {bookmark.bookTitle} · {bookmark.chapterTitle} · sentence {bookmark.blockIndex + 1}
       </Typography>
-      <Button component={Link} href={bookSentenceBookmarkHref(bookmark)} endIcon={<ArrowForward />} sx={{ mt: 'auto', pt: 2, px: 0, width: 'fit-content', color: 'var(--awm-forest)', fontWeight: 700, textTransform: 'none' }}>
+      </Box>
+      <Button component={Link} href={bookSentenceBookmarkHref(bookmark)} endIcon={<ArrowForward />} sx={{ mt: { xs: 2, md: 0 }, px: { xs: 0, md: 2.5 }, py: { md: 1.1 }, width: 'fit-content', color: { xs: 'var(--awm-forest)', md: '#fff' }, bgcolor: { md: 'var(--awm-forest)' }, borderRadius: '9999px', fontWeight: 700, textTransform: 'none', '&:hover': { bgcolor: { md: '#173f2d' } } }}>
         Continue from bookmark
       </Button>
     </Paper>
   )
 }
 
-function LearningStats({ totalSeconds, streak }: { totalSeconds: number; streak: number }) {
-  const stats = [
-    { label: 'Learning time', detail: 'Active study', value: formatLearningTime(totalSeconds), icon: AccessTimeRounded, colour: '#0e2e1f', background: 'rgba(14,46,31,0.09)' },
-    { label: 'Current streak', detail: streak === 1 ? '1 active day' : `${streak} active days`, value: `${streak}d`, icon: LocalFireDepartmentRounded, colour: '#c66a28', background: 'rgba(198,106,40,0.1)' },
+function ResumeReadingCard({ book, chapter }: { book: PublicBook; chapter: PublicChapter }) {
+  return (
+    <Paper elevation={0} sx={{ minHeight: 160, p: { xs: 2.5, sm: 3.5 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 26%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)', display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2.5 }}>
+      <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'var(--awm-gold)' }}><Bookmark sx={{ fontSize: 20 }} /><Typography sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Resume reading</Typography></Box>
+        <Typography sx={{ mt: 1.35, fontFamily: 'var(--font-heading)', fontSize: { xs: 25, sm: 29 }, fontWeight: 600, color: 'var(--awm-bark)' }}>{book.title}</Typography>
+        <Typography sx={{ mt: 0.4, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 13 }}>{chapter.title} · Chapter {chapter.chapterNumber} of {book.chapterCount}</Typography>
+      </Box>
+      <Button component={Link} href={`/books/${book.slug}/${chapter.slug}`} variant="contained" endIcon={<ArrowForward />} sx={{ flexShrink: 0, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', px: 2.5, textTransform: 'none', '&:hover': { bgcolor: '#173f2d' } }}>Resume chapter</Button>
+    </Paper>
+  )
+}
+
+function LearningStats({
+  activity,
+  streak,
+  booksInProgress,
+  now,
+  onActivityChange,
+}: {
+  activity: LearningActivity
+  streak: number
+  booksInProgress: number
+  now: Date
+  onActivityChange: (activity: LearningActivity) => void
+}) {
+  const [savingGoal, setSavingGoal] = useState(false)
+  const level = calculateLearningLevel(activity.totalSeconds)
+  const week = summarizeWeeklyActivity(activity.daily, now)
+  const goalProgress = activity.weeklyGoalSeconds
+    ? Math.min(100, Math.round(week.thisWeekSeconds / activity.weeklyGoalSeconds * 100))
+    : 0
+  const comparison = week.comparisonPercent
+  const comparisonText = comparison === null
+    ? 'No previous-week comparison yet'
+    : `${comparison >= 0 ? 'Up' : 'Down'} ${Math.abs(comparison)}% from last week`
+  const ComparisonIcon = comparison !== null && comparison < 0 ? TrendingDownRounded : TrendingUpRounded
+  const secondaryStats = [
+    { label: 'Active today', value: formatLearningTime(week.todaySeconds), icon: AccessTimeRounded },
+    { label: 'Reading this week', value: formatLearningTime(week.readingSeconds), icon: MenuBook },
+    { label: 'Current streak', value: `${streak} day${streak === 1 ? '' : 's'}`, icon: LocalFireDepartmentRounded },
+    { label: 'Books in progress', value: String(booksInProgress), icon: AutoStories },
+    { label: 'Definitions viewed', value: String(week.wordLookups), icon: ExploreOutlined },
   ]
+
+  const changeGoal = async (value: number) => {
+    setSavingGoal(true)
+    try {
+      onActivityChange(await updateWeeklyLearningGoal(value))
+    } catch (error) {
+      console.error('Unable to save weekly learning goal:', error)
+    } finally {
+      setSavingGoal(false)
+    }
+  }
 
   return (
     <Paper elevation={0} sx={{ p: { xs: 2.25, sm: 3, md: 3.5 }, border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '15px', bgcolor: 'var(--awm-white)' }}>
@@ -157,19 +215,59 @@ function LearningStats({ totalSeconds, streak }: { totalSeconds: number; streak:
           <Typography component="h2" sx={{ mt: 0.4, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 27, md: 32 }, fontWeight: 600, lineHeight: 1.15 }}>Your learning activity</Typography>
         </Box>
       </Box>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: { xs: 1, sm: 1.5 } }}>
-        {stats.map((stat) => {
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3,minmax(0,1fr))' }, gap: 1.5 }}>
+        <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-forest)', color: '#fff' }}>
+          <Typography sx={{ color: 'var(--awm-gold-light)', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Current level</Typography>
+          <Typography sx={{ mt: 1.1, fontFamily: 'var(--font-heading)', fontSize: { xs: 35, md: 40 }, fontWeight: 600, lineHeight: 1 }}>Level {level.level}</Typography>
+          <Typography sx={{ mt: 1.15, color: 'rgba(255,255,255,.72)', fontFamily: 'Jost, sans-serif', fontSize: 12 }}>{level.progressPercent}% to Level {level.level + 1}</Typography>
+          <LinearProgress variant="determinate" value={level.progressPercent} sx={{ mt: 1, height: 6, borderRadius: 99, bgcolor: 'rgba(255,255,255,.14)', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold-light)', borderRadius: 99 } }} />
+          <Typography sx={{ mt: 1.4, color: 'rgba(255,255,255,.58)', fontFamily: 'Jost, sans-serif', fontSize: 11 }}>{formatLearningTime(activity.totalSeconds)} total active learning</Typography>
+        </Box>
+
+        <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>
+          <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700 }}>Weekly learning goal</Typography>
+          <Typography sx={{ mt: 1.25, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 29, sm: 33 }, fontWeight: 600, lineHeight: 1.05 }}>
+            {formatLearningTime(week.thisWeekSeconds)}{activity.weeklyGoalSeconds ? ` / ${formatLearningTime(activity.weeklyGoalSeconds)}` : ''}
+          </Typography>
+          {activity.weeklyGoalSeconds && <LinearProgress variant="determinate" value={goalProgress} sx={{ mt: 1.4, height: 6, borderRadius: 99, bgcolor: '#e8dfd1', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold)', borderRadius: 99 } }} />}
+          <Select
+            size="small"
+            displayEmpty
+            disabled={savingGoal}
+            value={activity.weeklyGoalSeconds ?? ''}
+            onChange={(event) => void changeGoal(Number(event.target.value))}
+            inputProps={{ 'aria-label': 'Weekly learning goal' }}
+            sx={{ mt: activity.weeklyGoalSeconds ? 1.5 : 2, minWidth: 142, height: 35, borderRadius: '9999px', fontFamily: 'Jost, sans-serif', fontSize: 12, bgcolor: '#fff' }}
+          >
+            <MenuItem disabled value="">Choose a goal</MenuItem>
+            <MenuItem value={2 * 3600}>2 hours</MenuItem>
+            <MenuItem value={5 * 3600}>5 hours</MenuItem>
+            <MenuItem value={10 * 3600}>10 hours</MenuItem>
+          </Select>
+        </Box>
+
+        <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>
+          <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700 }}>This week</Typography>
+          <Typography sx={{ mt: 1.25, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 29, sm: 33 }, fontWeight: 600, lineHeight: 1.05 }}>{formatLearningTime(week.thisWeekSeconds)}</Typography>
+          <Box sx={{ mt: 1.1, display: 'flex', alignItems: 'center', gap: 0.6, color: comparison !== null && comparison < 0 ? 'var(--awm-muted)' : 'var(--awm-forest)' }}>
+            {comparison !== null && <ComparisonIcon sx={{ fontSize: 16 }} />}
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 11.5 }}>{comparisonText}</Typography>
+          </Box>
+          <Box sx={{ mt: 1.4, display: 'flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)' }}>
+            <CalendarMonthRounded sx={{ fontSize: 17, color: 'var(--awm-gold)' }} />
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 600 }}>{week.activeDays} active day{week.activeDays === 1 ? '' : 's'} this week</Typography>
+          </Box>
+        </Box>
+      </Box>
+
+      <Box sx={{ mt: 1.5, display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(5,minmax(0,1fr))' }, gap: 1 }}>
+        {secondaryStats.map((stat) => {
           const Icon = stat.icon
-          return (
-            <Box key={stat.label} sx={{ minWidth: 0, p: { xs: 1.5, sm: 2 }, borderRadius: '11px', bgcolor: 'var(--awm-cream-light)' }}>
-              <Box sx={{ width: { xs: 30, sm: 34 }, height: { xs: 30, sm: 34 }, display: 'grid', placeItems: 'center', borderRadius: '9px', color: stat.colour, bgcolor: stat.background }}>
-                <Icon sx={{ fontSize: { xs: 17, sm: 19 } }} />
-              </Box>
-              <Typography sx={{ mt: 1.25, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 25, sm: 30 }, fontWeight: 600, lineHeight: 1 }}>{stat.value}</Typography>
-              <Typography sx={{ mt: 0.8, color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 11, sm: 12 }, fontWeight: 700 }}>{stat.label}</Typography>
-              <Typography sx={{ mt: 0.2, color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 9.5, sm: 10.5 }, lineHeight: 1.35 }}>{stat.detail}</Typography>
-            </Box>
-          )
+          return <Box key={stat.label} sx={{ p: 1.5, minWidth: 0, border: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)', borderRadius: '10px' }}>
+            <Icon sx={{ color: 'var(--awm-gold)', fontSize: 18 }} />
+            <Typography sx={{ mt: 0.75, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: 21, fontWeight: 600, lineHeight: 1 }}>{stat.value}</Typography>
+            <Typography sx={{ mt: 0.55, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 10.5, lineHeight: 1.3 }}>{stat.label}</Typography>
+          </Box>
         })}
       </Box>
     </Paper>
@@ -194,6 +292,10 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
     }
     return null
   })()
+  const booksInProgress = Object.entries(progress).filter(([bookSlug, saved]) => (
+    books.some((book) => book.slug === bookSlug) &&
+    chaptersByBook[bookSlug]?.some((chapter) => chapter.slug === saved.chapterSlug)
+  )).length
 
   useEffect(() => {
     const handleActivityUpdate = (event: Event) => {
@@ -204,7 +306,22 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
   }, [])
 
   useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    void fetchLearningActivity()
+      .then((activity) => {
+        if (!cancelled) setActivityUpdate({ userId: user.id, activity })
+      })
+      .catch((error: unknown) => console.error('Unable to load dashboard activity:', error))
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  useEffect(() => {
     const readBookmark = (event?: Event) => {
+      if (event instanceof CustomEvent && event.detail === null) {
+        setBookmark(null)
+        return
+      }
       let localBookmark: BookSentenceBookmark | null = null
       try {
         localBookmark = parseBookSentenceBookmark(window.localStorage.getItem(BOOK_SENTENCE_BOOKMARK_STORAGE_KEY))
@@ -284,24 +401,43 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
     : parseLearningActivity(user.user_metadata)
   const activityDates = [
     ...activity.activeDates,
-    ...Object.values(progress).map((entry) => entry.updatedAt),
   ]
-  const streak = calculateLearningStreak(activityDates, new Date(dashboardLoadedAt))
+  const dashboardNow = new Date(dashboardLoadedAt)
+  const streak = calculateLearningStreak(activityDates, dashboardNow)
+  const bookmarkMatchesRecent = Boolean(
+    bookmark && recentReading &&
+    bookmark.bookSlug === recentReading.book.slug &&
+    bookmark.chapterSlug === recentReading.chapter.slug
+  )
+  const readingPositionPercent = bookmarkMatchesRecent && recentReading?.chapter.blockCount
+    ? Math.min(100, Math.max(0, Math.round((
+        (recentReading.chapter.chapterNumber - 1) +
+        Math.min(1, (bookmark!.blockIndex + 1) / recentReading.chapter.blockCount)
+      ) / Math.max(recentReading.book.chapterCount, 1) * 100)))
+    : null
 
   return (
     <Box component="main" sx={{ bgcolor: 'var(--awm-cream-light)', pb: { xs: 7, md: 11 } }}>
-      <Box sx={{ position: 'relative', mt: { xs: '-56px', md: '-64px' }, pt: { xs: 13, md: 16 }, pb: { xs: 5, md: 7 }, backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center 42%' }}>
+      <Box sx={{ position: 'relative', mt: { xs: '-56px', md: '-64px' }, pt: { xs: 14.5, md: 18 }, pb: { xs: 8, md: 10 }, overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center 42%' }}>
         <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(5,23,15,0.82)' }} />
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Typography sx={{ color: '#d4a843', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Your learning</Typography>
           <Typography component="h1" sx={{ mt: 0.75, color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 40, md: 58 }, fontWeight: 600, lineHeight: 1.08 }}>Welcome back, {displayName}</Typography>
           <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.68)', fontFamily: 'Jost, sans-serif' }}>Pick up where you left off or choose something new.</Typography>
         </Container>
+        <Box component="svg" aria-hidden="true" viewBox="0 0 1200 44" preserveAspectRatio="none" sx={{ position: 'absolute', zIndex: 2, left: 0, right: 0, bottom: -1, width: '100%', height: { xs: 25, sm: 32, md: 42 } }}>
+          <path d="M0 0 C300 38 900 38 1200 0 L1200 44 L0 44 Z" fill="var(--awm-cream-light)" />
+        </Box>
       </Box>
-      <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 6 } }}>
+      <Container maxWidth="lg" sx={{ pt: { xs: 4.5, md: 6 } }}>
         <SectionHeading eyebrow="Continue learning" title={recentReading ? 'Your next step is ready' : 'Start your next lesson'} />
+        {(bookmark || recentReading) && (
+          <Box sx={{ mb: 2.5 }}>
+            {bookmark ? <BookmarkContinueCard bookmark={bookmark} /> : recentReading && <ResumeReadingCard book={recentReading.book} chapter={recentReading.chapter} />}
+          </Box>
+        )}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
-          {bookmark && <BookmarkContinueCard bookmark={bookmark} />}
+          {featuredEpisode && <ContentCard type={`Watch next · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} actionLabel="Play episode" />}
           {recentReading ? (
             <Paper elevation={0} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px minmax(0,1fr)', sm: '180px minmax(0,1fr)' }, minHeight: 240, overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '15px', bgcolor: 'var(--awm-white)' }}>
               {recentReading.book.cover ? (
@@ -329,17 +465,25 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
                 >
                   “{recentReading.chapter.teaser ?? recentReading.chapter.title}”
                 </Typography>
-                <Typography sx={{ mt: 0.75, color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 11, sm: 12 }, fontWeight: 600 }}>{recentReading.chapter.title}</Typography>
-                <LinearProgress variant="determinate" value={Math.round(recentReading.chapter.chapterNumber / Math.max(recentReading.book.chapterCount, 1) * 100)} sx={{ mt: 2.5, height: 7, borderRadius: 99, bgcolor: '#eee7dc', '& .MuiLinearProgress-bar': { bgcolor: '#b8860b', borderRadius: 99 } }} />
-                <Button component={Link} href={`/books/${recentReading.book.slug}/${recentReading.chapter.slug}`} variant="contained" endIcon={<ArrowForward />} sx={{ mt: 2.5, bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', textTransform: 'none', '& .MuiButton-endIcon': { color: '#fff' }, '&:hover': { bgcolor: '#173f2d', color: '#fff' } }}>Continue Reading</Button>
+                <Typography sx={{ mt: 0.75, color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 11, sm: 12 }, fontWeight: 600 }}>{recentReading.chapter.title} · Chapter {recentReading.chapter.chapterNumber} of {recentReading.book.chapterCount}</Typography>
+                {readingPositionPercent !== null && <>
+                  <Typography sx={{ mt: 1.7, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11 }}>Saved reading position · {readingPositionPercent}% through book</Typography>
+                  <LinearProgress variant="determinate" value={readingPositionPercent} sx={{ mt: 0.7, height: 7, borderRadius: 99, bgcolor: '#eee7dc', '& .MuiLinearProgress-bar': { bgcolor: '#b8860b', borderRadius: 99 } }} />
+                </>}
+                <Button component={Link} href={`/books/${recentReading.book.slug}/${recentReading.chapter.slug}`} variant="contained" endIcon={<ArrowForward />} sx={{ mt: readingPositionPercent !== null ? 2 : 2.5, bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', textTransform: 'none', '& .MuiButton-endIcon': { color: '#fff' }, '&:hover': { bgcolor: '#173f2d', color: '#fff' } }}>Continue Reading</Button>
               </Box>
             </Paper>
           ) : featuredBook ? <ContentCard type="Start reading" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} /> : null}
-          {featuredEpisode && <ContentCard type={`Watch next · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} actionLabel="Play episode" />}
         </Box>
 
         <Box sx={{ mt: { xs: 5, md: 7 } }}>
-          <LearningStats totalSeconds={activity.totalSeconds} streak={streak} />
+          <LearningStats
+            activity={activity}
+            streak={streak}
+            booksInProgress={booksInProgress}
+            now={dashboardNow}
+            onActivityChange={(nextActivity) => setActivityUpdate({ userId: user.id, activity: nextActivity })}
+          />
         </Box>
         <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading eyebrow="Keep exploring" title="Keep your momentum" /><QuickLinks /></Box>
       </Container>

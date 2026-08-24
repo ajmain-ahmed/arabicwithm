@@ -108,6 +108,7 @@ export interface Database {
           cover: string | null
           level: string
           category: string | null
+          tags: string[]
           created_at: string | null
           updated_at: string | null
         }
@@ -120,6 +121,7 @@ export interface Database {
           cover?: string | null
           level?: string
           category?: string | null
+          tags?: string[]
           created_at?: string | null
           updated_at?: string | null
         }
@@ -132,6 +134,7 @@ export interface Database {
           cover?: string | null
           level?: string
           category?: string | null
+          tags?: string[]
           created_at?: string | null
           updated_at?: string | null
         }
@@ -227,9 +230,78 @@ export interface Database {
         }
         Relationships: []
       }
+      learning_profiles: {
+        Row: {
+          user_id: string
+          weekly_goal_seconds: number | null
+          legacy_active_seconds: number
+          tracked_active_seconds: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          weekly_goal_seconds?: number | null
+          legacy_active_seconds?: number
+          tracked_active_seconds?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          weekly_goal_seconds?: number | null
+          legacy_active_seconds?: number
+          tracked_active_seconds?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      learning_activity_daily: {
+        Row: {
+          user_id: string
+          activity_date: string
+          active_seconds: number
+          reading_seconds: number
+          video_seconds: number
+          word_lookups: number
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          activity_date: string
+          active_seconds?: number
+          reading_seconds?: number
+          video_seconds?: number
+          word_lookups?: number
+          updated_at?: string
+        }
+        Update: {
+          user_id?: string
+          activity_date?: string
+          active_seconds?: number
+          reading_seconds?: number
+          video_seconds?: number
+          word_lookups?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      increment_learning_activity: {
+        Args: {
+          p_user_id: string
+          p_activity_date: string
+          p_active_seconds: number
+          p_reading_seconds: number
+          p_video_seconds: number
+          p_word_lookups: number
+        }
+        Returns: undefined
+      }
+    }
     Enums: Record<string, never>
     CompositeTypes: Record<string, never>
   }

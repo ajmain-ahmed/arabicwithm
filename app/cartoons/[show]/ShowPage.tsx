@@ -317,7 +317,8 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                         tags={ep.tags}
                         showTags={false}
                         description={ep.description}
-                        imageFit="natural"
+                        aspectRatio="16 / 9"
+                        imageFit="cover"
                         compactMobileRow
                         overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                         metaItems={[]}

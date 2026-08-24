@@ -75,6 +75,7 @@ export default function useYouTubePlayer(
   const segmentSafetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onTimeUpdateRef = useRef(onTimeUpdate)
   const onEndedRef = useRef(options.onEnded)
+  const mutedRef = useRef(options.muted === true)
   const startAtRef = useRef(startAt)
   const fallbackHostRef = useRef(false)
   const fallbackVideoRef = useRef<string | undefined>(undefined)
@@ -84,10 +85,10 @@ export default function useYouTubePlayer(
   const [errorCode, setErrorCode] = useState<number | null>(null)
   const [retryNonce, setRetryNonce] = useState(0)
   const autoplay = options.autoplay === true
-  const muted = options.muted === true
 
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
   useEffect(() => { onEndedRef.current = options.onEnded }, [options.onEnded])
+  useEffect(() => { mutedRef.current = options.muted === true }, [options.muted])
   useEffect(() => { startAtRef.current = startAt }, [startAt])
 
   useEffect(() => {
@@ -130,7 +131,7 @@ export default function useYouTubePlayer(
               if (cancelled) return
               setErrorCode(null)
               setAutoplayBlocked(false)
-              if (muted) playerRef.current?.mute?.()
+              if (mutedRef.current) playerRef.current?.mute?.()
               if (autoplay) playerRef.current?.playVideo?.()
               setIsReady(true)
               intervalRef.current = setInterval(() => {
@@ -207,7 +208,7 @@ export default function useYouTubePlayer(
       setIsReady(false)
       setIsPlaying(false)
     }
-  }, [autoplay, muted, options.reloadKey, retryNonce, videoId])
+  }, [autoplay, options.reloadKey, retryNonce, videoId])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {

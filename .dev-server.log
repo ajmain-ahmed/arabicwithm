@@ -1,0 +1,49 @@
+
+> arabic-with-m@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.3 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.47:3000
+- Environments: .env.local
+✓ Ready in 829ms
+Creating turbopack project {
+  dir: 'C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm',
+  testMode: true
+}
+- Experiments (use with caution):
+  · optimizePackageImports
+
+ GET / 200 in 2.2s (next.js: 314ms, application-code: 1860ms)
+ GET / 200 in 1035ms (next.js: 7ms, application-code: 1028ms)
+ POST / 200 in 29ms (next.js: 8ms, application-code: 21ms)
+  └─ ƒ isAdminUser() in 5ms app/actions/auth.ts
+ GET / 200 in 897ms (next.js: 5ms, application-code: 892ms)
+ GET /books/ch-1 200 in 495ms (next.js: 455ms, generate-params: 415ms, application-code: 40ms)
+ GET /books/ch-1/lay-1 200 in 621ms (next.js: 438ms, generate-params: 405ms, application-code: 183ms)
+ GET /books/ch-1/lay-1 200 in 37ms (next.js: 10ms, generate-params: 5ms, application-code: 27ms)
+✓ Compiled in 148ms
+ GET /books/ch-1/lay-1 200 in 476ms (next.js: 11ms, generate-params: 5ms, application-code: 464ms)
+ POST /books/ch-1/lay-1 200 in 31ms (next.js: 9ms, generate-params: 54µs, application-code: 22ms)
+  └─ ƒ isAdminUser() in 8ms app/actions/auth.ts
+ GET / 200 in 976ms (next.js: 7ms, application-code: 968ms)
+✓ Compiled in 0ms
+ GET / 200 in 1127ms (next.js: 91ms, application-code: 1036ms)
+ GET / 200 in 982ms (next.js: 6ms, application-code: 976ms)
+ GET / 200 in 1347ms (next.js: 130ms, application-code: 1217ms)
+ GET / 200 in 984ms (next.js: 29ms, application-code: 955ms)
+ GET / 200 in 465ms (next.js: 5ms, application-code: 461ms)
+✓ Compiled in 38ms
+ GET / 200 in 1696ms (next.js: 99ms, application-code: 1597ms)
+ GET / 200 in 1828ms (next.js: 6ms, application-code: 1822ms)
+ GET / 200 in 2.0s (next.js: 122ms, application-code: 1915ms)
+ GET / 200 in 457ms (next.js: 88ms, application-code: 369ms)
+ GET / 200 in 359ms (next.js: 5ms, application-code: 354ms)
+ GET / 200 in 518ms (next.js: 5ms, application-code: 513ms)
+ POST / 200 in 23ms (next.js: 6ms, application-code: 17ms)
+  └─ ƒ isAdminUser() in 7ms app/actions/auth.ts
+ GET / 200 in 798ms (next.js: 7ms, application-code: 791ms)
+ GET / 200 in 346ms (next.js: 5ms, application-code: 341ms)
+ GET / 200 in 426ms (next.js: 7ms, application-code: 420ms)
+ GET / 200 in 596ms (next.js: 107ms, application-code: 490ms)
+ GET / 200 in 740ms (next.js: 4ms, application-code: 736ms)

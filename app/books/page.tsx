@@ -54,21 +54,16 @@ export default async function BooksPage() {
         ) : (
           <Box
             sx={{
-              display: { xs: 'flex', sm: 'grid' },
-              gridTemplateColumns: { sm: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' },
-              gap: { xs: 1, sm: 3 },
-              overflowX: { xs: 'auto', sm: 'visible' },
-              pb: { xs: 1.5, sm: 0 },
-              scrollSnapType: { xs: 'x mandatory', sm: 'none' },
-              scrollbarWidth: 'none',
-              '&::-webkit-scrollbar': { display: 'none' },
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(3, minmax(0, 1fr))' },
+              gap: { xs: 1.5, sm: 2.5, lg: 3.5 },
             }}
           >
             {books.map((book) => (
               <Link
                 key={book.id}
                 href={`/books/${encodeURIComponent(book.slug)}`}
-                style={{ color: 'inherit', textDecoration: 'none', flex: '0 0 calc((100% - 24px) / 4)', minWidth: 0, scrollSnapAlign: 'start' }}
+                style={{ color: 'inherit', textDecoration: 'none', minWidth: 0 }}
               >
                 <Paper
                   elevation={0}
@@ -77,9 +72,9 @@ export default async function BooksPage() {
                     flexDirection: 'column',
                     overflow: 'hidden',
                     height: '100%',
-                    borderRadius: { xs: '4px', sm: '12px' },
-                    border: { xs: 0, sm: '1px solid rgba(44,26,14,0.08)' },
-                    bgcolor: { xs: 'transparent', sm: '#fff' },
+                    borderRadius: '12px',
+                    border: '1px solid rgba(44,26,14,0.08)',
+                    bgcolor: 'var(--awm-white)',
                     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                     '&:hover': { transform: { xs: 'none', sm: 'translateY(-4px)' }, boxShadow: { xs: 'none', sm: '0 12px 28px rgba(44,26,14,0.12)' } },
                   }}
@@ -89,7 +84,7 @@ export default async function BooksPage() {
                       component="img"
                       src={book.cover}
                       alt={`${book.title} cover`}
-                      sx={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', objectPosition: 'center', borderRadius: { xs: '4px', sm: 0 } }}
+                      sx={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', objectPosition: 'center' }}
                     />
                   ) : (
                     <Box sx={{ minHeight: { xs: 92, sm: 300 }, aspectRatio: { xs: '3 / 4', sm: 'auto' }, p: { xs: 0.75, sm: 3 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: { xs: '5px', sm: 0 }, background: 'linear-gradient(145deg, #173f2d, #0e2e1f 62%, #2c1a0e)' }}>
@@ -102,15 +97,18 @@ export default async function BooksPage() {
                     </Box>
                   )}
 
-                  <Box sx={{ p: { xs: '5px 1px 0', sm: 2.5 } }}>
-                    <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 11.5, sm: 24 }, lineHeight: { xs: 1.25, sm: 1.2 }, fontWeight: 600, color: 'var(--awm-bark)', mb: { xs: 0, sm: 1.5 }, minHeight: { xs: '2.5em', sm: 0 }, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: { xs: 2, sm: 'unset' }, WebkitBoxOrient: 'vertical' }}>
+                  <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+                    <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 18, sm: 24 }, lineHeight: 1.2, fontWeight: 600, color: 'var(--awm-bark)', mb: 1.25, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                       {book.title}
                     </Typography>
-                    <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                    <Typography sx={{ display: { xs: 'none', sm: '-webkit-box' }, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 14, lineHeight: 1.5, overflow: 'hidden', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', mb: 1.75 }}>
+                      {book.description}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 2 }}>
                       {book.level && <Chip label={book.level} size="small" sx={{ bgcolor: '#6b8f5e', color: '#fff', fontWeight: 700 }} />}
-                      {book.category && <Chip label={book.category} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />}
+                      {book.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ display: { xs: 'none', sm: 'inline-flex' }, bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />)}
                     </Box>
-                    <Box sx={{ display: { xs: 'none', sm: 'flex' }, justifyContent: 'space-between', alignItems: 'center', pt: 1.5, borderTop: '1px solid rgba(44,26,14,0.07)' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: 1.5, borderTop: '1px solid rgba(44,26,14,0.07)' }}>
                       <Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 14 }}>
                         {book.chapterCount} {book.chapterCount === 1 ? 'chapter' : 'chapters'}
                       </Typography>

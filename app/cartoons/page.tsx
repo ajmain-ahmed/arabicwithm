@@ -1,6 +1,3 @@
-// app/cartoons/page.tsx
-// Server Component — fetches cartoon shows and episode slugs from Supabase.
-
 import { fetchShowsForPublic, fetchEpisodesForShowPublic } from '@/app/actions/cartoons'
 import { canonicalizeCartoonCategory } from '@/app/lib/cartoons'
 import CartoonsPage from './CartoonsPage'
@@ -14,10 +11,9 @@ export const metadata = {
 
 export default async function Page() {
   const shows = await fetchShowsForPublic()
-
-  // Build a map of show slug → episode slugs for random navigation
   const episodesMap: Record<string, string[]> = {}
-  const showCategories: Record<string, string[]> = {}
+  const showCategories: Record<string, string> = {}
+  const showAdditionalTags: Record<string, string[]> = {}
   const categoryLabels = new Map<string, string>()
 
   const episodesByShow = await Promise.all(
@@ -27,33 +23,56 @@ export default async function Page() {
     }))
   )
 
-  for (const { show, episodes } of episodesByShow) {
-    episodesMap[show.slug] = episodes.map((ep) => ep.slug)
-
-    const categoriesForShow = new Map<string, string>()
-    const sourceCategories = [show.category, ...episodes.flatMap((ep) => ep.tags)]
-    for (const sourceCategory of sourceCategories) {
-      const category = canonicalizeCartoonCategory(sourceCategory)
-      if (!category) continue
-
-      const categoryKey = category.toLowerCase()
-      categoryLabels.set(categoryKey, category)
-      categoriesForShow.set(categoryKey, category)
-    }
-    showCategories[show.slug] = Array.from(categoriesForShow.values())
+  for (const { show } of episodesByShow) {
+    const category = canonicalizeCartoonCategory(show.category)
+    if (!category) continue
+    categoryLabels.set(category.toLowerCase(), category)
+    showCategories[show.slug] = category
   }
 
-  const availableCategories = Array.from(categoryLabels.values()).sort((a, b) =>
+  const episodes = episodesByShow.flatMap(({ show, episodes: showEpisodes }) => {
+    episodesMap[show.slug] = showEpisodes.map((episode) => episode.slug)
+    return showEpisodes.map((episode) => ({
+      ...episode,
+      showId: show.id,
+      showSlug: show.slug,
+      showTitle: show.title,
+      showCategory: showCategories[show.slug],
+    }))
+  })
+
+  const mainCategoryKeys = new Set(categoryLabels.keys())
+  const additionalTagLabels = new Map<string, string>()
+  for (const { show, episodes: showEpisodes } of episodesByShow) {
+    const showTags = new Map<string, string>()
+    for (const rawTag of showEpisodes.flatMap((episode) => episode.tags)) {
+      const tag = rawTag.trim().replace(/\s+/g, ' ')
+      if (!tag) continue
+      const broadCategory = canonicalizeCartoonCategory(tag)
+      if (broadCategory && mainCategoryKeys.has(broadCategory.toLowerCase())) continue
+      showTags.set(tag.toLowerCase(), tag)
+      additionalTagLabels.set(tag.toLowerCase(), tag)
+    }
+    showAdditionalTags[show.slug] = Array.from(showTags.values())
+  }
+
+  const availableCategories = [
+    'All Categories',
+    ...Array.from(categoryLabels.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
+  ]
+  const availableAdditionalTags = Array.from(additionalTagLabels.values()).sort((a, b) =>
     a.localeCompare(b, undefined, { sensitivity: 'base' })
   )
-  availableCategories.unshift('All Shows')
 
   return (
     <CartoonsPage
       shows={shows}
+      episodes={episodes}
       episodesMap={episodesMap}
       showCategories={showCategories}
+      showAdditionalTags={showAdditionalTags}
       availableCategories={availableCategories}
+      availableAdditionalTags={availableAdditionalTags}
     />
   )
 }

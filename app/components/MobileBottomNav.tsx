@@ -35,7 +35,7 @@ export default function MobileBottomNav() {
   const activeValue = getActiveValue(pathname)
 
   if (!mounted) {
-    return <Box sx={{ display: { xs: 'block', md: 'none' }, height: 64 }} />
+    return null
   }
 
   const handleChange = (_: React.SyntheticEvent, newValue: string) => {
@@ -44,28 +44,32 @@ export default function MobileBottomNav() {
   }
 
   return (
-    <>
-      <Box
+    <Box
+      component="nav"
+      aria-label="Primary mobile navigation"
+      sx={{
+        position: 'fixed',
+        bottom: 'calc(env(safe-area-inset-bottom) + 10px)',
+        left: 12,
+        right: 12,
+        zIndex: 1250,
+        display: { xs: 'block', md: 'none' },
+        borderRadius: '20px',
+        overflow: 'hidden',
+        boxShadow: '0 12px 34px color-mix(in srgb, var(--awm-bark) 22%, transparent)',
+      }}
+    >
+      <BottomNavigation
+        value={activeValue}
+        onChange={handleChange}
+        showLabels
         sx={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1200,
-          display: { xs: 'block', md: 'none' },
-        }}
-      >
-        <BottomNavigation
-          value={activeValue}
-          onChange={handleChange}
-          showLabels
-          sx={{
-            background: 'rgba(255,255,255,0.98)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            borderTop: '1px solid rgba(184,134,11,0.15)',
-            height: 54,
-            pb: 'env(safe-area-inset-bottom)',
+            background: 'color-mix(in srgb, var(--awm-white) 78%, transparent)',
+            backdropFilter: 'blur(18px) saturate(145%)',
+            WebkitBackdropFilter: 'blur(18px) saturate(145%)',
+            border: '1px solid color-mix(in srgb, var(--awm-gold) 24%, transparent)',
+            borderRadius: '20px',
+            height: 60,
             '& .MuiBottomNavigationAction-root': {
               fontFamily: 'Jost, sans-serif',
               fontSize: '0.58rem',
@@ -73,7 +77,8 @@ export default function MobileBottomNav() {
               letterSpacing: '0.03em',
               color: 'var(--awm-muted)',
               minWidth: 0,
-              padding: '5px 0',
+              minHeight: 48,
+              padding: '6px 0',
               '&.Mui-selected': {
                 color: '#b8860b',
                 fontWeight: 600,
@@ -84,20 +89,17 @@ export default function MobileBottomNav() {
               fontSize: '0.58rem',
             },
             '& .MuiSvgIcon-root': { fontSize: 19 },
-          }}
-        >
-          {NAV_ITEMS.map((item) => (
-            <BottomNavigationAction
-              key={item.value}
-              value={item.value}
-              label={item.label}
-              icon={item.icon}
-            />
-          ))}
-        </BottomNavigation>
-      </Box>
-      {/* Spacer: accounts for nav height (56) + safe-area — only on mobile */}
-      <Box sx={{ display: { xs: 'block', md: 'none' }, height: 64 }} />
-    </>
+        }}
+      >
+        {NAV_ITEMS.map((item) => (
+          <BottomNavigationAction
+            key={item.value}
+            value={item.value}
+            label={item.label}
+            icon={item.icon}
+          />
+        ))}
+      </BottomNavigation>
+    </Box>
   )
 }

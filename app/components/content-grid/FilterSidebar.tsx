@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { Box, Typography, Button, Divider } from '@mui/material'
+import { Box, Typography, Button, Divider, FormControl, MenuItem, Select } from '@mui/material'
 
 /* ── Palette ── */
 const BARK = 'var(--awm-bark)'
@@ -17,6 +17,7 @@ export interface FilterSidebarProps {
   levels: string[]
   genres?: string[]
   languages?: string[]
+  additionalTags?: string[]
   activeCategory: string
   setActiveCategory: (c: string) => void
   activeLevel: string
@@ -25,6 +26,8 @@ export interface FilterSidebarProps {
   setActiveGenre?: (g: string) => void
   activeLanguage?: string
   setActiveLanguage?: (lang: string) => void
+  activeAdditionalTag?: string
+  setActiveAdditionalTag?: (tag: string) => void
   onMobileClose?: () => void
   hideTitle?: boolean
 }
@@ -98,6 +101,7 @@ export default function FilterSidebar({
   levels,
   genres,
   languages,
+  additionalTags,
   activeCategory,
   setActiveCategory,
   activeLevel,
@@ -106,6 +110,8 @@ export default function FilterSidebar({
   setActiveGenre,
   activeLanguage,
   setActiveLanguage,
+  activeAdditionalTag,
+  setActiveAdditionalTag,
   onMobileClose,
   hideTitle,
 }: FilterSidebarProps) {
@@ -136,6 +142,26 @@ export default function FilterSidebar({
             onChange={(v) => setActiveCategory(v || categories[0] || '')}
             onMobileClose={onMobileClose}
           />
+        </FilterSection>
+      )}
+
+      {additionalTags && additionalTags.length > 0 && (
+        <FilterSection label="Additional Tags">
+          <FormControl fullWidth size="small">
+            <Select
+              value={activeAdditionalTag ?? ''}
+              onChange={(event) => {
+                setActiveAdditionalTag?.(String(event.target.value))
+                onMobileClose?.()
+              }}
+              displayEmpty
+              inputProps={{ 'aria-label': 'Filter by additional tag' }}
+              sx={{ height: 40, borderRadius: '6px', bgcolor: WARM_WHITE, fontFamily: 'Jost, sans-serif', fontSize: 13 }}
+            >
+              <MenuItem value="">All tags</MenuItem>
+              {additionalTags.map((tag) => <MenuItem key={tag} value={tag}>{tag}</MenuItem>)}
+            </Select>
+          </FormControl>
         </FilterSection>
       )}
 
@@ -203,6 +229,7 @@ export default function FilterSidebar({
           setActiveLevel('')
           setActiveGenre?.('')
           setActiveLanguage?.('')
+          setActiveAdditionalTag?.('')
           onMobileClose?.()
         }}
         sx={{

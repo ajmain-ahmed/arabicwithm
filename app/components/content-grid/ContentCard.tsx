@@ -88,7 +88,7 @@ export default function ContentCard({
       sx={{
         display: denseMobileTile ? 'block' : compactMobileRow ? { xs: 'grid', sm: 'block' } : 'block',
         gridTemplateColumns: compactMobileRow ? { xs: '34% minmax(0, 1fr)', sm: 'none' } : undefined,
-        alignItems: denseMobileTile ? undefined : compactMobileRow ? { xs: 'stretch', sm: 'initial' } : undefined,
+        alignItems: denseMobileTile ? undefined : compactMobileRow ? { xs: 'start', sm: 'initial' } : undefined,
         color: 'inherit',
         textDecoration: 'none',
         borderRadius: denseMobileTile ? { xs: '4px', sm: '10px' } : '10px',
@@ -101,7 +101,7 @@ export default function ContentCard({
         transform: denseMobileTile ? { xs: 'none', sm: hovered ? 'translateY(-3px)' : 'none' } : hovered ? 'translateY(-3px)' : 'none',
         transition: 'all 0.2s ease',
         cursor: 'pointer',
-        minHeight: denseMobileTile ? undefined : compactMobileRow ? { xs: 148, sm: 0 } : undefined,
+        minHeight: undefined,
       }}
     >
       {/* Thumbnail */}
@@ -113,9 +113,9 @@ export default function ContentCard({
           aspectRatio: denseMobileTile
             ? { xs: mobileAspectRatio, sm: imageFit === 'natural' ? 'auto' : aspectRatio }
             : compactMobileRow
-            ? { xs: 'auto', sm: imageFit === 'natural' ? 'auto' : aspectRatio }
+            ? { xs: aspectRatio, sm: imageFit === 'natural' ? 'auto' : aspectRatio }
             : imageFit === 'natural' ? 'auto' : aspectRatio,
-          minHeight: compactMobileRow ? { xs: 148, sm: 0 } : undefined,
+          minHeight: undefined,
           overflow: 'hidden',
           borderRadius: denseMobileTile ? { xs: '4px', sm: 0 } : 0,
           backgroundColor: denseMobileTile
@@ -142,7 +142,7 @@ export default function ContentCard({
               objectFit: denseMobileTile
                 ? { xs: 'cover', sm: imageFit === 'natural' ? undefined : imageFit }
                 : compactMobileRow
-                ? { xs: 'contain', sm: imageFit === 'natural' ? undefined : imageFit }
+                ? { xs: imageFit === 'natural' ? 'cover' : imageFit, sm: imageFit === 'natural' ? undefined : imageFit }
                 : imageFit === 'natural' ? undefined : imageFit,
               objectPosition: denseMobileTile ? { xs: mobileImagePosition, sm: 'center' } : 'center',
               transform: hovered && imageFit !== 'natural' ? 'scale(1.03)' : 'scale(1)',

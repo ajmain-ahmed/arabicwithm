@@ -15,6 +15,7 @@ export interface PublicBook {
   cover?: string
   level: string
   category?: string
+  tags: string[]
   chapterCount: number
 }
 
@@ -24,6 +25,7 @@ export interface PublicChapter {
   title: string
   chapterNumber: number
   teaser?: string
+  blockCount: number
 }
 
 export interface PublicBookToken {
@@ -78,8 +80,24 @@ function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook
     cover: row.cover ? String(row.cover) : undefined,
     level: String(row.level ?? ""),
     category: row.category ? String(row.category) : undefined,
+    tags: Array.isArray(row.tags) ? row.tags.map((tag) => String(tag)).filter(Boolean) : [],
     chapterCount,
   }
+}
+
+function countReadableBlocks(value: unknown): number {
+  if (!Array.isArray(value)) return 0
+  return value.filter((rawBlock) => {
+    if (!rawBlock || typeof rawBlock !== 'object' || Array.isArray(rawBlock)) return false
+    const block = rawBlock as Record<string, unknown>
+    const hasTranslation = typeof block.translation === 'string' && block.translation.trim().length > 0
+    const hasToken = Array.isArray(block.tokens) && block.tokens.some((rawToken) => (
+      rawToken && typeof rawToken === 'object' && !Array.isArray(rawToken) &&
+      typeof (rawToken as Record<string, unknown>).arabic === 'string' &&
+      String((rawToken as Record<string, unknown>).arabic).trim().length > 0
+    ))
+    return hasTranslation || hasToken
+  }).length
 }
 
 export const fetchBooksForPublic = unstable_cache(
@@ -87,7 +105,7 @@ export const fetchBooksForPublic = unstable_cache(
     if (!hasServiceClientConfig()) return []
 
     const [{ data: books, error: booksError }, { data: chapters, error: chaptersError }] = await Promise.all([
-      serviceClient.from("books").select("id, slug, title, title_ar, description, cover, level, category").order("title"),
+      serviceClient.from("books").select("*").order("title"),
       serviceClient.from("chapters").select("book_id"),
     ])
 
@@ -104,7 +122,7 @@ export const fetchBooksForPublic = unstable_cache(
       mapBook(book, chapterCounts.get(String(book.id)) ?? 0)
     )
   },
-  ["books", "public", "book-covers-v1"],
+  ["books", "public", "book-catalogue-v2"],
   { revalidate: 300, tags: ["books-public"] }
 )
 
@@ -114,7 +132,7 @@ export const fetchBookBySlugPublic = unstable_cache(
 
     const { data: book, error } = await serviceClient
       .from("books")
-      .select("id, slug, title, title_ar, description, cover, level, category")
+      .select("*")
       .eq("slug", slug)
       .single()
 
@@ -128,7 +146,7 @@ export const fetchBookBySlugPublic = unstable_cache(
     if (countError) throw new Error(countError.message)
     return mapBook(book as Record<string, unknown>, count ?? 0)
   },
-  ["books", "public", "detail", "book-covers-v1"],
+  ["books", "public", "detail", "book-catalogue-v2"],
   { revalidate: 300, tags: ["books-public"] }
 )
 
@@ -150,6 +168,7 @@ export const fetchChaptersForBookPublic = unstable_cache(
       title: String(chapter.title),
       chapterNumber: Number(chapter.chapter_number),
       teaser: extractChapterTeaser(chapter.content),
+      blockCount: countReadableBlocks(chapter.content),
     }))
   },
   ["books", "public", "chapters", "chapter-teasers-v1"],
@@ -206,6 +225,7 @@ export const fetchChapterForPublic = unstable_cache(
       slug: String(data.slug),
       title: String(data.title),
       chapterNumber: Number(data.chapter_number),
+      blockCount: content.length,
       content,
     }
   },

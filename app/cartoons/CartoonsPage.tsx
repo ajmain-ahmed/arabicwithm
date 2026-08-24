@@ -1,123 +1,153 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Box,
-  Typography,
+  Breadcrumbs,
   Button,
   Container,
   Drawer,
   IconButton,
-  Breadcrumbs,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
 } from '@mui/material'
-import { useRouter } from 'next/navigation'
-import { ShowMeta, CARTOONS_BANNER_PATH } from '../lib/cartoons'
+import {
+  Close,
+  Delete,
+  Edit,
+  MenuBook,
+  Movie,
+  NavigateNext,
+  PlayArrow,
+  School,
+  Subtitles,
+  Tune,
+  VideoLibrary,
+} from '@mui/icons-material'
+import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
+import { CARTOONS_BANNER_PATH } from '@/app/lib/cartoons'
 import { PageBanner } from '@/app/components/page-layout'
-import { FilterSidebar, ContentCard } from '@/app/components/content-grid'
+import { ContentCard, FilterSidebar } from '@/app/components/content-grid'
 import ShowEditDialog from './components/ShowEditDialog'
 import { deleteShow } from '@/app/actions/admin'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
 import { errorMessage } from '@/app/lib/errors'
 
-/* ── MUI Icons ── */
-import {
-  PlayArrow,
-  Subtitles,
-  MenuBook,
-  School,
-  Close,
-  Tune,
-  NavigateNext,
-  Edit,
-  Delete,
-} from '@mui/icons-material'
-
-/* ── Palette ── */
 const BARK = 'var(--awm-bark)'
 const GOLD = 'var(--awm-gold)'
 const WARM_WHITE = 'var(--awm-cream-light)'
 const MUTED = 'var(--awm-muted)'
+const LEVELS = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'A1-A2', 'A2-B1', 'B1-B2', 'B2-C1']
 
-const LEVELS = ['A1-A2', 'A2-B1', 'B1-B2', 'B2-C1']
+export interface WatchEpisode extends EpisodeMeta {
+  showId: string
+  showSlug: string
+  showTitle: string
+  showCategory?: string
+}
 
-/* ═══════════════════════════════════════════════
-   Main Page
-   ═══════════════════════════════════════════════ */
+type WatchView = 'episodes' | 'shows'
+
 export default function CartoonsPage({
   shows,
+  episodes,
   episodesMap,
   showCategories,
+  showAdditionalTags,
   availableCategories,
+  availableAdditionalTags,
 }: {
   shows: ShowMeta[]
+  episodes: WatchEpisode[]
   episodesMap: Record<string, string[]>
-  showCategories: Record<string, string[]>
+  showCategories: Record<string, string>
+  showAdditionalTags: Record<string, string[]>
   availableCategories: string[]
+  availableAdditionalTags: string[]
 }) {
   const isAdmin = useIsAdmin()
-  const [activeCategory, setActiveCategory] = useState('All Shows')
+  const router = useRouter()
+  const [view, setView] = useState<WatchView>('episodes')
+  const [activeCategory, setActiveCategory] = useState('All Categories')
+  const [activeAdditionalTag, setActiveAdditionalTag] = useState('')
   const [activeLevel, setActiveLevel] = useState('')
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingShow, setEditingShow] = useState<ShowMeta | undefined>(undefined)
+  const [editingShow, setEditingShow] = useState<ShowMeta | undefined>()
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const router = useRouter()
+
+  const filteredEpisodes = useMemo(() => episodes.filter((episode) => {
+    const categoryMatches = activeCategory === 'All Categories' || episode.showCategory === activeCategory
+    const tagMatches = !activeAdditionalTag || episode.tags.some((tag) => tag.toLowerCase() === activeAdditionalTag.toLowerCase())
+    const levelMatches = !activeLevel || episode.level === activeLevel
+    return categoryMatches && tagMatches && levelMatches
+  }), [activeAdditionalTag, activeCategory, activeLevel, episodes])
+
+  const filteredShows = useMemo(() => shows.filter((show) => {
+    const categoryMatches = activeCategory === 'All Categories' || showCategories[show.slug] === activeCategory
+    const tagMatches = !activeAdditionalTag || (showAdditionalTags[show.slug] ?? []).some((tag) => tag.toLowerCase() === activeAdditionalTag.toLowerCase())
+    const levelMatches = !activeLevel || show.level === activeLevel
+    return categoryMatches && tagMatches && levelMatches
+  }), [activeAdditionalTag, activeCategory, activeLevel, showAdditionalTags, showCategories, shows])
+
+  const visibleItems = view === 'episodes' ? filteredEpisodes : filteredShows
+  const activeFilterCount = (activeCategory !== 'All Categories' ? 1 : 0) + (activeAdditionalTag ? 1 : 0) + (activeLevel ? 1 : 0)
+
+  const resetFilters = () => {
+    setActiveCategory('All Categories')
+    setActiveAdditionalTag('')
+    setActiveLevel('')
+  }
+
+  const goToRandomEpisode = () => {
+    const pool = filteredEpisodes.length > 0 ? filteredEpisodes : episodes
+    if (pool.length === 0) return
+    const episode = pool[Math.floor(Math.random() * pool.length)]
+    router.push(`/cartoons/${episode.showSlug}/${episode.slug}`)
+  }
 
   const handleDeleteShow = async (id: string) => {
-    if (!isAdmin) return
-    if (!confirm('Are you sure you want to delete this show? This cannot be undone.')) return
+    if (!isAdmin || !confirm('Are you sure you want to delete this show? This cannot be undone.')) return
     setDeletingId(id)
     try {
       await deleteShow(id)
       router.refresh()
-    } catch (e: unknown) {
-      alert(errorMessage(e) ?? 'Failed to delete show')
+    } catch (error: unknown) {
+      alert(errorMessage(error) ?? 'Failed to delete show')
     } finally {
       setDeletingId(null)
     }
   }
 
-  const filteredShows = shows.filter((s) => {
-    const catMatch = activeCategory === 'All Shows'
-      || (showCategories[s.slug] ?? []).includes(activeCategory)
-    const levelMatch = !activeLevel || s.level === activeLevel
-    return catMatch && levelMatch
-  })
-
-  const goToRandomEpisode = () => {
-    const showSlugs = Object.keys(episodesMap).filter(
-      (slug) => episodesMap[slug].length > 0
-    )
-    if (showSlugs.length === 0) return
-    const randomShow = showSlugs[Math.floor(Math.random() * showSlugs.length)]
-    const eps = episodesMap[randomShow]
-    const randomEp = eps[Math.floor(Math.random() * eps.length)]
-    router.push(`/cartoons/${randomShow}/${randomEp}`)
-  }
-
-  const activeFilterCount =
-    (activeCategory !== 'All Shows' ? 1 : 0) + (activeLevel ? 1 : 0)
+  const filters = (
+    <FilterSidebar
+      categories={availableCategories}
+      levels={LEVELS}
+      additionalTags={availableAdditionalTags}
+      activeCategory={activeCategory}
+      setActiveCategory={setActiveCategory}
+      activeAdditionalTag={activeAdditionalTag}
+      setActiveAdditionalTag={setActiveAdditionalTag}
+      activeLevel={activeLevel}
+      setActiveLevel={setActiveLevel}
+      onMobileClose={() => setFilterDrawerOpen(false)}
+    />
+  )
 
   return (
-    <Box
-      component="main"
-      sx={{
-        minHeight: { xs: 'calc(100vh - 56px)', md: '100vh' },
-        background: WARM_WHITE,
-        pb: { xs: 0, md: 8 },
-      }}
-    >
-      {/* Desktop banner */}
+    <Box component="main" sx={{ minHeight: { xs: 'calc(100vh - 56px)', md: '100vh' }, bgcolor: WARM_WHITE, pb: { xs: 2, md: 8 } }}>
       <Box sx={{ display: { xs: 'none', md: 'block' } }}>
         <PageBanner
-          title="Arabic Cartoons"
-          titleAr="الرسوم المتحركة بالعربية"
-          description="Learn Arabic naturally through your favourite shows, with interactive subtitles and vocabulary."
+          title="Watch Arabic"
+          titleAr="شاهد بالعربية"
+          description="Browse every episode or explore complete shows with interactive Arabic transcripts and vocabulary."
           features={[
-            { icon: <Subtitles sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Interactive Subtitles' },
-            { icon: <MenuBook sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Vocabulary Builder' },
-            { icon: <School sx={{ fontSize: { xs: 14, md: 16 }, color: 'rgba(255,255,255,0.9)' }} />, label: 'Grammar Notes' },
-            ]}
+            { icon: <Subtitles sx={{ fontSize: 16, color: 'rgba(255,255,255,.9)' }} />, label: 'Interactive Subtitles' },
+            { icon: <MenuBook sx={{ fontSize: 16, color: 'rgba(255,255,255,.9)' }} />, label: 'Vocabulary Builder' },
+            { icon: <School sx={{ fontSize: 16, color: 'rgba(255,255,255,.9)' }} />, label: 'Graded Content' },
+          ]}
           ctaLabel="Take Me Anywhere"
           ctaAction={goToRandomEpisode}
           ctaStartIcon={<PlayArrow sx={{ fontSize: 20 }} />}
@@ -125,289 +155,112 @@ export default function CartoonsPage({
         />
       </Box>
 
-      {/* ═══════════════════════════════════════════════
-          CONTENT
-         ═══════════════════════════════════════════════ */}
-      <Container
-        maxWidth="xl"
-        sx={{
-          position: 'relative',
-          zIndex: 2,
-          px: { xs: 2, md: 3 },
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {/* ── Content Area ── */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
-          {/* Breadcrumbs */}
-          <Breadcrumbs
-            separator={<NavigateNext sx={{ fontSize: 16, color: 'var(--awm-muted-light)' }} />}
-            sx={{
-              display: { xs: 'none', md: 'flex' },
-              mb: { xs: 1, md: 2 },
-              '& .MuiBreadcrumbs-li': { fontFamily: 'Jost, sans-serif' },
-            }}
-          >
-            <Typography
-              onClick={() => router.push('/')}
-              sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: 'var(--awm-muted)', cursor: 'pointer', '&:hover': { color: GOLD } }}
-            >
-              Home
-            </Typography>
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: 'var(--awm-bark)', fontWeight: 600 }}>
-              Cartoons
-            </Typography>
-          </Breadcrumbs>
+      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
+        <Breadcrumbs separator={<NavigateNext sx={{ fontSize: 16, color: 'var(--awm-muted-light)' }} />} sx={{ display: { xs: 'none', md: 'flex' }, mb: 2 }}>
+          <Typography onClick={() => router.push('/')} sx={{ color: MUTED, cursor: 'pointer', fontFamily: 'Jost, sans-serif', '&:hover': { color: GOLD } }}>Home</Typography>
+          <Typography sx={{ color: BARK, fontWeight: 600, fontFamily: 'Jost, sans-serif' }}>Watch</Typography>
+        </Breadcrumbs>
 
-          {/* ── Mobile Filter Button ── */}
-        <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
-          <Button
-            startIcon={<Tune />}
-            onClick={() => setFilterDrawerOpen(true)}
-            sx={{
-              height: 40,
-              px: 2,
-              borderRadius: '6px',
-              fontFamily: '"Jost", system-ui, sans-serif',
-              fontSize: 13,
-              fontWeight: 500,
-              textTransform: 'none',
-              color: BARK,
-              border: '1px solid rgba(44,26,14,0.15)',
-              backgroundColor: WARM_WHITE,
-              '&:hover': { backgroundColor: 'rgba(44,26,14,0.04)' },
-            }}
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1.5, mb: { xs: 1.5, md: 3 } }}>
+          <ToggleButtonGroup
+            exclusive
+            value={view}
+            onChange={(_, nextView: WatchView | null) => { if (nextView) setView(nextView) }}
+            aria-label="Watch catalogue view"
+            size="small"
+            sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' }, '& .MuiToggleButton-root': { flex: { xs: 1, sm: 'initial' }, minHeight: 44, px: 2.5, color: MUTED, borderColor: 'color-mix(in srgb, var(--awm-bark) 14%, transparent)', fontFamily: 'Jost, sans-serif', fontWeight: 700, textTransform: 'none', '&.Mui-selected': { bgcolor: '#0e2e1f', color: '#fff', '&:hover': { bgcolor: '#173f2d' } } } }}
           >
-            Filters
-            {activeFilterCount > 0 && (
-              <Box
-                component="span"
-                sx={{
-                  ml: 1,
-                  width: 18,
-                  height: 18,
-                  borderRadius: '50%',
-                  backgroundColor: GOLD,
-                  color: '#fff',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {activeFilterCount}
-              </Box>
-            )}
-          </Button>
-          <Typography sx={{ fontSize: 13, color: MUTED }}>
-            {filteredShows.length} {filteredShows.length === 1 ? 'show' : 'shows'}
-          </Typography>
+            <ToggleButton value="episodes" aria-label="Show all episodes"><VideoLibrary sx={{ mr: 0.75, fontSize: 19 }} />All Episodes</ToggleButton>
+            <ToggleButton value="shows" aria-label="Show all shows"><Movie sx={{ mr: 0.75, fontSize: 19 }} />All Shows</ToggleButton>
+          </ToggleButtonGroup>
+
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
+            <Button startIcon={<Tune />} onClick={() => setFilterDrawerOpen(true)} sx={{ minHeight: 42, px: 2, borderRadius: '8px', color: BARK, border: '1px solid rgba(44,26,14,.15)', textTransform: 'none' }}>
+              Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+            </Button>
+            <Typography sx={{ color: MUTED, fontSize: 13 }}>{visibleItems.length} {view === 'episodes' ? 'episodes' : 'shows'}</Typography>
+          </Box>
         </Box>
 
-        {/* ── Desktop: Sidebar + Grid Layout ── */}
         <Box sx={{ display: 'flex', gap: { md: 4, lg: 5 } }}>
-          {/* Sidebar — desktop only */}
-          <Box
-            sx={{
-              width: 240,
-              flexShrink: 0,
-              display: { xs: 'none', md: 'block' },
-            }}
-          >
-            <Box sx={{ position: 'sticky', top: 100, alignSelf: 'flex-start' }}>
-              <FilterSidebar
-                categories={availableCategories}
-                levels={LEVELS}
-                activeCategory={activeCategory}
-                setActiveCategory={setActiveCategory}
-                activeLevel={activeLevel}
-                setActiveLevel={setActiveLevel}
-              />
-            </Box>
+          <Box sx={{ width: 240, flexShrink: 0, display: { xs: 'none', md: 'block' } }}>
+            <Box sx={{ position: 'sticky', top: 100 }}>{filters}</Box>
           </Box>
 
-          {/* Show Grid */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            {/* Desktop result count */}
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-end', mb: 2 }}>
-              <Typography sx={{ fontSize: 13, color: MUTED }}>
-                {filteredShows.length} {filteredShows.length === 1 ? 'show' : 'shows'}
-              </Typography>
-            </Box>
+            <Typography sx={{ display: { xs: 'none', md: 'block' }, mb: 2, color: MUTED, textAlign: 'right', fontSize: 13 }}>
+              {visibleItems.length} {view === 'episodes' ? 'episodes' : 'shows'}
+            </Typography>
 
-            <ShowEditDialog
-              open={dialogOpen}
-              show={editingShow}
-              onClose={() => setDialogOpen(false)}
-              onSaved={() => { setDialogOpen(false); router.refresh(); }}
-            />
+            <ShowEditDialog open={dialogOpen} show={editingShow} onClose={() => setDialogOpen(false)} onSaved={() => { setDialogOpen(false); router.refresh() }} />
 
-            {filteredShows.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 8 }}>
-                <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 20, color: BARK, mb: 1 }}>
-                  No shows match your filters
-                </Typography>
-                <Typography sx={{ fontSize: 14, color: MUTED, mb: 2 }}>
-                  Try adjusting your filters.
-                </Typography>
-                <Button
-                  onClick={() => {
-                    setActiveCategory('All Shows')
-                    setActiveLevel('')
-                  }}
-                  sx={{
-                    borderRadius: '9999px',
-                    px: 3,
-                    py: 1,
-                    fontFamily: '"Jost", system-ui, sans-serif',
-                    textTransform: 'none',
-                    color: BARK,
-                    border: '1px solid rgba(44,26,14,0.15)',
-                  }}
-                >
-                  Reset Filters
-                </Button>
+            {visibleItems.length === 0 ? (
+              <Box sx={{ py: 10, textAlign: 'center' }}>
+                <Typography sx={{ color: BARK, fontFamily: 'var(--font-heading)', fontSize: 22 }}>No {view} match your filters</Typography>
+                <Button onClick={resetFilters} sx={{ mt: 1.5, color: GOLD, textTransform: 'none' }}>Reset filters</Button>
+              </Box>
+            ) : view === 'episodes' ? (
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 1.25, sm: 2 } }}>
+                {filteredEpisodes.map((episode) => (
+                  <ContentCard
+                    key={episode.id}
+                    slug={episode.slug}
+                    hrefPrefix={`/cartoons/${episode.showSlug}`}
+                    cover={episode.cover ?? ''}
+                    title={episode.title}
+                    description={episode.description}
+                    level={episode.level}
+                    tags={episode.tags}
+                    showTags={false}
+                    aspectRatio="16 / 9"
+                    imageFit="cover"
+                    compactMobileRow
+                    overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
+                    metaItems={[{ icon: <Movie sx={{ fontSize: 15, color: 'var(--awm-muted-light)' }} />, label: episode.showTitle }]}
+                  />
+                ))}
               </Box>
             ) : (
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: {
-                    xs: 'repeat(4, minmax(0, 1fr))',
-                    sm: 'repeat(2, minmax(0, 1fr))',
-                    xl: 'repeat(4, minmax(0, 1fr))',
-                  },
-                  gap: { xs: 0.75, sm: 2 },
-                }}
-              >
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 1.25, sm: 2 } }}>
                 {filteredShows.map((show) => (
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      minWidth: 0,
-                    }}
-                    key={show.slug}
-                  >
-                      {isAdmin && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: 8,
-                            left: 8,
-                            zIndex: 2,
-                            display: { xs: 'none', sm: 'flex' },
-                            gap: 0.5,
-                          }}
-                        >
-                          <IconButton
-                            size="small"
-                            disabled={deletingId === show.id}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setEditingShow(show)
-                              setDialogOpen(true)
-                            }}
-                            sx={{
-                              bgcolor: 'rgba(255,255,255,0.9)',
-                              color: GOLD,
-                              '&:hover': { bgcolor: 'rgba(255,255,255,1)' },
-                            }}
-                          >
-                            <Edit sx={{ fontSize: '1.1rem' }} />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            disabled={deletingId === show.id}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDeleteShow(show.id)
-                            }}
-                            sx={{
-                              bgcolor: 'rgba(255,255,255,0.9)',
-                              color: '#c0392b',
-                              '&:hover': { bgcolor: 'rgba(255,255,255,1)' },
-                            }}
-                          >
-                            <Delete sx={{ fontSize: '1.1rem' }} />
-                          </IconButton>
-                        </Box>
-                      )}
-                      <ContentCard
-                        slug={show.slug}
-                        hrefPrefix="/cartoons"
-                        cover={show.cover}
-                        title={show.title}
-                        titleAr={show.titleAr}
-                        description={show.description}
-                        category={show.category}
-                        tags={show.tags}
-                        maxVisibleTags={2}
-
-                        level={show.level}
-                        denseMobileTile
-                        mobileAspectRatio="2 / 3"
-                        mobileImagePosition="center"
-                        overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
-                        metaItems={[
-                          {
-                            icon: <School sx={{ fontSize: 14, color: 'var(--awm-muted-light)' }} />,
-                            label: `${show.episodeCount} ${show.episodeCount === 1 ? 'episode' : 'episodes'}`,
-                          },
-                        ]}
-                      />
+                  <Box key={show.id} sx={{ position: 'relative', minWidth: 0 }}>
+                    {isAdmin && (
+                      <Box sx={{ position: 'absolute', zIndex: 2, top: 8, left: 8, display: { xs: 'none', sm: 'flex' }, gap: 0.5 }}>
+                        <IconButton size="small" disabled={deletingId === show.id} onClick={(event) => { event.preventDefault(); setEditingShow(show); setDialogOpen(true) }} sx={{ bgcolor: 'rgba(255,255,255,.92)', color: GOLD }}><Edit fontSize="small" /></IconButton>
+                        <IconButton size="small" disabled={deletingId === show.id} onClick={(event) => { event.preventDefault(); void handleDeleteShow(show.id) }} sx={{ bgcolor: 'rgba(255,255,255,.92)', color: '#c0392b' }}><Delete fontSize="small" /></IconButton>
+                      </Box>
+                    )}
+                    <ContentCard
+                      slug={show.slug}
+                      hrefPrefix="/cartoons"
+                      cover={show.cover}
+                      title={show.title}
+                      titleAr={show.titleAr}
+                      description={show.description}
+                      category={show.category}
+                      tags={showAdditionalTags[show.slug]}
+                      maxVisibleTags={2}
+                      level={show.level}
+                      denseMobileTile
+                      mobileAspectRatio="2 / 3"
+                      mobileImagePosition="center"
+                      overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
+                      metaItems={[{ icon: <School sx={{ fontSize: 14, color: 'var(--awm-muted-light)' }} />, label: `${episodesMap[show.slug]?.length ?? 0} episodes` }]}
+                    />
                   </Box>
                 ))}
               </Box>
             )}
           </Box>
         </Box>
-
-        </Box>
       </Container>
 
-      {/* ═══════════════════════════════════════════════
-          MOBILE FILTER DRAWER
-         ═══════════════════════════════════════════════ */}
-      <Drawer
-        anchor="left"
-        open={filterDrawerOpen}
-        onClose={() => setFilterDrawerOpen(false)}
-        slotProps={{
-          paper: {
-            sx: {
-              width: 300,
-              backgroundColor: WARM_WHITE,
-              p: 3,
-            },
-          },
-        }}
-      >
+      <Drawer anchor="left" open={filterDrawerOpen} onClose={() => setFilterDrawerOpen(false)} slotProps={{ paper: { sx: { width: 310, bgcolor: WARM_WHITE, p: 3 } } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography
-            sx={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: 20,
-              color: BARK,
-            }}
-          >
-            Filters
-          </Typography>
-          <IconButton onClick={() => setFilterDrawerOpen(false)} size="small">
-            <Close sx={{ fontSize: 20, color: MUTED }} />
-          </IconButton>
+          <Typography sx={{ color: BARK, fontFamily: 'var(--font-heading)', fontSize: 22 }}>Filters</Typography>
+          <IconButton onClick={() => setFilterDrawerOpen(false)} aria-label="Close filters"><Close /></IconButton>
         </Box>
-        <FilterSidebar
-          categories={availableCategories}
-          levels={LEVELS}
-          activeCategory={activeCategory}
-          setActiveCategory={setActiveCategory}
-          activeLevel={activeLevel}
-          setActiveLevel={setActiveLevel}
-          onMobileClose={() => setFilterDrawerOpen(false)}
-          hideTitle
-        />
+        {filters}
       </Drawer>
     </Box>
   )

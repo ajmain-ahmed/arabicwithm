@@ -112,7 +112,7 @@ export const fetchShowsForPublic = unstable_cache(
       episodeCount: counts.get(String(row.id)) ?? 0,
     }))
   },
-  ["cartoons", "shows", "public"],
+  ["cartoons", "shows", "public", "catalogue-metadata-v2"],
   { revalidate: 300, tags: ["cartoons-public"] }
 )
 
@@ -180,7 +180,7 @@ export const fetchShowBySlugPublic = unstable_cache(
       episodeCount: episodes?.length ?? 0,
     }
   },
-  ["cartoons", "show"],
+  ["cartoons", "show", "catalogue-metadata-v2"],
   { revalidate: 300, tags: ["cartoons-public"] }
 )
 
@@ -228,7 +228,7 @@ export const fetchEpisodesForShowPublic = unstable_cache(
 
     return (data ?? []).map((row) => mapEpisodeRow(row, showSlug))
   },
-  ["cartoons", "episodes"],
+  ["cartoons", "episodes", "catalogue-metadata-v2"],
   { revalidate: 300, tags: ["cartoons-public"] }
 )
 

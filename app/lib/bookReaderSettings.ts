@@ -5,6 +5,9 @@ export const BOOK_TEXT_SCALE_STEP = 0.1
 export const BOOK_READER_FONTS = ['naskh', 'sans', 'amiri'] as const
 export type BookReaderFont = (typeof BOOK_READER_FONTS)[number]
 export const DEFAULT_BOOK_READER_FONT: BookReaderFont = 'naskh'
+export const BOOK_READER_LANGUAGES = ['ar', 'en'] as const
+export type BookReaderLanguage = (typeof BOOK_READER_LANGUAGES)[number]
+export const DEFAULT_BOOK_READER_LANGUAGE: BookReaderLanguage = 'ar'
 
 export function normalizeBookTextScale(value: unknown): number {
   if (value === null || value === undefined || value === '') return DEFAULT_BOOK_TEXT_SCALE
@@ -20,4 +23,10 @@ export function normalizeBookReaderFont(value: unknown): BookReaderFont {
   return typeof value === 'string' && BOOK_READER_FONTS.includes(value as BookReaderFont)
     ? value as BookReaderFont
     : DEFAULT_BOOK_READER_FONT
+}
+
+export function normalizeBookReaderLanguage(value: unknown): BookReaderLanguage {
+  return typeof value === 'string' && BOOK_READER_LANGUAGES.includes(value as BookReaderLanguage)
+    ? value as BookReaderLanguage
+    : DEFAULT_BOOK_READER_LANGUAGE
 }

@@ -3,6 +3,7 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Slider, Typography } from '@mui/material'
 import { Close } from '@mui/icons-material'
 import type { BookReaderFont } from '@/app/lib/bookReaderSettings'
+import PdfDownloadButton from '@/app/components/PdfDownloadButton'
 import {
   BOOK_TEXT_SCALE_STEP,
   MAX_BOOK_TEXT_SCALE,
@@ -22,6 +23,10 @@ export default function BookReaderSettingsDialog({
   onReaderFontChange,
   textScale,
   onTextScaleChange,
+  bookSlug,
+  chapterSlug,
+  language,
+  languageLabel,
 }: {
   open: boolean
   onClose: () => void
@@ -29,6 +34,10 @@ export default function BookReaderSettingsDialog({
   onReaderFontChange: (font: BookReaderFont) => void
   textScale: number
   onTextScaleChange: (scale: number) => void
+  bookSlug: string
+  chapterSlug: string
+  language: 'ar' | 'en'
+  languageLabel: string
 }) {
   return (
     <Dialog
@@ -59,6 +68,12 @@ export default function BookReaderSettingsDialog({
               </Button>
             ))}
           </Box>
+        </Box>
+
+        <Box sx={{ p: 2, border: '1px solid rgba(122,110,101,0.18)', borderRadius: '12px', bgcolor: 'rgba(122,110,101,0.04)' }}>
+          <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>Offline reading</Typography>
+          <Typography sx={{ mt: 0.25, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12.5 }}>Export the current chapter in {languageLabel}.</Typography>
+          <Box sx={{ mt: 1.5 }}><PdfDownloadButton bookSlug={bookSlug} chapterSlug={chapterSlug} language={language} label="Download Chapter" /></Box>
         </Box>
 
         <Box sx={{ p: 2, border: '1px solid rgba(122,110,101,0.18)', borderRadius: '12px', bgcolor: 'rgba(122,110,101,0.04)' }}>

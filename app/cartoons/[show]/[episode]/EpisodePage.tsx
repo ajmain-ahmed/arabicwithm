@@ -43,6 +43,7 @@ import { HtmlTooltip, WordTooltip, LEVEL_COLORS } from '@/app/components/vocab-t
 import { SettingsDialog } from '@/app/components/settings-controls'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
 import { usePlayerStore } from '@/store/playerStore'
+import { dispatchWordLookup } from '@/app/lib/activity'
 
 const EpisodeEditDialog = dynamic(() => import('@/app/(admin)/admin/components/EpisodeEditDialog'), { ssr: false })
 
@@ -365,12 +366,14 @@ function ArabicLineText({
     setActivePartIndex(partIndex)
     setOpen(true)
     childRef.current = el
+    dispatchWordLookup()
   }, [clearLeaveTimer])
 
   const handleOpenDrawer = useCallback((entry: CartoonWordEntry) => {
     setDrawerEntry(entry)
     setDrawerOpen(true)
     onDrawerOpenChange?.(true)
+    dispatchWordLookup()
   }, [onDrawerOpenChange])
 
   const handleCloseDrawer = useCallback(() => {
@@ -748,6 +751,7 @@ export default function EpisodePage({
   const router = useRouter()
   const isAdmin = useIsAdmin()
   const closePip = usePlayerStore((state) => state.closePip)
+  const setGlobalVideoPlaying = usePlayerStore((state) => state.setIsPlaying)
   const [tab, setTab] = useState(0)
   const [showDiacritics, setShowDiacritics] = useState(true)
   const [textScale, setTextScale] = useState(1.3)
@@ -838,12 +842,17 @@ export default function EpisodePage({
 
   const activeIndex = isYouTubeSource ? localActiveIndex : null
 
-  const { wrapRef, seekTo, errorCode, retry } = useYouTubePlayer(
+  const { wrapRef, seekTo, isPlaying: localVideoPlaying, errorCode, retry } = useYouTubePlayer(
     isYouTubeSource ? selectedSource.id : undefined,
     handleTimeUpdate,
     undefined,
     { reloadKey: isMobile ? 'mobile' : 'desktop' }
   )
+
+  useEffect(() => {
+    setGlobalVideoPlaying(localVideoPlaying)
+    return () => setGlobalVideoPlaying(false)
+  }, [localVideoPlaying, setGlobalVideoPlaying])
 
   useEffect(() => {
     closePip()

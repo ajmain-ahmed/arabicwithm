@@ -6,6 +6,7 @@ import {
   MIN_BOOK_TEXT_SCALE,
   normalizeBookTextScale,
   normalizeBookReaderFont,
+  normalizeBookReaderLanguage,
 } from './bookReaderSettings'
 
 describe('normalizeBookTextScale', () => {
@@ -22,6 +23,14 @@ describe('normalizeBookTextScale', () => {
   it('uses the smaller default for invalid stored values', () => {
     expect(normalizeBookTextScale(null)).toBe(DEFAULT_BOOK_TEXT_SCALE)
     expect(normalizeBookTextScale('not-a-size')).toBe(DEFAULT_BOOK_TEXT_SCALE)
+  })
+})
+
+describe('normalizeBookReaderLanguage', () => {
+  it('accepts Arabic and English and rejects unsupported values', () => {
+    expect(normalizeBookReaderLanguage('ar')).toBe('ar')
+    expect(normalizeBookReaderLanguage('en')).toBe('en')
+    expect(normalizeBookReaderLanguage('fr')).toBe('ar')
   })
 })
 

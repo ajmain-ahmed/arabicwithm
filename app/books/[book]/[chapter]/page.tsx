@@ -10,6 +10,7 @@ import {
 } from '@/app/actions/books'
 import ReadingProgress from './ReadingProgress'
 import ChapterReader from './ChapterReader'
+import { normalizeBookReaderLanguage } from '@/app/lib/bookReaderSettings'
 
 export const revalidate = 300
 
@@ -32,8 +33,17 @@ export async function generateMetadata({ params }: { params: Promise<{ book: str
   return chapter ? { title: `${chapter.title} — ${book.title}` } : { title: 'Chapter Not Found' }
 }
 
-export default async function ChapterPage({ params }: { params: Promise<{ book: string; chapter: string }> }) {
+export default async function ChapterPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ book: string; chapter: string }>
+  searchParams: Promise<{ lang?: string | string[] }>
+}) {
   const { book: bookSlug, chapter: chapterSlug } = await params
+  const rawLanguage = (await searchParams).lang
+  const languageValue = Array.isArray(rawLanguage) ? rawLanguage[0] : rawLanguage
+  const initialLanguage = languageValue ? normalizeBookReaderLanguage(languageValue) : undefined
   const book = await fetchBookBySlugPublic(bookSlug)
   if (!book) notFound()
 
@@ -62,7 +72,7 @@ export default async function ChapterPage({ params }: { params: Promise<{ book: 
           </Typography>
         </Box>
 
-        <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} />
+        <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} />
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr auto 1fr' }, gap: 1.5, alignItems: 'center', mt: 3 }}>
           <Box>
