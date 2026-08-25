@@ -5,7 +5,7 @@ import { ArrowBack, ChevronRight, MenuBook } from '@mui/icons-material'
 import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
 import BookReadingCta from './BookReadingCta'
 
-export const revalidate = 300
+export const revalidate = false
 
 export async function generateStaticParams() {
   const books = await fetchBooksForPublic()

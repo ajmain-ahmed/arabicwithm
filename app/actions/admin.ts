@@ -61,6 +61,18 @@ type EpisodeDatabaseError = {
   message?: string
 }
 
+function revalidateCartoonContent(): void {
+  revalidatePath("/")
+  revalidatePath("/cartoons", "layout")
+  revalidatePath("/explore")
+}
+
+function revalidateBookContent(): void {
+  revalidatePath("/")
+  revalidatePath("/books", "layout")
+  revalidatePath("/explore")
+}
+
 function isMissingSocialVideoColumn(error: EpisodeDatabaseError | null): boolean {
   return Boolean(
     error &&
@@ -213,6 +225,7 @@ export async function createShow(input: ShowInput): Promise<string> {
   }
 
   updateTag("cartoons-public")
+  revalidateCartoonContent()
   return data.id
 }
 
@@ -241,6 +254,7 @@ export async function updateShow(
   }
 
   updateTag("cartoons-public")
+  revalidateCartoonContent()
 }
 
 export async function deleteShow(id: string): Promise<void> {
@@ -254,6 +268,7 @@ export async function deleteShow(id: string): Promise<void> {
   }
 
   updateTag("cartoons-public")
+  revalidateCartoonContent()
 }
 
 /* ── Episodes ──────────────────────────────────────────────────────── */
@@ -357,6 +372,7 @@ export async function createEpisode(input: EpisodeInput): Promise<EpisodeSaveRes
   }
 
   updateTag("cartoons-public")
+  revalidateCartoonContent()
   return { ok: true, id: String(data.id) }
 }
 
@@ -425,6 +441,7 @@ export async function updateEpisode(
   }
 
   updateTag("cartoons-public")
+  revalidateCartoonContent()
   if (revalidate) {
     revalidatePath(revalidate)
   }
@@ -442,6 +459,7 @@ export async function deleteEpisode(id: string): Promise<void> {
   }
 
   updateTag("cartoons-public")
+  revalidateCartoonContent()
 }
 
 export async function updateEpisodeTranscript(
@@ -461,6 +479,7 @@ export async function updateEpisodeTranscript(
   }
 
   updateTag("cartoons-public")
+  revalidateCartoonContent()
 }
 
 /* ── Books ─────────────────────────────────────────────────────────── */
@@ -536,6 +555,7 @@ export async function createBook(input: BookInput): Promise<string> {
   }
 
   updateTag("books-public")
+  revalidateBookContent()
   return data.id
 }
 
@@ -565,6 +585,7 @@ export async function updateBook(
   }
 
   updateTag("books-public")
+  revalidateBookContent()
 }
 
 export async function deleteBook(id: string): Promise<void> {
@@ -578,6 +599,7 @@ export async function deleteBook(id: string): Promise<void> {
   }
 
   updateTag("books-public")
+  revalidateBookContent()
 }
 
 /* ── Chapters ──────────────────────────────────────────────────────── */
@@ -662,6 +684,7 @@ export async function createChapter(input: ChapterInput): Promise<string> {
   }
 
   updateTag("books-public")
+  revalidateBookContent()
   return data.id
 }
 
@@ -689,6 +712,7 @@ export async function updateChapter(
   }
 
   updateTag("books-public")
+  revalidateBookContent()
 }
 
 export async function deleteChapter(id: string): Promise<void> {
@@ -702,6 +726,7 @@ export async function deleteChapter(id: string): Promise<void> {
   }
 
   updateTag("books-public")
+  revalidateBookContent()
 }
 
 export async function updateChapterContent(
@@ -721,6 +746,7 @@ export async function updateChapterContent(
   }
 
   updateTag("books-public")
+  revalidateBookContent()
 }
 
 /* ── Hans Wehr ─────────────────────────────────────────────────────── */

@@ -12,7 +12,7 @@ import ReadingProgress from './ReadingProgress'
 import ChapterReader from './ChapterReader'
 import { normalizeBookReaderLanguage } from '@/app/lib/bookReaderSettings'
 
-export const revalidate = 300
+export const revalidate = false
 
 export async function generateStaticParams() {
   const books = await fetchBooksForPublic()

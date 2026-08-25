@@ -3,7 +3,7 @@ import { fetchEpisodesForShowPublic, fetchShowsForPublic } from '@/app/actions/c
 import HomeDashboard from '@/app/components/home/HomeDashboard'
 import { dailyRotationIndex } from '@/app/lib/dailyRotation'
 
-export const revalidate = 300
+export const revalidate = false
 
 export default async function HomePage() {
   const [books, shows] = await Promise.all([

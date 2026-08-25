@@ -3,7 +3,7 @@ import { Box, Chip, Container, Paper, Typography } from '@mui/material'
 import { AutoStories, ChevronRight, MenuBook } from '@mui/icons-material'
 import { fetchBooksForPublic } from '@/app/actions/books'
 
-export const revalidate = 300
+export const revalidate = false
 
 export const metadata = {
   title: 'Arabic Books | ArabicWithM',

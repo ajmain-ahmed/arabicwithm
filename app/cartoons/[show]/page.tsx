@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { fetchShowBySlugPublic, fetchEpisodesForShowPublic, fetchShowsForPublic } from '@/app/actions/cartoons'
 import ShowPage from './ShowPage'
 
-export const revalidate = 300
+export const revalidate = false
 
 export async function generateStaticParams() {
   const shows = await fetchShowsForPublic()

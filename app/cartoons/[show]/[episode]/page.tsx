@@ -8,7 +8,7 @@ import {
 } from '@/app/actions/cartoons'
 import EpisodePage from './EpisodePage'
 
-export const revalidate = 300
+export const revalidate = false
 
 export async function generateStaticParams() {
   const shows = await fetchShowsForPublic()

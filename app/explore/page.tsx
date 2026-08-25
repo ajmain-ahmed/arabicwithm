@@ -3,7 +3,7 @@ import { fetchEpisodesForExplorePublic } from '@/app/actions/cartoons'
 import { fetchBookPagesForExplorePublic } from '@/app/actions/books'
 import ExploreFeed from './ExploreFeed'
 
-export const revalidate = 300
+export const revalidate = false
 
 export const metadata: Metadata = {
   title: 'Explore Arabic | ArabicWithM',

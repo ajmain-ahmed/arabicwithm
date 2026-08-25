@@ -125,7 +125,7 @@ export const fetchBooksForPublic = unstable_cache(
     )
   },
   ["books", "public", "book-catalogue-v2"],
-  { revalidate: 300, tags: ["books-public"] }
+  { revalidate: false, tags: ["books-public"] }
 )
 
 export const fetchBookBySlugPublic = unstable_cache(
@@ -149,7 +149,7 @@ export const fetchBookBySlugPublic = unstable_cache(
     return mapBook(book as Record<string, unknown>, count ?? 0)
   },
   ["books", "public", "detail", "book-catalogue-v2"],
-  { revalidate: 300, tags: ["books-public"] }
+  { revalidate: false, tags: ["books-public"] }
 )
 
 export const fetchChaptersForBookPublic = unstable_cache(
@@ -174,7 +174,7 @@ export const fetchChaptersForBookPublic = unstable_cache(
     }))
   },
   ["books", "public", "chapters", "chapter-teasers-v1"],
-  { revalidate: 300, tags: ["books-public"] }
+  { revalidate: false, tags: ["books-public"] }
 )
 
 export const fetchChapterForPublic = unstable_cache(
@@ -232,7 +232,7 @@ export const fetchChapterForPublic = unstable_cache(
     }
   },
   ["books", "public", "chapter", "cartoon-tooltip-v1", "book-punctuation-v1"],
-  { revalidate: 300, tags: ["books-public"] }
+  { revalidate: false, tags: ["books-public"] }
 )
 
 const EXPLORE_BLOCKS_PER_PAGE = 5
@@ -326,5 +326,5 @@ export const fetchBookPagesForExplorePublic = unstable_cache(
     })
   },
   ["books", "public", "explore-pages-v1"],
-  { revalidate: 300, tags: ["books-public"] }
+  { revalidate: false, tags: ["books-public"] }
 )

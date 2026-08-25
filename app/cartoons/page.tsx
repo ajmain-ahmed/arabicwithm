@@ -2,7 +2,7 @@ import { fetchShowsForPublic, fetchEpisodesForShowPublic } from '@/app/actions/c
 import { canonicalizeCartoonCategory } from '@/app/lib/cartoons'
 import CartoonsPage from './CartoonsPage'
 
-export const revalidate = 300
+export const revalidate = false
 
 export const metadata = {
   title: 'Arabic Cartoons | ArabicWithM',
