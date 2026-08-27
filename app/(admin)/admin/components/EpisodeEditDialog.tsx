@@ -31,6 +31,7 @@ import {
   type EpisodeInput,
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
+import ImageUploadField from "./ImageUploadField"
 
 
 interface EpisodeEditDialogProps {
@@ -69,6 +70,7 @@ export default function EpisodeEditDialog({
   const [instagramId, setInstagramId] = useState("")
   const [tiktokId, setTiktokId] = useState("")
   const [facebookId, setFacebookId] = useState("")
+  const [cover, setCover] = useState<string | null>(null)
   const [transcriptJson, setTranscriptJson] = useState(defaultTranscript)
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("md"))
@@ -91,6 +93,7 @@ export default function EpisodeEditDialog({
       setInstagramId("")
       setTiktokId("")
       setFacebookId("")
+      setCover(null)
       setTranscriptJson(defaultTranscript)
       return
     }
@@ -112,6 +115,7 @@ export default function EpisodeEditDialog({
         setInstagramId(row.instagram_id ?? "")
         setTiktokId(row.tiktok_id ?? "")
         setFacebookId(row.facebook_id ?? "")
+        setCover(row.cover)
         setTranscriptJson(JSON.stringify(row.transcript ?? [], null, 2))
       })
       .catch((e: unknown) => setError(errorMessage(e) ?? "Failed to load episode"))
@@ -141,6 +145,7 @@ export default function EpisodeEditDialog({
         instagram_id: instagramId || null,
         tiktok_id: tiktokId || null,
         facebook_id: facebookId || null,
+        cover,
         transcript: transcript as Record<string, unknown>,
       }
 
@@ -264,6 +269,14 @@ export default function EpisodeEditDialog({
                 <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
                 <AdminTextField label="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
                 <AdminTextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
+                <ImageUploadField
+                  label="Episode cover"
+                  bucket="covers"
+                  path={`episodes/${slug || "episode-draft"}.webp`}
+                  previewUrl={cover}
+                  onUploaded={setCover}
+                  onRemove={() => setCover(null)}
+                />
                 <Typography sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e", pt: 0.5 }}>
                   Video sources
                 </Typography>

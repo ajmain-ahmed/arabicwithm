@@ -3,13 +3,10 @@
 import React, {
   useState,
   useEffect,
-  useLayoutEffect,
   useRef,
   useCallback,
   useMemo,
-  useSyncExternalStore,
 } from 'react'
-import { createPortal } from 'react-dom'
 import SafeHtml from '@/app/components/SafeHtml'
 import ClientStyles from '@/app/components/ClientStyles'
 import SocialVideoEmbed from '@/app/components/SocialVideoEmbed'
@@ -23,10 +20,11 @@ import {
   useMediaQuery,
   Chip,
   Breadcrumbs,
-  SwipeableDrawer,
+  IconButton,
+  Popover,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ArrowBack, Settings, ExpandMore, ExpandLess, ChevronRight, Fullscreen, Refresh } from '@mui/icons-material'
+import { ArrowBack, Settings, ExpandMore, ExpandLess, ChevronRight, Fullscreen, PsychologyOutlined, Refresh } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
@@ -71,20 +69,6 @@ const PAGE_CSS = `
 
   /* Fixed mobile header — rendered via portal directly on <body> so no
      ancestor overflow can interfere. Hidden on lg+. */
-  #mobile-fixed-header {
-    display: block;
-    position: fixed;
-    top: var(--navbar-height);
-    left: 0;
-    right: 0;
-    z-index: 30;
-    background: var(--cream);
-    padding: 4px 20px 8px;
-  }
-  @media (min-width: 900px) {
-    #mobile-fixed-header { display: none; }
-  }
-
   .script-block {
     transition: background 0.15s ease, border-color 0.2s ease;
     border-radius: 8px;
@@ -192,103 +176,6 @@ function SettingsButton({ onClick }: SettingsButtonProps) {
 /* ─────────────────────────────────────────────
    MobileFixedHeader — portal into <body>
 ───────────────────────────────────────────── */
-function MobileFixedHeader({
-  title,
-  onBack,
-  onHeightChange,
-  top,
-  onSettingsClick,
-}: {
-  title: string
-  onBack: () => void
-  onHeightChange?: (height: number) => void
-  top: number
-  onSettingsClick: () => void
-}) {
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false
-  )
-  const innerRef = useRef<HTMLDivElement>(null)
-
-  // Report height back to parent so <main> can pad itself correctly
-  useLayoutEffect(() => {
-    if (innerRef.current && onHeightChange) {
-      onHeightChange(innerRef.current.offsetHeight)
-    }
-  }, [mounted, onHeightChange])
-
-  useEffect(() => {
-    if (!innerRef.current || !onHeightChange) return
-    const ro = new ResizeObserver(() => {
-      onHeightChange(innerRef.current!.offsetHeight)
-    })
-    ro.observe(innerRef.current)
-    return () => ro.disconnect()
-  }, [mounted, onHeightChange])
-
-  if (!mounted) return null
-
-  const content = (
-    <div id="mobile-fixed-header" ref={innerRef} style={{ top: `${top}px` }}>
-      {/* Title row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 30, marginBottom: 14 }}>
-        {/* Back button — left */}
-        <button
-          onClick={onBack}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 30,
-            height: 30,
-            flexShrink: 0,
-            borderRadius: '50%',
-            border: 'none',
-            background: 'rgba(44,26,14,0.05)',
-            cursor: 'pointer',
-            color: 'var(--awm-muted)',
-          }}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-          </svg>
-        </button>
-
-        {/* Title — centred */}
-        <span
-          style={{
-            flex: 1,
-            minWidth: 0,
-            margin: '0 12px',
-            textAlign: 'center',
-            fontFamily: 'Georgia, "Times New Roman", serif',
-            fontWeight: 700,
-            fontSize: '1.1rem',
-            color: 'var(--awm-bark)',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            lineHeight: 1.2,
-          }}
-        >
-          {title}
-        </span>
-
-        {/* Actions — settings only on mobile */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          <SettingsButton onClick={onSettingsClick} />
-        </div>
-      </div>
-
-      {/* Video — moved into the fixed header on mobile */}
-    </div>
-  )
-
-  return createPortal(content, document.body)
-}
-
 /* ─────────────────────────────────────────────
    WordTooltip — inline markdown word popup
 ───────────────────────────────────────────── */
@@ -337,8 +224,8 @@ function ArabicLineText({
   const [activePartIndex, setActivePartIndex] = useState<number | null>(null)
   const [open, setOpen] = useState(false)
 
-  const [drawerEntry, setDrawerEntry] = useState<CartoonWordEntry | null>(null)
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [mobileEntry, setMobileEntry] = useState<CartoonWordEntry | null>(null)
+  const [mobileAnchor, setMobileAnchor] = useState<HTMLElement | null>(null)
 
   const childRef = useRef<HTMLSpanElement | null>(null)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -369,15 +256,15 @@ function ArabicLineText({
     dispatchWordLookup()
   }, [clearLeaveTimer])
 
-  const handleOpenDrawer = useCallback((entry: CartoonWordEntry) => {
-    setDrawerEntry(entry)
-    setDrawerOpen(true)
+  const handleOpenDrawer = useCallback((entry: CartoonWordEntry, anchor: HTMLElement) => {
+    setMobileEntry(entry)
+    setMobileAnchor(anchor)
     onDrawerOpenChange?.(true)
     dispatchWordLookup()
   }, [onDrawerOpenChange])
 
   const handleCloseDrawer = useCallback(() => {
-    setDrawerOpen(false)
+    setMobileAnchor(null)
     onDrawerOpenChange?.(false)
   }, [onDrawerOpenChange])
 
@@ -529,7 +416,7 @@ function ArabicLineText({
               key={i}
               onClick={(e) => {
                 e.stopPropagation()
-                handleOpenDrawer(entry)
+                handleOpenDrawer(entry, e.currentTarget)
               }}
               className="vocab-word"
               style={{
@@ -622,25 +509,31 @@ function ArabicLineText({
       })}
 
       {/* Mobile bottom-sheet summary */}
-      <SwipeableDrawer
-        anchor="bottom"
-        open={drawerOpen}
+      <Popover
+        open={Boolean(mobileAnchor)}
+        anchorEl={mobileAnchor}
         onClose={handleCloseDrawer}
-        onOpen={() => {}}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+        disableRestoreFocus
         slotProps={{
           paper: {
             sx: {
-              borderRadius: '20px 20px 0 0',
-              bgcolor: 'var(--cream)',
-              maxHeight: '70vh',
-              overflow: 'hidden',
+              mt: 0.75,
+              width: 'min(310px, calc(100vw - 24px))',
+              maxHeight: 'min(56dvh, 430px)',
+              borderRadius: '12px',
+              bgcolor: 'var(--awm-white)',
+              border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)',
+              boxShadow: '0 14px 42px color-mix(in srgb, var(--awm-bark) 22%, transparent)',
+              overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
             },
           },
         }}
       >
-        {drawerEntry && (
+        {mobileEntry && (
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <Box
               sx={{
@@ -664,16 +557,16 @@ function ArabicLineText({
                   lineHeight: 1.25,
                 }}
               >
-                {showDiacritics ? drawerEntry.arabic : drawerEntry.plain}
+                {showDiacritics ? mobileEntry.arabic : mobileEntry.plain}
               </Typography>
 
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                {drawerEntry.cefr && (
+                {mobileEntry.cefr && (
                   <Chip
-                    label={drawerEntry.cefr}
+                    label={mobileEntry.cefr}
                     size="small"
                     sx={{
-                      bgcolor: LEVEL_COLORS[drawerEntry.cefr] ?? 'var(--forest)',
+                      bgcolor: LEVEL_COLORS[mobileEntry.cefr] ?? 'var(--forest)',
                       color: '#fff',
                       fontFamily: 'Jost, sans-serif',
                       fontWeight: 700,
@@ -682,9 +575,9 @@ function ArabicLineText({
                     }}
                   />
                 )}
-                {drawerEntry.pos && (
+                {mobileEntry.pos && (
                   <Chip
-                    label={drawerEntry.pos}
+                    label={mobileEntry.pos}
                     size="small"
                     sx={{
                       bgcolor: 'rgba(44,26,14,0.08)',
@@ -698,7 +591,7 @@ function ArabicLineText({
                 )}
               </Box>
 
-              {drawerEntry.transliteration && (
+              {mobileEntry.transliteration && (
                 <Typography
                   sx={{
                     fontFamily: 'Jost, sans-serif',
@@ -708,11 +601,11 @@ function ArabicLineText({
                     lineHeight: 1.4,
                   }}
                 >
-                  {drawerEntry.transliteration}
+                  {mobileEntry.transliteration}
                 </Typography>
               )}
 
-              {drawerEntry.english ? (
+              {mobileEntry.english ? (
                 <Typography
                   sx={{
                     fontFamily: 'Jost, sans-serif',
@@ -722,7 +615,7 @@ function ArabicLineText({
                     lineHeight: 1.45,
                   }}
                 >
-                  {drawerEntry.english}
+                  {mobileEntry.english}
                 </Typography>
               ) : (
                 <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.05rem', color: 'var(--muted)' }}>
@@ -732,7 +625,7 @@ function ArabicLineText({
             </Box>
           </Box>
         )}
-      </SwipeableDrawer>
+      </Popover>
 
     </>
   )
@@ -757,7 +650,6 @@ export default function EpisodePage({
   const [textScale, setTextScale] = useState(1.3)
   const [textFont, setTextFont] = useState<'naskh' | 'garamond' | 'amiri'>('naskh')
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [mobileVideoMinimized, setMobileVideoMinimized] = useState(false)
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set())
   const [localActiveIndex, setLocalActiveIndex] = useState<number | null>(null)
   const videoSources = useMemo(() => getEpisodeVideoSources(episode), [episode])
@@ -801,9 +693,6 @@ export default function EpisodePage({
     return () => window.removeEventListener('resize', measure);
   }, []);
 
-  // ── Mobile header height ──
-  const estimatedMobileHeader = 56
-  const [mobileHeaderHeight, setMobileHeaderHeight] = useState(estimatedMobileHeader)
   const mobileVideoContainerRef = useRef<HTMLDivElement | null>(null)
 
   const activeBlockRef = useRef<HTMLDivElement | null>(null)
@@ -817,8 +706,8 @@ export default function EpisodePage({
 
   const scrollOffsetRef = useRef(0)
   useEffect(() => {
-    scrollOffsetRef.current = navbarHeight + mobileHeaderHeight + 16
-  }, [navbarHeight, mobileHeaderHeight])
+    scrollOffsetRef.current = navbarHeight + Math.min(window.innerHeight * 0.36, 340) + 68
+  }, [navbarHeight])
 
   const findActiveIndex = useCallback((time: number) => {
     const blocks = episode.scriptBlocks
@@ -928,26 +817,13 @@ export default function EpisodePage({
         onEdit={isAdmin ? () => setEditDialogOpen(true) : undefined}
       />
 
-      {/* ── Mobile fixed portal header ── */}
-      {isMobile && (
-        <MobileFixedHeader
-          top={navbarHeight}
-          title={episode.title}
-          onBack={() => router.push(`/cartoons/${episode.show}`)}
-          onHeightChange={setMobileHeaderHeight}
-          onSettingsClick={openSettings}
-        />
-      )}
-
       <Box
         component="main"
         sx={{
           background: 'var(--cream)',
-          // Counteract the root layout main padding-top so the fixed mobile
-          // header and transcript sit flush.
-          mt: { xs: '-56px', md: '-64px' },
+          mt: { xs: 0, md: '-64px' },
           pt: {
-            xs: `${navbarHeight + mobileHeaderHeight}px`,
+            xs: 0,
             md: '96px',
           },
           pb: { xs: 6, md: 10 },
@@ -994,6 +870,14 @@ export default function EpisodePage({
                 {episode.title}
               </Typography>
               <SettingsButton onClick={openSettings} />
+              <Button
+                onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
+                size="small"
+                startIcon={<PsychologyOutlined sx={{ fontSize: 18 }} />}
+                sx={{ color: 'var(--awm-forest)', border: '1px solid color-mix(in srgb, var(--awm-forest) 28%, transparent)', borderRadius: '8px', textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 700, '&:hover': { bgcolor: 'color-mix(in srgb, var(--awm-forest) 7%, transparent)' } }}
+              >
+                Memory
+              </Button>
             </Box>
 
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -1110,65 +994,20 @@ export default function EpisodePage({
             </Box>
 
             {isMobile && (
-              <Box sx={{ mb: 2, borderRadius: '12px', bgcolor: 'var(--awm-white)', border: '1px solid rgba(44,26,14,0.08)', overflow: 'hidden' }}>
-                <Box sx={{ px: 1.5, py: 1.1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                  <Typography sx={{ color: 'var(--bark)', fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700 }}>
-                    Video
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    {!mobileVideoMinimized && (
-                      <Button
-                        size="small"
-                        onClick={openMobileVideoFullscreen}
-                        startIcon={<Fullscreen sx={{ fontSize: 18 }} />}
-                        sx={{ minWidth: 0, color: 'var(--muted)', fontSize: 11.5, textTransform: 'none' }}
-                      >
-                        Full screen
-                      </Button>
-                    )}
-                    <Button
-                      size="small"
-                      onClick={() => setMobileVideoMinimized((current) => !current)}
-                      startIcon={mobileVideoMinimized ? <ExpandMore sx={{ fontSize: 18 }} /> : <ExpandLess sx={{ fontSize: 18 }} />}
-                      aria-expanded={!mobileVideoMinimized}
-                      sx={{ minWidth: 0, color: 'var(--muted)', fontSize: 11.5, textTransform: 'none' }}
-                    >
-                      {mobileVideoMinimized ? 'Expand' : 'Minimize'}
-                    </Button>
-                  </Box>
-                </Box>
-
-                {videoSources.length > 1 && (
-                  <Box sx={{ display: 'flex', gap: 0.65, flexWrap: 'wrap', px: 1.5, pb: 1.25 }}>
-                    {videoSources.map((source) => (
-                      <Chip
-                        key={source.provider}
-                        label={source.label}
-                        clickable
-                        size="small"
-                        onClick={() => setSelectedProvider(source.provider)}
-                        color={source.provider === selectedSource?.provider ? 'primary' : 'default'}
-                        variant={source.provider === selectedSource?.provider ? 'filled' : 'outlined'}
-                        sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 600 }}
-                      />
-                    ))}
-                  </Box>
-                )}
-
+              <Box sx={{ position: 'sticky', top: `${navbarHeight}px`, zIndex: 22, mb: 1.25, mx: -2.5, width: 'calc(100% + 40px)', bgcolor: '#000', boxShadow: '0 8px 24px color-mix(in srgb, var(--awm-bark) 20%, transparent)' }}>
                 <Box
                   ref={mobileVideoContainerRef}
                   sx={{
                     width: '100%',
-                    height: mobileVideoMinimized ? 0 : 'min(68dvh, 640px)',
-                    minHeight: mobileVideoMinimized ? 0 : 260,
-                    opacity: mobileVideoMinimized ? 0 : 1,
+                    height: 'clamp(200px, 36dvh, 340px)',
                     overflow: 'hidden',
                     bgcolor: '#000',
                     position: 'relative',
-                    transition: 'height 220ms ease, min-height 220ms ease, opacity 150ms ease',
                     '&:fullscreen': { width: '100vw', height: '100vh', minHeight: '100vh' },
                   }}
                 >
+                  <IconButton onClick={openMobileVideoFullscreen} aria-label="Open video full screen" sx={{ position: 'absolute', zIndex: 4, top: 8, right: 8, width: 38, height: 38, bgcolor: 'rgba(0,0,0,.56)', color: '#fff', border: '1px solid rgba(255,255,255,.25)', '&:hover': { bgcolor: 'rgba(0,0,0,.76)' } }}><Fullscreen /></IconButton>
+                  {videoSources.length > 1 && <Box sx={{ position: 'absolute', zIndex: 4, left: 8, bottom: 8, right: 54, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>{videoSources.map((source) => <Chip key={source.provider} label={source.label} clickable size="small" onClick={() => setSelectedProvider(source.provider)} sx={{ height: 25, bgcolor: source.provider === selectedSource?.provider ? 'var(--awm-gold-light)' : 'rgba(0,0,0,.62)', color: source.provider === selectedSource?.provider ? '#0e2e1f' : '#fff', fontFamily: 'Jost, sans-serif', fontWeight: 700 }} />)}</Box>}
                   {selectedSource?.provider !== 'youtube' && selectedSource ? (
                     <SocialVideoEmbed source={selectedSource} title={episode.title} />
                   ) : (
@@ -1191,7 +1030,12 @@ export default function EpisodePage({
             <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: 'var(--awm-white)', borderRadius: '12px 12px 0 0', px: { xs: 1, md: 4 }, display: 'flex', alignItems: 'center' }}>
               <Tabs
                 value={tab}
-                onChange={(_, v) => setTab(v)}
+                onChange={(_, v) => {
+                  if (v === 3) { openSettings(); return }
+                  if (v === 4) { router.push(`/memory?episode=${encodeURIComponent(episode.id)}`); return }
+                  setTab(v)
+                }}
+                variant={isMobileViewport ? 'fullWidth' : 'standard'}
                 sx={{
                   flex: 1,
                   '& .MuiTab-root': { fontFamily: 'Jost, var(--font-sans)', fontSize: { xs: '0.74rem', sm: '0.82rem' }, fontWeight: 500, textTransform: 'none', letterSpacing: '0.03em', color: 'var(--muted)', minWidth: 0, px: { xs: 1, sm: 2 }, py: 1.5 },
@@ -1202,11 +1046,18 @@ export default function EpisodePage({
                 <Tab label="Script" />
                 <Tab label={isMobileViewport ? 'Vocab' : 'Vocabulary List'} />
                 <Tab label={isMobileViewport ? 'Grammar' : 'Grammar Points'} />
+                {isMobileViewport && <Tab label="Settings" />}
+                {isMobileViewport && <Tab label="Memory" />}
               </Tabs>
 
             </Box>
 
             <Box sx={{ background: 'var(--awm-white)', borderRadius: '0 0 12px 12px', px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 } }}>
+              {tab === 0 && (
+                <Typography component="h1" sx={{ display: { xs: 'block', md: 'none' }, mb: 2, px: 1, textAlign: 'center', fontFamily: 'var(--font-heading)', fontSize: 23, fontWeight: 600, lineHeight: 1.2, color: 'var(--awm-bark)' }}>
+                  {episode.title}
+                </Typography>
+              )}
               {/* ── Test Yourself button (Script tab only) ── */}
               {tab === 0 && episode.scriptBlocks.length > 0 && (
                 <Box sx={{ mb: { xs: 2, md: 3 }, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>

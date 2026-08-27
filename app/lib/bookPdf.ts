@@ -116,7 +116,18 @@ export async function downloadBookPdf(payload: BookPdfPayload): Promise<void> {
     context.textAlign = payload.language === 'ar' ? 'right' : 'left'
     y = PAGE_MARGIN
   }
+  const drawBranding = () => {
+    context.save()
+    context.direction = 'ltr'
+    context.textAlign = 'center'
+    context.textBaseline = 'alphabetic'
+    context.fillStyle = 'rgba(44, 26, 14, 0.52)'
+    context.font = '600 12px Arial, sans-serif'
+    context.fillText('ArabicWithM · Learn Arabic through stories', PAGE_WIDTH / 2, PAGE_HEIGHT - 28)
+    context.restore()
+  }
   const commitPage = async () => {
+    drawBranding()
     pages.push(await canvasToJpeg(canvas))
     resetPage()
   }
@@ -146,7 +157,10 @@ export async function downloadBookPdf(payload: BookPdfPayload): Promise<void> {
       y += 17
     }
   }
-  if (y > PAGE_MARGIN || pages.length === 0) pages.push(await canvasToJpeg(canvas))
+  if (y > PAGE_MARGIN || pages.length === 0) {
+    drawBranding()
+    pages.push(await canvasToJpeg(canvas))
+  }
 
   const bytes = imagePdf(pages)
   const blob = new Blob([bytes.buffer as ArrayBuffer], { type: 'application/pdf' })

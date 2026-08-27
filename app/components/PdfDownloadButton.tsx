@@ -11,12 +11,14 @@ export default function PdfDownloadButton({
   language,
   label,
   small = false,
+  fullWidth = false,
 }: {
   bookSlug: string
   chapterSlug?: string
   language: 'ar' | 'en'
   label: string
   small?: boolean
+  fullWidth?: boolean
 }) {
   const [downloading, setDownloading] = useState(false)
   const [error, setError] = useState('')
@@ -45,7 +47,8 @@ export default function PdfDownloadButton({
         startIcon={downloading ? <CircularProgress size={16} /> : <Download />}
         size={small ? 'small' : 'medium'}
         variant={small ? 'text' : 'outlined'}
-        sx={{ color: 'var(--awm-muted)', borderColor: 'rgba(184,134,11,.45)', borderRadius: '8px', textTransform: 'none' }}
+        fullWidth={fullWidth}
+        sx={{ minWidth: 0, color: 'var(--awm-muted)', border: '1px solid color-mix(in srgb, var(--awm-gold) 38%, transparent)', borderRadius: '8px', textTransform: 'none', '&:hover': { borderColor: 'var(--awm-gold)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' } }}
       >
         {label}
       </Button>

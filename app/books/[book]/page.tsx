@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Box, Chip, Container, Paper, Typography } from '@mui/material'
-import { ArrowBack, ChevronRight, MenuBook } from '@mui/icons-material'
+import { ArrowBack, ChevronRight } from '@mui/icons-material'
 import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
 import BookReadingCta from './BookReadingCta'
+import BookListRemovalButton from './BookListRemovalButton'
 
 export const revalidate = false
 
@@ -37,15 +38,12 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
         <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', mb: 3 }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: book.cover ? '240px minmax(0, 1fr)' : '1fr' }, gap: { xs: 3, md: 5 }, alignItems: 'start' }}>
             {book.cover && (
-              <Box
-                component="img"
-                src={book.cover}
-                alt={`${book.title} cover`}
-                sx={{ width: '100%', maxWidth: { xs: 280, sm: 240 }, mx: { xs: 'auto', sm: 0 }, aspectRatio: '3 / 4', objectFit: 'cover', borderRadius: '10px', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}
-              />
+              <Box sx={{ width: '100%', maxWidth: { sm: 240 }, mx: { xs: 'auto', sm: 0 } }}>
+                <Box component="img" src={book.cover} alt={`${book.title} cover`} sx={{ display: 'block', width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', borderRadius: '10px', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }} />
+                <BookListRemovalButton bookSlug={book.slug} />
+              </Box>
             )}
             <Box sx={{ minWidth: 0 }}>
-              <MenuBook sx={{ color: '#b8860b', fontSize: 38, mb: 1 }} />
               <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 36, md: 48 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.1 }}>
                 {book.title}
               </Typography>

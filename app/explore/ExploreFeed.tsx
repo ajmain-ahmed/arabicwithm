@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { ArrowForward, ExploreOutlined, LaunchRounded, MenuBook, Refresh, VolumeOff, VolumeUp } from '@mui/icons-material'
+import { ArrowForward, ExploreOutlined, MenuBook, PlayCircleOutlineRounded, PsychologyOutlined, Refresh, VolumeOff, VolumeUp } from '@mui/icons-material'
 import { Box, Button, Chip, IconButton, Popover, Tooltip, Typography } from '@mui/material'
 import { WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
 import SocialVideoEmbed from '@/app/components/SocialVideoEmbed'
@@ -192,8 +192,12 @@ function ExploreVideo({
       <Box
         sx={{
           position: 'relative',
-          width: '100%',
-          height: '100%',
+          width: { xs: '100%', md: '100%' },
+          maxWidth: { xs: 'calc((100dvh - 122px - env(safe-area-inset-bottom)) * 0.5625)', md: 'none' },
+          height: { xs: 'auto', md: '100%' },
+          maxHeight: '100%',
+          aspectRatio: { xs: '9 / 16', md: 'auto' },
+          mx: 'auto',
           minHeight: 0,
           overflow: 'hidden',
           borderRadius: { xs: 0, md: '18px' },
@@ -243,12 +247,12 @@ function ExploreVideo({
             ))}
           </Box>
         )}
-        <Box sx={{ position: 'absolute', zIndex: 4, right: { xs: 12, md: 14 }, bottom: { xs: 14, md: 16 }, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ position: 'absolute', zIndex: 4, right: { xs: 10, md: 14 }, bottom: { xs: 10, md: 16 }, display: 'flex', flexDirection: 'column', gap: 0.85 }}>
           <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
             <IconButton
               onClick={toggleSound}
               aria-label={soundMuted ? 'Turn Explore sound on' : 'Mute Explore video'}
-              sx={{ width: 48, height: 48, bgcolor: 'rgba(14,46,31,.76)', color: '#fff', border: '1px solid rgba(255,255,255,.28)', backdropFilter: 'blur(10px)', '&:hover': { bgcolor: 'rgba(14,46,31,.9)' } }}
+              sx={{ width: 46, height: 46, bgcolor: 'rgba(14,46,31,.82)', color: '#fff', border: '1px solid rgba(255,255,255,.28)', backdropFilter: 'blur(10px)', '&:hover': { bgcolor: '#174832', transform: 'translateY(-1px)' }, '&:focus-visible': { outline: '3px solid rgba(212,168,67,.75)', outlineOffset: 2 } }}
             >
               {soundMuted ? <VolumeOff /> : <VolumeUp />}
             </IconButton>
@@ -258,9 +262,19 @@ function ExploreVideo({
               component={Link}
               href={`/cartoons/${episode.showSlug}/${episode.slug}`}
               aria-label={`Go to episode: ${episode.title}`}
-              sx={{ width: 48, height: 48, bgcolor: 'rgba(245,237,224,.9)', color: '#0e2e1f', border: '1px solid rgba(184,134,11,.38)', backdropFilter: 'blur(10px)', '&:hover': { bgcolor: '#fff' } }}
+              sx={{ width: 46, height: 46, bgcolor: 'rgba(212,168,67,.94)', color: '#0e2e1f', border: '1px solid rgba(255,255,255,.35)', backdropFilter: 'blur(10px)', '&:hover': { bgcolor: '#e3bb58', transform: 'translateY(-1px)' }, '&:focus-visible': { outline: '3px solid rgba(255,255,255,.78)', outlineOffset: 2 } }}
             >
-              <LaunchRounded />
+              <PlayCircleOutlineRounded />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Practise this episode in Memory" placement="left">
+            <IconButton
+              component={Link}
+              href={`/memory?episode=${encodeURIComponent(episode.id)}`}
+              aria-label={`Practise ${episode.title} in Memory`}
+              sx={{ width: 46, height: 46, bgcolor: 'rgba(245,237,224,.94)', color: '#0e2e1f', border: '1px solid rgba(184,134,11,.38)', backdropFilter: 'blur(10px)', '&:hover': { bgcolor: '#fff', transform: 'translateY(-1px)' }, '&:focus-visible': { outline: '3px solid rgba(212,168,67,.75)', outlineOffset: 2 } }}
+            >
+              <PsychologyOutlined />
             </IconButton>
           </Tooltip>
         </Box>
@@ -529,7 +543,7 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
   }, [activateIndex, orderedItems])
 
   if (orderedItems == null) {
-    return <Box component="main" sx={{ height: { xs: 'calc(100dvh - 138px - env(safe-area-inset-bottom))', md: 'calc(100dvh - 64px)' }, bgcolor: 'var(--awm-cream-light)' }} />
+    return <Box component="main" sx={{ height: { xs: 'calc(100dvh - 108px - env(safe-area-inset-bottom))', md: 'calc(100dvh - 64px)' }, bgcolor: 'var(--awm-cream-light)' }} />
   }
 
   if (orderedItems.length === 0) {
@@ -545,7 +559,7 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
       ref={feedRef}
       component="main"
       sx={{
-        height: { xs: 'calc(100dvh - 138px - env(safe-area-inset-bottom))', md: 'calc(100dvh - 64px)' },
+        height: { xs: 'calc(100dvh - 108px - env(safe-area-inset-bottom))', md: 'calc(100dvh - 64px)' },
         overflowY: 'auto',
         scrollSnapType: 'y mandatory',
         overscrollBehaviorY: 'contain',

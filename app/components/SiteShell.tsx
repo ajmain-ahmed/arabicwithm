@@ -31,7 +31,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
         component="main"
         sx={{
           pt: { xs: '56px', md: '64px' },
-          pb: { xs: 'calc(82px + env(safe-area-inset-bottom))', md: 0 },
+          pb: { xs: 'calc(52px + env(safe-area-inset-bottom))', md: 0 },
         }}
       >
         <ErrorBoundary>

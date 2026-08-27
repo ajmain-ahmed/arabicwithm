@@ -17,18 +17,14 @@ import {
   Close,
   Delete,
   Edit,
-  MenuBook,
   Movie,
   NavigateNext,
   PlayArrow,
   School,
-  Subtitles,
   Tune,
   VideoLibrary,
 } from '@mui/icons-material'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
-import { CARTOONS_BANNER_PATH } from '@/app/lib/cartoons'
-import { PageBanner } from '@/app/components/page-layout'
 import { ContentCard, FilterSidebar } from '@/app/components/content-grid'
 import ShowEditDialog from './components/ShowEditDialog'
 import { deleteShow } from '@/app/actions/admin'
@@ -138,23 +134,6 @@ export default function CartoonsPage({
 
   return (
     <Box component="main" sx={{ minHeight: { xs: 'calc(100vh - 56px)', md: '100vh' }, bgcolor: WARM_WHITE, pb: { xs: 2, md: 8 } }}>
-      <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-        <PageBanner
-          title="Watch Arabic"
-          titleAr="شاهد بالعربية"
-          description="Browse every episode or explore complete shows with interactive Arabic transcripts and vocabulary."
-          features={[
-            { icon: <Subtitles sx={{ fontSize: 16, color: 'rgba(255,255,255,.9)' }} />, label: 'Interactive Subtitles' },
-            { icon: <MenuBook sx={{ fontSize: 16, color: 'rgba(255,255,255,.9)' }} />, label: 'Vocabulary Builder' },
-            { icon: <School sx={{ fontSize: 16, color: 'rgba(255,255,255,.9)' }} />, label: 'Graded Content' },
-          ]}
-          ctaLabel="Take Me Anywhere"
-          ctaAction={goToRandomEpisode}
-          ctaStartIcon={<PlayArrow sx={{ fontSize: 20 }} />}
-          backgroundImage={CARTOONS_BANNER_PATH}
-        />
-      </Box>
-
       <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
         <Breadcrumbs separator={<NavigateNext sx={{ fontSize: 16, color: 'var(--awm-muted-light)' }} />} sx={{ display: { xs: 'none', md: 'flex' }, mb: 2 }}>
           <Typography onClick={() => router.push('/')} sx={{ color: MUTED, cursor: 'pointer', fontFamily: 'Jost, sans-serif', '&:hover': { color: GOLD } }}>Home</Typography>
@@ -174,11 +153,13 @@ export default function CartoonsPage({
             <ToggleButton value="shows" aria-label="Show all shows"><Movie sx={{ mr: 0.75, fontSize: 19 }} />All Shows</ToggleButton>
           </ToggleButtonGroup>
 
-          <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center' }}>
-            <Button startIcon={<Tune />} onClick={() => setFilterDrawerOpen(true)} sx={{ minHeight: 42, px: 2, borderRadius: '8px', color: BARK, border: '1px solid rgba(44,26,14,.15)', textTransform: 'none' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
+            <Button startIcon={<Tune />} onClick={() => setFilterDrawerOpen(true)} sx={{ display: { xs: 'inline-flex', md: 'none' }, minHeight: 42, px: 2, borderRadius: '8px', color: BARK, border: '1px solid rgba(44,26,14,.15)', textTransform: 'none' }}>
               Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
             </Button>
-            <Typography sx={{ color: MUTED, fontSize: 13 }}>{visibleItems.length} {view === 'episodes' ? 'episodes' : 'shows'}</Typography>
+            <Button disabled={episodes.length === 0} onClick={goToRandomEpisode} startIcon={<PlayArrow />} variant="contained" sx={{ minHeight: 42, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', px: { xs: 1.5, sm: 2.25 }, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' } }}>
+              Take Me Anywhere
+            </Button>
           </Box>
         </Box>
 
@@ -200,7 +181,7 @@ export default function CartoonsPage({
                 <Button onClick={resetFilters} sx={{ mt: 1.5, color: GOLD, textTransform: 'none' }}>Reset filters</Button>
               </Box>
             ) : view === 'episodes' ? (
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 1.25, sm: 2 } }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 1, sm: 2 } }}>
                 {filteredEpisodes.map((episode) => (
                   <ContentCard
                     key={episode.id}
@@ -214,14 +195,16 @@ export default function CartoonsPage({
                     showTags={false}
                     aspectRatio="16 / 9"
                     imageFit="cover"
-                    compactMobileRow
+                    denseMobileTile
+                    mobileAspectRatio="16 / 9"
+                    mobileTitleSize={10}
                     overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                     metaItems={[{ icon: <Movie sx={{ fontSize: 15, color: 'var(--awm-muted-light)' }} />, label: episode.showTitle }]}
                   />
                 ))}
               </Box>
             ) : (
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 1.25, sm: 2 } }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 1, sm: 2 } }}>
                 {filteredShows.map((show) => (
                   <Box key={show.id} sx={{ position: 'relative', minWidth: 0 }}>
                     {isAdmin && (

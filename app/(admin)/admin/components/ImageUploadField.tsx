@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useCallback } from "react"
 import { Box, Button, Typography, CircularProgress } from "@mui/material"
-import { CloudUpload, ImageOutlined } from "@mui/icons-material"
+import { CloudUpload, DeleteOutlined, ImageOutlined } from "@mui/icons-material"
 import { uploadCoverImage } from "@/app/actions/storage"
 import { errorMessage } from "@/app/lib/errors"
 
@@ -12,6 +12,7 @@ interface ImageUploadFieldProps {
   path: string
   previewUrl: string | null
   onUploaded?: (url: string) => void
+  onRemove?: () => void
 }
 
 const MAX_CANVAS_WIDTH = 1280
@@ -71,6 +72,7 @@ export default function ImageUploadField({
   path,
   previewUrl,
   onUploaded,
+  onRemove,
 }: ImageUploadFieldProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -188,6 +190,21 @@ export default function ImageUploadField({
               onChange={handleFileChange}
             />
           </Button>
+
+          {activePreview && onRemove && (
+            <Button
+              onClick={() => {
+                setLocalPreview(null)
+                onRemove()
+              }}
+              startIcon={<DeleteOutlined />}
+              size="small"
+              color="error"
+              sx={{ textTransform: "none", borderRadius: "8px" }}
+            >
+              Reset cover
+            </Button>
+          )}
 
           {path && (
             <Typography

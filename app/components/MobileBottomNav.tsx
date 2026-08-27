@@ -3,13 +3,14 @@
 import React, { useSyncExternalStore } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { BottomNavigation, BottomNavigationAction, Box } from '@mui/material'
-import { ExploreOutlined, Home, MenuBook, Movie } from '@mui/icons-material'
+import { ExploreOutlined, Home, MenuBook, Movie, PsychologyOutlined } from '@mui/icons-material'
 
 const NAV_ITEMS = [
   { value: '/', label: 'Home', icon: <Home sx={{ fontSize: 19 }} /> },
   { value: '/explore', label: 'Explore', icon: <ExploreOutlined sx={{ fontSize: 19 }} /> },
   { value: '/cartoons', label: 'Watch', icon: <Movie sx={{ fontSize: 19 }} /> },
   { value: '/books', label: 'Read', icon: <MenuBook sx={{ fontSize: 19 }} /> },
+  { value: '/memory', label: 'Memory', icon: <PsychologyOutlined sx={{ fontSize: 19 }} /> },
 ]
 
 function safePush(router: ReturnType<typeof useRouter>, url: string) {
@@ -21,6 +22,7 @@ function getActiveValue(pathname: string): string {
   if (pathname.startsWith('/cartoons')) return '/cartoons'
   if (pathname.startsWith('/books')) return '/books'
   if (pathname.startsWith('/explore')) return '/explore'
+  if (pathname.startsWith('/memory')) return '/memory'
   return ''
 }
 
@@ -49,14 +51,14 @@ export default function MobileBottomNav() {
       aria-label="Primary mobile navigation"
       sx={{
         position: 'fixed',
-        bottom: 'calc(env(safe-area-inset-bottom) + 10px)',
-        left: 12,
-        right: 12,
+        bottom: 0,
+        left: 0,
+        right: 0,
         zIndex: 1250,
         display: { xs: 'block', md: 'none' },
-        borderRadius: '20px',
+        borderRadius: '16px 16px 0 0',
         overflow: 'hidden',
-        boxShadow: '0 12px 34px color-mix(in srgb, var(--awm-bark) 22%, transparent)',
+        boxShadow: '0 -5px 22px color-mix(in srgb, var(--awm-bark) 14%, transparent)',
       }}
     >
       <BottomNavigation
@@ -68,8 +70,9 @@ export default function MobileBottomNav() {
             backdropFilter: 'blur(18px) saturate(145%)',
             WebkitBackdropFilter: 'blur(18px) saturate(145%)',
             border: '1px solid color-mix(in srgb, var(--awm-gold) 24%, transparent)',
-            borderRadius: '20px',
-            height: 60,
+            borderRadius: '16px 16px 0 0',
+            height: 'calc(52px + env(safe-area-inset-bottom))',
+            pb: 'env(safe-area-inset-bottom)',
             '& .MuiBottomNavigationAction-root': {
               fontFamily: 'Jost, sans-serif',
               fontSize: '0.58rem',
@@ -77,8 +80,8 @@ export default function MobileBottomNav() {
               letterSpacing: '0.03em',
               color: 'var(--awm-muted)',
               minWidth: 0,
-              minHeight: 48,
-              padding: '6px 0',
+              minHeight: 46,
+              padding: '4px 0 3px',
               '&.Mui-selected': {
                 color: '#b8860b',
                 fontWeight: 600,

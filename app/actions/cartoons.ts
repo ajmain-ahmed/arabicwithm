@@ -36,6 +36,19 @@ function uniqueTags(values: Array<string | null | undefined>): string[] {
   return Array.from(tags.values())
 }
 
+function episodeCover(showSlug: string, episodeSlug: string, youtubeId?: string, storedCover?: string): string | undefined {
+  const preferredCover = getEpisodeCoverPath(showSlug, episodeSlug)
+  const baseCover = preferredCover.replace(/\.avif$/, "")
+  for (const extension of ["avif", "webp", "png", "jpg", "jpeg"]) {
+    const localCover = `${baseCover}.${extension}`
+    const absoluteCover = path.join(process.cwd(), "public", localCover.replace(/^\//, ""))
+    if (existsSync(absoluteCover)) return localCover
+  }
+  return (/^https:\/\//i.test(storedCover ?? "") ? storedCover : undefined)
+    ?? getYouTubeThumbnailUrl(youtubeId)
+    ?? getShowCoverPath(showSlug)
+}
+
 function isMissingSocialVideoColumn(error: { code?: string; message?: string } | null): boolean {
   return Boolean(
     error &&
@@ -193,16 +206,16 @@ export const fetchEpisodesForShowPublic = unstable_cache(
 
     const withSocial = await serviceClient
       .from("episodes")
-      .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover")
+      .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, created_at")
       .eq("show_id", show.id)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
 
     const fallback = isMissingSocialVideoColumn(withSocial.error)
       ? await serviceClient
           .from("episodes")
-          .select("id, slug, title, level, tags, description, youtube_id, cover")
+          .select("id, slug, title, level, tags, description, youtube_id, cover, created_at")
           .eq("show_id", show.id)
-          .order("created_at", { ascending: true })
+          .order("created_at", { ascending: false })
       : null
     const data = (fallback?.data ?? withSocial.data) as unknown as Record<string, unknown>[] | null
     const error = fallback ? fallback.error : withSocial.error
@@ -242,7 +255,7 @@ export const fetchEpisodeForPublic = unstable_cache(
 
     const withSocial = await serviceClient
       .from("episodes")
-      .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript")
+      .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript, created_at")
       .eq("show_id", show.id)
       .eq("slug", episodeSlug)
       .limit(1)
@@ -251,7 +264,7 @@ export const fetchEpisodeForPublic = unstable_cache(
     const fallback = isMissingSocialVideoColumn(withSocial.error)
       ? await serviceClient
           .from("episodes")
-          .select("id, slug, title, level, tags, description, youtube_id, cover, transcript")
+          .select("id, slug, title, level, tags, description, youtube_id, cover, transcript, created_at")
           .eq("show_id", show.id)
           .eq("slug", episodeSlug)
           .limit(1)
@@ -389,14 +402,14 @@ export const fetchEpisodesForExplorePublic = unstable_cache(
       serviceClient.from("shows").select("id, slug, title"),
       serviceClient
         .from("episodes")
-        .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript")
+        .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript, created_at")
         .order("created_at", { ascending: true }),
     ])
 
     const legacyEpisodeResult = isMissingSocialVideoColumn(socialEpisodeResult.error)
       ? await serviceClient
           .from("episodes")
-          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, transcript")
+          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, transcript, created_at")
           .order("created_at", { ascending: true })
       : null
     const shows = showResult.data
@@ -478,5 +491,6 @@ function mapEpisodeRow(
     tiktokId,
     facebookId,
     cover,
+    createdAt: row.created_at ? String(row.created_at) : undefined,
   }
 }

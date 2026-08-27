@@ -8,7 +8,6 @@ import { createEpisode, updateEpisode, deleteEpisode } from "@/app/actions/admin
 import { errorMessage } from "@/app/lib/errors"
 import NativeField from "@/app/(admin)/admin/components/NativeField"
 import ImageUploadField from "@/app/(admin)/admin/components/ImageUploadField"
-import { getEpisodeCoverUrl } from "@/app/lib/storage"
 
 interface EpisodeEditorProps {
   showId: string
@@ -29,6 +28,7 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
   const [tiktokId, setTiktokId] = useState(episode?.tiktokId ?? "")
   const [facebookId, setFacebookId] = useState(episode?.facebookId ?? "")
   const [tags, setTags] = useState(episode?.tags.join(", ") ?? "")
+  const [cover, setCover] = useState<string | null>(episode?.cover ?? null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -43,6 +43,7 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
     tiktok_id: tiktokId.trim() || null,
     facebook_id: facebookId.trim() || null,
     tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+    cover,
   })
 
   const handleSave = async () => {
@@ -120,7 +121,9 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
         label="Cover image"
         bucket="covers"
         path={slug ? `episodes/${slug}.webp` : ""}
-        previewUrl={slug ? getEpisodeCoverUrl(slug) : null}
+        previewUrl={cover}
+        onUploaded={setCover}
+        onRemove={() => setCover(null)}
       />
 
       <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mt: "auto", pt: 1 }}>

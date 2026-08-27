@@ -30,6 +30,7 @@ export interface EpisodeMeta {
   tiktokId?: string
   facebookId?: string
   cover?: string
+  createdAt?: string
 }
 
 export type VideoProvider = 'youtube' | 'instagram' | 'tiktok' | 'facebook'

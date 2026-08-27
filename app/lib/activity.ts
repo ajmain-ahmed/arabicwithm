@@ -188,7 +188,7 @@ export function summarizeWeeklyActivity(daily: DailyLearningActivity[], now = ne
 export function activityKindForPath(pathname: string, videoPlaying: boolean): ActivityKind | null {
   if (videoPlaying) return 'video'
   if (/^\/books\/[^/]+\/[^/]+/.test(pathname)) return 'reading'
-  if (/^\/cartoons\/[^/]+\/[^/]+/.test(pathname) || pathname === '/explore' || pathname.startsWith('/practice')) return 'other'
+  if (/^\/cartoons\/[^/]+\/[^/]+/.test(pathname) || pathname === '/explore' || pathname.startsWith('/practice') || pathname.startsWith('/memory')) return 'other'
   return null
 }
 

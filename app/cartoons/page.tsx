@@ -39,7 +39,7 @@ export default async function Page() {
       showTitle: show.title,
       showCategory: showCategories[show.slug],
     }))
-  })
+  }).sort((left, right) => (right.createdAt ?? '').localeCompare(left.createdAt ?? ''))
 
   const mainCategoryKeys = new Set(categoryLabels.keys())
   const additionalTagLabels = new Map<string, string>()

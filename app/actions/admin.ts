@@ -49,6 +49,7 @@ export type EpisodeWithTranscript = EpisodeRow & {
 
 export type ShowInput = Omit<ShowRow, "id" | "cover">
 export type EpisodeInput = Omit<EpisodeRow, "id" | "created_at" | "cover"> & {
+  cover?: string | null
   transcript?: Record<string, unknown> | unknown[] | null
 }
 
@@ -318,7 +319,7 @@ export async function createEpisode(input: EpisodeInput): Promise<EpisodeSaveRes
   const validationError = validateEpisodeInput(input)
   if (validationError) return { ok: false, error: validationError }
 
-  const cover = await resolveEpisodeThumbnail(input)
+  const cover = input.cover === undefined ? await resolveEpisodeThumbnail(input) : input.cover
 
   const instagramId = normalizeInstagramId(input.instagram_id) ?? null
   const tiktokId = normalizeTikTokId(input.tiktok_id) ?? null
@@ -400,13 +401,14 @@ export async function updateEpisode(
   if (instagramId !== undefined) payload.instagram_id = instagramId
   if (tiktokId !== undefined) payload.tiktok_id = tiktokId
   if (facebookId !== undefined) payload.facebook_id = facebookId
+  if (input.cover !== undefined) payload.cover = input.cover
   const requestedSocialVideo = Boolean(instagramId || tiktokId || facebookId)
-  if (
+  if (input.cover === undefined && (
     input.youtube_id !== undefined ||
     input.instagram_id !== undefined ||
     input.tiktok_id !== undefined ||
     input.facebook_id !== undefined
-  ) {
+  )) {
     payload.cover = await resolveEpisodeThumbnail(input)
   }
   if (input.transcript !== undefined) payload.transcript = input.transcript
