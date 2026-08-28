@@ -1,5 +1,6 @@
 "use server"
-
+import path from "node:path"
+import { existsSync } from "node:fs"
 import { unstable_cache } from "next/cache"
 import { serviceClient, hasServiceClientConfig } from "@/app/lib/supabase"
 import {
@@ -15,6 +16,7 @@ import {
   normalizeNewTranscript,
   getShowCoverPath,
   getEpisodeCoverPath,
+  getYouTubeThumbnailUrl,
   normalizeYouTubeId,
   normalizeInstagramId,
   normalizeTikTokId,
