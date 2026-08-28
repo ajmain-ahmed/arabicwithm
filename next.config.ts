@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   poweredByHeader: false,
   compress: true,
+  staticPageGenerationTimeout: 180,
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,

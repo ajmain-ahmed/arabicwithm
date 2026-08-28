@@ -36,19 +36,6 @@ function uniqueTags(values: Array<string | null | undefined>): string[] {
   return Array.from(tags.values())
 }
 
-function episodeCover(showSlug: string, episodeSlug: string, youtubeId?: string, storedCover?: string): string | undefined {
-  const preferredCover = getEpisodeCoverPath(showSlug, episodeSlug)
-  const baseCover = preferredCover.replace(/\.avif$/, "")
-  for (const extension of ["avif", "webp", "png", "jpg", "jpeg"]) {
-    const localCover = `${baseCover}.${extension}`
-    const absoluteCover = path.join(process.cwd(), "public", localCover.replace(/^\//, ""))
-    if (existsSync(absoluteCover)) return localCover
-  }
-  return (/^https:\/\//i.test(storedCover ?? "") ? storedCover : undefined)
-    ?? getYouTubeThumbnailUrl(youtubeId)
-    ?? getShowCoverPath(showSlug)
-}
-
 function isMissingSocialVideoColumn(error: { code?: string; message?: string } | null): boolean {
   return Boolean(
     error &&
