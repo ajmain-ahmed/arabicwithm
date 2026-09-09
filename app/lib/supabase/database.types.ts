@@ -11,9 +11,16 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+type Table<Row> = { Row: Row; Insert: Partial<Row>; Update: Partial<Row>; Relationships: [] }
 export interface Database {
   public: {
     Tables: {
+      subscriptions: Table<{ user_id: string; customer_id: string; subscription_id: string | null; status: string; current_period_end: string; cancel_at_period_end: boolean; event_created: number }>
+      memory_reviews: Table<{ user_id: string; completion_id: string; card_id: string; rating: string; activity_date: string; xp: number; created_at: string }>
+      memory_sessions: Table<{ user_id: string; state: Json; updated_at: string }>
+      memory_legacy_progress: Table<{ user_id: string; xp: number }>
+      public_profiles: Table<{ user_id: string; display_name: string; is_public: boolean; share_reading: boolean; created_at: string }>
+
       shows: {
         Row: {
           id: string
@@ -103,6 +110,9 @@ export interface Database {
           id: string
           slug: string
           title: string
+          author: string | null
+          premium_exempt: boolean
+          free_chapter_count: number
           title_ar: string | null
           description: string | null
           cover: string | null
@@ -116,6 +126,9 @@ export interface Database {
           id?: string
           slug: string
           title: string
+          author?: string | null
+          premium_exempt?: boolean
+          free_chapter_count?: number
           title_ar?: string | null
           description?: string | null
           cover?: string | null
@@ -129,6 +142,9 @@ export interface Database {
           id?: string
           slug?: string
           title?: string
+          author?: string | null
+          premium_exempt?: boolean
+          free_chapter_count?: number
           title_ar?: string | null
           description?: string | null
           cover?: string | null
@@ -290,6 +306,10 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      memory_totals: { Args: { p_user_id: string; p_since?: string }; Returns: Json }
+      complete_memory_card: { Args: { p_user_id: string; p_completion_id: string; p_card_id: string; p_rating: string; p_xp: number; p_daily_limit: number }; Returns: Json }
+      apply_subscription_event: { Args: { p_user_id: string; p_event_created: number; p_subscription_id: string; p_status: string; p_period_end: string; p_cancel_at_period_end: boolean }; Returns: undefined }
+
       increment_learning_activity: {
         Args: {
           p_user_id: string

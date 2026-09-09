@@ -1,3 +1,4 @@
+import { LockedChapter } from "@/app/components/PremiumPrompt"
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Box, Button, Container, Typography } from '@mui/material'
@@ -51,7 +52,11 @@ export default async function ChapterPage({
     fetchChapterForPublic(book.id, chapterSlug),
     fetchChaptersForBookPublic(book.id),
   ])
-  if (!chapter) notFound()
+  if (!chapter) {
+    const listed = chapters.find(item => item.slug === chapterSlug)
+    if (!listed) notFound()
+    return <LockedChapter bookSlug={book.slug} chapterTitle={listed.title} />
+  }
 
   const chapterIndex = chapters.findIndex((item) => item.slug === chapter.slug)
   const previousChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : null

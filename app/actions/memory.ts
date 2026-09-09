@@ -1,5 +1,8 @@
 'use server'
 
+import { z } from 'zod'
+import { fetchPremiumStatus } from '@/app/actions/premium'
+import { MEMORY, platformDate } from '@/app/lib/entitlements'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
 import { getShowCoverPath, getYouTubeThumbnailUrl } from '@/app/lib/cartoons'
 import {
@@ -105,7 +108,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   const selectedEpisode = input.episodeId ? episodes[0] : undefined
 
   return {
-    cards: sampleMemoryCards(allCards, scope === 'episode' ? 150 : 80),
+    cards: sampleMemoryCards(allCards, MEMORY.sessionCards),
     shows,
     scope,
     scopeTitle: selectedEpisode?.episodeTitle ?? selectedShow?.title ?? 'Random practice',
@@ -115,9 +118,10 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   }
 }
 
-export async function recordMemoryReview(cardId: string, rating: MemoryRating): Promise<{ awarded: number; totalXp: number }> {
+export async function recordMemoryReview(cardId: string, rating: MemoryRating, completionId: string): Promise<{ accepted: boolean; awarded: number; totalXp: number; used: number }> {
   const userId = await getAuthenticatedUserId()
-  if (!userId) return { awarded: 0, totalXp: 0 }
+  if (!userId) throw new Error('Sign in to save Memory practice.')
+  z.string().uuid().parse(completionId)
   if (rating !== 'again' && rating !== 'known') throw new Error('Invalid Memory rating.')
 
   const parsed = parseMemoryCardId(cardId)
@@ -141,20 +145,52 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating): 
   })
   if (!validCards.some((card) => card.id === cardId)) throw new Error('This Memory card is no longer available.')
 
-  const { data: account, error: accountError } = await serviceClient.auth.admin.getUserById(userId)
-  if (accountError || !account.user) throw new Error('Unable to save Memory progress.')
-  const metadata = { ...account.user.user_metadata }
-  const existingReviews = metadata.memory_reviews && typeof metadata.memory_reviews === 'object' && !Array.isArray(metadata.memory_reviews)
-    ? metadata.memory_reviews as Record<string, unknown>
-    : {}
-  const currentXp = Math.max(0, Math.floor(Number(metadata.memory_xp) || 0))
-  if (Object.prototype.hasOwnProperty.call(existingReviews, cardId)) return { awarded: 0, totalXp: currentXp }
-
-  const entries = Object.entries({ ...existingReviews, [cardId]: { rating, reviewedAt: new Date().toISOString() } }).slice(-500)
-  const totalXp = currentXp + 1
-  const { error: updateError } = await serviceClient.auth.admin.updateUserById(userId, {
-    user_metadata: { ...metadata, memory_reviews: Object.fromEntries(entries), memory_xp: totalXp },
+  const { data, error } = await serviceClient.rpc('complete_memory_card', {
+    p_user_id: userId, p_completion_id: completionId, p_card_id: cardId, p_rating: rating,
+    p_xp: MEMORY.xpPerCard, p_daily_limit: MEMORY.dailyFreeCards,
   })
-  if (updateError) throw new Error('Unable to save Memory progress.')
-  return { awarded: 1, totalXp }
+  if (error) throw new Error('Unable to save Memory progress. Please try again.')
+  return data as { accepted: boolean; awarded: number; totalXp: number; used: number }
+}
+
+export async function fetchMemoryProgress() {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) return { used: 0, totalXp: 0, total: 0, weekCards: 0, weekXp: 0, premium: false }
+  const today = platformDate()
+  const monday = new Date(today + 'T12:00:00Z')
+  monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7)
+  const [daily, total, week, legacy, entitlement] = await Promise.all([
+    serviceClient.from('memory_reviews').select('completion_id', { count: 'exact', head: true }).eq('user_id', userId).eq('activity_date', today),
+    serviceClient.rpc('memory_totals', { p_user_id: userId }),
+    serviceClient.rpc('memory_totals', { p_user_id: userId, p_since: monday.toISOString().slice(0, 10) }),
+    serviceClient.from('memory_legacy_progress').select('xp').eq('user_id', userId).maybeSingle(),
+    fetchPremiumStatus(),
+  ])
+  if (daily.error || total.error || week.error || legacy.error) throw new Error('Unable to load Memory progress.')
+  const all = total.data as { cards: number; xp: number }
+  const weekly = week.data as { cards: number; xp: number }
+  return { used: daily.count ?? 0, total: all.cards, totalXp: all.xp + Number(legacy.data?.xp ?? 0), weekCards: weekly.cards, weekXp: weekly.xp, premium: entitlement.premium }
+}
+
+const sessionSchema = z.object({
+  cards: z.array(z.object({ id: z.string().max(100), showId: z.string(), showSlug: z.string(), showTitle: z.string(), episodeId: z.string(), episodeSlug: z.string(), episodeTitle: z.string(), cover: z.string().optional(), timestamp: z.number().nullable(), arabic: z.string().max(20000), english: z.string().max(20000) })).max(MEMORY.sessionCards),
+  index: z.number().int().min(0).max(MEMORY.sessionCards), completed: z.number().int().min(0).max(MEMORY.sessionCards),
+  sessionXp: z.number().int().min(0).max(MEMORY.sessionCards * MEMORY.xpPerCard), direction: z.enum(['arabic','english']),
+  completionIds: z.array(z.string().uuid()).max(MEMORY.sessionCards),
+})
+export type SavedMemorySession = z.infer<typeof sessionSchema>
+export async function saveMemorySession(input: SavedMemorySession) {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) throw new Error('Sign in to save your session.')
+  const state = sessionSchema.parse(input)
+  const { error } = await serviceClient.from('memory_sessions').upsert({ user_id: userId, state, updated_at: new Date().toISOString() })
+  if (error) throw new Error('Unable to save session. Please try again.')
+}
+export async function fetchSavedMemorySession(): Promise<SavedMemorySession | null> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) return null
+  const { data, error } = await serviceClient.from('memory_sessions').select('state').eq('user_id', userId).maybeSingle()
+  if (error) throw new Error('Unable to load saved session.')
+  const parsed = sessionSchema.safeParse(data?.state)
+  return parsed.success && parsed.data.index < parsed.data.cards.length ? parsed.data : null
 }

@@ -1,7 +1,9 @@
+import { canAccessBookChapter } from "@/app/lib/entitlements"
+import { fetchPremiumStatus } from "@/app/actions/premium"
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Box, Chip, Container, Paper, Typography } from '@mui/material'
-import { ArrowBack, ChevronRight } from '@mui/icons-material'
+import { ArrowBack, ChevronRight, LockOutlined } from '@mui/icons-material'
 import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
 import BookReadingCta from './BookReadingCta'
 import BookListRemovalButton from './BookListRemovalButton'
@@ -25,6 +27,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
   if (!book) notFound()
 
   const chapters = await fetchChaptersForBookPublic(book.id)
+  const premium = (await fetchPremiumStatus()).premium
 
   return (
     <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 3, md: 6 } }}>
@@ -47,6 +50,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
               <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 36, md: 48 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.1 }}>
                 {book.title}
               </Typography>
+              <Typography color="text.secondary" sx={{ mt: 1 }}>By {book.author}</Typography>
               {book.description && (
                 <Typography
                   dir="ltr"
@@ -100,6 +104,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                     <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}>{chapter.title}</Typography>
                     {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
                   </Box>
+                  {!canAccessBookChapter(premium, book, chapter.chapterNumber) && <LockOutlined aria-label="Premium chapter" sx={{ color: "text.secondary" }} />}
                   <ChevronRight sx={{ color: 'var(--awm-muted-light)' }} />
                 </Paper>
               </Link>

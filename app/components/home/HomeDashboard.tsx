@@ -17,9 +17,9 @@ import {
   TrendingDownRounded,
   TrendingUpRounded,
 } from '@mui/icons-material'
-import { Box, Button, Chip, CircularProgress, Container, LinearProgress, MenuItem, Select, Typography, Paper } from '@mui/material'
+import { Box, Button, Chip, CircularProgress, Container, LinearProgress, Typography, Paper } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
-import { fetchLearningActivity, updateWeeklyLearningGoal } from '@/app/actions/activity'
+import { fetchLearningActivity } from '@/app/actions/activity'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 import {
@@ -111,8 +111,8 @@ function QuickLinks() {
 
 function ContentCard({ type, title, titleAr, description, level, href, image, actionLabel = 'Explore' }: { type: string; title: string; titleAr?: string; description?: string; level?: string; href: string; image?: string; actionLabel?: string }) {
   return (
-    <Paper elevation={0} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px minmax(0,1fr)', sm: '180px minmax(0,1fr)' }, minHeight: 220, overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)' }}>
-      {image ? <Box component="img" src={image} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Box sx={{ display: 'grid', placeItems: 'center', bgcolor: '#0e2e1f' }}><AutoStories sx={{ color: '#d4a843', fontSize: { xs: 34, sm: 46 } }} /></Box>}
+    <Paper elevation={0} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px minmax(0,1fr)', sm: '180px minmax(0,1fr)' }, minHeight: { xs: 165, sm: 220 }, overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)' }}>
+      {image ? <Box component="img" src={image} alt="" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <Box sx={{ display: 'grid', placeItems: 'center', bgcolor: '#0e2e1f' }}><AutoStories sx={{ color: '#d4a843', fontSize: { xs: 34, sm: 46 } }} /></Box>}
       <Box sx={{ p: { xs: 2, sm: 3 }, minWidth: 0 }}>
         <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{type}</Typography>
         {titleAr && <Typography lang="ar" dir="rtl" sx={{ mt: 0.5, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 23, fontWeight: 700, color: 'var(--awm-bark)', textAlign: 'left' }}>{titleAr}</Typography>}
@@ -127,7 +127,7 @@ function ContentCard({ type, title, titleAr, description, level, href, image, ac
 
 function BookmarkContinueCard({ bookmark }: { bookmark: BookSentenceBookmark }) {
   return (
-    <Paper elevation={0} sx={{ minHeight: { xs: 190, md: 178 }, p: { xs: 2.5, sm: 3.5 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 30%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)', display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0,1fr) auto' }, columnGap: 4, alignItems: 'end' }}>
+    <Paper elevation={0} sx={{ minHeight: { xs: 140, md: 178 }, p: { xs: 1.75, sm: 3.5 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 30%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)', display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0,1fr) auto' }, columnGap: 4, alignItems: 'end' }}>
       <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'var(--awm-gold)' }}>
         <Bookmark sx={{ fontSize: 20 }} />
@@ -135,12 +135,12 @@ function BookmarkContinueCard({ bookmark }: { bookmark: BookSentenceBookmark }) 
           Your reading bookmark
         </Typography>
       </Box>
-      <Typography lang="ar" dir="rtl" sx={{ mt: 2, fontFamily: 'var(--font-serif)', fontSize: { xs: 24, sm: 28 }, fontWeight: 600, lineHeight: 1.75, color: 'var(--awm-bark)', textAlign: 'right' }}>
-        {bookmark.arabic}
+      <Typography lang="ar" dir="rtl" sx={{ mt: 2, fontFamily: 'var(--font-serif)', fontSize: { xs: 19, sm: 28 }, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontWeight: 600, lineHeight: 1.6, color: 'var(--awm-bark)', textAlign: 'right' }}>
+        {bookmark.arabic.slice(0, 150)}{bookmark.arabic.length > 150 ? '?' : ''}
       </Typography>
       {bookmark.translation && (
         <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 14, lineHeight: 1.6 }}>
-          {bookmark.translation}
+          {bookmark.translation.slice(0, 130)}{bookmark.translation.length > 130 ? '?' : ''}
         </Typography>
       )}
       <Typography sx={{ mt: 1, color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 600 }}>
@@ -172,20 +172,14 @@ function LearningStats({
   streak,
   booksInProgress,
   now,
-  onActivityChange,
 }: {
   activity: LearningActivity
   streak: number
   booksInProgress: number
   now: Date
-  onActivityChange: (activity: LearningActivity) => void
 }) {
-  const [savingGoal, setSavingGoal] = useState(false)
-  const level = calculateLearningLevel(activity.totalSeconds)
+  const level = calculateLearningLevel(activity.totalSeconds + (activity.memory?.totalXp ?? 0) * 60)
   const week = summarizeWeeklyActivity(activity.daily, now)
-  const goalProgress = activity.weeklyGoalSeconds
-    ? Math.min(100, Math.round(week.thisWeekSeconds / activity.weeklyGoalSeconds * 100))
-    : 0
   const comparison = week.comparisonPercent
   const comparisonText = comparison === null
     ? 'No previous-week comparison yet'
@@ -199,16 +193,6 @@ function LearningStats({
     { label: 'Definitions viewed', value: String(week.wordLookups), icon: ExploreOutlined },
   ]
 
-  const changeGoal = async (value: number) => {
-    setSavingGoal(true)
-    try {
-      onActivityChange(await updateWeeklyLearningGoal(value))
-    } catch (error) {
-      console.error('Unable to save weekly learning goal:', error)
-    } finally {
-      setSavingGoal(false)
-    }
-  }
 
   return (
     <Paper elevation={0} sx={{ p: { xs: 2.25, sm: 3, md: 3.5 }, border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '15px', bgcolor: 'var(--awm-white)' }}>
@@ -219,34 +203,19 @@ function LearningStats({
         </Box>
       </Box>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3,minmax(0,1fr))' }, gap: 1.5 }}>
-        <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-forest)', color: '#fff' }}>
+        <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)', color: 'var(--awm-bark)' }}>
           <Typography sx={{ color: 'var(--awm-gold-light)', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Current level</Typography>
-          <Typography sx={{ mt: 1.1, fontFamily: 'var(--font-heading)', fontSize: { xs: 35, md: 40 }, fontWeight: 600, lineHeight: 1 }}>Level {level.level}</Typography>
-          <Typography sx={{ mt: 1.15, color: 'rgba(255,255,255,.72)', fontFamily: 'Jost, sans-serif', fontSize: 12 }}>{level.progressPercent}% to Level {level.level + 1}</Typography>
+          <Typography sx={{ mt: 1.1, fontFamily: 'var(--font-heading)', color: 'var(--awm-bark)', fontSize: { xs: 35, md: 40 }, fontWeight: 600, lineHeight: 1 }}>Level {level.level}</Typography>
+          <Typography sx={{ mt: 1.15, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12 }}>{level.progressPercent}% to Level {level.level + 1}</Typography>
           <LinearProgress variant="determinate" value={level.progressPercent} sx={{ mt: 1, height: 6, borderRadius: 99, bgcolor: 'rgba(255,255,255,.14)', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold-light)', borderRadius: 99 } }} />
-          <Typography sx={{ mt: 1.4, color: 'rgba(255,255,255,.58)', fontFamily: 'Jost, sans-serif', fontSize: 11 }}>{formatLearningTime(activity.totalSeconds)} total active learning</Typography>
+          <Typography sx={{ mt: 1.4, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11 }}>{formatLearningTime(activity.totalSeconds)} total active learning</Typography>
         </Box>
 
         <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>
-          <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700 }}>Weekly learning goal</Typography>
-          <Typography sx={{ mt: 1.25, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 29, sm: 33 }, fontWeight: 600, lineHeight: 1.05 }}>
-            {formatLearningTime(week.thisWeekSeconds)}{activity.weeklyGoalSeconds ? ` / ${formatLearningTime(activity.weeklyGoalSeconds)}` : ''}
-          </Typography>
-          {activity.weeklyGoalSeconds && <LinearProgress variant="determinate" value={goalProgress} sx={{ mt: 1.4, height: 6, borderRadius: 99, bgcolor: '#e8dfd1', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold)', borderRadius: 99 } }} />}
-          <Select
-            size="small"
-            displayEmpty
-            disabled={savingGoal}
-            value={activity.weeklyGoalSeconds ?? ''}
-            onChange={(event) => void changeGoal(Number(event.target.value))}
-            inputProps={{ 'aria-label': 'Weekly learning goal' }}
-            sx={{ mt: activity.weeklyGoalSeconds ? 1.5 : 2, minWidth: 142, height: 35, borderRadius: '9999px', fontFamily: 'Jost, sans-serif', fontSize: 12, bgcolor: '#fff' }}
-          >
-            <MenuItem disabled value="">Choose a goal</MenuItem>
-            <MenuItem value={2 * 3600}>2 hours</MenuItem>
-            <MenuItem value={5 * 3600}>5 hours</MenuItem>
-            <MenuItem value={10 * 3600}>10 hours</MenuItem>
-          </Select>
+          <Typography sx={{ fontWeight: 700 }}>Memory practice</Typography>
+          <Typography sx={{ mt: 1, fontSize: 32 }}>{activity.memory?.total ?? 0} cards</Typography>
+          <Typography color="text.secondary">{activity.memory?.weekCards ?? 0} this week ? {activity.memory?.weekXp ?? 0} XP this week</Typography>
+          <Typography color="text.secondary">{activity.memory?.totalXp ?? 0} total Memory XP</Typography>
         </Box>
 
         <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>
@@ -444,7 +413,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           {recentReading ? (
             <Paper elevation={0} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px minmax(0,1fr)', sm: '180px minmax(0,1fr)' }, minHeight: 240, overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '15px', bgcolor: 'var(--awm-white)' }}>
               {recentReading.book.cover ? (
-                <Box component="img" src={recentReading.book.cover} alt={`${recentReading.book.title} cover`} sx={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+                <Box component="img" src={recentReading.book.cover} alt={`${recentReading.book.title} cover`} sx={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center' }} />
               ) : (
                 <Box sx={{ display: 'grid', placeItems: 'center', bgcolor: '#0e2e1f' }}>
                   <AutoStories sx={{ color: '#d4a843', fontSize: { xs: 34, sm: 46 } }} />
@@ -485,7 +454,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
             streak={streak}
             booksInProgress={booksInProgress}
             now={dashboardNow}
-            onActivityChange={(nextActivity) => setActivityUpdate({ userId: user.id, activity: nextActivity })}
+           )}
           />
         </Box>
         <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading eyebrow="Keep exploring" title="Keep your momentum" /><QuickLinks /></Box>

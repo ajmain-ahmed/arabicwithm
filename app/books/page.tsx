@@ -62,13 +62,14 @@ export default async function BooksPage() {
                       component="img"
                       src={book.cover}
                       alt={`${book.title} cover`}
-                      sx={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', objectPosition: 'center' }}
+                      sx={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'contain', objectPosition: 'center' }}
                     />
                   ) : (
                     <Box sx={{ minHeight: { xs: 92, sm: 300 }, aspectRatio: { xs: '3 / 4', sm: 'auto' }, p: { xs: 0.75, sm: 3 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: { xs: '5px', sm: 0 }, background: 'linear-gradient(145deg, #173f2d, #0e2e1f 62%, #2c1a0e)' }}>
                       <Box>
                         <AutoStories sx={{ color: '#d4a843', fontSize: { xs: 24, sm: 44 }, mb: { xs: 0, sm: 2 } }} />
-                        <Typography sx={{ display: { xs: 'none', sm: 'block' }, fontFamily: 'var(--font-heading)', fontSize: 28, lineHeight: 1.15, fontWeight: 600, color: '#fff' }}>
+                        <Typography color="text.secondary" sx={{ fontSize: { xs: 10, sm: 13 }, mb: 1 }}>By {book.author}</Typography>
+                    <Typography sx={{ display: { xs: 'none', sm: 'block' }, fontFamily: 'var(--font-heading)', fontSize: 28, lineHeight: 1.15, fontWeight: 600, color: '#fff' }}>
                           {book.title}
                         </Typography>
                       </Box>

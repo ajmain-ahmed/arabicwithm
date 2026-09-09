@@ -1,5 +1,7 @@
 "use server"
 
+import { fetchPremiumStatus } from "@/app/actions/premium"
+import { canAccessBookChapter } from "@/app/lib/entitlements"
 import { unstable_cache } from "next/cache"
 import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
 import { extractChapterTeaser } from "@/app/lib/bookChapterTeaser"
@@ -18,6 +20,9 @@ export interface PublicBook {
   category?: string
   tags: string[]
   chapterCount: number
+  author: string
+  premiumExempt: boolean
+  freeChapterCount: number
 }
 
 export interface PublicChapter {
@@ -84,6 +89,9 @@ function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook
     category: row.category ? String(row.category) : undefined,
     tags: Array.isArray(row.tags) ? row.tags.map((tag) => String(tag)).filter(Boolean) : [],
     chapterCount,
+    author: typeof row.author === "string" && row.author.trim() ? row.author : "Author not listed",
+    premiumExempt: row.premium_exempt === true,
+    freeChapterCount: typeof row.free_chapter_count === "number" ? row.free_chapter_count : 5,
   }
 }
 
@@ -124,7 +132,7 @@ export const fetchBooksForPublic = unstable_cache(
       mapBook(book, chapterCounts.get(String(book.id)) ?? 0)
     )
   },
-  ["books", "public", "book-catalogue-v2"],
+  ["books", "public", "book-catalogue-v3"],
   { revalidate: false, tags: ["books-public"] }
 )
 
@@ -148,7 +156,7 @@ export const fetchBookBySlugPublic = unstable_cache(
     if (countError) throw new Error(countError.message)
     return mapBook(book as Record<string, unknown>, count ?? 0)
   },
-  ["books", "public", "detail", "book-catalogue-v2"],
+  ["books", "public", "detail", "book-catalogue-v3"],
   { revalidate: false, tags: ["books-public"] }
 )
 
@@ -164,20 +172,21 @@ export const fetchChaptersForBookPublic = unstable_cache(
 
     if (error) throw new Error(error.message)
 
+    const book = (await fetchBooksForPublic()).find(book => book.id === bookId)
     return (data ?? []).map((chapter) => ({
       id: String(chapter.id),
       slug: String(chapter.slug),
       title: String(chapter.title),
       chapterNumber: Number(chapter.chapter_number),
-      teaser: extractChapterTeaser(chapter.content),
+      teaser: book && canAccessBookChapter(false, book, Number(chapter.chapter_number)) ? extractChapterTeaser(chapter.content) : undefined,
       blockCount: countReadableBlocks(chapter.content),
     }))
   },
-  ["books", "public", "chapters", "chapter-teasers-v1"],
+  ["books", "public", "chapters", "chapter-teasers-v2"],
   { revalidate: false, tags: ["books-public"] }
 )
 
-export const fetchChapterForPublic = unstable_cache(
+const fetchChapterContent = unstable_cache(
   async (bookId: string, chapterSlug: string): Promise<PublicChapterWithContent | null> => {
     if (!hasServiceClientConfig()) return null
 
@@ -235,6 +244,15 @@ export const fetchChapterForPublic = unstable_cache(
   { revalidate: false, tags: ["books-public"] }
 )
 
+export async function fetchChapterForPublic(bookId: string, chapterSlug: string): Promise<PublicChapterWithContent | null> {
+  const book = (await fetchBooksForPublic()).find(book => book.id === bookId)
+  const chapters = await fetchChaptersForBookPublic(bookId)
+  const chapter = chapters.find(chapter => chapter.slug === chapterSlug)
+  if (!book || !chapter) return null
+  if (!canAccessBookChapter(false, book, chapter.chapterNumber) && !(await fetchPremiumStatus()).premium) return null
+  return fetchChapterContent(bookId, chapterSlug)
+}
+
 const EXPLORE_BLOCKS_PER_PAGE = 5
 
 export const fetchBookPagesForExplorePublic = unstable_cache(
@@ -242,7 +260,7 @@ export const fetchBookPagesForExplorePublic = unstable_cache(
     if (!hasServiceClientConfig()) return []
 
     const [{ data: books, error: booksError }, { data: chapters, error: chaptersError }] = await Promise.all([
-      serviceClient.from("books").select("id, slug, title, cover, level"),
+      serviceClient.from("books").select("*"),
       serviceClient.from("chapters").select("id, book_id, slug, title, chapter_number, content"),
     ])
 
@@ -255,6 +273,9 @@ export const fetchBookPagesForExplorePublic = unstable_cache(
         return [
           String(book.id),
           {
+            premiumExempt: book.premium_exempt === true,
+            freeChapterCount: Number(book.free_chapter_count ?? 5),
+            chapterCount: (chapters ?? []).filter(ch => ch.book_id === book.id).length,
             slug,
             title: String(book.title),
             cover: getBookCoverUrl(slug),
@@ -266,7 +287,7 @@ export const fetchBookPagesForExplorePublic = unstable_cache(
 
     return ((chapters ?? []) as Record<string, unknown>[]).flatMap((chapter) => {
       const book = booksById.get(String(chapter.book_id))
-      if (!book) return []
+      if (!book || !canAccessBookChapter(false, book, Number(chapter.chapter_number))) return []
 
       const rawBlocks = Array.isArray(chapter.content) ? chapter.content : []
       const blocks: ExploreBookBlock[] = rawBlocks.flatMap((rawBlock) => {
@@ -325,6 +346,6 @@ export const fetchBookPagesForExplorePublic = unstable_cache(
       return pages
     })
   },
-  ["books", "public", "explore-pages-v1"],
+  ["books", "public", "explore-pages-v2"],
   { revalidate: false, tags: ["books-public"] }
 )

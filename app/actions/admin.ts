@@ -490,6 +490,7 @@ export type BookRow = {
   id: string
   slug: string
   title: string
+  author: string | null
   title_ar: string | null
   description: string | null
   cover: string | null
@@ -542,6 +543,7 @@ export async function createBook(input: BookInput): Promise<string> {
     .insert({
       slug: input.slug,
       title: input.title,
+      author: input.author?.trim() || null,
       title_ar: input.title_ar,
       description: input.description,
       cover: input.cover,
@@ -570,6 +572,7 @@ export async function updateBook(
   const payload: Record<string, unknown> = {}
   if (input.slug !== undefined) payload.slug = input.slug
   if (input.title !== undefined) payload.title = input.title
+  if (input.author !== undefined) payload.author = input.author?.trim() || null
   if (input.title_ar !== undefined) payload.title_ar = input.title_ar
   if (input.description !== undefined) payload.description = input.description
   if (input.cover !== undefined) payload.cover = input.cover
@@ -979,6 +982,7 @@ function mapBookRow(row: Record<string, unknown>): BookRow {
     id: String(row.id),
     slug: String(row.slug),
     title: String(row.title),
+    author: toStringOrNull(row.author),
     title_ar: toStringOrNull(row.title_ar),
     description: toStringOrNull(row.description),
     cover: toStringOrNull(row.cover),

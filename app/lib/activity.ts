@@ -16,6 +16,7 @@ export interface DailyLearningActivity {
 }
 
 export interface LearningActivity {
+  memory?: { total: number; totalXp: number; weekCards: number; weekXp: number }
   totalSeconds: number
   activeDates: string[]
   daily: DailyLearningActivity[]

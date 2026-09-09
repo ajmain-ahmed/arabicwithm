@@ -46,6 +46,7 @@ export default function BookEditDialog({
 
   const [slug, setSlug] = useState("")
   const [title, setTitle] = useState("")
+  const [author, setAuthor] = useState("")
   const [titleAr, setTitleAr] = useState("")
   const [description, setDescription] = useState("")
   const [level, setLevel] = useState("")
@@ -60,6 +61,7 @@ export default function BookEditDialog({
     if (isNew) {
       setSlug("")
       setTitle("")
+      setAuthor("")
       setTitleAr("")
       setDescription("")
       setLevel("")
@@ -76,6 +78,7 @@ export default function BookEditDialog({
         }
         setSlug(row.slug)
         setTitle(row.title)
+        setAuthor(row.author ?? "")
         setTitleAr(row.title_ar ?? "")
         setDescription(row.description ?? "")
         setLevel(row.level)
@@ -92,6 +95,7 @@ export default function BookEditDialog({
       const input: BookInput = {
         slug,
         title,
+        author: author.trim() || null,
         title_ar: titleAr || null,
         description: description || null,
         cover: slug ? getBookCoverUrl(slug) : null,
@@ -195,6 +199,7 @@ export default function BookEditDialog({
             />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />
+              <AdminTextField label="Author" value={author} onChange={(e) => setAuthor(e.target.value)} fullWidth size="small" />
               <AdminTextField label="Category" value={category} onChange={(e) => setCategory(e.target.value)} fullWidth size="small" />
             </Box>
           </Box>

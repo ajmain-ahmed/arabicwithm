@@ -1,3 +1,4 @@
+import { PremiumSection } from "@/app/components/PremiumPrompt"
 import { fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
 import { fetchEpisodesForShowPublic, fetchShowsForPublic } from '@/app/actions/cartoons'
 import HomeDashboard from '@/app/components/home/HomeDashboard'
@@ -26,11 +27,11 @@ export default async function HomePage() {
   const featuredBook = featuredBookIndex >= 0 ? books[featuredBookIndex] : null
 
   return (
-    <HomeDashboard
+    <><HomeDashboard
       books={books}
       featuredBook={featuredBook}
       featuredEpisode={featuredEpisode}
       chaptersByBook={Object.fromEntries(chapterEntries)}
-    />
+    /><PremiumSection /></>
   )
 }

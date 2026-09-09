@@ -1,5 +1,6 @@
 'use server'
 
+import { fetchMemoryProgress } from '@/app/actions/memory'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
 import { ACTIVE_DAY_MINIMUM_SECONDS, localDateKey, parseLearningActivity, type LearningActivity } from '@/app/lib/activity'
 import { serviceClient } from '@/app/lib/supabase'
@@ -14,7 +15,6 @@ interface RecordActivityInput {
 
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const MAX_BATCH_SECONDS = 120
-const ALLOWED_GOALS = new Set([2 * 3600, 5 * 3600, 10 * 3600])
 
 async function requireUserId(): Promise<string> {
   const userId = await getAuthenticatedUserId()
@@ -80,6 +80,7 @@ async function activityForUser(userId: string): Promise<LearningActivity> {
   ])).sort().slice(-400)
 
   return {
+    memory: await fetchMemoryProgress(),
     totalSeconds: Number(profile.legacy_active_seconds) + Number(profile.tracked_active_seconds),
     activeDates,
     daily,
@@ -114,16 +115,3 @@ export async function recordActiveLearning(input: RecordActivityInput): Promise<
   return activityForUser(userId)
 }
 
-export async function updateWeeklyLearningGoal(seconds: number | null): Promise<LearningActivity> {
-  const userId = await requireUserId()
-  await ensureLearningProfile(userId)
-  const goal = seconds === null ? null : Math.floor(Number(seconds))
-  if (goal !== null && !ALLOWED_GOALS.has(goal)) throw new Error('Choose a 2, 5, or 10 hour weekly goal.')
-
-  const { error } = await serviceClient
-    .from('learning_profiles')
-    .update({ weekly_goal_seconds: goal, updated_at: new Date().toISOString() })
-    .eq('user_id', userId)
-  if (error) throw new Error(error.message)
-  return activityForUser(userId)
-}

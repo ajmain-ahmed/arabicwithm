@@ -1,3 +1,4 @@
+import { fetchPremiumStatus } from "@/app/actions/premium"
 import type { NextRequest } from 'next/server'
 import {
   fetchBookBySlugPublic,
@@ -27,6 +28,7 @@ function filenamePart(value: string): string {
 }
 
 export async function GET(request: NextRequest, context: { params: Promise<{ book: string }> }) {
+  if (!(await fetchPremiumStatus()).premium) return Response.json({ error: "PDF downloads are available with Premium." }, { status: 403, headers: { "Cache-Control": "private, no-store" } })
   const { book: bookSlug } = await context.params
   const language = request.nextUrl.searchParams.get('lang') === 'en' ? 'en' : 'ar'
   const requestedChapter = request.nextUrl.searchParams.get('chapter')
@@ -47,11 +49,13 @@ export async function GET(request: NextRequest, context: { params: Promise<{ boo
     }
   }))
 
+  const available = chapters.some(chapter => chapter.paragraphs.length > 0)
+  if (!available) return Response.json({ error: 'This language is not available.' }, { status: 404 })
   const suffix = requestedChapter ? selectedChapters[0].title : 'complete-book'
   return Response.json({
     filename: `${filenamePart(book.title)}-${filenamePart(suffix)}-${language}.pdf`,
     title: book.title,
     language,
     chapters,
-  })
+  }, { headers: { "Cache-Control": "private, no-store" } })
 }

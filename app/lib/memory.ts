@@ -78,7 +78,7 @@ export function extractMemoryCards(episode: MemoryEpisodeInput): MemoryCard[] {
 
 export function sampleMemoryCards(
   cards: readonly MemoryCard[],
-  limit = 80,
+  limit = 20,
   random: () => number = Math.random,
 ): MemoryCard[] {
   const unique = Array.from(new Map(cards.map((card) => [card.id, card])).values())
@@ -86,7 +86,7 @@ export function sampleMemoryCards(
     const randomIndex = Math.floor(random() * (index + 1))
     ;[unique[index], unique[randomIndex]] = [unique[randomIndex], unique[index]]
   }
-  return unique.slice(0, Math.max(0, limit))
+  return unique.slice(0, Math.min(20, Math.max(0, limit)))
 }
 
 export function parseMemoryCardId(value: string): { episodeId: string; blockIndex: number } | null {
