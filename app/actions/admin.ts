@@ -62,16 +62,91 @@ type EpisodeDatabaseError = {
   message?: string
 }
 
-function revalidateCartoonContent(): void {
+/* ── Targeted revalidation: invalidate only the pages whose content
+   actually changed. Layout-scoped revalidation invalidates every show,
+   episode, book, and chapter page at once, and each invalidated page
+   regenerates (and re-writes its full payload) on the next request. ── */
+
+function revalidateCartoonIndex(): void {
   revalidatePath("/")
-  revalidatePath("/cartoons", "layout")
+  revalidatePath("/cartoons")
   revalidatePath("/explore")
 }
 
-function revalidateBookContent(): void {
+function revalidateBookIndex(): void {
   revalidatePath("/")
-  revalidatePath("/books", "layout")
+  revalidatePath("/books")
   revalidatePath("/explore")
+}
+
+function revalidateShowPage(showSlug: string): void {
+  revalidatePath(`/cartoons/${showSlug}`)
+}
+
+function revalidateEpisodePage(showSlug: string, episodeSlug: string): void {
+  revalidatePath(`/cartoons/${showSlug}`)
+  revalidatePath(`/cartoons/${showSlug}/${episodeSlug}`)
+}
+
+function revalidateBookPage(bookSlug: string): void {
+  revalidatePath(`/books/${bookSlug}`)
+}
+
+function revalidateChapterPage(bookSlug: string, chapterSlug: string): void {
+  revalidatePath(`/books/${bookSlug}`)
+  revalidatePath(`/books/${bookSlug}/${chapterSlug}`)
+}
+
+async function fetchShowSlugById(showId: string): Promise<string | null> {
+  const { data, error } = await serviceClient
+    .from("shows")
+    .select("slug")
+    .eq("id", showId)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return String((data as Record<string, unknown>).slug)
+}
+
+async function fetchEpisodePathById(
+  episodeId: string
+): Promise<{ showSlug: string; episodeSlug: string } | null> {
+  const { data, error } = await serviceClient
+    .from("episodes")
+    .select("slug, show_id")
+    .eq("id", episodeId)
+    .maybeSingle()
+
+  if (error || !data) return null
+  const showSlug = await fetchShowSlugById(String((data as Record<string, unknown>).show_id))
+  if (!showSlug) return null
+  return { showSlug, episodeSlug: String((data as Record<string, unknown>).slug) }
+}
+
+async function fetchBookSlugById(bookId: string): Promise<string | null> {
+  const { data, error } = await serviceClient
+    .from("books")
+    .select("slug")
+    .eq("id", bookId)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return String((data as Record<string, unknown>).slug)
+}
+
+async function fetchChapterPathById(
+  chapterId: string
+): Promise<{ bookSlug: string; chapterSlug: string } | null> {
+  const { data, error } = await serviceClient
+    .from("chapters")
+    .select("slug, book_id")
+    .eq("id", chapterId)
+    .maybeSingle()
+
+  if (error || !data) return null
+  const bookSlug = await fetchBookSlugById(String((data as Record<string, unknown>).book_id))
+  if (!bookSlug) return null
+  return { bookSlug, chapterSlug: String((data as Record<string, unknown>).slug) }
 }
 
 function isMissingSocialVideoColumn(error: EpisodeDatabaseError | null): boolean {
@@ -226,7 +301,8 @@ export async function createShow(input: ShowInput): Promise<string> {
   }
 
   updateTag("cartoons-public")
-  revalidateCartoonContent()
+  revalidateCartoonIndex()
+  revalidateShowPage(input.slug)
   return data.id
 }
 
@@ -235,6 +311,8 @@ export async function updateShow(
   input: Partial<ShowInput>
 ): Promise<void> {
   await guardAdmin()
+
+  const previousSlug = await fetchShowSlugById(id)
 
   const payload: Record<string, unknown> = {}
   if (input.slug !== undefined) payload.slug = input.slug
@@ -255,11 +333,15 @@ export async function updateShow(
   }
 
   updateTag("cartoons-public")
-  revalidateCartoonContent()
+  revalidateCartoonIndex()
+  if (previousSlug) revalidateShowPage(previousSlug)
+  if (input.slug && input.slug !== previousSlug) revalidateShowPage(input.slug)
 }
 
 export async function deleteShow(id: string): Promise<void> {
   await guardAdmin()
+
+  const slug = await fetchShowSlugById(id)
 
   const { error } = await serviceClient.from("shows").delete().eq("id", id)
 
@@ -269,7 +351,8 @@ export async function deleteShow(id: string): Promise<void> {
   }
 
   updateTag("cartoons-public")
-  revalidateCartoonContent()
+  revalidateCartoonIndex()
+  if (slug) revalidateShowPage(slug)
 }
 
 /* ── Episodes ──────────────────────────────────────────────────────── */
@@ -373,7 +456,9 @@ export async function createEpisode(input: EpisodeInput): Promise<EpisodeSaveRes
   }
 
   updateTag("cartoons-public")
-  revalidateCartoonContent()
+  revalidateCartoonIndex()
+  const showSlug = await fetchShowSlugById(input.show_id.trim())
+  if (showSlug) revalidateEpisodePage(showSlug, input.slug.trim())
   return { ok: true, id: String(data.id) }
 }
 
@@ -386,6 +471,8 @@ export async function updateEpisode(
 
   const validationError = validateEpisodeInput(input)
   if (validationError) return { ok: false, error: validationError }
+
+  const previousPath = await fetchEpisodePathById(id)
 
   const payload: Record<string, unknown> = {}
   if (input.show_id !== undefined) payload.show_id = input.show_id
@@ -443,7 +530,15 @@ export async function updateEpisode(
   }
 
   updateTag("cartoons-public")
-  revalidateCartoonContent()
+  revalidateCartoonIndex()
+  if (previousPath) revalidateEpisodePage(previousPath.showSlug, previousPath.episodeSlug)
+  const nextShowSlug = input.show_id !== undefined
+    ? await fetchShowSlugById(input.show_id)
+    : previousPath?.showSlug
+  const nextEpisodeSlug = input.slug ?? previousPath?.episodeSlug
+  if (nextShowSlug && nextEpisodeSlug) {
+    revalidateEpisodePage(nextShowSlug, nextEpisodeSlug)
+  }
   if (revalidate) {
     revalidatePath(revalidate)
   }
@@ -453,6 +548,8 @@ export async function updateEpisode(
 export async function deleteEpisode(id: string): Promise<void> {
   await guardAdmin()
 
+  const path = await fetchEpisodePathById(id)
+
   const { error } = await serviceClient.from("episodes").delete().eq("id", id)
 
   if (error) {
@@ -461,7 +558,8 @@ export async function deleteEpisode(id: string): Promise<void> {
   }
 
   updateTag("cartoons-public")
-  revalidateCartoonContent()
+  revalidateCartoonIndex()
+  if (path) revalidateEpisodePage(path.showSlug, path.episodeSlug)
 }
 
 export async function updateEpisodeTranscript(
@@ -469,6 +567,8 @@ export async function updateEpisodeTranscript(
   transcript: unknown
 ): Promise<void> {
   await guardAdmin()
+
+  const path = await fetchEpisodePathById(id)
 
   const { error } = await serviceClient
     .from("episodes")
@@ -481,7 +581,8 @@ export async function updateEpisodeTranscript(
   }
 
   updateTag("cartoons-public")
-  revalidateCartoonContent()
+  revalidatePath("/explore")
+  if (path) revalidateEpisodePage(path.showSlug, path.episodeSlug)
 }
 
 /* ── Books ─────────────────────────────────────────────────────────── */
@@ -559,7 +660,8 @@ export async function createBook(input: BookInput): Promise<string> {
   }
 
   updateTag("books-public")
-  revalidateBookContent()
+  revalidateBookIndex()
+  revalidateBookPage(input.slug)
   return data.id
 }
 
@@ -568,6 +670,8 @@ export async function updateBook(
   input: Partial<BookInput>
 ): Promise<void> {
   await guardAdmin()
+
+  const previousSlug = await fetchBookSlugById(id)
 
   const payload: Record<string, unknown> = {}
   if (input.slug !== undefined) payload.slug = input.slug
@@ -590,11 +694,15 @@ export async function updateBook(
   }
 
   updateTag("books-public")
-  revalidateBookContent()
+  revalidateBookIndex()
+  if (previousSlug) revalidateBookPage(previousSlug)
+  if (input.slug && input.slug !== previousSlug) revalidateBookPage(input.slug)
 }
 
 export async function deleteBook(id: string): Promise<void> {
   await guardAdmin()
+
+  const slug = await fetchBookSlugById(id)
 
   const { error } = await serviceClient.from("books").delete().eq("id", id)
 
@@ -604,7 +712,8 @@ export async function deleteBook(id: string): Promise<void> {
   }
 
   updateTag("books-public")
-  revalidateBookContent()
+  revalidateBookIndex()
+  if (slug) revalidateBookPage(slug)
 }
 
 /* ── Chapters ──────────────────────────────────────────────────────── */
@@ -689,7 +798,9 @@ export async function createChapter(input: ChapterInput): Promise<string> {
   }
 
   updateTag("books-public")
-  revalidateBookContent()
+  revalidateBookIndex()
+  const bookSlug = await fetchBookSlugById(input.book_id)
+  if (bookSlug) revalidateChapterPage(bookSlug, input.slug)
   return data.id
 }
 
@@ -698,6 +809,8 @@ export async function updateChapter(
   input: Partial<ChapterInput>
 ): Promise<void> {
   await guardAdmin()
+
+  const previousPath = await fetchChapterPathById(id)
 
   const payload: Record<string, unknown> = {}
   if (input.book_id !== undefined) payload.book_id = input.book_id
@@ -717,11 +830,21 @@ export async function updateChapter(
   }
 
   updateTag("books-public")
-  revalidateBookContent()
+  revalidateBookIndex()
+  if (previousPath) revalidateChapterPage(previousPath.bookSlug, previousPath.chapterSlug)
+  const nextBookSlug = input.book_id !== undefined
+    ? await fetchBookSlugById(input.book_id)
+    : previousPath?.bookSlug
+  const nextChapterSlug = input.slug ?? previousPath?.chapterSlug
+  if (nextBookSlug && nextChapterSlug) {
+    revalidateChapterPage(nextBookSlug, nextChapterSlug)
+  }
 }
 
 export async function deleteChapter(id: string): Promise<void> {
   await guardAdmin()
+
+  const path = await fetchChapterPathById(id)
 
   const { error } = await serviceClient.from("chapters").delete().eq("id", id)
 
@@ -731,7 +854,8 @@ export async function deleteChapter(id: string): Promise<void> {
   }
 
   updateTag("books-public")
-  revalidateBookContent()
+  revalidateBookIndex()
+  if (path) revalidateChapterPage(path.bookSlug, path.chapterSlug)
 }
 
 export async function updateChapterContent(
@@ -739,6 +863,8 @@ export async function updateChapterContent(
   content: unknown
 ): Promise<void> {
   await guardAdmin()
+
+  const path = await fetchChapterPathById(id)
 
   const { error } = await serviceClient
     .from("chapters")
@@ -751,7 +877,8 @@ export async function updateChapterContent(
   }
 
   updateTag("books-public")
-  revalidateBookContent()
+  revalidatePath("/explore")
+  if (path) revalidateChapterPage(path.bookSlug, path.chapterSlug)
 }
 
 /* ── Hans Wehr ─────────────────────────────────────────────────────── */

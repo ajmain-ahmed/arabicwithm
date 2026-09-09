@@ -9,12 +9,12 @@ import {
   type CartoonWordEntry,
   type VocabListItem,
   type GrammarPoint,
-  type NewTranscript,
   type ExploreEpisode,
   isNewTranscript,
   normalizeNewTranscript,
   getShowCoverPath,
   getEpisodeCoverPath,
+  getYouTubeThumbnailUrl,
   normalizeYouTubeId,
   normalizeInstagramId,
   normalizeTikTokId,
@@ -294,10 +294,17 @@ export const fetchEpisodeForPublic = unstable_cache(
 
     const wordMap: Record<string, CartoonWordEntry> = {}
     const diacritizedMap: Record<string, CartoonWordEntry> = {}
+    /* ── Intern entries by plain form so repeated words share one object;
+         the RSC payload dedupes shared references, and wordMap already
+         treats the first-seen entry per plain form as canonical. ── */
+    const wordPool = new Map<string, CartoonWordEntry>()
 
     const enrichWord = (w: Record<string, unknown>): CartoonWordEntry => {
       const arabic = String(w.arabic ?? '')
       const plain = String(w.plain ?? stripDiacritics(arabic))
+      const poolKey = plain || arabic
+      const pooled = wordPool.get(poolKey)
+      if (pooled) return pooled
       const lemma = typeof w.lemma === 'string' ? w.lemma.trim() : ''
       const entry: CartoonWordEntry = {
         arabic,
@@ -310,6 +317,7 @@ export const fetchEpisodeForPublic = unstable_cache(
       }
       const cefrRaw = typeof w.cefr === 'string' ? w.cefr.trim() : typeof w.CEFR === 'string' ? w.CEFR.trim() : ''
       if (cefrRaw) entry.cefr = cefrRaw.toLowerCase()
+      wordPool.set(poolKey, entry)
       return entry
     }
 
@@ -368,7 +376,6 @@ export const fetchEpisodeForPublic = unstable_cache(
       scriptBlocks,
       vocabList: enrichedVocabList,
       grammarPoints: grammarPoints.map(enrichGrammarPoint),
-      transcript: transcript as Record<string, unknown> | NewTranscript | undefined,
       transcriptFormat: isNew ? 'new' : 'legacy',
       wordMap,
       diacritizedMap,
@@ -417,6 +424,18 @@ export const fetchEpisodesForExplorePublic =
       ])
     )
 
+    /* ── Intern word entries across the whole feed so repeated words
+         serialize once in the RSC payload (shared references are
+         deduped by React Flight). ── */
+    const exploreWordPool = new Map<string, CartoonWordEntry>()
+    const internWord = (word: CartoonWordEntry): CartoonWordEntry => {
+      const key = word.plain || word.arabic
+      const existing = exploreWordPool.get(key)
+      if (existing) return existing
+      exploreWordPool.set(key, word)
+      return word
+    }
+
     return (episodes ?? []).flatMap((row) => {
       const show = showsById.get(String(row.show_id))
       const meta = mapEpisodeRow(row, show?.slug)
@@ -446,7 +465,7 @@ export const fetchEpisodesForExplorePublic =
           arabic: block.arabicDiacritic,
           arabicPlain: block.arabicPlain,
           translation: block.english || block.title,
-          words: block.words,
+          words: block.words.map(internWord),
         })),
       }]
     })
@@ -461,7 +480,7 @@ function mapEpisodeRow(
   const instagramId = normalizeInstagramId(row.instagram_id ? String(row.instagram_id) : undefined)
   const tiktokId = normalizeTikTokId(row.tiktok_id ? String(row.tiktok_id) : undefined)
   const facebookId = normalizeFacebookId(row.facebook_id ? String(row.facebook_id) : undefined)
-  const cover = showSlug != null ? getEpisodeCoverPath(showSlug, episodeSlug) : undefined
+  const cover = getYouTubeThumbnailUrl(youtubeId) ?? (showSlug != null ? getEpisodeCoverPath(showSlug, episodeSlug) : undefined)
 
   return {
     id: String(row.id),

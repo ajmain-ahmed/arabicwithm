@@ -211,7 +211,7 @@ export function shouldCountActiveTime({
 }
 
 export function formatLearningTime(totalSeconds: number): string {
-  const minutes = Math.floor(Math.max(0, totalSeconds) / 60) + Math.max(0, Math.floor(memoryXp))
+  const minutes = Math.floor(Math.max(0, totalSeconds) / 60)
   if (minutes < 60) return `${minutes}m`
   const hours = Math.floor(minutes / 60)
   const remainingMinutes = minutes % 60

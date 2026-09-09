@@ -281,8 +281,6 @@ export interface EpisodeFull extends EpisodeMeta {
   scriptBlocks: ScriptBlock[]
   vocabList: VocabListItem[]
   grammarPoints: GrammarPoint[]
-  /* ── raw transcript from Supabase (preserve on inline edits) ── */
-  transcript?: Record<string, unknown> | NewTranscript
   /* ── which transcript format this episode uses ── */
   transcriptFormat: TranscriptFormat
   /* ── lookup helpers built from script block word tables ── */
