@@ -449,13 +449,12 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
         </Box>
 
         <Box sx={{ mt: { xs: 5, md: 7 } }}>
-          <LearningStats
-            activity={activity}
-            streak={streak}
-            booksInProgress={booksInProgress}
-            now={dashboardNow}
-           )}
-          />
+<LearningStats
+  activity={activity}
+  streak={streak}
+  booksInProgress={booksInProgress}
+  now={dashboardNow}
+/>
         </Box>
         <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading eyebrow="Keep exploring" title="Keep your momentum" /><QuickLinks /></Box>
       </Container>
