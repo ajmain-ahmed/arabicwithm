@@ -194,7 +194,7 @@ export default function CartoonsPage({
                     tags={episode.tags}
                     showTags={false}
                     aspectRatio="16 / 9"
-                    imageFit="cover"
+                    imageFit="contain"
                     denseMobileTile
                     mobileAspectRatio="16 / 9"
                     mobileTitleSize={10}

@@ -307,7 +307,7 @@ export interface Database {
     Views: Record<string, never>
     Functions: {
       memory_totals: { Args: { p_user_id: string; p_since?: string }; Returns: Json }
-      complete_memory_card: { Args: { p_user_id: string; p_completion_id: string; p_card_id: string; p_rating: string; p_xp: number; p_daily_limit: number }; Returns: Json }
+      complete_memory_card: { Args: { p_user_id: string; p_completion_id: string; p_card_id: string; p_rating: string; p_xp: number; p_daily_limit: number; p_session: Json }; Returns: Json }
       apply_subscription_event: { Args: { p_user_id: string; p_event_created: number; p_subscription_id: string; p_status: string; p_period_end: string; p_cancel_at_period_end: boolean }; Returns: undefined }
 
       increment_learning_activity: {

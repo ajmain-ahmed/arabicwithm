@@ -178,7 +178,7 @@ function LearningStats({
   booksInProgress: number
   now: Date
 }) {
-  const level = calculateLearningLevel(activity.totalSeconds + (activity.memory?.totalXp ?? 0) * 60)
+  const level = calculateLearningLevel(activity.totalSeconds, activity.memory?.totalXp ?? 0)
   const week = summarizeWeeklyActivity(activity.daily, now)
   const comparison = week.comparisonPercent
   const comparisonText = comparison === null

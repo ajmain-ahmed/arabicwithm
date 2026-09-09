@@ -1,6 +1,6 @@
 'use client'
 
-import { AdminPanelSettings, LogoutSharp } from '@mui/icons-material'
+import { AdminPanelSettings, LogoutSharp, PersonOutlined } from '@mui/icons-material'
 import { Box, Menu, MenuItem, Typography } from '@mui/material'
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
@@ -51,6 +51,7 @@ export default function UserMenu({ anchorEl, onClose, user, onLogout }: UserMenu
                         'linear-gradient(90deg, transparent, color-mix(in srgb, var(--awm-gold) 30%, transparent), transparent)',
                 }}
             />
+            <MenuItem component={Link} href="/profile" onClick={onClose} sx={{ py: 1.2, gap: 1.5 }}><PersonOutlined sx={{ fontSize: 18 }} /> My Profile</MenuItem>
             {isAdmin && (
                 <MenuItem
                     component={Link}

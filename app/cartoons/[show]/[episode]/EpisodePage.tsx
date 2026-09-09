@@ -1251,10 +1251,10 @@ export default function EpisodePage({
                           px: { xs: 2, sm: 2 },
                           borderRadius: { xs: '12px', sm: '10px' },
                           border: '1px solid rgba(44,26,14,0.08)',
-                          background: { xs: '#fff', sm: 'rgba(44,26,14,0.02)' },
+                          background: 'var(--awm-white)',
                           boxShadow: { xs: '0 2px 8px rgba(44,26,14,0.04)', sm: 'none' },
                           transition: 'background 0.15s',
-                          '&:hover': { background: { xs: '#fff', sm: 'rgba(184,134,11,0.04)' } },
+                          '&:hover': { background: 'color-mix(in srgb, var(--awm-gold) 8%, var(--awm-white))' },
                         }}
                       >
                         {/* CEFR chip */}

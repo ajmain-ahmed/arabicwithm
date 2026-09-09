@@ -118,10 +118,12 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   }
 }
 
-export async function recordMemoryReview(cardId: string, rating: MemoryRating, completionId: string): Promise<{ accepted: boolean; awarded: number; totalXp: number; used: number }> {
+export async function recordMemoryReview(cardId: string, rating: MemoryRating, completionId: string, nextSession: SavedMemorySession): Promise<{ accepted: boolean; awarded: number; totalXp: number; used: number }> {
   const userId = await getAuthenticatedUserId()
   if (!userId) throw new Error('Sign in to save Memory practice.')
   z.string().uuid().parse(completionId)
+  const state = sessionSchema.parse(nextSession)
+  if (state.index < 1 || state.cards[state.index - 1]?.id !== cardId || state.completionIds[state.index - 1] !== completionId) throw new Error('Invalid session progress.')
   if (rating !== 'again' && rating !== 'known') throw new Error('Invalid Memory rating.')
 
   const parsed = parseMemoryCardId(cardId)
@@ -147,7 +149,7 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating, c
 
   const { data, error } = await serviceClient.rpc('complete_memory_card', {
     p_user_id: userId, p_completion_id: completionId, p_card_id: cardId, p_rating: rating,
-    p_xp: MEMORY.xpPerCard, p_daily_limit: MEMORY.dailyFreeCards,
+    p_xp: MEMORY.xpPerCard, p_daily_limit: MEMORY.dailyFreeCards, p_session: state,
   })
   if (error) throw new Error('Unable to save Memory progress. Please try again.')
   return data as { accepted: boolean; awarded: number; totalXp: number; used: number }

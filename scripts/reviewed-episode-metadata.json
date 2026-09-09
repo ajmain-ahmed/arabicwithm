@@ -1,0 +1,270 @@
+{
+  "dbz-3": {
+    "description": "Two companions argue over who should carry a shiny ball while searching for the others. Their teasing turns into a demand to take back an insult.",
+    "tags": [
+      "Dragon Balls",
+      "Argument",
+      "Adventure"
+    ],
+    "transcriptHash": "08de5443308c0a5db7b3fe3a0eccfc1c6e12cc62f9370369321978b53857068a"
+  },
+  "inv-20": {
+    "description": "Mark challenges the claim that human lives, including his mother's, are worthless. He insists on saving people despite a brutal confrontation.",
+    "tags": [
+      "Mark",
+      "Family",
+      "Humanity"
+    ],
+    "transcriptHash": "9b375de8eeb9c4058e3be000808ff52703cabe2fce1107ad67c7145224b9f7e6"
+  },
+  "misc-5": {
+    "description": "A basketball player recognises street-style tricks during a competitive exchange and resolves to try harder.",
+    "tags": [
+      "Basketball",
+      "Competition"
+    ],
+    "transcriptHash": "eac7f00a1f928d5a45921270ca414b3a8e06dce88b7051ddc2a417543dfdeb62"
+  },
+  "misc-6": {
+    "description": "Hassan is warned that hurting others and behaving violently could cost him a place on the basketball team.",
+    "tags": [
+      "Basketball",
+      "Discipline",
+      "Behaviour"
+    ],
+    "transcriptHash": "0a1459f6a62723791d081c76e4422a1a93e6f5b711e8a8bc04374124087a549c"
+  },
+  "misc-7": {
+    "description": "Hassan hears that a high-school basketball team needs tall players and excitedly imagines joining the team and becoming famous.",
+    "tags": [
+      "Basketball",
+      "School",
+      "Ambition"
+    ],
+    "transcriptHash": "fda0aa38a064d1cf5a19fbcde28ec83791fb6bc84ab2c57d18159a2675f42c0c"
+  },
+  "misc-8": {
+    "description": "A wandering musician refuses to serve a demanding housemate, prepares his own dinner and tells her to cook for herself.",
+    "tags": [
+      "Household chores",
+      "Cooking",
+      "Disagreement"
+    ],
+    "transcriptHash": "802e15232ff1e1ab01731ac8cba63ded39ba689e06707661714714f0918549c7"
+  },
+  "misc-9": {
+    "description": "Fifteen-year-old Ibn Al-Qasim asks to help rescue women held captive near al-Daybul. He explains that sailors have told him where they are being held.",
+    "tags": [
+      "Ibn Al-Qasim",
+      "Rescue",
+      "Al-Daybul"
+    ],
+    "transcriptHash": "a9d948dbc526c680961ca1ed77da40fadc09abf4c99d61a5f7ba772502f8d7c0"
+  },
+  "misc-10": {
+    "description": "An arrogant princess mocks her suitors' appearances and rejects them. Her cruel remarks about a prince's chin leave him deeply hurt.",
+    "tags": [
+      "Fairy tale",
+      "Appearance",
+      "Kindness"
+    ],
+    "transcriptHash": "e58edd01ee2af497ded523f1bb5f8b317a003393ef72834826d91bd09801d48a"
+  },
+  "misc-11": {
+    "description": "A nineteen-year-old is approached about cosmetics advertising and a photoshoot. His concerns about animal testing and his uncertainty are brushed aside.",
+    "tags": [
+      "Advertising",
+      "Animal testing",
+      "Birthday"
+    ],
+    "transcriptHash": "64a461fe2a38c7407fb343d6a4440559cda8b7ca9be9f20b7d81611cabfe8b37"
+  },
+  "misc-12": {
+    "description": "A dangerous bargain offers rain in exchange for deception: befriend a monkey, earn his trust and steal his weapon.",
+    "tags": [
+      "Bargain",
+      "Deception",
+      "Trust"
+    ],
+    "transcriptHash": "efb22f96b34963307c0072d916fa09fe2bbc7e066dbb7f96e9c98537a5605d33"
+  },
+  "misc-13": {
+    "description": "Two people speak honestly about appearance, intelligence and self-doubt. A harsh self-judgment becomes a conversation about what wisdom really means.",
+    "tags": [
+      "Honesty",
+      "Appearance",
+      "Wisdom"
+    ],
+    "transcriptHash": "f2e79e8d980313bad2f5c9f2555d9247b2a0472c079fb2728efdf6aeca345400"
+  },
+  "misc-14": {
+    "description": "The Monkey King is accused of selfishness and warned that he will end up alone. He insists he has his weapon, only to be told it belongs in immortal hands.",
+    "tags": [
+      "Monkey King",
+      "Loneliness",
+      "Identity"
+    ],
+    "transcriptHash": "15facf4d8b38751c2449262f25dd5c35a1627749f7184d3cc8754a54a168fb86"
+  },
+  "misc-15": {
+    "description": "Barney's B-bot is mocked for failing to make friends. It receives a crash course in sharing pictures, finding common interests and collecting friend requests.",
+    "tags": [
+      "Friendship",
+      "Robots",
+      "Social media"
+    ],
+    "transcriptHash": "a0009a64da93e5084567e310c1f6457932b150e5d02cf10db1f89aec7244ec62"
+  },
+  "misc-16": {
+    "description": "Someone regrets what he said to a girl and calls himself foolish. When asked whether he is all right, he tries to brush off his distress.",
+    "tags": [
+      "Regret",
+      "Emotions"
+    ],
+    "transcriptHash": "8bb7ffd46d73e7f3a4abfad91d959396bb6c3c46628ea97b3028d351703a395d"
+  },
+  "misc-17": {
+    "description": "A mother confronts her son about missing lectures and lying about school. He struggles to explain his side activities as she warns him about his future.",
+    "tags": [
+      "University",
+      "Family",
+      "Study"
+    ],
+    "transcriptHash": "ff53a35b3f940092f8b88f9fff85baa74fcf4bb17271595c25acbedeb7093223"
+  },
+  "misc-18": {
+    "description": "A young man makes a ruler's daughter laugh for the first time. When the ruler resists the promised marriage, his daughter challenges him to keep his word.",
+    "tags": [
+      "Fairy tale",
+      "Promises",
+      "Justice"
+    ],
+    "transcriptHash": "a03e437a999a6ad1f7964dbb79b1ab5fbfe0b45dbb1008cc02b93e2ea7818cf3"
+  },
+  "misc-19": {
+    "description": "A girl offers to sell the donkey she inherited from her father at any price. The narration explains that she plans to work as a maid in a wealthy household.",
+    "tags": [
+      "Inheritance",
+      "Work",
+      "Poverty"
+    ],
+    "transcriptHash": "ad6b48fe0fd9d91fbdd00e30357527c7adaaad0c14afa3d7608c3ccff2569a9d"
+  },
+  "misc-20": {
+    "description": "A trapped man fears being discovered after taking treasure from a cave. Ali Baba is blamed for the danger, and Marjana is sent to fetch a key maker.",
+    "tags": [
+      "Ali Baba",
+      "Treasure",
+      "Rescue"
+    ],
+    "transcriptHash": "bb62f45d440ca2b2ecd9f5fabf76322985b7bd7a3a019202f7bcb743ed574583"
+  },
+  "misc-21": {
+    "description": "Aladdin promises to treat the ruler's daughter kindly and is challenged to build a palace overnight. By morning, the ruler and his daughter see that he has fulfilled his promise.",
+    "tags": [
+      "Aladdin",
+      "Promises",
+      "Palace"
+    ],
+    "transcriptHash": "af85a592a92603b7f9ef9ab0500fbae11244cd416d099230cf9a703c901ec22b"
+  },
+  "misc-22": {
+    "description": "Jerusha is ordered to supervise cleaning at the orphanage despite having an exam. She is told to miss school and put the orphanage first.",
+    "tags": [
+      "Orphanage",
+      "School",
+      "Responsibilities"
+    ],
+    "transcriptHash": "76e4a139b1b5f959d02a0a7ffdd07d7c4e639f55e34d0eff9a2736082a85e363"
+  },
+  "misc-23": {
+    "description": "As their father leaves on a journey, his daughters ask for gifts. Belle wishes for his safe return and asks him to bring flowers for the house.",
+    "tags": [
+      "Belle",
+      "Family",
+      "Travel"
+    ],
+    "transcriptHash": "46ff6d2f96598a2825194a39faf7ad25cf145e1cc4b960553682385d43093df6"
+  },
+  "misc-24": {
+    "description": "Sherman describes his lunch before a classmate mocks him because his father is a dog. The teasing escalates into demands that he fetch his food.",
+    "tags": [
+      "Sherman",
+      "Bullying",
+      "Family"
+    ],
+    "transcriptHash": "a1a9c0a95423c18263f49124454a135767983b6cdf251b252270dccae9d22c15"
+  },
+  "misc-25": {
+    "description": "An awkward late visit to a closed shop leads to a brief conversation about the storm and climate change.",
+    "tags": [
+      "Shopping",
+      "Weather",
+      "Climate change"
+    ],
+    "transcriptHash": "0bdc6aa7db8527bd3018fe159a5ebd9723681e17f99192a5851c24c76730f4c7"
+  },
+  "misc-26": {
+    "description": "A disagreement about speaking to a father becomes a painful argument over fear, family and Fire Nation identity. The conversation ends in a breakup.",
+    "tags": [
+      "Fire Nation",
+      "Identity",
+      "Relationships"
+    ],
+    "transcriptHash": "43b928a8345d1f1e1aa8512618a53639b401428d0f7371fc4f4684dcc8de658f"
+  },
+  "omar-3": {
+    "description": "Khabbab tells Omar about the Prophet's prayer that Islam be strengthened through one of two men. Omar asks to be taken to the Prophet and his companions.",
+    "tags": [
+      "Omar ibn Al-Khattab",
+      "Khabbab",
+      "Islamic history"
+    ],
+    "transcriptHash": "fb5988b2e4adfd299eff3a42a19152ed2f64876d533ef63521b4e86267a8c58c"
+  },
+  "omar-4": {
+    "description": "Abu Bakr defends the Prophet as opponents object to his prayer at the Kaaba. Even while others attend to him afterward, his first concern is the Prophet's safety.",
+    "tags": [
+      "Abu Bakr",
+      "Kaaba",
+      "Islamic history"
+    ],
+    "transcriptHash": "6a64d474e228191ac96e0f572952b04c21e3ef6c88951507eb9d3528eef9970e"
+  },
+  "qss-7": {
+    "description": "Asiya confronts Pharaoh and declares her faith in Allah despite his threat of execution. She prays for a home in Paradise and deliverance from his wrongdoing.",
+    "tags": [
+      "Asiya",
+      "Pharaoh",
+      "Faith"
+    ],
+    "transcriptHash": "ae49caaff210731121d0ab0e44edd551a46f09dc035935c49551ebb6527cd09e"
+  },
+  "qss-8": {
+    "description": "Men trapped in a cave pray to Allah by recalling sincere good deeds. One recounts waiting all night to serve milk to his elderly parents, and the boulder begins to move.",
+    "tags": [
+      "Dutifulness to parents",
+      "Prayer",
+      "Cave"
+    ],
+    "transcriptHash": "00751b3e35c8d287572f28df0f6650347327eaf94091d221905b48488a277569"
+  },
+  "qss-9": {
+    "description": "A woman asks her cousin for money to prevent her family from losing their home. He exploits her financial distress by demanding intimacy in return.",
+    "tags": [
+      "Family",
+      "Financial hardship",
+      "Coercion"
+    ],
+    "transcriptHash": "f7263fa2f7393440ec23b46ea598a5655f4379075136138c539f8eb48a6433fc"
+  },
+  "qss-10": {
+    "description": "A woman appeals to her cousin's fear of Allah as he tries to exploit her need for money. He lets her leave with the money, and later recalls this act while praying for relief from a blocked cave.",
+    "tags": [
+      "Faith",
+      "Repentance",
+      "Prayer"
+    ],
+    "transcriptHash": "960aed221d8eae2cbe9126ed7d012f745fa17a8d16db7fbd5dc4d1ec9c25f3c2"
+  }
+}

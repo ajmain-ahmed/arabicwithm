@@ -28,7 +28,6 @@ const FOOTER_SECTIONS = (onContactClick?: () => void) => [
     title: 'Support',
     links: [
       { label: 'Contact Us', href: null, onClick: onContactClick },
-      { label: 'About', href: '/about', onClick: undefined },
     ],
   },
 ]

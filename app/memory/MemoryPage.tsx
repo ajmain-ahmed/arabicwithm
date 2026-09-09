@@ -60,7 +60,6 @@ export default function MemoryPage({ library, loadError }: { library: MemoryLibr
   const [saveError, setSaveError] = useState('')
   const [upgrade, setUpgrade] = useState(false)
   const busyRef = useRef(false)
-  const pendingAwardRef = useRef(0)
   const limited = !premium && used >= MEMORY.dailyFreeCards
   useEffect(() => {
     let active = true
@@ -69,6 +68,12 @@ export default function MemoryPage({ library, loadError }: { library: MemoryLibr
       setUsed(progress.used); setPremium(progress.premium); setTotalXp(progress.totalXp); setSaved(session); setReady(true)
     }).catch(() => { if (active) setSaveError('Unable to load Memory progress. Refresh to try again.') })
     return () => { active = false }
+  }, [user?.id])
+  useEffect(() => {
+    const refresh = () => { fetchMemoryProgress().then(progress => { setUsed(progress.used); setPremium(progress.premium); setTotalXp(progress.totalXp) }).catch(() => {}) }
+    const timer = window.setInterval(refresh, 60000)
+    window.addEventListener('focus', refresh)
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh) }
   }, [user?.id])
   const card = cards[index]
 
@@ -81,13 +86,10 @@ export default function MemoryPage({ library, loadError }: { library: MemoryLibr
     if (!card || !revealed || busyRef.current || limited || !user) return
     busyRef.current = true; setSaving(true); setSaveError('')
     try {
-      const result = await recordMemoryReview(card.id, rating, completionIds[index])
+      const result = await recordMemoryReview(card.id, rating, completionIds[index], { cards, index: index + 1, completed: completed + 1, sessionXp, direction, completionIds })
       setUsed(result.used)
       if (!result.accepted) { setUpgrade(true); return }
-      pendingAwardRef.current += result.awarded
-      const nextXp = sessionXp + pendingAwardRef.current
-      await saveMemorySession({ cards, index: index + 1, completed: completed + 1, sessionXp: nextXp, direction, completionIds })
-      setSessionXp(nextXp); setTotalXp(value => value + pendingAwardRef.current); pendingAwardRef.current = 0
+      setSessionXp(value => value + result.awarded); setTotalXp(value => value + result.awarded)
       setCompleted(value => value + 1); setIndex(value => value + 1); setRevealed(false)
       if (!premium && result.used >= MEMORY.dailyFreeCards) setUpgrade(true)
     } catch (e) { setSaveError(e instanceof Error ? e.message : 'Unable to save. Please retry this card.') }

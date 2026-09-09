@@ -1,5 +1,6 @@
 "use server"
 
+import { dailyRotationIndex } from "@/app/lib/dailyRotation"
 import { stripDiacritics } from "@/app/lib/arabic"
 import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
 
@@ -7,6 +8,7 @@ export interface VocabularyEntry {
   id: number
   arabic: string
   english: string
+  arabicDefinition?: string
   transliteration?: string
   isRoot: boolean
   root?: string
@@ -66,15 +68,6 @@ function extractTransliteration(value: string): string | undefined {
     .replace(/[,;:]+$/, "")
     .trim()
   return transliteration || undefined
-}
-
-function dailyRandomOffset(dayKey: string, count: number): number {
-  let hash = 2166136261
-  for (const character of dayKey) {
-    hash ^= character.charCodeAt(0)
-    hash = Math.imul(hash, 16777619)
-  }
-  return (hash >>> 0) % count
 }
 
 function safeSearchTerm(value: string): string {
@@ -149,19 +142,13 @@ export async function searchVocabulary(rawQuery: string): Promise<VocabularyEntr
 
 export async function fetchWordOfTheDay(): Promise<VocabularyEntry | null> {
     if (!hasServiceClientConfig()) return null
-    const dayKey = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Europe/London",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date())
     const { count, error: countError } = await serviceClient
       .from("hanswehr_dictionary")
       .select("id", { count: "exact", head: true })
       .eq("is_root", false)
     if (countError || !count) return null
 
-    const offset = dailyRandomOffset(dayKey, count)
+    const offset = dailyRotationIndex(count)
     const { data, error } = await serviceClient
       .from("hanswehr_dictionary")
       .select("id, word, definition, is_root, parent_id, quran_occurrence")

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
-import { AutoStories, Download, PsychologyOutlined } from '@mui/icons-material'
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography, IconButton } from '@mui/material'
+import { AutoStories, Download, PsychologyOutlined, AutoAwesome, Close } from '@mui/icons-material'
 import { fetchPremiumStatus, managePremium, startPremiumCheckout } from '@/app/actions/premium'
 import { useAuth } from '@/app/AuthContext'
 import { PREMIUM } from '@/app/lib/entitlements'
@@ -18,20 +18,23 @@ export default function PremiumPrompt({ open, onClose, reason }: { open: boolean
     try { window.location.assign(await (premium ? managePremium() : startPremiumCheckout())) }
     catch (e) { setError(e instanceof Error ? e.message : 'Unable to open billing.'); setBusy(false) }
   }
-  return <Dialog open={open} onClose={busy ? undefined : onClose} maxWidth="sm" fullWidth aria-labelledby="premium-title" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: '16px', m: 2, width: 'calc(100% - 32px)' } } }}>
-    <DialogTitle id="premium-title">{premium ? 'Premium active' : 'Premium'} <Typography component="span" sx={{ color: 'text.secondary' }}>£3.99 GBP / month</Typography></DialogTitle>
-    <DialogContent>
+  return <Dialog open={open} onClose={busy ? undefined : onClose} maxWidth="sm" fullWidth aria-labelledby="premium-title" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: '24px', m: 2, width: 'calc(100% - 32px)', textAlign: 'center', border: '1px solid', borderColor: 'divider' } } }}>
+    <IconButton aria-label="Close Premium details" onClick={onClose} sx={{ position: 'absolute', right: 12, top: 12, color: 'text.secondary' }}><Close /></IconButton>
+    <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}><AutoAwesome sx={{ display: 'block', mx: 'auto', mb: 1, color: 'primary.main', fontSize: 34 }} />{premium ? 'Premium active' : 'Premium'}</DialogTitle>
+    <DialogContent sx={{ px: { xs: 2.5, sm: 4 } }}>
+      <Typography color="text.secondary">More stories. More practice. Take your learning with you.</Typography>
+      <Box sx={{ py: 3 }}><Typography sx={{ fontSize: 48, fontWeight: 700, letterSpacing: '-.04em', lineHeight: 1 }}>?3.99<Typography component="span" sx={{ ml: 1, fontSize: 16, color: 'text.secondary' }}>GBP / month</Typography></Typography></Box>
       {reason && <Typography sx={{ mb: 2 }}>{reason}</Typography>}
       {[
         { icon: AutoStories, title: 'Finish longer books', text: 'The first five chapters of eligible longer books are free. Premium unlocks Chapter 6 onwards. Our four original exempt books remain free to read in full.' },
         { icon: Download, title: 'Download PDFs', text: 'Take available Arabic and English book PDFs with you.' },
         { icon: PsychologyOutlined, title: 'Unlimited Memory practice', text: 'Free accounts can complete 20 cards each day. Premium has no daily limit. Random sessions stay at 20 cards, with the same XP per card for everyone.' },
-      ].map(item => <Box key={item.title} sx={{ display: 'flex', gap: 2, py: 1.5 }}><item.icon sx={{ color: 'primary.main', mt: .5 }} /><Box><Typography sx={{ fontWeight: 700 }}>{item.title}</Typography><Typography color="text.secondary">{item.text}</Typography></Box></Box>)}
+      ].map(item => <Box key={item.title} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, p: 2, mb: 1.5, borderRadius: '14px', bgcolor: 'background.default' }}><item.icon sx={{ color: 'primary.main', mt: .5 }} /><Box><Typography sx={{ fontWeight: 700 }}>{item.title}</Typography><Typography color="text.secondary">{item.text}</Typography></Box></Box>)}
       <Typography sx={{ mt: 2 }} color="text.secondary">And this is only the beginning. More Premium features, books and learning content will be added over time.</Typography>
       <Typography variant="body2" sx={{ mt: 2 }}>£3.99 GBP, billed monthly as a recurring subscription. Cancel through Manage Premium; access continues until the end of your paid period.</Typography>
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
     </DialogContent>
-    <DialogActions sx={{ p: 2, flexWrap: 'wrap', gap: 1 }}><Button onClick={onClose}>Close</Button><Button variant="contained" disabled={busy} onClick={() => void purchase()}>{premium ? 'Manage Premium' : `Get Premium — ${PREMIUM.label}`}</Button></DialogActions>
+    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}><Button onClick={onClose}>Close</Button><Button fullWidth sx={{ minHeight: 52, borderRadius: "12px" }} variant="contained" disabled={busy} onClick={() => void purchase()}>{premium ? 'Manage Premium' : `Get Premium — ${PREMIUM.label}`}</Button></DialogActions>
   </Dialog>
 }
 export function PremiumSection() {
@@ -39,12 +42,22 @@ export function PremiumSection() {
   const [open, setOpen] = useState(false)
   const [premium, setPremium] = useState(false)
   useEffect(() => { let active = true; fetchPremiumStatus().then(s => { if (active) setPremium(s.premium) }).catch(() => {}); return () => { active = false } }, [user?.id])
-  return <Box component="section" sx={{ width: '100%', p: { xs: 3, md: 6 }, mt: 5, bgcolor: 'background.paper', borderTop: '1px solid', borderColor: 'divider' }}>
-    <Typography variant="h2">{premium ? 'Premium active' : 'Premium'}</Typography><Typography sx={{ mt: 1, fontWeight: 700 }}>{PREMIUM.label}</Typography>
-    <Typography sx={{ my: 2 }}>Unlock the full reading experience, downloadable books and unlimited Memory practice.</Typography>
-    <Button variant="contained" onClick={() => setOpen(true)}>{premium ? 'Manage Premium' : 'See Premium'}</Button>
+  return <Box component="section" aria-label="Premium" sx={{ width: '100%', px: { xs: 2, md: 5 }, py: { xs: 4, md: 6 }, display: 'flex', justifyContent: 'center' }}>
+    <Button variant="contained" startIcon={<AutoAwesome />} onClick={() => setOpen(true)} sx={{
+      width: '100%', maxWidth: 920, minHeight: { xs: 64, md: 76 }, px: 4, borderRadius: '18px', position: 'relative', overflow: 'hidden',
+      color: 'primary.contrastText', background: 'linear-gradient(135deg, var(--awm-gold-light), var(--awm-gold))',
+      border: '1px solid color-mix(in srgb, var(--awm-gold-light) 75%, transparent)', fontSize: { xs: 17, md: 20 }, fontWeight: 700,
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,.45), 0 10px 28px color-mix(in srgb, var(--awm-gold) 22%, transparent)',
+      transition: 'transform .18s ease, box-shadow .18s ease',
+      '&::before': { content: '\"\"', position: 'absolute', inset: 0, background: 'linear-gradient(115deg, transparent 20%, rgba(255,255,255,.24) 46%, transparent 68%)', transform: 'translateX(-65%)', transition: 'transform .65s ease', pointerEvents: 'none' },
+      '&:hover': { background: 'linear-gradient(135deg, var(--awm-gold-light), var(--awm-gold))', transform: 'translateY(-2px)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.45), 0 14px 32px color-mix(in srgb, var(--awm-gold) 30%, transparent)', '&::before': { transform: 'translateX(60%)' } },
+      '&:active': { transform: 'translateY(1px)', boxShadow: 'inset 0 2px 5px rgba(0,0,0,.12)' },
+      '&:focus-visible': { outline: '3px solid', outlineColor: 'text.primary', outlineOffset: 4 },
+      '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&::before': { transition: 'none' }, '&:hover, &:active': { transform: 'none' } },
+    }}>{premium ? 'Premium active ? Manage Premium' : 'Upgrade to Premium'}</Button>
     <PremiumPrompt open={open} onClose={() => setOpen(false)} />
   </Box>
+
 }
 export function LockedChapter({ bookSlug, chapterTitle }: { bookSlug: string; chapterTitle: string }) {
   const [open, setOpen] = useState(true)

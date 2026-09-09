@@ -105,6 +105,7 @@ function ExploreVideo({
   const [currentTime, setCurrentTime] = useState(0)
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
+  const [soundAllowed, setSoundAllowed] = useState(false)
   const [fallbackMutedFor, setFallbackMutedFor] = useState<string | null>(null)
   const source = sources.find((candidate) => candidate.provider === selectedProvider) ?? sources[0]
   const activeSourceKey = active && source ? `${source.provider}:${source.id}` : null
@@ -126,9 +127,9 @@ function ExploreVideo({
     active && isYouTube ? source.id : undefined,
     setCurrentTime,
     undefined,
-    { autoplay: active, muted: !soundEnabled, onEnded }
+    { autoplay: active, muted: !soundEnabled || !soundAllowed, onEnded }
   )
-  const soundMuted = !soundEnabled || fallbackMuted
+  const soundMuted = !soundEnabled || !soundAllowed || fallbackMuted
 
   useEffect(() => {
     if (!active) return
@@ -139,13 +140,13 @@ function ExploreVideo({
   useEffect(() => {
     if (!isReady) return
     if (active) {
-      if (soundEnabled && !fallbackMuted) unMute()
+      if (soundEnabled && soundAllowed && !fallbackMuted) unMute()
       else mute()
       playVideo()
     } else {
       pauseVideo()
     }
-  }, [active, fallbackMuted, isReady, mute, pauseVideo, playVideo, soundEnabled, unMute])
+  }, [active, fallbackMuted, isReady, mute, pauseVideo, playVideo, soundEnabled, soundAllowed, unMute])
 
   useEffect(() => {
     if (!active || !autoplayBlocked || !activeSourceKey) return
@@ -167,10 +168,12 @@ function ExploreVideo({
 
   const toggleSound = () => {
     if (soundMuted) {
+      setSoundAllowed(true)
       setExploreSoundPreference(true)
       setFallbackMutedFor(null)
       playWithSound()
     } else {
+      setSoundAllowed(false)
       setExploreSoundPreference(false)
       setFallbackMutedFor(null)
       mute()
@@ -210,7 +213,7 @@ function ExploreVideo({
             component="img"
             src={episode.cover ?? getYouTubeThumbnailUrl(episode.youtubeId) ?? ''}
             alt=""
-            sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.72 }}
+            sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', opacity: 0.72 }}
           />
         )}
         {active && source?.provider !== 'youtube' && source && (
@@ -247,37 +250,40 @@ function ExploreVideo({
             ))}
           </Box>
         )}
-        <Box sx={{ position: 'absolute', zIndex: 4, right: { xs: 10, md: 14 }, bottom: { xs: 10, md: 16 }, display: 'flex', flexDirection: 'column', gap: 0.85 }}>
-          <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
+        <Box sx={{ position: 'absolute', zIndex: 4, left: { xs: 6, md: 12 }, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 0.85 }}>
+          <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="right">
             <IconButton
               onClick={toggleSound}
               aria-label={soundMuted ? 'Turn Explore sound on' : 'Mute Explore video'}
-              sx={{ width: 46, height: 46, bgcolor: 'rgba(14,46,31,.82)', color: '#fff', border: '1px solid rgba(255,255,255,.28)', backdropFilter: 'blur(10px)', '&:hover': { bgcolor: '#174832', transform: 'translateY(-1px)' }, '&:focus-visible': { outline: '3px solid rgba(212,168,67,.75)', outlineOffset: 2 } }}
+              sx={{ width: 44, height: 44, bgcolor: 'transparent', color: 'var(--awm-gold-light)', filter: 'drop-shadow(0 1px 3px #000)', '&:hover': { bgcolor: 'transparent', transform: 'scale(1.08)' }, '&:active': { transform: 'scale(.95)' }, '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 } }}
             >
               {soundMuted ? <VolumeOff /> : <VolumeUp />}
             </IconButton>
           </Tooltip>
-          <Tooltip title="Go to episode" placement="left">
+          <Tooltip title="Go to episode" placement="right">
             <IconButton
               component={Link}
               href={`/cartoons/${episode.showSlug}/${episode.slug}`}
               aria-label={`Go to episode: ${episode.title}`}
-              sx={{ width: 46, height: 46, bgcolor: 'rgba(212,168,67,.94)', color: '#0e2e1f', border: '1px solid rgba(255,255,255,.35)', backdropFilter: 'blur(10px)', '&:hover': { bgcolor: '#e3bb58', transform: 'translateY(-1px)' }, '&:focus-visible': { outline: '3px solid rgba(255,255,255,.78)', outlineOffset: 2 } }}
+              sx={{ width: 44, height: 44, bgcolor: 'transparent', color: 'var(--awm-gold-light)', filter: 'drop-shadow(0 1px 3px #000)', '&:hover': { bgcolor: 'transparent', transform: 'scale(1.08)' }, '&:active': { transform: 'scale(.95)' }, '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 } }}
             >
               <PlayCircleOutlineRounded />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Practise this episode in Memory" placement="left">
+          <Tooltip title="Practise this episode in Memory" placement="right">
             <IconButton
               component={Link}
               href={`/memory?episode=${encodeURIComponent(episode.id)}`}
               aria-label={`Practise ${episode.title} in Memory`}
-              sx={{ width: 46, height: 46, bgcolor: 'rgba(245,237,224,.94)', color: '#0e2e1f', border: '1px solid rgba(184,134,11,.38)', backdropFilter: 'blur(10px)', '&:hover': { bgcolor: '#fff', transform: 'translateY(-1px)' }, '&:focus-visible': { outline: '3px solid rgba(212,168,67,.75)', outlineOffset: 2 } }}
+              sx={{ width: 44, height: 44, bgcolor: 'transparent', color: 'var(--awm-gold-light)', filter: 'drop-shadow(0 1px 3px #000)', '&:hover': { bgcolor: 'transparent', transform: 'scale(1.08)' }, '&:active': { transform: 'scale(.95)' }, '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 } }}
             >
               <PsychologyOutlined />
             </IconButton>
           </Tooltip>
         </Box>
+        {active && isYouTube && isReady && !isPlaying && errorCode == null && (
+          <Button onClick={() => { if (soundEnabled) { setSoundAllowed(true); setFallbackMutedFor(null); playWithSound() } else { mute(); playVideo() } }} startIcon={<PlayCircleOutlineRounded />} sx={{ position: 'absolute', zIndex: 4, top: '50%', left: '50%', transform: 'translate(-50%,-50%)', bgcolor: 'background.paper', color: 'text.primary', borderRadius: '9999px', minHeight: 44 }}>Play video</Button>
+        )}
         {errorCode != null && isYouTube && (
           <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.78)', p: 3 }}>
             <Box sx={{ textAlign: 'center', color: '#fff' }}>

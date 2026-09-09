@@ -43,12 +43,11 @@ export default function BookReadingCta({ bookSlug, chapters }: { bookSlug: strin
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
         <Button component={Link} href={`/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(destination)}?lang=ar`} variant="contained" startIcon={<AutoStories />} sx={{ minHeight: 44, bgcolor: '#b8860b', color: '#fff', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#946c08' } }}>Read in Arabic</Button>
-        <Button component={Link} href={`/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(destination)}?lang=en`} variant="contained" startIcon={<Translate />} sx={{ minHeight: 44, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 55%, transparent)', outlineOffset: 2 } }}>Read in English</Button>
+        <Button component={Link} href={`/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(destination)}?lang=en`} variant="contained" startIcon={<Translate />} sx={{ minHeight: 44, bgcolor: 'var(--awm-cream)', color: 'var(--awm-bark)', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: 'var(--awm-cream-light)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 55%, transparent)', outlineOffset: 2 } }}>Read in English</Button>
       </Box>
 
-      <Box sx={{ mt: 1.25, display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, maxWidth: 390 }}>
+      <Box sx={{ mt: 1.25, display: 'grid', gridTemplateColumns: '1fr', gap: 1, maxWidth: 390 }}>
         <PdfDownloadButton bookSlug={bookSlug} language="ar" label="Arabic PDF" small fullWidth />
-        <PdfDownloadButton bookSlug={bookSlug} language="en" label="English PDF" small fullWidth />
       </Box>
     </>
   )

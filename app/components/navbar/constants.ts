@@ -11,7 +11,6 @@ export const NAV_ROUTES: Record<string, string> = {
     Watch: '/cartoons',
     Read: '/books',
     Memory: '/memory',
-    About: '/about',
     Contact: '/contact',
 }
 

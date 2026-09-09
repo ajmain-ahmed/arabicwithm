@@ -378,7 +378,7 @@ export const fetchEpisodeForPublic = unstable_cache(
   { revalidate: false, tags: ["cartoons-public"] }
 )
 
-export const fetchEpisodesForExplorePublic = unstable_cache(
+export const fetchEpisodesForExplorePublic =
   async (): Promise<ExploreEpisode[]> => {
     if (!hasServiceClientConfig()) {
       console.warn("[fetchEpisodesForExplorePublic] Supabase service client not configured")
@@ -450,10 +450,7 @@ export const fetchEpisodesForExplorePublic = unstable_cache(
         })),
       }]
     })
-  },
-  ["cartoons", "explore"],
-  { revalidate: false, tags: ["cartoons-public"] }
-)
+   }
 
 function mapEpisodeRow(
   row: Record<string, unknown>,

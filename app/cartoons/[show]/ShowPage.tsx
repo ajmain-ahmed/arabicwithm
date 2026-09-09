@@ -299,7 +299,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                         showTags={false}
                         description={ep.description}
                         aspectRatio="16 / 9"
-                        imageFit="cover"
+                        imageFit="contain"
                         denseMobileTile
                         mobileAspectRatio="16 / 9"
                         mobileTitleSize={10}

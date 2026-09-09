@@ -18,7 +18,7 @@ export default function ContactDialog({ open, onClose }: ContactDialogProps) {
             slotProps={{
                 paper: {
                     sx: {
-                        background: 'linear-gradient(160deg, var(--awm-forest) 0%, var(--awm-bark-dark) 100%)',
+                        background: 'var(--awm-white)',
                         borderRadius: 'var(--awm-radius-none)',
                         border: '1px solid color-mix(in srgb, var(--awm-gold-light) 20%, transparent)',
                         overflow: 'hidden',
@@ -35,14 +35,14 @@ export default function ContactDialog({ open, onClose }: ContactDialogProps) {
                         position: 'absolute',
                         top: 12,
                         right: 12,
-                        color: 'color-mix(in srgb, var(--awm-cream) 40%, transparent)',
+                        color: 'var(--awm-muted)',
                         '&:hover': { color: 'var(--awm-gold-light)' },
                     }}
                 >
                     <Close sx={{ fontSize: 18 }} />
                 </IconButton>
                 <Box sx={{ mb: 3, textAlign: 'center' }}>
-                    <Typography variant="h3" sx={{ color: 'var(--awm-cream)', lineHeight: 1.1, mb: 1 }}>
+                    <Typography variant="h3" sx={{ color: 'var(--awm-bark)', lineHeight: 1.1, mb: 1 }}>
                         Get in Touch
                     </Typography>
                     <Box
@@ -54,7 +54,7 @@ export default function ContactDialog({ open, onClose }: ContactDialogProps) {
                             mb: 1.5,
                         }}
                     />
-                    <Typography variant="body2" sx={{ color: 'color-mix(in srgb, var(--awm-cream) 50%, transparent)', lineHeight: 1.7 }}>
+                    <Typography variant="body2" sx={{ color: 'var(--awm-muted)', lineHeight: 1.7 }}>
                         Have questions about learning Arabic? Reach out anytime.
                     </Typography>
                 </Box>
@@ -93,10 +93,10 @@ export default function ContactDialog({ open, onClose }: ContactDialogProps) {
                             <EmailSharp sx={{ fontSize: 20, color: 'var(--awm-gold-light)' }} />
                         </Box>
                         <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--awm-cream)', lineHeight: 1.2 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>
                                 Email Us
                             </Typography>
-                            <Typography variant="caption" sx={{ color: 'color-mix(in srgb, var(--awm-cream) 45%, transparent)' }}>
+                            <Typography variant="caption" sx={{ color: 'var(--awm-muted)' }}>
                                 hello@arabicwithm.com
                             </Typography>
                         </Box>

@@ -40,23 +40,28 @@ function ensureYouTubeApi(): Promise<void> {
   if (youtubeApiPromise) return youtubeApiPromise
 
   youtubeApiPromise = new Promise<void>((resolve, reject) => {
+    const previousReady = window.onYouTubeIframeAPIReady
+    let tag = document.getElementById('youtube-iframe-api') as HTMLScriptElement | null
+    const fail = () => {
+      window.clearTimeout(timeout)
+      tag?.remove()
+      youtubeApiPromise = null
+      reject(new Error('Unable to load the YouTube player API'))
+    }
+    const timeout = window.setTimeout(fail, 15000)
     window.onYouTubeIframeAPIReady = () => {
+      window.clearTimeout(timeout)
       window.__ytApiReady = true
       resolve()
+      previousReady?.()
     }
-
-    let tag = document.getElementById('youtube-iframe-api') as HTMLScriptElement | null
     if (!tag) {
       tag = document.createElement('script')
       tag.id = 'youtube-iframe-api'
       tag.src = 'https://www.youtube.com/iframe_api'
+      tag.addEventListener('error', fail, { once: true })
       document.head.appendChild(tag)
-    }
-
-    tag.addEventListener('error', () => {
-      youtubeApiPromise = null
-      reject(new Error('Unable to load the YouTube player API'))
-    }, { once: true })
+    } else tag.addEventListener('error', fail, { once: true })
   })
 
   return youtubeApiPromise
@@ -117,10 +122,12 @@ export default function useYouTubePlayer(
         playerRef.current = new window.YT.Player(inner, {
           ...(fallbackHostRef.current ? { host: 'https://www.youtube-nocookie.com' } : {}),
           videoId,
+          width: '100%',
+          height: '100%',
           playerVars: {
-            autoplay: autoplay ? 1 : 0,
+            // Apply mute on ready before requesting autoplay.
+            autoplay: 0,
             rel: 0,
-            modestbranding: 1,
             enablejsapi: 1,
             playsinline: 1,
             start: startAtRef.current && startAtRef.current > 0 ? Math.floor(startAtRef.current) : undefined,

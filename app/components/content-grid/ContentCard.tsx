@@ -62,7 +62,7 @@ export default function ContentCard({
   metaItems,
   overlayIcon,
   aspectRatio = '16/9',
-  imageFit = 'cover',
+  imageFit = 'contain',
   compactMobileRow = false,
   denseMobileTile = false,
   mobileAspectRatio = '4 / 3',
@@ -120,10 +120,10 @@ export default function ContentCard({
           overflow: 'hidden',
           borderRadius: denseMobileTile ? { xs: '4px', sm: 0 } : 0,
           backgroundColor: denseMobileTile
-            ? { xs: '#efe5d6', sm: imageFit === 'contain' ? '#efe5d6' : 'transparent' }
+            ? { xs: 'var(--awm-cream-light)', sm: imageFit === 'contain' ? 'var(--awm-cream-light)' : 'transparent' }
             : compactMobileRow
-            ? { xs: '#efe5d6', sm: imageFit === 'contain' ? '#efe5d6' : 'transparent' }
-            : imageFit === 'contain' ? '#efe5d6' : 'transparent',
+            ? { xs: 'var(--awm-cream-light)', sm: imageFit === 'contain' ? 'var(--awm-cream-light)' : 'transparent' }
+            : imageFit === 'contain' ? 'var(--awm-cream-light)' : 'transparent',
         }}
       >
         {imgLoading && !imgError && (
@@ -154,12 +154,12 @@ export default function ContentCard({
                 : imageFit === 'natural' ? 'auto' : '100%',
               display: 'block',
               objectFit: denseMobileTile
-                ? { xs: 'cover', sm: imageFit === 'natural' ? undefined : imageFit }
+                ? { xs: 'contain', sm: imageFit === 'natural' ? undefined : imageFit }
                 : compactMobileRow
-                ? { xs: imageFit === 'natural' ? 'cover' : imageFit, sm: imageFit === 'natural' ? undefined : imageFit }
+                ? { xs: imageFit === 'natural' ? 'contain' : imageFit, sm: imageFit === 'natural' ? undefined : imageFit }
                 : imageFit === 'natural' ? undefined : imageFit,
               objectPosition: denseMobileTile ? { xs: mobileImagePosition, sm: 'center' } : 'center',
-              transform: hovered && imageFit !== 'natural' ? 'scale(1.03)' : 'scale(1)',
+              transform: hovered && imageFit === 'cover' ? 'scale(1.03)' : 'scale(1)',
               transition: 'transform 0.3s, opacity 0.3s',
               opacity: imgLoading ? 0 : 1,
             }}

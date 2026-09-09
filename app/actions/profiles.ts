@@ -46,6 +46,6 @@ export async function fetchPublicProfile(id: string) {
   }))
   // Explicit public DTO: never return auth metadata, email or billing records.
   return { id, own, displayName: profile?.display_name ?? 'Arabic learner', isPublic: profile?.is_public ?? false, shareReading: profile?.share_reading ?? false,
-    joined: user.created_at.slice(0, 10), level: calculateLearningLevel(seconds + xp * 60).level, xp, weekXp: week.xp, memoryCards: totals.cards, shelf }
+    joined: user.created_at.slice(0, 10), level: calculateLearningLevel(seconds, xp).level, xp, weekXp: week.xp, memoryCards: totals.cards, shelf }
 }
 export type PublicProfile = NonNullable<Awaited<ReturnType<typeof fetchPublicProfile>>>
