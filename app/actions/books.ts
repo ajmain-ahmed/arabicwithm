@@ -160,29 +160,64 @@ export const fetchBookBySlugPublic = unstable_cache(
   { revalidate: false, tags: ["books-public"] }
 )
 
+type ChapterListExtras = Record<string, { teaser?: string; blockCount: number }>
+
+/* ── Teasers and block counts are only surfaced for chapters a free
+   visitor can open, so content is only ever pulled for the free
+   window (bounded by freeChapterCount), never for the whole book. ── */
+const fetchChapterListExtrasForBookPublic = unstable_cache(
+  async (bookId: string): Promise<ChapterListExtras> => {
+    const extras: ChapterListExtras = {}
+    if (!hasServiceClientConfig()) return extras
+
+    const book = (await fetchBooksForPublic()).find((book) => book.id === bookId)
+    if (!book) return extras
+
+    let query = serviceClient
+      .from("chapters")
+      .select("id, content")
+      .eq("book_id", bookId)
+    const wholeBookFree = book.premiumExempt || book.chapterCount <= book.freeChapterCount
+    if (!wholeBookFree) query = query.lte("chapter_number", book.freeChapterCount)
+
+    const { data, error } = await query
+    if (error) throw new Error(error.message)
+
+    for (const chapter of data ?? []) {
+      extras[String(chapter.id)] = {
+        teaser: extractChapterTeaser(chapter.content),
+        blockCount: countReadableBlocks(chapter.content),
+      }
+    }
+    return extras
+  },
+  ["books", "public", "chapter-extras", "v1"],
+  { revalidate: false, tags: ["books-public"] }
+)
+
 export const fetchChaptersForBookPublic = unstable_cache(
   async (bookId: string): Promise<PublicChapter[]> => {
     if (!hasServiceClientConfig()) return []
 
     const { data, error } = await serviceClient
       .from("chapters")
-      .select("id, slug, title, chapter_number, content")
+      .select("id, slug, title, chapter_number")
       .eq("book_id", bookId)
       .order("chapter_number")
 
     if (error) throw new Error(error.message)
 
-    const book = (await fetchBooksForPublic()).find(book => book.id === bookId)
+    const extras = await fetchChapterListExtrasForBookPublic(bookId)
     return (data ?? []).map((chapter) => ({
       id: String(chapter.id),
       slug: String(chapter.slug),
       title: String(chapter.title),
       chapterNumber: Number(chapter.chapter_number),
-      teaser: book && canAccessBookChapter(false, book, Number(chapter.chapter_number)) ? extractChapterTeaser(chapter.content) : undefined,
-      blockCount: countReadableBlocks(chapter.content),
+      teaser: extras[String(chapter.id)]?.teaser,
+      blockCount: extras[String(chapter.id)]?.blockCount ?? 0,
     }))
   },
-  ["books", "public", "chapters", "chapter-teasers-v2"],
+  ["books", "public", "chapters", "chapter-teasers-v3"],
   { revalidate: false, tags: ["books-public"] }
 )
 
@@ -245,11 +280,20 @@ const fetchChapterContent = unstable_cache(
 )
 
 export async function fetchChapterForPublic(bookId: string, chapterSlug: string): Promise<PublicChapterWithContent | null> {
-  const book = (await fetchBooksForPublic()).find(book => book.id === bookId)
-  const chapters = await fetchChaptersForBookPublic(bookId)
-  const chapter = chapters.find(chapter => chapter.slug === chapterSlug)
-  if (!book || !chapter) return null
-  if (!canAccessBookChapter(false, book, chapter.chapterNumber) && !(await fetchPremiumStatus()).premium) return null
+  const [book, chapterResult] = await Promise.all([
+    fetchBooksForPublic().then((books) => books.find((book) => book.id === bookId) ?? null),
+    hasServiceClientConfig()
+      ? serviceClient
+          .from("chapters")
+          .select("id, chapter_number")
+          .eq("book_id", bookId)
+          .eq("slug", chapterSlug)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ])
+  if (!book || !chapterResult.data) return null
+  const chapterNumber = Number(chapterResult.data.chapter_number)
+  if (!canAccessBookChapter(false, book, chapterNumber) && !(await fetchPremiumStatus()).premium) return null
   return fetchChapterContent(bookId, chapterSlug)
 }
 
