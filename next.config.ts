@@ -23,6 +23,13 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    /* Catalogue content changes rarely (admin edits bust the server
+       caches), so let browsers reuse recently visited dynamic pages
+       instead of re-requesting them on every navigation. */
+    staleTimes: {
+      dynamic: 300,
+      static: 1800,
+    },
     optimizePackageImports: [
       '@mui/material',
       '@mui/icons-material',
