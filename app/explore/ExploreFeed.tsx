@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { ArrowForward, ExploreOutlined, MenuBook, PlayCircleOutlineRounded, PsychologyOutlined, Refresh, VolumeOff, VolumeUp } from '@mui/icons-material'
-import { Box, Button, Chip, IconButton, Popover, Tooltip, Typography } from '@mui/material'
+import { Box, Button, Chip, CircularProgress, IconButton, Popover, Tooltip, Typography } from '@mui/material'
 import { WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
 import SocialVideoEmbed from '@/app/components/SocialVideoEmbed'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
@@ -11,22 +11,20 @@ import { getEpisodeVideoSources, getYouTubeThumbnailUrl, type ExploreEpisode, ty
 import type { ExploreBookPage } from '@/app/actions/books'
 import { dispatchWordLookup } from '@/app/lib/activity'
 import { usePlayerStore } from '@/store/playerStore'
+import { fetchExploreFeedPage } from '@/app/actions/explore'
 import {
+  EXPLORE_PREFETCH_AHEAD,
   EXPLORE_READING_DURATION_MS,
   definitionCacheKey,
   getExploreSoundPreference,
   nextExploreIndex,
   setExploreSoundPreference,
   subscribeToExploreSoundPreference,
+  type ExploreFeedItem,
 } from '@/app/lib/explore'
 
-function shuffled<T>(items: readonly T[]): T[] {
-  const result = [...items]
-  for (let index = result.length - 1; index > 0; index -= 1) {
-    const randomIndex = Math.floor(Math.random() * (index + 1))
-    ;[result[index], result[randomIndex]] = [result[randomIndex], result[index]]
-  }
-  return result
+function feedItemKey(item: ExploreFeedItem): string {
+  return item.kind === 'video' ? `video:${item.episode.id}` : `book:${item.page.id}`
 }
 
 type OpenDefinition = (
@@ -357,27 +355,6 @@ function ExploreVideo({
   )
 }
 
-type ExploreItem =
-  | { kind: 'video'; episode: ExploreEpisode }
-  | { kind: 'book'; page: ExploreBookPage }
-
-function buildExploreItems(episodes: readonly ExploreEpisode[], bookPages: readonly ExploreBookPage[]): ExploreItem[] {
-  const videos = shuffled(episodes)
-  const pages = shuffled(bookPages)
-  if (videos.length === 0) return pages.map((page) => ({ kind: 'book' as const, page }))
-
-  const items: ExploreItem[] = []
-  let pageIndex = 0
-  videos.forEach((episode, index) => {
-    items.push({ kind: 'video', episode })
-    if ((index + 1) % 3 === 0 && pages.length > 0) {
-      items.push({ kind: 'book', page: pages[pageIndex % pages.length] })
-      pageIndex += 1
-    }
-  })
-  return items
-}
-
 function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen }: { page: ExploreBookPage; itemIndex: number; onDefinitionOpen: OpenDefinition }) {
   return (
     <Box
@@ -459,10 +436,12 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen }: { page: Exp
   )
 }
 
-export default function ExploreFeed({ episodes, bookPages }: { episodes: ExploreEpisode[]; bookPages: ExploreBookPage[] }) {
+export default function ExploreFeed({ seed, initialItems, initialHasMore }: { seed: string; initialItems: ExploreFeedItem[]; initialHasMore: boolean }) {
   const setGlobalVideoPlaying = usePlayerStore((state) => state.setIsPlaying)
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
-  const [orderedItems, setOrderedItems] = useState<ExploreItem[] | null>(null)
+  const [items, setItems] = useState(initialItems)
+  const [hasMore, setHasMore] = useState(initialHasMore)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectedDefinition, setSelectedDefinition] = useState<SelectedDefinition | null>(null)
   const [pageVisible, setPageVisible] = useState(true)
@@ -473,11 +452,36 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
   const advancedFromRef = useRef<number | null>(null)
   const programmaticTargetRef = useRef<number | null>(null)
   const scrollLockUntilRef = useRef(0)
+  const nextPageRef = useRef(1)
+  const loadingBatchRef = useRef(false)
+  const seenKeysRef = useRef(new Set(initialItems.map(feedItemKey)))
+
+  const loadNextBatch = useCallback(async () => {
+    if (loadingBatchRef.current || !hasMore) return
+    loadingBatchRef.current = true
+    setLoadingMore(true)
+    try {
+      const batch = await fetchExploreFeedPage(seed, nextPageRef.current)
+      nextPageRef.current += 1
+      const fresh = batch.items.filter((item) => {
+        const key = feedItemKey(item)
+        if (seenKeysRef.current.has(key)) return false
+        seenKeysRef.current.add(key)
+        return true
+      })
+      if (fresh.length > 0) setItems((current) => [...current, ...fresh])
+      setHasMore(batch.hasMore)
+    } catch {
+      // Leave hasMore set so a later approach retries the same page.
+    } finally {
+      loadingBatchRef.current = false
+      setLoadingMore(false)
+    }
+  }, [hasMore, seed])
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => setOrderedItems(buildExploreItems(episodes, bookPages)))
-    return () => window.cancelAnimationFrame(frame)
-  }, [bookPages, episodes])
+    if (activeIndex >= items.length - EXPLORE_PREFETCH_AHEAD) void loadNextBatch()
+  }, [activeIndex, items.length, loadNextBatch])
 
   const setItemRef = useCallback((index: number, node: HTMLElement | null) => {
     if (node) itemRefs.current.set(index, node)
@@ -493,9 +497,8 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
   }, [])
 
   const advanceOnce = useCallback((fromIndex: number) => {
-    if (!orderedItems) return
     if (activeIndexRef.current !== fromIndex || advancedFromRef.current === fromIndex) return
-    const nextIndex = nextExploreIndex(fromIndex, orderedItems.length)
+    const nextIndex = nextExploreIndex(fromIndex, items.length)
     if (nextIndex === null) return
 
     advancedFromRef.current = fromIndex
@@ -505,7 +508,7 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
     setSelectedDefinition(null)
     setActiveIndex(nextIndex)
     itemRefs.current.get(nextIndex)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [orderedItems])
+  }, [items.length])
 
   const openDefinition = useCallback<OpenDefinition>((entry, anchor, context, itemIndex) => {
     const cacheKey = definitionCacheKey(context, entry)
@@ -525,11 +528,11 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
   }, [])
 
   useEffect(() => {
-    if (!orderedItems || !pageVisible || orderedItems[activeIndex]?.kind !== 'book') return
+    if (!pageVisible || items[activeIndex]?.kind !== 'book') return
     if (selectedDefinition?.itemIndex === activeIndex) return
     const timer = window.setTimeout(() => advanceOnce(activeIndex), EXPLORE_READING_DURATION_MS)
     return () => window.clearTimeout(timer)
-  }, [activeIndex, advanceOnce, orderedItems, pageVisible, selectedDefinition?.itemIndex])
+  }, [activeIndex, advanceOnce, items, pageVisible, selectedDefinition?.itemIndex])
 
   useEffect(() => {
     const root = feedRef.current
@@ -546,13 +549,9 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
     }, { root, threshold: [0.55, 0.7, 0.85] })
     itemRefs.current.forEach((node) => observer.observe(node))
     return () => observer.disconnect()
-  }, [activateIndex, orderedItems])
+  }, [activateIndex, items])
 
-  if (orderedItems == null) {
-    return <Box component="main" sx={{ height: { xs: 'calc(100dvh - 108px - env(safe-area-inset-bottom))', md: 'calc(100dvh - 64px)' }, bgcolor: 'var(--awm-cream-light)' }} />
-  }
-
-  if (orderedItems.length === 0) {
+  if (items.length === 0) {
     return (
       <Box sx={{ minHeight: '70vh', display: 'grid', placeItems: 'center', px: 3, textAlign: 'center', bgcolor: 'var(--awm-cream-light)' }}>
         <Box><ExploreOutlined sx={{ fontSize: 54, color: 'var(--awm-gold)' }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: 'var(--awm-bark)' }}>No videos to explore yet</Typography></Box>
@@ -572,7 +571,7 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
         bgcolor: 'var(--awm-cream-light)',
       }}
     >
-      {orderedItems.map((item, index) => (
+      {items.map((item, index) => (
         <Box
           key={item.kind === 'video' ? `video-${item.episode.id}` : `book-${item.page.id}-${index}`}
           ref={(node: HTMLElement | null) => setItemRef(index, node)}
@@ -610,6 +609,23 @@ export default function ExploreFeed({ episodes, bookPages }: { episodes: Explore
           )}
         </Box>
       ))}
+      {loadingMore && (
+        <Box component="section" sx={{ height: '100%', display: 'grid', placeItems: 'center', bgcolor: 'var(--awm-cream-light)' }}>
+          <Box sx={{ textAlign: 'center' }}>
+            <CircularProgress size={34} sx={{ color: 'var(--awm-gold)' }} />
+            <Typography sx={{ mt: 1.5, fontFamily: 'Jost, sans-serif', fontSize: 13, color: 'var(--awm-muted)' }}>Loading more…</Typography>
+          </Box>
+        </Box>
+      )}
+      {!loadingMore && !hasMore && items.length > 1 && (
+        <Box component="section" sx={{ height: '100%', display: 'grid', placeItems: 'center', px: 3, textAlign: 'center', bgcolor: 'var(--awm-cream-light)' }}>
+          <Box>
+            <ExploreOutlined sx={{ fontSize: 54, color: 'var(--awm-gold)' }} />
+            <Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: 'var(--awm-bark)' }}>You've explored it all</Typography>
+            <Typography sx={{ mt: 0.5, fontFamily: 'Jost, sans-serif', fontSize: 14, color: 'var(--awm-muted)' }}>Keep scrolling to start back at the beginning.</Typography>
+          </Box>
+        </Box>
+      )}
       <Popover
         open={Boolean(selectedDefinition)}
         anchorEl={selectedDefinition?.anchor ?? null}

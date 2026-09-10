@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import { fetchEpisodesForExplorePublic } from '@/app/actions/cartoons'
-import { fetchBookPagesForExplorePublic } from '@/app/actions/books'
+import { fetchExploreFeedPage } from '@/app/actions/explore'
+import { getExploreSeed } from '@/app/lib/explore'
 import ExploreFeed from './ExploreFeed'
 
 export const revalidate = false
@@ -11,9 +11,13 @@ export const metadata: Metadata = {
 }
 
 export default async function ExplorePage() {
-  const [episodes, bookPages] = await Promise.all([
-    fetchEpisodesForExplorePublic(),
-    fetchBookPagesForExplorePublic(),
-  ])
-  return <ExploreFeed episodes={episodes} bookPages={bookPages} />
+  const seed = getExploreSeed()
+  const initialBatch = await fetchExploreFeedPage(seed, 0)
+  return (
+    <ExploreFeed
+      seed={seed}
+      initialItems={initialBatch.items}
+      initialHasMore={initialBatch.hasMore}
+    />
+  )
 }

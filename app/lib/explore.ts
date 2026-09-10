@@ -2,6 +2,10 @@ export const EXPLORE_AUDIO_STORAGE_KEY = 'awm-explore-sound-enabled-v1'
 export const EXPLORE_AUDIO_EVENT = 'awm-explore-sound-preference-change'
 export const EXPLORE_READING_DURATION_MS = 10_000
 
+import type { ExploreEpisode } from '@/app/lib/cartoons'
+import type { ExploreBookPage } from '@/app/actions/books'
+import { platformDate } from '@/app/lib/entitlements'
+
 let inMemorySoundPreference: boolean | null = null
 
 export interface ExploreDefinitionEntry {
@@ -59,4 +63,89 @@ export function definitionCacheKey(context: string, entry: ExploreDefinitionEntr
 export function nextExploreIndex(currentIndex: number, itemCount: number): number | null {
   if (itemCount <= 1 || currentIndex < 0 || currentIndex >= itemCount) return null
   return (currentIndex + 1) % itemCount
+}
+
+/* ── Seeded feed construction ────────────────────────────────────────
+   The explore feed is assembled server-side in cacheable batches. A
+   date-based seed gives every visitor the same order within a day, so
+   each (seed, page) batch is one small shared cache entry instead of a
+   per-visit random blob the size of the whole catalogue. */
+
+export const EXPLORE_PAGE_SIZE = 12
+export const EXPLORE_PREFETCH_AHEAD = 3
+
+export type ExploreFeedItem =
+  | { kind: 'video'; episode: ExploreEpisode }
+  | { kind: 'book'; page: ExploreBookPage }
+
+export interface ExploreFeedBatch {
+  items: ExploreFeedItem[]
+  hasMore: boolean
+}
+
+export function getExploreSeed(now = new Date()): string {
+  return platformDate(now)
+}
+
+function hashSeed(seed: string): number {
+  let hash = 2166136261
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return hash >>> 0
+}
+
+function mulberry32(seed: number): () => number {
+  let state = seed
+  return () => {
+    state = (state + 0x6d2b79f5) | 0
+    let value = Math.imul(state ^ (state >>> 15), 1 | state)
+    value = (value + Math.imul(value ^ (value >>> 7), 61 | value)) ^ value
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+export function seededShuffled<T>(items: readonly T[], seed: string): T[] {
+  const random = mulberry32(hashSeed(seed))
+  const result = [...items]
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(random() * (index + 1))
+    ;[result[index], result[randomIndex]] = [result[randomIndex], result[index]]
+  }
+  return result
+}
+
+export function buildExploreFeedItems(
+  episodes: readonly ExploreEpisode[],
+  bookPages: readonly ExploreBookPage[],
+  seed: string,
+): ExploreFeedItem[] {
+  const videos = seededShuffled(episodes, `${seed}:videos`)
+  const pages = seededShuffled(bookPages, `${seed}:books`)
+  if (videos.length === 0) return pages.map((page) => ({ kind: 'book' as const, page }))
+
+  const items: ExploreFeedItem[] = []
+  let pageIndex = 0
+  videos.forEach((episode, index) => {
+    items.push({ kind: 'video', episode })
+    if ((index + 1) % 3 === 0 && pages.length > 0) {
+      items.push({ kind: 'book', page: pages[pageIndex % pages.length] })
+      pageIndex += 1
+    }
+  })
+  return items
+}
+
+export function sliceExploreFeedBatch(
+  allItems: readonly ExploreFeedItem[],
+  page: number,
+  pageSize = EXPLORE_PAGE_SIZE,
+): ExploreFeedBatch {
+  const safePage = Number.isInteger(page) && page >= 0 ? page : 0
+  const start = safePage * pageSize
+  return {
+    items: allItems.slice(start, start + pageSize),
+    hasMore: start + pageSize < allItems.length,
+  }
 }
