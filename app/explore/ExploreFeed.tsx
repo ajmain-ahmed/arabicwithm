@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { ArrowForward, ExploreOutlined, MenuBook, PlayCircleOutlineRounded, PsychologyOutlined, Refresh, VolumeOff, VolumeUp } from '@mui/icons-material'
-import { Box, Button, Chip, CircularProgress, IconButton, Popover, Tooltip, Typography } from '@mui/material'
-import { WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
+import { Box, Button, Chip, CircularProgress, IconButton, Popover, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
+import { WordTooltip, HtmlTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
 import SocialVideoEmbed from '@/app/components/SocialVideoEmbed'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { getEpisodeVideoSources, getYouTubeThumbnailUrl, type ExploreEpisode, type VideoProvider } from '@/app/lib/cartoons'
@@ -46,40 +46,120 @@ function ExploreDefinitionWord({
   context,
   itemIndex,
   onOpen,
+  onPeek,
 }: {
   entry: VocabEntry
   context: string
   itemIndex: number
   onOpen: OpenDefinition
+  onPeek: (itemIndex: number | null) => void
 }) {
-  const open = (target: HTMLElement) => onOpen(entry, target, context, itemIndex)
+  const theme = useTheme()
+  /* Same breakpoint as the episode page: below lg, taps open the shared
+     definition popover; at lg and above, hovering opens an instant tooltip. */
+  const isTouchLayout = useMediaQuery(theme.breakpoints.down('lg'))
+  const [hoverOpen, setHoverOpen] = useState(false)
+  const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearLeaveTimer = useCallback(() => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current)
+      leaveTimerRef.current = null
+    }
+  }, [])
+
+  const scheduleClose = useCallback(() => {
+    clearLeaveTimer()
+    leaveTimerRef.current = setTimeout(() => {
+      setHoverOpen(false)
+      onPeek(null)
+    }, 60)
+  }, [clearLeaveTimer, onPeek])
+
+  const handleHoverOpen = useCallback(() => {
+    clearLeaveTimer()
+    setHoverOpen(true)
+    onPeek(itemIndex)
+    dispatchWordLookup()
+  }, [clearLeaveTimer, itemIndex, onPeek])
+
+  useEffect(() => () => clearLeaveTimer(), [clearLeaveTimer])
+
+  const wordStyles = {
+    display: 'inline-block',
+    mx: '0.1em',
+    cursor: 'pointer',
+    borderBottom: '2px dotted var(--awm-gold)',
+    transition: 'background-color .12s ease',
+    '&:hover, &:focus-visible': { bgcolor: 'color-mix(in srgb, var(--awm-gold) 14%, transparent)', outline: 'none' },
+  } as const
+
+  if (isTouchLayout) {
+    const open = (target: HTMLElement) => onOpen(entry, target, context, itemIndex)
+    return (
+      <Box
+        component="span"
+        className="vocab-word"
+        role="button"
+        tabIndex={0}
+        aria-label={`Show definition for ${entry.arabic}`}
+        onClick={(event) => {
+          event.stopPropagation()
+          open(event.currentTarget)
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return
+          event.preventDefault()
+          open(event.currentTarget)
+        }}
+        sx={wordStyles}
+      >
+        {entry.arabic}
+      </Box>
+    )
+  }
+
   return (
-    <Box
-      component="span"
-      className="vocab-word"
-      role="button"
-      tabIndex={0}
-      aria-label={`Show definition for ${entry.arabic}`}
-      onClick={(event) => {
-        event.stopPropagation()
-        open(event.currentTarget)
-      }}
-      onKeyDown={(event) => {
-        if (event.key !== 'Enter' && event.key !== ' ') return
-        event.preventDefault()
-        open(event.currentTarget)
-      }}
-      sx={{
-        display: 'inline-block',
-        mx: '0.1em',
-        cursor: 'pointer',
-        borderBottom: '2px dotted var(--awm-gold)',
-        transition: 'background-color .12s ease',
-        '&:hover, &:focus-visible': { bgcolor: 'color-mix(in srgb, var(--awm-gold) 14%, transparent)', outline: 'none' },
+    <HtmlTooltip
+      open={hoverOpen}
+      title={
+        hoverOpen ? (
+          <Box
+            onMouseEnter={clearLeaveTimer}
+            onMouseLeave={scheduleClose}
+            sx={{ p: 2.5 }}
+          >
+            <WordTooltip entry={entry} />
+          </Box>
+        ) : (
+          <></>
+        )
+      }
+      placement="bottom"
+      arrow
+      describeChild
+      disableHoverListener
+      disableFocusListener
+      disableTouchListener
+      slotProps={{
+        popper: {
+          modifiers: [
+            { name: 'preventOverflow', enabled: true, options: { padding: 16, boundary: 'viewport' } },
+            { name: 'flip', enabled: true, options: { padding: 16 } },
+          ],
+        },
       }}
     >
-      {entry.arabic}
-    </Box>
+      <Box
+        component="span"
+        className="vocab-word"
+        onMouseEnter={handleHoverOpen}
+        onMouseLeave={scheduleClose}
+        sx={wordStyles}
+      >
+        {entry.arabic}
+      </Box>
+    </HtmlTooltip>
   )
 }
 
@@ -91,6 +171,7 @@ function ExploreVideo({
   soundEnabled,
   itemIndex,
   onDefinitionOpen,
+  onDefinitionPeek,
 }: {
   episode: ExploreEpisode
   active: boolean
@@ -99,6 +180,7 @@ function ExploreVideo({
   soundEnabled: boolean
   itemIndex: number
   onDefinitionOpen: OpenDefinition
+  onDefinitionPeek: (itemIndex: number | null) => void
 }) {
   const [currentTime, setCurrentTime] = useState(0)
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
@@ -341,6 +423,7 @@ function ExploreVideo({
                         context={`episode:${episode.id}:line:${index}`}
                         itemIndex={itemIndex}
                         onOpen={onDefinitionOpen}
+                        onPeek={onDefinitionPeek}
                       />
                     ))
                   : line.arabic}
@@ -355,7 +438,7 @@ function ExploreVideo({
   )
 }
 
-function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen }: { page: ExploreBookPage; itemIndex: number; onDefinitionOpen: OpenDefinition }) {
+function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionPeek }: { page: ExploreBookPage; itemIndex: number; onDefinitionOpen: OpenDefinition; onDefinitionPeek: (itemIndex: number | null) => void }) {
   return (
     <Box
       sx={{
@@ -406,6 +489,7 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen }: { page: Exp
                     context={`book:${page.id}:block:${blockIndex}`}
                     itemIndex={itemIndex}
                     onOpen={onDefinitionOpen}
+                    onPeek={onDefinitionPeek}
                   />
                 ))}
                 {block.punctuation}
@@ -444,6 +528,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
   const [loadingMore, setLoadingMore] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectedDefinition, setSelectedDefinition] = useState<SelectedDefinition | null>(null)
+  const [peekItemIndex, setPeekItemIndex] = useState<number | null>(null)
   const [pageVisible, setPageVisible] = useState(true)
   const feedRef = useRef<HTMLDivElement | null>(null)
   const itemRefs = useRef(new Map<number, HTMLElement>())
@@ -493,6 +578,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
     activeIndexRef.current = index
     advancedFromRef.current = null
     setSelectedDefinition(null)
+    setPeekItemIndex(null)
     setActiveIndex(index)
   }, [])
 
@@ -506,6 +592,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
     programmaticTargetRef.current = nextIndex
     scrollLockUntilRef.current = Date.now() + 1_000
     setSelectedDefinition(null)
+    setPeekItemIndex(null)
     setActiveIndex(nextIndex)
     itemRefs.current.get(nextIndex)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [items.length])
@@ -516,6 +603,10 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
     definitionCacheRef.current.set(cacheKey, cachedEntry)
     setSelectedDefinition({ cacheKey, entry: cachedEntry, anchor, itemIndex })
     dispatchWordLookup()
+  }, [])
+
+  const handleDefinitionPeek = useCallback((index: number | null) => {
+    setPeekItemIndex(index)
   }, [])
 
   useEffect(() => () => setGlobalVideoPlaying(false), [setGlobalVideoPlaying])
@@ -532,10 +623,10 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
 
   useEffect(() => {
     if (!pageVisible || items[activeIndex]?.kind !== 'book') return
-    if (selectedDefinition?.itemIndex === activeIndex) return
+    if (selectedDefinition?.itemIndex === activeIndex || peekItemIndex === activeIndex) return
     const timer = window.setTimeout(() => advanceOnce(activeIndex), EXPLORE_READING_DURATION_MS)
     return () => window.clearTimeout(timer)
-  }, [activeIndex, advanceOnce, items, pageVisible, selectedDefinition?.itemIndex])
+  }, [activeIndex, advanceOnce, items, pageVisible, peekItemIndex, selectedDefinition?.itemIndex])
 
   useEffect(() => {
     const root = feedRef.current
@@ -605,10 +696,11 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
                 soundEnabled={soundEnabled}
                 itemIndex={index}
                 onDefinitionOpen={openDefinition}
+                onDefinitionPeek={handleDefinitionPeek}
               />
             </>
           ) : (
-            <ExploreBookPageSlide page={item.page} itemIndex={index} onDefinitionOpen={openDefinition} />
+            <ExploreBookPageSlide page={item.page} itemIndex={index} onDefinitionOpen={openDefinition} onDefinitionPeek={handleDefinitionPeek} />
           )}
         </Box>
       ))}
