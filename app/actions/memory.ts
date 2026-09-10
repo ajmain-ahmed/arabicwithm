@@ -1,5 +1,6 @@
 'use server'
 
+import { isMissingDatabaseFeature, LEARNING_SETUP_MESSAGE } from '@/app/lib/databaseErrors'
 import { z } from 'zod'
 import { fetchPremiumStatus } from '@/app/actions/premium'
 import { MEMORY, platformDate } from '@/app/lib/entitlements'
@@ -157,7 +158,7 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating, c
 
 export async function fetchMemoryProgress() {
   const userId = await getAuthenticatedUserId()
-  if (!userId) return { used: 0, totalXp: 0, total: 0, weekCards: 0, weekXp: 0, premium: false }
+  if (!userId) throw new Error('Sign in to view your Memory progress.')
   const today = platformDate()
   const monday = new Date(today + 'T12:00:00Z')
   monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7)
@@ -168,7 +169,9 @@ export async function fetchMemoryProgress() {
     serviceClient.from('memory_legacy_progress').select('xp').eq('user_id', userId).maybeSingle(),
     fetchPremiumStatus(),
   ])
-  if (daily.error || total.error || week.error || legacy.error) throw new Error('Unable to load Memory progress.')
+  const errors = [daily.error, total.error, week.error, legacy.error]
+  if (errors.some(isMissingDatabaseFeature)) throw new Error(LEARNING_SETUP_MESSAGE)
+  if (errors.some(Boolean)) throw new Error('Unable to load Memory progress. Please try again.')
   const all = total.data as { cards: number; xp: number }
   const weekly = week.data as { cards: number; xp: number }
   return { used: daily.count ?? 0, total: all.cards, totalXp: all.xp + Number(legacy.data?.xp ?? 0), weekCards: weekly.cards, weekXp: weekly.xp, premium: entitlement.premium }
@@ -192,6 +195,7 @@ export async function fetchSavedMemorySession(): Promise<SavedMemorySession | nu
   const userId = await getAuthenticatedUserId()
   if (!userId) return null
   const { data, error } = await serviceClient.from('memory_sessions').select('state').eq('user_id', userId).maybeSingle()
+  if (isMissingDatabaseFeature(error)) throw new Error(LEARNING_SETUP_MESSAGE)
   if (error) throw new Error('Unable to load saved session.')
   const parsed = sessionSchema.safeParse(data?.state)
   return parsed.success && parsed.data.index < parsed.data.cards.length ? parsed.data : null

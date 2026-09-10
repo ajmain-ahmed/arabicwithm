@@ -343,7 +343,7 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
       })
     )
 
-    return ((chapters ?? []) as Record<string, unknown>[]).flatMap((chapter) => {
+    const allPages = ((chapters ?? []) as Record<string, unknown>[]).flatMap((chapter) => {
       const book = booksById.get(String(chapter.book_id))
       if (!book || !canAccessBookChapter(false, book, Number(chapter.chapter_number))) return []
       return [{
@@ -357,6 +357,9 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
         level: book.level,
       }]
     })
+    // Bound the discovery payload; full books remain available in the reader.
+    const stride = Math.max(1, Math.ceil(allPages.length / 40))
+    return allPages.filter((_, index) => index % stride === 0).slice(0, 40)
   },
   ["books", "public", "explore-chapter-metas", "v1"],
   { revalidate: false, tags: ["books-public"] }

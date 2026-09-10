@@ -181,7 +181,7 @@ export default function CartoonsPage({
                 <Button onClick={resetFilters} sx={{ mt: 1.5, color: GOLD, textTransform: 'none' }}>Reset filters</Button>
               </Box>
             ) : view === 'episodes' ? (
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 1, sm: 2 } }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.5, sm: 1 } }}>
                 {filteredEpisodes.map((episode) => (
                   <ContentCard
                     key={episode.id}
@@ -193,10 +193,10 @@ export default function CartoonsPage({
                     level={episode.level}
                     tags={episode.tags}
                     showTags={false}
-                    aspectRatio="16 / 9"
-                    imageFit="contain"
+                    aspectRatio="3 / 4"
+                    imageFit="cover"
                     denseMobileTile
-                    mobileAspectRatio="16 / 9"
+                    mobileAspectRatio="3 / 4"
                     mobileTitleSize={10}
                     overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                     metaItems={[{ icon: <Movie sx={{ fontSize: 15, color: 'var(--awm-muted-light)' }} />, label: episode.showTitle }]}
@@ -204,7 +204,7 @@ export default function CartoonsPage({
                 ))}
               </Box>
             ) : (
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 1, sm: 2 } }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.5, sm: 1 } }}>
                 {filteredShows.map((show) => (
                   <Box key={show.id} sx={{ position: 'relative', minWidth: 0 }}>
                     {isAdmin && (
@@ -225,7 +225,7 @@ export default function CartoonsPage({
                       maxVisibleTags={2}
                       level={show.level}
                       denseMobileTile
-                      mobileAspectRatio="2 / 3"
+                      mobileAspectRatio="3 / 4"
                       mobileImagePosition="center"
                       overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                       metaItems={[{ icon: <School sx={{ fontSize: 14, color: 'var(--awm-muted-light)' }} />, label: `${episodesMap[show.slug]?.length ?? 0} episodes` }]}

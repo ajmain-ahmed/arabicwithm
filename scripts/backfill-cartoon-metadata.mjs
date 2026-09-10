@@ -23,9 +23,9 @@ for (let offset = 0; ; offset += 100) {
     if (!patch) continue
     for (const [field, value] of Object.entries(patch)) {
       if (apply) {
-        let update = client.from('episodes').update({ [field]: value }).eq('id', episode.id).eq('transcript', episode.transcript)
+        let update = client.from('episodes').update({ [field]: value }).eq('id', episode.id)
         // Compare-and-set: preserve metadata written by an editor after the read.
-        update = episode[field] == null ? update.is(field, null) : update.eq(field, episode[field])
+        update = episode[field] == null ? update.is(field, null) : update.eq(field, field === 'tags' ? '{}' : episode[field])
         const { data: updated, error: updateError } = await update.select('id')
         if (updateError) throw new Error(`${episode.slug}: ${updateError.message}`)
         if (!updated.length) { console.log(`Skipped concurrent edit: ${episode.slug} ${field}`); continue }

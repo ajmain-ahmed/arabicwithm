@@ -27,10 +27,12 @@ create index if not exists learning_activity_daily_user_date_idx
 alter table public.learning_profiles enable row level security;
 alter table public.learning_activity_daily enable row level security;
 
+drop policy if exists "Users can read their learning profile" on public.learning_profiles;
 create policy "Users can read their learning profile"
   on public.learning_profiles for select
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can read their daily learning activity" on public.learning_activity_daily;
 create policy "Users can read their daily learning activity"
   on public.learning_activity_daily for select
   using (auth.uid() = user_id);

@@ -362,7 +362,7 @@ export async function fetchAllEpisodesForAdmin(): Promise<EpisodeRow[]> {
 
   const { data, error } = await serviceClient
     .from("episodes")
-    .select("*")
+    .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, created_at")
     .order("show_id", { ascending: true })
     .order("created_at", { ascending: true })
 

@@ -1,4 +1,4 @@
-import { act } from 'react'
+import { act, useEffect } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import useYouTubePlayer from './useYouTubePlayer'
@@ -12,8 +12,9 @@ const calls: string[] = []
 const destroy = vi.fn()
 const pause = vi.fn()
 function Harness({ id }: { id?: string }) {
-  controls = useYouTubePlayer(id, undefined, undefined, { autoplay: true, muted: true })
-  return <div ref={controls.wrapRef} />
+  const player = useYouTubePlayer(id, undefined, undefined, { autoplay: true, muted: true })
+  useEffect(() => { controls = player })
+  return <div ref={player.wrapRef} />
 }
 beforeEach(() => {
   vi.useFakeTimers()

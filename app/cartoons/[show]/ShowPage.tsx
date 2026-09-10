@@ -240,7 +240,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                     sm: 'repeat(2, minmax(0, 1fr))',
                     xl: 'repeat(4, minmax(0, 1fr))',
                   },
-                  gap: { xs: 1, sm: 2 },
+                  gap: { xs: 0.5, sm: 1 },
                 }}
               >
                 {filteredEpisodes.map((ep) => (
@@ -298,10 +298,10 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                         tags={ep.tags}
                         showTags={false}
                         description={ep.description}
-                        aspectRatio="16 / 9"
-                        imageFit="contain"
+                        aspectRatio="3 / 4"
+                        imageFit="cover"
                         denseMobileTile
-                        mobileAspectRatio="16 / 9"
+                        mobileAspectRatio="3 / 4"
                         mobileTitleSize={10}
                         overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                         metaItems={[]}

@@ -61,11 +61,11 @@ export default function ContentCard({
   level,
   metaItems,
   overlayIcon,
-  aspectRatio = '16/9',
-  imageFit = 'contain',
+  aspectRatio = '3 / 4',
+  imageFit = 'cover',
   compactMobileRow = false,
   denseMobileTile = false,
-  mobileAspectRatio = '4 / 3',
+  mobileAspectRatio = '3 / 4',
   mobileImagePosition = 'center',
   mobileTitleSize = 10,
   showTags = true,
@@ -90,12 +90,14 @@ export default function ContentCard({
         display: denseMobileTile ? 'block' : compactMobileRow ? { xs: 'grid', sm: 'block' } : 'block',
         gridTemplateColumns: compactMobileRow ? { xs: '34% minmax(0, 1fr)', sm: 'none' } : undefined,
         alignItems: denseMobileTile ? undefined : compactMobileRow ? { xs: 'start', sm: 'initial' } : undefined,
+        position: 'relative',
+        '&:focus-visible': { outline: '3px solid var(--awm-gold)', outlineOffset: 3 },
         color: 'inherit',
         textDecoration: 'none',
-        borderRadius: denseMobileTile ? { xs: '4px', sm: '10px' } : '10px',
+        borderRadius: denseMobileTile ? '4px' : '10px',
         overflow: 'hidden',
-        backgroundColor: denseMobileTile ? { xs: 'transparent', sm: WARM_WHITE } : WARM_WHITE,
-        border: denseMobileTile ? { xs: 0, sm: '1px solid rgba(44,26,14,0.04)' } : '1px solid rgba(44,26,14,0.04)',
+        backgroundColor: denseMobileTile ? 'transparent' : WARM_WHITE,
+        border: denseMobileTile ? 0 : '1px solid rgba(44,26,14,0.04)',
         boxShadow: denseMobileTile
           ? { xs: 'none', sm: hovered ? '0 8px 24px rgba(44,26,14,0.1)' : '0 1px 4px rgba(44,26,14,0.06)' }
           : hovered ? '0 8px 24px rgba(44,26,14,0.1)' : '0 1px 4px rgba(44,26,14,0.06)',
@@ -154,9 +156,9 @@ export default function ContentCard({
                 : imageFit === 'natural' ? 'auto' : '100%',
               display: 'block',
               objectFit: denseMobileTile
-                ? { xs: 'contain', sm: imageFit === 'natural' ? undefined : imageFit }
+                ? { xs: 'cover', sm: imageFit === 'natural' ? undefined : imageFit }
                 : compactMobileRow
-                ? { xs: imageFit === 'natural' ? 'contain' : imageFit, sm: imageFit === 'natural' ? undefined : imageFit }
+                ? { xs: imageFit === 'natural' ? 'cover' : imageFit, sm: imageFit === 'natural' ? undefined : imageFit }
                 : imageFit === 'natural' ? undefined : imageFit,
               objectPosition: denseMobileTile ? { xs: mobileImagePosition, sm: 'center' } : 'center',
               transform: hovered && imageFit === 'cover' ? 'scale(1.03)' : 'scale(1)',
@@ -262,7 +264,7 @@ export default function ContentCard({
       </Box>
 
       {/* Card Body */}
-      <Box sx={{ p: denseMobileTile ? { xs: '5px 1px 0', sm: 2 } : compactMobileRow ? { xs: 1.5, sm: 2 } : 2, flex: denseMobileTile ? undefined : compactMobileRow ? 1 : undefined, minWidth: 0 }}>
+      <Box sx={{ ...(denseMobileTile ? { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 1, background: 'linear-gradient(transparent, rgba(0,0,0,.8))', '& > *:not(:first-child)': { display: 'none' }, '& > :first-child': { color: '#fff', fontSize: { xs: 11, sm: 15 }, lineHeight: 1.3, whiteSpace: 'normal', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', minHeight: 0 } } : {}), p: denseMobileTile ? { xs: '20px 6px 6px', sm: '30px 12px 12px' } : compactMobileRow ? { xs: 1.5, sm: 2 } : 2, flex: denseMobileTile ? undefined : compactMobileRow ? 1 : undefined, minWidth: 0 }}>
         <Typography
           sx={{
             fontFamily: 'var(--font-heading)',

@@ -16,6 +16,7 @@ import {
   Paper,
   IconButton,
   Collapse,
+  Alert,
 } from "@mui/material"
 import { Edit, Add, ExpandMore } from "@mui/icons-material"
 import {
@@ -234,7 +235,7 @@ export default function ShowsAdminPage() {
       </Box>
 
       {error && (
-        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "Jost, sans-serif" }}>{error}</Typography>
+        <Alert severity="error" sx={{ mb: 2 }} action={<Button onClick={() => void load()}>Retry</Button>}>{error}</Alert>
       )}
 
       <Paper elevation={0} sx={{ borderRadius: "16px", border: "1px solid rgba(122,110,101,0.15)", overflow: "hidden" }}>

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase/client'
 
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextValue>({
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
@@ -49,10 +51,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
+      if (_event === "SIGNED_IN" || _event === "SIGNED_OUT") router.refresh()
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [router])
 
   const value = useMemo(() => ({ user, session, loading }), [user, session, loading])
 

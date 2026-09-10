@@ -51,7 +51,7 @@ export default function AdminNav() {
           py: 1,
         }}
       >
-        <Box sx={{ display: { xs: "none", md: "block" } }} />
+        <Button component={Link} href="/" sx={{ justifySelf: "start", display: { xs: "none", md: "inline-flex" }, color: "var(--awm-muted)" }}>Back to website</Button>
         <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", justifyContent: "center", alignItems: "center", minWidth: 0 }}>
           {navItems.map((item) => {
             const active = pathname === item.href || pathname?.startsWith(`${item.href}/`)

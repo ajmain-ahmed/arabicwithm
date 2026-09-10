@@ -8,10 +8,10 @@ import { MEMORY } from './entitlements'
 let db: PGlite
 const user = '11111111-1111-4111-8111-111111111111'
 const premium = '22222222-2222-4222-8222-222222222222'
-const migration = readFileSync('supabase/migrations/20260909120000_platform_premium_memory.sql', 'utf8')
+const migration = readFileSync('docs/platform-setup.sql', 'utf8')
 beforeAll(async () => {
   db = new PGlite()
-  await db.exec(`create schema auth; create role anon; create role authenticated; create role service_role;
+  await db.exec(`create schema auth; create function auth.uid() returns uuid language sql as 'select null::uuid'; create role anon; create role authenticated; create role service_role;
     create table auth.users(id uuid primary key, raw_user_meta_data jsonb);
     create table public.books(id uuid primary key, title text);
     create table public.chapters(id uuid primary key, content jsonb);

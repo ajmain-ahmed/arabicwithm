@@ -1,4 +1,5 @@
 'use server'
+import { isMissingDatabaseFeature } from '@/app/lib/databaseErrors'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
 import { serviceClient } from '@/app/lib/supabase'
 import { hasPremium, PREMIUM } from '@/app/lib/entitlements'
@@ -8,6 +9,7 @@ export async function fetchPremiumStatus() {
   const userId = await getAuthenticatedUserId()
   if (!userId) return { premium: false, signedIn: false, manageable: false }
   const { data, error } = await serviceClient.from('subscriptions').select('status, current_period_end, customer_id').eq('user_id', userId).maybeSingle()
+  if (isMissingDatabaseFeature(error)) return { premium: false, signedIn: true, manageable: false }
   if (error) throw new Error('Unable to verify Premium access.')
   return { premium: hasPremium(data), signedIn: true, manageable: Boolean(data?.customer_id) }
 }
@@ -29,7 +31,7 @@ export async function startPremiumCheckout(): Promise<string> {
   if (existing.data.some(s => ['active', 'trialing', 'past_due', 'unpaid', 'incomplete'].includes(s.status))) return managePremium()
   const open = await stripe.checkout.sessions.list({ customer, status: 'open', limit: 10 })
   if (open.data[0]?.url) return open.data[0].url
-  const session = await stripe.checkout.sessions.create({ customer, mode: 'subscription', line_items: [{ price: priceId, quantity: 1 }], client_reference_id: userId, subscription_data: { metadata: { user_id: userId } }, success_url: `${siteUrl()}/profile?checkout=success`, cancel_url: `${siteUrl()}/?checkout=cancelled` }, { idempotencyKey: `awm-checkout-${userId}-${Math.floor(Date.now() / 1800000)}` })
+  const session = await stripe.checkout.sessions.create({ customer, mode: 'subscription', line_items: [{ price: priceId, quantity: 1 }], client_reference_id: userId, subscription_data: { metadata: { user_id: userId } }, success_url: `${siteUrl()}/?checkout=success`, cancel_url: `${siteUrl()}/?checkout=cancelled` }, { idempotencyKey: `awm-checkout-${userId}-${Math.floor(Date.now() / 1800000)}` })
   if (!session.url) throw new Error('Unable to start checkout.')
   return session.url
 }
@@ -38,5 +40,5 @@ export async function managePremium(): Promise<string> {
   if (!userId) throw new Error('Sign in to manage Premium.')
   const { data, error } = await serviceClient.from('subscriptions').select('customer_id').eq('user_id', userId).single()
   if (error || !data.customer_id) throw new Error('No billing account found.')
-  return (await stripeClient().billingPortal.sessions.create({ customer: data.customer_id, return_url: `${siteUrl()}/profile` })).url
+  return (await stripeClient().billingPortal.sessions.create({ customer: data.customer_id, return_url: `${siteUrl()}/` })).url
 }
