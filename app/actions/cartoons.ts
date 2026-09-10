@@ -13,9 +13,6 @@ import {
   type ExploreEpisodeMeta,
   isNewTranscript,
   normalizeNewTranscript,
-  getShowCoverPath,
-  getEpisodeCoverPath,
-  getYouTubeThumbnailUrl,
   normalizeYouTubeId,
   normalizeInstagramId,
   normalizeTikTokId,
@@ -89,7 +86,7 @@ export const fetchShowsForPublic = unstable_cache(
       title: String(row.title),
       titleAr: row.title_ar ? String(row.title_ar) : undefined,
       description: row.description ? String(row.description) : undefined,
-      cover: getShowCoverPath(String(row.slug)),
+      cover: `/api/covers/shows/${row.id}`,
       level: String(row.level ?? ""),
       category: row.category ? String(row.category) : undefined,
       tags: uniqueTags([
@@ -99,7 +96,7 @@ export const fetchShowsForPublic = unstable_cache(
       episodeCount: counts.get(String(row.id)) ?? 0,
     }))
   },
-  ["cartoons", "shows", "public", "catalogue-metadata-v2"],
+  ["cartoons", "shows", "public", "catalogue-storage-covers-v3"],
   { revalidate: false, tags: ["cartoons-public"] }
 )
 
@@ -122,7 +119,7 @@ export async function fetchShowsForEpisodeEdit(): Promise<ShowRow[]> {
     title: String(row.title),
     title_ar: row.title_ar ? String(row.title_ar) : null,
     description: row.description ? String(row.description) : null,
-    cover: getShowCoverPath(String(row.slug)),
+    cover: `/api/covers/shows/${row.id}`,
     level: String(row.level ?? ""),
     category: row.category ? String(row.category) : null,
   }))
@@ -155,7 +152,7 @@ export const fetchShowBySlugPublic = unstable_cache(
       title: String(data.title),
       titleAr: data.title_ar ? String(data.title_ar) : undefined,
       description: data.description ? String(data.description) : undefined,
-      cover: getShowCoverPath(String(data.slug)),
+      cover: `/api/covers/shows/${data.id}`,
       level: String(data.level ?? ""),
       category: data.category ? String(data.category) : undefined,
       tags: uniqueTags([
@@ -167,7 +164,7 @@ export const fetchShowBySlugPublic = unstable_cache(
       episodeCount: episodes?.length ?? 0,
     }
   },
-  ["cartoons", "show", "catalogue-metadata-v2"],
+  ["cartoons", "show", "catalogue-storage-covers-v3"],
   { revalidate: false, tags: ["cartoons-public"] }
 )
 
@@ -213,9 +210,9 @@ export const fetchEpisodesForShowPublic = unstable_cache(
       throw new Error(error.message)
     }
 
-    return (data ?? []).map((row) => mapEpisodeRow(row, showSlug))
+    return (data ?? []).map((row) => mapEpisodeRow(row))
   },
-  ["cartoons", "episodes", "catalogue-metadata-v2"],
+  ["cartoons", "episodes", "catalogue-storage-covers-v3"],
   { revalidate: false, tags: ["cartoons-public"] }
 )
 
@@ -431,12 +428,12 @@ export const fetchExploreEpisodeMetasForPublic = unstable_cache(
     return (episodes ?? []).flatMap((row) => {
       const show = showsById.get(String(row.show_id))
       if (!show) return []
-      const meta = mapEpisodeRow(row, show.slug)
+      const meta = mapEpisodeRow(row)
       if (getEpisodeVideoSources(meta).length === 0) return []
       return [{ ...meta, showSlug: show.slug, showTitle: show.title }]
     })
   },
-  ["cartoons", "explore", "episode-metas", "v1"],
+  ["cartoons", "explore", "episode-metas", "storage-covers-v2"],
   { revalidate: false, tags: ["cartoons-public"] }
 )
 
@@ -468,7 +465,7 @@ export const fetchExploreEpisodeByIdPublic = unstable_cache(
     if (!show) return null
 
     const showSlug = String(show.slug)
-    const meta = mapEpisodeRow(row as Record<string, unknown>, showSlug)
+    const meta = mapEpisodeRow(row as Record<string, unknown>)
 
     /* ── Intern word entries within this episode so repeated words
          serialize once in the RSC payload. ── */
@@ -509,20 +506,19 @@ export const fetchExploreEpisodeByIdPublic = unstable_cache(
       })),
     }
   },
-  ["cartoons", "explore", "episode", "v1"],
+  ["cartoons", "explore", "episode", "storage-covers-v2"],
   { revalidate: false, tags: ["cartoons-public"] }
 )
 
 function mapEpisodeRow(
-  row: Record<string, unknown>,
-  showSlug?: string
+  row: Record<string, unknown>
 ): EpisodeMeta {
   const episodeSlug = String(row.slug)
   const youtubeId = normalizeYouTubeId(row.youtube_id ? String(row.youtube_id) : undefined)
   const instagramId = normalizeInstagramId(row.instagram_id ? String(row.instagram_id) : undefined)
   const tiktokId = normalizeTikTokId(row.tiktok_id ? String(row.tiktok_id) : undefined)
   const facebookId = normalizeFacebookId(row.facebook_id ? String(row.facebook_id) : undefined)
-  const cover = getYouTubeThumbnailUrl(youtubeId) ?? (showSlug != null ? getEpisodeCoverPath(showSlug, episodeSlug) : undefined)
+  const cover = `/api/covers/episodes/${row.id}`
 
   return {
     id: String(row.id),

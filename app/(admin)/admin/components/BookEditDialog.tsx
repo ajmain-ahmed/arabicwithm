@@ -23,7 +23,6 @@ import {
   type BookInput,
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
-import { getBookCoverUrl } from "@/app/lib/storage"
 
 interface BookEditDialogProps {
   open: boolean
@@ -46,6 +45,8 @@ export default function BookEditDialog({
 
   const [slug, setSlug] = useState("")
   const [title, setTitle] = useState("")
+  const [cover, setCover] = useState<string | null>(null)
+  const [loaded, setLoaded] = useState(false)
   const [author, setAuthor] = useState("")
   const [titleAr, setTitleAr] = useState("")
   const [description, setDescription] = useState("")
@@ -57,8 +58,13 @@ export default function BookEditDialog({
   useEffect(() => {
     if (!open) return
     setError(null)
+    setLoaded(false)
+    let active = true
 
     if (isNew) {
+      setLoading(false)
+      setLoaded(true)
+      setCover(null)
       setSlug("")
       setTitle("")
       setAuthor("")
@@ -72,10 +78,13 @@ export default function BookEditDialog({
     setLoading(true)
     fetchBookForAdmin(bookId!)
       .then((row: BookRow | null) => {
+        if (!active) return
         if (!row) {
           setError("Book not found")
           return
         }
+        setLoaded(true)
+        setCover(row.cover)
         setSlug(row.slug)
         setTitle(row.title)
         setAuthor(row.author ?? "")
@@ -84,8 +93,9 @@ export default function BookEditDialog({
         setLevel(row.level)
         setCategory(row.category ?? "")
       })
-      .catch((e: unknown) => setError(errorMessage(e) ?? "Failed to load book"))
-      .finally(() => setLoading(false))
+      .catch((e: unknown) => { if (active) setError(errorMessage(e) ?? "Failed to load book") })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
   }, [open, bookId, isNew])
 
   const handleSave = async () => {
@@ -98,12 +108,13 @@ export default function BookEditDialog({
         author: author.trim() || null,
         title_ar: titleAr || null,
         description: description || null,
-        cover: slug ? getBookCoverUrl(slug) : null,
+        cover,
         level,
         category: category || null,
       }
 
       if (isNew) {
+      setLoading(false)
         await createBook(input)
       } else {
         await updateBook(bookId!, input)
@@ -185,7 +196,7 @@ export default function BookEditDialog({
           </Typography>
         )}
 
-        {!loading && (
+        {!loading && loaded && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <AdminTextField label="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} fullWidth size="small" />
             <AdminTextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" />
@@ -195,7 +206,9 @@ export default function BookEditDialog({
               label="Cover image"
               bucket="covers"
               path={slug ? `books/${slug}.webp` : ""}
-              previewUrl={slug ? getBookCoverUrl(slug) : null}
+              previewUrl={cover ? (isNew ? cover : `/api/covers/books/${bookId}`) : null}
+              onUploaded={setCover}
+              onRemove={() => setCover(null)}
             />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />
@@ -230,7 +243,7 @@ export default function BookEditDialog({
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={saving || loading}
+          disabled={!loaded || saving || loading}
           startIcon={<Save sx={{ fontSize: "1rem" }} />}
           sx={{ background: "#2c1a0e", color: "#f5ede0", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", width: { xs: "100%", sm: "auto" }, "&:hover": { background: "#1a0f08" } }}
         >

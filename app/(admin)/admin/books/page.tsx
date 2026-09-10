@@ -290,7 +290,7 @@ export default function BooksAdminPage() {
                     <React.Fragment key={book.id}>
                       <TableRow
                         hover
-                        onClick={() => toggleExpand(book.id)}
+                        onClick={() => openEditBook(book.id)}
                         sx={{
                           cursor: "pointer",
                           backgroundColor: isExpanded ? "rgba(184,134,11,0.04)" : "inherit",

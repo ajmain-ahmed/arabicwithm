@@ -155,6 +155,7 @@ export default function MobileDrawer({
                     { label: 'Watch', icon: <Movie sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/cartoons') },
                     { label: 'Read', icon: <BookOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/books') },
                     { label: 'Memory', icon: <PsychologyOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/memory') },
+                    { label: 'Give Feedback', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => { window.location.href = '/feedback' } },
                     { label: 'Contact', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: onContactOpen },
                 ].map((item) => (
                     <ListItem disablePadding key={item.label}>

@@ -7,7 +7,6 @@ import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
 import { extractChapterTeaser } from "@/app/lib/bookChapterTeaser"
 import { stripDiacritics } from "@/app/lib/arabic"
 import type { CartoonWordEntry } from "@/app/lib/cartoons"
-import { getBookCoverUrl } from "@/app/lib/storage"
 
 export interface PublicBook {
   id: string
@@ -84,7 +83,7 @@ function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook
     title: String(row.title),
     titleAr: row.title_ar ? String(row.title_ar) : undefined,
     description: row.description ? String(row.description) : undefined,
-    cover: getBookCoverUrl(slug),
+    cover: `/api/covers/books/${row.id}`,
     level: String(row.level ?? ""),
     category: row.category ? String(row.category) : undefined,
     tags: Array.isArray(row.tags) ? row.tags.map((tag) => String(tag)).filter(Boolean) : [],
@@ -132,7 +131,7 @@ export const fetchBooksForPublic = unstable_cache(
       mapBook(book, chapterCounts.get(String(book.id)) ?? 0)
     )
   },
-  ["books", "public", "book-catalogue-v3"],
+  ["books", "public", "book-catalogue-storage-v5"],
   { revalidate: false, tags: ["books-public"] }
 )
 
@@ -156,7 +155,7 @@ export const fetchBookBySlugPublic = unstable_cache(
     if (countError) throw new Error(countError.message)
     return mapBook(book as Record<string, unknown>, count ?? 0)
   },
-  ["books", "public", "detail", "book-catalogue-v3"],
+  ["books", "public", "detail", "book-catalogue-storage-v5"],
   { revalidate: false, tags: ["books-public"] }
 )
 
@@ -336,7 +335,7 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
             chapterCount: (chapters ?? []).filter((ch) => ch.book_id === book.id).length,
             slug,
             title: String(book.title),
-            cover: getBookCoverUrl(slug),
+            cover: `/api/covers/books/${book.id}`,
             level: String(book.level ?? ""),
           },
         ]
@@ -361,7 +360,7 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
     const stride = Math.max(1, Math.ceil(allPages.length / 40))
     return allPages.filter((_, index) => index % stride === 0).slice(0, 40)
   },
-  ["books", "public", "explore-chapter-metas", "v1"],
+  ["books", "public", "explore-chapter-metas", "storage-covers-v2"],
   { revalidate: false, tags: ["books-public"] }
 )
 

@@ -14,7 +14,8 @@ const pause = vi.fn()
 function Harness({ id }: { id?: string }) {
   const player = useYouTubePlayer(id, undefined, undefined, { autoplay: true, muted: true })
   useEffect(() => { controls = player })
-  return <div ref={player.wrapRef} />
+  const { wrapRef } = player
+  return <div ref={wrapRef} />
 }
 beforeEach(() => {
   vi.useFakeTimers()

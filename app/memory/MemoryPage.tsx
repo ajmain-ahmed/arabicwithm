@@ -15,7 +15,7 @@ import {
 import { Alert, Autocomplete, Box, Button, Chip, Container, LinearProgress, Paper, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import PremiumPrompt from "@/app/components/PremiumPrompt"
 import { MEMORY } from "@/app/lib/entitlements"
-import { fetchMemoryProgress, fetchSavedMemorySession, saveMemorySession, type SavedMemorySession, recordMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
+import { loadMemoryProgress, loadSavedMemorySession, saveMemorySession, type SavedMemorySession, recordMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
 import { useAuth } from '@/app/AuthContext'
 import type { MemoryDirection, MemoryRating } from '@/app/lib/memory'
 
@@ -75,7 +75,9 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     if (!user) return
     let active = true
     const load = () => {
-      void fetchMemoryProgress().then(progress => {
+      void loadMemoryProgress().then(result => {
+        if (!result.ok) throw new Error(result.error)
+        const progress = result.data
         if (!active) return
         setUsed(progress.used); setPremium(progress.premium); setTotalXp(progress.totalXp); setReady(true); setProgressError('')
       }).catch(error => {
@@ -83,7 +85,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
       }).finally(() => { if (active) setProgressLoading(false) })
     }
     load()
-    void fetchSavedMemorySession().then(session => { if (active) { setSaved(session); setSessionError('') } }).catch(error => { if (active) setSessionError(error instanceof Error ? error.message : 'Unable to load your saved session.') })
+    void loadSavedMemorySession().then(result => { if (!result.ok) throw new Error(result.error); const session = result.data; if (active) { setSaved(session); setSessionError('') } }).catch(error => { if (active) setSessionError(error instanceof Error ? error.message : 'Unable to load your saved session.') })
     const refresh = () => { if (document.visibilityState === 'visible') load() }
     const timer = window.setInterval(refresh, 60000)
     window.addEventListener('focus', refresh)

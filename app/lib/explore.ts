@@ -4,7 +4,6 @@ export const EXPLORE_READING_DURATION_MS = 10_000
 
 import type { ExploreEpisode, ExploreEpisodeMeta } from '@/app/lib/cartoons'
 import type { ExploreBookChapterMeta, ExploreBookPage } from '@/app/actions/books'
-import { platformDate } from '@/app/lib/entitlements'
 
 let inMemorySoundPreference: boolean | null = null
 
@@ -65,15 +64,7 @@ export function nextExploreIndex(currentIndex: number, itemCount: number): numbe
   return (currentIndex + 1) % itemCount
 }
 
-/* ── Seeded feed construction ────────────────────────────────────────
-   The explore feed is planned server-side in cacheable batches. A
-   date-based seed gives every visitor the same order within a day, so
-   each (seed, page) batch is one small shared cache entry instead of a
-   per-visit random blob the size of the whole catalogue.
-   Planning only references episode/chapter ids plus per-chapter page
-   counts — transcripts and chapter content are hydrated per item, for
-   the items a batch actually contains. */
-
+// A visit has its own seed; pagination retains that seed for stable ordering.
 export const EXPLORE_PAGE_SIZE = 12
 export const EXPLORE_PREFETCH_AHEAD = 3
 
@@ -96,8 +87,8 @@ export interface ExploreFeedPlanBatch {
   hasMore: boolean
 }
 
-export function getExploreSeed(now = new Date()): string {
-  return platformDate(now)
+export function getExploreSeed(): string {
+  return crypto.randomUUID()
 }
 
 function hashSeed(seed: string): number {

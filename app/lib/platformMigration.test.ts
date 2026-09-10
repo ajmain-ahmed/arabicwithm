@@ -19,6 +19,7 @@ beforeAll(async () => {
     insert into auth.users values ('${user}', '{"memory_xp":9}'), ('${premium}', '{}');
     insert into books values ('${randomUUID()}', 'Blackwood Manor'), ('${randomUUID()}', 'Layla and the Shadow'), ('${randomUUID()}', 'The Stranger Who Knows My Name'), ('${randomUUID()}', 'When Learning Feels Real'), ('${randomUUID()}', 'Future Book');`)
   await db.exec(migration)
+  await db.exec(readFileSync('supabase/migrations/20260910120000_feedback_book_permissions.sql', 'utf8'))
 }, 30000)
 afterAll(async () => { await db?.close() })
 async function review(id: string, completion = randomUUID(), card = randomUUID(), direction = 'arabic') {
@@ -75,4 +76,14 @@ describe.sequential('actual PostgreSQL migration and Memory transactions', () =>
     await expect(review(user)).rejects.toThrow(/permission denied/)
     await db.exec('reset role')
   })
+})
+
+it('stores feedback metadata and protects direct client writes', async () => {
+  await db.query('insert into feedback(id,user_id,rating,comment) values ($1,$2,5,$3)', [randomUUID(), user, 'Useful practice'])
+  const { rows } = await db.query<{ rating: number; created_at: unknown }>('select rating,created_at from feedback')
+  expect(rows[0].rating).toBe(5)
+  expect(rows[0].created_at).toBeTruthy()
+  await expect(db.query('insert into feedback(id,user_id,rating) values ($1,$2,6)', [randomUUID(), user])).rejects.toThrow()
+  const result = await db.query<{ allowed: boolean }>("select has_table_privilege('authenticated','books','UPDATE') or has_table_privilege('anon','feedback','INSERT') as allowed")
+  expect(result.rows[0].allowed).toBe(false)
 })

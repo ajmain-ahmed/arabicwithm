@@ -5,7 +5,6 @@ import { z } from 'zod'
 import { fetchPremiumStatus } from '@/app/actions/premium'
 import { MEMORY, platformDate } from '@/app/lib/entitlements'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
-import { getShowCoverPath, getYouTubeThumbnailUrl } from '@/app/lib/cartoons'
 import {
   extractMemoryCards,
   parseMemoryCardId,
@@ -38,11 +37,6 @@ export interface MemoryScopeInput {
 }
 
 type EpisodeRecord = Record<string, unknown>
-
-function customEpisodeCover(row: EpisodeRecord): string | undefined {
-  const stored = typeof row.cover === 'string' && /^https:\/\//i.test(row.cover) ? row.cover : undefined
-  return stored ?? getYouTubeThumbnailUrl(typeof row.youtube_id === 'string' ? row.youtube_id : undefined)
-}
 
 function sampleEpisodeRows(rows: EpisodeRecord[], limit: number): EpisodeRecord[] {
   const sampled = [...rows]
@@ -100,7 +94,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
       showTitle: show.title,
       episodeSlug: String(row.slug),
       episodeTitle: String(row.title),
-      cover: customEpisodeCover(row) ?? getShowCoverPath(show.slug),
+      cover: `/api/covers/episodes/${row.id}`,
       transcript: row.transcript,
     }]
   })
@@ -170,10 +164,11 @@ export async function fetchMemoryProgress() {
     fetchPremiumStatus(),
   ])
   const errors = [daily.error, total.error, week.error, legacy.error]
+  if (errors.some(Boolean)) console.error('[memory database queries]', errors.filter(Boolean))
   if (errors.some(isMissingDatabaseFeature)) throw new Error(LEARNING_SETUP_MESSAGE)
   if (errors.some(Boolean)) throw new Error('Unable to load Memory progress. Please try again.')
-  const all = total.data as { cards: number; xp: number }
-  const weekly = week.data as { cards: number; xp: number }
+  const all = (total.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
+  const weekly = (week.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
   return { used: daily.count ?? 0, total: all.cards, totalXp: all.xp + Number(legacy.data?.xp ?? 0), weekCards: weekly.cards, weekXp: weekly.xp, premium: entitlement.premium }
 }
 
@@ -199,4 +194,21 @@ export async function fetchSavedMemorySession(): Promise<SavedMemorySession | nu
   if (error) throw new Error('Unable to load saved session.')
   const parsed = sessionSchema.safeParse(data?.state)
   return parsed.success && parsed.data.index < parsed.data.cards.length ? parsed.data : null
+}
+
+// Expected storage errors must cross the production Server Action boundary as
+// data: thrown errors are intentionally redacted by Next.js.
+export async function loadMemoryProgress() {
+  try { return { ok: true as const, data: await fetchMemoryProgress() } }
+  catch (error) {
+    console.error('[memory progress]', error)
+    return { ok: false as const, error: error instanceof Error && error.message === LEARNING_SETUP_MESSAGE ? LEARNING_SETUP_MESSAGE : 'Unable to load Memory progress. Please sign in and try again.' }
+  }
+}
+export async function loadSavedMemorySession() {
+  try { return { ok: true as const, data: await fetchSavedMemorySession() } }
+  catch (error) {
+    console.error('[memory session]', error)
+    return { ok: false as const, error: error instanceof Error && error.message === LEARNING_SETUP_MESSAGE ? LEARNING_SETUP_MESSAGE : 'Unable to load your saved session. Please try again.' }
+  }
 }

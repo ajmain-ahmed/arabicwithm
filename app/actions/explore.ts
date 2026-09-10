@@ -1,6 +1,5 @@
 'use server'
 
-import { unstable_cache } from 'next/cache'
 import { z } from 'zod'
 import { fetchExploreEpisodeByIdPublic, fetchExploreEpisodeMetasForPublic } from '@/app/actions/cartoons'
 import {
@@ -16,14 +15,7 @@ import {
   type ExploreFeedPlanItem,
 } from '@/app/lib/explore'
 
-/* ── Explore feed batches ────────────────────────────────────────────
-   Each (seed, page) is a small, separately cacheable entry rather than
-   one blob holding every episode transcript and book page. Batch
-   planning only uses episode/chapter ids plus per-chapter page counts;
-   transcripts and chapter content are hydrated per item, only for the
-   items the batch contains. Tagged with the catalogue tags so the
-   existing admin revalidation already covers these entries. */
-
+// Catalogue reads are cached; unique per-visit feed batches are not.
 async function hydrateExplorePlanItem(item: ExploreFeedPlanItem): Promise<ExploreFeedItem | null> {
   if (item.kind === 'video') {
     const episode = await fetchExploreEpisodeByIdPublic(item.episodeId)
@@ -34,8 +26,7 @@ async function hydrateExplorePlanItem(item: ExploreFeedPlanItem): Promise<Explor
   return page ? { kind: 'book', page } : null
 }
 
-const fetchExploreFeedBatch = unstable_cache(
-  async (seed: string, page: number): Promise<ExploreFeedBatch> => {
+async function fetchExploreFeedBatch(seed: string, page: number): Promise<ExploreFeedBatch> {
     const [episodeMetas, bookChapterMetas, bookPageCounts] = await Promise.all([
       fetchExploreEpisodeMetasForPublic(),
       fetchExploreBookChapterMetasForPublic(),
@@ -47,10 +38,7 @@ const fetchExploreFeedBatch = unstable_cache(
       (item): item is ExploreFeedItem => item !== null,
     )
     return { items, hasMore: batch.hasMore }
-  },
-  ['explore', 'feed', 'v1'],
-  { revalidate: false, tags: ['cartoons-public', 'books-public', 'explore-public'] }
-)
+}
 
 const batchInputSchema = z.object({
   seed: z.string().trim().min(1).max(64),

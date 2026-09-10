@@ -28,6 +28,7 @@ const FOOTER_SECTIONS = (onContactClick?: () => void) => [
     title: 'Support',
     links: [
       { label: 'Contact Us', href: null, onClick: onContactClick },
+      { label: 'Give Feedback', href: '/feedback', onClick: undefined },
     ],
   },
 ]
@@ -156,6 +157,7 @@ export default function Footer({ onContactClick }: FooterProps) {
                   background: 'linear-gradient(135deg, #2c1a0e 0%, #0e2e1f 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
+                  'html[data-theme="dark"] &': { background: 'none', color: '#fff', WebkitTextFillColor: '#fff' },
                   lineHeight: 1, mb: 1,
                 }}>
                   ArabicWithM

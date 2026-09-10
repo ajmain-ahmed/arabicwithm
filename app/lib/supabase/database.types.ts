@@ -15,6 +15,7 @@ type Table<Row> = { Row: Row; Insert: Partial<Row>; Update: Partial<Row>; Relati
 export interface Database {
   public: {
     Tables: {
+      feedback: Table<{ id: string; user_id: string; rating: number; comment: string | null; created_at: string }>
       subscriptions: Table<{ user_id: string; customer_id: string; subscription_id: string | null; status: string; current_period_end: string; cancel_at_period_end: boolean; event_created: number }>
       memory_reviews: Table<{ user_id: string; completion_id: string; card_id: string; rating: string; activity_date: string; xp: number; created_at: string }>
       memory_sessions: Table<{ user_id: string; state: Json; updated_at: string }>

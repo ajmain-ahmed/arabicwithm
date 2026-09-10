@@ -129,6 +129,19 @@ function subscribeToReaderLanguage(onStoreChange: () => void) {
   }
 }
 
+let wordHelpFallback = true
+function getWordHelp() {
+  try { return window.localStorage.getItem('awm-book-word-help') !== 'false' } catch { return wordHelpFallback }
+}
+function subscribeToWordHelp(callback: () => void) {
+  window.addEventListener('storage', callback)
+  window.addEventListener('awm-book-word-help-change', callback)
+  return () => {
+    window.removeEventListener('storage', callback)
+    window.removeEventListener('awm-book-word-help-change', callback)
+  }
+}
+
 function DictionaryWord({ token }: { token: PublicBookToken }) {
   return (
     <HtmlTooltip
@@ -174,15 +187,17 @@ function DictionaryWord({ token }: { token: PublicBookToken }) {
 function ArabicTokens({
   tokens,
   punctuation,
+  wordHelp,
 }: {
   tokens: PublicBookToken[]
+  wordHelp: boolean
   punctuation?: string
 }) {
   return (
     <>
       {tokens.map((token, index) => (
         <span key={`${token.headword ?? token.arabic}-${index}`}>
-          {index > 0 ? ' ' : ''}{token.prefix}<DictionaryWord token={token} />{token.suffix}
+          {index > 0 ? ' ' : ''}{token.prefix}{wordHelp ? <DictionaryWord token={token} /> : token.arabic}{token.suffix}
         </span>
       ))}
       {punctuation && <span aria-hidden="true">{punctuation}</span>}
@@ -206,6 +221,12 @@ export default function ChapterReader({
   initialLanguage?: BookReaderLanguage
 }) {
   const { user } = useAuth()
+  const wordHelp = useSyncExternalStore(subscribeToWordHelp, getWordHelp, () => true)
+  const toggleWordHelp = (enabled: boolean) => {
+    wordHelpFallback = enabled
+    try { window.localStorage.setItem('awm-book-word-help', String(enabled)) } catch { /* Keep the preference for this session. */ }
+    window.dispatchEvent(new Event('awm-book-word-help-change'))
+  }
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
   const [bookmarkNotice, setBookmarkNotice] = useState('')
@@ -359,6 +380,8 @@ export default function ChapterReader({
       <BookReaderSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        wordHelp={wordHelp}
+        onWordHelpChange={toggleWordHelp}
         readerFont={readerFont}
         onReaderFontChange={selectReaderFont}
         textScale={textScale}
@@ -452,14 +475,14 @@ export default function ChapterReader({
                       {language === 'ar' ? (
                         <>
                           <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 29 * textScale }, fontWeight: 500, lineHeight: 1.9, color: 'var(--awm-bark)', textAlign: 'right' }}>
-                            <ArabicTokens tokens={block.tokens} punctuation={block.punctuation} />
+                            <ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} />
                           </Typography>
                           {block.translation && <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 14 * textScale, md: 15 * textScale }, lineHeight: 1.7 }}>{block.translation}</Typography>}
                         </>
                       ) : (
                         <>
                           <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 18 * textScale, md: 20 * textScale }, lineHeight: 1.75 }}>{block.translation}</Typography>
-                          <Typography component="div" lang="ar" dir="rtl" sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 18 * textScale, md: 21 * textScale }, lineHeight: 1.8, textAlign: 'right' }}><ArabicTokens tokens={block.tokens} punctuation={block.punctuation} /></Typography>
+                          <Typography component="div" lang="ar" dir="rtl" sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 18 * textScale, md: 21 * textScale }, lineHeight: 1.8, textAlign: 'right' }}><ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} /></Typography>
                         </>
                       )}
                     </Box>
@@ -481,7 +504,7 @@ export default function ChapterReader({
             {paragraphs.map((paragraph, paragraphIndex) => (
               <Box component="p" key={paragraphIndex} sx={{ m: 0, '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
                 {language === 'ar'
-                  ? paragraph.map((block, blockIndex) => <span key={blockIndex}>{blockIndex > 0 ? ' ' : ''}<ArabicTokens tokens={block.tokens} punctuation={block.punctuation} /></span>)
+                  ? paragraph.map((block, blockIndex) => <span key={blockIndex}>{blockIndex > 0 ? ' ' : ''}<ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} /></span>)
                   : paragraph.map((block) => block.translation).filter(Boolean).join(' ')}
               </Box>
             ))}

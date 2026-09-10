@@ -330,8 +330,8 @@ function ExploreVideo({
             ))}
           </Box>
         )}
-        <Box sx={{ position: 'absolute', zIndex: 4, left: { xs: 6, md: 12 }, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 0.85 }}>
-          <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="right">
+        <Box sx={{ position: 'absolute', zIndex: 4, right: { xs: 6, md: 12 }, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 0.85 }}>
+          <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
             <IconButton
               onClick={toggleSound}
               aria-label={soundMuted ? 'Turn Explore sound on' : 'Mute Explore video'}
@@ -340,7 +340,7 @@ function ExploreVideo({
               {soundMuted ? <VolumeOff /> : <VolumeUp />}
             </IconButton>
           </Tooltip>
-          <Tooltip title="Go to episode" placement="right">
+          <Tooltip title="Go to episode" placement="left">
             <IconButton
               component={Link}
               href={`/cartoons/${episode.showSlug}/${episode.slug}`}
@@ -350,7 +350,7 @@ function ExploreVideo({
               <PlayCircleOutlineRounded />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Practise this episode in Memory" placement="right">
+          <Tooltip title="Practise this episode in Memory" placement="left">
             <IconButton
               component={Link}
               href={`/memory?episode=${encodeURIComponent(episode.id)}`}
@@ -716,7 +716,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
         <Box component="section" sx={{ height: '100%', display: 'grid', placeItems: 'center', px: 3, textAlign: 'center', bgcolor: 'var(--awm-cream-light)' }}>
           <Box>
             <ExploreOutlined sx={{ fontSize: 54, color: 'var(--awm-gold)' }} />
-            <Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: 'var(--awm-bark)' }}>You've explored it all</Typography>
+            <Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: 'var(--awm-bark)' }}>You&apos;ve explored it all</Typography>
             <Typography sx={{ mt: 0.5, fontFamily: 'Jost, sans-serif', fontSize: 14, color: 'var(--awm-muted)' }}>Keep scrolling to start back at the beginning.</Typography>
           </Box>
         </Box>

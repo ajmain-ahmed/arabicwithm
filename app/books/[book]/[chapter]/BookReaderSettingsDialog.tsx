@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Slider, Typography } from '@mui/material'
+import { Box, Button, FormControlLabel, Switch, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Slider, Typography } from '@mui/material'
 import { Close } from '@mui/icons-material'
 import type { BookReaderFont } from '@/app/lib/bookReaderSettings'
 import PdfDownloadButton from '@/app/components/PdfDownloadButton'
@@ -19,6 +19,8 @@ const FONT_OPTIONS: Array<{ value: BookReaderFont; label: string }> = [
 export default function BookReaderSettingsDialog({
   open,
   onClose,
+  wordHelp,
+  onWordHelpChange,
   readerFont,
   onReaderFontChange,
   textScale,
@@ -30,6 +32,8 @@ export default function BookReaderSettingsDialog({
 }: {
   open: boolean
   onClose: () => void
+  wordHelp: boolean
+  onWordHelpChange: (enabled: boolean) => void
   readerFont: BookReaderFont
   onReaderFontChange: (font: BookReaderFont) => void
   textScale: number
@@ -52,6 +56,10 @@ export default function BookReaderSettingsDialog({
         </IconButton>
       </DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '8px!important' }}>
+        <Box>
+          <FormControlLabel control={<Switch checked={wordHelp} onChange={(_, checked) => onWordHelpChange(checked)} />} label="Word hover help" />
+          <Typography variant="body2" color="text.secondary">Show word definitions and dotted underlines. Turn off for uninterrupted reading.</Typography>
+        </Box>
         <Box sx={{ p: 2, border: '1px solid rgba(122,110,101,0.18)', borderRadius: '12px', bgcolor: 'rgba(122,110,101,0.04)' }}>
           <Typography sx={{ mb: 1.25, color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>
             Arabic font

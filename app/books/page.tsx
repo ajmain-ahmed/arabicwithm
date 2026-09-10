@@ -62,7 +62,7 @@ export default async function BooksPage() {
                       component="img"
                       src={book.cover}
                       alt={`${book.title} cover`}
-                      sx={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'contain', objectPosition: 'center' }}
+                      sx={{ width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', display: 'block', objectPosition: 'center' }}
                     />
                   ) : (
                     <Box sx={{ minHeight: { xs: 92, sm: 300 }, aspectRatio: { xs: '3 / 4', sm: 'auto' }, p: { xs: 0.75, sm: 3 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: { xs: '5px', sm: 0 }, background: 'linear-gradient(145deg, #173f2d, #0e2e1f 62%, #2c1a0e)' }}>

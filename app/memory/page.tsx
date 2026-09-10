@@ -21,8 +21,9 @@ export default async function Page({
   try {
     library = await fetchMemoryLibrary({ showId, episodeId })
   } catch (error) {
+    console.error('[memory page render]', error)
     library = { cards: [], shows: [], scope: 'global' as const, scopeTitle: 'Memory', missingScope: false }
-    loadError = error instanceof Error ? error.message : 'Memory could not be loaded.'
+    loadError = 'Memory could not be loaded. Please try again shortly.'
   }
   return <MemoryPage library={library} loadError={loadError} />
 }

@@ -154,7 +154,7 @@ describe("sliceExploreFeedBatch", () => {
 })
 
 describe("getExploreSeed", () => {
-  it("returns a date string", () => {
-    expect(getExploreSeed(new Date("2026-09-10T12:00:00Z"))).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+  it("returns a fresh seed for each visit", () => {
+    expect(getExploreSeed()).not.toBe(getExploreSeed())
   })
 })

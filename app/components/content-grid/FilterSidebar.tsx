@@ -115,8 +115,18 @@ export default function FilterSidebar({
   onMobileClose,
   hideTitle,
 }: FilterSidebarProps) {
+  const hasFilters = Boolean((activeCategory && activeCategory !== categories[0]) || activeLevel || activeGenre || activeLanguage || activeAdditionalTag)
+  const clearAll = () => {
+    setActiveCategory(categories[0] ?? '')
+    setActiveLevel(''); setActiveGenre?.(''); setActiveLanguage?.(''); setActiveAdditionalTag?.('')
+    const url = new URL(window.location.href)
+    for (const key of ['category', 'level', 'genre', 'language', 'tag', 'tags', 'additionalTag']) url.searchParams.delete(key)
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
+    onMobileClose?.()
+  }
   return (
     <Box>
+      {hasFilters && <Button variant="outlined" fullWidth onClick={clearAll} sx={{ mb: 2 }}>Clear all</Button>}
       {!hideTitle && (
         <>
           <Typography
@@ -224,14 +234,7 @@ export default function FilterSidebar({
       {/* ── Reset ── */}
       <Button
         fullWidth
-        onClick={() => {
-          if (categories.length > 1) setActiveCategory(categories[0] ?? '')
-          setActiveLevel('')
-          setActiveGenre?.('')
-          setActiveLanguage?.('')
-          setActiveAdditionalTag?.('')
-          onMobileClose?.()
-        }}
+        onClick={clearAll}
         sx={{
           height: 40,
           borderRadius: '6px',
