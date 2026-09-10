@@ -520,6 +520,9 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
 
   useEffect(() => () => setGlobalVideoPlaying(false), [setGlobalVideoPlaying])
 
+  /* Tab visibility only gates book auto-advance. Videos deliberately keep
+     playing while the tab is hidden so returning users resume mid-video
+     instead of restarting it. */
   useEffect(() => {
     const handleVisibility = () => setPageVisible(document.visibilityState === 'visible')
     handleVisibility()
@@ -596,7 +599,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
             <>
               <ExploreVideo
                 episode={item.episode}
-                active={index === activeIndex && pageVisible}
+                active={index === activeIndex}
                 onEnded={() => advanceOnce(index)}
                 onPlaybackChange={setGlobalVideoPlaying}
                 soundEnabled={soundEnabled}
