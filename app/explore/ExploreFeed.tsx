@@ -679,7 +679,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
             gridTemplateColumns: item.kind === 'video' ? { xs: '1fr', md: 'minmax(330px, 500px) minmax(0, 1fr)' } : undefined,
             alignItems: 'center',
             gap: { xs: 0, md: 3 },
-            maxWidth: 1220,
+            maxWidth: 1536,
             mx: 'auto',
             px: { xs: 0, md: 3, lg: 5 },
             py: { xs: 0, md: 3 },
