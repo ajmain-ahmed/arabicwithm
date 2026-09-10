@@ -1,17 +1,17 @@
 import { describe, it, expect } from "vitest"
 import {
   EXPLORE_PAGE_SIZE,
-  buildExploreFeedItems,
+  buildExploreFeedPlan,
   definitionCacheKey,
   getExploreSeed,
   nextExploreIndex,
   parseExploreSoundPreference,
   seededShuffled,
   sliceExploreFeedBatch,
-  type ExploreFeedItem,
+  type ExploreFeedPlanItem,
 } from "./explore"
-import type { ExploreEpisode } from "./cartoons"
-import type { ExploreBookPage } from "@/app/actions/books"
+import type { ExploreEpisodeMeta } from "./cartoons"
+import type { ExploreBookChapterMeta } from "@/app/actions/books"
 
 describe("Explore behavior helpers", () => {
   it("defaults sound on and preserves an explicit mute", () => {
@@ -34,7 +34,7 @@ describe("Explore behavior helpers", () => {
   })
 })
 
-function makeEpisode(id: string): ExploreEpisode {
+function makeEpisodeMeta(id: string): ExploreEpisodeMeta {
   return {
     id,
     slug: id,
@@ -43,16 +43,23 @@ function makeEpisode(id: string): ExploreEpisode {
     tags: [],
     showSlug: "show",
     showTitle: "Show",
-    transcriptLines: [],
   }
 }
 
-function makeBookPage(id: string): ExploreBookPage {
-  return { id } as unknown as ExploreBookPage
+function makeChapterMeta(chapterId: string): ExploreBookChapterMeta {
+  return {
+    chapterId,
+    bookSlug: "book",
+    bookTitle: "Book",
+    chapterSlug: chapterId,
+    chapterTitle: `Chapter ${chapterId}`,
+    chapterNumber: 1,
+    level: "A2",
+  }
 }
 
-function videoIds(items: ExploreFeedItem[]): string[] {
-  return items.flatMap((item) => (item.kind === "video" ? [item.episode.id] : []))
+function videoIds(items: ExploreFeedPlanItem[]): string[] {
+  return items.flatMap((item) => (item.kind === "video" ? [item.episodeId] : []))
 }
 
 describe("seededShuffled", () => {
@@ -73,17 +80,18 @@ describe("seededShuffled", () => {
   })
 })
 
-describe("buildExploreFeedItems", () => {
-  const episodes = ["e1", "e2", "e3", "e4", "e5", "e6"].map(makeEpisode)
-  const bookPages = ["b1", "b2"].map(makeBookPage)
+describe("buildExploreFeedPlan", () => {
+  const episodes = ["e1", "e2", "e3", "e4", "e5", "e6"].map(makeEpisodeMeta)
+  const chapters = ["b1", "b2"].map(makeChapterMeta)
+  const pageCounts = { b1: 1, b2: 1 }
 
   it("is deterministic for a given seed", () => {
-    expect(buildExploreFeedItems(episodes, bookPages, "2026-09-10"))
-      .toEqual(buildExploreFeedItems(episodes, bookPages, "2026-09-10"))
+    expect(buildExploreFeedPlan(episodes, chapters, pageCounts, "2026-09-10"))
+      .toEqual(buildExploreFeedPlan(episodes, chapters, pageCounts, "2026-09-10"))
   })
 
   it("interleaves a book page after every third video", () => {
-    const items = buildExploreFeedItems(episodes, bookPages, "seed")
+    const items = buildExploreFeedPlan(episodes, chapters, pageCounts, "seed")
     const kinds = items.map((item) => item.kind)
     expect(kinds.filter((kind) => kind === "book")).toHaveLength(2)
     expect(kinds[3]).toBe("book")
@@ -91,29 +99,37 @@ describe("buildExploreFeedItems", () => {
   })
 
   it("includes every episode exactly once", () => {
-    const items = buildExploreFeedItems(episodes, bookPages, "seed")
+    const items = buildExploreFeedPlan(episodes, chapters, pageCounts, "seed")
     expect([...videoIds(items)].sort()).toEqual(["e1", "e2", "e3", "e4", "e5", "e6"])
   })
 
+  it("expands chapters to one plan slot per page", () => {
+    const items = buildExploreFeedPlan([], chapters, { b1: 2, b2: 1 }, "seed")
+    expect(items).toHaveLength(3)
+    expect(items).toContainEqual({ kind: "book", chapterId: "b1", pageIndex: 0 })
+    expect(items).toContainEqual({ kind: "book", chapterId: "b1", pageIndex: 1 })
+    expect(items).toContainEqual({ kind: "book", chapterId: "b2", pageIndex: 0 })
+  })
+
   it("falls back to book pages only when there are no videos", () => {
-    const items = buildExploreFeedItems([], bookPages, "seed")
+    const items = buildExploreFeedPlan([], chapters, pageCounts, "seed")
     expect(items.every((item) => item.kind === "book")).toBe(true)
     expect(items).toHaveLength(2)
   })
 
   it("omits book pages when there are none", () => {
-    const items = buildExploreFeedItems(episodes, [], "seed")
+    const items = buildExploreFeedPlan(episodes, [], {}, "seed")
     expect(items.every((item) => item.kind === "video")).toBe(true)
   })
 })
 
 describe("sliceExploreFeedBatch", () => {
   const episodes = Array.from({ length: EXPLORE_PAGE_SIZE * 2 + 3 }, (_, index) =>
-    makeEpisode(`e${index}`),
+    makeEpisodeMeta(`e${index}`),
   )
 
   it("serves the requested page", () => {
-    const all = buildExploreFeedItems(episodes, [], "seed")
+    const all = buildExploreFeedPlan(episodes, [], {}, "seed")
     const first = sliceExploreFeedBatch(all, 0)
     const second = sliceExploreFeedBatch(all, 1)
     expect(first.items).toHaveLength(EXPLORE_PAGE_SIZE)
@@ -123,7 +139,7 @@ describe("sliceExploreFeedBatch", () => {
   })
 
   it("reports hasMore until the catalogue is exhausted", () => {
-    const all = buildExploreFeedItems(episodes, [], "seed")
+    const all = buildExploreFeedPlan(episodes, [], {}, "seed")
     expect(sliceExploreFeedBatch(all, 0).hasMore).toBe(true)
     expect(sliceExploreFeedBatch(all, 1).hasMore).toBe(true)
     const last = sliceExploreFeedBatch(all, 2)
@@ -132,7 +148,7 @@ describe("sliceExploreFeedBatch", () => {
   })
 
   it("clamps invalid pages to zero", () => {
-    const all = buildExploreFeedItems(episodes, [], "seed")
+    const all = buildExploreFeedPlan(episodes, [], {}, "seed")
     expect(sliceExploreFeedBatch(all, -1).items[0]).toEqual(all[0])
   })
 })

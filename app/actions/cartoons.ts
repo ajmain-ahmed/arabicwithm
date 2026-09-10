@@ -10,6 +10,7 @@ import {
   type VocabListItem,
   type GrammarPoint,
   type ExploreEpisode,
+  type ExploreEpisodeMeta,
   isNewTranscript,
   normalizeNewTranscript,
   getShowCoverPath,
@@ -385,10 +386,13 @@ export const fetchEpisodeForPublic = unstable_cache(
   { revalidate: false, tags: ["cartoons-public"] }
 )
 
-export const fetchEpisodesForExplorePublic =
-  async (): Promise<ExploreEpisode[]> => {
+/* ── Explore feed: metadata-only catalogue used to plan batches. The
+   transcript column is intentionally absent here; it is only fetched
+   per episode, for the episodes a batch actually contains. ── */
+export const fetchExploreEpisodeMetasForPublic = unstable_cache(
+  async (): Promise<ExploreEpisodeMeta[]> => {
     if (!hasServiceClientConfig()) {
-      console.warn("[fetchEpisodesForExplorePublic] Supabase service client not configured")
+      console.warn("[fetchExploreEpisodeMetasForPublic] Supabase service client not configured")
       return []
     }
 
@@ -396,14 +400,14 @@ export const fetchEpisodesForExplorePublic =
       serviceClient.from("shows").select("id, slug, title"),
       serviceClient
         .from("episodes")
-        .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript, created_at")
+        .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, created_at")
         .order("created_at", { ascending: true }),
     ])
 
     const legacyEpisodeResult = isMissingSocialVideoColumn(socialEpisodeResult.error)
       ? await serviceClient
           .from("episodes")
-          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, transcript, created_at")
+          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, created_at")
           .order("created_at", { ascending: true })
       : null
     const shows = showResult.data
@@ -413,7 +417,7 @@ export const fetchEpisodesForExplorePublic =
 
     if (showError || episodeError) {
       const message = showError?.message ?? episodeError?.message ?? "Unable to load Explore episodes"
-      console.error("[fetchEpisodesForExplorePublic] error:", message)
+      console.error("[fetchExploreEpisodeMetasForPublic] error:", message)
       throw new Error(message)
     }
 
@@ -424,52 +428,90 @@ export const fetchEpisodesForExplorePublic =
       ])
     )
 
-    /* ── Intern word entries across the whole feed so repeated words
-         serialize once in the RSC payload (shared references are
-         deduped by React Flight). ── */
-    const exploreWordPool = new Map<string, CartoonWordEntry>()
+    return (episodes ?? []).flatMap((row) => {
+      const show = showsById.get(String(row.show_id))
+      if (!show) return []
+      const meta = mapEpisodeRow(row, show.slug)
+      if (getEpisodeVideoSources(meta).length === 0) return []
+      return [{ ...meta, showSlug: show.slug, showTitle: show.title }]
+    })
+  },
+  ["cartoons", "explore", "episode-metas", "v1"],
+  { revalidate: false, tags: ["cartoons-public"] }
+)
+
+export const fetchExploreEpisodeByIdPublic = unstable_cache(
+  async (episodeId: string): Promise<ExploreEpisode | null> => {
+    if (!hasServiceClientConfig()) return null
+
+    const withSocial = await serviceClient
+      .from("episodes")
+      .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript, created_at")
+      .eq("id", episodeId)
+      .maybeSingle()
+    const rowResult = isMissingSocialVideoColumn(withSocial.error)
+      ? await serviceClient
+          .from("episodes")
+          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, transcript, created_at")
+          .eq("id", episodeId)
+          .maybeSingle()
+      : withSocial
+    const { data: row, error } = rowResult
+    if (error) throw new Error(error.message)
+    if (!row) return null
+
+    const { data: show } = await serviceClient
+      .from("shows")
+      .select("slug, title")
+      .eq("id", String(row.show_id))
+      .maybeSingle()
+    if (!show) return null
+
+    const showSlug = String(show.slug)
+    const meta = mapEpisodeRow(row as Record<string, unknown>, showSlug)
+
+    /* ── Intern word entries within this episode so repeated words
+         serialize once in the RSC payload. ── */
+    const wordPool = new Map<string, CartoonWordEntry>()
     const internWord = (word: CartoonWordEntry): CartoonWordEntry => {
       const key = word.plain || word.arabic
-      const existing = exploreWordPool.get(key)
+      const existing = wordPool.get(key)
       if (existing) return existing
-      exploreWordPool.set(key, word)
+      wordPool.set(key, word)
       return word
     }
 
-    return (episodes ?? []).flatMap((row) => {
-      const show = showsById.get(String(row.show_id))
-      const meta = mapEpisodeRow(row, show?.slug)
-      if (!show || getEpisodeVideoSources(meta).length === 0) return []
+    const transcript = (row as Record<string, unknown>).transcript as unknown
+    const normalizedBlocks = isNewTranscript(transcript)
+      ? normalizeNewTranscript(transcript).scriptBlocks
+      : Array.isArray((transcript as Record<string, unknown> | null)?.scriptBlocks)
+        ? ((transcript as Record<string, unknown>).scriptBlocks as Record<string, unknown>[]).map((block) => ({
+            timestamp: block.timestamp == null ? null : Number(block.timestamp),
+            title: String(block.title ?? ""),
+            arabicDiacritic: String(block.arabicDiacritic ?? ""),
+            arabicPlain: String(block.arabicPlain ?? ""),
+            english: String(block.english ?? ""),
+            words: [],
+            notes: [],
+          }))
+        : []
 
-      const transcript = row.transcript as unknown
-      const normalizedBlocks = isNewTranscript(transcript)
-        ? normalizeNewTranscript(transcript).scriptBlocks
-        : Array.isArray((transcript as Record<string, unknown> | null)?.scriptBlocks)
-          ? ((transcript as Record<string, unknown>).scriptBlocks as Record<string, unknown>[]).map((block) => ({
-              timestamp: block.timestamp == null ? null : Number(block.timestamp),
-              title: String(block.title ?? ""),
-              arabicDiacritic: String(block.arabicDiacritic ?? ""),
-              arabicPlain: String(block.arabicPlain ?? ""),
-              english: String(block.english ?? ""),
-              words: [],
-              notes: [],
-            }))
-          : []
-
-      return [{
-        ...meta,
-        showSlug: show.slug,
-        showTitle: show.title,
-        transcriptLines: normalizedBlocks.map((block) => ({
-          timestamp: block.timestamp,
-          arabic: block.arabicDiacritic,
-          arabicPlain: block.arabicPlain,
-          translation: block.english || block.title,
-          words: block.words.map(internWord),
-        })),
-      }]
-    })
-   }
+    return {
+      ...meta,
+      showSlug,
+      showTitle: String(show.title),
+      transcriptLines: normalizedBlocks.map((block) => ({
+        timestamp: block.timestamp,
+        arabic: block.arabicDiacritic,
+        arabicPlain: block.arabicPlain,
+        translation: block.english || block.title,
+        words: block.words.map(internWord),
+      })),
+    }
+  },
+  ["cartoons", "explore", "episode", "v1"],
+  { revalidate: false, tags: ["cartoons-public"] }
+)
 
 function mapEpisodeRow(
   row: Record<string, unknown>,

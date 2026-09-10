@@ -299,13 +299,27 @@ export async function fetchChapterForPublic(bookId: string, chapterSlug: string)
 
 const EXPLORE_BLOCKS_PER_PAGE = 5
 
-export const fetchBookPagesForExplorePublic = unstable_cache(
-  async (): Promise<ExploreBookPage[]> => {
+/* ── Metadata-only catalogue used to plan explore batches. Chapter
+   content is only fetched per chapter, for batches that contain one
+   of its pages. ── */
+export interface ExploreBookChapterMeta {
+  chapterId: string
+  bookSlug: string
+  bookTitle: string
+  chapterSlug: string
+  chapterTitle: string
+  chapterNumber: number
+  cover?: string
+  level: string
+}
+
+export const fetchExploreBookChapterMetasForPublic = unstable_cache(
+  async (): Promise<ExploreBookChapterMeta[]> => {
     if (!hasServiceClientConfig()) return []
 
     const [{ data: books, error: booksError }, { data: chapters, error: chaptersError }] = await Promise.all([
       serviceClient.from("books").select("*"),
-      serviceClient.from("chapters").select("id, book_id, slug, title, chapter_number, content"),
+      serviceClient.from("chapters").select("id, book_id, slug, title, chapter_number"),
     ])
 
     if (booksError) throw new Error(booksError.message)
@@ -319,7 +333,7 @@ export const fetchBookPagesForExplorePublic = unstable_cache(
           {
             premiumExempt: book.premium_exempt === true,
             freeChapterCount: Number(book.free_chapter_count ?? 5),
-            chapterCount: (chapters ?? []).filter(ch => ch.book_id === book.id).length,
+            chapterCount: (chapters ?? []).filter((ch) => ch.book_id === book.id).length,
             slug,
             title: String(book.title),
             cover: getBookCoverUrl(slug),
@@ -332,64 +346,123 @@ export const fetchBookPagesForExplorePublic = unstable_cache(
     return ((chapters ?? []) as Record<string, unknown>[]).flatMap((chapter) => {
       const book = booksById.get(String(chapter.book_id))
       if (!book || !canAccessBookChapter(false, book, Number(chapter.chapter_number))) return []
-
-      const rawBlocks = Array.isArray(chapter.content) ? chapter.content : []
-      const blocks: ExploreBookBlock[] = rawBlocks.flatMap((rawBlock) => {
-        const block = rawBlock && typeof rawBlock === "object" && !Array.isArray(rawBlock)
-          ? rawBlock as Record<string, unknown>
-          : null
-        if (!block) return []
-
-        const words: CartoonWordEntry[] = (Array.isArray(block.tokens) ? block.tokens : []).flatMap((rawToken) => {
-          const token = rawToken && typeof rawToken === "object" && !Array.isArray(rawToken)
-            ? rawToken as Record<string, unknown>
-            : null
-          if (!token) return []
-          const core = typeof token.arabic === "string" ? token.arabic : ""
-          if (!core) return []
-          const arabic = `${typeof token.prefix === "string" ? token.prefix : ""}${core}${typeof token.suffix === "string" ? token.suffix : ""}`
-          const lemma = typeof token.headword === "string" ? token.headword.trim() : ""
-          return [{
-            arabic,
-            plain: stripDiacritics(arabic),
-            transliteration: typeof token.transliteration === "string" ? token.transliteration : "",
-            english: typeof token.english === "string" ? token.english : "",
-            cefr: typeof token.cefr === "string" ? token.cefr.toLowerCase() : undefined,
-            pos: typeof token.pos === "string" ? token.pos : undefined,
-            lemma: lemma || core,
-            entry_type: token.entry_type === "phrase" ? "phrase" : "word",
-          }]
-        })
-
-        const translation = typeof block.translation === "string" ? block.translation : ""
-        if (words.length === 0 && !translation) return []
-        return [{
-          words,
-          translation,
-          punctuation: typeof block.punctuation === "string" ? block.punctuation : undefined,
-        }]
-      })
-
-      const pages: ExploreBookPage[] = []
-      for (let start = 0; start < blocks.length; start += EXPLORE_BLOCKS_PER_PAGE) {
-        const pageBlocks = blocks.slice(start, start + EXPLORE_BLOCKS_PER_PAGE)
-        if (pageBlocks.length === 0) continue
-        pages.push({
-          id: `${String(chapter.id)}-${start}`,
-          bookSlug: book.slug,
-          bookTitle: book.title,
-          chapterSlug: String(chapter.slug),
-          chapterTitle: String(chapter.title),
-          chapterNumber: Number(chapter.chapter_number),
-          pageNumber: Math.floor(start / EXPLORE_BLOCKS_PER_PAGE) + 1,
-          cover: book.cover,
-          level: book.level,
-          blocks: pageBlocks,
-        })
-      }
-      return pages
+      return [{
+        chapterId: String(chapter.id),
+        bookSlug: book.slug,
+        bookTitle: book.title,
+        chapterSlug: String(chapter.slug),
+        chapterTitle: String(chapter.title),
+        chapterNumber: Number(chapter.chapter_number),
+        cover: book.cover,
+        level: book.level,
+      }]
     })
   },
-  ["books", "public", "explore-pages-v2"],
+  ["books", "public", "explore-chapter-metas", "v1"],
+  { revalidate: false, tags: ["books-public"] }
+)
+
+function buildExploreBookPages(
+  chapter: Record<string, unknown>,
+  book: { slug: string; title: string; cover?: string; level: string },
+): ExploreBookPage[] {
+  const rawBlocks = Array.isArray(chapter.content) ? chapter.content : []
+  const blocks: ExploreBookBlock[] = rawBlocks.flatMap((rawBlock) => {
+    const block = rawBlock && typeof rawBlock === "object" && !Array.isArray(rawBlock)
+      ? rawBlock as Record<string, unknown>
+      : null
+    if (!block) return []
+
+    const words: CartoonWordEntry[] = (Array.isArray(block.tokens) ? block.tokens : []).flatMap((rawToken) => {
+      const token = rawToken && typeof rawToken === "object" && !Array.isArray(rawToken)
+        ? rawToken as Record<string, unknown>
+        : null
+      if (!token) return []
+      const core = typeof token.arabic === "string" ? token.arabic : ""
+      if (!core) return []
+      const arabic = `${typeof token.prefix === "string" ? token.prefix : ""}${core}${typeof token.suffix === "string" ? token.suffix : ""}`
+      const lemma = typeof token.headword === "string" ? token.headword.trim() : ""
+      return [{
+        arabic,
+        plain: stripDiacritics(arabic),
+        transliteration: typeof token.transliteration === "string" ? token.transliteration : "",
+        english: typeof token.english === "string" ? token.english : "",
+        cefr: typeof token.cefr === "string" ? token.cefr.toLowerCase() : undefined,
+        pos: typeof token.pos === "string" ? token.pos : undefined,
+        lemma: lemma || core,
+        entry_type: token.entry_type === "phrase" ? "phrase" : "word",
+      }]
+    })
+
+    const translation = typeof block.translation === "string" ? block.translation : ""
+    if (words.length === 0 && !translation) return []
+    return [{
+      words,
+      translation,
+      punctuation: typeof block.punctuation === "string" ? block.punctuation : undefined,
+    }]
+  })
+
+  const pages: ExploreBookPage[] = []
+  for (let start = 0; start < blocks.length; start += EXPLORE_BLOCKS_PER_PAGE) {
+    const pageBlocks = blocks.slice(start, start + EXPLORE_BLOCKS_PER_PAGE)
+    if (pageBlocks.length === 0) continue
+    pages.push({
+      id: `${String(chapter.id)}-${start}`,
+      bookSlug: book.slug,
+      bookTitle: book.title,
+      chapterSlug: String(chapter.slug),
+      chapterTitle: String(chapter.title),
+      chapterNumber: Number(chapter.chapter_number),
+      pageNumber: Math.floor(start / EXPLORE_BLOCKS_PER_PAGE) + 1,
+      cover: book.cover,
+      level: book.level,
+      blocks: pageBlocks,
+    })
+  }
+  return pages
+}
+
+export const fetchExploreBookChapterPages = unstable_cache(
+  async (chapterId: string): Promise<ExploreBookPage[]> => {
+    if (!hasServiceClientConfig()) return []
+
+    const { data: chapter, error } = await serviceClient
+      .from("chapters")
+      .select("id, book_id, slug, title, chapter_number, content")
+      .eq("id", chapterId)
+      .maybeSingle()
+    if (error) throw new Error(error.message)
+    if (!chapter) return []
+
+    const book = (await fetchBooksForPublic()).find((book) => book.id === String(chapter.book_id))
+    if (!book) return []
+
+    return buildExploreBookPages(chapter as Record<string, unknown>, {
+      slug: book.slug,
+      title: book.title,
+      cover: book.cover,
+      level: book.level,
+    })
+  },
+  ["books", "public", "explore-chapter-pages", "v1"],
+  { revalidate: false, tags: ["books-public"] }
+)
+
+/* ── Page counts per chapter. Only the counts are cached; deriving
+   them reads chapter content once per cold cache, after which batch
+   planning costs bytes, not megabytes. ── */
+export const fetchExploreBookChapterPageCounts = unstable_cache(
+  async (): Promise<Record<string, number>> => {
+    const metas = await fetchExploreBookChapterMetasForPublic()
+    const entries = await Promise.all(
+      metas.map(async (meta) => {
+        const pages = await fetchExploreBookChapterPages(meta.chapterId)
+        return [meta.chapterId, pages.length] as const
+      })
+    )
+    return Object.fromEntries(entries)
+  },
+  ["books", "public", "explore-chapter-page-counts", "v1"],
   { revalidate: false, tags: ["books-public"] }
 )

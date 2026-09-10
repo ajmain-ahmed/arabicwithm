@@ -2,27 +2,51 @@
 
 import { unstable_cache } from 'next/cache'
 import { z } from 'zod'
-import { fetchEpisodesForExplorePublic } from '@/app/actions/cartoons'
-import { fetchBookPagesForExplorePublic } from '@/app/actions/books'
+import { fetchExploreEpisodeByIdPublic, fetchExploreEpisodeMetasForPublic } from '@/app/actions/cartoons'
 import {
-  buildExploreFeedItems,
+  fetchExploreBookChapterMetasForPublic,
+  fetchExploreBookChapterPageCounts,
+  fetchExploreBookChapterPages,
+} from '@/app/actions/books'
+import {
+  buildExploreFeedPlan,
   sliceExploreFeedBatch,
   type ExploreFeedBatch,
+  type ExploreFeedItem,
+  type ExploreFeedPlanItem,
 } from '@/app/lib/explore'
 
 /* ── Explore feed batches ────────────────────────────────────────────
    Each (seed, page) is a small, separately cacheable entry rather than
-   one blob holding every episode transcript and book page. Tagged with
-   the catalogue tags so the existing admin revalidation already covers
-   these entries. */
+   one blob holding every episode transcript and book page. Batch
+   planning only uses episode/chapter ids plus per-chapter page counts;
+   transcripts and chapter content are hydrated per item, only for the
+   items the batch contains. Tagged with the catalogue tags so the
+   existing admin revalidation already covers these entries. */
+
+async function hydrateExplorePlanItem(item: ExploreFeedPlanItem): Promise<ExploreFeedItem | null> {
+  if (item.kind === 'video') {
+    const episode = await fetchExploreEpisodeByIdPublic(item.episodeId)
+    return episode ? { kind: 'video', episode } : null
+  }
+  const pages = await fetchExploreBookChapterPages(item.chapterId)
+  const page = pages[item.pageIndex]
+  return page ? { kind: 'book', page } : null
+}
 
 const fetchExploreFeedBatch = unstable_cache(
   async (seed: string, page: number): Promise<ExploreFeedBatch> => {
-    const [episodes, bookPages] = await Promise.all([
-      fetchEpisodesForExplorePublic(),
-      fetchBookPagesForExplorePublic(),
+    const [episodeMetas, bookChapterMetas, bookPageCounts] = await Promise.all([
+      fetchExploreEpisodeMetasForPublic(),
+      fetchExploreBookChapterMetasForPublic(),
+      fetchExploreBookChapterPageCounts(),
     ])
-    return sliceExploreFeedBatch(buildExploreFeedItems(episodes, bookPages, seed), page)
+    const plan = buildExploreFeedPlan(episodeMetas, bookChapterMetas, bookPageCounts, seed)
+    const batch = sliceExploreFeedBatch(plan, page)
+    const items = (await Promise.all(batch.items.map(hydrateExplorePlanItem))).filter(
+      (item): item is ExploreFeedItem => item !== null,
+    )
+    return { items, hasMore: batch.hasMore }
   },
   ['explore', 'feed', 'v1'],
   { revalidate: false, tags: ['cartoons-public', 'books-public', 'explore-public'] }

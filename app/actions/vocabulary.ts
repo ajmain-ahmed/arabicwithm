@@ -98,7 +98,7 @@ export async function searchVocabulary(rawQuery: string): Promise<VocabularyEntr
   } else {
     const hints = ENGLISH_HEADWORD_HINTS[normalized.toLocaleLowerCase()] ?? []
     const [result, hinted] = await Promise.all([
-      serviceClient.from("hanswehr_dictionary").select(columns).ilike("definition", `%${normalized}%`).limit(220),
+      serviceClient.from("hanswehr_dictionary").select(columns).textSearch("search_vector", normalized, { config: "simple", type: "websearch" }).limit(120),
       hints.length
         ? serviceClient.from("hanswehr_dictionary").select(columns).in("word", hints)
         : Promise.resolve({ data: [], error: null }),

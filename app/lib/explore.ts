@@ -2,8 +2,8 @@ export const EXPLORE_AUDIO_STORAGE_KEY = 'awm-explore-sound-enabled-v1'
 export const EXPLORE_AUDIO_EVENT = 'awm-explore-sound-preference-change'
 export const EXPLORE_READING_DURATION_MS = 10_000
 
-import type { ExploreEpisode } from '@/app/lib/cartoons'
-import type { ExploreBookPage } from '@/app/actions/books'
+import type { ExploreEpisode, ExploreEpisodeMeta } from '@/app/lib/cartoons'
+import type { ExploreBookChapterMeta, ExploreBookPage } from '@/app/actions/books'
 import { platformDate } from '@/app/lib/entitlements'
 
 let inMemorySoundPreference: boolean | null = null
@@ -66,10 +66,13 @@ export function nextExploreIndex(currentIndex: number, itemCount: number): numbe
 }
 
 /* ── Seeded feed construction ────────────────────────────────────────
-   The explore feed is assembled server-side in cacheable batches. A
+   The explore feed is planned server-side in cacheable batches. A
    date-based seed gives every visitor the same order within a day, so
    each (seed, page) batch is one small shared cache entry instead of a
-   per-visit random blob the size of the whole catalogue. */
+   per-visit random blob the size of the whole catalogue.
+   Planning only references episode/chapter ids plus per-chapter page
+   counts — transcripts and chapter content are hydrated per item, for
+   the items a batch actually contains. */
 
 export const EXPLORE_PAGE_SIZE = 12
 export const EXPLORE_PREFETCH_AHEAD = 3
@@ -80,6 +83,16 @@ export type ExploreFeedItem =
 
 export interface ExploreFeedBatch {
   items: ExploreFeedItem[]
+  hasMore: boolean
+}
+
+/* Plan-level items: cheap to build and cache in bulk. */
+export type ExploreFeedPlanItem =
+  | { kind: 'video'; episodeId: string }
+  | { kind: 'book'; chapterId: string; pageIndex: number }
+
+export interface ExploreFeedPlanBatch {
+  items: ExploreFeedPlanItem[]
   hasMore: boolean
 }
 
@@ -116,21 +129,33 @@ export function seededShuffled<T>(items: readonly T[], seed: string): T[] {
   return result
 }
 
-export function buildExploreFeedItems(
-  episodes: readonly ExploreEpisode[],
-  bookPages: readonly ExploreBookPage[],
+export function buildExploreFeedPlan(
+  episodes: readonly ExploreEpisodeMeta[],
+  bookChapters: readonly ExploreBookChapterMeta[],
+  bookPageCounts: Record<string, number>,
   seed: string,
-): ExploreFeedItem[] {
-  const videos = seededShuffled(episodes, `${seed}:videos`)
-  const pages = seededShuffled(bookPages, `${seed}:books`)
-  if (videos.length === 0) return pages.map((page) => ({ kind: 'book' as const, page }))
+): ExploreFeedPlanItem[] {
+  const videos = seededShuffled(episodes, `${seed}:videos`).map((episode) => ({
+    kind: 'video' as const,
+    episodeId: episode.id,
+  }))
+  const bookSlots = bookChapters.flatMap((chapter) => {
+    const pageCount = Math.max(0, bookPageCounts[chapter.chapterId] ?? 0)
+    return Array.from({ length: pageCount }, (_, pageIndex) => ({
+      kind: 'book' as const,
+      chapterId: chapter.chapterId,
+      pageIndex,
+    }))
+  })
+  const pages = seededShuffled(bookSlots, `${seed}:books`)
+  if (videos.length === 0) return pages
 
-  const items: ExploreFeedItem[] = []
+  const items: ExploreFeedPlanItem[] = []
   let pageIndex = 0
-  videos.forEach((episode, index) => {
-    items.push({ kind: 'video', episode })
+  videos.forEach((video, index) => {
+    items.push(video)
     if ((index + 1) % 3 === 0 && pages.length > 0) {
-      items.push({ kind: 'book', page: pages[pageIndex % pages.length] })
+      items.push(pages[pageIndex % pages.length])
       pageIndex += 1
     }
   })
@@ -138,10 +163,10 @@ export function buildExploreFeedItems(
 }
 
 export function sliceExploreFeedBatch(
-  allItems: readonly ExploreFeedItem[],
+  allItems: readonly ExploreFeedPlanItem[],
   page: number,
   pageSize = EXPLORE_PAGE_SIZE,
-): ExploreFeedBatch {
+): ExploreFeedPlanBatch {
   const safePage = Number.isInteger(page) && page >= 0 ? page : 0
   const start = safePage * pageSize
   return {

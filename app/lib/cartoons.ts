@@ -55,6 +55,10 @@ export interface ExploreEpisode extends EpisodeMeta {
   transcriptLines: ExploreTranscriptLine[]
 }
 
+/* ── Metadata-only form used to plan explore batches; the transcript
+   is only fetched for the episodes a batch actually contains. ── */
+export type ExploreEpisodeMeta = Omit<ExploreEpisode, "transcriptLines">
+
 /* ── Cover image URLs ── */
 
 export const CARTOONS_BANNER_PATH = '/covers/cartoons-banner.avif'
