@@ -60,7 +60,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const [completionIds, setCompletionIds] = useState<string[]>([])
   const [used, setUsed] = useState(0)
   const [premium, setPremium] = useState(false)
-  const [ready, setReady] = useState(false)
+  const [ready, setReady] = useState(!user)
   const [progressError, setProgressError] = useState('')
   const [sessionError, setSessionError] = useState('')
   const [progressLoading, setProgressLoading] = useState(Boolean(user))
@@ -69,7 +69,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const [saveError, setSaveError] = useState('')
   const [upgrade, setUpgrade] = useState(false)
   const busyRef = useRef(false)
-  const limited = !premium && used >= MEMORY.dailyFreeCards
+  const limited = Boolean(user) && !premium && used >= MEMORY.dailyFreeCards
   useEffect(() => {
     if (!user) return
     let active = true
@@ -99,7 +99,13 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   }
 
   const finishCard = useCallback(async (rating: MemoryRating) => {
-    if (!card || !revealed || busyRef.current || limited || !user || !ready) return
+    if (!card || !revealed || busyRef.current || limited || (Boolean(user) && !ready)) return
+    if (!user) {
+      setCompleted(value => value + 1)
+      setIndex(value => value + 1)
+      setRevealed(false)
+      return
+    }
     busyRef.current = true; setSaving(true); setSaveError('')
     try {
       const result = await recordMemoryReview(card.id, rating, completionIds[index], { cards, index: index + 1, completed: completed + 1, sessionXp, direction, completionIds })
@@ -113,6 +119,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   }, [card, cards, completed, completionIds, direction, index, limited, premium, revealed, sessionXp, user, ready])
 
   const saveAndExit = async () => {
+    if (!user) { router.push('/'); return }
     if (busyRef.current) return
     busyRef.current = true; setSaving(true); setSaveError('')
     try {
@@ -144,11 +151,14 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     router.push(show ? `/memory?show=${encodeURIComponent(show.id)}` : '/memory')
   }
   const restart = async () => {
-    if (!user) { window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } })); return }
-    if (!ready || saving) return
+    if (Boolean(user) && (!ready || saving)) return
     if (limited) { setUpgrade(true); return }
-    setSaving(true)
     const ids = library.cards.map(() => crypto.randomUUID())
+    if (!user) {
+      setCards(library.cards); setCompletionIds(ids); setStarted(true); setIndex(0); setRevealed(false); setCompleted(0); setSessionXp(0); setSaved(null)
+      return
+    }
+    setSaving(true)
     try {
       await saveMemorySession({ cards: library.cards, index: 0, completed: 0, sessionXp: 0, direction, completionIds: ids })
       setCards(library.cards); setCompletionIds(ids); setStarted(true); setIndex(0); setRevealed(false); setCompleted(0); setSessionXp(0); setSaved(null)
@@ -202,12 +212,12 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         {progressLoading && <Box role="status" sx={{ mt: 2 }}><Typography>Loading Memory progress...</Typography><LinearProgress /></Box>}
         {progressError && <Alert severity="error" sx={{ mt: 2 }} action={<Button onClick={retryProgress} disabled={progressLoading}>Retry</Button>}>{progressError}</Alert>}
         {!progressError && sessionError && <Alert severity="warning" sx={{ mt: 2 }} action={<Button onClick={retryProgress}>Retry</Button>}>{sessionError} Your completed-card statistics are still available.</Alert>}
-        {!user && <Alert severity="info" sx={{ mt: 2 }}>Sign in to practise Memory and save your progress.</Alert>}
+        {!user && <Alert severity="info" sx={{ mt: 2 }}>You can practise without signing in. Sign in only if you want to save your progress.</Alert>}
         {saveError && <Alert severity="error" sx={{ mt: 2 }}>{saveError}</Alert>}
         {ready && user && <Typography sx={{ mt: 2 }} color="text.secondary">{premium ? 'Unlimited daily Memory practice' : `${used} / ${MEMORY.dailyFreeCards} cards today`}</Typography>}
         {limited && <Alert severity="info" sx={{ mt: 2 }} action={<Button onClick={() => setUpgrade(true)}>Upgrade to AWM+</Button>}>You&apos;ve completed today&apos;s free Memory practice. Your progress is saved. Come back tomorrow.</Alert>}
         {saved && !started && <Button onClick={resume} disabled={!ready || limited}>Resume saved session ? {saved.completed} completed</Button>}
-        {started && <Button disabled={saving} onClick={() => void saveAndExit()} sx={{ mt: 2 }}>Save &amp; Exit</Button>}
+        {started && <Button disabled={saving} onClick={() => void saveAndExit()} sx={{ mt: 2 }}>{user ? 'Save & Exit' : 'Exit practice'}</Button>}
         {loadError && <Alert severity="error" sx={{ mt: 2.5 }}>{loadError}</Alert>}
         {library.missingScope && <Alert severity="warning" sx={{ mt: 2.5 }}>That source is no longer available. Choose a show or switch to Random practice.</Alert>}
 
@@ -238,11 +248,11 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
               </Box>
               <Box sx={{ mt: 4 }}>
                 <Typography sx={{ mb: 1.5, textAlign: 'center', color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 11 }}>{card.showTitle} · {card.episodeTitle}</Typography>
-                {!revealed ? <Button onClick={() => setRevealed(true)} fullWidth variant="contained" startIcon={<VisibilityOutlined />} sx={{ minHeight: 49, bgcolor: 'var(--awm-gold)', color: '#fff', borderRadius: '10px', textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#946c08' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 3 } }}>Reveal</Button> : <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 1.25 }}><Button disabled={!ready || saving || limited} onClick={() => void finishCard('again')} variant="outlined" sx={{ minHeight: 48, color: 'var(--awm-bark)', borderColor: 'color-mix(in srgb, var(--awm-bark) 25%, transparent)', borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}>Didn&apos;t know</Button><Button disabled={!ready || saving || limited} onClick={() => void finishCard('known')} variant="contained" endIcon={<ArrowForward />} sx={{ minHeight: 48, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '10px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' } }}>Knew it</Button></Box>}
+                {!revealed ? <Button onClick={() => setRevealed(true)} fullWidth variant="contained" startIcon={<VisibilityOutlined />} sx={{ minHeight: 49, bgcolor: 'var(--awm-gold)', color: '#fff', borderRadius: '10px', textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#946c08' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 3 } }}>Reveal</Button> : <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 1.25 }}><Button disabled={(Boolean(user) && !ready) || saving || limited} onClick={() => void finishCard('again')} variant="outlined" sx={{ minHeight: 48, color: 'var(--awm-bark)', borderColor: 'color-mix(in srgb, var(--awm-bark) 25%, transparent)', borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}>Didn&apos;t know</Button><Button disabled={(Boolean(user) && !ready) || saving || limited} onClick={() => void finishCard('known')} variant="contained" endIcon={<ArrowForward />} sx={{ minHeight: 48, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '10px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' } }}>Knew it</Button></Box>}
                 <Button component={Link} href={`/cartoons/${encodeURIComponent(card.showSlug)}/${encodeURIComponent(card.episodeSlug)}`} startIcon={<PlayCircleOutlineRounded />} size="small" sx={{ display: 'flex', mx: 'auto', mt: 1.25, color: 'var(--awm-muted)', textTransform: 'none' }}>View source episode</Button>
               </Box>
             </Paper>
-            <Button disabled={!ready || saving || limited} onClick={() => { if (index >= cards.length - 1) setIndex(cards.length); else setIndex((value) => value + 1); setRevealed(false) }} startIcon={<ArrowBack sx={{ transform: 'rotate(180deg)' }} />} sx={{ mt: 1, color: 'var(--awm-muted)', textTransform: 'none' }}>Skip</Button>
+            <Button disabled={(Boolean(user) && !ready) || saving || limited} onClick={() => { if (index >= cards.length - 1) setIndex(cards.length); else setIndex((value) => value + 1); setRevealed(false) }} startIcon={<ArrowBack sx={{ transform: 'rotate(180deg)' }} />} sx={{ mt: 1, color: 'var(--awm-muted)', textTransform: 'none' }}>Skip</Button>
           </Box>
         )}
       </Container>
