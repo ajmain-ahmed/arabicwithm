@@ -5,6 +5,7 @@ import { AutoStories, Download, PsychologyOutlined, AutoAwesome, Close } from '@
 import { fetchPremiumStatus, managePremium, startPremiumCheckout } from '@/app/actions/premium'
 import { useAuth } from '@/app/AuthContext'
 import { PREMIUM } from '@/app/lib/entitlements'
+import { useRouter } from 'next/navigation'
 
 export default function PremiumPrompt({ open, onClose, reason }: { open: boolean; onClose: () => void; reason?: string }) {
   const { user } = useAuth()
@@ -60,6 +61,13 @@ export function PremiumSection() {
 
 }
 export function LockedChapter({ bookSlug, chapterTitle }: { bookSlug: string; chapterTitle: string }) {
+  const router = useRouter()
   const [open, setOpen] = useState(true)
-  return <Box component="main" sx={{ p: { xs: 3, md: 6 }, minHeight: '60vh' }}><Typography variant="h2">{chapterTitle}</Typography><Typography sx={{ my: 2 }}>Continue reading with AWM+. Your reading progress is saved.</Typography><Button href={`/books/${bookSlug}`}>Back to chapters</Button><Button onClick={() => setOpen(true)}>Upgrade to AWM+</Button><PremiumPrompt open={open} onClose={() => setOpen(false)} reason="You've reached the end of the free chapters. Upgrade to AWM+ to continue reading this book." /></Box>
+  const close = () => {
+    setOpen(false)
+    router.replace(`/books/${encodeURIComponent(bookSlug)}`)
+  }
+  return <Box component="main" sx={{ minHeight: '60vh', bgcolor: 'var(--awm-cream-light)' }}>
+    <PremiumPrompt open={open} onClose={close} reason={`${chapterTitle} is available with AWM+.`} />
+  </Box>
 }

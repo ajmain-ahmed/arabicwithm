@@ -75,7 +75,7 @@ export function PremiumChapterLink({ href, children, ...access }: ChapterAccessP
   }
 
   return <>
-    <Link href={href} onClick={(event) => void openChapter(event)} style={{ color: 'inherit', textDecoration: 'none' }}>
+    <Link href={href} prefetch={canAccess} onClick={(event) => void openChapter(event)} style={{ color: 'inherit', textDecoration: 'none' }}>
       {children}
     </Link>
     <PremiumPrompt
