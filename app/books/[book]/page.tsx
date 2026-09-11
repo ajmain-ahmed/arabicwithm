@@ -5,7 +5,7 @@ import { ArrowBack, ChevronRight } from '@mui/icons-material'
 import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
 import BookReadingCta from './BookReadingCta'
 import BookListRemovalButton from './BookListRemovalButton'
-import ChapterAccessLock from './ChapterAccessLock'
+import ChapterAccessLock, { PremiumChapterLink } from './ChapterAccessLock'
 
 export const revalidate = false
 
@@ -90,9 +90,12 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
         >
           {chapters.map((chapter) => (
             <Box key={chapter.id}>
-              <Link
+              <PremiumChapterLink
                 href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`}
-                style={{ color: 'inherit', textDecoration: 'none' }}
+                premiumExempt={book.premiumExempt}
+                freeChapterCount={book.freeChapterCount}
+                chapterCount={book.chapterCount}
+                chapterNumber={chapter.chapterNumber}
               >
                 <Paper elevation={0} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, p: { xs: 1.5, sm: 2 }, textAlign: 'left', borderRadius: '10px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', transition: 'border-color 0.15s ease, transform 0.15s ease', '&:hover': { borderColor: 'rgba(184,134,11,0.45)', transform: { sm: 'translateX(3px)' } } }}>
                   <Box sx={{ width: { xs: 34, sm: 38 }, height: { xs: 34, sm: 38 }, borderRadius: '50%', display: 'grid', placeItems: 'center', bgcolor: 'rgba(184,134,11,0.1)', color: '#b8860b', fontWeight: 700, flexShrink: 0 }}>
@@ -105,7 +108,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                   <ChapterAccessLock premiumExempt={book.premiumExempt} freeChapterCount={book.freeChapterCount} chapterCount={book.chapterCount} chapterNumber={chapter.chapterNumber} />
                   <ChevronRight sx={{ color: 'var(--awm-muted-light)' }} />
                 </Paper>
-              </Link>
+              </PremiumChapterLink>
             </Box>
           ))}
         </Box>
