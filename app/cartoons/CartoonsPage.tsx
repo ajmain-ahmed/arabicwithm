@@ -195,8 +195,7 @@ export default function CartoonsPage({
                     level={episode.level}
                     tags={episode.tags}
                     showTags={false}
-                    aspectRatio="16 / 9"
-                    imageFit="cover"
+                    imageFit="natural"
                     denseMobileTile
                     mobileAspectRatio="16 / 9"
                     mobileTitleSize={10}
@@ -226,8 +225,7 @@ export default function CartoonsPage({
                       tags={showAdditionalTags[show.slug]}
                       maxVisibleTags={2}
                       level={show.level}
-                      aspectRatio="16 / 9"
-                      imageFit="cover"
+                      imageFit="natural"
                       denseMobileTile
                       mobileAspectRatio="16 / 9"
                       mobileImagePosition="center"

@@ -114,7 +114,7 @@ export default function ContentCard({
           width: '100%',
           flexShrink: denseMobileTile ? undefined : compactMobileRow ? 0 : undefined,
           aspectRatio: denseMobileTile
-            ? { xs: mobileAspectRatio, sm: imageFit === 'natural' ? 'auto' : aspectRatio }
+            ? imageFit === 'natural' ? 'auto' : { xs: mobileAspectRatio, sm: aspectRatio }
             : compactMobileRow
             ? { xs: aspectRatio, sm: imageFit === 'natural' ? 'auto' : aspectRatio }
             : imageFit === 'natural' ? 'auto' : aspectRatio,
@@ -150,13 +150,13 @@ export default function ContentCard({
             sx={{
               width: '100%',
               height: denseMobileTile
-                ? { xs: '100%', sm: imageFit === 'natural' ? 'auto' : '100%' }
+                ? imageFit === 'natural' ? 'auto' : '100%'
                 : compactMobileRow
                 ? { xs: '100%', sm: imageFit === 'natural' ? 'auto' : '100%' }
                 : imageFit === 'natural' ? 'auto' : '100%',
               display: 'block',
               objectFit: denseMobileTile
-                ? { xs: 'cover', sm: imageFit === 'natural' ? undefined : imageFit }
+                ? imageFit === 'natural' ? undefined : imageFit
                 : compactMobileRow
                 ? { xs: imageFit === 'natural' ? 'cover' : imageFit, sm: imageFit === 'natural' ? undefined : imageFit }
                 : imageFit === 'natural' ? undefined : imageFit,
