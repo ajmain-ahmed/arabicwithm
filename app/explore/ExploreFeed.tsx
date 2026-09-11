@@ -658,7 +658,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
       ref={feedRef}
       component="main"
       sx={{
-        height: { xs: 'calc(100dvh - 108px - env(safe-area-inset-bottom))', md: 'calc(100dvh - 64px)' },
+        height: { xs: 'calc(100dvh - 56px)', md: 'calc(100dvh - 64px)' },
         overflowY: 'auto',
         scrollSnapType: 'y mandatory',
         overscrollBehaviorY: 'contain',

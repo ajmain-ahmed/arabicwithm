@@ -30,5 +30,5 @@ export default function ChapterAccessLock({
 
   if (premium === null) return null
   if (canAccessBookChapter(premium, { premiumExempt, freeChapterCount, chapterCount }, chapterNumber)) return null
-  return <LockOutlined aria-label="Premium chapter" sx={{ color: "text.secondary" }} />
+  return <LockOutlined aria-label="AWM+ chapter" sx={{ color: "text.secondary" }} />
 }

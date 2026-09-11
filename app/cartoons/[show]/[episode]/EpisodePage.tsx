@@ -21,7 +21,7 @@ import {
   Chip,
   Breadcrumbs,
   IconButton,
-  Popover,
+  Drawer,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { ArrowBack, Settings, ExpandMore, ExpandLess, ChevronRight, Fullscreen, PsychologyOutlined, Refresh } from '@mui/icons-material'
@@ -257,6 +257,7 @@ function ArabicLineText({
   }, [clearLeaveTimer])
 
   const handleOpenDrawer = useCallback((entry: CartoonWordEntry, anchor: HTMLElement) => {
+    window.dispatchEvent(new CustomEvent('awm-watch-definition', { detail: true }))
     setMobileEntry(entry)
     setMobileAnchor(anchor)
     onDrawerOpenChange?.(true)
@@ -264,6 +265,7 @@ function ArabicLineText({
   }, [onDrawerOpenChange])
 
   const handleCloseDrawer = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('awm-watch-definition', { detail: false }))
     setMobileAnchor(null)
     onDrawerOpenChange?.(false)
   }, [onDrawerOpenChange])
@@ -273,6 +275,7 @@ function ArabicLineText({
   useEffect(() => {
     return () => {
       clearLeaveTimer()
+      window.dispatchEvent(new CustomEvent('awm-watch-definition', { detail: false }))
     }
   }, [clearLeaveTimer])
 
@@ -414,6 +417,8 @@ function ArabicLineText({
           return (
             <span
               key={i}
+              role="button" tabIndex={0} aria-label={`Define ${wordText}`}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenDrawer(entry, e.currentTarget) } }}
               onClick={(e) => {
                 e.stopPropagation()
                 handleOpenDrawer(entry, e.currentTarget)
@@ -486,6 +491,9 @@ function ArabicLineText({
             }}
           >
             <span
+              role="button" tabIndex={0} aria-label={`Define ${wordText}`}
+              onClick={e => { setOpen(false); handleOpenDrawer(entry, e.currentTarget) }}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(false); handleOpenDrawer(entry, e.currentTarget) } }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
                 handleOpen(entry, e.currentTarget, index)
@@ -509,20 +517,18 @@ function ArabicLineText({
       })}
 
       {/* Mobile bottom-sheet summary */}
-      <Popover
+      <Drawer
+        anchor="bottom"
         open={Boolean(mobileAnchor)}
-        anchorEl={mobileAnchor}
         onClose={handleCloseDrawer}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
         disableRestoreFocus
         slotProps={{
           paper: {
             sx: {
               mt: 0.75,
-              width: 'min(310px, calc(100vw - 24px))',
+              width: '100%', maxWidth: 640, mx: 'auto', pb: 'env(safe-area-inset-bottom)',
               maxHeight: 'min(56dvh, 430px)',
-              borderRadius: '12px',
+              borderRadius: '18px 18px 0 0',
               bgcolor: 'var(--awm-white)',
               border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)',
               boxShadow: '0 14px 42px color-mix(in srgb, var(--awm-bark) 22%, transparent)',
@@ -533,99 +539,11 @@ function ArabicLineText({
           },
         }}
       >
-        {mobileEntry && (
-          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <Box
-              sx={{
-                px: 3,
-                pb: 3.5,
-                pt: 0.5,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
-                gap: 2,
-              }}
-            >
-              <Typography
-                sx={{
-                  fontFamily: '"EB Garamond", Georgia, serif',
-                  fontSize: '2.1rem',
-                  fontWeight: 700,
-                  color: 'var(--bark)',
-                  direction: 'rtl',
-                  lineHeight: 1.25,
-                }}
-              >
-                {showDiacritics ? mobileEntry.arabic : mobileEntry.plain}
-              </Typography>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                {mobileEntry.cefr && (
-                  <Chip
-                    label={mobileEntry.cefr}
-                    size="small"
-                    sx={{
-                      bgcolor: LEVEL_COLORS[mobileEntry.cefr] ?? 'var(--forest)',
-                      color: '#fff',
-                      fontFamily: 'Jost, sans-serif',
-                      fontWeight: 700,
-                      fontSize: '0.78rem',
-                      letterSpacing: '0.04em',
-                    }}
-                  />
-                )}
-                {mobileEntry.pos && (
-                  <Chip
-                    label={mobileEntry.pos}
-                    size="small"
-                    sx={{
-                      bgcolor: 'rgba(44,26,14,0.08)',
-                      color: 'var(--bark)',
-                      fontFamily: 'Jost, sans-serif',
-                      fontWeight: 600,
-                      fontSize: '0.78rem',
-                      textTransform: 'capitalize',
-                    }}
-                  />
-                )}
-              </Box>
-
-              {mobileEntry.transliteration && (
-                <Typography
-                  sx={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '1.1rem',
-                    color: 'var(--muted)',
-                    fontStyle: 'normal',
-                    lineHeight: 1.4,
-                  }}
-                >
-                  {mobileEntry.transliteration}
-                </Typography>
-              )}
-
-              {mobileEntry.english ? (
-                <Typography
-                  sx={{
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: '1.25rem',
-                    fontWeight: 600,
-                    color: 'var(--bark)',
-                    lineHeight: 1.45,
-                  }}
-                >
-                  {mobileEntry.english}
-                </Typography>
-              ) : (
-                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1.05rem', color: 'var(--muted)' }}>
-                  No meaning available.
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        )}
-      </Popover>
+        <Box sx={{ px: 2.5, pt: 1, pb: 2 }}>
+          <Button onClick={handleCloseDrawer} aria-label="Close word definition" sx={{ display: 'block', ml: 'auto', minHeight: 44 }}>Close</Button>
+          {mobileEntry && <WordTooltip entry={mobileEntry} textScale={textScale} />}
+        </Box>
+      </Drawer>
 
     </>
   )

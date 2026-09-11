@@ -1,4 +1,3 @@
-import WordOfTheDay from "@/app/components/home/WordOfTheDay"
 import { PremiumSection } from "@/app/components/PremiumPrompt"
 import { fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
 import { fetchEpisodesForShowPublic, fetchShowsForPublic } from '@/app/actions/cartoons'
@@ -33,6 +32,6 @@ export default async function HomePage() {
       featuredBook={featuredBook}
       featuredEpisode={featuredEpisode}
       chaptersByBook={Object.fromEntries(chapterEntries)}
-    /><WordOfTheDay /><PremiumSection /></>
+    /><PremiumSection /></>
   )
 }

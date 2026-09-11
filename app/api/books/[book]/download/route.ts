@@ -28,7 +28,7 @@ function filenamePart(value: string): string {
 }
 
 export async function GET(request: NextRequest, context: { params: Promise<{ book: string }> }) {
-  if (!(await fetchPremiumStatus()).premium) return Response.json({ error: "PDF downloads are available with Premium." }, { status: 403, headers: { "Cache-Control": "private, no-store" } })
+  if (!(await fetchPremiumStatus()).premium) return Response.json({ error: "PDF downloads are available with AWM+." }, { status: 403, headers: { "Cache-Control": "private, no-store" } })
   const { book: bookSlug } = await context.params
   const language = request.nextUrl.searchParams.get('lang') === 'en' ? 'en' : 'ar'
   const requestedChapter = request.nextUrl.searchParams.get('chapter')

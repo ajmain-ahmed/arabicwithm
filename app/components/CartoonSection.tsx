@@ -52,7 +52,7 @@ function WorksheetFan() {
             left,
             top: rotate === '0deg' ? '0%' : '4%',
             width: '76%',
-            aspectRatio: '3/4',
+            aspectRatio: '16 / 9',
             objectFit: 'cover',
             borderRadius: '10px',
             border: '3px solid #fff',

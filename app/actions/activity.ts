@@ -1,6 +1,6 @@
 'use server'
 
-import { fetchMemoryProgress } from '@/app/actions/memory'
+import { loadMemoryProgress } from '@/app/actions/memory'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
 import { ACTIVE_DAY_MINIMUM_SECONDS, localDateKey, parseLearningActivity, type LearningActivity } from '@/app/lib/activity'
 import { serviceClient } from '@/app/lib/supabase'
@@ -80,7 +80,7 @@ async function activityForUser(userId: string): Promise<LearningActivity> {
   ])).sort().slice(-400)
 
   return {
-    memory: await fetchMemoryProgress(),
+    memory: await loadMemoryProgress().then(result => result.ok ? result.data : undefined),
     totalSeconds: Number(profile.legacy_active_seconds) + Number(profile.tracked_active_seconds),
     activeDates,
     daily,

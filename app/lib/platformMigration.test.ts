@@ -8,7 +8,7 @@ import { MEMORY } from './entitlements'
 let db: PGlite
 const user = '11111111-1111-4111-8111-111111111111'
 const premium = '22222222-2222-4222-8222-222222222222'
-const migration = readFileSync('docs/platform-setup.sql', 'utf8')
+const migration = readFileSync('docs/platform-setup.sql', 'utf8') + '\n' + readFileSync('supabase/migrations/20260910180000_memory_no_xp.sql', 'utf8')
 beforeAll(async () => {
   db = new PGlite()
   await db.exec(`create schema auth; create function auth.uid() returns uuid language sql as 'select null::uuid'; create role anon; create role authenticated; create role service_role;
@@ -38,9 +38,9 @@ describe.sequential('actual PostgreSQL migration and Memory transactions', () =>
   it('records 8, resumes for 12 in the other direction, then rejects further practice without losing XP', async () => {
     for (let i = 0; i < 8; i++) expect((await review(user)).used).toBe(i + 1)
     for (let i = 8; i < 20; i++) expect((await review(user, randomUUID(), randomUUID(), 'english')).used).toBe(i + 1)
-    expect(await review(user)).toEqual({ accepted: false, used: 20, awarded: 0, totalXp: 20 })
+    expect(await review(user)).toEqual({ accepted: false, used: 20, awarded: 0, totalXp: 0 })
     const { rows } = await db.query<{ state: { completed: number; sessionXp: number } }>('select state from memory_sessions where user_id=$1', [user])
-    expect(rows[0].state).toMatchObject({ completed: 1, sessionXp: 1 })
+    expect(rows[0].state).toMatchObject({ completed: 1, sessionXp: 0 })
   })
   it('does not let concurrent requests overspend the quota', async () => {
     const id = randomUUID()
@@ -55,14 +55,14 @@ describe.sequential('actual PostgreSQL migration and Memory transactions', () =>
     await review(premium, completion, card)
     expect((await review(premium, completion, card)).used).toBe(1)
     expect((await review(premium, randomUUID(), card)).awarded).toBe(0)
-    for (let i = 0; i < 23; i++) expect((await review(premium)).awarded).toBe(1)
+    for (let i = 0; i < 23; i++) expect((await review(premium)).awarded).toBe(0)
     expect((await review(premium)).used).toBe(26)
   })
   it('resets by persisted date; expiration removes access but preserves all progress', async () => {
     await db.query("update memory_reviews set activity_date=activity_date-1 where user_id=$1", [user])
-    expect(await review(user)).toMatchObject({ accepted: true, used: 1, totalXp: 21 })
+    expect(await review(user)).toMatchObject({ accepted: true, used: 1, totalXp: 0 })
     await db.query("update subscriptions set current_period_end=now()-interval '1 second' where user_id=$1", [premium])
-    expect(await review(premium)).toMatchObject({ accepted: false, used: 26, totalXp: 25 })
+    expect(await review(premium)).toMatchObject({ accepted: false, used: 26, totalXp: 0 })
   })
   it('rejects stale billing events', async () => {
     await db.query("select apply_subscription_event($1,100,'sub_test','active',now()+interval '1 month',true)", [premium])
@@ -86,4 +86,19 @@ it('stores feedback metadata and protects direct client writes', async () => {
   await expect(db.query('insert into feedback(id,user_id,rating) values ($1,$2,6)', [randomUUID(), user])).rejects.toThrow()
   const result = await db.query<{ allowed: boolean }>("select has_table_privilege('authenticated','books','UPDATE') or has_table_privilege('anon','feedback','INSERT') as allowed")
   expect(result.rows[0].allowed).toBe(false)
+})
+
+it('ignores XP requested by legacy callers and retains weekly practice counts', async () => {
+  const id = randomUUID()
+  await db.query('insert into auth.users values ($1,$2)', [id, '{}'])
+  const completion = randomUUID()
+  const state = JSON.stringify({ completionIds: [completion], sessionXp: 999 })
+  const args = [id, completion, 'card', 'known', 999, 20, state]
+  const sql = 'select complete_memory_card($1,$2,$3,$4,$5,$6,$7::jsonb) as result'
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { rows } = await db.query<{ result: { awarded: number; used: number } }>(sql, args)
+    expect(rows[0].result).toMatchObject({ awarded: 0, used: 1 })
+  }
+  const { rows } = await db.query<{ result: { cards: number; xp: number } }>('select memory_totals($1) result', [id])
+  expect(rows[0].result).toMatchObject({ cards: 1, xp: 0 })
 })

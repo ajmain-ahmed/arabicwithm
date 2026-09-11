@@ -41,6 +41,6 @@ export default function PdfDownloadButton({ bookSlug, chapterSlug, small = false
       <DialogContent>{files.length ? files.map(file => <Button key={file.language} fullWidth disabled={busy} onClick={() => void download(file)} startIcon={<Download />}>{file.language === 'ar' ? 'Arabic PDF' : 'English PDF'}</Button>) : 'No PDFs are available for this book yet.'}</DialogContent>
       <DialogActions><Button onClick={() => setOpen(false)}>Close</Button></DialogActions>
     </Dialog>
-    <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason="PDF downloads are available with Premium." />
+    <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason="PDF downloads are available with AWM+." />
   </>
 }

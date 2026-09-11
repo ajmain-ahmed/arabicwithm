@@ -2,7 +2,7 @@ import 'server-only'
 import Stripe from 'stripe'
 export function stripeClient() {
   const key = process.env.STRIPE_SECRET_KEY
-  if (!key) throw new Error('Premium billing is not configured yet.')
+  if (!key) throw new Error('AWM+ billing is not configured yet.')
   if (key.startsWith('sk_live_') && process.env.STRIPE_LIVE_ENABLED !== 'true') throw new Error('Live billing is disabled.')
   return new Stripe(key)
 }

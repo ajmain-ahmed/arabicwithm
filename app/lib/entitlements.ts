@@ -1,6 +1,6 @@
 /** Shared product policy. Entitlements themselves are always read on the server. */
 export const PREMIUM = { monthlyPence: 399, currency: 'gbp', label: '£3.99/month' } as const
-export const MEMORY = { dailyFreeCards: 20, sessionCards: 20, xpPerCard: 1, timeZone: 'Europe/London' } as const
+export const MEMORY = { dailyFreeCards: 20, sessionCards: 20, xpPerCard: 0, timeZone: 'Europe/London' } as const
 export interface BookAccessPolicy { premiumExempt: boolean; freeChapterCount: number; chapterCount: number }
 export function canAccessBookChapter(premium: boolean, book: BookAccessPolicy, chapter: number): boolean {
   if (!Number.isInteger(chapter) || chapter < 1) return false

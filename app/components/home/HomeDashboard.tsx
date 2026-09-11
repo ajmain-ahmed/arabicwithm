@@ -20,6 +20,7 @@ import {
 import { Box, Button, Chip, CircularProgress, Container, LinearProgress, Typography, Paper } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { fetchLearningActivity } from '@/app/actions/activity'
+import WordOfTheDay from '@/app/components/home/WordOfTheDay'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 import {
@@ -178,7 +179,7 @@ function LearningStats({
   booksInProgress: number
   now: Date
 }) {
-  const level = calculateLearningLevel(activity.totalSeconds, activity.memory?.totalXp ?? 0)
+  const level = calculateLearningLevel(activity.totalSeconds)
   const week = summarizeWeeklyActivity(activity.daily, now)
   const comparison = week.comparisonPercent
   const comparisonText = comparison === null
@@ -211,12 +212,10 @@ function LearningStats({
           <Typography sx={{ mt: 1.4, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11 }}>{formatLearningTime(activity.totalSeconds)} total active learning</Typography>
         </Box>
 
-        <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>
-          <Typography sx={{ fontWeight: 700 }}>Memory practice</Typography>
-          <Typography sx={{ mt: 1, fontSize: 32 }}>{activity.memory?.total ?? 0} cards</Typography>
-          <Typography color="text.secondary">{activity.memory?.weekCards ?? 0} this week ? {activity.memory?.weekXp ?? 0} XP this week</Typography>
-          <Typography color="text.secondary">{activity.memory?.totalXp ?? 0} total Memory XP</Typography>
-        </Box>
+        {activity.memory && <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>
+          <Typography sx={{ fontWeight: 700 }}>Memory Practice</Typography>
+          <Typography sx={{ mt: 1, fontSize: 28 }}>{activity.memory.weekCards} cards this week</Typography>
+        </Box>}
 
         <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>
           <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700 }}>This week</Typography>
@@ -348,10 +347,14 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
               <BookmarkContinueCard bookmark={bookmark} />
             </Box>
           )}
-          <Box sx={{ mt: { xs: 7, md: 10 } }}><SectionHeading eyebrow="Start exploring" title="Featured learning" detail="A simple place to begin—no account history required." />
+          <Box sx={{ mt: { xs: 7, md: 10 } }}>
+            <WordOfTheDay embedded />
+            <Box sx={{ mt: { xs: 4, md: 5 } }}>
+              <SectionHeading eyebrow="Start exploring" title="Featured learning" detail="A simple place to begin—no account history required." />
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
               {featuredEpisode && <ContentCard type={`Featured episode · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} actionLabel="Play episode" />}
               {featuredBook && <ContentCard type="Featured book" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} />}
+            </Box>
             </Box>
           </Box>
           <Box sx={{ mt: { xs: 7, md: 10 } }}><SectionHeading eyebrow="Keep exploring" title="Choose what to do next" /><QuickLinks /></Box>

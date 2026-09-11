@@ -117,8 +117,8 @@ export function minutesRequiredForLevel(level: number): number {
   return Math.round(Math.pow(safeLevel - 1, 1.35) * 60)
 }
 
-export function calculateLearningLevel(totalSeconds: number, memoryXp = 0): LearningLevelProgress {
-  const totalMinutes = Math.floor(Math.max(0, totalSeconds) / 60) + Math.max(0, Math.floor(memoryXp))
+export function calculateLearningLevel(totalSeconds: number): LearningLevelProgress {
+  const totalMinutes = Math.floor(Math.max(0, totalSeconds) / 60)
   let level = 1
   while (minutesRequiredForLevel(level + 1) <= totalMinutes) level += 1
   const currentLevelMinutes = minutesRequiredForLevel(level)
@@ -187,6 +187,7 @@ export function summarizeWeeklyActivity(daily: DailyLearningActivity[], now = ne
 }
 
 export function activityKindForPath(pathname: string, videoPlaying: boolean): ActivityKind | null {
+  if (pathname.startsWith('/memory')) return null
   if (videoPlaying) return 'video'
   if (/^\/books\/[^/]+\/[^/]+/.test(pathname)) return 'reading'
   if (/^\/cartoons\/[^/]+\/[^/]+/.test(pathname) || pathname === '/explore' || pathname.startsWith('/practice') || pathname.startsWith('/memory')) return 'other'

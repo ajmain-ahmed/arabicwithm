@@ -1,4 +1,5 @@
 'use client'
+import { Shuffle } from '@mui/icons-material'
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -141,25 +142,26 @@ export default function CartoonsPage({
         </Breadcrumbs>
 
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1.5, mb: { xs: 1.5, md: 3 } }}>
+          <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center' }}>
           <ToggleButtonGroup
             exclusive
             value={view}
             onChange={(_, nextView: WatchView | null) => { if (nextView) setView(nextView) }}
             aria-label="Watch catalogue view"
             size="small"
-            sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' }, '& .MuiToggleButton-root': { flex: { xs: 1, sm: 'initial' }, minHeight: 44, px: 2.5, color: MUTED, borderColor: 'color-mix(in srgb, var(--awm-bark) 14%, transparent)', fontFamily: 'Jost, sans-serif', fontWeight: 700, textTransform: 'none', '&.Mui-selected': { bgcolor: '#0e2e1f', color: '#fff', '&:hover': { bgcolor: '#173f2d' } } } }}
+            sx={{ alignSelf: { xs: 'stretch', sm: 'flex-start' }, '& .MuiToggleButton-root': { flex: { xs: 1, sm: 'initial' }, minHeight: 44, px: { xs: 1, sm: 2.5 }, color: MUTED, borderColor: 'color-mix(in srgb, var(--awm-bark) 14%, transparent)', fontFamily: 'Jost, sans-serif', fontWeight: 700, textTransform: 'none', '&.Mui-selected': { bgcolor: '#0e2e1f', color: '#fff', '&:hover': { bgcolor: '#173f2d' } } } }}
           >
             <ToggleButton value="episodes" aria-label="Show all episodes"><VideoLibrary sx={{ mr: 0.75, fontSize: 19 }} />All Episodes</ToggleButton>
             <ToggleButton value="shows" aria-label="Show all shows"><Movie sx={{ mr: 0.75, fontSize: 19 }} />All Shows</ToggleButton>
           </ToggleButtonGroup>
+          <Button aria-label="Random episode" title="Random episode" disabled={episodes.length === 0} onClick={goToRandomEpisode} sx={{ minWidth: 44, width: 44, height: 44, color: BARK, border: '1px solid', borderColor: 'divider' }}><Shuffle /></Button>
+          </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
             <Button startIcon={<Tune />} onClick={() => setFilterDrawerOpen(true)} sx={{ display: { xs: 'inline-flex', md: 'none' }, minHeight: 42, px: 2, borderRadius: '8px', color: BARK, border: '1px solid rgba(44,26,14,.15)', textTransform: 'none' }}>
               Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
             </Button>
-            <Button disabled={episodes.length === 0} onClick={goToRandomEpisode} startIcon={<PlayArrow />} variant="contained" sx={{ minHeight: 42, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', px: { xs: 1.5, sm: 2.25 }, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' } }}>
-              Take Me Anywhere
-            </Button>
+            {activeFilterCount > 0 && <Button onClick={() => { resetFilters(); const url = new URL(window.location.href); ['category','level','tag','tags','additionalTag'].forEach(key => url.searchParams.delete(key)); window.history.replaceState(null, '', url.pathname + url.search) }} sx={{ minHeight: 44 }}>Clear all</Button>}
           </Box>
         </Box>
 
@@ -181,7 +183,7 @@ export default function CartoonsPage({
                 <Button onClick={resetFilters} sx={{ mt: 1.5, color: GOLD, textTransform: 'none' }}>Reset filters</Button>
               </Box>
             ) : view === 'episodes' ? (
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.5, sm: 1 } }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.5, sm: 1 } }}>
                 {filteredEpisodes.map((episode) => (
                   <ContentCard
                     key={episode.id}
@@ -193,10 +195,10 @@ export default function CartoonsPage({
                     level={episode.level}
                     tags={episode.tags}
                     showTags={false}
-                    aspectRatio="3 / 4"
+                    aspectRatio="16 / 9"
                     imageFit="cover"
                     denseMobileTile
-                    mobileAspectRatio="3 / 4"
+                    mobileAspectRatio="16 / 9"
                     mobileTitleSize={10}
                     overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                     metaItems={[{ icon: <Movie sx={{ fontSize: 15, color: 'var(--awm-muted-light)' }} />, label: episode.showTitle }]}
@@ -204,7 +206,7 @@ export default function CartoonsPage({
                 ))}
               </Box>
             ) : (
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.5, sm: 1 } }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.5, sm: 1 } }}>
                 {filteredShows.map((show) => (
                   <Box key={show.id} sx={{ position: 'relative', minWidth: 0 }}>
                     {isAdmin && (
@@ -224,8 +226,10 @@ export default function CartoonsPage({
                       tags={showAdditionalTags[show.slug]}
                       maxVisibleTags={2}
                       level={show.level}
+                      aspectRatio="16 / 9"
+                      imageFit="cover"
                       denseMobileTile
-                      mobileAspectRatio="3 / 4"
+                      mobileAspectRatio="16 / 9"
                       mobileImagePosition="center"
                       overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                       metaItems={[{ icon: <School sx={{ fontSize: 14, color: 'var(--awm-muted-light)' }} />, label: `${episodesMap[show.slug]?.length ?? 0} episodes` }]}

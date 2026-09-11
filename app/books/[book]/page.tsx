@@ -40,7 +40,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: book.cover ? '240px minmax(0, 1fr)' : '1fr' }, gap: { xs: 3, md: 5 }, alignItems: 'start' }}>
             {book.cover && (
               <Box sx={{ width: '100%', maxWidth: { sm: 240 }, mx: { xs: 'auto', sm: 0 } }}>
-                <Box component="img" src={book.cover} alt={`${book.title} cover`} sx={{ display: 'block', width: '100%', aspectRatio: '3 / 4', objectFit: 'cover', borderRadius: '10px', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }} />
+                <Box component="img" src={book.cover} alt={`${book.title} cover`} sx={{ display: 'block', width: '100%', aspectRatio: '2 / 3', objectFit: 'cover', borderRadius: '10px', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }} />
                 <BookListRemovalButton bookSlug={book.slug} />
               </Box>
             )}

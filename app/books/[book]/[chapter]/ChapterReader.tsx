@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore } from 'react'
-import { Box, Button, ButtonGroup, Divider, IconButton, Paper, Snackbar, Typography } from '@mui/material'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { Box, Button, ButtonGroup, Divider, IconButton, Paper, Snackbar, Typography, Menu, MenuItem } from '@mui/material'
 import { Bookmark, BookmarkBorder, MenuBook, Settings, ViewAgenda } from '@mui/icons-material'
 import { HtmlTooltip, WordTooltip } from '@/app/components/vocab-tooltip'
 import type { PublicBookBlock, PublicBookToken } from '@/app/actions/books'
@@ -227,6 +227,11 @@ export default function ChapterReader({
     try { window.localStorage.setItem('awm-book-word-help', String(enabled)) } catch { /* Keep the preference for this session. */ }
     window.dispatchEvent(new Event('awm-book-word-help-change'))
   }
+  const [bookmarkMenu, setBookmarkMenu] = useState<{ block: PublicBookBlock; index: number; anchor: HTMLElement } | null>(null)
+  const longPressHandled = useRef(false)
+  const press = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null)
+  const cancelPress = () => { if (press.current) clearTimeout(press.current.timer); press.current = null }
+  useEffect(() => () => { if (press.current) clearTimeout(press.current.timer) }, [])
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
   const [bookmarkNotice, setBookmarkNotice] = useState('')
@@ -393,8 +398,8 @@ export default function ChapterReader({
       />
       <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', overflow: 'hidden' }}>
       <Box sx={{ px: { xs: 2, md: 4 }, py: { xs: 2.25, md: 2.75 }, bgcolor: '#0e2e1f' }}>
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', md: 'center' }, gap: 2 }}>
-          <Box sx={{ textAlign: { xs: 'left', sm: 'left' }, minWidth: 0 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ textAlign: 'center', minWidth: 0 }}>
             <Typography sx={{ color: '#d4a843', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.45 }}>
               {bookTitle} · {language === 'ar' ? 'Arabic' : 'English'}
             </Typography>
@@ -403,14 +408,14 @@ export default function ChapterReader({
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: { xs: 'flex-start', sm: 'center' }, alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
             <ButtonGroup
               aria-label="Reading view"
               sx={{
                 bgcolor: 'rgba(255,255,255,0.08)',
                 borderRadius: '8px',
-                flexShrink: 0,
-                '& .MuiButton-root': { whiteSpace: 'nowrap', minWidth: 'auto', px: { xs: 1.35, md: 1.6 }, fontSize: 13 },
+                width: '100%', maxWidth: 430,
+                '& .MuiButton-root': { whiteSpace: 'nowrap', minWidth: 'auto', px: { xs: 0.75, md: 1.6 }, fontSize: { xs: 11, md: 13 }, minHeight: 44, flex: 1, '& .MuiButton-startIcon': { mr: 0.5, ml: 0 } },
               }}
             >
               <Button
@@ -429,15 +434,15 @@ export default function ChapterReader({
               >
                 Book view
               </Button>
-            </ButtonGroup>
-
             <Button
               onClick={() => setSettingsOpen(true)}
               startIcon={<Settings sx={{ fontSize: 17 }} />}
-              sx={{ height: 38, color: '#fff', bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: '8px', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: 'rgba(255,255,255,0.16)' } }}
+              aria-expanded={settingsOpen}
+              sx={{ color: '#fff', bgcolor: 'transparent', borderColor: 'rgba(255,255,255,0.25)!important', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
             >
               Settings
             </Button>
+            </ButtonGroup>
 
           </Box>
         </Box>
@@ -454,6 +459,20 @@ export default function ChapterReader({
                 <Box
                   key={sentenceIndex}
                   id={`sentence-${sentenceIndex}`}
+                  tabIndex={0}
+                  aria-label={`Sentence ${sentenceIndex + 1}${sentenceBookmarked ? ', bookmarked' : ''}. Press Shift F10 for bookmark options.`}
+                  onPointerDown={event => {
+                    if (event.pointerType === 'mouse') return
+                    longPressHandled.current = false
+                    cancelPress()
+                    const anchor = event.currentTarget
+                    press.current = { x: event.clientX, y: event.clientY, timer: setTimeout(() => { longPressHandled.current = true; setBookmarkMenu({ block, index: sentenceIndex, anchor }); press.current = null }, 600) }
+                  }}
+                  onPointerMove={event => { if (press.current && Math.hypot(event.clientX - press.current.x, event.clientY - press.current.y) > 10) cancelPress() }}
+                  onClickCapture={event => { if (longPressHandled.current) { event.preventDefault(); event.stopPropagation(); longPressHandled.current = false } }}
+                  onPointerUp={cancelPress} onPointerCancel={cancelPress} onPointerLeave={cancelPress}
+                  onContextMenu={event => { event.preventDefault(); cancelPress(); setBookmarkMenu({ block, index: sentenceIndex, anchor: event.currentTarget }) }}
+                  onKeyDown={event => { if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) { event.preventDefault(); setBookmarkMenu({ block, index: sentenceIndex, anchor: event.currentTarget }) } }}
                   sx={{
                     position: 'relative',
                     py: 2.5,
@@ -467,7 +486,7 @@ export default function ChapterReader({
                       onClick={() => toggleBookmark(block, sentenceIndex)}
                       aria-label={sentenceBookmarked ? 'Remove reading bookmark' : 'Save this reading position'}
                       title={sentenceBookmarked ? 'Remove reading bookmark' : 'Save this reading position'}
-                      sx={{ mt: 0.5, flexShrink: 0, opacity: { xs: 1, md: sentenceBookmarked ? 1 : 0 }, pointerEvents: { xs: 'auto', md: sentenceBookmarked ? 'auto' : 'none' }, transition: 'opacity 150ms ease, transform 150ms ease', transform: sentenceBookmarked ? 'scale(1.08)' : 'scale(1)', color: sentenceBookmarked ? 'var(--awm-gold)' : 'var(--awm-muted-light)', bgcolor: sentenceBookmarked ? 'color-mix(in srgb, var(--awm-gold) 12%, transparent)' : 'transparent', '&:hover': { color: 'var(--awm-gold)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)' } }}
+                      sx={{ display: { xs: 'none', md: 'inline-flex' }, mt: 0.5, flexShrink: 0, opacity: { xs: 1, md: sentenceBookmarked ? 1 : 0 }, pointerEvents: { xs: 'auto', md: sentenceBookmarked ? 'auto' : 'none' }, transition: 'opacity 150ms ease, transform 150ms ease', transform: sentenceBookmarked ? 'scale(1.08)' : 'scale(1)', color: sentenceBookmarked ? 'var(--awm-gold)' : 'var(--awm-muted-light)', bgcolor: sentenceBookmarked ? 'color-mix(in srgb, var(--awm-gold) 12%, transparent)' : 'transparent', '&:hover': { color: 'var(--awm-gold)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)' } }}
                     >
                       {sentenceBookmarked ? <Bookmark /> : <BookmarkBorder />}
                     </IconButton>
@@ -512,6 +531,9 @@ export default function ChapterReader({
         </Box>
       )}
       </Paper>
+      <Menu open={Boolean(bookmarkMenu)} anchorEl={bookmarkMenu?.anchor} onClose={() => setBookmarkMenu(null)}>
+        <MenuItem onClick={() => { if (bookmarkMenu) void toggleBookmark(bookmarkMenu.block, bookmarkMenu.index); setBookmarkMenu(null) }}>{bookmarkMenu && isBookmarkedSentence(bookmarkMenu.index) ? 'Remove bookmark' : 'Add bookmark'}</MenuItem>
+      </Menu>
       <Snackbar
         open={Boolean(bookmarkNotice)}
         autoHideDuration={1800}

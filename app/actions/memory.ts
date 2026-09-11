@@ -147,7 +147,7 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating, c
     p_xp: MEMORY.xpPerCard, p_daily_limit: MEMORY.dailyFreeCards, p_session: state,
   })
   if (error) throw new Error('Unable to save Memory progress. Please try again.')
-  return data as { accepted: boolean; awarded: number; totalXp: number; used: number }
+  return { ...(data as { accepted: boolean; used: number }), awarded: 0, totalXp: 0 }
 }
 
 export async function fetchMemoryProgress() {
@@ -156,33 +156,32 @@ export async function fetchMemoryProgress() {
   const today = platformDate()
   const monday = new Date(today + 'T12:00:00Z')
   monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7)
-  const [daily, total, week, legacy, entitlement] = await Promise.all([
+  const [daily, total, week, entitlement] = await Promise.all([
     serviceClient.from('memory_reviews').select('completion_id', { count: 'exact', head: true }).eq('user_id', userId).eq('activity_date', today),
     serviceClient.rpc('memory_totals', { p_user_id: userId }),
     serviceClient.rpc('memory_totals', { p_user_id: userId, p_since: monday.toISOString().slice(0, 10) }),
-    serviceClient.from('memory_legacy_progress').select('xp').eq('user_id', userId).maybeSingle(),
     fetchPremiumStatus(),
   ])
-  const errors = [daily.error, total.error, week.error, legacy.error]
+  const errors = [daily.error, total.error, week.error]
   if (errors.some(Boolean)) console.error('[memory database queries]', errors.filter(Boolean))
   if (errors.some(isMissingDatabaseFeature)) throw new Error(LEARNING_SETUP_MESSAGE)
   if (errors.some(Boolean)) throw new Error('Unable to load Memory progress. Please try again.')
   const all = (total.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
   const weekly = (week.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
-  return { used: daily.count ?? 0, total: all.cards, totalXp: all.xp + Number(legacy.data?.xp ?? 0), weekCards: weekly.cards, weekXp: weekly.xp, premium: entitlement.premium }
+  return { used: daily.count ?? 0, total: all.cards, totalXp: 0, weekCards: weekly.cards, weekXp: 0, premium: entitlement.premium }
 }
 
 const sessionSchema = z.object({
   cards: z.array(z.object({ id: z.string().max(100), showId: z.string(), showSlug: z.string(), showTitle: z.string(), episodeId: z.string(), episodeSlug: z.string(), episodeTitle: z.string(), cover: z.string().optional(), timestamp: z.number().nullable(), arabic: z.string().max(20000), english: z.string().max(20000) })).max(MEMORY.sessionCards),
   index: z.number().int().min(0).max(MEMORY.sessionCards), completed: z.number().int().min(0).max(MEMORY.sessionCards),
-  sessionXp: z.number().int().min(0).max(MEMORY.sessionCards * MEMORY.xpPerCard), direction: z.enum(['arabic','english']),
+  sessionXp: z.number().int().min(0).transform(() => 0), direction: z.enum(['arabic','english']),
   completionIds: z.array(z.string().uuid()).max(MEMORY.sessionCards),
 })
 export type SavedMemorySession = z.infer<typeof sessionSchema>
 export async function saveMemorySession(input: SavedMemorySession) {
   const userId = await getAuthenticatedUserId()
   if (!userId) throw new Error('Sign in to save your session.')
-  const state = sessionSchema.parse(input)
+  const state = { ...sessionSchema.parse(input), sessionXp: 0 }
   const { error } = await serviceClient.from('memory_sessions').upsert({ user_id: userId, state, updated_at: new Date().toISOString() })
   if (error) throw new Error('Unable to save session. Please try again.')
 }

@@ -12,7 +12,7 @@ import {
   Refresh,
   VisibilityOutlined,
 } from '@mui/icons-material'
-import { Alert, Autocomplete, Box, Button, Chip, Container, LinearProgress, Paper, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
+import { Alert, Autocomplete, Box, Button, Container, LinearProgress, Paper, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import PremiumPrompt from "@/app/components/PremiumPrompt"
 import { MEMORY } from "@/app/lib/entitlements"
 import { loadMemoryProgress, loadSavedMemorySession, saveMemorySession, type SavedMemorySession, recordMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
@@ -55,7 +55,6 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const [revealed, setRevealed] = useState(false)
   const [completed, setCompleted] = useState(0)
   const [sessionXp, setSessionXp] = useState(0)
-  const [totalXp, setTotalXp] = useState(0)
   const [cards, setCards] = useState(library.cards)
   const [saved, setSaved] = useState<SavedMemorySession | null>(null)
   const [completionIds, setCompletionIds] = useState<string[]>([])
@@ -79,7 +78,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         if (!result.ok) throw new Error(result.error)
         const progress = result.data
         if (!active) return
-        setUsed(progress.used); setPremium(progress.premium); setTotalXp(progress.totalXp); setReady(true); setProgressError('')
+        setUsed(progress.used); setPremium(progress.premium); setReady(true); setProgressError('')
       }).catch(error => {
         if (active) { setReady(false); setProgressError(error instanceof Error ? error.message : 'Unable to load Memory progress.') }
       }).finally(() => { if (active) setProgressLoading(false) })
@@ -106,7 +105,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
       const result = await recordMemoryReview(card.id, rating, completionIds[index], { cards, index: index + 1, completed: completed + 1, sessionXp, direction, completionIds })
       setUsed(result.used)
       if (!result.accepted) { setUpgrade(true); return }
-      setSessionXp(value => value + result.awarded); setTotalXp(value => value + result.awarded)
+      setSessionXp(value => value + result.awarded);
       setCompleted(value => value + 1); setIndex(value => value + 1); setRevealed(false)
       if (!premium && result.used >= MEMORY.dailyFreeCards) setUpgrade(true)
     } catch (e) { setSaveError(e instanceof Error ? e.message : 'Unable to save. Please retry this card.') }
@@ -199,14 +198,14 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
           </Box>
         </Paper>
 
-        <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason="You've completed today's free Memory practice. You've practised 20 cards today. Come back tomorrow or upgrade to Premium for unlimited Memory practice." />
+        <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason="You've completed today's free Memory practice. You've practised 20 cards today. Come back tomorrow or upgrade to AWM+ for unlimited Memory practice." />
         {progressLoading && <Box role="status" sx={{ mt: 2 }}><Typography>Loading Memory progress...</Typography><LinearProgress /></Box>}
         {progressError && <Alert severity="error" sx={{ mt: 2 }} action={<Button onClick={retryProgress} disabled={progressLoading}>Retry</Button>}>{progressError}</Alert>}
         {!progressError && sessionError && <Alert severity="warning" sx={{ mt: 2 }} action={<Button onClick={retryProgress}>Retry</Button>}>{sessionError} Your completed-card statistics are still available.</Alert>}
         {!user && <Alert severity="info" sx={{ mt: 2 }}>Sign in to practise Memory and save your progress.</Alert>}
         {saveError && <Alert severity="error" sx={{ mt: 2 }}>{saveError}</Alert>}
         {ready && user && <Typography sx={{ mt: 2 }} color="text.secondary">{premium ? 'Unlimited daily Memory practice' : `${used} / ${MEMORY.dailyFreeCards} cards today`}</Typography>}
-        {limited && <Alert severity="info" sx={{ mt: 2 }} action={<Button onClick={() => setUpgrade(true)}>Upgrade to Premium</Button>}>You&apos;ve completed today&apos;s free Memory practice. Your progress is saved. Come back tomorrow.</Alert>}
+        {limited && <Alert severity="info" sx={{ mt: 2 }} action={<Button onClick={() => setUpgrade(true)}>Upgrade to AWM+</Button>}>You&apos;ve completed today&apos;s free Memory practice. Your progress is saved. Come back tomorrow.</Alert>}
         {saved && !started && <Button onClick={resume} disabled={!ready || limited}>Resume saved session ? {saved.completed} completed</Button>}
         {started && <Button disabled={saving} onClick={() => void saveAndExit()} sx={{ mt: 2 }}>Save &amp; Exit</Button>}
         {loadError && <Alert severity="error" sx={{ mt: 2.5 }}>{loadError}</Alert>}
@@ -225,11 +224,11 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
           </Paper>
         ) : complete ? (
           <Paper elevation={0} sx={{ mt: 3, p: { xs: 4, md: 6 }, textAlign: 'center', borderRadius: '18px', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)' }}>
-            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>{completed} cards completed{user ? ` · ${sessionXp} XP earned` : ''}</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={Boolean(user) && (!ready || saving || limited)} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button component={Link} href="/memory" variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New random deck</Button></Box>
+            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>{completed} cards completed</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={Boolean(user) && (!ready || saving || limited)} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button component={Link} href="/memory" variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New random deck</Button></Box>
           </Paper>
         ) : card && (
           <Box sx={{ mt: 3 }}>
-            <Box sx={{ mb: 1.25, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}><Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12 }}>Card {index + 1} of {cards.length}</Typography><Box sx={{ display: 'flex', gap: 0.75 }}>{user && <Chip size="small" label={`${sessionXp} session XP · ${totalXp} total`} sx={{ bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)', color: 'var(--awm-bark)', fontWeight: 700 }} />}</Box></Box>
+            <Box sx={{ mb: 1.25, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}><Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12 }}>Card {index + 1} of {cards.length}</Typography><Box sx={{ display: 'flex', gap: 0.75 }}></Box></Box>
             <LinearProgress variant="determinate" value={(index / cards.length) * 100} sx={{ mb: 1.5, height: 6, borderRadius: 99, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold)', borderRadius: 99 } }} />
             <Paper elevation={0} aria-live="polite" sx={{ minHeight: { xs: 360, md: 430 }, p: { xs: 3, sm: 5 }, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: '18px', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', bgcolor: 'var(--awm-white)', boxShadow: '0 18px 50px color-mix(in srgb, var(--awm-bark) 10%, transparent)' }}>
               <Box sx={{ textAlign: 'center' }}>

@@ -79,3 +79,8 @@ describe('learning activity', () => {
     expect(formatLearningTime(7_200)).toBe('2h')
   })
 })
+
+it('never counts Memory practice as XP-bearing app time, including picture-in-picture playback', () => {
+  expect(activityKindForPath('/memory', false)).toBeNull()
+  expect(activityKindForPath('/memory?show=example', true)).toBeNull()
+})

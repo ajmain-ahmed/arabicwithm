@@ -10,17 +10,17 @@ export async function fetchPremiumStatus() {
   if (!userId) return { premium: false, signedIn: false, manageable: false }
   const { data, error } = await serviceClient.from('subscriptions').select('status, current_period_end, customer_id').eq('user_id', userId).maybeSingle()
   if (isMissingDatabaseFeature(error)) return { premium: false, signedIn: true, manageable: false }
-  if (error) throw new Error('Unable to verify Premium access.')
+  if (error) throw new Error('Unable to verify AWM+ access.')
   return { premium: hasPremium(data), signedIn: true, manageable: Boolean(data?.customer_id) }
 }
 export async function startPremiumCheckout(): Promise<string> {
   const userId = await getAuthenticatedUserId()
-  if (!userId) throw new Error('Sign in to get Premium.')
+  if (!userId) throw new Error('Sign in to get AWM+.')
   const stripe = stripeClient()
   const priceId = process.env.STRIPE_PREMIUM_PRICE_ID
-  if (!priceId) throw new Error('Premium billing is not configured yet.')
+  if (!priceId) throw new Error('AWM+ billing is not configured yet.')
   const price = await stripe.prices.retrieve(priceId)
-  if (!price.active || price.currency !== PREMIUM.currency || price.unit_amount !== PREMIUM.monthlyPence || price.recurring?.interval !== 'month' || price.recurring.interval_count !== 1) throw new Error('Premium price configuration is invalid.')
+  if (!price.active || price.currency !== PREMIUM.currency || price.unit_amount !== PREMIUM.monthlyPence || price.recurring?.interval !== 'month' || price.recurring.interval_count !== 1) throw new Error('AWM+ price configuration is invalid.')
   const { data: account, error } = await serviceClient.from('subscriptions').select('*').eq('user_id', userId).maybeSingle()
   if (error) throw new Error('Unable to verify subscription.')
   if (hasPremium(account)) return managePremium()
@@ -37,7 +37,7 @@ export async function startPremiumCheckout(): Promise<string> {
 }
 export async function managePremium(): Promise<string> {
   const userId = await getAuthenticatedUserId()
-  if (!userId) throw new Error('Sign in to manage Premium.')
+  if (!userId) throw new Error('Sign in to manage AWM+.')
   const { data, error } = await serviceClient.from('subscriptions').select('customer_id').eq('user_id', userId).single()
   if (error || !data.customer_id) throw new Error('No billing account found.')
   return (await stripeClient().billingPortal.sessions.create({ customer: data.customer_id, return_url: `${siteUrl()}/` })).url

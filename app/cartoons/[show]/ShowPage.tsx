@@ -236,7 +236,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: {
-                    xs: 'repeat(3, minmax(0, 1fr))',
+                    xs: 'repeat(2, minmax(0, 1fr))',
                     sm: 'repeat(2, minmax(0, 1fr))',
                     xl: 'repeat(4, minmax(0, 1fr))',
                   },
@@ -298,10 +298,10 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                         tags={ep.tags}
                         showTags={false}
                         description={ep.description}
-                        aspectRatio="3 / 4"
+                        aspectRatio="16 / 9"
                         imageFit="cover"
                         denseMobileTile
-                        mobileAspectRatio="3 / 4"
+                        mobileAspectRatio="16 / 9"
                         mobileTitleSize={10}
                         overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                         metaItems={[]}
