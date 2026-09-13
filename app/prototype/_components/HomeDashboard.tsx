@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Close,
   ExploreOutlined,
+  Headphones,
   InfoOutlined,
   LocalFireDepartmentRounded,
   MenuBook,
@@ -51,6 +52,13 @@ interface FeaturedEpisode {
   episode: EpisodeMeta
 }
 interface ActivityUpdate { userId: string; activity: LearningActivity }
+
+const QUICK_LINKS = [
+  { title: 'Explore', label: 'Discover a random clip', href: '/explore', icon: ExploreOutlined },
+  { title: 'Read', label: 'Open graded books', href: '/books', icon: AutoStories },
+  { title: 'Watch', label: 'Browse full episodes', href: '/cartoons', icon: Headphones },
+  { title: 'Memory', label: 'Recall phrases with flashcards', href: '/memory', icon: PsychologyOutlined },
+]
 
 function openAuth(mode: 'register' | 'signin') {
   window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode } }))
@@ -259,6 +267,23 @@ function SectionHeading({ eyebrow, title, detail }: { eyebrow?: string; title: s
       {eyebrow && <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{eyebrow}</Typography>}
       <Typography component="h2" sx={{ mt: eyebrow ? 0.5 : 0, fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 39 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.15 }}>{title}</Typography>
       {detail && <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>{detail}</Typography>}
+    </Box>
+  )
+}
+
+function QuickLinks() {
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', sm: 'repeat(4, minmax(0,1fr))' }, gap: 1.5 }}>
+      {QUICK_LINKS.map((item) => {
+        const Icon = item.icon
+        return (
+          <Paper key={item.title} component={Link} href={item.href} elevation={0} sx={{ p: { xs: 2, md: 2.5 }, textDecoration: 'none', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '12px', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', '&:hover': { borderColor: 'color-mix(in srgb, var(--awm-gold) 55%, transparent)' } }}>
+            <Icon sx={{ color: '#b8860b', fontSize: { xs: 19, md: 24 } }} />
+            <Typography sx={{ mt: 1, fontFamily: 'Jost, sans-serif', fontWeight: 700 }}>{item.title}</Typography>
+            <Typography sx={{ mt: 0.25, fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted)', fontSize: 12 }}>{item.label}</Typography>
+          </Paper>
+        )
+      })}
     </Box>
   )
 }

@@ -528,7 +528,11 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
   const [loadingMore, setLoadingMore] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectedDefinition, setSelectedDefinition] = useState<SelectedDefinition | null>(null)
-  const [peekItemIndex, setPeekItemIndex] = useState<number | null>(null)
+  /* Peek state is kept in a ref on purpose: every hover/leave writes it, and a
+     useState here would re-render the whole feed (videos + all text) on each
+     word hover, which makes the definition tooltip janky. The auto-advance
+     timer below polls the ref. */
+  const peekItemIndexRef = useRef<number | null>(null)
   const [pageVisible, setPageVisible] = useState(true)
   const feedRef = useRef<HTMLDivElement | null>(null)
   const itemRefs = useRef(new Map<number, HTMLElement>())
@@ -578,7 +582,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
     activeIndexRef.current = index
     advancedFromRef.current = null
     setSelectedDefinition(null)
-    setPeekItemIndex(null)
+    peekItemIndexRef.current = null
     setActiveIndex(index)
   }, [])
 
@@ -592,7 +596,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
     programmaticTargetRef.current = nextIndex
     scrollLockUntilRef.current = Date.now() + 1_000
     setSelectedDefinition(null)
-    setPeekItemIndex(null)
+    peekItemIndexRef.current = null
     setActiveIndex(nextIndex)
     itemRefs.current.get(nextIndex)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [items.length])
@@ -606,7 +610,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
   }, [])
 
   const handleDefinitionPeek = useCallback((index: number | null) => {
-    setPeekItemIndex(index)
+    peekItemIndexRef.current = index
   }, [])
 
   useEffect(() => () => setGlobalVideoPlaying(false), [setGlobalVideoPlaying])
@@ -623,10 +627,17 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
 
   useEffect(() => {
     if (!pageVisible || items[activeIndex]?.kind !== 'book') return
-    if (selectedDefinition?.itemIndex === activeIndex || peekItemIndex === activeIndex) return
-    const timer = window.setTimeout(() => advanceOnce(activeIndex), EXPLORE_READING_DURATION_MS)
-    return () => window.clearTimeout(timer)
-  }, [activeIndex, advanceOnce, items, pageVisible, peekItemIndex, selectedDefinition?.itemIndex])
+    if (selectedDefinition?.itemIndex === activeIndex) return
+    const startedAt = Date.now()
+    const timer = window.setInterval(() => {
+      // Paused while a definition is peeked for this page.
+      if (peekItemIndexRef.current === activeIndex) return
+      if (Date.now() - startedAt < EXPLORE_READING_DURATION_MS) return
+      window.clearInterval(timer)
+      advanceOnce(activeIndex)
+    }, 250)
+    return () => window.clearInterval(timer)
+  }, [activeIndex, advanceOnce, items, pageVisible, selectedDefinition?.itemIndex])
 
   useEffect(() => {
     const root = feedRef.current
