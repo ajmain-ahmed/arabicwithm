@@ -201,11 +201,9 @@ h6 {
 /* ── Prototype: geometric pattern panel for the homepage catalogue rows ── */
 /* Pattern parked for now — re-add a background-image here when ready. */
 .awm-pattern-section {
-  --awm-row-edge: var(--awm-cream);
-  background-color: var(--awm-cream);
+  --awm-row-edge: var(--awm-cream-light);
 }
 
 html[data-theme='dark'] .awm-pattern-section {
-  --awm-row-edge: #202b25;
-  background-color: #202b25;
+  --awm-row-edge: #101713;
 }
