@@ -43,7 +43,6 @@ function RowTile({ item }: { item: CatalogueRowItem }) {
       sx={{
         position: 'relative',
         flex: '0 0 auto',
-        scrollSnapAlign: 'start',
         width: { xs: '62vw', sm: 300, md: 320 },
         maxWidth: '100%',
         aspectRatio: '16 / 9',
@@ -122,16 +121,20 @@ export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
     return () => window.removeEventListener('resize', updateArrows)
   }, [items])
 
+  /* Warm the browser cache for every tile so arrow-slides don't reveal
+     skeletons for not-yet-loaded covers. */
+  useEffect(() => {
+    for (const item of items) {
+      const img = new Image()
+      img.src = item.imageSrc
+    }
+  }, [items])
+
   const scrollByPage = (direction: 1 | -1) => {
     const el = scrollerRef.current
     if (!el) return
-    // Suspend snap during programmatic scroll so it glides instead of lurching.
-    el.style.scrollSnapType = 'none'
-    const restore = () => {
-      el.style.scrollSnapType = ''
-    }
-    el.addEventListener('scrollend', restore, { once: true })
-    window.setTimeout(restore, 800)
+    // No scroll-snap on this scroller: snap re-evaluation at the end of a
+    // programmatic scroll is what made the slide lurch.
     el.scrollBy({ left: direction * el.clientWidth * 0.85, behavior: 'smooth' })
   }
 
@@ -169,7 +172,6 @@ export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
           display: 'flex',
           gap: { xs: 1.25, md: 2 },
           overflowX: 'auto',
-          scrollSnapType: 'x proximity',
           py: 1,
           pr: 0.5,
           scrollbarWidth: 'none',
