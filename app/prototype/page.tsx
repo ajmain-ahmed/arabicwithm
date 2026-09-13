@@ -1,7 +1,7 @@
 import { PremiumSection } from "@/app/components/PremiumPrompt"
 import { fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
 import { fetchEpisodesForShowPublic, fetchShowsForPublic } from '@/app/actions/cartoons'
-import HomeDashboard from '@/app/components/home/HomeDashboard'
+import HomeDashboard from './_components/HomeDashboard'
 import { dailyRotationIndex } from '@/app/lib/dailyRotation'
 
 export const revalidate = false
