@@ -14,7 +14,7 @@ export async function submitFeedback(input: unknown): Promise<{ ok: boolean; err
     const userId = await getAuthenticatedUserId()
     if (!userId) return { ok: false, error: 'Please sign in to submit feedback.' }
     const limited = rateLimit(`feedback:${userId}`, 5, 60 * 60 * 1000)
-    if (!limited.ok) return { ok: false, error: `Too many submissions. Please try again in ${limited.retryAfterSeconds} seconds.` }
+    if (!limited.ok) return { ok: false, error: `Too many submissions. Please try again in ${Math.ceil(limited.retryAfterSeconds / 60)} minutes.` }
     const { error } = await serviceClient.from('feedback').insert({ id: parsed.data.submissionId, user_id: userId, rating: parsed.data.rating, comment: parsed.data.comment || null })
     if (error && error.code !== '23505') {
       console.error('[feedback] insert failed', error)

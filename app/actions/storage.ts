@@ -6,7 +6,9 @@ import { guardAdmin } from "@/app/actions/auth"
 import { serviceClient } from "@/app/lib/supabase"
 
 const ALLOWED_BUCKETS = new Set(["covers"])
-const COVER_PATH_PATTERN = /^(cartoons|episodes|books)\/[\w-]+\.webp$/
+// Single path segment under a fixed prefix; slugs are admin free-text, so the
+// security property is "no traversal", not a specific slug charset.
+const COVER_PATH_PATTERN = /^(cartoons|episodes|books)\/[^/\\]+\.webp$/
 const MAX_FILE_BYTES = 5 * 1024 * 1024
 
 function isWebPHeader(header: Uint8Array): boolean {

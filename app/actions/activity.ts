@@ -23,9 +23,14 @@ async function requireUserId(): Promise<string> {
   return userId
 }
 
+function databaseError(context: string, error: unknown): Error {
+  console.error(`[activity] ${context}:`, error)
+  return new Error('Unable to load learning activity. Please try again.')
+}
+
 async function legacyActivityForUser(userId: string): Promise<LearningActivity> {
   const { data, error } = await serviceClient.auth.admin.getUserById(userId)
-  if (error) throw new Error(error.message)
+  if (error) throw databaseError('legacy metadata lookup failed', error)
   return parseLearningActivity(data.user?.user_metadata)
 }
 
@@ -35,21 +40,21 @@ async function ensureLearningProfile(userId: string) {
     .select('user_id, weekly_goal_seconds, legacy_active_seconds, tracked_active_seconds')
     .eq('user_id', userId)
     .maybeSingle()
-  if (selectError) throw new Error(selectError.message)
+  if (selectError) throw databaseError('learning profile lookup failed', selectError)
   if (existing) return existing
 
   const legacy = await legacyActivityForUser(userId)
   const { error: insertError } = await serviceClient
     .from('learning_profiles')
     .upsert({ user_id: userId, legacy_active_seconds: legacy.totalSeconds }, { onConflict: 'user_id', ignoreDuplicates: true })
-  if (insertError) throw new Error(insertError.message)
+  if (insertError) throw databaseError('learning profile create failed', insertError)
 
   const { data: created, error: createdError } = await serviceClient
     .from('learning_profiles')
     .select('user_id, weekly_goal_seconds, legacy_active_seconds, tracked_active_seconds')
     .eq('user_id', userId)
     .single()
-  if (createdError) throw new Error(createdError.message)
+  if (createdError) throw databaseError('learning profile reload failed', createdError)
   return created
 }
 
@@ -66,7 +71,7 @@ async function activityForUser(userId: string): Promise<LearningActivity> {
     .eq('user_id', userId)
     .gte('activity_date', localDateKey(earliest))
     .order('activity_date')
-  if (error) throw new Error(error.message)
+  if (error) throw databaseError('daily activity lookup failed', error)
 
   const daily = (data ?? []).map((day) => ({
     date: day.activity_date,
