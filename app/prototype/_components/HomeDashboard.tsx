@@ -319,8 +319,8 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           </Container>
         </Box>
 
-        <Container maxWidth={false} sx={{ pt: { xs: 5, md: 8 } }}>
-          <SectionHeading eyebrow="Fresh content" title="New on ArabicWithM" detail="The latest shows added to the catalogue." />
+        <Container maxWidth={false} sx={{ pt: { xs: 3, md: 4 } }}>
+          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>New on ArabicWithM</Typography>
           <NewOnRow shows={newShows} />
         </Container>
 
