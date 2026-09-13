@@ -398,7 +398,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           </Container>
         </Box>
 
-        <Container maxWidth={false} className="awm-pattern-section" sx={{ mt: { xs: 3, md: 4 }, pt: { xs: 3, md: 4 }, pb: { xs: 4, md: 5 } }}>
+        <Container maxWidth={false} className="awm-pattern-section" sx={{ pt: { xs: 4, md: 5 }, pb: { xs: 4, md: 5 } }}>
           <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>New on ArabicWithM</Typography>
           <NewOnRow items={showRowItems(newShows)} />
           <Typography component="h2" sx={{ mt: { xs: 3, md: 4 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Brand new episodes</Typography>
