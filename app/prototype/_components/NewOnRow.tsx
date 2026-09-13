@@ -16,7 +16,9 @@ export interface CatalogueRowItem {
 }
 
 const ARROW_SX = {
-  display: { xs: 'none', md: 'flex' },
+  /* Always visible on touch (no hover there); on desktop they stay hidden
+     until the row is hovered. */
+  display: 'flex',
   position: 'absolute',
   zIndex: 4,
   top: '50%',
@@ -27,8 +29,8 @@ const ARROW_SX = {
   bgcolor: 'rgba(5,23,15,0.6)',
   color: '#fff',
   boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
-  opacity: 0,
-  visibility: 'hidden',
+  opacity: { xs: 0.95, md: 0 },
+  visibility: { xs: 'visible', md: 'hidden' },
   transition: 'opacity 0.2s ease, visibility 0.2s ease, background-color 0.2s ease, transform 0.2s ease',
   '&:hover': { bgcolor: 'rgba(5,23,15,0.85)', transform: 'translateY(-50%) scale(1.08)' },
 } as const
@@ -68,7 +70,6 @@ function RowTile({ item }: { item: CatalogueRowItem }) {
         component="img"
         src={item.imageSrc}
         alt=""
-        loading="lazy"
         onLoad={() => setLoaded(true)}
         onError={(e) => {
           setLoaded(true)
@@ -105,21 +106,31 @@ function RowTile({ item }: { item: CatalogueRowItem }) {
    hover arrows appear at the edges when there is more content to scroll to. */
 export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null)
+  const frameRef = useRef<number | null>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
 
-  const updateArrows = () => {
-    const el = scrollerRef.current
-    if (!el) return
-    setCanScrollLeft(el.scrollLeft > 4)
-    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
-  }
+  /* rAF-throttled: scroll fires every animation frame during a slide; React
+     state updates there are what made the motion stutter. */
+  const updateArrows = useCallback(() => {
+    if (frameRef.current !== null) return
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null
+      const el = scrollerRef.current
+      if (!el) return
+      setCanScrollLeft(el.scrollLeft > 4)
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
+    })
+  }, [])
 
   useEffect(() => {
     updateArrows()
     window.addEventListener('resize', updateArrows)
-    return () => window.removeEventListener('resize', updateArrows)
-  }, [items])
+    return () => {
+      window.removeEventListener('resize', updateArrows)
+      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current)
+    }
+  }, [items, updateArrows])
 
   /* Warm the browser cache for every tile so arrow-slides don't reveal
      skeletons for not-yet-loaded covers. */
