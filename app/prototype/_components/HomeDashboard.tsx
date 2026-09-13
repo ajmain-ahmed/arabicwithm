@@ -8,6 +8,7 @@ import {
   AutoStories,
   Bookmark,
   CalendarMonthRounded,
+  Check,
   ChevronRight,
   ExploreOutlined,
   LocalFireDepartmentRounded,
@@ -16,11 +17,12 @@ import {
   TrendingDownRounded,
   TrendingUpRounded,
 } from '@mui/icons-material'
-import { Box, Button, Chip, CircularProgress, Container, LinearProgress, Typography, Paper } from '@mui/material'
+import { Box, Button, Chip, CircularProgress, Container, LinearProgress, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { fetchLearningActivity } from '@/app/actions/activity'
 import NewOnRow, { type CatalogueRowItem } from './NewOnRow'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
+import { PREMIUM } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 import {
@@ -73,8 +75,60 @@ function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
   }))
 }
 
-function BooksSection({ books }: { books: PublicBook[] }) {
-  if (books.length === 0) return null
+const PLAN_ROWS = [
+  { feature: 'Cartoons & Anime', free: 'tick', plus: 'tick' },
+  { feature: 'Books', free: 'limited', plus: 'tick' },
+  { feature: 'Downloadable PDFs', free: 'none', plus: 'tick' },
+  { feature: 'Audiobooks', free: 'none', plus: 'tick' },
+] as const
+
+const PLAN_PLUS_CELL_SX = {
+  bgcolor: 'color-mix(in srgb, var(--awm-gold) 9%, transparent)',
+} as const
+
+function planCell(value: 'tick' | 'limited' | 'none') {
+  if (value === 'tick') return <Check sx={{ color: 'var(--awm-gold)', fontSize: 22, verticalAlign: 'middle' }} />
+  if (value === 'limited') return <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--awm-muted)' }}>Limited</Typography>
+  return <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted-light)' }}>—</Typography>
+}
+
+function PlanCompare() {
+  return (
+    <Container maxWidth="md" sx={{ pt: { xs: 6, md: 8 }, pb: { xs: 7, md: 9 }, textAlign: 'center' }}>
+      <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 30 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Choose your plan</Typography>
+      <Typography sx={{ mt: 1, fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted)' }}>Free forever — or unlock everything with AWM+.</Typography>
+      <TableContainer sx={{ mt: 3, border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)', overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 440, borderCollapse: 'separate', borderSpacing: 0 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)' }} />
+              <TableCell align="center" sx={{ borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', fontFamily: 'Jost, sans-serif', fontWeight: 600, color: 'var(--awm-muted)', fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Free</TableCell>
+              <TableCell align="center" sx={{ ...PLAN_PLUS_CELL_SX, borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', fontFamily: 'Jost, sans-serif', fontWeight: 700, color: 'var(--awm-bark)', fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>AWM+</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {PLAN_ROWS.map((row) => (
+              <TableRow key={row.feature}>
+                <TableCell sx={{ borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)', fontFamily: 'Jost, sans-serif', color: 'var(--awm-bark)', fontSize: '0.95rem' }}>{row.feature}</TableCell>
+                <TableCell align="center" sx={{ borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)' }}>{planCell(row.free)}</TableCell>
+                <TableCell align="center" sx={{ ...PLAN_PLUS_CELL_SX, borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)' }}>{planCell(row.plus)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Button
+        onClick={() => openAuth('register')}
+        variant="contained"
+        sx={{ mt: 3.5, bgcolor: '#b8860b', color: '#fff', px: 4, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: '#9c6f09' } }}
+      >
+        Get AWM+ · {PREMIUM.label}
+      </Button>
+    </Container>
+  )
+}
+
+function BooksSection({ books }: { books: PublicBook[] }) {  if (books.length === 0) return null
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,1fr))', lg: 'repeat(4, minmax(0,1fr))' }, gap: 2 }}>
       {books.map((book) => (
@@ -385,6 +439,8 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
             <BooksSection books={books} />
           </Box>
         </Container>
+
+        <PlanCompare />
 
         <Container maxWidth="lg" sx={{ pt: 0 }}>
           {bookmark && (
