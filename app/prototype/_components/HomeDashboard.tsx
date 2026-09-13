@@ -81,6 +81,59 @@ function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
   }))
 }
 
+function BooksSection({ books }: { books: PublicBook[] }) {
+  if (books.length === 0) return null
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0,1fr))' }, gap: 2 }}>
+      {books.map((book) => (
+        <Paper
+          key={book.id}
+          component={Link}
+          href={`/books/${encodeURIComponent(book.slug)}`}
+          elevation={0}
+          sx={{
+            display: 'flex',
+            gap: 2,
+            p: 2,
+            minWidth: 0,
+            color: 'inherit',
+            textDecoration: 'none',
+            border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)',
+            borderRadius: '12px',
+            bgcolor: 'var(--awm-white)',
+            transition: 'transform .2s ease, box-shadow .2s ease',
+            '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 10px 26px color-mix(in srgb, var(--awm-bark) 10%, transparent)' },
+          }}
+        >
+          <Box
+            component="img"
+            src={book.cover || `/api/covers/books/${book.id}`}
+            alt=""
+            loading="lazy"
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
+            sx={{ width: { xs: 72, sm: 84 }, aspectRatio: '2 / 3', objectFit: 'cover', borderRadius: '8px', bgcolor: '#0e2e1f', flexShrink: 0 }}
+          />
+          <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', fontWeight: 600, color: 'var(--awm-bark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</Typography>
+            {book.titleAr && (
+              <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-serif)', fontSize: '1.05rem', color: 'var(--awm-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{book.titleAr}</Typography>
+            )}
+            <Typography sx={{ mt: 0.75, fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--awm-muted)', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+              {book.description}
+            </Typography>
+            <Box sx={{ mt: 'auto', pt: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              {book.level && (
+                <Chip size="small" label={book.level} sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700, fontFamily: 'Jost, sans-serif', bgcolor: 'color-mix(in srgb, var(--awm-gold) 16%, transparent)', color: 'var(--awm-bark)' }} />
+              )}
+              <Chip size="small" variant="outlined" label={`${book.chapterCount} chapter${book.chapterCount === 1 ? '' : 's'}`} sx={{ height: 20, fontSize: '0.68rem', fontFamily: 'Jost, sans-serif', borderColor: 'color-mix(in srgb, var(--awm-bark) 18%, transparent)', color: 'var(--awm-muted)' }} />
+            </Box>
+          </Box>
+        </Paper>
+      ))}
+    </Box>
+  )
+}
+
 function SectionHeading({ eyebrow, title, detail }: { eyebrow?: string; title: string; detail?: string }) {
   return (
     <Box sx={{ mb: 3 }}>
@@ -344,6 +397,13 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           <NewOnRow items={showRowItems(newShows)} />
           <Typography component="h2" sx={{ mt: { xs: 3, md: 4 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Brand new episodes</Typography>
           <NewOnRow items={episodeRowItems(newEpisodes)} />
+        </Container>
+
+        <Container maxWidth="lg" sx={{ pt: { xs: 5, md: 6 } }}>
+          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Books</Typography>
+          <Box sx={{ mt: 2 }}>
+            <BooksSection books={books} />
+          </Box>
         </Container>
 
         <Container maxWidth="lg" sx={{ pt: 0 }}>
