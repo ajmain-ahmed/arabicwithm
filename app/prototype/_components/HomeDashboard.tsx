@@ -8,6 +8,7 @@ import {
   AutoStories,
   Bookmark,
   CalendarMonthRounded,
+  ChevronRight,
   ExploreOutlined,
   Headphones,
   LocalFireDepartmentRounded,
@@ -84,7 +85,7 @@ function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
 function BooksSection({ books }: { books: PublicBook[] }) {
   if (books.length === 0) return null
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0,1fr))' }, gap: 2 }}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,1fr))', lg: 'repeat(4, minmax(0,1fr))' }, gap: 2 }}>
       {books.map((book) => (
         <Paper
           key={book.id}
@@ -93,39 +94,44 @@ function BooksSection({ books }: { books: PublicBook[] }) {
           elevation={0}
           sx={{
             display: 'flex',
-            gap: 2,
-            p: 2,
+            flexDirection: 'column',
             minWidth: 0,
+            overflow: 'hidden',
             color: 'inherit',
             textDecoration: 'none',
             border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)',
-            borderRadius: '12px',
+            borderRadius: '14px',
             bgcolor: 'var(--awm-white)',
             transition: 'transform .2s ease, box-shadow .2s ease',
-            '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 10px 26px color-mix(in srgb, var(--awm-bark) 10%, transparent)' },
+            '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 14px 32px color-mix(in srgb, var(--awm-bark) 12%, transparent)' },
           }}
         >
           <Box
             component="img"
             src={book.cover || `/api/covers/books/${book.id}`}
-            alt=""
+            alt={book.titleAr ? `${book.title} — ${book.titleAr}` : book.title}
             loading="lazy"
             onError={(e) => { e.currentTarget.style.display = 'none' }}
-            sx={{ width: { xs: 72, sm: 84 }, aspectRatio: '2 / 3', objectFit: 'cover', borderRadius: '8px', bgcolor: '#0e2e1f', flexShrink: 0 }}
+            sx={{ width: '100%', aspectRatio: '2 / 3', objectFit: 'cover', display: 'block', bgcolor: '#0e2e1f', flexShrink: 0 }}
           />
-          <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.15rem', fontWeight: 600, color: 'var(--awm-bark)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</Typography>
+          <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
+            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.2rem', fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</Typography>
             {book.titleAr && (
-              <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-serif)', fontSize: '1.05rem', color: 'var(--awm-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{book.titleAr}</Typography>
+              <Typography lang="ar" dir="rtl" sx={{ mt: 0.25, fontFamily: 'var(--font-serif)', fontSize: '1.05rem', color: 'var(--awm-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{book.titleAr}</Typography>
             )}
-            <Typography sx={{ mt: 0.75, fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--awm-muted)', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            <Typography sx={{ mt: 1, fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--awm-muted)', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
               {book.description}
             </Typography>
-            <Box sx={{ mt: 'auto', pt: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-              {book.level && (
-                <Chip size="small" label={book.level} sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700, fontFamily: 'Jost, sans-serif', bgcolor: 'color-mix(in srgb, var(--awm-gold) 16%, transparent)', color: 'var(--awm-bark)' }} />
-              )}
-              <Chip size="small" variant="outlined" label={`${book.chapterCount} chapter${book.chapterCount === 1 ? '' : 's'}`} sx={{ height: 20, fontSize: '0.68rem', fontFamily: 'Jost, sans-serif', borderColor: 'color-mix(in srgb, var(--awm-bark) 18%, transparent)', color: 'var(--awm-muted)' }} />
+            <Box sx={{ mt: 'auto', pt: 1.75, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', minWidth: 0 }}>
+                {book.level && (
+                  <Chip size="small" label={book.level} sx={{ height: 22, borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700, fontFamily: 'Jost, sans-serif', bgcolor: 'var(--awm-forest)', color: 'var(--awm-cream)' }} />
+                )}
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)' }}>
+                  {book.chapterCount} chapter{book.chapterCount === 1 ? '' : 's'}
+                </Typography>
+              </Box>
+              <ChevronRight sx={{ color: 'var(--awm-muted)', fontSize: 20, flexShrink: 0 }} />
             </Box>
           </Box>
         </Paper>
