@@ -20,8 +20,8 @@ import { Box, Button, Chip, CircularProgress, Container, LinearProgress, Typogra
 import { useAuth } from '@/app/AuthContext'
 import { fetchLearningActivity } from '@/app/actions/activity'
 import WordOfTheDay from '@/app/components/home/WordOfTheDay'
-import NewOnRow from './NewOnRow'
-import type { NewOnShow } from './newOnShows'
+import NewOnRow, { type CatalogueRowItem } from './NewOnRow'
+import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 import {
@@ -58,6 +58,27 @@ const QUICK_LINKS = [
 
 function openAuth(mode: 'register' | 'signin') {
   window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode } }))
+}
+
+function showRowItems(shows: NewOnShow[]): CatalogueRowItem[] {
+  return shows.map((show) => ({
+    key: show.id,
+    href: `/cartoons/${encodeURIComponent(show.slug)}`,
+    title: show.title,
+    level: show.level,
+    imageSrc: `/api/covers/shows/${show.id}`,
+  }))
+}
+
+function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
+  return episodes.map((episode) => ({
+    key: episode.id,
+    href: `/cartoons/${encodeURIComponent(episode.showSlug)}/${encodeURIComponent(episode.slug)}`,
+    title: episode.title,
+    meta: episode.showTitle,
+    level: episode.level,
+    imageSrc: `/api/covers/episodes/${episode.id}`,
+  }))
 }
 
 function SectionHeading({ eyebrow, title, detail }: { eyebrow?: string; title: string; detail?: string }) {
@@ -224,7 +245,7 @@ function LearningStats({
   )
 }
 
-export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook, newShows }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[] }) {
+export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
   const { user, loading } = useAuth()
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
   const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
@@ -320,7 +341,9 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
 
         <Container maxWidth={false} sx={{ pt: { xs: 3, md: 4 } }}>
           <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>New on ArabicWithM</Typography>
-          <NewOnRow shows={newShows} />
+          <NewOnRow items={showRowItems(newShows)} />
+          <Typography component="h2" sx={{ mt: { xs: 3, md: 4 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Brand new episodes</Typography>
+          <NewOnRow items={episodeRowItems(newEpisodes)} />
         </Container>
 
         <Container maxWidth="lg" sx={{ pt: 0 }}>

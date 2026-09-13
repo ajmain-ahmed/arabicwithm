@@ -2,7 +2,7 @@ import { PremiumSection } from "@/app/components/PremiumPrompt"
 import { fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
 import { fetchEpisodesForShowPublic, fetchShowsForPublic } from '@/app/actions/cartoons'
 import HomeDashboard from './_components/HomeDashboard'
-import { fetchNewOnShows } from './_components/newOnShows'
+import { fetchNewOnEpisodes, fetchNewOnShows } from './_components/catalogueRows'
 import { dailyRotationIndex } from '@/app/lib/dailyRotation'
 
 export const revalidate = false
@@ -31,6 +31,7 @@ export default async function PrototypePage() {
   const featuredEpisode = featuredEpisodeIndex >= 0 ? availableEpisodes[featuredEpisodeIndex] : null
   const featuredBook = featuredBookIndex >= 0 ? books[featuredBookIndex] : null
   const newShows = await fetchNewOnShows()
+  const newEpisodes = await fetchNewOnEpisodes()
 
   return (
     <><HomeDashboard
@@ -39,6 +40,7 @@ export default async function PrototypePage() {
       featuredEpisode={featuredEpisode}
       chaptersByBook={Object.fromEntries(chapterEntries)}
       newShows={newShows}
+      newEpisodes={newEpisodes}
     /><PremiumSection /></>
   )
 }
