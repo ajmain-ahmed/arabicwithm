@@ -22,7 +22,7 @@ let hasAnimated = false
 
 export default function Navbar() {
     const theme = useTheme()
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'))
     const router = useRouter()
     const { user } = useAuth()
     const { mode, toggleColorMode } = useColorMode()
@@ -154,7 +154,7 @@ export default function Navbar() {
                             </Box>
                         ) : (
                             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', width: '100%', alignItems: 'center' }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: { md: 2.5, lg: 4 } }}>
                                     {NAV_ITEMS.map((item) => (
                                         <Link key={item} href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
                                             <Typography
@@ -163,6 +163,8 @@ export default function Navbar() {
                                                 sx={{
                                                     fontWeight: 500,
                                                     letterSpacing: '0.06em',
+                                                    fontSize: { md: '0.8rem', lg: '0.875rem' },
+                                                    whiteSpace: 'nowrap',
                                                     color: 'var(--awm-forest)',
                                                     cursor: 'pointer',
                                                     py: 2,

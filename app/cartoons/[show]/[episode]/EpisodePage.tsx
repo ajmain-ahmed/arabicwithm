@@ -1162,8 +1162,9 @@ export default function EpisodePage({
                         key={row.number}
                         sx={{
                           display: 'flex',
-                          flexDirection: { xs: 'column', sm: 'row' },
-                          alignItems: { xs: 'flex-start', sm: 'center' },
+                          flexDirection: { xs: 'column', md: 'row' },
+                          alignItems: { xs: 'flex-start', md: 'center' },
+                          flexWrap: 'wrap',
                           gap: { xs: 1, sm: 2 },
                           py: { xs: 2, sm: 1.25 },
                           px: { xs: 2, sm: 2 },
@@ -1199,8 +1200,8 @@ export default function EpisodePage({
                             fontSize: `calc(1.25rem * ${textScale})`,
                             fontWeight: 700,
                             color: 'var(--awm-bark)',
-                            flex: { sm: '0 0 auto' },
-                            minWidth: { sm: 100 },
+                            flex: { md: '0 0 auto' },
+                            minWidth: { md: 100 },
                             textAlign: 'right',
                             direction: 'rtl',
                             lineHeight: 1.4,
@@ -1215,8 +1216,8 @@ export default function EpisodePage({
                             fontFamily: 'Jost, sans-serif',
                             fontSize: `calc(0.82rem * ${textScale})`,
                             color: 'var(--muted)',
-                            flex: { sm: '0 0 auto' },
-                            minWidth: { sm: 70 },
+                            flex: { md: '0 0 auto' },
+                            minWidth: { md: 70 },
                           }}
                         >
                           {row.transliteration}
@@ -1229,8 +1230,8 @@ export default function EpisodePage({
                             fontSize: `calc(0.9rem * ${textScale})`,
                             color: 'var(--bark)',
                             flex: 1,
-                            minWidth: 0,
-                            textAlign: { xs: 'right', sm: 'left' },
+                            minWidth: { xs: '100%', md: 0 },
+                            textAlign: { xs: 'right', md: 'left' },
                           }}
                         >
                           {row.english}

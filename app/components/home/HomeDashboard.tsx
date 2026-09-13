@@ -78,7 +78,7 @@ function SectionHeading({ eyebrow, title, detail }: { eyebrow?: string; title: s
 
 function LearningAreaCards() {
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', sm: 'repeat(4, minmax(0,1fr))' }, gap: 2 }}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,1fr))', md: 'repeat(4, minmax(0,1fr))' }, gap: 2 }}>
       {LEARNING_AREAS.map((area) => {
         const Icon = area.icon
         return (
@@ -233,7 +233,7 @@ function LearningStats({
         </Box>
       </Box>
 
-      <Box sx={{ mt: 1.5, display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(5,minmax(0,1fr))' }, gap: 1 }}>
+      <Box sx={{ mt: 1.5, display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(3,minmax(0,1fr))', md: 'repeat(5,minmax(0,1fr))' }, gap: 1 }}>
         {secondaryStats.map((stat) => {
           const Icon = stat.icon
           return <Box key={stat.label} sx={{ p: 1.5, minWidth: 0, border: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)', borderRadius: '10px' }}>

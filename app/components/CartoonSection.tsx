@@ -36,8 +36,9 @@ function WorksheetFan() {
     <Box
       sx={{
         position: 'relative',
-        width: { xs: 360, sm: 400, md: 440, lg: 500 },
-        height: { xs: 360, sm: 400, md: 440, lg: 500 },
+        width: { xs: 'min(360px, 100%)', sm: 400, md: 440, lg: 500 },
+        height: 'auto',
+        aspectRatio: '1 / 1',
         flexShrink: 0,
       }}
     >
@@ -275,7 +276,7 @@ export default function CartoonSection() {
       {/* ── Mobile layout ── */}
       <Box
         sx={{
-          display: { xs: 'flex', md: 'none' },
+          display: { xs: 'flex', lg: 'none' },
           flexDirection: 'column',
           alignItems: 'center',
           gap: 5,
@@ -293,9 +294,9 @@ export default function CartoonSection() {
       {/* ── Desktop layout ── */}
       <Box
         sx={{
-          display: { xs: 'none', md: 'grid' },
-          gridTemplateColumns: { md: '1.4fr 1fr', lg: '1.8fr 1fr' },
-          gap: { md: '0 100px', lg: '0 130px' },
+          display: { xs: 'none', lg: 'grid' },
+          gridTemplateColumns: { lg: '1.8fr 1fr' },
+          gap: { lg: '0 64px' },
           alignItems: 'start',
           justifyItems: 'center',
           width: '100%',
@@ -303,11 +304,11 @@ export default function CartoonSection() {
           mx: 'auto',
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mt: { md: 4, lg: 6 } }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%', mt: { lg: 6 } }}>
           <ShowImage />
         </Box>
         <SheetsWithCard
-          cardSx={{ mt: { md: '-260px', lg: '-280px' }, width: '100%', maxWidth: { md: 420, lg: 460 }, mb:15 }}
+          cardSx={{ mt: { lg: '-280px' }, width: '100%', maxWidth: { lg: 460 }, mb: 15 }}
         />
       </Box>
     </Box>

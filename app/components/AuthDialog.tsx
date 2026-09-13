@@ -243,7 +243,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
         }}
       >
         {/* ── Header ── */}
-        <Box sx={{ px: 4, pt: 4, pb: 2.5, position: 'relative', background: 'var(--awm-white)' }}>
+        <Box sx={{ px: { xs: 2.5, sm: 4 }, pt: { xs: 3, sm: 4 }, pb: 2.5, position: 'relative', background: 'var(--awm-white)' }}>
           <IconButton
             onClick={handleClose}
             size="small"
@@ -282,7 +282,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
         <GoldDivider />
 
         {/* ── Body ── */}
-        <DialogContent sx={{ px: 4, pt: 3, pb: 4 }}>
+        <DialogContent sx={{ px: { xs: 2.5, sm: 4 }, pt: 3, pb: 4 }}>
 
           {/* Mode toggle (only when not in forgot-password flow) */}
           {!forgotPassword && (
