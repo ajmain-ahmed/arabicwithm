@@ -612,14 +612,6 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
         </Box>
 
         <PlanCompare shows={newShows} books={books} />
-
-        <Container maxWidth="lg" sx={{ pt: 0 }}>
-          {bookmark && (
-            <Box sx={{ mt: { xs: 5, md: 7 }, maxWidth: 720 }}>
-              <BookmarkContinueCard bookmark={bookmark} />
-            </Box>
-          )}
-        </Container>
       </Box>
     )
   }
