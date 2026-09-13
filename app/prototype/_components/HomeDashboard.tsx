@@ -10,7 +10,6 @@ import {
   CalendarMonthRounded,
   ChevronRight,
   ExploreOutlined,
-  Headphones,
   LocalFireDepartmentRounded,
   MenuBook,
   PsychologyOutlined,
@@ -20,7 +19,6 @@ import {
 import { Box, Button, Chip, CircularProgress, Container, LinearProgress, Typography, Paper } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { fetchLearningActivity } from '@/app/actions/activity'
-import WordOfTheDay from '@/app/components/home/WordOfTheDay'
 import NewOnRow, { type CatalogueRowItem } from './NewOnRow'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
@@ -49,13 +47,6 @@ interface FeaturedEpisode {
   episode: EpisodeMeta
 }
 interface ActivityUpdate { userId: string; activity: LearningActivity }
-
-const QUICK_LINKS = [
-  { title: 'Explore', label: 'Discover a random clip', href: '/explore', icon: ExploreOutlined },
-  { title: 'Read', label: 'Open graded books', href: '/books', icon: AutoStories },
-  { title: 'Watch', label: 'Browse full episodes', href: '/cartoons', icon: Headphones },
-  { title: 'Memory', label: 'Recall phrases with flashcards', href: '/memory', icon: PsychologyOutlined },
-]
 
 function openAuth(mode: 'register' | 'signin') {
   window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode } }))
@@ -146,23 +137,6 @@ function SectionHeading({ eyebrow, title, detail }: { eyebrow?: string; title: s
       {eyebrow && <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{eyebrow}</Typography>}
       <Typography component="h2" sx={{ mt: eyebrow ? 0.5 : 0, fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 39 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.15 }}>{title}</Typography>
       {detail && <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>{detail}</Typography>}
-    </Box>
-  )
-}
-
-function QuickLinks() {
-  return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', sm: 'repeat(4, minmax(0,1fr))' }, gap: 1.5 }}>
-      {QUICK_LINKS.map((item) => {
-        const Icon = item.icon
-        return (
-          <Paper key={item.title} component={Link} href={item.href} elevation={0} sx={{ p: { xs: 2, md: 2.5 }, textDecoration: 'none', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '12px', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', '&:hover': { borderColor: 'color-mix(in srgb, var(--awm-gold) 55%, transparent)' } }}>
-            <Icon sx={{ color: '#b8860b', fontSize: { xs: 19, md: 24 } }} />
-            <Typography sx={{ mt: 1, fontFamily: 'Jost, sans-serif', fontWeight: 700 }}>{item.title}</Typography>
-            <Typography sx={{ mt: 0.25, fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted)', fontSize: 12 }}>{item.label}</Typography>
-          </Paper>
-        )
-      })}
     </Box>
   )
 }
@@ -418,25 +392,6 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
               <BookmarkContinueCard bookmark={bookmark} />
             </Box>
           )}
-          <Box sx={{ mt: { xs: 7, md: 10 } }}>
-            <WordOfTheDay embedded />
-            <Box sx={{ mt: { xs: 4, md: 5 } }}>
-              <SectionHeading eyebrow="Start exploring" title="Featured learning" detail="A simple place to begin—no account history required." />
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
-              {featuredEpisode && <ContentCard type={`Featured episode · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} actionLabel="Play episode" />}
-              {featuredBook && <ContentCard type="Featured book" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} />}
-            </Box>
-            </Box>
-          </Box>
-          <Box sx={{ mt: { xs: 7, md: 10 } }}><SectionHeading eyebrow="Keep exploring" title="Choose what to do next" /><QuickLinks /></Box>
-          <Paper elevation={0} sx={{ mt: { xs: 7, md: 10 }, p: { xs: 3, md: 5 }, borderRadius: '16px', bgcolor: 'var(--awm-cream)', border: '1px solid color-mix(in srgb, var(--awm-gold) 24%, transparent)', textAlign: 'center' }}>
-            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 40 }, fontWeight: 600, color: 'var(--awm-bark)' }}>Create an account to track your learning</Typography>
-            <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>Continue reading, track your learning time, and return to your lessons whenever you like.</Typography>
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-              <Button onClick={() => openAuth('register')} variant="contained" sx={{ bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', px: 3, textTransform: 'none', '&:hover': { bgcolor: '#173f2d', color: '#fff' } }}>Sign Up for Free</Button>
-              <Button onClick={() => openAuth('signin')} sx={{ color: '#0e2e1f', textTransform: 'none' }}>Log In</Button>
-            </Box>
-          </Paper>
         </Container>
       </Box>
     )

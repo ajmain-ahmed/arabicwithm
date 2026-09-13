@@ -1,4 +1,3 @@
-import { PremiumSection } from "@/app/components/PremiumPrompt"
 import { fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
 import { fetchEpisodesForShowPublic, fetchShowsForPublic } from '@/app/actions/cartoons'
 import HomeDashboard from './_components/HomeDashboard'
@@ -34,13 +33,13 @@ export default async function PrototypePage() {
   const newEpisodes = await fetchNewOnEpisodes()
 
   return (
-    <><HomeDashboard
+    <HomeDashboard
       books={books}
       featuredBook={featuredBook}
       featuredEpisode={featuredEpisode}
       chaptersByBook={Object.fromEntries(chapterEntries)}
       newShows={newShows}
       newEpisodes={newEpisodes}
-    /><PremiumSection /></>
+    />
   )
 }
