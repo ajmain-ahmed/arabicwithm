@@ -20,7 +20,7 @@ import {
   TrendingDownRounded,
   TrendingUpRounded,
 } from '@mui/icons-material'
-import { Box, Button, Chip, CircularProgress, Container, Dialog, IconButton, LinearProgress, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
+import { Box, Button, Chip, CircularProgress, Container, Dialog, IconButton, LinearProgress, Skeleton, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useMediaQuery, useTheme } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { fetchLearningActivity } from '@/app/actions/activity'
 import NewOnRow, { type CatalogueRowItem } from './NewOnRow'
@@ -131,52 +131,108 @@ function planDetailImage(imageKey: string, shows: NewOnShow[], books: PublicBook
   return undefined
 }
 
+function PlanBadge({ kind }: { kind: 'free' | 'plus' }) {
+  if (kind === 'free') {
+    return (
+      <Box component="span" sx={{ display: 'inline-block', px: 3.5, py: 1, borderRadius: '9999px', border: '1px solid color-mix(in srgb, var(--awm-bark) 35%, transparent)', color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Free</Box>
+    )
+  }
+  return (
+    <Box component="span" sx={{ display: 'inline-block', px: 3.5, py: 1, borderRadius: '9999px', bgcolor: '#b8860b', color: '#fff', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>AWM+</Box>
+  )
+}
+
+function PlanPrice({ kind }: { kind: 'free' | 'plus' }) {
+  return (
+    <>
+      <Typography sx={{ mt: 1.75, fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: 'var(--awm-bark)' }}>{kind === 'free' ? '£0' : PREMIUM.label}</Typography>
+      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)' }}>{kind === 'free' ? 'free forever' : 'cancel anytime'}</Typography>
+    </>
+  )
+}
+
+function PlanInfoButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <Box
+      component="button"
+      type="button"
+      onClick={onClick}
+      aria-label={`About ${label}`}
+      sx={{ display: 'inline-flex', p: 0.35, border: 0, bgcolor: 'transparent', cursor: 'pointer', color: 'var(--awm-muted-light)', borderRadius: '50%', transition: 'color 0.15s', '&:hover': { color: 'var(--awm-gold)' } }}
+    >
+      <InfoOutlined sx={{ fontSize: 16 }} />
+    </Box>
+  )
+}
+
 function PlanCompare({ shows, books }: { shows: NewOnShow[]; books: PublicBook[] }) {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [infoRow, setInfoRow] = useState<(typeof PLAN_ROWS)[number] | null>(null)
   return (
     <Container maxWidth="md" sx={{ pt: { xs: 6, md: 8 }, pb: { xs: 7, md: 9 }, textAlign: 'center' }}>
       <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 26, md: 34 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Choose your plan</Typography>
-      <TableContainer sx={{ mt: 4, overflowX: 'auto' }}>
-        <Table sx={{ minWidth: 520, borderCollapse: 'separate', borderSpacing: 0 }}>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ width: '42%', borderBottom: PLAN_HAIRLINE }} />
-              <TableCell align="center" sx={{ borderBottom: PLAN_HAIRLINE, verticalAlign: 'bottom', py: 2.5 }}>
-                <Box component="span" sx={{ display: 'inline-block', px: 3.5, py: 1, borderRadius: '9999px', border: '1px solid color-mix(in srgb, var(--awm-bark) 35%, transparent)', color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Free</Box>
-                <Typography sx={{ mt: 1.75, fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: 'var(--awm-bark)' }}>£0</Typography>
-                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)' }}>free forever</Typography>
-              </TableCell>
-              <TableCell align="center" sx={{ ...PLAN_PLUS_COL_SX, borderBottom: PLAN_HAIRLINE, verticalAlign: 'bottom', py: 2.5 }}>
-                <Box component="span" sx={{ display: 'inline-block', px: 3.5, py: 1, borderRadius: '9999px', bgcolor: '#b8860b', color: '#fff', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>AWM+</Box>
-                <Typography sx={{ mt: 1.75, fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: 'var(--awm-bark)' }}>{PREMIUM.label}</Typography>
-                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)' }}>cancel anytime</Typography>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {PLAN_ROWS.map((row, index) => (
-              <TableRow key={row.feature}>
-                <TableCell sx={{ borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5, fontFamily: 'Jost, sans-serif', color: 'var(--awm-bark)', fontSize: '1rem' }}>
-                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.6 }}>
-                    {row.feature}
-                    <Box
-                      component="button"
-                      type="button"
-                      onClick={() => setInfoRow(row)}
-                      aria-label={`About ${row.feature}`}
-                      sx={{ display: 'inline-flex', p: 0.35, border: 0, bgcolor: 'transparent', cursor: 'pointer', color: 'var(--awm-muted-light)', borderRadius: '50%', transition: 'color 0.15s', '&:hover': { color: 'var(--awm-gold)' } }}
-                    >
-                      <InfoOutlined sx={{ fontSize: 16 }} />
-                    </Box>
-                  </Box>
+
+      {isMobile ? (
+        /* Hulu-style stacked layout: plan badges on top, then per-feature
+           label centred above the Free/AWM+ values. */
+        <Box sx={{ mt: 3 }}>
+          <Box sx={{ display: 'flex', borderBottom: PLAN_HAIRLINE, pb: 2.5 }}>
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <PlanBadge kind="free" />
+              <PlanPrice kind="free" />
+            </Box>
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <PlanBadge kind="plus" />
+              <PlanPrice kind="plus" />
+            </Box>
+          </Box>
+          {PLAN_ROWS.map((row, index) => (
+            <Box key={row.feature} sx={{ py: 2, borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.6 }}>
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--awm-muted)' }}>{row.feature}</Typography>
+                <PlanInfoButton label={row.feature} onClick={() => setInfoRow(row)} />
+              </Box>
+              <Box sx={{ display: 'flex', mt: 1.25 }}>
+                <Box sx={{ flex: 1, textAlign: 'center' }}>{planCell(row.free)}</Box>
+                <Box sx={{ flex: 1, textAlign: 'center' }}>{planCell(row.plus)}</Box>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      ) : (
+        <TableContainer sx={{ mt: 4, overflowX: 'auto' }}>
+          <Table sx={{ minWidth: 520, borderCollapse: 'separate', borderSpacing: 0 }}>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: '42%', borderBottom: PLAN_HAIRLINE }} />
+                <TableCell align="center" sx={{ borderBottom: PLAN_HAIRLINE, verticalAlign: 'bottom', py: 2.5 }}>
+                  <PlanBadge kind="free" />
+                  <PlanPrice kind="free" />
                 </TableCell>
-                <TableCell align="center" sx={{ borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5 }}>{planCell(row.free)}</TableCell>
-                <TableCell align="center" sx={{ ...PLAN_PLUS_COL_SX, borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5 }}>{planCell(row.plus)}</TableCell>
+                <TableCell align="center" sx={{ ...PLAN_PLUS_COL_SX, borderBottom: PLAN_HAIRLINE, verticalAlign: 'bottom', py: 2.5 }}>
+                  <PlanBadge kind="plus" />
+                  <PlanPrice kind="plus" />
+                </TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {PLAN_ROWS.map((row, index) => (
+                <TableRow key={row.feature}>
+                  <TableCell sx={{ borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5, fontFamily: 'Jost, sans-serif', color: 'var(--awm-bark)', fontSize: '1rem' }}>
+                    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.6 }}>
+                      {row.feature}
+                      <PlanInfoButton label={row.feature} onClick={() => setInfoRow(row)} />
+                    </Box>
+                  </TableCell>
+                  <TableCell align="center" sx={{ borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5 }}>{planCell(row.free)}</TableCell>
+                  <TableCell align="center" sx={{ ...PLAN_PLUS_COL_SX, borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5 }}>{planCell(row.plus)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       <Dialog
         open={Boolean(infoRow)}
@@ -204,58 +260,78 @@ function PlanCompare({ shows, books }: { shows: NewOnShow[]; books: PublicBook[]
   )
 }
 
-function BooksSection({ books }: { books: PublicBook[] }) {  if (books.length === 0) return null
+function BookCard({ book }: { book: PublicBook }) {
+  const [loaded, setLoaded] = useState(false)
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,1fr))', lg: 'repeat(4, minmax(0,1fr))' }, gap: 2 }}>
-      {books.map((book) => (
-        <Paper
-          key={book.id}
-          component={Link}
-          href={`/books/${encodeURIComponent(book.slug)}`}
-          elevation={0}
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            minWidth: 0,
-            overflow: 'hidden',
-            color: 'inherit',
-            textDecoration: 'none',
-            border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)',
-            borderRadius: '14px',
-            bgcolor: 'var(--awm-white)',
-            transition: 'transform .2s ease, box-shadow .2s ease',
-            '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 14px 32px color-mix(in srgb, var(--awm-bark) 12%, transparent)' },
-          }}
-        >
-          <Box
-            component="img"
-            src={book.cover || `/api/covers/books/${book.id}`}
-            alt={book.titleAr ? `${book.title} — ${book.titleAr}` : book.title}
-            loading="lazy"
-            onError={(e) => { e.currentTarget.style.display = 'none' }}
-            sx={{ width: '100%', aspectRatio: '2 / 3', objectFit: 'cover', display: 'block', bgcolor: '#0e2e1f', flexShrink: 0 }}
+    <Paper
+      component={Link}
+      href={`/books/${encodeURIComponent(book.slug)}`}
+      elevation={0}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minWidth: 0,
+        overflow: 'hidden',
+        color: 'inherit',
+        textDecoration: 'none',
+        border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)',
+        borderRadius: { xs: '10px', sm: '14px' },
+        bgcolor: 'var(--awm-white)',
+        transition: 'transform .2s ease, box-shadow .2s ease',
+        '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 14px 32px color-mix(in srgb, var(--awm-bark) 12%, transparent)' },
+      }}
+    >
+      <Box sx={{ position: 'relative', bgcolor: '#0e2e1f' }}>
+        {!loaded && (
+          <Skeleton
+            variant="rectangular"
+            animation="wave"
+            sx={{ position: 'absolute', inset: 0, zIndex: 1, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)' }}
           />
-          <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
-            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.2rem', fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</Typography>
-            {book.titleAr && (
-              <Typography lang="ar" dir="rtl" sx={{ mt: 0.25, fontFamily: 'var(--font-serif)', fontSize: '1.05rem', color: 'var(--awm-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{book.titleAr}</Typography>
+        )}
+        <Box
+          component="img"
+          src={book.cover || `/api/covers/books/${book.id}`}
+          alt={book.titleAr ? `${book.title} — ${book.titleAr}` : book.title}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          onError={(e) => {
+            setLoaded(true)
+            e.currentTarget.style.display = 'none'
+          }}
+          sx={{ width: '100%', aspectRatio: '2 / 3', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease' }}
+        />
+      </Box>
+      <Box sx={{ p: { xs: 1.25, sm: 2 }, display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
+        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '0.95rem', sm: '1.2rem' }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</Typography>
+        {book.titleAr && (
+          <Typography lang="ar" dir="rtl" sx={{ mt: 0.25, fontFamily: 'var(--font-serif)', fontSize: { xs: '0.82rem', sm: '1.05rem' }, color: 'var(--awm-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{book.titleAr}</Typography>
+        )}
+        <Typography sx={{ mt: { xs: 0.75, sm: 1 }, fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.72rem', sm: '0.85rem' }, color: 'var(--awm-muted)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {book.description}
+        </Typography>
+        <Box sx={{ mt: 'auto', pt: { xs: 1.25, sm: 1.75 }, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.75 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', minWidth: 0 }}>
+            {book.level && (
+              <Chip size="small" label={book.level} sx={{ height: { xs: 18, sm: 22 }, borderRadius: '9999px', fontSize: { xs: '0.6rem', sm: '0.7rem' }, fontWeight: 700, fontFamily: 'Jost, sans-serif', bgcolor: 'var(--awm-forest)', color: 'var(--awm-cream)' }} />
             )}
-            <Typography sx={{ mt: 1, fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--awm-muted)', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-              {book.description}
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.68rem', sm: '0.78rem' }, color: 'var(--awm-muted)' }}>
+              {book.chapterCount} ch.
             </Typography>
-            <Box sx={{ mt: 'auto', pt: 1.75, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', minWidth: 0 }}>
-                {book.level && (
-                  <Chip size="small" label={book.level} sx={{ height: 22, borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700, fontFamily: 'Jost, sans-serif', bgcolor: 'var(--awm-forest)', color: 'var(--awm-cream)' }} />
-                )}
-                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)' }}>
-                  {book.chapterCount} chapter{book.chapterCount === 1 ? '' : 's'}
-                </Typography>
-              </Box>
-              <ChevronRight sx={{ color: 'var(--awm-muted)', fontSize: 20, flexShrink: 0 }} />
-            </Box>
           </Box>
-        </Paper>
+          <ChevronRight sx={{ color: 'var(--awm-muted)', fontSize: { xs: 16, sm: 20 }, flexShrink: 0 }} />
+        </Box>
+      </Box>
+    </Paper>
+  )
+}
+
+function BooksSection({ books }: { books: PublicBook[] }) {
+  if (books.length === 0) return null
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', lg: 'repeat(4, minmax(0,1fr))' }, gap: { xs: 1.25, sm: 2 } }}>
+      {books.map((book) => (
+        <BookCard key={book.id} book={book} />
       ))}
     </Box>
   )

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
-import { Box, Chip, IconButton, Typography } from '@mui/material'
+import { Box, Chip, IconButton, Skeleton, Typography } from '@mui/material'
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'
 
 export interface CatalogueRowItem {
@@ -18,20 +18,92 @@ export interface CatalogueRowItem {
 const ARROW_SX = {
   display: { xs: 'none', md: 'flex' },
   position: 'absolute',
-  zIndex: 3,
-  top: 8,
-  bottom: 16,
+  zIndex: 4,
+  top: '50%',
+  transform: 'translateY(-50%)',
   width: 40,
-  borderRadius: '8px',
-  bgcolor: 'rgba(5,23,15,0.45)',
+  height: 40,
+  borderRadius: '50%',
+  bgcolor: 'rgba(5,23,15,0.6)',
   color: '#fff',
+  boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
   opacity: 0,
-  transition: 'opacity 0.2s ease, background-color 0.2s ease',
-  '&:hover': { bgcolor: 'rgba(5,23,15,0.7)' },
+  visibility: 'hidden',
+  transition: 'opacity 0.2s ease, visibility 0.2s ease, background-color 0.2s ease, transform 0.2s ease',
+  '&:hover': { bgcolor: 'rgba(5,23,15,0.85)', transform: 'translateY(-50%) scale(1.08)' },
 } as const
 
-/* Netflix-style horizontally scrolling row of landscape tiles. Subtle hover
-   arrows appear at the edges when there is more content to scroll to. */
+function RowTile({ item }: { item: CatalogueRowItem }) {
+  const [loaded, setLoaded] = useState(false)
+  return (
+    <Box
+      component={Link}
+      href={item.href}
+      aria-label={item.title}
+      sx={{
+        position: 'relative',
+        flex: '0 0 auto',
+        scrollSnapAlign: 'start',
+        width: { xs: '62vw', sm: 300, md: 320 },
+        maxWidth: '100%',
+        aspectRatio: '16 / 9',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        bgcolor: '#0e2e1f',
+        transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+        '&:hover': {
+          transform: 'scale(1.045)',
+          boxShadow: '0 14px 34px rgba(44,26,14,0.28)',
+          zIndex: 3,
+        },
+      }}
+    >
+      {!loaded && (
+        <Skeleton
+          variant="rectangular"
+          animation="wave"
+          sx={{ position: 'absolute', inset: 0, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)' }}
+        />
+      )}
+      <Box
+        component="img"
+        src={item.imageSrc}
+        alt=""
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        onError={(e) => {
+          setLoaded(true)
+          // Missing cover: keep the branded gradient tile with the title.
+          e.currentTarget.style.display = 'none'
+        }}
+        sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease' }}
+      />
+      <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(5,23,15,0) 42%, rgba(5,23,15,0.85) 100%)' }} />
+      <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, p: { xs: 1.25, md: 1.5 } }}>
+        {item.meta && (
+          <Typography sx={{ color: 'rgba(255,255,255,0.78)', fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', textShadow: '0 1px 8px rgba(0,0,0,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {item.meta}
+          </Typography>
+        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: item.meta ? 0.25 : 0 }}>
+          <Typography sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: '1.05rem', md: '1.2rem' }, fontWeight: 600, textShadow: '0 2px 10px rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {item.title}
+          </Typography>
+          {item.level && (
+            <Chip
+              size="small"
+              label={item.level}
+              sx={{ flexShrink: 0, height: 20, fontSize: '0.68rem', bgcolor: 'rgba(212,168,67,0.92)', color: '#0e2e1f', fontWeight: 700, fontFamily: 'Jost, sans-serif' }}
+            />
+          )}
+        </Box>
+      </Box>
+    </Box>
+  )
+}
+
+/* Netflix-style horizontally scrolling row of landscape tiles. Subtle circular
+   hover arrows appear at the edges when there is more content to scroll to. */
 export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -53,27 +125,42 @@ export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
   const scrollByPage = (direction: 1 | -1) => {
     const el = scrollerRef.current
     if (!el) return
-    el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: 'smooth' })
+    // Suspend snap during programmatic scroll so it glides instead of lurching.
+    el.style.scrollSnapType = 'none'
+    const restore = () => {
+      el.style.scrollSnapType = ''
+    }
+    el.addEventListener('scrollend', restore, { once: true })
+    window.setTimeout(restore, 800)
+    el.scrollBy({ left: direction * el.clientWidth * 0.85, behavior: 'smooth' })
   }
 
   if (items.length === 0) return null
 
   return (
-    <Box sx={{ position: 'relative', '&:hover .awm-row-arrow': { opacity: 1 } }}>
+    <Box sx={{ position: 'relative', '&:hover .awm-row-arrow[data-active="true"]': { opacity: 0.95, visibility: 'visible' } }}>
       {/* edge fades hint at more content when the row overflows */}
       <Box aria-hidden="true" sx={{ pointerEvents: 'none', position: 'absolute', zIndex: 2, top: 0, bottom: 8, left: 0, width: { xs: 24, md: 48 }, background: 'linear-gradient(90deg, var(--awm-row-edge, var(--awm-cream-light)), transparent)' }} />
       <Box aria-hidden="true" sx={{ pointerEvents: 'none', position: 'absolute', zIndex: 2, top: 0, bottom: 8, right: 0, width: { xs: 24, md: 48 }, background: 'linear-gradient(270deg, var(--awm-row-edge, var(--awm-cream-light)), transparent)' }} />
 
-      {canScrollLeft && (
-        <IconButton className="awm-row-arrow" aria-label="Scroll back" onClick={() => scrollByPage(-1)} sx={{ ...ARROW_SX, left: 0 }}>
-          <ChevronLeft />
-        </IconButton>
-      )}
-      {canScrollRight && (
-        <IconButton className="awm-row-arrow" aria-label="Scroll forward" onClick={() => scrollByPage(1)} sx={{ ...ARROW_SX, right: 0 }}>
-          <ChevronRight />
-        </IconButton>
-      )}
+      <IconButton
+        className="awm-row-arrow"
+        data-active={canScrollLeft ? 'true' : 'false'}
+        aria-label="Scroll back"
+        onClick={() => scrollByPage(-1)}
+        sx={{ ...ARROW_SX, left: 4 }}
+      >
+        <ChevronLeft sx={{ fontSize: 26 }} />
+      </IconButton>
+      <IconButton
+        className="awm-row-arrow"
+        data-active={canScrollRight ? 'true' : 'false'}
+        aria-label="Scroll forward"
+        onClick={() => scrollByPage(1)}
+        sx={{ ...ARROW_SX, right: 4 }}
+      >
+        <ChevronRight sx={{ fontSize: 26 }} />
+      </IconButton>
 
       <Box
         ref={scrollerRef}
@@ -90,61 +177,7 @@ export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
         }}
       >
         {items.map((item) => (
-          <Box
-            key={item.key}
-            component={Link}
-            href={item.href}
-            aria-label={item.title}
-            sx={{
-              position: 'relative',
-              flex: '0 0 auto',
-              scrollSnapAlign: 'start',
-              width: { xs: '62vw', sm: 300, md: 320 },
-              maxWidth: '100%',
-              aspectRatio: '16 / 9',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              bgcolor: '#0e2e1f',
-              transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-              '&:hover': {
-                transform: 'scale(1.045)',
-                boxShadow: '0 14px 34px rgba(44,26,14,0.28)',
-                zIndex: 3,
-              },
-            }}
-          >
-            <Box
-              component="img"
-              src={item.imageSrc}
-              alt=""
-              loading="lazy"
-              onError={(e) => {
-                // Missing cover: keep the branded gradient tile with the title.
-                e.currentTarget.style.display = 'none'
-              }}
-              sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-            <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(5,23,15,0) 42%, rgba(5,23,15,0.85) 100%)' }} />
-            <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, p: { xs: 1.25, md: 1.5 } }}>
-              {item.meta && (
-                <Typography sx={{ color: 'rgba(255,255,255,0.78)', fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', textShadow: '0 1px 8px rgba(0,0,0,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {item.meta}
-                </Typography>
-              )}
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: item.meta ? 0.25 : 0 }}>
-                <Typography sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: '1.05rem', md: '1.2rem' }, fontWeight: 600, textShadow: '0 2px 10px rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {item.title}
-                </Typography>
-                {item.level && (
-                  <Chip
-                    size="small"
-                    label={item.level}
-                    sx={{ flexShrink: 0, height: 20, fontSize: '0.68rem', bgcolor: 'rgba(212,168,67,0.92)', color: '#0e2e1f', fontWeight: 700, fontFamily: 'Jost, sans-serif' }}
-                  />
-                )}
-              </Box>
-            </Box>
-          </Box>
+          <RowTile key={item.key} item={item} />
         ))}
       </Box>
     </Box>
