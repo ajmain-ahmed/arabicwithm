@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { animate } from 'framer-motion'
 import { Box, Chip, IconButton, Skeleton, Typography } from '@mui/material'
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'
 
@@ -107,6 +108,7 @@ function RowTile({ item }: { item: CatalogueRowItem }) {
 export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null)
   const frameRef = useRef<number | null>(null)
+  const scrollAnimationRef = useRef<{ stop: () => void } | null>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
 
@@ -141,12 +143,20 @@ export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
     }
   }, [items])
 
+  /* An eased rAF tween drives scrollLeft directly: native smooth-scroll can
+     be overridden by OS reduced-motion settings and jump instead of glide. */
   const scrollByPage = (direction: 1 | -1) => {
     const el = scrollerRef.current
     if (!el) return
-    // No scroll-snap on this scroller: snap re-evaluation at the end of a
-    // programmatic scroll is what made the slide lurch.
-    el.scrollBy({ left: direction * el.clientWidth * 0.85, behavior: 'smooth' })
+    scrollAnimationRef.current?.stop()
+    const target = el.scrollLeft + direction * el.clientWidth * 0.85
+    scrollAnimationRef.current = animate(el.scrollLeft, target, {
+      duration: 0.5,
+      ease: [0.25, 0.1, 0.25, 1],
+      onUpdate: (value) => {
+        if (scrollerRef.current) scrollerRef.current.scrollLeft = value
+      },
+    })
   }
 
   if (items.length === 0) return null
