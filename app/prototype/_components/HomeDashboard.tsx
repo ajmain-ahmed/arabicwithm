@@ -405,12 +405,34 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           <NewOnRow items={episodeRowItems(newEpisodes)} />
         </Container>
 
-        <Container maxWidth="lg" sx={{ pt: { xs: 5, md: 6 } }}>
-          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Books</Typography>
-          <Box sx={{ mt: 2 }}>
-            <BooksSection books={books} />
-          </Box>
-        </Container>
+        <Box sx={{ position: 'relative' }}>
+          <Container maxWidth="lg" sx={{ pt: { xs: 5, md: 6 } }}>
+            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Books</Typography>
+            <Box sx={{ mt: 2 }}>
+              <BooksSection books={books} />
+            </Box>
+          </Container>
+          {/* Desktop-only flourish in the right margin (only exists ≥ xl where the centred column leaves room) */}
+          <Box
+            component="img"
+            src="/homepage/layla-homepage.avif"
+            alt=""
+            aria-hidden="true"
+            sx={{
+              display: { xs: 'none', xl: 'block' },
+              position: 'absolute',
+              right: 12,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: 'calc((100vw - 1232px) / 2)',
+              maxWidth: 340,
+              maxHeight: '92%',
+              objectFit: 'contain',
+              objectPosition: 'right center',
+              pointerEvents: 'none',
+            }}
+          />
+        </Box>
 
         <Container maxWidth="lg" sx={{ pt: 0 }}>
           {bookmark && (
