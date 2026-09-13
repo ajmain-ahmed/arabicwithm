@@ -82,36 +82,45 @@ const PLAN_ROWS = [
   { feature: 'Audiobooks', free: 'none', plus: 'tick' },
 ] as const
 
-const PLAN_PLUS_CELL_SX = {
-  bgcolor: 'color-mix(in srgb, var(--awm-gold) 9%, transparent)',
+const PLAN_PLUS_COL_SX = {
+  bgcolor: 'color-mix(in srgb, var(--awm-gold) 8%, transparent)',
 } as const
+const PLAN_HAIRLINE = '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)'
+const PLAN_ROW_HAIRLINE = '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)'
 
 function planCell(value: 'tick' | 'limited' | 'none') {
-  if (value === 'tick') return <Check sx={{ color: 'var(--awm-gold)', fontSize: 22, verticalAlign: 'middle' }} />
-  if (value === 'limited') return <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.9rem', color: 'var(--awm-muted)' }}>Limited</Typography>
-  return <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted-light)' }}>—</Typography>
+  if (value === 'tick') return <Check sx={{ color: 'var(--awm-gold)', fontSize: 26, verticalAlign: 'middle' }} />
+  if (value === 'limited') return <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', color: 'var(--awm-muted)' }}>Limited</Typography>
+  return <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: 'var(--awm-muted-light)' }}>—</Typography>
 }
 
 function PlanCompare() {
   return (
     <Container maxWidth="md" sx={{ pt: { xs: 6, md: 8 }, pb: { xs: 7, md: 9 }, textAlign: 'center' }}>
-      <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 30 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Choose your plan</Typography>
-      <Typography sx={{ mt: 1, fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted)' }}>Free forever — or unlock everything with AWM+.</Typography>
-      <TableContainer sx={{ mt: 3, border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)', overflowX: 'auto' }}>
-        <Table sx={{ minWidth: 440, borderCollapse: 'separate', borderSpacing: 0 }}>
+      <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 26, md: 34 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Choose your plan</Typography>
+      <TableContainer sx={{ mt: 4, overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 520, borderCollapse: 'separate', borderSpacing: 0 }}>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)' }} />
-              <TableCell align="center" sx={{ borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', fontFamily: 'Jost, sans-serif', fontWeight: 600, color: 'var(--awm-muted)', fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Free</TableCell>
-              <TableCell align="center" sx={{ ...PLAN_PLUS_CELL_SX, borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', fontFamily: 'Jost, sans-serif', fontWeight: 700, color: 'var(--awm-bark)', fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>AWM+</TableCell>
+              <TableCell sx={{ width: '42%', borderBottom: PLAN_HAIRLINE }} />
+              <TableCell align="center" sx={{ borderBottom: PLAN_HAIRLINE, verticalAlign: 'bottom', py: 2.5 }}>
+                <Box component="span" sx={{ display: 'inline-block', px: 3.5, py: 1, borderRadius: '9999px', border: '1px solid color-mix(in srgb, var(--awm-bark) 35%, transparent)', color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Free</Box>
+                <Typography sx={{ mt: 1.75, fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: 'var(--awm-bark)' }}>£0</Typography>
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)' }}>free forever</Typography>
+              </TableCell>
+              <TableCell align="center" sx={{ ...PLAN_PLUS_COL_SX, borderBottom: PLAN_HAIRLINE, verticalAlign: 'bottom', py: 2.5 }}>
+                <Box component="span" sx={{ display: 'inline-block', px: 3.5, py: 1, borderRadius: '9999px', bgcolor: '#b8860b', color: '#fff', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>AWM+</Box>
+                <Typography sx={{ mt: 1.75, fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: 'var(--awm-bark)' }}>{PREMIUM.label}</Typography>
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)' }}>cancel anytime</Typography>
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {PLAN_ROWS.map((row) => (
+            {PLAN_ROWS.map((row, index) => (
               <TableRow key={row.feature}>
-                <TableCell sx={{ borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)', fontFamily: 'Jost, sans-serif', color: 'var(--awm-bark)', fontSize: '0.95rem' }}>{row.feature}</TableCell>
-                <TableCell align="center" sx={{ borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)' }}>{planCell(row.free)}</TableCell>
-                <TableCell align="center" sx={{ ...PLAN_PLUS_CELL_SX, borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)' }}>{planCell(row.plus)}</TableCell>
+                <TableCell sx={{ borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5, fontFamily: 'Jost, sans-serif', color: 'var(--awm-bark)', fontSize: '1rem' }}>{row.feature}</TableCell>
+                <TableCell align="center" sx={{ borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5 }}>{planCell(row.free)}</TableCell>
+                <TableCell align="center" sx={{ ...PLAN_PLUS_COL_SX, borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5 }}>{planCell(row.plus)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -120,7 +129,7 @@ function PlanCompare() {
       <Button
         onClick={() => openAuth('register')}
         variant="contained"
-        sx={{ mt: 3.5, bgcolor: '#b8860b', color: '#fff', px: 4, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: '#9c6f09' } }}
+        sx={{ mt: 4, bgcolor: '#b8860b', color: '#fff', px: 4, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: '#9c6f09' } }}
       >
         Get AWM+ · {PREMIUM.label}
       </Button>
