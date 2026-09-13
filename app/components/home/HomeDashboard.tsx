@@ -179,7 +179,7 @@ function LearningStats({
   booksInProgress: number
   now: Date
 }) {
-  const level = calculateLearningLevel(activity.totalSeconds)
+  const level = calculateLearningLevel(activity.totalSeconds, activity.memory?.totalXp ?? 0)
   const week = summarizeWeeklyActivity(activity.daily, now)
   const comparison = week.comparisonPercent
   const comparisonText = comparison === null
@@ -215,6 +215,8 @@ function LearningStats({
         {activity.memory && <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>
           <Typography sx={{ fontWeight: 700 }}>Memory Practice</Typography>
           <Typography sx={{ mt: 1, fontSize: 28 }}>{activity.memory.weekCards} cards this week</Typography>
+          <Typography color="text.secondary">{activity.memory.weekXp} XP this week</Typography>
+          <Typography color="text.secondary">{activity.memory.totalXp} total Memory XP</Typography>
         </Box>}
 
         <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>

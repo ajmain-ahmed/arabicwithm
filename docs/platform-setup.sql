@@ -95,7 +95,7 @@ alter table public.books add column if not exists author text;
 alter table public.books add column if not exists premium_exempt boolean not null default false;
 alter table public.books add column if not exists free_chapter_count integer not null default 5 check (free_chapter_count >= 0);
 update public.books set premium_exempt = true where lower(trim(title)) in
- ('blackwood manor', 'layla and the shadow', 'the stranger who knows my name', 'when learning feels real');
+ ('blackwood manor', 'layla & the shadow', 'the stranger who knows my name', 'when learning feels real');
 
 create table if not exists public.subscriptions (
  user_id uuid primary key references auth.users(id) on delete cascade,

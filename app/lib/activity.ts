@@ -117,8 +117,8 @@ export function minutesRequiredForLevel(level: number): number {
   return Math.round(Math.pow(safeLevel - 1, 1.35) * 60)
 }
 
-export function calculateLearningLevel(totalSeconds: number): LearningLevelProgress {
-  const totalMinutes = Math.floor(Math.max(0, totalSeconds) / 60)
+export function calculateLearningLevel(totalSeconds: number, memoryXp = 0): LearningLevelProgress {
+  const totalMinutes = Math.floor(Math.max(0, totalSeconds) / 60) + Math.max(0, Math.floor(memoryXp))
   let level = 1
   while (minutesRequiredForLevel(level + 1) <= totalMinutes) level += 1
   const currentLevelMinutes = minutesRequiredForLevel(level)
