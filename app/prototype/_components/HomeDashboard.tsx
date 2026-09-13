@@ -10,14 +10,16 @@ import {
   CalendarMonthRounded,
   Check,
   ChevronRight,
+  Close,
   ExploreOutlined,
+  InfoOutlined,
   LocalFireDepartmentRounded,
   MenuBook,
   PsychologyOutlined,
   TrendingDownRounded,
   TrendingUpRounded,
 } from '@mui/icons-material'
-import { Box, Button, Chip, CircularProgress, Container, LinearProgress, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
+import { Box, Button, Chip, CircularProgress, Container, Dialog, IconButton, LinearProgress, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { fetchLearningActivity } from '@/app/actions/activity'
 import NewOnRow, { type CatalogueRowItem } from './NewOnRow'
@@ -76,11 +78,26 @@ function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
 }
 
 const PLAN_ROWS = [
-  { feature: 'Cartoons & Anime', free: 'tick', plus: 'tick' },
-  { feature: 'Books', free: 'limited', plus: 'tick' },
-  { feature: 'Early access', free: 'none', plus: 'tick' },
-  { feature: 'Downloadable PDFs', free: 'none', plus: 'tick' },
-  { feature: 'Audiobooks', free: 'none', plus: 'tick' },
+  {
+    feature: 'Cartoons & Anime', free: 'tick', plus: 'tick', imageKey: 'show0',
+    detail: 'Watch every cartoon and anime episode with interactive Arabic subtitles — tap any word for its definition, pronunciation, and grammar notes.',
+  },
+  {
+    feature: 'Books', free: 'limited', plus: 'tick', imageKey: 'book0',
+    detail: 'Graded Arabic readers written for learners. The free tier includes the opening chapters of every book; AWM+ unlocks every chapter.',
+  },
+  {
+    feature: 'Early access', free: 'none', plus: 'tick', imageKey: 'show1',
+    detail: 'Get new books, cartoons and anime before they are published on YouTube or our other social channels.',
+  },
+  {
+    feature: 'Downloadable PDFs', free: 'none', plus: 'tick', imageKey: 'book1',
+    detail: 'Download every book and chapter as a print-ready PDF to read offline, annotate, or keep forever.',
+  },
+  {
+    feature: 'Audiobooks', free: 'none', plus: 'tick', imageKey: 'show2',
+    detail: 'Listen to narrated audiobooks of our graded readers — perfect for listening practice and shadowing on the go.',
+  },
 ] as const
 
 const PLAN_PLUS_COL_SX = {
@@ -95,7 +112,19 @@ function planCell(value: 'tick' | 'limited' | 'none') {
   return <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: 'var(--awm-muted-light)' }}>—</Typography>
 }
 
-function PlanCompare() {
+function planDetailImage(imageKey: string, shows: NewOnShow[], books: PublicBook[]): string | undefined {
+  const show = (index: number) => shows[index] ? `/api/covers/shows/${shows[index].id}` : undefined
+  const book = (index: number) => books[index] ? (books[index].cover || `/api/covers/books/${books[index].id}`) : undefined
+  if (imageKey === 'show0') return show(0)
+  if (imageKey === 'show1') return show(1)
+  if (imageKey === 'show2') return show(2)
+  if (imageKey === 'book0') return book(0)
+  if (imageKey === 'book1') return book(1)
+  return undefined
+}
+
+function PlanCompare({ shows, books }: { shows: NewOnShow[]; books: PublicBook[] }) {
+  const [infoRow, setInfoRow] = useState<(typeof PLAN_ROWS)[number] | null>(null)
   return (
     <Container maxWidth="md" sx={{ pt: { xs: 6, md: 8 }, pb: { xs: 7, md: 9 }, textAlign: 'center' }}>
       <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 26, md: 34 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Choose your plan</Typography>
@@ -119,7 +148,20 @@ function PlanCompare() {
           <TableBody>
             {PLAN_ROWS.map((row, index) => (
               <TableRow key={row.feature}>
-                <TableCell sx={{ borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5, fontFamily: 'Jost, sans-serif', color: 'var(--awm-bark)', fontSize: '1rem' }}>{row.feature}</TableCell>
+                <TableCell sx={{ borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5, fontFamily: 'Jost, sans-serif', color: 'var(--awm-bark)', fontSize: '1rem' }}>
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.6 }}>
+                    {row.feature}
+                    <Box
+                      component="button"
+                      type="button"
+                      onClick={() => setInfoRow(row)}
+                      aria-label={`About ${row.feature}`}
+                      sx={{ display: 'inline-flex', p: 0.35, border: 0, bgcolor: 'transparent', cursor: 'pointer', color: 'var(--awm-muted-light)', borderRadius: '50%', transition: 'color 0.15s', '&:hover': { color: 'var(--awm-gold)' } }}
+                    >
+                      <InfoOutlined sx={{ fontSize: 16 }} />
+                    </Box>
+                  </Box>
+                </TableCell>
                 <TableCell align="center" sx={{ borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5 }}>{planCell(row.free)}</TableCell>
                 <TableCell align="center" sx={{ ...PLAN_PLUS_COL_SX, borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5 }}>{planCell(row.plus)}</TableCell>
               </TableRow>
@@ -127,6 +169,29 @@ function PlanCompare() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Dialog
+        open={Boolean(infoRow)}
+        onClose={() => setInfoRow(null)}
+        slotProps={{ paper: { sx: { borderRadius: '16px', overflow: 'hidden', width: '100%', maxWidth: 380, m: 2 } } }}
+      >
+        {infoRow && (
+          <>
+            <Box sx={{ position: 'relative', bgcolor: '#0e2e1f' }}>
+              {planDetailImage(infoRow.imageKey, shows, books) && (
+                <Box component="img" src={planDetailImage(infoRow.imageKey, shows, books)} alt="" sx={{ width: '100%', height: 190, objectFit: 'cover', display: 'block' }} />
+              )}
+              <IconButton onClick={() => setInfoRow(null)} aria-label="Close" size="small" sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(5,23,15,0.55)', color: '#fff', '&:hover': { bgcolor: 'rgba(5,23,15,0.75)' } }}>
+                <Close sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Box>
+            <Box sx={{ p: 3, textAlign: 'left' }}>
+              <Typography component="h3" sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.45rem', fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25 }}>{infoRow.feature}</Typography>
+              <Typography sx={{ mt: 1.25, fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', color: 'var(--awm-muted)', lineHeight: 1.7 }}>{infoRow.detail}</Typography>
+            </Box>
+          </>
+        )}
+      </Dialog>
     </Container>
   )
 }
@@ -443,7 +508,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           </Box>
         </Container>
 
-        <PlanCompare />
+        <PlanCompare shows={newShows} books={books} />
 
         <Container maxWidth="lg" sx={{ pt: 0 }}>
           {bookmark && (
