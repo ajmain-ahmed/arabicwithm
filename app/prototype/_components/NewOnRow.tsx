@@ -46,9 +46,9 @@ function RowTile({ item }: { item: CatalogueRowItem }) {
       sx={{
         position: 'relative',
         flex: '0 0 auto',
-        width: { xs: '62vw', sm: 300, md: 320 },
+        width: { xs: '36vw', sm: 180, md: 200 },
         maxWidth: '100%',
-        aspectRatio: '16 / 9',
+        aspectRatio: '9 / 16',
         borderRadius: '12px',
         overflow: 'hidden',
         bgcolor: '#0e2e1f',
