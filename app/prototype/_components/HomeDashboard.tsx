@@ -85,7 +85,7 @@ function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
 function BooksSection({ books }: { books: PublicBook[] }) {
   if (books.length === 0) return null
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,1fr))', lg: 'repeat(4, minmax(0,1fr))' }, gap: 2 }}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,1fr))' }, gap: 2.5 }}>
       {books.map((book) => (
         <Paper
           key={book.id}
@@ -114,24 +114,24 @@ function BooksSection({ books }: { books: PublicBook[] }) {
             onError={(e) => { e.currentTarget.style.display = 'none' }}
             sx={{ width: '100%', aspectRatio: '2 / 3', objectFit: 'cover', display: 'block', bgcolor: '#0e2e1f', flexShrink: 0 }}
           />
-          <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
-            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.2rem', fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</Typography>
+          <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
+            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.45rem', fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</Typography>
             {book.titleAr && (
-              <Typography lang="ar" dir="rtl" sx={{ mt: 0.25, fontFamily: 'var(--font-serif)', fontSize: '1.05rem', color: 'var(--awm-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{book.titleAr}</Typography>
+              <Typography lang="ar" dir="rtl" sx={{ mt: 0.25, fontFamily: 'var(--font-serif)', fontSize: '1.2rem', color: 'var(--awm-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{book.titleAr}</Typography>
             )}
-            <Typography sx={{ mt: 1, fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--awm-muted)', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            <Typography sx={{ mt: 1.25, fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', color: 'var(--awm-muted)', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
               {book.description}
             </Typography>
-            <Box sx={{ mt: 'auto', pt: 1.75, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+            <Box sx={{ mt: 'auto', pt: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', minWidth: 0 }}>
                 {book.level && (
-                  <Chip size="small" label={book.level} sx={{ height: 22, borderRadius: '9999px', fontSize: '0.7rem', fontWeight: 700, fontFamily: 'Jost, sans-serif', bgcolor: 'var(--awm-forest)', color: 'var(--awm-cream)' }} />
+                  <Chip size="small" label={book.level} sx={{ height: 24, borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 700, fontFamily: 'Jost, sans-serif', bgcolor: 'var(--awm-forest)', color: 'var(--awm-cream)' }} />
                 )}
-                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)' }}>
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--awm-muted)' }}>
                   {book.chapterCount} chapter{book.chapterCount === 1 ? '' : 's'}
                 </Typography>
               </Box>
-              <ChevronRight sx={{ color: 'var(--awm-muted)', fontSize: 20, flexShrink: 0 }} />
+              <ChevronRight sx={{ color: 'var(--awm-muted)', fontSize: 22, flexShrink: 0 }} />
             </Box>
           </Box>
         </Paper>
