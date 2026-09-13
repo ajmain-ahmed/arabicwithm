@@ -323,9 +323,12 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           </Box>
         </Box>
 
-        <Container maxWidth="lg" sx={{ pt: { xs: 5, md: 8 } }}>
+        <Container maxWidth={false} sx={{ pt: { xs: 5, md: 8 } }}>
           <SectionHeading eyebrow="Fresh content" title="New on ArabicWithM" detail="The latest shows added to the catalogue." />
           <NewOnRow shows={newShows} />
+        </Container>
+
+        <Container maxWidth="lg" sx={{ pt: 0 }}>
           {bookmark && (
             <Box sx={{ mt: { xs: 5, md: 7 }, maxWidth: 720 }}>
               <BookmarkContinueCard bookmark={bookmark} />
