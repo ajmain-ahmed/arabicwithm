@@ -413,9 +413,9 @@ export const fetchExploreEpisodeMetasForPublic = unstable_cache(
     const episodeError = legacyEpisodeResult ? legacyEpisodeResult.error : socialEpisodeResult.error
 
     if (showError || episodeError) {
-      const message = showError?.message ?? episodeError?.message ?? "Unable to load Explore episodes"
+      const message = showError?.message ?? episodeError?.message ?? "Unknown error"
       console.error("[fetchExploreEpisodeMetasForPublic] error:", message)
-      throw new Error(message)
+      throw new Error("Unable to load Explore episodes")
     }
 
     const showsById = new Map(

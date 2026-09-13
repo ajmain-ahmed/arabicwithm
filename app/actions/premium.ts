@@ -1,6 +1,7 @@
 'use server'
 import { isMissingDatabaseFeature } from '@/app/lib/databaseErrors'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
+import { rateLimit } from '@/app/lib/rateLimit'
 import { serviceClient } from '@/app/lib/supabase'
 import { hasPremium, PREMIUM } from '@/app/lib/entitlements'
 import { stripeClient, siteUrl } from '@/app/lib/billing'
@@ -16,6 +17,8 @@ export async function fetchPremiumStatus() {
 export async function startPremiumCheckout(): Promise<string> {
   const userId = await getAuthenticatedUserId()
   if (!userId) throw new Error('Sign in to get AWM+.')
+  const limited = rateLimit(`checkout:${userId}`, 5, 10 * 60 * 1000)
+  if (!limited.ok) throw new Error('Too many checkout attempts. Please try again later.')
   const stripe = stripeClient()
   const priceId = process.env.STRIPE_PREMIUM_PRICE_ID
   if (!priceId) throw new Error('AWM+ billing is not configured yet.')

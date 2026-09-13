@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : null
+const isDev = process.env.NODE_ENV === "development"
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
@@ -46,11 +47,12 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains' },
           {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.youtube.com https://s.ytimg.com https://www.youtube.com/iframe_api",
+              `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval' " : ''}https://www.youtube.com https://s.ytimg.com https://www.youtube.com/iframe_api`,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               `img-src 'self' data: blob: https://i.ytimg.com https://*.tiktokcdn.com https://*.cdninstagram.com https://*.fbcdn.net https://images.unsplash.com https://ichef.bbci.co.uk https://s.france24.com https://cnn-arabic-images.cnn.io https://images.skynewsarabia.com https://www.akhbarona.com${supabaseUrl ? ` ${supabaseUrl}` : ''}`,

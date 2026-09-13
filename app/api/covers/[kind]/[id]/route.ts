@@ -17,10 +17,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
     if (/^https?:\/\//i.test(path)) {
       const url = new URL(path)
       const base = new URL(process.env.SUPABASE_URL!)
-      if (url.origin !== base.origin) return Response.redirect(url, 307)
-      const match = url.pathname.match(/^\/storage\/v1\/object\/(?:public|sign|authenticated)\/([^/]+)\/(.+)$/)
-      if (!match) return new Response(null, { status: 404 })
-      bucket = decodeURIComponent(match[1]); path = decodeURIComponent(match[2])
+      if (url.origin !== base.origin) {
+        // Never redirect callers to external origins; fall back to the canonical cover.
+        path = ''
+      } else {
+        const match = url.pathname.match(/^\/storage\/v1\/object\/(?:public|sign|authenticated)\/([^/]+)\/(.+)$/)
+        if (!match) return new Response(null, { status: 404 })
+        bucket = decodeURIComponent(match[1]); path = decodeURIComponent(match[2])
+      }
     } else {
       path = path.replace(/^\/+/, '').replace(/^covers\//, '')
     }

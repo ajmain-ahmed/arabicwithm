@@ -2,6 +2,7 @@
 
 import { z } from 'zod'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
+import { rateLimit } from '@/app/lib/rateLimit'
 import { serviceClient } from '@/app/lib/supabase'
 
 const schema = z.object({ rating: z.number().int().min(1).max(5), comment: z.string().trim().max(2000), submissionId: z.string().uuid() })
@@ -12,6 +13,8 @@ export async function submitFeedback(input: unknown): Promise<{ ok: boolean; err
   try {
     const userId = await getAuthenticatedUserId()
     if (!userId) return { ok: false, error: 'Please sign in to submit feedback.' }
+    const limited = rateLimit(`feedback:${userId}`, 5, 60 * 60 * 1000)
+    if (!limited.ok) return { ok: false, error: `Too many submissions. Please try again in ${limited.retryAfterSeconds} seconds.` }
     const { error } = await serviceClient.from('feedback').insert({ id: parsed.data.submissionId, user_id: userId, rating: parsed.data.rating, comment: parsed.data.comment || null })
     if (error && error.code !== '23505') {
       console.error('[feedback] insert failed', error)

@@ -3,6 +3,7 @@
 import { loadMemoryProgress } from '@/app/actions/memory'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
 import { ACTIVE_DAY_MINIMUM_SECONDS, localDateKey, parseLearningActivity, type LearningActivity } from '@/app/lib/activity'
+import { rateLimit } from '@/app/lib/rateLimit'
 import { serviceClient } from '@/app/lib/supabase'
 
 interface RecordActivityInput {
@@ -94,13 +95,19 @@ export async function fetchLearningActivity(): Promise<LearningActivity> {
 
 export async function recordActiveLearning(input: RecordActivityInput): Promise<LearningActivity> {
   const userId = await requireUserId()
+  const limited = rateLimit(`activity:${userId}`, 30, 60 * 1000)
+  if (!limited.ok) return activityForUser(userId)
   await ensureLearningProfile(userId)
 
   const seconds = Math.min(MAX_BATCH_SECONDS, Math.max(0, Math.floor(Number(input.activeSeconds) || 0)))
   const videoSeconds = Math.min(seconds, Math.max(0, Math.floor(Number(input.videoSeconds) || 0)))
   const readingSeconds = Math.min(seconds - videoSeconds, Math.max(0, Math.floor(Number(input.readingSeconds) || 0)))
   const wordLookups = Math.min(100, Math.max(0, Math.floor(Number(input.wordLookups) || 0)))
-  const date = DATE_KEY_PATTERN.test(input.date) ? input.date : localDateKey(new Date())
+  const today = localDateKey(new Date())
+  const requested = typeof input.date === 'string' && DATE_KEY_PATTERN.test(input.date) && !Number.isNaN(Date.parse(input.date))
+    ? input.date
+    : today
+  const date = requested <= today ? requested : today
   if (seconds === 0 && wordLookups === 0) return activityForUser(userId)
 
   const { error } = await serviceClient.rpc('increment_learning_activity', {
@@ -111,7 +118,10 @@ export async function recordActiveLearning(input: RecordActivityInput): Promise<
     p_video_seconds: videoSeconds,
     p_word_lookups: wordLookups,
   })
-  if (error) throw new Error(error.message)
+  if (error) {
+    console.error('[recordActiveLearning] rpc failed:', error)
+    throw new Error('Unable to record learning activity. Please try again.')
+  }
   return activityForUser(userId)
 }
 

@@ -87,8 +87,14 @@ export async function searchVocabulary(rawQuery: string): Promise<VocabularyEntr
       serviceClient.from("hanswehr_dictionary").select(columns).ilike("word", `%${normalized}%`).order("is_root", { ascending: false }).limit(18),
       serviceClient.from("hanswehr_dictionary").select(columns).textSearch("search_vector", normalized, { config: "simple", type: "websearch" }).order("is_root", { ascending: false }).limit(36),
     ])
-    if (direct.error) throw new Error(direct.error.message)
-    if (related.error) throw new Error(related.error.message)
+    if (direct.error) {
+      console.error('[searchVocabulary] direct lookup failed:', direct.error)
+      throw new Error("Dictionary lookup failed. Please try again.")
+    }
+    if (related.error) {
+      console.error('[searchVocabulary] related lookup failed:', related.error)
+      throw new Error("Dictionary lookup failed. Please try again.")
+    }
     const seen = new Set<number>()
     rows = [...(direct.data ?? []), ...(related.data ?? [])].filter((row) => {
       if (seen.has(row.id)) return false
@@ -103,8 +109,14 @@ export async function searchVocabulary(rawQuery: string): Promise<VocabularyEntr
         ? serviceClient.from("hanswehr_dictionary").select(columns).in("word", hints)
         : Promise.resolve({ data: [], error: null }),
     ])
-    if (result.error) throw new Error(result.error.message)
-    if (hinted.error) throw new Error(hinted.error.message)
+    if (result.error) {
+      console.error('[searchVocabulary] text search failed:', result.error)
+      throw new Error("Dictionary lookup failed. Please try again.")
+    }
+    if (hinted.error) {
+      console.error('[searchVocabulary] hinted lookup failed:', hinted.error)
+      throw new Error("Dictionary lookup failed. Please try again.")
+    }
     const needle = normalized.toLocaleLowerCase()
     const ranked = [...(result.data ?? [])]
       .sort((left, right) => {
@@ -126,7 +138,10 @@ export async function searchVocabulary(rawQuery: string): Promise<VocabularyEntr
   const { data: roots, error: rootsError } = parentIds.length
     ? await serviceClient.from("hanswehr_dictionary").select("id, word").in("id", parentIds)
     : { data: [], error: null }
-  if (rootsError) throw new Error(rootsError.message)
+  if (rootsError) {
+    console.error('[searchVocabulary] root lookup failed:', rootsError)
+    throw new Error("Dictionary lookup failed. Please try again.")
+  }
   const rootMap = new Map((roots ?? []).map((root) => [Number(root.id), String(root.word)]))
 
   return rows.map((row) => ({

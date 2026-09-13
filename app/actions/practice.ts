@@ -49,7 +49,10 @@ async function getPracticeContext() {
   if (!userId) return null
 
   const { data, error } = await serviceClient.auth.admin.getUserById(userId)
-  if (error || !data.user) throw new Error(error?.message ?? "Unable to load profile")
+  if (error || !data.user) {
+    console.error('[getPracticeContext] auth.admin.getUserById failed:', error)
+    throw new Error("Unable to load your practice profile.")
+  }
 
   return {
     userId,
@@ -62,7 +65,10 @@ async function persistWords(userId: string, metadata: Record<string, unknown>, w
   const { error } = await serviceClient.auth.admin.updateUserById(userId, {
     user_metadata: { ...metadata, [PRACTICE_WORDS_METADATA_KEY]: words },
   })
-  if (error) throw new Error(error.message)
+  if (error) {
+    console.error('[persistWords] auth.admin.updateUserById failed:', error)
+    throw new Error("Unable to save practice words. Please try again.")
+  }
 }
 
 export async function fetchPracticeLibrary(): Promise<PracticeLibraryResult> {
