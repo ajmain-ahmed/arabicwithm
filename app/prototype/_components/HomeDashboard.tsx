@@ -12,7 +12,6 @@ import {
   Headphones,
   LocalFireDepartmentRounded,
   MenuBook,
-  Movie,
   PsychologyOutlined,
   TrendingDownRounded,
   TrendingUpRounded,
@@ -21,6 +20,8 @@ import { Box, Button, Chip, CircularProgress, Container, LinearProgress, Typogra
 import { useAuth } from '@/app/AuthContext'
 import { fetchLearningActivity } from '@/app/actions/activity'
 import WordOfTheDay from '@/app/components/home/WordOfTheDay'
+import NewOnRow from './NewOnRow'
+import type { NewOnShow } from './newOnShows'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 import {
@@ -48,13 +49,6 @@ interface FeaturedEpisode {
 }
 interface ActivityUpdate { userId: string; activity: LearningActivity }
 
-const LEARNING_AREAS = [
-  { title: 'Explore', body: 'Scroll through randomized Arabic clips and discover your next episode.', href: '/explore', icon: ExploreOutlined },
-  { title: 'Watch', body: 'Watch entertaining Arabic content with interactive subtitles.', href: '/cartoons', icon: Movie },
-  { title: 'Read', body: 'Read graded Arabic stories at a comfortable pace.', href: '/books', icon: MenuBook },
-  { title: 'Memory', body: 'Practise useful phrases from real show transcripts with flashcards.', href: '/memory', icon: PsychologyOutlined },
-]
-
 const QUICK_LINKS = [
   { title: 'Explore', label: 'Discover a random clip', href: '/explore', icon: ExploreOutlined },
   { title: 'Read', label: 'Open graded books', href: '/books', icon: AutoStories },
@@ -72,23 +66,6 @@ function SectionHeading({ eyebrow, title, detail }: { eyebrow?: string; title: s
       {eyebrow && <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{eyebrow}</Typography>}
       <Typography component="h2" sx={{ mt: eyebrow ? 0.5 : 0, fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 39 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.15 }}>{title}</Typography>
       {detail && <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>{detail}</Typography>}
-    </Box>
-  )
-}
-
-function LearningAreaCards() {
-  return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,1fr))', md: 'repeat(4, minmax(0,1fr))' }, gap: 2 }}>
-      {LEARNING_AREAS.map((area) => {
-        const Icon = area.icon
-        return (
-          <Paper key={area.title} component={Link} href={area.href} elevation={0} sx={{ p: { xs: 2.25, sm: 2.75 }, color: 'inherit', textDecoration: 'none', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '13px', bgcolor: 'var(--awm-white)', transition: 'transform .2s ease, box-shadow .2s ease', '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 12px 30px color-mix(in srgb, var(--awm-bark) 10%, transparent)' } }}>
-            <Box sx={{ width: { xs: 38, sm: 44 }, height: { xs: 38, sm: 44 }, borderRadius: '10px', display: 'grid', placeItems: 'center', bgcolor: 'rgba(184,134,11,0.1)', color: '#b8860b' }}><Icon sx={{ fontSize: { xs: 20, sm: 24 } }} /></Box>
-            <Typography sx={{ mt: { xs: 1.5, sm: 2 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 22, sm: 24 }, fontWeight: 600, color: 'var(--awm-bark)' }}>{area.title}</Typography>
-            <Typography sx={{ mt: 0.5, fontFamily: 'Jost, sans-serif', fontSize: 14, color: 'var(--awm-muted)', lineHeight: 1.6 }}>{area.body}</Typography>
-          </Paper>
-        )
-      })}
     </Box>
   )
 }
@@ -247,7 +224,7 @@ function LearningStats({
   )
 }
 
-export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]> }) {
+export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook, newShows }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[] }) {
   const { user, loading } = useAuth()
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
   const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
@@ -347,7 +324,8 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
         </Box>
 
         <Container maxWidth="lg" sx={{ pt: { xs: 5, md: 8 } }}>
-          <LearningAreaCards />
+          <SectionHeading eyebrow="Fresh content" title="New on ArabicWithM" detail="The latest shows added to the catalogue." />
+          <NewOnRow shows={newShows} />
           {bookmark && (
             <Box sx={{ mt: { xs: 5, md: 7 }, maxWidth: 720 }}>
               <BookmarkContinueCard bookmark={bookmark} />
