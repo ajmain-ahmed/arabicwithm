@@ -439,6 +439,7 @@ export const fetchExploreBookChapterPages = unstable_cache(
 
     const book = (await fetchBooksForPublic()).find((book) => book.id === String(chapter.book_id))
     if (!book) return []
+    if (!canAccessBookChapter(false, book, Number(chapter.chapter_number))) return []
 
     return buildExploreBookPages(chapter as Record<string, unknown>, {
       slug: book.slug,
