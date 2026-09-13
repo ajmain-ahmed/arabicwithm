@@ -317,10 +317,6 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
               </Box>
             </Box>
           </Container>
-          {/* Gentle upward curve on the hero's bottom edge (centre rises, corners stay deep) */}
-          <Box component="svg" aria-hidden="true" viewBox="0 0 1200 48" preserveAspectRatio="none" sx={{ position: 'absolute', zIndex: 2, left: 0, right: 0, bottom: -1, width: '100%', height: { xs: 28, sm: 36, md: 48 }, display: 'block' }}>
-            <path d="M0 48 C300 8 900 8 1200 48 L1200 48 L0 48 Z" fill="var(--awm-cream-light)" />
-          </Box>
         </Box>
 
         <Container maxWidth={false} sx={{ pt: { xs: 5, md: 8 } }}>
@@ -388,7 +384,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.68)', fontFamily: 'Jost, sans-serif' }}>Pick up where you left off or choose something new.</Typography>
         </Container>
         <Box component="svg" aria-hidden="true" viewBox="0 0 1200 44" preserveAspectRatio="none" sx={{ position: 'absolute', zIndex: 2, left: 0, right: 0, bottom: -1, width: '100%', height: { xs: 25, sm: 32, md: 42 } }}>
-          <path d="M0 44 C300 6 900 6 1200 44 L1200 44 L0 44 Z" fill="var(--awm-cream-light)" />
+          <path d="M0 0 C300 38 900 38 1200 0 L1200 44 L0 44 Z" fill="var(--awm-cream-light)" />
         </Box>
       </Box>
       <Container maxWidth="lg" sx={{ pt: { xs: 4.5, md: 6 } }}>
