@@ -78,7 +78,7 @@ function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
 const PLAN_ROWS = [
   { feature: 'Cartoons & Anime', free: 'tick', plus: 'tick' },
   { feature: 'Books', free: 'limited', plus: 'tick' },
-  { feature: 'Early access to the latest books, cartoons & anime', free: 'none', plus: 'tick' },
+  { feature: 'Early access', free: 'none', plus: 'tick' },
   { feature: 'Downloadable PDFs', free: 'none', plus: 'tick' },
   { feature: 'Audiobooks', free: 'none', plus: 'tick' },
 ] as const
