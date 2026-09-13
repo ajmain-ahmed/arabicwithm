@@ -78,6 +78,7 @@ function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
 const PLAN_ROWS = [
   { feature: 'Cartoons & Anime', free: 'tick', plus: 'tick' },
   { feature: 'Books', free: 'limited', plus: 'tick' },
+  { feature: 'Early access to the latest books, cartoons & anime', free: 'none', plus: 'tick' },
   { feature: 'Downloadable PDFs', free: 'none', plus: 'tick' },
   { feature: 'Audiobooks', free: 'none', plus: 'tick' },
 ] as const
@@ -126,13 +127,6 @@ function PlanCompare() {
           </TableBody>
         </Table>
       </TableContainer>
-      <Button
-        onClick={() => openAuth('register')}
-        variant="contained"
-        sx={{ mt: 4, bgcolor: '#b8860b', color: '#fff', px: 4, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: '#9c6f09' } }}
-      >
-        Get AWM+ · {PREMIUM.label}
-      </Button>
     </Container>
   )
 }
