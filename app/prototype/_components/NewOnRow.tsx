@@ -61,8 +61,8 @@ export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
   return (
     <Box sx={{ position: 'relative', '&:hover .awm-row-arrow': { opacity: 1 } }}>
       {/* edge fades hint at more content when the row overflows */}
-      <Box aria-hidden="true" sx={{ pointerEvents: 'none', position: 'absolute', zIndex: 2, top: 0, bottom: 8, left: 0, width: { xs: 24, md: 48 }, background: 'linear-gradient(90deg, var(--awm-cream-light), transparent)' }} />
-      <Box aria-hidden="true" sx={{ pointerEvents: 'none', position: 'absolute', zIndex: 2, top: 0, bottom: 8, right: 0, width: { xs: 24, md: 48 }, background: 'linear-gradient(270deg, var(--awm-cream-light), transparent)' }} />
+      <Box aria-hidden="true" sx={{ pointerEvents: 'none', position: 'absolute', zIndex: 2, top: 0, bottom: 8, left: 0, width: { xs: 24, md: 48 }, background: 'linear-gradient(90deg, var(--awm-row-edge, var(--awm-cream-light)), transparent)' }} />
+      <Box aria-hidden="true" sx={{ pointerEvents: 'none', position: 'absolute', zIndex: 2, top: 0, bottom: 8, right: 0, width: { xs: 24, md: 48 }, background: 'linear-gradient(270deg, var(--awm-row-edge, var(--awm-cream-light)), transparent)' }} />
 
       {canScrollLeft && (
         <IconButton className="awm-row-arrow" aria-label="Scroll back" onClick={() => scrollByPage(-1)} sx={{ ...ARROW_SX, left: 0 }}>
