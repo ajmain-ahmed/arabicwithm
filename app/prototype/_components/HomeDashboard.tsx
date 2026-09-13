@@ -171,7 +171,7 @@ function PlanCompare({ shows, books }: { shows: NewOnShow[]; books: PublicBook[]
   const [infoRow, setInfoRow] = useState<(typeof PLAN_ROWS)[number] | null>(null)
   return (
     <Container maxWidth="md" sx={{ pt: { xs: 6, md: 8 }, pb: { xs: 7, md: 9 }, textAlign: 'center' }}>
-      <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 26, md: 34 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Choose your plan</Typography>
+      <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 26, md: 34 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2, textDecoration: 'underline', textUnderlineOffset: '6px' }}>Choose your plan</Typography>
 
       {isMobile ? (
         /* Hulu-style stacked layout: plan badges on top, then per-feature
@@ -595,19 +595,21 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           </Container>
         </Box>
 
-        <Container maxWidth={false} className="awm-pattern-section" sx={{ pt: { xs: 4, md: 5 }, pb: { xs: 4, md: 5 } }}>
-          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>New on ArabicWithM</Typography>
-          <NewOnRow items={showRowItems(newShows)} />
-          <Typography component="h2" sx={{ mt: { xs: 3, md: 4 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Brand new episodes</Typography>
-          <NewOnRow items={episodeRowItems(newEpisodes)} />
-        </Container>
+        <Box className="awm-pattern-section" sx={{ pt: { xs: 4, md: 5 }, pb: { xs: 5, md: 6 } }}>
+          <Container maxWidth={false}>
+            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>New Cartoons &amp; Anime</Typography>
+            <NewOnRow items={showRowItems(newShows)} />
+            <Typography component="h2" sx={{ mt: { xs: 3, md: 4 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Latest episode released</Typography>
+            <NewOnRow items={episodeRowItems(newEpisodes)} />
+          </Container>
 
-        <Container maxWidth="lg" sx={{ pt: { xs: 5, md: 6 } }}>
-          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Books</Typography>
-          <Box sx={{ mt: 2 }}>
-            <BooksSection books={books} />
-          </Box>
-        </Container>
+          <Container maxWidth="lg" sx={{ mt: { xs: 4, md: 5 } }}>
+            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Featured books in Arabic &amp; English</Typography>
+            <Box sx={{ mt: 2 }}>
+              <BooksSection books={books} />
+            </Box>
+          </Container>
+        </Box>
 
         <PlanCompare shows={newShows} books={books} />
 

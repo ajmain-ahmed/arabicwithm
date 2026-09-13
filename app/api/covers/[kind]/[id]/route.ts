@@ -1,5 +1,18 @@
+import { unstable_cache } from 'next/cache'
 import { serviceClient } from '@/app/lib/supabase'
 import { getYouTubeThumbnailUrl } from '@/app/lib/cartoons'
+
+/* DB lookup per cover is cached in memory and busted by the same tags the
+   admin CMS already invalidates on show/episode/book edits. */
+const fetchCoverRow = unstable_cache(
+  async (table: string, id: string) => {
+    const { data, error } = await serviceClient.from(table).select('*').eq('id', id).maybeSingle()
+    if (error) throw error
+    return data ?? null
+  },
+  ['cover-row', 'v1'],
+  { revalidate: false, tags: ['cartoons-public', 'books-public'] }
+)
 
 // Resolve only covers attached to published catalogue records, never arbitrary
 // caller-supplied Storage paths. Signed links are refreshed on every request.
@@ -8,8 +21,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
   if (!['shows', 'episodes', 'books'].includes(kind) || !/^[\w-]+$/.test(id)) return new Response(null, { status: 404 })
   try {
     const table = kind as 'shows' | 'episodes' | 'books'
-    const { data, error } = await serviceClient.from(table).select('*').eq('id', id).maybeSingle()
-    if (error) throw error
+    const data = await fetchCoverRow(table, id)
     if (!data) return new Response(null, { status: 404 })
     const row = data as Record<string, unknown>
     let path = typeof row.cover === 'string' ? row.cover.trim() : ''
