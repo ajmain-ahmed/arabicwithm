@@ -2,6 +2,7 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({ single: vi.fn(), sign: vi.fn(), bucket: vi.fn() }))
+vi.mock('next/cache', () => ({ unstable_cache: (fn: () => unknown) => fn }))
 vi.mock('@/app/lib/supabase', () => ({ serviceClient: {
   from: () => ({ select: () => ({ eq: () => ({ maybeSingle: mocks.single }) }) }),
   storage: { from: mocks.bucket },
