@@ -13,6 +13,10 @@ import {
   normalizeTikTokId,
   normalizeYouTubeId,
 } from "@/app/lib/cartoons"
+import {
+  normalizeThumbnailCrop,
+  type ThumbnailCrop,
+} from "@/app/lib/thumbnailCrop"
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -40,6 +44,7 @@ export type EpisodeRow = {
   tiktok_id: string | null
   facebook_id: string | null
   cover: string | null
+  cover_crop: ThumbnailCrop
   created_at: string | null
 }
 
@@ -362,7 +367,7 @@ export async function fetchAllEpisodesForAdmin(): Promise<EpisodeRow[]> {
 
   const { data, error } = await serviceClient
     .from("episodes")
-    .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, created_at")
+    .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
     .order("show_id", { ascending: true })
     .order("created_at", { ascending: true })
 
@@ -418,6 +423,7 @@ export async function createEpisode(input: EpisodeInput): Promise<EpisodeSaveRes
     description: input.description,
     youtube_id: normalizeYouTubeId(input.youtube_id) ?? null,
     cover,
+    cover_crop: normalizeThumbnailCrop(input.cover_crop),
     transcript: (input.transcript ?? []) as never,
   }
 
@@ -489,6 +495,7 @@ export async function updateEpisode(
   if (tiktokId !== undefined) payload.tiktok_id = tiktokId
   if (facebookId !== undefined) payload.facebook_id = facebookId
   if (input.cover !== undefined) payload.cover = input.cover
+  if (input.cover_crop !== undefined) payload.cover_crop = normalizeThumbnailCrop(input.cover_crop)
   const requestedSocialVideo = Boolean(instagramId || tiktokId || facebookId)
   if (input.cover === undefined && (
     input.youtube_id !== undefined ||
@@ -1097,6 +1104,7 @@ function mapEpisodeRow(row: Record<string, unknown>): EpisodeRow {
     tiktok_id: toStringOrNull(row.tiktok_id),
     facebook_id: toStringOrNull(row.facebook_id),
     cover: toStringOrNull(row.cover),
+    cover_crop: normalizeThumbnailCrop(row.cover_crop),
     created_at: toStringOrNull(row.created_at),
   }
 }

@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Box, Typography, Chip, Paper, Skeleton } from '@mui/material'
 import Link from 'next/link'
+import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 
 /* ── Palette ── */
 const BARK = 'var(--awm-bark)'
@@ -40,6 +41,7 @@ export interface ContentCardProps {
   overlayIcon?: React.ReactNode
   aspectRatio?: string
   imageFit?: 'cover' | 'contain' | 'natural'
+  imageCrop?: ThumbnailCrop
   compactMobileRow?: boolean
   denseMobileTile?: boolean
   mobileAspectRatio?: string
@@ -63,6 +65,7 @@ export default function ContentCard({
   overlayIcon,
   aspectRatio = '16 / 9',
   imageFit = 'cover',
+  imageCrop,
   compactMobileRow = false,
   denseMobileTile = false,
   mobileAspectRatio = '16 / 9',
@@ -160,8 +163,12 @@ export default function ContentCard({
                 : compactMobileRow
                 ? { xs: imageFit === 'natural' ? 'cover' : imageFit, sm: imageFit === 'natural' ? undefined : imageFit }
                 : imageFit === 'natural' ? undefined : imageFit,
-              objectPosition: denseMobileTile ? { xs: mobileImagePosition, sm: 'center' } : 'center',
-              transform: hovered && imageFit === 'cover' ? 'scale(1.03)' : 'scale(1)',
+              ...(imageCrop
+                ? thumbnailCropCss(imageCrop, hovered && imageFit === 'cover' ? 1.03 : 1)
+                : {
+                    objectPosition: denseMobileTile ? { xs: mobileImagePosition, sm: 'center' } : 'center',
+                    transform: hovered && imageFit === 'cover' ? 'scale(1.03)' : 'scale(1)',
+                  }),
               transition: 'transform 0.3s, opacity 0.3s',
               opacity: imgLoading ? 0 : 1,
             }}

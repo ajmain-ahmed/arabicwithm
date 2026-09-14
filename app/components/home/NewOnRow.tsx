@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Box, Chip, IconButton, Skeleton, Typography, useMediaQuery } from '@mui/material'
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'
+import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 
 /** Pixels per second. Shared by every slowly moving homepage showcase row. */
 export const AUTO_SCROLL_SPEED = 8
@@ -17,6 +18,7 @@ export interface CatalogueRowItem {
   meta?: string
   level?: string
   imageSrc: string
+  imageCrop?: ThumbnailCrop
 }
 
 const ARROW_SX = {
@@ -93,7 +95,7 @@ function RowTile({
           // Missing cover: keep the branded gradient tile with the title.
           e.currentTarget.style.display = 'none'
         }}
-        sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease' }}
+        sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease', ...thumbnailCropCss(item.imageCrop) }}
       />
       <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(5,23,15,0) 42%, rgba(5,23,15,0.85) 100%)' }} />
       <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, p: { xs: 1.25, md: 1.5 } }}>

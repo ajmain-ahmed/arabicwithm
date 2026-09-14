@@ -12,6 +12,7 @@ import type { ExploreBookPage } from '@/app/actions/books'
 import { dispatchWordLookup } from '@/app/lib/activity'
 import { usePlayerStore } from '@/store/playerStore'
 import { fetchExploreFeedPage } from '@/app/actions/explore'
+import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 import {
   EXPLORE_PREFETCH_AHEAD,
   EXPLORE_READING_DURATION_MS,
@@ -271,7 +272,7 @@ function ExploreVideo({
             component="img"
             src={episode.cover ?? getYouTubeThumbnailUrl(episode.youtubeId) ?? ''}
             alt=""
-            sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.72 }}
+            sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.72, ...thumbnailCropCss(episode.coverCrop) }}
           />
         )}
         {active && source?.provider !== 'youtube' && source && (

@@ -5,12 +5,15 @@ import { Box, Button, Typography, CircularProgress } from "@mui/material"
 import { CloudUpload, DeleteOutlined, ImageOutlined } from "@mui/icons-material"
 import { uploadCoverImage } from "@/app/actions/storage"
 import { errorMessage } from "@/app/lib/errors"
+import { thumbnailCropCss, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 
 interface ImageUploadFieldProps {
   label: string
   bucket: string
   path: string
   previewUrl: string | null
+  previewAspectRatio?: string
+  previewCrop?: ThumbnailCrop
   onUploaded?: (url: string) => void
   onRemove?: () => void
 }
@@ -71,6 +74,8 @@ export default function ImageUploadField({
   bucket,
   path,
   previewUrl,
+  previewAspectRatio = "1 / 1",
+  previewCrop,
   onUploaded,
   onRemove,
 }: ImageUploadFieldProps) {
@@ -138,7 +143,7 @@ export default function ImageUploadField({
         <Box
           sx={{
             width: 120,
-            height: 120,
+            aspectRatio: previewAspectRatio,
             borderRadius: "12px",
             border: "1px solid rgba(122,110,101,0.2)",
             backgroundColor: "rgba(245,237,224,0.4)",
@@ -158,6 +163,7 @@ export default function ImageUploadField({
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
+                ...thumbnailCropCss(previewCrop),
               }}
             />
           ) : (

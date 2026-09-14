@@ -2,6 +2,7 @@
 
 import { stripDiacritics } from './arabic'
 import { getShowCoverUrl, getEpisodeCoverUrl } from './storage'
+import type { ThumbnailCrop } from './thumbnailCrop'
 
 export interface ShowMeta {
   id: string
@@ -30,6 +31,7 @@ export interface EpisodeMeta {
   tiktokId?: string
   facebookId?: string
   cover?: string
+  coverCrop?: ThumbnailCrop
   createdAt?: string
 }
 

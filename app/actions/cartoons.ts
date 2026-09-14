@@ -20,6 +20,7 @@ import {
   getEpisodeVideoSources,
   canonicalizeCartoonCategory,
 } from "@/app/lib/cartoons"
+import { normalizeThumbnailCrop } from "@/app/lib/thumbnailCrop"
 import { type ShowRow } from "@/app/actions/admin"
 import { guardAdmin } from "@/app/actions/auth"
 import { stripDiacritics } from "@/app/lib/arabic"
@@ -39,6 +40,14 @@ function isMissingSocialVideoColumn(error: { code?: string; message?: string } |
     error &&
     (error.code === "42703" || error.code === "PGRST204") &&
     /(?:instagram_id|tiktok_id|facebook_id)/i.test(error.message ?? "")
+  )
+}
+
+function isMissingCoverCropColumn(error: { code?: string; message?: string } | null): boolean {
+  return Boolean(
+    error &&
+    (error.code === "42703" || error.code === "PGRST204") &&
+    /cover_crop/i.test(error.message ?? "")
   )
 }
 
@@ -189,16 +198,23 @@ export const fetchEpisodesForShowPublic = unstable_cache(
       return []
     }
 
-    const withSocial = await serviceClient
+    const withSocialAndCrop = await serviceClient
       .from("episodes")
-      .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, created_at")
+      .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
       .eq("show_id", show.id)
       .order("created_at", { ascending: false })
 
+    const withSocial = isMissingCoverCropColumn(withSocialAndCrop.error)
+      ? await serviceClient
+          .from("episodes")
+          .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, created_at")
+          .eq("show_id", show.id)
+          .order("created_at", { ascending: false })
+      : withSocialAndCrop
     const fallback = isMissingSocialVideoColumn(withSocial.error)
       ? await serviceClient
           .from("episodes")
-          .select("id, slug, title, level, tags, description, youtube_id, cover, created_at")
+          .select("id, slug, title, level, tags, description, youtube_id, cover, cover_crop, created_at")
           .eq("show_id", show.id)
           .order("created_at", { ascending: false })
       : null
@@ -238,18 +254,27 @@ export const fetchEpisodeForPublic = unstable_cache(
       return null
     }
 
-    const withSocial = await serviceClient
+    const withSocialAndCrop = await serviceClient
       .from("episodes")
-      .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript, created_at")
+      .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, transcript, created_at")
       .eq("show_id", show.id)
       .eq("slug", episodeSlug)
       .limit(1)
       .single()
 
+    const withSocial = isMissingCoverCropColumn(withSocialAndCrop.error)
+      ? await serviceClient
+          .from("episodes")
+          .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript, created_at")
+          .eq("show_id", show.id)
+          .eq("slug", episodeSlug)
+          .limit(1)
+          .single()
+      : withSocialAndCrop
     const fallback = isMissingSocialVideoColumn(withSocial.error)
       ? await serviceClient
           .from("episodes")
-          .select("id, slug, title, level, tags, description, youtube_id, cover, transcript, created_at")
+          .select("id, slug, title, level, tags, description, youtube_id, cover, cover_crop, transcript, created_at")
           .eq("show_id", show.id)
           .eq("slug", episodeSlug)
           .limit(1)
@@ -393,18 +418,24 @@ export const fetchExploreEpisodeMetasForPublic = unstable_cache(
       return []
     }
 
-    const [showResult, socialEpisodeResult] = await Promise.all([
+    const [showResult, initialEpisodeResult] = await Promise.all([
       serviceClient.from("shows").select("id, slug, title"),
       serviceClient
         .from("episodes")
-        .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, created_at")
+        .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
         .order("created_at", { ascending: true }),
     ])
 
+    const socialEpisodeResult = isMissingCoverCropColumn(initialEpisodeResult.error)
+      ? await serviceClient
+          .from("episodes")
+          .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, created_at")
+          .order("created_at", { ascending: true })
+      : initialEpisodeResult
     const legacyEpisodeResult = isMissingSocialVideoColumn(socialEpisodeResult.error)
       ? await serviceClient
           .from("episodes")
-          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, created_at")
+          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, cover_crop, created_at")
           .order("created_at", { ascending: true })
       : null
     const shows = showResult.data
@@ -441,15 +472,22 @@ export const fetchExploreEpisodeByIdPublic = unstable_cache(
   async (episodeId: string): Promise<ExploreEpisode | null> => {
     if (!hasServiceClientConfig()) return null
 
-    const withSocial = await serviceClient
+    const withSocialAndCrop = await serviceClient
       .from("episodes")
-      .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript, created_at")
+      .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, transcript, created_at")
       .eq("id", episodeId)
       .maybeSingle()
+    const withSocial = isMissingCoverCropColumn(withSocialAndCrop.error)
+      ? await serviceClient
+          .from("episodes")
+          .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript, created_at")
+          .eq("id", episodeId)
+          .maybeSingle()
+      : withSocialAndCrop
     const rowResult = isMissingSocialVideoColumn(withSocial.error)
       ? await serviceClient
           .from("episodes")
-          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, transcript, created_at")
+          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, cover_crop, transcript, created_at")
           .eq("id", episodeId)
           .maybeSingle()
       : withSocial
@@ -532,6 +570,7 @@ function mapEpisodeRow(
     tiktokId,
     facebookId,
     cover,
+    coverCrop: normalizeThumbnailCrop(row.cover_crop),
     createdAt: row.created_at ? String(row.created_at) : undefined,
   }
 }

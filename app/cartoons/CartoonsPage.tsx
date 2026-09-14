@@ -236,6 +236,7 @@ export default function CartoonsPage({
                     showTags={false}
                     aspectRatio="4 / 5"
                     imageFit="cover"
+                    imageCrop={episode.coverCrop}
                     denseMobileTile
                     mobileAspectRatio="4 / 5"
                     mobileImagePosition="center"

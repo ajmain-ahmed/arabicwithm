@@ -6,6 +6,7 @@
 
 import { unstable_cache } from "next/cache"
 import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
+import { normalizeThumbnailCrop, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 
 export interface NewOnShow {
   id: string
@@ -22,6 +23,7 @@ export interface NewOnEpisode {
   level: string
   showSlug: string
   showTitle: string
+  coverCrop: ThumbnailCrop
 }
 
 export const fetchNewOnShows = unstable_cache(
@@ -45,11 +47,19 @@ export const fetchNewOnShows = unstable_cache(
 export const fetchNewOnEpisodes = unstable_cache(
   async (): Promise<NewOnEpisode[]> => {
     if (!hasServiceClientConfig()) return []
-    const { data, error } = await serviceClient
+    const withCrop = await serviceClient
       .from("episodes")
-      .select("id, slug, title, level, show_id")
+      .select("id, slug, title, level, show_id, cover_crop")
       .order("created_at", { ascending: false })
       .limit(12)
+    const result = withCrop.error && /cover_crop/i.test(withCrop.error.message)
+      ? await serviceClient
+          .from("episodes")
+          .select("id, slug, title, level, show_id")
+          .order("created_at", { ascending: false })
+          .limit(12)
+      : withCrop
+    const { data, error } = result
     if (error) {
       console.error("[fetchNewOnEpisodes] error:", error)
       return []
@@ -75,6 +85,7 @@ export const fetchNewOnEpisodes = unstable_cache(
         level: String(row.level ?? ""),
         showSlug: show?.slug ?? "",
         showTitle: show?.title ?? "",
+        coverCrop: normalizeThumbnailCrop(row.cover_crop),
       }
     })
   },

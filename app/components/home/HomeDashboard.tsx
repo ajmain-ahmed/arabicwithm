@@ -27,6 +27,7 @@ import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
+import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 import {
   LEARNING_ACTIVITY_EVENT,
   calculateLearningLevel,
@@ -81,6 +82,7 @@ function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
     meta: episode.showTitle,
     level: episode.level,
     imageSrc: `/api/covers/episodes/${episode.id}`,
+    imageCrop: episode.coverCrop,
   }))
 }
 
@@ -216,10 +218,10 @@ function QuickLinks() {
   )
 }
 
-function ContentCard({ type, title, titleAr, description, level, href, image, actionLabel = 'Explore' }: { type: string; title: string; titleAr?: string; description?: string; level?: string; href: string; image?: string; actionLabel?: string }) {
+function ContentCard({ type, title, titleAr, description, level, href, image, imageCrop, actionLabel = 'Explore' }: { type: string; title: string; titleAr?: string; description?: string; level?: string; href: string; image?: string; imageCrop?: ThumbnailCrop; actionLabel?: string }) {
   return (
     <Paper elevation={0} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px minmax(0,1fr)', sm: '180px minmax(0,1fr)' }, minHeight: { xs: 165, sm: 220 }, overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)' }}>
-      {image ? <Box component="img" src={image} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} /> : <Box sx={{ display: 'grid', placeItems: 'center', bgcolor: '#0e2e1f' }}><AutoStories sx={{ color: '#d4a843', fontSize: { xs: 34, sm: 46 } }} /></Box>}
+      {image ? <Box component="img" src={image} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover', ...thumbnailCropCss(imageCrop) }} /> : <Box sx={{ display: 'grid', placeItems: 'center', bgcolor: '#0e2e1f' }}><AutoStories sx={{ color: '#d4a843', fontSize: { xs: 34, sm: 46 } }} /></Box>}
       <Box sx={{ p: { xs: 2, sm: 3 }, minWidth: 0 }}>
         <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{type}</Typography>
         {titleAr && <Typography lang="ar" dir="rtl" sx={{ mt: 0.5, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 23, fontWeight: 700, color: 'var(--awm-bark)', textAlign: 'left' }}>{titleAr}</Typography>}
@@ -320,9 +322,16 @@ function LearningStats({
 
         {activity.memory && <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>
           <Typography sx={{ fontWeight: 700 }}>Memory Practice</Typography>
-          <Typography sx={{ mt: 1, fontSize: 28 }}>{activity.memory.weekCards} cards this week</Typography>
-          <Typography color="text.secondary">{activity.memory.weekXp} XP this week</Typography>
-          <Typography color="text.secondary">{activity.memory.totalXp} total Memory XP</Typography>
+          <Box sx={{ mt: 1.25, display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 1.5 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 27, sm: 30 }, fontWeight: 600, lineHeight: 1 }}>{activity.memory.weekCards}</Typography>
+              <Typography sx={{ mt: 0.65, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, lineHeight: 1.35 }}>Cards completed this week</Typography>
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 27, sm: 30 }, fontWeight: 600, lineHeight: 1 }}>{activity.memory.weekXp}</Typography>
+              <Typography sx={{ mt: 0.65, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, lineHeight: 1.35 }}>XP earned this week</Typography>
+            </Box>
+          </Box>
         </Box>}
 
         <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>
@@ -519,7 +528,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           </Box>
         )}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
-          {featuredEpisode && <ContentCard type={`Watch next · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} actionLabel="Play episode" />}
+          {featuredEpisode && <ContentCard type={`Watch next · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} imageCrop={featuredEpisode.episode.coverCrop} actionLabel="Play episode" />}
           {recentReading ? (
             <Paper elevation={0} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px minmax(0,1fr)', sm: '180px minmax(0,1fr)' }, minHeight: 240, overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '15px', bgcolor: 'var(--awm-white)' }}>
               {recentReading.book.cover ? (
@@ -558,13 +567,18 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           ) : featuredBook ? <ContentCard type="Start reading" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} /> : null}
         </Box>
 
-        {(newShowItems.length > 0 || newEpisodeItems.length > 0) && (
-          <Box component="section" aria-labelledby="latest-releases-heading" sx={{ mt: { xs: 5, md: 7 }, minWidth: 0 }}>
+      </Container>
+
+      {(newShowItems.length > 0 || newEpisodeItems.length > 0) && (
+        <Box component="section" aria-labelledby="latest-releases-heading" sx={{ mt: { xs: 5, md: 7 }, minWidth: 0, width: '100%', overflow: 'hidden' }}>
+          <Container maxWidth="lg">
             <Box sx={{ mb: 2 }}>
               <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Newest first</Typography>
               <Typography id="latest-releases-heading" component="h2" sx={{ mt: 0.5, fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 39 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.15 }}>Latest Releases</Typography>
               <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>The newest shows and episodes from across ArabicWithM.</Typography>
             </Box>
+          </Container>
+          <Container maxWidth={false} sx={{ minWidth: 0 }}>
             {newShowItems.length > 0 && <Box sx={{ mt: 2 }}>
               <Typography component="h3" sx={{ mb: 0.75, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 23 }, fontWeight: 600, color: 'var(--awm-bark)' }}>Shows</Typography>
               <NewOnRow items={newShowItems} ariaLabel="Shows" mobileCardWidth="78vw" autoScroll />
@@ -573,9 +587,11 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
               <Typography component="h3" sx={{ mb: 0.75, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 23 }, fontWeight: 600, color: 'var(--awm-bark)' }}>Latest Episodes</Typography>
               <NewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes, newest first" mobileCardWidth="78vw" autoScroll />
             </Box>}
-          </Box>
-        )}
+          </Container>
+        </Box>
+      )}
 
+      <Container maxWidth="lg">
         <Box sx={{ mt: { xs: 5, md: 7 } }}>
 <LearningStats
   activity={activity}

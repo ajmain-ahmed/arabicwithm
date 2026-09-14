@@ -69,6 +69,7 @@ export interface Database {
           tiktok_id: string | null
           facebook_id: string | null
           cover: string | null
+          cover_crop: Json
           created_at: string | null
           transcript: Json | null
         }
@@ -85,6 +86,7 @@ export interface Database {
           tiktok_id?: string | null
           facebook_id?: string | null
           cover?: string | null
+          cover_crop?: Json
           created_at?: string | null
           transcript?: Json | null
         }
@@ -101,6 +103,7 @@ export interface Database {
           tiktok_id?: string | null
           facebook_id?: string | null
           cover?: string | null
+          cover_crop?: Json
           created_at?: string | null
           transcript?: Json | null
         }
