@@ -82,8 +82,6 @@ export default function useYouTubePlayer(
   const onEndedRef = useRef(options.onEnded)
   const mutedRef = useRef(options.muted === true)
   const startAtRef = useRef(startAt)
-  const fallbackHostRef = useRef(false)
-  const fallbackVideoRef = useRef<string | undefined>(undefined)
   const [isReady, setIsReady] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [autoplayBlocked, setAutoplayBlocked] = useState(false)
@@ -100,15 +98,50 @@ export default function useYouTubePlayer(
     const wrap = wrapRef.current
     if (!videoId || !wrap) return
 
-    if (fallbackVideoRef.current !== videoId) {
-      fallbackVideoRef.current = videoId
-      fallbackHostRef.current = false
-    }
-
     let cancelled = false
 
     const clearWrap = (el: HTMLDivElement) => {
       el.replaceChildren()
+    }
+
+    const mountFallbackEmbed = () => {
+      if (cancelled || !wrap.isConnected) return
+
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      intervalRef.current = null
+      const failedPlayer = playerRef.current
+      playerRef.current = null
+      try {
+        failedPlayer?.destroy?.()
+      } catch {}
+
+      const params = new URLSearchParams({
+        autoplay: autoplay ? '1' : '0',
+        mute: mutedRef.current ? '1' : '0',
+        playsinline: '1',
+        rel: '0',
+      })
+      const fallbackStart = startAtRef.current
+      if (fallbackStart && fallbackStart > 0) params.set('start', String(Math.floor(fallbackStart)))
+
+      const iframe = document.createElement('iframe')
+      iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?${params.toString()}`
+      iframe.title = 'YouTube video player'
+      iframe.allow = 'autoplay; encrypted-media; picture-in-picture; web-share'
+      iframe.allowFullscreen = true
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin'
+      iframe.style.width = '100%'
+      iframe.style.height = '100%'
+      iframe.style.border = '0'
+      clearWrap(wrap)
+      wrap.appendChild(iframe)
+
+      // A plain embed avoids the IFrame API failure while retaining native
+      // YouTube controls, including a tap-to-play path when autoplay is blocked.
+      setIsReady(false)
+      setIsPlaying(false)
+      setAutoplayBlocked(false)
+      setErrorCode(null)
     }
 
     const initPlayer = () => {
@@ -120,7 +153,6 @@ export default function useYouTubePlayer(
       wrap.appendChild(inner)
       try {
         playerRef.current = new window.YT.Player(inner, {
-          ...(fallbackHostRef.current ? { host: 'https://www.youtube-nocookie.com' } : {}),
           videoId,
           width: '100%',
           height: '100%',
@@ -168,9 +200,8 @@ export default function useYouTubePlayer(
             onError: (e: { data: number }) => {
               if (cancelled) return
               setIsPlaying(false)
-              if (e.data === 5 && !fallbackHostRef.current) {
-                fallbackHostRef.current = true
-                setRetryNonce((value) => value + 1)
+              if (e.data === 5) {
+                mountFallbackEmbed()
                 return
               }
               setErrorCode(e.data)

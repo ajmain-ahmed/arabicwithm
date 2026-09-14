@@ -1,5 +1,6 @@
 export { default as HtmlTooltip } from './HtmlTooltip'
 export { default as WordTooltip } from './WordTooltip'
+export { default as MobileDefinitionSheet } from './MobileDefinitionSheet'
 export { LEVEL_COLORS } from './WordTooltip'
 
 export interface VocabEntry {

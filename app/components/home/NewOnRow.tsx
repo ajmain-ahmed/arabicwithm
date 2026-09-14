@@ -2,9 +2,12 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { animate } from 'framer-motion'
-import { Box, Chip, IconButton, Skeleton, Typography } from '@mui/material'
+import { Box, Chip, IconButton, Skeleton, Typography, useMediaQuery } from '@mui/material'
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'
+
+/** Pixels per second. Shared by every slowly moving homepage showcase row. */
+export const AUTO_SCROLL_SPEED = 8
+const AUTO_RESUME_DELAY_MS = 1_600
 
 export interface CatalogueRowItem {
   key: string
@@ -17,9 +20,8 @@ export interface CatalogueRowItem {
 }
 
 const ARROW_SX = {
-  /* Visible on every breakpoint whenever the row can scroll that way;
-     hover only adds the scale-up below. */
-  display: 'flex',
+  /* Touch layouts use native swiping; desktop gets explicit paging controls. */
+  display: { xs: 'none', md: 'flex' },
   position: 'absolute',
   zIndex: 4,
   top: '50%',
@@ -35,19 +37,34 @@ const ARROW_SX = {
   '&:hover': { bgcolor: 'rgba(5,23,15,0.85)', transform: 'translateY(-50%) scale(1.08)' },
 } as const
 
-function RowTile({ item }: { item: CatalogueRowItem }) {
+function RowTile({
+  item,
+  mobileWidth,
+  isClone = false,
+  loopStart = false,
+}: {
+  item: CatalogueRowItem
+  mobileWidth: string | number
+  isClone?: boolean
+  loopStart?: boolean
+}) {
   const [loaded, setLoaded] = useState(false)
   return (
     <Box
       component={Link}
       href={item.href}
-      aria-label={item.title}
+      aria-label={isClone ? undefined : item.title}
+      aria-hidden={isClone || undefined}
+      tabIndex={isClone ? -1 : undefined}
+      data-loop-start={loopStart ? 'true' : undefined}
       sx={{
         position: 'relative',
         flex: '0 0 auto',
-        width: { xs: '36vw', sm: 180, md: 200 },
-        maxWidth: '100%',
-        aspectRatio: '9 / 16',
+        width: { xs: mobileWidth, sm: 260, md: 300 },
+        maxWidth: { xs: 310, sm: '100%' },
+        aspectRatio: '4 / 5',
+        scrollSnapAlign: 'start',
+        scrollSnapStop: 'normal',
         borderRadius: '12px',
         overflow: 'hidden',
         bgcolor: '#0e2e1f',
@@ -76,7 +93,7 @@ function RowTile({ item }: { item: CatalogueRowItem }) {
           // Missing cover: keep the branded gradient tile with the title.
           e.currentTarget.style.display = 'none'
         }}
-        sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease' }}
+        sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease' }}
       />
       <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(5,23,15,0) 42%, rgba(5,23,15,0.85) 100%)' }} />
       <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, p: { xs: 1.25, md: 1.5 } }}>
@@ -102,14 +119,59 @@ function RowTile({ item }: { item: CatalogueRowItem }) {
   )
 }
 
-/* Netflix-style horizontally scrolling row of landscape tiles. Subtle circular
+/* Horizontally scrolling row of portrait tiles. Subtle circular
    hover arrows appear at the edges when there is more content to scroll to. */
-export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
+export default function NewOnRow({
+  items,
+  ariaLabel = 'Content carousel',
+  mobileCardWidth = '62vw',
+  autoScroll = false,
+}: {
+  items: CatalogueRowItem[]
+  ariaLabel?: string
+  mobileCardWidth?: string | number
+  autoScroll?: boolean
+}) {
+  const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const scrollerRef = useRef<HTMLDivElement | null>(null)
   const frameRef = useRef<number | null>(null)
-  const scrollAnimationRef = useRef<{ stop: () => void } | null>(null)
+  const autoFrameRef = useRef<number | null>(null)
+  const autoPositionRef = useRef(0)
+  const lastAutoWriteRef = useRef(0)
+  const resumeAfterRef = useRef(0)
+  const pointerActiveRef = useRef(false)
+  const hoverActiveRef = useRef(false)
+  const focusActiveRef = useRef(false)
+  const visibleRef = useRef(true)
+  const dragStartXRef = useRef<number | null>(null)
+  const dragStartScrollRef = useRef(0)
+  const draggedRef = useRef(false)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
+  const shouldLoop = autoScroll && !reduceMotion && items.length > 1
+
+  const showAutoState = useCallback((moving: boolean) => {
+    const element = scrollerRef.current
+    if (element) {
+      element.dataset.autoScrolling = moving ? 'true' : 'false'
+      if (moving) element.dataset.manualScrolling = 'false'
+    }
+  }, [])
+
+  const setManualSnap = useCallback((active: boolean) => {
+    const element = scrollerRef.current
+    if (element) element.dataset.manualScrolling = active ? 'true' : 'false'
+  }, [])
+
+  const pauseFor = useCallback((delay = AUTO_RESUME_DELAY_MS) => {
+    resumeAfterRef.current = Math.max(resumeAfterRef.current, performance.now() + delay)
+    showAutoState(false)
+  }, [showAutoState])
+
+  const releaseInteraction = useCallback(() => {
+    resumeAfterRef.current = performance.now() + AUTO_RESUME_DELAY_MS
+    showAutoState(false)
+  }, [showAutoState])
 
   /* rAF-throttled: scroll fires every animation frame during a slide; React
      state updates there are what made the motion stutter. */
@@ -133,6 +195,51 @@ export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
     }
   }, [items, updateArrows])
 
+  useEffect(() => {
+    const element = scrollerRef.current
+    if (!element || !shouldLoop) {
+      showAutoState(false)
+      return
+    }
+
+    const observer = typeof IntersectionObserver === 'undefined'
+      ? null
+      : new IntersectionObserver(([entry]) => {
+          visibleRef.current = entry?.isIntersecting ?? true
+        }, { rootMargin: '160px 0px' })
+    observer?.observe(element)
+    autoPositionRef.current = element.scrollLeft
+
+    let previousTime = performance.now()
+    const tick = (now: number) => {
+      const interacting = pointerActiveRef.current || hoverActiveRef.current || focusActiveRef.current
+      const moving = visibleRef.current && !document.hidden && !interacting && now >= resumeAfterRef.current
+      showAutoState(moving)
+
+      if (moving) {
+        const loopStart = element.querySelector<HTMLElement>('[data-loop-start="true"]')
+        const firstItem = element.firstElementChild as HTMLElement | null
+        const loopWidth = loopStart && firstItem ? loopStart.offsetLeft - firstItem.offsetLeft : 0
+        const elapsedSeconds = Math.min(now - previousTime, 50) / 1_000
+        autoPositionRef.current += AUTO_SCROLL_SPEED * elapsedSeconds
+        if (loopWidth > 0 && autoPositionRef.current >= loopWidth) autoPositionRef.current -= loopWidth
+        lastAutoWriteRef.current = now
+        element.scrollLeft = autoPositionRef.current
+      }
+
+      previousTime = now
+      autoFrameRef.current = requestAnimationFrame(tick)
+    }
+    autoFrameRef.current = requestAnimationFrame(tick)
+
+    return () => {
+      observer?.disconnect()
+      if (autoFrameRef.current !== null) cancelAnimationFrame(autoFrameRef.current)
+      autoFrameRef.current = null
+      showAutoState(false)
+    }
+  }, [items, shouldLoop, showAutoState])
+
   /* Warm the browser cache for every tile so arrow-slides don't reveal
      skeletons for not-yet-loaded covers. */
   useEffect(() => {
@@ -142,26 +249,21 @@ export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
     }
   }, [items])
 
-  /* An eased rAF tween drives scrollLeft directly: native smooth-scroll can
-     be overridden by OS reduced-motion settings and jump instead of glide. */
   const scrollByPage = (direction: 1 | -1) => {
     const el = scrollerRef.current
     if (!el) return
-    scrollAnimationRef.current?.stop()
-    const target = el.scrollLeft + direction * el.clientWidth * 0.85
-    scrollAnimationRef.current = animate(el.scrollLeft, target, {
-      duration: 0.5,
-      ease: [0.25, 0.1, 0.25, 1],
-      onUpdate: (value) => {
-        if (scrollerRef.current) scrollerRef.current.scrollLeft = value
-      },
+    setManualSnap(true)
+    pauseFor(2_000)
+    el.scrollBy({
+      left: direction * el.clientWidth * 0.85,
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
     })
   }
 
   if (items.length === 0) return null
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative', width: '100%', maxWidth: '100%', minWidth: 0 }}>
       {/* edge fades hint at more content when the row overflows */}
       <Box aria-hidden="true" sx={{ pointerEvents: 'none', position: 'absolute', zIndex: 2, top: 0, bottom: 8, left: 0, width: { xs: 24, md: 48 }, background: 'linear-gradient(90deg, var(--awm-row-edge, var(--awm-cream-light)), transparent)' }} />
       <Box aria-hidden="true" sx={{ pointerEvents: 'none', position: 'absolute', zIndex: 2, top: 0, bottom: 8, right: 0, width: { xs: 24, md: 48 }, background: 'linear-gradient(270deg, var(--awm-row-edge, var(--awm-cream-light)), transparent)' }} />
@@ -170,8 +272,10 @@ export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
         className="awm-row-arrow"
         data-active={canScrollLeft ? 'true' : 'false'}
         aria-label="Scroll back"
+        aria-hidden={!canScrollLeft}
+        tabIndex={canScrollLeft ? 0 : -1}
         onClick={() => scrollByPage(-1)}
-        sx={{ ...ARROW_SX, left: 4 }}
+        sx={{ ...ARROW_SX, left: 4, opacity: canScrollLeft ? 0.95 : 0, pointerEvents: canScrollLeft ? 'auto' : 'none' }}
       >
         <ChevronLeft sx={{ fontSize: 26 }} />
       </IconButton>
@@ -179,27 +283,115 @@ export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
         className="awm-row-arrow"
         data-active={canScrollRight ? 'true' : 'false'}
         aria-label="Scroll forward"
+        aria-hidden={!canScrollRight}
+        tabIndex={canScrollRight ? 0 : -1}
         onClick={() => scrollByPage(1)}
-        sx={{ ...ARROW_SX, right: 4 }}
+        sx={{ ...ARROW_SX, right: 4, opacity: canScrollRight ? 0.95 : 0, pointerEvents: canScrollRight ? 'auto' : 'none' }}
       >
         <ChevronRight sx={{ fontSize: 26 }} />
       </IconButton>
 
       <Box
         ref={scrollerRef}
-        onScroll={updateArrows}
+        onScroll={() => {
+          updateArrows()
+          if (performance.now() - lastAutoWriteRef.current > 100) {
+            autoPositionRef.current = scrollerRef.current?.scrollLeft ?? 0
+            setManualSnap(true)
+            pauseFor(1_200)
+          }
+        }}
+        onPointerEnter={(event) => {
+          if (event.pointerType !== 'mouse') return
+          hoverActiveRef.current = true
+          setManualSnap(false)
+          showAutoState(false)
+        }}
+        onPointerLeave={(event) => {
+          if (event.pointerType !== 'mouse') return
+          hoverActiveRef.current = false
+          releaseInteraction()
+        }}
+        onPointerDown={(event) => {
+          pointerActiveRef.current = true
+          setManualSnap(true)
+          showAutoState(false)
+          if (event.pointerType === 'mouse' && event.button === 0) {
+            dragStartXRef.current = event.clientX
+            dragStartScrollRef.current = event.currentTarget.scrollLeft
+            draggedRef.current = false
+            event.currentTarget.setPointerCapture(event.pointerId)
+          }
+        }}
+        onPointerMove={(event) => {
+          if (event.pointerType !== 'mouse' || dragStartXRef.current === null) return
+          const distance = event.clientX - dragStartXRef.current
+          if (Math.abs(distance) > 4) draggedRef.current = true
+          if (draggedRef.current) event.currentTarget.scrollLeft = dragStartScrollRef.current - distance
+        }}
+        onPointerUp={(event) => {
+          pointerActiveRef.current = false
+          dragStartXRef.current = null
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
+          releaseInteraction()
+        }}
+        onPointerCancel={() => {
+          pointerActiveRef.current = false
+          dragStartXRef.current = null
+          draggedRef.current = false
+          releaseInteraction()
+        }}
+        onClickCapture={(event) => {
+          if (!draggedRef.current) return
+          event.preventDefault()
+          event.stopPropagation()
+          draggedRef.current = false
+        }}
+        onWheel={() => {
+          setManualSnap(true)
+          pauseFor()
+        }}
+        onFocusCapture={() => {
+          focusActiveRef.current = true
+          setManualSnap(false)
+          showAutoState(false)
+        }}
+        onBlurCapture={(event) => {
+          if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
+          focusActiveRef.current = false
+          releaseInteraction()
+        }}
+        role="region"
+        aria-label={ariaLabel}
         sx={{
           display: 'flex',
           gap: { xs: 1.25, md: 2 },
+          width: '100%',
+          maxWidth: '100%',
           overflowX: 'auto',
+          overflowY: 'hidden',
           py: 1,
           pr: 0.5,
+          scrollSnapType: shouldLoop ? 'none' : 'x mandatory',
+          scrollBehavior: 'smooth',
+          overscrollBehaviorX: 'contain',
+          WebkitOverflowScrolling: 'touch',
+          touchAction: 'pan-x pinch-zoom',
+          cursor: { md: 'grab' },
+          '&:active': { cursor: { md: 'grabbing' } },
+          userSelect: 'none',
           scrollbarWidth: 'none',
           '&::-webkit-scrollbar': { display: 'none' },
+          '&[data-manual-scrolling="true"]': { scrollSnapType: 'x mandatory' },
+          '&[data-auto-scrolling="true"]': { scrollSnapType: 'none', scrollBehavior: 'auto' },
+          '@media (prefers-reduced-motion: reduce)': { scrollBehavior: 'auto' },
         }}
       >
         {items.map((item) => (
-          <RowTile key={item.key} item={item} />
+          <RowTile key={item.key} item={item} mobileWidth={mobileCardWidth} />
+        ))}
+        {shouldLoop && items.map((item, index) => (
+          <RowTile key={`loop-${item.key}`} item={item} mobileWidth={mobileCardWidth} isClone loopStart={index === 0} />
         ))}
       </Box>
     </Box>

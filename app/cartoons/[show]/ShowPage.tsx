@@ -85,6 +85,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
       component="main"
       sx={{
         minHeight: { xs: 'calc(100vh - 56px)', md: '100vh' },
+        '@supports (height: 100dvh)': { minHeight: { xs: 'calc(100dvh - 56px)', md: '100dvh' } },
         background: WARM_WHITE,
         pb: { xs: 0, md: 8 },
       }}
@@ -104,12 +105,20 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
       >
         {/* ── Content Area ── */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
-          <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              justifyContent: 'space-between',
+              gap: 2,
+              '@media (max-width: 359.95px)': { flexDirection: 'column', alignItems: 'stretch', gap: 1.25 },
+            }}
+          >
             <Box sx={{ minWidth: 0 }}>
               <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 27, md: 38 }, fontWeight: 600, color: BARK, lineHeight: 1.12 }}>{show.title}</Typography>
               {show.description && <Typography sx={{ display: { xs: 'none', sm: '-webkit-box' }, mt: 0.5, maxWidth: 720, color: MUTED, fontFamily: 'Jost, sans-serif', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{show.description}</Typography>}
             </Box>
-            <Button disabled={episodes.length === 0} onClick={goToRandomEpisode} startIcon={<PlayArrow />} variant="contained" sx={{ flexShrink: 0, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', px: { xs: 1.5, sm: 2.25 }, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' } }}>{ctaLabel}</Button>
+            <Button disabled={episodes.length === 0} onClick={goToRandomEpisode} startIcon={<PlayArrow />} variant="contained" sx={{ flexShrink: 0, alignSelf: { xs: 'flex-start', sm: 'auto' }, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', px: { xs: 1.5, sm: 2.25 }, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' }, '@media (max-width: 359.95px)': { width: '100%', alignSelf: 'stretch' } }}>{ctaLabel}</Button>
           </Box>
           {/* Breadcrumbs */}
           <Breadcrumbs
@@ -236,11 +245,12 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: {
-                    xs: 'repeat(2, minmax(0, 1fr))',
+                    xs: 'repeat(3, minmax(0, 1fr))',
                     sm: 'repeat(2, minmax(0, 1fr))',
+                    lg: 'repeat(3, minmax(0, 1fr))',
                     xl: 'repeat(4, minmax(0, 1fr))',
                   },
-                  gap: { xs: 0.5, sm: 1 },
+                  gap: { xs: 0.75, sm: 1 },
                 }}
               >
                 {filteredEpisodes.map((ep) => (
@@ -298,10 +308,10 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                         tags={ep.tags}
                         showTags={false}
                         description={ep.description}
-                        aspectRatio="16 / 9"
+                        aspectRatio="4 / 5"
                         imageFit="cover"
                         denseMobileTile
-                        mobileAspectRatio="16 / 9"
+                        mobileAspectRatio="4 / 5"
                         mobileTitleSize={10}
                         overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
                         metaItems={[]}

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import Link from 'next/link'
 import { ArrowForward, ExploreOutlined, MenuBook, PlayCircleOutlineRounded, PsychologyOutlined, Refresh, VolumeOff, VolumeUp } from '@mui/icons-material'
 import { Box, Button, Chip, CircularProgress, IconButton, Popover, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
-import { WordTooltip, HtmlTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
+import { WordTooltip, HtmlTooltip, MobileDefinitionSheet, type VocabEntry } from '@/app/components/vocab-tooltip'
 import SocialVideoEmbed from '@/app/components/SocialVideoEmbed'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { getEpisodeVideoSources, getYouTubeThumbnailUrl, type ExploreEpisode, type VideoProvider } from '@/app/lib/cartoons'
@@ -275,11 +275,11 @@ function ExploreVideo({
       <Box
         sx={{
           position: 'relative',
-          width: { xs: '100%', md: '100%' },
-          maxWidth: { xs: 'calc((100dvh - 122px - env(safe-area-inset-bottom)) * 0.5625)', md: 'none' },
-          height: { xs: 'auto', md: '100%' },
+          width: '100%',
+          maxWidth: 'none',
+          height: { xs: 'calc(100% - env(safe-area-inset-bottom))', md: '100%' },
           maxHeight: '100%',
-          aspectRatio: { xs: '9 / 16', md: 'auto' },
+          aspectRatio: 'auto',
           mx: 'auto',
           minHeight: 0,
           overflow: 'hidden',
@@ -293,7 +293,7 @@ function ExploreVideo({
             component="img"
             src={episode.cover ?? getYouTubeThumbnailUrl(episode.youtubeId) ?? ''}
             alt=""
-            sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', opacity: 0.72 }}
+            sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', opacity: 0.72 }}
           />
         )}
         {active && source?.provider !== 'youtube' && source && (
@@ -310,7 +310,7 @@ function ExploreVideo({
           }}
         />
         {sources.length > 1 && (
-          <Box sx={{ position: 'absolute', zIndex: 3, bottom: 14, left: 14, right: 76, display: 'flex', gap: 0.65, flexWrap: 'wrap' }}>
+          <Box sx={{ position: 'absolute', zIndex: 3, bottom: { xs: 'max(14px, env(safe-area-inset-bottom))', md: 14 }, left: { xs: 'max(14px, env(safe-area-inset-left))', md: 14 }, right: { xs: 'max(76px, calc(env(safe-area-inset-right) + 62px))', md: 76 }, display: 'flex', gap: 0.65, flexWrap: 'wrap' }}>
             {sources.map((candidate) => (
               <Chip
                 key={candidate.provider}
@@ -330,7 +330,7 @@ function ExploreVideo({
             ))}
           </Box>
         )}
-        <Box sx={{ position: 'absolute', zIndex: 4, right: { xs: 6, md: 12 }, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 0.85 }}>
+        <Box sx={{ position: 'absolute', zIndex: 4, right: { xs: 'max(6px, env(safe-area-inset-right))', md: 12 }, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 0.85 }}>
           <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
             <IconButton
               onClick={toggleSound}
@@ -382,7 +382,9 @@ function ExploreVideo({
           display: { xs: 'none', md: 'flex' },
           minWidth: 0,
           height: '100%',
-          maxHeight: 'calc(100dvh - 64px)',
+          maxHeight: '100dvh',
+          boxSizing: 'border-box',
+          pt: '64px',
           flexDirection: 'column',
           overflow: 'hidden',
           border: '1px solid rgba(44,26,14,0.08)',
@@ -447,7 +449,8 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionP
         display: 'grid',
         placeItems: 'center',
         px: { xs: 1.5, sm: 3, md: 6 },
-        py: { xs: 1.5, md: 3 },
+        pt: { xs: 'calc(68px + env(safe-area-inset-top))', md: '88px' },
+        pb: { xs: 'calc(12px + env(safe-area-inset-bottom))', md: 3 },
       }}
     >
       <Box
@@ -521,6 +524,8 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionP
 }
 
 export default function ExploreFeed({ seed, initialItems, initialHasMore }: { seed: string; initialItems: ExploreFeedItem[]; initialHasMore: boolean }) {
+  const theme = useTheme()
+  const isMobileDefinitionLayout = useMediaQuery(theme.breakpoints.down('lg'))
   const setGlobalVideoPlaying = usePlayerStore((state) => state.setIsPlaying)
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
   const [items, setItems] = useState(initialItems)
@@ -602,6 +607,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
   }, [items.length])
 
   const openDefinition = useCallback<OpenDefinition>((entry, anchor, context, itemIndex) => {
+    anchor.focus({ preventScroll: true })
     const cacheKey = definitionCacheKey(context, entry)
     const cachedEntry = definitionCacheRef.current.get(cacheKey) ?? entry
     definitionCacheRef.current.set(cacheKey, cachedEntry)
@@ -665,15 +671,24 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
   }
 
   return (
-    <Box
-      ref={feedRef}
+      <Box
+        id="explore-feed"
+        ref={feedRef}
       component="main"
       sx={{
-        height: { xs: 'calc(100dvh - 56px)', md: 'calc(100dvh - 64px)' },
+        height: '100vh',
+        '@supports (height: 100dvh)': {
+          height: '100dvh',
+        },
+        width: '100%',
+        maxWidth: '100vw',
         overflowY: 'auto',
+        overflowX: 'hidden',
         scrollSnapType: 'y mandatory',
         overscrollBehaviorY: 'contain',
+        WebkitOverflowScrolling: 'touch',
         bgcolor: 'var(--awm-cream-light)',
+        ...(isMobileDefinitionLayout && selectedDefinition ? { overflowY: 'hidden' } : {}),
       }}
     >
       {items.map((item, index) => (
@@ -688,13 +703,14 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
             scrollSnapStop: 'always',
             display: item.kind === 'video' ? 'grid' : 'block',
             gridTemplateColumns: item.kind === 'video' ? { xs: '1fr', md: 'minmax(330px, 500px) minmax(0, 1fr)' } : undefined,
-            alignItems: 'center',
+            alignItems: { xs: 'stretch', md: 'center' },
             gap: { xs: 0, md: 3 },
             maxWidth: 1536,
             mx: 'auto',
             px: { xs: 0, md: 3, lg: 5 },
             py: { xs: 0, md: 3 },
             position: 'relative',
+            bgcolor: item.kind === 'video' ? '#090909' : 'var(--awm-cream-light)',
           }}
         >
           {item.kind === 'video' ? (
@@ -732,17 +748,24 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
           </Box>
         </Box>
       )}
-      <Popover
-        open={Boolean(selectedDefinition)}
-        anchorEl={selectedDefinition?.anchor ?? null}
-        onClose={() => setSelectedDefinition(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
-        disableRestoreFocus
-        slotProps={{ paper: { sx: { mt: 1, width: 'min(320px, calc(100vw - 28px))', borderRadius: '12px', border: '1px solid color-mix(in srgb, var(--awm-bark) 10%, transparent)', boxShadow: '0 14px 42px rgba(44,26,14,.2)' } } }}
-      >
-        {selectedDefinition && <Box key={selectedDefinition.cacheKey} sx={{ p: 2.5 }}><WordTooltip entry={selectedDefinition.entry} /></Box>}
-      </Popover>
+      {isMobileDefinitionLayout ? (
+        <MobileDefinitionSheet
+          open={Boolean(selectedDefinition)}
+          entry={selectedDefinition?.entry ?? null}
+          onClose={() => setSelectedDefinition(null)}
+        />
+      ) : (
+        <Popover
+          open={Boolean(selectedDefinition)}
+          anchorEl={selectedDefinition?.anchor ?? null}
+          onClose={() => setSelectedDefinition(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'center' }}
+          slotProps={{ paper: { sx: { mt: 1, width: 'min(320px, calc(100vw - 28px))', borderRadius: '12px', border: '1px solid color-mix(in srgb, var(--awm-bark) 10%, transparent)', boxShadow: '0 14px 42px rgba(44,26,14,.2)' } } }}
+        >
+          {selectedDefinition && <Box key={selectedDefinition.cacheKey} sx={{ p: 2.5 }}><WordTooltip entry={selectedDefinition.entry} /></Box>}
+        </Popover>
+      )}
     </Box>
   )
 }

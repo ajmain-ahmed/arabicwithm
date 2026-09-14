@@ -3,7 +3,18 @@ import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import useYouTubePlayer from './useYouTubePlayer'
 
-interface Options { videoId: string; width: string; height: string; playerVars: { autoplay: number }; events: { onReady: () => void; onStateChange: (event: { data: number }) => void; onAutoplayBlocked: () => void } }
+interface Options {
+  videoId: string
+  width: string
+  height: string
+  playerVars: { autoplay: number }
+  events: {
+    onReady: () => void
+    onStateChange: (event: { data: number }) => void
+    onError: (event: { data: number }) => void
+    onAutoplayBlocked: () => void
+  }
+}
 let options: Options
 let controls: ReturnType<typeof useYouTubePlayer>
 let root: Root
@@ -64,5 +75,20 @@ describe('YouTube player lifecycle', () => {
     await act(async () => root.render(<Harness />))
     expect(destroy).toHaveBeenCalledTimes(2)
     expect(controls.isPlaying).toBe(false)
+  })
+  it('falls back to a native embed when the IFrame API reports HTML5 error 5', async () => {
+    await act(async () => root.render(<Harness id="dQw4w9WgXcQ" />))
+    await act(async () => { await vi.advanceTimersByTimeAsync(60) })
+    await act(async () => options.events.onError({ data: 5 }))
+
+    const iframe = host.querySelector('iframe')
+    expect(destroy).toHaveBeenCalledOnce()
+    expect(iframe).not.toBeNull()
+    expect(iframe?.src).toContain('youtube.com/embed/dQw4w9WgXcQ')
+    expect(iframe?.src).toContain('autoplay=1')
+    expect(iframe?.src).toContain('mute=1')
+    expect(iframe?.src).toContain('playsinline=1')
+    expect(iframe?.allowFullscreen).toBe(true)
+    expect(controls.errorCode).toBeNull()
   })
 })

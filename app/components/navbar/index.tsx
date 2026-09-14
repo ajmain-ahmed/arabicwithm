@@ -4,7 +4,7 @@ import { DarkModeOutlined, LightModeOutlined, MenuOutlined, Person } from '@mui/
 import { AppBar, Avatar, Box, Button, Container, IconButton, Toolbar, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
@@ -24,6 +24,7 @@ export default function Navbar() {
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down('md'))
     const router = useRouter()
+    const pathname = usePathname()
     const { user } = useAuth()
     const { mode, toggleColorMode } = useColorMode()
     const isLoggedIn = Boolean(user)
@@ -33,10 +34,26 @@ export default function Navbar() {
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
     const [authDialogMode, setAuthDialogMode] = useState<'register' | 'signin'>('signin')
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
+    const [scrolled, setScrolled] = useState(false)
+
+    const supportsOverlay = pathname === '/' || pathname === '/explore' || pathname === '/vocabulary'
+    const isOverlay = supportsOverlay && !scrolled && !drawerOpen && !userMenuAnchor && !contactOpen && !authDialogOpen
+    const navColor = isOverlay ? '#fff' : 'var(--awm-forest)'
 
     useEffect(() => {
         hasAnimated = true
     }, [])
+
+    useEffect(() => {
+        const target = pathname === '/explore' ? document.getElementById('explore-feed') : window
+        const update = () => {
+            const scrollTop = target instanceof Window ? target.scrollY : target?.scrollTop ?? 0
+            setScrolled(scrollTop > 24)
+        }
+        update()
+        target?.addEventListener('scroll', update, { passive: true })
+        return () => target?.removeEventListener('scroll', update)
+    }, [pathname])
 
     useEffect(() => {
         const handler = (event: Event) => {
@@ -103,25 +120,30 @@ export default function Navbar() {
                 position="fixed"
                 elevation={0}
                 sx={{
-                    background: 'var(--awm-white)',
-                    backdropFilter: 'blur(16px)',
-                    borderBottom: '1px solid color-mix(in srgb, var(--awm-gold) 15%, transparent)',
-                    boxShadow: '0 4px 24px color-mix(in srgb, var(--awm-bark) 8%, transparent)',
+                    pt: 'env(safe-area-inset-top)',
+                    color: navColor,
+                    backgroundColor: isOverlay ? 'rgba(5,23,15,0.22)' : 'var(--awm-white)',
+                    backdropFilter: isOverlay ? 'blur(6px)' : 'blur(16px)',
+                    WebkitBackdropFilter: isOverlay ? 'blur(6px)' : 'blur(16px)',
+                    borderBottom: isOverlay ? '1px solid rgba(255,255,255,0.12)' : '1px solid color-mix(in srgb, var(--awm-gold) 15%, transparent)',
+                    boxShadow: isOverlay ? 'none' : '0 4px 24px color-mix(in srgb, var(--awm-bark) 8%, transparent)',
                     zIndex: 1200,
+                    transition: 'background-color .25s ease, backdrop-filter .25s ease, border-color .25s ease, box-shadow .25s ease, color .25s ease',
+                    '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
                 }}
             >
                 <Container maxWidth="xl">
                     <Toolbar disableGutters sx={{ py: { xs: 0.5, md: 1 }, minHeight: { xs: 56, md: 64 } }}>
                         {isMobile ? (
                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                <IconButton onClick={() => setDrawerOpen(true)} sx={{ p: 0.75, color: 'var(--awm-forest)' }} aria-label="Open menu">
+                                <IconButton onClick={() => setDrawerOpen(true)} sx={{ p: 0.75, color: navColor, transition: 'color .25s ease' }} aria-label="Open menu">
                                     <MenuOutlined sx={{ fontSize: 21 }} />
                                 </IconButton>
 
-                                <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} />
+                                <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
-                                    <IconButton onClick={toggleColorMode} sx={{ p: 0.65, color: 'var(--awm-forest)' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
+                                    <IconButton onClick={toggleColorMode} sx={{ p: 0.65, color: navColor, transition: 'color .25s ease' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
                                         {mode === 'dark' ? <LightModeOutlined sx={{ fontSize: 20 }} /> : <DarkModeOutlined sx={{ fontSize: 20 }} />}
                                     </IconButton>
                                     {isLoggedIn ? (
@@ -146,7 +168,7 @@ export default function Navbar() {
                                             </Avatar>
                                         </IconButton>
                                     ) : (
-                                        <IconButton onClick={openSignIn} sx={{ p: 0.75, color: 'var(--awm-forest)' }} aria-label="Sign in">
+                                        <IconButton onClick={openSignIn} sx={{ p: 0.75, color: navColor, transition: 'color .25s ease' }} aria-label="Sign in">
                                             <Person sx={{ fontSize: 21 }} />
                                         </IconButton>
                                     )}
@@ -165,7 +187,7 @@ export default function Navbar() {
                                                     letterSpacing: '0.06em',
                                                     fontSize: { md: '0.8rem', lg: '0.875rem' },
                                                     whiteSpace: 'nowrap',
-                                                    color: 'var(--awm-forest)',
+                                                    color: navColor,
                                                     cursor: 'pointer',
                                                     py: 2,
                                                 }}
@@ -176,11 +198,11 @@ export default function Navbar() {
                                     ))}
                                 </Box>
 
-                                <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} />
+                                <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 0.75 }}>
                                     <Tooltip title={mode === 'dark' ? 'Use light mode' : 'Use dark mode'}>
-                                        <IconButton onClick={toggleColorMode} sx={{ color: 'var(--awm-forest)' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
+                                        <IconButton onClick={toggleColorMode} sx={{ color: navColor, transition: 'color .25s ease' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
                                             {mode === 'dark' ? <LightModeOutlined /> : <DarkModeOutlined />}
                                         </IconButton>
                                     </Tooltip>
@@ -211,8 +233,8 @@ export default function Navbar() {
                                             size="small"
                                             startIcon={<Person sx={{ fontSize: 16 }} />}
                                             sx={{
-                                                borderColor: 'color-mix(in srgb, var(--awm-gold) 40%, transparent)',
-                                                color: 'var(--awm-forest)',
+                                                borderColor: isOverlay ? 'rgba(255,255,255,.58)' : 'color-mix(in srgb, var(--awm-gold) 40%, transparent)',
+                                                color: navColor,
                                                 fontFamily: 'var(--font-sans)',
                                                 fontWeight: 500,
                                                 fontSize: '0.8rem',
@@ -221,7 +243,7 @@ export default function Navbar() {
                                                 px: 1.8,
                                                 '&:hover': {
                                                     borderColor: 'var(--awm-gold-light)',
-                                                    background: 'color-mix(in srgb, var(--awm-gold) 6%, transparent)',
+                                                    background: isOverlay ? 'rgba(255,255,255,.1)' : 'color-mix(in srgb, var(--awm-gold) 6%, transparent)',
                                                 },
                                             }}
                                         >

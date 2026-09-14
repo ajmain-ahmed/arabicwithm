@@ -7,9 +7,10 @@ interface BrandLogoProps {
     isMobile: boolean
     onClick: () => void
     shouldAnimate: boolean
+    overlay?: boolean
 }
 
-export default function BrandLogo({ isMobile, onClick, shouldAnimate }: BrandLogoProps) {
+export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = false }: BrandLogoProps) {
     const text = 'ArabicWithM'
     const letters = text.split('')
 
@@ -62,7 +63,9 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate }: BrandLog
                         fontFamily: 'var(--font-decorative)',
                         fontSize: isMobile ? '1.45rem' : '2rem',
                         fontWeight: 700,
-                        background: 'linear-gradient(135deg, var(--awm-bark) 0%, var(--awm-forest) 100%)',
+                        background: overlay
+                            ? 'linear-gradient(135deg, #fff 0%, var(--awm-gold-light) 100%)'
+                            : 'linear-gradient(135deg, var(--awm-bark) 0%, var(--awm-forest) 100%)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         letterSpacing: '-0.035em',

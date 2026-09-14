@@ -178,7 +178,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const promptIsArabic = direction === 'english'
 
   return (
-    <Box component="main" sx={{ minHeight: 'calc(100vh - 64px)', bgcolor: 'var(--awm-cream-light)', pb: { xs: 4, md: 8 } }}>
+    <Box component="main" sx={{ minHeight: { xs: 'calc(100vh - 56px)', md: 'calc(100vh - 64px)' }, '@supports (height: 100dvh)': { minHeight: { xs: 'calc(100dvh - 56px)', md: 'calc(100dvh - 64px)' } }, bgcolor: 'var(--awm-cream-light)', pb: { xs: 4, md: 8 } }}>
       <Container maxWidth="md" sx={{ pt: { xs: 2.5, md: 5 }, px: { xs: 2, sm: 3 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box sx={{ width: 44, height: 44, display: 'grid', placeItems: 'center', borderRadius: '12px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 13%, transparent)', color: 'var(--awm-gold)' }}><PsychologyOutlined /></Box>
@@ -241,14 +241,30 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
           <Box sx={{ mt: 3 }}>
             <Box sx={{ mb: 1.25, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}><Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12 }}>Card {index + 1} of {cards.length}</Typography><Box sx={{ display: 'flex', gap: 0.75 }}>{user && <Chip size="small" label={`${sessionXp} session XP · ${totalXp} total`} sx={{ bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)', color: 'var(--awm-bark)', fontWeight: 700 }} />}</Box></Box>
             <LinearProgress variant="determinate" value={(index / cards.length) * 100} sx={{ mb: 1.5, height: 6, borderRadius: 99, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold)', borderRadius: 99 } }} />
-            <Paper elevation={0} aria-live="polite" sx={{ minHeight: { xs: 360, md: 430 }, p: { xs: 3, sm: 5 }, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', borderRadius: '18px', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', bgcolor: 'var(--awm-white)', boxShadow: '0 18px 50px color-mix(in srgb, var(--awm-bark) 10%, transparent)' }}>
+            <Paper elevation={0} aria-live="polite" sx={{ p: { xs: 2.25, sm: 3.5 }, borderRadius: '18px', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', bgcolor: 'var(--awm-white)', boxShadow: '0 12px 36px color-mix(in srgb, var(--awm-bark) 9%, transparent)' }}>
               <Box sx={{ textAlign: 'center' }}>
                 <Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'Jost, sans-serif', fontSize: 10.5, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase' }}>{promptIsArabic ? 'Translate into English' : 'Translate into Arabic'}</Typography>
-                <Typography lang={promptIsArabic ? 'ar' : 'en'} dir={promptIsArabic ? 'rtl' : 'ltr'} sx={{ mt: 3, fontFamily: promptIsArabic ? 'var(--font-book-naskh), serif' : 'var(--font-heading)', fontSize: { xs: promptIsArabic ? 31 : 27, md: promptIsArabic ? 42 : 35 }, fontWeight: 600, lineHeight: 1.55, color: 'var(--awm-bark)' }}>{prompt}</Typography>
-                {revealed && <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)' }}><Typography sx={{ color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 10, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase' }}>Answer</Typography><Typography lang={promptIsArabic ? 'en' : 'ar'} dir={promptIsArabic ? 'ltr' : 'rtl'} sx={{ mt: 1.25, fontFamily: promptIsArabic ? 'var(--font-heading)' : 'var(--font-book-naskh), serif', fontSize: { xs: promptIsArabic ? 24 : 29, md: promptIsArabic ? 30 : 38 }, fontWeight: 600, lineHeight: 1.55, color: 'var(--awm-forest)' }}>{answer}</Typography></Box>}
+                <Typography lang={promptIsArabic ? 'ar' : 'en'} dir={promptIsArabic ? 'rtl' : 'ltr'} sx={{ mt: { xs: 1.75, sm: 2.25 }, fontFamily: promptIsArabic ? 'var(--font-book-naskh), serif' : 'var(--font-heading)', fontSize: { xs: promptIsArabic ? 30 : 26, md: promptIsArabic ? 40 : 34 }, fontWeight: 600, lineHeight: 1.45, color: 'var(--awm-bark)' }}>{prompt}</Typography>
+                <Box
+                  aria-hidden={!revealed}
+                  sx={{
+                    display: 'grid',
+                    gridTemplateRows: revealed ? '1fr' : '0fr',
+                    opacity: revealed ? 1 : 0,
+                    transition: 'grid-template-rows 300ms cubic-bezier(.2,.8,.2,1), opacity 220ms ease 70ms',
+                    '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+                  }}
+                >
+                  <Box sx={{ minHeight: 0, overflow: 'hidden' }}>
+                    <Box sx={{ mt: { xs: 2.25, sm: 3 }, pt: { xs: 2.25, sm: 3 }, borderTop: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)' }}>
+                      <Typography sx={{ color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 10, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase' }}>Answer</Typography>
+                      <Typography lang={promptIsArabic ? 'en' : 'ar'} dir={promptIsArabic ? 'ltr' : 'rtl'} sx={{ mt: 1.1, fontFamily: promptIsArabic ? 'var(--font-heading)' : 'var(--font-book-naskh), serif', fontSize: { xs: promptIsArabic ? 24 : 29, md: promptIsArabic ? 30 : 38 }, fontWeight: 600, lineHeight: 1.5, color: 'var(--awm-forest)' }}>{answer}</Typography>
+                    </Box>
+                  </Box>
+                </Box>
               </Box>
-              <Box sx={{ mt: 4 }}>
-                <Typography sx={{ mb: 1.5, textAlign: 'center', color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 11 }}>{card.showTitle} · {card.episodeTitle}</Typography>
+              <Box sx={{ mt: { xs: 2.5, sm: 3 } }}>
+                <Typography sx={{ mb: 1.25, textAlign: 'center', color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 11 }}>{card.showTitle} · {card.episodeTitle}</Typography>
                 {!revealed ? <Button onClick={() => setRevealed(true)} fullWidth variant="contained" startIcon={<VisibilityOutlined />} sx={{ minHeight: 49, bgcolor: 'var(--awm-gold)', color: '#fff', borderRadius: '10px', textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#946c08' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 3 } }}>Reveal</Button> : <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 1.25 }}><Button disabled={(Boolean(user) && !ready) || saving || limited} onClick={() => void finishCard('again')} variant="outlined" sx={{ minHeight: 48, color: 'var(--awm-bark)', borderColor: 'color-mix(in srgb, var(--awm-bark) 25%, transparent)', borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}>Didn&apos;t know</Button><Button disabled={(Boolean(user) && !ready) || saving || limited} onClick={() => void finishCard('known')} variant="contained" endIcon={<ArrowForward />} sx={{ minHeight: 48, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '10px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' } }}>Knew it</Button></Box>}
                 <Button component={Link} href={`/cartoons/${encodeURIComponent(card.showSlug)}/${encodeURIComponent(card.episodeSlug)}`} startIcon={<PlayCircleOutlineRounded />} size="small" sx={{ display: 'flex', mx: 'auto', mt: 1.25, color: 'var(--awm-muted)', textTransform: 'none' }}>View source episode</Button>
               </Box>

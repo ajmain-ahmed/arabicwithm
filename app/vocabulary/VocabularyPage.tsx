@@ -29,8 +29,8 @@ export default function VocabularyPage({ initialQuery = '' }: { initialQuery?: s
   }, [query])
 
   return (
-    <Box component="main" sx={{ minHeight: '100vh', bgcolor: '#faf7f2', pb: { xs: 6, md: 10 } }}>
-      <Box sx={{ mt: { xs: '-56px', md: '-64px' }, pt: { xs: 14, md: 17 }, pb: { xs: 7, md: 9 }, px: 2, bgcolor: '#0e2e1f', color: '#fff' }}>
+    <Box component="main" sx={{ minHeight: '100vh', '@supports (height: 100dvh)': { minHeight: '100dvh' }, bgcolor: '#faf7f2', pb: { xs: 6, md: 10 } }}>
+      <Box sx={{ mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, pt: { xs: 14, md: 17 }, pb: { xs: 7, md: 9 }, px: 2, bgcolor: '#0e2e1f', color: '#fff' }}>
         <Container maxWidth="md" sx={{ textAlign: 'center' }}>
           <Typography sx={{ color: '#d4a843', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Hans Wehr dictionary</Typography>
           <Typography component="h1" sx={{ mt: 1, color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 39, md: 58 }, fontWeight: 600 }}>Arabic Vocabulary</Typography>

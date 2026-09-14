@@ -1,10 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography, IconButton } from '@mui/material'
-import { AutoStories, Download, PsychologyOutlined, AutoAwesome, Close } from '@mui/icons-material'
+import { AutoAwesome, CheckCircleRounded, Close } from '@mui/icons-material'
 import { fetchPremiumStatus, managePremium, startPremiumCheckout } from '@/app/actions/premium'
 import { useAuth } from '@/app/AuthContext'
-import { PREMIUM } from '@/app/lib/entitlements'
+import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import { useRouter } from 'next/navigation'
 
 export default function PremiumPrompt({ open, onClose, reason }: { open: boolean; onClose: () => void; reason?: string }) {
@@ -21,21 +21,23 @@ export default function PremiumPrompt({ open, onClose, reason }: { open: boolean
   }
   return <Dialog open={open} onClose={busy ? undefined : onClose} maxWidth="sm" fullWidth aria-labelledby="premium-title" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: '24px', m: 2, width: 'calc(100% - 32px)', textAlign: 'center', border: '1px solid', borderColor: 'divider' } } }}>
     <IconButton aria-label="Close AWM+ details" onClick={onClose} sx={{ position: 'absolute', right: 12, top: 12, color: 'text.secondary' }}><Close /></IconButton>
-    <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}><AutoAwesome sx={{ display: 'block', mx: 'auto', mb: 1, color: 'primary.main', fontSize: 34 }} />{premium ? 'AWM+ active' : 'AWM+'}</DialogTitle>
+    <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}><AutoAwesome sx={{ display: 'block', mx: 'auto', mb: 1, color: 'primary.main', fontSize: 34 }} />{premium ? 'AWM+ active' : 'Upgrade to AWM+'}</DialogTitle>
     <DialogContent sx={{ px: { xs: 2.5, sm: 4 } }}>
       <Typography color="text.secondary">More stories. More practice. Take your learning with you.</Typography>
       <Box sx={{ py: 3 }}><Typography sx={{ fontSize: 48, fontWeight: 700, letterSpacing: '-.04em', lineHeight: 1 }}>{new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(PREMIUM.monthlyPence / 100)}<Typography component="span" sx={{ ml: 1, fontSize: 16, color: 'text.secondary' }}>GBP / month</Typography></Typography></Box>
       {reason && <Typography sx={{ mb: 2 }}>{reason}</Typography>}
-      {[
-        { icon: AutoStories, title: 'Finish longer books', text: 'Unlimited access to all books.' },
-        { icon: Download, title: 'Download PDFs', text: 'Read available PDFs offline.' },
-        { icon: PsychologyOutlined, title: 'Unlimited Memory practice', text: 'Practise beyond the free 20-card daily limit.' },
-      ].map(item => <Box key={item.title} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, p: 2, mb: 1.5, borderRadius: '14px', bgcolor: 'background.default' }}><item.icon sx={{ color: 'primary.main', mt: .5 }} /><Box><Typography sx={{ fontWeight: 700 }}>{item.title}</Typography><Typography color="text.secondary">{item.text}</Typography></Box></Box>)}
+      <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid', gap: 1 }}>
+        {PREMIUM_BENEFITS.map((benefit) => <Box component="li" key={benefit.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.1, px: 1.5, py: 1.25, borderRadius: '10px', bgcolor: 'background.default', textAlign: 'left' }}>
+          <CheckCircleRounded aria-hidden="true" sx={{ flex: '0 0 auto', color: 'primary.main', fontSize: 21 }} />
+          <Typography sx={{ minWidth: 0, flex: 1, fontWeight: 700 }}>{benefit.label}</Typography>
+          {benefit.appOnly && <Box component="span" sx={{ flex: '0 0 auto', px: 0.8, py: 0.35, borderRadius: '9999px', bgcolor: 'color-mix(in srgb, var(--awm-forest) 9%, transparent)', color: 'var(--awm-forest)', fontFamily: 'Jost, sans-serif', fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap' }}>📱 App only</Box>}
+        </Box>)}
+      </Box>
       <Typography sx={{ mt: 2 }} color="text.secondary">New books and features as they arrive.</Typography>
       <Typography variant="body2" sx={{ mt: 2 }}>£3.99 GBP, billed monthly as a recurring subscription. Cancel through Manage AWM+; access continues until the end of your paid period.</Typography>
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
     </DialogContent>
-    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}><Button onClick={onClose}>Close</Button><Button fullWidth sx={{ minHeight: 52, borderRadius: "12px" }} variant="contained" disabled={busy} onClick={() => void purchase()}>{premium ? 'Manage AWM+' : `Get AWM+ — ${PREMIUM.label}`}</Button></DialogActions>
+    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}><Button onClick={onClose}>Close</Button><Button fullWidth sx={{ minHeight: 52, borderRadius: "12px" }} variant="contained" disabled={busy} onClick={() => void purchase()}>{premium ? 'Manage AWM+' : `Upgrade to AWM+ — ${PREMIUM.label}`}</Button></DialogActions>
   </Dialog>
 }
 export function PremiumSection() {

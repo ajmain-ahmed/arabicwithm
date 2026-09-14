@@ -1,5 +1,11 @@
 /** Shared product policy. Entitlements themselves are always read on the server. */
 export const PREMIUM = { monthlyPence: 399, currency: 'gbp', label: '£3.99/month' } as const
+export const PREMIUM_BENEFITS = [
+  { id: 'offline-books', label: 'Offline books', appOnly: false },
+  { id: 'audiobooks', label: 'Audiobooks', appOnly: false },
+  { id: 'memory', label: 'Unlimited Memory Practice', appOnly: false },
+  { id: 'flashcards', label: 'Unlimited flashcards', appOnly: true },
+] as const
 export const MEMORY = { dailyFreeCards: 20, sessionCards: 20, xpPerCard: 1, timeZone: 'Europe/London' } as const
 export interface BookAccessPolicy { premiumExempt: boolean; freeChapterCount: number; chapterCount: number }
 export function canAccessBookChapter(premium: boolean, book: BookAccessPolicy, chapter: number): boolean {

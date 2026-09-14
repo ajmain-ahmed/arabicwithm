@@ -21,7 +21,6 @@ import {
   Chip,
   Breadcrumbs,
   IconButton,
-  Drawer,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { ArrowBack, Settings, ExpandMore, ExpandLess, ChevronRight, Fullscreen, PsychologyOutlined, Refresh } from '@mui/icons-material'
@@ -37,7 +36,7 @@ import {
 } from '@/app/lib/cartoons'
 import { type ShowRow } from '@/app/actions/admin'
 import { fetchShowsForEpisodeEdit } from '@/app/actions/cartoons'
-import { HtmlTooltip, WordTooltip, LEVEL_COLORS } from '@/app/components/vocab-tooltip'
+import { HtmlTooltip, MobileDefinitionSheet, WordTooltip, LEVEL_COLORS } from '@/app/components/vocab-tooltip'
 import { SettingsDialog } from '@/app/components/settings-controls'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
 import { usePlayerStore } from '@/store/playerStore'
@@ -257,6 +256,7 @@ function ArabicLineText({
   }, [clearLeaveTimer])
 
   const handleOpenDrawer = useCallback((entry: CartoonWordEntry, anchor: HTMLElement) => {
+    anchor.focus({ preventScroll: true })
     window.dispatchEvent(new CustomEvent('awm-watch-definition', { detail: true }))
     setMobileEntry(entry)
     setMobileAnchor(anchor)
@@ -516,34 +516,12 @@ function ArabicLineText({
         )
       })}
 
-      {/* Mobile bottom-sheet summary */}
-      <Drawer
-        anchor="bottom"
+      <MobileDefinitionSheet
         open={Boolean(mobileAnchor)}
+        entry={mobileEntry}
         onClose={handleCloseDrawer}
-        disableRestoreFocus
-        slotProps={{
-          paper: {
-            sx: {
-              mt: 0.75,
-              width: '100%', maxWidth: 640, mx: 'auto', pb: 'env(safe-area-inset-bottom)',
-              maxHeight: 'min(56dvh, 430px)',
-              borderRadius: '18px 18px 0 0',
-              bgcolor: 'var(--awm-white)',
-              border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)',
-              boxShadow: '0 14px 42px color-mix(in srgb, var(--awm-bark) 22%, transparent)',
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-            },
-          },
-        }}
-      >
-        <Box sx={{ px: 2.5, pt: 1, pb: 2 }}>
-          <Button onClick={handleCloseDrawer} aria-label="Close word definition" sx={{ display: 'block', ml: 'auto', minHeight: 44 }}>Close</Button>
-          {mobileEntry && <WordTooltip entry={mobileEntry} textScale={textScale} />}
-        </Box>
-      </Drawer>
+        textScale={textScale}
+      />
 
     </>
   )

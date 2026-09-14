@@ -30,8 +30,13 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       <Box
         component="main"
         sx={{
-          pt: { xs: '56px', md: '64px' },
+          pt: isExploreRoute ? 0 : { xs: 'calc(56px + env(safe-area-inset-top))', md: 'calc(64px + env(safe-area-inset-top))' },
           pb: 0,
+          minWidth: 0,
+          overflowX: isExploreRoute ? 'hidden' : undefined,
+          '& :target': {
+            scrollMarginTop: { xs: 'calc(68px + env(safe-area-inset-top))', md: 'calc(76px + env(safe-area-inset-top))' },
+          },
         }}
       >
         <ErrorBoundary>
@@ -39,7 +44,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
         </ErrorBoundary>
       </Box>
       {!isExploreRoute && <Footer />}
-      <MobileBottomNav />
+      {!isExploreRoute && <MobileBottomNav />}
       {!isExploreRoute && <LazyFloatingVideoPlayer />}
     </>
   )
