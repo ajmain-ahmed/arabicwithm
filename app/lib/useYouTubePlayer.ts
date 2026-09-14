@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { getYouTubeEmbedUrl, normalizeYouTubeId } from './cartoons'
 
 /* ─────────────────────────────────────────────
    YouTube IFrame API Types
@@ -88,6 +89,7 @@ export default function useYouTubePlayer(
   const [errorCode, setErrorCode] = useState<number | null>(null)
   const [retryNonce, setRetryNonce] = useState(0)
   const autoplay = options.autoplay === true
+  const normalizedVideoId = normalizeYouTubeId(videoId)
 
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
   useEffect(() => { onEndedRef.current = options.onEnded }, [options.onEnded])
@@ -96,7 +98,7 @@ export default function useYouTubePlayer(
 
   useEffect(() => {
     const wrap = wrapRef.current
-    if (!videoId || !wrap) return
+    if (!normalizedVideoId || !wrap) return
 
     let cancelled = false
 
@@ -115,19 +117,17 @@ export default function useYouTubePlayer(
         failedPlayer?.destroy?.()
       } catch {}
 
-      const params = new URLSearchParams({
-        autoplay: autoplay ? '1' : '0',
-        mute: mutedRef.current ? '1' : '0',
-        playsinline: '1',
-        rel: '0',
+      const embedUrl = getYouTubeEmbedUrl(normalizedVideoId, {
+        autoplay,
+        muted: mutedRef.current,
+        startAt: startAtRef.current,
       })
-      const fallbackStart = startAtRef.current
-      if (fallbackStart && fallbackStart > 0) params.set('start', String(Math.floor(fallbackStart)))
+      if (!embedUrl) return
 
       const iframe = document.createElement('iframe')
-      iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?${params.toString()}`
+      iframe.src = embedUrl
       iframe.title = 'YouTube video player'
-      iframe.allow = 'autoplay; encrypted-media; picture-in-picture; web-share'
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
       iframe.allowFullscreen = true
       iframe.referrerPolicy = 'strict-origin-when-cross-origin'
       iframe.style.width = '100%'
@@ -153,7 +153,7 @@ export default function useYouTubePlayer(
       wrap.appendChild(inner)
       try {
         playerRef.current = new window.YT.Player(inner, {
-          videoId,
+          videoId: normalizedVideoId,
           width: '100%',
           height: '100%',
           playerVars: {
@@ -200,7 +200,7 @@ export default function useYouTubePlayer(
             onError: (e: { data: number }) => {
               if (cancelled) return
               setIsPlaying(false)
-              if (e.data === 5) {
+              if (e.data === 5 || e.data === 153) {
                 mountFallbackEmbed()
                 return
               }
@@ -215,16 +215,16 @@ export default function useYouTubePlayer(
           },
         })
       } catch (e) {
-        setErrorCode(-1)
         console.error('YT init error:', e)
+        mountFallbackEmbed()
       }
     }
 
     const timer = setTimeout(() => {
       void ensureYouTubeApi().then(initPlayer).catch((error: unknown) => {
         if (!cancelled) {
-          setErrorCode(-1)
           console.error('YT API error:', error)
+          mountFallbackEmbed()
         }
       })
     }, 50)
@@ -246,7 +246,7 @@ export default function useYouTubePlayer(
       setIsReady(false)
       setIsPlaying(false)
     }
-  }, [autoplay, options.reloadKey, retryNonce, videoId])
+  }, [autoplay, normalizedVideoId, options.reloadKey, retryNonce])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {

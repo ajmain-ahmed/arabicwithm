@@ -2,6 +2,7 @@ import { beforeAll, describe, it, expect } from 'vitest'
 import {
   canonicalizeCartoonCategory,
   getEpisodeCoverPath,
+  getYouTubeEmbedUrl,
   getYouTubeThumbnailUrl,
   getEpisodeVideoSources,
   getSocialVideoEmbedUrl,
@@ -210,10 +211,24 @@ describe('YouTube media helpers', () => {
     expect(normalizeYouTubeId('https://youtu.be/PcstB8t_Dlc?t=3')).toBe('PcstB8t_Dlc')
     expect(normalizeYouTubeId('https://www.youtube.com/watch?v=PcstB8t_Dlc')).toBe('PcstB8t_Dlc')
     expect(normalizeYouTubeId('https://youtube.com/shorts/PcstB8t_Dlc')).toBe('PcstB8t_Dlc')
+    expect(normalizeYouTubeId('https://www.youtube-nocookie.com/embed/PcstB8t_Dlc?rel=0')).toBe('PcstB8t_Dlc')
+  })
+
+  it('rejects malformed IDs and unrelated URLs', () => {
+    expect(normalizeYouTubeId('too-short')).toBeUndefined()
+    expect(normalizeYouTubeId('PcstB8t_Dlc?si=bad')).toBeUndefined()
+    expect(normalizeYouTubeId('https://example.com/watch?v=PcstB8t_Dlc')).toBeUndefined()
+    expect(normalizeYouTubeId('https://youtube.com/watch?v=not-an-id')).toBeUndefined()
   })
 
   it('builds the matching YouTube thumbnail URL', () => {
     expect(getYouTubeThumbnailUrl('PcstB8t_Dlc')).toBe('https://i.ytimg.com/vi/PcstB8t_Dlc/hqdefault.jpg')
+  })
+
+  it('builds a validated native embed URL with mobile playback enabled', () => {
+    const url = getYouTubeEmbedUrl('https://youtu.be/PcstB8t_Dlc?t=3', { autoplay: true, muted: true, startAt: 3 })
+    expect(url).toBe('https://www.youtube.com/embed/PcstB8t_Dlc?autoplay=1&controls=1&mute=1&playsinline=1&rel=0&start=3')
+    expect(getYouTubeEmbedUrl('not a video')).toBeUndefined()
   })
 })
 

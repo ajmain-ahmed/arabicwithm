@@ -76,10 +76,10 @@ describe('YouTube player lifecycle', () => {
     expect(destroy).toHaveBeenCalledTimes(2)
     expect(controls.isPlaying).toBe(false)
   })
-  it('falls back to a native embed when the IFrame API reports HTML5 error 5', async () => {
+  it.each([5, 153])('falls back to a native embed for recoverable IFrame API error %s', async (errorCode) => {
     await act(async () => root.render(<Harness id="dQw4w9WgXcQ" />))
     await act(async () => { await vi.advanceTimersByTimeAsync(60) })
-    await act(async () => options.events.onError({ data: 5 }))
+    await act(async () => options.events.onError({ data: errorCode }))
 
     const iframe = host.querySelector('iframe')
     expect(destroy).toHaveBeenCalledOnce()
@@ -88,6 +88,8 @@ describe('YouTube player lifecycle', () => {
     expect(iframe?.src).toContain('autoplay=1')
     expect(iframe?.src).toContain('mute=1')
     expect(iframe?.src).toContain('playsinline=1')
+    expect(iframe?.allow).toContain('encrypted-media')
+    expect(iframe?.referrerPolicy).toBe('strict-origin-when-cross-origin')
     expect(iframe?.allowFullscreen).toBe(true)
     expect(controls.errorCode).toBeNull()
   })

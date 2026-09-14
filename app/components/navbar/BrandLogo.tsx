@@ -1,7 +1,7 @@
 'use client'
 
 import { Box } from '@mui/material'
-import { motion, Variants } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 
 interface BrandLogoProps {
     isMobile: boolean
@@ -11,74 +11,64 @@ interface BrandLogoProps {
 }
 
 export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = false }: BrandLogoProps) {
-    const text = 'ArabicWithM'
-    const letters = text.split('')
-
-    const containerVariants: Variants = {
-        hidden: { opacity: 1 },
-        visible: {
-            opacity: 1,
-            transition: { staggerChildren: 0.08, delayChildren: 0.1 },
-        },
-    }
-
-    const letterVariants: Variants = {
-        hidden: { opacity: 0, y: 10, rotate: -5, scale: 0.8 },
-        visible: {
-            opacity: 1,
-            y: 0,
-            rotate: 0,
-            scale: 1,
-            transition: { type: 'spring' as const, damping: 20, stiffness: 300 },
-        },
-    }
+    const reduceMotion = useReducedMotion()
 
     return (
         <Box
+            component="button"
+            type="button"
             onClick={onClick}
+            aria-label="ArabicWithM home"
             sx={{
-                mr: 0.5,
+                m: 0,
+                p: 0,
+                border: 0,
+                bgcolor: 'transparent',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 0.5,
+                gap: { xs: 0.45, md: 0.75 },
                 cursor: 'pointer',
                 py: 0.5,
+                minWidth: 0,
+                color: 'inherit',
+                '&:focus-visible': {
+                    outline: '2px solid var(--awm-gold-light)',
+                    outlineOffset: 4,
+                    borderRadius: '6px',
+                },
             }}
         >
             <Box
                 component="img"
                 src="/homepage/arabicwithm-notext.png"
-                alt="Logo"
-                sx={{ height: isMobile ? 28 : 45, width: 'auto', objectFit: 'contain' }}
+                alt=""
+                aria-hidden="true"
+                sx={{ flexShrink: 0, height: isMobile ? 26 : 38, width: 'auto', objectFit: 'contain' }}
             />
-            <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                <motion.div
-                    variants={containerVariants}
-                    initial={shouldAnimate ? 'hidden' : 'visible'}
-                    animate="visible"
+            <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', minWidth: 0, height: isMobile ? 26 : 38 }}>
+                <motion.span
+                    initial={shouldAnimate && !reduceMotion ? { opacity: 0, y: isMobile ? 6 : 7 } : false}
+                    animate={{ opacity: 1, y: isMobile ? 1 : 2 }}
+                    transition={{ duration: 0.28, ease: 'easeOut' }}
                     style={{
                         display: 'flex',
+                        alignItems: 'center',
+                        height: '100%',
                         position: 'relative',
                         fontFamily: 'var(--font-decorative)',
-                        fontSize: isMobile ? '1.45rem' : '2rem',
+                        fontSize: isMobile ? 'clamp(1.02rem, 5.1vw, 1.28rem)' : '1.72rem',
                         fontWeight: 700,
-                        background: overlay
-                            ? 'linear-gradient(135deg, #fff 0%, var(--awm-gold-light) 100%)'
-                            : 'linear-gradient(135deg, var(--awm-bark) 0%, var(--awm-forest) 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        letterSpacing: '-0.035em',
+                        color: overlay ? '#fff' : 'var(--awm-forest)',
+                        textShadow: overlay ? '0 1px 8px rgba(0,0,0,0.48)' : 'none',
+                        letterSpacing: '-0.025em',
                         lineHeight: 1,
-                        marginTop: '0.1em',
+                        textAlign: 'center',
+                        whiteSpace: 'nowrap',
                     }}
                 >
-                    {letters.map((letter, index) => (
-                        <motion.span key={index} variants={letterVariants} style={{ display: 'inline-block' }}>
-                            {letter}
-                        </motion.span>
-                    ))}
-                </motion.div>
+                    ArabicWithM
+                </motion.span>
             </Box>
         </Box>
     )

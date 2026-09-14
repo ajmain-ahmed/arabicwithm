@@ -71,32 +71,51 @@ export function getEpisodeCoverPath(_showSlug: string, episodeSlug: string): str
   return getEpisodeCoverUrl(episodeSlug)
 }
 
+const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/
+
 export function normalizeYouTubeId(value?: string | null): string | undefined {
   const trimmed = value?.trim()
   if (!trimmed) return undefined
-  if (/^[A-Za-z0-9_-]{6,}$/.test(trimmed)) return trimmed
+  if (YOUTUBE_ID_PATTERN.test(trimmed)) return trimmed
 
   try {
     const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
     const url = new URL(candidate)
     const hostname = url.hostname.toLowerCase().replace(/^www\./, '').replace(/^m\./, '')
-    if (hostname === 'youtu.be') return url.pathname.split('/').filter(Boolean)[0]
-    if (hostname === 'youtube.com' || hostname.endsWith('.youtube.com')) {
+    let extracted: string | null | undefined
+    if (hostname === 'youtu.be') extracted = url.pathname.split('/').filter(Boolean)[0]
+    if (hostname === 'youtube.com' || hostname.endsWith('.youtube.com') || hostname === 'youtube-nocookie.com' || hostname.endsWith('.youtube-nocookie.com')) {
       const queryId = url.searchParams.get('v')?.trim()
-      if (queryId) return queryId
+      if (queryId) extracted = queryId
       const parts = url.pathname.split('/').filter(Boolean)
-      if (['shorts', 'embed', 'live'].includes(parts[0]) && parts[1]) return parts[1]
+      if (!extracted && ['shorts', 'embed', 'live'].includes(parts[0]) && parts[1]) extracted = parts[1]
     }
+    return extracted && YOUTUBE_ID_PATTERN.test(extracted) ? extracted : undefined
   } catch {
-    // Keep supporting legacy IDs that do not look like URLs.
+    return undefined
   }
-
-  return trimmed
 }
 
 export function getYouTubeThumbnailUrl(videoId?: string | null): string | undefined {
   const normalized = normalizeYouTubeId(videoId)
   return normalized ? `https://i.ytimg.com/vi/${encodeURIComponent(normalized)}/hqdefault.jpg` : undefined
+}
+
+export function getYouTubeEmbedUrl(
+  videoId?: string | null,
+  options: { autoplay?: boolean; muted?: boolean; startAt?: number } = {},
+): string | undefined {
+  const normalized = normalizeYouTubeId(videoId)
+  if (!normalized) return undefined
+  const params = new URLSearchParams({
+    autoplay: options.autoplay ? '1' : '0',
+    controls: '1',
+    mute: options.muted ? '1' : '0',
+    playsinline: '1',
+    rel: '0',
+  })
+  if (options.startAt && options.startAt > 0) params.set('start', String(Math.floor(options.startAt)))
+  return `https://www.youtube.com/embed/${normalized}?${params.toString()}`
 }
 
 export function normalizeInstagramId(value?: string | null): string | undefined {

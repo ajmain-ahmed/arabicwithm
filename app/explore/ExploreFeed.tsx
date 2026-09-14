@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { ArrowForward, ExploreOutlined, MenuBook, PlayCircleOutlineRounded, PsychologyOutlined, Refresh, VolumeOff, VolumeUp } from '@mui/icons-material'
+import { ArrowForward, ExploreOutlined, MenuBook, PlayCircleOutlineRounded, PsychologyOutlined, VolumeOff, VolumeUp } from '@mui/icons-material'
 import { Box, Button, Chip, CircularProgress, IconButton, Popover, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
 import { WordTooltip, HtmlTooltip, MobileDefinitionSheet, type VocabEntry } from '@/app/components/vocab-tooltip'
 import SocialVideoEmbed from '@/app/components/SocialVideoEmbed'
@@ -186,10 +186,9 @@ function ExploreVideo({
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
   const [soundAllowed, setSoundAllowed] = useState(false)
-  const [fallbackMutedFor, setFallbackMutedFor] = useState<string | null>(null)
+  const [playRequestedFor, setPlayRequestedFor] = useState<string | null>(null)
   const source = sources.find((candidate) => candidate.provider === selectedProvider) ?? sources[0]
   const activeSourceKey = active && source ? `${source.provider}:${source.id}` : null
-  const fallbackMuted = activeSourceKey != null && fallbackMutedFor === activeSourceKey
   const isYouTube = source?.provider === 'youtube'
   const {
     wrapRef,
@@ -200,16 +199,14 @@ function ExploreVideo({
     mute,
     unMute,
     playWithSound,
-    autoplayBlocked,
     errorCode,
-    retry,
   } = useYouTubePlayer(
     active && isYouTube ? source.id : undefined,
     setCurrentTime,
     undefined,
-    { autoplay: active, muted: !soundEnabled || !soundAllowed, onEnded }
+    { autoplay: false, muted: !soundEnabled || !soundAllowed, onEnded }
   )
-  const soundMuted = !soundEnabled || !soundAllowed || fallbackMuted
+  const soundMuted = !soundEnabled || !soundAllowed
 
   useEffect(() => {
     if (!active) return
@@ -219,43 +216,24 @@ function ExploreVideo({
 
   useEffect(() => {
     if (!isReady) return
-    if (active) {
-      if (soundEnabled && soundAllowed && !fallbackMuted) unMute()
-      else mute()
-      playVideo()
-    } else {
+    if (!active || playRequestedFor !== activeSourceKey) {
       pauseVideo()
+      return
     }
-  }, [active, fallbackMuted, isReady, mute, pauseVideo, playVideo, soundEnabled, soundAllowed, unMute])
-
-  useEffect(() => {
-    if (!active || !autoplayBlocked || !activeSourceKey) return
-    mute()
+    if (soundEnabled && soundAllowed) unMute()
+    else mute()
     playVideo()
-    const timer = window.setTimeout(() => setFallbackMutedFor(activeSourceKey), 0)
-    return () => window.clearTimeout(timer)
-  }, [active, activeSourceKey, autoplayBlocked, mute, playVideo])
-
-  useEffect(() => {
-    if (!active || !isYouTube || !isReady || isPlaying || !soundEnabled || fallbackMuted || !activeSourceKey) return
-    const timer = window.setTimeout(() => {
-      setFallbackMutedFor(activeSourceKey)
-      mute()
-      playVideo()
-    }, 1_500)
-    return () => window.clearTimeout(timer)
-  }, [active, activeSourceKey, fallbackMuted, isPlaying, isReady, isYouTube, mute, playVideo, soundEnabled])
+  }, [active, activeSourceKey, isReady, mute, pauseVideo, playRequestedFor, playVideo, soundAllowed, soundEnabled, unMute])
 
   const toggleSound = () => {
     if (soundMuted) {
       setSoundAllowed(true)
       setExploreSoundPreference(true)
-      setFallbackMutedFor(null)
+      setPlayRequestedFor(activeSourceKey)
       playWithSound()
     } else {
       setSoundAllowed(false)
       setExploreSoundPreference(false)
-      setFallbackMutedFor(null)
       mute()
     }
   }
@@ -362,15 +340,15 @@ function ExploreVideo({
           </Tooltip>
         </Box>
         {active && isYouTube && isReady && !isPlaying && errorCode == null && (
-          <Button onClick={() => { if (soundEnabled) { setSoundAllowed(true); setFallbackMutedFor(null); playWithSound() } else { mute(); playVideo() } }} startIcon={<PlayCircleOutlineRounded />} sx={{ position: 'absolute', zIndex: 4, top: '50%', left: '50%', transform: 'translate(-50%,-50%)', bgcolor: 'background.paper', color: 'text.primary', borderRadius: '9999px', minHeight: 44 }}>Play video</Button>
+          <Button onClick={() => { setPlayRequestedFor(activeSourceKey); if (soundEnabled) { setSoundAllowed(true); playWithSound() } else { mute(); playVideo() } }} startIcon={<PlayCircleOutlineRounded />} sx={{ position: 'absolute', zIndex: 4, top: '50%', left: '50%', transform: 'translate(-50%,-50%)', bgcolor: 'background.paper', color: 'text.primary', borderRadius: '9999px', minHeight: 44 }}>Play video</Button>
         )}
         {errorCode != null && isYouTube && (
-          <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.78)', p: 3 }}>
+          <Box sx={{ position: 'absolute', zIndex: 5, inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 3 }}>
             <Box sx={{ textAlign: 'center', color: '#fff' }}>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 700 }}>YouTube could not start this video.</Typography>
-              <Typography sx={{ mt: 0.5, mb: 1.5, fontFamily: 'Jost, sans-serif', fontSize: 12, opacity: 0.78 }}>Player error {errorCode}</Typography>
-              <Button onClick={retry} variant="contained" startIcon={<Refresh />} sx={{ bgcolor: '#b8860b', color: '#fff', textTransform: 'none' }}>
-                Retry video
+              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 700 }}>This video cannot be played here.</Typography>
+              <Typography sx={{ mt: 0.5, mb: 1.5, fontFamily: 'Jost, sans-serif', fontSize: 12, opacity: 0.78 }}>It may be unavailable or restricted from embedded playback.</Typography>
+              <Button component="a" href={`https://www.youtube.com/watch?v=${encodeURIComponent(source.id)}`} target="_blank" rel="noopener noreferrer" variant="contained" endIcon={<ArrowForward />} sx={{ bgcolor: '#b8860b', color: '#fff', textTransform: 'none' }}>
+                Open on YouTube
               </Button>
             </Box>
           </Box>

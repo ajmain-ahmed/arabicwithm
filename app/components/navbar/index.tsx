@@ -135,14 +135,16 @@ export default function Navbar() {
                 <Container maxWidth="xl">
                     <Toolbar disableGutters sx={{ py: { xs: 0.5, md: 1 }, minHeight: { xs: 56, md: 64 } }}>
                         {isMobile ? (
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                <IconButton onClick={() => setDrawerOpen(true)} sx={{ p: 0.75, color: navColor, transition: 'color .25s ease' }} aria-label="Open menu">
+                            <Box sx={{ display: 'grid', gridTemplateColumns: '72px minmax(0, 1fr) 72px', alignItems: 'center', width: '100%' }}>
+                                <IconButton onClick={() => setDrawerOpen(true)} sx={{ p: 0.75, color: navColor, transition: 'color .25s ease', justifySelf: 'start' }} aria-label="Open menu">
                                     <MenuOutlined sx={{ fontSize: 21 }} />
                                 </IconButton>
 
-                                <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
+                                <Box sx={{ minWidth: 0, display: 'flex', justifyContent: 'center' }}>
+                                    <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
+                                </Box>
 
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifySelf: 'end', gap: 0.25 }}>
                                     <IconButton onClick={toggleColorMode} sx={{ p: 0.65, color: navColor, transition: 'color .25s ease' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
                                         {mode === 'dark' ? <LightModeOutlined sx={{ fontSize: 20 }} /> : <DarkModeOutlined sx={{ fontSize: 20 }} />}
                                     </IconButton>
@@ -175,7 +177,7 @@ export default function Navbar() {
                                 </Box>
                             </Box>
                         ) : (
-                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', width: '100%', alignItems: 'center' }}>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', width: '100%', alignItems: 'center' }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: { md: 2.5, lg: 4 } }}>
                                     {NAV_ITEMS.map((item) => (
                                         <Link key={item} href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
