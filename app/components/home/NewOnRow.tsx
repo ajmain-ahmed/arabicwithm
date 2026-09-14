@@ -17,8 +17,8 @@ export interface CatalogueRowItem {
 }
 
 const ARROW_SX = {
-  /* Always visible on touch (no hover there); on desktop they stay hidden
-     until the row is hovered. */
+  /* Visible on every breakpoint whenever the row can scroll that way;
+     hover only adds the scale-up below. */
   display: 'flex',
   position: 'absolute',
   zIndex: 4,
@@ -30,9 +30,8 @@ const ARROW_SX = {
   bgcolor: 'rgba(5,23,15,0.6)',
   color: '#fff',
   boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
-  opacity: { xs: 0.95, md: 0 },
-  visibility: { xs: 'visible', md: 'hidden' },
-  transition: 'opacity 0.2s ease, visibility 0.2s ease, background-color 0.2s ease, transform 0.2s ease',
+  opacity: 0.95,
+  transition: 'opacity 0.2s ease, background-color 0.2s ease, transform 0.2s ease',
   '&:hover': { bgcolor: 'rgba(5,23,15,0.85)', transform: 'translateY(-50%) scale(1.08)' },
 } as const
 
@@ -162,7 +161,7 @@ export default function NewOnRow({ items }: { items: CatalogueRowItem[] }) {
   if (items.length === 0) return null
 
   return (
-    <Box sx={{ position: 'relative', '&:hover .awm-row-arrow[data-active="true"]': { opacity: 0.95, visibility: 'visible' } }}>
+    <Box sx={{ position: 'relative' }}>
       {/* edge fades hint at more content when the row overflows */}
       <Box aria-hidden="true" sx={{ pointerEvents: 'none', position: 'absolute', zIndex: 2, top: 0, bottom: 8, left: 0, width: { xs: 24, md: 48 }, background: 'linear-gradient(90deg, var(--awm-row-edge, var(--awm-cream-light)), transparent)' }} />
       <Box aria-hidden="true" sx={{ pointerEvents: 'none', position: 'absolute', zIndex: 2, top: 0, bottom: 8, right: 0, width: { xs: 24, md: 48 }, background: 'linear-gradient(270deg, var(--awm-row-edge, var(--awm-cream-light)), transparent)' }} />
