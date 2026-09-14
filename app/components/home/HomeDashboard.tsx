@@ -8,19 +8,24 @@ import {
   AutoStories,
   Bookmark,
   CalendarMonthRounded,
+  Check,
+  ChevronRight,
+  Close,
   ExploreOutlined,
   Headphones,
+  InfoOutlined,
   LocalFireDepartmentRounded,
   MenuBook,
-  Movie,
   PsychologyOutlined,
   TrendingDownRounded,
   TrendingUpRounded,
 } from '@mui/icons-material'
-import { Box, Button, Chip, CircularProgress, Container, LinearProgress, Typography, Paper } from '@mui/material'
+import { Box, Button, Chip, CircularProgress, Container, Dialog, IconButton, LinearProgress, Skeleton, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, useMediaQuery, useTheme } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { fetchLearningActivity } from '@/app/actions/activity'
-import WordOfTheDay from '@/app/components/home/WordOfTheDay'
+import NewOnRow, { type CatalogueRowItem } from './NewOnRow'
+import type { NewOnEpisode, NewOnShow } from './catalogueRows'
+import { PREMIUM } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 import {
@@ -48,13 +53,6 @@ interface FeaturedEpisode {
 }
 interface ActivityUpdate { userId: string; activity: LearningActivity }
 
-const LEARNING_AREAS = [
-  { title: 'Explore', body: 'Scroll through randomized Arabic clips and discover your next episode.', href: '/explore', icon: ExploreOutlined },
-  { title: 'Watch', body: 'Watch entertaining Arabic content with interactive subtitles.', href: '/cartoons', icon: Movie },
-  { title: 'Read', body: 'Read graded Arabic stories at a comfortable pace.', href: '/books', icon: MenuBook },
-  { title: 'Memory', body: 'Practise useful phrases from real show transcripts with flashcards.', href: '/memory', icon: PsychologyOutlined },
-]
-
 const QUICK_LINKS = [
   { title: 'Explore', label: 'Discover a random clip', href: '/explore', icon: ExploreOutlined },
   { title: 'Read', label: 'Open graded books', href: '/books', icon: AutoStories },
@@ -66,29 +64,285 @@ function openAuth(mode: 'register' | 'signin') {
   window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode } }))
 }
 
+function showRowItems(shows: NewOnShow[]): CatalogueRowItem[] {
+  return shows.map((show) => ({
+    key: show.id,
+    href: `/cartoons/${encodeURIComponent(show.slug)}`,
+    title: show.title,
+    level: show.level,
+    imageSrc: `/api/covers/shows/${show.id}`,
+  }))
+}
+
+function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
+  return episodes.map((episode) => ({
+    key: episode.id,
+    href: `/cartoons/${encodeURIComponent(episode.showSlug)}/${encodeURIComponent(episode.slug)}`,
+    title: episode.title,
+    meta: episode.showTitle,
+    level: episode.level,
+    imageSrc: `/api/covers/episodes/${episode.id}`,
+  }))
+}
+
+const PLAN_ROWS = [
+  {
+    feature: 'Cartoons & Anime', free: 'tick', plus: 'tick', imageKey: 'show0',
+    detail: 'Watch every cartoon and anime episode with interactive Arabic subtitles — tap any word for its definition, pronunciation, and grammar notes.',
+  },
+  {
+    feature: 'Books', free: 'limited', plus: 'tick', imageKey: 'book0',
+    detail: 'Graded Arabic readers written for learners. The free tier includes the opening chapters of every book; AWM+ unlocks every chapter.',
+  },
+  {
+    feature: 'Early access', free: 'none', plus: 'tick', imageKey: 'show1',
+    detail: 'Get new books, cartoons and anime before they are published on YouTube or our other social channels.',
+  },
+  {
+    feature: 'Downloadable PDFs', free: 'none', plus: 'tick', imageKey: 'book1',
+    detail: 'Download every book and chapter as a print-ready PDF to read offline, annotate, or keep forever.',
+  },
+  {
+    feature: 'Audiobooks', free: 'none', plus: 'tick', imageKey: 'show2',
+    detail: 'Listen to narrated audiobooks of our graded readers — perfect for listening practice and shadowing on the go.',
+  },
+] as const
+
+const PLAN_PLUS_COL_SX = {
+  bgcolor: 'color-mix(in srgb, var(--awm-gold) 8%, transparent)',
+} as const
+const PLAN_HAIRLINE = '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)'
+const PLAN_ROW_HAIRLINE = '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)'
+
+function planCell(value: 'tick' | 'limited' | 'none') {
+  if (value === 'tick') return <Check sx={{ color: 'var(--awm-gold)', fontSize: 26, verticalAlign: 'middle' }} />
+  if (value === 'limited') return <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', color: 'var(--awm-muted)' }}>Limited</Typography>
+  return <Typography component="span" sx={{ fontFamily: 'Jost, sans-serif', fontSize: '1rem', color: 'var(--awm-muted-light)' }}>—</Typography>
+}
+
+function planDetailImage(imageKey: string, shows: NewOnShow[], books: PublicBook[]): string | undefined {
+  const show = (index: number) => shows[index] ? `/api/covers/shows/${shows[index].id}` : undefined
+  const book = (index: number) => books[index] ? (books[index].cover || `/api/covers/books/${books[index].id}`) : undefined
+  if (imageKey === 'show0') return show(0)
+  if (imageKey === 'show1') return show(1)
+  if (imageKey === 'show2') return show(2)
+  if (imageKey === 'book0') return book(0)
+  if (imageKey === 'book1') return book(1)
+  return undefined
+}
+
+function PlanBadge({ kind }: { kind: 'free' | 'plus' }) {
+  if (kind === 'free') {
+    return (
+      <Box component="span" sx={{ display: 'inline-block', px: 3.5, py: 1, borderRadius: '9999px', border: '1px solid color-mix(in srgb, var(--awm-bark) 35%, transparent)', color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Free</Box>
+    )
+  }
+  return (
+    <Box component="span" sx={{ display: 'inline-block', px: 3.5, py: 1, borderRadius: '9999px', bgcolor: '#b8860b', color: '#fff', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '0.85rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>AWM+</Box>
+  )
+}
+
+function PlanPrice({ kind }: { kind: 'free' | 'plus' }) {
+  return (
+    <>
+      <Typography sx={{ mt: 1.75, fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: '1.1rem', color: 'var(--awm-bark)' }}>{kind === 'free' ? '£0' : PREMIUM.label}</Typography>
+      <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)' }}>{kind === 'free' ? 'free forever' : 'cancel anytime'}</Typography>
+    </>
+  )
+}
+
+function PlanInfoButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <Box
+      component="button"
+      type="button"
+      onClick={onClick}
+      aria-label={`About ${label}`}
+      sx={{ display: 'inline-flex', p: 0.35, border: 0, bgcolor: 'transparent', cursor: 'pointer', color: 'var(--awm-muted-light)', borderRadius: '50%', transition: 'color 0.15s', '&:hover': { color: 'var(--awm-gold)' } }}
+    >
+      <InfoOutlined sx={{ fontSize: 16 }} />
+    </Box>
+  )
+}
+
+function PlanCompare({ shows, books }: { shows: NewOnShow[]; books: PublicBook[] }) {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+  const [infoRow, setInfoRow] = useState<(typeof PLAN_ROWS)[number] | null>(null)
+  return (
+    <Container maxWidth="md" sx={{ pt: { xs: 6, md: 8 }, pb: { xs: 7, md: 9 }, textAlign: 'center' }}>
+      <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 26, md: 34 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2, textDecoration: 'underline', textUnderlineOffset: '6px' }}>Choose your plan</Typography>
+
+      {isMobile ? (
+        /* Hulu-style stacked layout: plan badges on top, then per-feature
+           label centred above the Free/AWM+ values. */
+        <Box sx={{ mt: 3 }}>
+          <Box sx={{ display: 'flex', borderBottom: PLAN_HAIRLINE, pb: 2.5 }}>
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <PlanBadge kind="free" />
+              <PlanPrice kind="free" />
+            </Box>
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <PlanBadge kind="plus" />
+              <PlanPrice kind="plus" />
+            </Box>
+          </Box>
+          {PLAN_ROWS.map((row, index) => (
+            <Box key={row.feature} sx={{ py: 2, borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.6 }}>
+                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', color: 'var(--awm-muted)' }}>{row.feature}</Typography>
+                <PlanInfoButton label={row.feature} onClick={() => setInfoRow(row)} />
+              </Box>
+              <Box sx={{ display: 'flex', mt: 1.25 }}>
+                <Box sx={{ flex: 1, textAlign: 'center' }}>{planCell(row.free)}</Box>
+                <Box sx={{ flex: 1, textAlign: 'center' }}>{planCell(row.plus)}</Box>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      ) : (
+        <TableContainer sx={{ mt: 4, overflowX: 'auto' }}>
+          <Table sx={{ minWidth: 520, borderCollapse: 'separate', borderSpacing: 0 }}>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ width: '42%', borderBottom: PLAN_HAIRLINE }} />
+                <TableCell align="center" sx={{ borderBottom: PLAN_HAIRLINE, verticalAlign: 'bottom', py: 2.5 }}>
+                  <PlanBadge kind="free" />
+                  <PlanPrice kind="free" />
+                </TableCell>
+                <TableCell align="center" sx={{ ...PLAN_PLUS_COL_SX, borderBottom: PLAN_HAIRLINE, verticalAlign: 'bottom', py: 2.5 }}>
+                  <PlanBadge kind="plus" />
+                  <PlanPrice kind="plus" />
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {PLAN_ROWS.map((row, index) => (
+                <TableRow key={row.feature}>
+                  <TableCell sx={{ borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5, fontFamily: 'Jost, sans-serif', color: 'var(--awm-bark)', fontSize: '1rem' }}>
+                    <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.6 }}>
+                      {row.feature}
+                      <PlanInfoButton label={row.feature} onClick={() => setInfoRow(row)} />
+                    </Box>
+                  </TableCell>
+                  <TableCell align="center" sx={{ borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5 }}>{planCell(row.free)}</TableCell>
+                  <TableCell align="center" sx={{ ...PLAN_PLUS_COL_SX, borderBottom: index === PLAN_ROWS.length - 1 ? 'none' : PLAN_ROW_HAIRLINE, py: 2.5 }}>{planCell(row.plus)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      <Dialog
+        open={Boolean(infoRow)}
+        onClose={() => setInfoRow(null)}
+        slotProps={{ paper: { sx: { borderRadius: '16px', overflow: 'hidden', width: '100%', maxWidth: 380, m: 2 } } }}
+      >
+        {infoRow && (
+          <>
+            <Box sx={{ position: 'relative', bgcolor: '#0e2e1f' }}>
+              {planDetailImage(infoRow.imageKey, shows, books) && (
+                <Box component="img" src={planDetailImage(infoRow.imageKey, shows, books)} alt="" sx={{ width: '100%', height: 190, objectFit: 'cover', display: 'block' }} />
+              )}
+              <IconButton onClick={() => setInfoRow(null)} aria-label="Close" size="small" sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(5,23,15,0.55)', color: '#fff', '&:hover': { bgcolor: 'rgba(5,23,15,0.75)' } }}>
+                <Close sx={{ fontSize: 16 }} />
+              </IconButton>
+            </Box>
+            <Box sx={{ p: 3, textAlign: 'left' }}>
+              <Typography component="h3" sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.45rem', fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25 }}>{infoRow.feature}</Typography>
+              <Typography sx={{ mt: 1.25, fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', color: 'var(--awm-muted)', lineHeight: 1.7 }}>{infoRow.detail}</Typography>
+            </Box>
+          </>
+        )}
+      </Dialog>
+    </Container>
+  )
+}
+
+function BookCard({ book }: { book: PublicBook }) {
+  const [loaded, setLoaded] = useState(false)
+  return (
+    <Paper
+      component={Link}
+      href={`/books/${encodeURIComponent(book.slug)}`}
+      elevation={0}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minWidth: 0,
+        overflow: 'hidden',
+        color: 'inherit',
+        textDecoration: 'none',
+        border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)',
+        borderRadius: { xs: '10px', sm: '14px' },
+        bgcolor: 'var(--awm-white)',
+        transition: 'transform .2s ease, box-shadow .2s ease',
+        '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 14px 32px color-mix(in srgb, var(--awm-bark) 12%, transparent)' },
+      }}
+    >
+      <Box sx={{ position: 'relative', bgcolor: '#0e2e1f' }}>
+        {!loaded && (
+          <Skeleton
+            variant="rectangular"
+            animation="wave"
+            sx={{ position: 'absolute', inset: 0, zIndex: 1, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)' }}
+          />
+        )}
+        <Box
+          component="img"
+          src={book.cover || `/api/covers/books/${book.id}`}
+          alt={book.titleAr ? `${book.title} — ${book.titleAr}` : book.title}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          onError={(e) => {
+            setLoaded(true)
+            e.currentTarget.style.display = 'none'
+          }}
+          sx={{ width: '100%', aspectRatio: '2 / 3', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease' }}
+        />
+      </Box>
+      <Box sx={{ p: { xs: 1.25, sm: 2 }, display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
+        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '0.95rem', sm: '1.2rem' }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</Typography>
+        {book.titleAr && (
+          <Typography lang="ar" dir="rtl" sx={{ mt: 0.25, fontFamily: 'var(--font-serif)', fontSize: { xs: '0.82rem', sm: '1.05rem' }, color: 'var(--awm-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{book.titleAr}</Typography>
+        )}
+        <Typography sx={{ mt: { xs: 0.75, sm: 1 }, fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.72rem', sm: '0.85rem' }, color: 'var(--awm-muted)', lineHeight: 1.5, display: { xs: 'none', sm: '-webkit-box' }, WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {book.description}
+        </Typography>
+        <Box sx={{ mt: 'auto', pt: { xs: 1.25, sm: 1.75 }, display: { xs: 'none', sm: 'flex' }, alignItems: 'center', justifyContent: 'space-between', gap: 0.75 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', minWidth: 0 }}>
+            {book.level && (
+              <Chip size="small" label={book.level} sx={{ height: { xs: 18, sm: 22 }, borderRadius: '9999px', fontSize: { xs: '0.6rem', sm: '0.7rem' }, fontWeight: 700, fontFamily: 'Jost, sans-serif', bgcolor: 'var(--awm-forest)', color: 'var(--awm-cream)' }} />
+            )}
+            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.68rem', sm: '0.78rem' }, color: 'var(--awm-muted)' }}>
+              {book.chapterCount} ch.
+            </Typography>
+          </Box>
+          <ChevronRight sx={{ color: 'var(--awm-muted)', fontSize: { xs: 16, sm: 20 }, flexShrink: 0 }} />
+        </Box>
+      </Box>
+    </Paper>
+  )
+}
+
+function BooksSection({ books }: { books: PublicBook[] }) {
+  if (books.length === 0) return null
+  return (
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', lg: 'repeat(4, minmax(0,1fr))' }, gap: { xs: 1.25, sm: 2 } }}>
+      {books.map((book) => (
+        <BookCard key={book.id} book={book} />
+      ))}
+    </Box>
+  )
+}
+
 function SectionHeading({ eyebrow, title, detail }: { eyebrow?: string; title: string; detail?: string }) {
   return (
     <Box sx={{ mb: 3 }}>
       {eyebrow && <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{eyebrow}</Typography>}
       <Typography component="h2" sx={{ mt: eyebrow ? 0.5 : 0, fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 39 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.15 }}>{title}</Typography>
       {detail && <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>{detail}</Typography>}
-    </Box>
-  )
-}
-
-function LearningAreaCards() {
-  return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0,1fr))', md: 'repeat(4, minmax(0,1fr))' }, gap: 2 }}>
-      {LEARNING_AREAS.map((area) => {
-        const Icon = area.icon
-        return (
-          <Paper key={area.title} component={Link} href={area.href} elevation={0} sx={{ p: { xs: 2.25, sm: 2.75 }, color: 'inherit', textDecoration: 'none', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '13px', bgcolor: 'var(--awm-white)', transition: 'transform .2s ease, box-shadow .2s ease', '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 12px 30px color-mix(in srgb, var(--awm-bark) 10%, transparent)' } }}>
-            <Box sx={{ width: { xs: 38, sm: 44 }, height: { xs: 38, sm: 44 }, borderRadius: '10px', display: 'grid', placeItems: 'center', bgcolor: 'rgba(184,134,11,0.1)', color: '#b8860b' }}><Icon sx={{ fontSize: { xs: 20, sm: 24 } }} /></Box>
-            <Typography sx={{ mt: { xs: 1.5, sm: 2 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 22, sm: 24 }, fontWeight: 600, color: 'var(--awm-bark)' }}>{area.title}</Typography>
-            <Typography sx={{ mt: 0.5, fontFamily: 'Jost, sans-serif', fontSize: 14, color: 'var(--awm-muted)', lineHeight: 1.6 }}>{area.body}</Typography>
-          </Paper>
-        )
-      })}
     </Box>
   )
 }
@@ -247,7 +501,7 @@ function LearningStats({
   )
 }
 
-export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]> }) {
+export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
   const { user, loading } = useAuth()
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
   const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
@@ -327,13 +581,12 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
   if (!user) {
     return (
       <Box component="main" sx={{ bgcolor: 'var(--awm-cream-light)', pb: { xs: 7, md: 11 } }}>
-        <Box sx={{ position: 'relative', mt: { xs: '-56px', md: '-64px' }, minHeight: { xs: 590, md: 690 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <Box sx={{ position: 'relative', mt: { xs: '-56px', md: '-64px' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
           <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(5,23,15,0.9) 0%, rgba(5,23,15,0.72) 52%, rgba(5,23,15,0.38) 100%)' }} />
-          <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 14 }, pb: { xs: 7, md: 9 } }}>
+          <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 14 }, pb: { xs: 5, md: 6 } }}>
             <Box sx={{ maxWidth: 720 }}>
               <Typography sx={{ color: '#d4a843', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', textShadow: '0 2px 12px rgba(0,0,0,0.45)' }}>Explore · Watch · Read · Memory</Typography>
               <Typography component="h1" sx={{ mt: 1.5, color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 42, sm: 54, md: 67 }, fontWeight: 600, lineHeight: 1.02, textShadow: '0 3px 22px rgba(0,0,0,0.55)' }}>Learn Arabic through cartoons and books</Typography>
-              <Typography sx={{ mt: 2, maxWidth: 610, color: 'rgba(255,255,255,0.86)', fontFamily: 'Jost, sans-serif', lineHeight: 1.75, textShadow: '0 2px 12px rgba(0,0,0,0.45)' }}>Build your Arabic naturally through entertaining videos, interactive transcripts, and graded stories.</Typography>
               <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
                 <Button onClick={() => openAuth('register')} variant="contained" endIcon={<ArrowForward />} sx={{ bgcolor: '#d4a843', color: '#0e2e1f', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#e3bb58' } }}>Start Learning</Button>
                 <Button component={Link} href="/cartoons" sx={{ color: '#fff', border: '1px solid rgba(255,255,255,0.5)', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', bgcolor: 'rgba(0,0,0,0.16)' }}>Browse Cartoons</Button>
@@ -342,33 +595,23 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           </Container>
         </Box>
 
-        <Container maxWidth="lg" sx={{ pt: { xs: 5, md: 8 } }}>
-          <LearningAreaCards />
-          {bookmark && (
-            <Box sx={{ mt: { xs: 5, md: 7 }, maxWidth: 720 }}>
-              <BookmarkContinueCard bookmark={bookmark} />
+        <Box className="awm-pattern-section" sx={{ pt: { xs: 4, md: 5 }, pb: { xs: 5, md: 6 } }}>
+          <Container maxWidth={false}>
+            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>New Cartoons &amp; Anime</Typography>
+            <NewOnRow items={showRowItems(newShows)} />
+            <Typography component="h2" sx={{ mt: { xs: 3, md: 4 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Latest episode releases</Typography>
+            <NewOnRow items={episodeRowItems(newEpisodes)} />
+          </Container>
+
+          <Container maxWidth="lg" sx={{ mt: { xs: 4, md: 5 } }}>
+            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Featured books in Arabic &amp; English</Typography>
+            <Box sx={{ mt: 2 }}>
+              <BooksSection books={books} />
             </Box>
-          )}
-          <Box sx={{ mt: { xs: 7, md: 10 } }}>
-            <WordOfTheDay embedded />
-            <Box sx={{ mt: { xs: 4, md: 5 } }}>
-              <SectionHeading eyebrow="Start exploring" title="Featured learning" detail="A simple place to begin—no account history required." />
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
-              {featuredEpisode && <ContentCard type={`Featured episode · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} actionLabel="Play episode" />}
-              {featuredBook && <ContentCard type="Featured book" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} />}
-            </Box>
-            </Box>
-          </Box>
-          <Box sx={{ mt: { xs: 7, md: 10 } }}><SectionHeading eyebrow="Keep exploring" title="Choose what to do next" /><QuickLinks /></Box>
-          <Paper elevation={0} sx={{ mt: { xs: 7, md: 10 }, p: { xs: 3, md: 5 }, borderRadius: '16px', bgcolor: 'var(--awm-cream)', border: '1px solid color-mix(in srgb, var(--awm-gold) 24%, transparent)', textAlign: 'center' }}>
-            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 40 }, fontWeight: 600, color: 'var(--awm-bark)' }}>Create an account to track your learning</Typography>
-            <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>Continue reading, track your learning time, and return to your lessons whenever you like.</Typography>
-            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-              <Button onClick={() => openAuth('register')} variant="contained" sx={{ bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', px: 3, textTransform: 'none', '&:hover': { bgcolor: '#173f2d', color: '#fff' } }}>Sign Up for Free</Button>
-              <Button onClick={() => openAuth('signin')} sx={{ color: '#0e2e1f', textTransform: 'none' }}>Log In</Button>
-            </Box>
-          </Paper>
-        </Container>
+          </Container>
+        </Box>
+
+        <PlanCompare shows={newShows} books={books} />
       </Box>
     )
   }
