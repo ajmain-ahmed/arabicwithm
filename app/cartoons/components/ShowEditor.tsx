@@ -9,6 +9,7 @@ import { errorMessage } from "@/app/lib/errors"
 import NativeField from "@/app/(admin)/admin/components/NativeField"
 import ImageUploadField from "@/app/(admin)/admin/components/ImageUploadField"
 import { getShowCoverUrl } from "@/app/lib/storage"
+import { DEFAULT_THUMBNAIL_CROP, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 
 interface ShowEditorProps {
   show?: ShowMeta
@@ -39,6 +40,7 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
   const [level, setLevel] = useState(initial.level ?? "")
   const [category, setCategory] = useState(initial.category ?? "")
   const [saving, setSaving] = useState(false)
+  const [coverCrop, setCoverCrop] = useState<ThumbnailCrop>(initial.coverCrop ?? { ...DEFAULT_THUMBNAIL_CROP })
 
   const buildPayload = () => ({
     slug: slug.trim(),
@@ -47,6 +49,7 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
     description: description.trim() || null,
     level: level.trim(),
     category: category.trim() || null,
+    cover_crop: coverCrop,
   })
 
   const handleSave = async () => {
@@ -113,6 +116,10 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
         bucket="covers"
         path={slug ? `cartoons/${slug}.webp` : ""}
         previewUrl={slug ? getShowCoverUrl(slug) : null}
+        previewAspectRatio="4 / 5"
+        previewCrop={coverCrop}
+        onCropChange={setCoverCrop}
+        onUploaded={() => setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })}
       />
       <NativeField label="Description" value={description} onChange={setDescription} textarea disabled={saving} />
 

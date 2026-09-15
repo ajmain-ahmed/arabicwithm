@@ -2,13 +2,12 @@
 
 import React, { useState } from "react"
 import { Box, Button, Paper, Typography } from "@mui/material"
-import { Save, Cancel, Delete, Crop } from "@mui/icons-material"
+import { Save, Cancel, Delete } from "@mui/icons-material"
 import { type EpisodeMeta } from "@/app/lib/cartoons"
 import { createEpisode, updateEpisode, deleteEpisode } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
 import NativeField from "@/app/(admin)/admin/components/NativeField"
 import ImageUploadField from "@/app/(admin)/admin/components/ImageUploadField"
-import EpisodeThumbnailCropper from "@/app/(admin)/admin/components/EpisodeThumbnailCropper"
 import { DEFAULT_THUMBNAIL_CROP, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 
 interface EpisodeEditorProps {
@@ -32,7 +31,6 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
   const [tags, setTags] = useState(episode?.tags.join(", ") ?? "")
   const [cover, setCover] = useState<string | null>(episode?.cover ?? null)
   const [coverCrop, setCoverCrop] = useState<ThumbnailCrop>(episode?.coverCrop ?? { ...DEFAULT_THUMBNAIL_CROP })
-  const [cropOpen, setCropOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -130,27 +128,16 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
         previewUrl={cover}
         previewAspectRatio="4 / 5"
         previewCrop={coverCrop}
+        onCropChange={setCoverCrop}
         onUploaded={(url) => {
           setCover(url)
           setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })
-          setCropOpen(true)
         }}
         onRemove={() => {
           setCover(null)
           setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })
         }}
       />
-      {cover && (
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<Crop />}
-          onClick={() => setCropOpen(true)}
-          sx={{ alignSelf: "flex-start", textTransform: "none", fontFamily: "Jost, sans-serif", borderColor: "rgba(184,134,11,0.4)", color: "#2c1a0e" }}
-        >
-          Adjust thumbnail crop
-        </Button>
-      )}
 
       <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1, mt: "auto", pt: 1 }}>
         {!isNew && (
@@ -204,18 +191,6 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
         </Button>
       </Box>
     </Paper>
-    {cover && cropOpen && (
-      <EpisodeThumbnailCropper
-        open={cropOpen}
-        imageSrc={cover}
-        value={coverCrop}
-        onClose={() => setCropOpen(false)}
-        onConfirm={(crop) => {
-          setCoverCrop(crop)
-          setCropOpen(false)
-        }}
-      />
-    )}
     </>
   )
 }

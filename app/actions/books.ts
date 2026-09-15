@@ -7,6 +7,7 @@ import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
 import { extractChapterTeaser } from "@/app/lib/bookChapterTeaser"
 import { stripDiacritics } from "@/app/lib/arabic"
 import type { CartoonWordEntry } from "@/app/lib/cartoons"
+import { normalizeThumbnailCrop, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 
 export interface PublicBook {
   id: string
@@ -15,6 +16,7 @@ export interface PublicBook {
   titleAr?: string
   description?: string
   cover?: string
+  coverCrop: ThumbnailCrop
   level: string
   category?: string
   tags: string[]
@@ -84,6 +86,7 @@ function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook
     titleAr: row.title_ar ? String(row.title_ar) : undefined,
     description: row.description ? String(row.description) : undefined,
     cover: `/api/covers/books/${row.id}`,
+    coverCrop: normalizeThumbnailCrop(row.cover_crop),
     level: String(row.level ?? ""),
     category: row.category ? String(row.category) : undefined,
     tags: Array.isArray(row.tags) ? row.tags.map((tag) => String(tag)).filter(Boolean) : [],

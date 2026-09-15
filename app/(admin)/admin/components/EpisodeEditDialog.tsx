@@ -19,7 +19,7 @@ import {
   useMediaQuery,
 } from "@mui/material"
 import { useTheme } from "@mui/material/styles"
-import { Close, Save, Delete, Crop } from "@mui/icons-material"
+import { Close, Save, Delete } from "@mui/icons-material"
 import AdminTextField from "./AdminTextField"
 import {
   fetchEpisodeForAdmin,
@@ -32,7 +32,6 @@ import {
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
 import ImageUploadField from "./ImageUploadField"
-import EpisodeThumbnailCropper from "./EpisodeThumbnailCropper"
 import {
   DEFAULT_THUMBNAIL_CROP,
   type ThumbnailCrop,
@@ -77,7 +76,6 @@ export default function EpisodeEditDialog({
   const [facebookId, setFacebookId] = useState("")
   const [cover, setCover] = useState<string | null>(null)
   const [coverCrop, setCoverCrop] = useState<ThumbnailCrop>({ ...DEFAULT_THUMBNAIL_CROP })
-  const [cropOpen, setCropOpen] = useState(false)
   const [transcriptJson, setTranscriptJson] = useState(defaultTranscript)
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("md"))
@@ -284,37 +282,19 @@ export default function EpisodeEditDialog({
                   label="Episode cover"
                   bucket="covers"
                   path={`episodes/${slug || "episode-draft"}.webp`}
-                  previewUrl={cover}
+                  previewUrl={cover ?? (!isNew && episodeId ? `/api/covers/episodes/${episodeId}` : null)}
                   previewAspectRatio="4 / 5"
                   previewCrop={coverCrop}
+                  onCropChange={setCoverCrop}
                   onUploaded={(url) => {
                     setCover(url)
                     setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })
-                    setCropOpen(true)
                   }}
                   onRemove={() => {
                     setCover(null)
                     setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })
                   }}
                 />
-                {cover && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<Crop />}
-                    onClick={() => setCropOpen(true)}
-                    sx={{
-                      alignSelf: "flex-start",
-                      borderColor: "rgba(184,134,11,0.4)",
-                      color: "#2c1a0e",
-                      borderRadius: "10px",
-                      textTransform: "none",
-                      fontFamily: "Jost, sans-serif",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Adjust thumbnail crop
-                  </Button>
-                )}
                 <Typography sx={{ fontFamily: "Jost, sans-serif", fontWeight: 700, color: "#2c1a0e", pt: 0.5 }}>
                   Video sources
                 </Typography>
@@ -389,18 +369,6 @@ export default function EpisodeEditDialog({
         </Button>
       </DialogActions>
     </Dialog>
-    {cover && cropOpen && (
-      <EpisodeThumbnailCropper
-        open={cropOpen}
-        imageSrc={cover}
-        value={coverCrop}
-        onClose={() => setCropOpen(false)}
-        onConfirm={(crop) => {
-          setCoverCrop(crop)
-          setCropOpen(false)
-        }}
-      />
-    )}
     </>
   )
 }

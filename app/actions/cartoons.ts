@@ -62,7 +62,7 @@ export const fetchShowsForPublic = unstable_cache(
 
     const { data: shows, error } = await serviceClient
       .from("shows")
-      .select("id, slug, title, title_ar, description, level, category")
+      .select("*")
       .order("title", { ascending: true })
 
     if (error) {
@@ -96,6 +96,7 @@ export const fetchShowsForPublic = unstable_cache(
       titleAr: row.title_ar ? String(row.title_ar) : undefined,
       description: row.description ? String(row.description) : undefined,
       cover: `/api/covers/shows/${row.id}`,
+      coverCrop: normalizeThumbnailCrop(row.cover_crop),
       level: String(row.level ?? ""),
       category: row.category ? String(row.category) : undefined,
       tags: uniqueTags([
@@ -114,7 +115,7 @@ export async function fetchShowsForEpisodeEdit(): Promise<ShowRow[]> {
 
   const { data, error } = await serviceClient
     .from("shows")
-    .select("id, slug, title, title_ar, description, cover, level, category")
+    .select("*")
     .order("title", { ascending: true })
 
   if (error) {
@@ -129,6 +130,7 @@ export async function fetchShowsForEpisodeEdit(): Promise<ShowRow[]> {
     title_ar: row.title_ar ? String(row.title_ar) : null,
     description: row.description ? String(row.description) : null,
     cover: `/api/covers/shows/${row.id}`,
+    cover_crop: normalizeThumbnailCrop(row.cover_crop),
     level: String(row.level ?? ""),
     category: row.category ? String(row.category) : null,
   }))
@@ -143,7 +145,7 @@ export const fetchShowBySlugPublic = unstable_cache(
 
     const { data, error } = await serviceClient
       .from("shows")
-      .select("id, slug, title, title_ar, description, level, category")
+      .select("*")
       .eq("slug", slug)
       .limit(1)
       .single()
@@ -162,6 +164,7 @@ export const fetchShowBySlugPublic = unstable_cache(
       titleAr: data.title_ar ? String(data.title_ar) : undefined,
       description: data.description ? String(data.description) : undefined,
       cover: `/api/covers/shows/${data.id}`,
+      coverCrop: normalizeThumbnailCrop(data.cover_crop),
       level: String(data.level ?? ""),
       category: data.category ? String(data.category) : undefined,
       tags: uniqueTags([

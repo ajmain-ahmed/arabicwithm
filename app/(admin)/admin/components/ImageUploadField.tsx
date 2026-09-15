@@ -1,11 +1,12 @@
 "use client"
 
-import React, { useState, useRef, useCallback } from "react"
+import React, { useState, useRef, useCallback, useEffect } from "react"
 import { Box, Button, Typography, CircularProgress } from "@mui/material"
-import { CloudUpload, DeleteOutlined, ImageOutlined } from "@mui/icons-material"
+import { CloudUpload, Crop, DeleteOutlined, ImageOutlined } from "@mui/icons-material"
 import { uploadCoverImage } from "@/app/actions/storage"
 import { errorMessage } from "@/app/lib/errors"
 import { thumbnailCropCss, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
+import ThumbnailCropper from "./EpisodeThumbnailCropper"
 
 interface ImageUploadFieldProps {
   label: string
@@ -14,6 +15,7 @@ interface ImageUploadFieldProps {
   previewUrl: string | null
   previewAspectRatio?: string
   previewCrop?: ThumbnailCrop
+  onCropChange?: (crop: ThumbnailCrop) => void
   onUploaded?: (url: string) => void
   onRemove?: () => void
 }
@@ -76,13 +78,27 @@ export default function ImageUploadField({
   previewUrl,
   previewAspectRatio = "1 / 1",
   previewCrop,
+  onCropChange,
   onUploaded,
   onRemove,
 }: ImageUploadFieldProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [localPreview, setLocalPreview] = useState<string | null>(null)
+  const [cropOpen, setCropOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setLocalPreview((current) => {
+      if (current?.startsWith("blob:")) URL.revokeObjectURL(current)
+      return null
+    })
+    setCropOpen(false)
+  }, [path])
+
+  useEffect(() => () => {
+    if (localPreview?.startsWith("blob:")) URL.revokeObjectURL(localPreview)
+  }, [localPreview])
 
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,6 +120,7 @@ export default function ImageUploadField({
 
         const publicUrl = await uploadCoverImage(formData)
         onUploaded?.(publicUrl)
+        if (onCropChange) setCropOpen(true)
       } catch (err: unknown) {
         setError(errorMessage(err) ?? "Upload failed")
         setLocalPreview(null)
@@ -114,7 +131,7 @@ export default function ImageUploadField({
         }
       }
     },
-    [bucket, path, onUploaded]
+    [bucket, path, onCropChange, onUploaded]
   )
 
   const activePreview = localPreview ?? previewUrl
@@ -212,6 +229,25 @@ export default function ImageUploadField({
             </Button>
           )}
 
+          {activePreview && previewCrop && onCropChange && (
+            <Button
+              onClick={() => setCropOpen(true)}
+              startIcon={<Crop />}
+              size="small"
+              variant="outlined"
+              sx={{
+                textTransform: "none",
+                fontFamily: "Jost, sans-serif",
+                fontWeight: 600,
+                borderRadius: "8px",
+                borderColor: "rgba(184,134,11,0.4)",
+                color: "#2c1a0e",
+              }}
+            >
+              Reposition image
+            </Button>
+          )}
+
           {path && (
             <Typography
               sx={{
@@ -241,6 +277,20 @@ export default function ImageUploadField({
         >
           {error}
         </Typography>
+      )}
+
+      {activePreview && previewCrop && onCropChange && cropOpen && (
+        <ThumbnailCropper
+          open={cropOpen}
+          imageSrc={activePreview}
+          value={previewCrop}
+          aspectRatio={previewAspectRatio}
+          onClose={() => setCropOpen(false)}
+          onConfirm={(crop) => {
+            onCropChange(crop)
+            setCropOpen(false)
+          }}
+        />
       )}
     </Box>
   )

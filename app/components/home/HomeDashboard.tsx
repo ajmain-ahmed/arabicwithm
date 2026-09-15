@@ -21,6 +21,7 @@ import {
 import { Box, Button, Chip, CircularProgress, Container, LinearProgress, Skeleton, Typography, Paper } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { fetchLearningActivity } from '@/app/actions/activity'
+import { fetchPremiumStatus } from '@/app/actions/premium'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import NewOnRow, { type CatalogueRowItem } from './NewOnRow'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
@@ -52,6 +53,7 @@ interface FeaturedEpisode {
   episode: EpisodeMeta
 }
 interface ActivityUpdate { userId: string; activity: LearningActivity }
+interface PremiumUpdate { authKey: string; premium: boolean }
 
 const QUICK_LINKS = [
   { title: 'Explore', label: 'Discover a random clip', href: '/explore', icon: ExploreOutlined },
@@ -71,6 +73,7 @@ function showRowItems(shows: NewOnShow[]): CatalogueRowItem[] {
     title: show.title,
     level: show.level,
     imageSrc: `/api/covers/shows/${show.id}`,
+    imageCrop: show.coverCrop,
   }))
 }
 
@@ -153,7 +156,7 @@ function BookCard({ book }: { book: PublicBook }) {
             setLoaded(true)
             e.currentTarget.style.display = 'none'
           }}
-          sx={{ width: '100%', aspectRatio: '2 / 3', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease' }}
+          sx={{ width: '100%', aspectRatio: '2 / 3', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease', ...thumbnailCropCss(book.coverCrop) }}
         />
       </Box>
       <Box sx={{ p: { xs: 1.25, sm: 2 }, display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
@@ -363,10 +366,12 @@ function LearningStats({
 }
 
 export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
-  const { user, loading } = useAuth()
+  const { user, session, loading } = useAuth()
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
+  const [premiumUpdate, setPremiumUpdate] = useState<PremiumUpdate | null>(null)
   const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
   const [dashboardLoadedAt] = useState(Date.now)
+  const premiumAuthKey = user ? `${user.id}:${session?.expires_at ?? 'pending'}` : null
   const progress = useMemo(() => {
     const raw = user?.user_metadata?.book_progress
     return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, ProgressEntry> : {}
@@ -409,6 +414,18 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
       .catch((error: unknown) => console.error('Unable to load dashboard activity:', error))
     return () => { cancelled = true }
   }, [user?.id])
+
+  useEffect(() => {
+    if (!premiumAuthKey) return
+    const authKey = premiumAuthKey
+    let cancelled = false
+    void fetchPremiumStatus()
+      .then((status) => {
+        if (!cancelled) setPremiumUpdate({ authKey, premium: status.premium })
+      })
+      .catch((error: unknown) => console.error('Unable to verify AWM+ status:', error))
+    return () => { cancelled = true }
+  }, [premiumAuthKey])
 
   useEffect(() => {
     const readBookmark = (event?: Event) => {
@@ -564,7 +581,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
                 <Button component={Link} href={`/books/${recentReading.book.slug}/${recentReading.chapter.slug}`} variant="contained" endIcon={<ArrowForward />} sx={{ mt: readingPositionPercent !== null ? 2 : 2.5, bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', textTransform: 'none', '& .MuiButton-endIcon': { color: '#fff' }, '&:hover': { bgcolor: '#173f2d', color: '#fff' } }}>Continue Reading</Button>
               </Box>
             </Paper>
-          ) : featuredBook ? <ContentCard type="Start reading" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} /> : null}
+          ) : featuredBook ? <ContentCard type="Start reading" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} imageCrop={featuredBook.coverCrop} /> : null}
         </Box>
 
       </Container>
@@ -602,6 +619,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
         </Box>
         <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading eyebrow="Keep exploring" title="Keep your momentum" /><QuickLinks /></Box>
       </Container>
+      {premiumUpdate?.authKey === premiumAuthKey && !premiumUpdate.premium && <UpgradeSection />}
     </Box>
   )
 }

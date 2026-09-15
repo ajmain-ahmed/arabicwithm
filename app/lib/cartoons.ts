@@ -11,6 +11,7 @@ export interface ShowMeta {
   titleAr?: string
   description?: string
   cover: string
+  coverCrop?: ThumbnailCrop
   level: string
   episodeCount: number
   category?: string

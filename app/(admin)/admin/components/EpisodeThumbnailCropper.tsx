@@ -21,10 +21,13 @@ import {
   type ThumbnailCrop,
 } from "@/app/lib/thumbnailCrop"
 
-interface EpisodeThumbnailCropperProps {
+interface ThumbnailCropperProps {
   open: boolean
   imageSrc: string
   value: ThumbnailCrop
+  aspectRatio?: string
+  title?: string
+  description?: string
   onClose: () => void
   onConfirm: (crop: ThumbnailCrop) => void
 }
@@ -40,13 +43,16 @@ function clamp(value: number): number {
   return Math.min(100, Math.max(0, value))
 }
 
-export default function EpisodeThumbnailCropper({
+export default function ThumbnailCropper({
   open,
   imageSrc,
   value,
+  aspectRatio = "4 / 5",
+  title = "Reposition image",
+  description = "Drag to keep the main subject in frame. The preview matches the image container on the site.",
   onClose,
   onConfirm,
-}: EpisodeThumbnailCropperProps) {
+}: ThumbnailCropperProps) {
   const [draft, setDraft] = useState(() => normalizeThumbnailCrop(value))
   const dragStart = useRef<DragStart | null>(null)
 
@@ -64,7 +70,7 @@ export default function EpisodeThumbnailCropper({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      aria-labelledby="episode-crop-title"
+      aria-labelledby="thumbnail-crop-title"
       slotProps={{
         paper: {
           sx: {
@@ -77,10 +83,10 @@ export default function EpisodeThumbnailCropper({
       }}
     >
       <DialogTitle
-        id="episode-crop-title"
+        id="thumbnail-crop-title"
         sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "#2c1a0e", fontFamily: "var(--font-heading)", fontWeight: 600 }}
       >
-        Position episode thumbnail
+        {title}
         <IconButton onClick={onClose} aria-label="Close crop editor" size="small">
           <Close />
         </IconButton>
@@ -88,13 +94,13 @@ export default function EpisodeThumbnailCropper({
 
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pb: 1 }}>
         <Typography sx={{ color: "#7a6e65", fontFamily: "Jost, sans-serif", fontSize: "0.88rem" }}>
-          Drag to keep the main subject in frame. This 4:5 preview matches episode cards on the site.
+          {description}
         </Typography>
 
         <Box
           role="application"
           tabIndex={0}
-          aria-label="Episode thumbnail crop preview. Drag the image or use arrow keys to reposition it."
+          aria-label="Thumbnail preview. Drag the image or use arrow keys to reposition it."
           onKeyDown={(event) => {
             const amount = event.shiftKey ? 5 : 1
             if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return
@@ -136,7 +142,7 @@ export default function EpisodeThumbnailCropper({
           sx={{
             position: "relative",
             width: "min(100%, 360px)",
-            aspectRatio: "4 / 5",
+            aspectRatio,
             alignSelf: "center",
             overflow: "hidden",
             borderRadius: "12px",

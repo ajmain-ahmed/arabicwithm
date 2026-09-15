@@ -9,6 +9,7 @@ import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 /** Pixels per second. Shared by every slowly moving homepage showcase row. */
 export const AUTO_SCROLL_SPEED = 8
 const AUTO_RESUME_DELAY_MS = 1_600
+const DRAG_ACTIVATION_DISTANCE_PX = 6
 
 export interface CatalogueRowItem {
   key: string
@@ -55,6 +56,7 @@ function RowTile({
     <Box
       component={Link}
       href={item.href}
+      draggable={false}
       aria-label={isClone ? undefined : item.title}
       aria-hidden={isClone || undefined}
       tabIndex={isClone ? -1 : undefined}
@@ -87,6 +89,7 @@ function RowTile({
       )}
       <Box
         component="img"
+        draggable={false}
         src={item.imageSrc}
         alt=""
         onLoad={() => setLoaded(true)}
@@ -146,7 +149,10 @@ export default function NewOnRow({
   const focusActiveRef = useRef(false)
   const visibleRef = useRef(true)
   const dragStartXRef = useRef<number | null>(null)
+  const dragStartYRef = useRef<number | null>(null)
   const dragStartScrollRef = useRef(0)
+  const activePointerIdRef = useRef<number | null>(null)
+  const pointerTypeRef = useRef<string | null>(null)
   const draggedRef = useRef(false)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
@@ -315,36 +321,50 @@ export default function NewOnRow({
           releaseInteraction()
         }}
         onPointerDown={(event) => {
+          if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return
           pointerActiveRef.current = true
           setManualSnap(true)
           showAutoState(false)
-          if (event.pointerType === 'mouse' && event.button === 0) {
-            dragStartXRef.current = event.clientX
-            dragStartScrollRef.current = event.currentTarget.scrollLeft
-            draggedRef.current = false
-            event.currentTarget.setPointerCapture(event.pointerId)
-          }
+          activePointerIdRef.current = event.pointerId
+          pointerTypeRef.current = event.pointerType
+          dragStartXRef.current = event.clientX
+          dragStartYRef.current = event.clientY
+          dragStartScrollRef.current = event.currentTarget.scrollLeft
+          draggedRef.current = false
         }}
         onPointerMove={(event) => {
-          if (event.pointerType !== 'mouse' || dragStartXRef.current === null) return
-          const distance = event.clientX - dragStartXRef.current
-          if (Math.abs(distance) > 4) draggedRef.current = true
-          if (draggedRef.current) event.currentTarget.scrollLeft = dragStartScrollRef.current - distance
+          if (activePointerIdRef.current !== event.pointerId || dragStartXRef.current === null || dragStartYRef.current === null) return
+          const distanceX = event.clientX - dragStartXRef.current
+          const distanceY = event.clientY - dragStartYRef.current
+          if (!draggedRef.current && Math.abs(distanceX) >= DRAG_ACTIVATION_DISTANCE_PX && Math.abs(distanceX) > Math.abs(distanceY)) {
+            draggedRef.current = true
+            if (event.pointerType === 'mouse') event.currentTarget.setPointerCapture(event.pointerId)
+          }
+          if (draggedRef.current && pointerTypeRef.current === 'mouse') {
+            event.preventDefault()
+            event.currentTarget.scrollLeft = dragStartScrollRef.current - distanceX
+          }
         }}
         onPointerUp={(event) => {
           pointerActiveRef.current = false
           dragStartXRef.current = null
+          dragStartYRef.current = null
+          activePointerIdRef.current = null
+          pointerTypeRef.current = null
           if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
           releaseInteraction()
         }}
         onPointerCancel={() => {
           pointerActiveRef.current = false
           dragStartXRef.current = null
+          dragStartYRef.current = null
+          activePointerIdRef.current = null
+          pointerTypeRef.current = null
           draggedRef.current = false
           releaseInteraction()
         }}
         onClickCapture={(event) => {
-          if (!draggedRef.current) return
+          if (!draggedRef.current || event.detail === 0) return
           event.preventDefault()
           event.stopPropagation()
           draggedRef.current = false

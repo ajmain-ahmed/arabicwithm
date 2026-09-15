@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Box, Chip, Container, Paper, Typography } from '@mui/material'
 import { AutoStories, ChevronRight } from '@mui/icons-material'
 import { fetchBooksForPublic } from '@/app/actions/books'
+import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 
 export const revalidate = false
 
@@ -62,7 +63,7 @@ export default async function BooksPage() {
                       component="img"
                       src={book.cover}
                       alt={`${book.title} cover`}
-                      sx={{ width: '100%', aspectRatio: '2 / 3', objectFit: 'cover', display: 'block', objectPosition: 'center' }}
+                      sx={{ width: '100%', aspectRatio: '2 / 3', objectFit: 'cover', display: 'block', ...thumbnailCropCss(book.coverCrop) }}
                     />
                   ) : (
                     <Box sx={{ minHeight: { xs: 92, sm: 300 }, aspectRatio: { xs: '2 / 3', sm: 'auto' }, p: { xs: 0.75, sm: 3 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: { xs: '5px', sm: 0 }, background: 'linear-gradient(145deg, #173f2d, #0e2e1f 62%, #2c1a0e)' }}>

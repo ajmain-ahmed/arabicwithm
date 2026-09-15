@@ -27,6 +27,7 @@ export type ShowRow = {
   title_ar: string | null
   description: string | null
   cover: string | null
+  cover_crop: ThumbnailCrop
   level: string
   category: string | null
 }
@@ -237,7 +238,7 @@ export async function fetchShowsForAdmin(): Promise<ShowRow[]> {
 
   const { data, error } = await serviceClient
     .from("shows")
-    .select("id, slug, title, title_ar, description, cover, level, category")
+    .select("*")
     .order("title", { ascending: true })
 
   if (error) {
@@ -245,16 +246,7 @@ export async function fetchShowsForAdmin(): Promise<ShowRow[]> {
     throw new Error(error.message)
   }
 
-  return ((data ?? []) as ShowRow[]).map((row) => ({
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    title_ar: row.title_ar ?? null,
-    description: row.description ?? null,
-    cover: row.cover ?? null,
-    level: row.level,
-    category: row.category ?? null,
-  }))
+  return ((data ?? []) as Record<string, unknown>[]).map(mapShowRow)
 }
 
 export async function fetchShowForAdmin(id: string): Promise<ShowRow | null> {
@@ -271,17 +263,7 @@ export async function fetchShowForAdmin(id: string): Promise<ShowRow | null> {
     return null
   }
 
-  const row = data as ShowRow
-  return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    title_ar: row.title_ar ?? null,
-    description: row.description ?? null,
-    cover: row.cover ?? null,
-    level: row.level,
-    category: row.category ?? null,
-  }
+  return mapShowRow(data as Record<string, unknown>)
 }
 
 export async function createShow(input: ShowInput): Promise<string> {
@@ -294,9 +276,10 @@ export async function createShow(input: ShowInput): Promise<string> {
       title: input.title,
       title_ar: input.title_ar,
       description: input.description,
+      cover_crop: normalizeThumbnailCrop(input.cover_crop),
       level: input.level,
       category: input.category,
-    })
+    } as never)
     .select("id")
     .single()
 
@@ -324,6 +307,7 @@ export async function updateShow(
   if (input.title !== undefined) payload.title = input.title
   if (input.title_ar !== undefined) payload.title_ar = input.title_ar
   if (input.description !== undefined) payload.description = input.description
+  if (input.cover_crop !== undefined) payload.cover_crop = normalizeThumbnailCrop(input.cover_crop)
   if (input.level !== undefined) payload.level = input.level
   if (input.category !== undefined) payload.category = input.category
 
@@ -367,7 +351,7 @@ export async function fetchAllEpisodesForAdmin(): Promise<EpisodeRow[]> {
 
   const { data, error } = await serviceClient
     .from("episodes")
-    .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
+    .select("*")
     .order("show_id", { ascending: true })
     .order("created_at", { ascending: true })
 
@@ -602,6 +586,7 @@ export type BookRow = {
   title_ar: string | null
   description: string | null
   cover: string | null
+  cover_crop: ThumbnailCrop
   level: string
   category: string | null
   created_at: string | null
@@ -655,9 +640,10 @@ export async function createBook(input: BookInput): Promise<string> {
       title_ar: input.title_ar,
       description: input.description,
       cover: input.cover,
+      cover_crop: normalizeThumbnailCrop(input.cover_crop),
       level: input.level,
       category: input.category,
-    })
+    } as never)
     .select("id")
     .single()
 
@@ -687,6 +673,7 @@ export async function updateBook(
   if (input.title_ar !== undefined) payload.title_ar = input.title_ar
   if (input.description !== undefined) payload.description = input.description
   if (input.cover !== undefined) payload.cover = input.cover
+  if (input.cover_crop !== undefined) payload.cover_crop = normalizeThumbnailCrop(input.cover_crop)
   if (input.level !== undefined) payload.level = input.level
   if (input.category !== undefined) payload.category = input.category
 
@@ -1087,6 +1074,23 @@ export async function updatePhrase(
 
 /* ── Helpers ───────────────────────────────────────────────────────── */
 
+function mapShowRow(row: Record<string, unknown>): ShowRow {
+  const toStringOrNull = (val: unknown): string | null =>
+    val == null || val === "" ? null : String(val)
+
+  return {
+    id: String(row.id),
+    slug: String(row.slug),
+    title: String(row.title),
+    title_ar: toStringOrNull(row.title_ar),
+    description: toStringOrNull(row.description),
+    cover: toStringOrNull(row.cover),
+    cover_crop: normalizeThumbnailCrop(row.cover_crop),
+    level: String(row.level),
+    category: toStringOrNull(row.category),
+  }
+}
+
 function mapEpisodeRow(row: Record<string, unknown>): EpisodeRow {
   const toStringOrNull = (val: unknown): string | null =>
     val == null || val === "" ? null : String(val)
@@ -1121,6 +1125,7 @@ function mapBookRow(row: Record<string, unknown>): BookRow {
     title_ar: toStringOrNull(row.title_ar),
     description: toStringOrNull(row.description),
     cover: toStringOrNull(row.cover),
+    cover_crop: normalizeThumbnailCrop(row.cover_crop),
     level: String(row.level),
     category: toStringOrNull(row.category),
     created_at: toStringOrNull(row.created_at),

@@ -24,6 +24,7 @@ import {
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
 import { getShowCoverUrl } from "@/app/lib/storage"
+import { DEFAULT_THUMBNAIL_CROP, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 
 
 interface ShowEditDialogProps {
@@ -51,6 +52,7 @@ export default function ShowEditDialog({
   const [description, setDescription] = useState("")
   const [level, setLevel] = useState("")
   const [category, setCategory] = useState("")
+  const [coverCrop, setCoverCrop] = useState<ThumbnailCrop>({ ...DEFAULT_THUMBNAIL_CROP })
 
   const isNew = showId === null
 
@@ -65,6 +67,7 @@ export default function ShowEditDialog({
       setDescription("")
       setLevel("")
       setCategory("")
+      setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })
       return
     }
 
@@ -81,6 +84,7 @@ export default function ShowEditDialog({
         setDescription(row.description ?? "")
         setLevel(row.level)
         setCategory(row.category ?? "")
+        setCoverCrop(row.cover_crop)
       })
       .catch((e: unknown) => setError(errorMessage(e) ?? "Failed to load show"))
       .finally(() => setLoading(false))
@@ -97,6 +101,7 @@ export default function ShowEditDialog({
         description: description || null,
         level,
         category: category || null,
+        cover_crop: coverCrop,
       }
 
       if (isNew) {
@@ -192,6 +197,10 @@ export default function ShowEditDialog({
               bucket="covers"
               path={slug ? `cartoons/${slug}.webp` : ""}
               previewUrl={slug ? getShowCoverUrl(slug) : null}
+              previewAspectRatio="4 / 5"
+              previewCrop={coverCrop}
+              onCropChange={setCoverCrop}
+              onUploaded={() => setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })}
             />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />

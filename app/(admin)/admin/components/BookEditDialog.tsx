@@ -23,6 +23,7 @@ import {
   type BookInput,
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
+import { DEFAULT_THUMBNAIL_CROP, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 
 interface BookEditDialogProps {
   open: boolean
@@ -52,6 +53,7 @@ export default function BookEditDialog({
   const [description, setDescription] = useState("")
   const [level, setLevel] = useState("")
   const [category, setCategory] = useState("")
+  const [coverCrop, setCoverCrop] = useState<ThumbnailCrop>({ ...DEFAULT_THUMBNAIL_CROP })
 
   const isNew = bookId === null
 
@@ -72,6 +74,7 @@ export default function BookEditDialog({
       setDescription("")
       setLevel("")
       setCategory("")
+      setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })
       return
     }
 
@@ -92,6 +95,7 @@ export default function BookEditDialog({
         setDescription(row.description ?? "")
         setLevel(row.level)
         setCategory(row.category ?? "")
+        setCoverCrop(row.cover_crop)
       })
       .catch((e: unknown) => { if (active) setError(errorMessage(e) ?? "Failed to load book") })
       .finally(() => { if (active) setLoading(false) })
@@ -111,6 +115,7 @@ export default function BookEditDialog({
         cover,
         level,
         category: category || null,
+        cover_crop: coverCrop,
       }
 
       if (isNew) {
@@ -206,9 +211,18 @@ export default function BookEditDialog({
               label="Cover image"
               bucket="covers"
               path={slug ? `books/${slug}.webp` : ""}
-              previewUrl={cover ? (isNew ? cover : `/api/covers/books/${bookId}`) : null}
-              onUploaded={setCover}
-              onRemove={() => setCover(null)}
+              previewUrl={isNew ? cover : (bookId ? cover ?? `/api/covers/books/${bookId}` : null)}
+              previewAspectRatio="2 / 3"
+              previewCrop={coverCrop}
+              onCropChange={setCoverCrop}
+              onUploaded={(url) => {
+                setCover(url)
+                setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })
+              }}
+              onRemove={() => {
+                setCover(null)
+                setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })
+              }}
             />
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
               <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />

@@ -14,6 +14,7 @@ export interface NewOnShow {
   title: string
   level: string
   category: string | null
+  coverCrop: ThumbnailCrop
 }
 
 export interface NewOnEpisode {
@@ -31,14 +32,21 @@ export const fetchNewOnShows = unstable_cache(
     if (!hasServiceClientConfig()) return []
     const { data, error } = await serviceClient
       .from("shows")
-      .select("id, slug, title, level, category")
+      .select("*")
       .order("created_at", { ascending: false })
       .limit(12)
     if (error) {
       console.error("[fetchNewOnShows] error:", error)
       return []
     }
-    return (data ?? []) as NewOnShow[]
+    return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+      id: String(row.id),
+      slug: String(row.slug),
+      title: String(row.title),
+      level: String(row.level ?? ""),
+      category: row.category ? String(row.category) : null,
+      coverCrop: normalizeThumbnailCrop(row.cover_crop),
+    }))
   },
   ["prototype", "new-on-shows", "v1"],
   { revalidate: false, tags: ["cartoons-public"] }

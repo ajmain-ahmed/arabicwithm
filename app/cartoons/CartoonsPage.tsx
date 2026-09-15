@@ -269,6 +269,7 @@ export default function CartoonsPage({
                       level={show.level}
                       aspectRatio="4 / 5"
                       imageFit="cover"
+                      imageCrop={show.coverCrop}
                       denseMobileTile
                       mobileAspectRatio="4 / 5"
                       mobileImagePosition="center"

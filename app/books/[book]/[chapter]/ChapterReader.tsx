@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { Box, Button, ButtonGroup, Divider, IconButton, Paper, Snackbar, Typography, Menu, MenuItem } from '@mui/material'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { Box, Button, ButtonGroup, Divider, IconButton, Paper, Snackbar, Typography, Menu, MenuItem, useMediaQuery } from '@mui/material'
 import { Bookmark, BookmarkBorder, MenuBook, Settings, ViewAgenda } from '@mui/icons-material'
-import { HtmlTooltip, WordTooltip } from '@/app/components/vocab-tooltip'
+import { HtmlTooltip, MobileDefinitionPopover, WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
 import type { PublicBookBlock, PublicBookToken } from '@/app/actions/books'
 import { groupChapterBlocks } from '@/app/lib/bookParagraphs'
 import { useAuth } from '@/app/AuthContext'
@@ -142,22 +142,64 @@ function subscribeToWordHelp(callback: () => void) {
   }
 }
 
-function DictionaryWord({ token }: { token: PublicBookToken }) {
+function dictionaryEntry(token: PublicBookToken): VocabEntry {
+  return {
+    arabic: token.arabic,
+    headword: token.headword,
+    transliteration: token.transliteration ?? '',
+    english: token.english ?? '',
+    cefr: token.cefr,
+    pos: token.pos,
+    entry_type: token.entryType,
+  }
+}
+
+function DictionaryWord({
+  token,
+  mobile,
+  onMobileOpen,
+}: {
+  token: PublicBookToken
+  mobile: boolean
+  onMobileOpen: (entry: VocabEntry, anchor: HTMLElement) => void
+}) {
+  const entry = dictionaryEntry(token)
+  const word = (
+    <Box
+      component="span"
+      tabIndex={0}
+      role={mobile ? 'button' : undefined}
+      aria-haspopup={mobile ? 'dialog' : undefined}
+      onPointerDown={mobile ? (event) => event.stopPropagation() : undefined}
+      onClick={mobile ? (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        onMobileOpen(entry, event.currentTarget)
+      } : undefined}
+      onKeyDown={mobile ? (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return
+        event.preventDefault()
+        event.stopPropagation()
+        onMobileOpen(entry, event.currentTarget)
+      } : undefined}
+      sx={{
+        display: 'inline',
+        cursor: 'help',
+        borderBottom: '2px dotted #b8860b',
+        transition: 'background-color 0.15s ease',
+        '&:hover, &:focus': { bgcolor: 'rgba(184,134,11,0.12)', outline: 'none' },
+      }}
+    >
+      {token.arabic}
+    </Box>
+  )
+
+  if (mobile) return word
   return (
     <HtmlTooltip
       title={
         <Box sx={{ p: 2.5 }}>
-          <WordTooltip
-            entry={{
-              arabic: token.arabic,
-              headword: token.headword,
-              transliteration: token.transliteration ?? '',
-              english: token.english ?? '',
-              cefr: token.cefr,
-              pos: token.pos,
-              entry_type: token.entryType,
-            }}
-          />
+          <WordTooltip entry={entry} />
         </Box>
       }
       arrow
@@ -167,19 +209,7 @@ function DictionaryWord({ token }: { token: PublicBookToken }) {
       leaveTouchDelay={5000}
       onOpen={dispatchWordLookup}
     >
-      <Box
-        component="span"
-        tabIndex={0}
-        sx={{
-          display: 'inline',
-          cursor: 'help',
-          borderBottom: '2px dotted #b8860b',
-          transition: 'background-color 0.15s ease',
-          '&:hover, &:focus': { bgcolor: 'rgba(184,134,11,0.12)', outline: 'none' },
-        }}
-      >
-        {token.arabic}
-      </Box>
+      {word}
     </HtmlTooltip>
   )
 }
@@ -188,16 +218,20 @@ function ArabicTokens({
   tokens,
   punctuation,
   wordHelp,
+  mobile,
+  onMobileOpen,
 }: {
   tokens: PublicBookToken[]
   wordHelp: boolean
   punctuation?: string
+  mobile: boolean
+  onMobileOpen: (entry: VocabEntry, anchor: HTMLElement) => void
 }) {
   return (
     <>
       {tokens.map((token, index) => (
         <span key={`${token.headword ?? token.arabic}-${index}`}>
-          {index > 0 ? ' ' : ''}{token.prefix}{wordHelp ? <DictionaryWord token={token} /> : token.arabic}{token.suffix}
+          {index > 0 ? ' ' : ''}{token.prefix}{wordHelp ? <DictionaryWord token={token} mobile={mobile} onMobileOpen={onMobileOpen} /> : token.arabic}{token.suffix}
         </span>
       ))}
       {punctuation && <span aria-hidden="true">{punctuation}</span>}
@@ -221,6 +255,21 @@ export default function ChapterReader({
   initialLanguage?: BookReaderLanguage
 }) {
   const { user } = useAuth()
+  const mobileWordPopup = useMediaQuery('(max-width:899.95px)')
+  const [selectedDefinition, setSelectedDefinition] = useState<{ entry: VocabEntry; anchor: HTMLElement } | null>(null)
+  const closeDefinition = useCallback(() => setSelectedDefinition(null), [])
+  const openDefinition = useCallback((entry: VocabEntry, anchor: HTMLElement) => {
+    dispatchWordLookup()
+    setSelectedDefinition({ entry, anchor })
+  }, [])
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width:899.95px)')
+    const handleChange = (event: MediaQueryListEvent) => {
+      if (!event.matches) closeDefinition()
+    }
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [closeDefinition])
   const wordHelp = useSyncExternalStore(subscribeToWordHelp, getWordHelp, () => true)
   const toggleWordHelp = (enabled: boolean) => {
     wordHelpFallback = enabled
@@ -494,14 +543,14 @@ export default function ChapterReader({
                       {language === 'ar' ? (
                         <>
                           <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 29 * textScale }, fontWeight: 500, lineHeight: 1.9, color: 'var(--awm-bark)', textAlign: 'right' }}>
-                            <ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} />
+                            <ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} mobile={mobileWordPopup} onMobileOpen={openDefinition} />
                           </Typography>
                           {block.translation && <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 14 * textScale, md: 15 * textScale }, lineHeight: 1.7 }}>{block.translation}</Typography>}
                         </>
                       ) : (
                         <>
                           <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 18 * textScale, md: 20 * textScale }, lineHeight: 1.75 }}>{block.translation}</Typography>
-                          <Typography component="div" lang="ar" dir="rtl" sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 18 * textScale, md: 21 * textScale }, lineHeight: 1.8, textAlign: 'right' }}><ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} /></Typography>
+                          <Typography component="div" lang="ar" dir="rtl" sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 18 * textScale, md: 21 * textScale }, lineHeight: 1.8, textAlign: 'right' }}><ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} mobile={mobileWordPopup} onMobileOpen={openDefinition} /></Typography>
                         </>
                       )}
                     </Box>
@@ -523,7 +572,7 @@ export default function ChapterReader({
             {paragraphs.map((paragraph, paragraphIndex) => (
               <Box component="p" key={paragraphIndex} sx={{ m: 0, '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
                 {language === 'ar'
-                  ? paragraph.map((block, blockIndex) => <span key={blockIndex}>{blockIndex > 0 ? ' ' : ''}<ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} /></span>)
+                  ? paragraph.map((block, blockIndex) => <span key={blockIndex}>{blockIndex > 0 ? ' ' : ''}<ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} mobile={mobileWordPopup} onMobileOpen={openDefinition} /></span>)
                   : paragraph.map((block) => block.translation).filter(Boolean).join(' ')}
               </Box>
             ))}
@@ -534,6 +583,12 @@ export default function ChapterReader({
       <Menu open={Boolean(bookmarkMenu)} anchorEl={bookmarkMenu?.anchor} onClose={() => setBookmarkMenu(null)}>
         <MenuItem onClick={() => { if (bookmarkMenu) void toggleBookmark(bookmarkMenu.block, bookmarkMenu.index); setBookmarkMenu(null) }}>{bookmarkMenu && isBookmarkedSentence(bookmarkMenu.index) ? 'Remove bookmark' : 'Add bookmark'}</MenuItem>
       </Menu>
+      <MobileDefinitionPopover
+        anchor={mobileWordPopup ? selectedDefinition?.anchor ?? null : null}
+        entry={selectedDefinition?.entry ?? null}
+        onClose={closeDefinition}
+        textScale={textScale}
+      />
       <Snackbar
         open={Boolean(bookmarkNotice)}
         autoHideDuration={1800}

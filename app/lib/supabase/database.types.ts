@@ -30,6 +30,7 @@ export interface Database {
           title_ar: string | null
           description: string | null
           cover: string | null
+          cover_crop: Json
           level: string
           category: string | null
         }
@@ -40,6 +41,7 @@ export interface Database {
           title_ar?: string | null
           description?: string | null
           cover?: string | null
+          cover_crop?: Json
           level?: string
           category?: string | null
         }
@@ -50,6 +52,7 @@ export interface Database {
           title_ar?: string | null
           description?: string | null
           cover?: string | null
+          cover_crop?: Json
           level?: string
           category?: string | null
         }
@@ -120,6 +123,7 @@ export interface Database {
           title_ar: string | null
           description: string | null
           cover: string | null
+          cover_crop: Json
           level: string
           category: string | null
           tags: string[]
@@ -136,6 +140,7 @@ export interface Database {
           title_ar?: string | null
           description?: string | null
           cover?: string | null
+          cover_crop?: Json
           level?: string
           category?: string | null
           tags?: string[]
@@ -152,6 +157,7 @@ export interface Database {
           title_ar?: string | null
           description?: string | null
           cover?: string | null
+          cover_crop?: Json
           level?: string
           category?: string | null
           tags?: string[]
