@@ -3,22 +3,33 @@ import { useEffect, useState } from 'react'
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography, IconButton } from '@mui/material'
 import { AutoAwesome, CheckCircleRounded, Close } from '@mui/icons-material'
 import { fetchPremiumStatus, managePremium, startPremiumCheckout } from '@/app/actions/premium'
+import type { PremiumStatus } from '@/app/actions/premium'
 import { useAuth } from '@/app/AuthContext'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import { useRouter } from 'next/navigation'
 
 export default function PremiumPrompt({ open, onClose, reason }: { open: boolean; onClose: () => void; reason?: string }) {
   const { user } = useAuth()
-  const [premium, setPremium] = useState(false)
+  const authKey = user?.id ?? 'signed-out'
+  const [statusUpdate, setStatusUpdate] = useState<{ authKey: string; status: PremiumStatus } | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  useEffect(() => { if (open) fetchPremiumStatus().then(s => setPremium(s.premium)).catch(() => setError('Unable to check AWM+ status. Please try again.')) }, [open, user?.id])
+  useEffect(() => {
+    let active = true
+    if (open) {
+      fetchPremiumStatus().then(status => { if (active) setStatusUpdate({ authKey, status }) }).catch(() => { if (active) setError('Unable to check AWM+ status. Please try again.') })
+    }
+    return () => { active = false }
+  }, [authKey, open])
+  const status = statusUpdate?.authKey === authKey ? statusUpdate.status : null
+  const premium = status?.premium ?? false
   async function purchase() {
     if (!user) { onClose(); window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } })); return }
     setBusy(true); setError('')
     try { window.location.assign(await (premium ? managePremium() : startPremiumCheckout())) }
     catch (e) { setError(e instanceof Error ? e.message : 'Unable to open billing.'); setBusy(false) }
   }
+  if (!status || status.admin) return null
   return <Dialog open={open} onClose={busy ? undefined : onClose} maxWidth="sm" fullWidth aria-labelledby="premium-title" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: '24px', m: 2, width: 'calc(100% - 32px)', textAlign: 'center', border: '1px solid', borderColor: 'divider' } } }}>
     <IconButton aria-label="Close AWM+ details" onClick={onClose} sx={{ position: 'absolute', right: 12, top: 12, color: 'text.secondary' }}><Close /></IconButton>
     <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}><AutoAwesome sx={{ display: 'block', mx: 'auto', mb: 1, color: 'primary.main', fontSize: 34 }} />{premium ? 'AWM+ active' : 'Upgrade to AWM+'}</DialogTitle>
@@ -43,8 +54,10 @@ export default function PremiumPrompt({ open, onClose, reason }: { open: boolean
 export function PremiumSection() {
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
-  const [premium, setPremium] = useState(false)
-  useEffect(() => { let active = true; fetchPremiumStatus().then(s => { if (active) setPremium(s.premium) }).catch(() => {}); return () => { active = false } }, [user?.id])
+  const [status, setStatus] = useState<PremiumStatus | null>(null)
+  useEffect(() => { let active = true; fetchPremiumStatus().then(s => { if (active) setStatus(s) }).catch(() => {}); return () => { active = false } }, [user?.id])
+  if (!status || status.admin) return null
+  const premium = status?.premium ?? false
   return <Box component="section" aria-label="AWM+" sx={{ width: '100%', px: { xs: 2, md: 5 }, py: { xs: 4, md: 6 }, display: 'flex', justifyContent: 'center' }}>
     <Button variant="contained" startIcon={<AutoAwesome />} onClick={() => setOpen(true)} sx={{
       width: '100%', maxWidth: 920, minHeight: { xs: 64, md: 76 }, px: 4, borderRadius: '18px', position: 'relative', overflow: 'hidden',

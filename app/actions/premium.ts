@@ -1,22 +1,32 @@
 'use server'
 import { isMissingDatabaseFeature } from '@/app/lib/databaseErrors'
-import { getAuthenticatedUserId } from '@/app/actions/auth'
+import { getAuthenticatedAccess, getAuthenticatedUserId } from '@/app/actions/auth'
 import { rateLimit } from '@/app/lib/rateLimit'
 import { serviceClient } from '@/app/lib/supabase'
-import { hasPremium, PREMIUM } from '@/app/lib/entitlements'
+import { hasPremium, hasPremiumAccess, PREMIUM } from '@/app/lib/entitlements'
 import { stripeClient, siteUrl } from '@/app/lib/billing'
 
-export async function fetchPremiumStatus() {
-  const userId = await getAuthenticatedUserId()
-  if (!userId) return { premium: false, signedIn: false, manageable: false }
-  const { data, error } = await serviceClient.from('subscriptions').select('status, current_period_end, customer_id').eq('user_id', userId).maybeSingle()
-  if (isMissingDatabaseFeature(error)) return { premium: false, signedIn: true, manageable: false }
+export interface PremiumStatus {
+  premium: boolean
+  signedIn: boolean
+  manageable: boolean
+  admin: boolean
+}
+
+export async function fetchPremiumStatus(): Promise<PremiumStatus> {
+  const access = await getAuthenticatedAccess()
+  if (!access) return { premium: false, signedIn: false, manageable: false, admin: false }
+  if (access.admin) return { premium: true, signedIn: true, manageable: false, admin: true }
+  const { data, error } = await serviceClient.from('subscriptions').select('status, current_period_end, customer_id').eq('user_id', access.userId).maybeSingle()
+  if (isMissingDatabaseFeature(error)) return { premium: false, signedIn: true, manageable: false, admin: false }
   if (error) throw new Error('Unable to verify AWM+ access.')
-  return { premium: hasPremium(data), signedIn: true, manageable: Boolean(data?.customer_id) }
+  return { premium: hasPremiumAccess(false, data), signedIn: true, manageable: Boolean(data?.customer_id), admin: false }
 }
 export async function startPremiumCheckout(): Promise<string> {
-  const userId = await getAuthenticatedUserId()
-  if (!userId) throw new Error('Sign in to get AWM+.')
+  const access = await getAuthenticatedAccess()
+  if (!access) throw new Error('Sign in to get AWM+.')
+  if (access.admin) throw new Error('AWM+ is already included with administrator access.')
+  const userId = access.userId
   const limited = rateLimit(`checkout:${userId}`, 5, 10 * 60 * 1000)
   if (!limited.ok) throw new Error('Too many checkout attempts. Please try again later.')
   const stripe = stripeClient()

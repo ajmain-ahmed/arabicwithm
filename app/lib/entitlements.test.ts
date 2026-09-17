@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canAccessBookChapter, getRemainingFreeMemoryCards, hasPremium, platformDate } from './entitlements'
+import { canAccessBookChapter, getRemainingFreeMemoryCards, hasPremium, hasPremiumAccess, platformDate } from './entitlements'
 describe('central access policy', () => {
   it.each([4, 5, 6, 12, 30])('protects a %i chapter book for both languages', chapterCount => {
     const book = { chapterCount, freeChapterCount: 5, premiumExempt: false }
@@ -18,6 +18,13 @@ describe('central access policy', () => {
     for (const status of ['past_due', 'unpaid', 'incomplete', 'canceled', 'expired', 'trialing']) expect(hasPremium({ status, current_period_end: '2026-10-01' }, now)).toBe(false)
     expect(hasPremium({ status: 'active', current_period_end: '2026-09-08' }, now)).toBe(false)
     expect(hasPremium(null, now)).toBe(false)
+  })
+  it('grants every admin effective premium access without changing normal subscription rules', () => {
+    const now = new Date('2026-09-09T00:00:00Z')
+    expect(hasPremiumAccess(true, null, now)).toBe(true)
+    expect(hasPremiumAccess(true, { status: 'expired', current_period_end: '2026-09-08' }, now)).toBe(true)
+    expect(hasPremiumAccess(false, null, now)).toBe(false)
+    expect(hasPremiumAccess(false, { status: 'active', current_period_end: '2026-10-01' }, now)).toBe(true)
   })
   it('shares a daily allowance and London calendar boundaries, including DST', () => {
     expect(getRemainingFreeMemoryCards(8)).toBe(12)

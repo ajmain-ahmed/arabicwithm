@@ -8,7 +8,10 @@ import { MEMORY } from './entitlements'
 let db: PGlite
 const user = '11111111-1111-4111-8111-111111111111'
 const premium = '22222222-2222-4222-8222-222222222222'
-const migration = readFileSync('docs/platform-setup.sql', 'utf8') + '\n' + readFileSync('supabase/migrations/20260912120000_restore_memory_xp.sql', 'utf8')
+const admin = '33333333-3333-4333-8333-333333333333'
+const migration = readFileSync('docs/platform-setup.sql', 'utf8')
+  + '\n' + readFileSync('supabase/migrations/20260912120000_restore_memory_xp.sql', 'utf8')
+  + '\n' + readFileSync('supabase/migrations/20260917120000_admin_premium_memory.sql', 'utf8')
 beforeAll(async () => {
   db = new PGlite()
   await db.exec(`create schema auth; create function auth.uid() returns uuid language sql as 'select null::uuid'; create role anon; create role authenticated; create role service_role;
@@ -16,15 +19,15 @@ beforeAll(async () => {
     create table public.books(id uuid primary key, title text);
     create table public.chapters(id uuid primary key, content jsonb);
     grant select on public.chapters to anon,authenticated;
-    insert into auth.users values ('${user}', '{"memory_xp":9}'), ('${premium}', '{}');
+    insert into auth.users values ('${user}', '{"memory_xp":9}'), ('${premium}', '{}'), ('${admin}', '{}');
     insert into books values ('${randomUUID()}', 'Blackwood Manor'), ('${randomUUID()}', 'Layla & the Shadow'), ('${randomUUID()}', 'The Stranger Who Knows My Name'), ('${randomUUID()}', 'When Learning Feels Real'), ('${randomUUID()}', 'Future Book');`)
   await db.exec(migration)
   await db.exec(readFileSync('supabase/migrations/20260910120000_feedback_book_permissions.sql', 'utf8'))
 }, 30000)
 afterAll(async () => { await db?.close() })
-async function review(id: string, completion = randomUUID(), card = randomUUID(), direction = 'arabic') {
+async function review(id: string, completion = randomUUID(), card = randomUUID(), direction = 'arabic', hasPremiumAccess = false) {
   const session = { index: 1, cards: [{ id: card }], completionIds: [completion], direction }
-  const { rows } = await db.query<{ result: { accepted: boolean; used: number; awarded: number; totalXp: number } }>('select complete_memory_card($1,$2,$3,$4,$5,$6,$7::jsonb) result', [id, completion, card, 'known', MEMORY.xpPerCard, MEMORY.dailyFreeCards, JSON.stringify(session)])
+  const { rows } = await db.query<{ result: { accepted: boolean; used: number; awarded: number; totalXp: number } }>('select complete_memory_card($1,$2,$3,$4,$5,$6,$7,$8::jsonb) result', [id, completion, card, 'known', MEMORY.xpPerCard, MEMORY.dailyFreeCards, hasPremiumAccess, JSON.stringify(session)])
   return rows[0].result
 }
 describe.sequential('actual PostgreSQL migration and Memory transactions', () => {
@@ -57,6 +60,10 @@ describe.sequential('actual PostgreSQL migration and Memory transactions', () =>
     expect((await review(premium, randomUUID(), card)).awarded).toBe(0)
     for (let i = 0; i < 23; i++) expect((await review(premium)).awarded).toBe(1)
     expect((await review(premium)).used).toBe(26)
+  })
+  it('allows centrally authorised admins beyond the free limit without a subscription', async () => {
+    for (let i = 0; i < 24; i++) expect((await review(admin, randomUUID(), randomUUID(), 'arabic', true)).accepted).toBe(true)
+    expect((await review(admin, randomUUID(), randomUUID(), 'arabic', true)).used).toBe(25)
   })
   it('resets by persisted date; expiration removes access but preserves all progress', async () => {
     await db.query("update memory_reviews set activity_date=activity_date-1 where user_id=$1", [user])
@@ -93,11 +100,11 @@ it('awards XP once per distinct card per day and retains weekly practice counts'
   await db.query('insert into auth.users values ($1,$2)', [id, '{}'])
   const completion = randomUUID()
   const state = JSON.stringify({ completionIds: [completion], sessionXp: 0 })
-  const sql = 'select complete_memory_card($1,$2,$3,$4,$5,$6,$7::jsonb) as result'
-  const args = [id, completion, 'card', 'known', MEMORY.xpPerCard, 20, state]
+  const sql = 'select complete_memory_card($1,$2,$3,$4,$5,$6,$7,$8::jsonb) as result'
+  const args = [id, completion, 'card', 'known', MEMORY.xpPerCard, 20, false, state]
   const first = await db.query<{ result: { awarded: number; used: number } }>(sql, args)
   expect(first.rows[0].result).toMatchObject({ awarded: 1, used: 1 })
-  const repeatCard = await db.query<{ result: { awarded: number; used: number } }>(sql, [id, randomUUID(), 'card', 'known', MEMORY.xpPerCard, 20, state])
+  const repeatCard = await db.query<{ result: { awarded: number; used: number } }>(sql, [id, randomUUID(), 'card', 'known', MEMORY.xpPerCard, 20, false, state])
   expect(repeatCard.rows[0].result).toMatchObject({ awarded: 0, used: 2 })
   const { rows } = await db.query<{ result: { cards: number; xp: number } }>('select memory_totals($1) result', [id])
   expect(rows[0].result).toMatchObject({ cards: 2, xp: 1 })

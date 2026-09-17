@@ -42,23 +42,33 @@ async function getAuthenticatedUser(): Promise<User | null> {
   }
 }
 
-export async function getAuthenticatedUserId(): Promise<string | null> {
-  const user = await getAuthenticatedUser()
-  return user?.id ?? null
+export interface AuthenticatedAccess {
+  userId: string
+  admin: boolean
 }
 
 const ADMIN_UIDS = new Set(
   [process.env.ADMIN, process.env.ADMIN2].filter((v): v is string => Boolean(v))
 )
 
-export async function isAdminUser(): Promise<boolean> {
-  const user = await getAuthenticatedUser()
-  if (!user) return false
-
-  const hasAdminRole = user.app_metadata?.role === "admin"
+function hasAdminAccess(user: User): boolean {
+  return user.app_metadata?.role === "admin"
     || user.app_metadata?.is_admin === true
+    || ADMIN_UIDS.has(user.id)
+}
 
-  return hasAdminRole || ADMIN_UIDS.has(user.id)
+/** Server-verified identity and application role used by all authorization checks. */
+export async function getAuthenticatedAccess(): Promise<AuthenticatedAccess | null> {
+  const user = await getAuthenticatedUser()
+  return user ? { userId: user.id, admin: hasAdminAccess(user) } : null
+}
+
+export async function getAuthenticatedUserId(): Promise<string | null> {
+  return (await getAuthenticatedAccess())?.userId ?? null
+}
+
+export async function isAdminUser(): Promise<boolean> {
+  return (await getAuthenticatedAccess())?.admin ?? false
 }
 
 export async function guardAdmin(): Promise<void> {

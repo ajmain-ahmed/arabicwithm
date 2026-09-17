@@ -15,6 +15,9 @@ export function canAccessBookChapter(premium: boolean, book: BookAccessPolicy, c
 export function hasPremium(subscription: { status: string; current_period_end: string } | null, now = new Date()): boolean {
   return Boolean(subscription && subscription.status === 'active' && Date.parse(subscription.current_period_end) > now.getTime())
 }
+export function hasPremiumAccess(admin: boolean, subscription: { status: string; current_period_end: string } | null, now = new Date()): boolean {
+  return admin || hasPremium(subscription, now)
+}
 export function getRemainingFreeMemoryCards(completed: number): number { return Math.max(0, MEMORY.dailyFreeCards - completed) }
 export function platformDate(now = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: MEMORY.timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now)
