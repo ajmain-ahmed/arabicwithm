@@ -6,6 +6,7 @@ import React, {
   useRef,
   useCallback,
   useMemo,
+  useSyncExternalStore,
 } from 'react'
 import SafeHtml from '@/app/components/SafeHtml'
 import ClientStyles from '@/app/components/ClientStyles'
@@ -41,6 +42,11 @@ import { SettingsDialog } from '@/app/components/settings-controls'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
 import { usePlayerStore } from '@/store/playerStore'
 import { dispatchWordLookup } from '@/app/lib/activity'
+import {
+  getWordTapSeekPreference,
+  setWordTapSeekPreference,
+  subscribeToWordTapSeekPreference,
+} from '@/app/lib/watchPreferences'
 
 const EpisodeEditDialog = dynamic(() => import('@/app/(admin)/admin/components/EpisodeEditDialog'), { ssr: false })
 
@@ -182,7 +188,7 @@ function SettingsButton({ onClick }: SettingsButtonProps) {
    Global guard — disable script-line clicks while any vocab UI is open.
    Lives outside component instances so multiple tooltips share state.
 ───────────────────────────────────────────── */
-const vocabTrackerRef = { openCount: 0, lastCloseAt: 0 }
+const vocabTrackerRef = { openCount: 0 }
 
 function useVocabOpenTracker(isOpen: boolean) {
   useEffect(() => {
@@ -190,7 +196,6 @@ function useVocabOpenTracker(isOpen: boolean) {
       vocabTrackerRef.openCount++
       return () => {
         vocabTrackerRef.openCount--
-        vocabTrackerRef.lastCloseAt = Date.now()
       }
     }
   }, [isOpen])
@@ -207,6 +212,7 @@ function ArabicLineText({
   textScale,
   showDiacritics,
   onDrawerOpenChange,
+  onWordActivate,
 }: {
   text: string
   words?: CartoonWordEntry[]
@@ -215,6 +221,7 @@ function ArabicLineText({
   textScale: number
   showDiacritics: boolean
   onDrawerOpenChange?: (open: boolean) => void
+  onWordActivate?: () => void
 }) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
@@ -262,11 +269,16 @@ function ArabicLineText({
     setMobileAnchor(anchor)
     onDrawerOpenChange?.(true)
     dispatchWordLookup()
-  }, [onDrawerOpenChange])
+    onWordActivate?.()
+  }, [onDrawerOpenChange, onWordActivate])
 
   const handleCloseDrawer = useCallback(() => {
-    window.dispatchEvent(new CustomEvent('awm-watch-definition', { detail: false }))
     setMobileAnchor(null)
+  }, [])
+
+  const handleDrawerExited = useCallback(() => {
+    setMobileEntry(null)
+    window.dispatchEvent(new CustomEvent('awm-watch-definition', { detail: false }))
     onDrawerOpenChange?.(false)
   }, [onDrawerOpenChange])
 
@@ -492,7 +504,7 @@ function ArabicLineText({
           >
             <span
               role="button" tabIndex={0} aria-label={`Define ${wordText}`}
-              onClick={e => { setOpen(false); handleOpenDrawer(entry, e.currentTarget) }}
+              onClick={e => { e.stopPropagation(); setOpen(false); handleOpenDrawer(entry, e.currentTarget) }}
               onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(false); handleOpenDrawer(entry, e.currentTarget) } }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
@@ -520,6 +532,7 @@ function ArabicLineText({
         open={Boolean(mobileAnchor)}
         entry={mobileEntry}
         onClose={handleCloseDrawer}
+        onExited={handleDrawerExited}
         textScale={textScale}
       />
 
@@ -556,6 +569,11 @@ export default function EpisodePage({
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [mobileWordDrawerOpen, setMobileWordDrawerOpen] = useState(false)
   const [allShows, setAllShows] = useState<ShowRow[]>([])
+  const jumpVideoToTappedWord = useSyncExternalStore(
+    subscribeToWordTapSeekPreference,
+    getWordTapSeekPreference,
+    () => false,
+  )
 
   useEffect(() => {
     if (!isAdmin) return
@@ -643,20 +661,12 @@ export default function EpisodePage({
     closePip()
   }, [closePip])
 
-  // Keep the YouTube wrapper non-interactive for a short delay after the mobile
-  // word drawer closes. The tap that dismisses the drawer is sometimes
-  // re-delivered to the iframe once it unmounts, which would toggle playback.
+  // Keep the player non-interactive for the complete modal lifecycle, including
+  // the drawer's exit transition. The backdrop owns and consumes the dismiss tap.
   const mobileOverlayOpen = mobileWordDrawerOpen
   useEffect(() => {
     if (!wrapRef.current) return
-    if (mobileOverlayOpen) {
-      wrapRef.current.style.pointerEvents = 'none'
-      return
-    }
-    const t = setTimeout(() => {
-      if (wrapRef.current) wrapRef.current.style.pointerEvents = 'auto'
-    }, 250)
-    return () => clearTimeout(t)
+    wrapRef.current.style.pointerEvents = mobileOverlayOpen ? 'none' : 'auto'
   }, [mobileOverlayOpen, wrapRef])
 
   useEffect(() => {
@@ -710,6 +720,8 @@ export default function EpisodePage({
         textSizeDescription="Adjust Arabic, translation, vocabulary, and grammar text"
         textFont={textFont}
         onTextFontChange={setTextFont}
+        jumpVideoToTappedWord={jumpVideoToTappedWord}
+        onToggleJumpVideoToTappedWord={() => setWordTapSeekPreference(!jumpVideoToTappedWord)}
         onEdit={isAdmin ? () => setEditDialogOpen(true) : undefined}
       />
 
@@ -1014,7 +1026,6 @@ export default function EpisodePage({
                             className={`script-block ${isActive ? 'active' : ''}`}
                             onClick={(e) => {
                               if (vocabTrackerRef.openCount > 0) return
-                              if (Date.now() - vocabTrackerRef.lastCloseAt < 120) return
                               if ((e.target as HTMLElement).closest('.vocab-word')) return
                               if (hasTimestamp && isYouTubeSource) {
                                 seekTo(block.timestamp!)
@@ -1046,6 +1057,9 @@ export default function EpisodePage({
                                 diacritizedMap={episode.diacritizedMap}
                                 showDiacritics={showDiacritics}
                                 onDrawerOpenChange={setMobileWordDrawerOpen}
+                                onWordActivate={jumpVideoToTappedWord && hasTimestamp && isYouTubeSource
+                                  ? () => seekTo(block.timestamp!)
+                                  : undefined}
                               />
                             </Typography>
 

@@ -20,6 +20,8 @@ export interface SettingsDialogProps {
   textScaleMax?: number
   textFont: 'naskh' | 'garamond' | 'amiri'
   onTextFontChange: (value: 'naskh' | 'garamond' | 'amiri') => void
+  jumpVideoToTappedWord: boolean
+  onToggleJumpVideoToTappedWord: () => void
   onEdit?: () => void
 }
 
@@ -32,6 +34,8 @@ export default function SettingsDialog({
   textScaleMax = 1.5,
   textFont,
   onTextFontChange,
+  jumpVideoToTappedWord,
+  onToggleJumpVideoToTappedWord,
   onEdit,
 }: SettingsDialogProps) {
   const textFontFamily = {
@@ -49,6 +53,13 @@ export default function SettingsDialog({
       <DialogContent sx={{ px: 2.5, pt: 1.5, pb: 2 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           <ToggleRow label="Show Diacritics" description="Display vowel marks on Arabic words" enabled={showDiacritics} onToggle={onToggleDiacritics} activeColor="#b8860b" />
+          <ToggleRow
+            label="Jump video to tapped word"
+            description="When enabled, tapping a word in a transcript moves the video to that word's position in the scene."
+            enabled={jumpVideoToTappedWord}
+            onToggle={onToggleJumpVideoToTappedWord}
+            activeColor="#b8860b"
+          />
           <Box sx={{ py: 1.5, px: 1.5, borderRadius: '10px', border: '1px solid rgba(122,110,101,0.15)', background: 'rgba(122,110,101,0.03)' }}>
             <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: 'var(--awm-bark)' }}>Arabic Font</Typography>
             <Typography lang="ar" dir="rtl" sx={{ my: 1.25, fontFamily: textFontFamily, fontSize: 27, color: 'var(--awm-bark)', textAlign: 'center', lineHeight: 1.5 }}>

@@ -12,7 +12,9 @@ import {
   normalizeYouTubeId,
   getShowCoverPath,
   isNewTranscript,
+  MAX_EPISODE_VOCABULARY_ITEMS,
   normalizeNewTranscript,
+  selectLearningVocabulary,
   type NewTranscript,
 } from './cartoons'
 import { stripDiacritics } from './arabic'
@@ -30,6 +32,7 @@ describe('isNewTranscript', () => {
             arabic: 'هَلْ',
             entry_type: 'word',
             transliteration: 'hal',
+            english: 'whether / is it?',
           },
         ],
         timestamp: '0:00',
@@ -61,6 +64,7 @@ describe('normalizeNewTranscript', () => {
             arabic: 'هَلْ',
             entry_type: 'word',
             transliteration: 'hal',
+            english: 'whether / is it?',
           },
           {
             CEFR: 'A1',
@@ -70,6 +74,7 @@ describe('normalizeNewTranscript', () => {
             arabic: 'سَتَكُونِينَ',
             entry_type: 'word',
             transliteration: 'satakūnīna',
+            english: 'you will be',
           },
           {
             cefr: 'A1',
@@ -79,6 +84,7 @@ describe('normalizeNewTranscript', () => {
             arabic: 'بِخَيْر',
             entry_type: 'word',
             transliteration: 'bi-khayr',
+            english: 'well',
           },
         ],
         timestamp: '0:00',
@@ -94,6 +100,7 @@ describe('normalizeNewTranscript', () => {
             arabic: 'أَعْتَقِدُ ذَلِكَ',
             entry_type: 'phrase',
             transliteration: "aʿtaqidu dhālika",
+            english: 'I think so',
           },
         ],
         timestamp: '0:01',
@@ -123,7 +130,7 @@ describe('normalizeNewTranscript', () => {
     expect(second.title).toBe('I think so.')
     expect(second.words[0].plain).toBe('أعتقد ذلك')
 
-    // Vocab list deduplicates by lemma and lowercases cefr.
+    // The learning list preserves useful entries and lowercases CEFR values.
     expect(vocabList).toHaveLength(4)
     expect(vocabList.map((v) => v.arabic)).toContain('كَانَ')
     expect(vocabList.every((v) => !v.cefr || v.cefr === v.cefr.toLowerCase())).toBe(true)
@@ -186,6 +193,91 @@ describe('normalizeNewTranscript', () => {
     const { scriptBlocks } = normalizeNewTranscript(transcript)
     expect(scriptBlocks[0].timestamp).toBeNull()
     expect(scriptBlocks[1].timestamp).toBeNull()
+  })
+})
+
+describe('selectLearningVocabulary', () => {
+  it('keeps useful Arabic entries, deduplicates lexical words, and excludes names and artefacts', () => {
+    const transcript: NewTranscript = [
+      {
+        timestamp: '0:00',
+        translation: 'He wrote quickly at school. Is it Kakashi?',
+        tokens: [
+          {
+            cefr: 'a1', pos: 'verb', headword: 'كتب', arabic: 'كَتَبَ',
+            entry_type: 'word', transliteration: 'kataba', english: 'he wrote',
+          },
+          {
+            cefr: 'a1', pos: 'verb', headword: 'كتب', arabic: 'كَتَبَ',
+            entry_type: 'word', transliteration: 'kataba', english: 'he wrote',
+          },
+          {
+            cefr: 'a2', pos: 'adjective', headword: 'سريع', arabic: 'سَرِيعٌ',
+            entry_type: 'word', transliteration: 'sarīʿ', english: 'fast',
+          },
+          {
+            cefr: 'a1', pos: 'noun', headword: 'مدرسة', arabic: 'مَدْرَسَةٌ',
+            entry_type: 'word', transliteration: 'madrasa', english: 'school',
+          },
+          {
+            cefr: 'a1', pos: 'particle', headword: 'هل', arabic: 'هَلْ',
+            entry_type: 'word', transliteration: 'hal', english: 'whether / is it?',
+          },
+          {
+            cefr: 'a1', pos: 'proper_noun', headword: null, arabic: 'كَاكَاشِي',
+            entry_type: 'word', transliteration: 'Kakashi', english: 'Kakashi',
+          },
+          {
+            cefr: 'a1', pos: 'word', headword: null, arabic: 'Kakashi',
+            entry_type: 'word', transliteration: 'Kakashi', english: 'Kakashi',
+          },
+          {
+            cefr: 'a1', pos: 'unknown', headword: null, arabic: 'ـــ',
+            entry_type: 'word', transliteration: '...', english: '...',
+          },
+        ],
+      },
+    ]
+
+    const vocabulary = selectLearningVocabulary(transcript)
+
+    expect(vocabulary.map((item) => stripDiacritics(item.arabic))).toEqual([
+      'كتب',
+      'سريع',
+      'مدرسة',
+      'هل',
+    ])
+    expect(vocabulary.filter((item) => stripDiacritics(item.arabic) === 'كتب')).toHaveLength(1)
+    expect(vocabulary.some((item) => item.transliteration === 'Kakashi')).toBe(false)
+  })
+
+  it('uses pedagogical ranking for the cap, then keeps transcript order', () => {
+    const transcript: NewTranscript = [
+      {
+        timestamp: '0:00',
+        translation: 'Is it a school? He wrote.',
+        tokens: [
+          {
+            cefr: 'a1', pos: 'particle', headword: 'هل', arabic: 'هَلْ',
+            entry_type: 'word', transliteration: 'hal', english: 'whether / is it?',
+          },
+          {
+            cefr: 'a1', pos: 'noun', headword: 'مدرسة', arabic: 'مَدْرَسَةٌ',
+            entry_type: 'word', transliteration: 'madrasa', english: 'school',
+          },
+          {
+            cefr: 'a1', pos: 'verb', headword: 'كتب', arabic: 'كَتَبَ',
+            entry_type: 'word', transliteration: 'kataba', english: 'he wrote',
+          },
+        ],
+      },
+    ]
+
+    expect(MAX_EPISODE_VOCABULARY_ITEMS).toBe(30)
+    expect(selectLearningVocabulary(transcript, 2).map((item) => stripDiacritics(item.arabic))).toEqual([
+      'مدرسة',
+      'كتب',
+    ])
   })
 })
 

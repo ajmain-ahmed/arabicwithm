@@ -1,7 +1,7 @@
 'use client'
 
-import { Box, IconButton, SwipeableDrawer, Typography, useMediaQuery } from '@mui/material'
-import { CloseRounded } from '@mui/icons-material'
+import { Box, SwipeableDrawer, useMediaQuery } from '@mui/material'
+import type { SyntheticEvent } from 'react'
 import WordTooltip from './WordTooltip'
 import type { VocabEntry } from './index'
 
@@ -9,15 +9,23 @@ export default function MobileDefinitionSheet({
   open,
   entry,
   onClose,
+  onExited,
   textScale = 1,
 }: {
   open: boolean
   entry: VocabEntry | null
   onClose: () => void
+  onExited?: () => void
   textScale?: number
 }) {
   const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const titleId = 'awm-mobile-definition-title'
+  const stopBackdropEvent = (event: SyntheticEvent) => {
+    event.stopPropagation()
+  }
+  const consumeBackdropClick = (event: SyntheticEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+  }
 
   return (
     <SwipeableDrawer
@@ -30,18 +38,26 @@ export default function MobileDefinitionSheet({
       hysteresis={0.3}
       minFlingVelocity={350}
       transitionDuration={reduceMotion ? 0 : { enter: 280, exit: 220 }}
+      ModalProps={{ onTransitionExited: onExited }}
       slotProps={{
         backdrop: {
+          onPointerDown: stopBackdropEvent,
+          onPointerUp: stopBackdropEvent,
+          onTouchStart: stopBackdropEvent,
+          onTouchEnd: stopBackdropEvent,
+          onClick: consumeBackdropClick,
           sx: {
             bgcolor: 'rgba(14, 46, 31, 0.28)',
             backdropFilter: 'blur(2px)',
             WebkitBackdropFilter: 'blur(2px)',
+            pointerEvents: 'auto',
+            touchAction: 'none',
           },
         },
         paper: {
           role: 'dialog',
           'aria-modal': true,
-          'aria-labelledby': titleId,
+          'aria-label': 'Word definition',
           sx: {
             width: '100%',
             maxWidth: 680,
@@ -62,31 +78,8 @@ export default function MobileDefinitionSheet({
     >
       <Box
         aria-hidden="true"
-        sx={{ width: 42, height: 5, borderRadius: 999, bgcolor: 'rgba(44,26,14,.24)', mx: 'auto', mt: 1.25, flex: '0 0 auto' }}
+        sx={{ width: 42, height: 5, borderRadius: 999, bgcolor: 'rgba(44,26,14,.24)', mx: 'auto', mt: 1.25, mb: 0.5, flex: '0 0 auto' }}
       />
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          minHeight: 54,
-          px: 2,
-          borderBottom: '1px solid rgba(44,26,14,.08)',
-          flex: '0 0 auto',
-        }}
-      >
-        <Typography id={titleId} sx={{ fontFamily: 'Jost, sans-serif', fontSize: 14, fontWeight: 700, color: 'var(--awm-bark)', letterSpacing: '.02em' }}>
-          Word definition
-        </Typography>
-        <IconButton
-          autoFocus={open}
-          onClick={onClose}
-          aria-label="Close word definition"
-          sx={{ width: 44, height: 44, color: 'var(--awm-bark)', bgcolor: 'rgba(44,26,14,.05)', '&:hover': { bgcolor: 'rgba(44,26,14,.09)' } }}
-        >
-          <CloseRounded />
-        </IconButton>
-      </Box>
       <Box
         sx={{
           minHeight: 0,
@@ -94,7 +87,7 @@ export default function MobileDefinitionSheet({
           overscrollBehavior: 'contain',
           WebkitOverflowScrolling: 'touch',
           px: { xs: 2.5, sm: 3.5 },
-          pt: 2.25,
+          pt: { xs: 1.75, sm: 2.25 },
           pb: 'calc(24px + env(safe-area-inset-bottom))',
         }}
       >

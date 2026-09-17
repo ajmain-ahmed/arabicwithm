@@ -332,6 +332,8 @@ export const fetchEpisodeForPublic = unstable_cache(
       const pooled = wordPool.get(poolKey)
       if (pooled) return pooled
       const lemma = typeof w.lemma === 'string' ? w.lemma.trim() : ''
+      const headword = typeof w.headword === 'string' ? w.headword.trim() : ''
+      const entryType: CartoonWordEntry['entry_type'] = w.entry_type === 'phrase' ? 'phrase' : 'word'
       const entry: CartoonWordEntry = {
         arabic,
         plain,
@@ -340,6 +342,8 @@ export const fetchEpisodeForPublic = unstable_cache(
         pos: typeof w.pos === 'string' ? w.pos : undefined,
         root: typeof w.root === 'string' ? w.root : undefined,
         lemma: lemma || arabic,
+        headword: headword || undefined,
+        entry_type: entryType,
       }
       const cefrRaw = typeof w.cefr === 'string' ? w.cefr.trim() : typeof w.CEFR === 'string' ? w.CEFR.trim() : ''
       if (cefrRaw) entry.cefr = cefrRaw.toLowerCase()

@@ -249,6 +249,7 @@ export interface CartoonWordEntry {
   pos?: string          // part of speech
   root?: string | null  // root letters (ف-ع-ل style)
   lemma?: string        // dictionary lemma (diacritized)
+  headword?: string     // dictionary lookup identity (unvocalised word or phrase ID)
   entry_type?: 'word' | 'phrase'
 }
 
@@ -282,8 +283,9 @@ export interface NewTranscriptToken {
   cefr?: string
   CEFR?: string
   pos: string
-  root: string | null
-  lemma: string
+  root?: string | null
+  lemma?: string
+  headword?: string | null
   arabic: string
   entry_type: 'word' | 'phrase'
   transliteration: string
@@ -299,6 +301,130 @@ export interface NewTranscriptBlock {
 export type NewTranscript = NewTranscriptBlock[]
 
 export type TranscriptFormat = 'legacy' | 'new'
+
+export const MAX_EPISODE_VOCABULARY_ITEMS = 30
+
+const VOCABULARY_POS_SCORES: Record<string, number> = {
+  phrase: 105,
+  idiom: 105,
+  verb: 90,
+  noun: 80,
+  adjective: 75,
+  adverb: 70,
+  numeral: 65,
+  number: 65,
+  word: 55,
+  interjection: 45,
+  pronoun: 42,
+  prep: 40,
+  preposition: 40,
+  conjunction: 38,
+  particle: 36,
+  determiner: 36,
+  proper_noun: 5,
+}
+
+const CEFR_VOCABULARY_SCORES: Record<string, number> = {
+  a1: 12,
+  a2: 10,
+  b1: 8,
+  b2: 6,
+  c1: 4,
+  c2: 2,
+}
+
+function cleanVocabularyArabic(value: string): string {
+  return value
+    .normalize('NFC')
+    .trim()
+    .replace(/^[^\p{Script_Extensions=Arabic}]+|[^\p{Script_Extensions=Arabic}]+$/gu, '')
+    .trim()
+}
+
+/** Selects a compact learning list without changing interactive transcript tokens. */
+export function selectLearningVocabulary(
+  blocks: NewTranscript,
+  limit = MAX_EPISODE_VOCABULARY_ITEMS,
+): VocabListItem[] {
+  interface Candidate {
+    key: string
+    firstIndex: number
+    occurrences: number
+    pos: string
+    cefr?: string
+    dictionaryMatched: boolean
+    phrase: boolean
+    item: Omit<VocabListItem, 'number'>
+  }
+
+  const candidates = new Map<string, Candidate>()
+  let tokenIndex = 0
+
+  for (const block of blocks) {
+    for (const token of block.tokens) {
+      const firstIndex = tokenIndex++
+      const arabic = cleanVocabularyArabic(token.arabic ?? '')
+      const english = token.english?.trim() ?? ''
+      const transliteration = token.transliteration?.trim() ?? ''
+      const pos = token.pos?.trim().toLowerCase() ?? ''
+      const entryType = token.entry_type === 'phrase' ? 'phrase' : 'word'
+      const headword = token.headword?.trim() ?? ''
+      const lemma = token.lemma?.trim() ?? ''
+      const cefr = (token.cefr ?? token.CEFR)?.trim().toLowerCase()
+      const dictionaryMatched = Boolean(headword)
+      const phrase = entryType === 'phrase' || pos === 'phrase' || pos === 'idiom'
+
+      if (!arabic || !/\p{Script=Arabic}/u.test(arabic) || !english || !transliteration) continue
+      if (!Object.hasOwn(VOCABULARY_POS_SCORES, pos)) continue
+      if (pos === 'word' && !dictionaryMatched) continue
+
+      // Most names are intentionally unmatched. Retain only dictionary-backed
+      // Arabic proper nouns whose gloss does not identify them as a name/title.
+      if (pos === 'proper_noun' && (
+        !dictionaryMatched
+        || /\b(name|title|surname|family name|character)\b/i.test(english)
+      )) continue
+
+      const fallbackIdentity = stripDiacritics(lemma || arabic).replace(/\s+/g, ' ').trim()
+      const lexicalIdentity = headword || fallbackIdentity
+      if (!lexicalIdentity) continue
+      const key = `${entryType}:${pos}:${lexicalIdentity}`
+      const existing = candidates.get(key)
+      if (existing) {
+        existing.occurrences += 1
+        continue
+      }
+
+      const item: Omit<VocabListItem, 'number'> = { arabic: lemma || arabic, transliteration, english }
+      if (cefr) item.cefr = cefr
+      candidates.set(key, {
+        key,
+        firstIndex,
+        occurrences: 1,
+        pos,
+        cefr,
+        dictionaryMatched,
+        phrase,
+        item,
+      })
+    }
+  }
+
+  const safeLimit = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : MAX_EPISODE_VOCABULARY_ITEMS
+  const score = (candidate: Candidate) => (
+    VOCABULARY_POS_SCORES[candidate.pos]
+    + (candidate.dictionaryMatched ? 12 : 0)
+    + (candidate.phrase ? 10 : 0)
+    + (CEFR_VOCABULARY_SCORES[candidate.cefr ?? ''] ?? 0)
+    + Math.min(candidate.occurrences * 4, 20)
+  )
+
+  return Array.from(candidates.values())
+    .sort((a, b) => score(b) - score(a) || a.firstIndex - b.firstIndex || a.key.localeCompare(b.key))
+    .slice(0, safeLimit)
+    .sort((a, b) => a.firstIndex - b.firstIndex)
+    .map((candidate, index) => ({ number: index + 1, ...candidate.item }))
+}
 
 export interface EpisodeFull extends EpisodeMeta {
   id: string
@@ -350,8 +476,6 @@ export function normalizeNewTranscript(
   blocks: NewTranscript
 ): { scriptBlocks: ScriptBlock[]; vocabList: VocabListItem[] } {
   const scriptBlocks: ScriptBlock[] = []
-  const seenVocab = new Map<string, VocabListItem>()
-  let vocabNumber = 1
 
   for (const block of blocks) {
     const words: CartoonWordEntry[] = []
@@ -365,19 +489,7 @@ export function normalizeNewTranscript(
       tokenDiacritics.push(diacritic)
       tokenPlains.push(plain)
 
-      // Build a lightweight vocab list keyed by lemma (dictionary form).
-      const lemma = token.lemma?.trim() || diacritic
       const tokenCefr = (token.cefr ?? token.CEFR)?.trim().toLowerCase()
-      if (!seenVocab.has(lemma)) {
-        const vocabItem: VocabListItem = {
-          number: vocabNumber++,
-          arabic: lemma,
-          transliteration: '', // new-format tokens carry surface-form transliterations
-          english: token.english ?? '',
-        }
-        if (tokenCefr) vocabItem.cefr = tokenCefr
-        seenVocab.set(lemma, vocabItem)
-      }
 
       const wordEntry: CartoonWordEntry = {
         arabic: diacritic,
@@ -386,6 +498,7 @@ export function normalizeNewTranscript(
         english: token.english ?? '',
         root: token.root ?? null,
         lemma: token.lemma?.trim() || diacritic,
+        headword: token.headword?.trim() || undefined,
         entry_type: token.entry_type,
         pos: token.pos?.trim() || 'unknown',
       }
@@ -404,5 +517,5 @@ export function normalizeNewTranscript(
     })
   }
 
-  return { scriptBlocks, vocabList: Array.from(seenVocab.values()) }
+  return { scriptBlocks, vocabList: selectLearningVocabulary(blocks) }
 }
