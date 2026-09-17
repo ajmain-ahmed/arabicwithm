@@ -18,11 +18,12 @@ import {
   TrendingDownRounded,
   TrendingUpRounded,
 } from '@mui/icons-material'
-import { Box, Button, Chip, CircularProgress, Container, LinearProgress, Skeleton, Typography, Paper } from '@mui/material'
+import { Box, Button, CircularProgress, Container, LinearProgress, Skeleton, Typography, Paper } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { fetchLearningActivity } from '@/app/actions/activity'
 import { fetchPremiumStatus } from '@/app/actions/premium'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
+import CefrChip from '@/app/components/CefrChip'
 import NewOnRow, { type CatalogueRowItem } from './NewOnRow'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
@@ -170,7 +171,7 @@ function BookCard({ book }: { book: PublicBook }) {
         <Box sx={{ mt: 'auto', pt: { xs: 1.25, sm: 1.75 }, display: { xs: 'none', sm: 'flex' }, alignItems: 'center', justifyContent: 'space-between', gap: 0.75 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', minWidth: 0 }}>
             {book.level && (
-              <Chip size="small" label={book.level} sx={{ height: { xs: 18, sm: 22 }, borderRadius: '9999px', fontSize: { xs: '0.6rem', sm: '0.7rem' }, fontWeight: 700, fontFamily: 'Jost, sans-serif', bgcolor: 'var(--awm-forest)', color: 'var(--awm-cream)' }} />
+              <CefrChip size="small" level={book.level} sx={{ height: { xs: 18, sm: 22 }, borderRadius: '9999px', fontSize: { xs: '0.6rem', sm: '0.7rem' } }} />
             )}
             <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.68rem', sm: '0.78rem' }, color: 'var(--awm-muted)' }}>
               {book.chapterCount} ch.
@@ -230,7 +231,7 @@ function ContentCard({ type, title, titleAr, description, level, href, image, im
         {titleAr && <Typography lang="ar" dir="rtl" sx={{ mt: 0.5, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 23, fontWeight: 700, color: 'var(--awm-bark)', textAlign: 'left' }}>{titleAr}</Typography>}
         <Typography sx={{ mt: titleAr ? 0 : 0.75, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, sm: 24 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>{title}</Typography>
         {description && <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 13, lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{description}</Typography>}
-        {level && <Chip size="small" label={level} sx={{ mt: 1.5, bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508', fontWeight: 700 }} />}
+        {level && <CefrChip size="small" level={level} sx={{ mt: 1.5 }} />}
         <Button component={Link} href={href} endIcon={<ArrowForward sx={{ fontSize: { xs: 17, sm: 20 } }} />} sx={{ display: 'flex', width: 'fit-content', mt: 1.5, px: 0, color: '#0e2e1f', fontWeight: 700, textTransform: 'none' }}>{actionLabel}</Button>
       </Box>
     </Paper>

@@ -2,18 +2,14 @@
 
 import React from 'react'
 import { Box, Typography, Chip } from '@mui/material'
-import { formatCefr, formatPos } from '@/app/lib/display'
+import CefrChip from '@/app/components/CefrChip'
+import { formatPos } from '@/app/lib/display'
+import { CEFR_LEVELS, CEFR_PALETTE } from '@/app/lib/cefr'
 import type { VocabEntry } from './index'
 
-export const LEVEL_COLORS: Record<string, string> = {
-  A0: '#5c8a6f',
-  A1: '#2d6a4f',
-  A2: '#40916c',
-  B1: '#b5861a',
-  B2: '#9c6b00',
-  C1: '#6d4c9e',
-  C2: '#4a2f7a',
-}
+export const LEVEL_COLORS: Record<string, string> = Object.fromEntries(
+  CEFR_LEVELS.map((level) => [level, CEFR_PALETTE[level].background]),
+)
 
 /* ─────────────────────────────────────────────
    WordTooltip — tooltip card content
@@ -53,16 +49,11 @@ export default function WordTooltip({
 
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, flexWrap: 'wrap' }}>
         {entry.cefr && (
-          <Chip
-            label={formatCefr(entry.cefr)}
+          <CefrChip
+            level={entry.cefr}
             size="small"
             sx={{
-              bgcolor: LEVEL_COLORS[formatCefr(entry.cefr)] ?? 'rgba(44,26,14,0.08)',
-              color: '#fff',
-              fontFamily: 'Jost, sans-serif',
-              fontWeight: 700,
               fontSize: `calc(0.7rem * ${textScale})`,
-              letterSpacing: '0.04em',
             }}
           />
         )}

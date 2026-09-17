@@ -29,6 +29,7 @@ import { errorMessage } from "@/app/lib/errors"
 import SearchField from "../components/SearchField"
 import ShowEditDialog from "../components/ShowEditDialog"
 import EpisodeEditDialog from "../components/EpisodeEditDialog"
+import CefrChip from "@/app/components/CefrChip"
 
 type ShowSortKey = keyof ShowRow
 type SortDir = "asc" | "desc"
@@ -310,7 +311,7 @@ export default function ShowsAdminPage() {
                           {show.title_ar}
                         </TableCell>
                         <TableCell sx={{ color: "#7a6e65" }}>{show.slug}</TableCell>
-                        <TableCell>{show.level}</TableCell>
+                        <TableCell>{show.level ? <CefrChip level={show.level} size="small" /> : "—"}</TableCell>
                         <TableCell>{show.category}</TableCell>
                         <TableCell align="right">
                           <IconButton
@@ -381,7 +382,7 @@ export default function ShowsAdminPage() {
                                               </Link>
                                             </TableCell>
                                             <TableCell sx={{ color: "#7a6e65" }}>{episode.slug}</TableCell>
-                                            <TableCell>{episode.level}</TableCell>
+                                            <TableCell>{episode.level ? <CefrChip level={episode.level} size="small" /> : "—"}</TableCell>
                                             <TableCell>{episode.tags.join(", ")}</TableCell>
                                             <TableCell>
                                               <Box sx={{ display: "flex", gap: 0.75, flexWrap: "wrap" }}>

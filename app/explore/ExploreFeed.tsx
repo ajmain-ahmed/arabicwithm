@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ArrowForward, ExploreOutlined, MenuBook, PlayCircleOutlineRounded, PsychologyOutlined, VolumeOff, VolumeUp } from '@mui/icons-material'
 import { Box, Button, Chip, CircularProgress, IconButton, Popover, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
 import { WordTooltip, HtmlTooltip, MobileDefinitionSheet, type VocabEntry } from '@/app/components/vocab-tooltip'
+import CefrChip from '@/app/components/CefrChip'
 import SocialVideoEmbed from '@/app/components/SocialVideoEmbed'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { getEpisodeVideoSources, getYouTubeThumbnailUrl, type ExploreEpisode, type VideoProvider } from '@/app/lib/cartoons'
@@ -374,7 +375,7 @@ function ExploreVideo({
       >
         <Box sx={{ px: 3, py: 2.5, borderBottom: '1px solid rgba(44,26,14,0.07)' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <Chip label={episode.level} size="small" sx={{ bgcolor: '#0e2e1f', color: '#fff', fontWeight: 700 }} />
+            <CefrChip level={episode.level} size="small" />
             {episode.tags.slice(0, 3).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.09)', color: '#8b6508' }} />)}
           </Box>
           {episode.description && <Typography sx={{ mt: 1.5, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 13.5, lineHeight: 1.55 }}>{episode.description}</Typography>}

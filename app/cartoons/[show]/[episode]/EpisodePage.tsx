@@ -37,7 +37,9 @@ import {
 } from '@/app/lib/cartoons'
 import { type ShowRow } from '@/app/actions/admin'
 import { fetchShowsForEpisodeEdit } from '@/app/actions/cartoons'
-import { HtmlTooltip, MobileDefinitionSheet, WordTooltip, LEVEL_COLORS } from '@/app/components/vocab-tooltip'
+import { HtmlTooltip, MobileDefinitionSheet, WordTooltip } from '@/app/components/vocab-tooltip'
+import CefrChip from '@/app/components/CefrChip'
+import { getCefrPalette } from '@/app/lib/cefr'
 import { SettingsDialog } from '@/app/components/settings-controls'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
 import { usePlayerStore } from '@/store/playerStore'
@@ -789,7 +791,7 @@ export default function EpisodePage({
             </Box>
 
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Box sx={{ background: LEVEL_COLORS[episode.level] ?? 'var(--forest)', color: '#fff', fontFamily: 'Jost, var(--font-sans)', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', px: 1.2, py: 0.4, borderRadius: '4px' }}>
+              <Box sx={{ background: getCefrPalette(episode.level).background, color: getCefrPalette(episode.level).foreground, fontFamily: 'Jost, var(--font-sans)', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', px: 1.2, py: 0.4, borderRadius: '4px' }}>
                 {episode.level}
               </Box>
               {episode.tags.map((tag) => (
@@ -1170,13 +1172,10 @@ export default function EpisodePage({
                       >
                         {/* CEFR chip */}
                         {row.cefr && (
-                          <Chip
-                            label={row.cefr}
+                          <CefrChip
+                            level={row.cefr}
                             size="small"
                             sx={{
-                              background: LEVEL_COLORS[row.cefr] ?? 'var(--forest)',
-                              color: '#fff',
-                              fontFamily: 'Jost, sans-serif',
                               fontWeight: 600,
                               fontSize: `calc(0.65rem * ${textScale})`,
                               minWidth: 40,

@@ -6,6 +6,7 @@ import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChaptersForBookPublic 
 import BookReadingCta from './BookReadingCta'
 import BookListRemovalButton from './BookListRemovalButton'
 import ChapterAccessLock, { PremiumChapterLink } from './ChapterAccessLock'
+import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 
 export const revalidate = false
@@ -69,7 +70,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                 </Typography>
               )}
               <Box sx={{ display: 'flex', gap: 1, mt: 2.5, flexWrap: 'wrap' }}>
-                {book.level && <Chip label={book.level} size="small" sx={{ bgcolor: '#6b8f5e', color: '#fff', fontWeight: 700 }} />}
+                {book.level && <CefrChip level={book.level} size="small" />}
                 {book.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />)}
               </Box>
               <Box sx={{ mt: 3 }}>

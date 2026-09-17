@@ -28,6 +28,7 @@ import { errorMessage } from "@/app/lib/errors"
 import SearchField from "../components/SearchField"
 import BookEditDialog from "../components/BookEditDialog"
 import ChapterEditDialog from "../components/ChapterEditDialog"
+import CefrChip from "@/app/components/CefrChip"
 
 type BookSortKey = keyof BookRow
 type SortDir = "asc" | "desc"
@@ -314,7 +315,7 @@ export default function BooksAdminPage() {
                           {book.title_ar}
                         </TableCell>
                         <TableCell sx={{ color: "#7a6e65" }}>{book.slug}</TableCell>
-                        <TableCell>{book.level}</TableCell>
+                        <TableCell>{book.level ? <CefrChip level={book.level} size="small" /> : "—"}</TableCell>
                         <TableCell>{book.category}</TableCell>
                         <TableCell align="right">
                           <IconButton

@@ -26,6 +26,8 @@ import {
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { removePracticeWord } from '@/app/actions/practice'
+import CefrChip from '@/app/components/CefrChip'
+import { getCefrPalette } from '@/app/lib/cefr'
 import { formatCefr, formatPos } from '@/app/lib/display'
 import { practiceCategoryFor, type PracticeCategory, type PracticeWord } from '@/app/lib/practice'
 import { supabase } from '@/app/lib/supabase/client'
@@ -208,15 +210,19 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
                 <span>All Levels</span><Chip label={words.length} size="small" sx={{ height: 22, fontSize: 11 }} />
               </Button>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.75 }}>
-                {CEFR_LEVELS.map((level) => (
-                  <Button
-                    key={level}
-                    onClick={() => setCefrFilter(level)}
-                    sx={{ minWidth: 0, justifyContent: 'space-between', color: cefrFilter === level ? '#0e2e1f' : '#7a6e65', bgcolor: cefrFilter === level ? 'rgba(184,134,11,0.12)' : 'transparent', border: '1px solid rgba(44,26,14,0.08)', textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: cefrFilter === level ? 700 : 500, px: 1, py: 0.75 }}
-                  >
-                    <span>{level}</span><Typography component="span" sx={{ fontSize: 11, color: 'inherit' }}>{cefrCounts[level]}</Typography>
-                  </Button>
-                ))}
+                {CEFR_LEVELS.map((level) => {
+                  const palette = getCefrPalette(level)
+                  const selected = cefrFilter === level
+                  return (
+                    <Button
+                      key={level}
+                      onClick={() => setCefrFilter(level)}
+                      sx={{ minWidth: 0, justifyContent: 'space-between', color: selected ? palette.foreground : palette.background, bgcolor: selected ? palette.background : palette.softBackground, border: `1px solid ${selected ? palette.background : palette.border}`, textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 700, px: 1, py: 0.75, '&:hover': { bgcolor: selected ? palette.background : palette.softBackground, filter: 'brightness(0.96)' } }}
+                    >
+                      <span>{level}</span><Typography component="span" sx={{ fontSize: 11, color: 'inherit' }}>{cefrCounts[level]}</Typography>
+                    </Button>
+                  )
+                })}
               </Box>
             </Paper>
           </Box>
@@ -240,7 +246,7 @@ export default function PracticePage({ authenticated, initialWords }: { authenti
                     <Typography sx={{ fontFamily: 'Jost, sans-serif', color: '#2c1a0e', textAlign: 'center', mt: 1.5 }}>{word.english || 'Definition unavailable'}</Typography>
                     <Box sx={{ display: 'flex', gap: 0.75, justifyContent: 'center', flexWrap: 'wrap', mt: 2 }}>
                       {word.pos && <Chip size="small" label={formatPos(word.pos)} sx={{ bgcolor: 'rgba(184,134,11,0.12)', color: '#966d09' }} />}
-                      {word.cefr && <Chip size="small" label={formatCefr(word.cefr)} variant="outlined" />}
+                      {word.cefr && <CefrChip size="small" level={word.cefr} />}
                     </Box>
                   </Paper>
                 ))}

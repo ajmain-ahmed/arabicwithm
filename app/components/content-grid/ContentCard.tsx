@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Box, Typography, Chip, Paper, Skeleton } from '@mui/material'
 import Link from 'next/link'
+import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 
 /* ── Palette ── */
@@ -11,13 +12,6 @@ const GOLD = 'var(--awm-gold)'
 const WARM_WHITE = 'var(--awm-cream-light)'
 const MUTED = 'var(--awm-muted)'
 const LABEL = 'var(--awm-muted-light)'
-
-const DIFFICULTY_COLORS: Record<string, string> = {
-  'A1-A2': '#6b8f5e',
-  'A2-B1': '#5a7d8c',
-  'B1-B2': '#c4904a',
-  'B2-C1': '#8a6a8a',
-}
 
 /* ═══════════════════════════════════════════════
    Content Card
@@ -77,7 +71,6 @@ export default function ContentCard({
   const [hovered, setHovered] = useState(false)
   const [imgLoading, setImgLoading] = useState(true)
   const [imgError, setImgError] = useState(false)
-  const badgeColor = DIFFICULTY_COLORS[level ?? ''] || MUTED
   const href = `${hrefPrefix}/${encodeURIComponent(slug)}`
   const allDisplayTags = Array.from(new Set([category, ...tags].filter((tag): tag is string => Boolean(tag?.trim()))))
   const displayTags = maxVisibleTags == null ? allDisplayTags : allDisplayTags.slice(0, maxVisibleTags)
@@ -250,18 +243,15 @@ export default function ContentCard({
         )}
         {/* Difficulty badge */}
         {level && (
-          <Chip
-            label={level}
+          <CefrChip
+            level={level}
             size="small"
             sx={{
               position: 'absolute',
               display: denseMobileTile || compactMobileRow ? { xs: 'none', sm: 'inline-flex' } : 'inline-flex',
               top: 8,
               right: 8,
-              backgroundColor: badgeColor,
-              color: '#fff',
               fontSize: 11,
-              fontWeight: 700,
               height: 24,
               borderRadius: '6px',
               '& .MuiChip-label': { px: 1.2, py: 0 },
@@ -327,17 +317,14 @@ export default function ContentCard({
         {/* Tags */}
         <Box sx={{ display: showTags ? (denseMobileTile ? { xs: 'none', sm: 'flex' } : 'flex') : 'none', gap: 1, mb: compactMobileRow ? { xs: 0.75, sm: 1.5 } : 1.5, flexWrap: 'wrap' }}>
           {level && compactMobileRow && (
-            <Chip
-              label={level}
+            <CefrChip
+              level={level}
               size="small"
               sx={{
                 display: { xs: 'inline-flex', sm: 'none' },
                 height: 21,
                 borderRadius: '9999px',
-                backgroundColor: badgeColor,
-                color: '#fff',
                 fontSize: 10,
-                fontWeight: 700,
                 '& .MuiChip-label': { px: 0.9 },
               }}
             />

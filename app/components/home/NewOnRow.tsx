@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Box, Chip, IconButton, Skeleton, Typography, useMediaQuery } from '@mui/material'
+import { Box, IconButton, Skeleton, Typography, useMediaQuery } from '@mui/material'
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'
+import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 
 /** Pixels per second. Shared by every slowly moving homepage showcase row. */
@@ -112,10 +113,10 @@ function RowTile({
             {item.title}
           </Typography>
           {item.level && (
-            <Chip
+            <CefrChip
               size="small"
-              label={item.level}
-              sx={{ flexShrink: 0, height: 20, fontSize: '0.68rem', bgcolor: 'rgba(212,168,67,0.92)', color: '#0e2e1f', fontWeight: 700, fontFamily: 'Jost, sans-serif' }}
+              level={item.level}
+              sx={{ flexShrink: 0, height: 20, fontSize: '0.68rem' }}
             />
           )}
         </Box>

@@ -11,7 +11,8 @@ import { Alert, Box, Button, Chip, Container, LinearProgress, Paper, Snackbar, T
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { markPracticeWordsSelected, ratePracticeWord } from '@/app/actions/practice'
-import { formatCefr, formatPos } from '@/app/lib/display'
+import CefrChip from '@/app/components/CefrChip'
+import { formatPos } from '@/app/lib/display'
 import type { PracticeRating, PracticeWord } from '@/app/lib/practice'
 
 const RATINGS: Array<{ value: PracticeRating; label: string; color: string }> = [
@@ -116,7 +117,7 @@ export default function PracticeSession({ authenticated, words }: { authenticate
               <Typography sx={{ fontFamily: 'var(--font-heading)', color: '#2c1a0e', fontSize: { xs: 28, md: 34 }, mt: 1 }}>{word.english || 'Definition unavailable'}</Typography>
               <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 2 }}>
                 {word.pos && <Chip label={formatPos(word.pos)} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.12)', color: '#966d09' }} />}
-                {word.cefr && <Chip label={formatCefr(word.cefr)} size="small" variant="outlined" />}
+                {word.cefr && <CefrChip level={word.cefr} size="small" />}
               </Box>
               <Typography sx={{ fontFamily: 'Jost, sans-serif', color: '#7a6e65', fontSize: 13, mt: 4, mb: 1.5 }}>How well did you know it?</Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, 1fr))' }, gap: 1 }}>

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Box, Chip, Container, Paper, Typography } from '@mui/material'
 import { AutoStories, ChevronRight } from '@mui/icons-material'
 import { fetchBooksForPublic } from '@/app/actions/books'
+import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 
 export const revalidate = false
@@ -85,7 +86,7 @@ export default async function BooksPage() {
                       {book.description}
                     </Typography>
                     <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 0.75, flexWrap: 'wrap', mb: 2, minHeight: 24 }}>
-                      {book.level && <Chip label={book.level} size="small" sx={{ bgcolor: '#6b8f5e', color: '#fff', fontWeight: 700 }} />}
+                      {book.level && <CefrChip level={book.level} size="small" />}
                       {book.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ display: { xs: 'none', sm: 'inline-flex' }, bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />)}
                     </Box>
                     <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: { xs: 0.6, sm: 1.5 }, borderTop: '1px solid rgba(44,26,14,0.07)' }}>
