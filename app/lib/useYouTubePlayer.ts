@@ -13,7 +13,17 @@ interface YTPlayer {
   pauseVideo(): void
   mute(): void
   unMute(): void
+  isMuted(): boolean
+  getVolume(): number
+  setVolume(volume: number): void
   destroy(): void
+}
+
+/* Volume at 0 is silent even when the mute flag is off (the user dragged
+   YouTube's own slider to zero), so treat it as muted everywhere. */
+function readEffectiveMuted(player: YTPlayer | null, fallback = false): boolean {
+  if (player?.isMuted == null && player?.getVolume == null) return fallback
+  return (player?.isMuted?.() ?? false) || (player?.getVolume?.() ?? 100) === 0
 }
 
 declare global {
@@ -85,6 +95,7 @@ export default function useYouTubePlayer(
   const startAtRef = useRef(startAt)
   const [isReady, setIsReady] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isMuted, setIsMuted] = useState(options.muted === true)
   const [autoplayBlocked, setAutoplayBlocked] = useState(false)
   const [errorCode, setErrorCode] = useState<number | null>(null)
   const [retryNonce, setRetryNonce] = useState(0)
@@ -171,6 +182,7 @@ export default function useYouTubePlayer(
               setErrorCode(null)
               setAutoplayBlocked(false)
               if (mutedRef.current) playerRef.current?.mute?.()
+              setIsMuted(readEffectiveMuted(playerRef.current, mutedRef.current))
               if (autoplay) playerRef.current?.playVideo?.()
               setIsReady(true)
               intervalRef.current = setInterval(() => {
@@ -211,6 +223,10 @@ export default function useYouTubePlayer(
               if (cancelled) return
               setIsPlaying(false)
               setAutoplayBlocked(true)
+            },
+            onVolumeChange: () => {
+              if (cancelled) return
+              setIsMuted(readEffectiveMuted(playerRef.current))
             },
           },
         })
@@ -295,16 +311,23 @@ export default function useYouTubePlayer(
 
   const mute = useCallback(() => {
     playerRef.current?.mute?.()
+    setIsMuted(true)
   }, [])
 
   const unMute = useCallback(() => {
     playerRef.current?.unMute?.()
+    setIsMuted(false)
   }, [])
 
   const playWithSound = useCallback(() => {
-    playerRef.current?.unMute?.()
-    playerRef.current?.playVideo?.()
+    const player = playerRef.current
+    player?.unMute?.()
+    // A volume of 0 stays silent even unmuted — bring it back so "sound on"
+    // actually means sound.
+    if ((player?.getVolume?.() ?? 100) === 0) player?.setVolume?.(100)
+    player?.playVideo?.()
     setAutoplayBlocked(false)
+    setIsMuted(false)
   }, [])
 
   const getCurrentTime = useCallback(() => {
@@ -330,6 +353,7 @@ export default function useYouTubePlayer(
     getCurrentTime,
     isReady,
     isPlaying,
+    isMuted,
     autoplayBlocked,
     errorCode,
     retry,

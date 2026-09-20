@@ -13,12 +13,15 @@ interface Options {
     onStateChange: (event: { data: number }) => void
     onError: (event: { data: number }) => void
     onAutoplayBlocked: () => void
+    onVolumeChange: () => void
   }
 }
 let options: Options
 let controls: ReturnType<typeof useYouTubePlayer>
 let root: Root
 let host: HTMLDivElement
+let playerMuted = true
+let playerVolume = 100
 const calls: string[] = []
 const destroy = vi.fn()
 const pause = vi.fn()
@@ -31,6 +34,8 @@ function Harness({ id }: { id?: string }) {
 beforeEach(() => {
   vi.useFakeTimers()
   calls.length = 0
+  playerMuted = true
+  playerVolume = 100
   vi.clearAllMocks()
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
@@ -41,8 +46,11 @@ beforeEach(() => {
       seekTo() {}
       playVideo() { calls.push('play') }
       pauseVideo = pause
-      mute() { calls.push('mute') }
-      unMute() { calls.push('unmute') }
+      mute() { calls.push('mute'); playerMuted = true }
+      unMute() { calls.push('unmute'); playerMuted = false }
+      isMuted() { return playerMuted }
+      getVolume() { return playerVolume }
+      setVolume(volume: number) { calls.push('setVolume'); playerVolume = volume }
       destroy = destroy
     },
     PlayerState: { ENDED: 0, PLAYING: 1 },
@@ -63,6 +71,35 @@ describe('YouTube player lifecycle', () => {
     expect(calls.slice(-2)).toEqual(['unmute', 'play'])
     await act(async () => options.events.onStateChange({ data: 1 }))
     expect(controls.isPlaying).toBe(true)
+  })
+  it('tracks mute state from native player controls via onVolumeChange', async () => {
+    await act(async () => { root.render(<Harness id="dQw4w9WgXcQ" />) })
+    await act(async () => { await vi.advanceTimersByTimeAsync(60) })
+    await act(async () => options.events.onReady())
+    expect(controls.isMuted).toBe(true)
+    // User raises volume with YouTube's own slider, which unmutes the player.
+    await act(async () => { playerMuted = false; options.events.onVolumeChange() })
+    expect(controls.isMuted).toBe(false)
+    // Hook-driven controls stay in sync too.
+    await act(async () => controls.mute())
+    expect(controls.isMuted).toBe(true)
+    await act(async () => controls.unMute())
+    expect(controls.isMuted).toBe(false)
+  })
+  it('treats a zeroed volume slider as muted and restores volume on playWithSound', async () => {
+    await act(async () => { root.render(<Harness id="dQw4w9WgXcQ" />) })
+    await act(async () => { await vi.advanceTimersByTimeAsync(60) })
+    await act(async () => options.events.onReady())
+    // User unmutes, then drags YouTube's volume slider down to 0.
+    await act(async () => { playerMuted = false; options.events.onVolumeChange() })
+    expect(controls.isMuted).toBe(false)
+    await act(async () => { playerVolume = 0; options.events.onVolumeChange() })
+    expect(controls.isMuted).toBe(true)
+    // "Turn sound on" must bring the volume back, not just clear the mute flag.
+    await act(async () => controls.playWithSound())
+    expect(calls).toContain('setVolume')
+    expect(playerVolume).toBe(100)
+    expect(controls.isMuted).toBe(false)
   })
   it('destroys the inactive video and initializes the newly selected source', async () => {
     await act(async () => root.render(<Harness id="dQw4w9WgXcQ" />))
