@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography, IconButton } from '@mui/material'
-import { AutoAwesome, CheckCircleRounded, Close } from '@mui/icons-material'
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
+import { AutoAwesome, CheckCircleRounded } from '@mui/icons-material'
 import { fetchPremiumStatus, managePremium, startPremiumCheckout } from '@/app/actions/premium'
 import type { PremiumStatus } from '@/app/actions/premium'
 import { useAuth } from '@/app/AuthContext'
@@ -31,8 +31,7 @@ export default function PremiumPrompt({ open, onClose, reason }: { open: boolean
   }
   if (!status || status.admin) return null
   return <Dialog open={open} onClose={busy ? undefined : onClose} maxWidth="sm" fullWidth aria-labelledby="premium-title" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: '24px', m: 2, width: 'calc(100% - 32px)', textAlign: 'center', border: '1px solid', borderColor: 'divider' } } }}>
-    <IconButton aria-label="Close AWM+ details" onClick={onClose} sx={{ position: 'absolute', right: 12, top: 12, color: 'text.secondary' }}><Close /></IconButton>
-    <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}><AutoAwesome sx={{ display: 'block', mx: 'auto', mb: 1, color: 'primary.main', fontSize: 34 }} />{premium ? 'AWM+ active' : 'Upgrade to AWM+'}</DialogTitle>
+    <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}>{premium ? 'AWM+ active' : 'Upgrade to AWM+'}</DialogTitle>
     <DialogContent sx={{ px: { xs: 2.5, sm: 4 } }}>
       <Typography color="text.secondary">More stories. More practice. Take your learning with you.</Typography>
       <Box sx={{ py: 3 }}><Typography sx={{ fontSize: 48, fontWeight: 700, letterSpacing: '-.04em', lineHeight: 1 }}>{new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(PREMIUM.monthlyPence / 100)}<Typography component="span" sx={{ ml: 1, fontSize: 16, color: 'text.secondary' }}>GBP / month</Typography></Typography></Box>
@@ -48,7 +47,7 @@ export default function PremiumPrompt({ open, onClose, reason }: { open: boolean
       <Typography variant="body2" sx={{ mt: 2 }}>£3.99 GBP, billed monthly as a recurring subscription. Cancel through Manage AWM+; access continues until the end of your paid period.</Typography>
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
     </DialogContent>
-    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}><Button onClick={onClose}>Close</Button><Button fullWidth sx={{ minHeight: 52, borderRadius: "12px" }} variant="contained" disabled={busy} onClick={() => void purchase()}>{premium ? 'Manage AWM+' : `Upgrade to AWM+ — ${PREMIUM.label}`}</Button></DialogActions>
+    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}><Button fullWidth sx={{ minHeight: 52, borderRadius: "12px" }} variant="contained" disabled={busy} onClick={() => void purchase()}>{premium ? 'Manage AWM+' : `Upgrade to AWM+ — ${PREMIUM.label}`}</Button></DialogActions>
   </Dialog>
 }
 export function PremiumSection() {
