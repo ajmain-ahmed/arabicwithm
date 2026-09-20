@@ -188,9 +188,7 @@ function ExploreVideo({
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
   const [soundAllowed, setSoundAllowed] = useState(false)
-  const [playRequestedFor, setPlayRequestedFor] = useState<string | null>(null)
   const source = sources.find((candidate) => candidate.provider === selectedProvider) ?? sources[0]
-  const activeSourceKey = active && source ? `${source.provider}:${source.id}` : null
   const isYouTube = source?.provider === 'youtube'
   const {
     wrapRef,
@@ -218,20 +216,19 @@ function ExploreVideo({
 
   useEffect(() => {
     if (!isReady) return
-    if (!active || playRequestedFor !== activeSourceKey) {
+    if (!active) {
       pauseVideo()
       return
     }
     if (soundEnabled && soundAllowed) unMute()
     else mute()
     playVideo()
-  }, [active, activeSourceKey, isReady, mute, pauseVideo, playRequestedFor, playVideo, soundAllowed, soundEnabled, unMute])
+  }, [active, isReady, mute, pauseVideo, playVideo, soundAllowed, soundEnabled, unMute])
 
   const toggleSound = () => {
     if (soundMuted) {
       setSoundAllowed(true)
       setExploreSoundPreference(true)
-      setPlayRequestedFor(activeSourceKey)
       playWithSound()
     } else {
       setSoundAllowed(false)
@@ -256,24 +253,39 @@ function ExploreVideo({
         sx={{
           position: 'relative',
           width: '100%',
-          maxWidth: 'none',
           height: { xs: 'calc(100% - env(safe-area-inset-bottom))', md: '100%' },
           maxHeight: '100%',
-          aspectRatio: 'auto',
-          mx: 'auto',
           minHeight: 0,
-          overflow: 'hidden',
-          borderRadius: { xs: 0, md: '18px' },
-          bgcolor: '#090909',
-          boxShadow: { xs: 'none', md: '0 22px 60px rgba(14,46,31,0.24)' },
+          /* Clears the fixed navbar; the transcript panel does the same. */
+          pt: { xs: 'calc(56px + env(safe-area-inset-top))', md: 'calc(64px + env(safe-area-inset-top))' },
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
+        {/* 9:16 frame sized to the tighter of column width or available
+            height (container units), so the player never letterboxes. */}
+        <Box sx={{ flex: 1, minHeight: 0, display: 'grid', placeItems: 'center', containerType: 'size' }}>
+        <Box
+          sx={{
+            position: 'relative',
+            width: '100%',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            aspectRatio: '9 / 16',
+            /* Older browsers: full width, minor letterboxing on tall screens. */
+            '@supports (width: 1cqh)': { width: 'min(100%, 56.25cqh)' },
+            overflow: 'hidden',
+            borderRadius: { xs: 0, md: '18px' },
+            boxShadow: { xs: 'none', md: '0 22px 60px rgba(14,46,31,0.24)' },
+          }}
+        >
         {!active && episode.cover && (
           <Box
             component="img"
             src={episode.cover ?? getYouTubeThumbnailUrl(episode.youtubeId) ?? ''}
             alt=""
-            sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.72, ...thumbnailCropCss(episode.coverCrop) }}
+            sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 1, ...thumbnailCropCss(episode.coverCrop) }}
           />
         )}
         {active && source?.provider !== 'youtube' && source && (
@@ -341,9 +353,6 @@ function ExploreVideo({
             </IconButton>
           </Tooltip>
         </Box>
-        {active && isYouTube && isReady && !isPlaying && errorCode == null && (
-          <Button onClick={() => { setPlayRequestedFor(activeSourceKey); if (soundEnabled) { setSoundAllowed(true); playWithSound() } else { mute(); playVideo() } }} startIcon={<PlayCircleOutlineRounded />} sx={{ position: 'absolute', zIndex: 4, top: '50%', left: '50%', transform: 'translate(-50%,-50%)', bgcolor: 'background.paper', color: 'text.primary', borderRadius: '9999px', minHeight: 44 }}>Play video</Button>
-        )}
         {errorCode != null && isYouTube && (
           <Box sx={{ position: 'absolute', zIndex: 5, inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 3 }}>
             <Box sx={{ textAlign: 'center', color: '#fff' }}>
@@ -355,6 +364,8 @@ function ExploreVideo({
             </Box>
           </Box>
         )}
+        </Box>
+        </Box>
       </Box>
 
       <Box
@@ -690,7 +701,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
             px: { xs: 0, md: 3, lg: 5 },
             py: { xs: 0, md: 3 },
             position: 'relative',
-            bgcolor: item.kind === 'video' ? '#090909' : 'var(--awm-cream-light)',
+            bgcolor: 'var(--awm-cream-light)',
           }}
         >
           {item.kind === 'video' ? (
