@@ -194,6 +194,7 @@ function ExploreVideo({
     wrapRef,
     isReady,
     isPlaying,
+    isMuted,
     playVideo,
     pauseVideo,
     mute,
@@ -206,7 +207,9 @@ function ExploreVideo({
     undefined,
     { autoplay: false, muted: !soundEnabled || !soundAllowed, onEnded }
   )
-  const soundMuted = !soundEnabled || !soundAllowed
+  /* The player is the source of truth once ready: the user can also unmute
+     or change volume with YouTube's own controls, which fire onVolumeChange. */
+  const soundMuted = isReady ? isMuted : !soundEnabled || !soundAllowed
 
   useEffect(() => {
     if (!active) return
@@ -246,6 +249,27 @@ function ExploreVideo({
     }
     return result
   }, [currentTime, episode.transcriptLines])
+
+  /* Keep the highlighted line in view. Unlike the episode page's
+     scrollIntoView, this scrolls the transcript container itself — an
+     ancestor scroll would fight the feed's scroll snapping. */
+  const transcriptBodyRef = useRef<HTMLDivElement | null>(null)
+  const activeLineRef = useRef<HTMLDivElement | null>(null)
+  const skipInitialLineScroll = useRef(true)
+  useEffect(() => {
+    if (activeLine < 0) return
+    if (skipInitialLineScroll.current) {
+      skipInitialLineScroll.current = false
+      return
+    }
+    const container = transcriptBodyRef.current
+    const line = activeLineRef.current
+    if (!container || !line || container.getBoundingClientRect().height === 0) return
+    const containerRect = container.getBoundingClientRect()
+    const lineRect = line.getBoundingClientRect()
+    const top = container.scrollTop + (lineRect.top - containerRect.top) - (container.clientHeight - lineRect.height) / 2
+    container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
+  }, [activeLine])
 
   return (
     <>
@@ -392,10 +416,11 @@ function ExploreVideo({
           {episode.description && <Typography sx={{ mt: 1.5, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 13.5, lineHeight: 1.55 }}>{episode.description}</Typography>}
         </Box>
 
-        <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 2.5, py: 2 }}>
+        <Box ref={transcriptBodyRef} sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 2.5, py: 2 }}>
           {episode.transcriptLines.map((line, index) => (
             <Box
               key={`${line.timestamp ?? 'line'}-${index}`}
+              ref={index === activeLine ? activeLineRef : undefined}
               sx={{
                 px: 1.5,
                 py: 1.2,
