@@ -235,6 +235,78 @@ export const fetchEpisodesForShowPublic = unstable_cache(
   { revalidate: false, tags: ["cartoons-public"] }
 )
 
+/* ── Every episode in a single query (watch catalogue home). Page code
+     groups by show, avoiding one round trip per show. ── */
+export const fetchAllEpisodesForPublic = unstable_cache(
+  async (): Promise<(EpisodeMeta & { showId: string })[]> => {
+    if (!hasServiceClientConfig()) {
+      console.warn("[fetchAllEpisodesForPublic] Supabase service client not configured")
+      return []
+    }
+
+    const withSocialAndCrop = await serviceClient
+      .from("episodes")
+      .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
+      .order("created_at", { ascending: false })
+
+    const withSocial = isMissingCoverCropColumn(withSocialAndCrop.error)
+      ? await serviceClient
+          .from("episodes")
+          .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, created_at")
+          .order("created_at", { ascending: false })
+      : withSocialAndCrop
+    const fallback = isMissingSocialVideoColumn(withSocial.error)
+      ? await serviceClient
+          .from("episodes")
+          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, cover_crop, created_at")
+          .order("created_at", { ascending: false })
+      : null
+    const data = (fallback?.data ?? withSocial.data) as unknown as Record<string, unknown>[] | null
+    const error = fallback ? fallback.error : withSocial.error
+
+    if (error) {
+      console.error("[fetchAllEpisodesForPublic] error:", error.message)
+      throw new Error(error.message)
+    }
+
+    return (data ?? []).map((row) => ({ ...mapEpisodeRow(row), showId: String(row.show_id) }))
+  },
+  ["cartoons", "all-episodes", "public", "catalogue-storage-covers-v3"],
+  { revalidate: false, tags: ["cartoons-public"] }
+)
+
+/* ── Shuffle: picks from the full filtered catalogue server-side, since
+     the watch page now only receives the current page's slice. ── */
+export async function pickRandomEpisodeForWatch(filters: {
+  category?: string
+  level?: string
+  additionalTag?: string
+}): Promise<{ showSlug: string; slug: string } | null> {
+  const [shows, allEpisodes] = await Promise.all([
+    fetchShowsForPublic(),
+    fetchAllEpisodesForPublic(),
+  ])
+  const showById = new Map(shows.map((show) => [show.id, show]))
+  const showCategoryBySlug = new Map<string, string>()
+  for (const show of shows) {
+    const category = canonicalizeCartoonCategory(show.category)
+    if (category) showCategoryBySlug.set(show.slug, category)
+  }
+  const category = filters.category?.trim() ?? ""
+  const level = filters.level?.trim() ?? ""
+  const additionalTag = filters.additionalTag?.trim().toLowerCase() ?? ""
+  const pool = allEpisodes.flatMap((episode) => {
+    const show = showById.get(episode.showId)
+    if (!show) return []
+    if (category && category !== "All Categories" && showCategoryBySlug.get(show.slug) !== category) return []
+    if (level && episode.level !== level) return []
+    if (additionalTag && !episode.tags.some((tag) => tag.toLowerCase() === additionalTag)) return []
+    return [{ showSlug: show.slug, slug: episode.slug }]
+  })
+  if (pool.length === 0) return null
+  return pool[Math.floor(Math.random() * pool.length)]
+}
+
 export const fetchEpisodeForPublic = unstable_cache(
   async (
     showSlug: string,

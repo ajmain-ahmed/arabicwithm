@@ -1,8 +1,8 @@
 'use client'
 import { Shuffle } from '@mui/icons-material'
 
-import { useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   Box,
   Breadcrumbs,
@@ -10,6 +10,8 @@ import {
   Container,
   Drawer,
   IconButton,
+  Pagination,
+  Skeleton,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
@@ -26,9 +28,11 @@ import {
   VideoLibrary,
 } from '@mui/icons-material'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
+import { WATCH_LEVELS } from '@/app/lib/cartoons'
 import { ContentCard, FilterSidebar } from '@/app/components/content-grid'
 import ShowEditDialog from './components/ShowEditDialog'
 import { deleteShow } from '@/app/actions/admin'
+import { pickRandomEpisodeForWatch } from '@/app/actions/cartoons'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
 import { errorMessage } from '@/app/lib/errors'
 
@@ -36,7 +40,6 @@ const BARK = 'var(--awm-bark)'
 const GOLD = 'var(--awm-gold)'
 const WARM_WHITE = 'var(--awm-cream-light)'
 const MUTED = 'var(--awm-muted)'
-const LEVELS = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'A1-A2', 'A2-B1', 'B1-B2', 'B2-C1']
 
 export interface WatchEpisode extends EpisodeMeta {
   showId: string
@@ -48,62 +51,145 @@ export interface WatchEpisode extends EpisodeMeta {
 type WatchView = 'episodes' | 'shows'
 type WatchControl = WatchView | 'shuffle'
 
+export interface WatchFilters {
+  category: string
+  level: string
+  additionalTag: string
+}
+
+export function CartoonsPageSkeleton() {
+  return (
+    <Box
+      component="main"
+      sx={{
+        minHeight: { xs: 'calc(100vh - 56px)', md: '100vh' },
+        '@supports (height: 100dvh)': { minHeight: { xs: 'calc(100dvh - 56px)', md: '100dvh' } },
+        bgcolor: WARM_WHITE,
+        pb: { xs: 2, md: 8 },
+      }}
+    >
+      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
+        <Box sx={{ display: { xs: 'none', md: 'block' }, mb: 2 }}>
+          <Skeleton width={140} />
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5, mb: { xs: 1.5, md: 3 } }}>
+          <Skeleton variant="rounded" width={360} height={44} sx={{ borderRadius: '9999px', maxWidth: '60%' }} />
+          <Skeleton variant="rounded" width={110} height={44} sx={{ display: { xs: 'none', md: 'block' } }} />
+        </Box>
+        <Box sx={{ display: 'flex', gap: { md: 4, lg: 5 } }}>
+          <Box sx={{ width: 240, flexShrink: 0, display: { xs: 'none', md: 'block' } }}>
+            <Box sx={{ position: 'sticky', top: 100, display: 'grid', gap: 1.75, pt: 0.5 }}>
+              {Array.from({ length: 9 }).map((_, index) => (
+                <Skeleton key={index} height={32} />
+              ))}
+            </Box>
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Skeleton sx={{ display: { xs: 'none', md: 'block' }, mb: 2, ml: 'auto' }} width={90} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.75, sm: 1 } }}>
+              {Array.from({ length: 12 }).map((_, index) => (
+                <Skeleton key={index} variant="rectangular" sx={{ aspectRatio: '4 / 5', borderRadius: '4px', bgcolor: 'rgba(44,26,14,0.08)' }} />
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      </Container>
+    </Box>
+  )
+}
+
 export default function CartoonsPage({
   shows,
   episodes,
-  episodesMap,
-  showCategories,
   showAdditionalTags,
+  episodeCounts,
   availableCategories,
   availableAdditionalTags,
+  filters,
+  page,
+  episodePageCount,
+  showPageCount,
+  totalEpisodes,
+  totalShows,
 }: {
   shows: ShowMeta[]
   episodes: WatchEpisode[]
-  episodesMap: Record<string, string[]>
-  showCategories: Record<string, string>
   showAdditionalTags: Record<string, string[]>
+  episodeCounts: Record<string, number>
   availableCategories: string[]
   availableAdditionalTags: string[]
+  filters: WatchFilters
+  page: number
+  episodePageCount: number
+  showPageCount: number
+  totalEpisodes: number
+  totalShows: number
 }) {
   const isAdmin = useIsAdmin()
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [view, setView] = useState<WatchView>('episodes')
-  const [activeCategory, setActiveCategory] = useState('All Categories')
-  const [activeAdditionalTag, setActiveAdditionalTag] = useState('')
-  const [activeLevel, setActiveLevel] = useState('')
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingShow, setEditingShow] = useState<ShowMeta | undefined>()
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [shuffleBusy, setShuffleBusy] = useState(false)
 
-  const filteredEpisodes = useMemo(() => episodes.filter((episode) => {
-    const categoryMatches = activeCategory === 'All Categories' || episode.showCategory === activeCategory
-    const tagMatches = !activeAdditionalTag || episode.tags.some((tag) => tag.toLowerCase() === activeAdditionalTag.toLowerCase())
-    const levelMatches = !activeLevel || episode.level === activeLevel
-    return categoryMatches && tagMatches && levelMatches
-  }), [activeAdditionalTag, activeCategory, activeLevel, episodes])
+  const activeCategory = filters.category || 'All Categories'
+  const activeAdditionalTag = filters.additionalTag
+  const activeLevel = filters.level
 
-  const filteredShows = useMemo(() => shows.filter((show) => {
-    const categoryMatches = activeCategory === 'All Categories' || showCategories[show.slug] === activeCategory
-    const tagMatches = !activeAdditionalTag || (showAdditionalTags[show.slug] ?? []).some((tag) => tag.toLowerCase() === activeAdditionalTag.toLowerCase())
-    const levelMatches = !activeLevel || show.level === activeLevel
-    return categoryMatches && tagMatches && levelMatches
-  }), [activeAdditionalTag, activeCategory, activeLevel, showAdditionalTags, showCategories, shows])
-
-  const visibleItems = view === 'episodes' ? filteredEpisodes : filteredShows
-  const activeFilterCount = (activeCategory !== 'All Categories' ? 1 : 0) + (activeAdditionalTag ? 1 : 0) + (activeLevel ? 1 : 0)
-
-  const resetFilters = () => {
-    setActiveCategory('All Categories')
-    setActiveAdditionalTag('')
-    setActiveLevel('')
+  /* Filter changes reset pagination and sync to the URL, so the server can
+     slice the matching page. */
+  const updateFilters = (mutate: (params: URLSearchParams) => void) => {
+    const params = new URLSearchParams(searchParams.toString())
+    mutate(params)
+    params.delete('page')
+    const query = params.toString()
+    router.push(query ? `${pathname}?${query}` : pathname)
   }
+  const setActiveCategory = (category: string) => updateFilters((params) => {
+    if (!category || category === 'All Categories') params.delete('category')
+    else params.set('category', category)
+  })
+  const setActiveAdditionalTag = (tag: string) => updateFilters((params) => {
+    if (!tag) params.delete('additionalTag')
+    else params.set('additionalTag', tag)
+  })
+  const setActiveLevel = (level: string) => updateFilters((params) => {
+    if (!level) params.delete('level')
+    else params.set('level', level)
+  })
+  const goToPage = (nextPage: number) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (nextPage <= 1) params.delete('page')
+    else params.set('page', String(nextPage))
+    const query = params.toString()
+    router.push(query ? `${pathname}?${query}` : pathname)
+  }
+  const resetFilters = () => router.push(pathname)
 
-  const goToRandomEpisode = () => {
-    const pool = filteredEpisodes.length > 0 ? filteredEpisodes : episodes
-    if (pool.length === 0) return
-    const episode = pool[Math.floor(Math.random() * pool.length)]
-    router.push(`/cartoons/${episode.showSlug}/${episode.slug}`)
+  const visibleItems = view === 'episodes' ? episodes : shows
+  const pageCount = view === 'episodes' ? episodePageCount : showPageCount
+  const totalItems = view === 'episodes' ? totalEpisodes : totalShows
+  const activeFilterCount = (filters.category ? 1 : 0) + (filters.additionalTag ? 1 : 0) + (filters.level ? 1 : 0)
+
+  const goToRandomEpisode = async () => {
+    if (totalEpisodes === 0 || shuffleBusy) return
+    setShuffleBusy(true)
+    try {
+      const target = await pickRandomEpisodeForWatch({
+        category: activeCategory,
+        level: activeLevel,
+        additionalTag: activeAdditionalTag,
+      })
+      if (target) router.push(`/cartoons/${target.showSlug}/${target.slug}`)
+    } catch (error: unknown) {
+      alert(errorMessage(error) ?? 'Failed to pick a random episode')
+    } finally {
+      setShuffleBusy(false)
+    }
   }
 
   const handleDeleteShow = async (id: string) => {
@@ -119,10 +205,10 @@ export default function CartoonsPage({
     }
   }
 
-  const filters = (
+  const filtersPanel = (
     <FilterSidebar
       categories={availableCategories}
-      levels={LEVELS}
+      levels={WATCH_LEVELS}
       additionalTags={availableAdditionalTags}
       activeCategory={activeCategory}
       setActiveCategory={setActiveCategory}
@@ -156,7 +242,7 @@ export default function CartoonsPage({
             exclusive
             value={view}
             onChange={(_, nextControl: WatchControl | null) => {
-              if (nextControl === 'shuffle') goToRandomEpisode()
+              if (nextControl === 'shuffle') void goToRandomEpisode()
               else if (nextControl) setView(nextControl)
             }}
             aria-label="Watch catalogue view"
@@ -192,7 +278,7 @@ export default function CartoonsPage({
               <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Shows</Box>
               <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>All Shows</Box>
             </ToggleButton>
-            <ToggleButton value="shuffle" aria-label="Open a random episode" title="Random episode" disabled={episodes.length === 0}><Shuffle sx={{ display: { xs: 'none', sm: 'inline-flex' }, mr: 0.75, fontSize: 19 }} />Shuffle</ToggleButton>
+            <ToggleButton value="shuffle" aria-label="Open a random episode" title="Random episode" disabled={totalEpisodes === 0 || shuffleBusy}><Shuffle sx={{ display: { xs: 'none', sm: 'inline-flex' }, mr: 0.75, fontSize: 19 }} />Shuffle</ToggleButton>
           </ToggleButtonGroup>
           </Box>
 
@@ -200,18 +286,18 @@ export default function CartoonsPage({
             <Button startIcon={<Tune />} onClick={() => setFilterDrawerOpen(true)} sx={{ display: { xs: 'inline-flex', md: 'none' }, minHeight: 42, px: 2, borderRadius: '8px', color: BARK, border: '1px solid rgba(44,26,14,.15)', textTransform: 'none' }}>
               Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
             </Button>
-            {activeFilterCount > 0 && <Button onClick={() => { resetFilters(); const url = new URL(window.location.href); ['category','level','tag','tags','additionalTag'].forEach(key => url.searchParams.delete(key)); window.history.replaceState(null, '', url.pathname + url.search) }} sx={{ minHeight: 44 }}>Clear all</Button>}
+            {activeFilterCount > 0 && <Button onClick={resetFilters} sx={{ minHeight: 44 }}>Clear all</Button>}
           </Box>
         </Box>
 
         <Box sx={{ display: 'flex', gap: { md: 4, lg: 5 } }}>
           <Box sx={{ width: 240, flexShrink: 0, display: { xs: 'none', md: 'block' } }}>
-            <Box sx={{ position: 'sticky', top: 100 }}>{filters}</Box>
+            <Box sx={{ position: 'sticky', top: 100 }}>{filtersPanel}</Box>
           </Box>
 
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography sx={{ display: { xs: 'none', md: 'block' }, mb: 2, color: MUTED, textAlign: 'right', fontSize: 13 }}>
-              {visibleItems.length} {view === 'episodes' ? 'episodes' : 'shows'}
+              {totalItems} {view === 'episodes' ? 'episodes' : 'shows'}
             </Typography>
 
             <ShowEditDialog open={dialogOpen} show={editingShow} onClose={() => setDialogOpen(false)} onSaved={() => { setDialogOpen(false); router.refresh() }} />
@@ -223,7 +309,7 @@ export default function CartoonsPage({
               </Box>
             ) : view === 'episodes' ? (
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.75, sm: 1 } }}>
-                {filteredEpisodes.map((episode) => (
+                {episodes.map((episode) => (
                   <ContentCard
                     key={episode.id}
                     slug={episode.slug}
@@ -248,7 +334,7 @@ export default function CartoonsPage({
               </Box>
             ) : (
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.75, sm: 1 } }}>
-                {filteredShows.map((show) => (
+                {shows.map((show) => (
                   <Box key={show.id} sx={{ position: 'relative', minWidth: 0 }}>
                     {isAdmin && (
                       <Box sx={{ position: 'absolute', zIndex: 2, top: 8, left: 8, display: { xs: 'none', sm: 'flex' }, gap: 0.5 }}>
@@ -274,10 +360,39 @@ export default function CartoonsPage({
                       mobileAspectRatio="4 / 5"
                       mobileImagePosition="center"
                       overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
-                      metaItems={[{ icon: <School sx={{ fontSize: 14, color: 'var(--awm-muted-light)' }} />, label: `${episodesMap[show.slug]?.length ?? 0} episodes` }]}
+                      metaItems={[{ icon: <School sx={{ fontSize: 14, color: 'var(--awm-muted-light)' }} />, label: `${episodeCounts[show.slug] ?? 0} episodes` }]}
                     />
                   </Box>
                 ))}
+              </Box>
+            )}
+
+            {pageCount > 1 && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: { xs: 3, md: 5 } }}>
+                <Pagination
+                  count={pageCount}
+                  page={page}
+                  onChange={(_, nextPage) => goToPage(nextPage)}
+                  shape="rounded"
+                  siblingCount={1}
+                  boundaryCount={1}
+                  sx={{
+                    '& .MuiPaginationItem-root': {
+                      fontFamily: 'Jost, sans-serif',
+                      fontWeight: 600,
+                      color: MUTED,
+                      border: '1px solid rgba(44,26,14,0.12)',
+                      borderRadius: '8px',
+                      '&:hover': { bgcolor: 'rgba(184,134,11,0.08)' },
+                    },
+                    '& .MuiPaginationItem-root.Mui-selected': {
+                      bgcolor: '#0e2e1f',
+                      color: '#fff',
+                      borderColor: '#0e2e1f',
+                      '&:hover': { bgcolor: '#173f2d' },
+                    },
+                  }}
+                />
               </Box>
             )}
           </Box>
@@ -289,7 +404,7 @@ export default function CartoonsPage({
           <Typography sx={{ color: BARK, fontFamily: 'var(--font-heading)', fontSize: 22 }}>Filters</Typography>
           <IconButton onClick={() => setFilterDrawerOpen(false)} aria-label="Close filters"><Close /></IconButton>
         </Box>
-        {filters}
+        {filtersPanel}
       </Drawer>
     </Box>
   )

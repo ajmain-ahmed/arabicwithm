@@ -38,6 +38,10 @@ export interface EpisodeMeta {
 
 export type VideoProvider = 'youtube' | 'instagram' | 'tiktok' | 'facebook'
 
+/* CEFR level options for the watch catalogue filter. Lives here (not in a
+   client component) so server code can validate filter params against it. */
+export const WATCH_LEVELS = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'A1-A2', 'A2-B1', 'B1-B2', 'B2-C1']
+
 export interface EpisodeVideoSource {
   provider: VideoProvider
   id: string
