@@ -24,7 +24,7 @@ import {
   IconButton,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ArrowBack, Settings, ExpandMore, ExpandLess, ChevronRight, Fullscreen, PsychologyOutlined, Refresh } from '@mui/icons-material'
+import { Settings, ExpandMore, ExpandLess, ChevronRight, Fullscreen, PsychologyOutlined, Refresh } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
@@ -39,7 +39,6 @@ import { type ShowRow } from '@/app/actions/admin'
 import { fetchShowsForEpisodeEdit } from '@/app/actions/cartoons'
 import { HtmlTooltip, MobileDefinitionSheet, WordTooltip } from '@/app/components/vocab-tooltip'
 import CefrChip from '@/app/components/CefrChip'
-import { getCefrPalette } from '@/app/lib/cefr'
 import { SettingsDialog } from '@/app/components/settings-controls'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
 import { usePlayerStore } from '@/store/playerStore'
@@ -756,61 +755,27 @@ export default function EpisodePage({
           <Box
             sx={{
               display: { xs: 'none', md: 'flex' },
-              position: { md: 'sticky' },
-              top: { md: 84 },
+              /* The column stretches to the transcript's height so the
+                 sticky player inside it never hits its bottom boundary
+                 (which is what pushed the video up under the navbar). */
+              alignSelf: 'stretch',
               flexDirection: 'column',
               gap: 2.5,
               px: 0,
               pt: 0,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-              <Typography
-                component="h1"
-                sx={{
-                  flex: 1,
-                  minWidth: 0,
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: '2rem',
-                  fontWeight: 600,
-                  color: 'var(--bark)',
-                  lineHeight: 1.15,
-                }}
-              >
-                {episode.title}
-              </Typography>
-              <SettingsButton onClick={openSettings} />
-              <Button
-                onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
-                size="small"
-                startIcon={<PsychologyOutlined sx={{ fontSize: 18 }} />}
-                sx={{ color: 'var(--awm-forest)', border: '1px solid color-mix(in srgb, var(--awm-forest) 28%, transparent)', borderRadius: '8px', textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 700, '&:hover': { bgcolor: 'color-mix(in srgb, var(--awm-forest) 7%, transparent)' } }}
-              >
-                Memory
-              </Button>
-            </Box>
-
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Box sx={{ background: getCefrPalette(episode.level).background, color: getCefrPalette(episode.level).foreground, fontFamily: 'Jost, var(--font-sans)', fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', px: 1.2, py: 0.4, borderRadius: '4px' }}>
-                {episode.level}
-              </Box>
-              {episode.tags.map((tag) => (
-                <Box key={tag} sx={{ fontFamily: 'Jost, var(--font-sans)', fontSize: '0.68rem', color: 'var(--muted)', border: '1px solid rgba(122,110,101,0.25)', px: 1, py: 0.2, borderRadius: '3px' }}>
-                  {tag}
-                </Box>
-              ))}
-            </Box>
-
             <Box
               sx={{
-                order: { md: -1 },
+                position: { md: 'sticky' },
+                top: { md: 84 },
                 width: '100%',
                 borderRadius: '16px',
                 overflow: 'hidden',
                 boxShadow: '0 12px 40px rgba(44,26,14,0.18)',
                 background: '#000',
                 height: 'min(76dvh, 760px)',
-                position: 'relative',
+                flexShrink: 0,
               }}
             >
               {selectedSource?.provider !== 'youtube' && selectedSource ? (
@@ -829,34 +794,29 @@ export default function EpisodePage({
                   </Box>
                 </Box>
               )}
+              {videoSources.length > 1 && (
+                <Box sx={{ position: 'absolute', zIndex: 5, bottom: 14, left: 14, right: 76, display: 'flex', gap: 0.65, flexWrap: 'wrap' }}>
+                  {videoSources.map((source) => (
+                    <Chip
+                      key={source.provider}
+                      label={source.label}
+                      clickable
+                      onClick={() => setSelectedProvider(source.provider)}
+                      size="small"
+                      sx={{
+                        height: 27,
+                        bgcolor: source.provider === selectedSource?.provider ? '#d4a843' : 'rgba(0,0,0,0.62)',
+                        color: source.provider === selectedSource?.provider ? '#0e2e1f' : '#fff',
+                        fontFamily: 'Jost, sans-serif',
+                        fontWeight: 700,
+                        '&:hover': { bgcolor: source.provider === selectedSource?.provider ? '#d4a843' : 'rgba(0,0,0,0.8)' },
+                      }}
+                    />
+                  ))}
+                </Box>
+              )}
             </Box>
 
-            {videoSources.length > 1 && (
-              <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-                {videoSources.map((source) => (
-                  <Chip
-                    key={source.provider}
-                    label={source.label}
-                    clickable
-                    onClick={() => setSelectedProvider(source.provider)}
-                    color={source.provider === selectedSource?.provider ? 'primary' : 'default'}
-                    variant={source.provider === selectedSource?.provider ? 'filled' : 'outlined'}
-                    sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 600 }}
-                  />
-                ))}
-              </Box>
-            )}
-
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, flexDirection: 'column', gap: 2.5 }}>
-              <Box sx={{ height: '1px', background: 'linear-gradient(90deg, transparent, rgba(184,134,11,0.3), transparent)' }} />
-              <Button
-                startIcon={<ArrowBack sx={{ fontSize: 18 }} />}
-                onClick={() => router.push(`/cartoons/${episode.show}`)}
-                sx={{ fontFamily: 'Jost, var(--font-sans)', fontSize: '0.8rem', color: 'var(--muted)', textTransform: 'none', justifyContent: 'flex-start', px: 0, py: 0.5, '&:hover': { color: 'var(--gold)', background: 'transparent' }, transition: 'color 0.2s' }}
-              >
-                Back to {showTitle}
-              </Button>
-            </Box>
           </Box>
           )}
 
@@ -900,6 +860,19 @@ export default function EpisodePage({
                   {episode.title}
                 </Typography>
               </Breadcrumbs>
+
+              {/* Settings + Memory live here on desktop; mobile has them as tabs. */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                <Button
+                  onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
+                  size="small"
+                  startIcon={<PsychologyOutlined sx={{ fontSize: 18 }} />}
+                  sx={{ color: 'var(--awm-forest)', border: '1px solid color-mix(in srgb, var(--awm-forest) 28%, transparent)', borderRadius: '8px', textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 700, '&:hover': { bgcolor: 'color-mix(in srgb, var(--awm-forest) 7%, transparent)' } }}
+                >
+                  Memory
+                </Button>
+                <SettingsButton onClick={openSettings} />
+              </Box>
 
             </Box>
 
