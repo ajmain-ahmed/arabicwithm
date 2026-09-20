@@ -141,6 +141,8 @@ export default function ContentCard({
             component="img"
             src={cover}
             alt={title}
+            loading="lazy"
+            decoding="async"
             onLoad={() => setImgLoading(false)}
             onError={() => { setImgLoading(false); setImgError(true) }}
             sx={{
