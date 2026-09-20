@@ -1,6 +1,12 @@
+import { createHash } from 'node:crypto'
 import { unstable_cache } from 'next/cache'
 import { serviceClient } from '@/app/lib/supabase'
 import { getYouTubeThumbnailUrl } from '@/app/lib/cartoons'
+
+// Covers are cached by this route's response headers (see CoverBytes below):
+// Supabase's storage gateway currently serves every object with
+// `cache-control: no-cache` regardless of upload-time cacheControl metadata,
+// so per-object metadata is unreliable and the proxy must set caching itself.
 
 /* DB lookup per cover is cached in memory and busted by the same tags the
    admin CMS already invalidates on show/episode/book edits. */
@@ -14,9 +20,41 @@ const fetchCoverRow = unstable_cache(
   { revalidate: false, tags: ['cartoons-public', 'books-public'] }
 )
 
+type CoverBytes = { bytes: ArrayBuffer; etag: string }
+
+/* Cover bytes per Storage path, cached with the same tags so an admin
+   re-upload busts them. Serving bytes (rather than redirecting to a Supabase
+   URL) is what lets us control Cache-Control; repeat views are then served
+   entirely from browser caches. */
+const fetchCoverBytes = unstable_cache(
+  async (bucket: string, path: string): Promise<CoverBytes | null> => {
+    const { data, error } = await serviceClient.storage.from(bucket).download(path)
+    if (error || !data) return null
+    const bytes = await data.arrayBuffer()
+    return { bytes, etag: createHash('md5').update(new Uint8Array(bytes)).digest('hex') }
+  },
+  ['cover-bytes', 'v1'],
+  { revalidate: false, tags: ['cartoons-public', 'books-public'] }
+)
+
+const COVER_CACHE_CONTROL = 'public, max-age=86400, stale-while-revalidate=604800'
+
+function coverResponse(cover: CoverBytes, ifNoneMatch: string | null): Response {
+  const etag = `"${cover.etag}"`
+  // Cheap revalidation: the browser already has these bytes cached.
+  if (ifNoneMatch?.split(',').some((tag) => tag.trim() === etag)) {
+    return new Response(null, { status: 304, headers: { ETag: etag, 'Cache-Control': COVER_CACHE_CONTROL } })
+  }
+  return new Response(cover.bytes, {
+    headers: { 'Content-Type': 'image/webp', 'Content-Length': String(cover.bytes.byteLength), ETag: etag, 'Cache-Control': COVER_CACHE_CONTROL },
+  })
+}
+
 // Resolve only covers attached to published catalogue records, never arbitrary
-// caller-supplied Storage paths. Signed links are refreshed on every request.
-export async function GET(_request: Request, { params }: { params: Promise<{ kind: string; id: string }> }) {
+// caller-supplied Storage paths. Public covers are served as cacheable bytes;
+// legacy private-bucket covers still get a per-request signed link, whose
+// rotating token makes them uncacheable.
+export async function GET(request: Request, { params }: { params: Promise<{ kind: string; id: string }> }) {
   const { kind, id } = await params
   if (!['shows', 'episodes', 'books'].includes(kind) || !/^[\w-]+$/.test(id)) return new Response(null, { status: 404 })
   try {
@@ -30,7 +68,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
       const url = new URL(path)
       const base = new URL(process.env.SUPABASE_URL!)
       if (url.origin !== base.origin) {
-        // Never redirect callers to external origins; fall back to the canonical cover.
+        // Never resolve external origins; fall back to the canonical cover.
         path = ''
       } else {
         const match = url.pathname.match(/^\/storage\/v1\/object\/(?:public|sign|authenticated)\/([^/]+)\/(.+)$/)
@@ -44,8 +82,13 @@ export async function GET(_request: Request, { params }: { params: Promise<{ kin
     const candidates = path ? [{ bucket, path }] : []
     if (bucket !== 'covers' || path !== canonical) candidates.push({ bucket: 'covers', path: canonical })
     for (const candidate of candidates) {
-      const { data: signed, error: signError } = await serviceClient.storage.from(candidate.bucket).createSignedUrl(candidate.path, 3600)
-      if (!signError && signed?.signedUrl) return new Response(null, { status: 307, headers: { Location: signed.signedUrl, 'Cache-Control': 'no-store' } })
+      if (candidate.bucket === 'covers') {
+        const cover = await fetchCoverBytes(candidate.bucket, candidate.path)
+        if (cover) return coverResponse(cover, request.headers.get('if-none-match'))
+      } else {
+        const { data: signed, error: signError } = await serviceClient.storage.from(candidate.bucket).createSignedUrl(candidate.path, 3600)
+        if (!signError && signed?.signedUrl) return new Response(null, { status: 307, headers: { Location: signed.signedUrl, 'Cache-Control': 'no-store' } })
+      }
     }
     const fallback = kind === 'episodes' ? getYouTubeThumbnailUrl(String(row.youtube_id ?? '')) : undefined
     if (fallback) return Response.redirect(fallback, 307)

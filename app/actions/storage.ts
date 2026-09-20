@@ -53,6 +53,11 @@ export async function uploadCoverImage(formData: FormData): Promise<string> {
     .from(bucket)
     .upload(path, file, {
       contentType: "image/webp",
+      // Note: Supabase's storage gateway currently serves objects with
+      // `cache-control: no-cache` regardless of this value — the covers API
+      // route sets its own caching headers. Record it anyway so the objects
+      // are correct if platform behavior ever changes.
+      cacheControl: "86400",
       upsert: true,
     })
 
