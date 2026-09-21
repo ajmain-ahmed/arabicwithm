@@ -76,7 +76,7 @@ export default function MobileDrawer({
                             width: 44,
                             height: 44,
                             background: 'linear-gradient(135deg, var(--awm-gold), var(--awm-gold-light))',
-                            color: 'var(--awm-forest)',
+                            color: '#fff',
                             fontFamily: 'var(--font-sans)',
                             fontWeight: 700,
                             fontSize: '1rem',
