@@ -23,7 +23,23 @@ import {
 } from '@mui/material'
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase/client'
+import { createClient } from '@supabase/supabase-js'
 import ClientStyles from '@/app/components/ClientStyles'
+
+/* Email confirmation/reset links follow the flow type of the client that
+   initiates them. @supabase/ssr forces PKCE, whose links only complete on the
+   device that started the request (the code verifier lives in that browser's
+   cookies). A plain implicit-flow client sends no code challenge, so Supabase
+   emails links that return the session in the URL hash instead — those work
+   on any device, and the main browser client picks the hash up on landing. */
+let emailLinkClient: ReturnType<typeof createClient> | null = null
+function getEmailLinkClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  if (!url || !key) throw new Error('Missing Supabase configuration')
+  if (!emailLinkClient) emailLinkClient = createClient(url, key)
+  return emailLinkClient
+}
 
 // ─── types ─────────────────────────────────────────────────────────────────
 interface AuthDialogProps {
@@ -107,11 +123,13 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
 
   const handleSignUp = async () => {
     setLoading(true)
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error } = await getEmailLinkClient().auth.signUp({
       email: formData.email,
       password: formData.password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        /* Land on a real page: the implicit-flow link returns the session in
+           the URL hash, which only client-side JS can read. */
+        emailRedirectTo: `${window.location.origin}/`,
       },
     })
     if (error) {
@@ -138,8 +156,8 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
 
   const handleForgotPassword = async () => {
     setLoading(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    const { error } = await getEmailLinkClient().auth.resetPasswordForEmail(formData.email, {
+      redirectTo: `${window.location.origin}/reset-password`,
     })
     if (error) {
       setLoading(false)
