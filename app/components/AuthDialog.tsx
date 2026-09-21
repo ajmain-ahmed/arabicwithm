@@ -13,6 +13,7 @@ import {
   Button,
   Dialog,
   DialogContent,
+  Divider,
   IconButton,
   Snackbar,
   TextField,
@@ -305,12 +306,12 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
                   borderRadius: '2px !important',
                   py: 1,
                   '&.Mui-selected': {
-                    background: 'var(--forest)',
-                    color: 'var(--gold-lt)',
-                    borderColor: 'var(--forest)',
-                    '&:hover': { background: 'var(--forest)' },
+                    background: 'linear-gradient(135deg, #b8860b, #d4a843)',
+                    color: '#fff',
+                    borderColor: 'var(--gold)',
+                    '&:hover': { background: 'linear-gradient(135deg, #d4a843, #b8860b)' },
                   },
-                  '&:hover': { background: 'rgba(14,46,31,0.05)' },
+                  '&:hover': { background: 'rgba(184,134,11,0.08)' },
                 },
               }}
             >
@@ -376,7 +377,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
               endIcon={<ArrowForward />}
               sx={{
                 background: 'linear-gradient(135deg, #b8860b, #d4a843)',
-                color: 'var(--forest)',
+                color: '#fff',
                 fontFamily: 'Jost, sans-serif',
                 fontWeight: 700,
                 fontSize: '0.875rem',
@@ -432,13 +433,17 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
             {/* Divider + Google (only in sign-in/register flow) */}
             {!forgotPassword && (
               <>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: 0.5 }}>
-                  <Box sx={{ flex: 1, height: '1px', background: 'rgba(44,26,14,0.1)' }} />
-                  <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.75rem', color: 'var(--muted)' }}>
-                    or
-                  </Typography>
-                  <Box sx={{ flex: 1, height: '1px', background: 'rgba(44,26,14,0.1)' }} />
-                </Box>
+                <Divider
+                  sx={{
+                    my: 0.5,
+                    fontFamily: 'Jost, sans-serif',
+                    fontSize: '0.75rem',
+                    color: 'var(--muted)',
+                    '&::before, &::after': { borderColor: 'color-mix(in srgb, var(--awm-black) 12%, transparent)' },
+                  }}
+                >
+                  or
+                </Divider>
 
                 <Button
                   loading={googleLoading}  // ← Add this prop
@@ -449,7 +454,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
                   fullWidth
                   startIcon={<Google sx={{ fontSize: 18 }} />}
                   sx={{
-                    borderColor: 'rgba(44,26,14,0.15)',
+                    borderColor: 'var(--gold)',
                     color: 'var(--bark)',
                     fontFamily: 'Jost, sans-serif',
                     fontWeight: 400,
@@ -458,8 +463,8 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
                     borderRadius: '2px',
                     py: 1.1,
                     '&:hover': {
-                      borderColor: 'rgba(44,26,14,0.3)',
-                      background: 'rgba(44,26,14,0.03)',
+                      borderColor: '#946c08',
+                      background: 'rgba(184,134,11,0.06)',
                     },
                   }}
                 >

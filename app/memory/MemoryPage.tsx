@@ -86,11 +86,14 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     }
     load()
     void loadSavedMemorySession().then(result => { if (!result.ok) throw new Error(result.error); const session = result.data; if (active) { setSaved(session); setSessionError('') } }).catch(error => { if (active) setSessionError(error instanceof Error ? error.message : 'Unable to load your saved session.') })
+    /* Poll progress only during an active session: each refresh runs several
+       DB queries, and finished ratings already update the count directly. */
+    if (!started) return () => { active = false }
     const refresh = () => { if (document.visibilityState === 'visible') load() }
     const timer = window.setInterval(refresh, 60000)
     window.addEventListener('focus', refresh)
     return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', refresh) }
-  }, [user, loadAttempt])
+  }, [user, loadAttempt, started])
   const retryProgress = () => { setProgressLoading(true); setProgressError(''); setSessionError(''); setLoadAttempt(value => value + 1) }
   const card = cards[index]
 

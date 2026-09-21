@@ -1,12 +1,15 @@
-// app/prototype/_components/catalogueRows.ts — data for the prototype's
-// Netflix-style homepage rows. Cached with the shared "cartoons-public" tag so
-// admin show/episode writes (updateTag in app/actions/admin.ts) bust these
-// caches along with the rest of the cartoon catalogue. revalidate: false →
-// served from memory, no per-request DB queries.
+// Data for the homepage's Netflix-style "New on" rows. Cached with the shared
+// "cartoons-public" tag so admin show/episode writes (updateTag in
+// app/actions/admin.ts) bust these caches along with the rest of the cartoon
+// catalogue. Production: no per-request DB queries. Dev: re-fetch every 60s
+// so live-site edits surface without clearing .next.
 
 import { unstable_cache } from "next/cache"
 import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
 import { normalizeThumbnailCrop, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
+
+/* Dev refreshes these rows every 60s; production relies on updateTag only. */
+const publicRevalidate = process.env.NODE_ENV === "development" ? 60 : false
 
 export interface NewOnShow {
   id: string
@@ -49,7 +52,7 @@ export const fetchNewOnShows = unstable_cache(
     }))
   },
   ["prototype", "new-on-shows", "v1"],
-  { revalidate: false, tags: ["cartoons-public"] }
+  { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
 export const fetchNewOnEpisodes = unstable_cache(
@@ -98,5 +101,5 @@ export const fetchNewOnEpisodes = unstable_cache(
     })
   },
   ["prototype", "new-on-episodes", "v1"],
-  { revalidate: false, tags: ["cartoons-public"] }
+  { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )

@@ -3,6 +3,9 @@ import { unstable_cache } from 'next/cache'
 import { serviceClient } from '@/app/lib/supabase'
 import { getYouTubeThumbnailUrl } from '@/app/lib/cartoons'
 
+/* Dev refreshes cover rows/bytes every 60s; production relies on updateTag only. */
+const publicRevalidate = process.env.NODE_ENV === 'development' ? 60 : false
+
 // Covers are cached by this route's response headers (see CoverBytes below):
 // Supabase's storage gateway currently serves every object with
 // `cache-control: no-cache` regardless of upload-time cacheControl metadata,
@@ -17,7 +20,7 @@ const fetchCoverRow = unstable_cache(
     return data ?? null
   },
   ['cover-row', 'v1'],
-  { revalidate: false, tags: ['cartoons-public', 'books-public'] }
+  { revalidate: publicRevalidate, tags: ['cartoons-public', 'books-public'] }
 )
 
 type CoverBytes = { bytes: ArrayBuffer; etag: string }
@@ -34,7 +37,7 @@ const fetchCoverBytes = unstable_cache(
     return { bytes, etag: createHash('md5').update(new Uint8Array(bytes)).digest('hex') }
   },
   ['cover-bytes', 'v1'],
-  { revalidate: false, tags: ['cartoons-public', 'books-public'] }
+  { revalidate: publicRevalidate, tags: ['cartoons-public', 'books-public'] }
 )
 
 const COVER_CACHE_CONTROL = 'public, max-age=86400, stale-while-revalidate=604800'

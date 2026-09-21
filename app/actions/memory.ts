@@ -14,6 +14,12 @@ import {
   type MemoryRating,
 } from '@/app/lib/memory'
 import { hasServiceClientConfig, serviceClient } from '@/app/lib/supabase'
+import { unstable_cache } from 'next/cache'
+
+/* Production data is refreshed only via updateTag/revalidatePath from the
+   admin CMS. In dev, re-fetch every minute so content added through
+   the live admin (or direct DB edits) surfaces without clearing .next. */
+const publicRevalidate = process.env.NODE_ENV === 'development' ? 60 : false
 
 export interface MemoryShowSource {
   id: string
@@ -52,16 +58,6 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
     return { cards: [], shows: [], scope: 'global', scopeTitle: 'Random practice', missingScope: false }
   }
 
-  const { data: showRows, error: showError } = await serviceClient
-    .from('shows')
-    .select('id, slug, title')
-    .order('title')
-  if (showError) throw new Error(showError.message)
-
-  const shows = (showRows ?? []).map((show) => ({ id: String(show.id), slug: String(show.slug), title: String(show.title) }))
-  const showsById = new Map(shows.map((show) => [show.id, show]))
-  const scope = input.episodeId ? 'episode' : input.showId ? 'show' : 'global'
-
   let sourceQuery = serviceClient
     .from('episodes')
     .select('id, show_id, slug, title, cover, youtube_id, created_at')
@@ -69,36 +65,53 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   if (input.episodeId) sourceQuery = sourceQuery.eq('id', input.episodeId)
   else if (input.showId) sourceQuery = sourceQuery.eq('show_id', input.showId)
 
-  const { data: sourceRows, error: sourceError } = await sourceQuery
+  /* The shows list and the episode sources don't depend on each other. */
+  const [showsResult, sourcesResult] = await Promise.all([
+    serviceClient.from('shows').select('id, slug, title').order('title'),
+    sourceQuery,
+  ])
+  const { data: showRows, error: showError } = showsResult
+  const { data: sourceRows, error: sourceError } = sourcesResult
+  if (showError) throw new Error(showError.message)
   if (sourceError) throw new Error(sourceError.message)
 
-  const selectedSources = scope === 'episode'
+  const shows = (showRows ?? []).map((show) => ({ id: String(show.id), slug: String(show.slug), title: String(show.title) }))
+  const showsById = new Map(shows.map((show) => [show.id, show]))
+  const scope = input.episodeId ? 'episode' : input.showId ? 'show' : 'global'
+
+  const sampledRows = scope === 'episode'
     ? ((sourceRows ?? []) as unknown as EpisodeRecord[])
     : sampleEpisodeRows((sourceRows ?? []) as unknown as EpisodeRecord[], 24)
-  const selectedIds = selectedSources.map((row) => String(row.id)).filter(Boolean)
-  const { data: episodeRows, error: episodeError } = selectedIds.length
-    ? await serviceClient
-      .from('episodes')
-      .select('id, show_id, slug, title, cover, youtube_id, transcript')
-      .in('id', selectedIds)
-    : { data: [], error: null }
-  if (episodeError) throw new Error(episodeError.message)
 
-  const episodes: MemoryEpisodeInput[] = ((episodeRows ?? []) as unknown as EpisodeRecord[]).flatMap((row) => {
-    const show = showsById.get(String(row.show_id))
-    if (!show) return []
-    return [{
-      id: String(row.id),
-      showId: show.id,
-      showSlug: show.slug,
-      showTitle: show.title,
-      episodeSlug: String(row.slug),
-      episodeTitle: String(row.title),
-      cover: `/api/covers/episodes/${row.id}`,
-      transcript: row.transcript,
-    }]
-  })
-  const allCards = episodes.flatMap(extractMemoryCards)
+  /* Fetch transcripts in small batches: a few episodes usually yield enough
+     cards for a session, so don't download all 24 transcripts up front. */
+  const episodes: MemoryEpisodeInput[] = []
+  const allCards: MemoryCard[] = []
+  const BATCH_SIZE = 6
+  for (let offset = 0; offset < sampledRows.length && allCards.length < MEMORY.sessionCards; offset += BATCH_SIZE) {
+    const batchIds = sampledRows.slice(offset, offset + BATCH_SIZE).map((row) => String(row.id)).filter(Boolean)
+    const { data: episodeRows, error: episodeError } = await serviceClient
+      .from('episodes')
+      .select('id, show_id, slug, title, transcript')
+      .in('id', batchIds)
+    if (episodeError) throw new Error(episodeError.message)
+    for (const row of (episodeRows ?? []) as unknown as EpisodeRecord[]) {
+      const show = showsById.get(String(row.show_id))
+      if (!show) continue
+      const episode: MemoryEpisodeInput = {
+        id: String(row.id),
+        showId: show.id,
+        showSlug: show.slug,
+        showTitle: show.title,
+        episodeSlug: String(row.slug),
+        episodeTitle: String(row.title),
+        cover: `/api/covers/episodes/${row.id}`,
+        transcript: row.transcript,
+      }
+      episodes.push(episode)
+      allCards.push(...extractMemoryCards(episode))
+    }
+  }
   const selectedShow = input.showId ? showsById.get(input.showId) : undefined
   const selectedEpisode = input.episodeId ? episodes[0] : undefined
 
@@ -113,6 +126,25 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   }
 }
 
+/* Episode+show source for validating a rated card. Cached with the same tag
+   as the public episode page so a 20-card session doesn't download the same
+   transcript 20 times; admin episode edits bust it. */
+const fetchMemoryCardSource = unstable_cache(
+  async (episodeId: string) => {
+    const { data: episode, error: episodeError } = await serviceClient
+      .from('episodes')
+      .select('id, show_id, slug, title, transcript')
+      .eq('id', episodeId)
+      .maybeSingle()
+    if (episodeError || !episode) return null
+    const { data: show } = await serviceClient.from('shows').select('id, slug, title').eq('id', episode.show_id).maybeSingle()
+    if (!show) return null
+    return { episode, show }
+  },
+  ['memory-card-source', 'v1'],
+  { revalidate: publicRevalidate, tags: ['cartoons-public'] }
+)
+
 export async function recordMemoryReview(cardId: string, rating: MemoryRating, completionId: string, nextSession: SavedMemorySession): Promise<{ accepted: boolean; awarded: number; totalXp: number; used: number }> {
   const [userId, entitlement] = await Promise.all([getAuthenticatedUserId(), fetchPremiumStatus()])
   if (!userId || !entitlement.signedIn) throw new Error('Sign in to save Memory practice.')
@@ -123,14 +155,9 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating, c
 
   const parsed = parseMemoryCardId(cardId)
   if (!parsed) throw new Error('Invalid Memory card.')
-  const { data: episode, error: episodeError } = await serviceClient
-    .from('episodes')
-    .select('id, show_id, slug, title, transcript')
-    .eq('id', parsed.episodeId)
-    .maybeSingle()
-  if (episodeError || !episode) throw new Error('This Memory card is no longer available.')
-  const { data: show } = await serviceClient.from('shows').select('id, slug, title').eq('id', episode.show_id).maybeSingle()
-  if (!show) throw new Error('This Memory source is no longer available.')
+  const source = await fetchMemoryCardSource(parsed.episodeId)
+  if (!source) throw new Error('This Memory card is no longer available.')
+  const { episode, show } = source
   const validCards = extractMemoryCards({
     id: String(episode.id),
     showId: String(show.id),

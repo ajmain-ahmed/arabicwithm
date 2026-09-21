@@ -9,6 +9,11 @@ import { stripDiacritics } from "@/app/lib/arabic"
 import type { CartoonWordEntry } from "@/app/lib/cartoons"
 import { normalizeThumbnailCrop, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 
+/* Production catalogue data is refreshed only via updateTag/revalidatePath
+   from the admin CMS. In dev, re-fetch every minute so content added through
+   the live admin (or direct DB edits) surfaces without clearing .next. */
+const publicRevalidate = process.env.NODE_ENV === "development" ? 60 : false
+
 export interface PublicBook {
   id: string
   slug: string
@@ -135,7 +140,7 @@ export const fetchBooksForPublic = unstable_cache(
     )
   },
   ["books", "public", "book-catalogue-storage-v5"],
-  { revalidate: false, tags: ["books-public"] }
+  { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
 export const fetchBookBySlugPublic = unstable_cache(
@@ -159,7 +164,7 @@ export const fetchBookBySlugPublic = unstable_cache(
     return mapBook(book as Record<string, unknown>, count ?? 0)
   },
   ["books", "public", "detail", "book-catalogue-storage-v5"],
-  { revalidate: false, tags: ["books-public"] }
+  { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
 type ChapterListExtras = Record<string, { teaser?: string; blockCount: number }>
@@ -194,7 +199,7 @@ const fetchChapterListExtrasForBookPublic = unstable_cache(
     return extras
   },
   ["books", "public", "chapter-extras", "v1"],
-  { revalidate: false, tags: ["books-public"] }
+  { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
 export const fetchChaptersForBookPublic = unstable_cache(
@@ -220,7 +225,7 @@ export const fetchChaptersForBookPublic = unstable_cache(
     }))
   },
   ["books", "public", "chapters", "chapter-teasers-v3"],
-  { revalidate: false, tags: ["books-public"] }
+  { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
 const fetchChapterContent = unstable_cache(
@@ -278,7 +283,7 @@ const fetchChapterContent = unstable_cache(
     }
   },
   ["books", "public", "chapter", "cartoon-tooltip-v1", "book-punctuation-v1"],
-  { revalidate: false, tags: ["books-public"] }
+  { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
 export async function fetchChapterForPublic(bookId: string, chapterSlug: string): Promise<PublicChapterWithContent | null> {
@@ -364,7 +369,7 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
     return allPages.filter((_, index) => index % stride === 0).slice(0, 40)
   },
   ["books", "public", "explore-chapter-metas", "storage-covers-v2"],
-  { revalidate: false, tags: ["books-public"] }
+  { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
 function buildExploreBookPages(
@@ -452,7 +457,7 @@ export const fetchExploreBookChapterPages = unstable_cache(
     })
   },
   ["books", "public", "explore-chapter-pages", "v1"],
-  { revalidate: false, tags: ["books-public"] }
+  { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
 /* ── Page counts per chapter. Only the counts are cached; deriving
@@ -470,5 +475,5 @@ export const fetchExploreBookChapterPageCounts = unstable_cache(
     return Object.fromEntries(entries)
   },
   ["books", "public", "explore-chapter-page-counts", "v1"],
-  { revalidate: false, tags: ["books-public"] }
+  { revalidate: publicRevalidate, tags: ["books-public"] }
 )

@@ -25,6 +25,11 @@ import { type ShowRow } from "@/app/actions/admin"
 import { guardAdmin } from "@/app/actions/auth"
 import { stripDiacritics } from "@/app/lib/arabic"
 
+/* Production catalogue data is refreshed only via updateTag/revalidatePath
+   from the admin CMS. In dev, re-fetch every minute so content added through
+   the live admin (or direct DB edits) surfaces without clearing .next. */
+const publicRevalidate = process.env.NODE_ENV === "development" ? 60 : false
+
 function uniqueTags(values: Array<string | null | undefined>): string[] {
   const tags = new Map<string, string>()
   for (const value of values) {
@@ -107,7 +112,7 @@ export const fetchShowsForPublic = unstable_cache(
     }))
   },
   ["cartoons", "shows", "public", "catalogue-storage-covers-v3"],
-  { revalidate: false, tags: ["cartoons-public"] }
+  { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
 export async function fetchShowsForEpisodeEdit(): Promise<ShowRow[]> {
@@ -177,7 +182,7 @@ export const fetchShowBySlugPublic = unstable_cache(
     }
   },
   ["cartoons", "show", "catalogue-storage-covers-v3"],
-  { revalidate: false, tags: ["cartoons-public"] }
+  { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
 /* ── Episodes ──────────────────────────────────────────────────────── */
@@ -232,7 +237,7 @@ export const fetchEpisodesForShowPublic = unstable_cache(
     return (data ?? []).map((row) => mapEpisodeRow(row))
   },
   ["cartoons", "episodes", "catalogue-storage-covers-v3"],
-  { revalidate: false, tags: ["cartoons-public"] }
+  { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
 /* ── Every episode in a single query (watch catalogue home). Page code
@@ -272,7 +277,7 @@ export const fetchAllEpisodesForPublic = unstable_cache(
     return (data ?? []).map((row) => ({ ...mapEpisodeRow(row), showId: String(row.show_id) }))
   },
   ["cartoons", "all-episodes", "public", "catalogue-storage-covers-v3"],
-  { revalidate: false, tags: ["cartoons-public"] }
+  { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
 /* ── Shuffle: picks from the full filtered catalogue server-side, since
@@ -484,7 +489,7 @@ export const fetchEpisodeForPublic = unstable_cache(
     }
   },
   ["cartoons", "episode"],
-  { revalidate: false, tags: ["cartoons-public"] }
+  { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
 /* ── Explore feed: metadata-only catalogue used to plan batches. The
@@ -544,7 +549,7 @@ export const fetchExploreEpisodeMetasForPublic = unstable_cache(
     })
   },
   ["cartoons", "explore", "episode-metas", "storage-covers-v2"],
-  { revalidate: false, tags: ["cartoons-public"] }
+  { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
 export const fetchExploreEpisodeByIdPublic = unstable_cache(
@@ -624,7 +629,7 @@ export const fetchExploreEpisodeByIdPublic = unstable_cache(
     }
   },
   ["cartoons", "explore", "episode", "storage-covers-v2"],
-  { revalidate: false, tags: ["cartoons-public"] }
+  { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
 function mapEpisodeRow(
