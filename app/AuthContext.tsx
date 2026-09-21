@@ -24,6 +24,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    /* Implicit-flow email links (confirmation, password reset) return the
+       session in the URL hash. The shared browser client runs PKCE
+       (@supabase/ssr default) and refuses implicit hashes, so extract the
+       tokens here and establish the session via setSession. Strip the hash
+       first so client initialization doesn't attempt (and silently fail)
+       the same detection. */
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    const hashAccessToken = hashParams.get('access_token')
+    const hashRefreshToken = hashParams.get('refresh_token')
+    if (hashAccessToken && hashRefreshToken) {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search)
+      supabase.auth.setSession({ access_token: hashAccessToken, refresh_token: hashRefreshToken })
+        .then(({ error }: { error: { message: string } | null }) => {
+          if (error) console.error('Unable to establish session from email link:', error.message)
+        })
+    }
+
     let stateChanged = false
 
     // Grab the current session on mount
