@@ -1,17 +1,25 @@
 import { createServerClient } from '@supabase/ssr'
+import type { EmailOtpType } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
 const ALLOWED_DESTINATIONS = new Set(['/', '/reset-password'])
 
+/* Email links (confirm signup, magic link, recovery, email change) carry
+   token_hash + type; OAuth carries code. Both become a session below. */
+const EMAIL_OTP_TYPES = new Set(['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'])
+
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
+  const tokenHash = requestUrl.searchParams.get('token_hash')
+  const otpType = requestUrl.searchParams.get('type')
   const requestedDestination = requestUrl.searchParams.get('next') ?? '/'
   const destination = ALLOWED_DESTINATIONS.has(requestedDestination)
     ? requestedDestination
     : '/'
 
-  if (!code) {
+  const hasTokenHash = Boolean(tokenHash) && EMAIL_OTP_TYPES.has(String(otpType))
+  if (!code && !hasTokenHash) {
     return authErrorResponse(requestUrl, destination)
   }
 
@@ -37,10 +45,12 @@ export async function GET(request: NextRequest) {
     },
   })
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code)
+  const result = code
+    ? await supabase.auth.exchangeCodeForSession(code)
+    : await supabase.auth.verifyOtp({ token_hash: tokenHash!, type: otpType as EmailOtpType })
 
-  if (error) {
-    console.error('[auth callback] Code exchange failed:', error.message)
+  if (result.error) {
+    console.error('[auth callback] Auth exchange failed:', result.error.message)
     return authErrorResponse(requestUrl, destination)
   }
 
