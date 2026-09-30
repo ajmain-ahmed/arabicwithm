@@ -189,7 +189,7 @@ function BooksSection({ books }: { books: PublicBook[] }) {
   if (books.length === 0) return null
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', sm: 'repeat(3, minmax(0,1fr))', md: 'repeat(4, minmax(0,1fr))', lg: 'repeat(auto-fit, minmax(220px, 1fr))' }, gap: { xs: 1.25, sm: 2 } }}>
-      {books.map((book) => (
+      {books.slice(0, 4).map((book) => (
         <BookCard key={book.id} book={book} />
       ))}
     </Box>
@@ -481,15 +481,15 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           </Container>
         </Box>
 
-        <Box className="awm-pattern-section" sx={{ pt: { xs: 4, md: 5 }, pb: { xs: 5, md: 6 } }}>
+        <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 4, md: 5 } }}>
           <Container maxWidth={false}>
             {newShowItems.length > 0 && <>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Shows</Typography>
-              <NewOnRow items={newShowItems} ariaLabel="Shows" autoScroll />
+              <NewOnRow items={newShowItems} ariaLabel="Shows" autoScroll compact />
             </>}
             {newEpisodeItems.length > 0 && <>
-              <Typography component="h2" sx={{ mt: { xs: 3, md: 4 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Latest Episodes</Typography>
-              <NewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes, newest first" autoScroll />
+              <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Latest Episodes</Typography>
+              <NewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" autoScroll compact />
             </>}
           </Container>
 
@@ -593,22 +593,15 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
       </Container>
 
       {(newShowItems.length > 0 || newEpisodeItems.length > 0) && (
-        <Box component="section" aria-labelledby="latest-releases-heading" sx={{ mt: { xs: 5, md: 7 }, minWidth: 0, width: '100%', overflow: 'hidden' }}>
-          <Container maxWidth="lg">
-            <Box sx={{ mb: 2 }}>
-              <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase' }}>Newest first</Typography>
-              <Typography id="latest-releases-heading" component="h2" sx={{ mt: 0.5, fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 39 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.15 }}>Latest Releases</Typography>
-              <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>The newest shows and episodes from across ArabicWithM.</Typography>
-            </Box>
-          </Container>
+        <Box component="section" aria-label="Shows and latest episodes" sx={{ mt: { xs: 3.5, md: 5 }, minWidth: 0, width: '100%', overflow: 'hidden' }}>
           <Container maxWidth={false} sx={{ minWidth: 0 }}>
-            {newShowItems.length > 0 && <Box sx={{ mt: 2 }}>
+            {newShowItems.length > 0 && <Box>
               <Typography component="h3" sx={{ mb: 0.75, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 23 }, fontWeight: 600, color: 'var(--awm-bark)' }}>Shows</Typography>
-              <NewOnRow items={newShowItems} ariaLabel="Shows" mobileCardWidth="78vw" autoScroll />
+              <NewOnRow items={newShowItems} ariaLabel="Shows" autoScroll />
             </Box>}
-            {newEpisodeItems.length > 0 && <Box sx={{ mt: { xs: 3, md: 4 } }}>
+            {newEpisodeItems.length > 0 && <Box sx={{ mt: { xs: 2.5, md: 3.25 } }}>
               <Typography component="h3" sx={{ mb: 0.75, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 23 }, fontWeight: 600, color: 'var(--awm-bark)' }}>Latest Episodes</Typography>
-              <NewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes, newest first" mobileCardWidth="78vw" autoScroll />
+              <NewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" autoScroll />
             </Box>}
           </Container>
         </Box>

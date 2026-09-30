@@ -17,6 +17,7 @@ import {
   normalizeThumbnailCrop,
   type ThumbnailCrop,
 } from "@/app/lib/thumbnailCrop"
+import { normalizeReadingTimeMinutes } from "@/app/lib/readingTime"
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -583,6 +584,7 @@ export type BookRow = {
   slug: string
   title: string
   author: string | null
+  reading_time_minutes: number | null
   title_ar: string | null
   description: string | null
   cover: string | null
@@ -637,6 +639,7 @@ export async function createBook(input: BookInput): Promise<string> {
       slug: input.slug,
       title: input.title,
       author: input.author?.trim() || null,
+      reading_time_minutes: normalizeReadingTimeMinutes(input.reading_time_minutes),
       title_ar: input.title_ar,
       description: input.description,
       cover: input.cover,
@@ -670,6 +673,7 @@ export async function updateBook(
   if (input.slug !== undefined) payload.slug = input.slug
   if (input.title !== undefined) payload.title = input.title
   if (input.author !== undefined) payload.author = input.author?.trim() || null
+  if (input.reading_time_minutes !== undefined) payload.reading_time_minutes = normalizeReadingTimeMinutes(input.reading_time_minutes)
   if (input.title_ar !== undefined) payload.title_ar = input.title_ar
   if (input.description !== undefined) payload.description = input.description
   if (input.cover !== undefined) payload.cover = input.cover
@@ -1122,6 +1126,9 @@ function mapBookRow(row: Record<string, unknown>): BookRow {
     slug: String(row.slug),
     title: String(row.title),
     author: toStringOrNull(row.author),
+    reading_time_minutes: typeof row.reading_time_minutes === "number" && row.reading_time_minutes > 0
+      ? Math.round(row.reading_time_minutes)
+      : null,
     title_ar: toStringOrNull(row.title_ar),
     description: toStringOrNull(row.description),
     cover: toStringOrNull(row.cover),

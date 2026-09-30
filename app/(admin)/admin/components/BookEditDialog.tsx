@@ -49,6 +49,7 @@ export default function BookEditDialog({
   const [cover, setCover] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [author, setAuthor] = useState("")
+  const [readingTimeMinutes, setReadingTimeMinutes] = useState("")
   const [titleAr, setTitleAr] = useState("")
   const [description, setDescription] = useState("")
   const [level, setLevel] = useState("")
@@ -70,6 +71,7 @@ export default function BookEditDialog({
       setSlug("")
       setTitle("")
       setAuthor("")
+      setReadingTimeMinutes("")
       setTitleAr("")
       setDescription("")
       setLevel("")
@@ -91,6 +93,7 @@ export default function BookEditDialog({
         setSlug(row.slug)
         setTitle(row.title)
         setAuthor(row.author ?? "")
+        setReadingTimeMinutes(row.reading_time_minutes?.toString() ?? "")
         setTitleAr(row.title_ar ?? "")
         setDescription(row.description ?? "")
         setLevel(row.level)
@@ -110,6 +113,7 @@ export default function BookEditDialog({
         slug,
         title,
         author: author.trim() || null,
+        reading_time_minutes: readingTimeMinutes ? Number(readingTimeMinutes) : null,
         title_ar: titleAr || null,
         description: description || null,
         cover,
@@ -224,10 +228,20 @@ export default function BookEditDialog({
                 setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })
               }}
             />
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
               <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />
               <AdminTextField label="Author" value={author} onChange={(e) => setAuthor(e.target.value)} fullWidth size="small" />
               <AdminTextField label="Category" value={category} onChange={(e) => setCategory(e.target.value)} fullWidth size="small" />
+              <AdminTextField
+                label="Reading Time"
+                value={readingTimeMinutes}
+                onChange={(e) => setReadingTimeMinutes(e.target.value)}
+                type="number"
+                helperText="Estimated duration in minutes"
+                slotProps={{ htmlInput: { min: 1, step: 1 } }}
+                fullWidth
+                size="small"
+              />
             </Box>
           </Box>
         )}

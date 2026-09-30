@@ -44,11 +44,13 @@ const ARROW_SX = {
 function RowTile({
   item,
   mobileWidth,
+  compact,
   isClone = false,
   loopStart = false,
 }: {
   item: CatalogueRowItem
   mobileWidth: string | number
+  compact: boolean
   isClone?: boolean
   loopStart?: boolean
 }) {
@@ -65,8 +67,8 @@ function RowTile({
       sx={{
         position: 'relative',
         flex: '0 0 auto',
-        width: { xs: mobileWidth, sm: 260, md: 300 },
-        maxWidth: { xs: 310, sm: '100%' },
+        width: { xs: mobileWidth, sm: compact ? 232 : 260, md: compact ? 270 : 300 },
+        maxWidth: { xs: compact ? 280 : 310, sm: '100%' },
         aspectRatio: '4 / 5',
         scrollSnapAlign: 'start',
         scrollSnapStop: 'normal',
@@ -102,14 +104,14 @@ function RowTile({
         sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease', ...thumbnailCropCss(item.imageCrop) }}
       />
       <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(5,23,15,0) 42%, rgba(5,23,15,0.85) 100%)' }} />
-      <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, p: { xs: 1.25, md: 1.5 } }}>
+      <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, p: compact ? { xs: 1.1, md: 1.35 } : { xs: 1.25, md: 1.5 } }}>
         {item.meta && (
           <Typography sx={{ color: 'rgba(255,255,255,0.78)', fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', textShadow: '0 1px 8px rgba(0,0,0,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {item.meta}
           </Typography>
         )}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: item.meta ? 0.25 : 0 }}>
-          <Typography sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: '1.05rem', md: '1.2rem' }, fontWeight: 600, textShadow: '0 2px 10px rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <Typography sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: compact ? { xs: '1rem', md: '1.12rem' } : { xs: '1.05rem', md: '1.2rem' }, fontWeight: 600, textShadow: '0 2px 10px rgba(0,0,0,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {item.title}
           </Typography>
           {item.level && (
@@ -130,13 +132,15 @@ function RowTile({
 export default function NewOnRow({
   items,
   ariaLabel = 'Content carousel',
-  mobileCardWidth = '62vw',
+  mobileCardWidth,
   autoScroll = false,
+  compact = false,
 }: {
   items: CatalogueRowItem[]
   ariaLabel?: string
   mobileCardWidth?: string | number
   autoScroll?: boolean
+  compact?: boolean
 }) {
   const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const scrollerRef = useRef<HTMLDivElement | null>(null)
@@ -388,12 +392,12 @@ export default function NewOnRow({
         aria-label={ariaLabel}
         sx={{
           display: 'flex',
-          gap: { xs: 1.25, md: 2 },
+          gap: compact ? { xs: 1, md: 1.5 } : { xs: 1.25, md: 2 },
           width: '100%',
           maxWidth: '100%',
           overflowX: 'auto',
           overflowY: 'hidden',
-          py: 1,
+          py: compact ? 0.75 : 1,
           pr: 0.5,
           scrollSnapType: shouldLoop ? 'none' : 'x mandatory',
           scrollBehavior: 'smooth',
@@ -411,10 +415,10 @@ export default function NewOnRow({
         }}
       >
         {items.map((item) => (
-          <RowTile key={item.key} item={item} mobileWidth={mobileCardWidth} />
+          <RowTile key={item.key} item={item} mobileWidth={mobileCardWidth ?? (compact ? '56vw' : '62vw')} compact={compact} />
         ))}
         {shouldLoop && items.map((item, index) => (
-          <RowTile key={`loop-${item.key}`} item={item} mobileWidth={mobileCardWidth} isClone loopStart={index === 0} />
+          <RowTile key={`loop-${item.key}`} item={item} mobileWidth={mobileCardWidth ?? (compact ? '56vw' : '62vw')} compact={compact} isClone loopStart={index === 0} />
         ))}
       </Box>
     </Box>

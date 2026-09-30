@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Box, Chip, Container, Paper, Typography } from '@mui/material'
-import { ArrowBack, ChevronRight } from '@mui/icons-material'
+import { AccessTimeRounded, ArrowBack, ChevronRight } from '@mui/icons-material'
 import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
 import BookReadingCta from './BookReadingCta'
 import BookListRemovalButton from './BookListRemovalButton'
 import ChapterAccessLock, { PremiumChapterLink } from './ChapterAccessLock'
 import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
+import { formatReadingTime } from '@/app/lib/readingTime'
 
 export const revalidate = false
 
@@ -71,6 +72,14 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
               )}
               <Box sx={{ display: 'flex', gap: 1, mt: 2.5, flexWrap: 'wrap' }}>
                 {book.level && <CefrChip level={book.level} size="small" />}
+                {book.readingTimeMinutes && (
+                  <Chip
+                    icon={<AccessTimeRounded />}
+                    label={formatReadingTime(book.readingTimeMinutes)}
+                    size="small"
+                    sx={{ bgcolor: 'rgba(14,46,31,0.08)', color: 'var(--awm-forest)', '& .MuiChip-icon': { color: 'inherit' } }}
+                  />
+                )}
                 {book.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />)}
               </Box>
               <Box sx={{ mt: 3 }}>

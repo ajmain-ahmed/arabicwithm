@@ -27,6 +27,7 @@ export interface PublicBook {
   tags: string[]
   chapterCount: number
   author: string
+  readingTimeMinutes?: number
   premiumExempt: boolean
   freeChapterCount: number
 }
@@ -97,6 +98,9 @@ function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook
     tags: Array.isArray(row.tags) ? row.tags.map((tag) => String(tag)).filter(Boolean) : [],
     chapterCount,
     author: typeof row.author === "string" && row.author.trim() ? row.author : "Author not listed",
+    readingTimeMinutes: typeof row.reading_time_minutes === "number" && row.reading_time_minutes > 0
+      ? Math.round(row.reading_time_minutes)
+      : undefined,
     premiumExempt: row.premium_exempt === true,
     freeChapterCount: typeof row.free_chapter_count === "number" ? row.free_chapter_count : 5,
   }
@@ -139,7 +143,7 @@ export const fetchBooksForPublic = unstable_cache(
       mapBook(book, chapterCounts.get(String(book.id)) ?? 0)
     )
   },
-  ["books", "public", "book-catalogue-storage-v5"],
+  ["books", "public", "book-catalogue-storage-v6"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
@@ -163,7 +167,7 @@ export const fetchBookBySlugPublic = unstable_cache(
     if (countError) throw new Error(countError.message)
     return mapBook(book as Record<string, unknown>, count ?? 0)
   },
-  ["books", "public", "detail", "book-catalogue-storage-v5"],
+  ["books", "public", "detail", "book-catalogue-storage-v6"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 

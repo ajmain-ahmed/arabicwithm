@@ -118,6 +118,7 @@ export interface Database {
           slug: string
           title: string
           author: string | null
+          reading_time_minutes: number | null
           premium_exempt: boolean
           free_chapter_count: number
           title_ar: string | null
@@ -135,6 +136,7 @@ export interface Database {
           slug: string
           title: string
           author?: string | null
+          reading_time_minutes?: number | null
           premium_exempt?: boolean
           free_chapter_count?: number
           title_ar?: string | null
@@ -152,6 +154,7 @@ export interface Database {
           slug?: string
           title?: string
           author?: string | null
+          reading_time_minutes?: number | null
           premium_exempt?: boolean
           free_chapter_count?: number
           title_ar?: string | null
