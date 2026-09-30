@@ -23,6 +23,7 @@ import { useAuth } from '@/app/AuthContext'
 import { fetchLearningActivity } from '@/app/actions/activity'
 import { fetchPremiumStatus } from '@/app/actions/premium'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
+import CheckoutFeedback from '@/app/components/CheckoutFeedback'
 import CefrChip from '@/app/components/CefrChip'
 import NewOnRow, { type CatalogueRowItem } from './NewOnRow'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
@@ -625,6 +626,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
         <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading eyebrow="Keep exploring" title="Keep your momentum" /><QuickLinks /></Box>
       </Container>
       {premiumUpdate?.authKey === premiumAuthKey && !premiumUpdate.premium && <UpgradeSection />}
+      <CheckoutFeedback />
     </Box>
   )
 }
