@@ -1,44 +1,30 @@
 import { createHash } from 'node:crypto'
-import { unstable_cache } from 'next/cache'
 import { serviceClient } from '@/app/lib/supabase'
 import { getYouTubeThumbnailUrl } from '@/app/lib/cartoons'
 
-/* Dev refreshes cover rows/bytes every 60s; production relies on updateTag only. */
-const publicRevalidate = process.env.NODE_ENV === 'development' ? 60 : false
+// Covers are cached by this route's response headers (see coverResponse below):
+// Supabase's storage gateway serves every object with `cache-control: no-cache`
+// regardless of upload-time cacheControl metadata, so per-object metadata is
+// unreliable and the proxy must set caching itself. Caching lives at the
+// response layer (browser + CDN); the Data Cache must never sit in the request
+// path, and admin re-uploads propagate within the max-age window.
 
-// Covers are cached by this route's response headers (see CoverBytes below):
-// Supabase's storage gateway currently serves every object with
-// `cache-control: no-cache` regardless of upload-time cacheControl metadata,
-// so per-object metadata is unreliable and the proxy must set caching itself.
-
-/* DB lookup per cover is cached in memory and busted by the same tags the
-   admin CMS already invalidates on show/episode/book edits. */
-const fetchCoverRow = unstable_cache(
-  async (table: string, id: string) => {
-    const { data, error } = await serviceClient.from(table).select('*').eq('id', id).maybeSingle()
-    if (error) throw error
-    return data ?? null
-  },
-  ['cover-row', 'v1'],
-  { revalidate: publicRevalidate, tags: ['cartoons-public', 'books-public'] }
-)
+async function fetchCoverRow(table: string, id: string) {
+  const { data, error } = await serviceClient.from(table).select('*').eq('id', id).maybeSingle()
+  if (error) throw error
+  return data ?? null
+}
 
 type CoverBytes = { bytes: ArrayBuffer; etag: string }
 
-/* Cover bytes per Storage path, cached with the same tags so an admin
-   re-upload busts them. Serving bytes (rather than redirecting to a Supabase
-   URL) is what lets us control Cache-Control; repeat views are then served
-   entirely from browser caches. */
-const fetchCoverBytes = unstable_cache(
-  async (bucket: string, path: string): Promise<CoverBytes | null> => {
-    const { data, error } = await serviceClient.storage.from(bucket).download(path)
-    if (error || !data) return null
-    const bytes = await data.arrayBuffer()
-    return { bytes, etag: createHash('md5').update(new Uint8Array(bytes)).digest('hex') }
-  },
-  ['cover-bytes', 'v1'],
-  { revalidate: publicRevalidate, tags: ['cartoons-public', 'books-public'] }
-)
+/* Serving bytes (rather than redirecting to a Supabase URL) is what lets us
+   control Cache-Control; repeat views are then served from browser caches. */
+async function fetchCoverBytes(bucket: string, path: string): Promise<CoverBytes | null> {
+  const { data, error } = await serviceClient.storage.from(bucket).download(path)
+  if (error || !data) return null
+  const bytes = await data.arrayBuffer()
+  return { bytes, etag: createHash('md5').update(new Uint8Array(bytes)).digest('hex') }
+}
 
 const COVER_CACHE_CONTROL = 'public, max-age=86400, stale-while-revalidate=604800'
 
