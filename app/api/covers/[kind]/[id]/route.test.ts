@@ -2,10 +2,13 @@
 import { createHash } from 'node:crypto'
 import { beforeEach, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({ single: vi.fn(), sign: vi.fn(), download: vi.fn(), bucket: vi.fn() }))
-vi.mock('next/cache', () => ({ unstable_cache: (fn: () => unknown) => fn }))
+const mocks = vi.hoisted(() => ({ single: vi.fn(), sign: vi.fn(), download: vi.fn(), bucket: vi.fn(), episodes: vi.fn() }))
 vi.mock('@/app/lib/supabase', () => ({ serviceClient: {
-  from: () => ({ select: () => ({ eq: () => ({ maybeSingle: mocks.single }) }) }),
+  from: () => ({
+    select: (columns: string) => columns === 'slug, youtube_id'
+      ? { eq: () => ({ order: () => ({ limit: mocks.episodes }) }) }
+      : { eq: () => ({ maybeSingle: mocks.single }) },
+  }),
   storage: { from: mocks.bucket },
 } }))
 import { GET } from './route'
@@ -20,12 +23,15 @@ beforeEach(() => {
   mocks.sign.mockReset()
   mocks.download.mockReset()
   mocks.bucket.mockReset()
+  mocks.episodes.mockReset()
+  mocks.episodes.mockResolvedValue({ data: [], error: null })
   mocks.bucket.mockReturnValue({ createSignedUrl: mocks.sign, download: mocks.download })
   mocks.sign.mockResolvedValue({ data: { signedUrl: 'https://project.supabase.co/signed-cover' }, error: null })
   mocks.download.mockResolvedValue({ data: new Blob([BYTES]), error: null })
 })
 
 const request = (headers?: HeadersInit) => GET(new Request('http://localhost/api/covers/episodes/item', { headers }), { params: Promise.resolve({ kind: 'episodes', id: 'item' }) })
+const showRequest = (headers?: HeadersInit) => GET(new Request('http://localhost/api/covers/shows/item', { headers }), { params: Promise.resolve({ kind: 'shows', id: 'item' }) })
 
 it.each(['episodes/upload.webp', 'covers/episodes/upload.webp', 'https://project.supabase.co/storage/v1/object/public/covers/episodes/upload.webp'])('serves the uploaded object as cacheable bytes before any YouTube fallback: %s', async cover => {
   mocks.single.mockResolvedValue({ data: { cover, slug: 'legacy', youtube_id: 'abcdefghijk' }, error: null })
@@ -82,4 +88,34 @@ it('does not resolve arbitrary paths without a catalogue record', async () => {
   expect((await request()).status).toBe(404)
   expect(mocks.download).not.toHaveBeenCalled()
   expect(mocks.sign).not.toHaveBeenCalled()
+})
+
+it('falls back to a newer episode cover when the show cover is missing', async () => {
+  mocks.single.mockResolvedValue({ data: { cover: '', slug: 'legacy' }, error: null })
+  mocks.episodes.mockResolvedValue({ data: [{ slug: 'legacy-2', youtube_id: 'vid2' }, { slug: 'legacy-1', youtube_id: 'vid1' }], error: null })
+  mocks.download
+    .mockResolvedValueOnce({ data: null, error: { message: 'Object not found' } })
+    .mockResolvedValueOnce({ data: null, error: { message: 'Object not found' } })
+    .mockResolvedValueOnce({ data: new Blob([BYTES]), error: null })
+  const response = await showRequest()
+  expect(response.status).toBe(200)
+  expect(response.headers.get('content-type')).toBe('image/webp')
+  expect(response.headers.get('cache-control')).toBe(CACHE_CONTROL)
+  expect(mocks.download).toHaveBeenNthCalledWith(3, 'episodes/legacy-1.webp')
+})
+
+it('redirects to an episode YouTube thumbnail when no show or episode cover exists', async () => {
+  mocks.single.mockResolvedValue({ data: { cover: '', slug: 'legacy' }, error: null })
+  mocks.episodes.mockResolvedValue({ data: [{ slug: 'legacy-1', youtube_id: 'abcdefghijk' }], error: null })
+  mocks.download.mockResolvedValue({ data: null, error: { message: 'Object not found' } })
+  const response = await showRequest()
+  expect(response.status).toBe(307)
+  expect(response.headers.get('location')).toBe('https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg')
+})
+
+it('returns 404 for a show with no cover and no episodes', async () => {
+  mocks.single.mockResolvedValue({ data: { cover: '', slug: 'legacy' }, error: null })
+  mocks.episodes.mockResolvedValue({ data: [], error: null })
+  mocks.download.mockResolvedValue({ data: null, error: { message: 'Object not found' } })
+  expect((await showRequest()).status).toBe(404)
 })

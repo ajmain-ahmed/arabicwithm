@@ -79,6 +79,23 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
         if (!signError && signed?.signedUrl) return new Response(null, { status: 307, headers: { Location: signed.signedUrl, 'Cache-Control': 'no-store' } })
       }
     }
+    if (kind === 'shows') {
+      // No dedicated show cover: borrow the newest episode cover, else redirect to its YouTube thumbnail.
+      const { data: episodes } = await serviceClient
+        .from('episodes')
+        .select('slug, youtube_id')
+        .eq('show_id', String(row.id))
+        .order('created_at', { ascending: false })
+        .limit(8)
+      for (const episode of episodes ?? []) {
+        const cover = await fetchCoverBytes('covers', `episodes/${episode.slug}.webp`)
+        if (cover) return coverResponse(cover, request.headers.get('if-none-match'))
+      }
+      for (const episode of episodes ?? []) {
+        const fallback = getYouTubeThumbnailUrl(String(episode.youtube_id ?? ''))
+        if (fallback) return Response.redirect(fallback, 307)
+      }
+    }
     const fallback = kind === 'episodes' ? getYouTubeThumbnailUrl(String(row.youtube_id ?? '')) : undefined
     if (fallback) return Response.redirect(fallback, 307)
     return new Response(null, { status: 404 })
