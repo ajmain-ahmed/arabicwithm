@@ -23,6 +23,9 @@ export interface CatalogueRowItem {
   imageCrop?: ThumbnailCrop
 }
 
+export const COMPACT_HOME_CARD_WIDTH = { xs: 'clamp(128px, 38vw, 152px)', sm: 164, md: 184, lg: 196 } as const
+export const HOME_CAROUSEL_CARD_ASPECT_RATIO = '4 / 5'
+
 const ARROW_SX = {
   /* Touch layouts use native swiping; desktop gets explicit paging controls. */
   display: { xs: 'none', md: 'flex' },
@@ -71,10 +74,10 @@ function RowTile({
         position: 'relative',
         flex: '0 0 auto',
         width: compact
-          ? { xs: mobileWidth, sm: 164, md: 184, lg: 196 }
+          ? { ...COMPACT_HOME_CARD_WIDTH, xs: mobileWidth }
           : { xs: mobileWidth, sm: 260, md: 300 },
         maxWidth: { xs: compact ? 152 : 310, sm: '100%' },
-        aspectRatio: '4 / 5',
+        aspectRatio: HOME_CAROUSEL_CARD_ASPECT_RATIO,
         scrollSnapAlign: 'start',
         scrollSnapStop: 'normal',
         borderRadius: compact ? '10px' : '12px',
@@ -111,7 +114,7 @@ function RowTile({
           inset: 0,
           width: '100%',
           height: '100%',
-          objectFit: compact ? 'fill' : 'cover',
+          objectFit: 'cover',
           opacity: loaded ? 1 : 0,
           transition: 'opacity 0.3s ease',
           ...imagePositionSx,

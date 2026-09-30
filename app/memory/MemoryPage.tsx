@@ -195,6 +195,12 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     if (!saved) return
     setCards(saved.cards); setIndex(saved.index); setCompleted(saved.completed); setSessionXp(saved.sessionXp); setCompletionIds(saved.completionIds); chooseDirection(saved.direction); setStarted(true); setSaved(null)
   }
+  const requestNewCards = () => {
+    const params = new URLSearchParams({ new: '1', deck: crypto.randomUUID() })
+    if (library.selectedEpisodeId) params.set('episode', library.selectedEpisodeId)
+    else if (library.selectedShowId) params.set('show', library.selectedShowId)
+    router.push(`/memory?${params.toString()}`)
+  }
 
   const empty = cards.length === 0
   const complete = started && index >= cards.length
@@ -263,9 +269,9 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         {loadError ? <Box sx={{ mt: 2 }}><Button onClick={() => router.refresh()}>Retry loading Memory cards</Button></Box> : empty ? (
           <Paper elevation={0} sx={{ mt: 3, p: { xs: 4, md: 6 }, textAlign: 'center', borderRadius: '16px', border: '1px solid color-mix(in srgb, var(--awm-gold) 24%, transparent)', bgcolor: 'var(--awm-white)' }}>
             <PsychologyOutlined sx={{ fontSize: 52, color: 'var(--awm-gold)' }} />
-            <Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 28, fontWeight: 600, color: 'var(--awm-bark)' }}>No usable transcript cards here yet</Typography>
-            <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>Memory needs a transcript segment with both Arabic and English.</Typography>
-            <Button component={Link} href="/memory" variant="contained" sx={{ mt: 2.5, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Try Random practice</Button>
+            <Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 28, fontWeight: 600, color: 'var(--awm-bark)' }}>{library.newOnly ? 'No new cards available' : 'No usable transcript cards here yet'}</Typography>
+            <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>{library.newOnly ? 'You have already reviewed every available card in this selection.' : 'Memory needs a transcript segment with both Arabic and English.'}</Typography>
+            <Button component={Link} href="/memory" variant="contained" sx={{ mt: 2.5, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>{library.newOnly ? 'Practise reviewed cards' : 'Try Random practice'}</Button>
           </Paper>
         ) : !started ? (
           <Paper elevation={0} sx={{ mt: 3, minHeight: { xs: 330, md: 390 }, p: { xs: 3, md: 5 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: '18px', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', bgcolor: 'var(--awm-white)', boxShadow: '0 18px 50px color-mix(in srgb, var(--awm-bark) 9%, transparent)' }}>
@@ -273,7 +279,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
           </Paper>
         ) : complete ? (
           <Paper elevation={0} sx={{ mt: 3, p: { xs: 4, md: 6 }, textAlign: 'center', borderRadius: '18px', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)' }}>
-            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>{completed} cards completed{user ? ` · ${sessionXp} XP earned` : ''}</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving || limited))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button component={Link} href="/memory" variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New random deck</Button></Box>
+            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>{completed} cards completed{user ? ` · ${sessionXp} XP earned` : ''}</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving || limited))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button></Box>
           </Paper>
         ) : card && (
           <Box sx={{ mt: 3 }}>

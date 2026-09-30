@@ -25,7 +25,7 @@ import { fetchPremiumStatus } from '@/app/actions/premium'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import CheckoutFeedback from '@/app/components/CheckoutFeedback'
 import CefrChip from '@/app/components/CefrChip'
-import NewOnRow, { type CatalogueRowItem } from './NewOnRow'
+import NewOnRow, { COMPACT_HOME_CARD_WIDTH, HOME_CAROUSEL_CARD_ASPECT_RATIO, type CatalogueRowItem } from './NewOnRow'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
@@ -127,58 +127,48 @@ function BookCard({ book }: { book: PublicBook }) {
       href={`/books/${encodeURIComponent(book.slug)}`}
       elevation={0}
       sx={{
-        display: 'flex',
-        flexDirection: 'column',
+        position: 'relative',
+        display: 'block',
+        width: COMPACT_HOME_CARD_WIDTH,
+        maxWidth: '100%',
+        aspectRatio: HOME_CAROUSEL_CARD_ASPECT_RATIO,
+        justifySelf: 'center',
         minWidth: 0,
         overflow: 'hidden',
-        color: 'inherit',
+        color: '#fff',
         textDecoration: 'none',
         border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)',
         borderRadius: { xs: '10px', sm: '14px' },
-        bgcolor: 'var(--awm-white)',
+        bgcolor: '#0e2e1f',
         transition: 'transform .2s ease, box-shadow .2s ease',
         '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 14px 32px color-mix(in srgb, var(--awm-bark) 12%, transparent)' },
       }}
     >
-      <Box sx={{ position: 'relative', bgcolor: '#0e2e1f' }}>
-        {!loaded && (
-          <Skeleton
-            variant="rectangular"
-            animation="wave"
-            sx={{ position: 'absolute', inset: 0, zIndex: 1, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)' }}
-          />
-        )}
-        <Box
-          component="img"
-          src={book.cover || `/api/covers/books/${book.id}`}
-          alt={book.titleAr ? `${book.title} — ${book.titleAr}` : book.title}
-          loading="lazy"
-          onLoad={() => setLoaded(true)}
-          onError={(e) => {
-            setLoaded(true)
-            e.currentTarget.style.display = 'none'
-          }}
-          sx={{ width: '100%', aspectRatio: '2 / 3', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease', ...thumbnailCropCss(book.coverCrop) }}
-        />
-      </Box>
-      <Box sx={{ p: { xs: 1.25, sm: 2 }, display: 'flex', flexDirection: 'column', flexGrow: 1, minWidth: 0 }}>
-        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '0.95rem', sm: '1.2rem' }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</Typography>
+      {!loaded && <Skeleton variant="rectangular" animation="wave" sx={{ position: 'absolute', inset: 0, zIndex: 1, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)' }} />}
+      <Box
+        component="img"
+        src={book.cover || `/api/covers/books/${book.id}`}
+        alt={book.titleAr ? `${book.title} — ${book.titleAr}` : book.title}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        onError={(e) => {
+          setLoaded(true)
+          e.currentTarget.style.display = 'none'
+        }}
+        sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease', ...thumbnailCropCss(book.coverCrop) }}
+      />
+      <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(5,23,15,0.04) 22%, rgba(5,23,15,0.94) 100%)' }} />
+      <Box sx={{ position: 'absolute', zIndex: 2, left: 0, right: 0, bottom: 0, p: { xs: 1, sm: 1.25 }, minWidth: 0 }}>
+        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '0.88rem', sm: '1rem' }, fontWeight: 700, color: '#fff', lineHeight: 1.15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 2px 8px rgba(0,0,0,.55)' }}>{book.title}</Typography>
         {book.titleAr && (
-          <Typography lang="ar" dir="rtl" sx={{ mt: 0.25, fontFamily: 'var(--font-serif)', fontSize: { xs: '0.82rem', sm: '1.05rem' }, color: 'var(--awm-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{book.titleAr}</Typography>
+          <Typography lang="ar" dir="rtl" sx={{ mt: 0.15, fontFamily: 'var(--font-serif)', fontSize: { xs: '0.75rem', sm: '0.85rem' }, color: 'rgba(255,255,255,.82)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{book.titleAr}</Typography>
         )}
-        <Typography sx={{ mt: { xs: 0.75, sm: 1 }, fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.72rem', sm: '0.85rem' }, color: 'var(--awm-muted)', lineHeight: 1.5, display: { xs: 'none', sm: '-webkit-box' }, WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+        <Typography sx={{ mt: 0.35, fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.61rem', sm: '0.68rem' }, color: 'rgba(255,255,255,.78)', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {book.description}
         </Typography>
-        <Box sx={{ mt: 'auto', pt: { xs: 1.25, sm: 1.75 }, display: { xs: 'none', sm: 'flex' }, alignItems: 'center', justifyContent: 'space-between', gap: 0.75 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', minWidth: 0 }}>
-            {book.level && (
-              <CefrChip size="small" level={book.level} sx={{ height: { xs: 18, sm: 22 }, borderRadius: '9999px', fontSize: { xs: '0.6rem', sm: '0.7rem' } }} />
-            )}
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.68rem', sm: '0.78rem' }, color: 'var(--awm-muted)' }}>
-              {book.chapterCount} ch.
-            </Typography>
-          </Box>
-          <ChevronRight sx={{ color: 'var(--awm-muted)', fontSize: { xs: 16, sm: 20 }, flexShrink: 0 }} />
+        <Box sx={{ mt: 0.65, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.5 }}>
+          {book.level ? <CefrChip size="small" level={book.level} sx={{ height: 18, borderRadius: '9999px', fontSize: '0.6rem' }} /> : <Box />}
+          <Typography component="span" sx={{ display: 'inline-flex', alignItems: 'center', color: '#fff', fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.63rem', sm: '0.7rem' }, fontWeight: 700 }}>Read <ChevronRight sx={{ fontSize: 15 }} /></Typography>
         </Box>
       </Box>
     </Paper>
@@ -188,7 +178,7 @@ function BookCard({ book }: { book: PublicBook }) {
 function BooksSection({ books }: { books: PublicBook[] }) {
   if (books.length === 0) return null
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', sm: 'repeat(3, minmax(0,1fr))', md: 'repeat(4, minmax(0,1fr))', lg: 'repeat(auto-fit, minmax(220px, 1fr))' }, gap: { xs: 1.25, sm: 2 } }}>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: { xs: 1, md: 1.5 } }}>
       {books.slice(0, 4).map((book) => (
         <BookCard key={book.id} book={book} />
       ))}
@@ -467,7 +457,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
             {/* Fluid row: fills one line on wide screens, wraps only when the
                 catalogue outgrows the width; centred so the heading aligns. */}
             <Box sx={{ maxWidth: 2200, mx: 'auto' }}>
-              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Featured books in Arabic &amp; English</Typography>
+              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2, textAlign: 'center' }}>Featured books in Arabic &amp; English</Typography>
               <Box sx={{ mt: 2 }}>
                 <BooksSection books={books} />
               </Box>
@@ -510,7 +500,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
         )}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
           {featuredEpisode && <ContentCard type={`Watch next · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} imageCrop={featuredEpisode.episode.coverCrop} actionLabel="Play episode" />}
-          {!recentReading && featuredBook ? <ContentCard type="Start reading" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} imageCrop={featuredBook.coverCrop} /> : null}
+          {featuredBook ? <BookCard book={featuredBook} /> : null}
         </Box>
 
       </Container>

@@ -7,6 +7,7 @@ import {
   recommendMemoryCardCount,
   sampleMemoryCards,
   scoreMemoryCard,
+  unseenMemoryCards,
   type MemoryCard,
   type MemoryEpisodeInput,
 } from './memory'
@@ -93,6 +94,27 @@ describe('Memory transcript candidates', () => {
 
     expect(extractMemoryCards(vocabularyEpisode)).toHaveLength(1)
     expect(extractMemoryCards(vocabularyEpisode)[0]).toMatchObject({ arabic: 'ذَهَبَ', english: 'He went' })
+  })
+
+  it('ignores malformed optional token fields instead of crashing a new deck', () => {
+    const validBlock = Array.isArray(episode.transcript) ? episode.transcript[0] : null
+    const malformedEpisode: MemoryEpisodeInput = {
+      ...episode,
+      transcript: [
+        validBlock,
+        { timestamp: null, translation: null, tokens: [null, { arabic: null, pos: null }] },
+      ],
+    }
+
+    expect(() => extractMemoryCards(malformedEpisode)).not.toThrow()
+    expect(extractMemoryCards(malformedEpisode)).toHaveLength(1)
+  })
+
+  it('returns only cards without review history for a New session', () => {
+    const cards = [card('seen', 'كيف حالك اليوم؟', 'How are you today?'), card('new', 'أريد بعض الطعام الآن.', 'I want some food now.')]
+    expect(unseenMemoryCards(cards, [{ cardId: 'seen', rating: 'known', reviewedAt: '2026-09-30' }]).map((item) => item.id)).toEqual(['new'])
+    expect(unseenMemoryCards(cards, [])).toEqual(cards)
+    expect(unseenMemoryCards(cards, cards.map((item) => ({ cardId: item.id, rating: 'known' as const, reviewedAt: '2026-09-30' })))).toEqual([])
   })
 
   it.each([

@@ -16,6 +16,7 @@ import {
   type MemoryEpisodeInput,
   type MemoryRating,
   type MemoryReviewSignal,
+  unseenMemoryCards,
 } from '@/app/lib/memory'
 import { hasServiceClientConfig, serviceClient } from '@/app/lib/supabase'
 import { unstable_cache } from 'next/cache'
@@ -41,11 +42,13 @@ export interface MemoryLibrary {
   missingScope: boolean
   recommendedCardCount: 5 | 10 | 15 | 20
   availableCardCount: number
+  newOnly: boolean
 }
 
 export interface MemoryScopeInput {
   showId?: string
   episodeId?: string
+  newOnly?: boolean
 }
 
 type EpisodeRecord = Record<string, unknown>
@@ -61,7 +64,7 @@ function sampleEpisodeRows(rows: EpisodeRecord[], limit: number): EpisodeRecord[
 
 export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<MemoryLibrary> {
   if (!hasServiceClientConfig()) {
-    return { cards: [], shows: [], scope: 'global', scopeTitle: 'Random practice', missingScope: false, recommendedCardCount: 5, availableCardCount: 0 }
+    return { cards: [], shows: [], scope: 'global', scopeTitle: 'Random practice', missingScope: false, recommendedCardCount: 5, availableCardCount: 0, newOnly: false }
   }
 
   let sourceQuery = serviceClient
@@ -90,7 +93,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
     ? sourceRecords
     : scope === 'show'
       ? sourceRecords
-      : sampleEpisodeRows(sourceRecords, 24)
+      : sampleEpisodeRows(sourceRecords, input.newOnly ? sourceRecords.length : 24)
 
   /* Fetch transcripts in small batches: a few episodes usually yield enough
      cards for a session, so don't download all 24 transcripts up front. */
@@ -132,6 +135,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(1000)
+    if (reviewError && input.newOnly) throw new Error('Unable to load Memory card history. Please try again.')
     if (reviewError) console.error('[memory review ranking]', reviewError.message)
     else reviewSignals = (reviewRows ?? []).flatMap((review) => {
       if (review.rating !== 'again' && review.rating !== 'known') return []
@@ -142,7 +146,11 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
       }]
     })
   }
-  const cards = prioritizeMemoryCards(rankedCards, reviewSignals).slice(0, MEMORY.sessionCards)
+  const newOnly = Boolean(input.newOnly && userId)
+  const eligibleCards = newOnly
+    ? unseenMemoryCards(rankedCards, reviewSignals)
+    : rankedCards
+  const cards = prioritizeMemoryCards(eligibleCards, reviewSignals).slice(0, MEMORY.sessionCards)
   const selectedShow = input.showId ? showsById.get(input.showId) : undefined
   const selectedEpisode = input.episodeId ? episodes[0] : undefined
 
@@ -156,6 +164,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
     missingScope: Boolean((input.episodeId || input.showId) && (sourceRows ?? []).length === 0),
     recommendedCardCount: recommendMemoryCardCount(cards.length),
     availableCardCount: cards.length,
+    newOnly,
   }
 }
 
@@ -166,7 +175,7 @@ const fetchMemoryCardSource = unstable_cache(
   async (episodeId: string) => {
     const { data: episode, error: episodeError } = await serviceClient
       .from('episodes')
-      .select('id, show_id, slug, title, transcript')
+      .select('id, show_id, slug, title, level, transcript')
       .eq('id', episodeId)
       .maybeSingle()
     if (episodeError || !episode) return null
@@ -198,6 +207,7 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating, c
     showTitle: String(show.title),
     episodeSlug: String(episode.slug),
     episodeTitle: String(episode.title),
+    level: episode.level ? String(episode.level) : undefined,
     transcript: episode.transcript,
   })
   if (!validCards.some((card) => card.id === cardId)) throw new Error('This Memory card is no longer available.')

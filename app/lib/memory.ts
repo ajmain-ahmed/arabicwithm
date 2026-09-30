@@ -1,4 +1,4 @@
-import { isNewTranscript, normalizeNewTranscript } from '@/app/lib/cartoons'
+import { isNewTranscript } from '@/app/lib/cartoons'
 import { stripDiacritics } from '@/app/lib/arabic'
 
 export type MemoryDirection = 'english' | 'arabic'
@@ -197,15 +197,68 @@ export function prioritizeMemoryCards(
     .map(({ card }) => card)
 }
 
+export function unseenMemoryCards(cards: readonly MemoryCard[], reviews: readonly MemoryReviewSignal[]): MemoryCard[] {
+  const reviewedIds = new Set(reviews.map((review) => review.cardId))
+  return cards.filter((card) => !reviewedIds.has(card.id))
+}
+
 function legacyBlocks(transcript: unknown): Array<Record<string, unknown>> {
   if (!transcript || typeof transcript !== 'object' || Array.isArray(transcript)) return []
   const blocks = (transcript as Record<string, unknown>).scriptBlocks
   return Array.isArray(blocks) ? blocks.filter((block): block is Record<string, unknown> => Boolean(block && typeof block === 'object')) : []
 }
 
+function safeTimestamp(value: unknown): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null
+  if (typeof value !== 'string' || !value.trim()) return null
+  const parts = value.split(':').map(Number)
+  if (!parts.every(Number.isFinite)) return null
+  if (parts.length === 1) return parts[0]
+  if (parts.length === 2) return parts[0] * 60 + parts[1]
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2]
+  if (parts.length === 4) return parts[0] * 3600 + parts[1] * 60 + parts[2] + parts[3] / 25
+  return null
+}
+
+/** Memory accepts partially edited transcript JSON without trusting token fields. */
+function safeNewTranscriptBlocks(transcript: unknown): Array<Record<string, unknown>> {
+  if (!Array.isArray(transcript)) return []
+  return transcript.flatMap((rawBlock) => {
+    if (!rawBlock || typeof rawBlock !== 'object' || Array.isArray(rawBlock)) return []
+    const block = rawBlock as Record<string, unknown>
+    const rawTokens = Array.isArray(block.tokens) ? block.tokens : []
+    const words = rawTokens.flatMap((rawToken) => {
+      if (!rawToken || typeof rawToken !== 'object' || Array.isArray(rawToken)) return []
+      const token = rawToken as Record<string, unknown>
+      const arabic = typeof token.arabic === 'string' ? token.arabic.trim() : ''
+      if (!arabic) return []
+      return [{
+        arabic,
+        plain: stripDiacritics(arabic),
+        english: typeof token.english === 'string' ? token.english.trim() : '',
+        lemma: typeof token.lemma === 'string' ? token.lemma.trim() : undefined,
+        headword: typeof token.headword === 'string' ? token.headword.trim() : undefined,
+        pos: typeof token.pos === 'string' ? token.pos.trim() : '',
+        cefr: typeof (token.cefr ?? token.CEFR) === 'string' ? String(token.cefr ?? token.CEFR).trim().toLowerCase() : undefined,
+        entry_type: token.entry_type === 'phrase' ? 'phrase' : 'word',
+      }]
+    })
+    const translation = typeof block.translation === 'string' ? block.translation.trim() : ''
+    return [{
+      timestamp: safeTimestamp(block.timestamp),
+      title: translation,
+      english: translation,
+      arabicDiacritic: words.map((word) => word.arabic).join(' '),
+      arabicPlain: words.map((word) => word.plain).join(' '),
+      words,
+    }]
+  })
+}
+
 export function extractMemoryCards(episode: MemoryEpisodeInput): MemoryCard[] {
-  const blocks = isNewTranscript(episode.transcript)
-    ? normalizeNewTranscript(episode.transcript).scriptBlocks as unknown as Array<Record<string, unknown>>
+  const newTranscript = isNewTranscript(episode.transcript)
+  const blocks = newTranscript
+    ? safeNewTranscriptBlocks(episode.transcript)
     : legacyBlocks(episode.transcript)
 
   const candidates = blocks.flatMap((block, index) => {
@@ -219,7 +272,7 @@ export function extractMemoryCards(episode: MemoryEpisodeInput): MemoryCard[] {
     ).trim()
     const english = String(block.english || block.title || '').trim()
     if (!hasUsefulArabic(arabic) || !hasUsefulEnglish(english)) return []
-    if (isNewTranscript(episode.transcript) && !learningSignal) return []
+    if (newTranscript && !learningSignal) return []
 
     const rawTimestamp = block.timestamp
     const timestamp = rawTimestamp == null || !Number.isFinite(Number(rawTimestamp)) ? null : Number(rawTimestamp)
