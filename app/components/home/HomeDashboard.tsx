@@ -188,7 +188,7 @@ function BookCard({ book }: { book: PublicBook }) {
 function BooksSection({ books }: { books: PublicBook[] }) {
   if (books.length === 0) return null
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', lg: 'repeat(5, minmax(0,1fr))' }, gap: { xs: 1.25, sm: 2 } }}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', sm: 'repeat(3, minmax(0,1fr))', md: 'repeat(4, minmax(0,1fr))', lg: 'repeat(auto-fit, minmax(220px, 1fr))' }, gap: { xs: 1.25, sm: 2 } }}>
       {books.map((book) => (
         <BookCard key={book.id} book={book} />
       ))}
@@ -494,9 +494,9 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           </Container>
 
           <Container maxWidth={false} sx={{ mt: { xs: 4, md: 5 } }}>
-            {/* Wide enough for a 5-book row at the previous card size (5 × 275px
-                + gaps); centred as one block so the heading aligns with the grid. */}
-            <Box sx={{ maxWidth: 1440, mx: 'auto' }}>
+            {/* Fluid row: fills one line on wide screens, wraps only when the
+                catalogue outgrows the width; centred so the heading aligns. */}
+            <Box sx={{ maxWidth: 2200, mx: 'auto' }}>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Featured books in Arabic &amp; English</Typography>
               <Box sx={{ mt: 2 }}>
                 <BooksSection books={books} />
