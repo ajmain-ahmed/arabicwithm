@@ -1,6 +1,7 @@
 'use server'
 
 import { z } from 'zod'
+import { getAuthenticatedUserId } from '@/app/actions/auth'
 import { fetchExploreEpisodeByIdPublic, fetchExploreEpisodeMetasForPublic } from '@/app/actions/cartoons'
 import {
   fetchExploreBookChapterMetasForPublic,
@@ -27,11 +28,13 @@ async function hydrateExplorePlanItem(item: ExploreFeedPlanItem): Promise<Explor
 }
 
 async function fetchExploreFeedBatch(seed: string, page: number): Promise<ExploreFeedBatch> {
-    const [episodeMetas, bookChapterMetas, bookPageCounts] = await Promise.all([
+    const [episodeMetas, userId] = await Promise.all([
       fetchExploreEpisodeMetasForPublic(),
-      fetchExploreBookChapterMetasForPublic(),
-      fetchExploreBookChapterPageCounts(),
+      getAuthenticatedUserId(),
     ])
+    const [bookChapterMetas, bookPageCounts] = userId
+      ? await Promise.all([fetchExploreBookChapterMetasForPublic(), fetchExploreBookChapterPageCounts()])
+      : [[], {}]
     const plan = buildExploreFeedPlan(episodeMetas, bookChapterMetas, bookPageCounts, seed)
     const batch = sliceExploreFeedBatch(plan, page)
     const items = (await Promise.all(batch.items.map(hydrateExplorePlanItem))).filter(

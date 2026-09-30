@@ -1,21 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { canAccessBookChapter, getRemainingFreeMemoryCards, hasPremium, hasPremiumAccess, platformDate } from './entitlements'
+import { canAccessBookChapter, getRemainingFreeMemoryCards, hasPremium, hasPremiumAccess, platformDate, resolveEntitlements } from './entitlements'
 describe('central access policy', () => {
-  it.each([4, 5, 6, 12, 30])('protects a %i chapter book for both languages', chapterCount => {
-    const book = { chapterCount, freeChapterCount: 5, premiumExempt: false }
-    for (let chapter = 1; chapter <= chapterCount; chapter++) {
-      expect(canAccessBookChapter(false, book, chapter)).toBe(chapter <= 5)
-      expect(canAccessBookChapter(true, book, chapter)).toBe(true)
-    }
-    expect(canAccessBookChapter(false, { ...book, premiumExempt: true }, chapterCount)).toBe(true)
+  it('allows every signed-in account to read and blocks guests', () => {
+    expect(canAccessBookChapter(false, 1)).toBe(false)
+    expect(canAccessBookChapter(true, 1)).toBe(true)
+    expect(canAccessBookChapter(true, 30)).toBe(true)
+    expect(canAccessBookChapter(true, -1)).toBe(false)
   })
-  it('rejects invalid chapter indices', () => {
-    expect(canAccessBookChapter(true, { chapterCount: 6, freeChapterCount: 5, premiumExempt: false }, -1)).toBe(false)
+  it('defines one guest, free, and premium entitlement matrix', () => {
+    expect(resolveEntitlements(false, false)).toMatchObject({ tier: 'guest', canReadBooks: false, canDownloadBooks: false, canUseAudiobooks: false, memoryDailyLimit: 30 })
+    expect(resolveEntitlements(true, false)).toMatchObject({ tier: 'free', canReadBooks: true, canDownloadBooks: false, canUseAudiobooks: false, memoryDailyLimit: 30 })
+    expect(resolveEntitlements(true, true)).toMatchObject({ tier: 'premium', canReadBooks: true, canDownloadBooks: true, canUseAudiobooks: true, memoryDailyLimit: null })
   })
   it('uses paid status and expiry, including cancellation at period end', () => {
     const now = new Date('2026-09-09T00:00:00Z')
     expect(hasPremium({ status: 'active', current_period_end: '2026-10-01' }, now)).toBe(true)
-    for (const status of ['past_due', 'unpaid', 'incomplete', 'canceled', 'expired', 'trialing']) expect(hasPremium({ status, current_period_end: '2026-10-01' }, now)).toBe(false)
+    expect(hasPremium({ status: 'trialing', current_period_end: '2026-10-01' }, now)).toBe(true)
+    for (const status of ['past_due', 'unpaid', 'incomplete', 'canceled', 'expired']) expect(hasPremium({ status, current_period_end: '2026-10-01' }, now)).toBe(false)
     expect(hasPremium({ status: 'active', current_period_end: '2026-09-08' }, now)).toBe(false)
     expect(hasPremium(null, now)).toBe(false)
   })
@@ -27,9 +28,9 @@ describe('central access policy', () => {
     expect(hasPremiumAccess(false, { status: 'active', current_period_end: '2026-10-01' }, now)).toBe(true)
   })
   it('shares a daily allowance and London calendar boundaries, including DST', () => {
-    expect(getRemainingFreeMemoryCards(8)).toBe(12)
-    expect(getRemainingFreeMemoryCards(20)).toBe(0)
-    expect(getRemainingFreeMemoryCards(24)).toBe(0)
+    expect(getRemainingFreeMemoryCards(8)).toBe(22)
+    expect(getRemainingFreeMemoryCards(30)).toBe(0)
+    expect(getRemainingFreeMemoryCards(34)).toBe(0)
     expect(platformDate(new Date('2026-09-09T23:01:00Z'))).toBe('2026-09-10')
     expect(platformDate(new Date('2026-12-09T23:01:00Z'))).toBe('2026-12-09')
   })

@@ -1,36 +1,26 @@
-import { LockedChapter } from "@/app/components/PremiumPrompt"
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Box, Button, Container, Typography } from '@mui/material'
 import { ArrowBack, ArrowForward, FormatListBulleted } from '@mui/icons-material'
 import {
   fetchBookBySlugPublic,
-  fetchBooksForPublic,
   fetchChapterForPublic,
   fetchChaptersForBookPublic,
 } from '@/app/actions/books'
 import ReadingProgress from './ReadingProgress'
 import ChapterReader from './ChapterReader'
 import { normalizeBookReaderLanguage } from '@/app/lib/bookReaderSettings'
+import SignInRequired from '@/app/components/SignInRequired'
+import { fetchPublishedChapterAudio } from '@/app/actions/audiobooks'
+import ChapterAudioPlayer from './ChapterAudioPlayer'
 
-export const revalidate = false
-
-export async function generateStaticParams() {
-  const books = await fetchBooksForPublic()
-  const params = await Promise.all(
-    books.map(async (book) => {
-      const chapters = await fetchChaptersForBookPublic(book.id)
-      return chapters.map((chapter) => ({ book: book.slug, chapter: chapter.slug }))
-    })
-  )
-  return params.flat()
-}
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: Promise<{ book: string; chapter: string }> }) {
   const { book: bookSlug, chapter: chapterSlug } = await params
   const book = await fetchBookBySlugPublic(bookSlug)
   if (!book) return { title: 'Chapter Not Found' }
-  const chapter = await fetchChapterForPublic(book.id, chapterSlug)
+  const chapter = (await fetchChaptersForBookPublic(book.id)).find((item) => item.slug === chapterSlug)
   return chapter ? { title: `${chapter.title} — ${book.title}` } : { title: 'Chapter Not Found' }
 }
 
@@ -55,10 +45,11 @@ export default async function ChapterPage({
   if (!chapter) {
     const listed = chapters.find(item => item.slug === chapterSlug)
     if (!listed) notFound()
-    return <LockedChapter bookSlug={book.slug} chapterTitle={listed.title} />
+    return <SignInRequired title={`Sign in to read ${listed.title}`} />
   }
 
   const chapterIndex = chapters.findIndex((item) => item.slug === chapter.slug)
+  const audio = await fetchPublishedChapterAudio(chapter.id)
   const previousChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : null
   const nextChapter = chapterIndex >= 0 && chapterIndex < chapters.length - 1 ? chapters[chapterIndex + 1] : null
 
@@ -77,6 +68,7 @@ export default async function ChapterPage({
           </Typography>
         </Box>
 
+        {audio && <ChapterAudioPlayer audio={audio} chapterTitle={chapter.title} />}
         <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} />
 
         <Box component="nav" aria-label="Chapter navigation" sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, mt: 3 }}>

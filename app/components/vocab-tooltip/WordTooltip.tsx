@@ -62,8 +62,8 @@ export default function WordTooltip({
             label={formatPos(entry.pos)}
             size="small"
             sx={{
-              bgcolor: 'rgba(184,134,11,0.15)',
-              color: '#b8860b',
+              bgcolor: 'color-mix(in srgb, var(--awm-gold) 15%, transparent)',
+              color: 'var(--awm-gold)',
               fontFamily: 'Jost, sans-serif',
               fontWeight: 600,
               fontSize: `calc(0.7rem * ${textScale})`,

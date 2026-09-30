@@ -2,12 +2,14 @@
 
 import { isMissingDatabaseFeature, LEARNING_SETUP_MESSAGE } from '@/app/lib/databaseErrors'
 import { z } from 'zod'
-import { fetchPremiumStatus } from '@/app/actions/premium'
+import { fetchEntitlements } from '@/app/actions/entitlements'
 import { MEMORY, platformDate } from '@/app/lib/entitlements'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
 import {
   extractMemoryCards,
   parseMemoryCardId,
+  rankMemoryCards,
+  recommendMemoryCardCount,
   sampleMemoryCards,
   type MemoryCard,
   type MemoryEpisodeInput,
@@ -35,6 +37,8 @@ export interface MemoryLibrary {
   selectedShowId?: string
   selectedEpisodeId?: string
   missingScope: boolean
+  recommendedCardCount: 5 | 10 | 15 | 20
+  availableCardCount: number
 }
 
 export interface MemoryScopeInput {
@@ -55,7 +59,7 @@ function sampleEpisodeRows(rows: EpisodeRecord[], limit: number): EpisodeRecord[
 
 export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<MemoryLibrary> {
   if (!hasServiceClientConfig()) {
-    return { cards: [], shows: [], scope: 'global', scopeTitle: 'Random practice', missingScope: false }
+    return { cards: [], shows: [], scope: 'global', scopeTitle: 'Random practice', missingScope: false, recommendedCardCount: 5, availableCardCount: 0 }
   }
 
   let sourceQuery = serviceClient
@@ -79,17 +83,20 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   const showsById = new Map(shows.map((show) => [show.id, show]))
   const scope = input.episodeId ? 'episode' : input.showId ? 'show' : 'global'
 
-  const sampledRows = scope === 'episode'
-    ? ((sourceRows ?? []) as unknown as EpisodeRecord[])
-    : sampleEpisodeRows((sourceRows ?? []) as unknown as EpisodeRecord[], 24)
+  const sourceRecords = (sourceRows ?? []) as unknown as EpisodeRecord[]
+  const selectedSources = scope === 'episode'
+    ? sourceRecords
+    : scope === 'show'
+      ? sourceRecords.slice(0, 24)
+      : sampleEpisodeRows(sourceRecords, 24)
 
   /* Fetch transcripts in small batches: a few episodes usually yield enough
      cards for a session, so don't download all 24 transcripts up front. */
   const episodes: MemoryEpisodeInput[] = []
   const allCards: MemoryCard[] = []
   const BATCH_SIZE = 6
-  for (let offset = 0; offset < sampledRows.length && allCards.length < MEMORY.sessionCards; offset += BATCH_SIZE) {
-    const batchIds = sampledRows.slice(offset, offset + BATCH_SIZE).map((row) => String(row.id)).filter(Boolean)
+  for (let offset = 0; offset < selectedSources.length && rankMemoryCards(allCards).length < MEMORY.sessionCards; offset += BATCH_SIZE) {
+    const batchIds = selectedSources.slice(offset, offset + BATCH_SIZE).map((row) => String(row.id)).filter(Boolean)
     const { data: episodeRows, error: episodeError } = await serviceClient
       .from('episodes')
       .select('id, show_id, slug, title, transcript')
@@ -112,17 +119,20 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
       allCards.push(...extractMemoryCards(episode))
     }
   }
+  const cards = rankMemoryCards(allCards).slice(0, MEMORY.sessionCards)
   const selectedShow = input.showId ? showsById.get(input.showId) : undefined
   const selectedEpisode = input.episodeId ? episodes[0] : undefined
 
   return {
-    cards: sampleMemoryCards(allCards, MEMORY.sessionCards),
+    cards: scope === 'global' ? sampleMemoryCards(cards, MEMORY.sessionCards) : cards,
     shows,
     scope,
     scopeTitle: selectedEpisode?.episodeTitle ?? selectedShow?.title ?? 'Random practice',
     selectedShowId: selectedEpisode?.showId ?? selectedShow?.id,
     selectedEpisodeId: selectedEpisode?.id,
     missingScope: Boolean((input.episodeId || input.showId) && (sourceRows ?? []).length === 0),
+    recommendedCardCount: recommendMemoryCardCount(cards.length),
+    availableCardCount: cards.length,
   }
 }
 
@@ -146,7 +156,7 @@ const fetchMemoryCardSource = unstable_cache(
 )
 
 export async function recordMemoryReview(cardId: string, rating: MemoryRating, completionId: string, nextSession: SavedMemorySession): Promise<{ accepted: boolean; awarded: number; totalXp: number; used: number }> {
-  const [userId, entitlement] = await Promise.all([getAuthenticatedUserId(), fetchPremiumStatus()])
+  const [userId, entitlement] = await Promise.all([getAuthenticatedUserId(), fetchEntitlements()])
   if (!userId || !entitlement.signedIn) throw new Error('Sign in to save Memory practice.')
   z.string().uuid().parse(completionId)
   const state = sessionSchema.parse(nextSession)
@@ -171,7 +181,7 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating, c
 
   const { data, error } = await serviceClient.rpc('complete_memory_card', {
     p_user_id: userId, p_completion_id: completionId, p_card_id: cardId, p_rating: rating,
-    p_xp: MEMORY.xpPerCard, p_daily_limit: MEMORY.dailyFreeCards, p_has_premium: entitlement.premium, p_session: state,
+    p_xp: MEMORY.xpPerCard, p_daily_limit: MEMORY.dailyFreeCards, p_has_premium: entitlement.memoryDailyLimit === null, p_session: state,
   })
   if (error) throw new Error('Unable to save Memory progress. Please try again.')
   return data as { accepted: boolean; awarded: number; totalXp: number; used: number }
@@ -188,7 +198,7 @@ export async function fetchMemoryProgress() {
     serviceClient.rpc('memory_totals', { p_user_id: userId }),
     serviceClient.rpc('memory_totals', { p_user_id: userId, p_since: monday.toISOString().slice(0, 10) }),
     serviceClient.from('memory_legacy_progress').select('xp').eq('user_id', userId).maybeSingle(),
-    fetchPremiumStatus(),
+    fetchEntitlements(),
   ])
   const errors = [daily.error, total.error, week.error, legacy.error]
   if (errors.some(Boolean)) console.error('[memory database queries]', errors.filter(Boolean))

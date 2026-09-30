@@ -38,38 +38,38 @@ describe.sequential('actual PostgreSQL migration and Memory transactions', () =>
     expect(rows.find(row => row.title === 'Future Book')?.premium_exempt).toBe(false)
     expect((await db.query<{ xp: number }>('select xp from memory_legacy_progress')).rows[0].xp).toBe(9)
   })
-  it('records 8, resumes for 12 in the other direction, then rejects further practice without losing XP', async () => {
+  it('records 8, resumes for 22 in the other direction, then rejects further practice without losing XP', async () => {
     for (let i = 0; i < 8; i++) expect((await review(user)).used).toBe(i + 1)
-    for (let i = 8; i < 20; i++) expect((await review(user, randomUUID(), randomUUID(), 'english')).used).toBe(i + 1)
-    expect(await review(user)).toEqual({ accepted: false, used: 20, awarded: 0, totalXp: 20 })
+    for (let i = 8; i < MEMORY.dailyFreeCards; i++) expect((await review(user, randomUUID(), randomUUID(), 'english')).used).toBe(i + 1)
+    expect(await review(user)).toEqual({ accepted: false, used: 30, awarded: 0, totalXp: 30 })
     const { rows } = await db.query<{ state: { completed: number; sessionXp: number } }>('select state from memory_sessions where user_id=$1', [user])
     expect(rows[0].state).toMatchObject({ completed: 1, sessionXp: 1 })
   })
   it('does not let concurrent requests overspend the quota', async () => {
     const id = randomUUID()
     await db.query('insert into auth.users values ($1,$2)', [id, '{}'])
-    const results = await Promise.all(Array.from({ length: 24 }, () => review(id)))
-    expect(results.filter(row => row.accepted)).toHaveLength(20)
+    const results = await Promise.all(Array.from({ length: 34 }, () => review(id)))
+    expect(results.filter(row => row.accepted)).toHaveLength(MEMORY.dailyFreeCards)
   })
-  it('allows Premium beyond 20 without increasing XP; retries and repeated sources cannot farm XP', async () => {
+  it('allows Premium beyond 30 without increasing XP; retries and repeated sources cannot farm XP', async () => {
     await db.query("insert into subscriptions(user_id,customer_id,status,current_period_end,cancel_at_period_end) values ($1,'cus_test','active',now()+interval '1 month',true)", [premium])
     const completion = randomUUID()
     const card = randomUUID()
     await review(premium, completion, card)
     expect((await review(premium, completion, card)).used).toBe(1)
     expect((await review(premium, randomUUID(), card)).awarded).toBe(0)
-    for (let i = 0; i < 23; i++) expect((await review(premium)).awarded).toBe(1)
-    expect((await review(premium)).used).toBe(26)
+    for (let i = 0; i < 33; i++) expect((await review(premium)).awarded).toBe(1)
+    expect((await review(premium)).used).toBe(36)
   })
   it('allows centrally authorised admins beyond the free limit without a subscription', async () => {
-    for (let i = 0; i < 24; i++) expect((await review(admin, randomUUID(), randomUUID(), 'arabic', true)).accepted).toBe(true)
-    expect((await review(admin, randomUUID(), randomUUID(), 'arabic', true)).used).toBe(25)
+    for (let i = 0; i < 34; i++) expect((await review(admin, randomUUID(), randomUUID(), 'arabic', true)).accepted).toBe(true)
+    expect((await review(admin, randomUUID(), randomUUID(), 'arabic', true)).used).toBe(35)
   })
   it('resets by persisted date; expiration removes access but preserves all progress', async () => {
     await db.query("update memory_reviews set activity_date=activity_date-1 where user_id=$1", [user])
-    expect(await review(user)).toMatchObject({ accepted: true, used: 1, totalXp: 21 })
+    expect(await review(user)).toMatchObject({ accepted: true, used: 1, totalXp: 31 })
     await db.query("update subscriptions set current_period_end=now()-interval '1 second' where user_id=$1", [premium])
-    expect(await review(premium)).toMatchObject({ accepted: false, used: 26, totalXp: 25 })
+    expect(await review(premium)).toMatchObject({ accepted: false, used: 36, totalXp: 35 })
   })
   it('rejects stale billing events', async () => {
     await db.query("select apply_subscription_event($1,100,'sub_test','active',now()+interval '1 month',true)", [premium])
@@ -101,10 +101,10 @@ it('awards XP once per distinct card per day and retains weekly practice counts'
   const completion = randomUUID()
   const state = JSON.stringify({ completionIds: [completion], sessionXp: 0 })
   const sql = 'select complete_memory_card($1,$2,$3,$4,$5,$6,$7,$8::jsonb) as result'
-  const args = [id, completion, 'card', 'known', MEMORY.xpPerCard, 20, false, state]
+  const args = [id, completion, 'card', 'known', MEMORY.xpPerCard, MEMORY.dailyFreeCards, false, state]
   const first = await db.query<{ result: { awarded: number; used: number } }>(sql, args)
   expect(first.rows[0].result).toMatchObject({ awarded: 1, used: 1 })
-  const repeatCard = await db.query<{ result: { awarded: number; used: number } }>(sql, [id, randomUUID(), 'card', 'known', MEMORY.xpPerCard, 20, false, state])
+  const repeatCard = await db.query<{ result: { awarded: number; used: number } }>(sql, [id, randomUUID(), 'card', 'known', MEMORY.xpPerCard, MEMORY.dailyFreeCards, false, state])
   expect(repeatCard.rows[0].result).toMatchObject({ awarded: 0, used: 2 })
   const { rows } = await db.query<{ result: { cards: number; xp: number } }>('select memory_totals($1) result', [id])
   expect(rows[0].result).toMatchObject({ cards: 2, xp: 1 })

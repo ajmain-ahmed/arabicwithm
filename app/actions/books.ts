@@ -1,6 +1,6 @@
 "use server"
 
-import { fetchPremiumStatus } from "@/app/actions/premium"
+import { getAuthenticatedUserId } from "@/app/actions/auth"
 import { canAccessBookChapter } from "@/app/lib/entitlements"
 import { unstable_cache } from "next/cache"
 import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
@@ -304,7 +304,7 @@ export async function fetchChapterForPublic(bookId: string, chapterSlug: string)
   ])
   if (!book || !chapterResult.data) return null
   const chapterNumber = Number(chapterResult.data.chapter_number)
-  if (!canAccessBookChapter(false, book, chapterNumber) && !(await fetchPremiumStatus()).premium) return null
+  if (!canAccessBookChapter(Boolean(await getAuthenticatedUserId()), chapterNumber)) return null
   return fetchChapterContent(bookId, chapterSlug)
 }
 
@@ -356,7 +356,7 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
 
     const allPages = ((chapters ?? []) as Record<string, unknown>[]).flatMap((chapter) => {
       const book = booksById.get(String(chapter.book_id))
-      if (!book || !canAccessBookChapter(false, book, Number(chapter.chapter_number))) return []
+      if (!book) return []
       return [{
         chapterId: String(chapter.id),
         bookSlug: book.slug,
@@ -437,7 +437,7 @@ function buildExploreBookPages(
   return pages
 }
 
-export const fetchExploreBookChapterPages = unstable_cache(
+const fetchExploreBookChapterPagesCached = unstable_cache(
   async (chapterId: string): Promise<ExploreBookPage[]> => {
     if (!hasServiceClientConfig()) return []
 
@@ -451,8 +451,6 @@ export const fetchExploreBookChapterPages = unstable_cache(
 
     const book = (await fetchBooksForPublic()).find((book) => book.id === String(chapter.book_id))
     if (!book) return []
-    if (!canAccessBookChapter(false, book, Number(chapter.chapter_number))) return []
-
     return buildExploreBookPages(chapter as Record<string, unknown>, {
       slug: book.slug,
       title: book.title,
@@ -464,6 +462,11 @@ export const fetchExploreBookChapterPages = unstable_cache(
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
+export async function fetchExploreBookChapterPages(chapterId: string): Promise<ExploreBookPage[]> {
+  if (!await getAuthenticatedUserId()) return []
+  return fetchExploreBookChapterPagesCached(chapterId)
+}
+
 /* ── Page counts per chapter. Only the counts are cached; deriving
    them reads chapter content once per cold cache, after which batch
    planning costs bytes, not megabytes. ── */
@@ -472,7 +475,7 @@ export const fetchExploreBookChapterPageCounts = unstable_cache(
     const metas = await fetchExploreBookChapterMetasForPublic()
     const entries = await Promise.all(
       metas.map(async (meta) => {
-        const pages = await fetchExploreBookChapterPages(meta.chapterId)
+        const pages = await fetchExploreBookChapterPagesCached(meta.chapterId)
         return [meta.chapterId, pages.length] as const
       })
     )

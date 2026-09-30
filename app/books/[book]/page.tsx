@@ -1,14 +1,15 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Box, Chip, Container, Paper, Typography } from '@mui/material'
-import { AccessTimeRounded, ArrowBack, ChevronRight } from '@mui/icons-material'
+import { AccessTimeRounded, ArrowBack, ChevronRight, HeadphonesRounded } from '@mui/icons-material'
 import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
 import BookReadingCta from './BookReadingCta'
 import BookListRemovalButton from './BookListRemovalButton'
-import ChapterAccessLock, { PremiumChapterLink } from './ChapterAccessLock'
+import ChapterAccessLock, { ChapterLink } from './ChapterAccessLock'
 import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 import { formatReadingTime } from '@/app/lib/readingTime'
+import { fetchPublishedAudioForBook } from '@/app/actions/audiobooks'
 
 export const revalidate = false
 
@@ -28,7 +29,8 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
   const book = await fetchBookBySlugPublic(slug)
   if (!book) notFound()
 
-  const chapters = await fetchChaptersForBookPublic(book.id)
+  const [chapters, audioChapters] = await Promise.all([fetchChaptersForBookPublic(book.id), fetchPublishedAudioForBook(book.id)])
+  const audioChapterIds = new Set(audioChapters.map((audio) => audio.chapterId))
 
   return (
     <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 3, md: 6 } }}>
@@ -81,6 +83,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                   />
                 )}
                 {book.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />)}
+                {audioChapters.length > 0 && <Chip icon={<HeadphonesRounded />} label={`Audiobook · ${audioChapters.length} ${audioChapters.length === 1 ? 'chapter' : 'chapters'}`} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508', '& .MuiChip-icon': { color: 'inherit' } }} />}
               </Box>
               <Box sx={{ mt: 3 }}>
                 <BookReadingCta bookSlug={book.slug} chapters={chapters} />
@@ -101,11 +104,8 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
         >
           {chapters.map((chapter) => (
             <Box key={chapter.id}>
-              <PremiumChapterLink
+              <ChapterLink
                 href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`}
-                premiumExempt={book.premiumExempt}
-                freeChapterCount={book.freeChapterCount}
-                chapterCount={book.chapterCount}
                 chapterNumber={chapter.chapterNumber}
               >
                 <Paper elevation={0} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, p: { xs: 1.5, sm: 2 }, textAlign: 'left', borderRadius: '10px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', transition: 'border-color 0.15s ease, transform 0.15s ease', '&:hover': { borderColor: 'rgba(184,134,11,0.45)', transform: { sm: 'translateX(3px)' } } }}>
@@ -116,10 +116,11 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                     <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}>{chapter.title}</Typography>
                     {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
                   </Box>
-                  <ChapterAccessLock premiumExempt={book.premiumExempt} freeChapterCount={book.freeChapterCount} chapterCount={book.chapterCount} chapterNumber={chapter.chapterNumber} />
+                  <ChapterAccessLock chapterNumber={chapter.chapterNumber} />
+                  {audioChapterIds.has(chapter.id) && <HeadphonesRounded aria-label="Audiobook available" sx={{ color: 'var(--awm-gold)', fontSize: 20 }} />}
                   <ChevronRight sx={{ color: 'var(--awm-muted-light)' }} />
                 </Paper>
-              </PremiumChapterLink>
+              </ChapterLink>
             </Box>
           ))}
         </Box>

@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import { Download } from '@mui/icons-material'
 import { downloadBookPdf, type BookPdfPayload } from '@/app/lib/bookPdf'
-import { fetchPremiumStatus } from '@/app/actions/premium'
+import { fetchEntitlements } from '@/app/actions/entitlements'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 export default function PdfDownloadButton({ bookSlug, chapterSlug, small = false, fullWidth = false }: {
   bookSlug: string; chapterSlug?: string; language?: 'ar' | 'en'; label?: string; small?: boolean; fullWidth?: boolean
@@ -16,7 +16,7 @@ export default function PdfDownloadButton({ bookSlug, chapterSlug, small = false
   async function choose() {
     setBusy(true); setError('')
     try {
-      if (!(await fetchPremiumStatus()).premium) { setUpgrade(true); return }
+      if (!(await fetchEntitlements()).canDownloadBooks) { setUpgrade(true); return }
       const results = await Promise.all((['ar', 'en'] as const).map(async language => {
         const query = new URLSearchParams({ lang: language })
         if (chapterSlug) query.set('chapter', chapterSlug)

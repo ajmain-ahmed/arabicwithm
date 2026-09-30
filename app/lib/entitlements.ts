@@ -6,14 +6,41 @@ export const PREMIUM_BENEFITS = [
   { id: 'memory', label: 'Unlimited Memory Practice', appOnly: false },
   { id: 'flashcards', label: 'Unlimited flashcards', appOnly: true },
 ] as const
-export const MEMORY = { dailyFreeCards: 20, sessionCards: 20, xpPerCard: 1, timeZone: 'Europe/London' } as const
-export interface BookAccessPolicy { premiumExempt: boolean; freeChapterCount: number; chapterCount: number }
-export function canAccessBookChapter(premium: boolean, book: BookAccessPolicy, chapter: number): boolean {
-  if (!Number.isInteger(chapter) || chapter < 1) return false
-  return premium || book.premiumExempt || book.chapterCount <= book.freeChapterCount || chapter <= book.freeChapterCount
+export const MEMORY = { dailyFreeCards: 30, sessionCards: 20, xpPerCard: 1, timeZone: 'Europe/London' } as const
+
+export type AccessTier = 'guest' | 'free' | 'premium'
+export interface Entitlements {
+  tier: AccessTier
+  signedIn: boolean
+  premium: boolean
+  canBrowseBooks: true
+  canWatchVideos: true
+  canReadBooks: boolean
+  canDownloadBooks: boolean
+  canUseAudiobooks: boolean
+  memoryDailyLimit: number | null
+}
+
+export function resolveEntitlements(signedIn: boolean, premium: boolean): Entitlements {
+  const paid = signedIn && premium
+  return {
+    tier: paid ? 'premium' : signedIn ? 'free' : 'guest',
+    signedIn,
+    premium: paid,
+    canBrowseBooks: true,
+    canWatchVideos: true,
+    canReadBooks: signedIn,
+    canDownloadBooks: paid,
+    canUseAudiobooks: paid,
+    memoryDailyLimit: paid ? null : MEMORY.dailyFreeCards,
+  }
+}
+
+export function canAccessBookChapter(signedIn: boolean, chapter: number): boolean {
+  return signedIn && Number.isInteger(chapter) && chapter >= 1
 }
 export function hasPremium(subscription: { status: string; current_period_end: string } | null, now = new Date()): boolean {
-  return Boolean(subscription && subscription.status === 'active' && Date.parse(subscription.current_period_end) > now.getTime())
+  return Boolean(subscription && ['active', 'trialing'].includes(subscription.status) && Date.parse(subscription.current_period_end) > now.getTime())
 }
 export function hasPremiumAccess(admin: boolean, subscription: { status: string; current_period_end: string } | null, now = new Date()): boolean {
   return admin || hasPremium(subscription, now)

@@ -17,6 +17,8 @@ import {
   InputLabel,
   FormControl,
   useMediaQuery,
+  FormControlLabel,
+  Switch,
 } from "@mui/material"
 import { useTheme } from "@mui/material/styles"
 import { Close, Save, Delete } from "@mui/icons-material"
@@ -31,6 +33,8 @@ import {
   type ChapterInput,
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
+import { deleteChapterAudioForAdmin, fetchChapterAudioForAdmin, saveChapterAudioForAdmin, type AudioSourceType } from '@/app/actions/audiobooks'
+import { removeAudiobookAudio, uploadAudiobookAudio } from '@/app/actions/storage'
 
 interface ChapterEditDialogProps {
   open: boolean
@@ -63,6 +67,14 @@ export default function ChapterEditDialog({
   const [title, setTitle] = useState("")
   const [chapterNumber, setChapterNumber] = useState("")
   const [contentJson, setContentJson] = useState(defaultContent)
+  const [audioExists, setAudioExists] = useState(false)
+  const [audioSource, setAudioSource] = useState<AudioSourceType>('supabase_storage')
+  const [audioPath, setAudioPath] = useState<string | null>(null)
+  const [youtubeId, setYoutubeId] = useState('')
+  const [narrator, setNarrator] = useState('')
+  const [durationSeconds, setDurationSeconds] = useState('')
+  const [audioPublished, setAudioPublished] = useState(false)
+  const [audioUploading, setAudioUploading] = useState(false)
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("md"))
 
@@ -73,6 +85,7 @@ export default function ChapterEditDialog({
     setTab(0)
     setError(null)
     setBookId(initialBookId ?? "")
+    setAudioExists(false); setAudioSource('supabase_storage'); setAudioPath(null); setYoutubeId(''); setNarrator(''); setDurationSeconds(''); setAudioPublished(false)
 
     if (isNew) {
       setSlug("")
@@ -97,6 +110,10 @@ export default function ChapterEditDialog({
       })
       .catch((e: unknown) => setError(errorMessage(e) ?? "Failed to load chapter"))
       .finally(() => setLoading(false))
+    fetchChapterAudioForAdmin(chapterId!).then((audio) => {
+      if (!audio) return
+      setAudioExists(true); setAudioSource(audio.sourceType); setAudioPath(audio.storagePath); setYoutubeId(audio.externalVideoId ?? ''); setNarrator(audio.narrator ?? ''); setDurationSeconds(audio.durationSeconds ? String(audio.durationSeconds) : ''); setAudioPublished(audio.isPublished)
+    }).catch((e: unknown) => setError(errorMessage(e) ?? 'Failed to load audiobook settings'))
   }, [open, chapterId, isNew, initialBookId])
 
   const handleSave = async () => {
@@ -124,10 +141,24 @@ export default function ChapterEditDialog({
         content: content as Record<string, unknown>,
       }
 
+      let savedChapterId = chapterId
       if (isNew) {
-        await createChapter(input)
+        savedChapterId = await createChapter(input)
       } else {
         await updateChapter(chapterId!, input)
+      }
+
+      const hasAudioSource = audioSource === 'supabase_storage' ? Boolean(audioPath) : Boolean(youtubeId.trim())
+      if (savedChapterId && (audioExists || hasAudioSource)) {
+        await saveChapterAudioForAdmin({
+          chapterId: savedChapterId,
+          sourceType: audioSource,
+          storagePath: audioSource === 'supabase_storage' ? audioPath : null,
+          externalVideoId: audioSource === 'youtube' ? youtubeId.trim() : null,
+          durationSeconds: durationSeconds ? Number(durationSeconds) : null,
+          narrator: narrator.trim() || null,
+          isPublished: audioPublished,
+        })
       }
 
       onSaved?.()
@@ -137,6 +168,27 @@ export default function ChapterEditDialog({
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleAudioUpload = async (file: File | undefined) => {
+    if (!file || !chapterId) return
+    setAudioUploading(true); setError(null)
+    try {
+      const data = new FormData(); data.set('chapterId', chapterId); data.set('file', file)
+      setAudioPath(await uploadAudiobookAudio(data)); setAudioSource('supabase_storage'); setAudioExists(true)
+    } catch (e: unknown) { setError(errorMessage(e) ?? 'Audio upload failed') }
+    finally { setAudioUploading(false) }
+  }
+
+  const handleRemoveAudio = async () => {
+    if (!chapterId || !audioExists || !confirm('Remove this chapter audiobook?')) return
+    setSaving(true); setError(null)
+    try {
+      if (audioPath) await removeAudiobookAudio(audioPath)
+      await deleteChapterAudioForAdmin(chapterId)
+      setAudioExists(false); setAudioPath(null); setYoutubeId(''); setNarrator(''); setDurationSeconds(''); setAudioPublished(false)
+    } catch (e: unknown) { setError(errorMessage(e) ?? 'Unable to remove audiobook') }
+    finally { setSaving(false) }
   }
 
   const handleDelete = async () => {
@@ -212,6 +264,7 @@ export default function ChapterEditDialog({
             <Tabs value={tab} onChange={(_, v) => setTab(v)} textColor="primary" indicatorColor="primary">
               <Tab label="Details" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.95rem" }} />
               <Tab label="Content JSON" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.95rem" }} />
+              <Tab label="Audiobook" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.95rem" }} />
             </Tabs>
 
             {tab === 0 && (
@@ -271,6 +324,19 @@ export default function ChapterEditDialog({
                   },
                 }}
               />
+            )}
+
+            {tab === 2 && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <FormControl fullWidth size="small"><InputLabel id="audio-source-label">Source</InputLabel><Select labelId="audio-source-label" label="Source" value={audioSource} onChange={(event) => setAudioSource(event.target.value as AudioSourceType)}><MenuItem value="supabase_storage">Uploaded MP3 / M4A</MenuItem><MenuItem value="youtube">YouTube</MenuItem></Select></FormControl>
+                {audioSource === 'supabase_storage' ? <Box>
+                  <Button component="label" variant="outlined" disabled={isNew || audioUploading}>{audioUploading ? 'Uploading…' : audioPath ? 'Replace audio file' : 'Upload audio file'}<input hidden type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,.mp3,.m4a" onChange={(event) => void handleAudioUpload(event.target.files?.[0])} /></Button>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{isNew ? 'Save the new chapter before uploading audio.' : audioPath ?? 'MP3 or M4A, up to 100 MB. Stored privately.'}</Typography>
+                </Box> : <AdminTextField label="YouTube video ID" value={youtubeId} onChange={(event) => setYoutubeId(event.target.value)} helperText="The 11-character ID, not the full URL." fullWidth size="small" />}
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}><AdminTextField label="Narrator" value={narrator} onChange={(event) => setNarrator(event.target.value)} fullWidth size="small" /><AdminTextField label="Duration (seconds)" type="number" value={durationSeconds} onChange={(event) => setDurationSeconds(event.target.value)} fullWidth size="small" /></Box>
+                <FormControlLabel control={<Switch checked={audioPublished} onChange={(event) => setAudioPublished(event.target.checked)} />} label="Published and visible to AWM+ listeners" />
+                {audioExists && <Button color="error" variant="outlined" onClick={() => void handleRemoveAudio()} disabled={saving}>Remove audiobook</Button>}
+              </Box>
             )}
           </Box>
         )}

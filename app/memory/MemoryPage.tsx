@@ -18,9 +18,11 @@ import { MEMORY } from "@/app/lib/entitlements"
 import { loadMemoryProgress, loadSavedMemorySession, saveMemorySession, type SavedMemorySession, recordMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
 import { useAuth } from '@/app/AuthContext'
 import type { MemoryDirection, MemoryRating } from '@/app/lib/memory'
+import { readGuestMemoryUsage, writeGuestMemoryUsage } from '@/app/lib/guestMemory'
 
 const DIRECTION_KEY = 'awm-memory-direction-v1'
 const DIRECTION_EVENT = 'awm-memory-direction-change'
+const CARD_COUNT_OPTIONS = [5, 10, 15, 20] as const
 
 function getDirectionSnapshot(): MemoryDirection {
   try {
@@ -56,7 +58,9 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const [completed, setCompleted] = useState(0)
   const [sessionXp, setSessionXp] = useState(0)
   const [totalXp, setTotalXp] = useState(0)
-  const [cards, setCards] = useState(library.cards)
+  const initialCardCount = library.scope === 'global' ? MEMORY.sessionCards : library.recommendedCardCount
+  const [selectedCardCount, setSelectedCardCount] = useState(initialCardCount)
+  const [cards, setCards] = useState(() => library.cards.slice(0, Math.min(initialCardCount, library.cards.length)))
   const [saved, setSaved] = useState<SavedMemorySession | null>(null)
   const [completionIds, setCompletionIds] = useState<string[]>([])
   const [used, setUsed] = useState(0)
@@ -70,7 +74,15 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const [saveError, setSaveError] = useState('')
   const [upgrade, setUpgrade] = useState(false)
   const busyRef = useRef(false)
-  const limited = Boolean(user) && !premium && used >= MEMORY.dailyFreeCards
+  const limited = !premium && used >= MEMORY.dailyFreeCards
+  useEffect(() => {
+    if (user) return
+    const refresh = () => setUsed(readGuestMemoryUsage(window.localStorage).used)
+    refresh()
+    const timer = window.setInterval(refresh, 60000)
+    window.addEventListener('focus', refresh)
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh) }
+  }, [user])
   useEffect(() => {
     if (!user) return
     let active = true
@@ -105,9 +117,13 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const finishCard = useCallback(async (rating: MemoryRating) => {
     if (!card || !revealed || busyRef.current || limited || (Boolean(user) && !ready)) return
     if (!user) {
+      const nextUsed = Math.min(MEMORY.dailyFreeCards, used + 1)
+      writeGuestMemoryUsage(window.localStorage, nextUsed)
+      setUsed(nextUsed)
       setCompleted(value => value + 1)
       setIndex(value => value + 1)
       setRevealed(false)
+      if (nextUsed >= MEMORY.dailyFreeCards) setUpgrade(true)
       return
     }
     busyRef.current = true; setSaving(true); setSaveError('')
@@ -120,7 +136,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
       if (!premium && result.used >= MEMORY.dailyFreeCards) setUpgrade(true)
     } catch (e) { setSaveError(e instanceof Error ? e.message : 'Unable to save. Please retry this card.') }
     finally { busyRef.current = false; setSaving(false) }
-  }, [card, cards, completed, completionIds, direction, index, limited, premium, revealed, sessionXp, user, ready])
+  }, [card, cards, completed, completionIds, direction, index, limited, premium, revealed, sessionXp, user, ready, used])
 
   const saveAndExit = async () => {
     if (!user) { router.push('/'); return }
@@ -154,18 +170,24 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const chooseShow = (_: unknown, show: MemoryShowSource | null) => {
     router.push(show ? `/memory?show=${encodeURIComponent(show.id)}` : '/memory')
   }
+  const chooseCardCount = (count: typeof CARD_COUNT_OPTIONS[number]) => {
+    if (started) return
+    setSelectedCardCount(count)
+    setCards(library.cards.slice(0, Math.min(count, library.cards.length)))
+  }
   const restart = async () => {
     if (Boolean(user) && (!ready || saving)) return
     if (limited) { setUpgrade(true); return }
-    const ids = library.cards.map(() => crypto.randomUUID())
+    const deck = library.cards.slice(0, Math.min(selectedCardCount, library.cards.length))
+    const ids = deck.map(() => crypto.randomUUID())
     if (!user) {
-      setCards(library.cards); setCompletionIds(ids); setStarted(true); setIndex(0); setRevealed(false); setCompleted(0); setSessionXp(0); setSaved(null)
+      setCards(deck); setCompletionIds(ids); setStarted(true); setIndex(0); setRevealed(false); setCompleted(0); setSessionXp(0); setSaved(null)
       return
     }
     setSaving(true)
     try {
-      await saveMemorySession({ cards: library.cards, index: 0, completed: 0, sessionXp: 0, direction, completionIds: ids })
-      setCards(library.cards); setCompletionIds(ids); setStarted(true); setIndex(0); setRevealed(false); setCompleted(0); setSessionXp(0); setSaved(null)
+      await saveMemorySession({ cards: deck, index: 0, completed: 0, sessionXp: 0, direction, completionIds: ids })
+      setCards(deck); setCompletionIds(ids); setStarted(true); setIndex(0); setRevealed(false); setCompleted(0); setSessionXp(0); setSaved(null)
     } catch { setSaveError('Unable to start a saved session. Please try again.') }
     finally { setSaving(false) }
   }
@@ -210,15 +232,26 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
             </ToggleButtonGroup>
             <Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12 }}>{library.scopeTitle} · {cards.length} cards</Typography>
           </Box>
+          {library.scope !== 'global' && <Box sx={{ mt: 2, pt: 1.75, borderTop: '1px solid color-mix(in srgb, var(--awm-bark) 9%, transparent)' }}>
+            <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700 }}>Recommended: {library.recommendedCardCount} cards</Typography>
+            <Box role="group" aria-label="Choose Memory card count" sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: { xs: 0.65, sm: 1 } }}>
+              {CARD_COUNT_OPTIONS.map((count) => {
+                const recommended = count === library.recommendedCardCount
+                const selected = count === selectedCardCount
+                return <Button key={count} onClick={() => chooseCardCount(count)} disabled={started} variant={selected ? 'contained' : 'outlined'} aria-label={`${count} cards${recommended ? ', recommended' : ''}`} aria-pressed={selected} sx={{ minWidth: 0, minHeight: 44, px: 0.5, borderRadius: '9px', borderColor: recommended ? 'var(--awm-gold)' : 'color-mix(in srgb, var(--awm-bark) 18%, transparent)', bgcolor: selected ? 'var(--awm-gold)' : 'transparent', color: selected ? '#fff' : 'var(--awm-bark)', fontWeight: 800, '&:hover': { bgcolor: selected ? '#946c08' : 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' } }}>{count}{recommended && <Box component="span" aria-hidden="true" sx={{ width: 5, height: 5, ml: 0.65, borderRadius: '50%', bgcolor: selected ? '#fff' : 'var(--awm-gold)' }} />}</Button>
+              })}
+            </Box>
+            {library.availableCardCount < selectedCardCount && <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, lineHeight: 1.45 }}>This source has {library.availableCardCount} high-quality {library.availableCardCount === 1 ? 'card' : 'cards'}, so the deck will use those without padding or duplicates.</Typography>}
+          </Box>}
         </Paper>
 
-        <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason="You've completed today's free Memory practice. You've practised 20 cards today. Come back tomorrow or upgrade to AWM+ for unlimited Memory practice." />
+        <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason={`You've completed today's free Memory practice. You've practised ${MEMORY.dailyFreeCards} cards today. Come back tomorrow or upgrade to AWM+ for unlimited Memory practice.`} />
         {progressLoading && <Box role="status" sx={{ mt: 2 }}><Typography>Loading Memory progress...</Typography><LinearProgress /></Box>}
         {progressError && <Alert severity="error" sx={{ mt: 2 }} action={<Button onClick={retryProgress} disabled={progressLoading}>Retry</Button>}>{progressError}</Alert>}
         {!progressError && sessionError && <Alert severity="warning" sx={{ mt: 2 }} action={<Button onClick={retryProgress}>Retry</Button>}>{sessionError} Your completed-card statistics are still available.</Alert>}
         {!user && <Alert severity="info" sx={{ mt: 2 }}>You can practise without signing in. Sign in only if you want to save your progress.</Alert>}
         {saveError && <Alert severity="error" sx={{ mt: 2 }}>{saveError}</Alert>}
-        {ready && user && <Typography sx={{ mt: 2 }} color="text.secondary">{premium ? 'Unlimited daily Memory practice' : `${used} / ${MEMORY.dailyFreeCards} cards today`}</Typography>}
+        {ready && <Typography sx={{ mt: 2 }} color="text.secondary">{premium ? 'Unlimited daily Memory practice' : `${used} / ${MEMORY.dailyFreeCards} cards today`}</Typography>}
         {limited && <Alert severity="info" sx={{ mt: 2 }} action={<Button onClick={() => setUpgrade(true)}>Upgrade to AWM+</Button>}>You&apos;ve completed today&apos;s free Memory practice. Your progress is saved. Come back tomorrow.</Alert>}
         {saved && !started && <Button onClick={resume} disabled={!ready || limited}>Resume saved session ? {saved.completed} completed</Button>}
         {started && <Button disabled={saving} onClick={() => void saveAndExit()} sx={{ mt: 2 }}>{user ? 'Save & Exit' : 'Exit practice'}</Button>}

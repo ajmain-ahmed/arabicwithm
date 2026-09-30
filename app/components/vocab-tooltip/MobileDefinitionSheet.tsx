@@ -1,6 +1,7 @@
 'use client'
 
 import { Box, SwipeableDrawer, useMediaQuery } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import type { SyntheticEvent } from 'react'
 import WordTooltip from './WordTooltip'
 import type { VocabEntry } from './index'
@@ -65,20 +66,20 @@ export default function MobileDefinitionSheet({
             mx: 'auto',
             overflow: 'hidden',
             borderRadius: '22px 22px 0 0',
-            bgcolor: 'rgba(255, 252, 247, 0.9)',
-            backgroundImage: 'linear-gradient(145deg, rgba(255,255,255,.5), rgba(245,237,224,.25))',
+            bgcolor: (theme) => alpha(theme.palette.background.paper, 0.92),
+            backgroundImage: (theme) => `linear-gradient(145deg, ${alpha(theme.palette.primary.light, 0.08)}, transparent)`,
             backdropFilter: 'blur(20px) saturate(140%)',
             WebkitBackdropFilter: 'blur(20px) saturate(140%)',
-            border: '1px solid color-mix(in srgb, var(--awm-gold) 30%, transparent)',
+            border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
             borderBottom: 0,
-            boxShadow: '0 -18px 52px rgba(14,46,31,.24)',
+            boxShadow: (theme) => `0 -18px 52px ${alpha(theme.palette.common.black, 0.26)}`,
           },
         },
       }}
     >
       <Box
         aria-hidden="true"
-        sx={{ width: 42, height: 5, borderRadius: 999, bgcolor: 'rgba(44,26,14,.24)', mx: 'auto', mt: 1.25, mb: 0.5, flex: '0 0 auto' }}
+        sx={{ width: 42, height: 5, borderRadius: 999, bgcolor: (theme) => alpha(theme.palette.text.primary, 0.24), mx: 'auto', mt: 1.25, mb: 0.5, flex: '0 0 auto' }}
       />
       <Box
         sx={{

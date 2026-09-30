@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest"
+    "test": "vitest",
+    "setup:audiobooks": "node --env-file=.env.local scripts/setup-audiobook-storage.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

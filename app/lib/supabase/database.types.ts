@@ -20,6 +20,8 @@ export interface Database {
       memory_reviews: Table<{ user_id: string; completion_id: string; card_id: string; rating: string; activity_date: string; xp: number; created_at: string }>
       memory_sessions: Table<{ user_id: string; state: Json; updated_at: string }>
       memory_legacy_progress: Table<{ user_id: string; xp: number }>
+      book_chapter_audio: Table<{ id: string; chapter_id: string; source_type: 'supabase_storage' | 'youtube'; storage_path: string | null; external_video_id: string | null; duration_seconds: number | null; narrator: string | null; is_published: boolean; created_at: string; updated_at: string }>
+      book_audio_progress: Table<{ user_id: string; chapter_id: string; position_seconds: number; completed: boolean; updated_at: string }>
       public_profiles: Table<{ user_id: string; display_name: string; is_public: boolean; share_reading: boolean; created_at: string }>
 
       shows: {

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import type { MouseEvent } from 'react'
 import { Box, Button, Typography } from '@mui/material'
 import { AutoStories, Translate } from '@mui/icons-material'
 import { useAuth } from '@/app/AuthContext'
@@ -29,6 +30,11 @@ export default function BookReadingCta({ bookSlug, chapters }: { bookSlug: strin
   const currentChapter = savedChapter ? chapters.find((chapter) => chapter.slug === savedChapter) : null
 
   if (!destination) return null
+  const requireSignIn = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (user) return
+    event.preventDefault()
+    window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } }))
+  }
 
   return (
     <>
@@ -42,8 +48,8 @@ export default function BookReadingCta({ bookSlug, chapters }: { bookSlug: strin
       )}
 
       <Box sx={{ display: 'inline-grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, maxWidth: '100%' }}>
-        <Button component={Link} href={`/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(destination)}?lang=ar`} variant="contained" startIcon={<AutoStories />} sx={{ minHeight: 44, bgcolor: '#b8860b', color: '#fff', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#946c08' } }}>Read in Arabic</Button>
-        <Button component={Link} href={`/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(destination)}?lang=en`} variant="contained" startIcon={<Translate />} sx={{ minHeight: 44, bgcolor: 'var(--awm-cream)', color: 'var(--awm-bark)', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: 'var(--awm-cream-light)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 55%, transparent)', outlineOffset: 2 } }}>Read in English</Button>
+        <Button component={Link} onClick={requireSignIn} href={`/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(destination)}?lang=ar`} variant="contained" startIcon={<AutoStories />} sx={{ minHeight: 44, bgcolor: '#b8860b', color: '#fff', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#946c08' } }}>Read in Arabic</Button>
+        <Button component={Link} onClick={requireSignIn} href={`/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(destination)}?lang=en`} variant="contained" startIcon={<Translate />} sx={{ minHeight: 44, bgcolor: 'var(--awm-cream)', color: 'var(--awm-bark)', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: 'var(--awm-cream-light)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 55%, transparent)', outlineOffset: 2 } }}>Read in English</Button>
       <Box sx={{ gridColumn: '1 / -1', mt: 0.25 }}>
         <PdfDownloadButton bookSlug={bookSlug} language="ar" label="Arabic PDF" small fullWidth />
       </Box>

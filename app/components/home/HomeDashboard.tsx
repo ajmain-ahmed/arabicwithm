@@ -14,11 +14,12 @@ import {
   Headphones,
   LocalFireDepartmentRounded,
   MenuBook,
+  MilitaryTechRounded,
   PsychologyOutlined,
-  TrendingDownRounded,
-  TrendingUpRounded,
+  Close,
 } from '@mui/icons-material'
-import { Box, Button, CircularProgress, Container, LinearProgress, Skeleton, Typography, Paper } from '@mui/material'
+import { Box, Button, CircularProgress, Container, Dialog, DialogContent, DialogTitle, IconButton, LinearProgress, Skeleton, SwipeableDrawer, Typography, Paper, useMediaQuery } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { useAuth } from '@/app/AuthContext'
 import { fetchLearningActivity } from '@/app/actions/activity'
 import { fetchPremiumStatus } from '@/app/actions/premium'
@@ -240,43 +241,29 @@ function ContentCard({ type, title, titleAr, description, level, href, image, im
 }
 
 function BookmarkContinueCard({ bookmark }: { bookmark: BookSentenceBookmark }) {
+  const sentencePreview = bookmark.arabic.trim()
   return (
-    <Paper elevation={0} sx={{ minHeight: { xs: 140, md: 178 }, p: { xs: 1.75, sm: 3.5 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 30%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)', display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0,1fr) auto' }, columnGap: 4, alignItems: 'end' }}>
-      <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'var(--awm-gold)' }}>
-        <Bookmark sx={{ fontSize: 20 }} />
-        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-          Your reading bookmark
-        </Typography>
+    <Paper elevation={0} sx={{ p: { xs: 1.25, sm: 1.5 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', borderRadius: '12px', bgcolor: 'var(--awm-white)', display: 'grid', gridTemplateColumns: { xs: '36px minmax(0,1fr)', sm: '40px minmax(0,1fr) auto' }, columnGap: { xs: 1.1, sm: 1.5 }, rowGap: 0.75, alignItems: 'center' }}>
+      <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, display: 'grid', placeItems: 'center', borderRadius: '10px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)', color: 'var(--awm-gold)' }}><Bookmark sx={{ fontSize: 20 }} /></Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 17, sm: 19 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bookmark.bookTitle}</Typography>
+        <Typography sx={{ mt: 0.2, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bookmark.chapterTitle} · Sentence {bookmark.blockIndex + 1}</Typography>
+        {sentencePreview && <Typography lang="ar" dir="rtl" sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'var(--font-serif)', fontSize: 13.5, lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{sentencePreview}</Typography>}
       </Box>
-      <Typography lang="ar" dir="rtl" sx={{ mt: 2, fontFamily: 'var(--font-serif)', fontSize: { xs: 19, sm: 28 }, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', fontWeight: 600, lineHeight: 1.6, color: 'var(--awm-bark)', textAlign: 'right' }}>
-        {bookmark.arabic.slice(0, 150)}{bookmark.arabic.length > 150 ? '?' : ''}
-      </Typography>
-      {bookmark.translation && (
-        <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 14, lineHeight: 1.6 }}>
-          {bookmark.translation.slice(0, 130)}{bookmark.translation.length > 130 ? '?' : ''}
-        </Typography>
-      )}
-      <Typography sx={{ mt: 1, color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 600 }}>
-        {bookmark.bookTitle} · {bookmark.chapterTitle} · sentence {bookmark.blockIndex + 1}
-      </Typography>
-      </Box>
-      <Button component={Link} href={bookSentenceBookmarkHref(bookmark)} endIcon={<ArrowForward />} sx={{ mt: { xs: 2, md: 0 }, px: { xs: 0, md: 2.5 }, py: { md: 1.1 }, width: 'fit-content', color: { xs: 'var(--awm-forest)', md: '#fff' }, bgcolor: { md: 'var(--awm-forest)' }, borderRadius: '9999px', fontWeight: 700, textTransform: 'none', '&:hover': { bgcolor: { md: '#173f2d' } } }}>
-        Continue from bookmark
-      </Button>
+      <Button component={Link} href={bookSentenceBookmarkHref(bookmark)} endIcon={<ArrowForward />} sx={{ gridColumn: { xs: '2', sm: 'auto' }, justifySelf: 'start', minHeight: 34, px: { xs: 0, sm: 1.75 }, color: 'var(--awm-forest)', borderRadius: '9999px', fontWeight: 700, textTransform: 'none' }}>Continue reading</Button>
     </Paper>
   )
 }
 
 function ResumeReadingCard({ book, chapter }: { book: PublicBook; chapter: PublicChapter }) {
   return (
-    <Paper elevation={0} sx={{ minHeight: 160, p: { xs: 2.5, sm: 3.5 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 26%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)', display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: 2.5, transition: 'border-color .2s ease, box-shadow .2s ease, transform .2s ease', '&:hover': { borderColor: 'color-mix(in srgb, var(--awm-gold) 46%, transparent)', boxShadow: '0 14px 36px color-mix(in srgb, var(--awm-bark) 12%, transparent)' }, 'html[data-theme="dark"] &': { bgcolor: 'color-mix(in srgb, var(--awm-white) 86%, var(--awm-forest))', borderColor: 'color-mix(in srgb, var(--awm-gold-light) 38%, transparent)', boxShadow: '0 16px 42px rgba(0, 0, 0, 0.24)' } }}>
-      <Box>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'var(--awm-gold)' }}><Bookmark sx={{ fontSize: 20 }} /><Typography sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Resume reading</Typography></Box>
-        <Typography sx={{ mt: 1.35, fontFamily: 'var(--font-heading)', fontSize: { xs: 25, sm: 29 }, fontWeight: 600, color: 'var(--awm-bark)' }}>{book.title}</Typography>
-        <Typography sx={{ mt: 0.4, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 13 }}>{chapter.title} · Chapter {chapter.chapterNumber} of {book.chapterCount}</Typography>
+    <Paper elevation={0} sx={{ p: { xs: 1.25, sm: 1.5 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 26%, transparent)', borderRadius: '12px', bgcolor: 'var(--awm-white)', display: 'grid', gridTemplateColumns: { xs: '36px minmax(0,1fr)', sm: '40px minmax(0,1fr) auto' }, columnGap: { xs: 1.1, sm: 1.5 }, rowGap: 0.75, alignItems: 'center' }}>
+      <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, display: 'grid', placeItems: 'center', borderRadius: '10px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)', color: 'var(--awm-gold)' }}><Bookmark sx={{ fontSize: 20 }} /></Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 17, sm: 19 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</Typography>
+        <Typography sx={{ mt: 0.2, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Chapter {chapter.chapterNumber} · {chapter.title}</Typography>
       </Box>
-      <Button component={Link} href={`/books/${book.slug}/${chapter.slug}`} variant="contained" endIcon={<ArrowForward />} sx={{ flexShrink: 0, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', px: 2.5, textTransform: 'none', boxShadow: 'none', '&:hover': { bgcolor: '#173f2d', boxShadow: '0 8px 20px rgba(14, 46, 31, 0.24)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold-light) 72%, transparent)', outlineOffset: '3px' } }}>Resume chapter</Button>
+      <Button component={Link} href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`} endIcon={<ArrowForward />} sx={{ gridColumn: { xs: '2', sm: 'auto' }, justifySelf: 'start', minHeight: 34, px: { xs: 0, sm: 1.75 }, color: 'var(--awm-forest)', borderRadius: '9999px', fontWeight: 700, textTransform: 'none' }}>Continue reading</Button>
     </Paper>
   )
 }
@@ -292,78 +279,66 @@ function LearningStats({
   booksInProgress: number
   now: Date
 }) {
+  const theme = useTheme()
+  const mobileDetail = useMediaQuery(theme.breakpoints.down('sm'))
+  const [selectedMetric, setSelectedMetric] = useState<string | null>(null)
   const level = calculateLearningLevel(activity.totalSeconds, activity.memory?.totalXp ?? 0)
   const week = summarizeWeeklyActivity(activity.daily, now)
   const comparison = week.comparisonPercent
   const comparisonText = comparison === null
     ? 'No previous-week comparison yet'
     : `${comparison >= 0 ? 'Up' : 'Down'} ${Math.abs(comparison)}% from last week`
-  const ComparisonIcon = comparison !== null && comparison < 0 ? TrendingDownRounded : TrendingUpRounded
-  const secondaryStats = [
-    { label: 'Active today', value: formatLearningTime(week.todaySeconds), icon: AccessTimeRounded },
-    { label: 'Reading this week', value: formatLearningTime(week.readingSeconds), icon: MenuBook },
-    { label: 'Current streak', value: `${streak} day${streak === 1 ? '' : 's'}`, icon: LocalFireDepartmentRounded },
-    { label: 'Books in progress', value: String(booksInProgress), icon: AutoStories },
-    { label: 'Definitions viewed', value: String(week.wordLookups), icon: ExploreOutlined },
+  const metrics = [
+    { id: 'level', label: 'Current level', value: `Level ${level.level}`, icon: MilitaryTechRounded, description: `${level.progressPercent}% of the way to Level ${level.level + 1}.`, detail: `${formatLearningTime(activity.totalSeconds)} total active learning time.` },
+    ...(activity.memory ? [{ id: 'memory', label: 'Memory Practice', value: `${activity.memory.totalXp} XP`, icon: PsychologyOutlined, description: `${activity.memory.weekXp} XP earned from ${activity.memory.weekCards} Memory card${activity.memory.weekCards === 1 ? '' : 's'} this week.` }] : []),
+    { id: 'week', label: 'Learning this week', value: formatLearningTime(week.thisWeekSeconds), icon: CalendarMonthRounded, description: `${week.activeDays} active day${week.activeDays === 1 ? '' : 's'} this week. ${comparisonText}.` },
+    { id: 'today', label: 'Active today', value: formatLearningTime(week.todaySeconds), icon: AccessTimeRounded, description: 'Active learning time recorded today while reading, watching, or practising.' },
+    { id: 'reading', label: 'Reading this week', value: formatLearningTime(week.readingSeconds), icon: MenuBook, description: 'Time spent actively reading ArabicWithM books during the current week.' },
+    { id: 'streak', label: 'Current streak', value: `${streak} day${streak === 1 ? '' : 's'}`, icon: LocalFireDepartmentRounded, description: 'Consecutive calendar days with recorded learning activity.' },
+    { id: 'books', label: 'Books in progress', value: String(booksInProgress), icon: AutoStories, description: 'Books with saved reading progress on this account.' },
+    { id: 'definitions', label: 'Definitions viewed', value: String(week.wordLookups), icon: ExploreOutlined, description: 'Arabic word definitions opened during the current week.' },
   ]
-
+  const selected = metrics.find((metric) => metric.id === selectedMetric) ?? null
+  const closeDetail = () => setSelectedMetric(null)
+  const detailPanel = selected ? (() => {
+    const DetailIcon = selected.icon
+    return <Box sx={{ px: { xs: 2.5, sm: 3 }, pt: { xs: 1, sm: 0 }, pb: { xs: 'calc(24px + env(safe-area-inset-bottom))', sm: 3 } }}>
+      <Box sx={{ width: 52, height: 52, display: 'grid', placeItems: 'center', borderRadius: '14px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 13%, transparent)', color: 'var(--awm-gold)' }}><DetailIcon sx={{ fontSize: 29 }} /></Box>
+      <Typography sx={{ mt: 2, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}>{selected.label}</Typography>
+      <Typography sx={{ mt: 0.5, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: 36, fontWeight: 600, lineHeight: 1.1 }}>{selected.value}</Typography>
+      <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.6 }}>{selected.description}</Typography>
+      {'detail' in selected && selected.detail && <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 13 }}>{selected.detail}</Typography>}
+      {selected.id === 'level' && <LinearProgress variant="determinate" value={level.progressPercent} sx={{ mt: 2, height: 7, borderRadius: 99, bgcolor: 'color-mix(in srgb, var(--awm-bark) 9%, transparent)', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold)', borderRadius: 99 } }} />}
+    </Box>
+  })() : null
 
   return (
-    <Paper elevation={0} sx={{ p: { xs: 2.25, sm: 3, md: 3.5 }, border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '15px', bgcolor: 'var(--awm-white)' }}>
-      <Box sx={{ mb: { xs: 2.25, md: 3 }, display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 2 }}>
-        <Box>
-          <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: 10, fontWeight: 700, letterSpacing: '0.13em', textTransform: 'uppercase' }}>At a glance</Typography>
-          <Typography component="h2" sx={{ mt: 0.4, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 27, md: 32 }, fontWeight: 600, lineHeight: 1.15 }}>Your learning activity</Typography>
-        </Box>
-      </Box>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3,minmax(0,1fr))' }, gap: 1.5 }}>
-        <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)', color: 'var(--awm-bark)' }}>
-          <Typography sx={{ color: 'var(--awm-gold-light)', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Current level</Typography>
-          <Typography sx={{ mt: 1.1, fontFamily: 'var(--font-heading)', color: 'var(--awm-bark)', fontSize: { xs: 35, md: 40 }, fontWeight: 600, lineHeight: 1 }}>Level {level.level}</Typography>
-          <Typography sx={{ mt: 1.15, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12 }}>{level.progressPercent}% to Level {level.level + 1}</Typography>
-          <LinearProgress variant="determinate" value={level.progressPercent} sx={{ mt: 1, height: 6, borderRadius: 99, bgcolor: 'rgba(255,255,255,.14)', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold-light)', borderRadius: 99 } }} />
-          <Typography sx={{ mt: 1.4, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11 }}>{formatLearningTime(activity.totalSeconds)} total active learning</Typography>
-        </Box>
+    <>
+    <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '15px', bgcolor: 'var(--awm-white)' }}>
+      <Typography component="h2" sx={{ mb: { xs: 1.25, sm: 1.5 }, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 21, sm: 24 }, fontWeight: 600, lineHeight: 1.15 }}>Your learning activity</Typography>
 
-        {activity.memory && <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>
-          <Typography sx={{ fontWeight: 700 }}>Memory Practice</Typography>
-          <Box sx={{ mt: 1.25, display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 1.5 }}>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 27, sm: 30 }, fontWeight: 600, lineHeight: 1 }}>{activity.memory.weekCards}</Typography>
-              <Typography sx={{ mt: 0.65, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, lineHeight: 1.35 }}>Cards completed this week</Typography>
-            </Box>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 27, sm: 30 }, fontWeight: 600, lineHeight: 1 }}>{activity.memory.weekXp}</Typography>
-              <Typography sx={{ mt: 0.65, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, lineHeight: 1.35 }}>XP earned this week</Typography>
-            </Box>
-          </Box>
-        </Box>}
-
-        <Box sx={{ minWidth: 0, p: { xs: 2, sm: 2.5 }, borderRadius: '12px', bgcolor: 'var(--awm-cream-light)' }}>
-          <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700 }}>This week</Typography>
-          <Typography sx={{ mt: 1.25, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 29, sm: 33 }, fontWeight: 600, lineHeight: 1.05 }}>{formatLearningTime(week.thisWeekSeconds)}</Typography>
-          <Box sx={{ mt: 1.1, display: 'flex', alignItems: 'center', gap: 0.6, color: comparison !== null && comparison < 0 ? 'var(--awm-muted)' : 'var(--awm-forest)' }}>
-            {comparison !== null && <ComparisonIcon sx={{ fontSize: 16 }} />}
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 11.5 }}>{comparisonText}</Typography>
-          </Box>
-          <Box sx={{ mt: 1.4, display: 'flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)' }}>
-            <CalendarMonthRounded sx={{ fontSize: 17, color: 'var(--awm-gold)' }} />
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 600 }}>{week.activeDays} active day{week.activeDays === 1 ? '' : 's'} this week</Typography>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ mt: 1.5, display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(3,minmax(0,1fr))', md: 'repeat(5,minmax(0,1fr))' }, gap: 1 }}>
-        {secondaryStats.map((stat) => {
-          const Icon = stat.icon
-          return <Box key={stat.label} sx={{ p: 1.5, minWidth: 0, border: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)', borderRadius: '10px' }}>
-            <Icon sx={{ color: 'var(--awm-gold)', fontSize: 18 }} />
-            <Typography sx={{ mt: 0.75, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: 21, fontWeight: 600, lineHeight: 1 }}>{stat.value}</Typography>
-            <Typography sx={{ mt: 0.55, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 10.5, lineHeight: 1.3 }}>{stat.label}</Typography>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(4,minmax(0,1fr))', sm: `repeat(${metrics.length},minmax(0,1fr))` }, gap: { xs: 0.65, sm: 0.8 } }}>
+        {metrics.map((metric) => {
+          const Icon = metric.icon
+          return <Box component="button" type="button" key={metric.id} onClick={() => setSelectedMetric(metric.id)} aria-label={`${metric.label}: ${metric.value}. Show details`} sx={{ minWidth: 0, minHeight: { xs: 74, sm: 82 }, p: { xs: 0.7, sm: 1 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 0.65, border: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)', borderRadius: '10px', bgcolor: 'var(--awm-cream-light)', color: 'var(--awm-bark)', font: 'inherit', cursor: 'pointer', transition: 'border-color .15s ease, transform .15s ease, background-color .15s ease', '&:hover': { borderColor: 'color-mix(in srgb, var(--awm-gold) 48%, transparent)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 7%, var(--awm-cream-light))', transform: { sm: 'translateY(-2px)' } }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 2 } }}>
+            <Icon aria-hidden="true" sx={{ color: 'var(--awm-gold)', fontSize: { xs: 21, sm: 24 } }} />
+            <Typography sx={{ maxWidth: '100%', color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 14, sm: 16 }, fontWeight: 700, lineHeight: 1.05, textAlign: 'center', overflowWrap: 'anywhere' }}>{metric.value}</Typography>
           </Box>
         })}
       </Box>
     </Paper>
+    {mobileDetail ? (
+      <SwipeableDrawer anchor="bottom" open={Boolean(selected)} onOpen={() => undefined} onClose={closeDetail} disableSwipeToOpen disableDiscovery slotProps={{ paper: { role: 'dialog', 'aria-modal': true, 'aria-label': selected?.label ?? 'Learning activity detail', sx: { borderRadius: '22px 22px 0 0', bgcolor: 'var(--awm-white)', maxHeight: '82dvh' } } }}>
+        <Box aria-hidden="true" sx={{ width: 42, height: 5, borderRadius: 999, bgcolor: 'color-mix(in srgb, var(--awm-bark) 24%, transparent)', mx: 'auto', mt: 1.25, mb: 1 }} />
+        {detailPanel}
+      </SwipeableDrawer>
+    ) : (
+      <Dialog open={Boolean(selected)} onClose={closeDetail} fullWidth maxWidth="xs" aria-labelledby="learning-metric-title" slotProps={{ paper: { sx: { borderRadius: '16px', bgcolor: 'var(--awm-white)' } } }}>
+        <DialogTitle id="learning-metric-title" sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}><IconButton aria-label="Close details" onClick={closeDetail}><Close /></IconButton></DialogTitle>
+        <DialogContent sx={{ p: 0 }}>{detailPanel}</DialogContent>
+      </Dialog>
+    )}
+    </>
   )
 }
 
@@ -597,11 +572,11 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           <Container maxWidth={false} sx={{ minWidth: 0 }}>
             {newShowItems.length > 0 && <Box>
               <Typography component="h3" sx={{ mb: 0.75, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 23 }, fontWeight: 600, color: 'var(--awm-bark)' }}>Shows</Typography>
-              <NewOnRow items={newShowItems} ariaLabel="Shows" autoScroll />
+              <NewOnRow items={newShowItems} ariaLabel="Shows" autoScroll compact />
             </Box>}
             {newEpisodeItems.length > 0 && <Box sx={{ mt: { xs: 2.5, md: 3.25 } }}>
               <Typography component="h3" sx={{ mb: 0.75, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 23 }, fontWeight: 600, color: 'var(--awm-bark)' }}>Latest Episodes</Typography>
-              <NewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" autoScroll />
+              <NewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" autoScroll compact />
             </Box>}
           </Container>
         </Box>
