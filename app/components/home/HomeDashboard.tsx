@@ -8,13 +8,16 @@ import {
   AutoStories,
   CalendarMonthRounded,
   CheckCircleRounded,
-  ChevronRight,
   ExploreOutlined,
   Headphones,
   LocalFireDepartmentRounded,
   MenuBook,
   MilitaryTechRounded,
   PsychologyOutlined,
+  AccountCircleOutlined,
+  GridViewRounded,
+  ManageSearchRounded,
+  SettingsOutlined,
   Close,
 } from '@mui/icons-material'
 import { Box, Button, CircularProgress, Container, Dialog, DialogContent, DialogTitle, IconButton, LinearProgress, Skeleton, SwipeableDrawer, Typography, Paper, useMediaQuery } from '@mui/material'
@@ -62,6 +65,10 @@ const QUICK_LINKS = [
   { title: 'Read', label: 'Open graded books', href: '/books', icon: AutoStories },
   { title: 'Watch', label: 'Browse full episodes', href: '/cartoons', icon: Headphones },
   { title: 'Memory', label: 'Recall phrases with flashcards', href: '/memory', icon: PsychologyOutlined },
+  { title: 'Settings', label: 'Manage your learning profile', href: (userId: string) => `/profile/${userId}#profile-settings`, icon: SettingsOutlined },
+  { title: 'My Profile', label: 'View your progress and achievements', href: (userId: string) => `/profile/${userId}`, icon: AccountCircleOutlined },
+  { title: 'Word Search', label: 'Find Arabic words from transcripts', href: '/word-search', icon: ManageSearchRounded },
+  { title: 'Crossword', label: 'Solve Arabic transcript clues', href: '/crossword', icon: GridViewRounded },
 ]
 
 function openAuth(mode: 'register' | 'signin') {
@@ -163,13 +170,7 @@ function BookCard({ book }: { book: PublicBook }) {
         {book.titleAr && (
           <Typography lang="ar" dir="rtl" sx={{ mt: 0.15, fontFamily: 'var(--font-serif)', fontSize: { xs: '0.75rem', sm: '0.85rem' }, color: 'rgba(255,255,255,.82)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{book.titleAr}</Typography>
         )}
-        <Typography sx={{ mt: 0.35, fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.61rem', sm: '0.68rem' }, color: 'rgba(255,255,255,.78)', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {book.description}
-        </Typography>
-        <Box sx={{ mt: 0.65, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 0.5 }}>
-          {book.level ? <CefrChip size="small" level={book.level} sx={{ height: 18, borderRadius: '9999px', fontSize: '0.6rem' }} /> : <Box />}
-          <Typography component="span" sx={{ display: 'inline-flex', alignItems: 'center', color: '#fff', fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.63rem', sm: '0.7rem' }, fontWeight: 700 }}>Read <ChevronRight sx={{ fontSize: 15 }} /></Typography>
-        </Box>
+        {book.level && <CefrChip size="small" level={book.level} sx={{ mt: 0.65, height: 18, borderRadius: '9999px', fontSize: '0.6rem' }} />}
       </Box>
     </Paper>
   )
@@ -196,13 +197,14 @@ function SectionHeading({ eyebrow, title, detail }: { eyebrow?: string; title: s
   )
 }
 
-function QuickLinks() {
+function QuickLinks({ userId }: { userId: string }) {
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', sm: 'repeat(4, minmax(0,1fr))' }, gap: 1.5 }}>
       {QUICK_LINKS.map((item) => {
         const Icon = item.icon
+        const href = typeof item.href === 'function' ? item.href(userId) : item.href
         return (
-          <Paper key={item.title} component={Link} href={item.href} elevation={0} sx={{ p: { xs: 2, md: 2.5 }, textDecoration: 'none', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '12px', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', '&:hover': { borderColor: 'color-mix(in srgb, var(--awm-gold) 55%, transparent)' } }}>
+          <Paper key={item.title} component={Link} href={href} elevation={0} sx={{ p: { xs: 2, md: 2.5 }, textDecoration: 'none', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '12px', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', '&:hover': { borderColor: 'color-mix(in srgb, var(--awm-gold) 55%, transparent)' } }}>
             <Icon sx={{ color: '#b8860b', fontSize: { xs: 19, md: 24 } }} />
             <Typography sx={{ mt: 1, fontFamily: 'Jost, sans-serif', fontWeight: 700 }}>{item.title}</Typography>
             <Typography sx={{ mt: 0.25, fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted)', fontSize: 12 }}>{item.label}</Typography>
@@ -529,7 +531,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
   now={dashboardNow}
 />
         </Box>
-        <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading eyebrow="Keep exploring" title="Keep your momentum" /><QuickLinks /></Box>
+        <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading title="Quick Actions" /><QuickLinks userId={user.id} /></Box>
       </Container>
       {premiumUpdate?.authKey === premiumAuthKey && !premiumUpdate.premium && <UpgradeSection />}
       <CheckoutFeedback />
