@@ -646,6 +646,7 @@ export async function createBook(input: BookInput): Promise<string> {
       cover_crop: normalizeThumbnailCrop(input.cover_crop),
       level: input.level,
       category: input.category,
+      updated_at: new Date().toISOString(),
     } as never)
     .select("id")
     .single()
@@ -669,7 +670,7 @@ export async function updateBook(
 
   const previousSlug = await fetchBookSlugById(id)
 
-  const payload: Record<string, unknown> = {}
+  const payload: Record<string, unknown> = { updated_at: new Date().toISOString() }
   if (input.slug !== undefined) payload.slug = input.slug
   if (input.title !== undefined) payload.title = input.title
   if (input.author !== undefined) payload.author = input.author?.trim() || null

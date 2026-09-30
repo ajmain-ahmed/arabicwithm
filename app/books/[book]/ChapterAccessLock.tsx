@@ -14,11 +14,15 @@ export default function ChapterAccessLock({ chapterNumber }: ChapterAccessProps)
 }
 
 export function ChapterLink({ href, children, chapterNumber }: ChapterAccessProps & { href: string; children: ReactNode }) {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   function openChapter(event: MouseEvent<HTMLAnchorElement>) {
+    if (loading) {
+      event.preventDefault()
+      return
+    }
     if (user) return
     event.preventDefault()
     window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } }))
   }
-  return <Link href={href} prefetch={Boolean(user)} aria-label={user ? undefined : `Sign in to read chapter ${chapterNumber}`} onClick={openChapter} style={{ color: 'inherit', textDecoration: 'none' }}>{children}</Link>
+  return <Link href={href} prefetch={Boolean(user) && !loading} aria-busy={loading || undefined} aria-label={user ? undefined : `Sign in to read chapter ${chapterNumber}`} onClick={openChapter} style={{ color: 'inherit', textDecoration: 'none' }}>{children}</Link>
 }

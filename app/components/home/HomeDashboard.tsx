@@ -6,7 +6,6 @@ import {
   AccessTimeRounded,
   ArrowForward,
   AutoStories,
-  Bookmark,
   CalendarMonthRounded,
   CheckCircleRounded,
   ChevronRight,
@@ -241,29 +240,25 @@ function ContentCard({ type, title, titleAr, description, level, href, image, im
 }
 
 function BookmarkContinueCard({ bookmark }: { bookmark: BookSentenceBookmark }) {
-  const sentencePreview = bookmark.arabic.trim()
   return (
-    <Paper elevation={0} sx={{ p: { xs: 1.25, sm: 1.5 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', borderRadius: '12px', bgcolor: 'var(--awm-white)', display: 'grid', gridTemplateColumns: { xs: '36px minmax(0,1fr)', sm: '40px minmax(0,1fr) auto' }, columnGap: { xs: 1.1, sm: 1.5 }, rowGap: 0.75, alignItems: 'center' }}>
-      <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, display: 'grid', placeItems: 'center', borderRadius: '10px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)', color: 'var(--awm-gold)' }}><Bookmark sx={{ fontSize: 20 }} /></Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 17, sm: 19 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bookmark.bookTitle}</Typography>
-        <Typography sx={{ mt: 0.2, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bookmark.chapterTitle} · Sentence {bookmark.blockIndex + 1}</Typography>
-        {sentencePreview && <Typography lang="ar" dir="rtl" sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'var(--font-serif)', fontSize: 13.5, lineHeight: 1.35, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{sentencePreview}</Typography>}
-      </Box>
-      <Button component={Link} href={bookSentenceBookmarkHref(bookmark)} endIcon={<ArrowForward />} sx={{ gridColumn: { xs: '2', sm: 'auto' }, justifySelf: 'start', minHeight: 34, px: { xs: 0, sm: 1.75 }, color: 'var(--awm-forest)', borderRadius: '9999px', fontWeight: 700, textTransform: 'none' }}>Continue reading</Button>
-    </Paper>
+    <ReadingBookmarkCard
+      bookTitle={bookmark.bookTitle}
+      chapterTitle={bookmark.chapterTitle}
+      href={bookSentenceBookmarkHref(bookmark)}
+    />
   )
 }
 
 function ResumeReadingCard({ book, chapter }: { book: PublicBook; chapter: PublicChapter }) {
+  return <ReadingBookmarkCard bookTitle={book.title} chapterTitle={chapter.title} href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`} />
+}
+
+function ReadingBookmarkCard({ bookTitle, chapterTitle, href }: { bookTitle: string; chapterTitle: string; href: string }) {
   return (
-    <Paper elevation={0} sx={{ p: { xs: 1.25, sm: 1.5 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 26%, transparent)', borderRadius: '12px', bgcolor: 'var(--awm-white)', display: 'grid', gridTemplateColumns: { xs: '36px minmax(0,1fr)', sm: '40px minmax(0,1fr) auto' }, columnGap: { xs: 1.1, sm: 1.5 }, rowGap: 0.75, alignItems: 'center' }}>
-      <Box sx={{ width: { xs: 36, sm: 40 }, height: { xs: 36, sm: 40 }, display: 'grid', placeItems: 'center', borderRadius: '10px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)', color: 'var(--awm-gold)' }}><Bookmark sx={{ fontSize: 20 }} /></Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 17, sm: 19 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{book.title}</Typography>
-        <Typography sx={{ mt: 0.2, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Chapter {chapter.chapterNumber} · {chapter.title}</Typography>
-      </Box>
-      <Button component={Link} href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`} endIcon={<ArrowForward />} sx={{ gridColumn: { xs: '2', sm: 'auto' }, justifySelf: 'start', minHeight: 34, px: { xs: 0, sm: 1.75 }, color: 'var(--awm-forest)', borderRadius: '9999px', fontWeight: 700, textTransform: 'none' }}>Continue reading</Button>
+    <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 26%, transparent)', borderRadius: '12px', bgcolor: 'var(--awm-white)' }}>
+      <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 18, sm: 20 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25 }}>{bookTitle}</Typography>
+      <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 12.5, sm: 13.5 }, lineHeight: 1.4 }}>{chapterTitle}</Typography>
+      <Typography component={Link} href={href} sx={{ display: 'inline-block', mt: 1, color: 'var(--awm-forest)', fontFamily: 'Jost, sans-serif', fontSize: 13.5, fontWeight: 700, textDecoration: 'none', '&:hover': { textDecoration: 'underline' }, '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 3, borderRadius: '2px' } }}>Continue Reading →</Typography>
     </Paper>
   )
 }
@@ -493,18 +488,6 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
   ]
   const dashboardNow = new Date(dashboardLoadedAt)
   const streak = calculateLearningStreak(activityDates, dashboardNow)
-  const bookmarkMatchesRecent = Boolean(
-    bookmark && recentReading &&
-    bookmark.bookSlug === recentReading.book.slug &&
-    bookmark.chapterSlug === recentReading.chapter.slug
-  )
-  const readingPositionPercent = bookmarkMatchesRecent && recentReading?.chapter.blockCount
-    ? Math.min(100, Math.max(0, Math.round((
-        (recentReading.chapter.chapterNumber - 1) +
-        Math.min(1, (bookmark!.blockIndex + 1) / recentReading.chapter.blockCount)
-      ) / Math.max(recentReading.book.chapterCount, 1) * 100)))
-    : null
-
   return (
     <Box component="main" sx={{ bgcolor: 'var(--awm-cream-light)', pb: { xs: 7, md: 11 } }}>
       <Box sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, pt: { xs: 14.5, md: 18 }, pb: { xs: 8, md: 10 }, overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center 42%' }}>
@@ -527,42 +510,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
         )}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
           {featuredEpisode && <ContentCard type={`Watch next · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} imageCrop={featuredEpisode.episode.coverCrop} actionLabel="Play episode" />}
-          {recentReading ? (
-            <Paper elevation={0} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px minmax(0,1fr)', sm: '180px minmax(0,1fr)' }, minHeight: 240, overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '15px', bgcolor: 'var(--awm-white)' }}>
-              {recentReading.book.cover ? (
-                <Box component="img" src={recentReading.book.cover} alt={`${recentReading.book.title} cover`} sx={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center' }} />
-              ) : (
-                <Box sx={{ display: 'grid', placeItems: 'center', bgcolor: '#0e2e1f' }}>
-                  <AutoStories sx={{ color: '#d4a843', fontSize: { xs: 34, sm: 46 } }} />
-                </Box>
-              )}
-              <Box sx={{ p: { xs: 2.25, sm: 3, md: 4 }, minWidth: 0 }}>
-                <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 11, letterSpacing: '0.13em', textTransform: 'uppercase' }}>Continue reading</Typography>
-                <Typography sx={{ mt: 1.25, fontFamily: 'var(--font-heading)', fontSize: { xs: 21, sm: 25 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>{recentReading.book.title}</Typography>
-                <Typography
-                  sx={{
-                    mt: 1,
-                    color: 'var(--awm-muted)',
-                    fontFamily: 'Jost, sans-serif',
-                    fontSize: { xs: 13, sm: 15 },
-                    lineHeight: 1.55,
-                    display: '-webkit-box',
-                    WebkitBoxOrient: 'vertical',
-                    WebkitLineClamp: 3,
-                    overflow: 'hidden',
-                  }}
-                >
-                  “{recentReading.chapter.teaser ?? recentReading.chapter.title}”
-                </Typography>
-                <Typography sx={{ mt: 0.75, color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 11, sm: 12 }, fontWeight: 600 }}>{recentReading.chapter.title} · Chapter {recentReading.chapter.chapterNumber} of {recentReading.book.chapterCount}</Typography>
-                {readingPositionPercent !== null && <>
-                  <Typography sx={{ mt: 1.7, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11 }}>Saved reading position · {readingPositionPercent}% through book</Typography>
-                  <LinearProgress variant="determinate" value={readingPositionPercent} sx={{ mt: 0.7, height: 7, borderRadius: 99, bgcolor: '#eee7dc', '& .MuiLinearProgress-bar': { bgcolor: '#b8860b', borderRadius: 99 } }} />
-                </>}
-                <Button component={Link} href={`/books/${recentReading.book.slug}/${recentReading.chapter.slug}`} variant="contained" endIcon={<ArrowForward />} sx={{ mt: readingPositionPercent !== null ? 2 : 2.5, bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', textTransform: 'none', '& .MuiButton-endIcon': { color: '#fff' }, '&:hover': { bgcolor: '#173f2d', color: '#fff' } }}>Continue Reading</Button>
-              </Box>
-            </Paper>
-          ) : featuredBook ? <ContentCard type="Start reading" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} imageCrop={featuredBook.coverCrop} /> : null}
+          {!recentReading && featuredBook ? <ContentCard type="Start reading" title={featuredBook.title} titleAr={featuredBook.titleAr} description={featuredBook.description} level={featuredBook.level} href={`/books/${featuredBook.slug}`} image={featuredBook.cover} imageCrop={featuredBook.coverCrop} /> : null}
         </Box>
 
       </Container>

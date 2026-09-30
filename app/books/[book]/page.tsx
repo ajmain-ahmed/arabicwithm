@@ -11,7 +11,7 @@ import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 import { formatReadingTime } from '@/app/lib/readingTime'
 import { fetchPublishedAudioForBook } from '@/app/actions/audiobooks'
 
-export const revalidate = false
+export const revalidate = 60
 
 export async function generateStaticParams() {
   const books = await fetchBooksForPublic()

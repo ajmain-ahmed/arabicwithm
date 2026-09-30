@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   extractMemoryCards,
   parseMemoryCardId,
+  prioritizeMemoryCards,
   rankMemoryCards,
   recommendMemoryCardCount,
   sampleMemoryCards,
@@ -79,16 +80,48 @@ describe('Memory transcript candidates', () => {
     expect(rankMemoryCards(repeats)).toEqual([])
   })
 
+  it('keeps useful single vocabulary, rejects particles, and deduplicates inflections by lemma', () => {
+    const vocabularyEpisode: MemoryEpisodeInput = {
+      ...episode,
+      level: 'A1',
+      transcript: [
+        { timestamp: '00:01', translation: 'He went', tokens: [{ arabic: 'ذَهَبَ', lemma: 'ذَهَبَ', english: 'to go', transliteration: 'dhahaba', pos: 'verb', cefr: 'a1', entry_type: 'word' }] },
+        { timestamp: '00:02', translation: 'We went', tokens: [{ arabic: 'ذَهَبْنَا', lemma: 'ذَهَبَ', english: 'to go', transliteration: 'dhahabna', pos: 'verb', cefr: 'a1', entry_type: 'word' }] },
+        { timestamp: '00:03', translation: 'In', tokens: [{ arabic: 'فِي', lemma: 'فِي', english: 'in', transliteration: 'fi', pos: 'preposition', cefr: 'a1', entry_type: 'word' }] },
+      ],
+    }
+
+    expect(extractMemoryCards(vocabularyEpisode)).toHaveLength(1)
+    expect(extractMemoryCards(vocabularyEpisode)[0]).toMatchObject({ arabic: 'ذَهَبَ', english: 'He went' })
+  })
+
   it.each([
     [0, 5],
-    [9, 5],
-    [10, 10],
-    [14, 10],
-    [15, 15],
-    [19, 15],
-    [20, 20],
+    [7, 5],
+    [8, 10],
+    [12, 10],
+    [13, 15],
+    [17, 15],
+    [18, 20],
     [40, 20],
   ])('recommends a supported count for %i available cards', (available, expected) => {
     expect(recommendMemoryCardCount(available)).toBe(expected)
+  })
+
+  it('prioritises missed, unseen, and due cards over recently mastered cards', () => {
+    const cards = [
+      card('recent-known', 'كيف حالك اليوم؟', 'How are you today?'),
+      card('unseen', 'أريد بعض الطعام الآن.', 'I want some food now.'),
+      card('missed', 'أين يمكن أن نجده؟', 'Where can we find it?'),
+      card('due', 'يجب أن نذهب الآن.', 'We must go now.'),
+    ]
+    const reviews = [
+      { cardId: 'recent-known', rating: 'known' as const, reviewedAt: '2026-09-29T12:00:00Z' },
+      { cardId: 'missed', rating: 'again' as const, reviewedAt: '2026-09-29T12:00:00Z' },
+      { cardId: 'due', rating: 'known' as const, reviewedAt: '2026-09-01T12:00:00Z' },
+    ]
+
+    expect(prioritizeMemoryCards(cards, reviews, new Date('2026-09-30T12:00:00Z')).map((item) => item.id))
+      .toEqual(['missed', 'unseen', 'due', 'recent-known'])
   })
 })

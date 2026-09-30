@@ -111,7 +111,7 @@ function RowTile({
           inset: 0,
           width: '100%',
           height: '100%',
-          objectFit: compact ? 'contain' : 'cover',
+          objectFit: compact ? 'fill' : 'cover',
           opacity: loaded ? 1 : 0,
           transition: 'opacity 0.3s ease',
           ...imagePositionSx,

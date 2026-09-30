@@ -9,10 +9,9 @@ import { stripDiacritics } from "@/app/lib/arabic"
 import type { CartoonWordEntry } from "@/app/lib/cartoons"
 import { normalizeThumbnailCrop, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 
-/* Production catalogue data is refreshed only via updateTag/revalidatePath
-   from the admin CMS. In dev, re-fetch every minute so content added through
-   the live admin (or direct DB edits) surfaces without clearing .next. */
-const publicRevalidate = process.env.NODE_ENV === "development" ? 60 : false
+/* Keep admin invalidation fast, while also picking up authoritative Supabase
+   changes made outside this process instead of caching them indefinitely. */
+const publicRevalidate = 60
 
 export interface PublicBook {
   id: string
@@ -85,13 +84,14 @@ export interface ExploreBookPage {
 
 function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook {
   const slug = String(row.slug)
+  const coverVersion = row.updated_at ?? row.created_at
   return {
     id: String(row.id),
     slug,
     title: String(row.title),
     titleAr: row.title_ar ? String(row.title_ar) : undefined,
     description: row.description ? String(row.description) : undefined,
-    cover: `/api/covers/books/${row.id}`,
+    cover: `/api/covers/books/${row.id}${coverVersion ? `?v=${encodeURIComponent(String(coverVersion))}` : ''}`,
     coverCrop: normalizeThumbnailCrop(row.cover_crop),
     level: String(row.level ?? ""),
     category: row.category ? String(row.category) : undefined,

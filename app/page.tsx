@@ -4,7 +4,7 @@ import HomeDashboard from '@/app/components/home/HomeDashboard'
 import { fetchNewOnEpisodes, fetchNewOnShows } from '@/app/components/home/catalogueRows'
 import { dailyRotationIndex } from '@/app/lib/dailyRotation'
 
-export const revalidate = false
+export const revalidate = 60
 
 export default async function HomePage() {
   const [books, shows] = await Promise.all([

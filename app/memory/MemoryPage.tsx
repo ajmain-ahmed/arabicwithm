@@ -43,14 +43,13 @@ function subscribeToDirection(onChange: () => void): () => void {
 }
 
 export default function MemoryPage(props: { library: MemoryLibrary; loadError?: string }) {
-  const { user, loading } = useAuth()
-  if (loading) return <Box role="status" sx={{ p: 4 }}><Typography>Loading your account...</Typography><LinearProgress sx={{ mt: 2 }} /></Box>
+  const { user } = useAuth()
   return <MemorySession key={`${user?.id ?? 'guest'}:${props.library.selectedShowId ?? ''}:${props.library.selectedEpisodeId ?? ''}`} {...props} />
 }
 
 function MemorySession({ library, loadError }: { library: MemoryLibrary; loadError?: string }) {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const direction = useSyncExternalStore<MemoryDirection>(subscribeToDirection, getDirectionSnapshot, () => 'arabic')
   const [started, setStarted] = useState(false)
   const [index, setIndex] = useState(0)
@@ -58,14 +57,14 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const [completed, setCompleted] = useState(0)
   const [sessionXp, setSessionXp] = useState(0)
   const [totalXp, setTotalXp] = useState(0)
-  const initialCardCount = library.scope === 'global' ? MEMORY.sessionCards : library.recommendedCardCount
+  const initialCardCount = library.scope === 'global' ? 10 : library.recommendedCardCount
   const [selectedCardCount, setSelectedCardCount] = useState(initialCardCount)
   const [cards, setCards] = useState(() => library.cards.slice(0, Math.min(initialCardCount, library.cards.length)))
   const [saved, setSaved] = useState<SavedMemorySession | null>(null)
   const [completionIds, setCompletionIds] = useState<string[]>([])
   const [used, setUsed] = useState(0)
   const [premium, setPremium] = useState(false)
-  const [ready, setReady] = useState(!user)
+  const [ready, setReady] = useState(!user && !loading)
   const [progressError, setProgressError] = useState('')
   const [sessionError, setSessionError] = useState('')
   const [progressLoading, setProgressLoading] = useState(Boolean(user))
@@ -76,15 +75,15 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const busyRef = useRef(false)
   const limited = !premium && used >= MEMORY.dailyFreeCards
   useEffect(() => {
-    if (user) return
+    if (loading || user) return
     const refresh = () => setUsed(readGuestMemoryUsage(window.localStorage).used)
     refresh()
     const timer = window.setInterval(refresh, 60000)
     window.addEventListener('focus', refresh)
     return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh) }
-  }, [user])
+  }, [loading, user])
   useEffect(() => {
-    if (!user) return
+    if (loading || !user) return
     let active = true
     const load = () => {
       void loadMemoryProgress().then(result => {
@@ -105,7 +104,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     const timer = window.setInterval(refresh, 60000)
     window.addEventListener('focus', refresh)
     return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', refresh) }
-  }, [user, loadAttempt, started])
+  }, [loading, user, loadAttempt, started])
   const retryProgress = () => { setProgressLoading(true); setProgressError(''); setSessionError(''); setLoadAttempt(value => value + 1) }
   const card = cards[index]
 
@@ -176,6 +175,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     setCards(library.cards.slice(0, Math.min(count, library.cards.length)))
   }
   const restart = async () => {
+    if (loading) return
     if (Boolean(user) && (!ready || saving)) return
     if (limited) { setUpgrade(true); return }
     const deck = library.cards.slice(0, Math.min(selectedCardCount, library.cards.length))
@@ -232,24 +232,26 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
             </ToggleButtonGroup>
             <Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12 }}>{library.scopeTitle} · {cards.length} cards</Typography>
           </Box>
-          {library.scope !== 'global' && <Box sx={{ mt: 2, pt: 1.75, borderTop: '1px solid color-mix(in srgb, var(--awm-bark) 9%, transparent)' }}>
-            <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700 }}>Recommended: {library.recommendedCardCount} cards</Typography>
+          <Box sx={{ mt: 2, pt: 1.75, borderTop: '1px solid color-mix(in srgb, var(--awm-bark) 9%, transparent)' }}>
+            <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700 }}>
+              {library.scope === 'global' ? 'How many cards would you like to practise?' : `${library.scope === 'show' ? 'Based on these transcripts' : 'Based on this transcript'}: Recommended ${library.recommendedCardCount} cards`}
+            </Typography>
             <Box role="group" aria-label="Choose Memory card count" sx={{ mt: 1, display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))', gap: { xs: 0.65, sm: 1 } }}>
               {CARD_COUNT_OPTIONS.map((count) => {
-                const recommended = count === library.recommendedCardCount
+                const recommended = library.scope !== 'global' && count === library.recommendedCardCount
                 const selected = count === selectedCardCount
-                return <Button key={count} onClick={() => chooseCardCount(count)} disabled={started} variant={selected ? 'contained' : 'outlined'} aria-label={`${count} cards${recommended ? ', recommended' : ''}`} aria-pressed={selected} sx={{ minWidth: 0, minHeight: 44, px: 0.5, borderRadius: '9px', borderColor: recommended ? 'var(--awm-gold)' : 'color-mix(in srgb, var(--awm-bark) 18%, transparent)', bgcolor: selected ? 'var(--awm-gold)' : 'transparent', color: selected ? '#fff' : 'var(--awm-bark)', fontWeight: 800, '&:hover': { bgcolor: selected ? '#946c08' : 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' } }}>{count}{recommended && <Box component="span" aria-hidden="true" sx={{ width: 5, height: 5, ml: 0.65, borderRadius: '50%', bgcolor: selected ? '#fff' : 'var(--awm-gold)' }} />}</Button>
+                return <Button key={count} onClick={() => chooseCardCount(count)} disabled={started} variant={selected ? 'contained' : 'outlined'} aria-label={`${count} cards${recommended ? ', recommended' : ''}`} aria-pressed={selected} sx={{ minWidth: 0, minHeight: 48, px: 0.5, borderRadius: '9px', borderColor: recommended ? 'var(--awm-gold)' : 'color-mix(in srgb, var(--awm-bark) 18%, transparent)', bgcolor: selected ? 'var(--awm-gold)' : 'transparent', color: selected ? '#fff' : 'var(--awm-bark)', fontWeight: 800, lineHeight: 1.1, display: 'flex', flexDirection: 'column', '&:hover': { bgcolor: selected ? '#946c08' : 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' } }}>{count}{recommended && <Box component="span" sx={{ mt: 0.35, fontSize: 8.5, fontWeight: 700, textTransform: 'none' }}>Recommended</Box>}</Button>
               })}
             </Box>
             {library.availableCardCount < selectedCardCount && <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, lineHeight: 1.45 }}>This source has {library.availableCardCount} high-quality {library.availableCardCount === 1 ? 'card' : 'cards'}, so the deck will use those without padding or duplicates.</Typography>}
-          </Box>}
+          </Box>
         </Paper>
 
         <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason={`You've completed today's free Memory practice. You've practised ${MEMORY.dailyFreeCards} cards today. Come back tomorrow or upgrade to AWM+ for unlimited Memory practice.`} />
         {progressLoading && <Box role="status" sx={{ mt: 2 }}><Typography>Loading Memory progress...</Typography><LinearProgress /></Box>}
         {progressError && <Alert severity="error" sx={{ mt: 2 }} action={<Button onClick={retryProgress} disabled={progressLoading}>Retry</Button>}>{progressError}</Alert>}
         {!progressError && sessionError && <Alert severity="warning" sx={{ mt: 2 }} action={<Button onClick={retryProgress}>Retry</Button>}>{sessionError} Your completed-card statistics are still available.</Alert>}
-        {!user && <Alert severity="info" sx={{ mt: 2 }}>You can practise without signing in. Sign in only if you want to save your progress.</Alert>}
+        {!loading && !user && <Alert severity="info" sx={{ mt: 2 }}>You can practise without signing in. Sign in only if you want to save your progress.</Alert>}
         {saveError && <Alert severity="error" sx={{ mt: 2 }}>{saveError}</Alert>}
         {ready && <Typography sx={{ mt: 2 }} color="text.secondary">{premium ? 'Unlimited daily Memory practice' : `${used} / ${MEMORY.dailyFreeCards} cards today`}</Typography>}
         {limited && <Alert severity="info" sx={{ mt: 2 }} action={<Button onClick={() => setUpgrade(true)}>Upgrade to AWM+</Button>}>You&apos;ve completed today&apos;s free Memory practice. Your progress is saved. Come back tomorrow.</Alert>}
@@ -267,11 +269,11 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
           </Paper>
         ) : !started ? (
           <Paper elevation={0} sx={{ mt: 3, minHeight: { xs: 330, md: 390 }, p: { xs: 3, md: 5 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: '18px', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', bgcolor: 'var(--awm-white)', boxShadow: '0 18px 50px color-mix(in srgb, var(--awm-bark) 9%, transparent)' }}>
-            <Box><Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 800, letterSpacing: '.13em', textTransform: 'uppercase' }}>{library.scopeTitle}</Typography><Typography sx={{ mt: 1.25, fontFamily: 'var(--font-heading)', fontSize: { xs: 31, md: 39 }, fontWeight: 600, color: 'var(--awm-bark)' }}>Ready to remember?</Typography><Typography sx={{ mt: 1, maxWidth: 520, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>Read the prompt, say the translation aloud or in your head, then reveal the answer.</Typography><Button disabled={Boolean(user) && (!ready || saving || limited)} onClick={() => void restart()} variant="contained" startIcon={<PlayCircleOutlineRounded />} sx={{ mt: 3, minHeight: 48, px: 4, bgcolor: 'var(--awm-gold)', color: '#fff', borderRadius: '9999px', textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#946c08' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 3 } }}>Start</Button></Box>
+            <Box><Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 800, letterSpacing: '.13em', textTransform: 'uppercase' }}>{library.scopeTitle}</Typography><Typography sx={{ mt: 1.25, fontFamily: 'var(--font-heading)', fontSize: { xs: 31, md: 39 }, fontWeight: 600, color: 'var(--awm-bark)' }}>Ready to remember?</Typography><Typography sx={{ mt: 1, maxWidth: 520, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>Read the prompt, say the translation aloud or in your head, then reveal the answer.</Typography><Button disabled={loading || (Boolean(user) && (!ready || saving || limited))} onClick={() => void restart()} variant="contained" startIcon={<PlayCircleOutlineRounded />} sx={{ mt: 3, minHeight: 48, px: 4, bgcolor: 'var(--awm-gold)', color: '#fff', borderRadius: '9999px', textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#946c08' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 3 } }}>Start</Button></Box>
           </Paper>
         ) : complete ? (
           <Paper elevation={0} sx={{ mt: 3, p: { xs: 4, md: 6 }, textAlign: 'center', borderRadius: '18px', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)' }}>
-            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>{completed} cards completed{user ? ` · ${sessionXp} XP earned` : ''}</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={Boolean(user) && (!ready || saving || limited)} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button component={Link} href="/memory" variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New random deck</Button></Box>
+            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>{completed} cards completed{user ? ` · ${sessionXp} XP earned` : ''}</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving || limited))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button component={Link} href="/memory" variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New random deck</Button></Box>
           </Paper>
         ) : card && (
           <Box sx={{ mt: 3 }}>

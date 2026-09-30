@@ -7,7 +7,7 @@ import { getYouTubeThumbnailUrl } from '@/app/lib/cartoons'
 // regardless of upload-time cacheControl metadata, so per-object metadata is
 // unreliable and the proxy must set caching itself. Caching lives at the
 // response layer (browser + CDN); the Data Cache must never sit in the request
-// path, and admin re-uploads propagate within the max-age window.
+// path. Clients revalidate so an overwritten object cannot remain stale.
 
 async function fetchCoverRow(table: string, id: string) {
   const { data, error } = await serviceClient.from(table).select('*').eq('id', id).maybeSingle()
@@ -26,7 +26,7 @@ async function fetchCoverBytes(bucket: string, path: string): Promise<CoverBytes
   return { bytes, etag: createHash('md5').update(new Uint8Array(bytes)).digest('hex') }
 }
 
-const COVER_CACHE_CONTROL = 'public, max-age=86400, stale-while-revalidate=604800'
+const COVER_CACHE_CONTROL = 'public, no-cache, must-revalidate'
 
 function coverResponse(cover: CoverBytes, ifNoneMatch: string | null): Response {
   const etag = `"${cover.etag}"`

@@ -15,7 +15,7 @@ import { GET } from './route'
 
 const BYTES = new Uint8Array([82, 73, 70, 70, 1, 2, 3, 4]) // minimal fake payload
 const ETAG = `"${createHash('md5').update(BYTES).digest('hex')}"`
-const CACHE_CONTROL = 'public, max-age=86400, stale-while-revalidate=604800'
+const CACHE_CONTROL = 'public, no-cache, must-revalidate'
 
 beforeEach(() => {
   vi.stubEnv('SUPABASE_URL', 'https://project.supabase.co')

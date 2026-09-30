@@ -5,7 +5,7 @@ import { fetchBooksForPublic } from '@/app/actions/books'
 import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 
-export const revalidate = false
+export const revalidate = 60
 
 export const metadata = {
   title: 'Arabic Books | ArabicWithM',

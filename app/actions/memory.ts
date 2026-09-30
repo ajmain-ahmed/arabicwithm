@@ -8,12 +8,14 @@ import { getAuthenticatedUserId } from '@/app/actions/auth'
 import {
   extractMemoryCards,
   parseMemoryCardId,
+  prioritizeMemoryCards,
   rankMemoryCards,
   recommendMemoryCardCount,
   sampleMemoryCards,
   type MemoryCard,
   type MemoryEpisodeInput,
   type MemoryRating,
+  type MemoryReviewSignal,
 } from '@/app/lib/memory'
 import { hasServiceClientConfig, serviceClient } from '@/app/lib/supabase'
 import { unstable_cache } from 'next/cache'
@@ -64,7 +66,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
 
   let sourceQuery = serviceClient
     .from('episodes')
-    .select('id, show_id, slug, title, cover, youtube_id, created_at')
+    .select('id, show_id, slug, title, cover, youtube_id, level, created_at')
     .order('created_at', { ascending: false })
   if (input.episodeId) sourceQuery = sourceQuery.eq('id', input.episodeId)
   else if (input.showId) sourceQuery = sourceQuery.eq('show_id', input.showId)
@@ -87,7 +89,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   const selectedSources = scope === 'episode'
     ? sourceRecords
     : scope === 'show'
-      ? sourceRecords.slice(0, 24)
+      ? sourceRecords
       : sampleEpisodeRows(sourceRecords, 24)
 
   /* Fetch transcripts in small batches: a few episodes usually yield enough
@@ -95,11 +97,11 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   const episodes: MemoryEpisodeInput[] = []
   const allCards: MemoryCard[] = []
   const BATCH_SIZE = 6
-  for (let offset = 0; offset < selectedSources.length && rankMemoryCards(allCards).length < MEMORY.sessionCards; offset += BATCH_SIZE) {
+  for (let offset = 0; offset < selectedSources.length; offset += BATCH_SIZE) {
     const batchIds = selectedSources.slice(offset, offset + BATCH_SIZE).map((row) => String(row.id)).filter(Boolean)
     const { data: episodeRows, error: episodeError } = await serviceClient
       .from('episodes')
-      .select('id, show_id, slug, title, transcript')
+      .select('id, show_id, slug, title, level, transcript')
       .in('id', batchIds)
     if (episodeError) throw new Error(episodeError.message)
     for (const row of (episodeRows ?? []) as unknown as EpisodeRecord[]) {
@@ -113,13 +115,34 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
         episodeSlug: String(row.slug),
         episodeTitle: String(row.title),
         cover: `/api/covers/episodes/${row.id}`,
+        level: row.level ? String(row.level) : undefined,
         transcript: row.transcript,
       }
       episodes.push(episode)
       allCards.push(...extractMemoryCards(episode))
     }
   }
-  const cards = rankMemoryCards(allCards).slice(0, MEMORY.sessionCards)
+  const rankedCards = rankMemoryCards(allCards)
+  const userId = await getAuthenticatedUserId()
+  let reviewSignals: MemoryReviewSignal[] = []
+  if (userId && rankedCards.length > 0) {
+    const { data: reviewRows, error: reviewError } = await serviceClient
+      .from('memory_reviews')
+      .select('card_id, rating, activity_date, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1000)
+    if (reviewError) console.error('[memory review ranking]', reviewError.message)
+    else reviewSignals = (reviewRows ?? []).flatMap((review) => {
+      if (review.rating !== 'again' && review.rating !== 'known') return []
+      return [{
+        cardId: String(review.card_id),
+        rating: review.rating,
+        reviewedAt: String(review.created_at ?? review.activity_date),
+      }]
+    })
+  }
+  const cards = prioritizeMemoryCards(rankedCards, reviewSignals).slice(0, MEMORY.sessionCards)
   const selectedShow = input.showId ? showsById.get(input.showId) : undefined
   const selectedEpisode = input.episodeId ? episodes[0] : undefined
 
@@ -127,7 +150,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
     cards: scope === 'global' ? sampleMemoryCards(cards, MEMORY.sessionCards) : cards,
     shows,
     scope,
-    scopeTitle: selectedEpisode?.episodeTitle ?? selectedShow?.title ?? 'Random practice',
+    scopeTitle: selectedEpisode ? `${selectedEpisode.showTitle} — ${selectedEpisode.episodeTitle}` : selectedShow?.title ?? 'Random practice',
     selectedShowId: selectedEpisode?.showId ?? selectedShow?.id,
     selectedEpisodeId: selectedEpisode?.id,
     missingScope: Boolean((input.episodeId || input.showId) && (sourceRows ?? []).length === 0),

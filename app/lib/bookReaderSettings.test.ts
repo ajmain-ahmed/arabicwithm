@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_BOOK_TEXT_SCALE,
   DEFAULT_BOOK_READER_FONT,
+  bookReaderHref,
   MAX_BOOK_TEXT_SCALE,
   MIN_BOOK_TEXT_SCALE,
   normalizeBookTextScale,
@@ -44,5 +45,17 @@ describe('normalizeBookReaderFont', () => {
   it('uses the readable default for unknown stored values', () => {
     expect(normalizeBookReaderFont('comic-sans')).toBe(DEFAULT_BOOK_READER_FONT)
     expect(normalizeBookReaderFont(null)).toBe(DEFAULT_BOOK_READER_FONT)
+  })
+})
+
+describe('bookReaderHref', () => {
+  it('builds encoded Arabic and English reader routes', () => {
+    expect(bookReaderHref('book one', 'chapter/one', 'ar')).toBe('/books/book%20one/chapter%2Fone?lang=ar')
+    expect(bookReaderHref('book one', 'chapter/one', 'en')).toBe('/books/book%20one/chapter%2Fone?lang=en')
+  })
+
+  it('preserves a valid saved sentence position', () => {
+    expect(bookReaderHref('book', 'chapter', 'en', 4)).toBe('/books/book/chapter?lang=en#sentence-4')
+    expect(bookReaderHref('book', 'chapter', 'ar', -1)).toBe('/books/book/chapter?lang=ar')
   })
 })
