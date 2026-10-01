@@ -20,6 +20,7 @@ import {
   SettingsOutlined,
   Close,
   VolunteerActivismRounded,
+  GridOnRounded,
 } from '@mui/icons-material'
 import { Box, Button, CircularProgress, Container, Dialog, DialogContent, DialogTitle, IconButton, LinearProgress, Skeleton, SwipeableDrawer, Typography, Paper, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
@@ -276,7 +277,7 @@ function LearningStats({
   const theme = useTheme()
   const mobileDetail = useMediaQuery(theme.breakpoints.down('sm'))
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null)
-  const level = calculateLearningLevel(activity.totalSeconds, activity.memory?.totalXp ?? 0)
+  const level = calculateLearningLevel(activity.totalSeconds, activity.xp?.totalXp ?? activity.memory?.totalXp ?? 0)
   const week = summarizeWeeklyActivity(activity.daily, now)
   const comparison = week.comparisonPercent
   const comparisonText = comparison === null
@@ -285,6 +286,7 @@ function LearningStats({
   const metrics = [
     { id: 'level', label: 'Current level', value: `Level ${level.level}`, icon: MilitaryTechRounded, description: `${level.progressPercent}% of the way to Level ${level.level + 1}.`, detail: `${formatLearningTime(activity.totalSeconds)} total active learning time.` },
     ...(activity.memory ? [{ id: 'memory', label: 'Memory Practice', value: `${activity.memory.totalXp} XP`, icon: PsychologyOutlined, description: `${activity.memory.weekXp} XP earned from ${activity.memory.weekCards} Memory card${activity.memory.weekCards === 1 ? '' : 's'} this week.` }] : []),
+    ...(activity.wordSearch ? [{ id: 'word-search', label: 'Word Search', value: `${activity.wordSearch.totalXp} XP`, icon: GridOnRounded, description: `${activity.wordSearch.weekXp} XP earned from ${activity.wordSearch.weekCompleted} completed Word Search${activity.wordSearch.weekCompleted === 1 ? '' : 'es'} this week.` }] : []),
     { id: 'week', label: 'Learning this week', value: formatLearningTime(week.thisWeekSeconds), icon: CalendarMonthRounded, description: `${week.activeDays} active day${week.activeDays === 1 ? '' : 's'} this week. ${comparisonText}.` },
     { id: 'today', label: 'Active today', value: formatLearningTime(week.todaySeconds), icon: AccessTimeRounded, description: 'Active learning time recorded today while reading, watching, or practising.' },
     { id: 'reading', label: 'Reading this week', value: formatLearningTime(week.readingSeconds), icon: MenuBook, description: 'Time spent actively reading ArabicWithM books during the current week.' },

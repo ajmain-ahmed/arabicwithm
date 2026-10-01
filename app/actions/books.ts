@@ -67,6 +67,7 @@ export interface ExploreBookBlock {
   words: CartoonWordEntry[]
   translation: string
   punctuation?: string
+  paragraphNumber?: number
 }
 
 export interface ExploreBookPage {
@@ -314,6 +315,7 @@ const EXPLORE_BLOCKS_PER_PAGE = 5
    content is only fetched per chapter, for batches that contain one
    of its pages. ── */
 export interface ExploreBookChapterMeta {
+  bookId?: string
   chapterId: string
   bookSlug: string
   bookTitle: string
@@ -358,6 +360,7 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
       const book = booksById.get(String(chapter.book_id))
       if (!book) return []
       return [{
+        bookId: String(chapter.book_id),
         chapterId: String(chapter.id),
         bookSlug: book.slug,
         bookTitle: book.title,
@@ -395,7 +398,8 @@ function buildExploreBookPages(
       const core = typeof token.arabic === "string" ? token.arabic : ""
       if (!core) return []
       const arabic = `${typeof token.prefix === "string" ? token.prefix : ""}${core}${typeof token.suffix === "string" ? token.suffix : ""}`
-      const lemma = typeof token.headword === "string" ? token.headword.trim() : ""
+      const lemma = typeof token.lemma === "string" ? token.lemma.trim() : ""
+      const headword = typeof token.headword === "string" ? token.headword.trim() : ""
       return [{
         arabic,
         plain: stripDiacritics(arabic),
@@ -403,7 +407,9 @@ function buildExploreBookPages(
         english: typeof token.english === "string" ? token.english : "",
         cefr: typeof token.cefr === "string" ? token.cefr.toLowerCase() : undefined,
         pos: typeof token.pos === "string" ? token.pos : undefined,
-        lemma: lemma || core,
+        lemma: lemma || undefined,
+        headword: headword || undefined,
+        root: typeof token.root === "string" ? token.root.trim() || undefined : undefined,
         entry_type: token.entry_type === "phrase" ? "phrase" : "word",
       }]
     })
@@ -414,6 +420,9 @@ function buildExploreBookPages(
       words,
       translation,
       punctuation: typeof block.punctuation === "string" ? block.punctuation : undefined,
+      paragraphNumber: typeof block.paragraph === "number" && Number.isFinite(block.paragraph)
+        ? block.paragraph
+        : undefined,
     }]
   })
 

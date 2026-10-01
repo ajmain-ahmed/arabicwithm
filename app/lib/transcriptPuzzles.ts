@@ -1,19 +1,46 @@
 import { normalizeArabicToken, stripDiacritics } from '@/app/lib/arabic'
 import type { ExploreTranscriptLine } from '@/app/lib/cartoons'
 
-export interface PuzzleWord {
+export type PuzzleSourceType = 'episode' | 'book'
+
+export interface PuzzleSourceReference {
+  type: PuzzleSourceType
   id: string
-  arabic: string
-  english: string
-  cefr?: string
+  bookId?: string
+  chapterNumber?: number
+  title: string
+  subtitle: string
+  href: string
+  level?: string
 }
 
-export interface PuzzleVocabularySource {
-  episodeId: string
-  episodeTitle: string
-  episodeSlug: string
-  showTitle: string
-  showSlug: string
+export interface PuzzleWordContext {
+  sentenceArabic: string
+  translation?: string
+  timestamp?: number
+  chapterNumber?: number
+  paragraphNumber?: number
+}
+
+export interface PuzzleVocabularyLine extends ExploreTranscriptLine {
+  chapterNumber?: number
+  paragraphNumber?: number
+}
+
+export interface PuzzleWord {
+  id: string
+  lemma: string
+  surfaceForm: string
+  english: string
+  contextualTranslation?: string
+  root?: string
+  pos?: string
+  cefr?: string
+  context?: PuzzleWordContext
+}
+
+export interface PuzzleVocabularySource extends PuzzleSourceReference {
+  puzzleId: string
   words: PuzzleWord[]
 }
 
@@ -40,6 +67,7 @@ const USEFUL_POS = new Map([
   ['adverb', 65],
 ])
 
+const NOMINAL_POS = new Set(['noun', 'adjective', 'adverb'])
 const ARABIC_FILL_LETTERS = Array.from('ابتثجحخدذرزسشصضطظعغفقكلمنهوي')
 const SEARCH_DIRECTIONS = [
   [-1, -1], [-1, 0], [-1, 1],
@@ -60,50 +88,118 @@ function puzzleLetters(value: string): string[] {
   return Array.from(normalizePuzzleArabic(value).replace(/\s/gu, ''))
 }
 
-function shuffle<T>(values: readonly T[], random: () => number): T[] {
-  const result = [...values]
-  for (let index = result.length - 1; index > 0; index -= 1) {
-    const next = Math.floor(random() * (index + 1))
-    ;[result[index], result[next]] = [result[next], result[index]]
-  }
-  return result
+function cleanDisplayArabic(value: string): string {
+  return value.normalize('NFC')
+    .replace(/[ـ]/gu, '')
+    .replace(/^[\p{P}\p{S}\s]+|[\p{P}\p{S}\s]+$/gu, '')
+    .trim()
 }
 
-/** Builds game-ready vocabulary from transcript tokens without mutating them. */
-export function extractPuzzleVocabulary(lines: readonly ExploreTranscriptLine[], limit = 20): PuzzleWord[] {
-  const candidates = new Map<string, { word: PuzzleWord; score: number; firstIndex: number; occurrences: number }>()
+function cleanEnglish(value: string): string {
+  return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 140)
+}
+
+function lexicalKey(value: string): string {
+  const normalized = normalizePuzzleArabic(value)
+  return normalizeArabicToken(normalized).replace(/\s/gu, '') || normalized.replace(/\s/gu, '')
+}
+
+function reliableLemma(token: ExploreTranscriptLine['words'][number], pos: string): string | null {
+  const explicitLemma = cleanDisplayArabic(token.lemma?.trim() ?? '')
+  if (explicitLemma && !explicitLemma.includes(' ')) return explicitLemma
+
+  const surface = cleanDisplayArabic(token.arabic || token.plain || '')
+  const headword = cleanDisplayArabic(token.headword?.trim() ?? '')
+  if (!surface || !headword || headword.includes(' ')) return null
+
+  const plainSurface = normalizePuzzleArabic(surface).replace(/\s/gu, '')
+  const plainHeadword = normalizePuzzleArabic(headword).replace(/\s/gu, '')
+  if (!plainSurface || !plainHeadword) return null
+
+  // Verbal headwords in the corpus are often roots. Without an explicit
+  // lemma, only the exact dictionary form is safe; ambiguous conjugations
+  // are skipped instead of being guessed.
+  if (pos === 'verb') return plainSurface === plainHeadword ? surface : null
+
+  // Hans-Wehr-linked nominal headwords are safe when their letters remain
+  // visibly present in the encountered inflected form (plural/suffix etc.).
+  if (NOMINAL_POS.has(pos) && plainSurface.includes(plainHeadword)) return headword
+  return plainSurface === plainHeadword ? surface : null
+}
+
+function contextScore(line: ExploreTranscriptLine): number {
+  const wordCount = line.words.length
+  const idealLength = wordCount >= 3 && wordCount <= 14 ? 22 : wordCount <= 22 ? 8 : -10
+  return idealLength
+    + (line.translation.trim() ? 12 : 0)
+    + (line.arabic.trim() ? 8 : 0)
+    - Math.max(0, wordCount - 22)
+}
+
+function sentenceForLine(line: ExploreTranscriptLine): string {
+  return line.arabic.trim() || line.words.map((word) => word.arabic).join(' ').trim()
+}
+
+/** Builds lexical vocabulary while retaining the authentic source form. */
+export function extractPuzzleVocabulary(lines: readonly PuzzleVocabularyLine[], limit = 20): PuzzleWord[] {
+  const candidates = new Map<string, {
+    word: PuzzleWord
+    score: number
+    contextScore: number
+    firstIndex: number
+    occurrences: number
+  }>()
   let tokenIndex = 0
 
   for (const line of lines) {
+    const sentenceArabic = sentenceForLine(line)
+    const exampleScore = contextScore(line)
     for (const token of line.words) {
       const firstIndex = tokenIndex++
       const pos = String(token.entry_type === 'phrase' ? 'phrase' : token.pos ?? '').trim().toLowerCase()
       const posScore = USEFUL_POS.get(pos)
-      const english = token.english?.trim() ?? ''
-      const sourceArabic = token.lemma?.trim() || token.arabic?.trim() || token.plain?.trim() || ''
-      const arabic = normalizePuzzleArabic(sourceArabic)
-      const letters = puzzleLetters(arabic)
+      const english = cleanEnglish(token.english ?? '')
+      const lemma = reliableLemma(token, pos)
+      const surfaceForm = cleanDisplayArabic(token.arabic || token.plain || '')
+      const letters = lemma ? puzzleLetters(lemma) : []
 
-      if (!posScore || !english || !/[A-Za-z]/.test(english)) continue
-      if (arabic.includes(' ') || letters.length < 3 || letters.length > 10) continue
-      if (/\b(name|surname|character|place name|proper name)\b/i.test(english)) continue
+      if (!posScore || !lemma || !surfaceForm || !english || !/[A-Za-z]/.test(english)) continue
+      if (normalizePuzzleArabic(lemma).includes(' ') || letters.length < 3 || letters.length > 10) continue
+      if (pos === 'proper_noun' || /\b(name|surname|character|place name|proper name)\b/i.test(english)) continue
 
-      const lexicalSource = token.headword?.trim() || token.lemma?.trim() || arabic
-      const lexicalKey = normalizeArabicToken(normalizePuzzleArabic(lexicalSource)).replace(/\s/gu, '') || arabic
-      const existing = candidates.get(lexicalKey)
+      const id = lexicalKey(lemma)
+      if (!id) continue
+      const word: PuzzleWord = {
+        id,
+        lemma,
+        surfaceForm,
+        english,
+        contextualTranslation: line.translation.trim() || undefined,
+        root: token.root?.trim() || undefined,
+        pos,
+        cefr: token.cefr?.toLowerCase(),
+        context: sentenceArabic ? {
+          sentenceArabic,
+          translation: line.translation.trim() || undefined,
+          timestamp: line.timestamp ?? undefined,
+          chapterNumber: line.chapterNumber,
+          paragraphNumber: line.paragraphNumber,
+        } : undefined,
+      }
+      const existing = candidates.get(id)
       if (existing) {
         existing.occurrences += 1
+        if (exampleScore > existing.contextScore) {
+          existing.word = word
+          existing.contextScore = exampleScore
+        }
         continue
       }
 
-      candidates.set(lexicalKey, {
-        word: {
-          id: lexicalKey,
-          arabic: letters.join(''),
-          english: english.replace(/\s+/g, ' ').trim(),
-          cefr: token.cefr?.toLowerCase(),
-        },
-        score: posScore + (token.headword ? 10 : 0),
+      candidates.set(id, {
+        word,
+        score: posScore + (token.lemma ? 14 : token.headword ? 8 : 0),
+        contextScore: exampleScore,
         firstIndex,
         occurrences: 1,
       })
@@ -111,9 +207,22 @@ export function extractPuzzleVocabulary(lines: readonly ExploreTranscriptLine[],
   }
 
   return [...candidates.values()]
-    .sort((a, b) => (b.score + Math.min(12, b.occurrences * 3)) - (a.score + Math.min(12, a.occurrences * 3)) || a.firstIndex - b.firstIndex)
+    .sort((a, b) => (
+      (b.score + b.contextScore + Math.min(12, b.occurrences * 3))
+      - (a.score + a.contextScore + Math.min(12, a.occurrences * 3))
+      || a.firstIndex - b.firstIndex
+    ))
     .slice(0, Math.max(0, Math.floor(limit)))
     .map(({ word }) => word)
+}
+
+function shuffle<T>(values: readonly T[], random: () => number): T[] {
+  const result = [...values]
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const next = Math.floor(random() * (index + 1))
+    ;[result[index], result[next]] = [result[next], result[index]]
+  }
+  return result
 }
 
 function cellsFor(row: number, col: number, dr: number, dc: number, length: number): PuzzleCell[] {
@@ -125,7 +234,7 @@ export function generateWordSearch(
   options: { size?: number; count?: number; random?: () => number } = {},
 ): WordSearchPuzzle {
   const random = options.random ?? Math.random
-  const longest = Math.max(0, ...vocabulary.map((word) => puzzleLetters(word.arabic).length))
+  const longest = Math.max(0, ...vocabulary.map((word) => puzzleLetters(word.lemma).length))
   const size = Math.max(9, Math.min(14, Math.floor(options.size ?? Math.max(10, longest + 2))))
   const count = Math.max(1, Math.min(10, Math.floor(options.count ?? 8)))
   const grid = Array.from({ length: size }, () => Array<string | null>(size).fill(null))
@@ -133,14 +242,14 @@ export function generateWordSearch(
 
   const candidates = shuffle(vocabulary, random)
     .filter((word) => {
-      const length = puzzleLetters(word.arabic).length
+      const length = puzzleLetters(word.lemma).length
       return length >= 3 && length <= size
     })
-    .sort((a, b) => puzzleLetters(b.arabic).length - puzzleLetters(a.arabic).length)
+    .sort((a, b) => puzzleLetters(b.lemma).length - puzzleLetters(a.lemma).length)
 
   for (const word of candidates) {
     if (placements.length >= count) break
-    const letters = puzzleLetters(word.arabic)
+    const letters = puzzleLetters(word.lemma)
     let placedCells: PuzzleCell[] | null = null
     for (let attempt = 0; attempt < 160 && !placedCells; attempt += 1) {
       const [dr, dc] = SEARCH_DIRECTIONS[Math.floor(random() * SEARCH_DIRECTIONS.length)]
@@ -153,7 +262,7 @@ export function generateWordSearch(
     }
     if (!placedCells) continue
     placedCells.forEach((cell, index) => { grid[cell.row][cell.col] = letters[index] })
-    placements.push({ ...word, arabic: letters.join(''), cells: placedCells })
+    placements.push({ ...word, cells: placedCells })
   }
 
   return {

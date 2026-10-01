@@ -1,12 +1,15 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { CheckCircle, LightbulbOutlined, Refresh } from '@mui/icons-material'
-import { Alert, Box, Button, Chip, CircularProgress, Paper, Typography } from '@mui/material'
+import { useRouter } from 'next/navigation'
+import { Celebration, CheckCircle, EmojiEvents, LightbulbOutlined, Refresh, TimerOutlined } from '@mui/icons-material'
+import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogContent, Paper, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
-import { fetchPuzzleVocabulary } from '@/app/actions/puzzles'
+import { completeWordSearch, fetchPuzzleVocabulary, type WordSearchCompletionResult } from '@/app/actions/puzzles'
 import GamePageShell from '@/app/components/puzzles/GamePageShell'
 import { generateWordSearch, sameCells, straightLineBetween, type PuzzleCell, type PuzzleVocabularySource, type WordSearchPuzzle } from '@/app/lib/transcriptPuzzles'
+import { calculateWordSearchAccuracy, formatWordSearchDuration, shouldCompleteWordSearch, type WordSearchCompletionStats } from '@/app/lib/wordSearchProgress'
+import WordSearchClues from './WordSearchClues'
 
 function cellKey(cell: PuzzleCell): string {
   return `${cell.row}:${cell.col}`
@@ -18,25 +21,40 @@ interface DragSelection {
   cells: PuzzleCell[]
 }
 
+interface CompletionSummary extends WordSearchCompletionStats, WordSearchCompletionResult {}
+
 export default function WordSearchGame({ initialSource, initialPuzzle }: { initialSource: PuzzleVocabularySource | null; initialPuzzle: WordSearchPuzzle | null }) {
+  const router = useRouter()
   const [source, setSource] = useState(initialSource)
   const [puzzle, setPuzzle] = useState(initialPuzzle)
   const [found, setFound] = useState<Set<string>>(() => new Set())
   const [drag, setDrag] = useState<DragSelection | null>(null)
   const [invalidCells, setInvalidCells] = useState<Set<string>>(() => new Set())
-  const [revealed, setRevealed] = useState(false)
-  const [revealedWords, setRevealedWords] = useState<Set<string>>(() => new Set())
+  const [solutionRevealed, setSolutionRevealed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
+  const [mistakes, setMistakes] = useState(0)
+  const [hintsUsed, setHintsUsed] = useState(0)
+  const [revealsUsed, setRevealsUsed] = useState(0)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [timerRunning, setTimerRunning] = useState(false)
+  const [round, setRound] = useState(0)
+  const [completion, setCompletion] = useState<CompletionSummary | null>(null)
+  const [pendingCompletion, setPendingCompletion] = useState<WordSearchCompletionStats | null>(null)
+  const [completionError, setCompletionError] = useState('')
+  const [savingCompletion, setSavingCompletion] = useState(false)
   const gridRef = useRef<HTMLDivElement | null>(null)
   const invalidTimerRef = useRef<number | null>(null)
+  const startedAtRef = useRef(0)
+  const completionSubmittedRef = useRef(false)
+  const completionIdRef = useRef('')
 
   const foundCells = useMemo(() => new Set(
     puzzle?.placements.filter((placement) => found.has(placement.id)).flatMap((placement) => placement.cells.map(cellKey)) ?? [],
   ), [found, puzzle])
   const solutionCells = useMemo(() => new Set(
-    revealed ? puzzle?.placements.flatMap((placement) => placement.cells.map(cellKey)) ?? [] : [],
-  ), [puzzle, revealed])
+    solutionRevealed ? puzzle?.placements.flatMap((placement) => placement.cells.map(cellKey)) ?? [] : [],
+  ), [puzzle, solutionRevealed])
   const dragCells = useMemo(() => new Set(drag?.cells.map(cellKey) ?? []), [drag])
   const complete = Boolean(puzzle?.placements.length) && found.size === puzzle?.placements.length
 
@@ -44,33 +62,108 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
     if (invalidTimerRef.current !== null) window.clearTimeout(invalidTimerRef.current)
   }, [])
 
+  useEffect(() => {
+    if (!source || !puzzle?.placements.length) {
+      setTimerRunning(false)
+      return
+    }
+    startedAtRef.current = Date.now()
+    completionIdRef.current = crypto.randomUUID()
+    completionSubmittedRef.current = false
+    setElapsedSeconds(0)
+    setTimerRunning(true)
+  }, [puzzle, round, source])
+
+  useEffect(() => {
+    if (!timerRunning) return
+    const update = () => setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startedAtRef.current) / 1000)))
+    update()
+    const timer = window.setInterval(update, 1000)
+    return () => window.clearInterval(timer)
+  }, [timerRunning])
+
+  const saveCompletion = async (stats: WordSearchCompletionStats) => {
+    if (!source) return
+    setSavingCompletion(true)
+    setCompletionError('')
+    const result = await completeWordSearch({
+      completionId: completionIdRef.current,
+      puzzleId: source.puzzleId,
+      sourceType: source.type,
+      sourceId: source.id,
+      difficulty: source.level,
+      ...stats,
+    })
+    setSavingCompletion(false)
+    if (!result.ok) {
+      setCompletionError(result.error)
+      return
+    }
+    setCompletion({ ...stats, ...result.data })
+  }
+
+  useEffect(() => {
+    if (!puzzle || !source || !shouldCompleteWordSearch(found.size, puzzle.placements.length, completionSubmittedRef.current)) return
+    completionSubmittedRef.current = true
+    setTimerRunning(false)
+    const stats: WordSearchCompletionStats = {
+      wordCount: puzzle.placements.length,
+      wordsFound: found.size,
+      mistakes,
+      hintsUsed,
+      revealsUsed,
+      durationSeconds: Math.max(1, Math.floor((Date.now() - startedAtRef.current) / 1000)),
+    }
+    setElapsedSeconds(stats.durationSeconds)
+    setPendingCompletion(stats)
+    void saveCompletion(stats)
+    // saveCompletion is intentionally invoked only on the first final-word transition.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [found.size, hintsUsed, mistakes, puzzle, revealsUsed, source])
+
   const reset = () => {
     setFound(new Set())
     setDrag(null)
     setInvalidCells(new Set())
-    setRevealed(false)
-    setRevealedWords(new Set())
+    setSolutionRevealed(false)
     setMessage('')
+    setMistakes(0)
+    setHintsUsed(0)
+    setRevealsUsed(0)
+    setCompletion(null)
+    setPendingCompletion(null)
+    setCompletionError('')
+    setRound((current) => current + 1)
   }
 
   const newGame = async () => {
     setBusy(true)
     setMessage('')
+    setCompletion(null)
     try {
-      const nextSource = await fetchPuzzleVocabulary(source?.episodeId)
+      const nextSource = await fetchPuzzleVocabulary(source ? `${source.type}:${source.id}` : undefined)
       if (!nextSource) {
-        setMessage('No transcript vocabulary is available for a new puzzle right now.')
+        setMessage('Not enough reliable vocabulary is available for a new puzzle yet.')
         return
       }
       const nextPuzzle = generateWordSearch(nextSource.words, { count: 8 })
-      if (nextPuzzle.placements.length === 0) {
-        setMessage('This transcript could not produce a word search. Please try again.')
+      if (nextPuzzle.placements.length < 4) {
+        setMessage('This source could not produce a reliable word search. Please try another.')
         return
       }
+      setFound(new Set())
+      setDrag(null)
+      setInvalidCells(new Set())
+      setSolutionRevealed(false)
+      setMistakes(0)
+      setHintsUsed(0)
+      setRevealsUsed(0)
+      setPendingCompletion(null)
+      setCompletionError('')
       setSource(nextSource)
       setPuzzle(nextPuzzle)
-      reset()
-    } catch {
+    } catch (error) {
+      console.error('[word-search] Unable to generate puzzle:', error)
       setMessage('Unable to create a new puzzle. Please try again.')
     } finally {
       setBusy(false)
@@ -95,15 +188,15 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
   }
 
   const checkSelection = (selection: PuzzleCell[]) => {
-    if (!puzzle) return
+    if (!puzzle || complete) return
     const match = puzzle.placements.find((placement) => (
       sameCells(selection, placement.cells) || sameCells(selection, [...placement.cells].reverse())
     ))
     if (!match) {
       flashInvalidSelection(selection)
+      if (selection.length > 1) setMistakes((current) => current + 1)
       setMessage(selection.length > 1 ? 'That line is not one of the words. Try again.' : 'Drag across a complete word.')
-    }
-    else if (found.has(match.id)) setMessage('You already found that word.')
+    } else if (found.has(match.id)) setMessage('You already found that word.')
     else {
       setFound((current) => new Set(current).add(match.id))
       setMessage(`Found: ${match.english}`)
@@ -111,7 +204,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
   }
 
   const beginDrag = (event: ReactPointerEvent<HTMLButtonElement>, cell: PuzzleCell) => {
-    if (!puzzle || revealed || (event.pointerType === 'mouse' && event.button !== 0)) return
+    if (!puzzle || complete || (event.pointerType === 'mouse' && event.button !== 0)) return
     event.preventDefault()
     if (invalidTimerRef.current !== null) window.clearTimeout(invalidTimerRef.current)
     setInvalidCells(new Set())
@@ -151,23 +244,31 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
   const controls = (
     <Box sx={{ mb: 2.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
       <Chip label={`${found.size} / ${puzzle?.placements.length ?? 0} found`} sx={(theme) => ({ bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.12), color: 'text.primary', fontWeight: 800 })} />
-      <Button onClick={reset} disabled={!puzzle || busy} startIcon={<Refresh />} color="secondary">Reset</Button>
-      <Button onClick={() => { setRevealed(true); setDrag(null); setMessage('Solution revealed.') }} disabled={!puzzle || revealed || busy} startIcon={<LightbulbOutlined />} color="secondary">Reveal solution</Button>
+      <Chip icon={<TimerOutlined />} label={formatWordSearchDuration(elapsedSeconds)} variant="outlined" sx={{ fontWeight: 700 }} />
+      <Button onClick={reset} disabled={!puzzle || busy || complete} startIcon={<Refresh />} color="secondary">Restart</Button>
+      <Button onClick={() => { setSolutionRevealed(true); setHintsUsed((current) => current + (solutionRevealed ? 0 : 1)); setDrag(null); setMessage('Word locations highlighted. You can still complete the puzzle.') }} disabled={!puzzle || solutionRevealed || busy || complete} startIcon={<LightbulbOutlined />} color="secondary">Hint</Button>
       <Button onClick={() => void newGame()} disabled={busy} variant="contained" sx={{ ml: { sm: 'auto' } }}>{busy ? <CircularProgress size={20} color="inherit" /> : 'New Game'}</Button>
     </Box>
   )
 
+  const accuracy = completion ? calculateWordSearchAccuracy(completion.wordsFound, completion.mistakes) : 0
+
   return (
-    <GamePageShell title="Word Search" intro="Use each English meaning as a clue, then find its Arabic word in the letter grid." source={source} controls={controls}>
+    <GamePageShell title="Word Search" intro="Use each English meaning as a clue, then find the canonical Arabic vocabulary word in the grid." source={source} controls={controls}>
       {message && <Alert severity={complete ? 'success' : 'info'} sx={{ mb: 2 }}>{message}</Alert>}
-      {complete && <Alert icon={<CheckCircle />} severity="success" sx={{ mb: 2 }}>Puzzle complete — you found every word.</Alert>}
+      {completionError && (
+        <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" disabled={savingCompletion} onClick={() => pendingCompletion && void saveCompletion(pendingCompletion)}>Retry save</Button>}>
+          {completionError}
+        </Alert>
+      )}
       {!puzzle || puzzle.placements.length === 0 ? (
         <Paper elevation={0} sx={{ p: 4, textAlign: 'center', borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
           <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 26, color: 'text.primary' }}>No puzzle available</Typography>
-          <Button onClick={() => void newGame()} disabled={busy} variant="contained" sx={{ mt: 2 }}>Try another transcript</Button>
+          <Typography sx={{ mt: 0.75, color: 'text.secondary', fontFamily: 'Jost, sans-serif' }}>Not enough reliable vocabulary is available for this activity yet.</Typography>
+          <Button onClick={() => void newGame()} disabled={busy} variant="contained" sx={{ mt: 2 }}>Try another source</Button>
         </Paper>
       ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0,1fr) 300px' }, gap: 2.5, alignItems: 'start' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0,1fr) 320px' }, gap: 2.5, alignItems: 'start' }}>
           <Paper elevation={0} sx={{ p: { xs: 0.75, sm: 2 }, borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
             <Box ref={gridRef} role="grid" aria-label="Arabic word search. Drag in a straight line to select a word." dir="ltr" onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={cancelDrag} sx={{ mx: 'auto', width: '100%', maxWidth: 560, display: 'grid', gridTemplateColumns: `repeat(${puzzle.grid.length}, minmax(0, 1fr))`, gap: { xs: 0.3, sm: 0.6 }, touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}>
               {puzzle.grid.flatMap((row, rowIndex) => row.map((letter, colIndex) => {
@@ -177,64 +278,53 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
                 const isFound = foundCells.has(key)
                 const isSolution = solutionCells.has(key)
                 return (
-                  <Box
-                    component="button"
-                    type="button"
-                    role="gridcell"
-                    key={key}
-                    data-word-search-cell="true"
-                    data-row={rowIndex}
-                    data-col={colIndex}
-                    onPointerDown={(event) => beginDrag(event, { row: rowIndex, col: colIndex })}
-                    aria-label={`Arabic letter ${letter}, row ${rowIndex + 1}, column ${colIndex + 1}`}
-                    lang="ar"
-                    dir="rtl"
+                  <Box component="button" type="button" role="gridcell" key={key} data-word-search-cell="true" data-row={rowIndex} data-col={colIndex} onPointerDown={(event) => beginDrag(event, { row: rowIndex, col: colIndex })} aria-label={`Arabic letter ${letter}, row ${rowIndex + 1}, column ${colIndex + 1}`} lang="ar" dir="rtl"
                     sx={(theme) => {
                       const dark = theme.palette.mode === 'dark'
-                      const borderColor = isInvalid
-                        ? theme.palette.error.main
-                        : isDragging
-                          ? theme.palette.primary.main
-                          : isFound
-                            ? theme.palette.success.main
-                            : isSolution
-                              ? theme.palette.secondary.main
-                              : theme.palette.divider
-                      const backgroundColor = isInvalid
-                        ? alpha(theme.palette.error.main, dark ? 0.3 : 0.14)
-                        : isDragging
-                          ? alpha(theme.palette.primary.main, dark ? 0.24 : 0.17)
-                          : isFound
-                            ? alpha(theme.palette.success.main, dark ? 0.28 : 0.16)
-                            : isSolution
-                              ? alpha(theme.palette.secondary.main, dark ? 0.22 : 0.13)
-                              : theme.palette.background.default
-                      return { aspectRatio: '1', minWidth: 0, p: 0, display: 'grid', placeItems: 'center', border: '1px solid', borderColor, borderRadius: { xs: '4px', sm: '7px' }, bgcolor: backgroundColor, color: theme.palette.text.primary, fontFamily: 'var(--font-book-naskh), serif', fontSize: { xs: 'clamp(.78rem, 4.4vw, 1.2rem)', sm: 24 }, fontWeight: 700, cursor: revealed ? 'default' : 'grab', transform: isDragging ? 'scale(1.055)' : 'scale(1)', boxShadow: isDragging ? `0 0 0 2px ${alpha(theme.palette.primary.main, dark ? 0.2 : 0.13)}` : isFound ? `inset 0 0 0 1px ${alpha(theme.palette.success.main, 0.28)}` : 'none', transition: 'background-color .16s ease, border-color .16s ease, color .16s ease, transform .12s ease, box-shadow .16s ease', '&:active': { cursor: revealed ? 'default' : 'grabbing' }, '&:focus-visible': { outline: `3px solid ${alpha(theme.palette.primary.main, 0.55)}`, outlineOffset: 1 }, '@media (prefers-reduced-motion: reduce)': { transition: 'none', transform: 'none' } }
+                      const borderColor = isInvalid ? theme.palette.error.main : isDragging ? theme.palette.primary.main : isFound ? theme.palette.success.main : isSolution ? theme.palette.secondary.main : theme.palette.divider
+                      const backgroundColor = isInvalid ? alpha(theme.palette.error.main, dark ? 0.3 : 0.14) : isDragging ? alpha(theme.palette.primary.main, dark ? 0.24 : 0.17) : isFound ? alpha(theme.palette.success.main, dark ? 0.28 : 0.16) : isSolution ? alpha(theme.palette.secondary.main, dark ? 0.22 : 0.13) : theme.palette.background.default
+                      return { aspectRatio: '1', minWidth: 0, p: 0, display: 'grid', placeItems: 'center', border: '1px solid', borderColor, borderRadius: { xs: '4px', sm: '7px' }, bgcolor: backgroundColor, color: theme.palette.text.primary, fontFamily: 'var(--font-book-naskh), serif', fontSize: { xs: 'clamp(.78rem, 4.4vw, 1.2rem)', sm: 24 }, fontWeight: 700, cursor: complete ? 'default' : 'grab', transform: isDragging ? 'scale(1.055)' : 'scale(1)', boxShadow: isDragging ? `0 0 0 2px ${alpha(theme.palette.primary.main, dark ? 0.2 : 0.13)}` : isFound ? `inset 0 0 0 1px ${alpha(theme.palette.success.main, 0.28)}` : 'none', transition: 'background-color .16s ease, border-color .16s ease, color .16s ease, transform .12s ease, box-shadow .16s ease', '&:active': { cursor: complete ? 'default' : 'grabbing' }, '&:focus-visible': { outline: `3px solid ${alpha(theme.palette.primary.main, 0.55)}`, outlineOffset: 1 }, '@media (prefers-reduced-motion: reduce)': { transition: 'none', transform: 'none' } }
                     }}
                   >{letter}</Box>
                 )
               }))}
             </Box>
           </Paper>
-          <Paper elevation={0} sx={{ p: 2, borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+          <Paper elevation={0} sx={{ p: 2, minWidth: 0, borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
             <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 24, fontWeight: 600, color: 'text.primary' }}>Find these meanings</Typography>
-            <Box component="ol" sx={{ m: 0, mt: 1.5, pl: 2.5, display: 'grid', gap: 1.15 }}>
-              {puzzle.placements.map((word) => {
-                const wordRevealed = revealedWords.has(word.id)
-                return (
-                  <Box component="li" key={word.id} sx={{ pl: 0.25 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-                      <Typography sx={{ minWidth: 0, color: found.has(word.id) ? 'success.main' : 'text.primary', fontFamily: 'Jost, sans-serif', fontWeight: found.has(word.id) ? 700 : 500, textDecoration: found.has(word.id) ? 'line-through' : 'none' }}>{word.english}</Typography>
-                      {!wordRevealed && <Button size="small" color="secondary" onClick={() => setRevealedWords((current) => new Set(current).add(word.id))} aria-label={`Reveal Arabic for ${word.english}`} sx={{ minWidth: 0, flexShrink: 0, px: 0.75, fontSize: 10.5 }}>Reveal Arabic</Button>}
-                    </Box>
-                    {wordRevealed && <Typography lang="ar" dir="rtl" sx={{ mt: 0.25, color: 'primary.main', fontFamily: 'var(--font-book-naskh), serif', fontSize: 19, fontWeight: 700, lineHeight: 1.25, animation: 'awm-clue-reveal .18s ease-out', '@keyframes awm-clue-reveal': { from: { opacity: 0, transform: 'translateY(-3px)' }, to: { opacity: 1, transform: 'translateY(0)' } }, '@media (prefers-reduced-motion: reduce)': { animation: 'none' } }}>{word.arabic}</Typography>}
-                  </Box>
-                )
-              })}
-            </Box>
+            <WordSearchClues key={`${source?.puzzleId}-${round}`} words={puzzle.placements} foundIds={found} sourceLabel={source ? `${source.title} · ${source.subtitle}` : 'Arabic with M'} onReveal={() => setRevealsUsed((current) => current + 1)} />
           </Paper>
         </Box>
       )}
+
+      <Dialog open={Boolean(completion)} fullWidth maxWidth="xs" aria-labelledby="word-search-complete-title" slotProps={{ paper: { sx: { borderRadius: '18px', bgcolor: 'background.paper', overflow: 'hidden' } } }}>
+        {completion && (
+          <DialogContent sx={{ p: { xs: 2.5, sm: 4 }, textAlign: 'center' }}>
+            <Box sx={{ width: 66, height: 66, mx: 'auto', display: 'grid', placeItems: 'center', borderRadius: '50%', bgcolor: 'color-mix(in srgb, var(--awm-gold) 16%, transparent)', color: 'var(--awm-gold)', animation: 'awm-complete-pop .42s ease-out', '@keyframes awm-complete-pop': { from: { opacity: 0, transform: 'scale(.72)' }, to: { opacity: 1, transform: 'scale(1)' } }, '@media (prefers-reduced-motion: reduce)': { animation: 'none' } }}>
+              {completion.level > completion.previousLevel ? <EmojiEvents sx={{ fontSize: 38 }} /> : <Celebration sx={{ fontSize: 36 }} />}
+            </Box>
+            <Typography id="word-search-complete-title" component="h2" sx={{ mt: 1.5, fontFamily: 'var(--font-heading)', fontSize: 32, fontWeight: 600, color: 'text.primary' }}>
+              {completion.level > completion.previousLevel ? 'Level Up!' : 'Word Search Complete!'}
+            </Typography>
+            <Typography sx={{ mt: 0.5, color: 'text.secondary', fontFamily: 'Jost, sans-serif' }}>Nice work — you found every word.</Typography>
+            <Typography sx={{ mt: 2, color: 'primary.main', fontFamily: 'var(--font-heading)', fontSize: 40, fontWeight: 700, lineHeight: 1 }}>
+              +{completion.awarded} XP
+            </Typography>
+            {completion.duplicate && <Typography sx={{ mt: 0.65, color: 'text.secondary', fontSize: 12 }}>This completion was already saved, so XP was not awarded twice.</Typography>}
+            {completion.level > completion.previousLevel && <Chip icon={<CheckCircle />} label={`Level ${completion.previousLevel} → Level ${completion.level}`} color="success" sx={{ mt: 1.5, fontWeight: 700 }} />}
+            <Box sx={{ mt: 2.5, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 1 }}>
+              {[
+                ['Time', formatWordSearchDuration(completion.durationSeconds)],
+                ['Words', `${completion.wordsFound} / ${completion.wordCount}`],
+                ['Accuracy', `${accuracy}%`],
+              ].map(([label, value]) => <Box key={label} sx={{ minWidth: 0, p: 1.25, borderRadius: '10px', bgcolor: 'action.hover' }}><Typography sx={{ color: 'text.secondary', fontFamily: 'Jost, sans-serif', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase' }}>{label}</Typography><Typography sx={{ mt: 0.3, overflowWrap: 'anywhere', color: 'text.primary', fontFamily: 'var(--font-heading)', fontSize: 17, fontWeight: 700 }}>{value}</Typography></Box>)}
+            </Box>
+            <Typography sx={{ mt: 1.5, color: 'text.secondary', fontFamily: 'Jost, sans-serif', fontSize: 12 }}>{completion.mistakes} mistake{completion.mistakes === 1 ? '' : 's'} · {completion.hintsUsed} hint{completion.hintsUsed === 1 ? '' : 's'} · {completion.revealsUsed} reveal{completion.revealsUsed === 1 ? '' : 's'}</Typography>
+            <Button fullWidth variant="contained" onClick={() => router.push('/')} sx={{ mt: 2.5, minHeight: 48, borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}>Continue</Button>
+            <Button fullWidth color="secondary" onClick={() => void newGame()} sx={{ mt: 0.75, textTransform: 'none' }}>Play Again</Button>
+          </DialogContent>
+        )}
+      </Dialog>
     </GamePageShell>
   )
 }

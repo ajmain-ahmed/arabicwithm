@@ -42,7 +42,7 @@ export async function fetchPublicProfile(id: string) {
 
   const monday = new Date(`${platformDate()}T12:00:00Z`)
   monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7))
-  const [account, activity, memory, weekly, legacy] = await Promise.all([
+  const [account, activity, memory, xpTotal, xpWeek] = await Promise.all([
     serviceClient.auth.admin.getUserById(id),
     serviceClient
       .from('learning_profiles')
@@ -50,21 +50,22 @@ export async function fetchPublicProfile(id: string) {
       .eq('user_id', id)
       .maybeSingle(),
     serviceClient.rpc('memory_totals', { p_user_id: id }),
-    serviceClient.rpc('memory_totals', {
+    serviceClient.rpc('learning_xp_totals', { p_user_id: id }),
+    serviceClient.rpc('learning_xp_totals', {
       p_user_id: id,
       p_since: monday.toISOString().slice(0, 10),
     }),
-    serviceClient.from('memory_legacy_progress').select('xp').eq('user_id', id).maybeSingle(),
   ])
-  if (account.error || activity.error || memory.error || weekly.error || legacy.error) {
+  if (account.error || activity.error || memory.error || xpTotal.error || xpWeek.error) {
     throw new Error('Unable to load learning statistics.')
   }
 
   const user = account.data.user
   if (!user) return null
   const totals = (memory.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
-  const week = (weekly.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
-  const xp = Number(totals.xp) + Number(legacy.data?.xp ?? 0)
+  const totalProgress = (xpTotal.data ?? { xp: 0 }) as { xp: number }
+  const week = (xpWeek.data ?? { xp: 0 }) as { xp: number }
+  const xp = Number(totalProgress.xp)
   const seconds = activity.data
     ? Number(activity.data.legacy_active_seconds) + Number(activity.data.tracked_active_seconds)
     : parseLearningActivity(user.user_metadata).totalSeconds

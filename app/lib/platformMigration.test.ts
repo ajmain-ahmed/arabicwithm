@@ -12,6 +12,7 @@ const admin = '33333333-3333-4333-8333-333333333333'
 const migration = readFileSync('docs/platform-setup.sql', 'utf8')
   + '\n' + readFileSync('supabase/migrations/20260912120000_restore_memory_xp.sql', 'utf8')
   + '\n' + readFileSync('supabase/migrations/20260917120000_admin_premium_memory.sql', 'utf8')
+  + '\n' + readFileSync('supabase/migrations/20261001113000_add_word_search_completions.sql', 'utf8')
 beforeAll(async () => {
   db = new PGlite()
   await db.exec(`create schema auth; create function auth.uid() returns uuid language sql as 'select null::uuid'; create role anon; create role authenticated; create role service_role;

@@ -17,6 +17,8 @@ export interface DailyLearningActivity {
 
 export interface LearningActivity {
   memory?: { total: number; totalXp: number; weekCards: number; weekXp: number }
+  wordSearch?: { total: number; totalXp: number; weekCompleted: number; weekXp: number }
+  xp?: { totalXp: number; weekXp: number }
   totalSeconds: number
   activeDates: string[]
   daily: DailyLearningActivity[]
@@ -117,8 +119,8 @@ export function minutesRequiredForLevel(level: number): number {
   return Math.round(Math.pow(safeLevel - 1, 1.35) * 60)
 }
 
-export function calculateLearningLevel(totalSeconds: number, memoryXp = 0): LearningLevelProgress {
-  const totalMinutes = Math.floor(Math.max(0, totalSeconds) / 60) + Math.max(0, Math.floor(memoryXp))
+export function calculateLearningLevel(totalSeconds: number, xp = 0): LearningLevelProgress {
+  const totalMinutes = Math.floor(Math.max(0, totalSeconds) / 60) + Math.max(0, Math.floor(xp))
   let level = 1
   while (minutesRequiredForLevel(level + 1) <= totalMinutes) level += 1
   const currentLevelMinutes = minutesRequiredForLevel(level)

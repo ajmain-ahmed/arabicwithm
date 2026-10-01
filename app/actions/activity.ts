@@ -5,6 +5,7 @@ import { getAuthenticatedUserId } from '@/app/actions/auth'
 import { ACTIVE_DAY_MINIMUM_SECONDS, localDateKey, parseLearningActivity, type LearningActivity } from '@/app/lib/activity'
 import { rateLimit } from '@/app/lib/rateLimit'
 import { serviceClient } from '@/app/lib/supabase'
+import { platformDate } from '@/app/lib/entitlements'
 
 interface RecordActivityInput {
   date: string
@@ -85,8 +86,26 @@ async function activityForUser(userId: string): Promise<LearningActivity> {
     ...daily.filter((day) => day.activeSeconds >= ACTIVE_DAY_MINIMUM_SECONDS).map((day) => day.date),
   ])).sort().slice(-400)
 
+  const monday = new Date(`${platformDate()}T12:00:00Z`)
+  monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7))
+  const [memoryResult, xpTotal, xpWeek] = await Promise.all([
+    loadMemoryProgress(),
+    serviceClient.rpc('learning_xp_totals', { p_user_id: userId }),
+    serviceClient.rpc('learning_xp_totals', { p_user_id: userId, p_since: monday.toISOString().slice(0, 10) }),
+  ])
+  if (xpTotal.error || xpWeek.error) throw databaseError('XP totals lookup failed', xpTotal.error ?? xpWeek.error)
+  const totalXp = (xpTotal.data ?? {}) as { xp?: number; wordSearchXp?: number; wordSearches?: number }
+  const weekXp = (xpWeek.data ?? {}) as { xp?: number; wordSearchXp?: number; wordSearches?: number }
+
   return {
-    memory: await loadMemoryProgress().then(result => result.ok ? result.data : undefined),
+    memory: memoryResult.ok ? memoryResult.data : undefined,
+    wordSearch: {
+      total: Number(totalXp.wordSearches ?? 0),
+      totalXp: Number(totalXp.wordSearchXp ?? 0),
+      weekCompleted: Number(weekXp.wordSearches ?? 0),
+      weekXp: Number(weekXp.wordSearchXp ?? 0),
+    },
+    xp: { totalXp: Number(totalXp.xp ?? 0), weekXp: Number(weekXp.xp ?? 0) },
     totalSeconds: Number(profile.legacy_active_seconds) + Number(profile.tracked_active_seconds),
     activeDates,
     daily,

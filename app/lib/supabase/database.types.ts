@@ -20,6 +20,7 @@ export interface Database {
       memory_reviews: Table<{ user_id: string; completion_id: string; card_id: string; rating: string; activity_date: string; xp: number; created_at: string }>
       memory_sessions: Table<{ user_id: string; state: Json; updated_at: string }>
       memory_legacy_progress: Table<{ user_id: string; xp: number }>
+      word_search_completions: Table<{ id: string; user_id: string; puzzle_id: string; source_type: 'episode' | 'book'; source_id: string; difficulty: string; word_count: number; words_found: number; mistakes: number; hints_used: number; reveals_used: number; duration_seconds: number; xp_earned: number; activity_date: string; completed_at: string }>
       book_chapter_audio: Table<{ id: string; chapter_id: string; source_type: 'supabase_storage' | 'youtube'; storage_path: string | null; external_video_id: string | null; duration_seconds: number | null; narrator: string | null; is_published: boolean; created_at: string; updated_at: string }>
       book_audio_progress: Table<{ user_id: string; chapter_id: string; position_seconds: number; completed: boolean; updated_at: string }>
       public_profiles: Table<{ user_id: string; display_name: string; is_public: boolean; share_reading: boolean; created_at: string }>
@@ -323,6 +324,8 @@ export interface Database {
     Functions: {
       memory_totals: { Args: { p_user_id: string; p_since?: string }; Returns: Json }
       complete_memory_card: { Args: { p_user_id: string; p_completion_id: string; p_card_id: string; p_rating: string; p_xp: number; p_daily_limit: number; p_has_premium: boolean; p_session: Json }; Returns: Json }
+      learning_xp_totals: { Args: { p_user_id: string; p_since?: string | null }; Returns: Json }
+      complete_word_search: { Args: { p_user_id: string; p_completion_id: string; p_puzzle_id: string; p_source_type: string; p_source_id: string; p_difficulty: string; p_word_count: number; p_words_found: number; p_mistakes: number; p_hints_used: number; p_reveals_used: number; p_duration_seconds: number; p_xp: number }; Returns: Json }
       apply_subscription_event: { Args: { p_user_id: string; p_event_created: number; p_subscription_id: string; p_status: string; p_period_end: string; p_cancel_at_period_end: boolean }; Returns: undefined }
 
       increment_learning_activity: {
