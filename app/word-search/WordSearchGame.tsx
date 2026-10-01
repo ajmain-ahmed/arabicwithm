@@ -7,9 +7,10 @@ import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogContent, Pape
 import { alpha } from '@mui/material/styles'
 import { completeWordSearch, fetchPuzzleVocabulary, type WordSearchCompletionResult } from '@/app/actions/puzzles'
 import GamePageShell from '@/app/components/puzzles/GamePageShell'
-import { generateWordSearch, sameCells, straightLineBetween, type PuzzleCell, type PuzzleVocabularySource, type WordSearchPuzzle } from '@/app/lib/transcriptPuzzles'
+import { generateWordSearch, sameCells, straightLineBetween, WORD_SEARCH_DIFFICULTIES, type PuzzleCell, type PuzzleVocabularySource, type WordSearchDifficulty, type WordSearchPuzzle } from '@/app/lib/transcriptPuzzles'
 import { calculateWordSearchAccuracy, formatWordSearchDuration, shouldCompleteWordSearch, type WordSearchCompletionStats } from '@/app/lib/wordSearchProgress'
 import WordSearchClues from './WordSearchClues'
+import WordSearchDifficultySelector from './WordSearchDifficultySelector'
 
 function cellKey(cell: PuzzleCell): string {
   return `${cell.row}:${cell.col}`
@@ -27,6 +28,9 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
   const router = useRouter()
   const [source, setSource] = useState(initialSource)
   const [puzzle, setPuzzle] = useState(initialPuzzle)
+  const [selectedDifficulty, setSelectedDifficulty] = useState<WordSearchDifficulty>('regular')
+  const [activeDifficulty, setActiveDifficulty] = useState<WordSearchDifficulty>('regular')
+  const [started, setStarted] = useState(false)
   const [found, setFound] = useState<Set<string>>(() => new Set())
   const [drag, setDrag] = useState<DragSelection | null>(null)
   const [invalidCells, setInvalidCells] = useState<Set<string>>(() => new Set())
@@ -63,7 +67,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
   }, [])
 
   useEffect(() => {
-    if (!source || !puzzle?.placements.length) {
+    if (!started || !source || !puzzle?.placements.length) {
       setTimerRunning(false)
       return
     }
@@ -72,7 +76,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
     completionSubmittedRef.current = false
     setElapsedSeconds(0)
     setTimerRunning(true)
-  }, [puzzle, round, source])
+  }, [puzzle, round, source, started])
 
   useEffect(() => {
     if (!timerRunning) return
@@ -91,7 +95,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
       puzzleId: source.puzzleId,
       sourceType: source.type,
       sourceId: source.id,
-      difficulty: source.level,
+      difficulty: activeDifficulty,
       ...stats,
     })
     setSavingCompletion(false)
@@ -136,32 +140,72 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
     setRound((current) => current + 1)
   }
 
+  const installPuzzle = (nextSource: PuzzleVocabularySource, nextPuzzle: WordSearchPuzzle, difficulty: WordSearchDifficulty) => {
+    setFound(new Set())
+    setDrag(null)
+    setInvalidCells(new Set())
+    setSolutionRevealed(false)
+    setMessage('')
+    setMistakes(0)
+    setHintsUsed(0)
+    setRevealsUsed(0)
+    setCompletion(null)
+    setPendingCompletion(null)
+    setCompletionError('')
+    setSource(nextSource)
+    setPuzzle(nextPuzzle)
+    setActiveDifficulty(difficulty)
+    setStarted(true)
+    setRound((current) => current + 1)
+  }
+
+  const puzzleFor = (candidate: PuzzleVocabularySource, difficulty: WordSearchDifficulty) => {
+    const config = WORD_SEARCH_DIFFICULTIES[difficulty]
+    const nextPuzzle = generateWordSearch(candidate.words, { difficulty })
+    return nextPuzzle.placements.length >= config.minimumWords ? nextPuzzle : null
+  }
+
+  const startGame = async () => {
+    setBusy(true)
+    setMessage('')
+    try {
+      const config = WORD_SEARCH_DIFFICULTIES[selectedDifficulty]
+      let nextSource = source
+      let nextPuzzle = nextSource ? puzzleFor(nextSource, selectedDifficulty) : null
+      if (!nextSource || !nextPuzzle) {
+        nextSource = await fetchPuzzleVocabulary(undefined, config.minimumWords)
+        nextPuzzle = nextSource ? puzzleFor(nextSource, selectedDifficulty) : null
+      }
+      if (!nextSource || !nextPuzzle) {
+        setMessage(`Not enough reliable vocabulary is available for a ${config.label.toLowerCase()} puzzle yet.`)
+        return
+      }
+      installPuzzle(nextSource, nextPuzzle, selectedDifficulty)
+    } catch (error) {
+      console.error('[word-search] Unable to start puzzle:', error)
+      setMessage('Unable to create this puzzle. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const newGame = async () => {
     setBusy(true)
     setMessage('')
     setCompletion(null)
     try {
-      const nextSource = await fetchPuzzleVocabulary(source ? `${source.type}:${source.id}` : undefined)
+      const config = WORD_SEARCH_DIFFICULTIES[selectedDifficulty]
+      const nextSource = await fetchPuzzleVocabulary(source ? `${source.type}:${source.id}` : undefined, config.minimumWords)
       if (!nextSource) {
         setMessage('Not enough reliable vocabulary is available for a new puzzle yet.')
         return
       }
-      const nextPuzzle = generateWordSearch(nextSource.words, { count: 8 })
-      if (nextPuzzle.placements.length < 4) {
-        setMessage('This source could not produce a reliable word search. Please try another.')
+      const nextPuzzle = puzzleFor(nextSource, selectedDifficulty)
+      if (!nextPuzzle) {
+        setMessage(`This source could not produce a reliable ${config.label.toLowerCase()} word search. Please try another.`)
         return
       }
-      setFound(new Set())
-      setDrag(null)
-      setInvalidCells(new Set())
-      setSolutionRevealed(false)
-      setMistakes(0)
-      setHintsUsed(0)
-      setRevealsUsed(0)
-      setPendingCompletion(null)
-      setCompletionError('')
-      setSource(nextSource)
-      setPuzzle(nextPuzzle)
+      installPuzzle(nextSource, nextPuzzle, selectedDifficulty)
     } catch (error) {
       console.error('[word-search] Unable to generate puzzle:', error)
       setMessage('Unable to create a new puzzle. Please try again.')
@@ -241,15 +285,19 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
     if (gridRef.current?.hasPointerCapture(event.pointerId)) gridRef.current.releasePointerCapture(event.pointerId)
   }
 
-  const controls = (
+  const activeConfig = WORD_SEARCH_DIFFICULTIES[activeDifficulty]
+  const selectedConfig = WORD_SEARCH_DIFFICULTIES[selectedDifficulty]
+  const controls = started ? (
     <Box sx={{ mb: 2.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+      <WordSearchDifficultySelector value={selectedDifficulty} disabled={busy || savingCompletion} onChange={setSelectedDifficulty} />
+      <Chip label={`${activeConfig.label} · ${activeConfig.gridSize}×${activeConfig.gridSize}`} color="secondary" variant="outlined" sx={{ fontWeight: 800 }} />
       <Chip label={`${found.size} / ${puzzle?.placements.length ?? 0} found`} sx={(theme) => ({ bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.12), color: 'text.primary', fontWeight: 800 })} />
       <Chip icon={<TimerOutlined />} label={formatWordSearchDuration(elapsedSeconds)} variant="outlined" sx={{ fontWeight: 700 }} />
       <Button onClick={reset} disabled={!puzzle || busy || complete} startIcon={<Refresh />} color="secondary">Restart</Button>
       <Button onClick={() => { setSolutionRevealed(true); setHintsUsed((current) => current + (solutionRevealed ? 0 : 1)); setDrag(null); setMessage('Word locations highlighted. You can still complete the puzzle.') }} disabled={!puzzle || solutionRevealed || busy || complete} startIcon={<LightbulbOutlined />} color="secondary">Hint</Button>
       <Button onClick={() => void newGame()} disabled={busy} variant="contained" sx={{ ml: { sm: 'auto' } }}>{busy ? <CircularProgress size={20} color="inherit" /> : 'New Game'}</Button>
     </Box>
-  )
+  ) : undefined
 
   const accuracy = completion ? calculateWordSearchAccuracy(completion.wordsFound, completion.mistakes) : 0
 
@@ -261,16 +309,30 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
           {completionError}
         </Alert>
       )}
-      {!puzzle || puzzle.placements.length === 0 ? (
+      {!started ? (
+        <Paper elevation={0} sx={{ mx: 'auto', maxWidth: 720, p: { xs: 2, sm: 3 }, textAlign: 'center', borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 28, sm: 34 }, fontWeight: 600, color: 'text.primary' }}>Choose your difficulty</Typography>
+          <Typography sx={{ mt: 0.5, mb: 2.25, color: 'text.secondary', fontFamily: 'Jost, sans-serif' }}>Select a level, then start your puzzle.</Typography>
+          <WordSearchDifficultySelector value={selectedDifficulty} disabled={busy} onChange={setSelectedDifficulty} />
+          <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 0.75 }}>
+            <Chip label={`${selectedConfig.gridSize} × ${selectedConfig.gridSize} grid`} variant="outlined" />
+            <Chip label={`${selectedConfig.wordCount} target words`} variant="outlined" />
+            <Chip label={selectedDifficulty === 'easy' ? 'Horizontal & vertical' : 'All directions'} variant="outlined" />
+          </Box>
+          <Button onClick={() => void startGame()} disabled={busy} variant="contained" size="large" sx={{ mt: 2.5, minWidth: 190, minHeight: 48, borderRadius: '10px', textTransform: 'none', fontWeight: 800 }}>
+            {busy ? <CircularProgress size={22} color="inherit" /> : `Start ${selectedConfig.label}`}
+          </Button>
+        </Paper>
+      ) : !puzzle || puzzle.placements.length === 0 ? (
         <Paper elevation={0} sx={{ p: 4, textAlign: 'center', borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
           <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 26, color: 'text.primary' }}>No puzzle available</Typography>
           <Typography sx={{ mt: 0.75, color: 'text.secondary', fontFamily: 'Jost, sans-serif' }}>Not enough reliable vocabulary is available for this activity yet.</Typography>
           <Button onClick={() => void newGame()} disabled={busy} variant="contained" sx={{ mt: 2 }}>Try another source</Button>
         </Paper>
       ) : (
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0,1fr) 320px' }, gap: 2.5, alignItems: 'start' }}>
-          <Paper elevation={0} sx={{ p: { xs: 0.75, sm: 2 }, borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-            <Box ref={gridRef} role="grid" aria-label="Arabic word search. Drag in a straight line to select a word." dir="ltr" onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={cancelDrag} sx={{ mx: 'auto', width: '100%', maxWidth: 560, display: 'grid', gridTemplateColumns: `repeat(${puzzle.grid.length}, minmax(0, 1fr))`, gap: { xs: 0.3, sm: 0.6 }, touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0,1fr) 300px' }, gap: { xs: 2, lg: 2.5 }, alignItems: 'start' }}>
+          <Paper elevation={0} sx={{ minWidth: 0, p: { xs: 0.35, sm: 1.25 }, borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+            <Box ref={gridRef} role="grid" aria-label={`${activeConfig.label} Arabic word search, ${activeConfig.gridSize} by ${activeConfig.gridSize}. Drag in a straight line to select a word.`} dir="ltr" onPointerMove={updateDrag} onPointerUp={finishDrag} onPointerCancel={cancelDrag} sx={{ mx: 'auto', width: '100%', maxWidth: activeConfig.maxBoardWidth, display: 'grid', gridTemplateColumns: `repeat(${puzzle.grid.length}, minmax(0, 1fr))`, gap: activeDifficulty === 'easy' ? { xs: '2px', sm: '4px' } : activeDifficulty === 'regular' ? { xs: '1.5px', sm: '3px' } : { xs: '1px', sm: '2px' }, touchAction: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}>
               {puzzle.grid.flatMap((row, rowIndex) => row.map((letter, colIndex) => {
                 const key = `${rowIndex}:${colIndex}`
                 const isDragging = dragCells.has(key)
@@ -283,7 +345,9 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
                       const dark = theme.palette.mode === 'dark'
                       const borderColor = isInvalid ? theme.palette.error.main : isDragging ? theme.palette.primary.main : isFound ? theme.palette.success.main : isSolution ? theme.palette.secondary.main : theme.palette.divider
                       const backgroundColor = isInvalid ? alpha(theme.palette.error.main, dark ? 0.3 : 0.14) : isDragging ? alpha(theme.palette.primary.main, dark ? 0.24 : 0.17) : isFound ? alpha(theme.palette.success.main, dark ? 0.28 : 0.16) : isSolution ? alpha(theme.palette.secondary.main, dark ? 0.22 : 0.13) : theme.palette.background.default
-                      return { aspectRatio: '1', minWidth: 0, p: 0, display: 'grid', placeItems: 'center', border: '1px solid', borderColor, borderRadius: { xs: '4px', sm: '7px' }, bgcolor: backgroundColor, color: theme.palette.text.primary, fontFamily: 'var(--font-book-naskh), serif', fontSize: { xs: 'clamp(.78rem, 4.4vw, 1.2rem)', sm: 24 }, fontWeight: 700, cursor: complete ? 'default' : 'grab', transform: isDragging ? 'scale(1.055)' : 'scale(1)', boxShadow: isDragging ? `0 0 0 2px ${alpha(theme.palette.primary.main, dark ? 0.2 : 0.13)}` : isFound ? `inset 0 0 0 1px ${alpha(theme.palette.success.main, 0.28)}` : 'none', transition: 'background-color .16s ease, border-color .16s ease, color .16s ease, transform .12s ease, box-shadow .16s ease', '&:active': { cursor: complete ? 'default' : 'grabbing' }, '&:focus-visible': { outline: `3px solid ${alpha(theme.palette.primary.main, 0.55)}`, outlineOffset: 1 }, '@media (prefers-reduced-motion: reduce)': { transition: 'none', transform: 'none' } }
+                      const mobileFont = activeDifficulty === 'easy' ? 'clamp(.9rem, 7vw, 1.35rem)' : activeDifficulty === 'regular' ? 'clamp(.72rem, 4.8vw, 1.1rem)' : 'clamp(.62rem, 3.7vw, .95rem)'
+                      const desktopFont = activeDifficulty === 'easy' ? 28 : activeDifficulty === 'regular' ? 23 : 20
+                      return { aspectRatio: '1', minWidth: 0, p: 0, display: 'grid', placeItems: 'center', border: '1px solid', borderColor, borderRadius: activeDifficulty === 'hard' ? { xs: '2px', sm: '5px' } : { xs: '4px', sm: '7px' }, bgcolor: backgroundColor, color: theme.palette.text.primary, fontFamily: 'var(--font-book-naskh), serif', fontSize: { xs: mobileFont, sm: desktopFont }, lineHeight: 1, fontWeight: 700, cursor: complete ? 'default' : 'grab', transform: isDragging ? 'scale(1.055)' : 'scale(1)', boxShadow: isDragging ? `0 0 0 2px ${alpha(theme.palette.primary.main, dark ? 0.2 : 0.13)}` : isFound ? `inset 0 0 0 1px ${alpha(theme.palette.success.main, 0.28)}` : 'none', transition: 'background-color .16s ease, border-color .16s ease, color .16s ease, transform .12s ease, box-shadow .16s ease', '&:active': { cursor: complete ? 'default' : 'grabbing' }, '&:focus-visible': { outline: `3px solid ${alpha(theme.palette.primary.main, 0.55)}`, outlineOffset: 1 }, '@media (prefers-reduced-motion: reduce)': { transition: 'none', transform: 'none' } }
                     }}
                   >{letter}</Box>
                 )

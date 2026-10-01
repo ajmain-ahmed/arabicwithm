@@ -20,7 +20,10 @@ import {
 } from '@/app/lib/transcriptPuzzles'
 import { calculateWordSearchXp, type WordSearchCompletionStats } from '@/app/lib/wordSearchProgress'
 
-const requestSchema = z.object({ excludeSourceKey: z.string().trim().max(160).optional() })
+const requestSchema = z.object({
+  excludeSourceKey: z.string().trim().max(160).optional(),
+  minimumWordCount: z.number().int().min(4).max(10).default(8),
+})
 const completionSchema = z.object({
   completionId: z.string().uuid(),
   puzzleId: z.string().uuid(),
@@ -74,8 +77,8 @@ async function vocabularyForCandidate(candidate: SourceCandidate): Promise<Puzzl
   return { ...candidate, puzzleId: randomUUID(), words }
 }
 
-export async function fetchPuzzleVocabulary(excludeSourceKey?: string): Promise<PuzzleVocabularySource | null> {
-  const parsed = requestSchema.safeParse({ excludeSourceKey })
+export async function fetchPuzzleVocabulary(excludeSourceKey?: string, minimumWordCount = 8): Promise<PuzzleVocabularySource | null> {
+  const parsed = requestSchema.safeParse({ excludeSourceKey, minimumWordCount })
   if (!parsed.success) return null
   const signedIn = Boolean(await getAuthenticatedUserId())
   const [episodeMetas, bookMetas] = await Promise.all([
@@ -112,7 +115,7 @@ export async function fetchPuzzleVocabulary(excludeSourceKey?: string): Promise<
     for (const source of sources) {
       if (!source) continue
       if (!fallback || source.words.length > fallback.words.length) fallback = source
-      if (source.words.length >= 8) return source
+      if (source.words.length >= parsed.data.minimumWordCount) return source
     }
   }
   return fallback

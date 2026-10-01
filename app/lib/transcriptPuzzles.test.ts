@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ExploreTranscriptLine } from './cartoons'
-import { extractPuzzleVocabulary, generateWordSearch, normalizePuzzleArabic, sameCells, straightLineBetween } from './transcriptPuzzles'
+import { extractPuzzleVocabulary, generateWordSearch, normalizePuzzleArabic, sameCells, straightLineBetween, WORD_SEARCH_DIFFICULTIES, type PuzzleWord } from './transcriptPuzzles'
 
 const lines: ExploreTranscriptLine[] = [{
   timestamp: 12,
@@ -30,6 +30,12 @@ function seededRandom(seed: number) {
     return state / 4294967296
   }
 }
+
+const difficultyWords: PuzzleWord[] = [
+  ['قلم', 'pen'], ['كتاب', 'book'], ['بيت', 'house'], ['مدرسة', 'school'],
+  ['سيارة', 'car'], ['مكتبة', 'library'], ['حديقة', 'garden'], ['مستشفى', 'hospital'],
+  ['استكشاف', 'exploration'], ['مسؤولية', 'responsibility'], ['استقلال', 'independence'], ['استراتيجية', 'strategy'],
+].map(([lemma, english], index) => ({ id: `word-${index}`, lemma, surfaceForm: lemma, english }))
 
 describe('word-search lexical vocabulary', () => {
   it('normalizes punctuation only for lookup and grid use', () => {
@@ -76,5 +82,35 @@ describe('word-search lexical vocabulary', () => {
     expect(sameCells(cells, [{ row: 1, col: 1 }, { row: 1, col: 2 }, { row: 1, col: 3 }])).toBe(true)
     expect(sameCells([...cells].reverse(), straightLineBetween({ row: 1, col: 3 }, { row: 1, col: 1 }))).toBe(true)
     expect(straightLineBetween({ row: 0, col: 0 }, { row: 1, col: 2 })).toEqual([])
+  })
+
+  it('centralizes the three requested difficulty configurations', () => {
+    expect(WORD_SEARCH_DIFFICULTIES.easy).toMatchObject({ gridSize: 10, wordCount: 6, overlap: 'avoid' })
+    expect(WORD_SEARCH_DIFFICULTIES.regular).toMatchObject({ gridSize: 14, wordCount: 8, overlap: 'moderate' })
+    expect(WORD_SEARCH_DIFFICULTIES.hard).toMatchObject({ gridSize: 18, wordCount: 10, overlap: 'prefer' })
+  })
+
+  it.each([
+    ['easy', 10, 6],
+    ['regular', 14, 8],
+    ['hard', 18, 10],
+  ] as const)('generates a playable %s puzzle at the configured dimensions', (difficulty, size, count) => {
+    const puzzle = generateWordSearch(difficultyWords, { difficulty, random: seededRandom(42) })
+    expect(puzzle.difficulty).toBe(difficulty)
+    expect(puzzle.grid).toHaveLength(size)
+    expect(puzzle.grid.every((row) => row.length === size)).toBe(true)
+    expect(puzzle.placements).toHaveLength(count)
+  })
+
+  it('keeps Easy placements horizontal or vertical and prefers shorter words than Hard', () => {
+    const easy = generateWordSearch(difficultyWords, { difficulty: 'easy', random: seededRandom(7) })
+    const hard = generateWordSearch(difficultyWords, { difficulty: 'hard', random: seededRandom(7) })
+    expect(easy.placements.every((placement) => {
+      const first = placement.cells[0]
+      const last = placement.cells.at(-1)!
+      return (first.row === last.row || first.col === last.col) && last.row >= first.row && last.col >= first.col
+    })).toBe(true)
+    const averageLength = (puzzle: typeof easy) => puzzle.placements.reduce((sum, word) => sum + normalizePuzzleArabic(word.lemma).length, 0) / puzzle.placements.length
+    expect(averageLength(easy)).toBeLessThan(averageLength(hard))
   })
 })

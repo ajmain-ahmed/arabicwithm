@@ -15,6 +15,6 @@ export default async function WordSearchPage() {
   await connection()
   if (!await getAuthenticatedUserId()) return <SignInRequired title="Sign in to play Word Search and earn XP" />
   const source = await fetchPuzzleVocabulary()
-  const puzzle = source ? generateWordSearch(source.words, { count: 8 }) : null
+  const puzzle = source ? generateWordSearch(source.words, { difficulty: 'regular' }) : null
   return <WordSearchGame initialSource={source} initialPuzzle={puzzle} />
 }
