@@ -15,7 +15,7 @@ import {
   MilitaryTechRounded,
   PsychologyOutlined,
   AccountCircleOutlined,
-  GridViewRounded,
+  BookmarkRounded,
   ManageSearchRounded,
   SettingsOutlined,
   Close,
@@ -68,7 +68,6 @@ const QUICK_LINKS = [
   { title: 'Settings', label: 'Manage your learning profile', href: (userId: string) => `/profile/${userId}#profile-settings`, icon: SettingsOutlined },
   { title: 'My Profile', label: 'View your progress and achievements', href: (userId: string) => `/profile/${userId}`, icon: AccountCircleOutlined },
   { title: 'Word Search', label: 'Find Arabic words from transcripts', href: '/word-search', icon: ManageSearchRounded },
-  { title: 'Crossword', label: 'Solve Arabic transcript clues', href: '/crossword', icon: GridViewRounded },
 ]
 
 function openAuth(mode: 'register' | 'signin') {
@@ -215,17 +214,20 @@ function QuickLinks({ userId }: { userId: string }) {
   )
 }
 
-function ContentCard({ type, title, titleAr, description, level, href, image, imageCrop, actionLabel = 'Explore' }: { type: string; title: string; titleAr?: string; description?: string; level?: string; href: string; image?: string; imageCrop?: ThumbnailCrop; actionLabel?: string }) {
+function FeaturedContentCard({ type, title, description, level, href, image, imageCrop, actionLabel }: { type: string; title: string; description?: string; level?: string; href: string; image?: string; imageCrop?: ThumbnailCrop; actionLabel: string }) {
   return (
-    <Paper elevation={0} sx={{ display: 'grid', gridTemplateColumns: { xs: '110px minmax(0,1fr)', sm: '180px minmax(0,1fr)' }, minHeight: { xs: 165, sm: 220 }, overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)' }}>
-      {image ? <Box component="img" src={image} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover', ...thumbnailCropCss(imageCrop) }} /> : <Box sx={{ display: 'grid', placeItems: 'center', bgcolor: '#0e2e1f' }}><AutoStories sx={{ color: '#d4a843', fontSize: { xs: 34, sm: 46 } }} /></Box>}
-      <Box sx={{ p: { xs: 2, sm: 3 }, minWidth: 0 }}>
+    <Paper elevation={0} sx={{ display: 'grid', gridTemplateColumns: { xs: '112px minmax(0,1fr)', sm: '38% minmax(0,1fr)' }, minHeight: { xs: 180, sm: 230 }, overflow: 'hidden', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)', boxShadow: '0 4px 16px color-mix(in srgb, var(--awm-bark) 5%, transparent)', transition: 'transform .22s ease, border-color .22s ease, box-shadow .22s ease', '&:hover': { transform: 'translateY(-3px)', borderColor: 'color-mix(in srgb, var(--awm-gold) 52%, transparent)', boxShadow: '0 12px 30px color-mix(in srgb, var(--awm-gold) 14%, transparent)' }, '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } } }}>
+      <Box sx={{ minWidth: 0, overflow: 'hidden', bgcolor: 'var(--awm-forest)' }}>
+        {image ? <Box component="img" src={image} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', ...thumbnailCropCss(imageCrop) }} /> : <Box sx={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center' }}><AutoStories sx={{ color: 'var(--awm-gold-light)', fontSize: { xs: 34, sm: 46 } }} /></Box>}
+      </Box>
+      <Box sx={{ p: { xs: 1.75, sm: 2.5 }, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <Typography sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontWeight: 700, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase' }}>{type}</Typography>
-        {titleAr && <Typography lang="ar" dir="rtl" sx={{ mt: 0.5, fontFamily: '"EB Garamond", Georgia, serif', fontSize: 23, fontWeight: 700, color: 'var(--awm-bark)', textAlign: 'left' }}>{titleAr}</Typography>}
-        <Typography sx={{ mt: titleAr ? 0 : 0.75, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, sm: 24 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>{title}</Typography>
+        <Typography sx={{ mt: 0.75, fontFamily: 'var(--font-heading)', fontSize: { xs: 19, sm: 24 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.15, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{title}</Typography>
         {description && <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 13, lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{description}</Typography>}
-        {level && <CefrChip size="small" level={level} sx={{ mt: 1.5 }} />}
-        <Button component={Link} href={href} endIcon={<ArrowForward sx={{ fontSize: { xs: 17, sm: 20 } }} />} sx={{ display: 'flex', width: 'fit-content', mt: 1.5, px: 0, color: '#0e2e1f', fontWeight: 700, textTransform: 'none' }}>{actionLabel}</Button>
+        <Box sx={{ mt: 'auto', pt: 1.25 }}>
+          {level && <CefrChip size="small" level={level} />}
+          <Button component={Link} href={href} endIcon={<ArrowForward sx={{ fontSize: { xs: 17, sm: 20 } }} />} sx={{ display: 'flex', width: 'fit-content', mt: 0.75, px: 0, color: 'var(--awm-forest)', fontWeight: 700, textTransform: 'none' }}>{actionLabel}</Button>
+        </Box>
       </Box>
     </Paper>
   )
@@ -247,10 +249,13 @@ function ResumeReadingCard({ book, chapter }: { book: PublicBook; chapter: Publi
 
 function ReadingBookmarkCard({ bookTitle, chapterTitle, href }: { bookTitle: string; chapterTitle: string; href: string }) {
   return (
-    <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 26%, transparent)', borderRadius: '12px', bgcolor: 'var(--awm-white)' }}>
-      <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 18, sm: 20 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25 }}>{bookTitle}</Typography>
-      <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 12.5, sm: 13.5 }, lineHeight: 1.4 }}>{chapterTitle}</Typography>
-      <Typography component={Link} href={href} sx={{ display: 'inline-block', mt: 1, color: 'var(--awm-forest)', fontFamily: 'Jost, sans-serif', fontSize: 13.5, fontWeight: 700, textDecoration: 'none', '&:hover': { textDecoration: 'underline' }, '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 3, borderRadius: '2px' } }}>Continue Reading →</Typography>
+    <Paper component={Link} href={href} elevation={0} aria-label={`Continue reading ${bookTitle}, ${chapterTitle}`} sx={{ width: { xs: 164, sm: 184 }, maxWidth: '100%', aspectRatio: '1', p: { xs: 1.75, sm: 2 }, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', textDecoration: 'none', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', borderRadius: '16px', bgcolor: 'var(--awm-white)', boxShadow: '0 4px 14px color-mix(in srgb, var(--awm-bark) 6%, transparent)', transition: 'transform .18s ease, border-color .18s ease, box-shadow .18s ease', '&:hover': { transform: 'translateY(-3px) scale(1.01)', borderColor: 'color-mix(in srgb, var(--awm-gold) 62%, transparent)', boxShadow: '0 10px 24px color-mix(in srgb, var(--awm-gold) 14%, transparent)' }, '&:active': { transform: 'translateY(0) scale(.98)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 48%, transparent)', outlineOffset: 3 }, '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover, &:active': { transform: 'none' } } }}>
+      <Box sx={{ width: 42, height: 42, display: 'grid', placeItems: 'center', borderRadius: '11px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 14%, transparent)', color: 'var(--awm-gold)' }}><BookmarkRounded aria-hidden="true" /></Box>
+      <Box sx={{ minWidth: 0, width: '100%' }}>
+        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 16, sm: 18 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.15, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{bookTitle}</Typography>
+        <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapterTitle}</Typography>
+        <Typography component="span" sx={{ display: 'inline-block', mt: 0.8, color: 'var(--awm-forest)', fontFamily: 'Jost, sans-serif', fontSize: 12.5, fontWeight: 700 }}>Continue Reading →</Typography>
+      </Box>
     </Paper>
   )
 }
@@ -480,6 +485,10 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
   ]
   const dashboardNow = new Date(dashboardLoadedAt)
   const streak = calculateLearningStreak(activityDates, dashboardNow)
+  const featuredReading = recentReading?.book ?? featuredBook
+  const featuredReadingHref = recentReading
+    ? `/books/${encodeURIComponent(recentReading.book.slug)}/${encodeURIComponent(recentReading.chapter.slug)}`
+    : featuredBook ? `/books/${encodeURIComponent(featuredBook.slug)}` : ''
   return (
     <Box component="main" sx={{ bgcolor: 'var(--awm-cream-light)', pb: { xs: 7, md: 11 } }}>
       <Box sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, pt: { xs: 14.5, md: 18 }, pb: { xs: 8, md: 10 }, overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center 42%' }}>
@@ -501,8 +510,8 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           </Box>
         )}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
-          {featuredEpisode && <ContentCard type={`Watch next · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} imageCrop={featuredEpisode.episode.coverCrop} actionLabel="Play episode" />}
-          {featuredBook ? <BookCard book={featuredBook} /> : null}
+          {featuredEpisode && <FeaturedContentCard type={`Featured video · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} imageCrop={featuredEpisode.episode.coverCrop} actionLabel="Watch Now" />}
+          {featuredReading && <FeaturedContentCard type={recentReading ? 'Continue reading' : 'Featured book'} title={featuredReading.title} description={featuredReading.description} level={featuredReading.level} href={featuredReadingHref} image={featuredReading.cover} imageCrop={featuredReading.coverCrop} actionLabel={recentReading ? 'Continue Reading' : 'Read Book'} />}
         </Box>
 
       </Container>

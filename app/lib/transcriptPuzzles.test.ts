@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ExploreTranscriptLine } from './cartoons'
-import { extractPuzzleVocabulary, generateCrossword, generateWordSearch, normalizePuzzleArabic, sameCells, straightLineBetween } from './transcriptPuzzles'
+import { extractPuzzleVocabulary, generateWordSearch, normalizePuzzleArabic, sameCells, straightLineBetween } from './transcriptPuzzles'
 
 const lines: ExploreTranscriptLine[] = [{
   timestamp: 0,
@@ -26,6 +26,9 @@ function seededRandom(seed: number) {
 describe('transcript puzzle vocabulary', () => {
   it('normalizes diacritics without changing the source transcript', () => {
     expect(normalizePuzzleArabic('مُسْتَشْفَى')).toBe('مستشفى')
+    expect(normalizePuzzleArabic('الكتاب؟')).toBe('الكتاب')
+    expect(normalizePuzzleArabic('السفر،')).toBe('السفر')
+    expect(normalizePuzzleArabic('«قرار»…')).toBe('قرار')
     expect(extractPuzzleVocabulary(lines).map((word) => word.english)).toEqual(expect.arrayContaining(['hospital', 'to travel']))
     expect(lines[0].words[0].arabic).toBe('مُسْتَشْفَى')
   })
@@ -36,6 +39,12 @@ describe('transcript puzzle vocabulary', () => {
     expect(puzzle.placements).toHaveLength(2)
     expect(puzzle.grid.flat().every((letter) => /\p{Script=Arabic}/u.test(letter))).toBe(true)
     expect(puzzle.placements.map((word) => word.english)).toContain('hospital')
+
+    const punctuationPuzzle = generateWordSearch(
+      [{ id: 'book', arabic: 'الكتاب؟', english: 'book' }],
+      { size: 10, count: 1, random: seededRandom(9) },
+    )
+    expect(punctuationPuzzle.placements[0]?.arabic).toBe('الكتاب')
   })
 
   it('recognizes straight selections in both directions', () => {
@@ -45,14 +54,4 @@ describe('transcript puzzle vocabulary', () => {
     expect(straightLineBetween({ row: 0, col: 0 }, { row: 1, col: 2 })).toEqual([])
   })
 
-  it('creates a connected crossword with across and down entries', () => {
-    const vocabulary = [
-      ['مستشفى', 'hospital'], ['سافر', 'to travel'], ['قرار', 'decision'], ['رفيق', 'companion'],
-      ['قريب', 'near'], ['طريق', 'road'], ['سريع', 'fast'], ['رسالة', 'message'], ['سلام', 'peace'],
-    ].map(([arabic, english]) => ({ id: arabic, arabic, english }))
-    const puzzle = generateCrossword(vocabulary, { count: 6, random: seededRandom(37) })
-    expect(puzzle.entries.length).toBeGreaterThanOrEqual(3)
-    expect(new Set(puzzle.entries.map((entry) => entry.direction))).toEqual(new Set(['across', 'down']))
-    expect(puzzle.grid.flat().filter(Boolean).every((letter) => /\p{Script=Arabic}/u.test(String(letter)))).toBe(true)
-  })
 })

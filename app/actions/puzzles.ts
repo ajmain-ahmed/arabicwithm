@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { fetchExploreEpisodeByIdPublic, fetchExploreEpisodeMetasForPublic } from '@/app/actions/cartoons'
-import { extractPuzzleVocabulary, generateCrossword, type PuzzleVocabularySource } from '@/app/lib/transcriptPuzzles'
+import { extractPuzzleVocabulary, type PuzzleVocabularySource } from '@/app/lib/transcriptPuzzles'
 
 const requestSchema = z.object({ excludeEpisodeId: z.string().trim().max(100).optional() })
 
@@ -37,7 +37,7 @@ export async function fetchPuzzleVocabulary(excludeEpisodeId?: string): Promise<
         words,
       }
       if (!fallback || source.words.length > fallback.words.length) fallback = source
-      if (words.length >= 8 && generateCrossword(words, { count: 7 }).entries.length >= 4) return source
+      if (words.length >= 8) return source
     }
   }
   return fallback

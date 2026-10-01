@@ -31,18 +31,6 @@ export interface WordSearchPuzzle {
   placements: WordSearchPlacement[]
 }
 
-export interface CrosswordEntry extends PuzzleWord {
-  answer: string
-  direction: 'across' | 'down'
-  number: number
-  cells: PuzzleCell[]
-}
-
-export interface CrosswordPuzzle {
-  grid: Array<Array<string | null>>
-  entries: CrosswordEntry[]
-}
-
 const USEFUL_POS = new Map([
   ['phrase', 100],
   ['idiom', 100],
@@ -62,7 +50,8 @@ const SEARCH_DIRECTIONS = [
 export function normalizePuzzleArabic(value: string): string {
   return stripDiacritics(value.normalize('NFC'))
     .replace(/[ـ]/gu, '')
-    .replace(/[^\p{Script_Extensions=Arabic}\s]/gu, '')
+    .replace(/[\p{P}\p{S}]+/gu, ' ')
+    .replace(/[^\p{Script_Extensions=Arabic}\s]/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim()
 }
@@ -170,120 +159,6 @@ export function generateWordSearch(
   return {
     grid: grid.map((row) => row.map((letter) => letter ?? ARABIC_FILL_LETTERS[Math.floor(random() * ARABIC_FILL_LETTERS.length)])),
     placements,
-  }
-}
-
-type WorkingCrosswordEntry = Omit<CrosswordEntry, 'number'>
-
-function crosswordCandidateCells(answer: string, intersection: PuzzleCell, letterIndex: number, direction: 'across' | 'down'): PuzzleCell[] {
-  const [dr, dc] = direction === 'across' ? [0, -1] : [1, 0]
-  return cellsFor(intersection.row - dr * letterIndex, intersection.col - dc * letterIndex, dr, dc, puzzleLetters(answer).length)
-}
-
-function canPlaceCrossword(
-  grid: Array<Array<string | null>>,
-  cells: readonly PuzzleCell[],
-  letters: readonly string[],
-  direction: 'across' | 'down',
-): boolean {
-  const size = grid.length
-  if (cells.some((cell) => cell.row < 0 || cell.row >= size || cell.col < 0 || cell.col >= size)) return false
-  let intersections = 0
-  for (let index = 0; index < cells.length; index += 1) {
-    const cell = cells[index]
-    const existing = grid[cell.row][cell.col]
-    if (existing !== null) {
-      if (existing !== letters[index]) return false
-      intersections += 1
-      continue
-    }
-    const neighbours = direction === 'across'
-      ? [[cell.row - 1, cell.col], [cell.row + 1, cell.col]]
-      : [[cell.row, cell.col - 1], [cell.row, cell.col + 1]]
-    if (neighbours.some(([row, col]) => row >= 0 && row < size && col >= 0 && col < size && grid[row][col] !== null)) return false
-  }
-  if (intersections !== 1) return false
-  const first = cells[0]
-  const last = cells[cells.length - 1]
-  const [dr, dc] = direction === 'across' ? [0, -1] : [1, 0]
-  const before = { row: first.row - dr, col: first.col - dc }
-  const after = { row: last.row + dr, col: last.col + dc }
-  return [before, after].every((cell) => cell.row < 0 || cell.row >= size || cell.col < 0 || cell.col >= size || grid[cell.row][cell.col] === null)
-}
-
-function buildCrossword(vocabulary: readonly PuzzleWord[], size: number, count: number, random: () => number): WorkingCrosswordEntry[] {
-  const grid = Array.from({ length: size }, () => Array<string | null>(size).fill(null))
-  const candidates = shuffle(vocabulary, random).filter((word) => {
-    const length = puzzleLetters(word.arabic).length
-    return length >= 3 && length <= size - 2
-  })
-  const first = [...candidates].sort((a, b) => puzzleLetters(b.arabic).length - puzzleLetters(a.arabic).length)[0]
-  if (!first) return []
-  const firstLetters = puzzleLetters(first.arabic)
-  const firstCells = crosswordCandidateCells(first.arabic, { row: Math.floor(size / 2), col: Math.floor(size / 2) + Math.floor(firstLetters.length / 2) }, 0, 'across')
-  firstCells.forEach((cell, index) => { grid[cell.row][cell.col] = firstLetters[index] })
-  const entries: WorkingCrosswordEntry[] = [{ ...first, answer: firstLetters.join(''), direction: 'across', cells: firstCells }]
-
-  for (const word of candidates) {
-    if (entries.length >= count || word.id === first.id) continue
-    const letters = puzzleLetters(word.arabic)
-    let placement: { cells: PuzzleCell[]; direction: 'across' | 'down' } | null = null
-    const existingEntries = shuffle(entries, random)
-    for (const existing of existingEntries) {
-      const direction = existing.direction === 'across' ? 'down' : 'across'
-      const existingLetters = puzzleLetters(existing.answer)
-      const matches = shuffle(existingLetters.flatMap((letter, existingIndex) => letters.flatMap((candidateLetter, letterIndex) => letter === candidateLetter ? [{ existingIndex, letterIndex }] : [])), random)
-      for (const match of matches) {
-        const cells = crosswordCandidateCells(word.arabic, existing.cells[match.existingIndex], match.letterIndex, direction)
-        if (!canPlaceCrossword(grid, cells, letters, direction)) continue
-        placement = { cells, direction }
-        break
-      }
-      if (placement) break
-    }
-    if (!placement) continue
-    placement.cells.forEach((cell, index) => { grid[cell.row][cell.col] = letters[index] })
-    entries.push({ ...word, answer: letters.join(''), direction: placement.direction, cells: placement.cells })
-  }
-  return entries
-}
-
-export function generateCrossword(
-  vocabulary: readonly PuzzleWord[],
-  options: { size?: number; count?: number; random?: () => number } = {},
-): CrosswordPuzzle {
-  const random = options.random ?? Math.random
-  const size = Math.max(11, Math.min(17, Math.floor(options.size ?? 15)))
-  const count = Math.max(3, Math.min(10, Math.floor(options.count ?? 8)))
-  let best: WorkingCrosswordEntry[] = []
-  for (let attempt = 0; attempt < 40; attempt += 1) {
-    const entries = buildCrossword(vocabulary, size, count, random)
-    if (entries.length > best.length) best = entries
-    if (best.length >= count) break
-  }
-  if (best.length === 0) return { grid: [], entries: [] }
-
-  const allCells = best.flatMap((entry) => entry.cells)
-  const minRow = Math.min(...allCells.map((cell) => cell.row))
-  const maxRow = Math.max(...allCells.map((cell) => cell.row))
-  const minCol = Math.min(...allCells.map((cell) => cell.col))
-  const maxCol = Math.max(...allCells.map((cell) => cell.col))
-  const answerGrid = Array.from({ length: maxRow - minRow + 1 }, () => Array<string | null>(maxCol - minCol + 1).fill(null))
-  const shifted = best.map((entry) => ({ ...entry, cells: entry.cells.map((cell) => ({ row: cell.row - minRow, col: cell.col - minCol })) }))
-  shifted.forEach((entry) => entry.cells.forEach((cell, index) => { answerGrid[cell.row][cell.col] = puzzleLetters(entry.answer)[index] }))
-
-  const numberByStart = new Map<string, number>()
-  const starts = [...new Set(shifted.map((entry) => `${entry.cells[0].row}:${entry.cells[0].col}`))]
-    .sort((a, b) => {
-      const [ar, ac] = a.split(':').map(Number)
-      const [br, bc] = b.split(':').map(Number)
-      return ar - br || ac - bc
-    })
-  starts.forEach((key, index) => numberByStart.set(key, index + 1))
-
-  return {
-    grid: answerGrid,
-    entries: shifted.map((entry) => ({ ...entry, number: numberByStart.get(`${entry.cells[0].row}:${entry.cells[0].col}`) ?? 0 })),
   }
 }
 
