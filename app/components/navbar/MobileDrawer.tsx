@@ -1,6 +1,6 @@
 'use client'
 
-import { BookOutlined, EmailSharp, ExploreOutlined, HomeOutlined, LogoutSharp, Movie, Person, PsychologyOutlined } from '@mui/icons-material'
+import { BookOutlined, EmailSharp, ExploreOutlined, HomeOutlined, LogoutSharp, Movie, Person, PsychologyOutlined, VolunteerActivismRounded } from '@mui/icons-material'
 import {
     Avatar,
     Box,
@@ -156,6 +156,7 @@ export default function MobileDrawer({
                     { label: 'Read', icon: <BookOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/books') },
                     { label: 'Memory', icon: <PsychologyOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/memory') },
                     { label: 'Give Feedback', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => { window.location.href = '/feedback' } },
+                    { label: 'Support Us', icon: <VolunteerActivismRounded sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/support') },
                     { label: 'Contact', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: onContactOpen },
                 ].map((item) => (
                     <ListItem disablePadding key={item.label}>

@@ -13,6 +13,7 @@ import { normalizeBookReaderLanguage } from '@/app/lib/bookReaderSettings'
 import SignInRequired from '@/app/components/SignInRequired'
 import { fetchPublishedChapterAudio } from '@/app/actions/audiobooks'
 import ChapterAudioPlayer from './ChapterAudioPlayer'
+import { getAuthenticatedUserId } from '@/app/actions/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,18 +39,63 @@ export default async function ChapterPage({
   const book = await fetchBookBySlugPublic(bookSlug)
   if (!book) notFound()
 
-  const [chapter, chapters] = await Promise.all([
-    fetchChapterForPublic(book.id, chapterSlug),
-    fetchChaptersForBookPublic(book.id),
-  ])
+  let chapter: Awaited<ReturnType<typeof fetchChapterForPublic>>
+  let chapters: Awaited<ReturnType<typeof fetchChaptersForBookPublic>>
+  try {
+    ;[chapter, chapters] = await Promise.all([
+      fetchChapterForPublic(book.id, chapterSlug),
+      fetchChaptersForBookPublic(book.id),
+    ])
+  } catch (error) {
+    console.error('[book-reader] Unable to load chapter data', {
+      bookSlug,
+      chapterSlug,
+      error,
+    })
+    throw error
+  }
   if (!chapter) {
     const listed = chapters.find(item => item.slug === chapterSlug)
     if (!listed) notFound()
-    return <SignInRequired title={`Sign in to read ${listed.title}`} />
+    if (!await getAuthenticatedUserId()) return <SignInRequired title={`Sign in to read ${listed.title}`} />
+
+    console.error('[book-reader] Chapter metadata exists but readable content is unavailable', {
+      bookSlug,
+      chapterSlug,
+      bookId: book.id,
+    })
+    return (
+      <Box component="main" sx={{ minHeight: '70vh', display: 'grid', placeItems: 'center', bgcolor: 'var(--awm-cream-light)', py: 6 }}>
+        <Container maxWidth="sm">
+          <Box sx={{ p: { xs: 3, sm: 5 }, textAlign: 'center', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '16px', bgcolor: 'var(--awm-white)' }}>
+            <Typography component="h1" sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 29, sm: 36 }, fontWeight: 600 }}>
+              Chapter content is unavailable
+            </Typography>
+            <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>
+              We found {listed.title}, but its reading content could not be loaded. Please return to the book and choose the chapter again.
+            </Typography>
+            <Button href={`/books/${encodeURIComponent(book.slug)}`} startIcon={<ArrowBack />} variant="contained" sx={{ mt: 3, bgcolor: 'var(--awm-gold)', textTransform: 'none', '&:hover': { bgcolor: '#946c08' } }}>
+              Back to {book.title}
+            </Button>
+          </Box>
+        </Container>
+      </Box>
+    )
   }
 
   const chapterIndex = chapters.findIndex((item) => item.slug === chapter.slug)
-  const audio = await fetchPublishedChapterAudio(chapter.id)
+  let audio: Awaited<ReturnType<typeof fetchPublishedChapterAudio>>
+  try {
+    audio = await fetchPublishedChapterAudio(chapter.id)
+  } catch (error) {
+    console.error('[book-reader] Unable to load chapter audio', {
+      bookSlug,
+      chapterSlug,
+      chapterId: chapter.id,
+      error,
+    })
+    throw error
+  }
   const previousChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : null
   const nextChapter = chapterIndex >= 0 && chapterIndex < chapters.length - 1 ? chapters[chapterIndex + 1] : null
 
@@ -73,15 +119,15 @@ export default async function ChapterPage({
 
         <Box component="nav" aria-label="Chapter navigation" sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, mt: 3 }}>
           {previousChapter && (
-            <Button component={Link} href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(previousChapter.slug)}`} startIcon={<ArrowBack />} variant="outlined" sx={{ maxWidth: '100%', color: 'var(--awm-bark)', borderColor: 'rgba(44,26,14,0.2)', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
+            <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(previousChapter.slug)}`} startIcon={<ArrowBack />} variant="outlined" sx={{ maxWidth: '100%', color: 'var(--awm-bark)', borderColor: 'rgba(44,26,14,0.2)', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
               {previousChapter.title}
             </Button>
           )}
-          <Button component={Link} href={`/books/${encodeURIComponent(book.slug)}`} startIcon={<FormatListBulleted />} variant="outlined" sx={{ color: 'var(--awm-muted)', borderColor: 'rgba(122,110,101,0.3)', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
+          <Button href={`/books/${encodeURIComponent(book.slug)}`} startIcon={<FormatListBulleted />} variant="outlined" sx={{ color: 'var(--awm-muted)', borderColor: 'rgba(122,110,101,0.3)', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
               All chapters
           </Button>
           {nextChapter && (
-            <Button component={Link} href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(nextChapter.slug)}`} endIcon={<ArrowForward />} variant="contained" sx={{ maxWidth: '100%', bgcolor: '#b8860b', color: '#fff', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: '#946c08' } }}>
+            <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(nextChapter.slug)}`} endIcon={<ArrowForward />} variant="contained" sx={{ maxWidth: '100%', bgcolor: '#b8860b', color: '#fff', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: '#946c08' } }}>
               {nextChapter.title}
             </Button>
           )}

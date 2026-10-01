@@ -19,6 +19,7 @@ import {
   ManageSearchRounded,
   SettingsOutlined,
   Close,
+  VolunteerActivismRounded,
 } from '@mui/icons-material'
 import { Box, Button, CircularProgress, Container, Dialog, DialogContent, DialogTitle, IconButton, LinearProgress, Skeleton, SwipeableDrawer, Typography, Paper, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
@@ -68,6 +69,7 @@ const QUICK_LINKS = [
   { title: 'Settings', label: 'Manage your learning profile', href: (userId: string) => `/profile/${userId}#profile-settings`, icon: SettingsOutlined },
   { title: 'My Profile', label: 'View your progress and achievements', href: (userId: string) => `/profile/${userId}`, icon: AccountCircleOutlined },
   { title: 'Word Search', label: 'Find Arabic words from transcripts', href: '/word-search', icon: ManageSearchRounded },
+  { title: 'Support Us', label: 'Help us create more learning resources', href: '/support', icon: VolunteerActivismRounded },
 ]
 
 function openAuth(mode: 'register' | 'signin') {
