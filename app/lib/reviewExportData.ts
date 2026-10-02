@@ -3,6 +3,7 @@ import { getAuthenticatedAccess } from '@/app/actions/auth'
 import { serviceClient } from '@/app/lib/supabase'
 import { exportFilename, sourceEnvelope, type ReviewExportScope, type ReviewExportData } from '@/app/lib/reviewExports'
 import type { Json } from '@/app/lib/supabase/database.types'
+import { reviewUnitLabel } from '@/app/lib/reviewLabels'
 
 const scopeSchema = z.object({ type:z.enum(['book','show']), parent:z.string().uuid(), target:z.string().uuid().optional(), status:z.enum(['pending','accepted','rejected','withdrawn']).optional(), author:z.string().uuid().optional(), since:z.string().datetime().optional(), until:z.string().datetime().optional() })
 export async function requireExportAdmin() {
@@ -43,7 +44,7 @@ export async function loadSuggestionExport(raw: ReviewExportScope): Promise<Revi
   if(scope.until)query=query.lte('created_at',scope.until)
   const {data,error}=await query.order('target_id').order('line_index').order('created_at').order('id').range(offset,offset+499)
   if(error)throw new Error('Unable to load suggestions')
-  for(const s of data??[])suggestions.push({...s,unit_title:String(units.find(u=>u.id===s.target_id)?.title??s.location)})
+  for(const s of data??[]){const unit=units.find(u=>u.id===s.target_id);suggestions.push({...s,unit_title:unit?reviewUnitLabel({id:String(unit.id),title:String(unit.title),chapter_number:typeof unit.chapter_number==='number'?unit.chapter_number:undefined}):s.location})}
   if((data?.length??0)<500)break
  }
  const ids=[...new Set(suggestions.map(s=>s.author_id))]

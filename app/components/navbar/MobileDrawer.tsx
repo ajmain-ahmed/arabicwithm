@@ -28,6 +28,9 @@ interface MobileDrawerProps {
     onLogout: () => void
     onContactOpen: () => void
     navigate: NavigateFn
+    accessLoading?: boolean
+    accessError?: string
+    onRetryAccess?: () => void
 }
 
 export default function MobileDrawer({
@@ -41,6 +44,7 @@ export default function MobileDrawer({
     onLogout,
     onContactOpen,
     navigate,
+    accessLoading,accessError,onRetryAccess,
 }: MobileDrawerProps) {
     const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M'
 
@@ -152,6 +156,8 @@ export default function MobileDrawer({
 
             <List disablePadding>
                 <GoldLine />
+                {isLoggedIn&&accessLoading&&<ListItem><Typography variant="body2" role="status">Checking permissions…</Typography></ListItem>}
+                {isLoggedIn&&accessError&&<ListItemButton onClick={onRetryAccess}><ListItemText primary="Unable to verify permissions · Retry"/></ListItemButton>}
 
                 {[
                     ...(isLoggedIn ? [{ label: 'My Profile', icon: <Person sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/profile') }] : []),
@@ -168,9 +174,9 @@ export default function MobileDrawer({
                 ].map((item) => (
                     <ListItem disablePadding key={item.label}>
                         <ListItemButton
-                            className={item.label === 'Reviewer Workspace' ? undefined : 'mobile-list-btn'}
+                            className="mobile-list-btn"
                             onClick={item.onClick}
-                            sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 }, ...(item.label === 'Reviewer Workspace' ? { mx: 1, my: 1, borderRadius: '10px', bgcolor: 'var(--awm-forest)', '& .MuiTypography-root, & .MuiListItemIcon-root': { color: 'var(--awm-cream)' }, '&:hover, &.Mui-focusVisible': { bgcolor: 'var(--awm-bark)', outline: '2px solid var(--awm-gold)' } } : {}) }}
+                            sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
                         >
                             <ListItemIcon sx={{ color: 'var(--awm-gold)' }}>{item.icon}</ListItemIcon>
                             <ListItemText

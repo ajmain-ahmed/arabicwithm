@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { useRouter } from 'next/navigation'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase/client'
+import { AccountAccessProvider } from '@/app/AccountAccessContext'
 
 interface AuthContextValue {
   user: User | null
@@ -24,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let active = true
     /* Implicit-flow email links (confirmation, password reset) return the
        session in the URL hash. The shared browser client runs PKCE
        (@supabase/ssr default) and refuses implicit hashes, so extract the
@@ -39,15 +41,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .then(({ error }: { error: { message: string } | null }) => {
           if (error) console.error('Unable to establish session from email link:', error.message)
         })
+        .catch((error:unknown)=>console.error('Unable to establish session from email link:',error))
     }
 
     let stateChanged = false
+    let identity: string | null = null
 
     // Grab the current session on mount
     supabase.auth.getSession()
       .then(({ data: { session } }: { data: { session: Session | null } }) => {
         // Only apply getSession result if onAuthStateChange hasn't already fired
-        if (!stateChanged) {
+        if (active && !stateChanged) {
+          identity=session?.user.id??null
           setSession(session)
           setUser(session?.user ?? null)
           setLoading(false)
@@ -55,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch((err: unknown) => {
         console.error('Auth session error:', err)
-        if (!stateChanged) {
+        if (active && !stateChanged) {
           setLoading(false)
         }
       })
@@ -64,21 +69,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
+      if (!active) return
+      const nextIdentity=session?.user.id??null
+      const identityChanged=nextIdentity!==identity
+      identity=nextIdentity
       stateChanged = true
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
-      if (_event === "SIGNED_IN" || _event === "SIGNED_OUT") router.refresh()
+      if (identityChanged&&(_event === "SIGNED_IN" || _event === "SIGNED_OUT")) router.refresh()
     })
 
-    return () => subscription.unsubscribe()
+    return () => { active=false; subscription.unsubscribe() }
   }, [router])
 
   const value = useMemo(() => ({ user, session, loading }), [user, session, loading])
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
+      <AccountAccessProvider userId={user?.id??null} authLoading={loading} token={session?.access_token}>{children}</AccountAccessProvider>
     </AuthContext.Provider>
   )
 }

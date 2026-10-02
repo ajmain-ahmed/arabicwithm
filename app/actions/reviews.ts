@@ -6,6 +6,7 @@ import { guardReviewer, getAuthenticatedAccess } from '@/app/actions/auth'
 import { serviceClient } from '@/app/lib/supabase'
 import type { Json } from '@/app/lib/supabase/database.types'
 import type { AccountRole, DirectoryResult, ReviewSource, ReviewType, SuggestionInput, SuggestionStatus } from '@/app/lib/reviews'
+import { reviewUnitLabel } from '@/app/lib/reviewLabels'
 
 const uuid = z.string().uuid()
 const inputSchema = z.object({ arabic: z.string().max(10000), english: z.string().max(10000), comment: z.string().max(10000), reason: z.string().max(10000) })
@@ -57,7 +58,7 @@ export async function reviewCatalogue(type: ReviewType, parent?: string) {
  if (parent) {
   uuid.parse(parent)
   const { data, error } = type === 'book'
-   ? await serviceClient.from('chapters').select('id,title').eq('book_id', parent).order('chapter_number').limit(1000)
+   ? await serviceClient.from('chapters').select('id,title,chapter_number').eq('book_id', parent).order('chapter_number').limit(1000)
    : await serviceClient.from('episodes').select('id,title').eq('show_id', parent).order('title').limit(1000)
   if (error) throw new Error(error.message)
   return data ?? []
@@ -100,13 +101,21 @@ export async function listSuggestions(admin: boolean, filters: { status: Suggest
  const { data, error, count } = await query.order('created_at', { ascending: false }).range(offset, offset+24)
  if (error) throw new Error(error.message)
  const names=admin?await accountNames((data??[]).map(s=>s.author_id)):new Map<string,string>()
- return { suggestions: (data??[]).map(s=>({...s,author_name:names.get(s.author_id)})), total: count ?? 0 }
+ const chapterIds=[...new Set((data??[]).filter(s=>s.content_type==='book').map(s=>s.target_id))]
+ const labels=new Map<string,string>()
+ if(chapterIds.length){
+  const {data:chapters,error}=await serviceClient.from('chapters').select('id,title,chapter_number').in('id',chapterIds)
+  if(error)throw new Error('Unable to load chapter labels')
+  for(const chapter of chapters??[])labels.set(chapter.id,reviewUnitLabel(chapter))
+ }
+ return { suggestions: (data??[]).map(s=>({...s,author_name:names.get(s.author_id),unit_label:labels.get(s.target_id)})), total: count ?? 0 }
 }
 export async function reviewSuggestion(id: string, action: 'accept' | 'reject' | 'reply', response: string, tokens: Json = null) {
  const actor = await adminActor()
  const { data, error } = await serviceClient.rpc('review_content_suggestion', { p_actor: actor, p_id: uuid.parse(id), p_action: z.enum(['accept','reject','reply']).parse(action), p_response: z.string().max(10000).parse(response), p_tokens: tokens })
  if (error) throw new Error(error.message)
  const result = data as { ok: boolean; conflict?: boolean; current?: Json; message?: string }
+ if(result.ok){revalidatePath('/reviewer');revalidatePath('/admin/reviews')}
  if (result.ok && action==='accept') {
   updateTag('books-public'); updateTag('cartoons-public')
   revalidatePath('/books', 'layout'); revalidatePath('/cartoons', 'layout'); revalidatePath('/explore')

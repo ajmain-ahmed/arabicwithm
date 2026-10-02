@@ -28,7 +28,7 @@ it('renders genuine new-account empty states and only shows AWM Plus for eligibl
   expect(host.querySelector('[aria-label="AWM Plus"]')).toBeNull()
   expect(host.textContent).toContain('0 day streak'); expect(host.textContent).toContain('No current book')
   expect(host.textContent).toContain('Your first milestone is ahead'); expect(host.textContent).toContain('No learning time recorded')
-  expect(host.querySelector('button')?.textContent).toContain('Change photo')
+  expect(host.querySelector('button[aria-label="Change profile photo"]')).not.toBeNull()
   await act(async () => root.render(<ProfileView profile={profile(true)} />))
   expect(host.querySelector('[aria-label="AWM Plus"]')).not.toBeNull()
   expect(host.querySelectorAll('[aria-label="Learning statistics"] > section')).toHaveLength(2)

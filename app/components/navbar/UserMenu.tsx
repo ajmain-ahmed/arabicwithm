@@ -12,9 +12,12 @@ interface UserMenuProps {
     isAdmin: boolean
     isReviewer: boolean
     onLogout: () => void
+    accessLoading?: boolean
+    accessError?: string
+    onRetryAccess?: () => void
 }
 
-export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, isReviewer }: UserMenuProps) {
+export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, isReviewer,accessLoading,accessError,onRetryAccess }: UserMenuProps) {
 
     return (
         <Menu
@@ -52,7 +55,9 @@ export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, i
                 }}
             />
             {user && <MenuItem component={Link} href="/profile" onClick={onClose} sx={{ py: 1.2, gap: 1.5 }}><AccountCircleOutlined sx={{ fontSize: 18, color: 'var(--awm-gold)' }} /><Typography variant="body2" sx={{ fontWeight: 600 }}>My Profile</Typography></MenuItem>}
-            {user && isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose} sx={{ mx: 1, my: 1, py: 1.5, gap: 1.5, borderRadius: '10px', bgcolor: 'var(--awm-forest)', color: 'var(--awm-cream)', '&:hover, &.Mui-focusVisible': { bgcolor: 'var(--awm-bark)', outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><RateReviewOutlined aria-hidden="true" /><Typography variant="body2" sx={{ fontWeight: 700 }}>Reviewer Workspace</Typography></MenuItem>}
+            {user && accessLoading && <MenuItem disabled><Typography variant="body2" role="status">Checking permissions…</Typography></MenuItem>}
+            {user && accessError && <MenuItem onClick={onRetryAccess}><Typography variant="body2">Unable to verify permissions · Retry</Typography></MenuItem>}
+            {user && isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose} sx={{ py: 1.2, gap: 1.5 }}><RateReviewOutlined sx={{fontSize:18,color:'var(--awm-gold)'}} aria-hidden="true" /><Typography variant="body2" sx={{ fontWeight: 600 }}>Reviewer Workspace</Typography></MenuItem>}
             {user && isAdmin && (
                 <MenuItem
                     component={Link}

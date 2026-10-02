@@ -28,6 +28,7 @@ beforeAll(async()=>{
  insert into episodes values('${target}','${parent}','Episode','${JSON.stringify(document)}',now());
  insert into subscriptions values('${user}','active',now()+interval '1 month',false);`)
  await db.exec(readFileSync('supabase/migrations/20261002170311_user_management_reviews.sql','utf8'))
+ await db.exec(readFileSync('supabase/migrations/20261002230036_admin_suggestion_review_permissions.sql','utf8'))
 },30000)
 afterAll(async()=>{await db?.close()})
 describe.sequential('database role and review security',()=>{
@@ -105,14 +106,20 @@ describe.sequential('database role and review security',()=>{
   expect((await db.query<{previous_role:string;new_role:string}>('select previous_role,new_role from access_change_audit')).rows[0]).toEqual({previous_role:'editor',new_role:'user'})
   await db.query('select change_account_role($1,$2,$3,$4)',[admin,editor,'editor','Restored'])
  })
- it('requires reviewed annotated tokens for Arabic corrections and rejects self-approval',async()=>{
+ it('requires annotated tokens, allows Admin review of their own suggestion and still denies Editors',async()=>{
   const id=(await db.query<{id:string}>('select submit_content_suggestion($1,$2,$3,0,$4::jsonb,$5,null,$6,$7) id',[editor,'book',target,JSON.stringify(document),'أهلا','Arabic correction','Natural greeting'])).rows[0].id
   await expect(review(id)).rejects.toThrow(/annotated/)
   const tokens=[{arabic:'أهلا',pos:'interjection',cefr:'a1',english:'welcome',headword:'أهل'}]
   expect((await db.query<{r:{ok:boolean}}>("select review_content_suggestion($1,$2,'accept','Reviewed',$3::jsonb) r",[admin,id,JSON.stringify(tokens)])).rows[0].r.ok).toBe(true)
   await db.query('update chapters set content=$1::jsonb',[JSON.stringify(document)])
   const own=await submit(admin)
-  await expect(review(own)).rejects.toThrow(/Another Admin/)
+  await expect(review(own,'accept',editor)).rejects.toThrow(/Forbidden/)
+  expect(await review(own)).toEqual({ok:true})
+  expect((await db.query<{status:string;reviewed_by:string}>('select status,reviewed_by from content_suggestions where id=$1',[own])).rows[0]).toEqual({status:'accepted',reviewed_by:admin})
+  await db.query('update chapters set content=$1::jsonb',[JSON.stringify(document)])
+  const ownRejected=await submit(admin)
+  expect(await review(ownRejected,'reject')).toEqual({ok:true})
+  expect((await db.query<{status:string}>('select status from content_suggestions where id=$1',[ownRejected])).rows[0].status).toBe('rejected')
  })
  it('serializes simultaneous demotions so one Admin survives',async()=>{
   await db.query('select change_account_role($1,$2,$3,$4)',[admin,other,'admin','Second Admin'])

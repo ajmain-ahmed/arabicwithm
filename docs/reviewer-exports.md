@@ -44,12 +44,12 @@ Authenticated live desktop/mobile browser sessions were unavailable in the autom
 - Changing content clears an old suggestion dialog. Busy submissions cannot switch scope.
 - Malformed persisted blocks report a useful source error instead of crashing the token renderer.
 - Failed suggestion reads clear stale rows and never show a false successful empty state.
-- Admins see an explanation and disabled accept/reject controls for their own suggestions, matching the existing backend rule requiring another Admin.
+- Admins can accept/reject pending suggestions, including their own. Editors and learners remain unable to review suggestions. Source conflict and annotation validation still apply.
 - Admin scope controls and exports are inside Reviewer Workspace; `/admin/reviews` reuses the same component and remains available.
 - Tabs scroll on narrow screens; date fields and download actions stack on mobile.
 - Home shortcuts, role-specific profile links, persistent avatar crop, Plus icon, Trophy Cabinet, consolidated progress and unchanged Learning Rhythm passed the existing regression checks. `/admin/users` and its role/subscription controls remain in the existing Admin area.
 
-Current permissions: learners have no Admin or Reviewer entry/access; Editors can read reviewable content, submit suggestions and edit/withdraw their own pending suggestions; Admins additionally manage users/roles, review other authors' suggestions and export scoped suggestions/source JSON. Backend role persistence and last-Admin protection remain authoritative.
+Current permissions: learners have no Admin or Reviewer entry/access; Editors can read reviewable content, submit suggestions and edit/withdraw their own pending suggestions; Admins additionally manage users/roles, review suggestions and export scoped suggestions/source JSON. Backend role persistence and last-Admin protection remain authoritative.
 
 ## Files changed
 

@@ -36,7 +36,7 @@ export default function Navbar() {
     const [authDialogMode, setAuthDialogMode] = useState<'register' | 'signin'>('signin')
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
     const [scrolled, setScrolled] = useState(false)
-    const { isAdmin, isReviewer } = useAccountAccess(`${pathname}:${drawerOpen}:${Boolean(userMenuAnchor)}`)
+    const { isAdmin, isReviewer, accessLoading, accessError, refreshAccess } = useAccountAccess(`${pathname}:${drawerOpen}:${Boolean(userMenuAnchor)}`)
 
     const supportsOverlay = pathname === '/' || pathname === '/explore' || pathname === '/vocabulary'
     const isOverlay = supportsOverlay && !scrolled && !drawerOpen && !userMenuAnchor && !contactOpen && !authDialogOpen
@@ -99,6 +99,9 @@ export default function Navbar() {
                 user={user}
                 isAdmin={isAdmin}
                 isReviewer={isReviewer}
+                accessLoading={accessLoading}
+                accessError={accessError}
+                onRetryAccess={()=>void refreshAccess()}
                 onAuthOpen={openSignIn}
                 onLogout={handleLogout}
                 onContactOpen={() => setContactOpen(true)}
@@ -113,6 +116,9 @@ export default function Navbar() {
                 user={user}
                 isAdmin={isAdmin}
                 isReviewer={isReviewer}
+                accessLoading={accessLoading}
+                accessError={accessError}
+                onRetryAccess={()=>void refreshAccess()}
                 onLogout={() => {
                     setUserMenuAnchor(null)
                     handleLogout()

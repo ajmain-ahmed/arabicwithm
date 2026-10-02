@@ -17,7 +17,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
 
   if (isAdminRoute) {
     return (
-      <ErrorBoundary>
+      <ErrorBoundary key={pathname}>
         {children}
       </ErrorBoundary>
     )
@@ -39,7 +39,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           },
         }}
       >
-        <ErrorBoundary>
+        <ErrorBoundary key={pathname}>
           <GlobalDataInit>{children}</GlobalDataInit>
         </ErrorBoundary>
       </Box>
