@@ -1,38 +1,64 @@
 'use client'
 import { useState } from 'react'
-import { AutoStories, EmojiEventsRounded, ExploreOutlined, LocalFireDepartmentRounded, MilitaryTechRounded, PsychologyOutlined, ScheduleRounded, SmartDisplayOutlined, StarsRounded, GridOnRounded } from '@mui/icons-material'
-import { Box, Button, Chip, LinearProgress, Paper, Tooltip, Typography } from '@mui/material'
-import { ACHIEVEMENT_FAMILIES, achievementMetrics, achievementPage, type AchievementCategory } from '@/app/lib/achievements'
+import { AutoStories, Close, EmojiEventsRounded, ExploreOutlined, LocalFireDepartmentRounded, MilitaryTechRounded, PsychologyOutlined, ScheduleRounded, SmartDisplayOutlined, StarsRounded, GridOnRounded } from '@mui/icons-material'
+import { Alert, Box, Button, Chip, Dialog, DialogContent, DialogTitle, IconButton, LinearProgress, Paper, Tooltip, Typography, useMediaQuery } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import { ACHIEVEMENT_FAMILIES, achievementMetrics, achievementPage, achievementPreview, type Achievement } from '@/app/lib/achievements'
 import type { LearningActivity } from '@/app/lib/activity'
+import { supabase } from '@/app/lib/supabase/client'
 const icons = { levels: MilitaryTechRounded, xp: StarsRounded, time: ScheduleRounded, words: ExploreOutlined, memory: PsychologyOutlined, reading: AutoStories, watching: SmartDisplayOutlined, streaks: LocalFireDepartmentRounded, puzzles: GridOnRounded, breadth: EmojiEventsRounded }
 
-export default function AchievementCabinet({ activity }: { activity: LearningActivity }) {
-  const [category, setCategory] = useState<AchievementCategory | undefined>(), [page, setPage] = useState(0)
-  const metrics = achievementMetrics(activity)
-  const cabinet = achievementPage(metrics, category, page)
-  return <Box component="section" aria-labelledby="achievements-heading" sx={{ mt: 5 }}>
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}><Typography id="achievements-heading" component="h2" variant="h4">Trophy cabinet</Typography><Chip label={`${cabinet.earnedTotal} earned`} icon={<EmojiEventsRounded />} /></Box>
-    <Typography sx={{ mt: 1, color: 'var(--awm-muted)' }}>{cabinet.earnedTotal ? 'Every milestone reflects your recorded learning. Keep building your collection.' : 'Your first milestone is ahead. Read, watch or practise to start your collection.'}</Typography>
-    <Box aria-label="Achievement categories" sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, my: 2 }}>
-      <Button size="small" aria-pressed={!category} variant={!category ? 'contained' : 'outlined'} onClick={() => { setCategory(undefined); setPage(0) }}>Highlights</Button>
-      {ACHIEVEMENT_FAMILIES.map(f => <Button key={f.id} size="small" aria-pressed={category === f.id} variant={category === f.id ? 'contained' : 'outlined'} onClick={() => { setCategory(f.id); setPage(0) }}>{({ levels: 'Levels', xp: 'XP', time: 'Time', words: 'Words', memory: 'Memory', reading: 'Reading', watching: 'Watching', streaks: 'Streaks', puzzles: 'Word Search', breadth: 'Exploration' })[f.id]}</Button>)}
-    </Box>
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(3,minmax(0,1fr))', md: 'repeat(4,minmax(0,1fr))' }, gap: 1.5 }}>
-      {cabinet.items.map(item => {
-        const Icon = icons[item.category]
-        const progress = Number(item.progress.toFixed(1)).toLocaleString('en-GB')
-        const explanation = `${item.earned ? 'Earned' : 'Next milestone'}: ${item.requirement} ${progress} / ${item.threshold.toLocaleString('en-GB')}.`
-        return <Tooltip title={explanation} key={item.id} describeChild enterTouchDelay={0}>
-          <Paper tabIndex={0} aria-label={`${item.name}. ${explanation}`} elevation={0} sx={{ minWidth: 0, p: { xs: 1.75, sm: 2.5 }, textAlign: 'center', borderRadius: '14px', border: `1px solid color-mix(in srgb, var(--awm-${item.earned ? 'gold' : 'bark'}) ${item.earned ? 40 : 12}%, transparent)`, background: item.earned ? 'linear-gradient(145deg, var(--awm-white), color-mix(in srgb, var(--awm-gold) 10%, var(--awm-white)))' : 'var(--awm-white)', boxShadow: item.earned ? '0 4px 18px color-mix(in srgb, var(--awm-gold) 12%, transparent)' : 'none', transition: 'transform .18s ease, box-shadow .18s ease', '&:hover, &:focus-visible': { transform: 'translateY(-3px)', boxShadow: '0 8px 24px color-mix(in srgb, var(--awm-gold) 15%, transparent)' }, '&:focus-visible': { outline: '3px solid var(--awm-gold)', outlineOffset: 2 }, '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover, &:focus-visible': { transform: 'none' } } }}>
-            <Box sx={{ width: 64, height: 64, mx: 'auto', display: 'grid', placeItems: 'center', bgcolor: item.earned ? 'color-mix(in srgb, var(--awm-gold) 15%, transparent)' : 'var(--awm-cream-light)', borderRadius: item.category === 'levels' ? '18px' : '50%', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)' }}><Icon aria-hidden="true" sx={{ fontSize: 36, color: item.earned ? 'var(--awm-gold)' : 'var(--awm-muted)' }} /></Box>
-            <Typography sx={{ mt: 1.5, fontWeight: 700, color: 'var(--awm-bark)', fontSize: 14 }}>{item.name}</Typography>
-            <Typography sx={{ mt: 0.5, fontSize: 12, color: 'var(--awm-muted)', minHeight: 36 }}>{item.requirement}</Typography>
-            <Typography sx={{ my: 1, fontSize: 12, color: 'var(--awm-muted)' }}>{item.earned ? 'Earned' : `${progress} / ${item.threshold.toLocaleString('en-GB')}`}</Typography>
-            <LinearProgress aria-label={`${item.name} progress`} variant="determinate" value={item.progress / item.threshold * 100} sx={{ height: 5, borderRadius: 99 }} />
-          </Paper>
-        </Tooltip>
-      })}
-    </Box>
-    {category && <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}><Button disabled={!page} onClick={() => setPage(p => p - 1)}>Previous milestones</Button><Typography>Page {page + 1}</Typography><Button disabled={!cabinet.hasNext} onClick={() => setPage(p => p + 1)}>Next milestones</Button></Box>}
+function Trophy({ item, compact = false }: { item: Achievement; compact?: boolean }) {
+  const Icon = icons[item.category]
+  const progress = (Math.floor(item.progress * 10) / 10).toLocaleString('en-GB')
+  const explanation = `${item.earned ? 'Earned' : 'Next milestone'}: ${item.requirement} ${progress} / ${item.threshold.toLocaleString('en-GB')}.`
+  return <Tooltip title={explanation} describeChild enterTouchDelay={0}><Box tabIndex={compact ? undefined : 0} aria-label={`${item.name}. ${explanation}`} sx={{ minWidth: 0, p: compact ? 1 : 2, textAlign: 'center', borderRadius: '14px', bgcolor: item.earned ? 'color-mix(in srgb, var(--awm-gold) 10%, var(--awm-white))' : 'var(--awm-cream-light)', boxShadow: item.earned ? '0 4px 18px color-mix(in srgb, var(--awm-gold) 12%, transparent)' : 'none', '&:focus-visible': { outline: '3px solid var(--awm-gold)', outlineOffset: 2 } }}>
+    <Icon aria-hidden="true" sx={{ fontSize: compact ? 34 : 42, color: item.earned ? 'var(--awm-gold)' : 'var(--awm-muted)' }} />
+    <Typography sx={{ mt: 1, fontWeight: 700, fontSize: compact ? 12 : 14 }}>{item.name}</Typography>
+    {!compact && <Typography sx={{ mt: 0.5, fontSize: 12, color: 'var(--awm-muted)' }}>{item.requirement}</Typography>}
+    <Typography sx={{ my: 1, fontSize: 12, color: 'var(--awm-muted)' }}>{item.earned ? 'Earned' : `${progress} / ${item.threshold.toLocaleString('en-GB')}`}</Typography>
+    {!compact && <LinearProgress aria-label={`${item.name} progress`} variant="determinate" value={item.progress / item.threshold * 100} sx={{ height: 5, borderRadius: 99 }} />}
+  </Box></Tooltip>
+}
+
+export default function AchievementCabinet({ activity, userId, editable = false, featuredTrophies = [] }: { activity: LearningActivity; userId?: string; editable?: boolean; featuredTrophies?: string[] }) {
+  const [open, setOpen] = useState(false), [pages, setPages] = useState<Record<string, number>>({})
+  const [featured, setFeatured] = useState(featuredTrophies), [choices, setChoices] = useState<string[]>([])
+  const [busy, setBusy] = useState(false), [message, setMessage] = useState('')
+  const metrics = achievementMetrics(activity), cabinet = achievementPage(metrics), preview = achievementPreview(metrics, featured)
+  const mobile = useMediaQuery(useTheme().breakpoints.down('sm'))
+  const show = () => { setChoices(preview.filter(item => item.earned).map(item => item.id)); setMessage(''); setOpen(true) }
+  const select = (id: string) => setChoices(current => current.includes(id) ? current.filter(value => value !== id) : current.length < 4 ? [...current, id] : current)
+  async function save() {
+    setBusy(true); setMessage('')
+    try {
+      const { data, error } = await supabase.auth.getUser()
+      if (error || !userId || data.user?.id !== userId) throw new Error('Sign in again to choose your trophies.')
+      const { error: saveError } = await supabase.auth.updateUser({ data: { featured_trophies: choices } })
+      if (saveError) throw new Error('Unable to save trophy highlights. Please try again.')
+      setFeatured(choices); setMessage('Trophy highlights saved.')
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save trophies.') }
+    finally { setBusy(false) }
+  }
+  return <Box component="section" sx={{ mt: 4 }}>
+    <Paper component="button" type="button" onClick={show} aria-label="Open Trophy Cabinet" elevation={0} sx={{ width: '100%', textAlign: 'left', p: { xs: 2, sm: 3 }, border: '1px solid color-mix(in srgb, var(--awm-gold) 30%, transparent)', borderRadius: '16px', bgcolor: 'var(--awm-white)', color: 'var(--awm-bark)', font: 'inherit', cursor: 'pointer', '&:hover': { boxShadow: '0 8px 24px color-mix(in srgb, var(--awm-gold) 12%, transparent)' }, '&:focus-visible': { outline: '3px solid var(--awm-gold)', outlineOffset: 3 } }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}><Typography component="h2" variant="h5">Trophy Cabinet</Typography><Chip label={`${cabinet.earnedTotal} earned`} icon={<EmojiEventsRounded />} /></Box>
+      <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontSize: 14 }}>{cabinet.earnedTotal ? 'Your earned highlights. Open your complete collection.' : 'Your first milestone is ahead. Read, watch or practise to start your collection.'}</Typography>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(4,minmax(0,1fr))' }, gap: 1.5, mt: 2 }}>{preview.map(item => <Trophy key={item.id} item={item} compact />)}</Box>
+      <Typography sx={{ mt: 2, color: 'var(--awm-forest)', fontWeight: 700 }}>View all trophies →</Typography>
+    </Paper>
+    <Dialog open={open} onClose={() => setOpen(false)} fullScreen={mobile} fullWidth maxWidth="md" aria-labelledby="full-cabinet-title">
+      <DialogTitle id="full-cabinet-title" sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>Trophy Cabinet<IconButton aria-label="Close Trophy Cabinet" onClick={() => setOpen(false)}><Close /></IconButton></DialogTitle>
+      <DialogContent>
+        {editable && <Box sx={{ mb: 3 }}><Typography>Choose up to four earned trophies for your profile ({choices.length}/4).</Typography><Button disabled={busy} onClick={() => void save()} variant="contained" sx={{ mt: 1 }}>{busy ? 'Saving…' : 'Save trophy highlights'}</Button>{message && <Alert severity={message === 'Trophy highlights saved.' ? 'success' : 'error'} sx={{ mt: 1 }}>{message}</Alert>}</Box>}
+        {ACHIEVEMENT_FAMILIES.map(family => {
+          const page = pages[family.id] ?? 0, collection = achievementPage(metrics, family.id, page)
+          return <Box component="section" key={family.id} sx={{ mb: 4 }}><Typography component="h3" variant="h6" sx={{ mb: 1.5 }}>{family.name}</Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(3,minmax(0,1fr))' }, gap: 1.5 }}>{collection.items.map(item => <Box key={item.id} sx={{ minWidth: 0 }}><Trophy item={item} />{editable && item.earned && <Button size="small" fullWidth aria-pressed={choices.includes(item.id)} disabled={busy || (!choices.includes(item.id) && choices.length >= 4)} onClick={() => select(item.id)}>{choices.includes(item.id) ? 'Featured' : 'Feature trophy'}</Button>}</Box>)}</Box>
+            {(page > 0 || collection.hasNext) && <Box sx={{ mt: 1.5, display: 'flex', gap: 1, alignItems: 'center' }}><Button aria-label={`Previous ${family.name} milestones`} disabled={!page} onClick={() => setPages(current => ({ ...current, [family.id]: page - 1 }))}>Previous</Button><Typography sx={{ fontSize: 13 }}>Page {page + 1}</Typography><Button aria-label={`Next ${family.name} milestones`} disabled={!collection.hasNext} onClick={() => setPages(current => ({ ...current, [family.id]: page + 1 }))}>Next</Button></Box>}
+          </Box>
+        })}
+      </DialogContent>
+    </Dialog>
   </Box>
 }

@@ -16,7 +16,10 @@ to progression. Calendar dates and weekly boundaries use Europe/London.
 - Current and longest streaks: recorded days with at least 60 active seconds,
   combined with preserved legacy active dates.
 - AWM Plus: the existing subscription entitlement function and account role.
-- Avatar: Auth `avatar_url` metadata and the existing `profile-media` bucket.
+- Avatar: Auth `avatar_url` and normalized `avatar_crop` metadata and the existing
+  `profile-media` bucket. The shared thumbnail editor previews the actual circular
+  avatar. Its crop is applied to the original image without destructive cropping,
+  so users can reposition the saved image later.
 - Currently Reading: Auth `book_progress` metadata and published book chapters.
 
 The website-only migration `20261002173850_website_learning_dashboard.sql` adds
@@ -31,6 +34,10 @@ these functions directly. Profile reads retain the existing public/private gate.
 every 10 levels; other cumulative families extend by doubling their last configured
 threshold. The cabinet paginates milestones instead of imposing a level cap.
 Achievements are derived, so no duplicated achievement records are stored.
+The profile shows up to four highlights in one Trophy Cabinet card. The full
+cabinet opens in a dialog with every milestone family and pagination, without
+filters. Owners can save `featured_trophies` in Auth metadata; those identifiers
+are checked against earned milestones before display and cannot grant achievements.
 Streak achievements use the longest recorded streak and remain earned after a gap.
 
 Chapter positions record where a user has opened a chapter. They do not prove

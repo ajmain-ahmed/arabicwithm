@@ -38,9 +38,9 @@ it.each(['admin', 'editor', 'user'])('offers the correct mobile destinations for
   await act(async () => root.render(<Navbar />))
   await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
   const buttons = [...document.querySelectorAll('[role="button"]')]
-  const admin = buttons.find(button => button.textContent === 'Admin · User Management')
+  const admin = buttons.find(button => button.textContent === 'Admin')
   expect(Boolean(admin)).toBe(role === 'admin')
-  expect(buttons.some(button => button.textContent === 'Reviewer workspace')).toBe(role !== 'user')
+  expect(buttons.some(button => button.textContent === 'Reviewer Workspace')).toBe(role !== 'user')
   expect(buttons.some(button => button.textContent === 'My Profile')).toBe(true)
   if (admin) {
     await act(async () => (admin as HTMLElement).click())

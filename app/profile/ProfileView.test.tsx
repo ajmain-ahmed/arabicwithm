@@ -15,7 +15,7 @@ import { platformDate } from '@/app/lib/entitlements'
 let host: HTMLDivElement, root: Root
 function profile(premium = false): PublicProfile {
   const learning = emptyLearningActivity()
-  return { id: 'user', own: true, displayName: 'Learner', isPublic: false, shareReading: false, joined: '2026-10-01', avatar: null, premium, learning, summary: summarizeLearningDashboard(learning), level: 1, xp: 0, weekXp: 0, memoryCards: 0, shelf: [] }
+  return { id: 'user', own: true, displayName: 'Learner', isPublic: false, shareReading: false, joined: '2026-10-01', avatar: null, avatarCrop: { x: 50, y: 50, zoom: 1 }, featuredTrophies: [], premium, learning, summary: summarizeLearningDashboard(learning), level: 1, xp: 0, weekXp: 0, memoryCards: 0, shelf: [] }
 }
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
@@ -25,12 +25,14 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.clearAllMocks() })
 it('renders genuine new-account empty states and only shows AWM Plus for eligible users', async () => {
   await act(async () => root.render(<ProfileView profile={profile()} />))
-  expect(host.textContent).not.toContain('AWM Plus')
+  expect(host.querySelector('[aria-label="AWM Plus"]')).toBeNull()
   expect(host.textContent).toContain('0 day streak'); expect(host.textContent).toContain('No current book')
   expect(host.textContent).toContain('Your first milestone is ahead'); expect(host.textContent).toContain('No learning time recorded')
   expect(host.querySelector('button')?.textContent).toContain('Change photo')
   await act(async () => root.render(<ProfileView profile={profile(true)} />))
-  expect(host.textContent).toContain('AWM Plus')
+  expect(host.querySelector('[aria-label="AWM Plus"]')).not.toBeNull()
+  expect(host.querySelectorAll('[aria-label="Learning statistics"] > section')).toHaveLength(2)
+  expect(host.querySelectorAll('[aria-label="Learning statistics"] button')).toHaveLength(8)
 })
 it('shows the reading cover/resume link and removes only list visibility', async () => {
   const value = profile()
@@ -43,11 +45,14 @@ it('shows the reading cover/resume link and removes only list visibility', async
   expect(mocks.update).toHaveBeenCalledWith({ data: { book_progress: { ...mocks.metadata.book_progress, story: { ...mocks.metadata.book_progress.story, hiddenFromList: true } } } })
   expect(host.textContent).toContain('No current book'); expect(mocks.metadata.book_sentence_bookmark.bookSlug).toBe('story')
 })
-it('renders four semantic quick-action links including the saved sentence destination', async () => {
+it('removes redundant shortcuts and renders Admin only for verified Admin permissions', async () => {
   await act(async () => root.render(<HomeQuickActions bookmarkHref="/books/story/one#sentence-4" bookmarkLabel="Story · One" />))
   const links = [...host.querySelectorAll('a')]
-  expect(links.map(a => a.getAttribute('href'))).toEqual(['/books/story/one#sentence-4','/profile','/word-search','/memory'])
-  expect(links).toHaveLength(4);expect(host.querySelector('nav')?.getAttribute('aria-label')).toBe('Learning shortcuts')
+  expect(links.map(a => a.getAttribute('href'))).toEqual(['/books/story/one#sentence-4','/profile'])
+  expect(links).toHaveLength(2);expect(host.querySelector('nav')?.getAttribute('aria-label')).toBe('Learning shortcuts')
+  await act(async () => root.render(<HomeQuickActions bookmarkHref="/books" bookmarkLabel="Books" isAdmin />))
+  expect(host.querySelector('a[href="/admin/users"]')?.textContent).toContain('Admin')
+  expect(host.textContent).not.toContain('Reviewer')
 })
 it('shows recorded chart values and exposes achievement requirements to keyboard and touch users', async () => {
   const value = profile()
@@ -67,9 +72,16 @@ it('shows recorded chart values and exposes achievement requirements to keyboard
   expect(host.querySelector('svg[role="img"] title')?.textContent).toContain('XP earned in the last 28 days')
   expect(host.querySelectorAll('tbody tr')).toHaveLength(28)
   expect(host.querySelector('tbody tr:last-child')?.textContent).toContain('18')
-  await act(async () => button('Words').click())
-  const earned = host.querySelector('[tabindex="0"][aria-label*="Word Explorer 1"]')!
+  await act(async () => (host.querySelector('[aria-label^="Total words inspected:"]') as HTMLElement).click())
+  expect(document.querySelector('[role="dialog"]')?.textContent).toContain('50 inspections')
+  await act(async () => (document.querySelector('[aria-label="Close activity details"]') as HTMLElement).click())
+  await act(async () => (host.querySelector('[aria-label="Open Trophy Cabinet"]') as HTMLElement).click())
+  expect(document.querySelector('[aria-label="Achievement categories"]')).toBeNull()
+  const earned = document.querySelector('[tabindex="0"][aria-label*="Word Explorer 1"]')!
   expect(earned.getAttribute('aria-label')).toContain('Earned: Reach 50 word inspections')
-  expect(host.querySelector('[aria-label*="Word Explorer 2"]')?.textContent).toContain('50 / 100')
+  expect(document.querySelector('[aria-label*="Word Explorer 2"]')?.textContent).toContain('50 / 100')
   expect(earned.textContent).toContain('Reach 50 word inspections')
+  const saveHighlights = [...document.querySelectorAll('button')].find(b => b.textContent === 'Save trophy highlights')!
+  await act(async () => saveHighlights.click())
+  expect(mocks.update).toHaveBeenCalledWith({ data: { featured_trophies: ['words-50'] } })
 })

@@ -15,7 +15,7 @@ import {
   MilitaryTechRounded,
   PsychologyOutlined,
   AccountCircleOutlined,
-  ManageSearchRounded,
+  AdminPanelSettings,
   SettingsOutlined,
   Close,
   VolunteerActivismRounded,
@@ -24,6 +24,7 @@ import {
 import { Box, Button, CircularProgress, Container, Dialog, DialogContent, DialogTitle, IconButton, LinearProgress, Skeleton, SwipeableDrawer, Typography, Paper, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useAuth } from '@/app/AuthContext'
+import { useAccountAccess } from '@/app/lib/useAccountAccess'
 import { fetchLearningActivity } from '@/app/actions/activity'
 import { fetchPremiumStatus } from '@/app/actions/premium'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
@@ -65,10 +66,8 @@ const QUICK_LINKS = [
   { title: 'Explore', label: 'Discover a random clip', href: '/explore', icon: ExploreOutlined },
   { title: 'Read', label: 'Open graded books', href: '/books', icon: AutoStories },
   { title: 'Watch', label: 'Browse full episodes', href: '/cartoons', icon: Headphones },
-  { title: 'Memory', label: 'Recall phrases with flashcards', href: '/memory', icon: PsychologyOutlined },
   { title: 'Settings', label: 'Manage your learning profile', href: (userId: string) => `/profile/${userId}#profile-settings`, icon: SettingsOutlined },
   { title: 'My Profile', label: 'View your progress and achievements', href: (userId: string) => `/profile/${userId}`, icon: AccountCircleOutlined },
-  { title: 'Word Search', label: 'Find Arabic words from transcripts', href: '/word-search', icon: ManageSearchRounded },
   { title: 'Support Us', label: 'Help us create more learning resources', href: '/support', icon: VolunteerActivismRounded },
 ]
 
@@ -198,10 +197,11 @@ function SectionHeading({ eyebrow, title, detail }: { eyebrow?: string; title: s
   )
 }
 
-function QuickLinks({ userId }: { userId: string }) {
+function QuickLinks({ userId, isAdmin }: { userId: string; isAdmin: boolean }) {
+  const links = [...QUICK_LINKS, ...(isAdmin ? [{ title: 'Admin', label: 'Manage users and content', href: '/admin/users', icon: AdminPanelSettings }] : [])]
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', sm: 'repeat(4, minmax(0,1fr))' }, gap: 1.5 }}>
-      {QUICK_LINKS.map((item) => {
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, '& > a': { flex: '1 1 180px', minWidth: 0 } }}>
+      {links.map((item) => {
         const Icon = item.icon
         const href = typeof item.href === 'function' ? item.href(userId) : item.href
         return (
@@ -312,6 +312,7 @@ function LearningStats({
 
 export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
   const { user, session, loading } = useAuth()
+  const { isAdmin } = useAccountAccess('home')
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
   const [premiumUpdate, setPremiumUpdate] = useState<PremiumUpdate | null>(null)
   const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
@@ -478,6 +479,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
       <Container maxWidth="lg" sx={{ pt: { xs: 4.5, md: 6 } }}>
         <SectionHeading eyebrow="Continue learning" title={recentReading ? 'Your next step is ready' : 'Start your next lesson'} />
         <HomeQuickActions
+          isAdmin={isAdmin}
           bookmarkHref={bookmark ? bookSentenceBookmarkHref(bookmark) : recentReading ? `/books/${encodeURIComponent(recentReading.book.slug)}/${encodeURIComponent(recentReading.chapter.slug)}` : '/books'}
           bookmarkLabel={bookmark ? `${bookmark.bookTitle} ? ${bookmark.chapterTitle}` : recentReading ? `${recentReading.book.title} ? ${recentReading.chapter.title}` : 'Save a sentence to return here'}
         />
@@ -512,7 +514,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
   now={dashboardNow}
 />
         </Box>
-        <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading title="Quick Actions" /><QuickLinks userId={user.id} /></Box>
+        <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading title="Quick Actions" /><QuickLinks userId={user.id} isAdmin={isAdmin} /></Box>
       </Container>
       {premiumUpdate?.authKey === premiumAuthKey && !premiumUpdate.premium && <UpgradeSection />}
       <CheckoutFeedback />

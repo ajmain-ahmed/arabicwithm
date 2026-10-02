@@ -59,3 +59,23 @@ export function achievementPage(metrics: AchievementMetrics, category?: Achievem
   const available = category ? Math.min(earnedAchievementCount(family, metrics) + 2, family.id === 'breadth' ? family.thresholds.length : Infinity) : items.length
   return { items, earnedTotal, hasNext: Boolean(category && (page + 1) * size < available) }
 }
+
+/** Saved display preferences cannot manufacture an earned trophy. */
+export function achievementPreview(metrics: AchievementMetrics, preferred: string[] = []): Achievement[] {
+  const chosen: Achievement[] = []
+  for (const id of [...new Set(preferred)].slice(0, 4)) {
+    const family = ACHIEVEMENT_FAMILIES.find(f => id.startsWith(`${f.id}-`))
+    if (!family) continue
+    const threshold = Number(id.slice(family.id.length + 1))
+    if (!Number.isFinite(threshold) || threshold <= 0 || threshold > (metrics[family.metric] ?? 0)) continue
+    let tier = family.step ? threshold / family.step - 1 : 0
+    if (!family.step) while (achievementThreshold(family, tier) < threshold) tier++
+    if (!Number.isInteger(tier) || achievementThreshold(family, tier) !== threshold) continue
+    const item = achievementPage(metrics, family.id, Math.floor(tier / 8)).items.find(item => item.id === id && item.earned)
+    if (item) chosen.push(item)
+  }
+  if (chosen.length) return chosen
+  const highlights = achievementPage(metrics).items
+  const earned = highlights.filter(item => item.earned).sort((a, b) => b.tier - a.tier)
+  return (earned.length ? earned : highlights.filter(item => !item.earned)).slice(0, 4)
+}

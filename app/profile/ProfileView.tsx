@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { AutoStories, LocalFireDepartmentRounded, PsychologyOutlined, ScheduleRounded, StarsRounded, TravelExploreOutlined } from '@mui/icons-material'
+import { Add, AutoStories, LocalFireDepartmentRounded } from '@mui/icons-material'
 import { Alert, Box, Button, Chip, Container, FormControlLabel, LinearProgress, Paper, Switch, TextField, Typography } from '@mui/material'
 import { updateProfile, type PublicProfile } from '@/app/actions/profiles'
 import { PremiumSection } from '@/app/components/PremiumPrompt'
@@ -10,7 +10,7 @@ import BookListRemovalButton from '@/app/books/[book]/BookListRemovalButton'
 import AchievementCabinet from '@/app/profile/AchievementCabinet'
 import ActivityChart from '@/app/profile/ActivityChart'
 import ProfileAvatar from '@/app/profile/ProfileAvatar'
-import { formatLearningTime } from '@/app/lib/activity'
+import LearningProgress from '@/app/profile/LearningProgress'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 
 const panel = { border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '16px', bgcolor: 'var(--awm-white)' }
@@ -20,16 +20,6 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
   const [message, setMessage] = useState(''), [saving, setSaving] = useState(false), [removed, setRemoved] = useState<string[]>([])
   const { learning, summary } = profile
   const shelf = profile.shelf.filter(book => !removed.includes(book.slug))
-  const stats = [
-    { label: 'Total XP', value: profile.xp.toLocaleString('en-GB'), detail: `${profile.weekXp} XP this week`, icon: StarsRounded },
-    { label: 'Total learning time', value: summary.time, detail: `${formatLearningTime(summary.week.thisWeekSeconds)} this week`, icon: ScheduleRounded },
-    { label: 'Memory cards reviewed', value: profile.memoryCards.toLocaleString('en-GB'), detail: `${learning.memory?.weekCards ?? 0} reviews this week`, icon: PsychologyOutlined },
-    { label: 'Total words inspected', value: (learning.lifetime?.wordLookups ?? 0).toLocaleString('en-GB'), detail: `${summary.week.wordLookups} this week`, icon: TravelExploreOutlined },
-    { label: 'Total reading time', value: formatLearningTime(learning.lifetime?.readingSeconds ?? 0), detail: `${formatLearningTime(summary.week.readingSeconds)} this week`, icon: AutoStories },
-    { label: 'Total watch time', value: formatLearningTime(learning.lifetime?.videoSeconds ?? 0), detail: `${formatLearningTime(summary.week.videoSeconds)} this week`, icon: ScheduleRounded },
-    { label: 'Longest recorded streak', value: `${summary.longestStreak} days`, detail: 'At least 1 minute of active learning each day', icon: LocalFireDepartmentRounded },
-    { label: 'Word Searches completed', value: (learning.wordSearch?.total ?? 0).toLocaleString('en-GB'), detail: `${learning.wordSearch?.weekCompleted ?? 0} this week`, icon: TravelExploreOutlined },
-  ]
   async function save() {
     setSaving(true); setMessage('')
     try { await updateProfile({ displayName: name, isPublic, shareReading }); setDisplayName(name.trim()); setMessage('Profile saved.') }
@@ -39,10 +29,10 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
   return <Container component="main" maxWidth="lg" sx={{ py: { xs: 3, md: 6 }, color: 'var(--awm-bark)' }}>
     <Paper component="header" elevation={0} sx={{ ...panel, p: { xs: 2.5, sm: 4 }, background: 'linear-gradient(135deg, var(--awm-white), var(--awm-cream))' }}>
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 3 }}>
-        <ProfileAvatar id={profile.id} name={displayName} src={profile.avatar} editable={profile.own} />
+        <ProfileAvatar id={profile.id} name={displayName} src={profile.avatar} crop={profile.avatarCrop} editable={profile.own} />
         <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
           <Typography sx={{ color: 'var(--awm-muted)', fontSize: 12, letterSpacing: '.12em', textTransform: 'uppercase' }}>{profile.own ? 'My learning profile' : 'Learning profile'}</Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mt: 0.75 }}><Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 34, md: 46 }, fontWeight: 600, lineHeight: 1.1, overflowWrap: 'anywhere' }}>{displayName}</Typography>{profile.premium && <Chip icon={<StarsRounded />} label="AWM Plus" sx={{ fontWeight: 700, color: 'var(--awm-bark)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 18%, transparent)', border: '1px solid color-mix(in srgb, var(--awm-gold) 40%, transparent)' }} />}</Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mt: 0.75 }}><Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 34, md: 46 }, fontWeight: 600, lineHeight: 1.1, overflowWrap: 'anywhere' }}>{displayName}</Typography>{profile.premium && <Chip aria-label="AWM Plus" label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>AWM<Add aria-hidden="true" sx={{ fontSize: 18 }} /></Box>} sx={{ fontWeight: 700, color: 'var(--awm-bark)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 18%, transparent)', border: '1px solid color-mix(in srgb, var(--awm-gold) 40%, transparent)' }} />}</Box>
           <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontSize: 13 }}>Learning since {profile.joined}</Typography>
           <Typography sx={{ mt: 2, fontWeight: 700 }}>Level {profile.level} · {summary.level.progressPercent}% toward Level {profile.level + 1}</Typography>
           <LinearProgress aria-label="Progress toward the next learning level" variant="determinate" value={summary.level.progressPercent} sx={{ mt: 1, height: 8, borderRadius: 99 }} />
@@ -51,11 +41,9 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
         <Box sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: 130, p: 2, textAlign: 'center', borderRadius: '14px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 10%, transparent)' }}><LocalFireDepartmentRounded aria-hidden="true" sx={{ color: 'var(--awm-gold)', fontSize: 38 }} /><Typography sx={{ fontWeight: 700, mt: 0.5 }}>{summary.streak} day streak</Typography><Typography sx={{ color: 'var(--awm-muted)', fontSize: 12 }}>Current streak</Typography></Box>
       </Box>
     </Paper>
-    <Box component="section" aria-label="Learning statistics" sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', md: 'repeat(4,minmax(0,1fr))' }, gap: 1.5, my: 3 }}>
-      {stats.map(item => <Paper key={item.label} elevation={0} sx={{ ...panel, minWidth: 0, p: { xs: 1.75, sm: 2.5 } }}><item.icon aria-hidden="true" sx={{ color: 'var(--awm-gold)', fontSize: 23 }} /><Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontSize: 12 }}>{item.label}</Typography><Typography sx={{ mt: 0.5, fontFamily: 'var(--font-heading)', fontSize: { xs: 26, md: 32 }, fontWeight: 600 }}>{item.value}</Typography><Typography sx={{ mt: 0.5, color: 'var(--awm-muted)', fontSize: 12 }}>{item.detail}</Typography></Paper>)}
-    </Box>
+    <LearningProgress profile={profile} />
     <ActivityChart activity={learning} />
-    <AchievementCabinet activity={learning} />
+    <AchievementCabinet activity={learning} userId={profile.id} editable={profile.own} featuredTrophies={profile.featuredTrophies} />
     {(profile.own || profile.shelf.length > 0) && <Box component="section" sx={{ mt: 5 }}>
       <Typography component="h2" variant="h4">Currently Reading</Typography>
       {shelf.length ? <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2,minmax(0,1fr))' }, gap: 2, mt: 2 }}>

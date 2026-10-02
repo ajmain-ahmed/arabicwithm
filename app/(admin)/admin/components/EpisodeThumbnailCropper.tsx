@@ -28,6 +28,9 @@ interface ThumbnailCropperProps {
   aspectRatio?: string
   title?: string
   description?: string
+  circular?: boolean
+  confirmLabel?: string
+  saving?: boolean
   onClose: () => void
   onConfirm: (crop: ThumbnailCrop) => void
 }
@@ -52,6 +55,9 @@ export default function ThumbnailCropper({
   description = "Drag to keep the main subject in frame. The preview matches the image container on the site.",
   onClose,
   onConfirm,
+  circular = false,
+  confirmLabel = 'Confirm crop',
+  saving = false,
 }: ThumbnailCropperProps) {
   const [draft, setDraft] = useState(() => normalizeThumbnailCrop(value))
   const dragStart = useRef<DragStart | null>(null)
@@ -87,7 +93,7 @@ export default function ThumbnailCropper({
         sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", color: "#2c1a0e", fontFamily: "var(--font-heading)", fontWeight: 600 }}
       >
         {title}
-        <IconButton onClick={onClose} aria-label="Close crop editor" size="small">
+        <IconButton onClick={onClose} disabled={saving} aria-label="Close crop editor" size="small">
           <Close />
         </IconButton>
       </DialogTitle>
@@ -100,8 +106,9 @@ export default function ThumbnailCropper({
         <Box
           role="application"
           tabIndex={0}
-          aria-label="Thumbnail preview. Drag the image or use arrow keys to reposition it."
+          aria-label={`${circular ? 'Avatar' : 'Thumbnail'} preview. Drag the image or use arrow keys to reposition it.`}
           onKeyDown={(event) => {
+            if (saving) return
             const amount = event.shiftKey ? 5 : 1
             if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return
             event.preventDefault()
@@ -112,6 +119,7 @@ export default function ThumbnailCropper({
             }))
           }}
           onPointerDown={(event) => {
+            if (saving) return
             if (event.button !== 0) return
             dragStart.current = {
               pointerId: event.pointerId,
@@ -122,6 +130,7 @@ export default function ThumbnailCropper({
             event.currentTarget.setPointerCapture(event.pointerId)
           }}
           onPointerMove={(event) => {
+            if (saving) return
             const start = dragStart.current
             if (!start || start.pointerId !== event.pointerId) return
             moveBy(
@@ -145,7 +154,7 @@ export default function ThumbnailCropper({
             aspectRatio,
             alignSelf: "center",
             overflow: "hidden",
-            borderRadius: "12px",
+            borderRadius: circular ? '50%' : '12px',
             bgcolor: "#0e2e1f",
             border: "2px solid rgba(184,134,11,0.55)",
             boxShadow: "0 14px 36px rgba(44,26,14,0.2)",
@@ -172,19 +181,20 @@ export default function ThumbnailCropper({
               ...thumbnailCropCss(draft),
             }}
           />
-          <Box aria-hidden="true" sx={{ position: "absolute", inset: 10, border: "1px solid rgba(255,255,255,0.72)", borderRadius: "8px", pointerEvents: "none" }} />
+          {!circular && <Box aria-hidden="true" sx={{ position: "absolute", inset: 10, border: "1px solid rgba(255,255,255,0.72)", borderRadius: "8px", pointerEvents: "none" }} />}
           <CenterFocusStrong aria-hidden="true" sx={{ position: "absolute", left: "50%", top: "50%", translate: "-50% -50%", color: "rgba(255,255,255,0.72)", filter: "drop-shadow(0 1px 3px rgba(0,0,0,.55))", pointerEvents: "none" }} />
         </Box>
 
         <Box sx={{ display: "grid", gridTemplateColumns: "auto minmax(0, 1fr) auto", alignItems: "center", gap: 1.25, px: { xs: 0, sm: 2 } }}>
           <ZoomOut sx={{ color: "#7a6e65" }} />
           <Slider
+            disabled={saving}
             value={draft.zoom}
             min={1}
             max={MAX_THUMBNAIL_ZOOM}
             step={0.01}
             onChange={(_, zoom) => setDraft((current) => ({ ...current, zoom: zoom as number }))}
-            aria-label="Thumbnail zoom"
+            aria-label={circular ? 'Avatar zoom' : 'Thumbnail zoom'}
             valueLabelDisplay="auto"
             valueLabelFormat={(zoom) => `${Math.round(zoom * 100)}%`}
             sx={{ color: "#b8860b" }}
@@ -194,6 +204,7 @@ export default function ThumbnailCropper({
 
         <Button
           onClick={() => setDraft({ ...DEFAULT_THUMBNAIL_CROP })}
+          disabled={saving}
           size="small"
           sx={{ alignSelf: "center", color: "#7a6e65", textTransform: "none", fontFamily: "Jost, sans-serif" }}
         >
@@ -202,16 +213,17 @@ export default function ThumbnailCropper({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button onClick={onClose} sx={{ color: "#7a6e65", textTransform: "none" }}>
+        <Button onClick={onClose} disabled={saving} sx={{ color: "#7a6e65", textTransform: "none" }}>
           Cancel
         </Button>
         <Button
           variant="contained"
+          disabled={saving}
           startIcon={<Crop />}
           onClick={() => onConfirm(normalizeThumbnailCrop(draft))}
           sx={{ bgcolor: "#2c1a0e", color: "#f5ede0", borderRadius: "10px", textTransform: "none", "&:hover": { bgcolor: "#1a0f08" } }}
         >
-          Confirm crop
+          {confirmLabel}
         </Button>
       </DialogActions>
     </Dialog>

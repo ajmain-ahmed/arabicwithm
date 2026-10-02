@@ -7,6 +7,7 @@ import { loadLearningSnapshot } from '@/app/lib/learningSnapshot'
 import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
 import { parseReadingList } from '@/app/lib/readingList'
 import { hasPremiumAccess } from '@/app/lib/entitlements'
+import { normalizeThumbnailCrop } from '@/app/lib/thumbnailCrop'
 import { serviceClient } from '@/app/lib/supabase'
 
 const profileInputSchema = z.object({
@@ -87,6 +88,8 @@ export async function fetchPublicProfile(id: string) {
     shareReading: profile?.share_reading ?? false,
     joined: user.created_at.slice(0, 10),
     avatar,
+    avatarCrop: normalizeThumbnailCrop(user.user_metadata.avatar_crop),
+    featuredTrophies: Array.isArray(user.user_metadata.featured_trophies) ? user.user_metadata.featured_trophies.filter((id: unknown): id is string => typeof id === 'string').slice(0, 4) : [],
     premium,
     learning,
     summary,

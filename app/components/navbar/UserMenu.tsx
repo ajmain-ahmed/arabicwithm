@@ -1,6 +1,6 @@
 'use client'
 
-import { AdminPanelSettings, LogoutSharp, AccountCircleOutlined } from '@mui/icons-material'
+import { AdminPanelSettings, LogoutSharp, AccountCircleOutlined, RateReviewOutlined } from '@mui/icons-material'
 import { Box, Menu, MenuItem, Typography } from '@mui/material'
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
@@ -52,7 +52,7 @@ export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, i
                 }}
             />
             {user && <MenuItem component={Link} href="/profile" onClick={onClose} sx={{ py: 1.2, gap: 1.5 }}><AccountCircleOutlined sx={{ fontSize: 18, color: 'var(--awm-gold)' }} /><Typography variant="body2" sx={{ fontWeight: 600 }}>My Profile</Typography></MenuItem>}
-            {user && isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose}>Reviewer workspace</MenuItem>}
+            {user && isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose} sx={{ mx: 1, my: 1, py: 1.5, gap: 1.5, borderRadius: '10px', bgcolor: 'var(--awm-forest)', color: 'var(--awm-cream)', '&:hover, &.Mui-focusVisible': { bgcolor: 'var(--awm-bark)', outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><RateReviewOutlined aria-hidden="true" /><Typography variant="body2" sx={{ fontWeight: 700 }}>Reviewer Workspace</Typography></MenuItem>}
             {user && isAdmin && (
                 <MenuItem
                     component={Link}
@@ -62,7 +62,7 @@ export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, i
                 >
                     <AdminPanelSettings sx={{ fontSize: 18, color: 'var(--awm-gold)' }} />
                     <Typography variant="body2" sx={{ color: 'var(--awm-bark)', fontWeight: 600 }}>
-                        Admin · User Management
+                        Admin
                     </Typography>
                 </MenuItem>
             )}
