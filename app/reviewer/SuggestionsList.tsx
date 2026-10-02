@@ -6,18 +6,41 @@ import type { ContentSuggestion, ReviewType, SuggestionInput, SuggestionStatus }
 import type { Json } from '@/app/lib/supabase/database.types'
 
 const blank: SuggestionInput={arabic:'',english:'',comment:'',reason:''}
-export default function SuggestionsList({admin}:{admin:boolean}){
- const [status,setStatus]=useState<SuggestionStatus>('pending'),[type,setType]=useState<ReviewType|''>(''),[author,setAuthor]=useState(''),[authorFilter,setAuthorFilter]=useState('')
+export default function SuggestionsList({admin,scopeRequired=false,actorId}:{admin:boolean;scopeRequired?:boolean;actorId?:string}){
+ const [status,setStatus]=useState<SuggestionStatus>('pending'),[type,setType]=useState<ReviewType|''>(scopeRequired?'book':''),[author,setAuthor]=useState(''),[authorFilter,setAuthorFilter]=useState('')
  const [parent,setParent]=useState(''),[target,setTarget]=useState(''),[since,setSince]=useState(''),[until,setUntil]=useState('')
  const [parents,setParents]=useState<{id:string;title:string}[]>([]),[targets,setTargets]=useState<{id:string;title:string}[]>([])
  const [page,setPage]=useState(0),[revision,setRevision]=useState(0),[rows,setRows]=useState<(ContentSuggestion & {author_name?:string})[]>([]),[total,setTotal]=useState(0),[loadedKey,setLoadedKey]=useState('')
  const [error,setError]=useState(''),[notice,setNotice]=useState(''),[selected,setSelected]=useState<ContentSuggestion|null>(null),[input,setInput]=useState(blank)
  const [response,setResponse]=useState(''),[tokens,setTokens]=useState(''),[busy,setBusy]=useState(false),[conflict,setConflict]=useState<Json|undefined>()
+ const [download,setDownload]=useState('')
+ const [loadFailure,setLoadFailure]=useState(false)
+ const needsScope=scopeRequired&&!parent
  const key=JSON.stringify([admin,status,type,authorFilter,parent,target,since,until,page,revision])
- useEffect(()=>{let active=true;listSuggestions(admin,{status,type:type||undefined,author:authorFilter||undefined,parent:parent||undefined,target:target||undefined,since:since?new Date(`${since}T00:00:00Z`).toISOString():undefined,until:until?new Date(`${until}T23:59:59.999Z`).toISOString():undefined},page).then(x=>{if(active){setRows(x.suggestions);setTotal(x.total);setLoadedKey(key);setError('')}}).catch(e=>{if(active){setError(e.message);setLoadedKey(key)}});return()=>{active=false}},[admin,status,type,authorFilter,parent,target,since,until,page,revision,key])
+ useEffect(()=>{let active=true;if(needsScope)return;listSuggestions(admin,{status,type:type||undefined,author:authorFilter||undefined,parent:parent||undefined,target:target||undefined,since:since?new Date(`${since}T00:00:00Z`).toISOString():undefined,until:until?new Date(`${until}T23:59:59.999Z`).toISOString():undefined},page).then(x=>{if(active){setRows(x.suggestions);setTotal(x.total);setLoadFailure(false);setLoadedKey(key);setError('')}}).catch(e=>{if(active){setRows([]);setTotal(0);setLoadFailure(true);setError(e.message);setLoadedKey(key)}});return()=>{active=false}},[admin,status,type,authorFilter,parent,target,since,until,page,revision,key,needsScope])
  useEffect(()=>{let active=true;if(type)reviewCatalogue(type).then(x=>{if(active)setParents(x)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[type])
  useEffect(()=>{let active=true;if(type&&parent)reviewCatalogue(type,parent).then(x=>{if(active)setTargets(x)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[type,parent])
  const open=(s:ContentSuggestion)=>{setSelected(s);setInput({arabic:s.suggested_arabic??'',english:s.suggested_english??'',comment:s.comment,reason:s.reason});setResponse(s.admin_response??'');setTokens(JSON.stringify((s.original_block as {tokens?:Json})?.tokens??[],null,2));setConflict(undefined);setError('');setNotice('')}
+ const exportFile=async(format:'csv'|'pdf'|'json')=>{
+  if(!type||!parent)return
+  setDownload(format);setError('')
+  try{
+   const query=new URLSearchParams({format,type,parent})
+   if(target)query.set('target',target)
+   if(format!=='json'){
+    query.set('status',status)
+    if(authorFilter)query.set('author',authorFilter)
+    if(since)query.set('since',new Date(`${since}T00:00:00Z`).toISOString())
+    if(until)query.set('until',new Date(`${until}T23:59:59.999Z`).toISOString())
+   }
+   const response=await fetch('/api/reviewer/export?'+query,{cache:'no-store'})
+   if(!response.ok){const data=await response.json();throw new Error(data.error??'Download failed')}
+   const file=await response.blob(),url=URL.createObjectURL(file),link=document.createElement('a')
+   const encoded=response.headers.get('Content-Disposition')?.match(/filename\*=UTF-8''([^;]+)/)?.[1]
+   link.href=url;link.download=encoded?decodeURIComponent(encoded):`awm-export.${format}`;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)
+   setNotice('Download ready.')
+  }catch(e){setError(e instanceof Error?e.message:'Unable to download')}finally{setDownload('')}
+ }
  const act=async(action:'save'|'withdraw'|'accept'|'reject'|'reply')=>{
   if(!selected)return;setBusy(true);setError('')
   try{
@@ -33,11 +56,17 @@ export default function SuggestionsList({admin}:{admin:boolean}){
    {type&&<TextField select label={type==='book'?'Book':'Show'} value={parent} onChange={e=>{setParent(e.target.value);setTarget('');setPage(0);setTargets([])}}><MenuItem value="">All</MenuItem>{parents.map(x=><MenuItem key={x.id} value={x.id}>{x.title}</MenuItem>)}</TextField>}
    {parent&&<TextField select label={type==='book'?'Chapter':'Episode'} value={target} onChange={e=>{setTarget(e.target.value);setPage(0)}}><MenuItem value="">All</MenuItem>{targets.map(x=><MenuItem key={x.id} value={x.id}>{x.title}</MenuItem>)}</TextField>}
    <Stack direction={{xs:'column',sm:'row'}} spacing={1}><TextField label="Editor account ID" value={author} onChange={e=>setAuthor(e.target.value)} fullWidth/><Button onClick={()=>{setAuthorFilter(author.trim());setPage(0)}}>Filter editor</Button></Stack>
-   <Stack direction="row" spacing={2}><TextField type="date" label="From" slotProps={{inputLabel:{shrink:true}}} value={since} onChange={e=>{setSince(e.target.value);setPage(0)}}/><TextField type="date" label="Through" slotProps={{inputLabel:{shrink:true}}} value={until} onChange={e=>{setUntil(e.target.value);setPage(0)}}/></Stack>
+   <Stack direction={{xs:'column',sm:'row'}} spacing={2}><TextField type="date" label="From" slotProps={{inputLabel:{shrink:true}}} value={since} onChange={e=>{setSince(e.target.value);setPage(0)}}/><TextField type="date" label="Through" slotProps={{inputLabel:{shrink:true}}} value={until} onChange={e=>{setUntil(e.target.value);setPage(0)}}/></Stack>
+   {type&&parent&&<Card variant="outlined"><CardContent><Stack spacing={1}>
+    <Typography variant="h6">{parents.find(p=>p.id===parent)?.title??'Selected content'}{target?` → ${targets.find(t=>t.id===target)?.title??'Selected unit'}`:' · All chapters / episodes'}</Typography>
+    <Typography variant="body2">Suggestion exports include all matching {status} suggestions across pages. Source JSON contains the current saved content and metadata; the original upload file is not archived.</Typography>
+    <Stack direction={{xs:'column',sm:'row'}} spacing={1}><Button disabled={Boolean(download)} onClick={()=>exportFile('csv')}>Export Suggestions · CSV</Button><Button disabled={Boolean(download)} onClick={()=>exportFile('pdf')}>Export Suggestions · PDF</Button><Button variant="outlined" disabled={Boolean(download)} onClick={()=>exportFile('json')}>Download Source · JSON</Button></Stack>
+    {download&&<Typography role="status">Preparing {download.toUpperCase()}…</Typography>}
+   </Stack></CardContent></Card>}
   </Stack>}
-  {error&&<Alert severity="error">{error}</Alert>}{notice&&<Alert severity="success">{notice}</Alert>}
-  <Typography>{loadedKey===key?`${total} suggestions`:'Loading suggestions…'}</Typography>
-  {loadedKey===key&&rows.map(s=><Card key={s.id} variant="outlined"><CardContent><Stack spacing={1}>
+  {error&&<Alert severity="error" action={<Button onClick={()=>setRevision(x=>x+1)}>Retry</Button>}>{error}</Alert>}{notice&&<Alert severity="success">{notice}</Alert>}
+  <Typography>{needsScope?'Choose a book or show to manage its suggestions.':loadedKey!==key?'Loading suggestions…':loadFailure?'Suggestions could not be loaded.':`${total} suggestions`}</Typography>
+  {!needsScope&&loadedKey===key&&rows.map(s=><Card key={s.id} variant="outlined"><CardContent><Stack spacing={1}>
    <Typography sx={{fontWeight:700}}>{s.location} · Line {s.line_index+1}</Typography><Chip label={s.status} size="small" sx={{alignSelf:'start'}}/>
    {admin&&<Typography variant="caption" sx={{overflowWrap:'anywhere'}}>Editor: {s.author_name??s.author_id} · {s.author_id}</Typography>}
    <Typography dir="rtl">{s.original_arabic}</Typography><Typography>{s.original_english}</Typography>
@@ -46,12 +75,13 @@ export default function SuggestionsList({admin}:{admin:boolean}){
    {s.admin_response&&<Typography>Admin response: {s.admin_response}</Typography>}
    <Button sx={{alignSelf:'start'}} onClick={()=>open(s)}>{admin?'Review / Reply':s.status==='pending'?'Edit / Withdraw':'View details'}</Button>
   </Stack></CardContent></Card>)}
-  {loadedKey===key&&total===0&&<Typography>No suggestions match these filters.</Typography>}
+  {!needsScope&&!error&&loadedKey===key&&total===0&&<Typography>No suggestions match these filters.</Typography>}
   <Stack direction="row" spacing={2}><Button disabled={!page||loadedKey!==key} onClick={()=>setPage(x=>x-1)}>Previous</Button><Typography>Page {page+1}</Typography><Button disabled={(page+1)*25>=total||loadedKey!==key} onClick={()=>setPage(x=>x+1)}>Next</Button></Stack>
   <Dialog open={Boolean(selected)} onClose={()=>!busy&&setSelected(null)} maxWidth="md" fullWidth><DialogTitle>{selected?.location} · Line {(selected?.line_index??0)+1}</DialogTitle><DialogContent><Stack spacing={2} sx={{pt:1}}>
    {error&&<Alert severity="error">{error}</Alert>}
    <Typography>Original Arabic</Typography><Typography dir="rtl">{selected?.original_arabic}</Typography><Typography>Original English</Typography><Typography>{selected?.original_english}</Typography>
    {admin?<>
+    {selected?.author_id===actorId&&<Alert severity="info">Another Admin must accept or reject your own suggestion. You can save a reply.</Alert>}
     <Typography dir="rtl">Proposed Arabic: {selected?.suggested_arabic??'Unchanged'}</Typography><Typography>Proposed English: {selected?.suggested_english??'Unchanged'}</Typography><Typography>Comment: {selected?.comment}<br/>Reason: {selected?.reason}</Typography>
     {conflict!==undefined&&<><Alert severity="warning">SOURCE CHANGED — acceptance is blocked. Request a new suggestion against the current source.</Alert><Typography>Current canonical block</Typography><Box component="pre" sx={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{JSON.stringify(conflict,null,2)}</Box></>}
     {selected?.suggested_arabic&&selected.suggested_arabic!==selected.original_arabic&&selected.status==='pending'&&<><Alert severity="info">Review annotated replacement tokens before accepting Arabic changes. Preserve dictionary matches; each token needs Arabic, POS and lowercase CEFR. The joined Arabic must match the proposal.</Alert><TextField label="Annotated replacement tokens (JSON array)" multiline minRows={8} value={tokens} onChange={e=>setTokens(e.target.value)}/></>}
@@ -62,7 +92,7 @@ export default function SuggestionsList({admin}:{admin:boolean}){
    </>}
    {selected?.reviewed_at&&<Typography variant="caption">Reviewed: {new Date(selected.reviewed_at).toLocaleString('en-GB')} · {selected.reviewed_by}</Typography>}
   </Stack></DialogContent><DialogActions sx={{flexWrap:'wrap'}}><Button disabled={busy} onClick={()=>setSelected(null)}>Close</Button>
-   {admin?<><Button disabled={busy} onClick={()=>act('reply')}>Save Reply</Button>{selected?.status==='pending'&&<><Button disabled={busy} onClick={()=>act('reject')}>Confirm Reject</Button><Button disabled={busy||conflict!==undefined} onClick={()=>act('accept')}>Confirm Accept</Button></>}</>:selected?.status==='pending'&&<><Button disabled={busy} onClick={()=>act('withdraw')}>Confirm Withdraw</Button><Button disabled={busy} onClick={()=>act('save')}>Save changes</Button></>}
+   {admin?<><Button disabled={busy} onClick={()=>act('reply')}>Save Reply</Button>{selected?.status==='pending'&&<><Button disabled={busy||selected.author_id===actorId} onClick={()=>act('reject')}>Confirm Reject</Button><Button disabled={busy||conflict!==undefined||selected.author_id===actorId} onClick={()=>act('accept')}>Confirm Accept</Button></>}</>:selected?.status==='pending'&&<><Button disabled={busy} onClick={()=>act('withdraw')}>Confirm Withdraw</Button><Button disabled={busy||![input.arabic,input.english,input.comment].some(x=>x.trim())} onClick={()=>act('save')}>Save changes</Button></>}
   </DialogActions></Dialog>
  </Stack>
 }

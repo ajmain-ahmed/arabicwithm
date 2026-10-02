@@ -70,7 +70,9 @@ export async function loadReviewSource(type: ReviewType, target: string): Promis
  await guardReviewer()
  const { data, error } = await serviceClient.rpc('review_source', { p_type: z.enum(['book','show']).parse(type), p_target: uuid.parse(target) })
  if (error) throw new Error(error.message)
- return data as unknown as ReviewSource
+ const source=data as unknown as ReviewSource
+ if(!source||!Array.isArray(source.document)||source.document.some(block=>!block||!Array.isArray(block.tokens)||block.tokens.some(token=>!token||typeof token.arabic!=='string')||typeof block.translation!=='string'))throw new Error('This source contains unsupported blocks. An Admin must repair its content in the existing content editor before it can be reviewed.')
+ return source
 }
 export async function submitSuggestion(type: ReviewType, target: string, line: number, document: Json, input: SuggestionInput) {
  const access = await guardReviewer(); const value = inputSchema.parse(input)

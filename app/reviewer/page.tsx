@@ -1,2 +1,3 @@
 import ReviewerWorkspace from '@/app/reviewer/ReviewerWorkspace'
-export default function ReviewerPage(){return <ReviewerWorkspace />}
+import { getAuthenticatedAccess } from '@/app/actions/auth'
+export default async function ReviewerPage(){const access=await getAuthenticatedAccess();return <ReviewerWorkspace admin={Boolean(access?.admin)} actorId={access?.userId}/>}

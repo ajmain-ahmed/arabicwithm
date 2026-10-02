@@ -42,6 +42,13 @@ describe('server authorization boundaries',()=>{
   await changeManagedRole(target,'editor','Trusted reviewer',target)
   expect(mocks.rpc).toHaveBeenCalledWith('change_account_role',expect.objectContaining({p_actor:actor,p_target:target,p_role:'editor'}))
  })
+ it('reports malformed source blocks without letting the reviewer crash while rendering tokens',async()=>{
+  mocks.reviewer.mockResolvedValue({userId:actor,admin:false,role:'editor'})
+  mocks.rpc.mockResolvedValueOnce({data:{document:[{tokens:null,translation:'Hello'}]},error:null})
+  await expect(loadReviewSource('book',target)).rejects.toThrow('unsupported blocks')
+  mocks.rpc.mockResolvedValueOnce({data:{document:[],parent:actor,location:'Empty chapter'},error:null})
+  expect((await loadReviewSource('book',target)).document).toEqual([])
+ })
  it('does not invalidate content after conflicts; successful acceptance refreshes readers',async()=>{
   mocks.access.mockResolvedValue({userId:actor,admin:true,role:'admin'})
   mocks.rpc.mockResolvedValueOnce({data:{ok:false,conflict:true},error:null})

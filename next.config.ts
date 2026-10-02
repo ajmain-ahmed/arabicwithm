@@ -8,6 +8,8 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   poweredByHeader: false,
   compress: true,
+  serverExternalPackages: ['pdfkit'],
+  outputFileTracingIncludes: { '/api/reviewer/export': ['./public/fonts/review/*.ttf'] },
   staticPageGenerationTimeout: 180,
   images: {
     formats: ['image/avif', 'image/webp'],
