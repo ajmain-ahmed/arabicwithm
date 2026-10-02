@@ -11,10 +11,13 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-type Table<Row> = { Row: Row; Insert: Partial<Row>; Update: Partial<Row>; Relationships: [] }
+type Table<Row> = { Row: { [K in keyof Row]: Row[K] }; Insert: { [K in keyof Row]?: Row[K] }; Update: { [K in keyof Row]?: Row[K] }; Relationships: [] }
 export interface Database {
   public: {
     Tables: {
+      account_roles: Table<{ user_id: string; role: 'user' | 'editor' | 'admin'; updated_at: string }>
+      access_change_audit: Table<import('@/app/lib/reviews').AccessChange>
+      content_suggestions: Table<import('@/app/lib/reviews').ContentSuggestion>
       feedback: Table<{ id: string; user_id: string; rating: number; comment: string | null; created_at: string }>
       subscriptions: Table<{ user_id: string; customer_id: string; subscription_id: string | null; status: string; current_period_end: string; cancel_at_period_end: boolean; event_created: number }>
       memory_reviews: Table<{ user_id: string; completion_id: string; card_id: string; rating: string; activity_date: string; xp: number; created_at: string }>
@@ -322,6 +325,13 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      account_role: { Args: { p_user_id: string }; Returns: string }
+      change_account_role: { Args: { p_actor: string; p_target: string; p_role: string; p_reason: string }; Returns: undefined }
+      admin_user_directory: { Args: { p_actor: string; p_tab: string; p_search: string; p_page: number; p_size: number }; Returns: Json }
+      review_source: { Args: { p_type: string; p_target: string }; Returns: Json }
+      submit_content_suggestion: { Args: { p_actor: string; p_type: string; p_target: string; p_line: number; p_document: Json; p_arabic: string; p_english: string; p_comment: string; p_reason: string }; Returns: string }
+      edit_content_suggestion: { Args: { p_actor: string; p_id: string; p_withdraw: boolean; p_arabic: string; p_english: string; p_comment: string; p_reason: string }; Returns: undefined }
+      review_content_suggestion: { Args: { p_actor: string; p_id: string; p_action: string; p_response: string; p_tokens: Json }; Returns: Json }
       memory_totals: { Args: { p_user_id: string; p_since?: string }; Returns: Json }
       complete_memory_card: { Args: { p_user_id: string; p_completion_id: string; p_card_id: string; p_rating: string; p_xp: number; p_daily_limit: number; p_has_premium: boolean; p_session: Json }; Returns: Json }
       learning_xp_totals: { Args: { p_user_id: string; p_since?: string | null }; Returns: Json }

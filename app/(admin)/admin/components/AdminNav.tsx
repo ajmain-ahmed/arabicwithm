@@ -15,12 +15,16 @@ import {
   Book,
   FormatQuote,
   LightMode,
+  People,
+  RateReview,
 } from "@mui/icons-material"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useColorMode } from "@/app/components/ThemeProvider"
 
 const navItems = [
+  { label: "Users", href: "/admin/users", icon: <People /> },
+  { label: "Reviews", href: "/admin/reviews", icon: <RateReview /> },
   { label: "Shows", href: "/admin/shows", icon: <SmartDisplay /> },
   { label: "Books", href: "/admin/books", icon: <Book /> },
   { label: "Hans Wehr", href: "/admin/hans-wehr", icon: <MenuBook /> },

@@ -5,6 +5,7 @@ import { Box, Menu, MenuItem, Typography } from '@mui/material'
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
+import { useIsReviewer } from '@/app/lib/useIsReviewer'
 
 interface UserMenuProps {
     anchorEl: HTMLElement | null
@@ -15,6 +16,7 @@ interface UserMenuProps {
 
 export default function UserMenu({ anchorEl, onClose, user, onLogout }: UserMenuProps) {
     const isAdmin = useIsAdmin()
+    const isReviewer = useIsReviewer()
 
     return (
         <Menu
@@ -51,6 +53,7 @@ export default function UserMenu({ anchorEl, onClose, user, onLogout }: UserMenu
                         'linear-gradient(90deg, transparent, color-mix(in srgb, var(--awm-gold) 30%, transparent), transparent)',
                 }}
             />
+            {isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose}>Reviewer workspace</MenuItem>}
             {isAdmin && (
                 <MenuItem
                     component={Link}

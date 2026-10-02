@@ -6,6 +6,8 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { unstable_rethrow } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
+import { serviceClient } from '@/app/lib/supabase'
+import type { AccountRole } from '@/app/lib/reviews'
 
 async function getAuthClient() {
   const cookieStore = await cookies()
@@ -45,22 +47,23 @@ async function getAuthenticatedUser(): Promise<User | null> {
 export interface AuthenticatedAccess {
   userId: string
   admin: boolean
-}
-
-const ADMIN_UIDS = new Set(
-  [process.env.ADMIN, process.env.ADMIN2].filter((v): v is string => Boolean(v))
-)
-
-function hasAdminAccess(user: User): boolean {
-  return user.app_metadata?.role === "admin"
-    || user.app_metadata?.is_admin === true
-    || ADMIN_UIDS.has(user.id)
+  role?: AccountRole
 }
 
 /** Server-verified identity and application role used by all authorization checks. */
 export async function getAuthenticatedAccess(): Promise<AuthenticatedAccess | null> {
   const user = await getAuthenticatedUser()
-  return user ? { userId: user.id, admin: hasAdminAccess(user) } : null
+  if (!user) return null
+  const { data, error } = await serviceClient.rpc('account_role', { p_user_id: user.id })
+  if (error) throw new Error('Unable to verify account access. Apply the user management migration.')
+  const role: AccountRole = data === 'admin' || data === 'editor' ? data : 'user'
+  return { userId: user.id, admin: role === 'admin', role }
+}
+
+export async function guardReviewer(): Promise<AuthenticatedAccess> {
+  const access = await getAuthenticatedAccess()
+  if (!access || !['editor', 'admin'].includes(access.role ?? 'user')) throw new Error('Forbidden')
+  return access
 }
 
 export async function getAuthenticatedUserId(): Promise<string | null> {

@@ -16,6 +16,7 @@ function makeEpisode(slug: string): EpisodeRow {
     tiktok_id: null,
     facebook_id: null,
     cover: null,
+    cover_crop: { x: 50, y: 50, zoom: 1 },
     created_at: null,
   }
 }
