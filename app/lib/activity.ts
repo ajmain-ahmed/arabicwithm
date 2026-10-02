@@ -13,6 +13,9 @@ export interface DailyLearningActivity {
   readingSeconds: number
   videoSeconds: number
   wordLookups: number
+  xp?: number
+  memoryCards?: number
+  wordSearches?: number
 }
 
 export interface LearningActivity {
@@ -23,6 +26,7 @@ export interface LearningActivity {
   activeDates: string[]
   daily: DailyLearningActivity[]
   weeklyGoalSeconds: number | null
+  lifetime?: { readingSeconds: number; videoSeconds: number; wordLookups: number }
 }
 
 export interface LearningLevelProgress {

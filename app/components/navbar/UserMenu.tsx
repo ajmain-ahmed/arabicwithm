@@ -1,22 +1,20 @@
 'use client'
 
-import { AdminPanelSettings, LogoutSharp } from '@mui/icons-material'
+import { AdminPanelSettings, LogoutSharp, AccountCircleOutlined } from '@mui/icons-material'
 import { Box, Menu, MenuItem, Typography } from '@mui/material'
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { useIsAdmin } from '@/app/lib/useIsAdmin'
-import { useIsReviewer } from '@/app/lib/useIsReviewer'
 
 interface UserMenuProps {
     anchorEl: HTMLElement | null
     onClose: () => void
     user: User | null
+    isAdmin: boolean
+    isReviewer: boolean
     onLogout: () => void
 }
 
-export default function UserMenu({ anchorEl, onClose, user, onLogout }: UserMenuProps) {
-    const isAdmin = useIsAdmin()
-    const isReviewer = useIsReviewer()
+export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, isReviewer }: UserMenuProps) {
 
     return (
         <Menu
@@ -53,17 +51,18 @@ export default function UserMenu({ anchorEl, onClose, user, onLogout }: UserMenu
                         'linear-gradient(90deg, transparent, color-mix(in srgb, var(--awm-gold) 30%, transparent), transparent)',
                 }}
             />
-            {isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose}>Reviewer workspace</MenuItem>}
-            {isAdmin && (
+            {user && <MenuItem component={Link} href="/profile" onClick={onClose} sx={{ py: 1.2, gap: 1.5 }}><AccountCircleOutlined sx={{ fontSize: 18, color: 'var(--awm-gold)' }} /><Typography variant="body2" sx={{ fontWeight: 600 }}>My Profile</Typography></MenuItem>}
+            {user && isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose}>Reviewer workspace</MenuItem>}
+            {user && isAdmin && (
                 <MenuItem
                     component={Link}
-                    href="/admin"
+                    href="/admin/users"
                     onClick={onClose}
                     sx={{ py: 1.2, gap: 1.5, '&:hover': { background: 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' } }}
                 >
                     <AdminPanelSettings sx={{ fontSize: 18, color: 'var(--awm-gold)' }} />
                     <Typography variant="body2" sx={{ color: 'var(--awm-bark)', fontWeight: 600 }}>
-                        Admin dashboard
+                        Admin · User Management
                     </Typography>
                 </MenuItem>
             )}

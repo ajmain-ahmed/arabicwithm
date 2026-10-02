@@ -1,6 +1,6 @@
 'use client'
 
-import { DarkModeOutlined, LightModeOutlined, MenuOutlined, Person } from '@mui/icons-material'
+import { AdminPanelSettings, DarkModeOutlined, LightModeOutlined, MenuOutlined, Person } from '@mui/icons-material'
 import { AppBar, Avatar, Box, Button, Container, IconButton, Toolbar, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import Link from 'next/link'
@@ -8,6 +8,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
+import { useAccountAccess } from '@/app/lib/useAccountAccess'
 import { supabase } from '@/app/lib/supabase/client'
 import AuthDialog from '@/app/components/AuthDialog'
 import ClientStyles from '@/app/components/ClientStyles'
@@ -35,6 +36,7 @@ export default function Navbar() {
     const [authDialogMode, setAuthDialogMode] = useState<'register' | 'signin'>('signin')
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
     const [scrolled, setScrolled] = useState(false)
+    const { isAdmin, isReviewer } = useAccountAccess(`${pathname}:${drawerOpen}:${Boolean(userMenuAnchor)}`)
 
     const supportsOverlay = pathname === '/' || pathname === '/explore' || pathname === '/vocabulary'
     const isOverlay = supportsOverlay && !scrolled && !drawerOpen && !userMenuAnchor && !contactOpen && !authDialogOpen
@@ -95,6 +97,8 @@ export default function Navbar() {
                 onClose={() => setDrawerOpen(false)}
                 isLoggedIn={isLoggedIn}
                 user={user}
+                isAdmin={isAdmin}
+                isReviewer={isReviewer}
                 onAuthOpen={openSignIn}
                 onLogout={handleLogout}
                 onContactOpen={() => setContactOpen(true)}
@@ -107,6 +111,8 @@ export default function Navbar() {
                 anchorEl={userMenuAnchor}
                 onClose={() => setUserMenuAnchor(null)}
                 user={user}
+                isAdmin={isAdmin}
+                isReviewer={isReviewer}
                 onLogout={() => {
                     setUserMenuAnchor(null)
                     handleLogout()
@@ -203,6 +209,7 @@ export default function Navbar() {
                                 <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 0.75 }}>
+                                    {isLoggedIn && isAdmin && <Button component={Link} href="/admin/users" startIcon={<AdminPanelSettings />} sx={{ color: navColor, textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>Admin</Button>}
                                     <Tooltip title={mode === 'dark' ? 'Use light mode' : 'Use dark mode'}>
                                         <IconButton onClick={toggleColorMode} sx={{ color: navColor, transition: 'color .25s ease' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
                                             {mode === 'dark' ? <LightModeOutlined /> : <DarkModeOutlined />}

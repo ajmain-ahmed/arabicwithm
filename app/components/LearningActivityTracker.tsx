@@ -8,10 +8,10 @@ import {
   LEARNING_ACTIVITY_EVENT,
   WORD_LOOKUP_EVENT,
   activityKindForPath,
-  localDateKey,
   shouldCountActiveTime,
 } from '@/app/lib/activity'
 import { usePlayerStore } from '@/store/playerStore'
+import { platformDate } from '@/app/lib/entitlements'
 
 const TICK_INTERVAL_MS = 15_000
 const SYNC_AFTER_SECONDS = 60
@@ -72,7 +72,7 @@ export default function LearningActivityTracker() {
 
     try {
       const activity = await recordActiveLearning({
-        date: localDateKey(new Date()),
+        date: platformDate(),
         ...snapshot,
       })
       if (userIdRef.current === userId) publish(userId, activity)

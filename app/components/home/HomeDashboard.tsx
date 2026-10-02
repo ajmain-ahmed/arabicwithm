@@ -15,7 +15,6 @@ import {
   MilitaryTechRounded,
   PsychologyOutlined,
   AccountCircleOutlined,
-  BookmarkRounded,
   ManageSearchRounded,
   SettingsOutlined,
   Close,
@@ -29,6 +28,9 @@ import { fetchLearningActivity } from '@/app/actions/activity'
 import { fetchPremiumStatus } from '@/app/actions/premium'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import CheckoutFeedback from '@/app/components/CheckoutFeedback'
+import HomeQuickActions from '@/app/components/home/HomeQuickActions'
+import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
+import { parseReadingList } from '@/app/lib/readingList'
 import CefrChip from '@/app/components/CefrChip'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, HOME_CAROUSEL_CARD_ASPECT_RATIO, type CatalogueRowItem } from './NewOnRow'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
@@ -38,11 +40,8 @@ import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 import {
   LEARNING_ACTIVITY_EVENT,
-  calculateLearningLevel,
-  calculateLearningStreak,
   formatLearningTime,
   parseLearningActivity,
-  summarizeWeeklyActivity,
   type LearningActivity,
 } from '@/app/lib/activity'
 import {
@@ -54,7 +53,7 @@ import {
   type BookSentenceBookmark,
 } from '@/app/lib/bookSentenceBookmark'
 
-interface ProgressEntry { chapterSlug: string; updatedAt?: string }
+interface ProgressEntry { chapterSlug: string; updatedAt?: string; hiddenFromList?: boolean }
 interface FeaturedEpisode {
   show: ShowMeta
   episode: EpisodeMeta
@@ -236,33 +235,6 @@ function FeaturedContentCard({ type, title, description, level, href, image, ima
   )
 }
 
-function BookmarkContinueCard({ bookmark }: { bookmark: BookSentenceBookmark }) {
-  return (
-    <ReadingBookmarkCard
-      bookTitle={bookmark.bookTitle}
-      chapterTitle={bookmark.chapterTitle}
-      href={bookSentenceBookmarkHref(bookmark)}
-    />
-  )
-}
-
-function ResumeReadingCard({ book, chapter }: { book: PublicBook; chapter: PublicChapter }) {
-  return <ReadingBookmarkCard bookTitle={book.title} chapterTitle={chapter.title} href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`} />
-}
-
-function ReadingBookmarkCard({ bookTitle, chapterTitle, href }: { bookTitle: string; chapterTitle: string; href: string }) {
-  return (
-    <Paper component={Link} href={href} elevation={0} aria-label={`Continue reading ${bookTitle}, ${chapterTitle}`} sx={{ width: { xs: 164, sm: 184 }, maxWidth: '100%', aspectRatio: '1', p: { xs: 1.75, sm: 2 }, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', textDecoration: 'none', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', borderRadius: '16px', bgcolor: 'var(--awm-white)', boxShadow: '0 4px 14px color-mix(in srgb, var(--awm-bark) 6%, transparent)', transition: 'transform .18s ease, border-color .18s ease, box-shadow .18s ease', '&:hover': { transform: 'translateY(-3px) scale(1.01)', borderColor: 'color-mix(in srgb, var(--awm-gold) 62%, transparent)', boxShadow: '0 10px 24px color-mix(in srgb, var(--awm-gold) 14%, transparent)' }, '&:active': { transform: 'translateY(0) scale(.98)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 48%, transparent)', outlineOffset: 3 }, '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover, &:active': { transform: 'none' } } }}>
-      <Box sx={{ width: 42, height: 42, display: 'grid', placeItems: 'center', borderRadius: '11px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 14%, transparent)', color: 'var(--awm-gold)' }}><BookmarkRounded aria-hidden="true" /></Box>
-      <Box sx={{ minWidth: 0, width: '100%' }}>
-        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 16, sm: 18 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.15, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{bookTitle}</Typography>
-        <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapterTitle}</Typography>
-        <Typography component="span" sx={{ display: 'inline-block', mt: 0.8, color: 'var(--awm-forest)', fontFamily: 'Jost, sans-serif', fontSize: 12.5, fontWeight: 700 }}>Continue Reading →</Typography>
-      </Box>
-    </Paper>
-  )
-}
-
 function LearningStats({
   activity,
   streak,
@@ -277,22 +249,22 @@ function LearningStats({
   const theme = useTheme()
   const mobileDetail = useMediaQuery(theme.breakpoints.down('sm'))
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null)
-  const level = calculateLearningLevel(activity.totalSeconds, activity.xp?.totalXp ?? activity.memory?.totalXp ?? 0)
-  const week = summarizeWeeklyActivity(activity.daily, now)
+  const summary = summarizeLearningDashboard(activity, now)
+  const { level, week } = summary
   const comparison = week.comparisonPercent
   const comparisonText = comparison === null
     ? 'No previous-week comparison yet'
     : `${comparison >= 0 ? 'Up' : 'Down'} ${Math.abs(comparison)}% from last week`
   const metrics = [
     { id: 'level', label: 'Current level', value: `Level ${level.level}`, icon: MilitaryTechRounded, description: `${level.progressPercent}% of the way to Level ${level.level + 1}.`, detail: `${formatLearningTime(activity.totalSeconds)} total active learning time.` },
-    ...(activity.memory ? [{ id: 'memory', label: 'Memory Practice', value: `${activity.memory.totalXp} XP`, icon: PsychologyOutlined, description: `${activity.memory.weekXp} XP earned from ${activity.memory.weekCards} Memory card${activity.memory.weekCards === 1 ? '' : 's'} this week.` }] : []),
-    ...(activity.wordSearch ? [{ id: 'word-search', label: 'Word Search', value: `${activity.wordSearch.totalXp} XP`, icon: GridOnRounded, description: `${activity.wordSearch.weekXp} XP earned from ${activity.wordSearch.weekCompleted} completed Word Search${activity.wordSearch.weekCompleted === 1 ? '' : 'es'} this week.` }] : []),
+    ...(activity.memory ? [{ id: 'memory', ...summary.memory, icon: PsychologyOutlined }] : []),
+    ...(activity.wordSearch ? [{ id: 'word-search', ...summary.wordSearch, icon: GridOnRounded }] : []),
     { id: 'week', label: 'Learning this week', value: formatLearningTime(week.thisWeekSeconds), icon: CalendarMonthRounded, description: `${week.activeDays} active day${week.activeDays === 1 ? '' : 's'} this week. ${comparisonText}.` },
     { id: 'today', label: 'Active today', value: formatLearningTime(week.todaySeconds), icon: AccessTimeRounded, description: 'Active learning time recorded today while reading, watching, or practising.' },
     { id: 'reading', label: 'Reading this week', value: formatLearningTime(week.readingSeconds), icon: MenuBook, description: 'Time spent actively reading ArabicWithM books during the current week.' },
     { id: 'streak', label: 'Current streak', value: `${streak} day${streak === 1 ? '' : 's'}`, icon: LocalFireDepartmentRounded, description: 'Consecutive calendar days with recorded learning activity.' },
     { id: 'books', label: 'Books in progress', value: String(booksInProgress), icon: AutoStories, description: 'Books with saved reading progress on this account.' },
-    { id: 'definitions', label: 'Definitions viewed', value: String(week.wordLookups), icon: ExploreOutlined, description: 'Arabic word definitions opened during the current week.' },
+    { id: 'definitions', label: 'Words inspected this week', value: String(week.wordLookups), icon: ExploreOutlined, description: 'Arabic word definitions opened during the current week.' },
   ]
   const selected = metrics.find((metric) => metric.id === selectedMetric) ?? null
   const closeDetail = () => setSelectedMetric(null)
@@ -346,12 +318,12 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
   const [dashboardLoadedAt] = useState(Date.now)
   const premiumAuthKey = user ? `${user.id}:${session?.expires_at ?? 'pending'}` : null
   const progress = useMemo(() => {
-    const raw = user?.user_metadata?.book_progress
-    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, ProgressEntry> : {}
+    return parseReadingList(user?.user_metadata?.book_progress) as Record<string, ProgressEntry>
   }, [user])
   const recentReading = (() => {
     const entries = Object.entries(progress).sort((a, b) => Date.parse(b[1].updatedAt ?? '') - Date.parse(a[1].updatedAt ?? ''))
     for (const [bookSlug, saved] of entries) {
+      if (saved.hiddenFromList) continue
       const book = books.find((item) => item.slug === bookSlug)
       const chapter = chaptersByBook[bookSlug]?.find((item) => item.slug === saved.chapterSlug)
       if (book && chapter) return { book, chapter }
@@ -359,7 +331,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
     return null
   })()
   const booksInProgress = Object.entries(progress).filter(([bookSlug, saved]) => (
-    books.some((book) => book.slug === bookSlug) &&
+    !saved.hiddenFromList && books.some((book) => book.slug === bookSlug) &&
     chaptersByBook[bookSlug]?.some((chapter) => chapter.slug === saved.chapterSlug)
   )).length
   const { newShowItems, newEpisodeItems } = useMemo(() => {
@@ -484,11 +456,8 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
   const activity = activityUpdate?.userId === user.id
     ? activityUpdate.activity
     : parseLearningActivity(user.user_metadata)
-  const activityDates = [
-    ...activity.activeDates,
-  ]
   const dashboardNow = new Date(dashboardLoadedAt)
-  const streak = calculateLearningStreak(activityDates, dashboardNow)
+  const streak = summarizeLearningDashboard(activity, dashboardNow).streak
   const featuredReading = recentReading?.book ?? featuredBook
   const featuredReadingHref = recentReading
     ? `/books/${encodeURIComponent(recentReading.book.slug)}/${encodeURIComponent(recentReading.chapter.slug)}`
@@ -508,11 +477,10 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
       </Box>
       <Container maxWidth="lg" sx={{ pt: { xs: 4.5, md: 6 } }}>
         <SectionHeading eyebrow="Continue learning" title={recentReading ? 'Your next step is ready' : 'Start your next lesson'} />
-        {(bookmark || recentReading) && (
-          <Box sx={{ mb: 2.5 }}>
-            {bookmark ? <BookmarkContinueCard bookmark={bookmark} /> : recentReading && <ResumeReadingCard book={recentReading.book} chapter={recentReading.chapter} />}
-          </Box>
-        )}
+        <HomeQuickActions
+          bookmarkHref={bookmark ? bookSentenceBookmarkHref(bookmark) : recentReading ? `/books/${encodeURIComponent(recentReading.book.slug)}/${encodeURIComponent(recentReading.chapter.slug)}` : '/books'}
+          bookmarkLabel={bookmark ? `${bookmark.bookTitle} ? ${bookmark.chapterTitle}` : recentReading ? `${recentReading.book.title} ? ${recentReading.chapter.title}` : 'Save a sentence to return here'}
+        />
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2,minmax(0,1fr))' }, gap: 2.5 }}>
           {featuredEpisode && <FeaturedContentCard type={`Featured video · ${featuredEpisode.show.title}`} title={featuredEpisode.episode.title} description={featuredEpisode.episode.description} level={featuredEpisode.episode.level} href={`/cartoons/${featuredEpisode.show.slug}/${featuredEpisode.episode.slug}`} image={featuredEpisode.episode.cover} imageCrop={featuredEpisode.episode.coverCrop} actionLabel="Watch Now" />}
           {featuredReading && <FeaturedContentCard type={recentReading ? 'Continue reading' : 'Featured book'} title={featuredReading.title} description={featuredReading.description} level={featuredReading.level} href={featuredReadingHref} image={featuredReading.cover} imageCrop={featuredReading.coverCrop} actionLabel={recentReading ? 'Continue Reading' : 'Read Book'} />}

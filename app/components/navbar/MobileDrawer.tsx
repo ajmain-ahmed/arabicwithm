@@ -1,6 +1,6 @@
 'use client'
 
-import { BookOutlined, EmailSharp, ExploreOutlined, HomeOutlined, LogoutSharp, Movie, Person, PsychologyOutlined, VolunteerActivismRounded } from '@mui/icons-material'
+import { AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, HomeOutlined, LogoutSharp, Movie, Person, PsychologyOutlined, RateReviewOutlined, VolunteerActivismRounded } from '@mui/icons-material'
 import {
     Avatar,
     Box,
@@ -22,6 +22,8 @@ interface MobileDrawerProps {
     onClose: () => void
     isLoggedIn: boolean
     user: User | null
+    isAdmin: boolean
+    isReviewer: boolean
     onAuthOpen: () => void
     onLogout: () => void
     onContactOpen: () => void
@@ -33,6 +35,8 @@ export default function MobileDrawer({
     onClose,
     isLoggedIn,
     user,
+    isAdmin,
+    isReviewer,
     onAuthOpen,
     onLogout,
     onContactOpen,
@@ -150,6 +154,9 @@ export default function MobileDrawer({
                 <GoldLine />
 
                 {[
+                    ...(isLoggedIn ? [{ label: 'My Profile', icon: <Person sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/profile') }] : []),
+                    ...(isLoggedIn && isAdmin ? [{ label: 'Admin · User Management', icon: <AdminPanelSettings sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/admin/users') }] : []),
+                    ...(isLoggedIn && isReviewer ? [{ label: 'Reviewer workspace', icon: <RateReviewOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/reviewer') }] : []),
                     { label: 'Home', icon: <HomeOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/') },
                     { label: 'Explore', icon: <ExploreOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/explore') },
                     { label: 'Watch', icon: <Movie sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/cartoons') },

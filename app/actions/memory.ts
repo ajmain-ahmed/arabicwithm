@@ -228,8 +228,8 @@ export async function fetchMemoryProgress() {
   monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7)
   const [daily, total, week, legacy, entitlement] = await Promise.all([
     serviceClient.from('memory_reviews').select('completion_id', { count: 'exact', head: true }).eq('user_id', userId).eq('activity_date', today),
-    serviceClient.rpc('memory_totals', { p_user_id: userId }),
-    serviceClient.rpc('memory_totals', { p_user_id: userId, p_since: monday.toISOString().slice(0, 10) }),
+    serviceClient.rpc('website_memory_totals', { p_user_id: userId }),
+    serviceClient.rpc('website_memory_totals', { p_user_id: userId, p_since: monday.toISOString().slice(0, 10) }),
     serviceClient.from('memory_legacy_progress').select('xp').eq('user_id', userId).maybeSingle(),
     fetchEntitlements(),
   ])

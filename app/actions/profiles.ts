@@ -3,8 +3,10 @@
 import { z } from 'zod'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
 import { fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
-import { calculateLearningLevel, parseLearningActivity } from '@/app/lib/activity'
-import { platformDate } from '@/app/lib/entitlements'
+import { loadLearningSnapshot } from '@/app/lib/learningSnapshot'
+import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
+import { parseReadingList } from '@/app/lib/readingList'
+import { hasPremiumAccess } from '@/app/lib/entitlements'
 import { serviceClient } from '@/app/lib/supabase'
 
 const profileInputSchema = z.object({
@@ -40,55 +42,38 @@ export async function fetchPublicProfile(id: string) {
   if (error) throw new Error('Unable to load profile.')
   if (!own && !profile?.is_public) return null
 
-  const monday = new Date(`${platformDate()}T12:00:00Z`)
-  monday.setUTCDate(monday.getUTCDate() - ((monday.getUTCDay() + 6) % 7))
-  const [account, activity, memory, xpTotal, xpWeek] = await Promise.all([
+  const [account, activity, role, subscription] = await Promise.all([
     serviceClient.auth.admin.getUserById(id),
-    serviceClient
-      .from('learning_profiles')
-      .select('legacy_active_seconds, tracked_active_seconds')
-      .eq('user_id', id)
-      .maybeSingle(),
-    serviceClient.rpc('memory_totals', { p_user_id: id }),
-    serviceClient.rpc('learning_xp_totals', { p_user_id: id }),
-    serviceClient.rpc('learning_xp_totals', {
-      p_user_id: id,
-      p_since: monday.toISOString().slice(0, 10),
-    }),
+    serviceClient.from('learning_profiles').select('legacy_active_seconds, tracked_active_seconds, weekly_goal_seconds').eq('user_id', id).maybeSingle(),
+    serviceClient.rpc('account_role', { p_user_id: id }),
+    serviceClient.from('subscriptions').select('status,current_period_end').eq('user_id', id).maybeSingle(),
   ])
-  if (account.error || activity.error || memory.error || xpTotal.error || xpWeek.error) {
-    throw new Error('Unable to load learning statistics.')
-  }
-
+  if (account.error || activity.error || role.error || subscription.error) throw new Error('Unable to load profile statistics.')
   const user = account.data.user
   if (!user) return null
-  const totals = (memory.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
-  const totalProgress = (xpTotal.data ?? { xp: 0 }) as { xp: number }
-  const week = (xpWeek.data ?? { xp: 0 }) as { xp: number }
-  const xp = Number(totalProgress.xp)
-  const seconds = activity.data
-    ? Number(activity.data.legacy_active_seconds) + Number(activity.data.tracked_active_seconds)
-    : parseLearningActivity(user.user_metadata).totalSeconds
-  const rawProgress = user.user_metadata.book_progress
-  const progress = rawProgress && typeof rawProgress === 'object' && !Array.isArray(rawProgress)
-    ? rawProgress as Record<string, { chapterSlug?: string }>
-    : {}
+  const learning = await loadLearningSnapshot(id, user.user_metadata, activity.data)
+  const summary = summarizeLearningDashboard(learning)
+  const progress = parseReadingList(user.user_metadata.book_progress)
+  const premium = hasPremiumAccess(role.data === 'admin', subscription.data)
+  const avatar = typeof user.user_metadata.avatar_url === 'string' && /^https?:\/\//.test(user.user_metadata.avatar_url) ? user.user_metadata.avatar_url : null
   const books = own || profile?.share_reading ? await fetchBooksForPublic() : []
   const shelf = await Promise.all(
     books
-      .filter((book) => progress[book.slug]?.chapterSlug)
+      .filter((book) => progress[book.slug]?.chapterSlug && !progress[book.slug]?.hiddenFromList)
       .map(async (book) => {
         const chapters = await fetchChaptersForBookPublic(book.id)
         const index = chapters.findIndex((chapter) => chapter.slug === progress[book.slug].chapterSlug)
+        if (index < 0) return null
         return {
           slug: book.slug,
           title: book.title,
           author: book.author,
           cover: book.cover,
-          chapter: index >= 0 ? chapters[index].title : 'Reading',
+          coverCrop: book.coverCrop,
+          chapter: chapters[index].title,
           position: index + 1,
           total: chapters.length,
-          href: index >= 0 ? `/books/${book.slug}/${chapters[index].slug}` : `/books/${book.slug}`,
+          href: `/books/${book.slug}/${chapters[index].slug}`,
         }
       }),
   )
@@ -97,15 +82,19 @@ export async function fetchPublicProfile(id: string) {
   return {
     id,
     own,
-    displayName: profile?.display_name ?? 'Arabic learner',
+    displayName: profile?.display_name ?? String(user.user_metadata.full_name ?? user.user_metadata.name ?? 'Arabic learner'),
     isPublic: profile?.is_public ?? false,
     shareReading: profile?.share_reading ?? false,
     joined: user.created_at.slice(0, 10),
-    level: calculateLearningLevel(seconds, xp).level,
-    xp,
-    weekXp: Number(week.xp),
-    memoryCards: Number(totals.cards),
-    shelf,
+    avatar,
+    premium,
+    learning,
+    summary,
+    level: summary.level.level,
+    xp: summary.xp,
+    weekXp: summary.weekXp,
+    memoryCards: learning.memory?.total ?? 0,
+    shelf: shelf.filter((book) => book !== null),
   }
 }
 

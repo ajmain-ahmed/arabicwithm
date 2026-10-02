@@ -2,142 +2,77 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import {
-  EmojiEventsOutlined,
-  LockOutlined,
-  MenuBookOutlined,
-  PsychologyOutlined,
-  StarOutlined,
-} from '@mui/icons-material'
-import {
-  Alert,
-  Box,
-  Button,
-  Container,
-  FormControlLabel,
-  Paper,
-  Switch,
-  TextField,
-  Typography,
-} from '@mui/material'
+import { AutoStories, LocalFireDepartmentRounded, PsychologyOutlined, ScheduleRounded, StarsRounded, TravelExploreOutlined } from '@mui/icons-material'
+import { Alert, Box, Button, Chip, Container, FormControlLabel, LinearProgress, Paper, Switch, TextField, Typography } from '@mui/material'
 import { updateProfile, type PublicProfile } from '@/app/actions/profiles'
 import { PremiumSection } from '@/app/components/PremiumPrompt'
+import BookListRemovalButton from '@/app/books/[book]/BookListRemovalButton'
+import AchievementCabinet from '@/app/profile/AchievementCabinet'
+import ActivityChart from '@/app/profile/ActivityChart'
+import ProfileAvatar from '@/app/profile/ProfileAvatar'
+import { formatLearningTime } from '@/app/lib/activity'
+import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 
+const panel = { border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '16px', bgcolor: 'var(--awm-white)' }
 export default function ProfileView({ profile }: { profile: PublicProfile }) {
-  const [name, setName] = useState(profile.displayName)
-  const [isPublic, setPublic] = useState(profile.isPublic)
-  const [shareReading, setShareReading] = useState(profile.shareReading)
-  const [message, setMessage] = useState('')
-  const [saving, setSaving] = useState(false)
-  const achievements = [
-    {
-      title: 'First recall',
-      target: 'Complete 1 Memory card',
-      unlocked: profile.memoryCards >= 1,
-      icon: PsychologyOutlined,
-    },
-    {
-      title: 'Memory explorer',
-      target: 'Complete 100 Memory cards',
-      unlocked: profile.memoryCards >= 100,
-      icon: EmojiEventsOutlined,
-    },
-    {
-      title: 'Level five',
-      target: 'Reach learning level 5',
-      unlocked: profile.level >= 5,
-      icon: StarOutlined,
-    },
-    {
-      title: 'Reader',
-      target: 'Start your first book',
-      unlocked: profile.shelf.length > 0,
-      icon: MenuBookOutlined,
-    },
+  const [name, setName] = useState(profile.displayName), [displayName, setDisplayName] = useState(profile.displayName)
+  const [isPublic, setPublic] = useState(profile.isPublic), [shareReading, setShareReading] = useState(profile.shareReading)
+  const [message, setMessage] = useState(''), [saving, setSaving] = useState(false), [removed, setRemoved] = useState<string[]>([])
+  const { learning, summary } = profile
+  const shelf = profile.shelf.filter(book => !removed.includes(book.slug))
+  const stats = [
+    { label: 'Total XP', value: profile.xp.toLocaleString('en-GB'), detail: `${profile.weekXp} XP this week`, icon: StarsRounded },
+    { label: 'Total learning time', value: summary.time, detail: `${formatLearningTime(summary.week.thisWeekSeconds)} this week`, icon: ScheduleRounded },
+    { label: 'Memory cards reviewed', value: profile.memoryCards.toLocaleString('en-GB'), detail: `${learning.memory?.weekCards ?? 0} reviews this week`, icon: PsychologyOutlined },
+    { label: 'Total words inspected', value: (learning.lifetime?.wordLookups ?? 0).toLocaleString('en-GB'), detail: `${summary.week.wordLookups} this week`, icon: TravelExploreOutlined },
+    { label: 'Total reading time', value: formatLearningTime(learning.lifetime?.readingSeconds ?? 0), detail: `${formatLearningTime(summary.week.readingSeconds)} this week`, icon: AutoStories },
+    { label: 'Total watch time', value: formatLearningTime(learning.lifetime?.videoSeconds ?? 0), detail: `${formatLearningTime(summary.week.videoSeconds)} this week`, icon: ScheduleRounded },
+    { label: 'Longest recorded streak', value: `${summary.longestStreak} days`, detail: 'At least 1 minute of active learning each day', icon: LocalFireDepartmentRounded },
+    { label: 'Word Searches completed', value: (learning.wordSearch?.total ?? 0).toLocaleString('en-GB'), detail: `${learning.wordSearch?.weekCompleted ?? 0} this week`, icon: TravelExploreOutlined },
   ]
-
   async function save() {
-    setSaving(true)
-    setMessage('')
-    try {
-      await updateProfile({ displayName: name, isPublic, shareReading })
-      setMessage('Profile saved.')
-    } catch {
-      setMessage('Unable to save profile. Please try again.')
-    } finally {
-      setSaving(false)
-    }
+    setSaving(true); setMessage('')
+    try { await updateProfile({ displayName: name, isPublic, shareReading }); setDisplayName(name.trim()); setMessage('Profile saved.') }
+    catch { setMessage('Unable to save profile. Please try again.') }
+    finally { setSaving(false) }
   }
-
-  return (
-    <Container component="main" maxWidth="lg" sx={{ py: { xs: 4, md: 7 } }}>
-      <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 36, md: 52 }, fontWeight: 600, color: 'var(--awm-bark)' }}>
-        {profile.displayName}
-      </Typography>
-      <Typography sx={{ mt: 0.75, fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted)' }}>
-        Learning since {profile.joined}
-      </Typography>
-
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5, my: 3.5 }}>
-        {[
-          ['Current level', profile.level],
-          ['Memory XP', profile.xp],
-          ['XP this week', profile.weekXp],
-          ['Cards completed', profile.memoryCards],
-        ].map(([label, value]) => (
-          <Paper key={label} elevation={0} sx={{ p: 2, border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '12px' }}>
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted)', fontSize: 12 }}>{label}</Typography>
-            <Typography sx={{ mt: 0.5, fontFamily: 'var(--font-heading)', color: 'var(--awm-bark)', fontSize: { xs: 28, md: 34 }, fontWeight: 600 }}>{value}</Typography>
-          </Paper>
-        ))}
-      </Box>
-
-      <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 30, fontWeight: 600, color: 'var(--awm-bark)' }}>Achievements</Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5, mt: 2 }}>
-        {achievements.map((item) => (
-          <Paper key={item.title} elevation={0} sx={{ p: 2, textAlign: 'center', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '12px' }}>
-            <item.icon sx={{ fontSize: 42, color: item.unlocked ? 'var(--awm-gold)' : 'var(--awm-muted-light)' }} />
-            <Typography sx={{ mt: 0.75, fontFamily: 'Jost, sans-serif', fontWeight: 700, color: 'var(--awm-bark)' }}>{item.title}</Typography>
-            <Typography sx={{ mt: 0.35, fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted)', fontSize: 12 }}>{item.target}</Typography>
-            {!item.unlocked && <LockOutlined aria-label="Locked" sx={{ mt: 0.75, color: 'var(--awm-muted-light)', fontSize: 16 }} />}
-          </Paper>
-        ))}
-      </Box>
-
-      {(profile.own || profile.shelf.length > 0) && (
-        <Box sx={{ mt: 5 }}>
-          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 30, fontWeight: 600, color: 'var(--awm-bark)' }}>Currently reading</Typography>
-          {profile.shelf.length > 0 ? (
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.5, mt: 2 }}>
-              {profile.shelf.map((book) => (
-                <Paper key={book.slug} elevation={0} sx={{ p: 2, border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '12px' }}>
-                  <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 21, fontWeight: 600, color: 'var(--awm-bark)' }}>{book.title}</Typography>
-                  <Typography sx={{ mt: 0.5, fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted)', fontSize: 13 }}>{book.chapter}</Typography>
-                  <Button component={Link} href={book.href} sx={{ mt: 1, px: 0, textTransform: 'none', color: 'var(--awm-forest)', fontWeight: 700 }}>Continue reading</Button>
-                </Paper>
-              ))}
-            </Box>
-          ) : (
-            <Typography sx={{ mt: 1, fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted)' }}>No reading activity yet.</Typography>
-          )}
+  return <Container component="main" maxWidth="lg" sx={{ py: { xs: 3, md: 6 }, color: 'var(--awm-bark)' }}>
+    <Paper component="header" elevation={0} sx={{ ...panel, p: { xs: 2.5, sm: 4 }, background: 'linear-gradient(135deg, var(--awm-white), var(--awm-cream))' }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 3 }}>
+        <ProfileAvatar id={profile.id} name={displayName} src={profile.avatar} editable={profile.own} />
+        <Box sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+          <Typography sx={{ color: 'var(--awm-muted)', fontSize: 12, letterSpacing: '.12em', textTransform: 'uppercase' }}>{profile.own ? 'My learning profile' : 'Learning profile'}</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mt: 0.75 }}><Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 34, md: 46 }, fontWeight: 600, lineHeight: 1.1, overflowWrap: 'anywhere' }}>{displayName}</Typography>{profile.premium && <Chip icon={<StarsRounded />} label="AWM Plus" sx={{ fontWeight: 700, color: 'var(--awm-bark)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 18%, transparent)', border: '1px solid color-mix(in srgb, var(--awm-gold) 40%, transparent)' }} />}</Box>
+          <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontSize: 13 }}>Learning since {profile.joined}</Typography>
+          <Typography sx={{ mt: 2, fontWeight: 700 }}>Level {profile.level} · {summary.level.progressPercent}% toward Level {profile.level + 1}</Typography>
+          <LinearProgress aria-label="Progress toward the next learning level" variant="determinate" value={summary.level.progressPercent} sx={{ mt: 1, height: 8, borderRadius: 99 }} />
+          <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontSize: 12 }}>{summary.nextLevelPoints.toLocaleString('en-GB')} progression points to your next level. Each recorded learning minute and XP contributes one point.</Typography>
         </Box>
-      )}
-
-      {profile.own && (
-        <Paper id="profile-settings" component="section" elevation={0} sx={{ mt: 5, p: { xs: 2.5, md: 3.5 }, scrollMarginTop: 88, border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '14px' }}>
-          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 28, fontWeight: 600, color: 'var(--awm-bark)' }}>Profile settings</Typography>
-          <TextField label="Public display name" value={name} onChange={(event) => setName(event.target.value)} fullWidth sx={{ mt: 2 }} slotProps={{ htmlInput: { maxLength: 60 } }} />
-          <Box sx={{ mt: 1.5, display: 'grid' }}>
-            <FormControlLabel control={<Switch checked={isPublic} onChange={(event) => setPublic(event.target.checked)} />} label="Make my learning profile public" />
-            <FormControlLabel control={<Switch checked={shareReading} onChange={(event) => setShareReading(event.target.checked)} />} label="Share my bookshelf on my public profile" />
-          </Box>
-          <Typography sx={{ mt: 1, fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted)', fontSize: 12 }}>Your email, account details, and private settings are never shown publicly.</Typography>
-          <Button disabled={saving || name.trim().length === 0} onClick={() => void save()} variant="contained" sx={{ mt: 2, textTransform: 'none' }}>Save profile</Button>
-          {message && <Alert severity={message === 'Profile saved.' ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
-        </Paper>
-      )}
-
-      {profile.own && <PremiumSection />}
-    </Container>
-  )
+        <Box sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: 130, p: 2, textAlign: 'center', borderRadius: '14px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 10%, transparent)' }}><LocalFireDepartmentRounded aria-hidden="true" sx={{ color: 'var(--awm-gold)', fontSize: 38 }} /><Typography sx={{ fontWeight: 700, mt: 0.5 }}>{summary.streak} day streak</Typography><Typography sx={{ color: 'var(--awm-muted)', fontSize: 12 }}>Current streak</Typography></Box>
+      </Box>
+    </Paper>
+    <Box component="section" aria-label="Learning statistics" sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', md: 'repeat(4,minmax(0,1fr))' }, gap: 1.5, my: 3 }}>
+      {stats.map(item => <Paper key={item.label} elevation={0} sx={{ ...panel, minWidth: 0, p: { xs: 1.75, sm: 2.5 } }}><item.icon aria-hidden="true" sx={{ color: 'var(--awm-gold)', fontSize: 23 }} /><Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontSize: 12 }}>{item.label}</Typography><Typography sx={{ mt: 0.5, fontFamily: 'var(--font-heading)', fontSize: { xs: 26, md: 32 }, fontWeight: 600 }}>{item.value}</Typography><Typography sx={{ mt: 0.5, color: 'var(--awm-muted)', fontSize: 12 }}>{item.detail}</Typography></Paper>)}
+    </Box>
+    <ActivityChart activity={learning} />
+    <AchievementCabinet activity={learning} />
+    {(profile.own || profile.shelf.length > 0) && <Box component="section" sx={{ mt: 5 }}>
+      <Typography component="h2" variant="h4">Currently Reading</Typography>
+      {shelf.length ? <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2,minmax(0,1fr))' }, gap: 2, mt: 2 }}>
+        {shelf.map(book => <Paper key={book.slug} elevation={0} sx={{ ...panel, display: 'grid', gridTemplateColumns: { xs: '100px minmax(0,1fr)', sm: '130px minmax(0,1fr)' }, overflow: 'hidden' }}>
+          <Box sx={{ bgcolor: 'var(--awm-cream)', minHeight: 190, overflow: 'hidden' }}>{book.cover ? <Box component="img" src={book.cover} alt={`${book.title} cover`} loading="lazy" sx={{ width: '100%', height: '100%', objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} /> : <AutoStories sx={{ color: 'var(--awm-gold)', m: 3, fontSize: 40 }} />}</Box>
+          <Box sx={{ minWidth: 0, p: 2 }}><Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 23, fontWeight: 600 }}>{book.title}</Typography><Typography sx={{ color: 'var(--awm-muted)', fontSize: 12 }}>{book.author}</Typography><Typography sx={{ mt: 1, fontSize: 13 }}>{book.chapter}</Typography><Typography sx={{ mt: 0.5, color: 'var(--awm-muted)', fontSize: 12 }}>Reading position: chapter {book.position} of {book.total}</Typography><LinearProgress aria-label={`${book.title} reading position`} variant="determinate" value={book.total ? Math.max(0, book.position - 1) / book.total * 100 : 0} sx={{ mt: 1, borderRadius: 99 }} /><Button component={Link} href={book.href} sx={{ mt: 1, px: 0 }}>Continue Reading</Button>{profile.own && <BookListRemovalButton bookSlug={book.slug} onRemoved={() => setRemoved(items => [...items, book.slug])} />}</Box>
+        </Paper>)}
+      </Box> : <Paper elevation={0} sx={{ ...panel, p: 3, mt: 2 }}><Typography>No current book. Your next story is waiting.</Typography><Button component={Link} href="/books" sx={{ mt: 1 }}>Browse books</Button></Paper>}
+    </Box>}
+    {profile.own && <Paper id="profile-settings" component="section" elevation={0} sx={{ ...panel, mt: 5, p: { xs: 2.5, md: 3.5 }, scrollMarginTop: 88 }}>
+      <Typography component="h2" variant="h5">Profile settings</Typography>
+      <TextField label="Public display name" value={name} onChange={e => setName(e.target.value)} fullWidth sx={{ mt: 2 }} slotProps={{ htmlInput: { maxLength: 60 } }} />
+      <Box sx={{ mt: 1.5, display: 'grid' }}><FormControlLabel control={<Switch checked={isPublic} onChange={e => setPublic(e.target.checked)} />} label="Make my learning profile public" /><FormControlLabel control={<Switch checked={shareReading} onChange={e => setShareReading(e.target.checked)} />} label="Share my bookshelf on my public profile" /></Box>
+      <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontSize: 12 }}>Your email, account details and private settings are never shown publicly. Uploaded profile pictures use public profile storage.</Typography>
+      <Button disabled={saving || !name.trim()} onClick={() => void save()} variant="contained" sx={{ mt: 2 }}>Save profile</Button>
+      {message && <Alert severity={message === 'Profile saved.' ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
+    </Paper>}
+    {profile.own && <PremiumSection />}
+  </Container>
 }

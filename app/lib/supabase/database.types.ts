@@ -325,6 +325,8 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      website_memory_totals: { Args: { p_user_id: string; p_since?: string }; Returns: Json }
+      website_learning_history: { Args: { p_user_id: string }; Returns: Json }
       account_role: { Args: { p_user_id: string }; Returns: string }
       change_account_role: { Args: { p_actor: string; p_target: string; p_role: string; p_reason: string }; Returns: undefined }
       admin_user_directory: { Args: { p_actor: string; p_tab: string; p_search: string; p_page: number; p_size: number }; Returns: Json }
