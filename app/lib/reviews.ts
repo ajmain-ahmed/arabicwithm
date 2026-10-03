@@ -21,3 +21,4 @@ export interface AccessChange { id: string; target_user_id: string; previous_rol
 export interface ReviewBlock { tokens: { arabic: string; [key: string]: Json | undefined }[]; translation: string; [key: string]: Json | undefined }
 export interface ReviewSource { document: ReviewBlock[]; parent: string; location: string }
 export interface SuggestionInput { arabic: string; english: string; comment: string; reason: string }
+export type ReviewerLineComment = Pick<ContentSuggestion, 'id' | 'line_index' | 'comment' | 'status' | 'created_at' | 'admin_response'>

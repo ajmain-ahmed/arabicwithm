@@ -31,6 +31,11 @@ it.each(['admin', 'editor', 'user'])('shows the desktop Admin entry only for %s 
   expect(menu.querySelector('a[href="/profile"]')).not.toBeNull()
   expect(Boolean(menu.querySelector('a[href="/admin/users"]'))).toBe(role === 'admin')
   expect(Boolean(menu.querySelector('a[href="/reviewer"]'))).toBe(role !== 'user')
+  const profile=menu.querySelector('a[href="/profile"]')!
+  for(const destination of ['/reviewer','/admin/users']){
+    const item=menu.querySelector(`a[href="${destination}"]`)
+    if(item){expect(item.className).toBe(profile.className);expect(item.querySelector('.MuiTypography-root')?.className).toBe(profile.querySelector('.MuiTypography-root')?.className)}
+  }
   expect(menu.textContent).toContain('Sign Out')
 })
 it.each(['admin', 'editor', 'user'])('offers the correct mobile destinations for %s permissions', async role => {

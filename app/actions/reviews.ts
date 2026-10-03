@@ -5,7 +5,7 @@ import { updateTag, revalidatePath } from 'next/cache'
 import { guardReviewer, getAuthenticatedAccess } from '@/app/actions/auth'
 import { serviceClient } from '@/app/lib/supabase'
 import type { Json } from '@/app/lib/supabase/database.types'
-import type { AccountRole, DirectoryResult, ReviewSource, ReviewType, SuggestionInput, SuggestionStatus } from '@/app/lib/reviews'
+import type { AccountRole, DirectoryResult, ReviewerLineComment, ReviewSource, ReviewType, SuggestionInput, SuggestionStatus } from '@/app/lib/reviews'
 import { reviewUnitLabel } from '@/app/lib/reviewLabels'
 
 const uuid = z.string().uuid()
@@ -85,6 +85,16 @@ export async function editSuggestion(id: string, withdraw: boolean, input: Sugge
  const access = await guardReviewer(); const value = inputSchema.parse(input)
  const { error } = await serviceClient.rpc('edit_content_suggestion', { p_actor: access.userId, p_id: uuid.parse(id), p_withdraw: z.boolean().parse(withdraw), p_arabic: value.arabic, p_english: value.english, p_comment: value.comment, p_reason: value.reason })
  if (error) throw new Error(error.message)
+}
+/** The inline chapter history has the same ownership boundary as My Suggestions. */
+export async function loadReviewerComments(type: ReviewType, target: string): Promise<ReviewerLineComment[]> {
+ const access = await guardReviewer()
+ const { data, error } = await serviceClient.from('content_suggestions')
+  .select('id,line_index,comment,status,created_at,admin_response')
+  .eq('author_id', access.userId).eq('content_type', z.enum(['book','show']).parse(type)).eq('target_id', uuid.parse(target))
+  .neq('status','withdrawn').neq('comment','').order('created_at',{ascending:false}).limit(1000)
+ if (error) throw new Error('Unable to load your previous comments. Please retry.')
+ return data ?? []
 }
 export async function listSuggestions(admin: boolean, filters: { status: SuggestionStatus; type?: ReviewType; author?: string; parent?: string; target?: string; since?: string; until?: string }, page: number) {
  const access = await guardReviewer()

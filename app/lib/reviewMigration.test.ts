@@ -71,6 +71,16 @@ describe.sequential('database role and review security',()=>{
   await db.exec('reset role')
   await expect(review(id,'accept',editor)).rejects.toThrow(/Forbidden/)
  })
+ it('persists comment-only feedback with reviewer/chapter/line attribution for Admin review',async()=>{
+  const comment='Please check the wording of this line.'
+  const id=(await db.query<{id:string}>('select submit_content_suggestion($1,$2,$3,0,$4::jsonb,$5,$6,$7,$8) id',[editor,'book',target,JSON.stringify(document),'','',comment,''])).rows[0].id
+  const row=(await db.query<{author_id:string;parent_id:string;target_id:string;line_index:number;comment:string;created_at:string;status:string;original_document:unknown}>('select author_id,parent_id,target_id,line_index,comment,created_at,status,original_document from content_suggestions where id=$1',[id])).rows[0]
+  expect(row).toMatchObject({author_id:editor,parent_id:parent,target_id:target,line_index:0,comment,status:'pending',original_document:document})
+  expect(Number.isNaN(new Date(row.created_at).getTime())).toBe(false)
+  expect(await review(id)).toEqual({ok:true})
+  expect((await db.query<{status:string}>('select status from content_suggestions where id=$1',[id])).rows[0].status).toBe('accepted')
+  expect((await db.query<{content:unknown}>('select content from chapters')).rows[0].content).toEqual(document)
+ })
  it('edits/withdraws only own pending suggestions, preserving history',async()=>{
   const id=await submit()
   await expect(db.query("select edit_content_suggestion($1,$2,false,null,'New','Comment','Reason')",[other,id])).rejects.toThrow(/Forbidden/)

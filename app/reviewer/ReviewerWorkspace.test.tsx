@@ -1,8 +1,8 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-const mocks=vi.hoisted(()=>({catalogue:vi.fn(),source:vi.fn(),submit:vi.fn(),list:vi.fn(),edit:vi.fn(),review:vi.fn()}))
-vi.mock('@/app/actions/reviews',()=>({reviewCatalogue:mocks.catalogue,loadReviewSource:mocks.source,submitSuggestion:mocks.submit,listSuggestions:mocks.list,editSuggestion:mocks.edit,reviewSuggestion:mocks.review}))
+const mocks=vi.hoisted(()=>({catalogue:vi.fn(),source:vi.fn(),submit:vi.fn(),comments:vi.fn(),list:vi.fn(),edit:vi.fn(),review:vi.fn()}))
+vi.mock('@/app/actions/reviews',()=>({reviewCatalogue:mocks.catalogue,loadReviewSource:mocks.source,submitSuggestion:mocks.submit,loadReviewerComments:mocks.comments,listSuggestions:mocks.list,editSuggestion:mocks.edit,reviewSuggestion:mocks.review}))
 import ReviewerWorkspace from './ReviewerWorkspace'
 import SuggestionsList from './SuggestionsList'
 let host:HTMLDivElement,root:Root
@@ -12,6 +12,7 @@ beforeEach(()=>{
  mocks.catalogue.mockImplementation(async(_type:string,parent?:string)=>parent?[{id:'chapter',title:'Arrival',chapter_number:3}]:[{id:'book',title:'Reader'}])
  mocks.source.mockResolvedValue({location:'Reader / Chapter 03',parent:'book',document:[{tokens:[{arabic:'مرحبا'}],translation:'Hello'}]})
  mocks.list.mockResolvedValue({suggestions:[],total:0});mocks.submit.mockResolvedValue('suggestion');mocks.edit.mockResolvedValue(undefined)
+ mocks.comments.mockResolvedValue([])
 })
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();vi.clearAllMocks();vi.restoreAllMocks()})
 async function select(index:number,title:string){
@@ -19,18 +20,48 @@ async function select(index:number,title:string){
  await act(async()=>{[...document.querySelectorAll<HTMLElement>('[role="option"]')].find(o=>o.textContent===title)!.click()})
 }
 async function button(text:string){await act(async()=>{[...document.querySelectorAll<HTMLButtonElement>('button')].find(b=>b.textContent===text)!.click()})}
-it('keeps the Editor review form working, submits the exact source snapshot and clears it when scope changes',async()=>{
+async function comment(index:number,text:string){
+ const textarea=host.querySelector<HTMLTextAreaElement>(`textarea[aria-label="Comment for line ${index}"]`)!
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,text);textarea.dispatchEvent(new Event('input',{bubbles:true}))})
+ return textarea
+}
+it('submits an inline Editor comment with the exact source snapshot, without a modal, reload or scroll',async()=>{
  await act(async()=>root.render(<ReviewerWorkspace/>));expect(host.textContent).not.toContain('Manage Suggestions & Exports')
  await select(0,'Reader');await select(1,'Chapter 3 — Arrival')
- expect(host.textContent).toContain('مرحبا');await button('Comment / Suggest Edit')
- const textarea=document.querySelector<HTMLTextAreaElement>('textarea')!
- await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'Review this greeting');textarea.dispatchEvent(new Event('input',{bubbles:true}))})
- await button('Submit suggestion')
- expect(mocks.submit).toHaveBeenCalledWith('book','chapter',0,[{tokens:[{arabic:'مرحبا'}],translation:'Hello'}],expect.objectContaining({comment:'Review this greeting'}))
- expect(host.textContent).toContain('Suggestion submitted')
- await button('Comment / Suggest Edit')
- await button('Cancel')
- await select(0,'Choose…');await act(async()=>{await new Promise(resolve=>setTimeout(resolve,250))});expect(document.querySelector('[role="dialog"]')).toBeNull();expect(host.textContent).not.toContain('مرحبا')
+ expect(host.textContent).toContain('مرحبا');expect(host.textContent).not.toContain('Suggest Edit');expect(document.querySelector('[role="dialog"]')).toBeNull()
+ const textarea=await comment(1,'Review this greeting');vi.mocked(window.scrollTo).mockClear()
+ await button('Comment')
+ expect(mocks.submit).toHaveBeenCalledWith('book','chapter',0,[{tokens:[{arabic:'مرحبا'}],translation:'Hello'}],{arabic:'',english:'',comment:'Review this greeting',reason:''})
+ expect(textarea.value).toBe('');expect(host.textContent).toContain('Comment added.');expect(host.textContent).toContain('Review this greeting')
+ expect(mocks.source).toHaveBeenCalledTimes(1);expect(window.scrollTo).not.toHaveBeenCalled()
+ await select(0,'Choose…');expect(document.querySelector('[role="dialog"]')).toBeNull();expect(host.textContent).not.toContain('مرحبا')
+})
+it('preserves independent drafts and failed comments, prevents duplicate clicks, and restores previous comments',async()=>{
+ mocks.source.mockResolvedValue({location:'Reader',parent:'book',document:Array.from({length:26},()=>({tokens:[{arabic:'مرحبا'}],translation:'Hello'}))})
+ mocks.comments.mockResolvedValue([{id:'old',line_index:0,comment:'Previously saved',status:'accepted',created_at:'2026-10-02T12:00:00Z',admin_response:'Reviewed'}])
+ await act(async()=>root.render(<ReviewerWorkspace/>));await select(0,'Reader');await select(1,'Chapter 3 — Arrival')
+ expect(host.textContent).toContain('Previously saved');expect(host.textContent).toContain('Admin: Reviewed')
+ await comment(1,'First draft');await comment(2,'Second draft')
+ await button('Next');await comment(26,'Later page');await button('Previous')
+ expect(host.querySelector<HTMLTextAreaElement>('[aria-label="Comment for line 1"]')?.value).toBe('First draft')
+ expect(host.querySelector<HTMLTextAreaElement>('[aria-label="Comment for line 2"]')?.value).toBe('Second draft')
+ let finish!:(value:unknown)=>void;mocks.submit.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
+ const action=[...host.querySelectorAll<HTMLButtonElement>('button')].find(b=>b.textContent==='Comment')!
+ await act(async()=>{action.click();action.click()});expect(mocks.submit).toHaveBeenCalledTimes(1)
+ expect(host.querySelector<HTMLTextAreaElement>('[aria-label="Comment for line 2"]')?.disabled).toBe(false)
+ await act(async()=>finish('new'));expect(host.textContent).toContain('Comment added.')
+ mocks.submit.mockRejectedValueOnce(new Error('Try again'));const second=host.querySelector<HTMLTextAreaElement>('[aria-label="Comment for line 2"]')!
+ await act(async()=>{second.closest('.MuiCard-root')!.querySelector<HTMLButtonElement>('button')!.click()})
+ expect(second.value).toBe('Second draft');expect(host.textContent).toContain('Try again')
+ mocks.submit.mockResolvedValueOnce('retry');await act(async()=>{second.closest('.MuiCard-root')!.querySelector<HTMLButtonElement>('button')!.click()})
+ expect(second.value).toBe('');expect(host.textContent).not.toContain('Try again')
+})
+it('ignores late comment completions after changing chapter scope',async()=>{
+ let finish!:(value:unknown)=>void;mocks.submit.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
+ await act(async()=>root.render(<ReviewerWorkspace/>));await select(0,'Reader');await select(1,'Chapter 3 — Arrival')
+ await comment(1,'Old chapter comment');await button('Comment');await select(0,'Choose…')
+ await act(async()=>finish('old-chapter'))
+ expect(host.textContent).not.toContain('Comment added.');expect(host.textContent).not.toContain('Old chapter comment')
 })
 it('offers Admin scope/export controls inside Reviewer Workspace and requires selection before querying all suggestions',async()=>{
  await act(async()=>root.render(<ReviewerWorkspace admin/>))
@@ -52,6 +83,8 @@ it('keeps chapter selection when switching views and scrolls after each source p
  await act(async()=>root.render(<ReviewerWorkspace/>));await select(0,'Reader');await select(1,'Chapter 3 — Arrival')
  expect(host.textContent).toContain('Chapter 3 — Arrival');expect(window.scrollTo).toHaveBeenCalledTimes(1)
  await button('Scroll View');expect(host.querySelector('[aria-label="Chapter list"] button[aria-pressed="true"]')?.textContent).toBe('Chapter 3 — Arrival')
+ await comment(1,'Keep this draft');await button('Chapter 3 — Arrival')
+ expect(host.querySelector<HTMLTextAreaElement>('[aria-label="Comment for line 1"]')?.value).toBe('Keep this draft');expect(mocks.source).toHaveBeenCalledTimes(1)
  await button('Dropdown View');expect(host.querySelectorAll('[role="combobox"]')[1].textContent).toContain('Chapter 3 — Arrival')
  expect(window.scrollTo).toHaveBeenCalledTimes(1)
  await button('Next');expect(host.textContent).toContain('Line 26');expect(host.textContent).not.toContain('Line 1Comment');expect(window.scrollTo).toHaveBeenCalledTimes(2)

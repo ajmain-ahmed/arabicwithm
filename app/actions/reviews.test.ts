@@ -4,7 +4,7 @@ const mocks=vi.hoisted(()=>({access:vi.fn(),reviewer:vi.fn(),rpc:vi.fn(),from:vi
 vi.mock('@/app/actions/auth',()=>({getAuthenticatedAccess:mocks.access,guardReviewer:mocks.reviewer}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{rpc:mocks.rpc,from:mocks.from}}))
 vi.mock('next/cache',()=>({updateTag:mocks.updateTag,revalidatePath:mocks.revalidatePath}))
-import { changeManagedRole, editSuggestion, listManagedUsers, listSuggestions, loadReviewSource, managedUserDetails, reviewCatalogue, reviewSuggestion, submitSuggestion } from './reviews'
+import { changeManagedRole, editSuggestion, listManagedUsers, listSuggestions, loadReviewerComments, loadReviewSource, managedUserDetails, reviewCatalogue, reviewSuggestion, submitSuggestion } from './reviews'
 const actor='11111111-1111-4111-8111-111111111111',target='22222222-2222-4222-8222-222222222222'
 const input={arabic:'',english:'New translation',comment:'',reason:'Correction'}
 beforeEach(()=>{vi.clearAllMocks();mocks.rpc.mockResolvedValue({data:{ok:true},error:null})})
@@ -21,6 +21,7 @@ describe('server authorization boundaries',()=>{
   mocks.reviewer.mockRejectedValue(new Error('Forbidden'))
   await expect(reviewCatalogue('book')).rejects.toThrow('Forbidden')
   await expect(loadReviewSource('show',target)).rejects.toThrow('Forbidden')
+  await expect(loadReviewerComments('book',target)).rejects.toThrow('Forbidden')
   await expect(submitSuggestion('book',target,0,[],input)).rejects.toThrow('Forbidden')
   await expect(editSuggestion(target,false,input)).rejects.toThrow('Forbidden')
   expect(mocks.rpc).not.toHaveBeenCalled();expect(mocks.from).not.toHaveBeenCalled()
@@ -34,6 +35,18 @@ describe('server authorization boundaries',()=>{
   mocks.reviewer.mockResolvedValue({userId:actor,admin:false,role:'editor'})
   await submitSuggestion('book',target,0,[],input)
   expect(mocks.rpc).toHaveBeenCalledWith('submit_content_suggestion',expect.objectContaining({p_actor:actor,p_target:target}))
+ })
+ it('loads inline history only for the verified reviewer and selected content',async()=>{
+  mocks.reviewer.mockResolvedValue({userId:actor,admin:false,role:'editor'})
+  const rows=[{id:target,line_index:2,comment:'Saved feedback',status:'pending',created_at:'2026-10-03T00:00:00Z',admin_response:null}]
+  const query={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),neq:vi.fn().mockReturnThis(),order:vi.fn().mockReturnThis(),limit:vi.fn().mockResolvedValue({data:rows,error:null})}
+  mocks.from.mockReturnValue(query)
+  expect(await loadReviewerComments('book',target)).toEqual(rows)
+  expect(mocks.from).toHaveBeenCalledWith('content_suggestions')
+  expect(query.eq).toHaveBeenCalledWith('author_id',actor);expect(query.eq).toHaveBeenCalledWith('content_type','book');expect(query.eq).toHaveBeenCalledWith('target_id',target)
+  expect(query.neq).toHaveBeenCalledWith('status','withdrawn')
+  query.limit.mockResolvedValueOnce({data:null,error:{message:'Unavailable'}})
+  await expect(loadReviewerComments('book',target)).rejects.toThrow('Unable to load your previous comments')
  })
  it('requires explicit target confirmation for protected role changes',async()=>{
   mocks.access.mockResolvedValue({userId:actor,admin:true,role:'admin'})

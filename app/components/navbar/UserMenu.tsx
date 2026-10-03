@@ -18,6 +18,8 @@ interface UserMenuProps {
 }
 
 export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, isReviewer,accessLoading,accessError,onRetryAccess }: UserMenuProps) {
+    const navigationItemSx = { py: 1.2, gap: 1.5, color: 'var(--awm-bark)', '&:hover': { background: 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' } }
+    const navigationTextSx = { fontWeight: 600, color: 'var(--awm-bark)' }
 
     return (
         <Menu
@@ -54,19 +56,19 @@ export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, i
                         'linear-gradient(90deg, transparent, color-mix(in srgb, var(--awm-gold) 30%, transparent), transparent)',
                 }}
             />
-            {user && <MenuItem component={Link} href="/profile" onClick={onClose} sx={{ py: 1.2, gap: 1.5 }}><AccountCircleOutlined sx={{ fontSize: 18, color: 'var(--awm-gold)' }} /><Typography variant="body2" sx={{ fontWeight: 600 }}>My Profile</Typography></MenuItem>}
+            {user && <MenuItem component={Link} href="/profile" onClick={onClose} sx={navigationItemSx}><AccountCircleOutlined sx={{ fontSize: 18, color: 'var(--awm-gold)' }} /><Typography variant="body2" sx={navigationTextSx}>My Profile</Typography></MenuItem>}
             {user && accessLoading && <MenuItem disabled><Typography variant="body2" role="status">Checking permissions…</Typography></MenuItem>}
             {user && accessError && <MenuItem onClick={onRetryAccess}><Typography variant="body2">Unable to verify permissions · Retry</Typography></MenuItem>}
-            {user && isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose} sx={{ py: 1.2, gap: 1.5 }}><RateReviewOutlined sx={{fontSize:18,color:'var(--awm-gold)'}} aria-hidden="true" /><Typography variant="body2" sx={{ fontWeight: 600 }}>Reviewer Workspace</Typography></MenuItem>}
+            {user && isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose} sx={navigationItemSx}><RateReviewOutlined sx={{fontSize:18,color:'var(--awm-gold)'}} aria-hidden="true" /><Typography variant="body2" sx={navigationTextSx}>Reviewer Workspace</Typography></MenuItem>}
             {user && isAdmin && (
                 <MenuItem
                     component={Link}
                     href="/admin/users"
                     onClick={onClose}
-                    sx={{ py: 1.2, gap: 1.5, '&:hover': { background: 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' } }}
+                    sx={navigationItemSx}
                 >
                     <AdminPanelSettings sx={{ fontSize: 18, color: 'var(--awm-gold)' }} />
-                    <Typography variant="body2" sx={{ color: 'var(--awm-bark)', fontWeight: 600 }}>
+                    <Typography variant="body2" sx={navigationTextSx}>
                         Admin
                     </Typography>
                 </MenuItem>
