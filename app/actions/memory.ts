@@ -2,6 +2,10 @@
 
 import { isMissingDatabaseFeature, LEARNING_SETUP_MESSAGE } from '@/app/lib/databaseErrors'
 import { z } from 'zod'
+import { getAuthClient } from '@/app/lib/supabase/server'
+import { actionResult } from '@/app/lib/actionResult'
+import { memorySessionSchema as sessionSchema, type SavedMemorySession } from '@/app/lib/memorySession'
+export type { SavedMemorySession } from '@/app/lib/memorySession'
 import { fetchEntitlements } from '@/app/actions/entitlements'
 import { MEMORY, platformDate } from '@/app/lib/entitlements'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
@@ -63,6 +67,7 @@ function sampleEpisodeRows(rows: EpisodeRecord[], limit: number): EpisodeRecord[
 }
 
 export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<MemoryLibrary> {
+  if (!z.object({showId:z.string().uuid().optional(),episodeId:z.string().uuid().optional(),newOnly:z.boolean().optional()}).safeParse(input).success) return { cards: [], shows: [], scope: 'global', scopeTitle: 'Memory', missingScope: true, recommendedCardCount: 5, availableCardCount: 0, newOnly: false }
   if (!hasServiceClientConfig()) {
     return { cards: [], shows: [], scope: 'global', scopeTitle: 'Random practice', missingScope: false, recommendedCardCount: 5, availableCardCount: 0, newOnly: false }
   }
@@ -178,8 +183,10 @@ const fetchMemoryCardSource = unstable_cache(
       .select('id, show_id, slug, title, level, transcript')
       .eq('id', episodeId)
       .maybeSingle()
-    if (episodeError || !episode) return null
-    const { data: show } = await serviceClient.from('shows').select('id, slug, title').eq('id', episode.show_id).maybeSingle()
+    if (episodeError) throw new Error('Unable to verify the Memory source. Please retry.')
+    if (!episode) return null
+    const { data: show, error: showError } = await serviceClient.from('shows').select('id, slug, title').eq('id', episode.show_id).maybeSingle()
+    if (showError) throw new Error('Unable to verify the Memory source. Please retry.')
     if (!show) return null
     return { episode, show }
   },
@@ -212,12 +219,13 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating, c
   })
   if (!validCards.some((card) => card.id === cardId)) throw new Error('This Memory card is no longer available.')
 
-  const { data, error } = await serviceClient.rpc('complete_memory_card', {
+  const client = await getAuthClient()
+  const { data, error } = await client.rpc('complete_memory_card', {
     p_user_id: userId, p_completion_id: completionId, p_card_id: cardId, p_rating: rating,
     p_xp: MEMORY.xpPerCard, p_daily_limit: MEMORY.dailyFreeCards, p_has_premium: entitlement.memoryDailyLimit === null, p_session: state,
   })
-  if (error) throw new Error('Unable to save Memory progress. Please try again.')
-  return data as { accepted: boolean; awarded: number; totalXp: number; used: number }
+  if (error) { console.error('[memory review RPC]', error); throw new Error('Unable to save Memory progress. Please try again.') }
+  return z.object({accepted:z.boolean(),awarded:z.number().int().min(0).max(5),totalXp:z.number().int().nonnegative(),used:z.number().int().nonnegative()}).parse(data)
 }
 
 export async function fetchMemoryProgress() {
@@ -242,13 +250,6 @@ export async function fetchMemoryProgress() {
   return { used: daily.count ?? 0, total: all.cards, totalXp: all.xp + Number(legacy.data?.xp ?? 0), weekCards: weekly.cards, weekXp: weekly.xp, premium: entitlement.premium }
 }
 
-const sessionSchema = z.object({
-  cards: z.array(z.object({ id: z.string().max(100), showId: z.string(), showSlug: z.string(), showTitle: z.string(), episodeId: z.string(), episodeSlug: z.string(), episodeTitle: z.string(), cover: z.string().optional(), timestamp: z.number().nullable(), arabic: z.string().max(20000), english: z.string().max(20000) })).max(MEMORY.sessionCards),
-  index: z.number().int().min(0).max(MEMORY.sessionCards), completed: z.number().int().min(0).max(MEMORY.sessionCards),
-  sessionXp: z.number().int().min(0).max(MEMORY.sessionCards * MEMORY.xpPerCard), direction: z.enum(['arabic','english']),
-  completionIds: z.array(z.string().uuid()).max(MEMORY.sessionCards),
-})
-export type SavedMemorySession = z.infer<typeof sessionSchema>
 export async function saveMemorySession(input: SavedMemorySession) {
   const userId = await getAuthenticatedUserId()
   if (!userId) throw new Error('Sign in to save your session.')
@@ -281,4 +282,11 @@ export async function loadSavedMemorySession() {
     console.error('[memory session]', error)
     return { ok: false as const, error: error instanceof Error && error.message === LEARNING_SETUP_MESSAGE ? LEARNING_SETUP_MESSAGE : 'Unable to load your saved session. Please try again.' }
   }
+}
+
+export async function submitMemoryReview(cardId:string,rating:MemoryRating,completionId:string,state:SavedMemorySession) {
+  return actionResult('memory review',()=>recordMemoryReview(cardId,rating,completionId,state),'Unable to save this card. Your place is unchanged; please retry. If the source was removed, choose New cards.')
+}
+export async function persistMemorySession(state:SavedMemorySession) {
+  return actionResult('memory save',()=>saveMemorySession(state),'Unable to save your session. Please try again.')
 }

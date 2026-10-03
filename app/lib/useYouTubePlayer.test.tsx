@@ -25,8 +25,9 @@ let playerVolume = 100
 const calls: string[] = []
 const destroy = vi.fn()
 const pause = vi.fn()
-function Harness({ id }: { id?: string }) {
-  const player = useYouTubePlayer(id, undefined, undefined, { autoplay: true, muted: true })
+const seek = vi.fn()
+function Harness({ id, start }: { id?: string; start?: number }) {
+  const player = useYouTubePlayer(id, undefined, start, { autoplay: true, muted: true })
   useEffect(() => { controls = player })
   const { wrapRef } = player
   return <div ref={wrapRef} />
@@ -43,7 +44,7 @@ beforeEach(() => {
     Player: class {
       constructor(_element: HTMLElement, input: Record<string, unknown>) { options = input as unknown as Options }
       getCurrentTime() { return 4 }
-      seekTo() {}
+      seekTo = seek
       playVideo() { calls.push('play') }
       pauseVideo = pause
       mute() { calls.push('mute'); playerMuted = true }
@@ -130,4 +131,14 @@ describe('YouTube player lifecycle', () => {
     expect(iframe?.allowFullscreen).toBe(true)
     expect(controls.errorCode).toBeNull()
   })
+})
+
+it('seeks to exact fractional times initially and on same-video timestamp navigation',async()=>{
+ await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" start={300.18}/>))
+ await act(async()=>{await vi.advanceTimersByTimeAsync(60)})
+ await act(async()=>options.events.onReady())
+ expect(seek).toHaveBeenCalledWith(300.18,true)
+ await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" start={401.72}/>))
+ expect(seek).toHaveBeenLastCalledWith(401.72,true)
+ expect(destroy).not.toHaveBeenCalled()
 })

@@ -1,5 +1,5 @@
-import Link from 'next/link'
-import { Box, Button } from '@mui/material'
+import { Box } from '@mui/material'
+import TranscriptSearchLink from './TranscriptSearchLink'
 import { connection } from 'next/server'
 import type { Metadata } from 'next'
 import { fetchExploreFeedPage } from '@/app/actions/explore'
@@ -18,7 +18,7 @@ export default async function ExplorePage() {
   const initialBatch = await fetchExploreFeedPage(seed, 0)
   return (
     <>
-    <Box sx={{px:2,py:1,bgcolor:"var(--awm-cream-light)"}}><Button component={Link} href="/explore/search">Search transcripts</Button></Box>
+    <Box sx={{px:2,py:1,bgcolor:"var(--awm-cream-light)"}}><TranscriptSearchLink /></Box>
     <ExploreFeed
       key={seed}
       seed={seed}

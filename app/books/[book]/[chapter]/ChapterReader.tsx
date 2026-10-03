@@ -8,7 +8,7 @@ import type { PublicBookBlock, PublicBookToken } from '@/app/actions/books'
 import { groupChapterBlocks } from '@/app/lib/bookParagraphs'
 import { useAuth } from '@/app/AuthContext'
 import { dispatchWordLookup } from '@/app/lib/activity'
-import { supabase } from '@/app/lib/supabase/client'
+import { syncBookBookmark } from '@/app/lib/bookBookmarkSync'
 import {
   BOOK_SENTENCE_BOOKMARK_EVENT,
   BOOK_SENTENCE_BOOKMARK_STORAGE_KEY,
@@ -284,6 +284,15 @@ export default function ChapterReader({
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
   const [bookmarkNotice, setBookmarkNotice] = useState('')
+  const bookmarkRequest = useRef(0)
+  useEffect(() => () => { bookmarkRequest.current += 1 }, [])
+  const syncBookmark = (value: BookSentenceBookmark | null) => {
+    if (!user) return
+    const request = ++bookmarkRequest.current
+    void syncBookBookmark(user.id, value).then(ok => {
+      if (!ok && request === bookmarkRequest.current) setBookmarkNotice('Reading position updated on this device. Account sync failed; try again when connected.')
+    })
+  }
   const view = useSyncExternalStore(subscribeToReaderView, getReaderViewSnapshot, () => 'lines')
   const textScale = useSyncExternalStore(subscribeToTextScale, getTextScaleSnapshot, () => DEFAULT_BOOK_TEXT_SCALE)
   const readerFont = useSyncExternalStore(subscribeToReaderFont, getReaderFontSnapshot, () => DEFAULT_BOOK_READER_FONT)
@@ -357,7 +366,7 @@ export default function ChapterReader({
       } catch {
         // The in-memory state still updates for this visit.
       }
-      if (user) void supabase.auth.updateUser({ data: { book_sentence_bookmark: null } })
+      syncBookmark(null)
       return
     }
 
@@ -382,9 +391,7 @@ export default function ChapterReader({
       // The bookmark remains available in memory for this visit.
     }
 
-    if (user) {
-      void supabase.auth.updateUser({ data: { book_sentence_bookmark: nextBookmark } })
-    }
+    syncBookmark(nextBookmark)
   }
 
   const isBookmarkedSentence = (blockIndex: number) => bookmark?.bookSlug === bookSlug

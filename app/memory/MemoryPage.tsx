@@ -1,7 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { initialPractice, practiceReducer } from '@/app/lib/memorySession'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   ArrowBack,
@@ -15,7 +17,7 @@ import {
 import { Alert, Autocomplete, Box, Button, Chip, Container, LinearProgress, Paper, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import PremiumPrompt from "@/app/components/PremiumPrompt"
 import { MEMORY } from "@/app/lib/entitlements"
-import { loadMemoryProgress, loadSavedMemorySession, saveMemorySession, type SavedMemorySession, recordMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
+import { loadMemoryProgress, loadSavedMemorySession, persistMemorySession, type SavedMemorySession, submitMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
 import { useAuth } from '@/app/AuthContext'
 import type { MemoryDirection, MemoryRating } from '@/app/lib/memory'
 import { readGuestMemoryUsage, writeGuestMemoryUsage } from '@/app/lib/guestMemory'
@@ -51,20 +53,21 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const router = useRouter()
   const { user, loading } = useAuth()
   const direction = useSyncExternalStore<MemoryDirection>(subscribeToDirection, getDirectionSnapshot, () => 'arabic')
-  const [started, setStarted] = useState(false)
-  const [index, setIndex] = useState(0)
-  const [revealed, setRevealed] = useState(false)
-  const [completed, setCompleted] = useState(0)
-  const [sessionXp, setSessionXp] = useState(0)
   const [totalXp, setTotalXp] = useState(0)
   const initialCardCount = library.scope === 'global' ? 10 : library.recommendedCardCount
   const [selectedCardCount, setSelectedCardCount] = useState(initialCardCount)
-  const [cards, setCards] = useState(() => library.cards.slice(0, Math.min(initialCardCount, library.cards.length)))
+  const [practice, dispatch] = useReducer(practiceReducer, library.cards.slice(0, Math.min(initialCardCount, library.cards.length)), initialPractice)
+  const { cards, index, revealed, completed, sessionXp, completionIds } = practice
+  const started = practice.phase !== 'selection'
+  const complete = practice.phase === 'complete'
+  const activePractice = practice.phase === 'practice'
+  const reducedMotion = useReducedMotion()
+  const [navigating, startNavigation] = useTransition()
   const [saved, setSaved] = useState<SavedMemorySession | null>(null)
-  const [completionIds, setCompletionIds] = useState<string[]>([])
   const [used, setUsed] = useState(0)
   const [premium, setPremium] = useState(false)
-  const [ready, setReady] = useState(!user && !loading)
+  const [progressReady, setReady] = useState(false)
+  const ready = (!user && !loading) || progressReady
   const [progressError, setProgressError] = useState('')
   const [sessionError, setSessionError] = useState('')
   const [progressLoading, setProgressLoading] = useState(Boolean(user))
@@ -73,10 +76,15 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const [saveError, setSaveError] = useState('')
   const [upgrade, setUpgrade] = useState(false)
   const busyRef = useRef(false)
+  const mounted = useRef(true)
+  const submitted = useRef(new Set<string>())
+  const reviewVersion = useRef(0)
+  const progressRequest = useRef(0)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const limited = !premium && used >= MEMORY.dailyFreeCards
   useEffect(() => {
     if (loading || user) return
-    const refresh = () => setUsed(readGuestMemoryUsage(window.localStorage).used)
+    const refresh = () => { try { setUsed(readGuestMemoryUsage(window.localStorage).used) } catch { /* Storage may be unavailable. */ } }
     refresh()
     const timer = window.setInterval(refresh, 60000)
     window.addEventListener('focus', refresh)
@@ -86,17 +94,18 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     if (loading || !user) return
     let active = true
     const load = () => {
+      const version = reviewVersion.current, request = ++progressRequest.current
       void loadMemoryProgress().then(result => {
         if (!result.ok) throw new Error(result.error)
         const progress = result.data
-        if (!active) return
+        if (!active || version !== reviewVersion.current || request !== progressRequest.current || busyRef.current) return
         setUsed(progress.used); setPremium(progress.premium); setTotalXp(progress.totalXp); setReady(true); setProgressError('')
       }).catch(error => {
-        if (active) { setReady(false); setProgressError(error instanceof Error ? error.message : 'Unable to load Memory progress.') }
+        if (active && version === reviewVersion.current && request === progressRequest.current && !busyRef.current) { setReady(false); setProgressError(error instanceof Error ? error.message : 'Unable to load Memory progress.') }
       }).finally(() => { if (active) setProgressLoading(false) })
     }
     load()
-    void loadSavedMemorySession().then(result => { if (!result.ok) throw new Error(result.error); const session = result.data; if (active) { setSaved(session); setSessionError('') } }).catch(error => { if (active) setSessionError(error instanceof Error ? error.message : 'Unable to load your saved session.') })
+    if (!started) void loadSavedMemorySession().then(result => { if (!result.ok) throw new Error(result.error); const session = result.data; if (active) { setSaved(session); setSessionError('') } }).catch(error => { if (active) setSessionError(error instanceof Error ? error.message : 'Unable to load your saved session.') })
     /* Poll progress only during an active session: each refresh runs several
        DB queries, and finished ratings already update the count directly. */
     if (!started) return () => { active = false }
@@ -114,38 +123,44 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   }
 
   const finishCard = useCallback(async (rating: MemoryRating) => {
-    if (!card || !revealed || busyRef.current || limited || (Boolean(user) && !ready)) return
-    if (!user) {
-      const nextUsed = Math.min(MEMORY.dailyFreeCards, used + 1)
-      writeGuestMemoryUsage(window.localStorage, nextUsed)
-      setUsed(nextUsed)
-      setCompleted(value => value + 1)
-      setIndex(value => value + 1)
-      setRevealed(false)
-      if (nextUsed >= MEMORY.dailyFreeCards) setUpgrade(true)
-      return
-    }
-    busyRef.current = true; setSaving(true); setSaveError('')
+    const completionId = completionIds[index]
+    if (!card || !revealed || !completionId || submitted.current.has(completionId) || busyRef.current || navigating || limited || loading || (Boolean(user) && !ready)) return
+    busyRef.current = true; setSaving(true); setSaveError(''); reviewVersion.current += 1
     try {
-      const result = await recordMemoryReview(card.id, rating, completionIds[index], { cards, index: index + 1, completed: completed + 1, sessionXp, direction, completionIds })
-      setUsed(result.used)
-      if (!result.accepted) { setUpgrade(true); return }
-      setSessionXp(value => value + result.awarded); setTotalXp(value => value + result.awarded);
-      setCompleted(value => value + 1); setIndex(value => value + 1); setRevealed(false)
-      if (!premium && result.used >= MEMORY.dailyFreeCards) setUpgrade(true)
-    } catch (e) { setSaveError(e instanceof Error ? e.message : 'Unable to save. Please retry this card.') }
-    finally { busyRef.current = false; setSaving(false) }
-  }, [card, cards, completed, completionIds, direction, index, limited, premium, revealed, sessionXp, user, ready, used])
+      let awarded = 0
+      if (!user) {
+        const nextUsed = Math.min(MEMORY.dailyFreeCards, used + 1)
+        try { writeGuestMemoryUsage(window.localStorage, nextUsed) } catch { /* Keep in-memory quota when storage is unavailable. */ }
+        setUsed(nextUsed)
+        if (nextUsed >= MEMORY.dailyFreeCards) setUpgrade(true)
+      } else {
+        const response = await submitMemoryReview(card.id, rating, completionId, { cards, index: index + 1, completed: completed + 1, sessionXp, direction, completionIds })
+        if (!mounted.current) return
+        if (!response.ok) { setSaveError(response.error); return }
+        const result = response.data
+        setUsed(result.used)
+        if (!result.accepted) { setUpgrade(true); return }
+        awarded = result.awarded
+        setTotalXp(value => value + awarded)
+        if (!premium && result.used >= MEMORY.dailyFreeCards) setUpgrade(true)
+      }
+      submitted.current.add(completionId)
+      dispatch({type:'advance',completionId,awarded})
+    } catch { if (mounted.current) setSaveError('Unable to save this card. Your place is unchanged; please retry.') }
+    finally { reviewVersion.current += 1; busyRef.current = false; if (mounted.current) setSaving(false) }
+  }, [card, cards, completed, completionIds, direction, index, limited, premium, revealed, sessionXp, user, ready, used, loading, navigating])
 
   const saveAndExit = async () => {
+    if (busyRef.current || navigating) return
     if (!user) { router.push('/'); return }
-    if (busyRef.current) return
     busyRef.current = true; setSaving(true); setSaveError('')
     try {
-      await saveMemorySession({ cards, index, completed, sessionXp, direction, completionIds })
+      const result = await persistMemorySession({ cards, index, completed, sessionXp, direction, completionIds })
+      if (!mounted.current) return
+      if (!result.ok) { setSaveError(result.error); return }
       router.push('/')
-    } catch (e) { setSaveError(e instanceof Error ? e.message : 'Unable to save. Please try again.') }
-    finally { busyRef.current = false; setSaving(false) }
+    } catch { if (mounted.current) setSaveError('Unable to save your session. Please try again.') }
+    finally { busyRef.current = false; if (mounted.current) setSaving(false) }
   }
 
   useEffect(() => {
@@ -154,7 +169,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
       if (event.target instanceof HTMLElement && event.target.closest('button, input, textarea, [role=dialog]')) return
       if ((event.key === ' ' || event.key.toLowerCase() === 'r') && !revealed) {
         event.preventDefault()
-        setRevealed(true)
+        dispatch({type:'reveal'})
       } else if (revealed && event.key === '1') {
         void finishCard('again')
       } else if (revealed && (event.key === '2' || event.key === 'ArrowRight')) {
@@ -170,40 +185,44 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     router.push(show ? `/memory?show=${encodeURIComponent(show.id)}` : '/memory')
   }
   const chooseCardCount = (count: typeof CARD_COUNT_OPTIONS[number]) => {
-    if (started) return
+    if (activePractice || busyRef.current) return
     setSelectedCardCount(count)
-    setCards(library.cards.slice(0, Math.min(count, library.cards.length)))
+    dispatch({type:'select',cards:library.cards.slice(0, Math.min(count, library.cards.length))})
   }
   const restart = async () => {
-    if (loading) return
-    if (Boolean(user) && (!ready || saving)) return
+    if (loading || busyRef.current || navigating || (Boolean(user) && !ready)) return
     if (limited) { setUpgrade(true); return }
     const deck = library.cards.slice(0, Math.min(selectedCardCount, library.cards.length))
-    const ids = deck.map(() => crypto.randomUUID())
-    if (!user) {
-      setCards(deck); setCompletionIds(ids); setStarted(true); setIndex(0); setRevealed(false); setCompleted(0); setSessionXp(0); setSaved(null)
-      return
-    }
-    setSaving(true)
+    if (!deck.length) return
+    busyRef.current = true; setSaving(true); setSaveError('')
     try {
-      await saveMemorySession({ cards: deck, index: 0, completed: 0, sessionXp: 0, direction, completionIds: ids })
-      setCards(deck); setCompletionIds(ids); setStarted(true); setIndex(0); setRevealed(false); setCompleted(0); setSessionXp(0); setSaved(null)
-    } catch { setSaveError('Unable to start a saved session. Please try again.') }
-    finally { setSaving(false) }
+      const state = { cards: deck, index: 0, completed: 0, sessionXp: 0, direction, completionIds: deck.map(() => crypto.randomUUID()) }
+      if (user) {
+        const result = await persistMemorySession(state)
+        if (!mounted.current) return
+        if (!result.ok) { setSaveError(result.error); return }
+      }
+      submitted.current.clear(); dispatch({type:'begin',session:state}); setSaved(null)
+    } catch { if (mounted.current) setSaveError('Unable to start your session. Please try again.') }
+    finally { busyRef.current = false; if (mounted.current) setSaving(false) }
   }
   const resume = () => {
-    if (!saved) return
-    setCards(saved.cards); setIndex(saved.index); setCompleted(saved.completed); setSessionXp(saved.sessionXp); setCompletionIds(saved.completionIds); chooseDirection(saved.direction); setStarted(true); setSaved(null)
+    if (!saved || busyRef.current || !ready || limited || navigating) return
+    dispatch({type:'begin',session:saved}); chooseDirection(saved.direction); setSaved(null); setSaveError('')
   }
   const requestNewCards = () => {
+    if (busyRef.current || navigating || loading) return
     const params = new URLSearchParams({ new: '1', deck: crypto.randomUUID() })
     if (library.selectedEpisodeId) params.set('episode', library.selectedEpisodeId)
     else if (library.selectedShowId) params.set('show', library.selectedShowId)
-    router.push(`/memory?${params.toString()}`)
+    startNavigation(() => router.push(`/memory?${params.toString()}`, {scroll:false}))
+  }
+  const skip = () => {
+    if (busyRef.current || navigating || limited || loading || (Boolean(user) && !ready)) return
+    dispatch({type:'skip',completionId:completionIds[index]}); setSaveError('')
   }
 
   const empty = cards.length === 0
-  const complete = started && index >= cards.length
   const prompt = card ? (direction === 'english' ? card.arabic : card.english) : ''
   const answer = card ? (direction === 'english' ? card.english : card.arabic) : ''
   const promptIsArabic = direction === 'english'
@@ -219,6 +238,8 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
           </Box>
         </Box>
 
+        <AnimatePresence initial={false}>
+        {!activePractice && <motion.div key="selection" initial={{opacity:0,height:0}} animate={{opacity:1,height:'auto'}} exit={{opacity:0,height:0}} transition={reducedMotion ? {duration:0} : {opacity:{duration:0.12},height:{duration:0.22,delay:0.12}}} style={{overflow:'hidden'}}>
         <Paper elevation={0} sx={{ mt: 3, p: { xs: 2, sm: 2.5 }, border: '1px solid color-mix(in srgb, var(--awm-bark) 11%, transparent)', borderRadius: '14px', bgcolor: 'var(--awm-white)' }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(0,1fr) auto' }, alignItems: 'center', gap: 1.5 }}>
             <Autocomplete
@@ -246,12 +267,14 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
               {CARD_COUNT_OPTIONS.map((count) => {
                 const recommended = library.scope !== 'global' && count === library.recommendedCardCount
                 const selected = count === selectedCardCount
-                return <Button key={count} onClick={() => chooseCardCount(count)} disabled={started} variant={selected ? 'contained' : 'outlined'} aria-label={`${count} cards${recommended ? ', recommended' : ''}`} aria-pressed={selected} sx={{ minWidth: 0, minHeight: 48, px: 0.5, borderRadius: '9px', borderColor: recommended ? 'var(--awm-gold)' : 'color-mix(in srgb, var(--awm-bark) 18%, transparent)', bgcolor: selected ? 'var(--awm-gold)' : 'transparent', color: selected ? '#fff' : 'var(--awm-bark)', fontWeight: 800, lineHeight: 1.1, display: 'flex', flexDirection: 'column', '&:hover': { bgcolor: selected ? '#946c08' : 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' } }}>{count}{recommended && <Box component="span" sx={{ mt: 0.35, fontSize: 8.5, fontWeight: 700, textTransform: 'none' }}>Recommended</Box>}</Button>
+                return <Button key={count} onClick={() => chooseCardCount(count)} disabled={activePractice || saving || navigating} variant={selected ? 'contained' : 'outlined'} aria-label={`${count} cards${recommended ? ', recommended' : ''}`} aria-pressed={selected} sx={{ minWidth: 0, minHeight: 48, px: 0.5, borderRadius: '9px', borderColor: recommended ? 'var(--awm-gold)' : 'color-mix(in srgb, var(--awm-bark) 18%, transparent)', bgcolor: selected ? 'var(--awm-gold)' : 'transparent', color: selected ? '#fff' : 'var(--awm-bark)', fontWeight: 800, lineHeight: 1.1, display: 'flex', flexDirection: 'column', '&:hover': { bgcolor: selected ? '#946c08' : 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' } }}>{count}{recommended && <Box component="span" sx={{ mt: 0.35, fontSize: 8.5, fontWeight: 700, textTransform: 'none' }}>Recommended</Box>}</Button>
               })}
             </Box>
             {library.availableCardCount < selectedCardCount && <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 11.5, lineHeight: 1.45 }}>This source has {library.availableCardCount} high-quality {library.availableCardCount === 1 ? 'card' : 'cards'}, so the deck will use those without padding or duplicates.</Typography>}
           </Box>
         </Paper>
+        </motion.div>}
+        </AnimatePresence>
 
         <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason={`You've completed today's free Memory practice. You've practised ${MEMORY.dailyFreeCards} cards today. Come back tomorrow or upgrade to AWM+ for unlimited Memory practice.`} />
         {progressLoading && <Box role="status" sx={{ mt: 2 }}><Typography>Loading Memory progress...</Typography><LinearProgress /></Box>}
@@ -261,11 +284,12 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         {saveError && <Alert severity="error" sx={{ mt: 2 }}>{saveError}</Alert>}
         {ready && <Typography sx={{ mt: 2 }} color="text.secondary">{premium ? 'Unlimited daily Memory practice' : `${used} / ${MEMORY.dailyFreeCards} cards today`}</Typography>}
         {limited && <Alert severity="info" sx={{ mt: 2 }} action={<Button onClick={() => setUpgrade(true)}>Upgrade to AWM+</Button>}>You&apos;ve completed today&apos;s free Memory practice. Your progress is saved. Come back tomorrow.</Alert>}
-        {saved && !started && <Button onClick={resume} disabled={!ready || limited}>Resume saved session ? {saved.completed} completed</Button>}
+        {saved && !started && <Button onClick={resume} disabled={!ready || limited}>Resume saved session - {saved.completed} completed</Button>}
         {started && <Button disabled={saving} onClick={() => void saveAndExit()} sx={{ mt: 2 }}>{user ? 'Save & Exit' : 'Exit practice'}</Button>}
         {loadError && <Alert severity="error" sx={{ mt: 2.5 }}>{loadError}</Alert>}
         {library.missingScope && <Alert severity="warning" sx={{ mt: 2.5 }}>That source is no longer available. Choose a show or switch to Random practice.</Alert>}
 
+        <motion.div layout transition={{duration:reducedMotion ? 0 : 0.28}} style={{position:'relative'}}>
         {loadError ? <Box sx={{ mt: 2 }}><Button onClick={() => router.refresh()}>Retry loading Memory cards</Button></Box> : empty ? (
           <Paper elevation={0} sx={{ mt: 3, p: { xs: 4, md: 6 }, textAlign: 'center', borderRadius: '16px', border: '1px solid color-mix(in srgb, var(--awm-gold) 24%, transparent)', bgcolor: 'var(--awm-white)' }}>
             <PsychologyOutlined sx={{ fontSize: 52, color: 'var(--awm-gold)' }} />
@@ -279,7 +303,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
           </Paper>
         ) : complete ? (
           <Paper elevation={0} sx={{ mt: 3, p: { xs: 4, md: 6 }, textAlign: 'center', borderRadius: '18px', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)' }}>
-            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>{completed} cards completed{user ? ` · ${sessionXp} XP earned` : ''}</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving || limited))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button></Box>
+            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>{completed} cards completed{user ? ` · ${sessionXp} XP earned` : ''}</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving || limited))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving || navigating} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button></Box>
           </Paper>
         ) : card && (
           <Box sx={{ mt: 3 }}>
@@ -309,13 +333,15 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
               </Box>
               <Box sx={{ mt: { xs: 2.5, sm: 3 } }}>
                 <Typography sx={{ mb: 1.25, textAlign: 'center', color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 11 }}>{card.showTitle} · {card.episodeTitle}</Typography>
-                {!revealed ? <Button onClick={() => setRevealed(true)} fullWidth variant="contained" startIcon={<VisibilityOutlined />} sx={{ minHeight: 49, bgcolor: 'var(--awm-gold)', color: '#fff', borderRadius: '10px', textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#946c08' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 3 } }}>Reveal</Button> : <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 1.25 }}><Button disabled={(Boolean(user) && !ready) || saving || limited} onClick={() => void finishCard('again')} variant="outlined" sx={{ minHeight: 48, color: 'var(--awm-bark)', borderColor: 'color-mix(in srgb, var(--awm-bark) 25%, transparent)', borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}>Didn&apos;t know</Button><Button disabled={(Boolean(user) && !ready) || saving || limited} onClick={() => void finishCard('known')} variant="contained" endIcon={<ArrowForward />} sx={{ minHeight: 48, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '10px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' } }}>Knew it</Button></Box>}
+                {!revealed ? <Button onClick={() => dispatch({type:'reveal'})} fullWidth variant="contained" startIcon={<VisibilityOutlined />} sx={{ minHeight: 49, bgcolor: 'var(--awm-gold)', color: '#fff', borderRadius: '10px', textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#946c08' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 3 } }}>Reveal</Button> : <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 1.25 }}><Button disabled={(Boolean(user) && !ready) || saving || navigating || limited} onClick={() => void finishCard('again')} variant="outlined" sx={{ minHeight: 48, color: 'var(--awm-bark)', borderColor: 'color-mix(in srgb, var(--awm-bark) 25%, transparent)', borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}>Didn&apos;t know</Button><Button disabled={(Boolean(user) && !ready) || saving || navigating || limited} onClick={() => void finishCard('known')} variant="contained" endIcon={<ArrowForward />} sx={{ minHeight: 48, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '10px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' } }}>Knew it</Button></Box>}
                 <Button component={Link} href={`/cartoons/${encodeURIComponent(card.showSlug)}/${encodeURIComponent(card.episodeSlug)}`} startIcon={<PlayCircleOutlineRounded />} size="small" sx={{ display: 'flex', mx: 'auto', mt: 1.25, color: 'var(--awm-muted)', textTransform: 'none' }}>View source episode</Button>
               </Box>
             </Paper>
-            <Button disabled={(Boolean(user) && !ready) || saving || limited} onClick={() => { if (index >= cards.length - 1) setIndex(cards.length); else setIndex((value) => value + 1); setRevealed(false) }} startIcon={<ArrowBack sx={{ transform: 'rotate(180deg)' }} />} sx={{ mt: 1, color: 'var(--awm-muted)', textTransform: 'none' }}>Skip</Button>
+            <Button disabled={(Boolean(user) && !ready) || saving || navigating || limited} onClick={skip} startIcon={<ArrowBack sx={{ transform: 'rotate(180deg)' }} />} sx={{ mt: 1, color: 'var(--awm-muted)', textTransform: 'none' }}>Skip</Button>
+            <Button onClick={requestNewCards} disabled={loading || saving || navigating}>New</Button>
           </Box>
         )}
+        </motion.div>
       </Container>
     </Box>
   )

@@ -2,29 +2,12 @@
 
 "use server"
 
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { getAuthClient } from '@/app/lib/supabase/server'
 import { unstable_rethrow } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
 import { serviceClient } from '@/app/lib/supabase'
 import type { AccountRole } from '@/app/lib/reviews'
 
-async function getAuthClient() {
-  const cookieStore = await cookies()
-  return createServerClient(
-    (process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL)!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll(values) {
-          // Server Actions can persist refreshes; rendering relies on proxy.ts.
-          try { values.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch { /* Server Component cookies are read-only. */ }
-        },
-      },
-    }
-  )
-}
 
 async function getAuthenticatedUser(): Promise<User | null> {
   try {

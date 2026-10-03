@@ -38,7 +38,7 @@ export default function ReadingProgress({ bookSlug, chapterSlug }: { bookSlug: s
       },
     }).then(({ error }: { error: { message: string } | null }) => {
       if (error) console.error('Unable to save reading progress:', error.message)
-    })
+    }).catch(() => { console.error('Unable to save reading progress: network request failed') })
   }, [bookSlug, chapterSlug, loading, user])
 
   return null

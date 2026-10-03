@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import {
   Box,
@@ -33,14 +33,8 @@ import CefrChip from "@/app/components/CefrChip"
 type BookSortKey = keyof BookRow
 type SortDir = "asc" | "desc"
 
-async function fetchAllChapters(): Promise<ChapterRow[]> {
-  const all: ChapterRow[] = []
-  const booksData = await fetchBooksForAdmin()
-  for (const book of booksData) {
-    const chapters = await fetchChaptersForBookAdmin(book.id)
-    all.push(...chapters)
-  }
-  return all
+async function fetchAllChapters(books: BookRow[]): Promise<ChapterRow[]> {
+  return (await Promise.all(books.map(book => fetchChaptersForBookAdmin(book.id)))).flat()
 }
 
 export default function BooksAdminPage() {
@@ -61,14 +55,16 @@ export default function BooksAdminPage() {
   const [chapterDialogBookId, setChapterDialogBookId] = useState<string>("")
   const [chapterDialogOpen, setChapterDialogOpen] = useState(false)
 
-  const load = async () => {
+  const mounted = useRef(true)
+  const loadVersion = useRef(0)
+  const load = useCallback(async () => {
+    const version = ++loadVersion.current
     setLoading(true)
     setError(null)
     try {
-      const [booksData, chaptersData] = await Promise.all([
-        fetchBooksForAdmin(),
-        fetchAllChapters(),
-      ])
+      const booksData = await fetchBooksForAdmin()
+      const chaptersData = await fetchAllChapters(booksData)
+      if (!mounted.current || version !== loadVersion.current) return
       setBooks(booksData)
 
       const grouped: Record<string, ChapterRow[]> = {}
@@ -81,15 +77,17 @@ export default function BooksAdminPage() {
       }
       setChaptersByBookId(grouped)
     } catch (e: unknown) {
-      setError(errorMessage(e) ?? "Failed to load content")
+      if (mounted.current && version === loadVersion.current) setError(errorMessage(e) ?? "Failed to load content")
     } finally {
-      setLoading(false)
+      if (mounted.current && version === loadVersion.current) setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    load()
-  }, [])
+    mounted.current = true
+    void load()
+    return () => { mounted.current = false; loadVersion.current += 1 }
+  }, [load])
 
   const toggleExpand = (bookId: string) => {
     setExpandedBookIds((prev) => {

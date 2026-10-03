@@ -18,6 +18,7 @@ interface ImageUploadFieldProps {
   onCropChange?: (crop: ThumbnailCrop) => void
   onUploaded?: (url: string) => void
   onRemove?: () => void
+  onUploadingChange?: (uploading: boolean) => void
 }
 
 const MAX_CANVAS_WIDTH = 1280
@@ -81,19 +82,26 @@ export default function ImageUploadField({
   onCropChange,
   onUploaded,
   onRemove,
+  onUploadingChange,
 }: ImageUploadFieldProps) {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [localPreview, setLocalPreview] = useState<string | null>(null)
   const [cropOpen, setCropOpen] = useState(false)
+  const generation = useRef(0)
+  const uploadBusy = useRef(false)
+  const uploadChange = useRef(onUploadingChange)
+  useEffect(() => { uploadChange.current = onUploadingChange }, [onUploadingChange])
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    generation.current += 1; uploadBusy.current = false; setUploading(false); uploadChange.current?.(false)
     setLocalPreview((current) => {
       if (current?.startsWith("blob:")) URL.revokeObjectURL(current)
       return null
     })
     setCropOpen(false)
+    return () => { generation.current += 1; uploadBusy.current = false; uploadChange.current?.(false) }
   }, [path])
 
   useEffect(() => () => {
@@ -103,8 +111,9 @@ export default function ImageUploadField({
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
-      if (!file) return
-
+      if (!file || uploadBusy.current || !path) return
+      const version = generation.current
+      uploadBusy.current = true; uploadChange.current?.(true)
       setUploading(true)
       setError(null)
 
@@ -113,21 +122,27 @@ export default function ImageUploadField({
         setLocalPreview(objectUrl)
 
         const webpBlob = await fileToWebpBlob(file)
+        if (version !== generation.current) return
         const formData = new FormData()
         formData.append("bucket", bucket)
         formData.append("path", path)
         formData.append("file", webpBlob, "cover.webp")
 
         const publicUrl = await uploadCoverImage(formData)
+        if (version !== generation.current) return
         onUploaded?.(publicUrl)
         if (onCropChange) setCropOpen(true)
       } catch (err: unknown) {
+        if (version !== generation.current) return
         setError(errorMessage(err) ?? "Upload failed")
         setLocalPreview(null)
       } finally {
+        if (version === generation.current) {
+        uploadBusy.current = false; uploadChange.current?.(false)
         setUploading(false)
         if (inputRef.current) {
           inputRef.current.value = ""
+        }
         }
       }
     },

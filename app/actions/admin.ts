@@ -17,7 +17,10 @@ import {
   normalizeThumbnailCrop,
   type ThumbnailCrop,
 } from "@/app/lib/thumbnailCrop"
-import { normalizeReadingTimeMinutes } from "@/app/lib/readingTime"
+import { z } from 'zod'
+import { unstable_rethrow } from 'next/navigation'
+import { bookInputSchema, bookSaveError } from '@/app/lib/bookInput'
+import type { ActionResult } from '@/app/lib/actionResult'
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -630,74 +633,40 @@ export async function fetchBookForAdmin(id: string): Promise<BookRow | null> {
   return mapBookRow(data as Record<string, unknown>)
 }
 
-export async function createBook(input: BookInput): Promise<string> {
-  await guardAdmin()
-  if (!input.description || input.description.trim().length < 20) throw new Error("Books require a meaningful description of at least 20 characters.")
-
-  const { data, error } = await serviceClient
-    .from("books")
-    .insert({
-      slug: input.slug,
-      title: input.title,
-      author: input.author?.trim() || null,
-      reading_time_minutes: normalizeReadingTimeMinutes(input.reading_time_minutes),
-      title_ar: input.title_ar,
-      description: input.description,
-      cover: input.cover,
-      cover_crop: normalizeThumbnailCrop(input.cover_crop),
-      level: input.level,
-      category: input.category,
-      updated_at: new Date().toISOString(),
-    } as never)
-    .select("id")
-    .single()
-
-  if (error || !data) {
-    console.error("[createBook] error:", error?.message)
-    throw new Error(error?.message ?? "Failed to create book")
+export async function createBook(input: BookInput): Promise<ActionResult<string>> {
+  try {
+    await guardAdmin()
+    const parsed = bookInputSchema.safeParse(input)
+    if (!parsed.success) return {ok:false,error:parsed.error.issues[0].message}
+    const value = parsed.data
+    const {data,error} = await serviceClient.from('books').insert({...value,author:value.author || null,updated_at:new Date().toISOString()} as never).select('id').single()
+    if (error || !data) { console.error('[createBook]',error); return {ok:false,error:bookSaveError(error)} }
+    updateTag('books-public'); revalidateBookIndex(); revalidateBookPage(value.slug); revalidatePath('/admin/books')
+    return {ok:true,data:String(data.id)}
+  } catch (error) {
+    unstable_rethrow(error); console.error('[createBook]',error)
+    return {ok:false,error:error instanceof Error && error.message==='Forbidden'?'Administrator access is required to save books.':'Unable to save the book. Please try again.'}
   }
-
-  updateTag("books-public")
-  revalidateBookIndex()
-  revalidateBookPage(input.slug)
-  return data.id
 }
 
-export async function updateBook(
-  id: string,
-  input: Partial<BookInput>
-): Promise<void> {
-  await guardAdmin()
-
-  const previousSlug = await fetchBookSlugById(id)
-  if (input.description !== undefined && (!input.description || input.description.trim().length < 20)) throw new Error("Books require a meaningful description of at least 20 characters.")
-
-  const payload: Record<string, unknown> = { updated_at: new Date().toISOString() }
-  if (input.slug !== undefined) payload.slug = input.slug
-  if (input.title !== undefined) payload.title = input.title
-  if (input.author !== undefined) payload.author = input.author?.trim() || null
-  if (input.reading_time_minutes !== undefined) payload.reading_time_minutes = normalizeReadingTimeMinutes(input.reading_time_minutes)
-  if (input.title_ar !== undefined) payload.title_ar = input.title_ar
-  if (input.description !== undefined) payload.description = input.description
-  if (input.cover !== undefined) payload.cover = input.cover
-  if (input.cover_crop !== undefined) payload.cover_crop = normalizeThumbnailCrop(input.cover_crop)
-  if (input.level !== undefined) payload.level = input.level
-  if (input.category !== undefined) payload.category = input.category
-
-  const { error } = await serviceClient
-    .from("books")
-    .update(payload as never)
-    .eq("id", id)
-
-  if (error) {
-    console.error("[updateBook] error:", error.message)
-    throw new Error(error.message)
+export async function updateBook(id:string,input:Partial<BookInput>):Promise<ActionResult<string>> {
+  try {
+    await guardAdmin()
+    if (!z.string().uuid().safeParse(id).success) return {ok:false,error:'Invalid book ID.'}
+    const parsed = bookInputSchema.partial().safeParse(input)
+    if (!parsed.success) return {ok:false,error:parsed.error.issues[0].message}
+    const previousSlug = await fetchBookSlugById(id)
+    if (!previousSlug) return {ok:false,error:'This book is no longer available. Refresh the library.'}
+    const {data,error} = await serviceClient.from('books').update({...parsed.data,updated_at:new Date().toISOString()} as never).eq('id',id).select('id').maybeSingle()
+    if (error || !data) { console.error('[updateBook]',error); return {ok:false,error:error?bookSaveError(error):'This book is no longer available. Refresh the library.'} }
+    updateTag('books-public'); revalidateBookIndex(); revalidateBookPage(previousSlug)
+    if(parsed.data.slug && parsed.data.slug!==previousSlug)revalidateBookPage(parsed.data.slug)
+    revalidatePath('/admin/books')
+    return {ok:true,data:id}
+  } catch(error) {
+    unstable_rethrow(error); console.error('[updateBook]',error)
+    return {ok:false,error:error instanceof Error && error.message==='Forbidden'?'Administrator access is required to save books.':'Unable to save the book. Please try again.'}
   }
-
-  updateTag("books-public")
-  revalidateBookIndex()
-  if (previousSlug) revalidateBookPage(previousSlug)
-  if (input.slug && input.slug !== previousSlug) revalidateBookPage(input.slug)
 }
 
 export async function deleteBook(id: string): Promise<void> {
