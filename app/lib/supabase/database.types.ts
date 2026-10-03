@@ -15,6 +15,8 @@ type Table<Row> = { Row: { [K in keyof Row]: Row[K] }; Insert: { [K in keyof Row
 export interface Database {
   public: {
     Tables: {
+      youtube_transcripts: Table<import('@/app/actions/transcripts').TranscriptRow>
+      transcript_segments: Table<import('@/app/actions/transcripts').TranscriptSegment & {transcript_id:string}>
       account_roles: Table<{ user_id: string; role: 'user' | 'editor' | 'admin'; updated_at: string }>
       access_change_audit: Table<import('@/app/lib/reviews').AccessChange>
       content_suggestions: Table<import('@/app/lib/reviews').ContentSuggestion>
@@ -325,6 +327,9 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      register_youtube_transcript: { Args:{p_user:string;p_youtube_id:string};Returns:string }
+      admin_import_youtube_transcript: { Args:{p_actor:string;p_youtube_id:string;p_title:string;p_channel:string;p_raw:Json;p_searchable:boolean};Returns:string }
+      search_transcript_word: { Args:{p_word:string;p_after:number;p_after_rank:number;p_limit:number};Returns:Json }
       website_memory_totals: { Args: { p_user_id: string; p_since?: string }; Returns: Json }
       website_learning_history: { Args: { p_user_id: string }; Returns: Json }
       account_role: { Args: { p_user_id: string }; Returns: string }

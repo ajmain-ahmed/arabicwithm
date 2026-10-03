@@ -632,6 +632,7 @@ export async function fetchBookForAdmin(id: string): Promise<BookRow | null> {
 
 export async function createBook(input: BookInput): Promise<string> {
   await guardAdmin()
+  if (!input.description || input.description.trim().length < 20) throw new Error("Books require a meaningful description of at least 20 characters.")
 
   const { data, error } = await serviceClient
     .from("books")
@@ -669,6 +670,7 @@ export async function updateBook(
   await guardAdmin()
 
   const previousSlug = await fetchBookSlugById(id)
+  if (input.description !== undefined && (!input.description || input.description.trim().length < 20)) throw new Error("Books require a meaningful description of at least 20 characters.")
 
   const payload: Record<string, unknown> = { updated_at: new Date().toISOString() }
   if (input.slug !== undefined) payload.slug = input.slug

@@ -7,7 +7,7 @@ if (!url || !key) throw new Error('SUPABASE_URL and SUPABASE_SERVICE_KEY are req
 const supabase = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
 const config = {
   public: false,
-  fileSizeLimit: 104_857_600,
+  fileSizeLimit: 52_428_800,
   allowedMimeTypes: ['audio/mpeg', 'audio/mp4', 'audio/x-m4a'],
 }
 const { data: existing } = await supabase.storage.getBucket('audiobooks')

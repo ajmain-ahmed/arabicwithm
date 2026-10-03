@@ -2,6 +2,7 @@
 
 "use server"
 
+import { saveChapterAudioForAdmin, fetchChapterAudioForAdmin } from '@/app/actions/audiobooks'
 import { guardAdmin } from "@/app/actions/auth"
 import { serviceClient } from "@/app/lib/supabase"
 
@@ -10,7 +11,7 @@ const ALLOWED_BUCKETS = new Set(["covers"])
 // security property is "no traversal", not a specific slug charset.
 const COVER_PATH_PATTERN = /^(cartoons|episodes|books)\/[^/\\]+\.webp$/
 const MAX_FILE_BYTES = 5 * 1024 * 1024
-const MAX_AUDIO_BYTES = 100 * 1024 * 1024
+const MAX_AUDIO_BYTES = 50 * 1024 * 1024
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 function isWebPHeader(header: Uint8Array): boolean {
@@ -90,16 +91,20 @@ export async function uploadAudiobookAudio(formData: FormData): Promise<string> 
   const chapterId = formData.get('chapterId')
   const file = formData.get('file')
   if (typeof chapterId !== 'string' || !UUID_PATTERN.test(chapterId) || !(file instanceof File)) throw new Error('A valid chapter and audio file are required.')
-  if (file.size === 0 || file.size > MAX_AUDIO_BYTES) throw new Error('Audio must be 100 MB or smaller.')
+  if (file.size === 0 || file.size > MAX_AUDIO_BYTES) throw new Error('Audio must be 50 MB or smaller.')
   const header = new Uint8Array(await file.slice(0, 16).arrayBuffer())
   const extension = audioExtension(file, file.name, header)
   if (!extension) throw new Error('Audio must be a valid MP3 or M4A file.')
+  const { data: chapter, error: chapterError } = await serviceClient.from('chapters').select('id').eq('id', chapterId).maybeSingle()
+  if (chapterError || !chapter) throw new Error('Chapter not found.')
+  const previous = await fetchChapterAudioForAdmin(chapterId)
   const path = `${chapterId}/audio.${extension}`
-  const { error } = await serviceClient.storage.from('audiobooks').upload(path, file, { contentType: file.type, upsert: true })
+  const { error } = await serviceClient.storage.from('audiobooks').upload(path, file, { contentType: extension === 'mp3' ? 'audio/mpeg' : 'audio/mp4', upsert: true })
   if (error) {
     console.error('[uploadAudiobookAudio] error:', error.message)
     throw new Error('Audio upload failed. Confirm the private audiobooks bucket is configured.')
   }
+  await saveChapterAudioForAdmin({ chapterId, sourceType: 'supabase_storage', storagePath: path, externalVideoId: null, durationSeconds: null, narrator: previous?.narrator ?? null, isPublished: previous?.isPublished ?? false })
   const otherPath = `${chapterId}/audio.${extension === 'mp3' ? 'm4a' : 'mp3'}`
   await serviceClient.storage.from('audiobooks').remove([otherPath])
   return path
@@ -108,6 +113,8 @@ export async function uploadAudiobookAudio(formData: FormData): Promise<string> 
 export async function removeAudiobookAudio(path: string): Promise<void> {
   await guardAdmin()
   if (!/^[0-9a-f-]{36}\/audio\.(mp3|m4a)$/i.test(path)) throw new Error('Invalid audiobook path.')
+  const { data: reference, error: referenceError } = await serviceClient.from('book_chapter_audio').select('chapter_id').eq('storage_path', path).maybeSingle()
+  if (referenceError || reference) throw new Error('Remove the chapter audiobook reference before deleting its file.')
   const { error } = await serviceClient.storage.from('audiobooks').remove([path])
   if (error) throw new Error('Unable to remove audiobook file.')
 }

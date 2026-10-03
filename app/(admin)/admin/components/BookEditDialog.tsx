@@ -109,6 +109,7 @@ export default function BookEditDialog({
     setSaving(true)
     setError(null)
     try {
+      if (description.trim().length < 20) throw new Error("Add a meaningful description of at least 20 characters.")
       const input: BookInput = {
         slug,
         title,
@@ -210,7 +211,7 @@ export default function BookEditDialog({
             <AdminTextField label="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} fullWidth size="small" />
             <AdminTextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" />
             <AdminTextField label="Title Arabic" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} fullWidth size="small" />
-            <AdminTextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" />
+            <AdminTextField label="Description" required helperText="At least 20 characters; shown on the public book page." value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" />
             <ImageUploadField
               label="Cover image"
               bucket="covers"

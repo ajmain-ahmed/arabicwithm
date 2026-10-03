@@ -45,7 +45,7 @@ it.each(['admin', 'editor', 'user'])('offers the correct mobile destinations for
   const buttons = [...document.querySelectorAll('[role="button"]')]
   const admin = buttons.find(button => button.textContent === 'Admin')
   expect(Boolean(admin)).toBe(role === 'admin')
-  expect(buttons.some(button => button.textContent === 'Reviewer Workspace')).toBe(role !== 'user')
+  expect(buttons.some(button => button.textContent === 'Reviewer')).toBe(role !== 'user')
   expect(buttons.some(button => button.textContent === 'My Profile')).toBe(true)
   if (admin) {
     await act(async () => (admin as HTMLElement).click())

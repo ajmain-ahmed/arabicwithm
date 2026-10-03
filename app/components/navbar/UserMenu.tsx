@@ -59,7 +59,7 @@ export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, i
             {user && <MenuItem component={Link} href="/profile" onClick={onClose} sx={navigationItemSx}><AccountCircleOutlined sx={{ fontSize: 18, color: 'var(--awm-gold)' }} /><Typography variant="body2" sx={navigationTextSx}>My Profile</Typography></MenuItem>}
             {user && accessLoading && <MenuItem disabled><Typography variant="body2" role="status">Checking permissions…</Typography></MenuItem>}
             {user && accessError && <MenuItem onClick={onRetryAccess}><Typography variant="body2">Unable to verify permissions · Retry</Typography></MenuItem>}
-            {user && isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose} sx={navigationItemSx}><RateReviewOutlined sx={{fontSize:18,color:'var(--awm-gold)'}} aria-hidden="true" /><Typography variant="body2" sx={navigationTextSx}>Reviewer Workspace</Typography></MenuItem>}
+            {user && isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose} sx={navigationItemSx}><RateReviewOutlined sx={{fontSize:18,color:'var(--awm-gold)'}} aria-hidden="true" /><Typography variant="body2" sx={navigationTextSx}>Reviewer</Typography></MenuItem>}
             {user && isAdmin && (
                 <MenuItem
                     component={Link}

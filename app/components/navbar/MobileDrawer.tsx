@@ -162,7 +162,7 @@ export default function MobileDrawer({
                 {[
                     ...(isLoggedIn ? [{ label: 'My Profile', icon: <Person sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/profile') }] : []),
                     ...(isLoggedIn && isAdmin ? [{ label: 'Admin', icon: <AdminPanelSettings sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/admin/users') }] : []),
-                    ...(isLoggedIn && isReviewer ? [{ label: 'Reviewer Workspace', icon: <RateReviewOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/reviewer') }] : []),
+                    ...(isLoggedIn && isReviewer ? [{ label: 'Reviewer', icon: <RateReviewOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/reviewer') }] : []),
                     { label: 'Home', icon: <HomeOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/') },
                     { label: 'Explore', icon: <ExploreOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/explore') },
                     { label: 'Watch', icon: <Movie sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/cartoons') },

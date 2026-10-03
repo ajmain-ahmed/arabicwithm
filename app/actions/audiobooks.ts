@@ -106,6 +106,11 @@ export async function fetchChapterAudioForAdmin(chapterId: string): Promise<Admi
 export async function saveChapterAudioForAdmin(input: z.input<typeof audioInput>): Promise<void> {
   await guardAdmin()
   const value = audioInput.parse(input)
+  if (value.storagePath) {
+    if (value.storagePath.split('/')[0].toLowerCase() !== value.chapterId.toLowerCase()) throw new Error('Audio must belong to this chapter.')
+    const { data: objects, error: objectError } = await serviceClient.storage.from('audiobooks').list(value.chapterId, { search: value.storagePath.split('/')[1] })
+    if (objectError || !objects?.some(item => item.name === value.storagePath!.split('/')[1])) throw new Error('Upload the audio file before saving this source.')
+  }
   const { error } = await serviceClient.from('book_chapter_audio').upsert({ chapter_id: value.chapterId, source_type: value.sourceType, storage_path: value.storagePath, external_video_id: value.externalVideoId, duration_seconds: value.durationSeconds, narrator: value.narrator || null, is_published: value.isPublished, updated_at: new Date().toISOString() }, { onConflict: 'chapter_id' })
   if (error) throw new Error(error.message)
   await revalidateChapterAudio(value.chapterId)
@@ -113,7 +118,13 @@ export async function saveChapterAudioForAdmin(input: z.input<typeof audioInput>
 
 export async function deleteChapterAudioForAdmin(chapterId: string): Promise<void> {
   await guardAdmin()
+  if (!z.string().uuid().safeParse(chapterId).success) throw new Error('Invalid chapter.')
+  const previous = await fetchChapterAudioForAdmin(chapterId)
   const { error } = await serviceClient.from('book_chapter_audio').delete().eq('chapter_id', chapterId)
   if (error) throw new Error(error.message)
   await revalidateChapterAudio(chapterId)
+  if (previous?.storagePath) {
+    const { error: cleanupError } = await serviceClient.storage.from('audiobooks').remove([previous.storagePath])
+    if (cleanupError) console.warn('[chapter audio] Removed the chapter reference; private file cleanup needs retry.')
+  }
 }

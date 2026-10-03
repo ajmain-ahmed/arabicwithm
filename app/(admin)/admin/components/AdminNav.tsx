@@ -26,6 +26,7 @@ const navItems = [
   { label: "Users", href: "/admin/users", icon: <People /> },
   { label: "Reviews", href: "/admin/reviews", icon: <RateReview /> },
   { label: "Shows", href: "/admin/shows", icon: <SmartDisplay /> },
+  { label: "Transcripts", href: "/admin/transcripts", icon: <FormatQuote /> },
   { label: "Books", href: "/admin/books", icon: <Book /> },
   { label: "Hans Wehr", href: "/admin/hans-wehr", icon: <MenuBook /> },
   { label: "Phrases", href: "/admin/phrases", icon: <FormatQuote /> },

@@ -1,0 +1,31 @@
+import {File as NodeFile} from 'node:buffer'
+import {afterEach,beforeEach,describe,it,expect,vi} from 'vitest'
+const mocks=vi.hoisted(()=>({guard:vi.fn(),entitlement:vi.fn(),user:vi.fn(),from:vi.fn(),list:vi.fn(),remove:vi.fn(),sign:vi.fn(),upload:vi.fn(),revalidate:vi.fn()}))
+vi.mock('@/app/actions/auth',()=>({guardAdmin:mocks.guard,getAuthenticatedUserId:mocks.user}))
+vi.mock('@/app/actions/entitlements',()=>({requireEntitlement:mocks.entitlement}))
+vi.mock('@/app/lib/supabase',()=>({serviceClient:{from:mocks.from,storage:{from:()=>({list:mocks.list,remove:mocks.remove,createSignedUrl:mocks.sign,upload:mocks.upload})}}}))
+vi.mock('next/cache',()=>({revalidatePath:mocks.revalidate}))
+import {uploadAudiobookAudio,removeAudiobookAudio} from './storage'
+import {deleteChapterAudioForAdmin,fetchChapterAudioForAdmin,fetchPublishedChapterAudio,requestChapterAudio,saveChapterAudioForAdmin} from './audiobooks'
+const chapter='11111111-1111-4111-8111-111111111111'
+let row:Record<string,unknown>|null,events:string[]
+beforeEach(()=>{
+ vi.resetAllMocks();events=[];row=null;mocks.guard.mockResolvedValue(undefined);mocks.entitlement.mockResolvedValue(undefined);mocks.user.mockResolvedValue('listener');mocks.list.mockResolvedValue({data:[{name:'audio.mp3'}],error:null});mocks.remove.mockImplementation(async()=>{events.push('remove-file');return {error:null}});mocks.sign.mockResolvedValue({data:{signedUrl:'https://example.test/scoped-playback'},error:null})
+ mocks.from.mockImplementation((table:string)=>{
+  const value={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn(async()=>({data:table==='book_chapter_audio'?row:table==='chapters'?{id:chapter,slug:'chapter',book_id:'book'}:table==='books'?{slug:'book'}:null,error:null})),
+   upsert:vi.fn(async(data:Record<string,unknown>)=>{row={id:'audio',...data};events.push('persist-reference');return {error:null}}),
+   delete:vi.fn(()=>({eq:vi.fn(async()=>{row=null;events.push('remove-reference');return {error:null}})}))}
+  return value
+ })
+})
+afterEach(()=>vi.unstubAllGlobals())
+describe('existing chapter audio persistence and permissions',()=>{
+ it('denies audio mutations before touching storage or metadata',async()=>{mocks.guard.mockRejectedValue(new Error('Forbidden'));await expect(saveChapterAudioForAdmin({chapterId:chapter,sourceType:'supabase_storage',storagePath:chapter+'/audio.mp3',externalVideoId:null,durationSeconds:null,narrator:null,isPublished:true})).rejects.toThrow('Forbidden');expect(mocks.from).not.toHaveBeenCalled();expect(mocks.list).not.toHaveBeenCalled()})
+ it('persists a stable private path and reloads it, not a signed URL',async()=>{await saveChapterAudioForAdmin({chapterId:chapter,sourceType:'supabase_storage',storagePath:chapter+'/audio.mp3',externalVideoId:null,durationSeconds:15,narrator:'Narrator',isPublished:true});const loaded=await fetchChapterAudioForAdmin(chapter);expect(loaded?.storagePath).toBe(chapter+'/audio.mp3');expect(loaded?.isPublished).toBe(true);expect(mocks.sign).not.toHaveBeenCalled()})
+ it('does not accept another chapter path or a missing storage object',async()=>{await expect(saveChapterAudioForAdmin({chapterId:chapter,sourceType:'supabase_storage',storagePath:'22222222-2222-4222-8222-222222222222/audio.mp3',externalVideoId:null,durationSeconds:null,narrator:null,isPublished:true})).rejects.toThrow('belong');mocks.list.mockResolvedValue({data:[],error:null});await expect(saveChapterAudioForAdmin({chapterId:chapter,sourceType:'supabase_storage',storagePath:chapter+'/audio.mp3',externalVideoId:null,durationSeconds:null,narrator:null,isPublished:true})).rejects.toThrow('Upload')})
+ it('removes the persistent reference before deleting the file',async()=>{row={chapter_id:chapter,source_type:'supabase_storage',storage_path:chapter+'/audio.mp3',is_published:true};await deleteChapterAudioForAdmin(chapter);expect(events).toEqual(['remove-reference','remove-file']);expect(await fetchPublishedChapterAudio(chapter)).toBeNull()})
+ it('the existing uploader persists the reference before retiring another format',async()=>{vi.stubGlobal('File',NodeFile);mocks.upload.mockResolvedValue({error:null});const file=new NodeFile([new Uint8Array([0x49,0x44,0x33,4,0,0,0,0,0,0])],'chapter.mp3',{type:'audio/mpeg'});const data={get:(key:string)=>key==='chapterId'?chapter:file} as unknown as FormData;expect(await uploadAudiobookAudio(data)).toBe(chapter+'/audio.mp3');expect(events).toEqual(['persist-reference','remove-file']);expect((await fetchChapterAudioForAdmin(chapter))?.storagePath).toBe(chapter+'/audio.mp3');expect(mocks.upload).toHaveBeenCalledWith(chapter+'/audio.mp3',file,{contentType:'audio/mpeg',upsert:true})})
+ it('direct file deletion refuses a saved chapter reference',async()=>{row={chapter_id:chapter,source_type:'supabase_storage',storage_path:chapter+'/audio.mp3',is_published:true};await expect(removeAudiobookAudio(chapter+'/audio.mp3')).rejects.toThrow('reference');expect(mocks.remove).not.toHaveBeenCalled()})
+ it('returns no player availability for chapters without audio',async()=>{expect(await fetchPublishedChapterAudio(chapter)).toBeNull()})
+ it('requires audiobook entitlement before generating a playback URL',async()=>{mocks.entitlement.mockRejectedValue(new Error('AWM+ required'));await expect(requestChapterAudio(chapter)).rejects.toThrow('AWM+ required');expect(mocks.from).not.toHaveBeenCalled();expect(mocks.sign).not.toHaveBeenCalled()})
+})

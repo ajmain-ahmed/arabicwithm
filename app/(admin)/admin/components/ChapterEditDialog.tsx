@@ -34,7 +34,7 @@ import {
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
 import { deleteChapterAudioForAdmin, fetchChapterAudioForAdmin, saveChapterAudioForAdmin, type AudioSourceType } from '@/app/actions/audiobooks'
-import { removeAudiobookAudio, uploadAudiobookAudio } from '@/app/actions/storage'
+import { uploadAudiobookAudio } from '@/app/actions/storage'
 
 interface ChapterEditDialogProps {
   open: boolean
@@ -83,6 +83,7 @@ export default function ChapterEditDialog({
   useEffect(() => {
     if (!open) return
     setTab(0)
+    setLoading(false)
     setError(null)
     setBookId(initialBookId ?? "")
     setAudioExists(false); setAudioSource('supabase_storage'); setAudioPath(null); setYoutubeId(''); setNarrator(''); setDurationSeconds(''); setAudioPublished(false)
@@ -95,25 +96,23 @@ export default function ChapterEditDialog({
       return
     }
 
+    let active = true
     setLoading(true)
-    fetchChapterForAdmin(chapterId!)
-      .then((row: ChapterWithContent | null) => {
-        if (!row) {
-          setError("Chapter not found")
-          return
+    Promise.all([fetchChapterForAdmin(chapterId!), fetchChapterAudioForAdmin(chapterId!)])
+      .then(([row, audio]: [ChapterWithContent | null, Awaited<ReturnType<typeof fetchChapterAudioForAdmin>>]) => {
+        if (!active) return
+        if (!row) { setError("Chapter not found"); return }
+        setBookId(row.book_id); setSlug(row.slug); setTitle(row.title)
+        setChapterNumber(String(row.chapter_number)); setContentJson(JSON.stringify(row.content ?? [], null, 2))
+        if (audio) {
+          setAudioExists(true); setAudioSource(audio.sourceType); setAudioPath(audio.storagePath)
+          setYoutubeId(audio.externalVideoId ?? ''); setNarrator(audio.narrator ?? '')
+          setDurationSeconds(audio.durationSeconds ? String(audio.durationSeconds) : ''); setAudioPublished(audio.isPublished)
         }
-        setBookId(row.book_id)
-        setSlug(row.slug)
-        setTitle(row.title)
-        setChapterNumber(String(row.chapter_number))
-        setContentJson(JSON.stringify(row.content ?? [], null, 2))
       })
-      .catch((e: unknown) => setError(errorMessage(e) ?? "Failed to load chapter"))
-      .finally(() => setLoading(false))
-    fetchChapterAudioForAdmin(chapterId!).then((audio) => {
-      if (!audio) return
-      setAudioExists(true); setAudioSource(audio.sourceType); setAudioPath(audio.storagePath); setYoutubeId(audio.externalVideoId ?? ''); setNarrator(audio.narrator ?? ''); setDurationSeconds(audio.durationSeconds ? String(audio.durationSeconds) : ''); setAudioPublished(audio.isPublished)
-    }).catch((e: unknown) => setError(errorMessage(e) ?? 'Failed to load audiobook settings'))
+      .catch((e: unknown) => { if (active) setError(errorMessage(e) ?? "Failed to load chapter and audio") })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
   }, [open, chapterId, isNew, initialBookId])
 
   const handleSave = async () => {
@@ -175,7 +174,7 @@ export default function ChapterEditDialog({
     setAudioUploading(true); setError(null)
     try {
       const data = new FormData(); data.set('chapterId', chapterId); data.set('file', file)
-      setAudioPath(await uploadAudiobookAudio(data)); setAudioSource('supabase_storage'); setAudioExists(true)
+      setAudioPath(await uploadAudiobookAudio(data)); setAudioSource('supabase_storage'); setAudioExists(true); setDurationSeconds('')
     } catch (e: unknown) { setError(errorMessage(e) ?? 'Audio upload failed') }
     finally { setAudioUploading(false) }
   }
@@ -184,7 +183,6 @@ export default function ChapterEditDialog({
     if (!chapterId || !audioExists || !confirm('Remove this chapter audiobook?')) return
     setSaving(true); setError(null)
     try {
-      if (audioPath) await removeAudiobookAudio(audioPath)
       await deleteChapterAudioForAdmin(chapterId)
       setAudioExists(false); setAudioPath(null); setYoutubeId(''); setNarrator(''); setDurationSeconds(''); setAudioPublished(false)
     } catch (e: unknown) { setError(errorMessage(e) ?? 'Unable to remove audiobook') }
@@ -206,7 +204,7 @@ export default function ChapterEditDialog({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => { if (!saving && !audioUploading) onClose() }}
       fullScreen={isMobile}
       maxWidth="xl"
       fullWidth={!isMobile}
@@ -235,7 +233,7 @@ export default function ChapterEditDialog({
         }}
       >
         {isNew ? "New Chapter" : "Edit Chapter"}
-        <IconButton onClick={onClose} size="small" sx={{ color: "#7a6e65", mr: -0.5 }}>
+        <IconButton onClick={onClose} disabled={saving || audioUploading} size="small" sx={{ color: "#7a6e65", mr: -0.5 }}>
           <Close sx={{ fontSize: "1.2rem" }} />
         </IconButton>
       </DialogTitle>
@@ -330,12 +328,12 @@ export default function ChapterEditDialog({
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <FormControl fullWidth size="small"><InputLabel id="audio-source-label">Source</InputLabel><Select labelId="audio-source-label" label="Source" value={audioSource} onChange={(event) => setAudioSource(event.target.value as AudioSourceType)}><MenuItem value="supabase_storage">Uploaded MP3 / M4A</MenuItem><MenuItem value="youtube">YouTube</MenuItem></Select></FormControl>
                 {audioSource === 'supabase_storage' ? <Box>
-                  <Button component="label" variant="outlined" disabled={isNew || audioUploading}>{audioUploading ? 'Uploading…' : audioPath ? 'Replace audio file' : 'Upload audio file'}<input hidden type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,.mp3,.m4a" onChange={(event) => void handleAudioUpload(event.target.files?.[0])} /></Button>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{isNew ? 'Save the new chapter before uploading audio.' : audioPath ?? 'MP3 or M4A, up to 100 MB. Stored privately.'}</Typography>
+                  <Button component="label" variant="outlined" disabled={isNew || audioUploading || loading || saving}>{audioUploading ? 'Uploading…' : audioPath ? 'Replace audio file' : 'Upload audio file'}<input hidden type="file" accept="audio/mpeg,audio/mp4,audio/x-m4a,.mp3,.m4a" onChange={(event) => void handleAudioUpload(event.target.files?.[0])} /></Button>
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>{isNew ? 'Save the new chapter before uploading audio.' : audioPath ?? 'MP3 or M4A, up to 50 MB. Stored privately.'}</Typography>
                 </Box> : <AdminTextField label="YouTube video ID" value={youtubeId} onChange={(event) => setYoutubeId(event.target.value)} helperText="The 11-character ID, not the full URL." fullWidth size="small" />}
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}><AdminTextField label="Narrator" value={narrator} onChange={(event) => setNarrator(event.target.value)} fullWidth size="small" /><AdminTextField label="Duration (seconds)" type="number" value={durationSeconds} onChange={(event) => setDurationSeconds(event.target.value)} fullWidth size="small" /></Box>
                 <FormControlLabel control={<Switch checked={audioPublished} onChange={(event) => setAudioPublished(event.target.checked)} />} label="Published and visible to AWM+ listeners" />
-                {audioExists && <Button color="error" variant="outlined" onClick={() => void handleRemoveAudio()} disabled={saving}>Remove audiobook</Button>}
+                {audioExists && <Button color="error" variant="outlined" onClick={() => void handleRemoveAudio()} disabled={saving || audioUploading || loading}>Remove audiobook</Button>}
               </Box>
             )}
           </Box>
@@ -358,7 +356,7 @@ export default function ChapterEditDialog({
         <Button
           variant="outlined"
           onClick={onClose}
-          disabled={saving}
+          disabled={saving || audioUploading || loading}
           sx={{ fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", borderColor: "rgba(122,110,101,0.3)", color: "#7a6e65", width: { xs: "100%", sm: "auto" } }}
         >
           Cancel
@@ -366,7 +364,7 @@ export default function ChapterEditDialog({
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={saving || loading}
+          disabled={saving || audioUploading || loading}
           startIcon={<Save sx={{ fontSize: "1rem" }} />}
           sx={{ background: "#2c1a0e", color: "#f5ede0", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", width: { xs: "100%", sm: "auto" }, "&:hover": { background: "#1a0f08" } }}
         >
