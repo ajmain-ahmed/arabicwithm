@@ -4,7 +4,7 @@ const mocks=vi.hoisted(()=>({access:vi.fn(),reviewer:vi.fn(),rpc:vi.fn(),from:vi
 vi.mock('@/app/actions/auth',()=>({getAuthenticatedAccess:mocks.access,guardReviewer:mocks.reviewer}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{rpc:mocks.rpc,from:mocks.from}}))
 vi.mock('next/cache',()=>({updateTag:mocks.updateTag,revalidatePath:mocks.revalidatePath}))
-import { changeManagedRole, editSuggestion, listManagedUsers, listSuggestions, loadReviewerComments, loadReviewSource, managedUserDetails, reviewCatalogue, reviewSuggestion, submitSuggestion } from './reviews'
+import { changeManagedRole, editSuggestion, listManagedUsers, listSuggestions, loadAdminBookCorrections, loadReviewerComments, loadReviewSource, managedUserDetails, reviewCatalogue, reviewSuggestion, submitSuggestion } from './reviews'
 const actor='11111111-1111-4111-8111-111111111111',target='22222222-2222-4222-8222-222222222222'
 const input={arabic:'',english:'New translation',comment:'',reason:'Correction'}
 beforeEach(()=>{vi.clearAllMocks();mocks.rpc.mockResolvedValue({data:{ok:true},error:null})})
@@ -15,6 +15,7 @@ describe('server authorization boundaries',()=>{
   await expect(managedUserDetails(target)).rejects.toThrow('Forbidden')
   await expect(changeManagedRole(target,'admin','Promotion',target)).rejects.toThrow('Forbidden')
   await expect(reviewSuggestion(target,'accept','')).rejects.toThrow('Forbidden')
+  await expect(loadAdminBookCorrections(actor,target)).rejects.toThrow('Forbidden')
   expect(mocks.rpc).not.toHaveBeenCalled();expect(mocks.from).not.toHaveBeenCalled()
  })
  it('denies reviewer reads/writes for normal users before touching the database',async()=>{
@@ -54,6 +55,28 @@ describe('server authorization boundaries',()=>{
   expect(mocks.rpc).not.toHaveBeenCalled()
   await changeManagedRole(target,'editor','Trusted reviewer',target)
   expect(mocks.rpc).toHaveBeenCalledWith('change_account_role',expect.objectContaining({p_actor:actor,p_target:target,p_role:'editor'}))
+ })
+ it('collects all chapter comments across API batches in reading order, without losing same-line comments',async()=>{
+  mocks.access.mockResolvedValue({userId:actor,admin:true,role:'admin'})
+  const records=Array.from({length:1001},(_,index)=>({id:`00000000-0000-4000-8000-${String(index+1).padStart(12,'0')}`,author_id:actor,parent_id:actor,target_id:target,line_index:1000-index,original_arabic:'Original',comment:`Comment ${index}`,created_at:'2026-10-03T00:00:00Z',status:'pending',admin_response:null}))
+  records[1000].line_index=records[999].line_index
+  const pages=[records.slice(0,500),records.slice(500,1000),records.slice(1000),[]]
+  const query={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),neq:vi.fn().mockReturnThis(),lte:vi.fn().mockReturnThis(),order:vi.fn().mockReturnThis(),limit:vi.fn().mockReturnThis(),gt:vi.fn().mockReturnThis(),then:(resolve:(value:unknown)=>unknown)=>Promise.resolve({data:pages.shift(),error:null}).then(resolve)}
+  mocks.from.mockReturnValue(query)
+  const rows=await loadAdminBookCorrections(actor,target)
+  expect(rows).toHaveLength(1001);expect(rows[0].line_index).toBe(1);expect(rows[1].line_index).toBe(1);expect(rows[1000].line_index).toBe(1000)
+  expect(query.gt).toHaveBeenCalledWith('id',records[499].id);expect(query.gt).toHaveBeenCalledWith('id',records[999].id)
+  expect(query.eq).toHaveBeenCalledWith('content_type','book');expect(query.eq).toHaveBeenCalledWith('parent_id',actor);expect(query.eq).toHaveBeenCalledWith('target_id',target)
+  expect(query.eq).not.toHaveBeenCalledWith('author_id',expect.anything());expect(query.neq).toHaveBeenCalledWith('status','withdrawn')
+ })
+ it('checks selected IDs against the chapter and rejects missing/withdrawn records',async()=>{
+  mocks.access.mockResolvedValue({userId:actor,admin:true,role:'admin'})
+  const query={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),neq:vi.fn().mockReturnThis(),lte:vi.fn().mockReturnThis(),in:vi.fn().mockResolvedValue({data:[],error:null})}
+  mocks.from.mockReturnValue(query)
+  await expect(loadAdminBookCorrections(actor,target,[target])).rejects.toThrow('removed or withdrawn')
+  expect(query.in).toHaveBeenCalledWith('id',[target])
+  query.in.mockResolvedValueOnce({data:null,error:{message:'Database unavailable'}})
+  await expect(loadAdminBookCorrections(actor,target,[target])).rejects.toThrow('Unable to load corrections')
  })
  it('reports malformed source blocks without letting the reviewer crash while rendering tokens',async()=>{
   mocks.reviewer.mockResolvedValue({userId:actor,admin:false,role:'editor'})

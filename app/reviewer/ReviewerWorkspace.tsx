@@ -1,14 +1,15 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Alert, Box, Button, Card, CardContent, MenuItem, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
-import { loadReviewerComments, loadReviewSource, reviewCatalogue, submitSuggestion } from '@/app/actions/reviews'
-import type { ReviewerLineComment, ReviewSource, ReviewType } from '@/app/lib/reviews'
+import { Alert, Box, Button, Card, CardContent, Checkbox, MenuItem, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
+import { loadAdminBookCorrections, loadReviewerComments, loadReviewSource, reviewCatalogue, submitSuggestion } from '@/app/actions/reviews'
+import type { BookCorrection, ReviewerLineComment, ReviewSource, ReviewType } from '@/app/lib/reviews'
 import SuggestionsList from '@/app/reviewer/SuggestionsList'
 import type { Json } from '@/app/lib/supabase/database.types'
 import ChapterNavigator from '@/app/reviewer/ChapterNavigator'
 import { reviewUnitLabel, type ReviewCatalogueItem } from '@/app/lib/reviewLabels'
 import { useContentPageTop } from '@/app/lib/useContentPageTop'
 import ReviewActionButton from '@/app/reviewer/ReviewActionButton'
+import CorrectionCopyButton from '@/app/reviewer/CorrectionCopyButton'
 
 interface CommentState { text:string; busy:boolean; error:string; success:boolean }
 const emptyComment:CommentState={text:'',busy:false,error:'',success:false}
@@ -17,13 +18,14 @@ export default function ReviewerWorkspace({admin=false}:{admin?:boolean}){
  const [parents,setParents]=useState<ReviewCatalogueItem[]>([]),[targets,setTargets]=useState<ReviewCatalogueItem[]>([])
  const [source,setSource]=useState<ReviewSource|null>(null),[page,setPage]=useState(0),[error,setError]=useState('')
  const [commentStates,setCommentStates]=useState<Record<number,CommentState>>({}),[comments,setComments]=useState<ReviewerLineComment[]>([]),[commentHistoryError,setCommentHistoryError]=useState(''),[historyRetry,setHistoryRetry]=useState(0)
+ const [corrections,setCorrections]=useState<BookCorrection[]>([]),[correctionsReady,setCorrectionsReady]=useState(false),[selecting,setSelecting]=useState(false),[selectedCorrections,setSelectedCorrections]=useState(new Set<string>())
  const [loadingParents,setLoadingParents]=useState(false),[loadingTargets,setLoadingTargets]=useState(false),[loadingSource,setLoadingSource]=useState(false),[retry,setRetry]=useState(0)
  const loading=loadingParents||loadingTargets||loadingSource
  const contentTab=tab==='book'||tab==='show'
  const submitting=useRef(new Set<number>()),scopeRevision=useRef(0),active=useRef(true)
  const invalidateScope=useCallback(()=>{scopeRevision.current++;submitting.current=new Set<number>()},[])
  useEffect(()=>{active.current=true;return()=>{active.current=false;invalidateScope()}},[invalidateScope])
- const resetComments=()=>{invalidateScope();setCommentStates({});setComments([]);setCommentHistoryError('')}
+ const resetComments=()=>{invalidateScope();setCommentStates({});setComments([]);setCommentHistoryError('');setCorrections([]);setCorrectionsReady(false);setSelecting(false);setSelectedCorrections(new Set())}
  const updateComment=(index:number,patch:Partial<CommentState>)=>setCommentStates(states=>({...states,[index]:{...(states[index]??emptyComment),...patch}}))
  const contentTop=useContentPageTop(`${target}:${page}`,Boolean(source)&&!loadingSource)
  useEffect(()=>{let active=true;if(contentTab){setLoadingParents(true);reviewCatalogue(tab as ReviewType).then(x=>{if(active){setParents(x);setLoadingParents(false)}}).catch(e=>{if(active){setError(e.message);setLoadingParents(false)}})}return()=>{active=false}},[tab,contentTab,retry])
@@ -34,12 +36,17 @@ export default function ReviewerWorkspace({admin=false}:{admin?:boolean}){
   const revision=scopeRevision.current
   if(contentTab&&target){
    setCommentHistoryError('')
-   loadReviewerComments(tab as ReviewType,target).then(history=>{
-    if(current&&revision===scopeRevision.current)setComments(previous=>[...previous,...history.filter(item=>!previous.some(saved=>saved.id===item.id))])
+   setCorrectionsReady(false)
+   const historyRequest=admin&&tab==='book'?loadAdminBookCorrections(parent,target):loadReviewerComments(tab as ReviewType,target)
+   historyRequest.then(history=>{
+    if(current&&revision===scopeRevision.current){
+     setComments(previous=>[...history,...previous.filter(item=>!item.created_at&&!history.some(saved=>saved.id===item.id))])
+     if(admin&&tab==='book'){setCorrections(history as BookCorrection[]);setCorrectionsReady(true);setSelectedCorrections(previous=>new Set([...previous].filter(id=>history.some(item=>item.id===id))))}
+    }
    }).catch(e=>{if(current&&revision===scopeRevision.current)setCommentHistoryError(e instanceof Error?e.message:'Unable to load your previous comments.')})
   }
   return()=>{current=false}
- },[tab,contentTab,target,historyRetry])
+ },[admin,tab,contentTab,parent,target,historyRetry])
  const submit=async(index:number)=>{
   const text=commentStates[index]?.text.trim()
   if(!contentTab||!source||!text||submitting.current.has(index))return
@@ -50,6 +57,7 @@ export default function ReviewerWorkspace({admin=false}:{admin?:boolean}){
    if(!active.current||revision!==scopeRevision.current)return
    updateComment(index,{text:'',success:true})
    setComments(history=>[{id:String(id),line_index:index,comment:text,status:'pending',created_at:'',admin_response:null},...history])
+   if(admin&&tab==='book'){setCorrectionsReady(false);setHistoryRetry(value=>value+1)}
   }catch(e){if(active.current&&revision===scopeRevision.current)updateComment(index,{error:e instanceof Error?e.message:'Unable to add your comment. Please retry.'})}
   finally{if(active.current&&revision===scopeRevision.current){submitting.current.delete(index);updateComment(index,{busy:false})}}
  }
@@ -57,7 +65,7 @@ export default function ReviewerWorkspace({admin=false}:{admin?:boolean}){
   <Typography variant="h4">Reviewer</Typography>
   <Tabs value={tab} variant="scrollable" scrollButtons="auto" onChange={(_,v)=>{resetComments();setTab(v);setParent('');setTarget('');setParents([]);setTargets([]);setSource(null);setPage(0);setError('');setLoadingParents(false);setLoadingTargets(false);setLoadingSource(false)}}><Tab label="Books" value="book"/><Tab label="Shows" value="show"/><Tab label="My Suggestions" value="mine"/>{admin&&<Tab label="Manage Suggestions & Exports" value="manage"/>}</Tabs>
   {error&&<Alert severity="error" action={<Button onClick={()=>{setError('');setRetry(x=>x+1)}}>Retry</Button>}>{error}</Alert>}
-  {tab==='manage'&&admin?<SuggestionsList admin scopeRequired/>:tab==='mine'?<SuggestionsList admin={false}/>:<>
+  {tab==='manage'&&admin?<SuggestionsList admin scopeRequired/>:tab==='mine'?<SuggestionsList admin={false} canCopyBookCorrections={admin}/>:<>
    {loading&&<Typography role="status">{loadingSource?'Loading source…':loadingTargets?'Loading chapters / episodes…':'Loading content…'}</Typography>}
    {!loading&&!error&&!parents.length&&<Typography>No {tab==='book'?'books':'shows'} are available for review.</Typography>}
    <TextField select label={tab==='book'?'Book':'Show'} value={parent} onChange={e=>{resetComments();setError('');setParent(e.target.value);setTarget('');setTargets([]);setSource(null);setPage(0);setLoadingTargets(false);setLoadingSource(false)}}><MenuItem value="">Choose…</MenuItem>{parents.map(x=><MenuItem key={x.id} value={x.id}>{x.title}</MenuItem>)}</TextField>
@@ -65,6 +73,14 @@ export default function ReviewerWorkspace({admin=false}:{admin?:boolean}){
    {parent&&!loading&&!error&&!targets.length&&<Typography>No chapters / episodes are available in this content.</Typography>}
    {source&&!source.document.length&&<Typography>This source has no reviewable lines.</Typography>}
    <Box ref={contentTop.ref}>{source&&<Typography variant="h6">{parents.find(p=>p.id===parent)?.title} / {targets.find(t=>t.id===target)?reviewUnitLabel(targets.find(t=>t.id===target)!):source.location}</Typography>}</Box>
+   {admin&&tab==='book'&&source&&<Stack spacing={1}>
+    <Stack direction="row" spacing={1} sx={{flexWrap:'wrap',gap:1}}>
+     <CorrectionCopyButton key={`${parent}:${target}:all`} bookId={parent} chapterId={target} disabled={!correctionsReady||!corrections.length}/>
+     <Button size="small" disabled={!correctionsReady||!corrections.length} aria-pressed={selecting} onClick={()=>{setSelecting(value=>!value);setSelectedCorrections(new Set())}}>{selecting?'Cancel selection':'Select corrections'}</Button>
+     {selecting&&<CorrectionCopyButton key={`${parent}:${target}:selected`} bookId={parent} chapterId={target} ids={[...selectedCorrections]} label={`Copy Selected (${selectedCorrections.size})`} disabled={!correctionsReady||!selectedCorrections.size}/>}
+    </Stack>
+    <Typography variant="caption">{correctionsReady?`${corrections.length} comments across all chapter pages`:commentHistoryError?'Corrections could not be loaded.':'Loading chapter corrections…'}</Typography>
+   </Stack>}
    {commentHistoryError&&<Typography variant="caption" color="error" role="alert">{commentHistoryError} <Button size="small" onClick={()=>setHistoryRetry(x=>x+1)}>Retry comments</Button></Typography>}
    {source?.document.slice(page*25,page*25+25).map((block,index)=>{
     const lineIndex=page*25+index,state=commentStates[lineIndex]??emptyComment
@@ -77,7 +93,11 @@ export default function ReviewerWorkspace({admin=false}:{admin?:boolean}){
      {state.error&&<Typography variant="caption" role="alert" color="error">{state.error}</Typography>}
      {state.success&&<Typography variant="caption" role="status" sx={{color:'var(--awm-forest)'}}>Comment added.</Typography>}
      {comments.filter(comment=>comment.line_index===lineIndex).map(comment=><Box key={comment.id} sx={{mt:1,pl:1.5,borderLeft:'2px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)'}}>
-      <Typography variant="body2" sx={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{comment.comment}</Typography>
+      <Stack direction="row" spacing={1} sx={{alignItems:'flex-start'}}>
+       {admin&&tab==='book'&&selecting&&corrections.some(item=>item.id===comment.id)&&<Checkbox size="small" checked={selectedCorrections.has(comment.id)} disabled={!correctionsReady} slotProps={{input:{'aria-label':`Select comment on line ${lineIndex+1}: ${comment.comment.slice(0,60)}`}}} onChange={(_,checked)=>setSelectedCorrections(previous=>{const next=new Set(previous);if(checked)next.add(comment.id);else next.delete(comment.id);return next})} sx={{p:0.5}}/>}
+       <Typography variant="body2" sx={{whiteSpace:'pre-wrap',overflowWrap:'anywhere',flex:1,minWidth:0}}>{comment.comment}</Typography>
+       {admin&&tab==='book'&&corrections.some(item=>item.id===comment.id)&&<CorrectionCopyButton bookId={parent} chapterId={target} ids={[comment.id]} iconOnly disabled={!correctionsReady}/>}
+      </Stack>
       <Typography variant="caption">{comment.status}{comment.created_at?` · ${new Date(comment.created_at).toLocaleString('en-GB')}`:' · Just submitted'}</Typography>
       {comment.admin_response&&<Typography variant="caption" component="p" sx={{whiteSpace:'pre-wrap'}}>Admin: {comment.admin_response}</Typography>}
      </Box>)}

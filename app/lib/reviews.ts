@@ -22,3 +22,4 @@ export interface ReviewBlock { tokens: { arabic: string; [key: string]: Json | u
 export interface ReviewSource { document: ReviewBlock[]; parent: string; location: string }
 export interface SuggestionInput { arabic: string; english: string; comment: string; reason: string }
 export type ReviewerLineComment = Pick<ContentSuggestion, 'id' | 'line_index' | 'comment' | 'status' | 'created_at' | 'admin_response'>
+export type BookCorrection = Pick<ContentSuggestion, 'id' | 'author_id' | 'parent_id' | 'target_id' | 'line_index' | 'original_arabic' | 'comment' | 'status' | 'created_at' | 'admin_response'> & { selected_text?: string | null }

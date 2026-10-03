@@ -5,7 +5,8 @@ import { updateTag, revalidatePath } from 'next/cache'
 import { guardReviewer, getAuthenticatedAccess } from '@/app/actions/auth'
 import { serviceClient } from '@/app/lib/supabase'
 import type { Json } from '@/app/lib/supabase/database.types'
-import type { AccountRole, DirectoryResult, ReviewerLineComment, ReviewSource, ReviewType, SuggestionInput, SuggestionStatus } from '@/app/lib/reviews'
+import type { AccountRole, BookCorrection, DirectoryResult, ReviewerLineComment, ReviewSource, ReviewType, SuggestionInput, SuggestionStatus } from '@/app/lib/reviews'
+import { orderedCorrections } from '@/app/lib/correctionClipboard'
 import { reviewUnitLabel } from '@/app/lib/reviewLabels'
 
 const uuid = z.string().uuid()
@@ -95,6 +96,39 @@ export async function loadReviewerComments(type: ReviewType, target: string): Pr
   .neq('status','withdrawn').neq('comment','').order('created_at',{ascending:false}).limit(1000)
  if (error) throw new Error('Unable to load your previous comments. Please retry.')
  return data ?? []
+}
+/** Admin-only collection; cursor batches avoid the Data API row limit and UI pagination. */
+export async function loadAdminBookCorrections(parent: string, target: string, ids?: string[]): Promise<BookCorrection[]> {
+ await adminActor()
+ uuid.parse(parent);uuid.parse(target)
+ const selected=ids===undefined?undefined:[...new Set(z.array(uuid).min(1).max(10000).parse(ids))]
+ const cutoff=new Date().toISOString(),rows:BookCorrection[]=[]
+ const query=()=>serviceClient.from('content_suggestions')
+  .select('id,author_id,parent_id,target_id,line_index,original_arabic,comment,status,created_at,admin_response')
+  .eq('content_type','book').eq('parent_id',parent).eq('target_id',target)
+  .neq('status','withdrawn').neq('comment','').lte('created_at',cutoff)
+ if(selected){
+  for(let offset=0;offset<selected.length;offset+=50){
+   const {data,error}=await query().in('id',selected.slice(offset,offset+50))
+   if(error)throw new Error('Unable to load corrections. Please retry.')
+   rows.push(...(data??[]))
+  }
+  if(rows.length!==selected.length)throw new Error('A selected comment was removed or withdrawn. Refresh the comments and select again.')
+ }else{
+  let cursor:string|undefined
+  for(;;){
+   let batch=query().order('id',{ascending:true}).limit(500)
+   if(cursor)batch=batch.gt('id',cursor)
+   const {data,error}=await batch
+   if(error)throw new Error('Unable to load corrections. Please retry.')
+   rows.push(...(data??[]))
+   if(!data?.length)break
+   const next=data[data.length-1].id
+   if(next===cursor)throw new Error('Unable to finish collecting corrections. Please retry.')
+   cursor=next
+  }
+ }
+ return orderedCorrections(rows)
 }
 export async function listSuggestions(admin: boolean, filters: { status: SuggestionStatus; type?: ReviewType; author?: string; parent?: string; target?: string; since?: string; until?: string }, page: number) {
  const access = await guardReviewer()

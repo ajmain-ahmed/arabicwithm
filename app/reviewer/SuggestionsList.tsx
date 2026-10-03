@@ -9,9 +9,10 @@ import ChapterNavigator from '@/app/reviewer/ChapterNavigator'
 import ReviewActionButton from '@/app/reviewer/ReviewActionButton'
 import { reviewUnitLabel, type ReviewCatalogueItem } from '@/app/lib/reviewLabels'
 import { useContentPageTop } from '@/app/lib/useContentPageTop'
+import CorrectionCopyButton from '@/app/reviewer/CorrectionCopyButton'
 
 const blank: SuggestionInput={arabic:'',english:'',comment:'',reason:''}
-export default function SuggestionsList({admin,scopeRequired=false}:{admin:boolean;scopeRequired?:boolean}){
+export default function SuggestionsList({admin,scopeRequired=false,canCopyBookCorrections=admin}:{admin:boolean;scopeRequired?:boolean;canCopyBookCorrections?:boolean}){
  const [status,setStatus]=useState<SuggestionStatus>('pending'),[type,setType]=useState<ReviewType|''>(scopeRequired?'book':''),[author,setAuthor]=useState(''),[authorFilter,setAuthorFilter]=useState('')
  const [parent,setParent]=useState(''),[target,setTarget]=useState(''),[since,setSince]=useState(''),[until,setUntil]=useState('')
  const [parents,setParents]=useState<ReviewCatalogueItem[]>([]),[targets,setTargets]=useState<ReviewCatalogueItem[]>([])
@@ -68,6 +69,7 @@ export default function SuggestionsList({admin,scopeRequired=false}:{admin:boole
     <Typography variant="h6">{parents.find(p=>p.id===parent)?.title??'Selected content'}{target?` → ${targets.find(t=>t.id===target)?reviewUnitLabel(targets.find(t=>t.id===target)!):'Selected unit'}`:' · All chapters / episodes'}</Typography>
     <Typography variant="body2">Suggestion exports include all matching {status} suggestions across pages. Source JSON contains the current saved content and metadata; the original upload file is not archived.</Typography>
     <Stack direction={{xs:'column',sm:'row'}} spacing={1}><ReviewActionButton startIcon={<TableViewOutlined/>} disabled={Boolean(download)} loading={download==='csv'} onClick={()=>exportFile('csv')}>Export Suggestions · CSV</ReviewActionButton><ReviewActionButton startIcon={<PictureAsPdfOutlined/>} disabled={Boolean(download)} loading={download==='pdf'} onClick={()=>exportFile('pdf')}>Export Suggestions · PDF</ReviewActionButton><ReviewActionButton startIcon={<DownloadOutlined/>} disabled={Boolean(download)} loading={download==='json'} onClick={()=>exportFile('json')}>Download Source · JSON</ReviewActionButton></Stack>
+    {type==='book'&&target&&<CorrectionCopyButton key={`${parent}:${target}`} bookId={parent} chapterId={target}/>}
     {download&&<Typography role="status">Preparing {download.toUpperCase()}…</Typography>}
    </Stack></CardContent></Card>}
   </Stack>}
@@ -78,7 +80,7 @@ export default function SuggestionsList({admin,scopeRequired=false}:{admin:boole
    {admin&&<Typography variant="caption" sx={{overflowWrap:'anywhere'}}>Editor: {s.author_name??s.author_id} · {s.author_id}</Typography>}
    <Typography dir="rtl">{s.original_arabic}</Typography><Typography>{s.original_english}</Typography>
    {s.suggested_arabic&&<Typography dir="rtl">Proposed: {s.suggested_arabic}</Typography>}{s.suggested_english&&<Typography>Proposed: {s.suggested_english}</Typography>}
-   <Typography>{s.comment}</Typography><Typography>{s.reason}</Typography><Typography variant="caption">{new Date(s.created_at).toLocaleString('en-GB')}</Typography>
+   <Stack direction="row" spacing={1} sx={{alignItems:'flex-start'}}><Typography sx={{flex:1,minWidth:0,whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{s.comment}</Typography>{canCopyBookCorrections&&s.content_type==='book'&&s.comment.trim()&&<CorrectionCopyButton bookId={s.parent_id} chapterId={s.target_id} ids={[s.id]} iconOnly/>}</Stack><Typography>{s.reason}</Typography><Typography variant="caption">{new Date(s.created_at).toLocaleString('en-GB')}</Typography>
    {s.admin_response&&<Typography>Admin response: {s.admin_response}</Typography>}
    <Button sx={{alignSelf:'start'}} onClick={()=>open(s)}>{admin?'Review / Reply':s.status==='pending'?'Edit / Withdraw':'View details'}</Button>
   </Stack></CardContent></Card>)}
