@@ -19,7 +19,7 @@ beforeEach(() => {
   mocks.auth.user = { id: 'admin', email: 'admin@example.com' }
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
 })
-it.each([false, true])('offers Word Search to signed-out visitors on mobile=%s', async mobile => {
+it.each([false, true])('keeps existing mobile navigation and removes the desktop Word Search link on mobile=%s', async mobile => {
   mocks.mobile = mobile; mocks.auth.user = null; mocks.role = 'user'
   await act(async () => root.render(<Navbar />))
   if (mobile) {
@@ -28,7 +28,7 @@ it.each([false, true])('offers Word Search to signed-out visitors on mobile=%s',
     expect(link).toBeDefined()
     await act(async () => link.click())
     expect(mocks.push).toHaveBeenCalledWith('/word-search')
-  } else expect(host.querySelector('a[href="/word-search"]')).not.toBeNull()
+  } else expect(host.querySelector('a[href="/word-search"]')).toBeNull()
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove() })
 it.each(['admin', 'editor', 'user'])('shows the desktop Admin entry only for %s permissions and retains account navigation', async role => {
@@ -38,7 +38,7 @@ it.each(['admin', 'editor', 'user'])('shows the desktop Admin entry only for %s 
   expect(Boolean(link)).toBe(role === 'admin')
   if (link) expect(link.textContent).toBe('Admin')
   expect(host.querySelector('a[href="/books"]')).not.toBeNull()
-  expect(host.querySelector('a[href="/word-search"]')).not.toBeNull()
+  expect(host.querySelector('a[href="/word-search"]')).toBeNull()
   await act(async () => (host.querySelector('[aria-label="Open user menu"]') as HTMLElement).click())
   const menu = document.querySelector('[role="menu"]')!
   expect(menu.querySelector('a[href="/profile"]')).not.toBeNull()

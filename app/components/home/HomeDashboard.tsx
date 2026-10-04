@@ -15,7 +15,6 @@ import {
   MilitaryTechRounded,
   PsychologyOutlined,
   AccountCircleOutlined,
-  AdminPanelSettings,
   SettingsOutlined,
   Close,
   VolunteerActivismRounded,
@@ -63,6 +62,7 @@ interface ActivityUpdate { userId: string; activity: LearningActivity }
 interface PremiumUpdate { authKey: string; premium: boolean }
 
 const QUICK_LINKS = [
+  { title: 'Word Search', label: 'Find Arabic words from real transcripts', href: '/word-search', icon: GridOnRounded },
   { title: 'Explore', label: 'Discover a random clip', href: '/explore', icon: ExploreOutlined },
   { title: 'Read', label: 'Open graded books', href: '/books', icon: AutoStories },
   { title: 'Watch', label: 'Browse full episodes', href: '/cartoons', icon: Headphones },
@@ -197,15 +197,15 @@ function SectionHeading({ eyebrow, title, detail }: { eyebrow?: string; title: s
   )
 }
 
-function QuickLinks({ userId, isAdmin }: { userId: string; isAdmin: boolean }) {
-  const links = [...QUICK_LINKS, ...(isAdmin ? [{ title: 'Admin', label: 'Manage users and content', href: '/admin/users', icon: AdminPanelSettings }] : [])]
+export function QuickLinks({ userId }: { userId?: string }) {
+  const links = QUICK_LINKS.filter(item => userId || typeof item.href === 'string')
   return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, '& > a': { flex: '1 1 180px', minWidth: 0 } }}>
+    <Box component="nav" aria-label="Quick Actions" sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(3,minmax(0,1fr))', lg: 'repeat(4,minmax(0,1fr))' }, gap: 1.5, alignItems: 'stretch' }}>
       {links.map((item) => {
         const Icon = item.icon
-        const href = typeof item.href === 'function' ? item.href(userId) : item.href
+        const href = typeof item.href === 'function' ? item.href(userId!) : item.href
         return (
-          <Paper key={item.title} component={Link} href={href} elevation={0} sx={{ p: { xs: 2, md: 2.5 }, textDecoration: 'none', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '12px', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', '&:hover': { borderColor: 'color-mix(in srgb, var(--awm-gold) 55%, transparent)' } }}>
+          <Paper key={item.title} component={Link} href={href} elevation={0} sx={{ minWidth: 0, minHeight: 154, height: '100%', boxSizing: 'border-box', p: { xs: 2, md: 2.5 }, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textDecoration: 'none', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '12px', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', '&:hover': { borderColor: 'color-mix(in srgb, var(--awm-gold) 55%, transparent)' } }}>
             <Icon sx={{ color: '#b8860b', fontSize: { xs: 19, md: 24 } }} />
             <Typography sx={{ mt: 1, fontFamily: 'Jost, sans-serif', fontWeight: 700 }}>{item.title}</Typography>
             <Typography sx={{ mt: 0.25, fontFamily: 'Jost, sans-serif', color: 'var(--awm-muted)', fontSize: 12 }}>{item.label}</Typography>
@@ -449,6 +449,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
           </Container>
         </Box>
 
+        <Container maxWidth="lg" sx={{ py: 4 }}><SectionHeading title="Quick Actions" /><QuickLinks /></Container>
         <UpgradeSection />
       </Box>
     )
@@ -514,7 +515,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
   now={dashboardNow}
 />
         </Box>
-        <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading title="Quick Actions" /><QuickLinks userId={user.id} isAdmin={isAdmin} /></Box>
+        <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading title="Quick Actions" /><QuickLinks userId={user.id} /></Box>
       </Container>
       {premiumUpdate?.authKey === premiumAuthKey && !premiumUpdate.premium && <UpgradeSection />}
       <CheckoutFeedback />

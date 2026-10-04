@@ -190,7 +190,7 @@ export default function Navbar() {
                             </Box>
                         ) : (
                             <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', width: '100%', alignItems: 'center' }}>
-                                <Box sx={{ display: 'flex', flexWrap: { md: 'wrap', lg: 'nowrap' }, alignItems: 'center', columnGap: { md: 1, lg: 2.5 }, rowGap: 0 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: { md: 2.5, lg: 4 } }}>
                                     {NAV_ITEMS.map((item) => (
                                         <Link key={item} href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
                                             <Typography
