@@ -5,13 +5,12 @@ import React from 'react'
 
 export const NAV_ITEMS = ['Home', 'Explore', 'Watch', 'Read', 'Memory'] as const
 
-export const NAV_ROUTES: Record<string, string> = {
+export const NAV_ROUTES: Record<(typeof NAV_ITEMS)[number], string> = {
     Home: '/',
     Explore: '/explore',
     Watch: '/cartoons',
     Read: '/books',
     Memory: '/memory',
-    Contact: '/contact',
 }
 
 export const CARTOON_SLUG_MAP: Record<string, string> = {

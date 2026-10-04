@@ -38,6 +38,8 @@ export default function Navbar() {
     const [scrolled, setScrolled] = useState(false)
     const { isAdmin, isReviewer, accessLoading, accessError, refreshAccess } = useAccountAccess(`${pathname}:${drawerOpen}:${Boolean(userMenuAnchor)}`)
 
+    const showAdminLink = isAdmin && pathname !== '/'
+
     const supportsOverlay = pathname === '/' || pathname === '/explore' || pathname === '/vocabulary'
     const isOverlay = supportsOverlay && !scrolled && !drawerOpen && !userMenuAnchor && !contactOpen && !authDialogOpen
     const navColor = isOverlay ? '#fff' : 'var(--awm-forest)'
@@ -97,7 +99,7 @@ export default function Navbar() {
                 onClose={() => setDrawerOpen(false)}
                 isLoggedIn={isLoggedIn}
                 user={user}
-                isAdmin={isAdmin}
+                isAdmin={showAdminLink}
                 isReviewer={isReviewer}
                 accessLoading={accessLoading}
                 accessError={accessError}
@@ -114,7 +116,7 @@ export default function Navbar() {
                 anchorEl={userMenuAnchor}
                 onClose={() => setUserMenuAnchor(null)}
                 user={user}
-                isAdmin={isAdmin}
+                isAdmin={showAdminLink}
                 isReviewer={isReviewer}
                 accessLoading={accessLoading}
                 accessError={accessError}
@@ -190,7 +192,7 @@ export default function Navbar() {
                             </Box>
                         ) : (
                             <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', width: '100%', alignItems: 'center' }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: { md: 2.5, lg: 4 } }}>
+                                <Box component="nav" aria-label="Primary navigation" sx={{ display: 'flex', alignItems: 'center', gap: { md: 2.5, lg: 4 } }}>
                                     {NAV_ITEMS.map((item) => (
                                         <Link key={item} href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
                                             <Typography
@@ -215,7 +217,7 @@ export default function Navbar() {
                                 <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 0.75 }}>
-                                    {isLoggedIn && isAdmin && <Button component={Link} href="/admin/users" startIcon={<AdminPanelSettings />} sx={{ color: navColor, textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>Admin</Button>}
+                                    {isLoggedIn && showAdminLink && <Button component={Link} href="/admin/users" startIcon={<AdminPanelSettings />} sx={{ color: navColor, textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>Admin</Button>}
                                     <Tooltip title={mode === 'dark' ? 'Use light mode' : 'Use dark mode'}>
                                         <IconButton onClick={toggleColorMode} sx={{ color: navColor, transition: 'color .25s ease' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
                                             {mode === 'dark' ? <LightModeOutlined /> : <DarkModeOutlined />}

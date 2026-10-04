@@ -20,3 +20,30 @@ export function normaliseManualTranscriptJson(input: string): { provider: 'manua
   if (new TextEncoder().encode(JSON.stringify(result)).length > 1048576) throw new Error('Normalized transcript exceeds the 1 MB limit.')
   return result
 }
+
+interface ExportSegment {
+  original_text: string
+  english_text: string | null
+  start_seconds: number
+  end_seconds: number
+  start_ms?: number | null
+  end_ms?: number | null
+}
+
+/** Portable canonical JSON; no database or processing metadata. */
+export function serialiseTranscriptJson(segments: readonly ExportSegment[]): string {
+  const content = segments.map(segment => {
+    const offset = segment.start_ms ?? Math.round(segment.start_seconds * 1000)
+    const end = segment.end_ms ?? Math.round(segment.end_seconds * 1000)
+    if (!Number.isSafeInteger(offset) || !Number.isSafeInteger(end) || offset < 0 || end <= offset) {
+      throw new Error('This transcript contains invalid segment timing and cannot be exported.')
+    }
+    return { text: segment.original_text, offset, duration: end - offset, english: segment.english_text ?? '' }
+  }).sort((a, b) => a.offset - b.offset)
+  return JSON.stringify({ content }, null, 2)
+}
+
+export function transcriptJsonFilename(title: string): string {
+  const name = title.normalize('NFKC').replace(/[^\p{L}\p{N}_-]+/gu, '_').replace(/^_+|_+$/g, '').slice(0, 100)
+  return `${name || 'video'}_transcript.json`
+}

@@ -3,11 +3,9 @@ import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Box, Button, Fab, Popover, useMediaQuery } from '@mui/material'
 import { Close, ExploreOutlined, Home, MenuBook, Menu, Movie, PsychologyOutlined } from '@mui/icons-material'
-const destinations = [
-  { href: '/', label: 'Home', Icon: Home }, { href: '/explore', label: 'Explore', Icon: ExploreOutlined },
-  { href: '/cartoons', label: 'Watch', Icon: Movie }, { href: '/books', label: 'Read', Icon: MenuBook },
-  { href: '/memory', label: 'Memory', Icon: PsychologyOutlined },
-]
+import { NAV_ITEMS, NAV_ROUTES } from '@/app/components/navbar/constants'
+const primaryIcons = { Home, Explore: ExploreOutlined, Watch: Movie, Read: MenuBook, Memory: PsychologyOutlined }
+const destinations = NAV_ITEMS.map(label => ({ label, href: NAV_ROUTES[label], Icon: primaryIcons[label] }))
 export default function MobileBottomNav() {
   const mobile = useMediaQuery('(max-width:899.95px)')
   const router = useRouter()

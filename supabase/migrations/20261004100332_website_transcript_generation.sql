@@ -24,7 +24,7 @@ end $$;
 revoke all on function public.admin_generate_youtube_transcript(uuid,text) from public,anon,authenticated;
 grant execute on function public.admin_generate_youtube_transcript(uuid,text) to service_role;
 
-create function public.admin_delete_youtube_transcript(p_actor uuid,p_id uuid) returns boolean
+create or replace function public.admin_delete_youtube_transcript(p_actor uuid,p_id uuid) returns boolean
 language plpgsql security definer set search_path='' as $$
 begin
   if p_actor is null or public.account_role(p_actor) is distinct from 'admin' then raise exception 'Forbidden'; end if;

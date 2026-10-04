@@ -45,13 +45,13 @@ it('shows the reading cover/resume link and removes only list visibility', async
   expect(mocks.update).toHaveBeenCalledWith({ data: { book_progress: { ...mocks.metadata.book_progress, story: { ...mocks.metadata.book_progress.story, hiddenFromList: true } } } })
   expect(host.textContent).toContain('No current book'); expect(mocks.metadata.book_sentence_bookmark.bookSlug).toBe('story')
 })
-it('removes redundant shortcuts and renders Admin only for verified Admin permissions', async () => {
+it('keeps learning shortcuts free of the separate Quick Actions Admin entry', async () => {
   await act(async () => root.render(<HomeQuickActions bookmarkHref="/books/story/one#sentence-4" bookmarkLabel="Story · One" />))
   const links = [...host.querySelectorAll('a')]
   expect(links.map(a => a.getAttribute('href'))).toEqual(['/books/story/one#sentence-4','/profile'])
   expect(links).toHaveLength(2);expect(host.querySelector('nav')?.getAttribute('aria-label')).toBe('Learning shortcuts')
-  await act(async () => root.render(<HomeQuickActions bookmarkHref="/books" bookmarkLabel="Books" isAdmin />))
-  expect(host.querySelector('a[href="/admin/users"]')?.textContent).toContain('Admin')
+  await act(async () => root.render(<HomeQuickActions bookmarkHref="/books" bookmarkLabel="Books" />))
+  expect(host.querySelector('a[href="/admin/users"]')).toBeNull()
   expect(host.textContent).not.toContain('Reviewer')
 })
 it('shows recorded chart values and exposes achievement requirements to keyboard and touch users', async () => {

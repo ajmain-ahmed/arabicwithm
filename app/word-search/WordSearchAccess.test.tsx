@@ -2,6 +2,11 @@ import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({ user: null as null | { id: string }, complete: vi.fn(), vocabulary: vi.fn() }))
+// Keep access tests focused on the game rather than loading decorative icons.
+vi.mock('@mui/icons-material', () => {
+  const Icon = () => <svg aria-hidden="true" />
+  return { Celebration: Icon, CheckCircle: Icon, EmojiEvents: Icon, LightbulbOutlined: Icon, Refresh: Icon, TimerOutlined: Icon, ExpandLess: Icon, ExpandMore: Icon, Visibility: Icon, VisibilityOff: Icon }
+})
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => ({ user: mocks.user }) }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('next/server', () => ({ connection: vi.fn() }))

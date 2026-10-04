@@ -50,12 +50,16 @@ describe('website generation migration and shared transcript boundaries', () => 
         from public.transcript_tokens k join public.transcript_segments s on s.id=k.segment_id join public.youtube_transcripts t on t.id=s.transcript_id
         where k.surface=p_word and t.status='ready' and t.searchable and (0,s.id)>(p_after_rank,p_after) order by s.id limit p_limit $$;
     `)
+    // The standalone delete can be installed before optional generation support.
+    await db.exec(readFileSync('supabase/migrations/20261004164545_admin_transcript_delete.sql', 'utf8'))
     await db.exec(readFileSync('supabase/migrations/20261004100332_website_transcript_generation.sql', 'utf8'))
   })
   afterAll(async () => { await db?.close() })
   it('rejects non-admin actors and direct authenticated generation/deletion', async () => {
     await expect(db.query('select admin_generate_youtube_transcript($1,$2)', [user, 'GENERATE001'])).rejects.toThrow('Forbidden')
     await expect(db.query('select admin_delete_youtube_transcript($1,$2)', [user, admin])).rejects.toThrow('Forbidden')
+    await expect(db.query('select admin_delete_youtube_transcript($1,$2)', [null, admin])).rejects.toThrow('Forbidden')
+    await expect(db.query('select admin_delete_youtube_transcript($1,$2)', ['99999999-9999-4999-8999-999999999999', admin])).rejects.toThrow('Forbidden')
     await db.exec('set role authenticated')
     await expect(db.query('select public.admin_generate_youtube_transcript($1,$2)', [admin, 'GENERATE001'])).rejects.toThrow(/permission denied/)
     await expect(db.query('select public.admin_delete_youtube_transcript($1,$2)', [admin, admin])).rejects.toThrow(/permission denied/)

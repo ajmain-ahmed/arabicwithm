@@ -1,12 +1,11 @@
 'use client'
 import Link from 'next/link'
-import { AccountCircleOutlined, AdminPanelSettings, BookmarkRounded } from '@mui/icons-material'
+import { AccountCircleOutlined, BookmarkRounded } from '@mui/icons-material'
 import { Box, Paper, Typography } from '@mui/material'
 
-export default function HomeQuickActions({ bookmarkHref, bookmarkLabel, isAdmin = false }: { bookmarkHref: string; bookmarkLabel: string; isAdmin?: boolean }) {
+export default function HomeQuickActions({ bookmarkHref, bookmarkLabel }: { bookmarkHref: string; bookmarkLabel: string }) {
   const actions = [
     { title: 'Bookmark', detail: bookmarkLabel, href: bookmarkHref, icon: BookmarkRounded },
-    ...(isAdmin ? [{ title: 'Admin', detail: 'Manage users and content', href: '/admin/users', icon: AdminPanelSettings }] : []),
     { title: 'My Profile', detail: 'Your progress & trophy cabinet', href: '/profile', icon: AccountCircleOutlined },
   ]
   return <Box component="nav" aria-label="Learning shortcuts" sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', md: `repeat(${actions.length},minmax(0,1fr))` }, alignItems: 'stretch', gap: { xs: 1, sm: 2.5 }, mb: 2.5 }}>

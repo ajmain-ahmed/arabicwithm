@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import {
   AccessTimeRounded,
+  AdminPanelSettings,
   ArrowForward,
   AutoStories,
   CalendarMonthRounded,
@@ -197,8 +198,11 @@ function SectionHeading({ eyebrow, title, detail }: { eyebrow?: string; title: s
   )
 }
 
-export function QuickLinks({ userId }: { userId?: string }) {
-  const links = QUICK_LINKS.filter(item => userId || typeof item.href === 'string')
+export function QuickLinks({ userId, isAdmin = false }: { userId?: string; isAdmin?: boolean }) {
+  const links = [
+    ...QUICK_LINKS.filter(item => userId || typeof item.href === 'string'),
+    ...(userId && isAdmin ? [{ title: 'Admin', label: 'Manage users and content', href: '/admin/users', icon: AdminPanelSettings }] : []),
+  ]
   return (
     <Box component="nav" aria-label="Quick Actions" sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(3,minmax(0,1fr))', lg: 'repeat(4,minmax(0,1fr))' }, gap: 1.5, alignItems: 'stretch' }}>
       {links.map((item) => {
@@ -480,7 +484,6 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
       <Container maxWidth="lg" sx={{ pt: { xs: 4.5, md: 6 } }}>
         <SectionHeading eyebrow="Continue learning" title={recentReading ? 'Your next step is ready' : 'Start your next lesson'} />
         <HomeQuickActions
-          isAdmin={isAdmin}
           bookmarkHref={bookmark ? bookSentenceBookmarkHref(bookmark) : recentReading ? `/books/${encodeURIComponent(recentReading.book.slug)}/${encodeURIComponent(recentReading.chapter.slug)}` : '/books'}
           bookmarkLabel={bookmark ? `${bookmark.bookTitle} ? ${bookmark.chapterTitle}` : recentReading ? `${recentReading.book.title} ? ${recentReading.chapter.title}` : 'Save a sentence to return here'}
         />
@@ -515,7 +518,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
   now={dashboardNow}
 />
         </Box>
-        <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading title="Quick Actions" /><QuickLinks userId={user.id} /></Box>
+        <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading title="Quick Actions" /><QuickLinks userId={user.id} isAdmin={isAdmin} /></Box>
       </Container>
       {premiumUpdate?.authKey === premiumAuthKey && !premiumUpdate.premium && <UpgradeSection />}
       <CheckoutFeedback />
