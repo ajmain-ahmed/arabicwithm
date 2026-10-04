@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
+import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import {
   Dialog,
   DialogTitle,
@@ -42,6 +43,7 @@ export default function ShowEditDialog({
   onSaved,
   onDeleted,
 }: ShowEditDialogProps) {
+  const cache = useAdminListCache()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -110,6 +112,7 @@ export default function ShowEditDialog({
         await updateShow(showId!, input)
       }
 
+      cache.invalidate("shows")
       onSaved?.()
       onClose()
     } catch (e: unknown) {
@@ -124,6 +127,7 @@ export default function ShowEditDialog({
     if (!confirm("Delete this show and its episodes? This cannot be undone.")) return
     try {
       await deleteShow(showId!)
+      cache.invalidate("shows")
       onDeleted?.()
       onClose()
     } catch (e: unknown) {

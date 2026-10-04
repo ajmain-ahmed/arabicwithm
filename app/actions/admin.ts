@@ -242,7 +242,7 @@ export async function fetchShowsForAdmin(): Promise<ShowRow[]> {
 
   const { data, error } = await serviceClient
     .from("shows")
-    .select("*")
+    .select("id,slug,title,title_ar,description,cover,cover_crop,level,category")
     .order("title", { ascending: true })
 
   if (error) {
@@ -355,7 +355,7 @@ export async function fetchAllEpisodesForAdmin(): Promise<EpisodeRow[]> {
 
   const { data, error } = await serviceClient
     .from("episodes")
-    .select("*")
+    .select("id,show_id,slug,title,level,tags,description,youtube_id,instagram_id,tiktok_id,facebook_id,cover,cover_crop,created_at")
     .order("show_id", { ascending: true })
     .order("created_at", { ascending: true })
 
@@ -605,7 +605,7 @@ export async function fetchBooksForAdmin(): Promise<BookRow[]> {
 
   const { data, error } = await serviceClient
     .from("books")
-    .select("*")
+    .select("id,slug,title,author,reading_time_minutes,title_ar,description,cover,cover_crop,level,category,created_at,updated_at")
     .order("title", { ascending: true })
 
   if (error) {
@@ -713,7 +713,7 @@ export async function fetchChaptersForBookAdmin(
 
   const { data, error } = await serviceClient
     .from("chapters")
-    .select("*")
+    .select("id,book_id,slug,title,chapter_number,created_at,updated_at")
     .eq("book_id", bookId)
     .order("chapter_number", { ascending: true })
 
@@ -1136,4 +1136,28 @@ function mapPhraseRow(row: Record<string, unknown>): PhraseRow {
     cefr: String(row.cefr),
     notes: row.notes ? String(row.notes) : null,
   }
+}
+
+export interface BooksAdminIndex { books: BookRow[]; chapters: ChapterRow[] }
+export interface ShowsAdminIndex { shows: ShowRow[]; episodes: EpisodeRow[] }
+
+/** One authorization check and two bounded summary queries; no manuscripts. */
+export async function fetchBooksIndexForAdmin(): Promise<BooksAdminIndex> {
+  await guardAdmin()
+  const [books, chapters] = await Promise.all([
+    serviceClient.from('books').select('id,slug,title,author,reading_time_minutes,title_ar,description,cover,cover_crop,level,category,created_at,updated_at').order('title').limit(1000),
+    serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number,created_at,updated_at').order('chapter_number').limit(1000),
+  ])
+  if (books.error || chapters.error) throw new Error('Unable to load the book catalogue.')
+  return { books: (books.data ?? []).map(row => mapBookRow(row)), chapters: (chapters.data ?? []).map(row => mapChapterRow(row)) }
+}
+
+export async function fetchShowsIndexForAdmin(): Promise<ShowsAdminIndex> {
+  await guardAdmin()
+  const [shows, episodes] = await Promise.all([
+    serviceClient.from('shows').select('id,slug,title,title_ar,description,cover,cover_crop,level,category').order('title').limit(1000),
+    serviceClient.from('episodes').select('id,show_id,slug,title,level,tags,description,youtube_id,instagram_id,tiktok_id,facebook_id,cover,cover_crop,created_at').order('show_id').order('created_at').limit(1000),
+  ])
+  if (shows.error || episodes.error) throw new Error('Unable to load the show catalogue.')
+  return { shows: (shows.data ?? []).map(row => mapShowRow(row)), episodes: (episodes.data ?? []).map(row => mapEpisodeRow(row)) }
 }

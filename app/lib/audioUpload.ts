@@ -2,6 +2,12 @@ export type AudioLanguage = 'ar' | 'en'
 export const MAX_AUDIO_BYTES = 50 * 1024 * 1024
 export const AUDIO_PATH_PATTERN = /^[0-9a-f-]{36}\/(?:audio\.(?:mp3|m4a)|(?:ar|en)\/[0-9a-f-]{36}\.(?:mp3|m4a))$/i
 
+// Storage's multipart uploader reads Blob.type, ignoring contentType options.
+// slice changes only that metadata and retains the validated original bytes.
+export function audioUploadBody(file: Blob, extension: 'mp3' | 'm4a'): Blob {
+  return file.slice(0, file.size, extension === 'mp3' ? 'audio/mpeg' : 'audio/mp4')
+}
+
 export function audioExtension(name: string, header: Uint8Array): 'mp3' | 'm4a' | null {
   if (name.toLowerCase().endsWith('.mp3') && (
     (header[0] === 0x49 && header[1] === 0x44 && header[2] === 0x33) ||

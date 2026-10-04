@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState } from "react"
+import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import {
   Dialog,
   DialogTitle,
@@ -33,6 +34,8 @@ import { errorMessage } from "@/app/lib/errors"
 import { deleteChapterAudioForAdmin, fetchChapterAudioForAdmin, saveChapterAudioResult } from '@/app/actions/audiobooks'
 import { uploadChapterAudio } from '@/app/lib/uploadChapterAudio'
 import { validateAudioFile, type AudioLanguage } from '@/app/lib/audioUpload'
+import { normalizeYouTubeId } from '@/app/lib/cartoons'
+import { removeAudiobookAudio } from '@/app/actions/storage'
 import ChapterAudioFields, { audioDraft, emptyAudioDraft, type AudioDraft } from './ChapterAudioFields'
 
 interface ChapterEditDialogProps {
@@ -56,6 +59,7 @@ export default function ChapterEditDialog({
   onSaved,
   onDeleted,
 }: ChapterEditDialogProps) {
+  const cache = useAdminListCache()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -68,11 +72,22 @@ export default function ChapterEditDialog({
   const [contentJson, setContentJson] = useState(defaultContent)
   const [audio, setAudio] = useState<Record<AudioLanguage, AudioDraft>>({ ar: emptyAudioDraft(), en: emptyAudioDraft() })
   const savedIdRef = useRef<string | null>(chapterId)
+  const stagedPaths = useRef(new Set<string>())
   const [audioUploading, setAudioUploading] = useState(false)
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down("md"))
 
   const isNew = chapterId === null
+
+  useEffect(() => {
+    const paths = stagedPaths.current
+    return () => {
+      for (const path of paths) void removeAudiobookAudio(path).catch(() => {
+        console.warn('[chapter audio] Unreferenced upload cleanup needs retry.')
+      })
+      paths.clear()
+    }
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -136,8 +151,8 @@ export default function ChapterEditDialog({
       for (const language of ['ar', 'en'] as const) {
         const draft = audio[language]
         if (draft.source === 'supabase_storage' && draft.file) await validateAudioFile(draft.file, draft.file.name)
-        if (draft.source === 'youtube' && draft.youtubeId && !/^[A-Za-z0-9_-]{11}$/.test(draft.youtubeId.trim())) throw new Error(`${language === 'ar' ? 'Arabic' : 'English'} YouTube video ID is invalid.`)
-        if (draft.duration && (!Number.isInteger(Number(draft.duration)) || Number(draft.duration) <= 0 || Number(draft.duration) > 86400)) throw new Error('Audio duration must be a whole number from 1 to 86400 seconds.')
+        if (draft.source === 'youtube' && draft.youtubeId && !normalizeYouTubeId(draft.youtubeId)) throw new Error(`${language === 'ar' ? 'Arabic' : 'English'} YouTube URL or video ID is invalid.`)
+        if (draft.duration.trim() && (!Number.isInteger(Number(draft.duration)) || Number(draft.duration) <= 0 || Number(draft.duration) > 86400)) throw new Error('Audio duration must be a whole number from 1 to 86400 seconds.')
       }
       if (!savedIdRef.current) savedIdRef.current = await createChapter(input)
       else await updateChapter(savedIdRef.current, input)
@@ -148,6 +163,7 @@ export default function ChapterEditDialog({
         if (draft.source === 'supabase_storage' && draft.file) {
           setAudioUploading(true)
           path = await uploadChapterAudio(savedChapterId, language, draft.file)
+          stagedPaths.current.add(path)
           // Keep a successful upload for retry if the metadata write fails.
           setAudio(current => ({ ...current, [language]: { ...current[language], path, file: null } }))
         }
@@ -156,16 +172,19 @@ export default function ChapterEditDialog({
           const result = await saveChapterAudioResult({
             chapterId: savedChapterId, language, sourceType: draft.source,
             storagePath: draft.source === 'supabase_storage' ? path : null,
-            externalVideoId: draft.source === 'youtube' ? draft.youtubeId.trim() : null,
-            durationSeconds: draft.duration ? Number(draft.duration) : null,
+            externalVideoId: draft.source === 'youtube' ? normalizeYouTubeId(draft.youtubeId) ?? null : null,
+            durationSeconds: draft.duration.trim() ? Number(draft.duration) : null,
             narrator: draft.narrator.trim() || null, isPublished: draft.published,
           })
           if (!result.ok) throw new Error(`${language === 'ar' ? 'Arabic' : 'English'} audio: ${result.error}`)
+          if (path) stagedPaths.current.delete(path)
           setAudio(current => ({ ...current, [language]: { ...current[language], exists: true } }))
         }
       }
 
+      cache.invalidate("books")
       onSaved?.()
+      cleanupStagedUploads()
       onClose()
     } catch (e: unknown) {
       const message = errorMessage(e) ?? 'Save failed'
@@ -174,6 +193,21 @@ export default function ChapterEditDialog({
       setSaving(false)
       setAudioUploading(false)
     }
+  }
+
+  function cleanupStagedUploads() {
+    const paths = [...stagedPaths.current]
+    stagedPaths.current.clear()
+    for (const path of paths) void removeAudiobookAudio(path).catch(() => {
+      console.warn('[chapter audio] Unreferenced upload cleanup needs retry.')
+    })
+  }
+
+  function handleClose() {
+    if (saving || audioUploading) return
+    cleanupStagedUploads()
+    if (savedIdRef.current && isNew) { cache.invalidate('books'); onSaved?.() }
+    onClose()
   }
 
   const handleAudioSelection = async (language: AudioLanguage, file: File) => {
@@ -199,6 +233,7 @@ export default function ChapterEditDialog({
     if (!confirm("Delete this chapter? This cannot be undone.")) return
     try {
       await deleteChapter(savedIdRef.current!)
+      cache.invalidate("books")
       onDeleted?.()
       onClose()
     } catch (e: unknown) {
@@ -209,7 +244,7 @@ export default function ChapterEditDialog({
   return (
     <Dialog
       open={open}
-      onClose={() => { if (!saving && !audioUploading) onClose() }}
+      onClose={handleClose}
       fullScreen={isMobile}
       maxWidth="xl"
       fullWidth={!isMobile}
@@ -238,7 +273,7 @@ export default function ChapterEditDialog({
         }}
       >
         {isNew ? "New Chapter" : "Edit Chapter"}
-        <IconButton onClick={onClose} disabled={saving || audioUploading} size="small" sx={{ color: "#7a6e65", mr: -0.5 }}>
+        <IconButton onClick={handleClose} disabled={saving || audioUploading} size="small" sx={{ color: "#7a6e65", mr: -0.5 }}>
           <Close sx={{ fontSize: "1.2rem" }} />
         </IconButton>
       </DialogTitle>
@@ -356,7 +391,7 @@ export default function ChapterEditDialog({
         <Box sx={{ flex: 1 }} />
         <Button
           variant="outlined"
-          onClick={onClose}
+          onClick={handleClose}
           disabled={saving || audioUploading || loading}
           sx={{ fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", borderColor: "rgba(122,110,101,0.3)", color: "#7a6e65", width: { xs: "100%", sm: "auto" } }}
         >

@@ -10,7 +10,24 @@ describe('website transcript server boundaries',()=>{
 
  it.each([true,false])('passes canonical bilingual JSON and explicit publication=%s through the existing import RPC',async searchable=>{mocks.rpc.mockResolvedValue({data:'saved',error:null});const content=[{text:'حياكم الله',offset:0,duration:5270,english:'Welcome'}];expect(await importAdminManualTranscriptResult({url:'https://youtu.be/Dgj9fQYbCZY',title:'Title',channel:'',json:JSON.stringify({content}),searchable})).toEqual({ok:true,id:'saved'});expect(mocks.rpc).toHaveBeenCalledWith('admin_record_transcript_origin',{p_actor:'11111111-1111-4111-8111-111111111111',p_id:'saved'});expect(mocks.rpc).toHaveBeenCalledWith('admin_import_youtube_transcript',expect.objectContaining({p_searchable:searchable,p_raw:{provider:'manual',lang:'ar',content}}))})
  it('returns useful JSON validation without touching the database',async()=>{const result=await importAdminManualTranscriptResult({url:'https://youtu.be/Dgj9fQYbCZY',title:'Title',channel:'',json:'{',searchable:true});expect(result).toEqual({ok:false,error:expect.stringContaining('Invalid transcript JSON')});expect(mocks.rpc).not.toHaveBeenCalled()})
- it('keeps the canonical list usable before the unrelated generation migration is deployed',async()=>{const query={select:vi.fn().mockReturnThis(),order:vi.fn().mockReturnThis(),range:vi.fn()};query.range.mockResolvedValueOnce({data:null,error:{code:'42703',message:'column website_generation does not exist'},count:null}).mockResolvedValueOnce({data:[{id:'existing'}],error:null,count:1});mocks.from.mockReturnValue(query);expect(await listAdminTranscripts()).toEqual({rows:[{id:'existing',website_generation:false}],total:1});expect(query.range).toHaveBeenCalledTimes(2)})
+ it('uses a short-lived schema fallback without repeating the failing query on each navigation',async()=>{
+  const clock=vi.spyOn(Date,'now').mockReturnValue(1000)
+  const query={select:vi.fn().mockReturnThis(),order:vi.fn().mockReturnThis(),range:vi.fn()}
+  query.range
+   .mockReturnValueOnce({overrideTypes:async()=>({data:null,error:{code:'42703',message:'column website_generation does not exist'},count:null})})
+   .mockResolvedValueOnce({data:[{id:'existing'}],error:null,count:1})
+   .mockReturnValueOnce({overrideTypes:async()=>({data:[{id:'existing'}],error:null,count:1})})
+   .mockReturnValueOnce({overrideTypes:async()=>({data:[{id:'existing',website_generation:true}],error:null,count:1})})
+  mocks.from.mockReturnValue(query)
+  expect(await listAdminTranscripts()).toEqual({rows:[{id:'existing',website_generation:false}],total:1})
+  expect(query.range).toHaveBeenCalledTimes(2)
+  expect(await listAdminTranscripts()).toEqual({rows:[{id:'existing',website_generation:false}],total:1})
+  expect(query.select.mock.calls[2][0]).not.toContain('website_generation')
+  clock.mockReturnValue(61001)
+  expect((await listAdminTranscripts()).rows[0].website_generation).toBe(true)
+  expect(query.select.mock.calls[3][0]).toContain('website_generation')
+  clock.mockRestore()
+ })
  it('denies generation, deletion and draft viewing before database access',async()=>{mocks.access.mockResolvedValue({admin:false,userId:'other'});mocks.guard.mockRejectedValue(new Error('Forbidden'));expect(await generateAdminTranscript('https://youtu.be/Dgj9fQYbCZY')).toEqual({ok:false,error:'Administrators only.'});expect(await deleteAdminTranscript('11111111-1111-4111-8111-111111111111')).toEqual({ok:false,error:'Administrators only.'});await expect(loadAdminTranscript('11111111-1111-4111-8111-111111111111')).rejects.toThrow('Forbidden');expect(mocks.rpc).not.toHaveBeenCalled();expect(mocks.from).not.toHaveBeenCalled()})
  it('queues automatic bilingual generation and reports canonical duplicates',async()=>{const id='33333333-3333-4333-8333-333333333333';mocks.rpc.mockResolvedValue({data:{id,duplicate:true},error:null});expect(await generateAdminTranscript('https://youtu.be/Dgj9fQYbCZY?t=30')).toEqual({ok:true,id,duplicate:true});expect(mocks.rpc).toHaveBeenCalledWith('admin_generate_youtube_transcript',{p_actor:'11111111-1111-4111-8111-111111111111',p_youtube_id:'Dgj9fQYbCZY'})})
  it('validates generation URLs before queuing',async()=>{expect((await generateAdminTranscript('Dgj9fQYbCZY')).ok).toBe(false);expect((await generateAdminTranscript('https://example.com/video')).ok).toBe(false);expect(mocks.rpc).not.toHaveBeenCalled()})

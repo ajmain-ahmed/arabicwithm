@@ -8,6 +8,7 @@ import { isMissingDatabaseFeature } from '@/app/lib/databaseErrors'
 import { revalidatePath } from 'next/cache'
 import { AUDIO_PATH_PATTERN, type AudioLanguage } from '@/app/lib/audioUpload'
 import { verifyAudioObject } from '@/app/lib/verifyAudioObject'
+import { normalizeYouTubeId } from '@/app/lib/cartoons'
 
 export type AudioSourceType = 'supabase_storage' | 'youtube'
 export interface ChapterAudioSummary {
@@ -30,14 +31,19 @@ const audioInput = z.object({
   chapterId: z.string().uuid(),
   language: z.enum(['ar', 'en']).default('ar'),
   sourceType: z.enum(['supabase_storage', 'youtube']),
-  storagePath: z.string().regex(AUDIO_PATH_PATTERN).nullable(),
-  externalVideoId: z.string().trim().regex(/^[A-Za-z0-9_-]{11}$/).nullable(),
-  durationSeconds: z.number().int().positive().max(86400).nullable(),
-  narrator: z.string().trim().max(160).nullable(),
+  storagePath: z.string().regex(AUDIO_PATH_PATTERN).nullish().transform(value => value ?? null),
+  externalVideoId: z.string().trim().nullish().transform((value, context) => {
+    if (!value) return null
+    const id = normalizeYouTubeId(value)
+    if (!id) context.addIssue({ code: 'custom', message: 'Enter a valid YouTube URL or video ID.' })
+    return id ?? null
+  }),
+  durationSeconds: z.number().int().positive().max(86400).nullish().transform(value => value ?? null),
+  narrator: z.string().trim().max(160).nullish().transform(value => value || null),
   isPublished: z.boolean(),
 }).superRefine((value, context) => {
   if (value.sourceType === 'supabase_storage' && (!value.storagePath || value.externalVideoId)) context.addIssue({ code: 'custom', message: 'Choose one uploaded audio file.' })
-  if (value.sourceType === 'youtube' && (!value.externalVideoId || value.storagePath)) context.addIssue({ code: 'custom', message: 'Enter one valid YouTube video ID.' })
+  if (value.sourceType === 'youtube' && (!value.externalVideoId || value.storagePath)) context.addIssue({ code: 'custom', message: 'Enter one valid YouTube URL or video ID.' })
 })
 
 function summary(row: Record<string, unknown>): ChapterAudioSummary {
@@ -130,6 +136,10 @@ export async function saveChapterAudioForAdmin(input: z.input<typeof audioInput>
   }
   const { error } = await serviceClient.from('book_chapter_audio').upsert({ chapter_id: value.chapterId, language: value.language, source_type: value.sourceType, storage_path: value.storagePath, external_video_id: value.externalVideoId, duration_seconds: value.durationSeconds, narrator: value.narrator || null, is_published: value.isPublished, updated_at: new Date().toISOString() }, { onConflict: 'chapter_id,language' })
   if (error) throw new Error(/PGRST204|42703|42P10/.test(error.code ?? '') ? 'Audiobook schema is out of date. Apply the chapter_audio_languages migration before saving audio.' : `Unable to save audiobook: ${error.message}`)
+  const persisted = await fetchChapterAudioForAdmin(value.chapterId, value.language)
+  if (!persisted || persisted.sourceType !== value.sourceType || persisted.storagePath !== value.storagePath || persisted.externalVideoId !== value.externalVideoId || persisted.narrator !== value.narrator || persisted.durationSeconds !== value.durationSeconds || persisted.isPublished !== value.isPublished) {
+    throw new Error('The database did not confirm the saved audio source. Keep this dialog open and retry Save.')
+  }
   await revalidateChapterAudio(value.chapterId)
   if (previous?.storagePath && previous.storagePath !== value.storagePath) {
     const { error: cleanupError } = await serviceClient.storage.from('audiobooks').remove([previous.storagePath])
@@ -141,7 +151,11 @@ export async function saveChapterAudioForAdmin(input: z.input<typeof audioInput>
 // not hide useful storage/validation messages from the uploader.
 export async function saveChapterAudioResult(input: z.input<typeof audioInput>): Promise<{ ok: true } | { ok: false; error: string }> {
   try { await saveChapterAudioForAdmin(input); return { ok: true } }
-  catch (error) { return { ok: false, error: error instanceof Error ? error.message : 'Unable to save chapter audio.' } }
+  catch (error) {
+    const message = error instanceof z.ZodError ? error.issues[0].message : error instanceof Error ? error.message : 'Unable to save chapter audio.'
+    console.error('[chapter audio] Save failed:', message)
+    return { ok: false, error: message }
+  }
 }
 
 export async function deleteChapterAudioForAdmin(chapterId: string, language: AudioLanguage = 'ar'): Promise<void> {

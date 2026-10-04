@@ -1,9 +1,9 @@
-import { Box, CircularProgress, Typography } from '@mui/material'
+import { Box, Skeleton, Typography } from '@mui/material'
 
 export default function AdminLoading() {
-  return (
-    <Box component="main" sx={{ minHeight: '60vh', display: 'grid', placeItems: 'center', textAlign: 'center' }}>
-      <Box><CircularProgress size={34} sx={{ color: 'var(--awm-gold)' }} /><Typography sx={{ mt: 1.5, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>Loading admin…</Typography></Box>
-    </Box>
-  )
+  return <Box role="status" aria-label="Loading Admin section">
+    <Typography variant="h4" sx={{ mb: 2 }}>Admin</Typography>
+    <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
+    <Skeleton variant="rounded" height={260} />
+  </Box>
 }

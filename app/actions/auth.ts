@@ -2,6 +2,7 @@
 
 "use server"
 
+import { cache } from "react"
 import { getAuthClient } from '@/app/lib/supabase/server'
 import { unstable_rethrow } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
@@ -34,13 +35,17 @@ export interface AuthenticatedAccess {
 }
 
 /** Server-verified identity and application role used by all authorization checks. */
-export async function getAuthenticatedAccess(): Promise<AuthenticatedAccess | null> {
+const accessForRequest = cache(async (): Promise<AuthenticatedAccess | null> => {
   const user = await getAuthenticatedUser()
   if (!user) return null
   const { data, error } = await serviceClient.rpc('account_role', { p_user_id: user.id })
   if (error) throw new Error('Unable to verify account access. Apply the user management migration.')
   const role: AccountRole = data === 'admin' || data === 'editor' ? data : 'user'
   return { userId: user.id, admin: role === 'admin', role }
+})
+
+export async function getAuthenticatedAccess(): Promise<AuthenticatedAccess | null> {
+  return accessForRequest()
 }
 
 export async function guardReviewer(): Promise<AuthenticatedAccess> {

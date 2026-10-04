@@ -5,6 +5,20 @@ import { Alert, Box, Button, Dialog, DialogContent, DialogTitle, DialogActions, 
 import { HeadphonesRounded, LockOutlined, PlayArrowRounded, RefreshRounded } from '@mui/icons-material'
 import { requestChapterAudio, saveAudioProgress, type ChapterAudioPlayback, type ChapterAudioSummary } from '@/app/actions/audiobooks'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
+import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
+
+function YouTubeAudio({ playback }: { playback: Extract<ChapterAudioPlayback, { sourceType: 'youtube' }> }) {
+  const { wrapRef, errorCode, retry } = useYouTubePlayer(playback.videoId, undefined, playback.positionSeconds)
+  const message = errorCode === 100
+    ? 'This YouTube video is private, removed, or unavailable. Ask the administrator for an unlisted or public source.'
+    : errorCode === 101 || errorCode === 150
+      ? 'The video owner has disabled embedded playback. Ask the administrator to enable embedding or upload the audio.'
+      : 'YouTube could not play this video. Try again or ask the administrator to check the source.'
+  return <>
+    <Box ref={wrapRef} sx={{ width: '100%', aspectRatio: '16 / 9', overflow: 'hidden', borderRadius: '10px', '& iframe': { width: '100%', height: '100%', border: 0 } }} />
+    {errorCode !== null && <Alert severity="warning" action={<Button onClick={retry}>Retry YouTube</Button>}>{message}</Alert>}
+  </>
+}
 
 function durationLabel(seconds: number | null): string | null {
   if (!seconds) return null
@@ -70,7 +84,7 @@ export default function ChapterAudioPlayer({ audio, chapterTitle, compact = fals
       onError={() => setError('The secure audio link expired or playback was interrupted. Refresh it to continue.')}
       style={{ width: '100%' }}
     />}
-    {playback?.sourceType === 'youtube' && <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', overflow: 'hidden', borderRadius: '10px' }}><iframe title={`${chapterTitle} audiobook`} src={`https://www.youtube-nocookie.com/embed/${playback.videoId}?start=${playback.positionSeconds}`} allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} /></Box>}
+    {playback?.sourceType === 'youtube' && <YouTubeAudio playback={playback} />}
     {error && <Alert severity="warning" sx={{ mt: 1.5 }} action={<Button startIcon={<RefreshRounded />} onClick={() => void loadPlayback()}>Refresh audio</Button>}>{error}</Alert>}
     <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason="Audiobook playback is available with AWM+." />
   </Paper>

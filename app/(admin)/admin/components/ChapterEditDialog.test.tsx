@@ -6,6 +6,8 @@ vi.mock('@/app/actions/admin', () => ({ createChapter: mocks.create, updateChapt
 vi.mock('@/app/actions/audiobooks', () => ({ fetchChapterAudioForAdmin: mocks.audio, saveChapterAudioResult: mocks.persist, deleteChapterAudioForAdmin: vi.fn() }))
 vi.mock('@/app/lib/uploadChapterAudio', () => ({ uploadChapterAudio: mocks.upload }))
 vi.mock('@/app/lib/audioUpload', () => ({ validateAudioFile: vi.fn().mockResolvedValue('mp3') }))
+vi.mock('@/app/actions/storage', () => ({ removeAudiobookAudio: vi.fn().mockResolvedValue(undefined) }))
+vi.mock('@mui/icons-material', () => ({ Close: () => null, Save: () => null, Delete: () => null }))
 import ChapterEditDialog from './ChapterEditDialog'
 let host: HTMLDivElement, root: Root
 beforeEach(() => {
@@ -36,7 +38,7 @@ it.each([['Arabic'], ['English'], ['Arabic', 'English']])('creates a chapter wit
   expect(mocks.upload).toHaveBeenCalledTimes(languages.length)
   for (const name of languages) {
     const language = name === 'Arabic' ? 'ar' : 'en'
-    expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ chapterId: 'new-chapter', language, storagePath: `new-chapter/${language}/new.mp3` }))
+    expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ chapterId: 'new-chapter', language, storagePath: `new-chapter/${language}/new.mp3`, narrator: null, durationSeconds: null }))
   }
   expect(mocks.closed).toHaveBeenCalledOnce()
 })

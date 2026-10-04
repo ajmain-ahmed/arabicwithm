@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useRef, useState } from "react"
+import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import {
   Dialog,
   DialogTitle,
@@ -40,6 +41,7 @@ export default function BookEditDialog({
   onSaved,
   onDeleted,
 }: BookEditDialogProps) {
+  const cache = useAdminListCache()
   const busy = useRef(false)
   const mounted = useRef(true)
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
@@ -133,6 +135,7 @@ export default function BookEditDialog({
       if (!mounted.current) return
       if (!result.ok) { setError(result.error); return }
 
+      cache.invalidate("books")
       onSaved?.()
       onClose()
     } catch (e: unknown) {
@@ -150,6 +153,7 @@ export default function BookEditDialog({
     try {
       await deleteBook(bookId!)
       if (!mounted.current) return
+      cache.invalidate("books")
       onDeleted?.()
       onClose()
     } catch (e: unknown) {

@@ -13,6 +13,9 @@ export interface TranscriptSegment {id:number;position:number;original_text:stri
 export interface TranscriptHit {segment_id:number;transcript_id:string;youtube_id:string;title:string;channel:string|null;thumbnail:string;start_seconds:number;end_seconds:number;original_text:string;english_text:string|null;matched_surfaces:string[];match_type:string;match_rank:number;previous_text:string|null;next_text:string|null}
 const columns='id,youtube_id,canonical_url,title,channel,thumbnail,duration_seconds,provider,status,translation_status,searchable,created_at,updated_at,error_code'
 function missingGenerationColumn(error:{code?:string;message:string}|null):boolean{return Boolean(error&&['42703','PGRST204'].includes(error.code??'')&&error.message.includes('website_generation'))}
+// Cache only schema capability, never transcript data or permissions. Recheck
+// within one minute so applying the generation migration takes effect promptly.
+let generationColumnUnavailableUntil=0
 async function adminIdentity():Promise<string> {const access=await getAuthenticatedAccess();if(!access?.admin) throw new Error('Forbidden');return access.userId}
 async function recordAdminOrigin(actor:string,id:string):Promise<void> {
   const {error}=await serviceClient.rpc('admin_record_transcript_origin',{p_actor:actor,p_id:id})
@@ -43,8 +46,11 @@ export async function deleteAdminTranscript(id: string): Promise<{ok:true}|{ok:f
 }
 export async function listAdminTranscripts(page=0):Promise<{rows:TranscriptRow[];total:number}> {
   await guardAdmin();z.number().int().min(0).max(100000).parse(page)
-  let {data,error,count}=await serviceClient.from('youtube_transcripts').select(`${columns},website_generation`,{count:'exact'}).order('created_at',{ascending:false}).order('id').range(page*30,page*30+29)
+  const includeGeneration=Date.now()>=generationColumnUnavailableUntil
+  let {data,error,count}=await serviceClient.from('youtube_transcripts').select(includeGeneration?`${columns},website_generation`:columns,{count:'exact'}).order('created_at',{ascending:false}).order('id').range(page*30,page*30+29).overrideTypes<TranscriptRow[],{merge:false}>()
+  if(!includeGeneration&&data)data=data.map(row=>({...row,website_generation:false}))
   if(missingGenerationColumn(error)){
+    generationColumnUnavailableUntil=Date.now()+60_000
     const legacy=await serviceClient.from('youtube_transcripts').select(columns,{count:'exact'}).order('created_at',{ascending:false}).order('id').range(page*30,page*30+29)
     data=legacy.data?.map(row=>({...row,website_generation:false}))??null;error=legacy.error;count=legacy.count
   }

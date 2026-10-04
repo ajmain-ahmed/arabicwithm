@@ -1,10 +1,10 @@
 import React, { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
+vi.mock('@mui/icons-material', () => ({ Edit: () => null, Add: () => null, ExpandMore: () => null, Search: () => null, Close: () => null }));
 const mocks = vi.hoisted(() => ({ books: vi.fn(), chapters: vi.fn() }));
 vi.mock("@/app/actions/admin", () => ({
-  fetchBooksForAdmin: mocks.books,
-  fetchChaptersForBookAdmin: mocks.chapters,
+  fetchBooksIndexForAdmin: mocks.books,
 }));
 vi.mock("../components/BookEditDialog", () => ({
   default: ({ open, onSaved }: { open: boolean; onSaved: () => void }) =>
@@ -44,7 +44,7 @@ it("refreshes from one catalogue snapshot and discards a late pre-creation respo
   let finish!: (value: unknown) => void;
   mocks.books
     .mockImplementationOnce(() => new Promise((resolve) => (finish = resolve)))
-    .mockResolvedValueOnce([row]);
+    .mockResolvedValueOnce({ books: [row], chapters: [] });
   await act(async () => root.render(<BooksAdminPage />));
   await act(async () =>
     Array.from(host.querySelectorAll("button"))
@@ -57,8 +57,8 @@ it("refreshes from one catalogue snapshot and discards a late pre-creation respo
       .click(),
   );
   expect(host.textContent).toContain("Newly persisted book");
-  await act(async () => finish([]));
+  await act(async () => finish({ books: [], chapters: [] }));
   expect(host.textContent).toContain("Newly persisted book");
   expect(mocks.books).toHaveBeenCalledTimes(2);
-  expect(mocks.chapters).toHaveBeenCalledOnce();
+  expect(mocks.chapters).not.toHaveBeenCalled();
 });

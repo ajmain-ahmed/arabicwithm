@@ -3,15 +3,18 @@ import {useCallback,useEffect,useState} from 'react'
 import Link from 'next/link'
 import {Alert,Box,Button,Card,CardContent,Checkbox,Dialog,DialogActions,DialogContent,DialogTitle,FormControlLabel,Stack,TextField,Typography} from '@mui/material'
 import {generateAdminTranscript,deleteAdminTranscript,importAdminManualTranscriptResult,listAdminTranscripts,updateAdminTranscript,type TranscriptRow} from '@/app/actions/transcripts'
+import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import TranscriptJsonField from '@/app/(admin)/admin/components/TranscriptJsonField'
 import {transcriptGenerationStatus,transcriptGenerationPending} from '@/app/lib/transcriptStatus'
 
 export default function AdminTranscripts(){
- const [rows,setRows]=useState<TranscriptRow[]>([]),[page,setPage]=useState(0),[total,setTotal]=useState(0),[loading,setLoading]=useState(true),[error,setError]=useState(''),[success,setSuccess]=useState(''),[refresh,setRefresh]=useState(0)
+ const cache=useAdminListCache()
+ const snapshot=cache.peek<{rows:TranscriptRow[];total:number}>("transcripts:0")
+ const [rows,setRows]=useState<TranscriptRow[]>(snapshot?.rows??[]),[page,setPage]=useState(0),[total,setTotal]=useState(snapshot?.total??0),[loading,setLoading]=useState(!snapshot),[error,setError]=useState(''),[success,setSuccess]=useState(''),[refresh,setRefresh]=useState(0)
  const [open,setOpen]=useState(false),[url,setUrl]=useState(''),[title,setTitle]=useState(''),[channel,setChannel]=useState(''),[transcriptJson,setTranscriptJson]=useState(''),[searchable,setSearchable]=useState(true),[busy,setBusy]=useState(false),[edit,setEdit]=useState<TranscriptRow|null>(null),[formError,setFormError]=useState('')
  const [generationUrl,setGenerationUrl]=useState(''),[generating,setGenerating]=useState(false),[deleting,setDeleting]=useState<TranscriptRow|null>(null),[deleteBusy,setDeleteBusy]=useState(false),[deleteError,setDeleteError]=useState('')
- const reload=useCallback(()=>setRefresh(v=>v+1),[])
- useEffect(()=>{let current=true;setLoading(true);setError('');listAdminTranscripts(page).then(result=>{if(current){setRows(result.rows);setTotal(result.total)}}).catch(e=>{if(current)setError(e.message)}).finally(()=>{if(current)setLoading(false)});return()=>{current=false}},[page,refresh])
+ const reload=useCallback(()=>{cache.invalidate("transcripts:");setRefresh(v=>v+1)},[cache])
+ useEffect(()=>{let current=true;setLoading(!cache.peek(`transcripts:${page}`));setError('');cache.load(`transcripts:${page}`,()=>listAdminTranscripts(page)).then(result=>{if(current){setRows(result.rows);setTotal(result.total)}}).catch(e=>{if(current)setError(e.message)}).finally(()=>{if(current)setLoading(false)});return()=>{current=false}},[page,refresh,cache])
  useEffect(()=>{if(!rows.some(transcriptGenerationPending))return;const timer=setInterval(()=>{if(document.visibilityState==='visible')reload()},5000);return()=>clearInterval(timer)},[rows,reload])
  async function save(){setBusy(true);setFormError('');try{
   if(edit)await updateAdminTranscript(edit.id,{title,channel,searchable})
