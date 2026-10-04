@@ -14,6 +14,10 @@ export interface TranscriptHit {segment_id:number;transcript_id:string;youtube_i
 const columns='id,youtube_id,canonical_url,title,channel,thumbnail,duration_seconds,provider,status,translation_status,searchable,created_at,updated_at,error_code'
 function missingGenerationColumn(error:{code?:string;message:string}|null):boolean{return Boolean(error&&['42703','PGRST204'].includes(error.code??'')&&error.message.includes('website_generation'))}
 async function adminIdentity():Promise<string> {const access=await getAuthenticatedAccess();if(!access?.admin) throw new Error('Forbidden');return access.userId}
+async function recordAdminOrigin(actor:string,id:string):Promise<void> {
+  const {error}=await serviceClient.rpc('admin_record_transcript_origin',{p_actor:actor,p_id:id})
+  if(error)throw new Error('Unable to record Admin transcript provenance. Please retry the import.')
+}
 export async function generateAdminTranscript(url: string): Promise<{ok:true;id:string;duplicate:boolean}|{ok:false;error:string}> {
   try {
     const actor=await adminIdentity()
@@ -23,6 +27,7 @@ export async function generateAdminTranscript(url: string): Promise<{ok:true;id:
     const {data,error}=await serviceClient.rpc('admin_generate_youtube_transcript',{p_actor:actor,p_youtube_id:youtubeId})
     if(error)throw new Error(/Forbidden/.test(error.message)?'Administrators only.':/rate_limit|daily_limit/.test(error.message)?'Generation quota reached. Please try again later.':/PGRST202|42883/.test(error.code??'')?'Website generation is not configured. Apply the website transcript migration.':'Unable to queue transcript generation. Please retry.')
     const result=z.object({id:z.string().uuid(),duplicate:z.boolean()}).parse(data)
+    await recordAdminOrigin(actor,result.id)
     revalidatePath('/admin/transcripts')
     return {ok:true,...result}
   }catch(error){return {ok:false,error:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to generate transcript.'}}
@@ -51,9 +56,10 @@ export async function addAdminYouTubeTranscript(input:string):Promise<string> {
   // Saved canonical work is always reused, even if the operator is on cooldown.
   const {data:existing,error:lookupError}=await serviceClient.from('youtube_transcripts').select('id').eq('youtube_id',id).maybeSingle()
   if(lookupError)throw new Error('Unable to check the canonical library.')
-  if(existing)return existing.id
+  if(existing){await recordAdminOrigin(actor,existing.id);return existing.id}
   const {data,error}=await serviceClient.rpc('register_youtube_transcript',{p_user:actor,p_youtube_id:id})
   if(error)throw new Error(/limit/.test(error.message)?'Import quota reached. Please try later.':'Unable to queue transcript import.')
+  await recordAdminOrigin(actor,data)
   revalidatePath('/admin/transcripts');return data
 }
 export async function importAdminManualTranscript(input:{url:string;title:string;channel:string;json?:string;arabic?:string;english?:string;searchable:boolean}):Promise<string> {
@@ -63,6 +69,7 @@ export async function importAdminManualTranscript(input:{url:string;title:string
   const raw=value.json!==undefined?normaliseManualTranscriptJson(value.json):normaliseManualTranscript(value.arabic??'',value.english)
   const {data,error}=await serviceClient.rpc('admin_import_youtube_transcript',{p_actor:actor,p_youtube_id:id,p_title:value.title,p_channel:value.channel,p_raw:raw as unknown as Json,p_searchable:value.searchable})
   if(error)throw new Error('Unable to import the timed transcript. Existing canonical content has not been replaced.')
+  await recordAdminOrigin(actor,data)
   revalidatePath('/admin/transcripts');return data
 }
 export async function updateAdminTranscript(id:string,input:{title:string;channel:string;searchable:boolean}):Promise<void> {

@@ -327,6 +327,7 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      admin_record_transcript_origin: { Args:{p_actor:string;p_id:string};Returns:string }
       register_youtube_transcript: { Args:{p_user:string;p_youtube_id:string};Returns:string }
       admin_generate_youtube_transcript: { Args:{p_actor:string;p_youtube_id:string};Returns:Json }
       admin_delete_youtube_transcript: { Args:{p_actor:string;p_id:string};Returns:boolean }
