@@ -19,15 +19,12 @@ beforeEach(() => {
   mocks.auth.user = { id: 'admin', email: 'admin@example.com' }
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
 })
-it.each([false, true])('keeps existing mobile navigation and removes the desktop Word Search link on mobile=%s', async mobile => {
+it.each([false, true])('omits Word Search from desktop and responsive website navigation on mobile=%s', async mobile => {
   mocks.mobile = mobile; mocks.auth.user = null; mocks.role = 'user'
   await act(async () => root.render(<Navbar />))
   if (mobile) {
     await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
-    const link = [...document.querySelectorAll('[role="button"]')].find(button => button.textContent === 'Word Search') as HTMLElement
-    expect(link).toBeDefined()
-    await act(async () => link.click())
-    expect(mocks.push).toHaveBeenCalledWith('/word-search')
+    expect([...document.querySelectorAll('[role="button"]')].some(button => button.textContent === 'Word Search')).toBe(false)
   } else expect(host.querySelector('a[href="/word-search"]')).toBeNull()
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove() })
@@ -60,7 +57,7 @@ it.each(['admin', 'editor', 'user'])('offers the correct mobile destinations for
   expect(Boolean(admin)).toBe(role === 'admin')
   expect(buttons.some(button => button.textContent === 'Reviewer')).toBe(role !== 'user')
   expect(buttons.some(button => button.textContent === 'My Profile')).toBe(true)
-  expect(buttons.some(button => button.textContent === 'Word Search')).toBe(true)
+  expect(buttons.some(button => button.textContent === 'Word Search')).toBe(false)
   if (admin) {
     await act(async () => (admin as HTMLElement).click())
     expect(mocks.push).toHaveBeenCalledWith('/admin/users')

@@ -12,7 +12,6 @@ import ChapterReader from './ChapterReader'
 import { normalizeBookReaderLanguage } from '@/app/lib/bookReaderSettings'
 import SignInRequired from '@/app/components/SignInRequired'
 import { fetchPublishedChapterAudio } from '@/app/actions/audiobooks'
-import ChapterAudioPlayer from './ChapterAudioPlayer'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
 
 export const dynamic = 'force-dynamic'
@@ -114,8 +113,7 @@ export default async function ChapterPage({
           </Typography>
         </Box>
 
-        {audio.map(item => item && <ChapterAudioPlayer key={item.language} audio={item} chapterTitle={chapter.title} />)}
-        <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} />
+        <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
 
         <Box component="nav" aria-label="Chapter navigation" sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, mt: 3 }}>
           {previousChapter && (

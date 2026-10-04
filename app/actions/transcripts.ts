@@ -6,11 +6,13 @@ import { getAuthenticatedAccess, guardAdmin } from '@/app/actions/auth'
 import { serviceClient } from '@/app/lib/supabase'
 import type { Json } from '@/app/lib/supabase/database.types'
 import { normaliseManualTranscript, transcriptVideoId } from '@/app/lib/manualTranscripts'
+import { normaliseManualTranscriptJson } from '@/app/lib/manualTranscriptJson'
 
 export interface TranscriptRow {id:string;youtube_id:string;canonical_url:string;title:string;channel:string|null;thumbnail:string;duration_seconds:number|null;provider:string;status:string;translation_status:string;searchable:boolean;created_at:string;updated_at:string;error_code:string|null;website_generation?:boolean}
 export interface TranscriptSegment {id:number;position:number;original_text:string;english_text:string|null;start_seconds:number;end_seconds:number;start_ms?:number;end_ms?:number}
 export interface TranscriptHit {segment_id:number;transcript_id:string;youtube_id:string;title:string;channel:string|null;thumbnail:string;start_seconds:number;end_seconds:number;original_text:string;english_text:string|null;matched_surfaces:string[];match_type:string;match_rank:number;previous_text:string|null;next_text:string|null}
 const columns='id,youtube_id,canonical_url,title,channel,thumbnail,duration_seconds,provider,status,translation_status,searchable,created_at,updated_at,error_code'
+function missingGenerationColumn(error:{code?:string;message:string}|null):boolean{return Boolean(error&&['42703','PGRST204'].includes(error.code??'')&&error.message.includes('website_generation'))}
 async function adminIdentity():Promise<string> {const access=await getAuthenticatedAccess();if(!access?.admin) throw new Error('Forbidden');return access.userId}
 export async function generateAdminTranscript(url: string): Promise<{ok:true;id:string;duplicate:boolean}|{ok:false;error:string}> {
   try {
@@ -36,7 +38,11 @@ export async function deleteAdminTranscript(id: string): Promise<{ok:true}|{ok:f
 }
 export async function listAdminTranscripts(page=0):Promise<{rows:TranscriptRow[];total:number}> {
   await guardAdmin();z.number().int().min(0).max(100000).parse(page)
-  const {data,error,count}=await serviceClient.from('youtube_transcripts').select(`${columns},website_generation`,{count:'exact'}).order('created_at',{ascending:false}).order('id').range(page*30,page*30+29)
+  let {data,error,count}=await serviceClient.from('youtube_transcripts').select(`${columns},website_generation`,{count:'exact'}).order('created_at',{ascending:false}).order('id').range(page*30,page*30+29)
+  if(missingGenerationColumn(error)){
+    const legacy=await serviceClient.from('youtube_transcripts').select(columns,{count:'exact'}).order('created_at',{ascending:false}).order('id').range(page*30,page*30+29)
+    data=legacy.data?.map(row=>({...row,website_generation:false}))??null;error=legacy.error;count=legacy.count
+  }
   if(error)throw new Error('Unable to load transcripts. Please retry.')
   return {rows:data??[],total:count??0}
 }
@@ -50,11 +56,11 @@ export async function addAdminYouTubeTranscript(input:string):Promise<string> {
   if(error)throw new Error(/limit/.test(error.message)?'Import quota reached. Please try later.':'Unable to queue transcript import.')
   revalidatePath('/admin/transcripts');return data
 }
-export async function importAdminManualTranscript(input:{url:string;title:string;channel:string;arabic:string;english?:string;searchable:boolean}):Promise<string> {
+export async function importAdminManualTranscript(input:{url:string;title:string;channel:string;json?:string;arabic?:string;english?:string;searchable:boolean}):Promise<string> {
   const actor=await adminIdentity()
-  const value=z.object({url:z.string().max(2048),title:z.string().trim().min(1).max(300),channel:z.string().trim().max(300),arabic:z.string().max(1048576),english:z.string().max(1048576).optional(),searchable:z.boolean()}).parse(input)
+  const value=z.object({url:z.string().max(2048),title:z.string().trim().min(1).max(300),channel:z.string().trim().max(300),json:z.string().max(1048576).optional(),arabic:z.string().max(1048576).optional(),english:z.string().max(1048576).optional(),searchable:z.boolean()}).parse(input)
   const id=transcriptVideoId(value.url)
-  const raw=normaliseManualTranscript(value.arabic,value.english)
+  const raw=value.json!==undefined?normaliseManualTranscriptJson(value.json):normaliseManualTranscript(value.arabic??'',value.english)
   const {data,error}=await serviceClient.rpc('admin_import_youtube_transcript',{p_actor:actor,p_youtube_id:id,p_title:value.title,p_channel:value.channel,p_raw:raw as unknown as Json,p_searchable:value.searchable})
   if(error)throw new Error('Unable to import the timed transcript. Existing canonical content has not been replaced.')
   revalidatePath('/admin/transcripts');return data
@@ -62,7 +68,8 @@ export async function importAdminManualTranscript(input:{url:string;title:string
 export async function updateAdminTranscript(id:string,input:{title:string;channel:string;searchable:boolean}):Promise<void> {
   await guardAdmin();z.string().uuid().parse(id)
   const value=z.object({title:z.string().trim().min(1).max(300),channel:z.string().trim().max(300),searchable:z.boolean()}).parse(input)
-  const {data:video,error:readError}=await serviceClient.from('youtube_transcripts').select('status,website_generation,translation_status').eq('id',id).single()
+  let {data:video,error:readError}=await serviceClient.from('youtube_transcripts').select('status,website_generation,translation_status').eq('id',id).single()
+  if(missingGenerationColumn(readError))({data:video,error:readError}=await serviceClient.from('youtube_transcripts').select('status,translation_status').eq('id',id).single())
   if(readError||!video)throw new Error('Transcript not found.')
   if(value.searchable&&video.status!=='ready')throw new Error('Wait for processing to finish before publishing.')
   if(value.searchable&&video.website_generation&&video.translation_status!=='ready')throw new Error('Wait for complete English translation before publishing this generated transcript.')
@@ -94,6 +101,10 @@ async function loadTranscript(id:string,after=-1,seconds?:number,admin=false):Pr
   const {data:segments,error:segmentError}=await serviceClient.from('transcript_segments').select('*').eq('transcript_id',id).gt('position',after).order('position',{ascending:true}).limit(100)
   if(segmentError)throw new Error('Unable to load transcript segments.')
   return {video,segments:(segments??[]).map(segment=>({id:segment.id,position:segment.position,original_text:segment.original_text,english_text:segment.english_text,start_seconds:segment.start_seconds,end_seconds:segment.end_seconds,start_ms:segment.start_ms??Math.round(segment.start_seconds*1000),end_ms:segment.end_ms??Math.round(segment.end_seconds*1000)}))}
+}
+export async function importAdminManualTranscriptResult(input: Parameters<typeof importAdminManualTranscript>[0]): Promise<{ok:true;id:string}|{ok:false;error:string}> {
+  try { return {ok:true,id:await importAdminManualTranscript(input)} }
+  catch(error) { return {ok:false,error:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to import transcript.'} }
 }
 export async function loadPublicTranscript(id:string,after=-1,seconds?:number){return loadTranscript(id,after,seconds)}
 export async function loadAdminTranscript(id:string,after=-1,seconds?:number){await guardAdmin();return loadTranscript(id,after,seconds,true)}

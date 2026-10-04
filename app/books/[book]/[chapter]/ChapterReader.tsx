@@ -27,6 +27,8 @@ import {
   type BookReaderLanguage,
 } from '@/app/lib/bookReaderSettings'
 import BookReaderSettingsDialog from './BookReaderSettingsDialog'
+import ChapterAudioPlayer from './ChapterAudioPlayer'
+import type { ChapterAudioSummary } from '@/app/actions/audiobooks'
 
 type ReaderView = 'lines' | 'book'
 const READER_VIEW_STORAGE_KEY = 'awm-book-reader-view'
@@ -246,6 +248,7 @@ export default function ChapterReader({
   chapterSlug,
   content,
   initialLanguage,
+  audio = [],
 }: {
   bookSlug: string
   bookTitle: string
@@ -253,6 +256,7 @@ export default function ChapterReader({
   chapterSlug: string
   content: PublicBookBlock[]
   initialLanguage?: BookReaderLanguage
+  audio?: ChapterAudioSummary[]
 }) {
   const { user } = useAuth()
   const mobileWordPopup = useMediaQuery('(max-width:899.95px)')
@@ -499,6 +503,7 @@ export default function ChapterReader({
               Settings
             </Button>
             </ButtonGroup>
+            {(() => { const source = audio.find(item => item.language === language) ?? audio[0]; return source ? <ChapterAudioPlayer key={`${source.chapterId}/${source.language}`} audio={source} chapterTitle={chapterTitle} compact label={source.language === language ? 'Audio' : `Audio (${source.language === 'en' ? 'English' : 'Arabic'})`} /> : null })()}
 
           </Box>
         </Box>

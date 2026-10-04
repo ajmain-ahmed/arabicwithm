@@ -129,7 +129,7 @@ export async function saveChapterAudioForAdmin(input: z.input<typeof audioInput>
     if (segments.length === 2) await verifyAudioObject(value.storagePath)
   }
   const { error } = await serviceClient.from('book_chapter_audio').upsert({ chapter_id: value.chapterId, language: value.language, source_type: value.sourceType, storage_path: value.storagePath, external_video_id: value.externalVideoId, duration_seconds: value.durationSeconds, narrator: value.narrator || null, is_published: value.isPublished, updated_at: new Date().toISOString() }, { onConflict: 'chapter_id,language' })
-  if (error) throw new Error(error.message)
+  if (error) throw new Error(/PGRST204|42703|42P10/.test(error.code ?? '') ? 'Audiobook schema is out of date. Apply the chapter_audio_languages migration before saving audio.' : `Unable to save audiobook: ${error.message}`)
   await revalidateChapterAudio(value.chapterId)
   if (previous?.storagePath && previous.storagePath !== value.storagePath) {
     const { error: cleanupError } = await serviceClient.storage.from('audiobooks').remove([previous.storagePath])
