@@ -12,9 +12,9 @@ let row:Record<string,unknown>|null,events:string[]
 beforeEach(()=>{
  vi.resetAllMocks();events=[];row=null;mocks.guard.mockResolvedValue(undefined);mocks.entitlement.mockResolvedValue(undefined);mocks.user.mockResolvedValue('listener');mocks.list.mockResolvedValue({data:[{name:'audio.mp3'}],error:null});mocks.remove.mockImplementation(async()=>{events.push('remove-file');return {error:null}});mocks.sign.mockResolvedValue({data:{signedUrl:'https://example.test/scoped-playback'},error:null})
  mocks.from.mockImplementation((table:string)=>{
-  const value={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn(async()=>({data:table==='book_chapter_audio'?row:table==='chapters'?{id:chapter,slug:'chapter',book_id:'book'}:table==='books'?{slug:'book'}:null,error:null})),
+  const value={then:(resolve:(value:unknown)=>unknown)=>Promise.resolve({data:table==='book_chapter_audio'?(row?[row]:[]):[],error:null}).then(resolve),select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn(async()=>({data:table==='book_chapter_audio'?row:table==='chapters'?{id:chapter,slug:'chapter',book_id:'book'}:table==='books'?{slug:'book'}:null,error:null})),
    upsert:vi.fn(async(data:Record<string,unknown>)=>{row={id:'audio',...data};events.push('persist-reference');return {error:null}}),
-   delete:vi.fn(()=>({eq:vi.fn(async()=>{row=null;events.push('remove-reference');return {error:null}})}))}
+   delete:vi.fn(()=>{const builder={eq:vi.fn().mockReturnThis(),then:(resolve:(value:unknown)=>unknown)=>{row=null;events.push('remove-reference');return Promise.resolve({error:null}).then(resolve)}};return builder})}
   return value
  })
 })
@@ -28,4 +28,6 @@ describe('existing chapter audio persistence and permissions',()=>{
  it('direct file deletion refuses a saved chapter reference',async()=>{row={chapter_id:chapter,source_type:'supabase_storage',storage_path:chapter+'/audio.mp3',is_published:true};await expect(removeAudiobookAudio(chapter+'/audio.mp3')).rejects.toThrow('reference');expect(mocks.remove).not.toHaveBeenCalled()})
  it('returns no player availability for chapters without audio',async()=>{expect(await fetchPublishedChapterAudio(chapter)).toBeNull()})
  it('requires audiobook entitlement before generating a playback URL',async()=>{mocks.entitlement.mockRejectedValue(new Error('AWM+ required'));await expect(requestChapterAudio(chapter)).rejects.toThrow('AWM+ required');expect(mocks.from).not.toHaveBeenCalled();expect(mocks.sign).not.toHaveBeenCalled()})
+ it('does not confuse an English source with Arabic playback',async()=>{row={chapter_id:chapter,language:'en',source_type:'supabase_storage',storage_path:chapter+'/en/11111111-1111-4111-8111-111111111111.mp3',is_published:true};await expect(requestChapterAudio(chapter,'ar')).rejects.toThrow('not available');expect(mocks.sign).not.toHaveBeenCalled();expect(await requestChapterAudio(chapter,'en')).toEqual(expect.objectContaining({sourceType:'supabase_storage'}));expect(mocks.sign).toHaveBeenCalledWith(row.storage_path,900)})
+ it('rejects assigning legacy Arabic or new English paths to the other language',async()=>{await expect(saveChapterAudioForAdmin({chapterId:chapter,language:'en',sourceType:'supabase_storage',storagePath:chapter+'/audio.mp3',externalVideoId:null,durationSeconds:null,narrator:null,isPublished:true})).rejects.toThrow('language');await expect(saveChapterAudioForAdmin({chapterId:chapter,language:'ar',sourceType:'supabase_storage',storagePath:chapter+'/en/11111111-1111-4111-8111-111111111111.mp3',externalVideoId:null,durationSeconds:null,narrator:null,isPublished:true})).rejects.toThrow('language')})
 })

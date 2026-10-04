@@ -84,9 +84,9 @@ export default async function ChapterPage({
   }
 
   const chapterIndex = chapters.findIndex((item) => item.slug === chapter.slug)
-  let audio: Awaited<ReturnType<typeof fetchPublishedChapterAudio>>
+  let audio: Awaited<ReturnType<typeof fetchPublishedChapterAudio>>[]
   try {
-    audio = await fetchPublishedChapterAudio(chapter.id)
+    audio = await Promise.all([fetchPublishedChapterAudio(chapter.id, 'ar'), fetchPublishedChapterAudio(chapter.id, 'en')])
   } catch (error) {
     console.error('[book-reader] Unable to load chapter audio', {
       bookSlug,
@@ -114,7 +114,7 @@ export default async function ChapterPage({
           </Typography>
         </Box>
 
-        {audio && <ChapterAudioPlayer audio={audio} chapterTitle={chapter.title} />}
+        {audio.map(item => item && <ChapterAudioPlayer key={item.language} audio={item} chapterTitle={chapter.title} />)}
         <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} />
 
         <Box component="nav" aria-label="Chapter navigation" sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, mt: 3 }}>

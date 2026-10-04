@@ -168,6 +168,7 @@ export default function MobileDrawer({
                     { label: 'Watch', icon: <Movie sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/cartoons') },
                     { label: 'Read', icon: <BookOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/books') },
                     { label: 'Memory', icon: <PsychologyOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/memory') },
+                    { label: 'Word Search', icon: <ExploreOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/word-search') },
                     { label: 'Give Feedback', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => { window.location.href = '/feedback' } },
                     { label: 'Support Us', icon: <VolunteerActivismRounded sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/support') },
                     { label: 'Contact', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: onContactOpen },

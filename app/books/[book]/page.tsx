@@ -83,7 +83,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                   />
                 )}
                 {book.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />)}
-                {audioChapters.length > 0 && <Chip icon={<HeadphonesRounded />} label={`Audiobook · ${audioChapters.length} ${audioChapters.length === 1 ? 'chapter' : 'chapters'}`} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508', '& .MuiChip-icon': { color: 'inherit' } }} />}
+                {audioChapterIds.size > 0 && <Chip icon={<HeadphonesRounded />} label={`Audiobook · ${audioChapterIds.size} ${audioChapterIds.size === 1 ? 'chapter' : 'chapters'}`} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508', '& .MuiChip-icon': { color: 'inherit' } }} />}
               </Box>
               <Box sx={{ mt: 3 }}>
                 <BookReadingCta bookSlug={book.slug} chapters={chapters} />

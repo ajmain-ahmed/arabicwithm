@@ -7,6 +7,7 @@ const destinations = [
   { href: '/', label: 'Home', Icon: Home }, { href: '/explore', label: 'Explore', Icon: ExploreOutlined },
   { href: '/cartoons', label: 'Watch', Icon: Movie }, { href: '/books', label: 'Read', Icon: MenuBook },
   { href: '/memory', label: 'Memory', Icon: PsychologyOutlined },
+  { href: '/word-search', label: 'Word Search', Icon: ExploreOutlined },
 ]
 export default function MobileBottomNav() {
   const mobile = useMediaQuery('(max-width:899.95px)')

@@ -11,6 +11,7 @@ import { generateWordSearch, sameCells, straightLineBetween, WORD_SEARCH_DIFFICU
 import { calculateWordSearchAccuracy, formatWordSearchDuration, shouldCompleteWordSearch, type WordSearchCompletionStats } from '@/app/lib/wordSearchProgress'
 import WordSearchClues from './WordSearchClues'
 import WordSearchDifficultySelector from './WordSearchDifficultySelector'
+import { useAuth } from '@/app/AuthContext'
 
 function cellKey(cell: PuzzleCell): string {
   return `${cell.row}:${cell.col}`
@@ -26,6 +27,7 @@ interface CompletionSummary extends WordSearchCompletionStats, WordSearchComplet
 
 export default function WordSearchGame({ initialSource, initialPuzzle }: { initialSource: PuzzleVocabularySource | null; initialPuzzle: WordSearchPuzzle | null }) {
   const router = useRouter()
+  const { user } = useAuth()
   const [source, setSource] = useState(initialSource)
   const [puzzle, setPuzzle] = useState(initialPuzzle)
   const [selectedDifficulty, setSelectedDifficulty] = useState<WordSearchDifficulty>('regular')
@@ -88,6 +90,10 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
 
   const saveCompletion = async (stats: WordSearchCompletionStats) => {
     if (!source) return
+    if (!user) {
+      setCompletion({ ...stats, awarded: 0, totalXp: 0, duplicate: false, previousLevel: 1, level: 1 })
+      return
+    }
     setSavingCompletion(true)
     setCompletionError('')
     const result = await completeWordSearch({
@@ -372,7 +378,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
             </Typography>
             <Typography sx={{ mt: 0.5, color: 'text.secondary', fontFamily: 'Jost, sans-serif' }}>Nice work — you found every word.</Typography>
             <Typography sx={{ mt: 2, color: 'primary.main', fontFamily: 'var(--font-heading)', fontSize: 40, fontWeight: 700, lineHeight: 1 }}>
-              +{completion.awarded} XP
+              {user ? `+${completion.awarded} XP` : 'Sign in to save XP'}
             </Typography>
             {completion.duplicate && <Typography sx={{ mt: 0.65, color: 'text.secondary', fontSize: 12 }}>This completion was already saved, so XP was not awarded twice.</Typography>}
             {completion.level > completion.previousLevel && <Chip icon={<CheckCircle />} label={`Level ${completion.previousLevel} → Level ${completion.level}`} color="success" sx={{ mt: 1.5, fontWeight: 700 }} />}

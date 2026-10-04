@@ -35,4 +35,18 @@ describe('audiobook migration', () => {
     await expect(db.query('select * from book_audio_progress')).rejects.toThrow(/permission denied/)
     await db.exec('reset role')
   })
+  it('migrates legacy audio and progress without changing paths and isolates languages', async () => {
+    await db.exec(readFileSync('supabase/migrations/20261004092444_chapter_audio_languages.sql', 'utf8'))
+    const legacy = (await db.query<{language:string;storage_path:string}>('select language,storage_path from book_chapter_audio')).rows[0]
+    expect(legacy).toEqual({language:'ar',storage_path:`${chapter}/audio.mp3`})
+    await db.query("insert into book_chapter_audio(chapter_id,language,source_type,storage_path) values($1,'en','supabase_storage',$2)",[chapter,`${chapter}/en/audio.m4a`])
+    expect((await db.query('select * from book_chapter_audio where chapter_id=$1',[chapter])).rows).toHaveLength(2)
+    await expect(db.query("insert into book_chapter_audio(chapter_id,language,source_type,storage_path) values($1,'en','supabase_storage','other.m4a')",[chapter])).rejects.toThrow()
+    await db.query("insert into book_audio_progress(user_id,chapter_id,language,position_seconds) values($1,$2,'en',19)",[user,chapter])
+    expect((await db.query<{language:string;position_seconds:number}>('select language,position_seconds from book_audio_progress order by language')).rows).toEqual([{language:'ar',position_seconds:42},{language:'en',position_seconds:19}])
+    await db.exec('set role authenticated')
+    await expect(db.query('select * from book_chapter_audio')).rejects.toThrow(/permission denied/)
+    await db.exec('reset role')
+  })
+
 })

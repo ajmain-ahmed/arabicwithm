@@ -1,7 +1,7 @@
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-const mocks = vi.hoisted(() => ({ mobile: false, role: 'admin', push: vi.fn(), auth: { user: { id: 'admin', email: 'admin@example.com' } } }))
+const mocks = vi.hoisted(() => ({ mobile: false, role: 'admin', push: vi.fn(), auth: { user: { id: 'admin', email: 'admin@example.com' } as { id: string; email: string } | null } }))
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => mocks.auth }))
 vi.mock('@/app/lib/useAccountAccess', () => ({ useAccountAccess: () => ({ isAdmin: mocks.role === 'admin', isReviewer: mocks.role !== 'user' }) }))
 vi.mock('@/app/components/ThemeProvider', () => ({ useColorMode: () => ({ mode: 'light', toggleColorMode: vi.fn() }) }))
@@ -16,7 +16,19 @@ let host: HTMLDivElement, root: Root
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   mocks.mobile = false; mocks.role = 'admin'; mocks.push.mockReset()
+  mocks.auth.user = { id: 'admin', email: 'admin@example.com' }
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
+})
+it.each([false, true])('offers Word Search to signed-out visitors on mobile=%s', async mobile => {
+  mocks.mobile = mobile; mocks.auth.user = null; mocks.role = 'user'
+  await act(async () => root.render(<Navbar />))
+  if (mobile) {
+    await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
+    const link = [...document.querySelectorAll('[role="button"]')].find(button => button.textContent === 'Word Search') as HTMLElement
+    expect(link).toBeDefined()
+    await act(async () => link.click())
+    expect(mocks.push).toHaveBeenCalledWith('/word-search')
+  } else expect(host.querySelector('a[href="/word-search"]')).not.toBeNull()
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove() })
 it.each(['admin', 'editor', 'user'])('shows the desktop Admin entry only for %s permissions and retains account navigation', async role => {
@@ -26,6 +38,7 @@ it.each(['admin', 'editor', 'user'])('shows the desktop Admin entry only for %s 
   expect(Boolean(link)).toBe(role === 'admin')
   if (link) expect(link.textContent).toBe('Admin')
   expect(host.querySelector('a[href="/books"]')).not.toBeNull()
+  expect(host.querySelector('a[href="/word-search"]')).not.toBeNull()
   await act(async () => (host.querySelector('[aria-label="Open user menu"]') as HTMLElement).click())
   const menu = document.querySelector('[role="menu"]')!
   expect(menu.querySelector('a[href="/profile"]')).not.toBeNull()
@@ -47,6 +60,7 @@ it.each(['admin', 'editor', 'user'])('offers the correct mobile destinations for
   expect(Boolean(admin)).toBe(role === 'admin')
   expect(buttons.some(button => button.textContent === 'Reviewer')).toBe(role !== 'user')
   expect(buttons.some(button => button.textContent === 'My Profile')).toBe(true)
+  expect(buttons.some(button => button.textContent === 'Word Search')).toBe(true)
   if (admin) {
     await act(async () => (admin as HTMLElement).click())
     expect(mocks.push).toHaveBeenCalledWith('/admin/users')

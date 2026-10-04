@@ -22,7 +22,7 @@ export default function ChapterAudioPlayer({ audio, chapterTitle }: { audio: Cha
 
   async function loadPlayback() {
     setLoading(true); setError('')
-    try { setPlayback(await requestChapterAudio(audio.chapterId)) }
+    try { setPlayback(await requestChapterAudio(audio.chapterId, audio.language)) }
     catch (cause) {
       const message = cause instanceof Error ? cause.message : 'Unable to start playback.'
       if (message.includes('AWM+') || message.includes('Sign in')) setUpgrade(true)
@@ -39,14 +39,14 @@ export default function ChapterAudioPlayer({ audio, chapterTitle }: { audio: Cha
   const savePosition = (completed = false) => {
     const element = audioRef.current
     if (!element) return
-    void saveAudioProgress(audio.chapterId, completed ? 0 : element.currentTime, completed).catch(() => {})
+    void saveAudioProgress(audio.chapterId, completed ? 0 : element.currentTime, completed, audio.language).catch(() => {})
   }
 
   const metadata = [audio.narrator ? `Narrated by ${audio.narrator}` : null, durationLabel(audio.durationSeconds)].filter(Boolean).join(' · ')
   return <Paper component="section" elevation={0} sx={{ mb: 3, p: { xs: 2, sm: 2.5 }, borderRadius: '14px', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)', bgcolor: 'var(--awm-white)' }}>
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: playback ? 1.5 : 0 }}>
       <HeadphonesRounded sx={{ color: 'var(--awm-gold)' }} />
-      <Box sx={{ flex: 1 }}><Typography sx={{ fontWeight: 700, color: 'var(--awm-bark)' }}>Listen to this chapter</Typography>{metadata && <Typography variant="body2" color="text.secondary">{metadata}</Typography>}</Box>
+      <Box sx={{ flex: 1 }}><Typography sx={{ fontWeight: 700, color: 'var(--awm-bark)' }}>Listen to this chapter · {audio.language === 'en' ? 'English' : 'Arabic'}</Typography>{metadata && <Typography variant="body2" color="text.secondary">{metadata}</Typography>}</Box>
       {!playback && <Button disabled={loading} onClick={() => void loadPlayback()} variant="contained" startIcon={<LockOutlined />} sx={{ bgcolor: 'var(--awm-gold)', textTransform: 'none', '&:hover': { bgcolor: '#946c08' } }}>{loading ? 'Loading…' : 'Listen with AWM+'}</Button>}
     </Box>
     {playback?.sourceType === 'supabase_storage' && <audio

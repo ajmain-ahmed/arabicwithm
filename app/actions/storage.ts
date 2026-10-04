@@ -102,7 +102,7 @@ export async function uploadAudiobookAudio(formData: FormData): Promise<string> 
   const { error } = await serviceClient.storage.from('audiobooks').upload(path, file, { contentType: extension === 'mp3' ? 'audio/mpeg' : 'audio/mp4', upsert: true })
   if (error) {
     console.error('[uploadAudiobookAudio] error:', error.message)
-    throw new Error('Audio upload failed. Confirm the private audiobooks bucket is configured.')
+    throw new Error(`Audio storage upload failed: ${error.message}`)
   }
   await saveChapterAudioForAdmin({ chapterId, sourceType: 'supabase_storage', storagePath: path, externalVideoId: null, durationSeconds: null, narrator: previous?.narrator ?? null, isPublished: previous?.isPublished ?? false })
   const otherPath = `${chapterId}/audio.${extension === 'mp3' ? 'm4a' : 'mp3'}`
