@@ -13,6 +13,9 @@ describe('audiobook source resolution', () => {
     expect(normalizeAudiobookSource('https://audio.example.com/stream?id=1', project).externalUrl).toBe('https://audio.example.com/stream?id=1')
     expect(sourceFromAudioRecord({ storage_path: 'chapter/audio.mp3' }, project).storagePath).toBe('chapter/audio.mp3')
   })
+  it('rejects dashboard links instead of saving HTML pages as audio', () => {
+    expect(() => normalizeAudiobookSource('https://supabase.com/dashboard/project/example/storage/files/buckets/audiobooks', project)).toThrow('dashboard page')
+  })
   it.each(['', '../secret', 'ar//file', 'javascript:alert(1)', 'http://example.com/audio.mp3', 'https://user:password@example.com/audio', 'https://example.com/image.png', 'https://other.supabase.co/storage/v1/object/sign/audiobooks/file?token=temporary'])('rejects invalid source %s', source => {
     expect(() => normalizeAudiobookSource(source, project)).toThrow()
   })
@@ -23,8 +26,8 @@ describe('audiobook source resolution', () => {
     expect(await getAudiobookPlaybackUrl(source, storage)).toEqual({ url: 'public', expiresIn: 0 })
     expect(signed).not.toHaveBeenCalled()
     storage.getBucket.mockResolvedValue({ data: { public: false }, error: null })
-    expect(await getAudiobookPlaybackUrl(source, storage)).toEqual({ url: 'fresh', expiresIn: 900 })
-    expect(signed).toHaveBeenCalledWith('ar/book/file', 900)
+    expect(await getAudiobookPlaybackUrl(source, storage)).toEqual({ url: 'fresh', expiresIn: 7200 })
+    expect(signed).toHaveBeenCalledWith('ar/book/file', 7200)
     expect(await getAudiobookPlaybackUrl(normalizeAudiobookSource('https://audio.example.com/file', project), storage)).toEqual({ url: 'https://audio.example.com/file', expiresIn: 0 })
   })
 })

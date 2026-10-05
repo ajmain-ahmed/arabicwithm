@@ -63,8 +63,11 @@ const store: AudioStore = {
         positionSeconds,
       };
     }
-    const playback = await getAudiobookPlaybackUrl(sourceFromAudioRecord(data, Deno.env.get("SUPABASE_URL")!), client.storage);
-    return { sourceType: "supabase_storage", ...playback, positionSeconds };
+    const source = sourceFromAudioRecord(data, Deno.env.get("SUPABASE_URL")!);
+    const playback = await getAudiobookPlaybackUrl(source, client.storage);
+    return { sourceType: "supabase_storage", ...playback, positionSeconds,
+      storageBucket: source.storageBucket, storagePath: source.storagePath,
+      urlType: source.externalUrl ? "external" : playback.expiresIn > 0 ? "signed" : "public" };
 
   },
   async progress(chapterId, language, userId, position, completed) {

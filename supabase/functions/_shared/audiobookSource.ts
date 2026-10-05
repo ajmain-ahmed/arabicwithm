@@ -18,6 +18,7 @@ export function normalizeAudiobookSource(input: string, projectUrl: string, defa
     let url: URL
     try { url = new URL(value) } catch { throw new Error('Enter a valid audio URL.') }
     if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Audio URLs must use HTTPS without embedded credentials.')
+    if (url.hostname === 'supabase.com' && url.pathname.startsWith('/dashboard')) throw new Error('This is a Supabase dashboard page. Paste the audio object path or its media URL instead.')
     if (url.origin === new URL(projectUrl).origin) {
       const match = url.pathname.match(/^\/storage\/v1\/object\/(?:public|sign|authenticated)\/([^/]+)\/(.+)$/)
       if (!match) throw new Error('Enter a Supabase Storage object URL.')
@@ -46,7 +47,7 @@ export async function getAudiobookPlaybackUrl(source: AudiobookSource, storage: 
   const { data: info, error } = await storage.getBucket(bucket)
   if (error || !info) throw new Error('Unable to access the audiobook bucket.')
   if (info.public) return { url: storage.from(bucket).getPublicUrl(source.storagePath).data.publicUrl, expiresIn: 0 }
-  const expiresIn = 900
+  const expiresIn = 2 * 60 * 60
   const { data, error: signingError } = await storage.from(bucket).createSignedUrl(source.storagePath, expiresIn)
   if (signingError || !data) throw new Error('Unable to start audiobook playback.')
   return { url: data.signedUrl, expiresIn }
