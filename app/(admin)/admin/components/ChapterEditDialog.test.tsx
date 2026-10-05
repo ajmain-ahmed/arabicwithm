@@ -1,9 +1,10 @@
 import React, { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
-const mocks = vi.hoisted(() => ({ create: vi.fn(), update: vi.fn(), fetch: vi.fn(), audio: vi.fn(), upload: vi.fn(), persist: vi.fn(), saved: vi.fn(), closed: vi.fn() }))
+const mocks = vi.hoisted(() => ({ create: vi.fn(), update: vi.fn(), fetch: vi.fn(), audio: vi.fn(), upload: vi.fn(), persist: vi.fn(), saved: vi.fn(), closed: vi.fn(), resolve: vi.fn(), duration: vi.fn() }))
 vi.mock('@/app/actions/admin', () => ({ createChapter: mocks.create, updateChapter: mocks.update, fetchChapterForAdmin: mocks.fetch, deleteChapter: vi.fn() }))
-vi.mock('@/app/actions/audiobooks', () => ({ fetchChapterAudioForAdmin: mocks.audio, saveChapterAudioResult: mocks.persist, deleteChapterAudioForAdmin: vi.fn() }))
+vi.mock('@/app/actions/audiobooks', () => ({ fetchChapterAudioForAdmin: mocks.audio, saveChapterAudioResult: mocks.persist, deleteChapterAudioForAdmin: vi.fn(), resolveAudiobookForAdmin: mocks.resolve }))
+vi.mock('@/app/lib/audioMetadata', () => ({ readAudioDuration: mocks.duration }))
 vi.mock('@/app/lib/uploadChapterAudio', () => ({ uploadChapterAudio: mocks.upload }))
 vi.mock('@/app/lib/audioUpload', () => ({ validateAudioFile: vi.fn().mockResolvedValue('mp3') }))
 vi.mock('@/app/actions/storage', () => ({ removeAudiobookAudio: vi.fn().mockResolvedValue(undefined) }))
@@ -15,7 +16,58 @@ beforeEach(() => {
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
   mocks.create.mockResolvedValue('new-chapter'); mocks.audio.mockResolvedValue(null)
   mocks.persist.mockResolvedValue({ ok: true })
+  mocks.duration.mockResolvedValue(2536)
+  mocks.resolve.mockImplementation(async source => ({ ok: true, storagePath: source.replace(/^audiobooks\//, ''), storageBucket: 'audiobooks', externalUrl: null, url: 'https://example.com/audio' }))
   mocks.upload.mockImplementation(async (id, language) => `${id}/${language}/new.mp3`)
+})
+async function enterSource(language: 'Arabic' | 'English', source: string) {
+  const input = [...document.querySelectorAll('input')].find(input => input.labels?.[0]?.textContent?.includes(`${language} Audio path or URL`))!
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, source)
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+}
+it('keeps both audio sections optional and omits manual narrator/duration fields', async () => {
+  await mount()
+  expect(document.body.textContent).not.toContain('Narrator')
+  expect(document.body.textContent).not.toContain('Duration (seconds)')
+  await act(async () => button('Save').click())
+  expect(mocks.persist).not.toHaveBeenCalled()
+})
+it('links pasted Arabic and English paths independently and saves detected duration', async () => {
+  await mount()
+  await enterSource('Arabic', 'audiobooks/arabic/book/ar.mp3')
+  await enterSource('English', 'audiobooks/english/book/en.mp3')
+  await act(async () => button('Save').click())
+  expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ language: 'ar', storagePath: 'arabic/book/ar.mp3', durationSeconds: 2536 }))
+  expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ language: 'en', storagePath: 'english/book/en.mp3', durationSeconds: 2536 }))
+  expect(mocks.upload).not.toHaveBeenCalled()
+})
+it('saves linked audio when duration is unavailable', async () => {
+  await mount()
+  mocks.duration.mockResolvedValue(null)
+  await enterSource('Arabic', 'audiobooks/arabic/book/audio')
+  await act(async () => button('Link Arabic audio').click())
+  expect(document.body.textContent).toContain('You can still save')
+  await act(async () => button('Save').click())
+  expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ durationSeconds: null }))
+})
+it('shows invalid source errors and prevents metadata writes', async () => {
+  await mount()
+  mocks.resolve.mockResolvedValue({ ok: false, error: 'File not found' })
+  await enterSource('English', 'audiobooks/english/missing.mp3')
+  await act(async () => button('Save').click())
+  expect(document.body.textContent).toContain('File not found')
+  expect(mocks.persist).not.toHaveBeenCalled()
+  expect(mocks.create).not.toHaveBeenCalled()
+})
+it('removes a newly linked draft before any database record exists', async () => {
+  await mount()
+  await enterSource('Arabic', 'audiobooks/arabic/book/audio.mp3')
+  await act(async () => button('Link Arabic audio').click())
+  await act(async () => button('Remove Arabic audiobook').click())
+  await act(async () => button('Save').click())
+  expect(mocks.persist).not.toHaveBeenCalled()
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove() })
 const button = (text: string) => [...document.querySelectorAll('button')].find(item => item.textContent === text)!
@@ -38,7 +90,7 @@ it.each([['Arabic'], ['English'], ['Arabic', 'English']])('creates a chapter wit
   expect(mocks.upload).toHaveBeenCalledTimes(languages.length)
   for (const name of languages) {
     const language = name === 'Arabic' ? 'ar' : 'en'
-    expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ chapterId: 'new-chapter', language, storagePath: `new-chapter/${language}/new.mp3`, narrator: null, durationSeconds: null }))
+    expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ chapterId: 'new-chapter', language, storagePath: `new-chapter/${language}/new.mp3`, narrator: null, durationSeconds: 2536 }))
   }
   expect(mocks.closed).toHaveBeenCalledOnce()
 })

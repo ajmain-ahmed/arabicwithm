@@ -31,7 +31,8 @@ import {
   type ChapterInput,
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
-import { deleteChapterAudioForAdmin, fetchChapterAudioForAdmin, saveChapterAudioResult } from '@/app/actions/audiobooks'
+import { deleteChapterAudioForAdmin, fetchChapterAudioForAdmin, saveChapterAudioResult, resolveAudiobookForAdmin } from '@/app/actions/audiobooks'
+import { readAudioDuration } from '@/app/lib/audioMetadata'
 import { uploadChapterAudio } from '@/app/lib/uploadChapterAudio'
 import { validateAudioFile, type AudioLanguage } from '@/app/lib/audioUpload'
 import { normalizeYouTubeId } from '@/app/lib/cartoons'
@@ -71,6 +72,7 @@ export default function ChapterEditDialog({
   const [chapterNumber, setChapterNumber] = useState("")
   const [contentJson, setContentJson] = useState(defaultContent)
   const [audio, setAudio] = useState<Record<AudioLanguage, AudioDraft>>({ ar: emptyAudioDraft(), en: emptyAudioDraft() })
+  const busyRef = useRef(false)
   const savedIdRef = useRef<string | null>(chapterId)
   const stagedPaths = useRef(new Set<string>())
   const [audioUploading, setAudioUploading] = useState(false)
@@ -122,6 +124,8 @@ export default function ChapterEditDialog({
   }, [open, chapterId, isNew, initialBookId])
 
   const handleSave = async () => {
+    if (busyRef.current) return
+    busyRef.current = true
     setSaving(true)
     setError(null)
 
@@ -148,30 +152,38 @@ export default function ChapterEditDialog({
 
       // Validate both languages before creating anything. Keep the created ID
       // on partial failures so retrying Save never creates a duplicate chapter.
+      const preparedAudio = { ...audio }
       for (const language of ['ar', 'en'] as const) {
-        const draft = audio[language]
-        if (draft.source === 'supabase_storage' && draft.file) await validateAudioFile(draft.file, draft.file.name)
+        let draft = audio[language]
+        if (draft.source !== 'youtube' && !draft.file && draft.linkedInput && !draft.sourceInput.trim()) throw new Error('Use Remove audiobook to unlink the existing audio, or enter a replacement source.')
+        if (draft.source !== 'youtube' && !draft.file && draft.sourceInput.trim() && draft.sourceInput !== draft.linkedInput) {
+          draft = await prepareAudioLink(draft)
+          preparedAudio[language] = draft
+          setAudio(current => ({ ...current, [language]: draft }))
+        }
+        if (draft.source !== 'youtube' && draft.file) await validateAudioFile(draft.file, draft.file.name)
         if (draft.source === 'youtube' && draft.youtubeId && !normalizeYouTubeId(draft.youtubeId)) throw new Error(`${language === 'ar' ? 'Arabic' : 'English'} YouTube URL or video ID is invalid.`)
-        if (draft.duration.trim() && (!Number.isInteger(Number(draft.duration)) || Number(draft.duration) <= 0 || Number(draft.duration) > 86400)) throw new Error('Audio duration must be a whole number from 1 to 86400 seconds.')
       }
       if (!savedIdRef.current) savedIdRef.current = await createChapter(input)
       else await updateChapter(savedIdRef.current, input)
       const savedChapterId = savedIdRef.current
       for (const language of ['ar', 'en'] as const) {
-        const draft = audio[language]
+        const draft = preparedAudio[language]
         let path = draft.path
-        if (draft.source === 'supabase_storage' && draft.file) {
+        if (draft.source !== 'youtube' && draft.file) {
           setAudioUploading(true)
           path = await uploadChapterAudio(savedChapterId, language, draft.file)
           stagedPaths.current.add(path)
           // Keep a successful upload for retry if the metadata write fails.
-          setAudio(current => ({ ...current, [language]: { ...current[language], path, file: null } }))
+          setAudio(current => ({ ...current, [language]: { ...current[language], path, bucket: 'audiobooks', sourceInput: `audiobooks/${path}`, linkedInput: `audiobooks/${path}`, externalUrl: null, file: null } }))
         }
-        const hasSource = draft.source === 'supabase_storage' ? Boolean(path) : Boolean(draft.youtubeId.trim())
+        const hasSource = draft.source === 'youtube' ? Boolean(draft.youtubeId.trim()) : Boolean(path || draft.externalUrl)
         if (draft.exists || hasSource) {
           const result = await saveChapterAudioResult({
             chapterId: savedChapterId, language, sourceType: draft.source,
             storagePath: draft.source === 'supabase_storage' ? path : null,
+            storageBucket: draft.source === 'supabase_storage' ? draft.bucket ?? 'audiobooks' : null,
+            externalUrl: draft.source === 'external_url' ? draft.externalUrl : null,
             externalVideoId: draft.source === 'youtube' ? normalizeYouTubeId(draft.youtubeId) ?? null : null,
             durationSeconds: draft.duration.trim() ? Number(draft.duration) : null,
             narrator: draft.narrator.trim() || null, isPublished: draft.published,
@@ -192,6 +204,7 @@ export default function ChapterEditDialog({
     } finally {
       setSaving(false)
       setAudioUploading(false)
+      busyRef.current = false
     }
   }
 
@@ -210,22 +223,55 @@ export default function ChapterEditDialog({
     onClose()
   }
 
+  async function prepareAudioLink(draft: AudioDraft): Promise<AudioDraft> {
+    const resolved = await resolveAudiobookForAdmin(draft.sourceInput)
+    if (!resolved.ok) throw new Error(resolved.error)
+    const duration = await readAudioDuration(resolved.url)
+    return { ...draft, source: resolved.externalUrl ? 'external_url' : 'supabase_storage', path: resolved.storagePath, bucket: resolved.storageBucket, externalUrl: resolved.externalUrl, linkedInput: draft.sourceInput, file: null, preview: resolved.url, duration: duration ? String(duration) : '', status: duration ? 'Audio linked' : 'Audio linked; metadata unavailable. You can still save.' }
+  }
+
+  const handleAudioLink = async (language: AudioLanguage) => {
+    if (busyRef.current) return
+    busyRef.current = true
+    setAudioUploading(true); setError(null)
+    setAudio(current => ({ ...current, [language]: { ...current[language], status: 'Linking audio / reading metadata?' } }))
+    try {
+      const linked = await prepareAudioLink(audio[language])
+      setAudio(current => ({ ...current, [language]: linked }))
+    } catch (cause) {
+      setError(errorMessage(cause) ?? 'Unable to link audio.')
+      setAudio(current => ({ ...current, [language]: { ...current[language], status: 'Unable to link this source. Check the path or URL.' } }))
+    }
+    finally { setAudioUploading(false); busyRef.current = false }
+  }
+
   const handleAudioSelection = async (language: AudioLanguage, file: File) => {
-    setError(null)
+    if (busyRef.current) return
+    busyRef.current = true
+    setAudioUploading(true); setError(null)
     try {
       await validateAudioFile(file, file.name)
-      setAudio(current => ({ ...current, [language]: { ...current[language], file, source: 'supabase_storage', duration: '' } }))
+      setAudio(current => ({ ...current, [language]: { ...current[language], file, source: 'supabase_storage', sourceInput: '', linkedInput: '', externalUrl: null, bucket: 'audiobooks', preview: null, duration: '', status: 'Reading metadata?' } }))
+      const duration = await readAudioDuration(file)
+      setAudio(current => ({ ...current, [language]: { ...current[language], duration: duration ? String(duration) : '', status: duration ? 'File ready to upload when you save' : 'File ready; duration unavailable. You can still save.' } }))
     } catch (cause) { setError(errorMessage(cause) ?? 'Unable to select audio file.') }
+    finally { setAudioUploading(false); busyRef.current = false }
   }
 
   const handleRemoveAudio = async (language: AudioLanguage) => {
-    if (!savedIdRef.current || !confirm(`Remove this ${language === 'ar' ? 'Arabic' : 'English'} audiobook?`)) return
+    if (busyRef.current) return
+    if (!savedIdRef.current) {
+      setAudio(current => ({ ...current, [language]: emptyAudioDraft() }))
+      return
+    }
+    if (!confirm(`Remove this ${language === 'ar' ? 'Arabic' : 'English'} audiobook?`)) return
+    busyRef.current = true
     setSaving(true); setError(null)
     try {
       await deleteChapterAudioForAdmin(savedIdRef.current, language)
       setAudio(current => ({ ...current, [language]: emptyAudioDraft() }))
     } catch (cause) { setError(errorMessage(cause) ?? 'Unable to remove audiobook') }
-    finally { setSaving(false) }
+    finally { setSaving(false); busyRef.current = false }
   }
 
   const handleDelete = async () => {
@@ -368,7 +414,7 @@ export default function ChapterEditDialog({
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {(['ar', 'en'] as const).map(language => <ChapterAudioFields key={language} language={language} value={audio[language]} disabled={saving || audioUploading || loading}
                   onChange={value => setAudio(current => ({ ...current, [language]: value }))}
-                  onFile={file => void handleAudioSelection(language, file)} onRemove={() => void handleRemoveAudio(language)} />)}
+                  onLink={() => void handleAudioLink(language)} onFile={file => void handleAudioSelection(language, file)} onRemove={() => void handleRemoveAudio(language)} />)}
               </Box>
             )}
           </Box>
@@ -404,7 +450,7 @@ export default function ChapterEditDialog({
           startIcon={<Save sx={{ fontSize: "1rem" }} />}
           sx={{ background: "#2c1a0e", color: "#f5ede0", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", width: { xs: "100%", sm: "auto" }, "&:hover": { background: "#1a0f08" } }}
         >
-          {saving ? "Saving…" : "Save"}
+          {audioUploading ? "Uploading / reading audio?" : saving ? "Saving…" : "Save"}
         </Button>
       </DialogActions>
     </Dialog>

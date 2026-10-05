@@ -7,7 +7,7 @@ import { MAX_AUDIO_BYTES } from '@/app/lib/audioUpload'
 const inputSchema = z.object({
   chapterId: z.string().uuid(),
   language: z.enum(['ar', 'en']),
-  extension: z.enum(['mp3', 'm4a']),
+  extension: z.enum(['mp3', 'm4a', 'aac', 'wav', 'ogg']),
   size: z.number().int().positive().max(MAX_AUDIO_BYTES),
 })
 
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   try {
     await guardAdmin()
     const parsed = inputSchema.safeParse(await request.json())
-    if (!parsed.success) return Response.json({ error: 'Choose a valid chapter, language, and non-empty MP3/M4A file up to 50 MB.' }, { status: 400 })
+    if (!parsed.success) return Response.json({ error: 'Choose a valid chapter, language, and non-empty audio file up to 50 MB.' }, { status: 400 })
     const { chapterId, language, extension } = parsed.data
     const { data: chapter, error: chapterError } = await serviceClient.from('chapters').select('id').eq('id', chapterId).maybeSingle()
     if (chapterError) throw new Error(`Unable to verify chapter: ${chapterError.message}`)

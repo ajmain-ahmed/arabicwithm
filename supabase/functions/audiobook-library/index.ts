@@ -1,3 +1,4 @@
+import { getAudiobookPlaybackUrl, sourceFromAudioRecord } from "../_shared/audiobookSource.ts";
 import { createClient } from "@supabase/supabase-js";
 import { audiobookHandler, type AudioStore } from "./handler.ts";
 
@@ -40,7 +41,7 @@ const store: AudioStore = {
   },
   async play(chapterId, language, userId) {
     const { data, error } = await client.from("book_chapter_audio").select(
-      "source_type,storage_path,external_video_id",
+      "source_type,storage_path,storage_bucket,external_url,external_video_id",
     ).eq("chapter_id", chapterId).eq("language", language).eq(
       "is_published",
       true,
@@ -62,22 +63,9 @@ const store: AudioStore = {
         positionSeconds,
       };
     }
-    if (data.source_type !== "supabase_storage" || !data.storage_path) {
-      return null;
-    }
-    const expiresIn = 900;
-    const { data: signed, error: signingError } = await client.storage.from(
-      "audiobooks",
-    ).createSignedUrl(data.storage_path, expiresIn);
-    if (signingError || !signed?.signedUrl) {
-      throw new Error("Unable to sign audio.");
-    }
-    return {
-      sourceType: "supabase_storage",
-      url: signed.signedUrl,
-      expiresIn,
-      positionSeconds,
-    };
+    const playback = await getAudiobookPlaybackUrl(sourceFromAudioRecord(data, Deno.env.get("SUPABASE_URL")!), client.storage);
+    return { sourceType: "supabase_storage", ...playback, positionSeconds };
+
   },
   async progress(chapterId, language, userId, position, completed) {
     const { error } = await client.from("book_audio_progress").upsert({

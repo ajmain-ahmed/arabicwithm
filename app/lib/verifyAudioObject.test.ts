@@ -10,9 +10,9 @@ it('checks actual stored bytes using a bounded range request', async () => {
   await verifyAudioObject('chapter/ar/file.mp3')
   expect(mocks.fetch).toHaveBeenCalledWith('https://storage.test/private', { headers: { Range: 'bytes=0-15' }, cache: 'no-store' })
 })
-it('rejects fake audio and oversized stored files before persisting', async () => {
+it('rejects fake audio and empty stored files before persisting', async () => {
   mocks.fetch.mockResolvedValue(new Response('not audio'))
-  await expect(verifyAudioObject('file.mp3')).rejects.toThrow('valid MP3 or M4A')
-  mocks.info.mockResolvedValueOnce({ data: { size: 51 * 1024 * 1024 }, error: null })
-  await expect(verifyAudioObject('file.mp3')).rejects.toThrow('50 MB')
+  await expect(verifyAudioObject('file.mp3')).rejects.toThrow('valid MP3')
+  mocks.info.mockResolvedValueOnce({ data: { size: 0 }, error: null })
+  await expect(verifyAudioObject('file.mp3')).rejects.toThrow('empty or inaccessible')
 })

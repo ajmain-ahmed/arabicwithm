@@ -49,4 +49,15 @@ describe('audiobook migration', () => {
     await db.exec('reset role')
   })
 
+  it('adds stable sources without changing historical data or language uniqueness', async () => {
+    await db.exec('create schema storage; create table storage.buckets(id text primary key, allowed_mime_types text[]);')
+    const { readdirSync } = await import('node:fs')
+    const file = readdirSync('supabase/migrations').find(name => name.endsWith('_audiobook_sources.sql'))!
+    await db.exec(readFileSync(`supabase/migrations/${file}`, 'utf8'))
+    expect((await db.query<{ storage_path: string; storage_bucket: string | null }>("select storage_path,storage_bucket from book_chapter_audio where language='ar'")).rows[0]).toEqual({ storage_path: `${chapter}/audio.mp3`, storage_bucket: null })
+    await db.query("update book_chapter_audio set source_type='external_url',storage_path=null,external_url='https://audio.example.com/file' where language='en'")
+    await expect(db.query("update book_chapter_audio set storage_path='conflicting.mp3' where language='en'")).rejects.toThrow()
+    await db.query("delete from book_chapter_audio where language='en'")
+    expect((await db.query('select * from book_chapter_audio')).rows).toHaveLength(1)
+  })
 })

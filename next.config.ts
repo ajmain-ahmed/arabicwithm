@@ -60,7 +60,7 @@ const nextConfig: NextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               `img-src 'self' data: blob: https://i.ytimg.com https://*.tiktokcdn.com https://*.cdninstagram.com https://*.fbcdn.net https://images.unsplash.com https://ichef.bbci.co.uk https://s.france24.com https://cnn-arabic-images.cnn.io https://images.skynewsarabia.com https://www.akhbarona.com${supabaseUrl ? ` ${supabaseUrl}` : ''}`,
               `connect-src 'self' ${supabaseUrl ?? "https://whbxgwucsoguqzpnpzjd.supabase.co"}`,
-              `media-src 'self' ${supabaseUrl ?? "https://whbxgwucsoguqzpnpzjd.supabase.co"}`,
+              "media-src 'self' blob: https:",
               "frame-src https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://youtube-nocookie.com https://www.instagram.com https://instagram.com https://www.tiktok.com https://www.facebook.com https://web.facebook.com",
             ].join('; '),
           },

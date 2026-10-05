@@ -8,7 +8,7 @@ const supabase = createClient(url, key, { auth: { persistSession: false, autoRef
 const config = {
   public: false,
   fileSizeLimit: 52_428_800,
-  allowedMimeTypes: ['audio/mpeg', 'audio/mp4', 'audio/x-m4a'],
+  allowedMimeTypes: ['audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'audio/aac', 'audio/wav', 'audio/x-wav', 'audio/ogg'],
 }
 const { data: existing } = await supabase.storage.getBucket('audiobooks')
 const result = existing

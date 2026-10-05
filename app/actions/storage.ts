@@ -6,7 +6,7 @@ import { saveChapterAudioForAdmin, fetchChapterAudioForAdmin } from '@/app/actio
 import { guardAdmin } from "@/app/actions/auth"
 import { serviceClient } from "@/app/lib/supabase"
 import { randomUUID } from 'node:crypto'
-import { AUDIO_PATH_PATTERN, audioUploadBody, validateAudioFile } from '@/app/lib/audioUpload'
+import { AUDIO_PATH_PATTERN, AUDIO_MIME, audioUploadBody, validateAudioFile } from '@/app/lib/audioUpload'
 
 const ALLOWED_BUCKETS = new Set(["covers"])
 // Single path segment under a fixed prefix; slugs are admin free-text, so the
@@ -85,7 +85,7 @@ export async function uploadAudiobookAudio(formData: FormData): Promise<string> 
   if (chapterError || !chapter) throw new Error('Chapter not found.')
   const previous = await fetchChapterAudioForAdmin(chapterId)
   const path = `${chapterId}/ar/${randomUUID()}.${extension}`
-  const { error } = await serviceClient.storage.from('audiobooks').upload(path, audioUploadBody(file, extension), { contentType: extension === 'mp3' ? 'audio/mpeg' : 'audio/mp4', upsert: false })
+  const { error } = await serviceClient.storage.from('audiobooks').upload(path, audioUploadBody(file, extension), { contentType: AUDIO_MIME[extension], upsert: false })
   if (error) {
     console.error('[uploadAudiobookAudio] error:', error.message)
     throw new Error(`Audio storage upload failed: ${error.message}`)

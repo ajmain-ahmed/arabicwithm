@@ -1,7 +1,7 @@
 'use client'
 
 import { supabase } from '@/app/lib/supabase/client'
-import { audioUploadBody, validateAudioFile, type AudioLanguage } from '@/app/lib/audioUpload'
+import { AUDIO_MIME, audioUploadBody, validateAudioFile, type AudioLanguage } from '@/app/lib/audioUpload'
 
 export async function uploadChapterAudio(chapterId: string, language: AudioLanguage, file: File): Promise<string> {
   const extension = await validateAudioFile(file, file.name)
@@ -15,7 +15,7 @@ export async function uploadChapterAudio(chapterId: string, language: AudioLangu
   if (!response.ok) throw new Error(typeof result?.error === 'string' ? result.error : `Audio authorization failed (HTTP ${response.status}).`)
   if (typeof result?.path !== 'string' || !result.path || typeof result.token !== 'string' || !result.token) throw new Error('Audio authorization did not include a storage path and token.')
   const { data, error } = await supabase.storage.from('audiobooks').uploadToSignedUrl(result.path, result.token, audioUploadBody(file, extension), {
-    contentType: extension === 'mp3' ? 'audio/mpeg' : 'audio/mp4',
+    contentType: AUDIO_MIME[extension],
   })
   if (error) throw new Error(`Audio storage upload failed: ${error.message}`)
   if (data?.path !== result.path) throw new Error('Storage did not confirm the uploaded audio path. Please retry.')

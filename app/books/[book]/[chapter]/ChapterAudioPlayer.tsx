@@ -81,7 +81,7 @@ export default function ChapterAudioPlayer({ audio, chapterTitle, compact = fals
       onTimeUpdate={(event) => { const second = Math.floor(event.currentTarget.currentTime); if (second - lastSavedRef.current >= 10) { lastSavedRef.current = second; savePosition() } }}
       onPause={() => savePosition()}
       onEnded={() => savePosition(true)}
-      onError={() => setError('The secure audio link expired or playback was interrupted. Refresh it to continue.')}
+      onError={() => setError('Audio could not load or playback was interrupted. Refresh the audio to try again.')}
       style={{ width: '100%' }}
     />}
     {playback?.sourceType === 'youtube' && <YouTubeAudio playback={playback} />}

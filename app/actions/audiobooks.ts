@@ -6,11 +6,12 @@ import { requireEntitlement } from '@/app/actions/entitlements'
 import { serviceClient } from '@/app/lib/supabase'
 import { isMissingDatabaseFeature } from '@/app/lib/databaseErrors'
 import { revalidatePath } from 'next/cache'
-import { AUDIO_PATH_PATTERN, type AudioLanguage } from '@/app/lib/audioUpload'
+import { type AudioLanguage } from '@/app/lib/audioUpload'
 import { verifyAudioObject } from '@/app/lib/verifyAudioObject'
+import { getAudiobookPlaybackUrl, normalizeAudiobookSource, sourceFromAudioRecord } from '@/app/lib/audiobookSource'
 import { normalizeYouTubeId } from '@/app/lib/cartoons'
 
-export type AudioSourceType = 'supabase_storage' | 'youtube'
+export type AudioSourceType = 'supabase_storage' | 'youtube' | 'external_url'
 export interface ChapterAudioSummary {
   chapterId: string
   language: AudioLanguage
@@ -20,6 +21,8 @@ export interface ChapterAudioSummary {
 export interface AdminChapterAudio extends ChapterAudioSummary {
   sourceType: AudioSourceType
   storagePath: string | null
+  storageBucket?: string | null
+  externalUrl?: string | null
   externalVideoId: string | null
   isPublished: boolean
 }
@@ -30,19 +33,22 @@ export type ChapterAudioPlayback =
 const audioInput = z.object({
   chapterId: z.string().uuid(),
   language: z.enum(['ar', 'en']).default('ar'),
-  sourceType: z.enum(['supabase_storage', 'youtube']),
-  storagePath: z.string().regex(AUDIO_PATH_PATTERN).nullish().transform(value => value ?? null),
+  sourceType: z.enum(['supabase_storage', 'youtube', 'external_url']),
+  storagePath: z.string().trim().min(1).nullish().transform(value => value ?? null),
+  storageBucket: z.string().trim().nullish().transform(value => value ?? null),
+  externalUrl: z.string().trim().nullish().transform(value => value ?? null),
   externalVideoId: z.string().trim().nullish().transform((value, context) => {
     if (!value) return null
     const id = normalizeYouTubeId(value)
     if (!id) context.addIssue({ code: 'custom', message: 'Enter a valid YouTube URL or video ID.' })
     return id ?? null
   }),
-  durationSeconds: z.number().int().positive().max(86400).nullish().transform(value => value ?? null),
+  durationSeconds: z.number().int().positive().max(2147483647).nullish().transform(value => value ?? null),
   narrator: z.string().trim().max(160).nullish().transform(value => value || null),
   isPublished: z.boolean(),
 }).superRefine((value, context) => {
   if (value.sourceType === 'supabase_storage' && (!value.storagePath || value.externalVideoId)) context.addIssue({ code: 'custom', message: 'Choose one uploaded audio file.' })
+  if (value.sourceType === 'external_url' && (!value.externalUrl || value.storagePath || value.externalVideoId)) context.addIssue({ code: 'custom', message: 'Enter one HTTPS audio URL.' })
   if (value.sourceType === 'youtube' && (!value.externalVideoId || value.storagePath)) context.addIssue({ code: 'custom', message: 'Enter one valid YouTube URL or video ID.' })
 })
 
@@ -94,11 +100,8 @@ export async function requestChapterAudio(chapterId: string, language: AudioLang
   if (error || !data) throw new Error('This audiobook chapter is not available.')
   const positionSeconds = Number(progress?.position_seconds ?? 0)
   if (data.source_type === 'youtube' && data.external_video_id) return { sourceType: 'youtube', videoId: data.external_video_id, positionSeconds }
-  if (!data.storage_path) throw new Error('This audiobook chapter is not available.')
-  const expiresIn = 15 * 60
-  const { data: signed, error: signedError } = await serviceClient.storage.from('audiobooks').createSignedUrl(data.storage_path, expiresIn)
-  if (signedError || !signed?.signedUrl) throw new Error('Unable to start audiobook playback.')
-  return { sourceType: 'supabase_storage', url: signed.signedUrl, expiresIn, positionSeconds }
+  const playback = await getAudiobookPlaybackUrl(sourceFromAudioRecord(data, process.env.SUPABASE_URL!), serviceClient.storage)
+  return { sourceType: 'supabase_storage', ...playback, positionSeconds }
 }
 
 export async function saveAudioProgress(chapterId: string, positionSeconds: number, completed: boolean, language: AudioLanguage = 'ar'): Promise<void> {
@@ -117,34 +120,28 @@ export async function fetchChapterAudioForAdmin(chapterId: string, language: Aud
   if (error) throw new Error(error.message)
   const data = sources?.find(row => (row.language ?? 'ar') === language)
   if (!data) return null
-  return { ...summary(data as Record<string, unknown>), sourceType: data.source_type, storagePath: data.storage_path, externalVideoId: data.external_video_id, isPublished: data.is_published }
+  return { ...summary(data as Record<string, unknown>), sourceType: data.source_type, storagePath: data.storage_path, storageBucket: data.storage_bucket, externalUrl: data.external_url, externalVideoId: data.external_video_id, isPublished: data.is_published }
 }
 
 export async function saveChapterAudioForAdmin(input: z.input<typeof audioInput>): Promise<void> {
   await guardAdmin()
   const value = audioInput.parse(input)
-  const previous = await fetchChapterAudioForAdmin(value.chapterId, value.language)
-  if (value.storagePath) {
-    if (value.storagePath.split('/')[0].toLowerCase() !== value.chapterId.toLowerCase()) throw new Error('Audio must belong to this chapter.')
-    const segments = value.storagePath.split('/')
-    if ((segments.length === 3 && segments[1] !== value.language) || (segments.length === 2 && value.language !== 'ar')) throw new Error('Audio must belong to this language.')
-    const filename = segments.pop()!
-    const { data: objects, error: objectError } = await serviceClient.storage.from('audiobooks').list(segments.join('/'), { search: filename })
-    if (objectError) throw new Error(`Unable to verify uploaded audio: ${objectError.message}`)
-    if (!objects?.some(item => item.name === filename)) throw new Error('Upload the audio file before saving this source.')
-    if (segments.length === 2) await verifyAudioObject(value.storagePath)
+  if (value.sourceType !== 'youtube') {
+    const normalized = normalizeAudiobookSource(value.externalUrl ?? value.storagePath ?? '', process.env.SUPABASE_URL!, value.storageBucket ?? 'audiobooks')
+    value.storagePath = normalized.storagePath
+    value.storageBucket = normalized.storageBucket
+    value.externalUrl = normalized.externalUrl
+    value.sourceType = normalized.externalUrl ? 'external_url' : 'supabase_storage'
+    if (value.storagePath) await verifyAudioObject(value.storagePath, value.storageBucket!)
   }
-  const { error } = await serviceClient.from('book_chapter_audio').upsert({ chapter_id: value.chapterId, language: value.language, source_type: value.sourceType, storage_path: value.storagePath, external_video_id: value.externalVideoId, duration_seconds: value.durationSeconds, narrator: value.narrator || null, is_published: value.isPublished, updated_at: new Date().toISOString() }, { onConflict: 'chapter_id,language' })
-  if (error) throw new Error(/PGRST204|42703|42P10/.test(error.code ?? '') ? 'Audiobook schema is out of date. Apply the chapter_audio_languages migration before saving audio.' : `Unable to save audiobook: ${error.message}`)
+  const { error } = await serviceClient.from('book_chapter_audio').upsert({ chapter_id: value.chapterId, language: value.language, source_type: value.sourceType, storage_path: value.storagePath, storage_bucket: value.storageBucket, external_url: value.externalUrl, external_video_id: value.externalVideoId, duration_seconds: value.durationSeconds, narrator: value.narrator || null, is_published: value.isPublished, updated_at: new Date().toISOString() }, { onConflict: 'chapter_id,language' })
+  if (error) throw new Error(/PGRST204|42703|42P10/.test(error.code ?? '') ? 'Audiobook schema is out of date. Apply the audiobook_sources migration before saving audio.' : `Unable to save audiobook: ${error.message}`)
   const persisted = await fetchChapterAudioForAdmin(value.chapterId, value.language)
-  if (!persisted || persisted.sourceType !== value.sourceType || persisted.storagePath !== value.storagePath || persisted.externalVideoId !== value.externalVideoId || persisted.narrator !== value.narrator || persisted.durationSeconds !== value.durationSeconds || persisted.isPublished !== value.isPublished) {
+  if (!persisted || persisted.sourceType !== value.sourceType || persisted.storagePath !== value.storagePath || persisted.storageBucket !== value.storageBucket || persisted.externalUrl !== value.externalUrl || persisted.externalVideoId !== value.externalVideoId || persisted.narrator !== value.narrator || persisted.durationSeconds !== value.durationSeconds || persisted.isPublished !== value.isPublished) {
     throw new Error('The database did not confirm the saved audio source. Keep this dialog open and retry Save.')
   }
   await revalidateChapterAudio(value.chapterId)
-  if (previous?.storagePath && previous.storagePath !== value.storagePath) {
-    const { error: cleanupError } = await serviceClient.storage.from('audiobooks').remove([previous.storagePath])
-    if (cleanupError) console.warn('[chapter audio] Replacement saved; previous private file cleanup needs retry.')
-  }
+
 }
 
 // Return expected failures as data so production Server Action redaction does
@@ -160,13 +157,19 @@ export async function saveChapterAudioResult(input: z.input<typeof audioInput>):
 
 export async function deleteChapterAudioForAdmin(chapterId: string, language: AudioLanguage = 'ar'): Promise<void> {
   await guardAdmin()
+  z.enum(['ar', 'en']).parse(language)
   if (!z.string().uuid().safeParse(chapterId).success) throw new Error('Invalid chapter.')
-  const previous = await fetchChapterAudioForAdmin(chapterId, language)
   const { error } = await serviceClient.from('book_chapter_audio').delete().eq('chapter_id', chapterId).eq('language', language)
   if (error) throw new Error(error.message)
   await revalidateChapterAudio(chapterId)
-  if (previous?.storagePath) {
-    const { error: cleanupError } = await serviceClient.storage.from('audiobooks').remove([previous.storagePath])
-    if (cleanupError) console.warn('[chapter audio] Removed the chapter reference; private file cleanup needs retry.')
-  }
+}
+
+export async function resolveAudiobookForAdmin(source: string): Promise<{ ok: true; url: string; storagePath: string | null; storageBucket: string | null; externalUrl: string | null } | { ok: false; error: string }> {
+  try {
+    await guardAdmin()
+    const normalized = normalizeAudiobookSource(source, process.env.SUPABASE_URL!)
+    if (normalized.storagePath) await verifyAudioObject(normalized.storagePath, normalized.storageBucket!)
+    const playback = await getAudiobookPlaybackUrl(normalized, serviceClient.storage)
+    return { ok: true, ...normalized, url: playback.url }
+  } catch (cause) { return { ok: false, error: cause instanceof Error ? cause.message : 'Unable to link audio.' } }
 }
