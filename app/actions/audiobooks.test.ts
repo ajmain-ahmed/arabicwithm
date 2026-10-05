@@ -46,6 +46,13 @@ describe('existing chapter audio persistence and permissions',()=>{
   expect(mocks.upload.mock.calls[0][1].type).toBe('audio/mpeg')
   expect(mocks.upload.mock.calls[0][2].upsert).toBe(false)
  })
+ it.each([null,false])('legacy upload preserves explicit false and defaults absent Arabic audio (%s)',async(published)=>{
+  vi.stubGlobal('File',NodeFile);mocks.upload.mockResolvedValue({error:null})
+  row=published===null?null:{chapter_id:chapter,language:'ar',source_type:'supabase_storage',storage_path:chapter+'/audio.mp3',is_published:published}
+  const file=new NodeFile([new Uint8Array([0x49,0x44,0x33,4,0,0,0,0,0,0])],'chapter.mp3',{type:'audio/mpeg'})
+  await uploadAudiobookAudio({get:(key:string)=>key==='chapterId'?chapter:file} as unknown as FormData)
+  expect((await fetchChapterAudioForAdmin(chapter))?.isPublished).toBe(published??true)
+ })
  it.each(['ar','en'] as const)('accepts omitted, blank, and supplied metadata for %s',async(language)=>{
   await saveChapterAudioForAdmin({chapterId:chapter,language,sourceType:'youtube',externalVideoId:'https://youtu.be/yFeE2MvsrJM',isPublished:false})
   expect(await fetchChapterAudioForAdmin(chapter,language)).toEqual(expect.objectContaining({externalVideoId:'yFeE2MvsrJM',narrator:null,durationSeconds:null}))

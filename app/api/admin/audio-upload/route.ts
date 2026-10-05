@@ -13,7 +13,13 @@ const inputSchema = z.object({
 
 export async function POST(request: Request) {
   // Cookie authentication is accompanied by same-origin protection.
-  if (request.headers.get('origin') !== new URL(request.url).origin) return Response.json({ error: 'Audio uploads must originate from this website.' }, { status: 403 })
+  const internal = new URL(request.url)
+  const protocol = request.headers.get('x-forwarded-proto') ?? internal.protocol.replace(':', '')
+  const host = request.headers.get('host') ?? internal.host
+  let expectedOrigin: string
+  try { expectedOrigin = new URL(`${protocol}://${host}`).origin }
+  catch { return Response.json({ error: 'Unable to verify the upload origin.' }, { status: 403 }) }
+  if (!['http', 'https'].includes(protocol) || request.headers.get('origin') !== expectedOrigin) return Response.json({ error: 'Audio uploads must originate from this website.' }, { status: 403 })
   try {
     await guardAdmin()
     const parsed = inputSchema.safeParse(await request.json())
@@ -26,7 +32,7 @@ export async function POST(request: Request) {
     const { data, error } = await serviceClient.storage.from('audiobooks').createSignedUploadUrl(path)
     if (error) throw new Error(`Unable to authorize private audio upload: ${error.message}`)
     if (!data?.token || data.path !== path) throw new Error('Storage did not return a valid upload authorization.')
-    return Response.json({ path, token: data.token }, { headers: { 'Cache-Control': 'no-store' } })
+    return Response.json({ path, token: data.token, signedUrl: data.signedUrl }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unable to authorize audio upload.'
     return Response.json({ error: message === 'Forbidden' ? 'Sign in with an administrator account to upload audio.' : message }, { status: message === 'Forbidden' ? 403 : 500 })

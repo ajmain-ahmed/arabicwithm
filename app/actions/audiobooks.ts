@@ -45,7 +45,7 @@ const audioInput = z.object({
   }),
   durationSeconds: z.number().int().positive().max(2147483647).nullish().transform(value => value ?? null),
   narrator: z.string().trim().max(160).nullish().transform(value => value || null),
-  isPublished: z.boolean(),
+  isPublished: z.boolean().nullish(),
 }).superRefine((value, context) => {
   if (value.sourceType === 'supabase_storage' && (!value.storagePath || value.externalVideoId)) context.addIssue({ code: 'custom', message: 'Choose one uploaded audio file.' })
   if (value.sourceType === 'external_url' && (!value.externalUrl || value.storagePath || value.externalVideoId)) context.addIssue({ code: 'custom', message: 'Enter one HTTPS audio URL.' })
@@ -130,16 +130,22 @@ export async function saveAudioProgress(chapterId: string, positionSeconds: numb
 
 export async function fetchChapterAudioForAdmin(chapterId: string, language: AudioLanguage = 'ar'): Promise<AdminChapterAudio | null> {
   await guardAdmin()
+  return readChapterAudio(chapterId, language)
+}
+
+async function readChapterAudio(chapterId: string, language: AudioLanguage): Promise<AdminChapterAudio | null> {
   const { data: sources, error } = await serviceClient.from('book_chapter_audio').select('*').eq('chapter_id', chapterId)
   if (error) throw new Error(error.message)
   const data = sources?.find(row => (row.language ?? 'ar') === language)
   if (!data) return null
-  return { ...summary(data as Record<string, unknown>), sourceType: data.source_type, storagePath: data.storage_path, storageBucket: data.storage_bucket, externalUrl: data.external_url, externalVideoId: data.external_video_id, isPublished: data.is_published }
+  return { ...summary(data as Record<string, unknown>), sourceType: data.source_type, storagePath: data.storage_path, storageBucket: data.storage_bucket, externalUrl: data.external_url, externalVideoId: data.external_video_id, isPublished: data.is_published ?? (language === 'ar') }
 }
 
 export async function saveChapterAudioForAdmin(input: z.input<typeof audioInput>): Promise<void> {
+  const started = Date.now()
   await guardAdmin()
   const value = audioInput.parse(input)
+  value.isPublished ??= value.language === 'ar'
   if (value.sourceType !== 'youtube') {
     const normalized = normalizeAudiobookSource(value.externalUrl ?? value.storagePath ?? '', process.env.SUPABASE_URL!, value.storageBucket ?? 'audiobooks')
     value.storagePath = normalized.storagePath
@@ -150,11 +156,12 @@ export async function saveChapterAudioForAdmin(input: z.input<typeof audioInput>
   }
   const { error } = await serviceClient.from('book_chapter_audio').upsert({ chapter_id: value.chapterId, language: value.language, source_type: value.sourceType, storage_path: value.storagePath, storage_bucket: value.storageBucket, external_url: value.externalUrl, external_video_id: value.externalVideoId, duration_seconds: value.durationSeconds, narrator: value.narrator || null, is_published: value.isPublished, updated_at: new Date().toISOString() }, { onConflict: 'chapter_id,language' })
   if (error) throw new Error(/PGRST204|42703|42P10/.test(error.code ?? '') ? 'Audiobook schema is out of date. Apply the audiobook_sources migration before saving audio.' : `Unable to save audiobook: ${error.message}`)
-  const persisted = await fetchChapterAudioForAdmin(value.chapterId, value.language)
+  const persisted = await readChapterAudio(value.chapterId, value.language)
   if (!persisted || persisted.sourceType !== value.sourceType || persisted.storagePath !== value.storagePath || persisted.storageBucket !== value.storageBucket || persisted.externalUrl !== value.externalUrl || persisted.externalVideoId !== value.externalVideoId || persisted.narrator !== value.narrator || persisted.durationSeconds !== value.durationSeconds || persisted.isPublished !== value.isPublished) {
     throw new Error('The database did not confirm the saved audio source. Keep this dialog open and retry Save.')
   }
   await revalidateChapterAudio(value.chapterId)
+  if (process.env.NODE_ENV === 'development') console.info('[chapter audio] Saved and verified', { chapterId: value.chapterId, language: value.language, sourceType: value.sourceType, bucket: value.storageBucket, pathLength: value.storagePath?.length ?? 0, elapsedMs: Date.now() - started })
 
 }
 

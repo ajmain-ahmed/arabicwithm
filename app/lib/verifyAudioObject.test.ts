@@ -8,7 +8,7 @@ afterEach(() => vi.unstubAllGlobals())
 it('checks actual stored bytes using a bounded range request', async () => {
   mocks.fetch.mockResolvedValue(new Response(new Uint8Array([0x49, 0x44, 0x33, 4])))
   await verifyAudioObject('chapter/ar/file.mp3')
-  expect(mocks.fetch).toHaveBeenCalledWith('https://storage.test/private', { headers: { Range: 'bytes=0-15' }, cache: 'no-store' })
+  expect(mocks.fetch).toHaveBeenCalledWith('https://storage.test/private', { headers: { Range: 'bytes=0-15' }, cache: 'no-store', signal: expect.any(AbortSignal) })
 })
 it('rejects fake audio and empty stored files before persisting', async () => {
   mocks.fetch.mockResolvedValue(new Response('not audio'))

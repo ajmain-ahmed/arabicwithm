@@ -13,6 +13,12 @@ describe('audiobook source resolution', () => {
     expect(normalizeAudiobookSource('https://audio.example.com/stream?id=1', project).externalUrl).toBe('https://audio.example.com/stream?id=1')
     expect(sourceFromAudioRecord({ storage_path: 'chapter/audio.mp3' }, project).storagePath).toBe('chapter/audio.mp3')
   })
+  it('decodes URL object names once and keeps literal relative object keys unchanged', () => {
+    const path = 'ar/كتاب (1)-100% ready.mp3'
+    const url = `${project}storage/v1/object/sign/audiobooks/${path.split('/').map(encodeURIComponent).join('/')}?token=discarded`
+    expect(normalizeAudiobookSource(url, project).storagePath).toBe(path)
+    expect(normalizeAudiobookSource(`audiobooks/${path}`, project).storagePath).toBe(path)
+  })
   it('rejects dashboard links instead of saving HTML pages as audio', () => {
     expect(() => normalizeAudiobookSource('https://supabase.com/dashboard/project/example/storage/files/buckets/audiobooks', project)).toThrow('dashboard page')
   })

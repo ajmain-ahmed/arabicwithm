@@ -29,6 +29,10 @@ it('denies unauthorized and cross-origin requests before issuing tokens', async 
   expect(response.status).toBe(403); expect((await response.json()).error).toContain('administrator')
   expect(mocks.sign).not.toHaveBeenCalled()
 })
+it('accepts the browser origin when Next uses an internal URL behind a proxy', async () => {
+  const proxied = new Request('http://localhost:3000/api/admin/audio-upload', { method: 'POST', headers: { origin: 'https://awm.test', host: 'awm.test', 'x-forwarded-proto': 'https', 'Content-Type': 'application/json' }, body: JSON.stringify({ chapterId: id, language: 'ar', extension: 'mp3', size: 100 }) })
+  expect((await POST(proxied)).status).toBe(200)
+})
 it('reports invalid language, oversize, missing chapter, and storage errors specifically', async () => {
   expect((await POST(request('fr'))).status).toBe(400)
   expect((await POST(request('en', 51 * 1024 * 1024))).status).toBe(400)

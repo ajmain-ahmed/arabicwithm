@@ -10,6 +10,7 @@ vi.mock('@/app/lib/audioUpload', () => ({ validateAudioFile: vi.fn().mockResolve
 vi.mock('@/app/actions/storage', () => ({ removeAudiobookAudio: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('@mui/icons-material', () => ({ Close: () => null, Save: () => null, Delete: () => null }))
 import ChapterEditDialog from './ChapterEditDialog'
+import { audioDraft, emptyAudioDraft } from './ChapterAudioFields'
 let host: HTMLDivElement, root: Root
 beforeEach(() => {
   vi.clearAllMocks(); Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
@@ -34,37 +35,37 @@ it('keeps both audio sections optional and omits manual narrator/duration fields
   await act(async () => button('Save').click())
   expect(mocks.persist).not.toHaveBeenCalled()
 })
-it('links pasted Arabic and English paths independently and saves detected duration', async () => {
+it('saves pasted Arabic and English paths without waiting for metadata', async () => {
   await mount()
   await enterSource('Arabic', 'audiobooks/arabic/book/ar.mp3')
   await enterSource('English', 'audiobooks/english/book/en.mp3')
   await act(async () => button('Save').click())
-  expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ language: 'ar', storagePath: 'arabic/book/ar.mp3', durationSeconds: 2536 }))
-  expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ language: 'en', storagePath: 'english/book/en.mp3', durationSeconds: 2536 }))
+  expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ language: 'ar', storagePath: 'arabic/book/ar.mp3', durationSeconds: null }))
+  expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ language: 'en', storagePath: 'english/book/en.mp3', durationSeconds: null }))
   expect(mocks.upload).not.toHaveBeenCalled()
 })
 it('saves linked audio when duration is unavailable', async () => {
   await mount()
   mocks.duration.mockResolvedValue(null)
   await enterSource('Arabic', 'audiobooks/arabic/book/audio')
-  await act(async () => button('Link Arabic audio').click())
-  expect(document.body.textContent).toContain('You can still save')
+  await act(async () => button('Save Arabic audio').click())
+  expect(document.body.textContent).toContain('Save the new chapter')
   await act(async () => button('Save').click())
   expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ durationSeconds: null }))
 })
 it('shows invalid source errors and prevents metadata writes', async () => {
   await mount()
-  mocks.resolve.mockResolvedValue({ ok: false, error: 'File not found' })
+  mocks.persist.mockResolvedValue({ ok: false, error: 'File not found' })
   await enterSource('English', 'audiobooks/english/missing.mp3')
   await act(async () => button('Save').click())
   expect(document.body.textContent).toContain('File not found')
-  expect(mocks.persist).not.toHaveBeenCalled()
-  expect(mocks.create).not.toHaveBeenCalled()
+  expect(mocks.persist).toHaveBeenCalled()
+  expect(mocks.closed).not.toHaveBeenCalled()
 })
 it('removes a newly linked draft before any database record exists', async () => {
   await mount()
   await enterSource('Arabic', 'audiobooks/arabic/book/audio.mp3')
-  await act(async () => button('Link Arabic audio').click())
+  await act(async () => button('Save Arabic audio').click())
   await act(async () => button('Remove Arabic audiobook').click())
   await act(async () => button('Save').click())
   expect(mocks.persist).not.toHaveBeenCalled()
@@ -113,5 +114,46 @@ it('loads and preserves legacy Arabic audio when editing a chapter', async () =>
   expect(document.body.textContent).toContain('existing/audio.mp3')
   await act(async () => button('Save').click())
   expect(mocks.create).not.toHaveBeenCalled(); expect(mocks.upload).not.toHaveBeenCalled()
-  expect(mocks.persist).toHaveBeenCalledWith(expect.objectContaining({ chapterId: 'existing', language: 'ar', storagePath: 'existing/audio.mp3', isPublished: true }))
+  expect(mocks.persist).not.toHaveBeenCalled()
+  expect(mocks.update).not.toHaveBeenCalled()
+})
+
+it('defaults Arabic publishing for missing/null flags and preserves explicit false', () => {
+  expect(emptyAudioDraft('ar').published).toBe(true)
+  expect(emptyAudioDraft('en').published).toBe(false)
+  for (const isPublished of [null, undefined, false, true]) {
+    expect(audioDraft({ sourceType: 'supabase_storage', storagePath: 'ar/file.mp3', isPublished } as never, 'ar').published).toBe(isPublished ?? true)
+  }
+})
+
+it('uploads immediately for an existing chapter and retries a failed write without another upload', async () => {
+  mocks.fetch.mockResolvedValue({ book_id: 'book-id', slug: 'chapter', title: 'Chapter', chapter_number: 1, content: [] })
+  mocks.persist.mockResolvedValueOnce({ ok: false, error: 'Database unavailable' }).mockResolvedValue({ ok: true })
+  await mount('existing'); await select('Arabic')
+  expect(document.body.textContent).toContain('Database unavailable')
+  expect(mocks.update).not.toHaveBeenCalled()
+  await act(async () => button('Retry Arabic audio').click())
+  expect(mocks.upload).toHaveBeenCalledOnce()
+  expect(mocks.persist).toHaveBeenCalledTimes(2)
+  expect(document.body.textContent).toContain('Audio saved')
+  expect(mocks.closed).not.toHaveBeenCalled()
+})
+
+it('keeps the other language editable during an upload and suppresses duplicate submissions', async () => {
+  mocks.fetch.mockResolvedValue({ book_id: 'book-id', slug: 'chapter', title: 'Chapter', chapter_number: 1, content: [] })
+  let complete!: (path: string) => void
+  mocks.upload.mockImplementation((_id, _language, _file, options) => {
+    options.onAuthorized(); options.onProgress(42)
+    return new Promise<string>(resolve => { complete = resolve })
+  })
+  await mount('existing'); await select('Arabic')
+  expect(document.body.textContent).toContain('Uploading 42%')
+  const english = document.querySelector('input[aria-label="English Audio file"]') as HTMLInputElement
+  expect(english.closest('button')?.disabled).not.toBe(true)
+  await enterSource('English', 'audiobooks/en/retained.mp3')
+  await act(async () => button('Save Arabic audio').click())
+  expect(mocks.upload).toHaveBeenCalledOnce()
+  await act(async () => complete('existing/ar/new.mp3'))
+  expect((document.querySelectorAll('fieldset input')[1] as HTMLInputElement)).toBeDefined()
+  expect([...document.querySelectorAll('input')].some(input => input.value === 'audiobooks/en/retained.mp3')).toBe(true)
 })

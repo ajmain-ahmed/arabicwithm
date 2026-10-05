@@ -29,4 +29,43 @@ it('reports a malformed successful response before touching storage', async () =
   await expect(uploadChapterAudio('chapter', 'ar', file())).rejects.toThrow('storage path and token')
   expect(mocks.upload).not.toHaveBeenCalled()
 })
+
+class UploadXHR {
+  static current: UploadXHR
+  upload: { onprogress?: (event: { lengthComputable: boolean; loaded: number; total: number }) => void } = {}
+  onload?: () => void; onerror?: () => void; onabort?: () => void; ontimeout?: () => void
+  status = 200; responseText = '{"Key":"audiobooks/chapter/ar/new.mp3"}'; timeout = 0
+  open = vi.fn(); setRequestHeader = vi.fn(); send = vi.fn()
+  constructor() { UploadXHR.current = this }
+  abort() { this.onabort?.() }
+}
+
+it('reports actual byte percentages and confirms the storage key before completing', async () => {
+  vi.stubGlobal('XMLHttpRequest', UploadXHR)
+  mocks.fetch.mockResolvedValue({ ok: true, json: async () => ({ path: 'chapter/ar/new.mp3', token: 'token', signedUrl: 'https://storage.test/upload?token=secret' }) })
+  const onProgress = vi.fn()
+  const promise = uploadChapterAudio('chapter', 'ar', file(), { onProgress })
+  await vi.waitFor(() => expect(UploadXHR.current.send).toHaveBeenCalled())
+  const xhr = UploadXHR.current
+  xhr.upload.onprogress?.({ lengthComputable: true, loaded: 25, total: 100 })
+  xhr.upload.onprogress?.({ lengthComputable: true, loaded: 75, total: 100 })
+  expect(onProgress.mock.calls.map(([percent]) => percent)).toEqual([0, 25, 75])
+  xhr.onload?.()
+  expect(await promise).toBe('chapter/ar/new.mp3')
+  expect(onProgress).toHaveBeenLastCalledWith(100)
+  expect(xhr.setRequestHeader).toHaveBeenCalledWith('x-upsert', 'false')
+})
+
+it('cancels the actual upload without reporting completion', async () => {
+  vi.stubGlobal('XMLHttpRequest', UploadXHR)
+  mocks.fetch.mockResolvedValue({ ok: true, json: async () => ({ path: 'chapter/ar/new.mp3', token: 'token', signedUrl: 'https://storage.test/upload' }) })
+  const controller = new AbortController(), onProgress = vi.fn()
+  const previous = UploadXHR.current
+  const promise = uploadChapterAudio('chapter', 'ar', file(), { signal: controller.signal, onProgress })
+  const rejected = expect(promise).rejects.toThrow('cancelled')
+  await vi.waitFor(() => { expect(UploadXHR.current).not.toBe(previous); expect(UploadXHR.current.send).toHaveBeenCalled() })
+  controller.abort()
+  await rejected
+  expect(onProgress).not.toHaveBeenCalledWith(100)
+})
 // @vitest-environment node

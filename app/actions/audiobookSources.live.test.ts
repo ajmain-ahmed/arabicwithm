@@ -48,7 +48,7 @@ describe.skipIf(process.env.AWM_LIVE_AUDIO_CHECK !== '1')('live stable audiobook
       expect(Buffer.from(await (await fetch(playback.url)).arrayBuffer())).toEqual(bytes)
       expect((await browser.storage.from('audiobooks').download(path)).error).not.toBeNull()
     }
-    const nested = `arabic/audio-source-check-${chapterId}/odd-filename`
+    const nested = `arabic/audio-source-check-${chapterId}/odd-filename (1).wav`
     paths.push(nested)
     const uploaded = await serviceClient.storage.from('audiobooks').upload(nested, bytes, { contentType: 'audio/wav' })
     if (uploaded.error) throw uploaded.error
@@ -62,7 +62,14 @@ describe.skipIf(process.env.AWM_LIVE_AUDIO_CHECK !== '1')('live stable audiobook
     const legacy = await serviceClient.from('book_chapter_audio').update({ storage_bucket: null }).eq('chapter_id', chapterId).eq('language', 'ar')
     if (legacy.error) throw legacy.error
     expect((await requestChapterAudio(chapterId)).sourceType).toBe('supabase_storage')
+    // Missing Arabic publication defaults to true; explicit false survives reload.
+    expect(await saveChapterAudioResult({ chapterId, sourceType: 'supabase_storage', storagePath: nested })).toEqual({ ok: true })
+    expect((await fetchChapterAudioForAdmin(chapterId))?.isPublished).toBe(true)
+    expect(await saveChapterAudioResult({ chapterId, sourceType: 'supabase_storage', storagePath: signed.data.signedUrl, isPublished: false })).toEqual({ ok: true })
+    expect((await fetchChapterAudioForAdmin(chapterId))?.isPublished).toBe(false)
+    expect((await fetchChapterAudioForAdmin(chapterId, 'en'))?.isPublished).toBe(true)
     expect(await saveChapterAudioResult({ chapterId, sourceType: 'external_url', externalUrl: 'https://example.com/image.png', isPublished: true })).toEqual(expect.objectContaining({ ok: false }))
+    expect(await fetchChapterAudioForAdmin(chapterId)).toEqual(expect.objectContaining({ storagePath: nested, isPublished: false }))
     await deleteChapterAudioForAdmin(chapterId)
     expect(await fetchPublishedChapterAudio(chapterId)).toBeNull()
     expect(await fetchPublishedChapterAudio(chapterId, 'en')).not.toBeNull()

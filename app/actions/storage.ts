@@ -91,7 +91,7 @@ export async function uploadAudiobookAudio(formData: FormData): Promise<string> 
     throw new Error(`Audio storage upload failed: ${error.message}`)
   }
   try {
-    await saveChapterAudioForAdmin({ chapterId, sourceType: 'supabase_storage', storagePath: path, externalVideoId: null, durationSeconds: null, narrator: previous?.narrator ?? null, isPublished: previous?.isPublished ?? false })
+    await saveChapterAudioForAdmin({ chapterId, sourceType: 'supabase_storage', storagePath: path, externalVideoId: null, durationSeconds: null, narrator: previous?.narrator ?? null, isPublished: previous?.isPublished ?? true })
   } catch (cause) {
     // Never remove an object if a write succeeded before revalidation failed.
     await removeAudiobookAudio(path).catch(() => {})

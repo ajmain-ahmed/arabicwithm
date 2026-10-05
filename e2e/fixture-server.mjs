@@ -25,6 +25,7 @@ const bookId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const chapterId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
 const showId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 const metadata = new Map()
+let failAudioSave = false
 function account(id) {
   const kind = Object.keys(ids).find(key => ids[key] === id) ?? 'free'
   return { id, aud: 'authenticated', role: 'authenticated', email: `${kind}@fixture.example`, email_confirmed_at: '2026-01-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', app_metadata: { provider: 'email', providers: ['email'] }, user_metadata: { full_name: `${kind} learner`, ...metadata.get(id) }, identities: [] }
@@ -35,7 +36,7 @@ const tables = {
   chapters: [{ id: chapterId, book_id: bookId, slug: 'chapter-1', title: 'First Chapter', chapter_number: 1, content }],
   shows: [{ id: showId, slug: 'test-show', title: 'Test Show', title_ar: 'كتاب', level: 'A1', tags: [] }],
   episodes: Array.from({ length: 4 }, (_, i) => ({ id: `dddddddd-dddd-4ddd-8ddd-ddddddddddd${i}`, show_id: showId, slug: `clip-${i}`, title: `Clip ${i}`, youtube_id: ['abcdefghij0', 'abcdefghij1', 'abcdefghij2', 'abcdefghij3'][i], level: 'A1', tags: [], transcript: [{ timestamp: '0:00', tokens: [{ arabic: 'كِتَابٌ', english: 'book', pos: 'noun', cefr: 'a1' }], translation: 'A book.' }], created_at: '2026-01-01T00:00:00Z' })),
-  book_chapter_audio: ['ar', 'en'].map(language => ({ chapter_id: chapterId, language, is_published: true, source_type: 'supabase_storage', storage_bucket: 'audiobooks', storage_path: `fixture/${language}/chapter.wav`, duration_seconds: 60, narrator: 'Fixture Narrator' })),
+  book_chapter_audio: ['ar', 'en'].map(language => ({ chapter_id: chapterId, language, is_published: true, source_type: 'supabase_storage', storage_bucket: 'audiobooks', storage_path: `fixture/${language}/chapter.wav`, duration_seconds: 60, narrator: 'Fixture Narrator', external_url: null, external_video_id: null })),
 }
 function userFromToken(token) { try { return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString()).sub } catch { return null } }
 function json(res, data, status = 200) { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(data)) }
@@ -44,16 +45,18 @@ const rate = 8000, sampleCount = rate * 60
 const wave = Buffer.alloc(44 + sampleCount * 2)
 wave.write('RIFF'); wave.writeUInt32LE(wave.length - 8, 4); wave.write('WAVEfmt ', 8); wave.writeUInt32LE(16, 16); wave.writeUInt16LE(1, 20); wave.writeUInt16LE(1, 22); wave.writeUInt32LE(rate, 24); wave.writeUInt32LE(rate * 2, 28); wave.writeUInt16LE(2, 32); wave.writeUInt16LE(16, 34); wave.write('data', 36); wave.writeUInt32LE(sampleCount * 2, 40)
 for (let i = 0; i < sampleCount; i++) wave.writeInt16LE(Math.round(Math.sin(i * Math.PI * 2 * 220 / rate) * 150), 44 + i * 2)
+const audioObjects = new Map(['ar', 'en'].map(language => [`audiobooks/fixture/${language}/chapter.wav`, wave]))
 const cover = Buffer.from('UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA', 'base64')
 const backend = https.createServer({ key: readFileSync(privateKey), cert: readFileSync(certificate) }, async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:3000')
-  res.setHeader('Access-Control-Allow-Headers', 'authorization, apikey, x-client-info, content-type, range, prefer, accept, x-supabase-api-version')
+  res.setHeader('Access-Control-Allow-Headers', 'authorization, apikey, x-client-info, content-type, range, prefer, accept, x-supabase-api-version, x-upsert')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD')
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return }
   const url = new URL(req.url, 'https://localhost:4310')
   const chunks = []; for await (const chunk of req) chunks.push(chunk)
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
+  if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
   if (url.pathname.startsWith('/auth/v1/admin/users/')) return json(res, { user: account(url.pathname.split('/').at(-1)) })
   if (url.pathname === '/auth/v1/user') {
     if (req.method === 'PUT' && userId) metadata.set(userId, { ...metadata.get(userId), ...body.data })
@@ -74,7 +77,14 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   }
   if (url.pathname.startsWith('/rest/v1/')) {
     const table = url.pathname.split('/').at(-1)
-    if (req.method !== 'GET' && req.method !== 'HEAD') return json(res, null, 201)
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      if (table === 'book_chapter_audio') {
+        if (failAudioSave) return json(res, { message: 'Simulated database save failure', code: 'XX000' }, 500)
+        const index = tables[table].findIndex(row => row.chapter_id === body.chapter_id && row.language === body.language)
+        if (index < 0) tables[table].push(body); else tables[table][index] = { ...tables[table][index], ...body }
+      }
+      return json(res, null, 201)
+    }
     const owner = (url.searchParams.get('user_id') ?? '').replace(/^eq\./, '')
     let rows = tables[table] ?? []
     if (table === 'subscriptions') rows = owner === ids.premium ? [{ user_id: owner, status: 'active', current_period_end: '2099-01-01T00:00:00Z', customer_id: 'fixture' }] : []
@@ -89,12 +99,40 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if (req.method === 'HEAD') { res.writeHead(200); res.end(); return }
     return json(res, (req.headers.accept ?? '').includes('application/vnd.pgrst.object+json') ? rows[0] ?? null : rows)
   }
+  if (url.pathname.startsWith('/storage/v1/object/upload/sign/')) {
+    const objectPath = decodeURIComponent(url.pathname.split('/object/upload/sign/')[1])
+    if (req.method === 'POST') return json(res, { url: `/object/upload/sign/${objectPath}?token=fixture-upload` })
+    if (req.method === 'PUT') {
+      const boundary = req.headers['content-type']?.match(/boundary=(?:"([^"]+)"|([^;]+))/)
+      if (!boundary) return json(res, { message: 'Missing multipart boundary' }, 400)
+      const raw = Buffer.concat(chunks), marker = Buffer.from(`--${boundary[1] ?? boundary[2]}`)
+      let offset = raw.indexOf(marker)
+      while (offset >= 0) {
+        const next = raw.indexOf(marker, offset + marker.length)
+        if (next < 0) break
+        const headerEnd = raw.indexOf('\r\n\r\n', offset)
+        const headers = raw.subarray(offset, headerEnd).toString()
+        if (headerEnd >= 0 && headerEnd < next && headers.includes('filename=')) {
+          audioObjects.set(objectPath, raw.subarray(headerEnd + 4, next - 2))
+          return json(res, { Key: objectPath })
+        }
+        offset = next
+      }
+      return json(res, { message: 'Missing audio file' }, 400)
+    }
+  }
+  if (url.pathname.startsWith('/storage/v1/object/info/')) {
+    const bytes = audioObjects.get(decodeURIComponent(url.pathname.split('/object/info/')[1]))
+    return bytes ? json(res, { size: bytes.length, content_type: 'audio/wav' }) : json(res, { message: 'Object not found' }, 404)
+  }
   if (url.pathname === '/storage/v1/bucket/audiobooks') return json(res, { id: 'audiobooks', name: 'audiobooks', public: false })
   if (url.pathname.startsWith('/storage/v1/object/sign/') && req.method === 'POST') return json(res, { signedURL: `${url.pathname.replace('/storage/v1', '')}?token=fixture-only` })
   if (url.pathname.startsWith('/storage/v1/object/sign/')) {
+    const bytes = audioObjects.get(decodeURIComponent(url.pathname.split('/object/sign/')[1]))
+    if (!bytes) return json(res, { message: 'Object not found' }, 404)
     const match = req.headers.range?.match(/bytes=(\d+)-(\d*)/)
-    const start = match ? Number(match[1]) : 0, end = match?.[2] ? Math.min(Number(match[2]), wave.length - 1) : wave.length - 1
-    res.writeHead(match ? 206 : 200, { 'Content-Type': 'audio/wav', 'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1, ...(match ? { 'Content-Range': `bytes ${start}-${end}/${wave.length}` } : {}) }); res.end(wave.subarray(start, end + 1)); return
+    const start = match ? Number(match[1]) : 0, end = match?.[2] ? Math.min(Number(match[2]), bytes.length - 1) : bytes.length - 1
+    res.writeHead(match ? 206 : 200, { 'Content-Type': 'audio/wav', 'Accept-Ranges': 'bytes', 'Content-Length': end - start + 1, ...(match ? { 'Content-Range': `bytes ${start}-${end}/${bytes.length}` } : {}) }); res.end(bytes.subarray(start, end + 1)); return
   }
   if (url.pathname.startsWith('/storage/v1/object/')) { res.writeHead(200, { 'Content-Type': 'image/webp' }); res.end(cover); return }
   console.error('Unhandled fixture endpoint:', req.method, url.pathname)

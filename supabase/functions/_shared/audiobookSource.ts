@@ -22,7 +22,11 @@ export function normalizeAudiobookSource(input: string, projectUrl: string, defa
     if (url.origin === new URL(projectUrl).origin) {
       const match = url.pathname.match(/^\/storage\/v1\/object\/(?:public|sign|authenticated)\/([^/]+)\/(.+)$/)
       if (!match) throw new Error('Enter a Supabase Storage object URL.')
-      return objectSource(decodeURIComponent(match[1]), decodeURIComponent(match[2]))
+      try { return objectSource(decodeURIComponent(match[1]), decodeURIComponent(match[2])) }
+      catch (cause) {
+        if (cause instanceof URIError) throw new Error('The storage URL contains invalid encoding. Copy the object path or URL again.')
+        throw cause
+      }
     }
     if (/^\/storage\/v1\/object\/sign\//.test(url.pathname)) throw new Error('Signed links from another Supabase project expire. Use a stable public audio URL.')
     if (/\.(?:html?|png|jpe?g|webp|gif|pdf|svg|txt|json)$/i.test(url.pathname)) throw new Error('This URL points to a non-audio file.')
