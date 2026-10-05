@@ -74,8 +74,8 @@ export default function LearningActivityTracker() {
       const activity = await recordActiveLearning({
         date: platformDate(),
         ...snapshot,
-      })
-      if (userIdRef.current === userId) publish(userId, activity)
+      }, userId)
+      if (activity && userIdRef.current === userId) publish(userId, activity)
     } catch (error) {
       if (userIdRef.current === userId) {
         pendingRef.current.activeSeconds += snapshot.activeSeconds
@@ -83,7 +83,7 @@ export default function LearningActivityTracker() {
         pendingRef.current.videoSeconds += snapshot.videoSeconds
         pendingRef.current.wordLookups += snapshot.wordLookups
       }
-      console.error('Unable to save learning activity:', error)
+      if (userIdRef.current === userId) console.error('Unable to save learning activity:', error)
     } finally {
       syncingRef.current = false
     }
@@ -96,7 +96,7 @@ export default function LearningActivityTracker() {
       .then((activity) => {
         if (!cancelled && userIdRef.current === user.id) publish(user.id, activity)
       })
-      .catch((error: unknown) => console.error('Unable to load learning activity:', error))
+      .catch((error: unknown) => { if (!cancelled && userIdRef.current === user.id) console.error('Unable to load learning activity:', error) })
     return () => { cancelled = true }
   }, [loading, publish, user?.id])
 

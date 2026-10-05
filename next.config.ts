@@ -5,6 +5,8 @@ const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : null
 const isDev = process.env.NODE_ENV === "development"
 
 const nextConfig: NextConfig = {
+  // Isolate browser fixtures from the real catalogue's server caches.
+  distDir: process.env.AWM_BROWSER_TEST === '1' ? '.next-browser' : '.next',
   reactStrictMode: false,
   poweredByHeader: false,
   compress: true,

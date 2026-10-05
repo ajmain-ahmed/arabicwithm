@@ -104,11 +104,25 @@ export async function requestChapterAudio(chapterId: string, language: AudioLang
   return { sourceType: 'supabase_storage', ...playback, positionSeconds }
 }
 
-export async function saveAudioProgress(chapterId: string, positionSeconds: number, completed: boolean, language: AudioLanguage = 'ar'): Promise<void> {
+/** Expected subscription restrictions must survive Server Action error redaction. */
+export async function requestChapterAudioResult(chapterId: string, language: AudioLanguage = 'ar'): Promise<
+  { status: 'ready'; playback: ChapterAudioPlayback } | { status: 'upgrade' } | { status: 'error'; message: string }
+> {
+  try { return { status: 'ready', playback: await requestChapterAudio(chapterId, language) } }
+  catch (cause) {
+    const message = cause instanceof Error ? cause.message : ''
+    if (/AWM\+|Sign in/i.test(message)) return { status: 'upgrade' }
+    return { status: 'error', message: 'Audio couldn\'t be loaded. Tap to retry.' }
+  }
+}
+
+export async function saveAudioProgress(chapterId: string, positionSeconds: number, completed: boolean, language: AudioLanguage = 'ar', expectedUserId?: string): Promise<void> {
   z.enum(['ar', 'en']).parse(language)
-  await requireEntitlement('audiobooks')
   const userId = await getAuthenticatedUserId()
-  if (!userId || !z.string().uuid().safeParse(chapterId).success) throw new Error('Invalid playback progress.')
+  // Ignore cleanup from a previous account after its browser session changed.
+  if (!userId || (expectedUserId && userId !== expectedUserId)) return
+  await requireEntitlement('audiobooks')
+  if (!z.string().uuid().safeParse(chapterId).success) throw new Error('Invalid playback progress.')
   const position = Math.max(0, Math.min(Math.trunc(positionSeconds), 86400))
   const { error } = await serviceClient.from('book_audio_progress').upsert({ user_id: userId, chapter_id: chapterId, language, position_seconds: position, completed, updated_at: new Date().toISOString() }, { onConflict: 'user_id,chapter_id,language' })
   if (error) throw new Error('Unable to save audiobook progress.')

@@ -4,6 +4,7 @@ import { AdminPanelSettings, LogoutSharp, AccountCircleOutlined, RateReviewOutli
 import { Box, Menu, MenuItem, Typography } from '@mui/material'
 import { User } from '@supabase/supabase-js'
 import Link from 'next/link'
+import { profileRoute } from './constants'
 
 interface UserMenuProps {
     anchorEl: HTMLElement | null
@@ -12,12 +13,9 @@ interface UserMenuProps {
     isAdmin: boolean
     isReviewer: boolean
     onLogout: () => void
-    accessLoading?: boolean
-    accessError?: string
-    onRetryAccess?: () => void
 }
 
-export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, isReviewer,accessLoading,accessError,onRetryAccess }: UserMenuProps) {
+export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, isReviewer }: UserMenuProps) {
     const navigationItemSx = { py: 1.2, gap: 1.5, color: 'var(--awm-bark)', '&:hover': { background: 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' } }
     const navigationTextSx = { fontWeight: 600, color: 'var(--awm-bark)' }
 
@@ -56,9 +54,7 @@ export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, i
                         'linear-gradient(90deg, transparent, color-mix(in srgb, var(--awm-gold) 30%, transparent), transparent)',
                 }}
             />
-            {user && <MenuItem component={Link} href="/profile" onClick={onClose} sx={navigationItemSx}><AccountCircleOutlined sx={{ fontSize: 18, color: 'var(--awm-gold)' }} /><Typography variant="body2" sx={navigationTextSx}>My Profile</Typography></MenuItem>}
-            {user && accessLoading && <MenuItem disabled><Typography variant="body2" role="status">Checking permissions…</Typography></MenuItem>}
-            {user && accessError && <MenuItem onClick={onRetryAccess}><Typography variant="body2">Unable to verify permissions · Retry</Typography></MenuItem>}
+            {user && <MenuItem component={Link} href={profileRoute(user.id)} prefetch={false} onClick={onClose} sx={navigationItemSx}><AccountCircleOutlined sx={{ fontSize: 18, color: 'var(--awm-gold)' }} /><Typography variant="body2" sx={navigationTextSx}>My Profile</Typography></MenuItem>}
             {user && isReviewer && <MenuItem component={Link} href="/reviewer" onClick={onClose} sx={navigationItemSx}><RateReviewOutlined sx={{fontSize:18,color:'var(--awm-gold)'}} aria-hidden="true" /><Typography variant="body2" sx={navigationTextSx}>Reviewer</Typography></MenuItem>}
             {user && isAdmin && (
                 <MenuItem

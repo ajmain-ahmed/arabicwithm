@@ -45,10 +45,10 @@ it.each(['admin', 'editor', 'user'])('shows the desktop Admin entry only for %s 
   expect(host.querySelector('a[href="/word-search"]')).toBeNull()
   await act(async () => (host.querySelector('[aria-label="Open user menu"]') as HTMLElement).click())
   const menu = document.querySelector('[role="menu"]')!
-  expect(menu.querySelector('a[href="/profile"]')).not.toBeNull()
+  expect(menu.querySelector('a[href="/profile/admin"]')).not.toBeNull()
   expect(Boolean(menu.querySelector('a[href="/admin/users"]'))).toBe(role === 'admin')
   expect(Boolean(menu.querySelector('a[href="/reviewer"]'))).toBe(role !== 'user')
-  const profile=menu.querySelector('a[href="/profile"]')!
+  const profile=menu.querySelector('a[href="/profile/admin"]')!
   for(const destination of ['/reviewer','/admin/users']){
     const item=menu.querySelector(`a[href="${destination}"]`)
     if(item){expect(item.className).toBe(profile.className);expect(item.querySelector('.MuiTypography-root')?.className).toBe(profile.querySelector('.MuiTypography-root')?.className)}
@@ -113,4 +113,19 @@ it.each([false, true])('leaves Home Admin access solely in Quick Actions on mobi
   await act(async () => trigger.click())
   expect(document.querySelector('a[href="/admin/users"]')).toBeNull()
   expect([...document.querySelectorAll('.mobile-list-btn')].some(button => button.textContent === 'Admin')).toBe(false)
+})
+
+it('routes every normal mobile entry once and closes without permission UI',async()=>{
+ mocks.mobile=true;mocks.role='user';mocks.pathname='/books'
+ const entries=[['My Profile','/profile/admin'],['Home','/'],['Explore','/explore'],['Watch','/cartoons'],['Read','/books'],['Memory','/memory'],['Give Feedback','/feedback'],['Support Us','/support']]
+ await act(async()=>root.render(<Navbar/>))
+ for(const [label,href] of entries){
+  await act(async()=> (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
+  const items=[...document.querySelectorAll('.mobile-list-btn')]
+  expect(items.map(item=>item.textContent)).toEqual(entries.map(([name])=>name))
+  expect(document.body.textContent).not.toMatch(/Checking permissions|Verifying permissions|Contact|Reviewer/)
+  const item=items.find(item=>item.textContent===label) as HTMLElement
+  mocks.push.mockClear();await act(async()=>item.click())
+  expect(mocks.push).toHaveBeenCalledExactlyOnceWith(href)
+ }
 })

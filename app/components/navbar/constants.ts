@@ -3,15 +3,7 @@
 import { Movie } from '@mui/icons-material'
 import React from 'react'
 
-export const NAV_ITEMS = ['Home', 'Explore', 'Watch', 'Read', 'Memory'] as const
-
-export const NAV_ROUTES: Record<(typeof NAV_ITEMS)[number], string> = {
-    Home: '/',
-    Explore: '/explore',
-    Watch: '/cartoons',
-    Read: '/books',
-    Memory: '/memory',
-}
+export { NAV_ITEMS, NAV_ROUTES, profileRoute } from '@/app/lib/navigation'
 
 export const CARTOON_SLUG_MAP: Record<string, string> = {
     'Teenage Mutant Ninja Turtles': 'tmnt',

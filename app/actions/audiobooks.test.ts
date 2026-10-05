@@ -8,7 +8,7 @@ vi.mock('@/app/lib/supabase',()=>({serviceClient:{from:mocks.from,storage:{getBu
 vi.mock('@/app/lib/verifyAudioObject',()=>({verifyAudioObject:mocks.verify}))
 vi.mock('next/cache',()=>({revalidatePath:mocks.revalidate}))
 import {uploadAudiobookAudio,removeAudiobookAudio} from './storage'
-import {deleteChapterAudioForAdmin,fetchChapterAudioForAdmin,fetchPublishedChapterAudio,requestChapterAudio,saveChapterAudioForAdmin} from './audiobooks'
+import {deleteChapterAudioForAdmin,fetchChapterAudioForAdmin,fetchPublishedChapterAudio,requestChapterAudio,requestChapterAudioResult,saveAudioProgress,saveChapterAudioForAdmin} from './audiobooks'
 const chapter='11111111-1111-4111-8111-111111111111'
 let row:Record<string,unknown>|null,events:string[]
 beforeEach(()=>{
@@ -74,4 +74,15 @@ describe('existing chapter audio persistence and permissions',()=>{
   expect(mocks.remove).not.toHaveBeenCalled()
  })
 
+})
+
+it.each(['AWM+ is required for this feature.','Sign in to continue.'])('returns an upgrade offering for expected restriction: %s',async(message)=>{
+ mocks.entitlement.mockRejectedValue(new Error(message))
+ expect(await requestChapterAudioResult(chapter,'en')).toEqual({status:'upgrade'})
+ expect(mocks.sign).not.toHaveBeenCalled();expect(mocks.from).not.toHaveBeenCalled()
+})
+it('does not write the previous listener position to a newly signed-in account',async()=>{
+ mocks.user.mockResolvedValue('new-listener')
+ await saveAudioProgress(chapter,12,false,'en','old-listener')
+ expect(mocks.from).not.toHaveBeenCalled()
 })

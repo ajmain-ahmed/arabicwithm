@@ -71,8 +71,10 @@ export async function fetchLearningActivity(): Promise<LearningActivity> {
   return activityForUser(await requireUserId())
 }
 
-export async function recordActiveLearning(input: RecordActivityInput): Promise<LearningActivity> {
-  const userId = await requireUserId()
+export async function recordActiveLearning(input: RecordActivityInput, expectedUserId?: string): Promise<LearningActivity | null> {
+  const userId = await getAuthenticatedUserId()
+  // A background flush can finish after sign-out or an account switch.
+  if (!userId || (expectedUserId && expectedUserId !== userId)) return null
   const limited = rateLimit(`activity:${userId}`, 30, 60 * 1000)
   if (!limited.ok) return activityForUser(userId)
   await ensureLearningProfile(userId)

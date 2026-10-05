@@ -1,6 +1,6 @@
 'use client'
 
-import { AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, HomeOutlined, LogoutSharp, Movie, Person, PsychologyOutlined, RateReviewOutlined, VolunteerActivismRounded } from '@mui/icons-material'
+import { AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, HomeOutlined, Movie, Person, PsychologyOutlined, RateReviewOutlined, VolunteerActivismRounded } from '@mui/icons-material'
 import {
     Avatar,
     Box,
@@ -15,7 +15,7 @@ import {
 } from '@mui/material'
 import { User } from '@supabase/supabase-js'
 import GoldLine from './GoldLine'
-import { NAV_ITEMS, NAV_ROUTES, type NavigateFn } from './constants'
+import { NAV_ITEMS, NAV_ROUTES, profileRoute, type NavigateFn } from './constants'
 
 const primaryIcons = { Home: HomeOutlined, Explore: ExploreOutlined, Watch: Movie, Read: BookOutlined, Memory: PsychologyOutlined }
 
@@ -27,12 +27,7 @@ interface MobileDrawerProps {
     isAdmin: boolean
     isReviewer: boolean
     onAuthOpen: () => void
-    onLogout: () => void
-    onContactOpen: () => void
     navigate: NavigateFn
-    accessLoading?: boolean
-    accessError?: string
-    onRetryAccess?: () => void
 }
 
 export default function MobileDrawer({
@@ -43,10 +38,7 @@ export default function MobileDrawer({
     isAdmin,
     isReviewer,
     onAuthOpen,
-    onLogout,
-    onContactOpen,
     navigate,
-    accessLoading,accessError,onRetryAccess,
 }: MobileDrawerProps) {
     const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M'
 
@@ -61,6 +53,7 @@ export default function MobileDrawer({
             onClose={onClose}
             slotProps={{
                 paper: {
+                    'aria-label': 'Site navigation',
                     sx: {
                         width: 280,
                         background: 'var(--awm-cream-light)',
@@ -158,20 +151,17 @@ export default function MobileDrawer({
 
             <List disablePadding>
                 <GoldLine />
-                {isLoggedIn&&accessLoading&&<ListItem><Typography variant="body2" role="status">Checking permissions…</Typography></ListItem>}
-                {isLoggedIn&&accessError&&<ListItemButton onClick={onRetryAccess}><ListItemText primary="Unable to verify permissions · Retry"/></ListItemButton>}
 
                 {[
-                    ...(isLoggedIn ? [{ label: 'My Profile', icon: <Person sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/profile') }] : []),
+                    ...(isLoggedIn && user ? [{ label: 'My Profile', icon: <Person sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(profileRoute(user!.id)) }] : []),
                     ...(isLoggedIn && isAdmin ? [{ label: 'Admin', icon: <AdminPanelSettings sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/admin/users') }] : []),
                     ...(isLoggedIn && isReviewer ? [{ label: 'Reviewer', icon: <RateReviewOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/reviewer') }] : []),
                     ...NAV_ITEMS.map(label => {
                         const Icon = primaryIcons[label]
                         return { label, icon: <Icon sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(NAV_ROUTES[label]) }
                     }),
-                    { label: 'Give Feedback', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => { window.location.href = '/feedback' } },
+                    { label: 'Give Feedback', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/feedback') },
                     { label: 'Support Us', icon: <VolunteerActivismRounded sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/support') },
-                    { label: 'Contact', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: onContactOpen },
                 ].map((item) => (
                     <ListItem disablePadding key={item.label}>
                         <ListItemButton
@@ -191,29 +181,7 @@ export default function MobileDrawer({
                     </ListItem>
                 ))}
 
-                {isLoggedIn && (
-                    <ListItem disablePadding>
-                        <ListItemButton
-                            className="mobile-list-btn"
-                            onClick={() => {
-                                onLogout()
-                                onClose()
-                            }}
-                            sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
-                        >
-                            <ListItemIcon sx={{ color: 'var(--awm-error)' }}>
-                                <LogoutSharp sx={{ fontSize: 18 }} />
-                            </ListItemIcon>
-                            <ListItemText
-                                primary={
-                                    <Typography variant="body2" sx={{ fontWeight: 500, color: 'var(--awm-error)' }}>
-                                        Log Out
-                                    </Typography>
-                                }
-                            />
-                        </ListItemButton>
-                    </ListItem>
-                )}
+
             </List>
         </Drawer>
     )

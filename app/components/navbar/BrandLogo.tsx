@@ -31,6 +31,7 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = 
                 cursor: 'pointer',
                 py: 0.5,
                 minWidth: 0,
+                minHeight: 44,
                 color: 'inherit',
                 '&:focus-visible': {
                     outline: '2px solid var(--awm-gold-light)',
@@ -57,7 +58,7 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = 
                         height: '100%',
                         position: 'relative',
                         fontFamily: 'var(--font-decorative)',
-                        fontSize: isMobile ? 'clamp(1.02rem, 5.1vw, 1.28rem)' : '1.72rem',
+                        fontSize: isMobile ? 'clamp(.88rem, 4.4vw, 1.28rem)' : '1.72rem',
                         fontWeight: 700,
                         color: overlay ? '#fff' : 'var(--awm-forest)',
                         textShadow: overlay ? '0 1px 8px rgba(0,0,0,0.48)' : 'none',

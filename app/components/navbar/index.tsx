@@ -5,7 +5,7 @@ import { AppBar, Avatar, Box, Button, Container, IconButton, Toolbar, Tooltip, T
 import { useTheme } from '@mui/material/styles'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
 import { useAccountAccess } from '@/app/lib/useAccountAccess'
@@ -13,7 +13,7 @@ import { supabase } from '@/app/lib/supabase/client'
 import AuthDialog from '@/app/components/AuthDialog'
 import ClientStyles from '@/app/components/ClientStyles'
 import BrandLogo from './BrandLogo'
-import ContactDialog from './ContactDialog'
+import { setExploreSoundPreference } from '@/app/lib/explore'
 import MobileDrawer from './MobileDrawer'
 import UserMenu from './UserMenu'
 import { NAV_ITEMS, NAV_ROUTES } from './constants'
@@ -31,21 +31,35 @@ export default function Navbar() {
     const isLoggedIn = Boolean(user)
 
     const [drawerOpen, setDrawerOpen] = useState(false)
-    const [contactOpen, setContactOpen] = useState(false)
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
     const [authDialogMode, setAuthDialogMode] = useState<'register' | 'signin'>('signin')
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
     const [scrolled, setScrolled] = useState(false)
-    const { isAdmin, isReviewer, accessLoading, accessError, refreshAccess } = useAccountAccess(`${pathname}:${drawerOpen}:${Boolean(userMenuAnchor)}`)
+    const navbarRef = useRef<HTMLElement>(null)
+    const { isAdmin, isReviewer } = useAccountAccess()
 
     const showAdminLink = isAdmin && pathname !== '/'
 
     const supportsOverlay = pathname === '/' || pathname === '/explore' || pathname === '/vocabulary'
-    const isOverlay = supportsOverlay && !scrolled && !drawerOpen && !userMenuAnchor && !contactOpen && !authDialogOpen
+    const isOverlay = supportsOverlay && !scrolled && !drawerOpen && !userMenuAnchor && !authDialogOpen
     const navColor = isOverlay ? '#fff' : 'var(--awm-forest)'
 
     useEffect(() => {
         hasAnimated = true
+    }, [])
+
+    useLayoutEffect(() => {
+        const navbar = navbarRef.current
+        if (!navbar) return
+        const measure = () => {
+            const height = navbar.getBoundingClientRect().height
+            if (height > 0) document.documentElement.style.setProperty('--awm-navbar-height', `${height}px`)
+        }
+        measure()
+        const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+        observer?.observe(navbar, { box: 'border-box' })
+        window.addEventListener('resize', measure)
+        return () => { observer?.disconnect(); window.removeEventListener('resize', measure); document.documentElement.style.removeProperty('--awm-navbar-height') }
     }, [])
 
     useEffect(() => {
@@ -75,6 +89,7 @@ export default function Navbar() {
     }
 
     const safePush = (url: string) => {
+        if (url === NAV_ROUTES.Explore) setExploreSoundPreference(true)
         router.push(url)
     }
 
@@ -101,16 +116,10 @@ export default function Navbar() {
                 user={user}
                 isAdmin={showAdminLink}
                 isReviewer={isReviewer}
-                accessLoading={accessLoading}
-                accessError={accessError}
-                onRetryAccess={()=>void refreshAccess()}
                 onAuthOpen={openSignIn}
-                onLogout={handleLogout}
-                onContactOpen={() => setContactOpen(true)}
                 navigate={safePush}
             />
 
-            <ContactDialog open={contactOpen} onClose={() => setContactOpen(false)} />
 
             <UserMenu
                 anchorEl={userMenuAnchor}
@@ -118,9 +127,6 @@ export default function Navbar() {
                 user={user}
                 isAdmin={showAdminLink}
                 isReviewer={isReviewer}
-                accessLoading={accessLoading}
-                accessError={accessError}
-                onRetryAccess={()=>void refreshAccess()}
                 onLogout={() => {
                     setUserMenuAnchor(null)
                     handleLogout()
@@ -130,13 +136,14 @@ export default function Navbar() {
             <AuthDialog key={authDialogMode} open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} initialMode={authDialogMode} />
 
             <AppBar
+                ref={navbarRef}
                 id="main-navbar"
                 position="fixed"
                 elevation={0}
                 sx={{
                     pt: 'env(safe-area-inset-top)',
                     color: navColor,
-                    backgroundColor: isOverlay ? 'rgba(5,23,15,0.22)' : 'var(--awm-white)',
+                    backgroundColor: isOverlay ? (pathname === '/explore' ? 'rgb(5,23,15)' : 'rgba(5,23,15,0.22)') : 'var(--awm-white)',
                     backdropFilter: isOverlay ? 'blur(6px)' : 'blur(16px)',
                     WebkitBackdropFilter: isOverlay ? 'blur(6px)' : 'blur(16px)',
                     borderBottom: isOverlay ? '1px solid rgba(255,255,255,0.12)' : '1px solid color-mix(in srgb, var(--awm-gold) 15%, transparent)',
@@ -149,8 +156,8 @@ export default function Navbar() {
                 <Container maxWidth="xl">
                     <Toolbar disableGutters sx={{ py: { xs: 0.5, md: 1 }, minHeight: { xs: 56, md: 64 } }}>
                         {isMobile ? (
-                            <Box sx={{ display: 'grid', gridTemplateColumns: '72px minmax(0, 1fr) 72px', alignItems: 'center', width: '100%' }}>
-                                <IconButton onClick={() => setDrawerOpen(true)} sx={{ p: 0.75, color: navColor, transition: 'color .25s ease', justifySelf: 'start' }} aria-label="Open menu">
+                            <Box sx={{ display: 'grid', gridTemplateColumns: '90px minmax(0, 1fr) 90px', alignItems: 'center', width: '100%' }}>
+                                <IconButton onClick={() => setDrawerOpen(true)} sx={{ width: 44, height: 44, p: 0.75, color: navColor, transition: 'color .25s ease', justifySelf: 'start' }} aria-label="Open menu">
                                     <MenuOutlined sx={{ fontSize: 21 }} />
                                 </IconButton>
 
@@ -159,14 +166,14 @@ export default function Navbar() {
                                 </Box>
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifySelf: 'end', gap: 0.25 }}>
-                                    <IconButton onClick={toggleColorMode} sx={{ p: 0.65, color: navColor, transition: 'color .25s ease' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
+                                    <IconButton onClick={toggleColorMode} sx={{ width: 44, height: 44, p: 0.65, color: navColor, transition: 'color .25s ease' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
                                         {mode === 'dark' ? <LightModeOutlined sx={{ fontSize: 20 }} /> : <DarkModeOutlined sx={{ fontSize: 20 }} />}
                                     </IconButton>
                                     {isLoggedIn ? (
                                         <IconButton
                                             onClick={(e) => setUserMenuAnchor(e.currentTarget)}
                                             size="small"
-                                            sx={{ position: 'relative' }}
+                                            sx={{ position: 'relative', width: 44, height: 44 }}
                                             aria-label="Open user menu"
                                         >
                                             <Avatar
@@ -184,7 +191,7 @@ export default function Navbar() {
                                             </Avatar>
                                         </IconButton>
                                     ) : (
-                                        <IconButton onClick={openSignIn} sx={{ p: 0.75, color: navColor, transition: 'color .25s ease' }} aria-label="Sign in">
+                                        <IconButton onClick={openSignIn} sx={{ width: 44, height: 44, p: 0.75, color: navColor, transition: 'color .25s ease' }} aria-label="Sign in">
                                             <Person sx={{ fontSize: 21 }} />
                                         </IconButton>
                                     )}
@@ -194,7 +201,7 @@ export default function Navbar() {
                             <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', width: '100%', alignItems: 'center' }}>
                                 <Box component="nav" aria-label="Primary navigation" sx={{ display: 'flex', alignItems: 'center', gap: { md: 2.5, lg: 4 } }}>
                                     {NAV_ITEMS.map((item) => (
-                                        <Link key={item} href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
+                                        <Link key={item} href={NAV_ROUTES[item]} onNavigate={() => { if (item === 'Explore') setExploreSoundPreference(true) }} style={{ color: 'inherit', textDecoration: 'none' }}>
                                             <Typography
                                                 className="nav-link"
                                                 variant="body2"

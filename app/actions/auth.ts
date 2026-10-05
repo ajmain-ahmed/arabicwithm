@@ -55,7 +55,8 @@ export async function guardReviewer(): Promise<AuthenticatedAccess> {
 }
 
 export async function getAuthenticatedUserId(): Promise<string | null> {
-  return (await getAuthenticatedAccess())?.userId ?? null
+  // Identity-only routes must not depend on reviewer/admin role availability.
+  return (await getAuthenticatedUser())?.id ?? null
 }
 
 export async function isAdminUser(): Promise<boolean> {

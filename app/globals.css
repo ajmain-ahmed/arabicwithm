@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  --awm-navbar-height: calc(57px + env(safe-area-inset-top, 0px));
   /* ── ArabicWithM design tokens ───────────────────────────────────────── */
 
   /* Palette */
@@ -52,6 +53,10 @@
   --muted-light: var(--awm-muted-light);
   --forest: var(--awm-forest);
   --sand: var(--awm-cream);
+}
+
+@media (min-width: 900px) {
+  :root { --awm-navbar-height: calc(65px + env(safe-area-inset-top, 0px)); }
 }
 
 html[data-theme='dark'] {

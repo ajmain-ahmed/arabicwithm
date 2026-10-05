@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Box, Button, ButtonGroup, Divider, IconButton, Paper, Snackbar, Typography, Menu, MenuItem, useMediaQuery } from '@mui/material'
 import { Bookmark, BookmarkBorder, MenuBook, Settings, ViewAgenda } from '@mui/icons-material'
 import { HtmlTooltip, MobileDefinitionPopover, WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
@@ -440,8 +440,11 @@ export default function ChapterReader({
     }
   }
 
-  return (
+  const mobileAudioLayout = mobileWordPopup
+  const selectedAudio = audio.find(item => item.language === language) ?? audio[0]
+  const renderReader = ({ button, player }: { button: ReactNode; player: ReactNode }) => (
     <>
+      {mobileAudioLayout && button && <Box data-reader-mobile-audio sx={{ mb: 1.5 }}>{button}</Box>}
       <BookReaderSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -457,15 +460,18 @@ export default function ChapterReader({
         languageLabel={language === 'ar' ? 'Arabic' : 'English'}
       />
       <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', overflow: 'hidden' }}>
-      <Box sx={{ px: { xs: 2, md: 4 }, py: { xs: 2.25, md: 2.75 }, bgcolor: '#0e2e1f' }}>
+      <Box data-reader-heading sx={{ px: { xs: 2, md: 4 }, py: { xs: 2.25, md: 2.75 }, bgcolor: '#0e2e1f' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
           <Box sx={{ textAlign: 'center', minWidth: 0 }}>
             <Typography sx={{ color: '#d4a843', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.45 }}>
               {bookTitle} · {language === 'ar' ? 'Arabic' : 'English'}
             </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 1.5 }}>
             <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 31 }, lineHeight: 1.15, fontWeight: 600 }}>
               {chapterTitle}
             </Typography>
+            {!mobileAudioLayout && button}
+            </Box>
           </Box>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
@@ -503,12 +509,12 @@ export default function ChapterReader({
               Settings
             </Button>
             </ButtonGroup>
-            {(() => { const source = audio.find(item => item.language === language) ?? audio[0]; return source ? <ChapterAudioPlayer key={`${source.chapterId}/${source.language}`} audio={source} chapterTitle={chapterTitle} compact label={source.language === language ? 'Audio' : `Audio (${source.language === 'en' ? 'English' : 'Arabic'})`} /> : null })()}
 
           </Box>
         </Box>
       </Box>
 
+      {player}
       {view === 'lines' ? (
         <Box sx={{ px: { xs: 2.5, md: 6 }, py: { xs: 3, md: 5 } }}>
           {paragraphs.map((paragraph, paragraphIndex) => (
@@ -611,4 +617,7 @@ export default function ChapterReader({
       />
     </>
   )
+  return selectedAudio
+    ? <ChapterAudioPlayer key={`${selectedAudio.chapterId}/${selectedAudio.language}`} audio={selectedAudio} chapterTitle={chapterTitle} label={selectedAudio.language === language ? 'Play Audio' : `Play Audio (${selectedAudio.language === 'en' ? 'English' : 'Arabic'})`} render={renderReader} />
+    : renderReader({ button: null, player: null })
 }

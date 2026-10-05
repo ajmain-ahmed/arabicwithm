@@ -30,7 +30,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       <Box
         component="main"
         sx={{
-          pt: isExploreRoute ? 0 : { xs: 'calc(56px + env(safe-area-inset-top))', md: 'calc(64px + env(safe-area-inset-top))' },
+          pt: 'var(--awm-navbar-height)',
           pb: 0,
           minWidth: 0,
           overflowX: isExploreRoute ? 'hidden' : undefined,

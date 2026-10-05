@@ -5,7 +5,7 @@ vi.mock('@supabase/ssr',()=>({createServerClient:()=>({auth:{getUser:mocks.getUs
 vi.mock('next/headers',()=>({cookies:async()=>({getAll:()=>[],set:vi.fn()})}))
 vi.mock('next/navigation',()=>({unstable_rethrow:vi.fn()}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{rpc:mocks.rpc}}))
-import { getAuthenticatedAccess, guardAdmin, guardReviewer } from './auth'
+import { getAuthenticatedAccess, getAuthenticatedUserId, guardAdmin, guardReviewer } from './auth'
 const id='11111111-1111-4111-8111-111111111111'
 beforeEach(()=>{vi.clearAllMocks();mocks.getUser.mockResolvedValue({data:{user:{id,app_metadata:{role:'admin'},user_metadata:{role:'admin'}}},error:null});mocks.rpc.mockResolvedValue({data:'user',error:null})})
 describe('current database role authorization',()=>{
@@ -29,4 +29,9 @@ describe('current database role authorization',()=>{
   mocks.getUser.mockResolvedValue({data:{user:null},error:{message:'Auth session missing!'}})
   expect(await getAuthenticatedAccess()).toBeNull();expect(mocks.rpc).not.toHaveBeenCalled()
  })
+})
+
+it('resolves profile identity without requiring reviewer role lookup',async()=>{
+ mocks.rpc.mockResolvedValue({data:null,error:{message:'Role service unavailable'}})
+ expect(await getAuthenticatedUserId()).toBe(id);expect(mocks.rpc).not.toHaveBeenCalled()
 })
