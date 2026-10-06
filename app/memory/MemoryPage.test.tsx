@@ -6,6 +6,8 @@ const mocks = vi.hoisted(() => ({
     user: { id: string } | null;
     loading: boolean;
   },
+  begin:vi.fn(),
+  resume:vi.fn(),
   progress: vi.fn(),
   saved: vi.fn(),
   save: vi.fn(),
@@ -16,7 +18,7 @@ vi.mock("@/app/AuthContext", () => ({ useAuth: () => mocks.auth }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: mocks.push, refresh: vi.fn() }),
 }));
-vi.mock("@/app/components/PremiumPrompt", () => ({ default: () => null }));
+vi.mock("@/app/components/PremiumPrompt", () => ({ default: ({open}:{open:boolean}) => open?<aside>Upgrade for unlimited Memory sessions</aside>:null }));
 vi.mock("framer-motion", () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
   useReducedMotion: () => true,
@@ -28,6 +30,8 @@ vi.mock("@/app/actions/memory", () => ({
   loadMemoryProgress: mocks.progress,
   loadSavedMemorySession: mocks.saved,
   persistMemorySession: mocks.save,
+  beginMemorySession:mocks.begin,
+  resumeMemorySession:mocks.resume,
   submitMemoryReview: mocks.review,
 }));
 import MemoryPage from "./MemoryPage";
@@ -63,6 +67,8 @@ beforeEach(() => {
     ok: true,
     data: { used: 0, premium: false, totalXp: 0 },
   });
+  mocks.begin.mockImplementation(async(state)=>({status:'ready',state,used:1}));
+  mocks.resume.mockImplementation(async(state)=>({status:'ready',state}));
   mocks.saved.mockResolvedValue({ ok: true, data: null });
   mocks.save.mockResolvedValue({ ok: true, data: undefined });
   mocks.review.mockResolvedValue({
@@ -90,9 +96,10 @@ async function click(label: string) {
   await act(async () => button(label).click());
 }
 it("starts, reveals, reviews the next card, finishes and restarts with fresh completion IDs", async () => {
+  mocks.progress.mockResolvedValue({ok:true,data:{used:0,premium:true,totalXp:0}});
   await mount();
   await click("Start");
-  const first = mocks.save.mock.calls[0][0];
+  const first = mocks.begin.mock.calls[0][0];
   expect(host.querySelector("input")).toBeNull();
   await click("Reveal");
   await click("Knew it");
@@ -103,7 +110,7 @@ it("starts, reveals, reviews the next card, finishes and restarts with fresh com
   expect(host.querySelector("input")).not.toBeNull();
   await click("Practise again");
   expect(host.textContent).toContain("Card 1 of 2");
-  expect(mocks.save.mock.calls.at(-1)![0].completionIds).not.toEqual(
+  expect(mocks.begin.mock.calls.at(-1)![0].completionIds).not.toEqual(
     first.completionIds,
   );
 });
@@ -188,18 +195,12 @@ it("does not advance or navigate when a review resolves after unmount", async ()
   expect(host.textContent).toBe("Left Memory");
   expect(mocks.push).not.toHaveBeenCalled();
 });
-it("guest rapid review clicks count one card and need no backend", async () => {
-  mocks.auth.user = null;
-  await mount();
-  await click("Start");
-  await click("Reveal");
-  await act(async () => {
-    button("Knew it").click();
-    button("Knew it").click();
-  });
-  expect(host.textContent).toContain("Card 2 of 2");
-  expect(host.textContent).toContain("1 / 30 cards today");
-  expect(mocks.review).not.toHaveBeenCalled();
+it("guest starts request sign-in without creating a Memory session", async () => {
+  mocks.auth.user=null
+  const auth=vi.fn();window.addEventListener('open-auth-dialog',auth)
+  await mount();await click('Start')
+  expect(auth).toHaveBeenCalledOnce();expect(mocks.begin).not.toHaveBeenCalled();expect(mocks.review).not.toHaveBeenCalled()
+  window.removeEventListener('open-auth-dialog',auth)
 });
 
 it("does not let an old progress refresh erase a successful review", async () => {
@@ -217,6 +218,18 @@ it("does not let an old progress refresh erase a successful review", async () =>
   await act(async () =>
     finish({ ok: true, data: { used: 0, premium: false, totalXp: 0 } }),
   );
-  expect(host.textContent).toContain("1 / 30 cards today");
+  expect(host.textContent).toContain("1 / 1 sessions today");
   expect(host.textContent).toContain("Card 2 of 2");
 });
+
+it('free users finish the whole first session, then see an upgrade on another start',async()=>{
+ await mount();await click('Start');await click('Reveal');await click('Knew it');await click('Reveal');await click("Didn't know")
+ expect(host.textContent).toContain('Deck complete');await click('Practise again')
+ expect(mocks.begin).toHaveBeenCalledTimes(1);expect(host.textContent).toContain('Upgrade for unlimited Memory sessions')
+})
+it('a completed saved recap is available after the daily free session is used',async()=>{
+ const state={sessionId:crypto.randomUUID(),cards,index:cards.length,completed:cards.length,sessionXp:5,direction:'arabic',completionIds:cards.map(()=>crypto.randomUUID())}
+ mocks.progress.mockResolvedValue({ok:true,data:{used:1,premium:false,totalXp:5}});mocks.saved.mockResolvedValue({ok:true,data:state})
+ await mount();await click('View saved recap - 2 completed')
+ expect(host.textContent).toContain('Deck complete');expect(mocks.begin).not.toHaveBeenCalled();expect(mocks.resume).toHaveBeenCalledOnce()
+})

@@ -25,6 +25,7 @@ export default function PremiumPrompt({ open, onClose, reason }: { open: boolean
   const premium = status?.premium ?? false
   async function purchase() {
     if (!user) { onClose(); window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } })); return }
+    if(premium && !status?.manageable){onClose();return}
     setBusy(true); setError('')
     try { window.location.assign(await (premium ? managePremium() : startPremiumCheckout())) }
     catch (e) { setError(e instanceof Error ? e.message : 'Unable to open billing.'); setBusy(false) }
@@ -34,7 +35,7 @@ export default function PremiumPrompt({ open, onClose, reason }: { open: boolean
     <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}>{premium ? 'AWM+ active' : 'Upgrade to AWM+'}</DialogTitle>
     <DialogContent sx={{ px: { xs: 2.5, sm: 4 } }}>
       <Typography color="text.secondary">More stories. More practice. Take your learning with you.</Typography>
-      <Box sx={{ py: 3 }}><Typography sx={{ fontSize: 48, fontWeight: 700, letterSpacing: '-.04em', lineHeight: 1 }}>{new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(PREMIUM.monthlyPence / 100)}<Typography component="span" sx={{ ml: 1, fontSize: 16, color: 'text.secondary' }}>GBP / month</Typography></Typography></Box>
+      {!premium && <Box sx={{ py: 3 }}><Typography sx={{ fontSize: 48, fontWeight: 700, letterSpacing: '-.04em', lineHeight: 1 }}>{new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(PREMIUM.monthlyPence / 100)}<Typography component="span" sx={{ ml: 1, fontSize: 16, color: 'text.secondary' }}>GBP / month</Typography></Typography></Box>}
       {reason && <Typography sx={{ mb: 2 }}>{reason}</Typography>}
       <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid', gap: 1 }}>
         {PREMIUM_BENEFITS.map((benefit) => <Box component="li" key={benefit.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.1, px: 1.5, py: 1.25, borderRadius: '10px', bgcolor: 'background.default', textAlign: 'left' }}>
@@ -44,17 +45,21 @@ export default function PremiumPrompt({ open, onClose, reason }: { open: boolean
         </Box>)}
       </Box>
       <Typography sx={{ mt: 2 }} color="text.secondary">New books and features as they arrive.</Typography>
-      <Typography variant="body2" sx={{ mt: 2 }}>£3.99 GBP, billed monthly as a recurring subscription. Cancel through Manage AWM+; access continues until the end of your paid period.</Typography>
+      {!premium ? <Typography variant="body2" sx={{ mt: 2 }}>£3.99 GBP, billed monthly as a recurring subscription. Cancel through Manage AWM+; access continues until the end of your paid period.</Typography> : <Typography variant="body2" sx={{mt:2}}>Your account has AWM+ access.</Typography>}
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
     </DialogContent>
-    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}><Button fullWidth sx={{ minHeight: 52, borderRadius: "12px" }} variant="contained" disabled={busy} onClick={() => void purchase()}>{premium ? 'Manage AWM+' : `Upgrade to AWM+ — ${PREMIUM.label}`}</Button></DialogActions>
+    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}><Button fullWidth sx={{ minHeight: 52, borderRadius: "12px" }} variant="contained" disabled={busy} onClick={() => void purchase()}>{premium ? status.manageable ? 'Manage AWM+' : 'Continue learning' : `Upgrade to AWM+ — ${PREMIUM.label}`}</Button></DialogActions>
   </Dialog>
 }
 export function PremiumSection() {
   const { user } = useAuth()
+  return <PremiumAccountSection key={user?.id ?? 'signed-out'} />
+}
+function PremiumAccountSection() {
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState<PremiumStatus | null>(null)
-  useEffect(() => { let active = true; fetchPremiumStatus().then(s => { if (active) setStatus(s) }).catch(() => {}); return () => { active = false } }, [user?.id])
+  useEffect(() => { let active = true; const refresh=()=>{void fetchPremiumStatus().then(s => { if (active) setStatus(s) }).catch(() => {})}; refresh(); window.addEventListener('focus',refresh); return () => { active = false;window.removeEventListener('focus',refresh) } }, [user?.id])
   if (!status || status.admin) return null
   const premium = status?.premium ?? false
   return <Box component="section" aria-label="AWM+" sx={{ width: '100%', px: { xs: 2, md: 5 }, py: { xs: 4, md: 6 }, display: 'flex', justifyContent: 'center' }}>
@@ -69,7 +74,7 @@ export function PremiumSection() {
       '&:active': { transform: 'translateY(1px)', boxShadow: 'inset 0 2px 5px rgba(0,0,0,.12)' },
       '&:focus-visible': { outline: '3px solid', outlineColor: 'text.primary', outlineOffset: 4 },
       '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&::before': { transition: 'none' }, '&:hover, &:active': { transform: 'none' } },
-    }}>{premium ? 'AWM+ active - Manage' : 'Upgrade to AWM+'}</Button>
+    }}>{premium ? status.manageable ? 'AWM+ active - Manage' : 'AWM+ active' : 'Upgrade to AWM+'}</Button>
     <PremiumPrompt open={open} onClose={() => setOpen(false)} />
   </Box>
 

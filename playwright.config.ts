@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test'
 
+const baseURL = `http://127.0.0.1:${process.env.AWM_TEST_WEB_PORT ?? 3000}`
+
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.pw.ts',
@@ -7,7 +9,7 @@ export default defineConfig({
   timeout: 90_000,
   expect: { timeout: 15_000 },
   use: {
-    baseURL: 'http://127.0.0.1:3000',
+    baseURL,
     ignoreHTTPSErrors: true,
     hasTouch: true,
     trace: 'retain-on-failure',
@@ -18,7 +20,7 @@ export default defineConfig({
   },
   webServer: {
     command: 'node e2e/fixture-server.mjs',
-    url: 'http://127.0.0.1:3000',
+    url: baseURL,
     reuseExistingServer: false,
     timeout: 120_000,
   },

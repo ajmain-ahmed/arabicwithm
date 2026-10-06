@@ -78,26 +78,26 @@ beforeEach(() => {
     },
     error: null,
   });
-  mocks.cookieRpc.mockResolvedValue({
+  mocks.serviceRpc.mockResolvedValue({
     data: { accepted: true, awarded: 5, used: 1, totalXp: 5 },
     error: null,
   });
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
-it("reviews with the cookie JWT, never the service identity", async () => {
+it("uses the session ledger service API after server-verified identity and source validation", async () => {
   expect(
     await recordMemoryReview(card.id, "known", completion, session),
   ).toMatchObject({ accepted: true, awarded: 5 });
-  expect(mocks.cookieRpc).toHaveBeenCalledWith(
-    "complete_memory_card",
+  expect(mocks.serviceRpc).toHaveBeenCalledWith(
+    "website_complete_memory_card_v2",
     expect.objectContaining({ p_user_id: user, p_completion_id: completion }),
   );
-  expect(mocks.serviceRpc).not.toHaveBeenCalled();
+  expect(mocks.cookieRpc).not.toHaveBeenCalled();
 });
 it.each([null, {}, { accepted: true, awarded: -1, used: 1, totalXp: 1 }])(
   "rejects malformed backend responses without advancing %j",
   async (data) => {
-    mocks.cookieRpc.mockResolvedValue({ data, error: null });
+    mocks.serviceRpc.mockResolvedValue({ data, error: null });
     expect(
       await submitMemoryReview(card.id, "known", completion, session),
     ).toMatchObject({ ok: false });
@@ -109,7 +109,7 @@ it("returns recoverable errors for deleted sources and database failure", async 
     (await submitMemoryReview(card.id, "known", completion, session)).ok,
   ).toBe(false);
   expect(mocks.cookieRpc).not.toHaveBeenCalled();
-  mocks.cookieRpc.mockResolvedValue({
+  mocks.serviceRpc.mockResolvedValue({
     data: null,
     error: { message: "Not authorised" },
   });

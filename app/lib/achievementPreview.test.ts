@@ -14,3 +14,5 @@ it('gives new learners four honest upcoming milestones', () => {
   const items = achievementPreview({ level: 1 })
   expect(items).toHaveLength(4); expect(items.some(item => item.earned)).toBe(false)
 })
+
+it('preserves an intentionally empty cabinet instead of restoring automatic highlights',()=>{expect(achievementPreview({level:100,xp:10000},[])).toEqual([])})

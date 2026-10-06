@@ -7,7 +7,6 @@ import { Box, Button, Chip, CircularProgress, IconButton, Popover, Tooltip, Typo
 import { WordTooltip, HtmlTooltip, MobileDefinitionSheet, type VocabEntry } from '@/app/components/vocab-tooltip'
 import CefrChip from '@/app/components/CefrChip'
 import SocialVideoEmbed from '@/app/components/SocialVideoEmbed'
-import TranscriptSearchLink from './TranscriptSearchLink'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { getEpisodeVideoSources, getYouTubeThumbnailUrl, type ExploreEpisode, type VideoProvider } from '@/app/lib/cartoons'
 import type { ExploreBookPage } from '@/app/actions/books'
@@ -699,7 +698,6 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
 
   return (
       <>
-      <Box sx={{ position: 'fixed', top: 'calc(var(--awm-navbar-height) + 10px)', left: 'max(10px, env(safe-area-inset-left))', zIndex: 1100 }}><TranscriptSearchLink /></Box>
       <Box
         id="explore-feed"
         ref={feedRef}

@@ -44,8 +44,11 @@ export async function managedUserDetails(id: string) {
  ])
  if (error || authError) throw new Error('Unable to load account details')
  // Do not serialize the Auth user object or sensitive metadata.
+ const {data:manual,error:manualError}=await serviceClient.rpc('admin_manual_premium_details',{p_actor:await adminActor(),p_target:id})
+ if(manualError)throw new Error('Unable to load Premium access.')
+ const manualDetails=manual as {enabled:boolean;history:{enabled:boolean;reason:string;changed_by:string;changed_at:string}[]}
  const names=await accountNames((history??[]).map(h=>h.changed_by))
- return { id: identity.user.id, history: (history??[]).map(h=>({...h,changed_by_name:names.get(h.changed_by)})) }
+ return { id: identity.user.id, manual:manualDetails, history: (history??[]).map(h=>({...h,changed_by_name:names.get(h.changed_by)})) }
 }
 export async function changeManagedRole(id: string, role: AccountRole, reason: string, confirmation: string) {
  const actor = await adminActor()
@@ -165,4 +168,12 @@ export async function reviewSuggestion(id: string, action: 'accept' | 'reject' |
   revalidatePath('/books', 'layout'); revalidatePath('/cartoons', 'layout'); revalidatePath('/explore')
  }
  return result
+}
+
+export async function changeManagedPremium(id:string, enabled:boolean, reason:string) {
+ const actor=await adminActor()
+ const {data,error}=await serviceClient.rpc('admin_set_manual_premium',{p_actor:actor,p_target:uuid.parse(id),p_enabled:z.boolean().parse(enabled),p_reason:z.string().trim().min(1).max(2000).parse(reason)})
+ if(error)throw new Error('Unable to save manual Premium access.')
+ revalidatePath('/admin/users');revalidatePath('/profile')
+ return data
 }

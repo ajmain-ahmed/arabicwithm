@@ -7,6 +7,7 @@ import { AutoStories, Translate } from '@mui/icons-material'
 import { useAuth } from '@/app/AuthContext'
 import type { PublicChapter } from '@/app/actions/books'
 import PdfDownloadButton from '@/app/components/PdfDownloadButton'
+import BookReviewButton from './BookReviewButton'
 import { bookReaderHref } from '@/app/lib/bookReaderSettings'
 import {
   BOOK_SENTENCE_BOOKMARK_EVENT,
@@ -28,7 +29,7 @@ function progressForBook(metadata: Record<string, unknown>, bookSlug: string): B
   return entry && typeof entry === 'object' && !Array.isArray(entry) ? entry as BookProgressEntry : null
 }
 
-export default function BookReadingCta({ bookSlug, chapters }: { bookSlug: string; chapters: PublicChapter[] }) {
+export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlug: string; bookId: string; chapters: PublicChapter[] }) {
   const { user, loading } = useAuth()
   const [localBookmark, setLocalBookmark] = useState<BookSentenceBookmark | null>(null)
 
@@ -85,8 +86,9 @@ export default function BookReadingCta({ bookSlug, chapters }: { bookSlug: strin
       <Box sx={{ display: 'inline-grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, maxWidth: '100%' }}>
         <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'ar', savedBlockIndex)} variant="contained" startIcon={<AutoStories />} sx={{ minHeight: 44, bgcolor: '#b8860b', color: '#fff', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#946c08' } }}>Read in Arabic</Button>
         <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'en', savedBlockIndex)} variant="contained" startIcon={<Translate />} sx={{ minHeight: 44, bgcolor: 'var(--awm-cream)', color: 'var(--awm-bark)', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: 'var(--awm-cream-light)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 55%, transparent)', outlineOffset: 2 } }}>Read in English</Button>
-      <Box sx={{ gridColumn: '1 / -1', mt: 0.25 }}>
-        <PdfDownloadButton bookSlug={bookSlug} language="ar" label="Arabic PDF" small fullWidth />
+      <Box sx={{ gridColumn: '1 / -1', mt: 0.25, display:'grid', gridTemplateColumns:{xs:'1fr',sm:'repeat(2,minmax(0,1fr))'},gap:1,alignItems:'start' }}>
+        <PdfDownloadButton bookSlug={bookSlug} language="ar" label="Download PDF" small fullWidth />
+        <BookReviewButton bookId={bookId} />
       </Box>
       </Box>
     </>

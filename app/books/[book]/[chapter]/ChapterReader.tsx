@@ -28,6 +28,7 @@ import {
 } from '@/app/lib/bookReaderSettings'
 import BookReaderSettingsDialog from './BookReaderSettingsDialog'
 import ChapterAudioPlayer from './ChapterAudioPlayer'
+import { BOOK_LANGUAGE_STOP_EVENT } from '@/app/lib/bookReaderSettings'
 import type { ChapterAudioSummary } from '@/app/actions/audiobooks'
 
 type ReaderView = 'lines' | 'book'
@@ -432,6 +433,7 @@ export default function ChapterReader({
   }
 
   const selectLanguage = (nextLanguage: BookReaderLanguage) => {
+    if(nextLanguage!==language) window.dispatchEvent(new Event(BOOK_LANGUAGE_STOP_EVENT))
     try {
       window.localStorage.setItem(READER_LANGUAGE_STORAGE_KEY, nextLanguage)
       window.dispatchEvent(new Event(READER_LANGUAGE_CHANGE_EVENT))
@@ -441,7 +443,7 @@ export default function ChapterReader({
   }
 
   const mobileAudioLayout = mobileWordPopup
-  const selectedAudio = audio.find(item => item.language === language) ?? audio[0]
+  const selectedAudio = audio.find(item => item.language === language)
   const renderReader = ({ button, player }: { button: ReactNode; player: ReactNode }) => (
     <>
       {mobileAudioLayout && button && <Box data-reader-mobile-audio sx={{ mb: 1.5 }}>{button}</Box>}
@@ -478,7 +480,7 @@ export default function ChapterReader({
             <ButtonGroup
               aria-label="Reading view"
               sx={{
-                bgcolor: 'rgba(255,255,255,0.08)',
+                bgcolor: 'transparent',
                 borderRadius: '8px',
                 width: '100%', maxWidth: 430,
                 '& .MuiButton-root': { whiteSpace: 'nowrap', minWidth: 'auto', px: { xs: 0.75, md: 1.6 }, fontSize: { xs: 11, md: 13 }, minHeight: 44, flex: 1, '& .MuiButton-startIcon': { mr: 0.5, ml: 0 } },

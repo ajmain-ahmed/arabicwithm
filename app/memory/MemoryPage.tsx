@@ -17,14 +17,13 @@ import {
 import { Alert, Autocomplete, Box, Button, Chip, Container, LinearProgress, Paper, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import PremiumPrompt from "@/app/components/PremiumPrompt"
 import { MEMORY } from "@/app/lib/entitlements"
-import { loadMemoryProgress, loadSavedMemorySession, persistMemorySession, type SavedMemorySession, submitMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
+import { resumeMemorySession, beginMemorySession, loadMemoryProgress, loadSavedMemorySession, persistMemorySession, type SavedMemorySession, submitMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
 import { useAuth } from '@/app/AuthContext'
 import type { MemoryDirection, MemoryRating } from '@/app/lib/memory'
-import { readGuestMemoryUsage, writeGuestMemoryUsage } from '@/app/lib/guestMemory'
 
 const DIRECTION_KEY = 'awm-memory-direction-v1'
 const DIRECTION_EVENT = 'awm-memory-direction-change'
-const CARD_COUNT_OPTIONS = [5, 10, 15, 20] as const
+const CARD_COUNT_OPTIONS = [5, 10, 15, 20, 50] as const
 
 function getDirectionSnapshot(): MemoryDirection {
   try {
@@ -55,9 +54,9 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const direction = useSyncExternalStore<MemoryDirection>(subscribeToDirection, getDirectionSnapshot, () => 'arabic')
   const [totalXp, setTotalXp] = useState(0)
   const initialCardCount = library.scope === 'global' ? 10 : library.recommendedCardCount
-  const [selectedCardCount, setSelectedCardCount] = useState(initialCardCount)
+  const [selectedCardCount, setSelectedCardCount] = useState<number>(initialCardCount)
   const [practice, dispatch] = useReducer(practiceReducer, library.cards.slice(0, Math.min(initialCardCount, library.cards.length)), initialPractice)
-  const { cards, index, revealed, completed, sessionXp, completionIds } = practice
+  const { cards, index, revealed, completed, sessionXp, completionIds, sessionId } = practice
   const started = practice.phase !== 'selection'
   const complete = practice.phase === 'complete'
   const activePractice = practice.phase === 'practice'
@@ -75,21 +74,14 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [upgrade, setUpgrade] = useState(false)
+  const pendingStart = useRef<SavedMemorySession|null>(null)
   const busyRef = useRef(false)
   const mounted = useRef(true)
   const submitted = useRef(new Set<string>())
   const reviewVersion = useRef(0)
   const progressRequest = useRef(0)
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
-  const limited = !premium && used >= MEMORY.dailyFreeCards
-  useEffect(() => {
-    if (loading || user) return
-    const refresh = () => { try { setUsed(readGuestMemoryUsage(window.localStorage).used) } catch { /* Storage may be unavailable. */ } }
-    refresh()
-    const timer = window.setInterval(refresh, 60000)
-    window.addEventListener('focus', refresh)
-    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh) }
-  }, [loading, user])
+  const limited = !premium && used >= MEMORY.dailyFreeSessions && !activePractice
   useEffect(() => {
     if (loading || !user) return
     let active = true
@@ -128,13 +120,8 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     busyRef.current = true; setSaving(true); setSaveError(''); reviewVersion.current += 1
     try {
       let awarded = 0
-      if (!user) {
-        const nextUsed = Math.min(MEMORY.dailyFreeCards, used + 1)
-        try { writeGuestMemoryUsage(window.localStorage, nextUsed) } catch { /* Keep in-memory quota when storage is unavailable. */ }
-        setUsed(nextUsed)
-        if (nextUsed >= MEMORY.dailyFreeCards) setUpgrade(true)
-      } else {
-        const response = await submitMemoryReview(card.id, rating, completionId, { cards, index: index + 1, completed: completed + 1, sessionXp, direction, completionIds })
+      if (user) {
+        const response = await submitMemoryReview(card.id, rating, completionId, { sessionId, cards, index: index + 1, completed: completed + 1, sessionXp, direction, completionIds })
         if (!mounted.current) return
         if (!response.ok) { setSaveError(response.error); return }
         const result = response.data
@@ -142,20 +129,19 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         if (!result.accepted) { setUpgrade(true); return }
         awarded = result.awarded
         setTotalXp(value => value + awarded)
-        if (!premium && result.used >= MEMORY.dailyFreeCards) setUpgrade(true)
       }
       submitted.current.add(completionId)
       dispatch({type:'advance',completionId,awarded})
     } catch { if (mounted.current) setSaveError('Unable to save this card. Your place is unchanged; please retry.') }
     finally { reviewVersion.current += 1; busyRef.current = false; if (mounted.current) setSaving(false) }
-  }, [card, cards, completed, completionIds, direction, index, limited, premium, revealed, sessionXp, user, ready, used, loading, navigating])
+  }, [card, cards, completed, completionIds, direction, index, limited, sessionId, revealed, sessionXp, user, ready, loading, navigating])
 
   const saveAndExit = async () => {
     if (busyRef.current || navigating) return
     if (!user) { router.push('/'); return }
     busyRef.current = true; setSaving(true); setSaveError('')
     try {
-      const result = await persistMemorySession({ cards, index, completed, sessionXp, direction, completionIds })
+      const result = await persistMemorySession({ sessionId, cards, index, completed, sessionXp, direction, completionIds })
       if (!mounted.current) return
       if (!result.ok) { setSaveError(result.error); return }
       router.push('/')
@@ -186,29 +172,41 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   }
   const chooseCardCount = (count: typeof CARD_COUNT_OPTIONS[number]) => {
     if (activePractice || busyRef.current) return
+    pendingStart.current=null
     setSelectedCardCount(count)
     dispatch({type:'select',cards:library.cards.slice(0, Math.min(count, library.cards.length))})
   }
   const restart = async () => {
     if (loading || busyRef.current || navigating || (Boolean(user) && !ready)) return
-    if (limited) { setUpgrade(true); return }
+    if (!user) { window.dispatchEvent(new CustomEvent('open-auth-dialog',{detail:{mode:'signin'}})); return }
+    if (limited && !pendingStart.current) { setUpgrade(true); return }
     const deck = library.cards.slice(0, Math.min(selectedCardCount, library.cards.length))
     if (!deck.length) return
     busyRef.current = true; setSaving(true); setSaveError('')
     try {
-      const state = { cards: deck, index: 0, completed: 0, sessionXp: 0, direction, completionIds: deck.map(() => crypto.randomUUID()) }
+      const state = pendingStart.current ?? { cards: deck, index: 0, completed: 0, sessionXp: 0, direction, sessionId: crypto.randomUUID(), completionIds: deck.map(() => crypto.randomUUID()) }
+      pendingStart.current=state
       if (user) {
-        const result = await persistMemorySession(state)
+        const result = await beginMemorySession(state)
         if (!mounted.current) return
-        if (!result.ok) { setSaveError(result.error); return }
+        if(result.status==='upgrade'){pendingStart.current=null;setUpgrade(true);return}
+        setUsed(result.used)
+        Object.assign(state,result.state)
       }
-      submitted.current.clear(); dispatch({type:'begin',session:state}); setSaved(null)
+      pendingStart.current=null; submitted.current.clear(); dispatch({type:'begin',session:state}); setSaved(null)
     } catch { if (mounted.current) setSaveError('Unable to start your session. Please try again.') }
     finally { busyRef.current = false; if (mounted.current) setSaving(false) }
   }
-  const resume = () => {
-    if (!saved || busyRef.current || !ready || limited || navigating) return
-    dispatch({type:'begin',session:saved}); chooseDirection(saved.direction); setSaved(null); setSaveError('')
+  const resume = async () => {
+    if (!saved || busyRef.current || !ready || navigating) return
+    busyRef.current=true;setSaving(true);setSaveError('')
+    try{
+      const result=await resumeMemorySession(saved)
+      if(!mounted.current)return
+      if(result.status==='upgrade'){setUpgrade(true);return}
+      dispatch({type:'begin',session:result.state}); chooseDirection(result.state.direction); setSaved(null)
+    }catch(e){if(mounted.current)setSaveError(e instanceof Error?e.message:'Unable to resume session.')}
+    finally{busyRef.current=false;if(mounted.current)setSaving(false)}
   }
   const requestNewCards = () => {
     if (busyRef.current || navigating || loading) return
@@ -276,15 +274,15 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         </motion.div>}
         </AnimatePresence>
 
-        <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason={`You've completed today's free Memory practice. You've practised ${MEMORY.dailyFreeCards} cards today. Come back tomorrow or upgrade to AWM+ for unlimited Memory practice.`} />
+        <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason={`You've used today's free Memory session. Upgrade to AWM+ for unlimited Memory sessions.`} />
         {progressLoading && <Box role="status" sx={{ mt: 2 }}><Typography>Loading Memory progress...</Typography><LinearProgress /></Box>}
         {progressError && <Alert severity="error" sx={{ mt: 2 }} action={<Button onClick={retryProgress} disabled={progressLoading}>Retry</Button>}>{progressError}</Alert>}
         {!progressError && sessionError && <Alert severity="warning" sx={{ mt: 2 }} action={<Button onClick={retryProgress}>Retry</Button>}>{sessionError} Your completed-card statistics are still available.</Alert>}
         {!loading && !user && <Alert severity="info" sx={{ mt: 2 }}>You can practise without signing in. Sign in only if you want to save your progress.</Alert>}
         {saveError && <Alert severity="error" sx={{ mt: 2 }}>{saveError}</Alert>}
-        {ready && <Typography sx={{ mt: 2 }} color="text.secondary">{premium ? 'Unlimited daily Memory practice' : `${used} / ${MEMORY.dailyFreeCards} cards today`}</Typography>}
-        {limited && <Alert severity="info" sx={{ mt: 2 }} action={<Button onClick={() => setUpgrade(true)}>Upgrade to AWM+</Button>}>You&apos;ve completed today&apos;s free Memory practice. Your progress is saved. Come back tomorrow.</Alert>}
-        {saved && !started && <Button onClick={resume} disabled={!ready || limited}>Resume saved session - {saved.completed} completed</Button>}
+        {ready && <Typography sx={{ mt: 2 }} color="text.secondary">{premium ? 'Unlimited daily Memory practice' : `${used} / ${MEMORY.dailyFreeSessions} sessions today`}</Typography>}
+        {limited && <Alert severity="info" sx={{ mt: 2 }} action={<Button onClick={() => setUpgrade(true)}>Upgrade to AWM+</Button>}>You&apos;ve used today&apos;s free Memory session. You can still resume it or view its recap.</Alert>}
+        {saved && !started && <Button onClick={()=>void resume()} disabled={!ready || saving}>{saved.index===saved.cards.length?'View saved recap':'Resume saved session'} - {saved.completed} completed</Button>}
         {started && <Button disabled={saving} onClick={() => void saveAndExit()} sx={{ mt: 2 }}>{user ? 'Save & Exit' : 'Exit practice'}</Button>}
         {loadError && <Alert severity="error" sx={{ mt: 2.5 }}>{loadError}</Alert>}
         {library.missingScope && <Alert severity="warning" sx={{ mt: 2.5 }}>That source is no longer available. Choose a show or switch to Random practice.</Alert>}
@@ -299,11 +297,11 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
           </Paper>
         ) : !started ? (
           <Paper elevation={0} sx={{ mt: 3, minHeight: { xs: 330, md: 390 }, p: { xs: 3, md: 5 }, display: 'grid', placeItems: 'center', textAlign: 'center', borderRadius: '18px', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', bgcolor: 'var(--awm-white)', boxShadow: '0 18px 50px color-mix(in srgb, var(--awm-bark) 9%, transparent)' }}>
-            <Box><Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 800, letterSpacing: '.13em', textTransform: 'uppercase' }}>{library.scopeTitle}</Typography><Typography sx={{ mt: 1.25, fontFamily: 'var(--font-heading)', fontSize: { xs: 31, md: 39 }, fontWeight: 600, color: 'var(--awm-bark)' }}>Ready to remember?</Typography><Typography sx={{ mt: 1, maxWidth: 520, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>Read the prompt, say the translation aloud or in your head, then reveal the answer.</Typography><Button disabled={loading || (Boolean(user) && (!ready || saving || limited))} onClick={() => void restart()} variant="contained" startIcon={<PlayCircleOutlineRounded />} sx={{ mt: 3, minHeight: 48, px: 4, bgcolor: 'var(--awm-gold)', color: '#fff', borderRadius: '9999px', textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#946c08' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 3 } }}>Start</Button></Box>
+            <Box><Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 800, letterSpacing: '.13em', textTransform: 'uppercase' }}>{library.scopeTitle}</Typography><Typography sx={{ mt: 1.25, fontFamily: 'var(--font-heading)', fontSize: { xs: 31, md: 39 }, fontWeight: 600, color: 'var(--awm-bark)' }}>Ready to remember?</Typography><Typography sx={{ mt: 1, maxWidth: 520, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>Read the prompt, say the translation aloud or in your head, then reveal the answer.</Typography><Button disabled={loading || (Boolean(user) && (!ready || saving))} onClick={() => void restart()} variant="contained" startIcon={<PlayCircleOutlineRounded />} sx={{ mt: 3, minHeight: 48, px: 4, bgcolor: 'var(--awm-gold)', color: '#fff', borderRadius: '9999px', textTransform: 'none', fontWeight: 800, '&:hover': { bgcolor: '#946c08' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)', outlineOffset: 3 } }}>Start</Button></Box>
           </Paper>
         ) : complete ? (
           <Paper elevation={0} sx={{ mt: 3, p: { xs: 4, md: 6 }, textAlign: 'center', borderRadius: '18px', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)' }}>
-            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>{completed} cards completed{user ? ` · ${sessionXp} XP earned` : ''}</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving || limited))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving || navigating} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button></Box>
+            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif' }}>{completed} cards completed{user ? ` · ${sessionXp} XP earned` : ''}</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving || navigating} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button></Box>
           </Paper>
         ) : card && (
           <Box sx={{ mt: 3 }}>

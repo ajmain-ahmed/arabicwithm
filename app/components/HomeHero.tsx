@@ -4,6 +4,7 @@ import { ArrowForwardSharp } from "@mui/icons-material";
 import { Box, Button, Typography } from "@mui/material";
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { HOME_HERO_IMAGE } from '@/app/lib/brand';
 import React, { useState, useEffect } from "react";
 
 /* ─────────────────────────────────────────────
@@ -58,7 +59,7 @@ export default function HomeHero() {
       {/* ── Background image ── */}
       <Box
         component="img"
-        src="/homepage/hero.avif"
+        src={HOME_HERO_IMAGE}
         alt=""
         aria-hidden="true"
         sx={{

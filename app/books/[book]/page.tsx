@@ -33,7 +33,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
   const audioChapterIds = new Set(audioChapters.map((audio) => audio.chapterId))
 
   return (
-    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 3, md: 6 } }}>
+    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 3, md: 6 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 6 } }}>
       <Container maxWidth="lg">
         <Link href="/books" style={{ color: 'inherit', textDecoration: 'none' }}>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', mb: 3, '&:hover': { color: '#b8860b' } }}>
@@ -86,7 +86,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                 {audioChapterIds.size > 0 && <Chip icon={<HeadphonesRounded />} label={`Audiobook · ${audioChapterIds.size} ${audioChapterIds.size === 1 ? 'chapter' : 'chapters'}`} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508', '& .MuiChip-icon': { color: 'inherit' } }} />}
               </Box>
               <Box sx={{ mt: 3 }}>
-                <BookReadingCta bookSlug={book.slug} chapters={chapters} />
+                <BookReadingCta bookId={book.id} bookSlug={book.slug} chapters={chapters} />
               </Box>
             </Box>
           </Box>

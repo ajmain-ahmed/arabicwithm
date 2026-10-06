@@ -5,7 +5,7 @@ import { Alert, Box, Button, Chip, Dialog, DialogContent, DialogTitle, IconButto
 import { useTheme } from '@mui/material/styles'
 import { ACHIEVEMENT_FAMILIES, achievementMetrics, achievementPage, achievementPreview, type Achievement } from '@/app/lib/achievements'
 import type { LearningActivity } from '@/app/lib/activity'
-import { supabase } from '@/app/lib/supabase/client'
+import { saveTrophyHighlights } from '@/app/actions/profiles'
 const icons = { levels: MilitaryTechRounded, xp: StarsRounded, time: ScheduleRounded, words: ExploreOutlined, memory: PsychologyOutlined, reading: AutoStories, watching: SmartDisplayOutlined, streaks: LocalFireDepartmentRounded, puzzles: GridOnRounded, breadth: EmojiEventsRounded }
 
 function Trophy({ item, compact = false }: { item: Achievement; compact?: boolean }) {
@@ -21,7 +21,7 @@ function Trophy({ item, compact = false }: { item: Achievement; compact?: boolea
   </Box></Tooltip>
 }
 
-export default function AchievementCabinet({ activity, userId, editable = false, featuredTrophies = [] }: { activity: LearningActivity; userId?: string; editable?: boolean; featuredTrophies?: string[] }) {
+export default function AchievementCabinet({ activity, userId, editable = false, featuredTrophies }: { activity: LearningActivity; userId?: string; editable?: boolean; featuredTrophies?: string[] }) {
   const [open, setOpen] = useState(false), [pages, setPages] = useState<Record<string, number>>({})
   const [featured, setFeatured] = useState(featuredTrophies), [choices, setChoices] = useState<string[]>([])
   const [busy, setBusy] = useState(false), [message, setMessage] = useState('')
@@ -32,11 +32,9 @@ export default function AchievementCabinet({ activity, userId, editable = false,
   async function save() {
     setBusy(true); setMessage('')
     try {
-      const { data, error } = await supabase.auth.getUser()
-      if (error || !userId || data.user?.id !== userId) throw new Error('Sign in again to choose your trophies.')
-      const { error: saveError } = await supabase.auth.updateUser({ data: { featured_trophies: choices } })
-      if (saveError) throw new Error('Unable to save trophy highlights. Please try again.')
-      setFeatured(choices); setMessage('Trophy highlights saved.')
+      if(!editable || !userId) throw new Error('Sign in to choose trophies.')
+      const saved=await saveTrophyHighlights(choices)
+      setFeatured(saved); setMessage('Trophy highlights saved.')
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Unable to save trophies.') }
     finally { setBusy(false) }
   }
@@ -54,7 +52,7 @@ export default function AchievementCabinet({ activity, userId, editable = false,
         {ACHIEVEMENT_FAMILIES.map(family => {
           const page = pages[family.id] ?? 0, collection = achievementPage(metrics, family.id, page)
           return <Box component="section" key={family.id} sx={{ mb: 4 }}><Typography component="h3" variant="h6" sx={{ mb: 1.5 }}>{family.name}</Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(3,minmax(0,1fr))' }, gap: 1.5 }}>{collection.items.map(item => <Box key={item.id} sx={{ minWidth: 0 }}><Trophy item={item} />{editable && item.earned && <Button size="small" fullWidth aria-pressed={choices.includes(item.id)} disabled={busy || (!choices.includes(item.id) && choices.length >= 4)} onClick={() => select(item.id)}>{choices.includes(item.id) ? 'Featured' : 'Feature trophy'}</Button>}</Box>)}</Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(3,minmax(0,1fr))' }, gap: 1.5 }}>{collection.items.map(item => <Box key={item.id} sx={{ minWidth: 0 }}><Trophy item={item} />{editable && item.earned && <Button size="small" fullWidth aria-pressed={choices.includes(item.id)} disabled={busy || (!choices.includes(item.id) && choices.length >= 4)} onClick={() => select(item.id)}>{choices.includes(item.id) ? 'Remove from cabinet' : 'Add to cabinet'}</Button>}</Box>)}</Box>
             {(page > 0 || collection.hasNext) && <Box sx={{ mt: 1.5, display: 'flex', gap: 1, alignItems: 'center' }}><Button aria-label={`Previous ${family.name} milestones`} disabled={!page} onClick={() => setPages(current => ({ ...current, [family.id]: page - 1 }))}>Previous</Button><Typography sx={{ fontSize: 13 }}>Page {page + 1}</Typography><Button aria-label={`Next ${family.name} milestones`} disabled={!collection.hasNext} onClick={() => setPages(current => ({ ...current, [family.id]: page + 1 }))}>Next</Button></Box>}
           </Box>
         })}

@@ -6,7 +6,7 @@ import { fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/b
 import { loadLearningSnapshot } from '@/app/lib/learningSnapshot'
 import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
 import { parseReadingList } from '@/app/lib/readingList'
-import { hasPremiumAccess } from '@/app/lib/entitlements'
+import { accountHasPremium } from '@/app/lib/accountPremium'
 import { normalizeThumbnailCrop } from '@/app/lib/thumbnailCrop'
 import { serviceClient } from '@/app/lib/supabase'
 
@@ -43,19 +43,17 @@ export async function fetchPublicProfile(id: string) {
   if (error) throw new Error('Unable to load profile.')
   if (!own && !profile?.is_public) return null
 
-  const [account, activity, role, subscription] = await Promise.all([
+  const [account, activity] = await Promise.all([
     serviceClient.auth.admin.getUserById(id),
     serviceClient.from('learning_profiles').select('legacy_active_seconds, tracked_active_seconds, weekly_goal_seconds').eq('user_id', id).maybeSingle(),
-    serviceClient.rpc('account_role', { p_user_id: id }),
-    serviceClient.from('subscriptions').select('status,current_period_end').eq('user_id', id).maybeSingle(),
   ])
-  if (account.error || activity.error || role.error || subscription.error) throw new Error('Unable to load profile statistics.')
+  if (account.error || activity.error) throw new Error('Unable to load profile statistics.')
   const user = account.data.user
   if (!user) return null
   const learning = await loadLearningSnapshot(id, user.user_metadata, activity.data)
   const summary = summarizeLearningDashboard(learning)
   const progress = parseReadingList(user.user_metadata.book_progress)
-  const premium = hasPremiumAccess(role.data === 'admin', subscription.data)
+  const premium = await accountHasPremium(id)
   const avatar = typeof user.user_metadata.avatar_url === 'string' && /^https?:\/\//.test(user.user_metadata.avatar_url) ? user.user_metadata.avatar_url : null
   const books = own || profile?.share_reading ? await fetchBooksForPublic() : []
   const shelf = await Promise.all(
@@ -89,7 +87,7 @@ export async function fetchPublicProfile(id: string) {
     joined: user.created_at.slice(0, 10),
     avatar,
     avatarCrop: normalizeThumbnailCrop(user.user_metadata.avatar_crop),
-    featuredTrophies: Array.isArray(user.user_metadata.featured_trophies) ? user.user_metadata.featured_trophies.filter((id: unknown): id is string => typeof id === 'string').slice(0, 4) : [],
+    featuredTrophies: Array.isArray(user.user_metadata.featured_trophies) ? user.user_metadata.featured_trophies.filter((id: unknown): id is string => typeof id === 'string').slice(0, 4) : undefined,
     premium,
     learning,
     summary,
@@ -102,3 +100,18 @@ export async function fetchPublicProfile(id: string) {
 }
 
 export type PublicProfile = NonNullable<Awaited<ReturnType<typeof fetchPublicProfile>>>
+
+/** Persist existing profile display preferences only after validating earned milestones. */
+export async function saveTrophyHighlights(input:string[]) {
+ const id=await getAuthenticatedUserId()
+ if(!id)throw new Error('Sign in to choose trophies.')
+ const selected=z.array(z.string().max(100)).max(4).parse(input)
+ const profile=await fetchPublicProfile(id)
+ if(!profile)throw new Error('Unable to verify your achievements.')
+ const {achievementMetrics,achievementPreview}=await import('@/app/lib/achievements')
+ const valid=achievementPreview(achievementMetrics(profile.learning),selected).map(item=>item.id)
+ if(valid.length!==selected.length)throw new Error('Choose only achievements you have earned.')
+ const {error}=await serviceClient.auth.admin.updateUserById(id,{user_metadata:{featured_trophies:valid}})
+ if(error)throw new Error('Unable to save trophy highlights. Please retry.')
+ return valid
+}

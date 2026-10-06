@@ -5,7 +5,7 @@ export type ReviewType = 'book' | 'show'
 export type SuggestionStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn'
 export interface DirectoryUser {
  id: string; email: string | null; name: string; avatar: string | null; role: AccountRole
- joined: string; last_sign_in: string | null; premium: boolean; paid_premium: boolean
+ joined: string; last_sign_in: string | null; premium: boolean; paid_premium: boolean; manual_premium?: boolean
  subscription_status: string | null; current_period_end: string | null; cancel_at_period_end: boolean | null
  banned_until: string | null; activity: Partial<Record<SuggestionStatus, number>> | null
 }

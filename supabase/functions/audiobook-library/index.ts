@@ -13,19 +13,9 @@ const store: AudioStore = {
     return error ? null : data.user?.id ?? null;
   },
   async premium(userId) {
-    const { data: role, error: roleError } = await client.rpc("account_role", {
-      p_user_id: userId,
-    });
-    if (roleError) throw roleError;
-    if (role === "admin") return true;
-    const { data, error } = await client.from("subscriptions").select(
-      "status,current_period_end",
-    ).eq("user_id", userId).maybeSingle();
-    if (error) throw error;
-    return Boolean(
-      data && ["active", "trialing"].includes(data.status) &&
-        Date.parse(data.current_period_end) > Date.now(),
-    );
+    const {data,error}=await client.rpc('account_has_premium',{p_user_id:userId});
+    if(error)throw error;
+    return data===true;
   },
   async availability(chapterId) {
     const { data, error } = await client.from("book_chapter_audio").select(

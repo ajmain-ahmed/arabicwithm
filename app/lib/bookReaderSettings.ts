@@ -42,3 +42,5 @@ export function bookReaderHref(
     : ''
   return `/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(chapterSlug)}?lang=${language}${hash}`
 }
+
+export const BOOK_LANGUAGE_STOP_EVENT = 'awm-book-language-stop'

@@ -2,7 +2,6 @@
 
 import { isMissingDatabaseFeature, LEARNING_SETUP_MESSAGE } from '@/app/lib/databaseErrors'
 import { z } from 'zod'
-import { getAuthClient } from '@/app/lib/supabase/server'
 import { actionResult } from '@/app/lib/actionResult'
 import { memorySessionSchema as sessionSchema, type SavedMemorySession } from '@/app/lib/memorySession'
 export type { SavedMemorySession } from '@/app/lib/memorySession'
@@ -219,10 +218,9 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating, c
   })
   if (!validCards.some((card) => card.id === cardId)) throw new Error('This Memory card is no longer available.')
 
-  const client = await getAuthClient()
-  const { data, error } = await client.rpc('complete_memory_card', {
+  const { data, error } = await serviceClient.rpc('website_complete_memory_card_v2', {
     p_user_id: userId, p_completion_id: completionId, p_card_id: cardId, p_rating: rating,
-    p_xp: MEMORY.xpPerCard, p_daily_limit: MEMORY.dailyFreeCards, p_has_premium: entitlement.memoryDailyLimit === null, p_session: state,
+    p_session: state,
   })
   if (error) { console.error('[memory review RPC]', error); throw new Error('Unable to save Memory progress. Please try again.') }
   return z.object({accepted:z.boolean(),awarded:z.number().int().min(0).max(5),totalXp:z.number().int().nonnegative(),used:z.number().int().nonnegative()}).parse(data)
@@ -235,7 +233,7 @@ export async function fetchMemoryProgress() {
   const monday = new Date(today + 'T12:00:00Z')
   monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7)
   const [daily, total, week, legacy, entitlement] = await Promise.all([
-    serviceClient.from('memory_reviews').select('completion_id', { count: 'exact', head: true }).eq('user_id', userId).eq('activity_date', today),
+    serviceClient.rpc('website_memory_session_usage', {p_user_id:userId}),
     serviceClient.rpc('website_memory_totals', { p_user_id: userId }),
     serviceClient.rpc('website_memory_totals', { p_user_id: userId, p_since: monday.toISOString().slice(0, 10) }),
     serviceClient.from('memory_legacy_progress').select('xp').eq('user_id', userId).maybeSingle(),
@@ -247,14 +245,14 @@ export async function fetchMemoryProgress() {
   if (errors.some(Boolean)) throw new Error('Unable to load Memory progress. Please try again.')
   const all = (total.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
   const weekly = (week.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
-  return { used: daily.count ?? 0, total: all.cards, totalXp: all.xp + Number(legacy.data?.xp ?? 0), weekCards: weekly.cards, weekXp: weekly.xp, premium: entitlement.premium }
+  return { used: daily.data ?? 0, total: all.cards, totalXp: all.xp + Number(legacy.data?.xp ?? 0), weekCards: weekly.cards, weekXp: weekly.xp, premium: entitlement.premium }
 }
 
 export async function saveMemorySession(input: SavedMemorySession) {
   const userId = await getAuthenticatedUserId()
   if (!userId) throw new Error('Sign in to save your session.')
   const state = sessionSchema.parse(input)
-  const { error } = await serviceClient.from('memory_sessions').upsert({ user_id: userId, state, updated_at: new Date().toISOString() })
+  const { error } = await serviceClient.rpc('website_save_memory_session',{p_user_id:userId,p_state:state})
   if (error) throw new Error('Unable to save session. Please try again.')
 }
 export async function fetchSavedMemorySession(): Promise<SavedMemorySession | null> {
@@ -264,7 +262,7 @@ export async function fetchSavedMemorySession(): Promise<SavedMemorySession | nu
   if (isMissingDatabaseFeature(error)) throw new Error(LEARNING_SETUP_MESSAGE)
   if (error) throw new Error('Unable to load saved session.')
   const parsed = sessionSchema.safeParse(data?.state)
-  return parsed.success && parsed.data.index < parsed.data.cards.length ? parsed.data : null
+  return parsed.success && parsed.data.cards.length > 0 ? parsed.data : null
 }
 
 // Expected storage errors must cross the production Server Action boundary as
@@ -289,4 +287,34 @@ export async function submitMemoryReview(cardId:string,rating:MemoryRating,compl
 }
 export async function persistMemorySession(state:SavedMemorySession) {
   return actionResult('memory save',()=>saveMemorySession(state),'Unable to save your session. Please try again.')
+}
+
+/** Atomic start reservation, idempotent by client-generated session ID. */
+export async function beginMemorySession(input: SavedMemorySession): Promise<{status:'ready';state:SavedMemorySession;used:number}|{status:'upgrade'}> {
+ const userId=await getAuthenticatedUserId()
+ if(!userId)throw new Error('Sign in to start Memory practice.')
+ const state=sessionSchema.parse(input)
+ if(!state.sessionId || state.index!==0 || state.completed!==0 || state.sessionXp!==0)throw new Error('Invalid session start.')
+ const {data,error}=await serviceClient.rpc('website_begin_memory_session',{p_user_id:userId,p_state:state})
+ if(error)throw new Error('Unable to start Memory practice. Please retry.')
+ const result=z.object({accepted:z.boolean(),used:z.number().int().nonnegative(),state:sessionSchema.optional()}).parse(data)
+ if(!result.accepted)return {status:'upgrade'}
+ if(!result.state)throw new Error('Unable to restore session.')
+ return {status:'ready',state:result.state,used:result.used}
+}
+
+export async function resumeMemorySession(input:SavedMemorySession):Promise<{status:'ready';state:SavedMemorySession}|{status:'upgrade'}> {
+ const userId=await getAuthenticatedUserId()
+ if(!userId)throw new Error('Sign in to resume Memory practice.')
+ let state=sessionSchema.parse(input)
+ // Historical completed snapshots remain recaps, not new start reservations.
+ if(!state.sessionId && state.index===state.cards.length)return {status:'ready',state}
+ if(!state.sessionId){
+  const start=await beginMemorySession({...state,sessionId:crypto.randomUUID(),index:0,completed:0,sessionXp:0})
+  if(start.status==='upgrade')return start
+  state={...state,sessionId:start.state.sessionId}
+ }
+ const {data,error}=await serviceClient.rpc('website_save_memory_session',{p_user_id:userId,p_state:state})
+ if(error)throw new Error('Unable to resume this session. Please retry.')
+ return {status:'ready',state:sessionSchema.parse(data)}
 }

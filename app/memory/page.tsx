@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { getAuthenticatedUserId } from '@/app/actions/auth'
+import SignInRequired from '@/app/components/SignInRequired'
 import { fetchMemoryLibrary } from '@/app/actions/memory'
 import MemoryPage from './MemoryPage'
 import { unstable_rethrow } from 'next/navigation'
@@ -13,6 +15,7 @@ export default async function Page({
 }: {
   searchParams: Promise<{ show?: string | string[]; episode?: string | string[]; new?: string | string[]; deck?: string | string[] }>
 }) {
+  if(!await getAuthenticatedUserId()) return <SignInRequired title="Sign in to practise Memory" />
   const query = await searchParams
   const showId = typeof query.show === 'string' ? query.show : undefined
   const episodeId = typeof query.episode === 'string' ? query.episode : undefined

@@ -7,6 +7,7 @@ import { requestChapterAudioResult, saveAudioProgress, type ChapterAudioPlayback
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import { useAuth } from '@/app/AuthContext'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
+import { BOOK_LANGUAGE_STOP_EVENT } from '@/app/lib/bookReaderSettings'
 
 type VideoControls = { play: () => void; pause: () => void }
 
@@ -70,6 +71,18 @@ function AudioSession({ audio, chapterTitle, label, render, authKey, signedIn }:
       void saveAudioProgress(audio.chapterId, element.currentTime, false, audio.language, authKey).catch(() => {})
     }
   }, [authKey, audio.chapterId, audio.language, playback?.sourceType])
+
+  useEffect(()=>{
+    const stop=()=>{
+      requestRef.current.revision++
+      playRequestedRef.current=false;busyRef.current=false;resumeRef.current=null
+      audioRef.current?.pause();videoRef.current?.pause()
+      setPlaying(false);setLoading(false);setSource(null)
+      if('mediaSession' in navigator) navigator.mediaSession.playbackState='paused'
+    }
+    window.addEventListener(BOOK_LANGUAGE_STOP_EVENT,stop)
+    return()=>window.removeEventListener(BOOK_LANGUAGE_STOP_EVENT,stop)
+  },[])
 
   async function startMedia(element: HTMLAudioElement) {
     try { await element.play(); setError('') }

@@ -72,3 +72,22 @@ it('closes an old account upgrade prompt when the account changes',async()=>{
  await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter"/>))
  expect(host.querySelector('[role=dialog]')).toBeNull()
 })
+
+it('hard-stops the owned media on language selection',async()=>{
+ await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter"/>))
+ await act(async()=>host.querySelector('button')!.click())
+ const element=host.querySelector('audio')!
+ await act(async()=>window.dispatchEvent(new Event('awm-book-language-stop')))
+ expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled()
+ expect(host.querySelector('audio')).toBeNull()
+ expect(element.isConnected).toBe(false)
+})
+it('invalidates an outstanding URL request on language selection',async()=>{
+ let finish!:(value:unknown)=>void;mocks.request.mockImplementation(()=>new Promise(resolve=>{finish=resolve}))
+ await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter"/>))
+ await act(async()=>host.querySelector('button')!.click())
+ await act(async()=>window.dispatchEvent(new Event('awm-book-language-stop')))
+ await act(async()=>finish({status:'ready',playback:{sourceType:'supabase_storage',url:'https://example.test/private',expiresIn:900,positionSeconds:0}}))
+ expect(host.querySelector('audio')).toBeNull()
+ expect(HTMLMediaElement.prototype.play).not.toHaveBeenCalled()
+})

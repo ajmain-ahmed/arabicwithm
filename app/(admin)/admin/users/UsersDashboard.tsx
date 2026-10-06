@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { Alert, Avatar, Box, Button, Card, CardContent, Chip, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
-import { changeManagedRole, listManagedUsers, managedUserDetails } from '@/app/actions/reviews'
+import { changeManagedPremium, changeManagedRole, listManagedUsers, managedUserDetails } from '@/app/actions/reviews'
 import type { AccessChange, AccountRole, DirectoryResult, DirectoryUser } from '@/app/lib/reviews'
 
 const date = (value: string | null) => value ? new Date(value).toLocaleString('en-GB') : 'Unavailable'
@@ -11,6 +11,7 @@ export default function UsersDashboard() {
  const [result,setResult] = useState<DirectoryResult | null>(null), [error,setError] = useState('')
  const [selected,setSelected] = useState<DirectoryUser | null>(null), [history,setHistory] = useState<(AccessChange & {changed_by_name?:string})[]>([])
  const [role,setRole] = useState<AccountRole>('user'), [reason,setReason] = useState(''), [confirmation,setConfirmation] = useState('')
+ const [manual,setManual]=useState(false), [premiumReason,setPremiumReason]=useState(''), [notice,setNotice]=useState('')
  const [busy,setBusy] = useState(false), [loadedKey,setLoadedKey] = useState('')
  const key = `${tab}:${search}:${page}:${revision}`
  useEffect(() => {
@@ -20,12 +21,21 @@ export default function UsersDashboard() {
  },[tab,search,page,revision,key])
  const open = async (user: DirectoryUser) => {
   setBusy(true);setError('')
-  try { const details=await managedUserDetails(user.id);setHistory(details.history);setSelected(user);setRole(user.role);setReason('');setConfirmation('') } catch(e){setError(e instanceof Error?e.message:'Unable to load user')} finally{setBusy(false)}
+  try { const details=await managedUserDetails(user.id);setHistory(details.history);setManual(details.manual.enabled);setPremiumReason('');setNotice('');setSelected(user);setRole(user.role);setReason('');setConfirmation('') } catch(e){setError(e instanceof Error?e.message:'Unable to load user')} finally{setBusy(false)}
  }
  const save = async () => {
   if(!selected)return
   setBusy(true);setError('')
   try { await changeManagedRole(selected.id,role,reason,confirmation);setSelected(null);setRevision(n=>n+1) } catch(e){setError(e instanceof Error?e.message:'Unable to change access')} finally{setBusy(false)}
+ }
+ const savePremium=async()=>{
+  if(!selected)return
+  setBusy(true);setError('');setNotice('')
+  try{
+   const effective=await changeManagedPremium(selected.id,!manual,premiumReason)
+   setManual(!manual);setSelected({...selected,manual_premium:!manual,premium:effective});setRevision(n=>n+1)
+   setNotice('Premium access saved. Paid subscription access is unchanged.');setPremiumReason('')
+  }catch(e){setError(e instanceof Error?e.message:'Unable to save Premium access')}finally{setBusy(false)}
  }
  return <Stack spacing={2}>
   <Typography variant="h4">Users</Typography>
@@ -53,6 +63,12 @@ export default function UsersDashboard() {
     <Typography>Role: {selected?.role}<br />Access: {selected?.premium?'Premium':'Free'}<br />Subscription: {selected?.subscription_status??'None'}{selected?.paid_premium&&<><br />{selected.cancel_at_period_end?'Expires':'Current period ends'}: {date(selected.current_period_end)}</>}</Typography>
     {selected?.banned_until&&new Date(selected.banned_until)>new Date()&&<Alert severity="warning">Account restricted until {date(selected.banned_until)}</Alert>}
     <Typography>Review activity: Pending {selected?.activity?.pending??0} · Accepted {selected?.activity?.accepted??0} · Rejected {selected?.activity?.rejected??0} · Withdrawn {selected?.activity?.withdrawn??0}</Typography>
+    <Typography variant="h6">Manual Premium access</Typography>
+    <Chip label={manual?'Enabled':'Disabled'} />
+    <Typography variant="body2">Manual access supplements paid subscriptions. Revoking it does not cancel billing or remove active paid access.</Typography>
+    <TextField label="Reason for Premium change" value={premiumReason} onChange={e=>setPremiumReason(e.target.value)} />
+    <Button variant="outlined" disabled={busy||!premiumReason.trim()} onClick={savePremium}>{manual?'Revoke manual Premium':'Grant Premium'}</Button>
+    {notice&&<Alert severity="success">{notice}</Alert>}
     <Typography variant="h6">Manage Access</Typography>
     <TextField select label="Role" value={role} onChange={e=>setRole(e.target.value as AccountRole)}>{(['user','editor','admin'] as const).map(r=><MenuItem value={r} key={r}>{r}</MenuItem>)}</TextField>
     {role!==selected?.role&&<Alert severity={role==='admin'||selected?.role==='admin'?'warning':'info'}>{role==='admin'?`Give Admin access to ${selected?.name}? Admin access grants control of users and canonical content.`:role==='editor'?`Give Editor access to ${selected?.name}? Editors can review and propose corrections, but cannot modify or delete canonical content.`:`Remove privileged access from ${selected?.name}? They will return to User access. Existing suggestions and history remain.`}</Alert>}

@@ -13,7 +13,6 @@ import {
   Headphones,
   LocalFireDepartmentRounded,
   MenuBook,
-  MilitaryTechRounded,
   PsychologyOutlined,
   AccountCircleOutlined,
   SettingsOutlined,
@@ -21,7 +20,7 @@ import {
   VolunteerActivismRounded,
   GridOnRounded,
 } from '@mui/icons-material'
-import { Box, Button, CircularProgress, Container, Dialog, DialogContent, DialogTitle, IconButton, LinearProgress, Skeleton, SwipeableDrawer, Typography, Paper, useMediaQuery } from '@mui/material'
+import { Box, Button, CircularProgress, Container, Dialog, DialogContent, DialogTitle, IconButton, Skeleton, SwipeableDrawer, Typography, Paper, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useAuth } from '@/app/AuthContext'
 import { useAccountAccess } from '@/app/lib/useAccountAccess'
@@ -254,13 +253,12 @@ function LearningStats({
   const mobileDetail = useMediaQuery(theme.breakpoints.down('sm'))
   const [selectedMetric, setSelectedMetric] = useState<string | null>(null)
   const summary = summarizeLearningDashboard(activity, now)
-  const { level, week } = summary
+  const { week } = summary
   const comparison = week.comparisonPercent
   const comparisonText = comparison === null
     ? 'No previous-week comparison yet'
     : `${comparison >= 0 ? 'Up' : 'Down'} ${Math.abs(comparison)}% from last week`
   const metrics = [
-    { id: 'level', label: 'Current level', value: `Level ${level.level}`, icon: MilitaryTechRounded, description: `${level.progressPercent}% of the way to Level ${level.level + 1}.`, detail: `${formatLearningTime(activity.totalSeconds)} total active learning time.` },
     ...(activity.memory ? [{ id: 'memory', ...summary.memory, icon: PsychologyOutlined }] : []),
     ...(activity.wordSearch ? [{ id: 'word-search', ...summary.wordSearch, icon: GridOnRounded }] : []),
     { id: 'week', label: 'Learning this week', value: formatLearningTime(week.thisWeekSeconds), icon: CalendarMonthRounded, description: `${week.activeDays} active day${week.activeDays === 1 ? '' : 's'} this week. ${comparisonText}.` },
@@ -279,8 +277,6 @@ function LearningStats({
       <Typography sx={{ mt: 2, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase' }}>{selected.label}</Typography>
       <Typography sx={{ mt: 0.5, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: 36, fontWeight: 600, lineHeight: 1.1 }}>{selected.value}</Typography>
       <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.6 }}>{selected.description}</Typography>
-      {'detail' in selected && selected.detail && <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 13 }}>{selected.detail}</Typography>}
-      {selected.id === 'level' && <LinearProgress variant="determinate" value={level.progressPercent} sx={{ mt: 2, height: 7, borderRadius: 99, bgcolor: 'color-mix(in srgb, var(--awm-bark) 9%, transparent)', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold)', borderRadius: 99 } }} />}
     </Box>
   })() : null
 

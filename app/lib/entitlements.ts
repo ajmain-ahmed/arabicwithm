@@ -6,7 +6,7 @@ export const PREMIUM_BENEFITS = [
   { id: 'memory', label: 'Unlimited Memory Practice', appOnly: false },
   { id: 'flashcards', label: 'Unlimited flashcards', appOnly: true },
 ] as const
-export const MEMORY = { dailyFreeCards: 30, sessionCards: 20, xpPerCard: 1, timeZone: 'Europe/London' } as const
+export const MEMORY = { dailyFreeCards: 30, dailyFreeSessions: 1, sessionCards: 50, xpPerCard: 1, timeZone: 'Europe/London' } as const
 
 export type AccessTier = 'guest' | 'free' | 'premium'
 export interface Entitlements {
@@ -32,7 +32,7 @@ export function resolveEntitlements(signedIn: boolean, premium: boolean): Entitl
     canReadBooks: signedIn,
     canDownloadBooks: paid,
     canUseAudiobooks: paid,
-    memoryDailyLimit: paid ? null : MEMORY.dailyFreeCards,
+    memoryDailyLimit: paid ? null : MEMORY.dailyFreeSessions,
   }
 }
 

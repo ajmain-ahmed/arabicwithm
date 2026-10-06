@@ -4,8 +4,8 @@ import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import type { PublicProfile } from '@/app/actions/profiles'
 import { emptyLearningActivity } from '@/app/lib/activity'
 import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
-const mocks = vi.hoisted(() => ({ update: vi.fn(), getUser: vi.fn(), metadata: { book_progress: { story: { chapterSlug: 'one', updatedAt: '2026-10-01' }, other: { chapterSlug: 'two' } }, book_sentence_bookmark: { bookSlug: 'story' } } }))
-vi.mock('@/app/actions/profiles', () => ({ updateProfile: vi.fn() }))
+const mocks = vi.hoisted(() => ({ trophies:vi.fn(), update: vi.fn(), getUser: vi.fn(), metadata: { book_progress: { story: { chapterSlug: 'one', updatedAt: '2026-10-01' }, other: { chapterSlug: 'two' } }, book_sentence_bookmark: { bookSlug: 'story' } } }))
+vi.mock('@/app/actions/profiles', () => ({ updateProfile: vi.fn(),saveTrophyHighlights:mocks.trophies }))
 vi.mock('@/app/components/PremiumPrompt', () => ({ PremiumSection: () => null }))
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => ({ loading: false, user: { id: 'user', user_metadata: mocks.metadata } }) }))
 vi.mock('@/app/lib/supabase/client', () => ({ supabase: { auth: { updateUser: mocks.update, getUser: mocks.getUser } } }))
@@ -20,6 +20,7 @@ function profile(premium = false): PublicProfile {
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
+  mocks.trophies.mockImplementation(async(ids)=>ids);
   mocks.update.mockResolvedValue({ error: null }); mocks.getUser.mockResolvedValue({ data: { user: { id: 'user', user_metadata: mocks.metadata } }, error: null })
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.clearAllMocks() })
@@ -81,7 +82,8 @@ it('shows recorded chart values and exposes achievement requirements to keyboard
   expect(earned.getAttribute('aria-label')).toContain('Earned: Reach 50 word inspections')
   expect(document.querySelector('[aria-label*="Word Explorer 2"]')?.textContent).toContain('50 / 100')
   expect(earned.textContent).toContain('Reach 50 word inspections')
+  await act(async()=> (earned.parentElement!.querySelector('button') as HTMLElement).click())
   const saveHighlights = [...document.querySelectorAll('button')].find(b => b.textContent === 'Save trophy highlights')!
   await act(async () => saveHighlights.click())
-  expect(mocks.update).toHaveBeenCalledWith({ data: { featured_trophies: ['words-50'] } })
+  expect(mocks.trophies).toHaveBeenCalledWith(['words-50'])
 })

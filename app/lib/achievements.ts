@@ -61,9 +61,9 @@ export function achievementPage(metrics: AchievementMetrics, category?: Achievem
 }
 
 /** Saved display preferences cannot manufacture an earned trophy. */
-export function achievementPreview(metrics: AchievementMetrics, preferred: string[] = []): Achievement[] {
+export function achievementPreview(metrics: AchievementMetrics, preferred?: string[]): Achievement[] {
   const chosen: Achievement[] = []
-  for (const id of [...new Set(preferred)].slice(0, 4)) {
+  for (const id of [...new Set(preferred ?? [])].slice(0, 4)) {
     const family = ACHIEVEMENT_FAMILIES.find(f => id.startsWith(`${f.id}-`))
     if (!family) continue
     const threshold = Number(id.slice(family.id.length + 1))
@@ -74,7 +74,7 @@ export function achievementPreview(metrics: AchievementMetrics, preferred: strin
     const item = achievementPage(metrics, family.id, Math.floor(tier / 8)).items.find(item => item.id === id && item.earned)
     if (item) chosen.push(item)
   }
-  if (chosen.length) return chosen
+  if (preferred !== undefined) return chosen
   const highlights = achievementPage(metrics).items
   const earned = highlights.filter(item => item.earned).sort((a, b) => b.tier - a.tier)
   return (earned.length ? earned : highlights.filter(item => !item.earned)).slice(0, 4)

@@ -327,6 +327,13 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      account_has_premium: { Args: { p_user_id: string }; Returns: boolean }
+      admin_set_manual_premium: { Args: {p_actor:string;p_target:string;p_enabled:boolean;p_reason:string}; Returns:boolean }
+      admin_manual_premium_details: { Args:{p_actor:string;p_target:string};Returns:Json }
+      website_memory_session_usage: {Args:{p_user_id:string};Returns:number}
+      website_begin_memory_session: {Args:{p_user_id:string;p_state:Json};Returns:Json}
+      website_save_memory_session: {Args:{p_user_id:string;p_state:Json};Returns:Json}
+      website_complete_memory_card_v2: {Args:{p_user_id:string;p_completion_id:string;p_card_id:string;p_rating:string;p_session:Json};Returns:Json}
       admin_record_transcript_origin: { Args:{p_actor:string;p_id:string};Returns:string }
       register_youtube_transcript: { Args:{p_user:string;p_youtube_id:string};Returns:string }
       admin_generate_youtube_transcript: { Args:{p_actor:string;p_youtube_id:string};Returns:Json }

@@ -34,7 +34,7 @@ export default function PdfDownloadButton({ bookSlug, chapterSlug, small = false
     try { await downloadBookPdf(file) } catch { setError('Unable to render this PDF. Please try again.') } finally { setBusy(false) }
   }
   return <>
-    <Button onClick={() => void choose()} disabled={busy} startIcon={<Download />} size={small ? 'small' : 'medium'} variant="outlined" fullWidth={fullWidth}>Download PDF</Button>
+    <Button onClick={() => void choose()} disabled={busy} startIcon={<Download />} size={small ? 'small' : 'medium'} variant="outlined" fullWidth={fullWidth} sx={{minHeight:44,px:2.25,borderRadius:'9px',textTransform:'none',fontWeight:700}}>Download PDF</Button>
     {error && <Alert severity="error">{error}</Alert>}
     <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="xs" aria-labelledby="pdf-title">
       <DialogTitle id="pdf-title">Download PDF</DialogTitle>

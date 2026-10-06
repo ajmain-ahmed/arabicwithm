@@ -1,0 +1,4 @@
+PASS: deployed canonical Premium, manual grant/revoke, paid access preservation and atomic first/second free Memory starts.
+PASS: protected new RPC execution denied to anon/authenticated; service_role allowed. Anonymous raw chapter SELECT denied.
+PASS: own book review insert/read/update/delete; spoofed ownership insert denied; cross-account review read denied.
+All synthetic live test data was rolled back. No real billing or user entitlement was changed.

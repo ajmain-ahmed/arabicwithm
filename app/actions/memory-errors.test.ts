@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
-const mocks = vi.hoisted(() => ({ auth: vi.fn(), rpc: vi.fn(), result: { error: null as null | { code: string; message: string }, data: null, count: 0 } }))
+const mocks = vi.hoisted(() => ({ auth: vi.fn(), rpc: vi.fn(), result: { error: null as null | { code: string; message: string }, data: null as unknown, count: 0 } }))
 vi.mock('@/app/actions/auth', () => ({ getAuthenticatedUserId: mocks.auth }))
 vi.mock('@/app/actions/premium', () => ({ fetchPremiumStatus: async () => ({ premium: false }) }))
 vi.mock('@/app/lib/supabase', () => ({ hasServiceClientConfig: () => true, serviceClient: {
@@ -11,7 +11,7 @@ vi.mock('@/app/lib/supabase', () => ({ hasServiceClientConfig: () => true, servi
   },
 } }))
 import { loadMemoryProgress, loadSavedMemorySession } from './memory'
-beforeEach(() => { mocks.auth.mockResolvedValue('verified-user'); mocks.result.error = null; mocks.rpc.mockResolvedValue({ data: null, error: null }); vi.spyOn(console, 'error').mockImplementation(() => {}) })
+beforeEach(() => { vi.clearAllMocks(); mocks.auth.mockResolvedValue('verified-user'); mocks.result.error = null; mocks.result.data = null; mocks.rpc.mockResolvedValue({ data: null, error: null }); vi.spyOn(console, 'error').mockImplementation(() => {}) })
 afterEach(() => { vi.restoreAllMocks() })
 it('returns a serializable setup error instead of throwing a redacted production exception', async () => {
   mocks.result.error = { code: 'PGRST205', message: 'missing relation' }
@@ -29,4 +29,11 @@ it('handles signed-out progress without a rejected action', async () => {
   mocks.auth.mockResolvedValue(null)
   expect((await loadMemoryProgress()).ok).toBe(false)
   expect(await loadSavedMemorySession()).toEqual({ ok: true, data: null })
+})
+
+it('restores a completed snapshot as a recap without starting another session',async()=>{
+ const state={sessionId:'55555555-5555-4555-8555-555555555555',cards:[{id:'source:0',showId:'show',showSlug:'show',showTitle:'Show',episodeId:'episode',episodeSlug:'episode',episodeTitle:'Episode',timestamp:0,arabic:'word',english:'word'}],index:1,completed:1,sessionXp:5,direction:'arabic',completionIds:['66666666-6666-4666-8666-666666666666']}
+ mocks.result.data={state}
+ await expect(loadSavedMemorySession()).resolves.toEqual({ok:true,data:state})
+ expect(mocks.rpc).not.toHaveBeenCalled()
 })

@@ -3,6 +3,7 @@ import { MEMORY } from "@/app/lib/entitlements";
 import type { MemoryCard, MemoryDirection } from "@/app/lib/memory";
 export const memorySessionSchema = z
   .object({
+    sessionId: z.string().uuid().optional(),
     cards: z
       .array(
         z.object({

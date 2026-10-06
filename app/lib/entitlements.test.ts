@@ -8,8 +8,8 @@ describe('central access policy', () => {
     expect(canAccessBookChapter(true, -1)).toBe(false)
   })
   it('defines one guest, free, and premium entitlement matrix', () => {
-    expect(resolveEntitlements(false, false)).toMatchObject({ tier: 'guest', canReadBooks: false, canDownloadBooks: false, canUseAudiobooks: false, memoryDailyLimit: 30 })
-    expect(resolveEntitlements(true, false)).toMatchObject({ tier: 'free', canReadBooks: true, canDownloadBooks: false, canUseAudiobooks: false, memoryDailyLimit: 30 })
+    expect(resolveEntitlements(false, false)).toMatchObject({ tier: 'guest', canReadBooks: false, canDownloadBooks: false, canUseAudiobooks: false, memoryDailyLimit: 1 })
+    expect(resolveEntitlements(true, false)).toMatchObject({ tier: 'free', canReadBooks: true, canDownloadBooks: false, canUseAudiobooks: false, memoryDailyLimit: 1 })
     expect(resolveEntitlements(true, true)).toMatchObject({ tier: 'premium', canReadBooks: true, canDownloadBooks: true, canUseAudiobooks: true, memoryDailyLimit: null })
   })
   it('uses paid status and expiry, including cancellation at period end', () => {

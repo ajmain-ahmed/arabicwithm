@@ -99,7 +99,7 @@ export default async function ChapterPage({
   const nextChapter = chapterIndex >= 0 && chapterIndex < chapters.length - 1 ? chapters[chapterIndex + 1] : null
 
   return (
-    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 2.5, md: 5 } }}>
+    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 2.5, md: 5 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 5 } }}>
       <ReadingProgress bookSlug={book.slug} chapterSlug={chapter.slug} />
       <Container maxWidth="xl">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>

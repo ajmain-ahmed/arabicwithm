@@ -82,7 +82,7 @@ export default function SupportForm() {
         fullWidth
         variant="contained"
         startIcon={<FavoriteRounded />}
-        sx={{ mt: 2.5, minHeight: 56, borderRadius: '12px', bgcolor: 'var(--awm-forest)', fontWeight: 700, fontSize: 16, textTransform: 'none', '&:hover': { bgcolor: 'color-mix(in srgb, var(--awm-forest) 88%, #000)' } }}
+        sx={{ mt: 2.5, minHeight: 56, borderRadius: '12px', bgcolor: '#0e2e1f', color: '#fff', fontWeight: 700, fontSize: 16, textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}
       >
         {submitting ? 'Opening secure checkout…' : `Support Arabic with M${amountPence ? ` — ${formatSupportAmount(amountPence)}` : ''}`}
       </Button>

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  --awm-mobile-bottom-clearance: calc(104px + env(safe-area-inset-bottom));
   --awm-navbar-height: calc(57px + env(safe-area-inset-top, 0px));
   /* ── ArabicWithM design tokens ───────────────────────────────────────── */
 
@@ -56,7 +57,8 @@
 }
 
 @media (min-width: 900px) {
-  :root { --awm-navbar-height: calc(65px + env(safe-area-inset-top, 0px)); }
+  :root {
+  --awm-mobile-bottom-clearance: calc(104px + env(safe-area-inset-bottom)); --awm-navbar-height: calc(65px + env(safe-area-inset-top, 0px)); }
 }
 
 html[data-theme='dark'] {

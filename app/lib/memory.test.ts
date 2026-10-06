@@ -147,3 +147,8 @@ describe('Memory transcript candidates', () => {
       .toEqual(['missed', 'unseen', 'due', 'recent-known'])
   })
 })
+
+it('can sample a complete 50-card session without the former 20-card cap',()=>{
+ const cards=Array.from({length:60},(_,i)=>card(String(i),'example','example'))
+ expect(sampleMemoryCards(cards,50,()=>0.5)).toHaveLength(50)
+})

@@ -1,5 +1,6 @@
 import { isNewTranscript } from '@/app/lib/cartoons'
 import { stripDiacritics } from '@/app/lib/arabic'
+import { MEMORY } from '@/app/lib/entitlements'
 
 export type MemoryDirection = 'english' | 'arabic'
 export type MemoryRating = 'again' | 'known'
@@ -305,7 +306,7 @@ export function sampleMemoryCards(
     const randomIndex = Math.floor(random() * (index + 1))
     ;[unique[index], unique[randomIndex]] = [unique[randomIndex], unique[index]]
   }
-  return unique.slice(0, Math.min(20, Math.max(0, limit)))
+  return unique.slice(0, Math.min(MEMORY.sessionCards, Math.max(0, limit)))
 }
 
 export function parseMemoryCardId(value: string): { episodeId: string; blockIndex: number } | null {
