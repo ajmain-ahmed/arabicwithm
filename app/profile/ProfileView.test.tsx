@@ -15,7 +15,7 @@ import { platformDate } from '@/app/lib/entitlements'
 let host: HTMLDivElement, root: Root
 function profile(premium = false): PublicProfile {
   const learning = emptyLearningActivity()
-  return { id: 'user', own: true, displayName: 'Learner', isPublic: false, shareReading: false, joined: '2026-10-01', avatar: null, avatarCrop: { x: 50, y: 50, zoom: 1 }, featuredTrophies: [], premium, learning, summary: summarizeLearningDashboard(learning), level: 1, xp: 0, weekXp: 0, memoryCards: 0, shelf: [] }
+  return { id: 'user', own: true, displayName: 'Learner', username: null, isPublic: false, shareReading: false, joined: '2026-10-01', avatar: null, avatarCrop: { x: 50, y: 50, zoom: 1 }, featuredTrophies: [], premium, learning, summary: summarizeLearningDashboard(learning), level: 1, xp: 0, weekXp: 0, memoryCards: 0, shelf: [] }
 }
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })

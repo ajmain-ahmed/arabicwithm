@@ -20,7 +20,7 @@ it('shows useful server validation errors without closing the JSON editor',async
 it('offers only the essential manual-import inputs',async()=>{
   await open()
   const dialog=document.querySelector('[role="dialog"]')!
-  expect([...dialog.querySelectorAll('label')].map(label=>label.textContent?.replace(/\s*\*$/, ''))).toEqual(['YouTube URL','Video Title','Transcript JSON','Publish to the shared searchable transcript library'])
+  expect([...dialog.querySelectorAll('label')].map(label=>label.textContent?.replace(/\s*\*$/, ''))).toEqual(['YouTube URL','Video Title','Transcript JSON','Video duration in seconds (optional)','Publish to the shared searchable transcript library'])
   expect(dialog.textContent).not.toMatch(/Channel \/ source|Arabic SRT|English SRT|VTT|Import Transcript/)
   expect([...dialog.querySelectorAll('button')].map(button=>button.textContent)).toContain('Import')
 })

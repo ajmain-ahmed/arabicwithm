@@ -59,7 +59,7 @@ function PremiumAccountSection() {
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState<PremiumStatus | null>(null)
-  useEffect(() => { let active = true; const refresh=()=>{void fetchPremiumStatus().then(s => { if (active) setStatus(s) }).catch(() => {})}; refresh(); window.addEventListener('focus',refresh); return () => { active = false;window.removeEventListener('focus',refresh) } }, [user?.id])
+  useEffect(() => { let active = true; const refresh=()=>{void fetchPremiumStatus().then(s => { if (active) setStatus(s) }).catch(() => {})}; refresh(); const timer=window.setInterval(()=>{if(document.visibilityState==='visible')refresh()},60000);window.addEventListener('account-access-changed',refresh); window.addEventListener('focus',refresh); return () => { active = false;window.clearInterval(timer);window.removeEventListener('account-access-changed',refresh);window.removeEventListener('focus',refresh) } }, [user?.id])
   if (!status || status.admin) return null
   const premium = status?.premium ?? false
   return <Box component="section" aria-label="AWM+" sx={{ width: '100%', px: { xs: 2, md: 5 }, py: { xs: 4, md: 6 }, display: 'flex', justifyContent: 'center' }}>

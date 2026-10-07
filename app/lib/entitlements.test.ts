@@ -35,3 +35,11 @@ describe('central access policy', () => {
     expect(platformDate(new Date('2026-12-09T23:01:00Z'))).toBe('2026-12-09')
   })
 })
+
+it('resolves independent editorial and Premium capabilities, with Admin inheritance',()=>{
+ expect(resolveEntitlements(true,false,'editor')).toMatchObject({isEditor:true,isAdmin:false,isPremium:false,canUseAudiobooks:false})
+ expect(resolveEntitlements(true,true,'editor')).toMatchObject({isEditor:true,isAdmin:false,isPremium:true})
+ expect(resolveEntitlements(true,true,'user')).toMatchObject({isEditor:false,isAdmin:false,isPremium:true})
+ expect(resolveEntitlements(true,false,'admin')).toMatchObject({isEditor:true,isAdmin:true,isPremium:true,memoryDailyLimit:null})
+ expect(resolveEntitlements(false,true,'admin')).toMatchObject({isEditor:false,isAdmin:false,isPremium:false})
+})

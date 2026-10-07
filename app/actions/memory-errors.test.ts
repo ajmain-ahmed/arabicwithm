@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({ auth: vi.fn(), rpc: vi.fn(), result: { error: null as null | { code: string; message: string }, data: null as unknown, count: 0 } }))
-vi.mock('@/app/actions/auth', () => ({ getAuthenticatedUserId: mocks.auth }))
-vi.mock('@/app/actions/premium', () => ({ fetchPremiumStatus: async () => ({ premium: false }) }))
+vi.mock('@/app/actions/auth', () => ({ getAuthenticatedUserId: mocks.auth, getAuthenticatedAccess: async () => { const userId=await mocks.auth();return userId?{userId,role:'user',admin:false}:null } }))
+vi.mock('@/app/actions/premium', () => ({ fetchPremiumStatus: async () => ({ premium: false, signedIn:true }) }))
 vi.mock('@/app/lib/supabase', () => ({ hasServiceClientConfig: () => true, serviceClient: {
   rpc: mocks.rpc,
   from: () => {

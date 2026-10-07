@@ -78,3 +78,12 @@ it('does not return a partial download on pagination failure',async()=>{
   mocks.from.mockImplementation(table=>table==='youtube_transcripts'?video:segments)
   await expect(downloadAdminTranscriptJson('11111111-1111-4111-8111-111111111111')).rejects.toThrow('complete transcript')
 })
+it('exports preserved lexical metadata with the current indexed translation',async()=>{
+  const id='11111111-1111-4111-8111-111111111111',text='\u0645\u0631\u062d\u0628\u0627'
+  const tokens=[{id:'word-1',arabic:text,gloss:'hello',start_ms:0,end_ms:900,cefr:'a1',pos:'interjection'}]
+  const video={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValueOnce({data:{title:'Rich',raw_transcript:{content:[{text,offset:0,duration:1000,english:'Old translation',sentence_id:'sentence-1',tokens,paragraph:1}]}},error:null}).mockResolvedValueOnce({data:{id},error:null})}
+  const segments={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),gt:vi.fn().mockReturnThis(),order:vi.fn().mockReturnThis(),limit:vi.fn().mockResolvedValue({data:[{position:0,original_text:text,english_text:'Current translation',start_seconds:0,end_seconds:1}],error:null})}
+  mocks.from.mockImplementation(table=>table==='youtube_transcripts'?video:segments)
+  const result=await downloadAdminTranscriptJson(id)
+  expect(JSON.parse(result.json).content[0]).toEqual({text,offset:0,duration:1000,english:'Current translation',sentence_id:'sentence-1',tokens,paragraph:1})
+})

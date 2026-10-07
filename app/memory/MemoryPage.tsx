@@ -23,7 +23,7 @@ import type { MemoryDirection, MemoryRating } from '@/app/lib/memory'
 
 const DIRECTION_KEY = 'awm-memory-direction-v1'
 const DIRECTION_EVENT = 'awm-memory-direction-change'
-const CARD_COUNT_OPTIONS = [5, 10, 15, 20, 50] as const
+const CARD_COUNT_OPTIONS = [5, 10, 15, 20] as const
 
 function getDirectionSnapshot(): MemoryDirection {
   try {
@@ -53,7 +53,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const { user, loading } = useAuth()
   const direction = useSyncExternalStore<MemoryDirection>(subscribeToDirection, getDirectionSnapshot, () => 'arabic')
   const [totalXp, setTotalXp] = useState(0)
-  const initialCardCount = library.scope === 'global' ? 10 : library.recommendedCardCount
+  const initialCardCount = library.scope === 'global' ? 10 : Math.min(20, library.recommendedCardCount)
   const [selectedCardCount, setSelectedCardCount] = useState<number>(initialCardCount)
   const [practice, dispatch] = useReducer(practiceReducer, library.cards.slice(0, Math.min(initialCardCount, library.cards.length)), initialPractice)
   const { cards, index, revealed, completed, sessionXp, completionIds, sessionId } = practice
@@ -98,13 +98,12 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     }
     load()
     if (!started) void loadSavedMemorySession().then(result => { if (!result.ok) throw new Error(result.error); const session = result.data; if (active) { setSaved(session); setSessionError('') } }).catch(error => { if (active) setSessionError(error instanceof Error ? error.message : 'Unable to load your saved session.') })
-    /* Poll progress only during an active session: each refresh runs several
-       DB queries, and finished ratings already update the count directly. */
-    if (!started) return () => { active = false }
+    /* Recheck current access while visible, including before a new session. */
     const refresh = () => { if (document.visibilityState === 'visible') load() }
     const timer = window.setInterval(refresh, 60000)
     window.addEventListener('focus', refresh)
-    return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', refresh) }
+    window.addEventListener('account-access-changed', refresh)
+    return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', refresh); window.removeEventListener('account-access-changed', refresh) }
   }, [loading, user, loadAttempt, started])
   const retryProgress = () => { setProgressLoading(true); setProgressError(''); setSessionError(''); setLoadAttempt(value => value + 1) }
   const card = cards[index]

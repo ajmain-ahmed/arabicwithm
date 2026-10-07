@@ -12,16 +12,17 @@ export default function AdminTranscripts(){
  const snapshot=cache.peek<{rows:TranscriptRow[];total:number}>("transcripts:0")
  const [rows,setRows]=useState<TranscriptRow[]>(snapshot?.rows??[]),[page,setPage]=useState(0),[total,setTotal]=useState(snapshot?.total??0),[loading,setLoading]=useState(!snapshot),[error,setError]=useState(''),[success,setSuccess]=useState(''),[refresh,setRefresh]=useState(0)
  const [open,setOpen]=useState(false),[url,setUrl]=useState(''),[title,setTitle]=useState(''),[channel,setChannel]=useState(''),[transcriptJson,setTranscriptJson]=useState(''),[searchable,setSearchable]=useState(true),[busy,setBusy]=useState(false),[edit,setEdit]=useState<TranscriptRow|null>(null),[formError,setFormError]=useState('')
+ const [durationSeconds,setDurationSeconds]=useState('')
  const [generationUrl,setGenerationUrl]=useState(''),[generating,setGenerating]=useState(false),[deleting,setDeleting]=useState<TranscriptRow|null>(null),[deleteBusy,setDeleteBusy]=useState(false),[deleteError,setDeleteError]=useState('')
  const reload=useCallback(()=>{cache.invalidate("transcripts:");setRefresh(v=>v+1)},[cache])
  useEffect(()=>{let current=true;setLoading(!cache.peek(`transcripts:${page}`));setError('');cache.load(`transcripts:${page}`,()=>listAdminTranscripts(page)).then(result=>{if(current){setRows(result.rows);setTotal(result.total)}}).catch(e=>{if(current)setError(e.message)}).finally(()=>{if(current)setLoading(false)});return()=>{current=false}},[page,refresh,cache])
  useEffect(()=>{if(!rows.some(transcriptGenerationPending))return;const timer=setInterval(()=>{if(document.visibilityState==='visible')reload()},5000);return()=>clearInterval(timer)},[rows,reload])
  async function save(){setBusy(true);setFormError('');try{
   if(edit)await updateAdminTranscript(edit.id,{title,channel,searchable})
-  else { const result=await importAdminManualTranscriptResult({url,title,json:transcriptJson,searchable});if(!result.ok)throw new Error(result.error) }
+  else { const result=await importAdminManualTranscriptResult({url,title,json:transcriptJson,searchable,durationSeconds:durationSeconds.trim()?Number(durationSeconds):undefined});if(!result.ok)throw new Error(result.error) }
   setOpen(false);setSuccess(edit?'Transcript settings saved.':'Transcript imported.');reload()
  }catch(e){setFormError(e instanceof Error?e.message:'Unable to save. Please retry.')}finally{setBusy(false)}}
- function start(row:TranscriptRow|null){setEdit(row);setTitle(row?.title??'');setChannel(row?.channel??'');setSearchable(row?.searchable??true);setUrl('');setTranscriptJson('');setFormError('');setOpen(true)}
+ function start(row:TranscriptRow|null){setEdit(row);setTitle(row?.title??'');setChannel(row?.channel??'');setSearchable(row?.searchable??true);setUrl('');setTranscriptJson('');setDurationSeconds('');setFormError('');setOpen(true)}
  async function generate(){setGenerating(true);setError('');setSuccess('');try{
   const result=await generateAdminTranscript(generationUrl)
   if(!result.ok){setError(result.error);return}
@@ -51,9 +52,9 @@ export default function AdminTranscripts(){
    {formError&&<Alert severity="error">{formError}</Alert>}
    {!edit&&<TextField label="YouTube URL" value={url} onChange={e=>setUrl(e.target.value)} required/>}
    <TextField label="Video Title" value={title} onChange={e=>setTitle(e.target.value)} required/>{edit&&<TextField label="Channel / source" value={channel} onChange={e=>setChannel(e.target.value)}/>}
-   {!edit&&<TranscriptJsonField value={transcriptJson} onChange={setTranscriptJson} />}
+   {!edit&&<><TranscriptJsonField value={transcriptJson} onChange={setTranscriptJson} /><TextField label="Video duration in seconds (optional)" value={durationSeconds} onChange={event=>setDurationSeconds(event.target.value)} helperText="Needed only for the final block of an AWM transcript that has start timestamps without end times." type="number" /></>}
    <FormControlLabel control={<Checkbox checked={searchable} onChange={e=>setSearchable(e.target.checked)}/>} label="Publish to the shared searchable transcript library"/>
-  </Stack></DialogContent><DialogActions><Button disabled={busy} onClick={()=>setOpen(false)}>Cancel</Button><Button disabled={busy} variant="contained" onClick={()=>void save()}>{busy?'Saving...':edit?'Save':'Import'}</Button></DialogActions></Dialog>
+  </Stack></DialogContent><DialogActions><Button disabled={busy} onClick={()=>setOpen(false)}>Cancel</Button><Button disabled={busy} variant="contained" onClick={()=>void save()}>{busy?'Importing...':edit?'Save':'Import'}</Button></DialogActions></Dialog>
   <Dialog open={Boolean(deleting)} onClose={()=>{if(!deleteBusy)setDeleting(null)}} aria-labelledby="delete-transcript-title" fullWidth maxWidth="sm"><DialogTitle id="delete-transcript-title">Delete transcript?</DialogTitle><DialogContent><Stack spacing={2}><Typography sx={{fontWeight:600}}>{deleting?.title}</Typography><Typography>This will permanently remove this transcript and its owned segments, search data, and generation records.</Typography>{deleteError&&<Alert severity="error">{deleteError}</Alert>}</Stack></DialogContent><DialogActions><Button disabled={deleteBusy} onClick={()=>setDeleting(null)}>Cancel</Button><Button color="error" variant="contained" disabled={deleteBusy} onClick={()=>void remove()}>{deleteBusy?'Deleting...':'Delete'}</Button></DialogActions></Dialog>
  </Stack>
 }

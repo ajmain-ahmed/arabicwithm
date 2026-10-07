@@ -2,10 +2,11 @@
 
 import { fetchPremiumStatus } from '@/app/actions/premium'
 import { resolveEntitlements, type Entitlements } from '@/app/lib/entitlements'
+import { getAuthenticatedAccess } from '@/app/actions/auth'
 
 export async function fetchEntitlements(): Promise<Entitlements> {
-  const status = await fetchPremiumStatus()
-  return resolveEntitlements(status.signedIn, status.premium)
+  const [status, access] = await Promise.all([fetchPremiumStatus(), getAuthenticatedAccess()])
+  return resolveEntitlements(status.signedIn, status.premium, access?.role)
 }
 
 export async function requireEntitlement(feature: 'readBooks' | 'downloadBooks' | 'audiobooks'): Promise<Entitlements> {

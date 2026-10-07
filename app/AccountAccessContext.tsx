@@ -41,8 +41,9 @@ export function AccountAccessProvider({userId,authLoading,token,children}:{userI
  useEffect(()=>{
   void refresh()
   const visible=()=>{if(document.visibilityState==='visible')void refresh()}
-  window.addEventListener('focus',refresh);window.addEventListener('online',refresh);document.addEventListener('visibilitychange',visible)
-  return()=>{window.removeEventListener('focus',refresh);window.removeEventListener('online',refresh);document.removeEventListener('visibilitychange',visible)}
+  window.addEventListener('account-access-changed',refresh);window.addEventListener('focus',refresh);window.addEventListener('online',refresh);document.addEventListener('visibilitychange',visible)
+  const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void refresh()},60000)
+  return()=>{window.clearInterval(timer);window.removeEventListener('account-access-changed',refresh);window.removeEventListener('focus',refresh);window.removeEventListener('online',refresh);document.removeEventListener('visibilitychange',visible)}
  },[refresh,token])
  const current=userId&&access?.userId===userId?access:null
  const value=useMemo(()=>({access:current,loading:authLoading||Boolean(userId&&(pending||!current&&!error)),error:userId?error:'',refresh}),[current,authLoading,userId,pending,error,refresh])

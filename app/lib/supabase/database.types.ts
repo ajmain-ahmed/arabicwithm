@@ -15,7 +15,7 @@ type Table<Row> = { Row: { [K in keyof Row]: Row[K] }; Insert: { [K in keyof Row
 export interface Database {
   public: {
     Tables: {
-      youtube_transcripts: Table<import('@/app/actions/transcripts').TranscriptRow>
+      youtube_transcripts: Table<import('@/app/actions/transcripts').TranscriptRow & {raw_transcript:Json|null}>
       transcript_segments: Table<import('@/app/actions/transcripts').TranscriptSegment & {transcript_id:string}>
       account_roles: Table<{ user_id: string; role: 'user' | 'editor' | 'admin'; updated_at: string }>
       access_change_audit: Table<import('@/app/lib/reviews').AccessChange>
@@ -28,6 +28,7 @@ export interface Database {
       word_search_completions: Table<{ id: string; user_id: string; puzzle_id: string; source_type: 'episode' | 'book'; source_id: string; difficulty: string; word_count: number; words_found: number; mistakes: number; hints_used: number; reveals_used: number; duration_seconds: number; xp_earned: number; activity_date: string; completed_at: string }>
       book_chapter_audio: Table<{ id: string; chapter_id: string; language: 'ar' | 'en'; source_type: 'supabase_storage' | 'youtube' | 'external_url'; storage_bucket: string | null; external_url: string | null; storage_path: string | null; external_video_id: string | null; duration_seconds: number | null; narrator: string | null; is_published: boolean; created_at: string; updated_at: string }>
       book_audio_progress: Table<{ user_id: string; chapter_id: string; language: 'ar' | 'en'; position_seconds: number; completed: boolean; updated_at: string }>
+      leaderboard_public_profiles: Table<{user_id:string;display_name:string;avatar_url:string|null;handle:string|null;updated_at:string}>
       public_profiles: Table<{ user_id: string; display_name: string; is_public: boolean; share_reading: boolean; created_at: string }>
 
       shows: {
@@ -329,6 +330,7 @@ export interface Database {
     Functions: {
       account_has_premium: { Args: { p_user_id: string }; Returns: boolean }
       admin_set_manual_premium: { Args: {p_actor:string;p_target:string;p_enabled:boolean;p_reason:string}; Returns:boolean }
+      admin_set_account_access: { Args: {p_actor:string;p_target:string;p_role:string;p_premium:boolean;p_notes:string}; Returns:Json }
       admin_manual_premium_details: { Args:{p_actor:string;p_target:string};Returns:Json }
       website_memory_session_usage: {Args:{p_user_id:string};Returns:number}
       website_begin_memory_session: {Args:{p_user_id:string;p_state:Json};Returns:Json}
@@ -342,6 +344,7 @@ export interface Database {
       search_transcript_word: { Args:{p_word:string;p_after:number;p_after_rank:number;p_limit:number};Returns:Json }
       website_memory_totals: { Args: { p_user_id: string; p_since?: string }; Returns: Json }
       website_learning_history: { Args: { p_user_id: string }; Returns: Json }
+      set_public_handle: {Args:{p_handle:string};Returns:string}
       account_role: { Args: { p_user_id: string }; Returns: string }
       change_account_role: { Args: { p_actor: string; p_target: string; p_role: string; p_reason: string }; Returns: undefined }
       admin_user_directory: { Args: { p_actor: string; p_tab: string; p_search: string; p_page: number; p_size: number }; Returns: Json }

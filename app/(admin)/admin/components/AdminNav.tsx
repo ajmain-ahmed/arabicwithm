@@ -7,6 +7,9 @@ import {
   Button,
   Box,
   Tooltip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
 } from "@mui/material"
 import {
   DarkMode,
@@ -17,6 +20,7 @@ import {
   LightMode,
   People,
   RateReview,
+  Menu as MenuIcon,
 } from "@mui/icons-material"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -34,6 +38,7 @@ const navItems = [
 
 export default function AdminNav() {
   const pathname = usePathname()
+  const [anchor, setAnchor] = React.useState<HTMLElement | null>(null)
   const { mode, toggleColorMode } = useColorMode()
 
   return (
@@ -57,7 +62,12 @@ export default function AdminNav() {
         }}
       >
         <Button component={Link} href="/" sx={{ justifySelf: "start", display: { xs: "none", md: "inline-flex" }, color: "var(--awm-muted)" }}>Back to website</Button>
-        <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", justifyContent: "center", alignItems: "center", minWidth: 0 }}>
+        <Button startIcon={<MenuIcon />} onClick={event => setAnchor(event.currentTarget)} aria-haspopup="menu" aria-expanded={Boolean(anchor)} aria-controls={anchor ? 'mobile-admin-menu' : undefined} sx={{ display: { xs: 'inline-flex', md: 'none' }, justifySelf: 'start', minHeight: 44 }}>Admin</Button>
+        <Menu id="mobile-admin-menu" anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)} slotProps={{ paper: { sx: { minWidth: 220, maxHeight: 'calc(100dvh - 120px - env(safe-area-inset-bottom))' } } }}>
+          {navItems.map(item => <MenuItem key={item.href} component={Link} href={item.href} selected={pathname === item.href || pathname?.startsWith(`${item.href}/`)} onClick={() => setAnchor(null)} sx={{ minHeight: 48 }}><ListItemIcon>{item.icon}</ListItemIcon>{item.label}</MenuItem>)}
+          <MenuItem component={Link} href="/" onClick={() => setAnchor(null)} sx={{ minHeight: 48 }}>Back to website</MenuItem>
+        </Menu>
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 0.5, flexWrap: "wrap", justifyContent: "center", alignItems: "center", minWidth: 0 }}>
           {navItems.map((item) => {
             const active = pathname === item.href || pathname?.startsWith(`${item.href}/`)
             return (

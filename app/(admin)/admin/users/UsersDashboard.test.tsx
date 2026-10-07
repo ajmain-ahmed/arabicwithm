@@ -2,7 +2,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({ list: vi.fn(), details: vi.fn(), change: vi.fn() }))
-vi.mock('@/app/actions/reviews', () => ({ listManagedUsers: mocks.list, managedUserDetails: mocks.details, changeManagedRole: mocks.change }))
+vi.mock('@/app/actions/reviews', () => ({ listManagedUsers: mocks.list, managedUserDetails: mocks.details, changeManagedAccess: mocks.change }))
 import UsersDashboard from './UsersDashboard'
 
 it('loads the existing user directory, premium information and User/Editor/Admin controls', async () => {
@@ -18,15 +18,18 @@ it('loads the existing user directory, premium information and User/Editor/Admin
     await act(async () => { await vi.advanceTimersByTimeAsync(300) })
     expect(mocks.list).toHaveBeenCalledWith('all', '', 0)
     expect(host.textContent).toContain('Account owner')
-    expect(host.textContent).toContain('Premium subscription')
+    expect(host.textContent).toContain('Premium')
     const view = [...host.querySelectorAll('button')].find(button => button.textContent === 'View User')!
     await act(async () => view.click())
     expect(mocks.details).toHaveBeenCalledWith(id)
     const dialog = document.querySelector('[role="dialog"]')!
-    expect(dialog.textContent).toContain('Manage Access')
-    expect(dialog.textContent).toContain('Subscription: active')
-    await act(async () => dialog.querySelector('[role="combobox"]')!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })))
-    expect([...document.querySelectorAll('[role="option"]')].map(option => option.textContent)).toEqual(['user', 'editor', 'admin'])
+    expect(dialog.textContent).toContain('Access Level')
+    expect(dialog.querySelector('[aria-label="Account information"]')).toBeNull()
+    expect([...dialog.querySelectorAll('input[type="checkbox"]')]).toHaveLength(4)
+    expect(dialog.textContent).toContain('Notes (optional)')
+    expect(dialog.textContent).not.toContain('Reason for')
+    await act(async()=> (dialog.querySelector('[aria-label="Information"]') as HTMLElement).click())
+    expect(dialog.querySelector('[aria-label="Account information"]')?.textContent).toContain('Subscription: active')
     expect(mocks.change).not.toHaveBeenCalled()
   } finally {
     await act(async () => root.unmount()); host.remove(); vi.useRealTimers()

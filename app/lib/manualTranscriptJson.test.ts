@@ -5,7 +5,7 @@ describe('canonical manual transcript JSON',()=>{
   it('preserves bilingual text and real integer timing in chronological order',()=>{expect(normaliseManualTranscriptJson(JSON.stringify({content}))).toEqual({provider:'manual',lang:'ar',content:[content[1],content[0]]})})
   it('reports syntax errors usefully',()=>{expect(()=>normaliseManualTranscriptJson('{')).toThrow('Invalid transcript JSON')})
   it.each([{content:[]},[],{content:[{text:'مرحبا',offset:'0',duration:5}]},{content:[{text:'مرحبا',offset:0,duration:0}]},{content:[{text:'مرحبا',offset:0.5,duration:5}]},{content:[{text:'مرحبا',offset:0,duration:5,english:1}]},{content:[{text:'English',offset:0,duration:5}]},{content:[{text:'مرحبا',offset:43200000,duration:5}]}])('rejects malformed fields without coercion',value=>{expect(()=>normaliseManualTranscriptJson(JSON.stringify(value))).toThrow()})
-  it('rejects Show JSON without changing its schema or parser',()=>{expect(()=>normaliseManualTranscriptJson(JSON.stringify([{tokens:[{arabic:'مرحبا'}],timestamp:'0:00',translation:'Hello'}]))).toThrow('content array')})
+  it('accepts timed AWM token blocks and preserves lexical data',()=>{const blocks=[{tokens:[{arabic:'\u0645\u0631\u062d\u0628\u0627',headword:'\u0645\u0631\u062d\u0628\u0627',english:'Hello'}],timestamp:'0:00',translation:'Hello'}];expect(normaliseManualTranscriptJson(JSON.stringify(blocks),2).content[0]).toMatchObject({text:'\u0645\u0631\u062d\u0628\u0627',offset:0,duration:2000,english:'Hello',tokens:blocks[0].tokens})})
 })
 
 it('round-trips the full bilingual UTF-8 export through the canonical import validator',()=>{
@@ -29,4 +29,36 @@ it.each(['text','offset','duration'])('reports the missing %s field',key=>{
 })
 it.each([{offset:-1,duration:5},{offset:0,duration:-1},{offset:'0',duration:5},{offset:0,duration:'5'}])('rejects invalid or negative timing %j',timing=>{
   expect(()=>normaliseManualTranscriptJson(JSON.stringify({content:[{text:'\u0645\u0631\u062d\u0628\u0627',...timing}]}))).toThrow()
+})
+
+
+describe('expanded formats and resource limits',()=>{
+ it('accepts the new bare token array with uppercase CEFR and paragraph grouping',()=>{
+  const tokens=[{pos:'verb',cefr:'A2',arabic:'\u0642\u0627\u0644\u064e',english:'said',headword:'\u0642\u0627\u0644',entry_type:'word',transliteration:'qala'},{pos:'noun',cefr:'A1',arabic:'\u0627\u0644\u0648\u0644\u062f',english:'boy',headword:'\u0648\u0644\u062f',entry_type:'word',transliteration:'al-walad'}]
+  const blocks=[{tokens,timestamp:'00:00',translation:'The boy said.',paragraph:1},{tokens,timestamp:'00:05',translation:'He said again.',paragraph:2}]
+  expect(normaliseManualTranscriptJson(JSON.stringify(blocks),8).content).toEqual([{text:tokens.map(token=>token.arabic).join(' '),offset:0,duration:5000,english:blocks[0].translation,tokens,paragraph:1},{text:tokens.map(token=>token.arabic).join(' '),offset:5000,duration:3000,english:blocks[1].translation,tokens,paragraph:2}])
+ })
+ it.each([0,-1,1.5,'1'])('rejects an invalid paragraph number %j',paragraph=>{
+  expect(()=>normaliseManualTranscriptJson(JSON.stringify([{tokens:[{arabic:'\u0645\u0631\u062d\u0628\u0627'}],timestamp:'00:00',paragraph}]),2)).toThrow('paragraph must be a positive integer')
+ })
+ it('preserves sentence IDs, glosses, translations, and exact token milliseconds',()=>{
+  const token={id:'s0001_t001',i:1,ar:'\u0633\u0644\u0645',plain:'\u0633\u0644\u0645',gloss:'deliver',start_ms:23039,end_ms:24799}
+  const result=normaliseManualTranscriptJson(JSON.stringify({sentences:[{sentence_id:'s0001',sentence_index:1,start_ms:23039,end_ms:28320,arabic:'\u0633\u0644\u0645 \u0648\u0627\u0633\u062a\u0644\u0645.',english:'Deliver and receive.',tokens:[token]}]}))
+  expect(result.content[0]).toMatchObject({offset:23039,duration:5281,text:'\u0633\u0644\u0645 \u0648\u0627\u0633\u062a\u0644\u0645.',english:'Deliver and receive.',sentence_id:'s0001',sentence_index:1,tokens:[token]})
+ })
+ it('accepts segments using seconds without losing millisecond precision',()=>{expect(normaliseManualTranscriptJson(JSON.stringify({segments:[{original_text:'\u0645\u0631\u062d\u0628\u0627',english_text:'Hello',start_seconds:1.234,end_seconds:3.456}]})).content[0]).toMatchObject({offset:1234,duration:2222})})
+ it('accepts more than 5,000 segments and more than 10,000 characters in a segment',()=>{
+  const long='\u0645\u0631\u062d\u0628\u0627 '.repeat(3000)
+  const content=Array.from({length:5001},(_,i)=>({text:i===0?long:'\u0645\u0631\u062d\u0628\u0627',offset:i*1000,duration:1000}))
+  const result=normaliseManualTranscriptJson(JSON.stringify({content}))
+  expect(result.content).toHaveLength(5001);expect(result.content[0].text).toBe(long)
+ })
+ it('reports the actual malformed sentence and refuses untimed books',()=>{
+  expect(()=>normaliseManualTranscriptJson(JSON.stringify({sentences:[{arabic:'\u0645\u0631\u062d\u0628\u0627',end_ms:5}]}))).toThrow('Sentence 1: missing or invalid start_ms')
+  expect(()=>normaliseManualTranscriptJson(JSON.stringify([{tokens:[{arabic:'\u0645\u0631\u062d\u0628\u0627'}],translation:'Hello'}]))).toThrow('timed imports require a start time')
+ })
+ it('never guesses a final endpoint or accepts invalid token intervals',()=>{
+  expect(()=>normaliseManualTranscriptJson(JSON.stringify([{tokens:[{arabic:'\u0645\u0631\u062d\u0628\u0627'}],timestamp:'0:00'}]))).toThrow('video duration')
+  expect(()=>normaliseManualTranscriptJson(JSON.stringify({sentences:[{arabic:'\u0645\u0631\u062d\u0628\u0627',start_ms:0,end_ms:5,tokens:[{ar:'\u0645\u0631\u062d\u0628\u0627',start_ms:0,end_ms:8}]}]}))).toThrow('token timing')
+ })
 })

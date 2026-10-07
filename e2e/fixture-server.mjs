@@ -29,9 +29,11 @@ const bookId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const chapterId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
 const showId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 const metadata = new Map()
+const handles=new Map(),profiles=new Map(),roles=new Map(),accessAudit=[]
+const roleFor=id=>roles.get(id)??(id===ids.admin?'admin':id===ids.reviewer?'editor':'user')
 let failAudioSave = false
-const manualPremium=new Map(), memoryStarts=new Map(), memorySnapshots=new Map(), memoryReviews=new Map(), ownReviews=new Map(), earned=new Set()
-const effective=id=>id===ids.premium||id===ids.admin||manualPremium.get(id)===true
+const manualPremium=new Map(), memoryStarts=new Map(), memorySnapshots=new Map(), memoryReviews=new Map(), ownReviews=new Map(), earned=new Set(), wordTotals=new Map()
+const effective=id=>id===ids.premium||roleFor(id)==='admin'||manualPremium.get(id)===true
 const usage=id=>[...memoryStarts.values()].filter(row=>row.userId===id).length
 function account(id) {
   const kind = Object.keys(ids).find(key => ids[key] === id) ?? 'free'
@@ -65,8 +67,8 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
-  if(url.pathname==='/fixture/reset-overhaul'){manualPremium.clear();memoryStarts.clear();memorySnapshots.clear();memoryReviews.clear();ownReviews.clear();earned.clear();metadata.clear();return json(res,{})}
-  if(url.pathname==='/fixture/earned'){earned.add(body.userId);return json(res,{})}
+  if(url.pathname==='/fixture/reset-overhaul'){handles.clear();profiles.clear();roles.clear();accessAudit.length=0;manualPremium.clear();memoryStarts.clear();memorySnapshots.clear();memoryReviews.clear();ownReviews.clear();earned.clear();wordTotals.clear();metadata.clear();return json(res,{})}
+  if(url.pathname==='/fixture/earned'){earned.add(body.userId);wordTotals.set(body.userId,body.words??100);return json(res,{})}
   if (url.pathname.startsWith('/auth/v1/admin/users/')) {
     const id=url.pathname.split('/').at(-1)
     if(req.method==='PUT')metadata.set(id,{...metadata.get(id),...body.user_metadata})
@@ -81,16 +83,27 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     const rpc = url.pathname.split('/').at(-1)
     if (rpc === 'account_role') {
       await new Promise(resolve => setTimeout(resolve, 350))
-      return json(res, body.p_user_id === ids.admin ? 'admin' : body.p_user_id === ids.reviewer ? 'editor' : 'user')
+      return json(res, roleFor(body.p_user_id))
+    }
+    if(rpc==='set_public_handle'){
+      if(!userId)return json(res,{message:'Not authenticated'},403)
+      if([...handles.entries()].some(([id,handle])=>id!==userId&&handle===body.p_handle))return json(res,{message:'PUBLIC_ID_TAKEN'},409)
+      handles.set(userId,body.p_handle);return json(res,body.p_handle)
+    }
+    if(rpc==='admin_set_account_access'){
+      if(roleFor(body.p_actor)!=='admin')return json(res,{message:'Forbidden'},403)
+      manualPremium.set(body.p_target,body.p_premium);roles.set(body.p_target,body.p_role)
+      accessAudit.push({enabled:body.p_premium,reason:body.p_notes,changed_at:new Date().toISOString()})
+      return json(res,{role:body.p_role,manual:body.p_premium,premium:effective(body.p_target)})
     }
     if(rpc==='account_has_premium')return json(res,effective(body.p_user_id))
     if(rpc==='admin_set_manual_premium'){
       if(body.p_actor!==ids.admin)return json(res,{message:'Forbidden'},403)
       manualPremium.set(body.p_target,body.p_enabled);return json(res,effective(body.p_target))
     }
-    if(rpc==='admin_manual_premium_details')return json(res,{enabled:manualPremium.get(body.p_target)===true,history:[]})
+    if(rpc==='admin_manual_premium_details')return json(res,{enabled:manualPremium.get(body.p_target)===true,history:accessAudit})
     if(rpc==='admin_user_directory'){
-      const users=Object.entries(ids).map(([kind,id])=>({id,email:kind+'@fixture.example',name:kind+' learner',avatar:null,joined:'2026-01-01',last_sign_in:null,role:kind==='admin'?'admin':kind==='reviewer'?'editor':'user',premium:effective(id),manual_premium:manualPremium.get(id)===true,paid_premium:kind==='premium',subscription_status:kind==='premium'?'active':null,current_period_end:kind==='premium'?'2099-01-01':null,cancel_at_period_end:false,activity:null,banned_until:null}))
+      const users=Object.entries(ids).map(([kind,id])=>({id,email:kind+'@fixture.example',name:kind+' learner',avatar:null,joined:'2026-01-01',last_sign_in:null,role:roleFor(id),premium:effective(id),manual_premium:manualPremium.get(id)===true,paid_premium:kind==='premium',subscription_status:kind==='premium'?'active':null,current_period_end:kind==='premium'?'2099-01-01':null,cancel_at_period_end:false,activity:null,banned_until:null}))
       const filtered=users.filter(u=>(body.p_tab==='all'||body.p_tab==='premium'&&u.premium||u.role===body.p_tab)&&(!body.p_search||u.name.includes(body.p_search)||u.email.includes(body.p_search)))
       return json(res,{users:filtered,total:filtered.length,counts:{all:users.length,premium:users.filter(u=>u.premium).length,editor:1,admin:1}})
     }
@@ -115,7 +128,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       row.state={...body.p_session,sessionXp:[...memoryReviews.values()].filter(r=>r.userId===id).reduce((n,r)=>n+r.xp,0)};memorySnapshots.set(id,row.state)
       return json(res,{accepted:true,awarded:memoryReviews.get(key).xp,used:usage(id),totalXp:row.state.sessionXp})
     }
-    if(rpc==='website_learning_history'&&earned.has(body.p_user_id))return json(res,{daily:[],activeDates:[],totals:{readingSeconds:0,videoSeconds:0,wordLookups:100}})
+    if(rpc==='website_learning_history'&&earned.has(body.p_user_id))return json(res,{daily:[],activeDates:[],totals:{readingSeconds:0,videoSeconds:0,wordLookups:wordTotals.get(body.p_user_id)??100}})
     if (rpc === 'website_learning_history') return json(res, { daily: [], activeDates: [], totals: { readingSeconds: 0, videoSeconds: 0, wordLookups: 0 } })
     if (rpc === 'learning_xp_totals') return json(res, { xp: 0, wordSearchXp: 0, wordSearches: 0 })
     if (rpc === 'website_memory_totals') {const rows=[...memoryReviews.values()].filter(r=>r.userId===body.p_user_id);return json(res,{cards:rows.length,xp:rows.reduce((n,r)=>n+r.xp,0)})}
@@ -130,6 +143,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
         const index = tables[table].findIndex(row => row.chapter_id === body.chapter_id && row.language === body.language)
         if (index < 0) tables[table].push(body); else tables[table][index] = { ...tables[table][index], ...body }
       }
+      if(table==='public_profiles')profiles.set(body.user_id,body)
       if(table==='book_reviews'){
         const id=body.user_id??userId,book=body.book_id??(url.searchParams.get('book_id')??'').replace(/^eq\./,'')
         const key=id+':'+book
@@ -142,7 +156,8 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if(table==='memory_sessions')rows=memorySnapshots.has(owner)?[{user_id:owner,state:memorySnapshots.get(owner)}]:[]
     if(table==='book_reviews')rows=[...ownReviews.values()]
     if (table === 'subscriptions') rows = owner === ids.premium ? [{ user_id: owner, status: 'active', current_period_end: '2099-01-01T00:00:00Z', customer_id: 'fixture' }] : []
-    if (table === 'public_profiles') rows = [{ user_id: owner, display_name: `${Object.keys(ids).find(k => ids[k] === owner)} learner`, is_public: false, share_reading: false }]
+    if (table === 'public_profiles') rows = [{ user_id: owner, display_name: `${Object.keys(ids).find(k => ids[k] === owner)} learner`, is_public: false, share_reading: false, ...profiles.get(owner) }]
+    if(table==='leaderboard_public_profiles')rows=[...handles.entries()].map(([user_id,handle])=>({user_id,handle}))
     if (table === 'learning_profiles') rows = [{ user_id: owner, legacy_active_seconds: 0, tracked_active_seconds: 0, weekly_goal_seconds: null }]
     for (const [key, filter] of url.searchParams) {
       if (filter.startsWith('eq.')) rows = rows.filter(row => String(row[key]) === filter.slice(3))

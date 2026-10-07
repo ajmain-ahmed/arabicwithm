@@ -1,80 +1,92 @@
-# Website overhaul verification
+# Website final overhaul verification
 
-Implemented in the existing Next.js website; Supabase project `whbxgwucsoguqzpnpzjd`. No website publication, commit or push was performed.
+Implemented in the existing Next.js website on 7 October 2026. The Supabase migration is deployed to `whbxgwucsoguqzpnpzjd`; website code remains local. No commit, push or website publication was performed.
 
-1. **Premium source of truth:** `public.account_has_premium` calls `private.has_premium`: an active/trialing unexpired subscription OR an enabled manual grant OR existing administrator inclusion. Server Actions, profile status, admin directory and the audiobook Edge Function consume it. Browser state is display-only.
-2. **Manual Premium:** verified administrators grant/revoke from Users with a reason. The grant and audit entry persist transactionally. The UI confirms success after the RPC returns, updates the selected user and refetches the directory. Active access without a billing account offers Continue learning.
-3. **Paid/manual interaction:** grants never change Stripe/subscription records. Revoking a manual grant leaves eligible paid access intact; cancellation/expiry of paid access leaves an enabled manual grant intact.
-4. **Memory:** `private.website_memory_starts` records a UUID start, owner, London calendar date and immutable queue. A per-account transaction lock atomically permits one free start/day. Cards do not consume starts. Sessions support up to 50 cards; Premium has unlimited starts. Retried IDs, existing-session resume and completed recap do not create starts. Existing latest snapshots and card reviews remain in use. Completed snapshots now survive refresh.
-5. **Audiobooks:** server entitlements gate signed playback requests. The deployed `audiobook-library` Edge Function verifies the JWT identity and checks the canonical RPC. Current published storage audio uses a private bucket; clients cannot invoke the new service-only RPCs.
-6. **Language:** selecting either language synchronously pauses owned audio/video, invalidates pending requests, clears the source and remounts the language-owned player. One media element remains; the other language requires an explicit Play action. Existing per-language progress remains separate.
-7. **Books:** guests can browse catalogue metadata and receive sign-in when opening chapters. Signed-in free users read every chapter, including later chapters. Anonymous raw chapter SELECT is revoked. Existing Premium PDF policy is preserved. Explore, Watch and Word Search retain public access.
-8. **Support:** deliberate Support / Arabic with M lines, unbroken second line and responsive sizes. It uses the exact homepage hero asset via a shared constant with a dark readability gradient. The checkout button has explicit readable white text.
-9. **Explore/activity:** removed the public Search transcripts entry; administrative transcript tools remain. Removed only the redundant Current level activity tile; profile levels and achievements remain.
-10. **Mobile spacing:** book, chapter and Support pages use shared 104px plus safe-area bottom clearance. Browser checks verify chapter navigation clears fixed navigation and book controls can be scrolled into view and tapped.
-11. **Reader controls:** Reading view group background is transparent; individual buttons and active states remain. Computed browser style confirms removal of the group overlay.
-12. **Trophies:** explicit Add/Remove controls, up to four earned highlights, server-side milestone validation before saving existing auth metadata. Empty selection remains empty after refresh. Profile identity changes remount account-scoped Premium display state.
-13. **Reviews:** Flutter publishes into existing `public.book_reviews`, keyed by book/user UUID, with rating 1-5 and text up to 2000 characters. Older on-device drafts remain local until published. Website reuses the same record and own-row RLS for load/save/delete. Inline personal form only; no public averages, counts, review panels or review modal.
-14. **Schema/RLS:** deployed migration `20261006222630_website_premium_sessions.sql` adds three private tables (grants, audit, session starts), service-only invoker RPCs, and updates the existing admin directory function. Private RLS/no client privileges intentionally deny all direct client access. Existing review policies and Hans Wehr/dictionary schemas are unchanged. The legacy mobile Memory completion RPC is retained.
-15. **Files:** see the file list below. No package/dependency installation was needed.
-16. **Verification:** production build, TypeScript and changed-file lint pass. Eleven Chrome browser scenarios pass, using normal app authorization with isolated synthetic Supabase records and real decodable audio. They cover persisted manual grants, native playback, both language stops, free/Premium Memory starts, refresh recaps, saved reviews, saved/empty trophy highlights, later chapters, responsive Support, mobile actions and transparent controls. Additional reruns verify active manual-access billing UI, unearned trophy controls and retained profile levels. Live Supabase transaction checks verify grants/revocation/paid preservation/session starts; live review RLS checks verify own CRUD and cross-account denial. All synthetic live data was rolled back. Broader Vitest run: 535 passes, 3 skips, one new mock-history assertion failure; its isolation fix was rerun successfully (4/4). Final policy checks pass 15/15; the focused run's other 79 tests pass. No unresolved product failure remains from those runs.
-17. **Limits:** website changes are local and need the existing hosting publication workflow. No real Stripe charge or production user entitlement was changed. Chrome interactions use synthetic accounts/media; live database checks separately validate deployed SQL. Previously issued audio URLs remain usable until their existing two-hour expiry. Native browser autoplay restrictions can require the existing second explicit Play tap. No external/public audio source can provide private-storage revocation. Legacy mobile Memory behavior is intentionally unchanged by this website task.
+1. **Mobile Admin navigation.** Below the desktop breakpoint, one Admin menu opens all seven existing destinations vertically, plus Back to website. Targets are at least 48px high. Selecting closes the menu, and its maximum height accounts for the viewport and bottom safe area. Desktop destinations and layout remain in place.
 
-## Deployment notes
+2. **Username and uniqueness source.** The live schema inspection discovered the mobile app's existing `leaderboard_public_profiles.handle`, `leaderboard_public_profiles_handle_unique` index and authenticated `set_public_handle` RPC. The website reuses them. No extra username column or identifier table was added. Profile settings says Select a username, checks availability after a short debounce, trims whitespace, folds case, enforces the existing 3-24 character rule and reserved names, and handles save-time unique conflicts. Username routes resolve the same user and retain existing profile privacy checks. Existing UUID routes remain compatible; UUIDs are not shown as usernames.
 
-The migration and audiobook Edge Function (version 5, JWT verification enabled) are already deployed. Website Server Actions require server-side Supabase service credentials, as before; never expose them to client components. Billing webhooks continue writing only subscription data. Manual access is maintained through the admin Users interface, not by editing billing status. Future quota changes should retain the atomic start ledger and idempotent IDs. Existing on-device decks/cards/reviews remain local.
+3. **Admin user layout.** The main dialog shows name/email, Access Level, four compact checkboxes and Notes (optional). A top-right Information icon reveals joined, last sign-in, billing and review activity. Notes & History is collapsed initially. Mandatory UUID entry and reason controls were removed from this interface.
 
-## Validation artifacts
+4. **Permission architecture.** User is the baseline for every registered account. The existing `account_roles.role` retains user/editor/admin editorial authority. Premium remains an independent grant or paid subscription, so both a free Editor and a Premium Editor are supported. Four UI controls expose capabilities, rather than requiring a mutually exclusive selector for Premium and editorial authority. Editors retain the existing review/propose-correction workflow; canonical content and user administration still require Admin.
 
-Logs and screenshots are under `docs/validation/website/`. The full-suite/focused-suite logs include the subsequently fixed mock-history assertion; policy/recap logs record its successful reruns. The profile-before-fix log also records an exact-text selector mismatch; final-layout.log verifies the actual complete level/progress label. One generated Next.js font-resolver error cleared on retry; the failure and successful final build logs are retained. Screenshots capture responsive Support and mobile book actions.
+5. **Admin inheritance.** `private.has_premium` includes Admin. Shared entitlement resolution marks Admin as both Editor and Premium, and reviewer guards already accept Admin. The UI checks inherited controls while Admin is selected. The database does not duplicate inherited grants. Final-Admin demotion remains protected by the existing serialized role-change lock.
 
-## Changed files
+6. **Paid/manual interaction.** Effective Premium is an eligible active/trialing unexpired subscription OR an enabled manual grant OR Admin inheritance. Revoking manual Premium preserves paid access. Role changes do not change billing. An active paid checkbox displays effective access and cannot cancel a subscription. No real Stripe charges or production account permissions were changed during verification.
 
+7. **Optional notes.** Blank notes are accepted in Server Actions and database functions. Entered notes are trimmed and retained in the existing `access_change_audit` and `private.manual_premium_audit` architecture. `admin_set_account_access` saves the grant and role in one transaction. Notes entered without changing a capability also remain available in the collapsed history. Earlier history is preserved.
+
+8. **Transcript root causes.** `manualTranscriptJson.ts` accepted only an object with `content[]`, required every item to use text/offset/duration, rejected token-block arrays, and discarded rich metadata. It imposed 1 MB, 5,000 segments and 10,000 characters per text/translation. The SRT/VTT helper duplicated count/text caps. The live `admin_import_youtube_transcript` repeated those restrictions; changing an error label alone would have left imports broken. The underlying indexer can process larger canonical arrays.
+
+9. **Limits changed.** Removed per-segment 10,000-character and 5,000-segment/cue restrictions. Both normalized imports and the database use a 20 MB payload resource budget, with the existing 12-hour media timing boundary. The existing Next Server Action envelope is 51 MB. These are resource/timing guards, not sentence count limits. Backend validation messages are returned when actionable.
+
+10. **Supported formats.** Legacy `content[]` with millisecond offset/duration; `sentences[]` with Arabic/English and start_ms/end_ms; `segments[]` with millisecond or second timing; native timed AWM token arrays and array wrappers under content, transcript or scriptBlocks; bilingual SRT/VTT through the existing server path. Arabic may come from text, arabic, original_text or Arabic tokens. Translation aliases are recognized. Start-only AWM blocks use the following timestamp for each boundary and an explicitly supplied video duration for the final block.
+
+11. **Canonical flow and preserved data.** Server-side detection normalizes once into provider=manual/lang=ar/content. It validates Arabic, integer millisecond intervals, sentence/token bounds and field types; sorts chronologically; and atomically imports through the established RPC. Arabic/plain/gloss, token IDs/indices and timings, lexical metadata, sentence IDs/indices and translations persist in existing raw_transcript JSONB. Existing indexed segments/tokens continue serving search and playback. JSON export retains matching rich metadata while using the latest indexed English text. Large arrays are never rendered as thousands of editor controls. Importing state prevents duplicate submission. SRT English pairing now uses a timing map instead of repeatedly scanning every cue.
+
+12. **Memory daily enforcement.** The existing `private.website_memory_starts` ledger, London calendar dates, per-user transaction lock and canonical Premium check allow one new free session/day and unlimited Premium sessions. Retried IDs, resumed sessions and completed recaps do not consume another start. Usage remains server-persisted.
+
+13. **Session sizes.** Website choices are 5, 10, 15 and 20. The 50-card choice is removed. Initial selection is capped at 20. The existing parser/backend maximum of 50 remains so historical queues still resume and recap safely. These historical cards do not change the daily-session rule.
+
+14. **Support hero.** Preserved the already implemented shared homepage image constant, background/overlay/gradient treatment and deliberate Support / Arabic with M heading lines. Browser verification covers 320px, 375px and desktop widths with no second-line clipping.
+
+15. **Audiobook language changes.** Preserved the reader's synchronous stop event, invalidation of pending playback requests and language-owned player remount. Current audio/video stops before text switches, and the new language requires explicit Play. Chrome checks use actual decodable audio in both directions. Playback requests remain gated server-side by canonical Premium.
+
+16. **Trophy removal cause and controls.** The prior Add/Remove actions changed temporary choices and depended on a separate Save click, so closing or refreshing lost the apparent removal. Compact labelled plus/minus icons now await persistence immediately, then update selection and preview. The minus control has a small red danger treatment. Busy state prevents competing writes; failed saves retain the previous confirmed state.
+
+17. **Four earned highlights.** Attempting a fifth displays You can highlight up to 4 trophies. The server validates at most four unique IDs against earned milestones from current persisted learning activity. Unearned items have no add control. Existing auth profile display metadata stores highlights; empty arrays stay empty. Chrome verifies add, remove, empty selection, four-choice persistence and rejection of a fifth after refresh, plus a newly authenticated browser session restoring saved highlights.
+
+18. **Explore.** The public Search transcripts entry remains absent. Admin transcript tools remain available. No new For You feed, extraction, ranking or public review display was added. Existing public Explore/Watch/Word Search access is preserved.
+
+19. **Reader/mobile layout.** Preserved the shared 104px-plus-safe-area bottom clearance and transparent reading-view wrapper. Chrome verifies final chapter navigation clears fixed navigation, the PDF/review buttons remain balanced and tappable, and the controls have no group overlay. Only the redundant learning-activity level tile is removed; profile levels remain visible.
+
+20. **Review investigation.** Mobile and website reuse `public.book_reviews`, with book/user linkage, rating 1-5 and review text up to 2,000 characters. Existing own-row SELECT/INSERT/UPDATE/DELETE policies include ownership checks. Leave a Review edits the user's existing personal record. Browser verification saves and restores it after reload. No duplicate table, public averages, counts or review-list/modal was introduced.
+
+21. **Database/security.** Deployed `20261007154352_website_final_overhaul.sql` changes optional-note validation and existing role/Premium/import functions, and adds the service-only atomic access RPC. No new tables or username column. All access/import mutations reject client execution; server identity comes from verified cookies. Live transaction checks verify independent roles, notes, inherited Premium, revocation, existing handle persistence, duplicate rejection, 5,001 indexed segments, rich token retention and client denial. All synthetic records were rolled back. The security advisor comparison showed no new findings; existing unrelated findings were unchanged. Existing RLS boundaries are retained, following the [Supabase RLS guide](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+22. **Changed files.** See the list below. The lint configuration now excludes generated browser-build/test artifacts so verification checks source code.
+
+23. **Verification results.** Production build, TypeScript and lint pass. The final complete Vitest run passes **91 test files, 559 tests**, with two opt-in live files / three live audiobook tests skipped (562 tests total), in 274.67 seconds. Command: `npm test -- --run --maxWorkers=8 --testTimeout=15000`. All 16 distinct Chrome acceptance scenarios pass across the main run and targeted reruns, including fresh-login trophy persistence. Rich-export checks pass 22/22 and the separate reviewer run passes 11/11. Earlier verification exposed stale Memory auth mocks, browser selectors acting during redirects and two five-second UI timeouts while build/browser workers competed; the final run uses corrected mocks/selectors, completed-save waits and sufficient UI test time without concurrent build/browser work. Detailed results are in `docs/validation/website/final-overhaul-vitest-verified.log`, `final-overhaul-build.log`, `final-overhaul-lint.log`, `final-overhaul-final-lint.log`, `final-overhaul-persistence-rerun.log`, and the other targeted logs. Live transaction checks also passed the database cases described in item 21.
+
+24. **Practical limitations.** Website changes need the existing hosting publication workflow. Untimed book text cannot become a timed video transcript without genuine start/end times; the importer explains this instead of fabricating timings. Start-only episode arrays need the final video duration. Rich token timings are retained in raw JSON and exports; this task does not add a new word-level playback UI. Already issued signed audio URLs retain their existing expiry. Browser tests use isolated synthetic accounts/media, while separate live checks validate the actual deployed database. Three opt-in live audiobook upload/source tests are skipped in the default suite; actual browser playback and deployed-database entitlement checks are covered separately. No real checkout or external-video privacy change was tested.
+
+Changed source and test files:
+
+- `app/(admin)/admin/components/AdminNav.tsx`
+- `app/(admin)/admin/components/TranscriptJsonField.tsx`
+- `app/(admin)/admin/transcripts/AdminTranscripts.test.tsx`
+- `app/(admin)/admin/transcripts/AdminTranscripts.tsx`
 - `app/(admin)/admin/users/UsersDashboard.test.tsx`
 - `app/(admin)/admin/users/UsersDashboard.tsx`
-- `app/actions/bookReviews.ts`
+- `app/AccountAccessContext.tsx`
+- `app/actions/entitlements.ts`
 - `app/actions/memory-errors.test.ts`
-- `app/actions/memory-review.test.ts`
-- `app/actions/memory.ts`
-- `app/actions/premium.test.ts`
-- `app/actions/premium.ts`
+- `app/actions/profiles.test.ts`
 - `app/actions/profiles.ts`
 - `app/actions/reviews.ts`
-- `app/books/[book]/BookReadingCta.tsx`
-- `app/books/[book]/BookReviewButton.tsx`
-- `app/books/[book]/[chapter]/ChapterAudioPlayer.test.tsx`
-- `app/books/[book]/[chapter]/ChapterAudioPlayer.tsx`
-- `app/books/[book]/[chapter]/ChapterReader.tsx`
-- `app/books/[book]/[chapter]/page.tsx`
-- `app/books/[book]/page.tsx`
-- `app/components/HomeHero.tsx`
-- `app/components/PdfDownloadButton.tsx`
+- `app/actions/transcripts.test.ts`
+- `app/actions/transcripts.ts`
 - `app/components/PremiumPrompt.tsx`
-- `app/components/home/HomeDashboard.tsx`
-- `app/explore/ExploreFeed.tsx`
-- `app/globals.css`
-- `app/lib/accountPremium.ts`
-- `app/lib/achievementPreview.test.ts`
-- `app/lib/achievements.ts`
-- `app/lib/bookReaderSettings.ts`
-- `app/lib/brand.ts`
 - `app/lib/entitlements.test.ts`
 - `app/lib/entitlements.ts`
-- `app/lib/memory.test.ts`
-- `app/lib/memory.ts`
-- `app/lib/memorySession.ts`
-- `app/lib/reviews.ts`
+- `app/lib/finalOverhaulMigration.test.ts`
+- `app/lib/manualTranscriptJson.test.ts`
+- `app/lib/manualTranscriptJson.ts`
+- `app/lib/manualTranscripts.ts`
 - `app/lib/supabase/database.types.ts`
-- `app/lib/websitePremiumMigration.test.ts`
-- `app/memory/MemoryPage.test.tsx`
+- `app/lib/useAccountAccess.ts`
+- `app/lib/username.test.ts`
+- `app/lib/username.ts`
 - `app/memory/MemoryPage.tsx`
-- `app/memory/page.tsx`
 - `app/profile/AchievementCabinet.tsx`
 - `app/profile/ProfileView.test.tsx`
-- `app/support/page.tsx`
-- `app/support/SupportForm.tsx`
+- `app/profile/ProfileView.tsx`
+- `docs/WEBSITE_OVERHAUL_REPORT.md`
 - `e2e/fixture-server.mjs`
 - `e2e/website-overhaul.pw.ts`
-- `playwright.config.ts`
-- `supabase/functions/audiobook-library/index.ts`
-- `supabase/migrations/20261006222630_website_premium_sessions.sql`
+- `eslint.config.mjs`
+- `supabase/migrations/20261007154352_website_final_overhaul.sql`
+
+Validation logs and refreshed mobile screenshots are in `docs/validation/website/`.
+
+Follow-up format verification: the supplied bare array of `tokens`, `timestamp`, `translation`, and positive integer `paragraph` blocks is supported. All seven token fields, including uppercase CEFR, are retained. Paragraph grouping now survives normalization and JSON export. Start-only timestamps use the next block boundary and the supplied video duration for the last block. The focused importer/export suites pass 56 tests; TypeScript and targeted lint pass. Placeholder WORD_1/WORD_2 values must be replaced by Arabic text.

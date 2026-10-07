@@ -13,6 +13,12 @@ export interface Entitlements {
   tier: AccessTier
   signedIn: boolean
   premium: boolean
+  isUser: boolean
+  isPremium: boolean
+  isEditor: boolean
+  isAdmin: boolean
+  canEditContent: boolean
+  canAdminister: boolean
   canBrowseBooks: true
   canWatchVideos: true
   canReadBooks: boolean
@@ -21,12 +27,20 @@ export interface Entitlements {
   memoryDailyLimit: number | null
 }
 
-export function resolveEntitlements(signedIn: boolean, premium: boolean): Entitlements {
-  const paid = signedIn && premium
+export function resolveEntitlements(signedIn: boolean, premium: boolean, role: 'user' | 'editor' | 'admin' = 'user'): Entitlements {
+  const admin = signedIn && role === 'admin'
+  const editor = signedIn && (role === 'editor' || admin)
+  const paid = signedIn && (premium || admin)
   return {
     tier: paid ? 'premium' : signedIn ? 'free' : 'guest',
     signedIn,
     premium: paid,
+    isUser: signedIn,
+    isPremium: paid,
+    isEditor: editor,
+    isAdmin: admin,
+    canEditContent: editor,
+    canAdminister: admin,
     canBrowseBooks: true,
     canWatchVideos: true,
     canReadBooks: signedIn,

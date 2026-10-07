@@ -5,8 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { getAuthenticatedAccess, guardAdmin } from '@/app/actions/auth'
 import { serviceClient } from '@/app/lib/supabase'
 import type { Json } from '@/app/lib/supabase/database.types'
-import { normaliseManualTranscript, transcriptVideoId } from '@/app/lib/manualTranscripts'
-import { normaliseManualTranscriptJson, serialiseTranscriptJson, transcriptJsonFilename } from '@/app/lib/manualTranscriptJson'
+import { normaliseManualTranscript, transcriptVideoId, type CanonicalChunk } from '@/app/lib/manualTranscripts'
+import { MAX_TRANSCRIPT_BYTES, normaliseManualTranscriptJson, serialiseTranscriptJson, transcriptJsonFilename } from '@/app/lib/manualTranscriptJson'
 
 export interface TranscriptRow {id:string;youtube_id:string;canonical_url:string;title:string;channel:string|null;thumbnail:string;duration_seconds:number|null;provider:string;status:string;translation_status:string;searchable:boolean;created_at:string;updated_at:string;error_code:string|null;website_generation?:boolean}
 export interface TranscriptSegment {id:number;position:number;original_text:string;english_text:string|null;start_seconds:number;end_seconds:number;start_ms?:number;end_ms?:number}
@@ -68,13 +68,13 @@ export async function addAdminYouTubeTranscript(input:string):Promise<string> {
   await recordAdminOrigin(actor,data)
   revalidatePath('/admin/transcripts');return data
 }
-export async function importAdminManualTranscript(input:{url:string;title:string;channel?:string;json?:string;arabic?:string;english?:string;searchable:boolean}):Promise<string> {
+export async function importAdminManualTranscript(input:{url:string;title:string;channel?:string;json?:string;arabic?:string;english?:string;searchable:boolean;durationSeconds?:number}):Promise<string> {
   const actor=await adminIdentity()
-  const value=z.object({url:z.string().trim().max(2048).refine(value=>/^https?:\/\//i.test(value),'Enter a complete YouTube URL, including https://.'),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300).default(''),json:z.string().max(1048576).optional(),arabic:z.string().max(1048576).optional(),english:z.string().max(1048576).optional(),searchable:z.boolean()}).parse(input)
+  const value=z.object({url:z.string().trim().max(2048).refine(value=>/^https?:\/\//i.test(value),'Enter a complete YouTube URL, including https://.'),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300).default(''),json:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),arabic:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),english:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),searchable:z.boolean(),durationSeconds:z.number().finite().positive().max(43200).optional()}).parse(input)
   const id=transcriptVideoId(value.url)
-  const raw=value.json!==undefined?normaliseManualTranscriptJson(value.json):normaliseManualTranscript(value.arabic??'',value.english)
+  const raw=value.json!==undefined?normaliseManualTranscriptJson(value.json,value.durationSeconds):normaliseManualTranscript(value.arabic??'',value.english)
   const {data,error}=await serviceClient.rpc('admin_import_youtube_transcript',{p_actor:actor,p_youtube_id:id,p_title:value.title,p_channel:value.channel||'Unknown channel',p_raw:raw as unknown as Json,p_searchable:value.searchable})
-  if(error)throw new Error('Unable to import the timed transcript. Existing canonical content has not been replaced.')
+  if(error)throw new Error(/^(Segment \d+:|Transcript needs|Invalid transcript|Transcript could not)/.test(error.message) ? error.message : 'Unable to import the timed transcript. Existing canonical content has not been replaced.')
   await recordAdminOrigin(actor,data)
   for(const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${data}`])revalidatePath(path);return data
 }
@@ -126,7 +126,7 @@ export async function loadAdminTranscript(id:string,after=-1,seconds?:number){aw
 export async function downloadAdminTranscriptJson(id: string): Promise<{ filename: string; json: string }> {
   await guardAdmin()
   z.string().uuid().parse(id)
-  const { data: video, error } = await serviceClient.from('youtube_transcripts').select('title').eq('id', id).maybeSingle()
+  const { data: video, error } = await serviceClient.from('youtube_transcripts').select('title,raw_transcript').eq('id', id).maybeSingle()
   if (error) throw new Error('Unable to load transcript for download.')
   if (!video) throw new Error('Transcript is no longer available.')
   const segments: TranscriptSegment[] = []
@@ -144,5 +144,16 @@ export async function downloadAdminTranscriptJson(id: string): Promise<{ filenam
   const { data: current, error: checkError } = await serviceClient.from('youtube_transcripts').select('id').eq('id', id).maybeSingle()
   if (checkError || !current) throw new Error('Transcript is no longer available. Please retry.')
   if (!segments.length) throw new Error('This transcript has no segments to download yet.')
-  return { filename: transcriptJsonFilename(video.title), json: serialiseTranscriptJson(segments) }
+  const raw = video.raw_transcript
+  const rich = raw && typeof raw === 'object' && !Array.isArray(raw) && Array.isArray(raw.content) ? raw.content : []
+  const portable = JSON.parse(serialiseTranscriptJson(segments)) as { content: CanonicalChunk[] }
+  // Match by stored position and timing; retain current English from indexed segments.
+  portable.content = portable.content.map((chunk, index) => {
+    const source = rich[index]
+    if (!source || typeof source !== 'object' || Array.isArray(source) || source.offset !== chunk.offset || source.text !== chunk.text) return chunk
+    const metadata: Record<string, unknown> = {}
+    for (const key of ['tokens', 'sentence_id', 'sentence_index', 'id', 'index', 'punctuation', 'paragraph']) if (source[key] !== undefined) metadata[key] = source[key]
+    return { ...metadata, ...chunk }
+  })
+  return { filename: transcriptJsonFilename(video.title), json: JSON.stringify(portable, null, 2) }
 }

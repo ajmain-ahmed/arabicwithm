@@ -62,25 +62,26 @@ test('Premium starts several Memory sessions without a daily limit',async({page,
 })
 test('manual Premium persists and grants actual audio; revocation restores free access',async({page,context,browser})=>{
  await signIn(context,'admin');await page.goto('/admin/users');await page.getByLabel('Search by name or email').fill('free@')
- await page.getByRole('button',{name:'View User'}).click();await page.getByLabel('Reason for Premium change').fill('Browser integration test')
- await page.getByRole('button',{name:'Grant Premium',exact:true}).click();await expect(page.getByText('Premium access saved. Paid subscription access is unchanged.')).toBeVisible()
+ await page.getByRole('button',{name:'View User'}).click();await page.getByRole('checkbox',{name:'Premium',exact:true}).check()
+ await page.getByRole('button',{name:'Save access',exact:true}).click();await expect(page.getByText('Access saved.')).toBeVisible()
  const learner=await browser.newContext({ignoreHTTPSErrors:true});await signIn(learner,'free');const read=await learner.newPage();await read.goto(`${webUrl}/books/test-book/chapter-1`);await read.bringToFront();await playAudio(read)
  await read.goto(`${webUrl}/profile`);await read.getByText('AWM+ active',{exact:true}).scrollIntoViewIfNeeded();await read.getByRole('button',{name:'AWM+ active',exact:true}).click();await expect(read.getByRole('dialog').getByRole('button',{name:'Continue learning',exact:true})).toBeVisible();await read.getByRole('dialog').getByRole('button',{name:'Continue learning',exact:true}).click();await expect(read.getByRole('dialog')).toHaveCount(0);await read.goto(`${webUrl}/books/test-book/chapter-1`)
- await page.getByLabel('Reason for Premium change').fill('Revoke test grant');await page.getByRole('button',{name:'Revoke manual Premium',exact:true}).click();await expect(page.getByText('Premium access saved. Paid subscription access is unchanged.')).toBeVisible()
+ await page.getByRole('checkbox',{name:'Premium',exact:true}).uncheck();await page.getByRole('button',{name:'Save access',exact:true}).click();await expect(page.getByText('Access saved.')).toBeVisible()
  await read.reload();await read.getByRole('button',{name:'Play Audio',exact:true}).click();await expect(read.getByRole('dialog')).toBeVisible();await expect(read.locator('audio')).toHaveCount(0);await learner.close()
 })
 test('book review writes the existing personal record and restores after refresh',async({page,context})=>{
  await signIn(context,'free');await page.goto('/books/test-book');await page.getByRole('button',{name:'Leave a Review',exact:true}).click();await page.getByLabel('Your review',{exact:true}).fill('A helpful story.');await page.getByRole('button',{name:'Save review',exact:true}).click();await expect(page.getByText('Review saved.')).toBeVisible()
  await page.reload();await page.getByRole('button',{name:'Leave a Review',exact:true}).click();await expect(page.getByLabel('Your review',{exact:true})).toHaveValue('A helpful story.');await expect(page.getByRole('heading',{name:/average|reviews/i})).toHaveCount(0)
 })
-test('earned trophy additions and an empty cabinet survive refresh',async({page,context,request})=>{
+test('earned trophy additions and an empty cabinet survive refresh',async({page,context,request,browser})=>{
  await signIn(context,'free');await request.post(`${backendUrl}/fixture/earned`,{data:{userId:ids.free}})
  await page.goto('/profile');await page.getByRole('button',{name:'Open Trophy Cabinet'}).click()
- const dialog=page.getByRole('dialog');await expect(dialog.locator('[aria-label^="Level 10."]').locator('..').getByRole('button',{name:'Add to cabinet'})).toHaveCount(0);const trophy=dialog.locator('[aria-label^="Word Explorer 1."]').locator('..')
- while(await dialog.getByRole('button',{name:'Remove from cabinet'}).count())await dialog.getByRole('button',{name:'Remove from cabinet'}).first().click()
- await trophy.getByRole('button',{name:'Add to cabinet'}).click();await dialog.getByRole('button',{name:'Save trophy highlights'}).click();await expect(dialog.getByText('Trophy highlights saved.')).toBeVisible();await page.reload()
+ const dialog=page.getByRole('dialog');await expect(dialog.locator('[aria-label^="Level 10."]').locator('..').getByRole('button',{name:/^Add .* to cabinet$/})).toHaveCount(0);const trophy=dialog.locator('[aria-label^="Word Explorer 1."]').locator('..')
+ while(await dialog.getByRole('button',{name:/^Remove .* from cabinet$/}).count()){const count=await dialog.getByRole('button',{name:/^Remove .* from cabinet$/}).count();await dialog.getByRole('button',{name:/^Remove .* from cabinet$/}).first().click();await expect(dialog.getByRole('button',{name:/^Remove .* from cabinet$/})).toHaveCount(count-1)}
+ await trophy.getByRole('button',{name:/^Add .* to cabinet$/}).click();await expect(dialog.getByRole('button',{name:/^Remove .* from cabinet$/})).toHaveCount(1);await expect(dialog.getByText('Trophy highlights saved.')).toBeVisible();await page.reload()
  await expect(page.getByRole('button',{name:'Open Trophy Cabinet'})).toContainText('Word Explorer 1')
- await page.getByRole('button',{name:'Open Trophy Cabinet'}).click();await page.getByRole('dialog').getByRole('button',{name:'Remove from cabinet'}).click();await page.getByRole('button',{name:'Save trophy highlights'}).click();await expect(page.getByText('Trophy highlights saved.')).toBeVisible();await page.reload();await expect(page.getByRole('button',{name:'Open Trophy Cabinet'})).not.toContainText('Word Explorer 1')
+ const fresh=await browser.newContext({ignoreHTTPSErrors:true});await signIn(fresh,'free');const restored=await fresh.newPage();await restored.goto(`${webUrl}/profile/${ids.free}`);await expect(restored.getByRole('button',{name:'Open Trophy Cabinet'})).toContainText('Word Explorer 1');await fresh.close()
+ await page.getByRole('button',{name:'Open Trophy Cabinet'}).click();await page.getByRole('dialog').getByRole('button',{name:'Remove Word Explorer 1 from cabinet',exact:true}).click();await expect(page.getByRole('dialog').getByRole('button',{name:/^Remove .* from cabinet$/})).toHaveCount(0);await expect(page.getByText('Trophy highlights saved.')).toBeVisible();await page.reload();await expect(page.getByRole('button',{name:'Open Trophy Cabinet'})).not.toContainText('Word Explorer 1')
 })
 
 test('free readers can open later chapters and Explore omits transcript search',async({page,context})=>{
@@ -98,4 +99,39 @@ test('mobile PDF and review controls match and clear the fixed navigation',async
 test('learning activity removes its level tile while the profile keeps its level',async({page,context})=>{
  await signIn(context,'free');await page.goto('/');await expect(page.getByRole('heading',{name:'Your learning activity',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:/^Current level:/})).toHaveCount(0)
  await page.goto('/profile');await expect(page.getByText(/^Level 1 .*toward Level 2$/)).toBeVisible()
+})
+
+
+test('mobile Admin uses a menu and desktop retains all destinations',async({page,context})=>{
+ await signIn(context,'admin');await page.setViewportSize({width:375,height:812});await page.goto('/admin/users')
+ const menu=page.getByRole('button',{name:'Admin',exact:true});await expect(menu).toBeVisible();await menu.click()
+ await expect(page.getByRole('menuitem',{name:'Transcripts',exact:true})).toBeVisible();await page.getByRole('menuitem',{name:'Users',exact:true}).click();await expect(page.getByRole('menu')).toHaveCount(0)
+ await page.setViewportSize({width:1440,height:900});await expect(menu).toBeHidden();await expect(page.getByRole('link',{name:'Hans Wehr',exact:true})).toBeVisible()
+})
+test('username uses the existing handle, rejects duplicates and survives reload',async({page,context,browser})=>{
+ await signIn(context,'free');await page.goto(`/profile/${ids.free}`);await page.getByLabel('Select a username').fill('learner_one')
+ await expect(page.getByText('Username available.',{exact:true})).toBeVisible();await page.getByRole('button',{name:'Save profile',exact:true}).click();await expect(page.getByText('Profile saved.',{exact:true})).toBeVisible();await page.reload();await expect(page.getByLabel('Select a username')).toHaveValue('learner_one')
+ const other=await browser.newContext({ignoreHTTPSErrors:true});await signIn(other,'premium');const second=await other.newPage();await second.goto(`${webUrl}/profile/${ids.premium}`);await second.getByLabel('Select a username').fill('learner_one');await expect(second.getByText('That username is already taken.',{exact:true})).toBeVisible();await expect(second.getByRole('button',{name:'Save profile',exact:true})).toBeDisabled();await other.close()
+})
+test('independent access controls save with blank notes, information and history stay collapsed',async({page,context})=>{
+ await signIn(context,'admin');await page.goto('/admin/users');await page.getByLabel('Search by name or email').fill('free@');await page.getByRole('button',{name:'View User'}).click()
+ const dialog=page.getByRole('dialog');await expect(dialog.getByRole('heading',{name:'Access Level'})).toBeVisible();await expect(dialog.getByRole('region',{name:'Account information'})).toHaveCount(0)
+ await dialog.getByRole('checkbox',{name:'Editor',exact:true}).check();await dialog.getByRole('button',{name:'Save access',exact:true}).click();await expect(dialog.getByText('Access saved.',{exact:true})).toBeVisible();await expect(dialog.getByRole('checkbox',{name:'Premium',exact:true})).not.toBeChecked()
+ await dialog.getByRole('checkbox',{name:'Premium',exact:true}).check();await dialog.getByLabel('Notes (optional)').fill('Trusted reviewer');await dialog.getByRole('button',{name:'Save access',exact:true}).click()
+ await dialog.getByRole('button',{name:'Notes & History'}).click();await expect(dialog.getByText('Trusted reviewer',{exact:true})).toBeVisible();await dialog.getByRole('button',{name:'Close',exact:true}).click()
+ await page.reload();await page.getByLabel('Search by name or email').fill('free@');await page.getByRole('button',{name:'View User'}).click();await expect(page.getByRole('checkbox',{name:'Editor',exact:true})).toBeChecked();await expect(page.getByRole('checkbox',{name:'Premium',exact:true})).toBeChecked();await expect(page.getByRole('checkbox',{name:'Admin',exact:true})).not.toBeChecked()
+})
+test('Memory offers small sessions while keeping historical sessions supported',async({page,context})=>{
+ await signIn(context,'free');await page.goto('/memory');for(const count of [5,10,15,20])await expect(page.getByRole('button',{name:new RegExp(`^${count} cards`)})).toBeVisible();await expect(page.getByRole('button',{name:/^50 cards/})).toHaveCount(0)
+})
+
+
+test('four-trophy limit explains the fifth attempt and unearned trophies cannot be added',async({page,context,request})=>{
+ await signIn(context,'free');await request.post(`${backendUrl}/fixture/earned`,{data:{userId:ids.free,words:1000}});await page.goto('/profile');await page.getByRole('button',{name:'Open Trophy Cabinet'}).click()
+ const dialog=page.getByRole('dialog'),remove=dialog.getByRole('button',{name:/^Remove .* from cabinet$/})
+ while(await remove.count()){const n=await remove.count();await remove.first().click();await expect(remove).toHaveCount(n-1)}
+ for(let i=1;i<=4;i++){await dialog.getByRole('button',{name:`Add Word Explorer ${i} to cabinet`,exact:true}).click();await expect(remove).toHaveCount(i)}
+ await dialog.getByRole('button',{name:'Add Word Explorer 5 to cabinet',exact:true}).click();await expect(dialog.getByText('You can highlight up to 4 trophies.',{exact:true})).toBeVisible();await expect(remove).toHaveCount(4)
+ await expect(dialog.locator('[aria-label^="Level 10."]').locator('..').getByRole('button',{name:/^Add/})).toHaveCount(0)
+ await page.reload();await page.getByRole('button',{name:'Open Trophy Cabinet'}).click();await expect(page.getByRole('dialog').getByRole('button',{name:/^Remove .* from cabinet$/})).toHaveCount(4)
 })

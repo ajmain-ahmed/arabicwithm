@@ -53,7 +53,7 @@ export async function managedUserDetails(id: string) {
 export async function changeManagedRole(id: string, role: AccountRole, reason: string, confirmation: string) {
  const actor = await adminActor()
  if (confirmation !== id) throw new Error('Confirm the target account ID')
- const { error } = await serviceClient.rpc('change_account_role', { p_actor: actor, p_target: uuid.parse(id), p_role: z.enum(['user','editor','admin']).parse(role), p_reason: z.string().trim().min(1).max(2000).parse(reason) })
+ const { error } = await serviceClient.rpc('change_account_role', { p_actor: actor, p_target: uuid.parse(id), p_role: z.enum(['user','editor','admin']).parse(role), p_reason: z.string().trim().max(2000).parse(reason) })
  if (error) throw new Error(error.message)
  revalidatePath('/admin/users')
 }
@@ -172,8 +172,18 @@ export async function reviewSuggestion(id: string, action: 'accept' | 'reject' |
 
 export async function changeManagedPremium(id:string, enabled:boolean, reason:string) {
  const actor=await adminActor()
- const {data,error}=await serviceClient.rpc('admin_set_manual_premium',{p_actor:actor,p_target:uuid.parse(id),p_enabled:z.boolean().parse(enabled),p_reason:z.string().trim().min(1).max(2000).parse(reason)})
+ const {data,error}=await serviceClient.rpc('admin_set_manual_premium',{p_actor:actor,p_target:uuid.parse(id),p_enabled:z.boolean().parse(enabled),p_reason:z.string().trim().max(2000).parse(reason)})
  if(error)throw new Error('Unable to save manual Premium access.')
  revalidatePath('/admin/users');revalidatePath('/profile')
  return data
+}
+
+/** Save the independent grant and editorial capabilities together, with existing audit history. */
+export async function changeManagedAccess(id: string, input: { premium: boolean; editor: boolean; admin: boolean; notes: string }) {
+ const actor = await adminActor()
+ const value = z.object({ premium: z.boolean(), editor: z.boolean(), admin: z.boolean(), notes: z.string().trim().max(2000) }).parse(input)
+ const { data, error } = await serviceClient.rpc('admin_set_account_access', { p_actor: actor, p_target: uuid.parse(id), p_role: value.admin ? 'admin' : value.editor ? 'editor' : 'user', p_premium: value.premium, p_notes: value.notes })
+ if (error) throw new Error(error.message)
+ revalidatePath('/admin/users'); revalidatePath('/profile'); revalidatePath('/reviewer')
+ return data as unknown as { role: AccountRole; premium: boolean; manual: boolean }
 }
