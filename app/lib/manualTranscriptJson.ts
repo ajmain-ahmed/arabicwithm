@@ -1,16 +1,10 @@
 import type { CanonicalChunk } from '@/app/lib/manualTranscripts'
+import { MAX_TRANSCRIPT_TIME_MS, MissingTranscriptDuration, parseTranscriptTime } from '@/app/lib/transcriptTiming'
 
 /** Resource budget for authenticated imports, not a per-sentence/count restriction. */
 export const MAX_TRANSCRIPT_BYTES = 20 * 1024 * 1024
-const MAX_TIME = 43_200_000
+const MAX_TIME = MAX_TRANSCRIPT_TIME_MS
 const object = (value: unknown): value is Record<string, unknown> => Boolean(value && typeof value === 'object' && !Array.isArray(value))
-function timestamp(value: unknown): number | undefined {
-  if (typeof value === 'number' && Number.isFinite(value)) return Math.round(value * 1000)
-  if (typeof value !== 'string' || !/^\d+(?::\d{2}){1,2}(?:\.\d{1,3})?$/.test(value)) return undefined
-  const parts = value.split(':').map(Number)
-  if (parts.slice(1).some(n => n >= 60)) return undefined
-  return Math.round(parts.reduce((sum, n) => sum * 60 + n, 0) * 1000)
-}
 
 /** Detect legitimate AWM inputs once; every caller saves the same canonical model. */
 export function normaliseManualTranscriptJson(input: string, videoDurationSeconds?: number): { provider: 'manual'; lang: 'ar'; content: CanonicalChunk[] } {
@@ -23,14 +17,23 @@ export function normaliseManualTranscriptJson(input: string, videoDurationSecond
   const values = Array.isArray(parsed) ? parsed : key ? root[key] : null
   if (!Array.isArray(values) || !values.length) throw new Error('This transcript format could not be recognised. Supply a non-empty content[], sentences[], segments[], or timed AWM block array.')
   const label = key === 'sentences' ? 'Sentence' : 'Segment'
-  const starts = values.map(value => {
+  const starts = values.map((value, index) => {
     if (!object(value)) return undefined
-    if ('offset' in value) return value.offset
-    if ('start_ms' in value) return value.start_ms
-    if ('start_seconds' in value) return typeof value.start_seconds === 'number' ? Math.round(value.start_seconds * 1000) : undefined
-    return timestamp(value.timestamp)
+    try {
+      if ('offset' in value) return parseTranscriptTime(value.offset)
+      if ('start_ms' in value) return parseTranscriptTime(value.start_ms)
+      if ('start_seconds' in value) return parseTranscriptTime(value.start_seconds, 'seconds')
+      if ('timestamp' in value) return parseTranscriptTime(value.timestamp, 'seconds')
+      return undefined
+    } catch (error) { throw new Error(`${label} ${index + 1}: invalid start_ms / offset / timestamp. ${error instanceof Error ? error.message : ''}`) }
   })
-  const videoEnd = typeof root.duration_ms === 'number' ? root.duration_ms : typeof root.duration_seconds === 'number' ? Math.round(root.duration_seconds * 1000) : videoDurationSeconds !== undefined ? Math.round(videoDurationSeconds * 1000) : undefined
+  let videoEnd: number | undefined
+  try {
+    if (root.duration_ms !== undefined) videoEnd = parseTranscriptTime(root.duration_ms)
+    else if (root.duration_seconds !== undefined) videoEnd = parseTranscriptTime(root.duration_seconds, 'seconds')
+    else if (typeof root.duration === 'string') videoEnd = parseTranscriptTime(root.duration)
+    else if (videoDurationSeconds !== undefined) videoEnd = parseTranscriptTime(videoDurationSeconds, 'seconds')
+  } catch (error) { throw new Error(`Invalid video duration. ${error instanceof Error ? error.message : ''}`) }
   const content = values.map((value, index): CanonicalChunk => {
     const fail = (reason: string): never => { throw new Error(`${label} ${index + 1}: ${reason}`) }
     if (!object(value)) return fail('must be an object.')
@@ -52,13 +55,21 @@ export function normaliseManualTranscriptJson(input: string, videoDurationSecond
     if (typeof text !== 'string' || !text.trim() || !/\p{Script=Arabic}/u.test(text)) return fail('text must contain Arabic (text or arabic, or Arabic tokens).')
     const offset = starts[index]
     if (!Number.isSafeInteger(offset) || Number(offset) < 0) return fail('missing or invalid start_ms / offset / timestamp; timed imports require a start time.')
-    let end: unknown
-    if ('duration' in item) end = typeof item.duration === 'number' ? Number(offset) + item.duration : undefined
-    else if ('end_ms' in item) end = item.end_ms
-    else if ('end_seconds' in item) end = typeof item.end_seconds === 'number' ? Math.round(item.end_seconds * 1000) : undefined
-    else if ('timestamp' in item) end = starts[index + 1] ?? videoEnd
-    else return fail('missing end_ms or duration.')
-    if (!Number.isSafeInteger(end) || Number(end) <= Number(offset) || Number(end) > MAX_TIME) return fail('duration / end_ms must give a positive interval within 12 hours. For start-only AWM blocks, supply the video duration for the final block.')
+    let end: number | undefined
+    try {
+      if (item.end_ms !== undefined) end = parseTranscriptTime(item.end_ms)
+      else if (item.end_seconds !== undefined) end = parseTranscriptTime(item.end_seconds, 'seconds')
+      else if (item.duration_ms !== undefined) end = Number(offset) + parseTranscriptTime(item.duration_ms)
+      // Legacy numeric duration is milliseconds; explicit duration_seconds is seconds.
+      else if (item.duration !== undefined) end = Number(offset) + parseTranscriptTime(item.duration)
+      else if (item.duration_seconds !== undefined) end = Number(offset) + parseTranscriptTime(item.duration_seconds, 'seconds')
+      else if (index < values.length - 1) end = starts[index + 1]
+      else end = videoEnd
+    } catch (error) { return fail(`invalid end_ms / duration. ${error instanceof Error ? error.message : ''}`) }
+    if (end === undefined && index === values.length - 1) throw new MissingTranscriptDuration()
+    if (end === undefined) return fail('the next block needs a valid start time to infer this block\'s end.')
+    if (end <= Number(offset)) return fail('end time must be after its start. Check timestamp order and that video duration extends beyond the final start.')
+    if (end > MAX_TIME) return fail('end time exceeds the 12-hour limit. Numeric offset, start_ms, end_ms and duration use milliseconds; *_seconds fields use seconds.')
     if (tokens?.some(token => token.start_ms !== undefined && (Number(token.start_ms) < Number(offset) || Number(token.end_ms) > Number(end)))) return fail('token timing must fall within its sentence.')
     const english = item.english ?? item.translation ?? item.english_text
     if (english !== undefined && english !== null && typeof english !== 'string') return fail('english / translation must be a string.')

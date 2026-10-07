@@ -3,8 +3,50 @@ const mocks=vi.hoisted(()=>({guard:vi.fn(),access:vi.fn(),rpc:vi.fn(),from:vi.fn
 vi.mock('@/app/actions/auth',()=>({guardAdmin:mocks.guard,getAuthenticatedAccess:mocks.access}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{rpc:mocks.rpc,from:mocks.from}}))
 vi.mock('next/cache',()=>({revalidatePath:mocks.revalidate}))
-import {addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson} from './transcripts'
+import {addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson} from './transcripts'
 beforeEach(()=>{vi.resetAllMocks();mocks.guard.mockResolvedValue(undefined);mocks.access.mockResolvedValue({admin:true,userId:'11111111-1111-4111-8111-111111111111'})})
+
+function metadata(duration:number|null){const query={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:duration===null?null:{duration_seconds:duration},error:null})};mocks.from.mockReturnValue(query);return query}
+const startOnlyJson=JSON.stringify([{tokens:[{arabic:'\u0645\u0631\u062d\u0628\u0627',english:'hello'}],timestamp:'00:00',translation:'Hello'},{arabic:'\u0645\u0631\u062d\u0628\u0627',start_ms:630000}])
+describe('manual import timing preflight',()=>{
+ it.each(['ZBynl03Vp-w','https://www.youtube.com/watch?v=ZBynl03Vp-w','https://youtu.be/ZBynl03Vp-w','https://www.youtube.com/shorts/ZBynl03Vp-w','https://www.youtube.com/embed/ZBynl03Vp-w'])('accepts %s without demanding duration for fully timed content',async url=>{
+  mocks.rpc.mockResolvedValue({data:'saved',error:null})
+  const json=JSON.stringify([{arabic:'\u0645\u0631\u062d\u0628\u0627',start_ms:1000,end_ms:5000}])
+  expect(await validateAdminManualTranscript({url,json,duration:''})).toMatchObject({ok:true,segments:1,durationSource:'transcript'})
+  expect(await importAdminManualTranscriptResult({url,title:'Title',json,searchable:true,duration:''})).toEqual({ok:true,id:'saved'})
+  expect(mocks.rpc).toHaveBeenCalledWith('admin_import_youtube_transcript',expect.objectContaining({p_youtube_id:'ZBynl03Vp-w'}));expect(mocks.from).not.toHaveBeenCalled()
+ })
+ it('reports the missing final duration before Import without mutating anything',async()=>{
+  metadata(null)
+  expect(await validateAdminManualTranscript({url:'ZBynl03Vp-w',json:startOnlyJson})).toMatchObject({ok:false,needsDuration:true,error:expect.stringContaining('Enter the video duration')})
+  expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+ it.each([['10:57',27000],['1:10:57',3627000]])('imports start-only blocks with human duration %s',async(duration,lastDuration)=>{
+  metadata(null);mocks.rpc.mockResolvedValue({data:'saved',error:null})
+  expect(await validateAdminManualTranscript({url:'ZBynl03Vp-w',json:startOnlyJson,duration})).toMatchObject({ok:true,durationSource:'manual'})
+  expect(await importAdminManualTranscriptResult({url:'ZBynl03Vp-w',title:'Title',json:startOnlyJson,duration,searchable:true})).toMatchObject({ok:true})
+  expect(mocks.rpc).toHaveBeenCalledWith('admin_import_youtube_transcript',expect.objectContaining({p_raw:expect.objectContaining({content:[expect.objectContaining({offset:0,duration:630000}),expect.objectContaining({offset:630000,duration:lastDuration})]})}))
+ })
+ it('automatically reuses saved duration metadata without a manual value',async()=>{
+  const query=metadata(657)
+  expect(await validateAdminManualTranscript({url:'ZBynl03Vp-w',json:startOnlyJson})).toMatchObject({ok:true,durationSource:'saved-video'})
+  expect(query.eq).toHaveBeenCalledWith('youtube_id','ZBynl03Vp-w');expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+ it('ignores saved metadata that ends before the final start and uses manual duration',async()=>{
+  metadata(100)
+  expect(await validateAdminManualTranscript({url:'ZBynl03Vp-w',json:startOnlyJson,duration:'10:57'})).toMatchObject({ok:true,durationSource:'manual'})
+ })
+ it('rejects malformed durations and video inputs with useful errors',async()=>{
+  expect(await validateAdminManualTranscript({url:'ZBynl03Vp-w',json:startOnlyJson,duration:'657'})).toMatchObject({ok:false,error:expect.stringContaining('MM:SS')})
+  expect(await validateAdminManualTranscript({url:'not-a-video-id',json:startOnlyJson})).toMatchObject({ok:false,error:'Enter a YouTube URL or video ID.'})
+  expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+ it('authorizes preflight before reading metadata',async()=>{
+  mocks.access.mockResolvedValue({admin:false,userId:'other'})
+  expect(await validateAdminManualTranscript({url:'ZBynl03Vp-w',json:startOnlyJson})).toMatchObject({ok:false,error:'Administrators only.'})
+  expect(mocks.from).not.toHaveBeenCalled();expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+})
 describe('website transcript server boundaries',()=>{
  it('reports failed provenance marking and lets canonical reuse repair it on retry',async()=>{const lookup={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:{id:'saved'},error:null})};mocks.from.mockReturnValue(lookup);mocks.rpc.mockResolvedValueOnce({data:null,error:{message:'unavailable'}}).mockResolvedValueOnce({data:'saved',error:null});await expect(addAdminYouTubeTranscript('Dgj9fQYbCZY')).rejects.toThrow('provenance');expect(await addAdminYouTubeTranscript('Dgj9fQYbCZY')).toBe('saved');expect(mocks.rpc).toHaveBeenCalledTimes(2);expect(mocks.rpc).not.toHaveBeenCalledWith('register_youtube_transcript',expect.anything())})
 
@@ -41,8 +83,8 @@ describe('website transcript server boundaries',()=>{
  it('does not expose unpublished canonical data through the public loader',async()=>{const lookup={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:null,error:null})};mocks.from.mockReturnValue(lookup);expect(await loadPublicTranscript('11111111-1111-4111-8111-111111111111')).toBeNull();expect(lookup.eq).toHaveBeenCalledWith('status','ready');expect(lookup.eq).toHaveBeenCalledWith('searchable',true);expect(mocks.from).toHaveBeenCalledTimes(1)})
 })
 
-it('requires a complete YouTube URL and a trimmed non-empty title before importing', async()=>{
-  for(const input of [{url:'Dgj9fQYbCZY',title:'Title'},{url:'https://example.com/video',title:'Title'},{url:'https://youtu.be/Dgj9fQYbCZY',title:'   '}]){
+it('requires a recognized YouTube URL or ID and a trimmed non-empty title before importing', async()=>{
+  for(const input of [{url:'bad-id',title:'Title'},{url:'https://example.com/video',title:'Title'},{url:'https://youtu.be/Dgj9fQYbCZY',title:'   '}]){
     const result=await importAdminManualTranscriptResult({...input,json:'{"content":[]}',searchable:true})
     expect(result.ok).toBe(false)
   }

@@ -2,27 +2,39 @@
 import {useCallback,useEffect,useState} from 'react'
 import Link from 'next/link'
 import {Alert,Box,Button,Card,CardContent,Checkbox,Dialog,DialogActions,DialogContent,DialogTitle,FormControlLabel,Stack,TextField,Typography} from '@mui/material'
-import {generateAdminTranscript,deleteAdminTranscript,importAdminManualTranscriptResult,listAdminTranscripts,updateAdminTranscript,type TranscriptRow} from '@/app/actions/transcripts'
+import {generateAdminTranscript,deleteAdminTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,updateAdminTranscript,type TranscriptRow,type ManualTranscriptCheck} from '@/app/actions/transcripts'
 import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import TranscriptJsonField from '@/app/(admin)/admin/components/TranscriptJsonField'
 import {transcriptGenerationStatus,transcriptGenerationPending} from '@/app/lib/transcriptStatus'
+import {parseVideoDuration} from '@/app/lib/transcriptTiming'
 
 export default function AdminTranscripts(){
  const cache=useAdminListCache()
  const snapshot=cache.peek<{rows:TranscriptRow[];total:number}>("transcripts:0")
  const [rows,setRows]=useState<TranscriptRow[]>(snapshot?.rows??[]),[page,setPage]=useState(0),[total,setTotal]=useState(snapshot?.total??0),[loading,setLoading]=useState(!snapshot),[error,setError]=useState(''),[success,setSuccess]=useState(''),[refresh,setRefresh]=useState(0)
  const [open,setOpen]=useState(false),[url,setUrl]=useState(''),[title,setTitle]=useState(''),[channel,setChannel]=useState(''),[transcriptJson,setTranscriptJson]=useState(''),[searchable,setSearchable]=useState(true),[busy,setBusy]=useState(false),[edit,setEdit]=useState<TranscriptRow|null>(null),[formError,setFormError]=useState('')
- const [durationSeconds,setDurationSeconds]=useState('')
+ const [duration,setDuration]=useState('')
+ const [validation,setValidation]=useState<{url:string;json:string;duration:string;result:ManualTranscriptCheck}|null>(null)
+ let durationError=''
+ try {parseVideoDuration(duration)}catch(error){durationError=error instanceof Error?error.message:'Enter MM:SS or HH:MM:SS.'}
+ const checked=validation?.url===url&&validation.json===transcriptJson&&validation.duration===duration?validation.result:null
+ const ready=checked?.ok&&!durationError&&Boolean(title.trim())
+ useEffect(()=>{
+  if(!open||edit||!transcriptJson.trim()||durationError)return
+  let active=true
+  const timer=setTimeout(()=>{void validateAdminManualTranscript({url,json:transcriptJson,duration}).then(result=>{if(active)setValidation({url,json:transcriptJson,duration,result})}).catch(()=>{if(active)setValidation({url,json:transcriptJson,duration,result:{ok:false,error:'Unable to check the transcript. Change an input to retry.',needsDuration:false}})})},750)
+  return()=>{active=false;clearTimeout(timer)}
+ },[open,edit,url,transcriptJson,duration,durationError])
  const [generationUrl,setGenerationUrl]=useState(''),[generating,setGenerating]=useState(false),[deleting,setDeleting]=useState<TranscriptRow|null>(null),[deleteBusy,setDeleteBusy]=useState(false),[deleteError,setDeleteError]=useState('')
  const reload=useCallback(()=>{cache.invalidate("transcripts:");setRefresh(v=>v+1)},[cache])
  useEffect(()=>{let current=true;setLoading(!cache.peek(`transcripts:${page}`));setError('');cache.load(`transcripts:${page}`,()=>listAdminTranscripts(page)).then(result=>{if(current){setRows(result.rows);setTotal(result.total)}}).catch(e=>{if(current)setError(e.message)}).finally(()=>{if(current)setLoading(false)});return()=>{current=false}},[page,refresh,cache])
  useEffect(()=>{if(!rows.some(transcriptGenerationPending))return;const timer=setInterval(()=>{if(document.visibilityState==='visible')reload()},5000);return()=>clearInterval(timer)},[rows,reload])
- async function save(){setBusy(true);setFormError('');try{
+ async function save(){if(busy||!edit&&!ready)return;setBusy(true);setFormError('');try{
   if(edit)await updateAdminTranscript(edit.id,{title,channel,searchable})
-  else { const result=await importAdminManualTranscriptResult({url,title,json:transcriptJson,searchable,durationSeconds:durationSeconds.trim()?Number(durationSeconds):undefined});if(!result.ok)throw new Error(result.error) }
+  else { const result=await importAdminManualTranscriptResult({url,title,json:transcriptJson,searchable,duration});if(!result.ok)throw new Error(result.error) }
   setOpen(false);setSuccess(edit?'Transcript settings saved.':'Transcript imported.');reload()
  }catch(e){setFormError(e instanceof Error?e.message:'Unable to save. Please retry.')}finally{setBusy(false)}}
- function start(row:TranscriptRow|null){setEdit(row);setTitle(row?.title??'');setChannel(row?.channel??'');setSearchable(row?.searchable??true);setUrl('');setTranscriptJson('');setDurationSeconds('');setFormError('');setOpen(true)}
+ function start(row:TranscriptRow|null){setEdit(row);setTitle(row?.title??'');setChannel(row?.channel??'');setSearchable(row?.searchable??true);setUrl('');setTranscriptJson('');setDuration('');setValidation(null);setFormError('');setOpen(true)}
  async function generate(){setGenerating(true);setError('');setSuccess('');try{
   const result=await generateAdminTranscript(generationUrl)
   if(!result.ok){setError(result.error);return}
@@ -50,11 +62,15 @@ export default function AdminTranscripts(){
   <Stack direction="row" spacing={2}><Button disabled={page===0||loading} onClick={()=>setPage(p=>p-1)}>Previous</Button><Typography>Page {page+1} | {total} transcripts</Typography><Button disabled={(page+1)*30>=total||loading} onClick={()=>setPage(p=>p+1)}>Next</Button></Stack>
   <Dialog open={open} onClose={()=>{if(!busy)setOpen(false)}} fullWidth maxWidth="md"><DialogTitle>{edit?'Edit Transcript':'Manual Import'}</DialogTitle><DialogContent><Stack spacing={2} sx={{pt:1}}>
    {formError&&<Alert severity="error">{formError}</Alert>}
-   {!edit&&<TextField label="YouTube URL" value={url} onChange={e=>setUrl(e.target.value)} required/>}
+   {!edit&&<TextField label="YouTube URL or video ID" placeholder="https://youtu.be/... or ZBynl03Vp-w" value={url} onChange={e=>setUrl(e.target.value)} required disabled={busy}/>}
    <TextField label="Video Title" value={title} onChange={e=>setTitle(e.target.value)} required/>{edit&&<TextField label="Channel / source" value={channel} onChange={e=>setChannel(e.target.value)}/>}
-   {!edit&&<><TranscriptJsonField value={transcriptJson} onChange={setTranscriptJson} /><TextField label="Video duration in seconds (optional)" value={durationSeconds} onChange={event=>setDurationSeconds(event.target.value)} helperText="Needed only for the final block of an AWM transcript that has start timestamps without end times." type="number" /></>}
+   {!edit&&<><TranscriptJsonField value={transcriptJson} onChange={setTranscriptJson} /><TextField label="Video duration" placeholder="MM:SS or HH:MM:SS" value={duration} onChange={event=>setDuration(event.target.value)} required={checked?.ok===false&&checked.needsDuration} error={Boolean(durationError)} helperText={durationError||'Examples: 10:57, 42:15, 1:03:22. Only needed when the final end cannot be determined from the transcript or saved video metadata.'} disabled={busy}/>
+    {transcriptJson.trim()&&!durationError&&!checked&&<Typography role="status">Checking transcript timing...</Typography>}
+    {checked?.ok===false&&!durationError&&<Alert severity={checked.needsDuration?'warning':'error'}>{checked.error}</Alert>}
+    {checked?.ok&&<Alert severity="success">{checked.segments} {checked.segments===1?'segment':'segments'} ready to import.{checked.durationSource==='saved-video'?' Using the saved video duration.':''}</Alert>}
+   </>}
    <FormControlLabel control={<Checkbox checked={searchable} onChange={e=>setSearchable(e.target.checked)}/>} label="Publish to the shared searchable transcript library"/>
-  </Stack></DialogContent><DialogActions><Button disabled={busy} onClick={()=>setOpen(false)}>Cancel</Button><Button disabled={busy} variant="contained" onClick={()=>void save()}>{busy?'Importing...':edit?'Save':'Import'}</Button></DialogActions></Dialog>
+  </Stack></DialogContent><DialogActions><Button disabled={busy} onClick={()=>setOpen(false)}>Cancel</Button><Button disabled={busy||!edit&&!ready} variant="contained" onClick={()=>void save()}>{busy?'Importing...':edit?'Save':'Import'}</Button></DialogActions></Dialog>
   <Dialog open={Boolean(deleting)} onClose={()=>{if(!deleteBusy)setDeleting(null)}} aria-labelledby="delete-transcript-title" fullWidth maxWidth="sm"><DialogTitle id="delete-transcript-title">Delete transcript?</DialogTitle><DialogContent><Stack spacing={2}><Typography sx={{fontWeight:600}}>{deleting?.title}</Typography><Typography>This will permanently remove this transcript and its owned segments, search data, and generation records.</Typography>{deleteError&&<Alert severity="error">{deleteError}</Alert>}</Stack></DialogContent><DialogActions><Button disabled={deleteBusy} onClick={()=>setDeleting(null)}>Cancel</Button><Button color="error" variant="contained" disabled={deleteBusy} onClick={()=>void remove()}>{deleteBusy?'Deleting...':'Delete'}</Button></DialogActions></Dialog>
  </Stack>
 }

@@ -7,6 +7,7 @@ import { serviceClient } from '@/app/lib/supabase'
 import type { Json } from '@/app/lib/supabase/database.types'
 import { normaliseManualTranscript, transcriptVideoId, type CanonicalChunk } from '@/app/lib/manualTranscripts'
 import { MAX_TRANSCRIPT_BYTES, normaliseManualTranscriptJson, serialiseTranscriptJson, transcriptJsonFilename } from '@/app/lib/manualTranscriptJson'
+import { MissingTranscriptDuration, parseVideoDuration } from '@/app/lib/transcriptTiming'
 
 export interface TranscriptRow {id:string;youtube_id:string;canonical_url:string;title:string;channel:string|null;thumbnail:string;duration_seconds:number|null;provider:string;status:string;translation_status:string;searchable:boolean;created_at:string;updated_at:string;error_code:string|null;website_generation?:boolean}
 export interface TranscriptSegment {id:number;position:number;original_text:string;english_text:string|null;start_seconds:number;end_seconds:number;start_ms?:number;end_ms?:number}
@@ -68,11 +69,39 @@ export async function addAdminYouTubeTranscript(input:string):Promise<string> {
   await recordAdminOrigin(actor,data)
   revalidatePath('/admin/transcripts');return data
 }
-export async function importAdminManualTranscript(input:{url:string;title:string;channel?:string;json?:string;arabic?:string;english?:string;searchable:boolean;durationSeconds?:number}):Promise<string> {
+function manualVideoId(input: string): string {
+  try { return transcriptVideoId(input) } catch { throw new Error('Enter a YouTube URL or video ID.') }
+}
+async function resolveManualJson(json: string, youtubeId: string, duration?: string, durationSeconds?: number) {
+  const manualEnd = duration !== undefined ? parseVideoDuration(duration) : durationSeconds !== undefined ? durationSeconds * 1000 : undefined
+  try { return { raw: normaliseManualTranscriptJson(json), durationSource: 'transcript' as const } }
+  catch (error) { if (!(error instanceof MissingTranscriptDuration)) throw error }
+  // The existing metadata acquisition provides title/thumbnail, not duration.
+  // Reuse a duration already saved by ingestion; do not start a paid provider job.
+  const { data } = await serviceClient.from('youtube_transcripts').select('duration_seconds').eq('youtube_id', youtubeId).maybeSingle()
+  const saved = data?.duration_seconds
+  if (typeof saved === 'number' && Number.isFinite(saved) && saved > 0 && saved <= 43200) {
+    try { return { raw: normaliseManualTranscriptJson(json, saved), durationSource: 'saved-video' as const } }
+    catch (error) { if (!(error instanceof Error) || !error.message.includes('video duration extends beyond')) throw error }
+  }
+  if (manualEnd === undefined) throw new MissingTranscriptDuration()
+  return { raw: normaliseManualTranscriptJson(json, manualEnd / 1000), durationSource: 'manual' as const }
+}
+export type ManualTranscriptCheck = {ok:true;segments:number;durationSource:'transcript'|'saved-video'|'manual'} | {ok:false;error:string;needsDuration:boolean}
+/** Read-only preflight; the import repeats the same validation before writing. */
+export async function validateAdminManualTranscript(input:{url:string;json:string;duration?:string}):Promise<ManualTranscriptCheck> {
+  try {
+    await adminIdentity()
+    const value=z.object({url:z.string().trim().max(2048),json:z.string().max(MAX_TRANSCRIPT_BYTES),duration:z.string().max(30).optional()}).parse(input)
+    const {raw,durationSource}=await resolveManualJson(value.json,manualVideoId(value.url),value.duration)
+    return {ok:true,segments:raw.content.length,durationSource}
+  }catch(error){return {ok:false,error:error instanceof z.ZodError?error.issues[0].message:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to check the transcript.',needsDuration:error instanceof MissingTranscriptDuration}}
+}
+export async function importAdminManualTranscript(input:{url:string;title:string;channel?:string;json?:string;arabic?:string;english?:string;searchable:boolean;duration?:string;durationSeconds?:number}):Promise<string> {
   const actor=await adminIdentity()
-  const value=z.object({url:z.string().trim().max(2048).refine(value=>/^https?:\/\//i.test(value),'Enter a complete YouTube URL, including https://.'),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300).default(''),json:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),arabic:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),english:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),searchable:z.boolean(),durationSeconds:z.number().finite().positive().max(43200).optional()}).parse(input)
-  const id=transcriptVideoId(value.url)
-  const raw=value.json!==undefined?normaliseManualTranscriptJson(value.json,value.durationSeconds):normaliseManualTranscript(value.arabic??'',value.english)
+  const value=z.object({url:z.string().trim().max(2048),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300).default(''),json:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),arabic:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),english:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),searchable:z.boolean(),duration:z.string().max(30).optional(),durationSeconds:z.number().finite().positive().max(43200).optional()}).parse(input)
+  const id=manualVideoId(value.url)
+  const raw=value.json!==undefined?(await resolveManualJson(value.json,id,value.duration,value.durationSeconds)).raw:normaliseManualTranscript(value.arabic??'',value.english)
   const {data,error}=await serviceClient.rpc('admin_import_youtube_transcript',{p_actor:actor,p_youtube_id:id,p_title:value.title,p_channel:value.channel||'Unknown channel',p_raw:raw as unknown as Json,p_searchable:value.searchable})
   if(error)throw new Error(/^(Segment \d+:|Transcript needs|Invalid transcript|Transcript could not)/.test(error.message) ? error.message : 'Unable to import the timed transcript. Existing canonical content has not been replaced.')
   await recordAdminOrigin(actor,data)

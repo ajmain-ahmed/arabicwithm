@@ -33,6 +33,27 @@ it.each([{offset:-1,duration:5},{offset:0,duration:-1},{offset:'0',duration:5},{
 
 
 describe('expanded formats and resource limits',()=>{
+ it('infers all start_ms-only boundaries including segment 98 without unit confusion',()=>{
+  const blocks=Array.from({length:98},(_,index)=>({arabic:'\u0645\u0631\u062d\u0628\u0627',start_ms:index*6500}))
+  const result=normaliseManualTranscriptJson(JSON.stringify(blocks),657)
+  expect(result.content[96]).toMatchObject({offset:624000,duration:6500})
+  expect(result.content[97]).toMatchObject({offset:630500,duration:26500})
+ })
+ it('uses explicit end before duration and keeps complete timing independent of video duration',()=>{
+  expect(normaliseManualTranscriptJson(JSON.stringify({segments:[{text:'\u0645\u0631\u062d\u0628\u0627',start_ms:1000,end_ms:5000,duration:999999}]})).content[0]).toMatchObject({offset:1000,duration:4000})
+ })
+ it.each([{duration:'10:57'},{duration_seconds:657},{duration_ms:657000},{duration_seconds:'10:57'}])('uses root duration %j as an absolute final endpoint',timing=>{
+  expect(normaliseManualTranscriptJson(JSON.stringify({...timing,segments:[{text:'\u0645\u0631\u062d\u0628\u0627',start_ms:630000}]})).content[0]).toMatchObject({offset:630000,duration:27000})
+ })
+ it.each([{duration:'00:05'},{duration_seconds:5},{duration_ms:5000},{duration:5000}])('normalizes segment duration %j before adding it to start_ms',timing=>{
+  expect(normaliseManualTranscriptJson(JSON.stringify({segments:[{text:'\u0645\u0631\u062d\u0628\u0627',start_ms:1000,...timing}]})).content[0]).toMatchObject({offset:1000,duration:5000})
+ })
+ it('reports missing final duration and unordered starts without a false 12-hour error',()=>{
+  const text='\u0645\u0631\u062d\u0628\u0627'
+  expect(()=>normaliseManualTranscriptJson(JSON.stringify([{text,start_ms:630000}]))).toThrow('This transcript uses start-only timestamps')
+  expect(()=>normaliseManualTranscriptJson(JSON.stringify([{text,start_ms:5000},{text,start_ms:1000}]),10)).toThrow('Check timestamp order')
+  expect(()=>normaliseManualTranscriptJson(JSON.stringify([{text,start_ms:630000}]),657/1000)).toThrow('video duration extends beyond')
+ })
  it('accepts the new bare token array with uppercase CEFR and paragraph grouping',()=>{
   const tokens=[{pos:'verb',cefr:'A2',arabic:'\u0642\u0627\u0644\u064e',english:'said',headword:'\u0642\u0627\u0644',entry_type:'word',transliteration:'qala'},{pos:'noun',cefr:'A1',arabic:'\u0627\u0644\u0648\u0644\u062f',english:'boy',headword:'\u0648\u0644\u062f',entry_type:'word',transliteration:'al-walad'}]
   const blocks=[{tokens,timestamp:'00:00',translation:'The boy said.',paragraph:1},{tokens,timestamp:'00:05',translation:'He said again.',paragraph:2}]

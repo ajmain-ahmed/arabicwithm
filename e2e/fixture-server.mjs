@@ -41,6 +41,7 @@ function account(id) {
 }
 const content = Array.from({ length: 30 }, (_, i) => ({ paragraph: i + 1, tokens: [{ arabic: 'كِتَابٌ', headword: 'كِتَاب', english: 'book', pos: 'noun', cefr: 'a1' }], translation: `A book. Paragraph ${i + 1}.` }))
 const tables = {
+  youtube_transcripts: [],
   books: [{ id: bookId, slug: 'test-book', title: 'Test Book', title_ar: 'كتاب', author: 'Fixture Author', level: 'A1', tags: [], premium_exempt: false, free_chapter_count: 5 }],
   chapters: [{ id: chapterId, book_id: bookId, slug: 'chapter-1', title: 'First Chapter', chapter_number: 1, content }],
   shows: [{ id: showId, slug: 'test-show', title: 'Test Show', title_ar: 'كتاب', level: 'A1', tags: [] }],
@@ -67,7 +68,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
-  if(url.pathname==='/fixture/reset-overhaul'){handles.clear();profiles.clear();roles.clear();accessAudit.length=0;manualPremium.clear();memoryStarts.clear();memorySnapshots.clear();memoryReviews.clear();ownReviews.clear();earned.clear();wordTotals.clear();metadata.clear();return json(res,{})}
+  if(url.pathname==='/fixture/reset-overhaul'){handles.clear();profiles.clear();roles.clear();accessAudit.length=0;manualPremium.clear();memoryStarts.clear();memorySnapshots.clear();memoryReviews.clear();ownReviews.clear();earned.clear();wordTotals.clear();metadata.clear();tables.youtube_transcripts.length=0;return json(res,{})}
   if(url.pathname==='/fixture/earned'){earned.add(body.userId);wordTotals.set(body.userId,body.words??100);return json(res,{})}
   if (url.pathname.startsWith('/auth/v1/admin/users/')) {
     const id=url.pathname.split('/').at(-1)
@@ -81,6 +82,14 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   if (url.pathname === '/auth/v1/logout') return json(res, {})
   if (url.pathname.startsWith('/rest/v1/rpc/')) {
     const rpc = url.pathname.split('/').at(-1)
+    if(rpc==='admin_import_youtube_transcript'){
+      if(roleFor(body.p_actor)!=='admin')return json(res,{message:'Forbidden'},403)
+      const existing=tables.youtube_transcripts.find(row=>row.youtube_id===body.p_youtube_id)
+      if(existing)return json(res,existing.id)
+      const id='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
+      tables.youtube_transcripts.push({id,youtube_id:body.p_youtube_id,canonical_url:`https://www.youtube.com/watch?v=${body.p_youtube_id}`,title:body.p_title,channel:body.p_channel,thumbnail:`${backendUrl}/storage/v1/object/public/covers/test.webp`,provider:'manual',status:'ready',translation_status:'ready',searchable:body.p_searchable,raw_transcript:body.p_raw,duration_seconds:Math.max(...body.p_raw.content.map(chunk=>chunk.offset+chunk.duration))/1000,created_at:'2026-10-07T00:00:00Z',updated_at:'2026-10-07T00:00:00Z'})
+      return json(res,id)
+    }
     if (rpc === 'account_role') {
       await new Promise(resolve => setTimeout(resolve, 350))
       return json(res, roleFor(body.p_user_id))
