@@ -105,3 +105,20 @@ it('rolls back an edit that fails grouping AFTER indexing, including prior segme
  await expect(db.query('select admin_save_grouped_transcript($1,$2,$3,$4,$5,true,$6,$7,$8,null)',[actor,imported,raw,'Must roll back','Channel',version,'NEWAWM00001',other])).rejects.toThrow()
  expect(await snapshot()).toEqual(before)
 })
+
+it('uses the same Arabic-letter rule in SQL and preflight and rejects every invalid token atomically',async()=>{
+ const {hasArabicLetter}=await import('./transcriptTokenValidation')
+ await db.exec(readFileSync('supabase/migrations/20261008191311_awm_token_arabic_letters.sql','utf8'))
+ await db.exec(readFileSync('supabase/migrations/20261008191630_awm_arabic_text_validation_alignment.sql','utf8'))
+ for(const value of ['', '!', '،', 'َُّ', 'ﹶ', 'ـ','123','hello','مرحبا!','مرحبا hello','پ','ﷲ','𞸀']){
+  const result=await db.query<{valid:boolean}>('select transcript_private.has_awm_arabic_letter($1) valid',[value]);expect(result.rows[0].valid).toBe(hasArabicLetter(value))
+  if(hasArabicLetter(value))await db.query('select transcript_private.validate_standalone_transcript_json($1)',[{content:[{text:value,offset:1234,duration:3766,tokens:[{arabic:value}]}]}])
+ }
+ const before=await snapshot(),invalid={...raw,content:raw.content.map((chunk,index)=>({...chunk,tokens:[{...chunk.tokens![0],arabic:index===0?'!':index===1?'َُّ':'hello'}]}))}
+ let message='';try{await db.query('select admin_import_grouped_transcript($1,$2,$3,$4,$5,true,null,null)',[actor,'BADTOK00001','Rejected','Channel',invalid])}catch(e){message=(e as Error).message}
+ for(const segment of [1,2,3])expect(message).toContain(`Segment ${segment}, token 1`)
+ expect(await snapshot()).toEqual(before)
+ const punctuation=normaliseManualTranscriptJson(JSON.stringify([{tokens:[{arabic:'مرحبا',english:'hello',pos:'noun',headword:'مرحبا',entry_type:'word',transliteration:'marhaba'},{arabic:'!'}],timestamp:'00:01.234',end_ms:5000}]))
+ const id=(await db.query<{id:string}>('select admin_import_grouped_transcript($1,$2,$3,$4,$5,true,null,null) id',[actor,'PUNCT000001','Safe punctuation','Channel',punctuation])).rows[0].id
+ expect((await db.query<{raw:unknown}>('select raw_transcript raw from youtube_transcripts where id=$1',[id])).rows[0].raw).toEqual(punctuation)
+})

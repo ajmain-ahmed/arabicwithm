@@ -1,0 +1,15 @@
+# Timed AWM token validation
+
+The reported Segment 92 error occurred because JSON preflight accepted every non-empty token string. The raw database validator checked string types but not Arabic letters. The canonical trigger caught the invalid token during indexing. Its old Arabic-block character range also admitted Arabic punctuation, digits and diacritics.
+
+`transcriptTokenValidation.ts` now checks the complete original token document before timing resolution, simultaneous-start merging, duration lookup or import RPC. Each token must include an Arabic-script letter; presentation-form vowel marks alone do not qualify. Latin-only, empty, digit-only and diacritics-only tokens fail. Arabic words with punctuation and mixed Arabic/English text containing an Arabic letter remain unchanged. Invalid enrichment field types and disagreeing Arabic aliases are reported together with original segment/token positions and JSON-escaped offending values.
+
+Clear opening punctuation attaches to the next Arabic token in the same segment; clear closing punctuation attaches to the previous token. Nesting and source order are preserved. Neutral punctuation metadata may be absorbed; meaningful lexical, timing or custom metadata blocks correction to prevent loss. Ambiguous quotes, missing neighbours, or disagreement with explicit source text also block correction. No Arabic word is dropped, reordered or rewritten. Explicit Arabic text, translations, original timestamps and Arabic-word enrichment remain intact. No diagnostic strings are added to returned transcript JSON.
+
+Import and Edit share this normalizer. The authenticated Admin preflight displays a multiline report and disables Import for invalid input. Server actions independently repeat validation before any import write. The new database migration uses the same frozen Arabic-letter character class for raw tokens and canonical AWM projection, checks every token before indexing, and keeps atomic rollback. The database rejects raw standalone punctuation; Admin normalizes safe punctuation first. There is no schema change or new transcript property.
+
+Diagnostics are only returned through authenticated Admin actions and rendered in the Admin dialog. The public reader is unchanged and receives only persisted content and intended reading/vocabulary data.
+
+Migrations `20261008191311_awm_token_arabic_letters.sql` and `20261008191630_awm_arabic_text_validation_alignment.sql` are applied to the live project. The website code requires deployment. No saved transcript was updated by this repair.
+
+Verification: 166 focused tests passed, including JavaScript/Postgres agreement, empty/punctuation/diacritic tokens, punctuation nesting, metadata preservation, mixed content, complete pre-RPC reports, source timestamps and atomic failures. Six Chromium import tests passed, including consolidated Admin diagnostics, correction, persisted content without diagnostics and the public reader. Production build passed. A rolled-back live service-role test verified consolidated rejection and successful enriched punctuation import. All 119 saved transcripts and their segment/token hashes match the baseline.

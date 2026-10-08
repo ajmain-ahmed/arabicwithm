@@ -231,3 +231,11 @@ it('reports a database segment failure through Import without a second write',as
  expect(mocks.rpc).toHaveBeenCalledTimes(1)
  expect(mocks.revalidate).not.toHaveBeenCalled()
 })
+
+it('prevents the import RPC and duration lookup for the complete invalid-token report',async()=>{
+ const json=JSON.stringify([{tokens:[{arabic:''},{arabic:'َُّ'}],timestamp:'00:01'},{tokens:[{arabic:'hello'}],timestamp:'00:02'}])
+ const result=await importAdminManualTranscriptResult({url:'AWMFILE0001',title:'Invalid',json,searchable:true})
+ expect(result).toMatchObject({ok:false,error:expect.stringContaining('Segment 1, token 1')})
+ if(!result.ok){expect(result.error).toContain('Segment 1, token 2');expect(result.error).toContain('Segment 2, token 1')}
+ expect(mocks.rpc).not.toHaveBeenCalled();expect(mocks.duration).not.toHaveBeenCalled();expect(mocks.from).not.toHaveBeenCalled()
+})

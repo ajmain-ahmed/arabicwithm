@@ -1,3 +1,4 @@
+import {hasArabicLetter,normaliseEnrichmentTokens} from '@/app/lib/transcriptTokenValidation'
 import type { CanonicalChunk } from '@/app/lib/manualTranscripts'
 import { MAX_TRANSCRIPT_TIME_MS, MissingTranscriptDuration, parseTranscriptTime } from '@/app/lib/transcriptTiming'
 
@@ -68,6 +69,7 @@ export function normaliseManualTranscriptJson(input: string, videoDurationSecond
   let values: unknown[] = detectedValues
   const label = key === 'sentences' ? 'Sentence' : 'Segment'
   const issues: string[] = []
+  values = normaliseEnrichmentTokens(values,issues)
   let starts = values.map((value, index) => {
     if (!object(value)) return undefined
     try {
@@ -137,7 +139,7 @@ export function normaliseManualTranscriptJson(input: string, videoDurationSecond
       }
       const tokenText = tokens?.map(t => String(t.ar ?? t.arabic ?? t.surface)).join(' ')
       const text = item.text ?? item.arabic ?? item.original_text ?? (tokenText ? tokenText + (typeof item.punctuation === 'string' ? item.punctuation : '') : undefined)
-      if (typeof text !== 'string' || !text.trim() || !/\p{Script=Arabic}/u.test(text)) return fail('text must contain Arabic (text or arabic, or Arabic tokens).')
+      if (typeof text !== 'string' || !text.trim() || !hasArabicLetter(text)) return fail('text must contain Arabic (text or arabic, or Arabic tokens).')
       const offset = starts[index]
       if (!Number.isSafeInteger(offset) || Number(offset) < 0) return fail('missing or invalid start_ms / offset / timestamp; timed imports require a start time.')
       const english = item.english ?? item.translation ?? item.english_text

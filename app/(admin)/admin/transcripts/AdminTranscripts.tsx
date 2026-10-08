@@ -91,7 +91,7 @@ export default function AdminTranscripts(){
    {edit&&<>{editLoading?<Typography role="status">Loading transcript JSON...</Typography>:<><Box component="fieldset" disabled={busy} sx={{border:0,p:0,m:0,minWidth:0}}><TranscriptJsonField value={transcriptJson} onChange={value=>{setTranscriptJson(value);setSaved(false)}} /></Box><Stack direction="row" spacing={1}><Button disabled={busy||!editVersion} onClick={formatJson}>Format JSON</Button><Button disabled={busy||downloadBusy||!editVersion} onClick={()=>void download()}>{downloadBusy?'Downloading...':'Download JSON'}</Button></Stack></>}{saved&&<Alert severity="success">Saved</Alert>}</>}
    {!edit&&<><TranscriptJsonField value={transcriptJson} onChange={setTranscriptJson} />
     {transcriptJson.trim()&&!durationError&&!checked&&<Typography role="status">Checking transcript timing...</Typography>}
-    {checked?.ok===false&&!durationError&&<Alert severity={checked.needsDuration||checked.error.includes('duplicate timestamp')?'warning':'error'}>{checked.error}</Alert>}
+    {checked?.ok===false&&!durationError&&<Alert severity={checked.needsDuration||checked.error.includes('duplicate timestamp')?'warning':'error'} sx={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{checked.error}</Alert>}
     {checked?.ok&&<Alert severity="success">{checked.segments} {checked.segments===1?'segment':'segments'} ready to import.{checked.durationSource==='youtube'?' Using the actual YouTube video duration.':checked.durationSource==='saved-video'?' Using the saved video duration.':''}</Alert>}
    </>}
 
