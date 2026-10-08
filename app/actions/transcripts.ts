@@ -60,7 +60,7 @@ export async function manageAdminTranscriptGroup(input:{name?:string;parentId?:s
     if(!value.remove&&!value.name)throw new Error('Enter a group name.')
     if(value.remove&&!value.id)throw new Error('Select a group.')
     const {data,error}=await serviceClient.rpc('admin_manage_transcript_group',{p_actor:actor,p_name:value.name??null,p_parent:value.parentId??null,p_id:value.id??null,p_delete:value.remove})
-    if(error)throw new Error(error.code==='23503'?'This group contains transcripts or subgroups. Move them before deleting it.':error.code==='23505'?'A group with this name already exists under this parent.':'Unable to save the group. Please retry.')
+    if(error)throw new Error(error.code==='23503'?'This group is still in use. Move its transcripts before deleting it.':error.code==='23505'?'A group with this name already exists.':'Unable to save the group. Please retry.')
     revalidatePath('/admin/transcripts')
     return {ok:true,id:z.string().parse(data)}
   }catch(error){return {ok:false,error:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to save group.'}}
@@ -237,4 +237,15 @@ export async function saveAdminGeneratedTranscript(id:string,input:{json:string;
   for(const path of ['/admin/transcripts','/explore','/explore/search',`/transcripts/${id}`])revalidatePath(path)
   return {ok:true,updatedAt:z.string().parse(data),json:JSON.stringify({content:raw.content},null,2)}
  }catch(error){return {ok:false,error:error instanceof Error?error.message:'Unable to save generated transcript.'}}
+}
+
+/** Move organisational metadata without touching transcript content or search rows. */
+export async function moveAdminTranscriptGroup(id:string,input:{groupId:string|null;previousGroupId:string|null;updatedAt:string}):Promise<{ok:true;updatedAt:string}|{ok:false;error:string}> {
+ try {
+  const actor=await adminIdentity();z.string().uuid().parse(id)
+  const value=z.object({groupId:z.string().uuid().nullable(),previousGroupId:z.string().uuid().nullable(),updatedAt:z.string().datetime({offset:true})}).parse(input)
+  const {data,error}=await serviceClient.rpc('admin_move_standalone_transcript',{p_actor:actor,p_id:id,p_group:value.groupId,p_previous_group:value.previousGroupId,p_updated_at:value.updatedAt})
+  if(error)throw new Error(error.code==='23503'?'The selected group no longer exists. Choose another group.':/conflict/.test(error.message)?'This transcript or its group changed. Reopen Edit before saving. Your edits are still here.':'Unable to move the transcript. Please retry.')
+  revalidatePath('/admin/transcripts');return {ok:true,updatedAt:z.string().parse(data)}
+ }catch(error){return {ok:false,error:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to move the transcript.'}}
 }

@@ -1,6 +1,7 @@
 // Isolated HTTP contract fixture. Production authorization runs unchanged;
 // only this child Next process points at these synthetic accounts and records.
 import https from 'node:https'
+import {randomUUID} from 'node:crypto'
 import { spawn, spawnSync } from 'node:child_process'
 import { mkdirSync, readFileSync, rmSync } from 'node:fs'
 import path from 'node:path'
@@ -42,6 +43,9 @@ function account(id) {
 const content = Array.from({ length: 30 }, (_, i) => ({ paragraph: i + 1, tokens: [{ arabic: 'كِتَابٌ', headword: 'كِتَاب', english: 'book', pos: 'noun', cefr: 'a1' }], translation: `A book. Paragraph ${i + 1}.` }))
 const tables = {
   youtube_transcripts: [],
+  transcript_groups: [],
+  admin_manual_transcripts: [],
+  transcript_segments: [],
   books: [{ id: bookId, slug: 'test-book', title: 'Test Book', title_ar: 'كتاب', author: 'Fixture Author', level: 'A1', tags: [], premium_exempt: false, free_chapter_count: 5 }],
   chapters: [{ id: chapterId, book_id: bookId, slug: 'chapter-1', title: 'First Chapter', chapter_number: 1, content }],
   shows: [{ id: showId, slug: 'test-show', title: 'Test Show', title_ar: 'كتاب', level: 'A1', tags: [] }],
@@ -68,7 +72,14 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
-  if(url.pathname==='/fixture/reset-overhaul'){handles.clear();profiles.clear();roles.clear();accessAudit.length=0;manualPremium.clear();memoryStarts.clear();memorySnapshots.clear();memoryReviews.clear();ownReviews.clear();earned.clear();wordTotals.clear();metadata.clear();tables.youtube_transcripts.length=0;return json(res,{})}
+  if(url.pathname==='/fixture/reset-overhaul'){handles.clear();profiles.clear();roles.clear();accessAudit.length=0;manualPremium.clear();memoryStarts.clear();memorySnapshots.clear();memoryReviews.clear();ownReviews.clear();earned.clear();wordTotals.clear();metadata.clear();tables.youtube_transcripts.length=0;tables.transcript_groups.length=0;tables.admin_manual_transcripts.length=0;tables.transcript_segments.length=0;return json(res,{})}
+  if(url.pathname==='/fixture/standalone-transcripts'){
+    const raw={content:[{text:'مرحبا',offset:1234,duration:5000,english:'Hello',tokens:[{arabic:'مرحبا',english:'hello',pos:'noun',headword:'مرحبا',entry_type:'word',transliteration:'marhaban'}]}]}
+    const id='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
+    tables.youtube_transcripts.push({id,youtube_id:'ZBynl03Vp-w',canonical_url:'https://www.youtube.com/watch?v=ZBynl03Vp-w',title:'Existing standalone transcript',channel:'Original channel',thumbnail:`${backendUrl}/storage/v1/object/public/covers/test.webp`,provider:'manual',source_origin:'website_admin_transcript',episode_id:null,status:'ready',translation_status:'ready',searchable:true,raw_transcript:raw,duration_seconds:10,created_at:'2026-10-07T00:00:00Z',updated_at:'2026-10-07T00:00:00Z'})
+    tables.transcript_segments.push({id:1,transcript_id:id,position:0,start_seconds:1.234,end_seconds:6.234,original_text:'مرحبا',english_text:'Hello'})
+    return json(res,{})
+  }
   if(url.pathname==='/fixture/earned'){earned.add(body.userId);wordTotals.set(body.userId,body.words??100);return json(res,{})}
   if (url.pathname.startsWith('/auth/v1/admin/users/')) {
     const id=url.pathname.split('/').at(-1)
@@ -82,12 +93,26 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   if (url.pathname === '/auth/v1/logout') return json(res, {})
   if (url.pathname.startsWith('/rest/v1/rpc/')) {
     const rpc = url.pathname.split('/').at(-1)
-    if(rpc==='admin_import_youtube_transcript'){
+    if(rpc==='admin_list_manual_transcripts'){
+      const eligible=tables.youtube_transcripts.filter(row=>row.provider==='manual'&&row.source_origin==='website_admin_transcript'&&!row.episode_id&&!tables.episodes.some(episode=>episode.youtube_id===row.youtube_id)).map(row=>({...row,group_id:tables.admin_manual_transcripts.find(m=>m.transcript_id===row.id)?.group_id??null}))
+      const filtered=eligible.filter(row=>(!body.p_ungrouped||!row.group_id)&&(!body.p_group||body.p_group===row.group_id)&&(!body.p_search||row.title.toLowerCase().includes(body.p_search.toLowerCase())))
+      return json(res,{rows:filtered.slice(body.p_page*30,body.p_page*30+30),total:filtered.length,ungrouped:eligible.filter(row=>!row.group_id).length,groups:tables.transcript_groups.map(group=>({...group,direct_count:eligible.filter(row=>row.group_id===group.id).length,transcript_count:eligible.filter(row=>row.group_id===group.id).length}))})
+    }
+    if(rpc==='admin_manage_transcript_group'){const id=body.p_id??randomUUID();if(body.p_delete)tables.transcript_groups=tables.transcript_groups.filter(group=>group.id!==id);else if(body.p_id)tables.transcript_groups.find(group=>group.id===id).name=body.p_name;else tables.transcript_groups.push({id,name:body.p_name,parent_id:null});return json(res,id)}
+    if(rpc==='admin_record_transcript_origin')return json(res,null)
+    if(rpc==='admin_move_standalone_transcript'){
+      const row=tables.youtube_transcripts.find(row=>row.id===body.p_id),membership=tables.admin_manual_transcripts.find(row=>row.transcript_id===body.p_id)
+      if(row.updated_at!==body.p_updated_at||(membership?.group_id??null)!==body.p_previous_group)return json(res,{message:'transcript_group_conflict'},409)
+      if(membership)membership.group_id=body.p_group;else tables.admin_manual_transcripts.push({transcript_id:row.id,group_id:body.p_group})
+      return json(res,row.updated_at)
+    }
+    if(rpc==='admin_import_youtube_transcript'||rpc==='admin_import_grouped_transcript'){
       if(roleFor(body.p_actor)!=='admin')return json(res,{message:'Forbidden'},403)
       const existing=tables.youtube_transcripts.find(row=>row.youtube_id===body.p_youtube_id)
       if(existing)return json(res,existing.id)
       const id='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
-      tables.youtube_transcripts.push({id,youtube_id:body.p_youtube_id,canonical_url:`https://www.youtube.com/watch?v=${body.p_youtube_id}`,title:body.p_title,channel:body.p_channel,thumbnail:`${backendUrl}/storage/v1/object/public/covers/test.webp`,provider:'manual',status:'ready',translation_status:'ready',searchable:body.p_searchable,raw_transcript:body.p_raw,duration_seconds:Math.max(...body.p_raw.content.map(chunk=>chunk.offset+chunk.duration))/1000,created_at:'2026-10-07T00:00:00Z',updated_at:'2026-10-07T00:00:00Z'})
+      tables.youtube_transcripts.push({id,youtube_id:body.p_youtube_id,canonical_url:`https://www.youtube.com/watch?v=${body.p_youtube_id}`,title:body.p_title,channel:body.p_channel,thumbnail:`${backendUrl}/storage/v1/object/public/covers/test.webp`,provider:'manual',source_origin:'website_admin_transcript',episode_id:null,status:'ready',translation_status:'ready',searchable:body.p_searchable,raw_transcript:body.p_raw,duration_seconds:Math.max(...body.p_raw.content.map(chunk=>chunk.offset+chunk.duration))/1000,created_at:'2026-10-07T00:00:00Z',updated_at:'2026-10-07T00:00:00Z'})
+      if(rpc==='admin_import_grouped_transcript')tables.admin_manual_transcripts.push({transcript_id:id,group_id:body.p_group??null})
       return json(res,id)
     }
     if (rpc === 'account_role') {

@@ -1,38 +1,44 @@
-# Manual transcript groups and search
+# Standalone manual transcript groups
 
-Admin → Transcripts now lists only manual JSON imports. Shows, episode transcripts and provider-generated/imported transcripts retain their existing canonical records and public/shared-library behaviour.
+Admin → Transcripts lists only `youtube_transcripts` with `provider=manual`, `source_origin=website_admin_transcript`, no `episode_id`, and no matching episode YouTube ID. Shows, Episodes and their JSON/relationships are untouched.
 
-## Search
+## Restoration
 
-The previous listing used a literal `ILIKE` title substring. Arabic diacritics, presentation forms, alif/ya/kaf variants, punctuation and repeated whitespace could therefore prevent matching visually equivalent titles. The query also had no manual-origin boundary. Its 60-second browser cache could retain an old search snapshot.
+Live inspection found 12 eligible existing manual imports. They had not been deleted. The grouping RPC and tables were missing from production, causing the new page to fail loading. An assignment-first inner join would also have hidden any old records without membership.
 
-`admin_list_manual_transcripts` now searches normalised title, group and parent-group names on the server, before pagination. It normalises NFKC forms, Arabic diacritics/tatweel, common alif/ya/kaf variants, case, punctuation and spacing. Display titles and JSON are untouched. Search text uses literal substring matching rather than interpolated SQL or wildcard patterns. Punctuation-only queries behave like an empty search.
+Applied `20261008171140_standalone_transcript_groups_restore.sql` adds the missing grouping tables/RPCs and lists from actual transcript rows with a LEFT JOIN to optional assignments. No records are copied or backfilled. Missing assignments and null `group_id` both mean the virtual Ungrouped section, expanded by default. After migration, the RPC returned all 12 old imports with zero assignment rows. Before/after hashes of all 119 transcripts, all segments, Shows and Episodes matched.
 
-Each list request returns at most 30 rows plus matching totals and database-wide group counts. It selects only lightweight metadata, never transcript JSON. Changing search returns to page one and clears the active group filter, so a global title match remains visible even when its group is collapsed. Selecting a group after searching combines both constraints. Main-group filters include direct assignments and immediate subgroups. Browser requests always refresh the data; an old response cannot overwrite a newer search. Saves and group changes refresh the listing without reloading the page.
+## Groups and saves
 
-## Database model and safety
+Groups are flat in the UI. Existing internal `parent_id` is preserved for compatibility; creation always uses null and each group shows only its direct assignments. Parent controls and parent/child display paths are removed. Groups expand/collapse, show an explicit empty state and offer Add Transcript with that group preselected. Import still accepts no group. New groups appear immediately and can be selected without losing form edits.
 
-Apply `supabase/migrations/20261008161532_transcript_groups_manual_library.sql` after the existing transcript migrations, including `20261008133217_admin_transcript_json_edit.sql`. The website change requires the new migration; it fails with an explicit configuration error instead of falling back to the mixed shared listing.
+Tables have RLS and no client-role grants. Service-only RPCs independently verify the database admin role. Group deletion is restricted while referenced; it never deletes transcripts.
 
-- `transcript_groups` stores main groups and subgroups. A serialised hierarchy trigger enforces a maximum of two levels. Sibling names are unique case-insensitively.
-- `admin_manual_transcripts` stores one optional group assignment per transcript. No group fields are added to transcript JSON.
-- Backfill requires **both** `provider='manual'` and `source_origin='website_admin_transcript'`, with no episode relationship or matching episode YouTube ID. All eligible existing imports start Ungrouped. Ambiguous records stay unchanged.
-- Listing rechecks this boundary, so a transcript subsequently attached to an episode cannot appear in manual management.
-- Both new tables have RLS enabled and client-role privileges revoked. Server actions authenticate Admin access; service-role-only RPCs independently check the actor's database admin role. No new public access policies are introduced.
-- Foreign keys restrict deleting any group with assignments or subgroups. The UI enables deletion only for empty groups. Deleting a group cannot delete transcripts.
-- Import and Edit wrap the existing JSON validation/indexing RPCs in one transaction. An invalid assignment, video conflict, invalid duration or indexing failure rolls back the whole operation. Duplicate imports direct the operator to Edit.
-- Existing channel metadata is preserved while Group replaces its visible control. Edit can change the YouTube ID/URL, duration and assignment without changing transcript identity or existing library relationships. A target video belonging to an episode is rejected.
+Group-only saves use `admin_move_standalone_transcript`, updating only the assignment row, with transcript-version and prior-assignment conflict checks. They never change transcript JSON, timestamps, title, URL, publication, translation, indexing, search rows or transcript `updated_at`. Formatting JSON does not cause a content rewrite. Actual edits use shared server normalization and the existing live canonical indexer in one transaction.
 
-The live read-only inspection found 21 proven manual imports, 106 curated episode transcripts and one Supadata import. No live records or schema were changed while implementing this feature. This migration does not depend on the optional `website_generation` column.
+## Search and form
 
-## Interface and duration
+Search normalizes Arabic variants, case, punctuation and whitespace before pagination and clears the group filter to reveal global matches. Counts are database-wide and assignments optional. Dropdown labels always float with an outlined notch; long selected names truncate within the responsive control.
 
-Groups expand to show the selected group's paginated transcripts, with actual database counts. Import and Edit offer the same dropdown, including Ungrouped and `Parent / Subgroup` labels. A group can be created from the form without losing unsaved JSON.
+Duration input appears above compact Minutes & Seconds / Hours, Minutes & Seconds toggles and the retained explicit minutes mode. A circular info button supports hover and tap. MM:SS, HH:MM:SS and millisecond precision retain the existing parser. Fully timed JSON does not need duration; start-only JSON uses actual video duration or the explicit fallback.
 
-Title, YouTube URL/ID, Group and Video Duration appear in a responsive metadata grid above the existing JSON editor. Saved duration is populated in clock format, retaining millisecond precision. `MM:SS` and `HH:MM:SS` remain supported alongside the previously requested explicit minutes mode. Fully timed JSON does not require duration; start-only timing uses the established actual-video/manual-fallback resolution. Explicit durations cannot end before the transcript. Clearing the field leaves existing duration metadata unchanged when the JSON is fully timed.
+## Verification and deployment
 
-## Verification
+Regression coverage includes old records without assignments, unrelated/Show exclusion, pagination, flat groups, imports without groups, preselection, moves both ways with complete row snapshots, concurrency conflicts, permissions, JSON/token preservation, duration layout and tap help. Live move and content-edit checks run in a rolled-back transaction. No production transcript records are modified by verification. All 208 focused unit/database tests and seven browser acceptance tests passed, along with lint, TypeScript and the production build. Desktop/mobile screenshots were reviewed.
 
-Focused regression tests cover normalised Arabic/English search, pages beyond the first, group-name search, Show exclusion, exact counts, hierarchy constraints, create/rename/delete, Import assignment, moves to groups and Ungrouped, persistence, atomic rollback, client-role denial, real JSON indexing and enriched tokens, unsaved form preservation, duration formats and existing public transcript/Shows readers.
+The database repair is live. Website UI/server-action changes require deployment of this checkout. Do not blindly apply historical pending transcript migrations over the live canonical pipeline; the restoration migration is independently compatible with the inspected live schema.
 
-The production migration and application deployment must be completed before these controls are available on the live website. The migration does not deploy automatically through `next build`.
+
+## Files changed for this repair
+
+- `app/(admin)/admin/transcripts/AdminTranscripts.tsx` and `AdminTranscripts.test.tsx`
+- `app/(admin)/admin/transcripts/TranscriptGroups.tsx`
+- `app/(admin)/admin/transcripts/TranscriptDurationField.tsx`
+- `app/actions/transcripts.ts` and `transcripts.test.ts`
+- `app/lib/supabase/database.types.ts`
+- `app/lib/standaloneTranscriptGroupsMigration.test.ts`
+- `supabase/migrations/20261008171140_standalone_transcript_groups_restore.sql`
+- `e2e/fixture-server.mjs`, `e2e/manual-transcript-import.pw.ts`, `e2e/standalone-transcript-groups.pw.ts`
+- `docs/transcript-groups.md`
+
+No Shows/Episodes/Books/Flutter source files changed. The migration only adds admin grouping tables and functions; it does not add columns to transcript storage or replace the shared indexer/search functions.

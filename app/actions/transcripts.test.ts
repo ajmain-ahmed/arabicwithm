@@ -4,7 +4,7 @@ vi.mock('@/app/actions/auth',()=>({guardAdmin:mocks.guard,getAuthenticatedAccess
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{rpc:mocks.rpc,from:mocks.from}}))
 vi.mock('@/app/lib/youtubeVideoDuration',()=>({getYouTubeVideoDuration:mocks.duration}))
 vi.mock('next/cache',()=>({revalidatePath:mocks.revalidate}))
-import {addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson,saveAdminTranscriptJson} from './transcripts'
+import {addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson,saveAdminTranscriptJson,moveAdminTranscriptGroup} from './transcripts'
 beforeEach(()=>{vi.resetAllMocks();mocks.duration.mockResolvedValue(null);mocks.guard.mockResolvedValue(undefined);mocks.access.mockResolvedValue({admin:true,userId:'11111111-1111-4111-8111-111111111111'})})
 
 function metadata(duration:number|null){const query={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:duration===null?null:{duration_seconds:duration},error:null})};mocks.from.mockReturnValue(query);return query}
@@ -205,4 +205,22 @@ it('accepts a raw video ID and reports provider or migration failures precisely'
  expect(await generateAdminTranscript('Dgj9fQYbCZY')).toMatchObject({ok:false,error:expect.stringContaining('website_generation_configuration_repair')})
  mocks.rpc.mockResolvedValueOnce({data:null,error:{message:'provider_not_configured'}})
  expect(await generateAdminTranscript('Dgj9fQYbCZY')).toMatchObject({ok:false,error:expect.stringContaining('SUPADATA_API_KEY')})
+})
+
+describe('standalone metadata-only group moves',()=>{
+ const id='33333333-3333-4333-8333-333333333333',groupId='44444444-4444-4444-8444-444444444444',updatedAt='2026-10-08T12:00:00Z'
+ it('sends only assignment and concurrency metadata, with no content reads or public revalidation',async()=>{
+  mocks.rpc.mockResolvedValue({data:updatedAt,error:null})
+  expect(await moveAdminTranscriptGroup(id,{groupId,previousGroupId:null,updatedAt})).toEqual({ok:true,updatedAt})
+  expect(mocks.rpc).toHaveBeenCalledWith('admin_move_standalone_transcript',{p_actor:'11111111-1111-4111-8111-111111111111',p_id:id,p_group:groupId,p_previous_group:null,p_updated_at:updatedAt})
+  expect(mocks.from).not.toHaveBeenCalled();expect(mocks.revalidate.mock.calls).toEqual([['/admin/transcripts']])
+ })
+ it('denies non-admin moves before database access',async()=>{
+  mocks.access.mockResolvedValue({admin:false,userId:'other'})
+  expect(await moveAdminTranscriptGroup(id,{groupId:null,previousGroupId:groupId,updatedAt})).toEqual({ok:false,error:'Administrators only.'});expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+ it('reports stale assignment separately from invalid group',async()=>{
+  mocks.rpc.mockResolvedValue({data:null,error:{message:'transcript_group_conflict'}})
+  expect(await moveAdminTranscriptGroup(id,{groupId,previousGroupId:null,updatedAt})).toMatchObject({ok:false,error:expect.stringContaining('group changed')})
+ })
 })
