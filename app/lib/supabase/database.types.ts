@@ -344,6 +344,10 @@ export interface Database {
       admin_delete_youtube_transcript: { Args:{p_actor:string;p_id:string};Returns:boolean }
       admin_list_manual_transcripts: {Args:{p_actor:string;p_page:number;p_search:string;p_group:string|null;p_ungrouped:boolean};Returns:Json}
       admin_manage_transcript_group: {Args:{p_actor:string;p_name:string|null;p_parent:string|null;p_id:string|null;p_delete:boolean};Returns:string}
+      admin_manual_enrichment: {Args:{p_actor:string;p_id:string};Returns:Json}
+      admin_retry_manual_enrichment: {Args:{p_actor:string;p_id:string};Returns:Json}
+      admin_import_manual_source: {Args:Database['public']['Functions']['admin_import_grouped_transcript']['Args'];Returns:Json}
+      admin_save_manual_source: {Args:Database['public']['Functions']['admin_save_grouped_transcript']['Args'];Returns:Json}
       admin_import_grouped_transcript: {Args:{p_actor:string;p_youtube_id:string;p_title:string;p_channel:string;p_raw:Json;p_searchable:boolean;p_group:string|null;p_duration:number|null};Returns:string}
       admin_move_standalone_transcript: {Args:{p_actor:string;p_id:string;p_group:string|null;p_previous_group:string|null;p_updated_at:string};Returns:string}
       admin_save_grouped_transcript: {Args:{p_actor:string;p_id:string;p_raw:Json;p_title:string;p_channel:string;p_searchable:boolean;p_updated_at:string;p_youtube_id:string;p_group:string|null;p_duration:number|null};Returns:string}

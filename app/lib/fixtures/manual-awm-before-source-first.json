@@ -1,0 +1,79 @@
+{
+  "provider": "manual",
+  "lang": "ar",
+  "content": [
+    {
+      "text": "أَبِي",
+      "offset": 1234,
+      "duration": 1266,
+      "english": "My father.",
+      "tokens": [
+        {
+          "arabic": "أَبِي",
+          "english": "my father",
+          "pos": "noun",
+          "headword": "ابو",
+          "entry_type": "word",
+          "transliteration": "original",
+          "cefr": "A1",
+          "custom": {
+            "retained": true
+          }
+        }
+      ]
+    },
+    {
+      "text": "الْحَمْدُ لِلَّهِ مَرْحَبًا",
+      "offset": 2500,
+      "duration": 2067,
+      "english": "Praise be to God. Welcome.",
+      "tokens": [
+        {
+          "arabic": "الْحَمْدُ لِلَّهِ",
+          "english": "praise be to God",
+          "pos": "phrase",
+          "headword": "3",
+          "entry_type": "phrase",
+          "transliteration": "al-ḥamdu lillāh",
+          "cefr": "A1",
+          "custom": {
+            "retained": true
+          }
+        },
+        {
+          "arabic": "مَرْحَبًا",
+          "english": "welcome",
+          "pos": "noun",
+          "headword": "مرحبا",
+          "entry_type": "word",
+          "transliteration": "original",
+          "cefr": "A1",
+          "custom": {
+            "retained": true
+          }
+        }
+      ],
+      "paragraph": 1
+    },
+    {
+      "text": "شُكْرًا",
+      "offset": 4567,
+      "duration": 3433,
+      "english": "Thank you.",
+      "tokens": [
+        {
+          "arabic": "شُكْرًا",
+          "english": "thank you",
+          "pos": "noun",
+          "headword": "شكر",
+          "entry_type": "word",
+          "transliteration": "original",
+          "cefr": "A1",
+          "custom": {
+            "retained": true
+          }
+        }
+      ]
+    }
+  ]
+}

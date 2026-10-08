@@ -1,6 +1,6 @@
 import { normalizeYouTubeId } from '@/app/lib/cartoons'
 
-export interface CanonicalChunk { text: string; offset: number; duration: number; english?: string; tokens?: Record<string, unknown>[]; [key: string]: unknown }
+export interface CanonicalChunk { text: string; offset: number; duration: number | null; english?: string; tokens?: Record<string, unknown>[]; [key: string]: unknown }
 export function transcriptVideoId(input: string): string {
   if (input.length>2048) throw new Error('Enter a valid YouTube URL.')
   const id=normalizeYouTubeId(input)
@@ -39,11 +39,11 @@ function cues(input:string):CanonicalChunk[] {
     result.push({text,offset,duration:end-offset})
   }
   if (!result.length) throw new Error('Supply at least one timed cue.')
-  return result.sort((a,b)=>a.offset-b.offset)
+  if(result.some((cue,index)=>index>0&&cue.offset<result[index-1].offset))throw new Error('timestamp-order error; source cues have not been reordered.')
+  return result
 }
 export function normaliseManualTranscript(arabic:string,english=''):{provider:'manual';lang:'ar';content:CanonicalChunk[]} {
   const content=cues(arabic)
-  if (content.some(c=>!/[\u0600-\u06ff]/.test(c.text))) throw new Error('Every original cue must contain Arabic text.')
   if (english.trim()) {
     const translated=cues(english)
     const byTiming=new Map<string,CanonicalChunk[]>()

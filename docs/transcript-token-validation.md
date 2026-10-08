@@ -1,3 +1,5 @@
+> Superseded for manual imports by [the source-first contract](transcript-source-first.md). This document records the earlier repair.
+
 # Timed AWM token validation
 
 The reported Segment 92 error occurred because JSON preflight accepted every non-empty token string. The raw database validator checked string types but not Arabic letters. The canonical trigger caught the invalid token during indexing. Its old Arabic-block character range also admitted Arabic punctuation, digits and diacritics.

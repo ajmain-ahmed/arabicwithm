@@ -2,7 +2,7 @@ import React, {act} from 'react'
 import {createRoot,type Root} from 'react-dom/client'
 import {beforeEach,afterEach,expect,it,vi} from 'vitest'
 const mocks=vi.hoisted(()=>({list:vi.fn(),import:vi.fn(),remove:vi.fn(),validate:vi.fn(),download:vi.fn(),save:vi.fn(),group:vi.fn(),move:vi.fn()}))
-vi.mock('@/app/actions/transcripts',()=>({listAdminTranscripts:mocks.list,importAdminManualTranscriptResult:mocks.import,validateAdminManualTranscript:mocks.validate,generateAdminTranscript:vi.fn(),deleteAdminTranscript:mocks.remove,updateAdminTranscript:vi.fn(),downloadAdminTranscriptJson:mocks.download,saveAdminTranscriptJson:mocks.save,manageAdminTranscriptGroup:mocks.group,moveAdminTranscriptGroup:mocks.move}))
+vi.mock('@/app/actions/transcripts',()=>({loadAdminManualEnrichment:vi.fn().mockResolvedValue(null),retryAdminManualEnrichment:vi.fn().mockResolvedValue({ok:true,status:'unavailable'}),listAdminTranscripts:mocks.list,importAdminManualTranscriptResult:mocks.import,validateAdminManualTranscript:mocks.validate,generateAdminTranscript:vi.fn(),deleteAdminTranscript:mocks.remove,updateAdminTranscript:vi.fn(),downloadAdminTranscriptJson:mocks.download,saveAdminTranscriptJson:mocks.save,manageAdminTranscriptGroup:mocks.group,moveAdminTranscriptGroup:mocks.move}))
 import AdminTranscripts from './AdminTranscripts'
 let host:HTMLDivElement,root:Root
 beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.resetAllMocks();mocks.list.mockResolvedValue({rows:[],total:0});mocks.import.mockResolvedValue({ok:true,id:'saved'});mocks.validate.mockResolvedValue({ok:true,segments:1,durationSource:'transcript'});host=document.createElement('div');document.body.appendChild(host);root=createRoot(host)})

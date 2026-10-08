@@ -7,13 +7,12 @@ import { serviceClient } from '@/app/lib/supabase'
 import type { Json } from '@/app/lib/supabase/database.types'
 import { normaliseManualTranscript, transcriptVideoId } from '@/app/lib/manualTranscripts'
 import { MAX_TRANSCRIPT_BYTES, normaliseManualTranscriptJson, serialiseTranscriptJson, transcriptJsonFilename } from '@/app/lib/manualTranscriptJson'
-import { getYouTubeVideoDuration } from '@/app/lib/youtubeVideoDuration'
 import {transcriptDatabaseError} from '@/app/lib/transcriptDatabaseError'
 import { MissingTranscriptDuration, parseVideoDuration } from '@/app/lib/transcriptTiming'
 
 export interface TranscriptRow {id:string;youtube_id:string;canonical_url:string;title:string;channel:string|null;thumbnail:string;duration_seconds:number|null;provider:string;status:string;translation_status:string;searchable:boolean;created_at:string;updated_at:string;error_code:string|null;website_generation?:boolean;group_id?:string|null}
-export interface TranscriptSegment {id:number;position:number;original_text:string;english_text:string|null;start_seconds:number;end_seconds:number;start_ms?:number;end_ms?:number;canonical_paragraph?:Json|null}
-export interface TranscriptHit {segment_id:number;transcript_id:string;youtube_id:string;title:string;channel:string|null;thumbnail:string;start_seconds:number;end_seconds:number;original_text:string;english_text:string|null;matched_surfaces:string[];match_type:string;match_rank:number;previous_text:string|null;next_text:string|null}
+export interface TranscriptSegment {id:number;position:number;original_text:string;english_text:string|null;start_seconds:number;end_seconds:number|null;start_ms?:number;end_ms?:number|null;canonical_paragraph?:Json|null}
+export interface TranscriptHit {segment_id:number;transcript_id:string;youtube_id:string;title:string;channel:string|null;thumbnail:string;start_seconds:number;end_seconds:number|null;original_text:string;english_text:string|null;matched_surfaces:string[];match_type:string;match_rank:number;previous_text:string|null;next_text:string|null}
 const columns='id,youtube_id,canonical_url,title,channel,thumbnail,duration_seconds,provider,status,translation_status,searchable,created_at,updated_at,error_code'
 function missingGenerationColumn(error:{code?:string;message:string}|null):boolean{return Boolean(error&&['42703','PGRST204'].includes(error.code??'')&&error.message.includes('website_generation'))}
 async function adminIdentity():Promise<string> {const access=await getAuthenticatedAccess();if(!access?.admin) throw new Error('Forbidden');return access.userId}
@@ -80,25 +79,27 @@ export async function addAdminYouTubeTranscript(input:string):Promise<string> {
 function manualVideoId(input: string): string {
   try { return transcriptVideoId(input) } catch { throw new Error('Enter a YouTube URL or video ID.') }
 }
-async function resolveManualJson(json: string, youtubeId: string, duration?: string, durationSeconds?: number, durationFormat: 'clock'|'minutes' = 'clock', savedSeconds?:number|null) {
-  try { return {raw:normaliseManualTranscriptJson(json),durationSource:'transcript' as const} }
-  catch (error) { if (!(error instanceof MissingTranscriptDuration)) throw error }
-  const actual = await getYouTubeVideoDuration(youtubeId)
-  if (actual !== null) return {raw:normaliseManualTranscriptJson(json,actual),durationSource:'youtube' as const}
-  const manualEnd = duration !== undefined ? parseVideoDuration(duration,durationFormat) : durationSeconds !== undefined ? durationSeconds*1000 : undefined
-  // Manual fallback is explicit; legacy saved metadata remains a last resort.
-  if (manualEnd !== undefined) return {raw:normaliseManualTranscriptJson(json,manualEnd/1000),durationSource:'manual' as const}
-  let saved = savedSeconds
-  if (saved === undefined) {
-    const {data,error} = await serviceClient.from('youtube_transcripts').select('duration_seconds').eq('youtube_id',youtubeId).maybeSingle()
-    if(error)throw new Error(transcriptDatabaseError('Video duration lookup',error))
-    saved = data?.duration_seconds
-  }
-  if (typeof saved === 'number' && Number.isFinite(saved) && saved > 0 && saved <= 43200) {
-    try { return {raw:normaliseManualTranscriptJson(json,saved),durationSource:'saved-video' as const} }
-    catch (error) { if (!(error instanceof Error) || !error.message.includes('video duration extends beyond')) throw error }
-  }
-  throw new MissingTranscriptDuration()
+async function resolveManualJson(json:string,youtubeId:string,duration?:string,durationSeconds?:number,durationFormat:'clock'|'minutes'='clock',savedSeconds?:number|null){
+ const supplied=parseVideoDuration(duration??'',durationFormat)
+ const end=supplied===undefined?durationSeconds??undefined:supplied/1000
+ const raw=normaliseManualTranscriptJson(json,end)
+ void youtubeId;void savedSeconds
+ return {raw,durationSource:supplied!==undefined||durationSeconds!==undefined?'manual' as const:'transcript' as const}
+}
+export type ManualEnrichmentStatus='ready'|'partial'|'unavailable'
+const enrichmentResult=z.object({id:z.string(),enrichment:z.enum(['ready','partial','unavailable'])})
+export async function loadAdminManualEnrichment(id:string):Promise<{status:ManualEnrichmentStatus;diagnostics:Json;originalJson:string|null}|null>{
+ const actor=await adminIdentity();z.string().uuid().parse(id)
+ const {data,error}=await serviceClient.rpc('admin_manual_enrichment',{p_actor:actor,p_id:id})
+ if(error)throw new Error(transcriptDatabaseError('Enrichment details',error))
+ return data as {status:ManualEnrichmentStatus;diagnostics:Json;originalJson:string|null}|null
+}
+export async function retryAdminManualEnrichment(id:string):Promise<{ok:true;status:ManualEnrichmentStatus}|{ok:false;error:string}>{
+ try{const actor=await adminIdentity();z.string().uuid().parse(id)
+ const {data,error}=await serviceClient.rpc('admin_retry_manual_enrichment',{p_actor:actor,p_id:id})
+ if(error)throw new Error(transcriptDatabaseError('Enrichment retry',error))
+ revalidatePath('/admin/transcripts');return {ok:true,status:z.object({status:z.enum(['ready','partial','unavailable'])}).parse(data).status}
+ }catch(e){return {ok:false,error:e instanceof Error?e.message:'Enrichment retry unavailable.'}}
 }
 export type ManualTranscriptCheck = {ok:true;segments:number;durationSource:'transcript'|'youtube'|'saved-video'|'manual'} | {ok:false;error:string;needsDuration:boolean}
 /** Read-only preflight; the import repeats the same validation before writing. */
@@ -110,17 +111,19 @@ export async function validateAdminManualTranscript(input:{url:string;json:strin
     return {ok:true,segments:raw.content.length,durationSource}
   }catch(error){return {ok:false,error:error instanceof z.ZodError?error.issues[0].message:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to check the transcript.',needsDuration:error instanceof MissingTranscriptDuration}}
 }
-export async function importAdminManualTranscript(input:{url:string;title:string;channel?:string;json?:string;arabic?:string;english?:string;searchable:boolean;duration?:string;durationSeconds?:number;durationFormat?:'clock'|'minutes';groupId?:string|null}):Promise<string> {
+async function importManualSource(input:{url:string;title:string;channel?:string;json?:string;arabic?:string;english?:string;searchable:boolean;duration?:string;durationSeconds?:number;durationFormat?:'clock'|'minutes';groupId?:string|null}):Promise<{id:string;enrichment:ManualEnrichmentStatus}> {
   const actor=await adminIdentity()
   const value=z.object({url:z.string().trim().max(2048),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300).default(''),json:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),arabic:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),english:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),searchable:z.boolean(),duration:z.string().max(30).optional(),durationFormat:z.enum(['clock','minutes']).default('clock'),durationSeconds:z.number().finite().positive().max(43200).optional(),groupId:z.string().uuid().nullable().optional()}).parse(input)
   const id=manualVideoId(value.url)
   const durationMs=parseVideoDuration(value.duration??'',value.durationFormat)
   const raw=value.json!==undefined?(await resolveManualJson(value.json,id,value.duration,value.durationSeconds,value.durationFormat)).raw:normaliseManualTranscript(value.arabic??'',value.english)
-  const {data,error}=await serviceClient.rpc('admin_import_grouped_transcript',{p_actor:actor,p_youtube_id:id,p_title:value.title,p_channel:value.channel||'Unknown channel',p_raw:raw as unknown as Json,p_searchable:value.searchable,p_group:value.groupId??null,p_duration:durationMs===undefined?value.durationSeconds??null:durationMs/1000})
+  const {data,error}=await serviceClient.rpc('admin_import_manual_source',{p_actor:actor,p_youtube_id:id,p_title:value.title,p_channel:value.channel||'Unknown channel',p_raw:{...raw,...(value.json!==undefined?{_source_json:value.json}:{})} as unknown as Json,p_searchable:value.searchable,p_group:value.groupId??null,p_duration:durationMs===undefined?value.durationSeconds??null:durationMs/1000})
   if(error)throw new Error(transcriptDatabaseError('Import',error))
   // The RPC commits provenance, indexing and optional grouping in one transaction.
-  for(const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${data}`])revalidatePath(path);return data
+  const result=enrichmentResult.parse(data)
+  for(const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${result.id}`])revalidatePath(path);return result
 }
+export async function importAdminManualTranscript(input:Parameters<typeof importManualSource>[0]):Promise<string>{return (await importManualSource(input)).id}
 export async function updateAdminTranscript(id:string,input:{title:string;channel:string;searchable:boolean}):Promise<void> {
   await guardAdmin();z.string().uuid().parse(id)
   const value=z.object({title:z.string().trim().min(1).max(300),channel:z.string().trim().max(300),searchable:z.boolean()}).parse(input)
@@ -156,10 +159,10 @@ async function loadTranscript(id:string,after=-1,seconds?:number,admin=false):Pr
   }
   const {data:segments,error:segmentError}=await serviceClient.from('transcript_segments').select('*').eq('transcript_id',id).gt('position',after).order('position',{ascending:true}).limit(100)
   if(segmentError)throw new Error('Unable to load transcript segments.')
-  return {video,segments:(segments??[]).map(segment=>({id:segment.id,position:segment.position,original_text:segment.original_text,english_text:segment.english_text,start_seconds:segment.start_seconds,end_seconds:segment.end_seconds,start_ms:segment.start_ms??Math.round(segment.start_seconds*1000),end_ms:segment.end_ms??Math.round(segment.end_seconds*1000)}))}
+  return {video,segments:(segments??[]).map(segment=>({id:segment.id,position:segment.position,original_text:segment.original_text,english_text:segment.english_text,start_seconds:segment.start_seconds,end_seconds:segment.end_seconds,start_ms:segment.start_ms??Math.round(segment.start_seconds*1000),end_ms:segment.end_seconds===null?null:segment.end_ms??Math.round(segment.end_seconds*1000)}))}
 }
-export async function importAdminManualTranscriptResult(input: Parameters<typeof importAdminManualTranscript>[0]): Promise<{ok:true;id:string}|{ok:false;error:string}> {
-  try { return {ok:true,id:await importAdminManualTranscript(input)} }
+export async function importAdminManualTranscriptResult(input: Parameters<typeof importAdminManualTranscript>[0]): Promise<{ok:true;id:string;enrichment:ManualEnrichmentStatus}|{ok:false;error:string}> {
+  try { return {ok:true,...await importManualSource(input)} }
   catch(error) { return {ok:false,error:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error instanceof z.ZodError?error.issues[0].message:error.message):'Unable to import transcript.'} }
 }
 export async function loadPublicTranscript(id:string,after=-1,seconds?:number){return loadTranscript(id,after,seconds)}
@@ -194,7 +197,7 @@ export async function downloadAdminTranscriptJson(id: string): Promise<{ filenam
 }
 
 /** Validate with Manual Import, then commit content and metadata in one RPC. */
-export async function saveAdminTranscriptJson(id: string, input: {json:string;title:string;channel:string;searchable:boolean;updatedAt:string;duration?:string;durationFormat?:'clock'|'minutes';url?:string;groupId?:string|null}): Promise<{ok:true;updatedAt:string;json:string}|{ok:false;error:string}> {
+export async function saveAdminTranscriptJson(id: string, input: {json:string;title:string;channel:string;searchable:boolean;updatedAt:string;duration?:string;durationFormat?:'clock'|'minutes';url?:string;groupId?:string|null}): Promise<{ok:true;updatedAt:string;json:string;enrichment?:ManualEnrichmentStatus}|{ok:false;error:string}> {
   try {
     const actor = await adminIdentity()
     z.string().uuid().parse(id)
@@ -205,10 +208,11 @@ export async function saveAdminTranscriptJson(id: string, input: {json:string;ti
     const youtubeId=value.url===undefined?video.youtube_id:manualVideoId(value.url)
     const durationMs=parseVideoDuration(value.duration??'',value.durationFormat)
     const {raw} = await resolveManualJson(value.json,youtubeId,value.duration,undefined,value.durationFormat,youtubeId===video.youtube_id?video.duration_seconds:null)
-    const {data,error} = await serviceClient.rpc('admin_save_grouped_transcript',{p_actor:actor,p_id:id,p_raw:raw as unknown as Json,p_title:value.title,p_channel:value.channel,p_searchable:value.searchable,p_updated_at:value.updatedAt,p_youtube_id:youtubeId,p_group:value.groupId??null,p_duration:durationMs===undefined?null:durationMs/1000})
+    const {data,error} = await serviceClient.rpc('admin_save_manual_source',{p_actor:actor,p_id:id,p_raw:{...raw,_source_json:value.json} as unknown as Json,p_title:value.title,p_channel:value.channel,p_searchable:value.searchable,p_updated_at:value.updatedAt,p_youtube_id:youtubeId,p_group:value.groupId??null,p_duration:durationMs===undefined?null:durationMs/1000})
     if (error) throw new Error(error.code==='23503'?'The selected group no longer exists. Choose another group.':error.code==='23505'?'This YouTube video already has a transcript.':/Video duration|Only manual/.test(error.message)?error.message:/transcript_edit_conflict/.test(error.message)?'This transcript changed after you opened it. Reopen Edit before saving. Your edits are still here.':/transcript_edit_busy/.test(error.message)?'Wait for transcript processing and translation to finish before editing.':/generation_incomplete/.test(error.message)?'Published generated transcripts need English for every segment. Add the missing translations or turn publication off.':transcriptDatabaseError('Edit',error))
     for (const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${id}`]) revalidatePath(path)
-    return {ok:true,updatedAt:z.string().parse(data),json:JSON.stringify({content:raw.content},null,2)}
+    const result=z.object({updatedAt:z.string(),enrichment:z.enum(['ready','partial','unavailable'])}).parse(data)
+    return {ok:true,...result,json:JSON.stringify({content:raw.content},null,2)}
   } catch (error) {
     return {ok:false,error:error instanceof z.ZodError?error.issues.map(issue=>issue.message).join('\n'):error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Could not save transcript.'}
   }
@@ -234,7 +238,8 @@ export async function saveAdminGeneratedTranscript(id:string,input:{json:string;
   const {data:video,error:readError}=await serviceClient.from('youtube_transcripts').select('youtube_id,duration_seconds').eq('id',id).single()
   if(readError||!video)throw new Error('Generated transcript not found.')
   parseVideoDuration(value.duration??'')
-  const {raw}=await resolveManualJson(value.json,video.youtube_id,value.duration,undefined,'clock',video.duration_seconds)
+  const raw=normaliseManualTranscriptJson(value.json,parseVideoDuration(value.duration??'')===undefined?video.duration_seconds??undefined:parseVideoDuration(value.duration??'')!/1000)
+  if(raw.content.some(c=>c.duration===null))throw new MissingTranscriptDuration()
   const {data,error}=await serviceClient.rpc('admin_review_generated_transcript',{p_actor:actor,p_id:id,p_raw:raw as unknown as Json,p_title:value.title,p_searchable:value.searchable,p_updated_at:value.updatedAt})
   if(error)throw new Error(/transcript_edit_conflict/.test(error.message)?'This transcript changed. Reload its JSON before saving. Your edits are still here.':/transcript_edit_busy/.test(error.message)?'Wait for generation to finish before saving.':/not_generated_transcript/.test(error.message)?'This saved video belongs to another workflow. Use its existing editor.':'Unable to save generated JSON. Check its token metadata and retry.')
   for(const path of ['/admin/transcripts','/explore','/explore/search',`/transcripts/${id}`])revalidatePath(path)

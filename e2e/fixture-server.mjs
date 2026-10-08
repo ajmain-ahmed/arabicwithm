@@ -106,15 +106,21 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       if(membership)membership.group_id=body.p_group;else tables.admin_manual_transcripts.push({transcript_id:row.id,group_id:body.p_group})
       return json(res,row.updated_at)
     }
-    if(rpc==='admin_import_youtube_transcript'||rpc==='admin_import_grouped_transcript'){
+    if(rpc==='admin_import_youtube_transcript'||rpc==='admin_import_grouped_transcript'||rpc==='admin_import_manual_source'){
       if(roleFor(body.p_actor)!=='admin')return json(res,{message:'Forbidden'},403)
       const existing=tables.youtube_transcripts.find(row=>row.youtube_id===body.p_youtube_id)
       if(existing)return json(res,existing.id)
       const id='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
       tables.youtube_transcripts.push({id,youtube_id:body.p_youtube_id,canonical_url:`https://www.youtube.com/watch?v=${body.p_youtube_id}`,title:body.p_title,channel:body.p_channel,thumbnail:`${backendUrl}/storage/v1/object/public/covers/test.webp`,provider:'manual',source_origin:'website_admin_transcript',episode_id:null,status:'ready',translation_status:'ready',searchable:body.p_searchable,raw_transcript:body.p_raw,duration_seconds:Math.max(...body.p_raw.content.map(chunk=>chunk.offset+chunk.duration))/1000,created_at:'2026-10-07T00:00:00Z',updated_at:'2026-10-07T00:00:00Z'})
-      if(rpc==='admin_import_grouped_transcript')tables.admin_manual_transcripts.push({transcript_id:id,group_id:body.p_group??null})
+      if(rpc==='admin_import_grouped_transcript'||rpc==='admin_import_manual_source')tables.admin_manual_transcripts.push({transcript_id:id,group_id:body.p_group??null})
+      if(rpc==='admin_import_manual_source'){
+        const row=tables.youtube_transcripts.find(row=>row.id===id);row.original_json=body.p_raw._source_json;delete row.raw_transcript._source_json;row.enrichment_status='unavailable'
+        body.p_raw.content.forEach((chunk,position)=>tables.transcript_segments.push({id:position+1,transcript_id:id,position,original_text:chunk.text,english_text:chunk.english??null,start_seconds:chunk.offset/1000,end_seconds:chunk.duration===null?null:(chunk.offset+chunk.duration)/1000}))
+        return json(res,{id,enrichment:'unavailable'})
+      }
       return json(res,id)
     }
+    if(rpc==='admin_manual_enrichment'||rpc==='admin_retry_manual_enrichment'){const row=tables.youtube_transcripts.find(row=>row.id===body.p_id);return json(res,row?{status:row.enrichment_status??'unavailable',diagnostics:[],originalJson:row.original_json??null}:null)}
     if (rpc === 'account_role') {
       await new Promise(resolve => setTimeout(resolve, 350))
       return json(res, roleFor(body.p_user_id))

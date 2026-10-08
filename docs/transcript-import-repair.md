@@ -1,3 +1,5 @@
+> Superseded for manual imports by [the source-first contract](transcript-source-first.md). This document records the earlier repair.
+
 # AWM transcript import repair — 8 October 2026
 
 The live database repair is applied as migration `20261008182737_manual_awm_import_compatibility.sql`. The application changes still need a website deployment.

@@ -5,7 +5,7 @@ import {beforeAll,afterAll,expect,it} from 'vitest'
 import {normaliseManualTranscriptJson} from './manualTranscriptJson'
 let db:PGlite
 const awm=JSON.parse(readFileSync('app/lib/fixtures/manual-awm-word-and-phrase.json','utf8'))
-const raw=normaliseManualTranscriptJson(JSON.stringify(awm))
+const raw=JSON.parse(readFileSync('app/lib/fixtures/manual-awm-before-source-first.json','utf8')) as ReturnType<typeof normaliseManualTranscriptJson>
 let imported:string
 const actor='11111111-1111-4111-8111-111111111111'
 const other='22222222-2222-4222-8222-222222222222'
@@ -118,7 +118,7 @@ it('uses the same Arabic-letter rule in SQL and preflight and rejects every inva
  let message='';try{await db.query('select admin_import_grouped_transcript($1,$2,$3,$4,$5,true,null,null)',[actor,'BADTOK00001','Rejected','Channel',invalid])}catch(e){message=(e as Error).message}
  for(const segment of [1,2,3])expect(message).toContain(`Segment ${segment}, token 1`)
  expect(await snapshot()).toEqual(before)
- const punctuation=normaliseManualTranscriptJson(JSON.stringify([{tokens:[{arabic:'مرحبا',english:'hello',pos:'noun',headword:'مرحبا',entry_type:'word',transliteration:'marhaba'},{arabic:'!'}],timestamp:'00:01.234',end_ms:5000}]))
+ const punctuation={provider:'manual',lang:'ar',content:[{text:'مرحبا!',offset:1234,duration:3766,tokens:[{arabic:'مرحبا!',english:'hello',pos:'noun',headword:'مرحبا',entry_type:'word',transliteration:'marhaba'}]}]}
  const id=(await db.query<{id:string}>('select admin_import_grouped_transcript($1,$2,$3,$4,$5,true,null,null) id',[actor,'PUNCT000001','Safe punctuation','Channel',punctuation])).rows[0].id
  expect((await db.query<{raw:unknown}>('select raw_transcript raw from youtube_transcripts where id=$1',[id])).rows[0].raw).toEqual(punctuation)
 })
