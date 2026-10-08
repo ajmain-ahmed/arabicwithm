@@ -1,6 +1,6 @@
 /** All manual-import timing becomes integer milliseconds before validation. */
 export const MAX_TRANSCRIPT_TIME_MS = 12 * 60 * 60 * 1000
-export const FINAL_DURATION_MESSAGE = 'This transcript uses start-only timestamps. Enter the video duration (MM:SS or HH:MM:SS) so the final segment can be timed.'
+export const FINAL_DURATION_MESSAGE = 'This transcript uses start-only timestamps. Enter the video duration (MM:SS or HH:MM:SS; alternatively MM or HH:MM in minutes mode) so the final segment can be timed.'
 
 export class MissingTranscriptDuration extends Error {
   constructor() { super(FINAL_DURATION_MESSAGE) }
@@ -22,9 +22,16 @@ export function parseTranscriptTime(value: unknown, unit: 'milliseconds' | 'seco
   return milliseconds
 }
 
-export function parseVideoDuration(value: string): number | undefined {
+export function parseVideoDuration(value: string, format: 'clock' | 'minutes' = 'clock'): number | undefined {
   if (!value.trim()) return undefined
-  const milliseconds = parseTranscriptTime(value)
+  let milliseconds: number
+  if (format === 'minutes') {
+    const time = value.trim()
+    if (!/^\d+(?::\d{2})?$/.test(time)) throw new Error('Enter minutes (MM) or hours:minutes (HH:MM), for example 11 or 1:03.')
+    const parts = time.split(':').map(Number)
+    if (parts.length === 2 && parts[1] >= 60) throw new Error('Minutes after a colon must be between 00 and 59.')
+    milliseconds = (parts.length === 1 ? parts[0] : parts[0]*60+parts[1])*60000
+  } else milliseconds = parseTranscriptTime(value)
   if (milliseconds <= 0 || milliseconds > MAX_TRANSCRIPT_TIME_MS) throw new Error('Video duration must be greater than zero and no longer than 12 hours.')
   return milliseconds
 }

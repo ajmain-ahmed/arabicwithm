@@ -1,0 +1,80 @@
+[
+  {
+    "timestamp": "08:21.123",
+    "translation": "First.",
+    "paragraph": 1,
+    "tokens": [
+      {
+        "arabic": "أولا",
+        "english": "first",
+        "pos": "noun",
+        "headword": "أولا",
+        "entry_type": "word",
+        "transliteration": "fixture",
+        "cefr": "A1",
+        "custom": {
+          "retained": true
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "08:22",
+    "translation": "Welcome",
+    "paragraph": 1,
+    "speaker": "Narrator",
+    "tokens": [
+      {
+        "arabic": "أهلا",
+        "english": "welcome",
+        "pos": "noun",
+        "headword": "أهلا",
+        "entry_type": "word",
+        "transliteration": "fixture",
+        "cefr": "A1",
+        "custom": {
+          "retained": true
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "08:22",
+    "translation": "to you.",
+    "paragraph": 1,
+    "speaker": "Narrator",
+    "tokens": [
+      {
+        "arabic": "بكم",
+        "english": "you",
+        "pos": "noun",
+        "headword": "بكم",
+        "entry_type": "word",
+        "transliteration": "fixture",
+        "cefr": "A1",
+        "custom": {
+          "retained": true
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "08:24.567",
+    "translation": "Last.",
+    "paragraph": 2,
+    "tokens": [
+      {
+        "arabic": "أخيرا",
+        "english": "last",
+        "pos": "noun",
+        "headword": "أخيرا",
+        "entry_type": "word",
+        "transliteration": "fixture",
+        "cefr": "A1",
+        "custom": {
+          "retained": true
+        }
+      }
+    ]
+  }
+]

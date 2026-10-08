@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
+import representative from './fixtures/transcript-start-only.json'
 import { normaliseManualTranscriptJson, serialiseTranscriptJson, transcriptJsonFilename } from './manualTranscriptJson'
 const content=[{text:'حياكم الله',offset:84200,duration:5500,english:'Welcome'},{text:'مرحبا بكم',offset:0,duration:5270,english:'Hello'}]
 describe('canonical manual transcript JSON',()=>{
-  it('preserves bilingual text and real integer timing in chronological order',()=>{expect(normaliseManualTranscriptJson(JSON.stringify({content}))).toEqual({provider:'manual',lang:'ar',content:[content[1],content[0]]})})
+  it('preserves bilingual text and real integer timing in chronological order',()=>{expect(normaliseManualTranscriptJson(JSON.stringify({content:[content[1],content[0]]}))).toEqual({provider:'manual',lang:'ar',content:[content[1],content[0]]})})
   it('reports syntax errors usefully',()=>{expect(()=>normaliseManualTranscriptJson('{')).toThrow('Invalid transcript JSON')})
   it.each([{content:[]},[],{content:[{text:'مرحبا',offset:'0',duration:5}]},{content:[{text:'مرحبا',offset:0,duration:0}]},{content:[{text:'مرحبا',offset:0.5,duration:5}]},{content:[{text:'مرحبا',offset:0,duration:5,english:1}]},{content:[{text:'English',offset:0,duration:5}]},{content:[{text:'مرحبا',offset:43200000,duration:5}]}])('rejects malformed fields without coercion',value=>{expect(()=>normaliseManualTranscriptJson(JSON.stringify(value))).toThrow()})
   it('accepts timed AWM token blocks and preserves lexical data',()=>{const blocks=[{tokens:[{arabic:'\u0645\u0631\u062d\u0628\u0627',headword:'\u0645\u0631\u062d\u0628\u0627',english:'Hello'}],timestamp:'0:00',translation:'Hello'}];expect(normaliseManualTranscriptJson(JSON.stringify(blocks),2).content[0]).toMatchObject({text:'\u0645\u0631\u062d\u0628\u0627',offset:0,duration:2000,english:'Hello',tokens:blocks[0].tokens})})
@@ -105,4 +106,46 @@ it('retains canonical enrichment alongside supplied token IDs and timings and re
  const token=normaliseManualTranscriptJson(serialiseTranscriptJson([segment],raw)).content[0].tokens![0]
  expect(token).toMatchObject({...raw.content[0].tokens[0],headword:'مرحبا',transliteration:'marhaba'})
  expect(normaliseManualTranscriptJson(serialiseTranscriptJson([segment],{content:[{...raw.content[0],tokens:[]}]})).content[0].tokens).toEqual(canonical.tokens)
+})
+
+describe('representative AWM simultaneous start-only captions (not the missing original JSON)',()=>{
+ const token=(arabic:string,english:string)=>({arabic,english,pos:'noun',headword:arabic,entry_type:'word',transliteration:'fixture',cefr:'A1',custom:{retained:true}})
+ const blocks=representative
+ it('merges 08:22 captions before timing validation and retains every token property/order',()=>{
+  const result=normaliseManualTranscriptJson(JSON.stringify(blocks),510).content
+  expect(result).toHaveLength(3)
+  expect(result[0]).toMatchObject({offset:501123,duration:877})
+  expect(result[1]).toMatchObject({offset:502000,duration:2567,text:'أهلا بكم',english:'Welcome to you.',paragraph:1,speaker:'Narrator',tokens:[...blocks[1].tokens,...blocks[2].tokens]})
+  expect(result[2]).toMatchObject({offset:504567,duration:5433})
+  expect(normaliseManualTranscriptJson(JSON.stringify({content:result})).content).toEqual(result)
+ })
+ it('reports incompatible duplicate metadata precisely instead of guessing',()=>{
+  const invalid=blocks.map(block=>({...block}));invalid[2].paragraph=2
+  expect(()=>normaliseManualTranscriptJson(JSON.stringify(invalid))).toThrow(/Segments 2, 3: duplicate timestamp 502000 ms.*metadata field "paragraph"/)
+ })
+ it('does not mask a middle order error with the missing final duration',()=>{
+  const invalid=[blocks[0],blocks[3],blocks[1]]
+  try{normaliseManualTranscriptJson(JSON.stringify(invalid));throw new Error('Expected rejection')}
+  catch(error){expect((error as Error).message).toContain('timestamp-order error');expect((error as Error).message).not.toContain('Enter the video duration')}
+ })
+ it('rejects disagreeing explicit duplicate ends and mixed token mappings',()=>{
+  expect(()=>normaliseManualTranscriptJson(JSON.stringify([{...blocks[1],end_ms:503000},{...blocks[2],end_ms:504000}]))).toThrow('explicit end times disagree')
+  expect(()=>normaliseManualTranscriptJson(JSON.stringify([blocks[1],{timestamp:'08:22',arabic:'بكم'}]))).toThrow('some blocks have tokens and others do not')
+ })
+ it('requires duration only when the final end is genuinely unknown',()=>{
+  expect(()=>normaliseManualTranscriptJson(JSON.stringify(blocks))).toThrow('Enter the video duration')
+  expect(normaliseManualTranscriptJson(JSON.stringify([...blocks.slice(0,-1),{...blocks.at(-1),end_ms:510123}])).content.at(-1)).toMatchObject({offset:504567,duration:5556})
+ })
+ it.each([1,7,300])('is independent of segment count: %i blocks',count=>{
+  const source=Array.from({length:count},(_,index)=>({tokens:[token('مرحبا','hello')],start_ms:index*1234}))
+  const result=normaliseManualTranscriptJson(JSON.stringify(source),count*1234/1000).content
+  expect(result).toHaveLength(count);expect(result.at(-1)).toMatchObject({offset:(count-1)*1234,duration:1234})
+ })
+})
+
+it('rejects out-of-order fully timed input instead of silently reordering timestamps',()=>{
+ expect(()=>normaliseManualTranscriptJson(JSON.stringify([{arabic:'مرحبا',start_ms:2000,end_ms:3000},{arabic:'مرحبا',start_ms:1000,end_ms:2000}]))).toThrow('timestamp-order error')
+})
+it('reports invalid final metadata before requesting the missing final duration',()=>{
+ expect(()=>normaliseManualTranscriptJson(JSON.stringify([{arabic:'مرحبا',start_ms:0,paragraph:0}]))).toThrow('paragraph must be a positive integer')
 })

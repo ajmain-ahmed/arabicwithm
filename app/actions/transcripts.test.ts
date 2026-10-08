@@ -1,10 +1,11 @@
 import {beforeEach,describe,it,expect,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({guard:vi.fn(),access:vi.fn(),rpc:vi.fn(),from:vi.fn(),revalidate:vi.fn()}))
+const mocks=vi.hoisted(()=>({guard:vi.fn(),access:vi.fn(),rpc:vi.fn(),from:vi.fn(),revalidate:vi.fn(),duration:vi.fn()}))
 vi.mock('@/app/actions/auth',()=>({guardAdmin:mocks.guard,getAuthenticatedAccess:mocks.access}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{rpc:mocks.rpc,from:mocks.from}}))
+vi.mock('@/app/lib/youtubeVideoDuration',()=>({getYouTubeVideoDuration:mocks.duration}))
 vi.mock('next/cache',()=>({revalidatePath:mocks.revalidate}))
 import {addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson,saveAdminTranscriptJson} from './transcripts'
-beforeEach(()=>{vi.resetAllMocks();mocks.guard.mockResolvedValue(undefined);mocks.access.mockResolvedValue({admin:true,userId:'11111111-1111-4111-8111-111111111111'})})
+beforeEach(()=>{vi.resetAllMocks();mocks.duration.mockResolvedValue(null);mocks.guard.mockResolvedValue(undefined);mocks.access.mockResolvedValue({admin:true,userId:'11111111-1111-4111-8111-111111111111'})})
 
 function metadata(duration:number|null){const query={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:duration===null?null:{duration_seconds:duration},error:null})};mocks.from.mockReturnValue(query);return query}
 const startOnlyJson=JSON.stringify([{tokens:[{arabic:'\u0645\u0631\u062d\u0628\u0627',english:'hello'}],timestamp:'00:00',translation:'Hello'},{arabic:'\u0645\u0631\u062d\u0628\u0627',start_ms:630000}])
@@ -155,5 +156,40 @@ describe('editing JSON safely',()=>{
  it('returns useful concurrent-edit errors without changing editor data',async()=>{
   stored();mocks.rpc.mockResolvedValue({data:null,error:{message:'transcript_edit_conflict'}})
   expect(await saveAdminTranscriptJson(id,input)).toMatchObject({ok:false,error:expect.stringContaining('changed after you opened')})
+ })
+})
+
+describe('server duration resolution shared by Import and Edit',()=>{
+ const id='11111111-1111-4111-8111-111111111111',updatedAt='2026-10-08T12:00:00Z'
+ it('uses actual YouTube duration for the final start-only segment',async()=>{
+  mocks.duration.mockResolvedValue(657)
+  expect(await validateAdminManualTranscript({url:'https://youtu.be/ZBynl03Vp-w',json:startOnlyJson})).toMatchObject({ok:true,durationSource:'youtube'})
+  mocks.rpc.mockResolvedValue({data:'saved',error:null})
+  expect(await importAdminManualTranscriptResult({url:'ZBynl03Vp-w',title:'Video',json:startOnlyJson,searchable:true})).toMatchObject({ok:true})
+  expect(mocks.rpc).toHaveBeenCalledWith('admin_import_youtube_transcript',expect.objectContaining({p_raw:expect.objectContaining({content:expect.arrayContaining([expect.objectContaining({offset:630000,duration:27000})])})}))
+  expect(mocks.from).not.toHaveBeenCalled()
+ })
+ it('does not fetch duration for complete timing or a middle order/duplicate error',async()=>{
+  const text='مرحبا'
+  expect(await validateAdminManualTranscript({url:'ZBynl03Vp-w',json:JSON.stringify([{text,start_ms:0,end_ms:1000}])})).toMatchObject({ok:true})
+  for(const blocks of [[{text,start_ms:2000},{text,start_ms:1000},{text,start_ms:3000}],[{text,start_ms:0,paragraph:1},{text,start_ms:0,paragraph:2},{text,start_ms:3000}]]){
+   const result=await validateAdminManualTranscript({url:'ZBynl03Vp-w',json:JSON.stringify(blocks)})
+   expect(result).toMatchObject({ok:false,needsDuration:false});if(!result.ok)expect(result.error).not.toContain('Enter the video duration')
+  }
+  expect(mocks.duration).not.toHaveBeenCalled();expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+ it('supports explicit minutes mode after automatic retrieval fails',async()=>{
+  metadata(null)
+  expect(await validateAdminManualTranscript({url:'ZBynl03Vp-w',json:startOnlyJson,duration:'11',durationFormat:'minutes'})).toMatchObject({ok:true,durationSource:'manual'})
+ })
+ it('uses the same merging, duration lookup and manual fallback in Edit',async()=>{
+  mocks.from.mockReturnValue({select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),single:vi.fn().mockResolvedValue({data:{youtube_id:'ZBynl03Vp-w',duration_seconds:null},error:null})})
+  mocks.duration.mockResolvedValue(660);mocks.rpc.mockResolvedValue({data:updatedAt,error:null})
+  const json=JSON.stringify([{tokens:[{arabic:'أهلا',english:'welcome',pos:'noun',headword:'أهل',entry_type:'word',transliteration:'ahlan'}],timestamp:'08:22',translation:'Welcome'},{tokens:[{arabic:'بكم',english:'you',pos:'pronoun',headword:null,entry_type:'word',transliteration:'bikum'}],timestamp:'08:22',translation:'to you'},{arabic:'مرحبا',timestamp:'10:00'}])
+  expect(await saveAdminTranscriptJson(id,{json,title:'Video',channel:'Channel',searchable:true,updatedAt})).toMatchObject({ok:true})
+  expect(mocks.duration).toHaveBeenCalledWith('ZBynl03Vp-w')
+  expect(mocks.rpc).toHaveBeenCalledWith('admin_update_transcript_json',expect.objectContaining({p_id:id,p_raw:expect.objectContaining({content:[expect.objectContaining({offset:502000,duration:98000,tokens:expect.any(Array)}),expect.objectContaining({offset:600000,duration:60000})]})}))
+  mocks.duration.mockResolvedValue(null)
+  expect(await saveAdminTranscriptJson(id,{json,title:'Video',channel:'Channel',searchable:true,updatedAt,duration:'00:11',durationFormat:'minutes'})).toMatchObject({ok:true})
  })
 })
