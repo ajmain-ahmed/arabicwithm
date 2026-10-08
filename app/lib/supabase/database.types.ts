@@ -15,6 +15,7 @@ type Table<Row> = { Row: { [K in keyof Row]: Row[K] }; Insert: { [K in keyof Row
 export interface Database {
   public: {
     Tables: {
+      admin_manual_transcripts: Table<{transcript_id:string;group_id:string|null;created_at:string}>
       youtube_transcripts: Table<import('@/app/actions/transcripts').TranscriptRow & {raw_transcript:Json|null}>
       transcript_segments: Table<import('@/app/actions/transcripts').TranscriptSegment & {transcript_id:string}>
       account_roles: Table<{ user_id: string; role: 'user' | 'editor' | 'admin'; updated_at: string }>
@@ -338,8 +339,13 @@ export interface Database {
       website_complete_memory_card_v2: {Args:{p_user_id:string;p_completion_id:string;p_card_id:string;p_rating:string;p_session:Json};Returns:Json}
       admin_record_transcript_origin: { Args:{p_actor:string;p_id:string};Returns:string }
       register_youtube_transcript: { Args:{p_user:string;p_youtube_id:string};Returns:string }
+      admin_review_generated_transcript: {Args:{p_actor:string;p_id:string;p_raw:Json;p_title:string;p_searchable:boolean;p_updated_at:string};Returns:string}
       admin_generate_youtube_transcript: { Args:{p_actor:string;p_youtube_id:string};Returns:Json }
       admin_delete_youtube_transcript: { Args:{p_actor:string;p_id:string};Returns:boolean }
+      admin_list_manual_transcripts: {Args:{p_actor:string;p_page:number;p_search:string;p_group:string|null;p_ungrouped:boolean};Returns:Json}
+      admin_manage_transcript_group: {Args:{p_actor:string;p_name:string|null;p_parent:string|null;p_id:string|null;p_delete:boolean};Returns:string}
+      admin_import_grouped_transcript: {Args:{p_actor:string;p_youtube_id:string;p_title:string;p_channel:string;p_raw:Json;p_searchable:boolean;p_group:string|null;p_duration:number|null};Returns:string}
+      admin_save_grouped_transcript: {Args:{p_actor:string;p_id:string;p_raw:Json;p_title:string;p_channel:string;p_searchable:boolean;p_updated_at:string;p_youtube_id:string;p_group:string|null;p_duration:number|null};Returns:string}
       admin_update_transcript_json: { Args:{p_actor:string;p_id:string;p_raw:Json;p_title:string;p_channel:string;p_searchable:boolean;p_updated_at:string};Returns:string }
       admin_import_youtube_transcript: { Args:{p_actor:string;p_youtube_id:string;p_title:string;p_channel:string;p_raw:Json;p_searchable:boolean};Returns:string }
       search_transcript_word: { Args:{p_word:string;p_after:number;p_after_rank:number;p_limit:number};Returns:Json }

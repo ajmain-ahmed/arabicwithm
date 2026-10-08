@@ -1,8 +1,8 @@
 import React, {act} from 'react'
 import {createRoot,type Root} from 'react-dom/client'
 import {beforeEach,afterEach,expect,it,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({list:vi.fn(),import:vi.fn(),remove:vi.fn(),validate:vi.fn(),download:vi.fn(),save:vi.fn()}))
-vi.mock('@/app/actions/transcripts',()=>({listAdminTranscripts:mocks.list,importAdminManualTranscriptResult:mocks.import,validateAdminManualTranscript:mocks.validate,generateAdminTranscript:vi.fn(),deleteAdminTranscript:mocks.remove,updateAdminTranscript:vi.fn(),downloadAdminTranscriptJson:mocks.download,saveAdminTranscriptJson:mocks.save}))
+const mocks=vi.hoisted(()=>({list:vi.fn(),import:vi.fn(),remove:vi.fn(),validate:vi.fn(),download:vi.fn(),save:vi.fn(),group:vi.fn()}))
+vi.mock('@/app/actions/transcripts',()=>({listAdminTranscripts:mocks.list,importAdminManualTranscriptResult:mocks.import,validateAdminManualTranscript:mocks.validate,generateAdminTranscript:vi.fn(),deleteAdminTranscript:mocks.remove,updateAdminTranscript:vi.fn(),downloadAdminTranscriptJson:mocks.download,saveAdminTranscriptJson:mocks.save,manageAdminTranscriptGroup:mocks.group}))
 import AdminTranscripts from './AdminTranscripts'
 let host:HTMLDivElement,root:Root
 beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.resetAllMocks();mocks.list.mockResolvedValue({rows:[],total:0});mocks.import.mockResolvedValue({ok:true,id:'saved'});mocks.validate.mockResolvedValue({ok:true,segments:1,durationSource:'transcript'});host=document.createElement('div');document.body.appendChild(host);root=createRoot(host)})
@@ -23,7 +23,7 @@ it('shows useful server validation errors without closing the JSON editor',async
 it('offers only the essential manual-import inputs',async()=>{
   await open()
   const dialog=document.querySelector('[role="dialog"]')!
-  expect([...dialog.querySelectorAll('label')].map(label=>label.textContent?.replace(/\s*\*$/, ''))).toEqual(['YouTube URL or video ID','Video Title','Transcript JSON','Video duration','Publish to the shared searchable transcript library'])
+  expect([...dialog.querySelectorAll('label')].map(label=>label.textContent?.replace(/\s*\*$/, ''))).toEqual(['Video Title','YouTube URL or video ID','Group','Video duration','Transcript JSON','Publish to the shared searchable transcript library'])
   expect(dialog.textContent).not.toMatch(/Channel \/ source|Arabic SRT|English SRT|VTT|Import Transcript/)
   expect([...dialog.querySelectorAll('button')].map(button=>button.textContent)).toContain('Import')
 })
@@ -81,7 +81,7 @@ it('keeps invalid edits and returns from Saving on failure, then permits correct
  await fill('Transcript JSON',savedJson)
  mocks.save.mockResolvedValueOnce({ok:true,json:savedJson,updatedAt:'2026-10-08T12:00:00Z'})
  await act(async()=>editSave().click())
- expect(mocks.save).toHaveBeenLastCalledWith(editRow.id,{json:savedJson,title:editRow.title,channel:editRow.channel,searchable:true,updatedAt:editRow.updated_at,duration:'',durationFormat:'clock'})
+ expect(mocks.save).toHaveBeenLastCalledWith(editRow.id,{json:savedJson,title:editRow.title,channel:editRow.channel,searchable:true,updatedAt:editRow.updated_at,duration:'0:10',durationFormat:'clock',url:'',groupId:null})
  expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Saved')
  await fill('Transcript JSON',savedJson.replace('Hello','Welcome'))
  mocks.save.mockResolvedValueOnce({ok:true,json:savedJson,updatedAt:'2026-10-08T12:01:00Z'})
@@ -112,4 +112,51 @@ it('allows minutes / HH:MM fallback without changing existing clock interpretati
  await fill('Video duration','11');await act(async()=>{await new Promise(resolve=>setTimeout(resolve,800))})
  await act(async()=>importButton().click())
  expect(mocks.import).toHaveBeenCalledWith(expect.objectContaining({duration:'11',durationFormat:'minutes'}))
+})
+
+const parentGroup={id:'33333333-3333-4333-8333-333333333333',name:'Arabic Learning',parent_id:null,direct_count:2,transcript_count:41}
+const childGroup={id:'44444444-4444-4444-8444-444444444444',name:'Grammar',parent_id:parentGroup.id,direct_count:39,transcript_count:39}
+async function select(label:string,value:string){const input=[...document.querySelectorAll('select')].find(element=>[...document.querySelectorAll('label')].some(item=>item.htmlFor===element.id&&item.textContent?.startsWith(label)))!;await act(async()=>{Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value')!.set!.call(input,value);input.dispatchEvent(new Event('change',{bubbles:true}))})}
+it('searches beyond the current page, resets group filters, and reveals matches without expanding groups',async()=>{
+ mocks.list.mockImplementation(async(page:number,search:string)=>({rows:search?[{...editRow,title:'قصة إبراهيم',group_id:childGroup.id}]:[],total:search?1:41,groups:[parentGroup,childGroup],ungrouped:0}))
+ await act(async()=>root.render(<AdminTranscripts/>))
+ await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='Next')!.click())
+ expect(mocks.list).toHaveBeenLastCalledWith(1,'','')
+ await fill('Search transcripts by title','قصة إبراهيم')
+ await act(async()=>{await new Promise(resolve=>setTimeout(resolve,400))})
+ expect(mocks.list).toHaveBeenLastCalledWith(0,'قصة إبراهيم','')
+ expect(host.textContent).toContain('قصة إبراهيم')
+ expect(host.textContent).toContain('Arabic Learning (41)')
+ expect(host.querySelector('[aria-expanded="true"]')).toBeNull()
+ await select('Filter by group',childGroup.id)
+ expect(mocks.list).toHaveBeenLastCalledWith(0,'قصة إبراهيم',childGroup.id)
+ await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='Clear filter')!.click())
+ expect(mocks.list).toHaveBeenLastCalledWith(0,'قصة إبراهيم','')
+})
+it('loads saved group and duration, changes assignment and keeps channel metadata out of the visible form',async()=>{
+ mocks.list.mockResolvedValue({rows:[{...editRow,youtube_id:'ZBynl03Vp-w',group_id:childGroup.id}],total:1,groups:[parentGroup,childGroup],ungrouped:0})
+ mocks.download.mockResolvedValue({json:savedJson,updatedAt:editRow.updated_at,title:editRow.title,channel:editRow.channel,groupId:childGroup.id,youtubeId:'ZBynl03Vp-w',durationSeconds:4257})
+ mocks.save.mockResolvedValue({ok:true,json:savedJson,updatedAt:'2026-10-08T12:01:00Z'})
+ await act(async()=>root.render(<AdminTranscripts/>));await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='Edit / Publish')!.click())
+ const dialog=document.querySelector('[role="dialog"]')!
+ expect(dialog.textContent).not.toContain('Channel / source')
+ expect((dialog.querySelector('select') as HTMLSelectElement).value).toBe(childGroup.id)
+ expect([...dialog.querySelectorAll('input')].map(input=>input.value)).toContain('1:10:57')
+ expect(dialog.querySelector('textarea')!.compareDocumentPosition(dialog.querySelector('select')!)&Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy()
+ await select('Group','');await act(async()=>editSave().click())
+ expect(mocks.save).toHaveBeenCalledWith(editRow.id,expect.objectContaining({groupId:null,channel:'Channel',url:'ZBynl03Vp-w',duration:'1:10:57'}))
+})
+it('creates a group from Import without losing unsaved JSON and makes it immediately selectable',async()=>{
+ await open();await validForm();const json=document.querySelector('textarea')!.value
+ mocks.group.mockResolvedValue({ok:true,id:parentGroup.id})
+ mocks.list.mockResolvedValue({rows:[],total:0,groups:[parentGroup],ungrouped:0})
+ await act(async()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Create a group')!.click())
+ await fill('Group name','Arabic Learning')
+ await act(async()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Create group')!.click())
+ expect(mocks.group).toHaveBeenCalledWith(expect.objectContaining({name:'Arabic Learning',parentId:null}))
+ await act(async()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Done')!.click())
+ expect(document.querySelector('textarea')!.value).toBe(json)
+ expect((document.querySelector('[role="dialog"] select') as HTMLSelectElement).value).toBe(parentGroup.id)
+ await act(async()=>importButton().click())
+ expect(mocks.import).toHaveBeenCalledWith(expect.objectContaining({groupId:parentGroup.id,json}))
 })

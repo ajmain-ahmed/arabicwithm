@@ -186,3 +186,16 @@ it('preserves generated publication opt-out, rejects missing English for publish
  expect((await db.query('select * from transcript_private.translations')).rows).toHaveLength(0)
  const before=await snapshot();await expect(update([{text:'مرحبا',offset:0,duration:1000}],saved,true)).rejects.toThrow('generation_incomplete');expect(await snapshot()).toEqual(before)
 })
+
+it('keeps real JSON indexing and token enrichment when saving group, video ID and duration together',async()=>{
+ await db.exec("alter table youtube_transcripts add column source_origin text default 'website_admin_transcript',add column created_at timestamptz default now();create table public.episodes(id uuid primary key default gen_random_uuid(),youtube_id text);")
+ await db.exec(readFileSync('supabase/migrations/20261008161532_transcript_groups_manual_library.sql','utf8'))
+ const group=(await db.query<{id:string}>('select admin_manage_transcript_group($1,$2) id',[admin,'Arabic learning'])).rows[0].id
+ const rich=chunk('مرحبا',0);Object.assign(rich.tokens[0],{english:'hello',pos:'noun',headword:'مرحبا',entry_type:'word',transliteration:'marhaban'})
+ await db.query('select admin_save_grouped_transcript($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',[admin,id,{content:[rich]},'Grouped title','Source',true,saved,'NEWVIDEO001',group,657])
+ const video=(await db.query('select * from youtube_transcripts where id=$1',[id])).rows[0]
+ expect(video).toMatchObject({id,title:'Grouped title',channel:'Source',youtube_id:'NEWVIDEO001',duration_seconds:657,raw_transcript:expect.objectContaining({content:[rich]})})
+ expect((await db.query('select group_id from admin_manual_transcripts where transcript_id=$1',[id])).rows[0]).toEqual({group_id:group})
+ expect((await db.query('select * from transcript_segments where transcript_id=$1',[id])).rows[0]).toMatchObject({original_text:'مرحبا',english_text:'English',canonical_paragraph:expect.objectContaining({tokens:[expect.objectContaining({pos:'noun',headword:'مرحبا',entry_type:'word',transliteration:'marhaban'})]})})
+ expect((await db.query('select * from user_video_library')).rows).toHaveLength(1)
+})

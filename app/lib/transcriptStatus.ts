@@ -17,6 +17,10 @@ export function transcriptGenerationPending(row: TranscriptRow): boolean {
 }
 export function transcriptGenerationError(code: string): string {
   const errors: Record<string, string> = {
+    enrichment_not_configured: 'Arabic text is saved, but word-level enrichment needs OPENAI_API_KEY on the Supabase transcript worker. You can review the available JSON.',
+    enrichment_auth: 'The enrichment provider rejected OPENAI_API_KEY. Check the Supabase worker secret.',
+    enrichment_unavailable: 'Word-level enrichment is temporarily unavailable. The saved Arabic timing is preserved.',
+    invalid_enrichment: 'The enrichment response did not match the AWM token schema. Review the available JSON before saving.',
     provider_upgrade_required: 'Supadata requires a plan or credit upgrade for this request. Generation is incomplete.',
     provider_not_configured: 'Supadata is not configured on the transcript worker.',
     provider_auth: 'Supadata rejected the configured API key.',

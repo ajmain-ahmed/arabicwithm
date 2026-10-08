@@ -10,14 +10,11 @@ import { MAX_TRANSCRIPT_BYTES, normaliseManualTranscriptJson, serialiseTranscrip
 import { getYouTubeVideoDuration } from '@/app/lib/youtubeVideoDuration'
 import { MissingTranscriptDuration, parseVideoDuration } from '@/app/lib/transcriptTiming'
 
-export interface TranscriptRow {id:string;youtube_id:string;canonical_url:string;title:string;channel:string|null;thumbnail:string;duration_seconds:number|null;provider:string;status:string;translation_status:string;searchable:boolean;created_at:string;updated_at:string;error_code:string|null;website_generation?:boolean}
+export interface TranscriptRow {id:string;youtube_id:string;canonical_url:string;title:string;channel:string|null;thumbnail:string;duration_seconds:number|null;provider:string;status:string;translation_status:string;searchable:boolean;created_at:string;updated_at:string;error_code:string|null;website_generation?:boolean;group_id?:string|null}
 export interface TranscriptSegment {id:number;position:number;original_text:string;english_text:string|null;start_seconds:number;end_seconds:number;start_ms?:number;end_ms?:number;canonical_paragraph?:Json|null}
 export interface TranscriptHit {segment_id:number;transcript_id:string;youtube_id:string;title:string;channel:string|null;thumbnail:string;start_seconds:number;end_seconds:number;original_text:string;english_text:string|null;matched_surfaces:string[];match_type:string;match_rank:number;previous_text:string|null;next_text:string|null}
 const columns='id,youtube_id,canonical_url,title,channel,thumbnail,duration_seconds,provider,status,translation_status,searchable,created_at,updated_at,error_code'
 function missingGenerationColumn(error:{code?:string;message:string}|null):boolean{return Boolean(error&&['42703','PGRST204'].includes(error.code??'')&&error.message.includes('website_generation'))}
-// Cache only schema capability, never transcript data or permissions. Recheck
-// within one minute so applying the generation migration takes effect promptly.
-let generationColumnUnavailableUntil=0
 async function adminIdentity():Promise<string> {const access=await getAuthenticatedAccess();if(!access?.admin) throw new Error('Forbidden');return access.userId}
 async function recordAdminOrigin(actor:string,id:string):Promise<void> {
   const {error}=await serviceClient.rpc('admin_record_transcript_origin',{p_actor:actor,p_id:id})
@@ -27,10 +24,9 @@ export async function generateAdminTranscript(url: string): Promise<{ok:true;id:
   try {
     const actor=await adminIdentity()
     const input=z.string().trim().max(2048).parse(url)
-    if(!/^https?:\/\//i.test(input))throw new Error('Enter a complete YouTube URL, including https://.')
-    const youtubeId=transcriptVideoId(input)
+    const youtubeId=manualVideoId(input)
     const {data,error}=await serviceClient.rpc('admin_generate_youtube_transcript',{p_actor:actor,p_youtube_id:youtubeId})
-    if(error)throw new Error(/Forbidden/.test(error.message)?'Administrators only.':/rate_limit|daily_limit/.test(error.message)?'Generation quota reached. Please try again later.':/PGRST202|42883/.test(error.code??'')?'Website generation is not configured. Apply the website transcript migration.':'Unable to queue transcript generation. Please retry.')
+    if(error)throw new Error(/Forbidden/.test(error.message)?'Administrators only.':/rate_limit|daily_limit/.test(error.message)?'Generation quota reached. Please try again later.':/PGRST202|42883/.test(error.code??'')?'The website generation RPC is missing. Apply website_generation_configuration_repair to the configured Supabase project.':/provider_not_configured/.test(error.message)?'Supadata is not configured. Set SUPADATA_API_KEY in Supabase Vault or on the transcript worker.':/episode_video/.test(error.message)?'This video belongs to Shows. Manage its transcript in Episodes.':error.code==='42501'?'The server cannot call the generation RPC. Check its service-role permissions.':'Unable to queue transcript generation. Please retry.')
     const result=z.object({id:z.string().uuid(),duplicate:z.boolean()}).parse(data)
     await recordAdminOrigin(actor,result.id)
     revalidatePath('/admin/transcripts')
@@ -46,24 +42,28 @@ export async function deleteAdminTranscript(id: string): Promise<{ok:true}|{ok:f
     return {ok:true}
   }catch(error){return {ok:false,error:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to delete transcript.'}}
 }
-export async function listAdminTranscripts(page=0,titleSearch=""):Promise<{rows:TranscriptRow[];total:number}> {
-  await guardAdmin();z.number().int().min(0).max(100000).parse(page)
+export interface TranscriptGroup {id:string;name:string;parent_id:string|null;direct_count:number;transcript_count:number}
+export interface ManualTranscriptList {rows:TranscriptRow[];total:number;groups:TranscriptGroup[];ungrouped:number}
+export async function listAdminTranscripts(page=0,titleSearch='',groupFilter=''):Promise<ManualTranscriptList> {
+  const actor=await adminIdentity()
+  z.number().int().min(0).max(100000).parse(page)
   const search=z.string().trim().max(300).parse(titleSearch)
-  const pattern=`%${search.replace(/[\\%_]/g,character=>`\\${character}`)}%`
-  const includeGeneration=Date.now()>=generationColumnUnavailableUntil
-  let query=serviceClient.from('youtube_transcripts').select(includeGeneration?`${columns},website_generation`:columns,{count:'exact'})
-  if(search)query=query.ilike('title',pattern)
-  let {data,error,count}=await query.order('created_at',{ascending:false}).order('id').range(page*30,page*30+29).overrideTypes<TranscriptRow[],{merge:false}>()
-  if(!includeGeneration&&data)data=data.map(row=>({...row,website_generation:false}))
-  if(missingGenerationColumn(error)){
-    generationColumnUnavailableUntil=Date.now()+60_000
-    let legacyQuery=serviceClient.from('youtube_transcripts').select(columns,{count:'exact'})
-    if(search)legacyQuery=legacyQuery.ilike('title',pattern)
-    const legacy=await legacyQuery.order('created_at',{ascending:false}).order('id').range(page*30,page*30+29)
-    data=legacy.data?.map(row=>({...row,website_generation:false}))??null;error=legacy.error;count=legacy.count
-  }
-  if(error)throw new Error('Unable to load transcripts. Please retry.')
-  return {rows:data??[],total:count??0}
+  if(groupFilter&&groupFilter!=='ungrouped')z.string().uuid().parse(groupFilter)
+  const {data,error}=await serviceClient.rpc('admin_list_manual_transcripts',{p_actor:actor,p_page:page,p_search:search,p_group:groupFilter&&groupFilter!=='ungrouped'?groupFilter:null,p_ungrouped:groupFilter==='ungrouped'})
+  if(error)throw new Error(/PGRST202|42883/.test(error.code??'')?'Transcript groups are not configured. Apply the transcript groups migration.':'Unable to load transcripts. Please retry.')
+  return data as unknown as ManualTranscriptList
+}
+export async function manageAdminTranscriptGroup(input:{name?:string;parentId?:string|null;id?:string;remove?:boolean}):Promise<{ok:true;id:string}|{ok:false;error:string}> {
+  try {
+    const actor=await adminIdentity()
+    const value=z.object({name:z.string().trim().min(1).max(150).optional(),parentId:z.string().uuid().nullable().optional(),id:z.string().uuid().optional(),remove:z.boolean().default(false)}).parse(input)
+    if(!value.remove&&!value.name)throw new Error('Enter a group name.')
+    if(value.remove&&!value.id)throw new Error('Select a group.')
+    const {data,error}=await serviceClient.rpc('admin_manage_transcript_group',{p_actor:actor,p_name:value.name??null,p_parent:value.parentId??null,p_id:value.id??null,p_delete:value.remove})
+    if(error)throw new Error(error.code==='23503'?'This group contains transcripts or subgroups. Move them before deleting it.':error.code==='23505'?'A group with this name already exists under this parent.':'Unable to save the group. Please retry.')
+    revalidatePath('/admin/transcripts')
+    return {ok:true,id:z.string().parse(data)}
+  }catch(error){return {ok:false,error:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to save group.'}}
 }
 export async function addAdminYouTubeTranscript(input:string):Promise<string> {
   const actor=await adminIdentity(),id=transcriptVideoId(input)
@@ -108,13 +108,14 @@ export async function validateAdminManualTranscript(input:{url:string;json:strin
     return {ok:true,segments:raw.content.length,durationSource}
   }catch(error){return {ok:false,error:error instanceof z.ZodError?error.issues[0].message:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to check the transcript.',needsDuration:error instanceof MissingTranscriptDuration}}
 }
-export async function importAdminManualTranscript(input:{url:string;title:string;channel?:string;json?:string;arabic?:string;english?:string;searchable:boolean;duration?:string;durationSeconds?:number;durationFormat?:'clock'|'minutes'}):Promise<string> {
+export async function importAdminManualTranscript(input:{url:string;title:string;channel?:string;json?:string;arabic?:string;english?:string;searchable:boolean;duration?:string;durationSeconds?:number;durationFormat?:'clock'|'minutes';groupId?:string|null}):Promise<string> {
   const actor=await adminIdentity()
-  const value=z.object({url:z.string().trim().max(2048),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300).default(''),json:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),arabic:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),english:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),searchable:z.boolean(),duration:z.string().max(30).optional(),durationFormat:z.enum(['clock','minutes']).default('clock'),durationSeconds:z.number().finite().positive().max(43200).optional()}).parse(input)
+  const value=z.object({url:z.string().trim().max(2048),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300).default(''),json:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),arabic:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),english:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),searchable:z.boolean(),duration:z.string().max(30).optional(),durationFormat:z.enum(['clock','minutes']).default('clock'),durationSeconds:z.number().finite().positive().max(43200).optional(),groupId:z.string().uuid().nullable().optional()}).parse(input)
   const id=manualVideoId(value.url)
+  const durationMs=parseVideoDuration(value.duration??'',value.durationFormat)
   const raw=value.json!==undefined?(await resolveManualJson(value.json,id,value.duration,value.durationSeconds,value.durationFormat)).raw:normaliseManualTranscript(value.arabic??'',value.english)
-  const {data,error}=await serviceClient.rpc('admin_import_youtube_transcript',{p_actor:actor,p_youtube_id:id,p_title:value.title,p_channel:value.channel||'Unknown channel',p_raw:raw as unknown as Json,p_searchable:value.searchable})
-  if(error)throw new Error(/^(Segment \d+:|Transcript needs|Invalid transcript|Transcript could not)/.test(error.message) ? error.message : 'Unable to import the timed transcript. Existing canonical content has not been replaced.')
+  const {data,error}=await serviceClient.rpc('admin_import_grouped_transcript',{p_actor:actor,p_youtube_id:id,p_title:value.title,p_channel:value.channel||'Unknown channel',p_raw:raw as unknown as Json,p_searchable:value.searchable,p_group:value.groupId??null,p_duration:durationMs===undefined?value.durationSeconds??null:durationMs/1000})
+  if(error)throw new Error(error.code==='23503'?'The selected group no longer exists. Choose another group.':/already exists|belongs to Shows|Video duration/.test(error.message)?error.message:/^(Segment \d+:|Transcript needs|Invalid transcript|Transcript could not)/.test(error.message) ? error.message : 'Unable to import the timed transcript. Existing canonical content has not been replaced.')
   await recordAdminOrigin(actor,data)
   for(const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${data}`])revalidatePath(path);return data
 }
@@ -163,10 +164,10 @@ export async function loadPublicTranscript(id:string,after=-1,seconds?:number){r
 export async function loadAdminTranscript(id:string,after=-1,seconds?:number){await guardAdmin();return loadTranscript(id,after,seconds,true)}
 
 /** Export every stored segment, independently of the viewer's 100-row window. */
-export async function downloadAdminTranscriptJson(id: string): Promise<{ filename: string; json: string; updatedAt: string; durationSeconds: number | null; title: string; channel: string | null; searchable: boolean }> {
+export async function downloadAdminTranscriptJson(id: string): Promise<{ filename: string; json: string; updatedAt: string; durationSeconds: number | null; title: string; channel: string | null; searchable: boolean; youtubeId:string;groupId:string|null }> {
   await guardAdmin()
   z.string().uuid().parse(id)
-  const { data: video, error } = await serviceClient.from('youtube_transcripts').select('title,channel,searchable,raw_transcript,updated_at,duration_seconds').eq('id', id).maybeSingle()
+  const { data: video, error } = await serviceClient.from('youtube_transcripts').select('title,channel,searchable,raw_transcript,updated_at,duration_seconds,youtube_id').eq('id', id).maybeSingle()
   if (error) throw new Error('Unable to load transcript for download.')
   if (!video) throw new Error('Transcript is no longer available.')
   const segments: TranscriptSegment[] = []
@@ -185,23 +186,55 @@ export async function downloadAdminTranscriptJson(id: string): Promise<{ filenam
   if (checkError || !current) throw new Error('Transcript is no longer available. Please retry.')
   if (current.updated_at !== video.updated_at) throw new Error('Transcript changed while loading. Please reload it.')
   if (!segments.length) throw new Error('This transcript has no segments to download yet.')
-  return { filename: transcriptJsonFilename(video.title), json: serialiseTranscriptJson(segments, video.raw_transcript), updatedAt: video.updated_at, durationSeconds: video.duration_seconds, title: video.title, channel: video.channel, searchable: video.searchable }
+  const {data:membership,error:groupError}=await serviceClient.from('admin_manual_transcripts').select('group_id').eq('transcript_id',id).maybeSingle()
+  if(groupError)throw new Error('Unable to load transcript group. Apply the transcript groups migration.')
+  return { youtubeId:video.youtube_id,groupId:membership?.group_id??null,filename: transcriptJsonFilename(video.title), json: serialiseTranscriptJson(segments, video.raw_transcript), updatedAt: video.updated_at, durationSeconds: video.duration_seconds, title: video.title, channel: video.channel, searchable: video.searchable }
 }
 
 /** Validate with Manual Import, then commit content and metadata in one RPC. */
-export async function saveAdminTranscriptJson(id: string, input: {json:string;title:string;channel:string;searchable:boolean;updatedAt:string;duration?:string;durationFormat?:'clock'|'minutes'}): Promise<{ok:true;updatedAt:string;json:string}|{ok:false;error:string}> {
+export async function saveAdminTranscriptJson(id: string, input: {json:string;title:string;channel:string;searchable:boolean;updatedAt:string;duration?:string;durationFormat?:'clock'|'minutes';url?:string;groupId?:string|null}): Promise<{ok:true;updatedAt:string;json:string}|{ok:false;error:string}> {
   try {
     const actor = await adminIdentity()
     z.string().uuid().parse(id)
-    const value = z.object({json:z.string().max(MAX_TRANSCRIPT_BYTES),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300),searchable:z.boolean(),updatedAt:z.string().datetime({offset:true}),duration:z.string().max(30).optional(),durationFormat:z.enum(['clock','minutes']).default('clock')}).parse(input)
+    const value = z.object({json:z.string().max(MAX_TRANSCRIPT_BYTES),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300),searchable:z.boolean(),updatedAt:z.string().datetime({offset:true}),duration:z.string().max(30).optional(),durationFormat:z.enum(['clock','minutes']).default('clock'),url:z.string().trim().max(2048).optional(),groupId:z.string().uuid().nullable().optional()}).parse(input)
     const {data:video,error:readError} = await serviceClient.from('youtube_transcripts').select('youtube_id,duration_seconds').eq('id',id).single()
     if (readError || !video) throw new Error('Transcript not found.')
-    const {raw} = await resolveManualJson(value.json,video.youtube_id,value.duration,undefined,value.durationFormat,video.duration_seconds)
-    const {data,error} = await serviceClient.rpc('admin_update_transcript_json',{p_actor:actor,p_id:id,p_raw:raw as unknown as Json,p_title:value.title,p_channel:value.channel,p_searchable:value.searchable,p_updated_at:value.updatedAt})
-    if (error) throw new Error(/transcript_edit_conflict/.test(error.message)?'This transcript changed after you opened it. Reopen Edit before saving. Your edits are still here.':/transcript_edit_busy/.test(error.message)?'Wait for transcript processing and translation to finish before editing.':/generation_incomplete/.test(error.message)?'Published generated transcripts need English for every segment. Add the missing translations or turn publication off.':'Could not save transcript. Please retry.')
+    const youtubeId=value.url===undefined?video.youtube_id:manualVideoId(value.url)
+    const durationMs=parseVideoDuration(value.duration??'',value.durationFormat)
+    const {raw} = await resolveManualJson(value.json,youtubeId,value.duration,undefined,value.durationFormat,youtubeId===video.youtube_id?video.duration_seconds:null)
+    const {data,error} = await serviceClient.rpc('admin_save_grouped_transcript',{p_actor:actor,p_id:id,p_raw:raw as unknown as Json,p_title:value.title,p_channel:value.channel,p_searchable:value.searchable,p_updated_at:value.updatedAt,p_youtube_id:youtubeId,p_group:value.groupId??null,p_duration:durationMs===undefined?null:durationMs/1000})
+    if (error) throw new Error(error.code==='23503'?'The selected group no longer exists. Choose another group.':error.code==='23505'?'This YouTube video already has a transcript.':/Video duration|Only manual/.test(error.message)?error.message:/transcript_edit_conflict/.test(error.message)?'This transcript changed after you opened it. Reopen Edit before saving. Your edits are still here.':/transcript_edit_busy/.test(error.message)?'Wait for transcript processing and translation to finish before editing.':/generation_incomplete/.test(error.message)?'Published generated transcripts need English for every segment. Add the missing translations or turn publication off.':'Could not save transcript. Please retry.')
     for (const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${id}`]) revalidatePath(path)
     return {ok:true,updatedAt:z.string().parse(data),json:JSON.stringify({content:raw.content},null,2)}
   } catch (error) {
     return {ok:false,error:error instanceof z.ZodError?error.issues.map(issue=>issue.message).join('\n'):error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Could not save transcript.'}
   }
+}
+
+/** Generated work has its own review panel, independent of the manual library. */
+export async function loadAdminGeneration(id:string):Promise<{video:TranscriptRow;json:string|null}> {
+ await guardAdmin();z.string().uuid().parse(id)
+ const {data:video,error}=await serviceClient.from('youtube_transcripts').select(`${columns},website_generation,raw_transcript`).eq('id',id).single()
+ if(error||!video)throw new Error('Unable to load generation status. Check the database configuration and retry.')
+ const {raw_transcript:raw,...metadata}=video
+ if(video.status!=='ready')return {video:metadata,json:null}
+ const segments:TranscriptSegment[]=[]
+ for(let after=-1;;){const {data,error}=await serviceClient.from('transcript_segments').select('*').eq('transcript_id',id).gt('position',after).order('position').limit(500);if(error)throw new Error('Unable to load generated JSON. Retry before saving.');const batch=data??[];segments.push(...batch);if(batch.length<500)break;after=batch[batch.length-1].position}
+ const {data:current,error:checkError}=await serviceClient.from('youtube_transcripts').select('updated_at').eq('id',id).single()
+ if(checkError||current?.updated_at!==video.updated_at)throw new Error('Generation changed while loading. Retry to load its latest JSON.')
+ return {video:metadata,json:serialiseTranscriptJson(segments,raw)}
+}
+export async function saveAdminGeneratedTranscript(id:string,input:{json:string;title:string;searchable:boolean;updatedAt:string;duration?:string}):Promise<{ok:true;updatedAt:string;json:string}|{ok:false;error:string}> {
+ try {
+  const actor=await adminIdentity();z.string().uuid().parse(id)
+  const value=z.object({json:z.string().max(MAX_TRANSCRIPT_BYTES),title:z.string().trim().min(1).max(300),searchable:z.boolean(),updatedAt:z.string().datetime({offset:true}),duration:z.string().max(30).optional()}).parse(input)
+  const {data:video,error:readError}=await serviceClient.from('youtube_transcripts').select('youtube_id,duration_seconds').eq('id',id).single()
+  if(readError||!video)throw new Error('Generated transcript not found.')
+  parseVideoDuration(value.duration??'')
+  const {raw}=await resolveManualJson(value.json,video.youtube_id,value.duration,undefined,'clock',video.duration_seconds)
+  const {data,error}=await serviceClient.rpc('admin_review_generated_transcript',{p_actor:actor,p_id:id,p_raw:raw as unknown as Json,p_title:value.title,p_searchable:value.searchable,p_updated_at:value.updatedAt})
+  if(error)throw new Error(/transcript_edit_conflict/.test(error.message)?'This transcript changed. Reload its JSON before saving. Your edits are still here.':/transcript_edit_busy/.test(error.message)?'Wait for generation to finish before saving.':/not_generated_transcript/.test(error.message)?'This saved video belongs to another workflow. Use its existing editor.':'Unable to save generated JSON. Check its token metadata and retry.')
+  for(const path of ['/admin/transcripts','/explore','/explore/search',`/transcripts/${id}`])revalidatePath(path)
+  return {ok:true,updatedAt:z.string().parse(data),json:JSON.stringify({content:raw.content},null,2)}
+ }catch(error){return {ok:false,error:error instanceof Error?error.message:'Unable to save generated transcript.'}}
 }
