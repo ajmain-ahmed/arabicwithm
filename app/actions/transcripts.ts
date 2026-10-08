@@ -5,12 +5,12 @@ import { revalidatePath } from 'next/cache'
 import { getAuthenticatedAccess, guardAdmin } from '@/app/actions/auth'
 import { serviceClient } from '@/app/lib/supabase'
 import type { Json } from '@/app/lib/supabase/database.types'
-import { normaliseManualTranscript, transcriptVideoId, type CanonicalChunk } from '@/app/lib/manualTranscripts'
+import { normaliseManualTranscript, transcriptVideoId } from '@/app/lib/manualTranscripts'
 import { MAX_TRANSCRIPT_BYTES, normaliseManualTranscriptJson, serialiseTranscriptJson, transcriptJsonFilename } from '@/app/lib/manualTranscriptJson'
 import { MissingTranscriptDuration, parseVideoDuration } from '@/app/lib/transcriptTiming'
 
 export interface TranscriptRow {id:string;youtube_id:string;canonical_url:string;title:string;channel:string|null;thumbnail:string;duration_seconds:number|null;provider:string;status:string;translation_status:string;searchable:boolean;created_at:string;updated_at:string;error_code:string|null;website_generation?:boolean}
-export interface TranscriptSegment {id:number;position:number;original_text:string;english_text:string|null;start_seconds:number;end_seconds:number;start_ms?:number;end_ms?:number}
+export interface TranscriptSegment {id:number;position:number;original_text:string;english_text:string|null;start_seconds:number;end_seconds:number;start_ms?:number;end_ms?:number;canonical_paragraph?:Json|null}
 export interface TranscriptHit {segment_id:number;transcript_id:string;youtube_id:string;title:string;channel:string|null;thumbnail:string;start_seconds:number;end_seconds:number;original_text:string;english_text:string|null;matched_surfaces:string[];match_type:string;match_rank:number;previous_text:string|null;next_text:string|null}
 const columns='id,youtube_id,canonical_url,title,channel,thumbnail,duration_seconds,provider,status,translation_status,searchable,created_at,updated_at,error_code'
 function missingGenerationColumn(error:{code?:string;message:string}|null):boolean{return Boolean(error&&['42703','PGRST204'].includes(error.code??'')&&error.message.includes('website_generation'))}
@@ -152,10 +152,10 @@ export async function loadPublicTranscript(id:string,after=-1,seconds?:number){r
 export async function loadAdminTranscript(id:string,after=-1,seconds?:number){await guardAdmin();return loadTranscript(id,after,seconds,true)}
 
 /** Export every stored segment, independently of the viewer's 100-row window. */
-export async function downloadAdminTranscriptJson(id: string): Promise<{ filename: string; json: string }> {
+export async function downloadAdminTranscriptJson(id: string): Promise<{ filename: string; json: string; updatedAt: string; durationSeconds: number | null; title: string; channel: string | null; searchable: boolean }> {
   await guardAdmin()
   z.string().uuid().parse(id)
-  const { data: video, error } = await serviceClient.from('youtube_transcripts').select('title,raw_transcript').eq('id', id).maybeSingle()
+  const { data: video, error } = await serviceClient.from('youtube_transcripts').select('title,channel,searchable,raw_transcript,updated_at,duration_seconds').eq('id', id).maybeSingle()
   if (error) throw new Error('Unable to load transcript for download.')
   if (!video) throw new Error('Transcript is no longer available.')
   const segments: TranscriptSegment[] = []
@@ -170,19 +170,27 @@ export async function downloadAdminTranscriptJson(id: string): Promise<{ filenam
     after = batch[batch.length - 1].position
   }
   // Do not return a partial export if the record was deleted during pagination.
-  const { data: current, error: checkError } = await serviceClient.from('youtube_transcripts').select('id').eq('id', id).maybeSingle()
+  const { data: current, error: checkError } = await serviceClient.from('youtube_transcripts').select('id,updated_at').eq('id', id).maybeSingle()
   if (checkError || !current) throw new Error('Transcript is no longer available. Please retry.')
+  if (current.updated_at !== video.updated_at) throw new Error('Transcript changed while loading. Please reload it.')
   if (!segments.length) throw new Error('This transcript has no segments to download yet.')
-  const raw = video.raw_transcript
-  const rich = raw && typeof raw === 'object' && !Array.isArray(raw) && Array.isArray(raw.content) ? raw.content : []
-  const portable = JSON.parse(serialiseTranscriptJson(segments)) as { content: CanonicalChunk[] }
-  // Match by stored position and timing; retain current English from indexed segments.
-  portable.content = portable.content.map((chunk, index) => {
-    const source = rich[index]
-    if (!source || typeof source !== 'object' || Array.isArray(source) || source.offset !== chunk.offset || source.text !== chunk.text) return chunk
-    const metadata: Record<string, unknown> = {}
-    for (const key of ['tokens', 'sentence_id', 'sentence_index', 'id', 'index', 'punctuation', 'paragraph']) if (source[key] !== undefined) metadata[key] = source[key]
-    return { ...metadata, ...chunk }
-  })
-  return { filename: transcriptJsonFilename(video.title), json: JSON.stringify(portable, null, 2) }
+  return { filename: transcriptJsonFilename(video.title), json: serialiseTranscriptJson(segments, video.raw_transcript), updatedAt: video.updated_at, durationSeconds: video.duration_seconds, title: video.title, channel: video.channel, searchable: video.searchable }
+}
+
+/** Validate with Manual Import, then commit content and metadata in one RPC. */
+export async function saveAdminTranscriptJson(id: string, input: {json:string;title:string;channel:string;searchable:boolean;updatedAt:string}): Promise<{ok:true;updatedAt:string;json:string}|{ok:false;error:string}> {
+  try {
+    const actor = await adminIdentity()
+    z.string().uuid().parse(id)
+    const value = z.object({json:z.string().max(MAX_TRANSCRIPT_BYTES),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300),searchable:z.boolean(),updatedAt:z.string().datetime({offset:true})}).parse(input)
+    const {data:video,error:readError} = await serviceClient.from('youtube_transcripts').select('duration_seconds').eq('id',id).single()
+    if (readError || !video) throw new Error('Transcript not found.')
+    const raw = normaliseManualTranscriptJson(value.json,video.duration_seconds ?? undefined)
+    const {data,error} = await serviceClient.rpc('admin_update_transcript_json',{p_actor:actor,p_id:id,p_raw:raw as unknown as Json,p_title:value.title,p_channel:value.channel,p_searchable:value.searchable,p_updated_at:value.updatedAt})
+    if (error) throw new Error(/transcript_edit_conflict/.test(error.message)?'This transcript changed after you opened it. Reopen Edit before saving. Your edits are still here.':/transcript_edit_busy/.test(error.message)?'Wait for transcript processing and translation to finish before editing.':/generation_incomplete/.test(error.message)?'Published generated transcripts need English for every segment. Add the missing translations or turn publication off.':'Could not save transcript. Please retry.')
+    for (const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${id}`]) revalidatePath(path)
+    return {ok:true,updatedAt:z.string().parse(data),json:JSON.stringify({content:raw.content},null,2)}
+  } catch (error) {
+    return {ok:false,error:error instanceof z.ZodError?error.issues.map(issue=>issue.message).join('\n'):error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Could not save transcript.'}
+  }
 }

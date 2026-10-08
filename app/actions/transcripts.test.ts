@@ -3,7 +3,7 @@ const mocks=vi.hoisted(()=>({guard:vi.fn(),access:vi.fn(),rpc:vi.fn(),from:vi.fn
 vi.mock('@/app/actions/auth',()=>({guardAdmin:mocks.guard,getAuthenticatedAccess:mocks.access}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{rpc:mocks.rpc,from:mocks.from}}))
 vi.mock('next/cache',()=>({revalidatePath:mocks.revalidate}))
-import {addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson} from './transcripts'
+import {addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson,saveAdminTranscriptJson} from './transcripts'
 beforeEach(()=>{vi.resetAllMocks();mocks.guard.mockResolvedValue(undefined);mocks.access.mockResolvedValue({admin:true,userId:'11111111-1111-4111-8111-111111111111'})})
 
 function metadata(duration:number|null){const query={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:duration===null?null:{duration_seconds:duration},error:null})};mocks.from.mockReturnValue(query);return query}
@@ -128,4 +128,32 @@ it('exports preserved lexical metadata with the current indexed translation',asy
   mocks.from.mockImplementation(table=>table==='youtube_transcripts'?video:segments)
   const result=await downloadAdminTranscriptJson(id)
   expect(JSON.parse(result.json).content[0]).toEqual({text,offset:0,duration:1000,english:'Current translation',sentence_id:'sentence-1',tokens,paragraph:1})
+})
+
+describe('editing JSON safely',()=>{
+ const id='11111111-1111-4111-8111-111111111111',updatedAt='2026-10-08T12:00:00Z'
+ const input={json:JSON.stringify({sentences:[{arabic:'مرحبا',start_ms:1234,end_ms:4567,english:'Hello',tokens:[{ar:'مرحبا',plain:'مرحبا',gloss:'hello',start_ms:1234,end_ms:2234}]}]}),title:'Video',channel:'Channel',searchable:true,updatedAt}
+ function stored(){const query={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),single:vi.fn().mockResolvedValue({data:{duration_seconds:10},error:null})};mocks.from.mockReturnValue(query)}
+ it('uses the shared normaliser and one atomic RPC on the same ID',async()=>{
+  stored();mocks.rpc.mockResolvedValue({data:updatedAt,error:null})
+  const result=await saveAdminTranscriptJson(id,input);expect(result).toMatchObject({ok:true,updatedAt})
+  expect(mocks.rpc).toHaveBeenCalledTimes(1)
+  expect(mocks.rpc).toHaveBeenCalledWith('admin_update_transcript_json',expect.objectContaining({p_id:id,p_updated_at:updatedAt,p_title:'Video',p_channel:'Channel',p_searchable:true,p_raw:expect.objectContaining({content:[expect.objectContaining({offset:1234,duration:3333,tokens:[expect.objectContaining({plain:'مرحبا',gloss:'hello',start_ms:1234})]})]})}))
+  expect(mocks.revalidate.mock.calls.flat()).toEqual(expect.arrayContaining(['/explore/search','/explore',`/transcripts/${id}`]))
+ })
+ it('rejects syntax and multiple structural issues before any mutation',async()=>{
+  stored()
+  expect(await saveAdminTranscriptJson(id,{...input,json:'{broken'})).toMatchObject({ok:false,error:expect.stringContaining('Invalid transcript JSON')})
+  const result=await saveAdminTranscriptJson(id,{...input,json:JSON.stringify({sentences:[{arabic:'مرحبا',end_ms:1000},{arabic:'مرحبا',start_ms:1000,end_ms:500}]})})
+  expect(result).toMatchObject({ok:false,error:expect.stringContaining('Sentence 1')});if(!result.ok)expect(result.error).toContain('Sentence 2')
+  expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+ it('authorises before reading data',async()=>{
+  mocks.access.mockResolvedValue({admin:false});expect(await saveAdminTranscriptJson(id,input)).toMatchObject({ok:false,error:'Administrators only.'})
+  expect(mocks.from).not.toHaveBeenCalled();expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+ it('returns useful concurrent-edit errors without changing editor data',async()=>{
+  stored();mocks.rpc.mockResolvedValue({data:null,error:{message:'transcript_edit_conflict'}})
+  expect(await saveAdminTranscriptJson(id,input)).toMatchObject({ok:false,error:expect.stringContaining('changed after you opened')})
+ })
 })

@@ -340,6 +340,7 @@ export interface Database {
       register_youtube_transcript: { Args:{p_user:string;p_youtube_id:string};Returns:string }
       admin_generate_youtube_transcript: { Args:{p_actor:string;p_youtube_id:string};Returns:Json }
       admin_delete_youtube_transcript: { Args:{p_actor:string;p_id:string};Returns:boolean }
+      admin_update_transcript_json: { Args:{p_actor:string;p_id:string;p_raw:Json;p_title:string;p_channel:string;p_searchable:boolean;p_updated_at:string};Returns:string }
       admin_import_youtube_transcript: { Args:{p_actor:string;p_youtube_id:string;p_title:string;p_channel:string;p_raw:Json;p_searchable:boolean};Returns:string }
       search_transcript_word: { Args:{p_word:string;p_after:number;p_after_rank:number;p_limit:number};Returns:Json }
       website_memory_totals: { Args: { p_user_id: string; p_since?: string }; Returns: Json }

@@ -83,3 +83,26 @@ describe('expanded formats and resource limits',()=>{
   expect(()=>normaliseManualTranscriptJson(JSON.stringify({sentences:[{arabic:'\u0645\u0631\u062d\u0628\u0627',start_ms:0,end_ms:5,tokens:[{ar:'\u0645\u0631\u062d\u0628\u0627',start_ms:0,end_ms:8}]}]}))).toThrow('token timing')
  })
 })
+
+it('round-trips indexed canonical tokens and raw token milliseconds, IDs and plain Arabic',()=>{
+ const tokens=[{ar:'مرحبا',plain:'مرحبا',gloss:'hello',id:'word-1',start_ms:1234,end_ms:2000}]
+ const source={content:[{text:'مرحبا',offset:1234,duration:3000,sentence_id:'sentence-1',arabic_plain:'مرحبا',tokens}]}
+ const segment={position:0,original_text:'مرحبا',english_text:'Corrected translation',start_seconds:1.234,end_seconds:4.234}
+ const json=serialiseTranscriptJson([segment],source)
+ expect(normaliseManualTranscriptJson(json).content[0]).toMatchObject({...source.content[0],english:'Corrected translation'})
+ const canonical=[{arabic:'مرحبا',english:'hello',headword:'مرحبا'}]
+ expect(normaliseManualTranscriptJson(serialiseTranscriptJson([{...segment,canonical_paragraph:{tokens:canonical,paragraph:1}}])).content[0].tokens).toEqual(canonical)
+})
+it('reports several malformed sentences together without returning partial data',()=>{
+ try{normaliseManualTranscriptJson(JSON.stringify({sentences:[{arabic:'مرحبا',end_ms:1000},{arabic:'مرحبا',start_ms:2000,end_ms:1000}]}));throw new Error('Expected rejection')}
+ catch(error){expect((error as Error).message).toContain('Sentence 1');expect((error as Error).message).toContain('Sentence 2')}
+})
+
+it('retains canonical enrichment alongside supplied token IDs and timings and recovers empty raw tokens',()=>{
+ const canonical={tokens:[{arabic:'مرحبا',english:'hello',headword:'مرحبا',transliteration:'marhaba'}],paragraph:1}
+ const segment={position:0,original_text:'مرحبا',english_text:'Hello',start_seconds:0,end_seconds:1,canonical_paragraph:canonical}
+ const raw={content:[{text:'مرحبا',offset:0,duration:1000,tokens:[{ar:'مرحبا',id:'t1',start_ms:0,end_ms:500,gloss:'hello'}]}]}
+ const token=normaliseManualTranscriptJson(serialiseTranscriptJson([segment],raw)).content[0].tokens![0]
+ expect(token).toMatchObject({...raw.content[0].tokens[0],headword:'مرحبا',transliteration:'marhaba'})
+ expect(normaliseManualTranscriptJson(serialiseTranscriptJson([segment],{content:[{...raw.content[0],tokens:[]}]})).content[0].tokens).toEqual(canonical.tokens)
+})

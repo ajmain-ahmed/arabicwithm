@@ -1,8 +1,8 @@
 import React, {act} from 'react'
 import {createRoot,type Root} from 'react-dom/client'
 import {beforeEach,afterEach,expect,it,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({list:vi.fn(),import:vi.fn(),remove:vi.fn(),validate:vi.fn()}))
-vi.mock('@/app/actions/transcripts',()=>({listAdminTranscripts:mocks.list,importAdminManualTranscriptResult:mocks.import,validateAdminManualTranscript:mocks.validate,generateAdminTranscript:vi.fn(),deleteAdminTranscript:mocks.remove,updateAdminTranscript:vi.fn()}))
+const mocks=vi.hoisted(()=>({list:vi.fn(),import:vi.fn(),remove:vi.fn(),validate:vi.fn(),download:vi.fn(),save:vi.fn()}))
+vi.mock('@/app/actions/transcripts',()=>({listAdminTranscripts:mocks.list,importAdminManualTranscriptResult:mocks.import,validateAdminManualTranscript:mocks.validate,generateAdminTranscript:vi.fn(),deleteAdminTranscript:mocks.remove,updateAdminTranscript:vi.fn(),downloadAdminTranscriptJson:mocks.download,saveAdminTranscriptJson:mocks.save}))
 import AdminTranscripts from './AdminTranscripts'
 let host:HTMLDivElement,root:Root
 beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.resetAllMocks();mocks.list.mockResolvedValue({rows:[],total:0});mocks.import.mockResolvedValue({ok:true,id:'saved'});mocks.validate.mockResolvedValue({ok:true,segments:1,durationSource:'transcript'});host=document.createElement('div');document.body.appendChild(host);root=createRoot(host)})
@@ -53,4 +53,55 @@ it('confirms deletion for legacy and generated rows, keeps Cancel safe, then ref
   await act(async()=>[...document.querySelectorAll('[role="dialog"] button')].find(button=>button.textContent==='Delete')!.dispatchEvent(new MouseEvent('click',{bubbles:true})))
   expect(mocks.remove).toHaveBeenCalledWith(row.id)
   expect(host.textContent).not.toContain('Legacy video')
+})
+
+const editRow={id:'11111111-1111-4111-8111-111111111111',title:'Saved video',channel:'Channel',thumbnail:'test.jpg',status:'ready',translation_status:'ready',provider:'manual',created_at:'2026-10-04',updated_at:'2026-10-04T00:00:00Z',searchable:true}
+const savedJson=JSON.stringify({content:[{text:'مرحبا',offset:1234,duration:4000,english:'Hello',tokens:[{ar:'مرحبا',plain:'مرحبا',gloss:'hello',start_ms:1234,end_ms:2234}]}]})
+async function openEdit(){
+ mocks.list.mockResolvedValue({rows:[editRow],total:1})
+ mocks.download.mockResolvedValue({json:savedJson,filename:'Saved_video_transcript.json',updatedAt:editRow.updated_at,durationSeconds:10})
+ await act(async()=>root.render(<AdminTranscripts/>))
+ await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='Edit / Publish')!.click())
+}
+const editSave=()=>[...document.querySelectorAll('[role="dialog"] button')].find(button=>button.textContent==='Save Changes') as HTMLButtonElement
+it('populates Edit with current JSON, keeps unsaved changes through list refresh, and formats without changing data',async()=>{
+ await openEdit();expect(document.querySelector('textarea')?.value).toBe(savedJson)
+ const corrected=savedJson.replace('Hello','Welcome');await fill('Transcript JSON',corrected)
+ await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='Refresh')!.click())
+ expect(document.querySelector('textarea')?.value).toBe(corrected)
+ await act(async()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Format JSON')!.click())
+ expect(JSON.parse(document.querySelector('textarea')!.value)).toEqual(JSON.parse(corrected))
+ expect(mocks.download).toHaveBeenCalledTimes(1)
+})
+it('keeps invalid edits and returns from Saving on failure, then permits correction and save',async()=>{
+ await openEdit();await fill('Transcript JSON','{broken')
+ mocks.save.mockResolvedValueOnce({ok:false,error:'Invalid transcript JSON near line 1.'})
+ await act(async()=>editSave().click());expect(editSave().disabled).toBe(false)
+ expect(document.body.textContent).toContain('Invalid transcript JSON');expect(document.querySelector('textarea')!.value).toBe('{broken')
+ await fill('Transcript JSON',savedJson)
+ mocks.save.mockResolvedValueOnce({ok:true,json:savedJson,updatedAt:'2026-10-08T12:00:00Z'})
+ await act(async()=>editSave().click())
+ expect(mocks.save).toHaveBeenLastCalledWith(editRow.id,{json:savedJson,title:editRow.title,channel:editRow.channel,searchable:true,updatedAt:editRow.updated_at})
+ expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Saved')
+ await fill('Transcript JSON',savedJson.replace('Hello','Welcome'))
+ mocks.save.mockResolvedValueOnce({ok:true,json:savedJson,updatedAt:'2026-10-08T12:01:00Z'})
+ await act(async()=>editSave().click())
+ expect(mocks.save.mock.calls.at(-1)?.[1].updatedAt).toBe('2026-10-08T12:00:00Z')
+})
+it('downloads saved canonical JSON without replacing current unsaved edits',async()=>{
+ await openEdit();await fill('Transcript JSON',savedJson.replace('Hello','Welcome'))
+ const create=vi.fn(()=> 'blob:transcript'),revoke=vi.fn()
+ Object.assign(URL,{createObjectURL:create,revokeObjectURL:revoke})
+ const click=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{})
+ await act(async()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Download JSON')!.click())
+ expect(create).toHaveBeenCalledWith(expect.any(Blob));expect(click).toHaveBeenCalled()
+ expect(document.querySelector('textarea')!.value).toContain('Welcome');click.mockRestore()
+})
+it('prevents duplicate saves and re-enables Save after a thrown request',async()=>{
+ await openEdit();let reject!:(error:Error)=>void
+ mocks.save.mockImplementation(()=>new Promise((_,fail)=>{reject=fail}))
+ const button=editSave();await act(async()=>{button.click();button.click()})
+ expect(mocks.save).toHaveBeenCalledTimes(1);expect(button.disabled).toBe(true);expect(button.textContent).toBe('Saving…')
+ await act(async()=>reject(new Error('Could not save transcript.')))
+ expect(editSave().disabled).toBe(false);expect(document.body.textContent).toContain('Could not save transcript.')
 })
