@@ -8,6 +8,7 @@ import type { Json } from '@/app/lib/supabase/database.types'
 import { normaliseManualTranscript, transcriptVideoId } from '@/app/lib/manualTranscripts'
 import { MAX_TRANSCRIPT_BYTES, normaliseManualTranscriptJson, serialiseTranscriptJson, transcriptJsonFilename } from '@/app/lib/manualTranscriptJson'
 import { getYouTubeVideoDuration } from '@/app/lib/youtubeVideoDuration'
+import {transcriptDatabaseError} from '@/app/lib/transcriptDatabaseError'
 import { MissingTranscriptDuration, parseVideoDuration } from '@/app/lib/transcriptTiming'
 
 export interface TranscriptRow {id:string;youtube_id:string;canonical_url:string;title:string;channel:string|null;thumbnail:string;duration_seconds:number|null;provider:string;status:string;translation_status:string;searchable:boolean;created_at:string;updated_at:string;error_code:string|null;website_generation?:boolean;group_id?:string|null}
@@ -89,7 +90,8 @@ async function resolveManualJson(json: string, youtubeId: string, duration?: str
   if (manualEnd !== undefined) return {raw:normaliseManualTranscriptJson(json,manualEnd/1000),durationSource:'manual' as const}
   let saved = savedSeconds
   if (saved === undefined) {
-    const {data} = await serviceClient.from('youtube_transcripts').select('duration_seconds').eq('youtube_id',youtubeId).maybeSingle()
+    const {data,error} = await serviceClient.from('youtube_transcripts').select('duration_seconds').eq('youtube_id',youtubeId).maybeSingle()
+    if(error)throw new Error(transcriptDatabaseError('Video duration lookup',error))
     saved = data?.duration_seconds
   }
   if (typeof saved === 'number' && Number.isFinite(saved) && saved > 0 && saved <= 43200) {
@@ -115,8 +117,8 @@ export async function importAdminManualTranscript(input:{url:string;title:string
   const durationMs=parseVideoDuration(value.duration??'',value.durationFormat)
   const raw=value.json!==undefined?(await resolveManualJson(value.json,id,value.duration,value.durationSeconds,value.durationFormat)).raw:normaliseManualTranscript(value.arabic??'',value.english)
   const {data,error}=await serviceClient.rpc('admin_import_grouped_transcript',{p_actor:actor,p_youtube_id:id,p_title:value.title,p_channel:value.channel||'Unknown channel',p_raw:raw as unknown as Json,p_searchable:value.searchable,p_group:value.groupId??null,p_duration:durationMs===undefined?value.durationSeconds??null:durationMs/1000})
-  if(error)throw new Error(error.code==='23503'?'The selected group no longer exists. Choose another group.':/already exists|belongs to Shows|Video duration/.test(error.message)?error.message:/^(Segment \d+:|Transcript needs|Invalid transcript|Transcript could not)/.test(error.message) ? error.message : 'Unable to import the timed transcript. Existing canonical content has not been replaced.')
-  await recordAdminOrigin(actor,data)
+  if(error)throw new Error(transcriptDatabaseError('Import',error))
+  // The RPC commits provenance, indexing and optional grouping in one transaction.
   for(const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${data}`])revalidatePath(path);return data
 }
 export async function updateAdminTranscript(id:string,input:{title:string;channel:string;searchable:boolean}):Promise<void> {
@@ -198,12 +200,13 @@ export async function saveAdminTranscriptJson(id: string, input: {json:string;ti
     z.string().uuid().parse(id)
     const value = z.object({json:z.string().max(MAX_TRANSCRIPT_BYTES),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300),searchable:z.boolean(),updatedAt:z.string().datetime({offset:true}),duration:z.string().max(30).optional(),durationFormat:z.enum(['clock','minutes']).default('clock'),url:z.string().trim().max(2048).optional(),groupId:z.string().uuid().nullable().optional()}).parse(input)
     const {data:video,error:readError} = await serviceClient.from('youtube_transcripts').select('youtube_id,duration_seconds').eq('id',id).single()
-    if (readError || !video) throw new Error('Transcript not found.')
+    if(readError)throw new Error(transcriptDatabaseError('Edit lookup',readError))
+    if(!video)throw new Error('Transcript not found.')
     const youtubeId=value.url===undefined?video.youtube_id:manualVideoId(value.url)
     const durationMs=parseVideoDuration(value.duration??'',value.durationFormat)
     const {raw} = await resolveManualJson(value.json,youtubeId,value.duration,undefined,value.durationFormat,youtubeId===video.youtube_id?video.duration_seconds:null)
     const {data,error} = await serviceClient.rpc('admin_save_grouped_transcript',{p_actor:actor,p_id:id,p_raw:raw as unknown as Json,p_title:value.title,p_channel:value.channel,p_searchable:value.searchable,p_updated_at:value.updatedAt,p_youtube_id:youtubeId,p_group:value.groupId??null,p_duration:durationMs===undefined?null:durationMs/1000})
-    if (error) throw new Error(error.code==='23503'?'The selected group no longer exists. Choose another group.':error.code==='23505'?'This YouTube video already has a transcript.':/Video duration|Only manual/.test(error.message)?error.message:/transcript_edit_conflict/.test(error.message)?'This transcript changed after you opened it. Reopen Edit before saving. Your edits are still here.':/transcript_edit_busy/.test(error.message)?'Wait for transcript processing and translation to finish before editing.':/generation_incomplete/.test(error.message)?'Published generated transcripts need English for every segment. Add the missing translations or turn publication off.':'Could not save transcript. Please retry.')
+    if (error) throw new Error(error.code==='23503'?'The selected group no longer exists. Choose another group.':error.code==='23505'?'This YouTube video already has a transcript.':/Video duration|Only manual/.test(error.message)?error.message:/transcript_edit_conflict/.test(error.message)?'This transcript changed after you opened it. Reopen Edit before saving. Your edits are still here.':/transcript_edit_busy/.test(error.message)?'Wait for transcript processing and translation to finish before editing.':/generation_incomplete/.test(error.message)?'Published generated transcripts need English for every segment. Add the missing translations or turn publication off.':transcriptDatabaseError('Edit',error))
     for (const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${id}`]) revalidatePath(path)
     return {ok:true,updatedAt:z.string().parse(data),json:JSON.stringify({content:raw.content},null,2)}
   } catch (error) {

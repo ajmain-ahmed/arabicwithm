@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs'
 import {test,expect,type BrowserContext} from '@playwright/test'
 const backend=`https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4310}`
 async function admin(context:BrowserContext){
@@ -28,4 +29,24 @@ test('human-readable duration inside JSON needs no duration field',async({page,r
  const dialog=page.getByRole('dialog');await dialog.getByLabel('YouTube URL or video ID').fill('https://youtu.be/ZBynl03Vp-w');await dialog.getByLabel('Video Title').fill('JSON duration');await dialog.getByLabel('Transcript JSON').fill(JSON.stringify({duration:'10:57',segments:[{arabic:'\u0645\u0631\u062d\u0628\u0627',start_ms:630000}]}))
  await expect(dialog.getByText('1 segment ready to import.')).toBeVisible();await expect(dialog.getByRole('textbox',{name:'Video duration',exact:true})).toHaveValue('');await dialog.getByRole('button',{name:'Import',exact:true}).click();await expect(page.getByText('Transcript imported.',{exact:true})).toBeVisible()
  const saved=await (await request.get(`${backend}/rest/v1/youtube_transcripts`)).json();expect(saved[0].raw_transcript.content[0]).toMatchObject({offset:630000,duration:27000})
+})
+
+test('imports enriched AWM words and phrases ungrouped without requesting an unnecessary duration',async({page,request})=>{
+ const input=readFileSync('app/lib/fixtures/manual-awm-word-and-phrase.json','utf8'),blocks=JSON.parse(input),dialog=page.getByRole('dialog')
+ await dialog.getByLabel('YouTube URL or video ID').fill('AWMFILE0001')
+ await dialog.getByLabel('Video Title').fill('AWM words and phrases')
+ await dialog.getByLabel('Transcript JSON').fill(input)
+ await expect(dialog.getByText('3 segments ready to import.')).toBeVisible()
+ await expect(dialog.getByRole('textbox',{name:'Video duration',exact:true})).toHaveValue('')
+ await dialog.getByRole('button',{name:'Import',exact:true}).click()
+ await expect(page.getByText('Transcript imported.',{exact:true})).toBeVisible()
+ const saved=await (await request.get(`${backend}/rest/v1/youtube_transcripts`)).json()
+ expect(saved[0].raw_transcript.content.map((chunk:{offset:number;duration:number})=>[chunk.offset,chunk.duration])).toEqual([[1234,1266],[2500,2067],[4567,3433]])
+ expect(saved[0].raw_transcript.content[1].tokens).toEqual([...blocks[1].tokens,...blocks[2].tokens])
+ expect(saved[0].raw_transcript.content[1].english).toBe('Praise be to God. Welcome.')
+ expect(saved[0].raw_transcript.content[0].tokens).toEqual(blocks[0].tokens)
+ const membership=await (await request.get(`${backend}/rest/v1/admin_manual_transcripts`)).json()
+ expect(membership[0].group_id).toBeNull()
+ await page.reload()
+ await expect(page.getByRole('heading',{name:'AWM words and phrases'})).toBeVisible()
 })

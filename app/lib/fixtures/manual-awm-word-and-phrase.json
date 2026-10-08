@@ -1,0 +1,77 @@
+[
+  {
+    "timestamp": "00:01.234",
+    "translation": "My father.",
+    "tokens": [
+      {
+        "arabic": "أَبِي",
+        "english": "my father",
+        "pos": "noun",
+        "headword": "ابو",
+        "entry_type": "word",
+        "transliteration": "original",
+        "cefr": "A1",
+        "custom": {
+          "retained": true
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "00:02.500",
+    "translation": "Praise be to God.",
+    "paragraph": 1,
+    "tokens": [
+      {
+        "arabic": "الْحَمْدُ لِلَّهِ",
+        "english": "praise be to God",
+        "pos": "phrase",
+        "headword": "3",
+        "entry_type": "phrase",
+        "transliteration": "al-ḥamdu lillāh",
+        "cefr": "A1",
+        "custom": {
+          "retained": true
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "00:02.500",
+    "translation": "Welcome.",
+    "paragraph": 1,
+    "tokens": [
+      {
+        "arabic": "مَرْحَبًا",
+        "english": "welcome",
+        "pos": "noun",
+        "headword": "مرحبا",
+        "entry_type": "word",
+        "transliteration": "original",
+        "cefr": "A1",
+        "custom": {
+          "retained": true
+        }
+      }
+    ]
+  },
+  {
+    "timestamp": "00:04.567",
+    "end_ms": 8000,
+    "translation": "Thank you.",
+    "tokens": [
+      {
+        "arabic": "شُكْرًا",
+        "english": "thank you",
+        "pos": "noun",
+        "headword": "شكر",
+        "entry_type": "word",
+        "transliteration": "original",
+        "cefr": "A1",
+        "custom": {
+          "retained": true
+        }
+      }
+    ]
+  }
+]

@@ -125,6 +125,10 @@ export function normaliseManualTranscriptJson(input: string, videoDurationSecond
         tokens = item.tokens.map((token, tokenIndex) => {
           if (!object(token) || typeof (token.ar ?? token.arabic ?? token.surface) !== 'string' || !String(token.ar ?? token.arabic ?? token.surface).trim()) return fail(`Token ${tokenIndex + 1} needs ar or arabic text.`)
           if (token.gloss !== undefined && typeof token.gloss !== 'string' || token.english !== undefined && typeof token.english !== 'string') return fail(`Token ${tokenIndex + 1} gloss must be a string.`)
+          for(const field of ['pos','POS','entry_type','transliteration','cefr'])if(token[field]!==undefined&&typeof token[field]!=='string')return fail(`Token ${tokenIndex+1} ${field} must be text.`)
+          if(token.headword!==undefined&&token.headword!==null&&typeof token.headword!=='string')return fail(`Token ${tokenIndex+1} headword must be text or null.`)
+          if(token.entry_type!==undefined&&!['word','phrase'].includes(String(token.entry_type)))return fail(`Token ${tokenIndex+1} entry_type must be word or phrase.`)
+          if(token.entry_type==='phrase'&&token.headword!==undefined&&(typeof token.headword!=='string'||!(/^[1-9][0-9]*$/).test(token.headword)))return fail(`Token ${tokenIndex+1} phrase headword must be a phrase ID string.`)
           if (token.start_ms !== undefined || token.end_ms !== undefined) {
             if (!Number.isSafeInteger(token.start_ms) || !Number.isSafeInteger(token.end_ms) || Number(token.start_ms) < 0 || Number(token.end_ms) <= Number(token.start_ms) || Number(token.end_ms) > MAX_TIME) return fail(`Token ${tokenIndex + 1} needs valid start_ms and end_ms.`)
           }

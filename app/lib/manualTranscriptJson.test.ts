@@ -149,3 +149,10 @@ it('rejects out-of-order fully timed input instead of silently reordering timest
 it('reports invalid final metadata before requesting the missing final duration',()=>{
  expect(()=>normaliseManualTranscriptJson(JSON.stringify([{arabic:'مرحبا',start_ms:0,paragraph:0}]))).toThrow('paragraph must be a positive integer')
 })
+
+it('accepts AWM word and phrase enrichment and reports invalid enrichment before missing final timing',()=>{
+ const phrase={arabic:'الحمد لله',english:'praise be to God',pos:'phrase',headword:'3',entry_type:'phrase',transliteration:'al-ḥamdu lillāh',cefr:'A1'}
+ expect(normaliseManualTranscriptJson(JSON.stringify([{tokens:[phrase],timestamp:'00:01.234',end_ms:5000}])).content[0].tokens).toEqual([phrase])
+ expect(()=>normaliseManualTranscriptJson(JSON.stringify([{tokens:[{...phrase,headword:3}],timestamp:'00:01'}]))).toThrow('Token 1 headword must be text or null')
+ expect(()=>normaliseManualTranscriptJson(JSON.stringify([{tokens:[{...phrase,entry_type:'invalid'}],timestamp:'00:01'}]))).toThrow('entry_type must be word or phrase')
+})
