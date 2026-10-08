@@ -193,3 +193,23 @@ describe('server duration resolution shared by Import and Edit',()=>{
   expect(await saveAdminTranscriptJson(id,{json,title:'Video',channel:'Channel',searchable:true,updatedAt,duration:'00:11',durationFormat:'minutes'})).toMatchObject({ok:true})
  })
 })
+
+describe('admin transcript title search',()=>{
+ it('filters before pagination and returns the matching total',async()=>{
+  const query={select:vi.fn().mockReturnThis(),ilike:vi.fn().mockReturnThis(),order:vi.fn().mockReturnThis(),range:vi.fn().mockReturnValue({overrideTypes:async()=>({data:[{id:'match',title:'Arabic Lesson'}],error:null,count:41})})}
+  mocks.from.mockReturnValue(query)
+  expect(await listAdminTranscripts(1,'  Lesson  ')).toMatchObject({rows:[{title:'Arabic Lesson'}],total:41})
+  expect(query.ilike).toHaveBeenCalledWith('title','%Lesson%')
+  expect(query.range).toHaveBeenCalledWith(30,59)
+  expect(query.ilike.mock.invocationCallOrder[0]).toBeLessThan(query.range.mock.invocationCallOrder[0])
+ })
+ it('treats wildcard characters in titles as literal text',async()=>{
+  const query={select:vi.fn().mockReturnThis(),ilike:vi.fn().mockReturnThis(),order:vi.fn().mockReturnThis(),range:vi.fn().mockReturnValue({overrideTypes:async()=>({data:[],error:null,count:0})})}
+  mocks.from.mockReturnValue(query)
+  await listAdminTranscripts(0,'100%_')
+  expect(query.ilike).toHaveBeenCalledWith('title',String.raw`%100\%\_%`)
+  query.ilike.mockClear()
+  await listAdminTranscripts(0,'   ')
+  expect(query.ilike).not.toHaveBeenCalled()
+ })
+})

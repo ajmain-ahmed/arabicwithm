@@ -10,6 +10,7 @@ import {parseVideoDuration} from '@/app/lib/transcriptTiming'
 
 export default function AdminTranscripts(){
  const cache=useAdminListCache()
+ const [searchInput,setSearchInput]=useState(''),[titleSearch,setTitleSearch]=useState('')
  const snapshot=cache.peek<{rows:TranscriptRow[];total:number}>("transcripts:0")
  const [rows,setRows]=useState<TranscriptRow[]>(snapshot?.rows??[]),[page,setPage]=useState(0),[total,setTotal]=useState(snapshot?.total??0),[loading,setLoading]=useState(!snapshot),[error,setError]=useState(''),[success,setSuccess]=useState(''),[refresh,setRefresh]=useState(0)
  const [open,setOpen]=useState(false),[url,setUrl]=useState(''),[title,setTitle]=useState(''),[channel,setChannel]=useState(''),[transcriptJson,setTranscriptJson]=useState(''),[searchable,setSearchable]=useState(true),[busy,setBusy]=useState(false),[edit,setEdit]=useState<TranscriptRow|null>(null),[formError,setFormError]=useState('')
@@ -29,7 +30,8 @@ export default function AdminTranscripts(){
  },[open,edit,url,transcriptJson,duration,durationFormat,durationError])
  const [generationUrl,setGenerationUrl]=useState(''),[generating,setGenerating]=useState(false),[deleting,setDeleting]=useState<TranscriptRow|null>(null),[deleteBusy,setDeleteBusy]=useState(false),[deleteError,setDeleteError]=useState('')
  const reload=useCallback(()=>{cache.invalidate("transcripts:");setRefresh(v=>v+1)},[cache])
- useEffect(()=>{let current=true;setLoading(!cache.peek(`transcripts:${page}`));setError('');cache.load(`transcripts:${page}`,()=>listAdminTranscripts(page)).then(result=>{if(current){setRows(result.rows);setTotal(result.total)}}).catch(e=>{if(current)setError(e.message)}).finally(()=>{if(current)setLoading(false)});return()=>{current=false}},[page,refresh,cache])
+ useEffect(()=>{if(searchInput.trim()===titleSearch)return;const timer=setTimeout(()=>{setTitleSearch(searchInput.trim());setPage(0)},350);return()=>clearTimeout(timer)},[searchInput,titleSearch])
+ useEffect(()=>{let current=true;const key=titleSearch?`transcripts:${page}:${titleSearch}`:`transcripts:${page}`;setLoading(!cache.peek(key));setError('');cache.load(key,()=>listAdminTranscripts(page,titleSearch)).then(result=>{if(current){setRows(result.rows);setTotal(result.total)}}).catch(e=>{if(current)setError(e.message)}).finally(()=>{if(current)setLoading(false)});return()=>{current=false}},[page,titleSearch,refresh,cache])
  useEffect(()=>{if(!rows.some(transcriptGenerationPending))return;const timer=setInterval(()=>{if(document.visibilityState==='visible')reload()},5000);return()=>clearInterval(timer)},[rows,reload])
  async function save(){if(durationError||saving.current||busy||editLoading||edit&&!editVersion||!edit&&!ready)return;saving.current=true;setBusy(true);setFormError('');try{
   if(edit){const result=await saveAdminTranscriptJson(edit.id,{json:transcriptJson,title,channel,searchable,updatedAt:editVersion,duration,durationFormat});if(!result.ok)throw new Error(result.error);setTranscriptJson(result.json);setEditVersion(result.updatedAt);setSaved(true);setSuccess('Saved');reload();return}
@@ -52,9 +54,10 @@ export default function AdminTranscripts(){
  }catch{setDeleteError('Unable to contact transcript deletion. Please retry.')}finally{setDeleteBusy(false)}}
  return <Stack spacing={2}>
   <Stack direction="row" spacing={2} sx={{justifyContent:'space-between',flexWrap:'wrap'}}><Typography variant="h4">Transcripts</Typography><Box><Button onClick={reload} disabled={loading}>Refresh</Button><Button variant="contained" onClick={()=>start(null)}>Add Transcript</Button></Box></Stack>
+  <Stack direction="row" spacing={1} sx={{alignItems:'center'}}><TextField fullWidth type="search" label="Search transcripts by title" placeholder="Enter a transcript title" value={searchInput} onChange={event=>setSearchInput(event.target.value)} slotProps={{htmlInput:{maxLength:300}}}/>{searchInput&&<Button onClick={()=>{setSearchInput('');setTitleSearch('');setPage(0)}}>Clear</Button>}</Stack>
   <Card variant="outlined"><CardContent><Typography component="h2" variant="h6" sx={{mb:2}}>Generate Transcript</Typography><Box component="form" onSubmit={event=>{event.preventDefault();void generate()}}><Stack direction={{xs:'column',sm:'row'}} spacing={2}><TextField label="YouTube URL" placeholder="https://youtube.com/watch?v=..." value={generationUrl} onChange={event=>setGenerationUrl(event.target.value)} disabled={generating} required fullWidth/><Button type="submit" variant="contained" disabled={generating||!generationUrl.trim()} sx={{whiteSpace:'nowrap'}}>{generating?'Preparing video...':'Generate Transcript'}</Button></Stack></Box><Typography variant="body2" sx={{mt:1}} color="text.secondary">Arabic transcription and English translation are saved and published automatically when complete.</Typography></CardContent></Card>
   {success&&<Alert severity="success" onClose={()=>setSuccess('')}>{success}</Alert>}{error&&<Alert severity="error" action={<Button onClick={reload}>Retry</Button>}>{error}</Alert>}
-  {loading&&<Typography role="status">Loading transcripts...</Typography>}{!loading&&!error&&!rows.length&&<Typography>No transcripts in this page of the library.</Typography>}
+  {loading&&<Typography role="status">Loading transcripts...</Typography>}{!loading&&!error&&!rows.length&&<Typography>{titleSearch?'No transcripts match this title.':'No transcripts in this page of the library.'}</Typography>}
   {rows.map(row=><Card variant="outlined" key={row.id}><CardContent><Stack direction={{xs:'column',sm:'row'}} spacing={2}>
    <Box component="img" src={row.thumbnail} alt="" sx={{width:140,height:80,objectFit:'cover',borderRadius:1}}/>
    <Box sx={{flex:1,minWidth:0}}><Typography variant="h6">{row.title}</Typography><Typography>{row.channel??'Unknown channel'} | {row.duration_seconds==null?'Duration pending':`${Math.ceil(row.duration_seconds)} seconds`} | {row.provider}</Typography>

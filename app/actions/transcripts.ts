@@ -46,14 +46,20 @@ export async function deleteAdminTranscript(id: string): Promise<{ok:true}|{ok:f
     return {ok:true}
   }catch(error){return {ok:false,error:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to delete transcript.'}}
 }
-export async function listAdminTranscripts(page=0):Promise<{rows:TranscriptRow[];total:number}> {
+export async function listAdminTranscripts(page=0,titleSearch=""):Promise<{rows:TranscriptRow[];total:number}> {
   await guardAdmin();z.number().int().min(0).max(100000).parse(page)
+  const search=z.string().trim().max(300).parse(titleSearch)
+  const pattern=`%${search.replace(/[\\%_]/g,character=>`\\${character}`)}%`
   const includeGeneration=Date.now()>=generationColumnUnavailableUntil
-  let {data,error,count}=await serviceClient.from('youtube_transcripts').select(includeGeneration?`${columns},website_generation`:columns,{count:'exact'}).order('created_at',{ascending:false}).order('id').range(page*30,page*30+29).overrideTypes<TranscriptRow[],{merge:false}>()
+  let query=serviceClient.from('youtube_transcripts').select(includeGeneration?`${columns},website_generation`:columns,{count:'exact'})
+  if(search)query=query.ilike('title',pattern)
+  let {data,error,count}=await query.order('created_at',{ascending:false}).order('id').range(page*30,page*30+29).overrideTypes<TranscriptRow[],{merge:false}>()
   if(!includeGeneration&&data)data=data.map(row=>({...row,website_generation:false}))
   if(missingGenerationColumn(error)){
     generationColumnUnavailableUntil=Date.now()+60_000
-    const legacy=await serviceClient.from('youtube_transcripts').select(columns,{count:'exact'}).order('created_at',{ascending:false}).order('id').range(page*30,page*30+29)
+    let legacyQuery=serviceClient.from('youtube_transcripts').select(columns,{count:'exact'})
+    if(search)legacyQuery=legacyQuery.ilike('title',pattern)
+    const legacy=await legacyQuery.order('created_at',{ascending:false}).order('id').range(page*30,page*30+29)
     data=legacy.data?.map(row=>({...row,website_generation:false}))??null;error=legacy.error;count=legacy.count
   }
   if(error)throw new Error('Unable to load transcripts. Please retry.')
