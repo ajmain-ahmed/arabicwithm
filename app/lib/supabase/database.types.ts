@@ -346,6 +346,15 @@ export interface Database {
       admin_manage_transcript_group: {Args:{p_actor:string;p_name:string|null;p_parent:string|null;p_id:string|null;p_delete:boolean};Returns:string}
       admin_manual_enrichment: {Args:{p_actor:string;p_id:string};Returns:Json}
       admin_retry_manual_enrichment: {Args:{p_actor:string;p_id:string};Returns:Json}
+      admin_save_manual_draft: {Args:{p_actor:string;p_id:string;p_payload:Json;p_version?:string|null};Returns:Json}
+      admin_load_manual_draft: {Args:{p_actor:string;p_id:string};Returns:Json}
+      admin_list_manual_drafts: {Args:{p_actor:string;p_page?:number;p_search?:string;p_rows?:boolean};Returns:Json}
+      admin_delete_manual_draft: {Args:{p_actor:string;p_id:string;p_version:string};Returns:boolean}
+      admin_begin_manual_import: {Args:Database['public']['Functions']['admin_import_grouped_transcript']['Args']&{p_key:string};Returns:Json}
+      admin_append_manual_import: {Args:{p_actor:string;p_import:string;p_offset:number;p_limit?:number;p_bytes?:number};Returns:Json}
+      admin_resume_manual_import: {Args:{p_actor:string;p_id:string};Returns:Json}
+      admin_manual_import_state: {Args:{p_actor:string;p_import:string};Returns:Json}
+      admin_finish_manual_import: {Args:{p_actor:string;p_import:string};Returns:Json}
       admin_import_manual_source: {Args:Database['public']['Functions']['admin_import_grouped_transcript']['Args'];Returns:Json}
       admin_save_manual_source: {Args:Database['public']['Functions']['admin_save_grouped_transcript']['Args'];Returns:Json}
       admin_import_grouped_transcript: {Args:{p_actor:string;p_youtube_id:string;p_title:string;p_channel:string;p_raw:Json;p_searchable:boolean;p_group:string|null;p_duration:number|null};Returns:string}

@@ -1,16 +1,54 @@
 import React, {act} from 'react'
 import {createRoot,type Root} from 'react-dom/client'
 import {beforeEach,afterEach,expect,it,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({list:vi.fn(),import:vi.fn(),remove:vi.fn(),validate:vi.fn(),download:vi.fn(),save:vi.fn(),group:vi.fn(),move:vi.fn()}))
-vi.mock('@/app/actions/transcripts',()=>({loadAdminManualEnrichment:vi.fn().mockResolvedValue(null),retryAdminManualEnrichment:vi.fn().mockResolvedValue({ok:true,status:'unavailable'}),listAdminTranscripts:mocks.list,importAdminManualTranscriptResult:mocks.import,validateAdminManualTranscript:mocks.validate,generateAdminTranscript:vi.fn(),deleteAdminTranscript:mocks.remove,updateAdminTranscript:vi.fn(),downloadAdminTranscriptJson:mocks.download,saveAdminTranscriptJson:mocks.save,manageAdminTranscriptGroup:mocks.group,moveAdminTranscriptGroup:mocks.move}))
+const mocks=vi.hoisted(()=>({list:vi.fn(),import:vi.fn(),remove:vi.fn(),validate:vi.fn(),download:vi.fn(),save:vi.fn(),group:vi.fn(),move:vi.fn(),saveDraft:vi.fn(),loadDraft:vi.fn(),deleteDraft:vi.fn()}))
+vi.mock('@/app/actions/transcripts',()=>({saveAdminManualDraft:mocks.saveDraft,loadAdminManualDraft:mocks.loadDraft,deleteAdminManualDraft:mocks.deleteDraft,loadAdminManualEnrichment:vi.fn().mockResolvedValue(null),retryAdminManualEnrichment:vi.fn().mockResolvedValue({ok:true,status:'unavailable'}),listAdminTranscripts:mocks.list,prepareAdminManualImport:async(input:unknown)=>{const result=await mocks.import(input);return result.ok?{ok:true,state:{importId:'99999999-9999-4999-8999-999999999999',id:result.id??'saved',expected:1,committed:0,tokens:0,completed:false,enrichment:result.enrichment??'unavailable'}}:{...result,retryable:false}},appendAdminManualImport:async()=> ({ok:true,state:{importId:'99999999-9999-4999-8999-999999999999',id:'saved',expected:1,committed:1,tokens:1,completed:false,enrichment:'unavailable'}}),finishAdminManualImport:async()=> ({ok:true,state:{importId:'99999999-9999-4999-8999-999999999999',id:'saved',expected:1,committed:1,tokens:1,completed:true,enrichment:'unavailable'}}),resumeAdminManualImport:vi.fn(),validateAdminManualTranscript:mocks.validate,generateAdminTranscript:vi.fn(),deleteAdminTranscript:mocks.remove,updateAdminTranscript:vi.fn(),downloadAdminTranscriptJson:mocks.download,saveAdminTranscriptJson:mocks.save,manageAdminTranscriptGroup:mocks.group,moveAdminTranscriptGroup:mocks.move}))
 import AdminTranscripts from './AdminTranscripts'
 let host:HTMLDivElement,root:Root
-beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.resetAllMocks();mocks.list.mockResolvedValue({rows:[],total:0});mocks.import.mockResolvedValue({ok:true,id:'saved'});mocks.validate.mockResolvedValue({ok:true,segments:1,durationSource:'transcript'});host=document.createElement('div');document.body.appendChild(host);root=createRoot(host)})
+beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.resetAllMocks();mocks.list.mockResolvedValue({rows:[],total:0});mocks.import.mockResolvedValue({ok:true,id:'saved'});mocks.saveDraft.mockImplementation(async(id:string)=>({ok:true,id,updatedAt:'2026-10-09T17:00:00Z'}));mocks.deleteDraft.mockResolvedValue({ok:true});mocks.validate.mockResolvedValue({ok:true,segments:1,durationSource:'transcript'});host=document.createElement('div');document.body.appendChild(host);root=createRoot(host)})
 afterEach(async()=>{await act(async()=>root.unmount());host.remove()})
 async function open(){await act(async()=>root.render(<AdminTranscripts/>));await act(async()=>Array.from(host.querySelectorAll('button')).find(button=>button.textContent==='Add Transcript')!.click())}
 async function fill(label:string,value:string){const input=[...document.querySelectorAll('input,textarea')].find(element=>{const id=element.id;return [...document.querySelectorAll('label')].some(item=>item.htmlFor===id&&item.textContent?.startsWith(label))}) as HTMLInputElement|HTMLTextAreaElement;await act(async()=>{const prototype=input.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(prototype,'value')!.set!.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}))})}
 async function validForm(){await fill('YouTube URL or video ID','ZBynl03Vp-w');await fill('Video Title','A video');await fill('Transcript JSON','[{"arabic":"\\u0645\\u0631\\u062d\\u0628\\u0627","start_ms":1000,"end_ms":5000}]');await act(async()=>{await new Promise(resolve=>setTimeout(resolve,800))})}
 const importButton=()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Import') as HTMLButtonElement
+const draftButton=()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Save draft') as HTMLButtonElement
+it('offers Save draft alongside Cancel and Import and saves unfinished inputs without import validation',async()=>{
+ await open();expect(draftButton().disabled).toBe(false)
+ const actions=[...document.querySelectorAll('[role="dialog"] button')].map(b=>b.textContent)
+ expect(actions.slice(-3)).toEqual(['Cancel','Save draft','Import'])
+ await fill('Video Title','  My unfinished draft  ');await fill('Transcript JSON','{ incomplete');await fill('Video duration','unfinished')
+ expect(importButton().disabled).toBe(true);expect(draftButton().disabled).toBe(false)
+ await act(async()=>draftButton().click())
+ expect(mocks.saveDraft).toHaveBeenCalledWith(expect.stringMatching(/^[a-f0-9-]{36}$/),expect.objectContaining({title:'  My unfinished draft  ',url:'',json:'{ incomplete',duration:'unfinished',durationFormat:'clock',searchable:true,groupId:null}),null)
+ expect(mocks.import).not.toHaveBeenCalled();expect(document.body.textContent).toContain('Draft saved in Drafts.')
+})
+it('opens saved drafts with exact input and can update the same draft without duplicates',async()=>{
+ const id='77777777-7777-4777-8777-777777777777',version='2026-10-09T17:00:00Z',group='66666666-6666-4666-8666-666666666666'
+ const row={id,draft_id:id,draft_version:version,title:'Saved draft',status:'draft',provider:'manual',created_at:version,updated_at:version,searchable:false}
+ mocks.list.mockResolvedValue({rows:[row],total:1,groups:[{id:'drafts',name:'Drafts',direct_count:1,transcript_count:1},{id:group,name:'Destination',direct_count:0,transcript_count:0}]})
+ mocks.loadDraft.mockResolvedValue({id,updatedAt:version,payload:{title:'Saved draft',url:'incomplete URL',channel:'Hidden source',json:'  {not yet JSON',duration:'11',durationFormat:'minutes',searchable:false,groupId:group}})
+ await act(async()=>root.render(<AdminTranscripts/>));await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent==='Open draft')!.click())
+ const json=document.querySelector('textarea') as HTMLTextAreaElement;expect(json.value).toBe('  {not yet JSON')
+ expect((document.querySelector('input[type="checkbox"]') as HTMLInputElement).checked).toBe(false)
+ expect((document.querySelector('[role="dialog"] select') as HTMLSelectElement).value).toBe(group)
+ await fill('Video Title','Updated draft');await act(async()=>draftButton().click())
+ expect(mocks.saveDraft).toHaveBeenCalledWith(id,expect.objectContaining({title:'Updated draft',url:'incomplete URL',channel:'Hidden source',json:'  {not yet JSON',duration:'11',durationFormat:'minutes',searchable:false,groupId:group}),version)
+})
+it('keeps draft inputs intact on save failure and never discards a draft after a failed import',async()=>{
+ mocks.saveDraft.mockResolvedValue({ok:false,error:'Draft changed in another tab.'});await open();await fill('Transcript JSON','  {unfinished')
+ await act(async()=>draftButton().click());expect(document.querySelector('textarea')?.value).toBe('  {unfinished');expect(document.body.textContent).toContain('Draft changed in another tab.')
+ expect(mocks.deleteDraft).not.toHaveBeenCalled()
+})
+it('removes a saved draft only after verified import and retains it after an import failure',async()=>{
+ const id='77777777-7777-4777-8777-777777777777',version='2026-10-09T17:00:00Z'
+ const row={id,draft_id:id,draft_version:version,title:'Saved draft',status:'draft',provider:'manual',created_at:version,updated_at:version,searchable:false}
+ mocks.list.mockResolvedValue({rows:[row],total:1,groups:[{id:'drafts',name:'Drafts',direct_count:1,transcript_count:1}]})
+ mocks.loadDraft.mockResolvedValue({id,updatedAt:version,payload:{title:'Saved draft',url:'ZBynl03Vp-w',channel:'',json:'[{"text":"hello","offset":0,"duration":1000}]',duration:'',durationFormat:'clock',searchable:true,groupId:null}})
+ await act(async()=>root.render(<AdminTranscripts/>));await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent==='Open draft')!.click())
+ await act(async()=>{await new Promise(resolve=>setTimeout(resolve,800))})
+ mocks.import.mockResolvedValueOnce({ok:false,error:'Simulated failure'});await act(async()=>importButton().click());expect(mocks.deleteDraft).not.toHaveBeenCalled()
+ await act(async()=>importButton().click());expect(mocks.deleteDraft).toHaveBeenCalledWith(id,version)
+})
 it('uses one JSON box, defaults publication on, and retains an explicit opt-out',async()=>{
   await open();expect(document.querySelector('input[type="file"]')).toBeNull();expect(document.querySelector('textarea')?.getAttribute('placeholder')).toBe('Paste transcript JSON here...');
   const checkbox=document.querySelector('input[type="checkbox"]') as HTMLInputElement;expect(checkbox.checked).toBe(true);

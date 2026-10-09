@@ -1,11 +1,42 @@
 import {beforeEach,describe,it,expect,vi} from 'vitest'
 const mocks=vi.hoisted(()=>({guard:vi.fn(),access:vi.fn(),rpc:vi.fn(),from:vi.fn(),revalidate:vi.fn(),duration:vi.fn()}))
 vi.mock('@/app/actions/auth',()=>({guardAdmin:mocks.guard,getAuthenticatedAccess:mocks.access}))
-vi.mock('@/app/lib/supabase',()=>({serviceClient:{rpc:async(name:string,args:unknown)=>{const result=await mocks.rpc(name,args);if(!result?.error&&typeof result?.data==='string'&&name==='admin_import_manual_source')return {...result,data:{id:result.data,enrichment:'unavailable'}};if(!result?.error&&typeof result?.data==='string'&&name==='admin_save_manual_source')return {...result,data:{updatedAt:result.data,enrichment:'unavailable'}};return result},from:mocks.from}}))
+vi.mock('@/app/lib/supabase',()=>{let state={importId:'99999999-9999-4999-8999-999999999999',id:'saved',expected:1,committed:0,tokens:0,completed:false,enrichment:'unavailable'};return {serviceClient:{rpc:async(name:string,args:unknown)=>{
+ const result=await mocks.rpc(name,args);if(result?.error)return result
+ if(name==='admin_list_manual_drafts'&&!result?.data?.count)return {...result,data:{rows:[],total:0,count:0}}
+ if(name==='admin_begin_manual_import'){const input=args as {p_raw:{content:unknown[]}};state={...state,id:typeof result?.data==='string'?result.data:result.data?.id??'saved',enrichment:result.data?.enrichment??'unavailable',expected:input.p_raw.content.length,committed:0,completed:false};return {...result,data:state}}
+ if(name==='admin_append_manual_import'){state={...state,committed:Math.min(state.expected,state.committed+100)};return {...result,data:state}}
+ if(name==='admin_finish_manual_import'){state={...state,completed:true};return {...result,data:state}}
+ if(!result?.error&&typeof result?.data==='string'&&name==='admin_save_manual_source')return {...result,data:{updatedAt:result.data,enrichment:'unavailable'}};return result
+ },from:mocks.from}}})
 vi.mock('@/app/lib/youtubeVideoDuration',()=>({getYouTubeVideoDuration:mocks.duration}))
 vi.mock('next/cache',()=>({revalidatePath:mocks.revalidate}))
-import {addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson,saveAdminTranscriptJson,moveAdminTranscriptGroup} from './transcripts'
+import {addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson,saveAdminTranscriptJson,moveAdminTranscriptGroup,saveAdminManualDraft,loadAdminManualDraft,deleteAdminManualDraft} from './transcripts'
 beforeEach(()=>{vi.resetAllMocks();mocks.duration.mockResolvedValue(null);mocks.guard.mockResolvedValue(undefined);mocks.access.mockResolvedValue({admin:true,userId:'11111111-1111-4111-8111-111111111111'})})
+
+describe('manual form drafts',()=>{
+ const id='77777777-7777-4777-8777-777777777777',updatedAt='2026-10-09T17:00:00Z'
+ const payload={url:'unfinished URL',title:'  draft  ',channel:'',json:'  {broken JSON',searchable:true,duration:'unfinished',durationFormat:'minutes' as const,groupId:null}
+ it('saves exact unfinished form contents with the trusted actor and no import RPC',async()=>{
+  mocks.rpc.mockResolvedValue({data:{id,updatedAt},error:null})
+  expect(await saveAdminManualDraft(id,payload)).toEqual({ok:true,id,updatedAt})
+  expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith('admin_save_manual_draft',{p_actor:'11111111-1111-4111-8111-111111111111',p_id:id,p_payload:payload,p_version:null})
+  expect(mocks.from).not.toHaveBeenCalled()
+ })
+ it('loads the original fields and protects drafts from stale saves/deletes',async()=>{
+  mocks.rpc.mockResolvedValueOnce({data:{id,payload,updatedAt},error:null}).mockResolvedValue({data:null,error:{code:'P0001',message:'draft_conflict'}})
+  expect(await loadAdminManualDraft(id)).toEqual({id,payload,updatedAt})
+  expect(await saveAdminManualDraft(id,payload,updatedAt)).toMatchObject({ok:false,error:expect.stringContaining('changed in another tab')})
+  expect(await deleteAdminManualDraft(id,updatedAt)).toMatchObject({ok:false,error:expect.stringContaining('changed in another tab')})
+ })
+ it('denies non-admin draft operations before database access',async()=>{
+  mocks.access.mockResolvedValue({admin:false,userId:'other'})
+  expect(await saveAdminManualDraft(id,payload)).toEqual({ok:false,error:'Administrators only.'})
+  await expect(loadAdminManualDraft(id)).rejects.toThrow('Forbidden')
+  expect(await deleteAdminManualDraft(id,updatedAt)).toEqual({ok:false,error:'Administrators only.'})
+  expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+})
 
 const startOnlyJson=JSON.stringify([{tokens:[{arabic:'\u0645\u0631\u062d\u0628\u0627',english:'hello'}],timestamp:'00:00',translation:'Hello'},{arabic:'\u0645\u0631\u062d\u0628\u0627',start_ms:630000}])
 describe('permissive manual preflight',()=>{
@@ -14,7 +45,7 @@ describe('permissive manual preflight',()=>{
   const json=JSON.stringify([{text:'Hello 42%!',tokens:{malformed:true},timestamp:'00:01.234'}])
   expect(await validateAdminManualTranscript({url,json})).toMatchObject({ok:true,segments:1})
   expect(await importAdminManualTranscriptResult({url,title:'Title',json,searchable:true})).toEqual({ok:true,id:'saved',enrichment:'unavailable'})
-  expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith('admin_import_manual_source',expect.objectContaining({p_raw:expect.objectContaining({_source_json:json,content:[expect.objectContaining({text:'Hello 42%!',offset:1234,duration:null,tokens:{malformed:true}})]}),p_duration:null}))
+  expect(mocks.rpc).toHaveBeenCalledWith('admin_begin_manual_import',expect.objectContaining({p_raw:expect.objectContaining({_source_json:json,content:[expect.objectContaining({text:'Hello 42%!',offset:1234,duration:null,tokens:{malformed:true}})]}),p_duration:null}))
   expect(mocks.from).not.toHaveBeenCalled();expect(mocks.duration).not.toHaveBeenCalled()
  })
  it('respects explicit duration and rejects real structural errors without RPC writes',async()=>{
@@ -28,7 +59,7 @@ describe('permissive manual preflight',()=>{
 describe('website transcript server boundaries',()=>{
  it('reports failed provenance marking and lets canonical reuse repair it on retry',async()=>{const lookup={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:{id:'saved'},error:null})};mocks.from.mockReturnValue(lookup);mocks.rpc.mockResolvedValueOnce({data:null,error:{message:'unavailable'}}).mockResolvedValueOnce({data:'saved',error:null});await expect(addAdminYouTubeTranscript('Dgj9fQYbCZY')).rejects.toThrow('provenance');expect(await addAdminYouTubeTranscript('Dgj9fQYbCZY')).toBe('saved');expect(mocks.rpc).toHaveBeenCalledTimes(2);expect(mocks.rpc).not.toHaveBeenCalledWith('register_youtube_transcript',expect.anything())})
 
- it.each([true,false])('passes canonical bilingual JSON and explicit publication=%s through the existing import RPC',async searchable=>{mocks.rpc.mockResolvedValue({data:'saved',error:null});const content=[{text:'حياكم الله',offset:0,duration:5270,english:'Welcome'}];expect(await importAdminManualTranscriptResult({url:'https://youtu.be/Dgj9fQYbCZY',title:'Title',channel:'',json:JSON.stringify({content}),searchable})).toMatchObject({ok:true,id:'saved',enrichment:'unavailable'});expect(mocks.rpc).toHaveBeenCalledTimes(1);expect(mocks.rpc).toHaveBeenCalledWith('admin_import_manual_source',expect.objectContaining({p_searchable:searchable,p_raw:expect.objectContaining({provider:'manual',lang:'ar',content,_source_json:JSON.stringify({content})})}))})
+ it.each([true,false])('passes canonical bilingual JSON and explicit publication=%s through the existing import RPC',async searchable=>{mocks.rpc.mockResolvedValue({data:'saved',error:null});const content=[{text:'حياكم الله',offset:0,duration:5270,english:'Welcome'}];expect(await importAdminManualTranscriptResult({url:'https://youtu.be/Dgj9fQYbCZY',title:'Title',channel:'',json:JSON.stringify({content}),searchable})).toMatchObject({ok:true,id:'saved',enrichment:'unavailable'});expect(mocks.rpc).toHaveBeenCalledTimes(3);expect(mocks.rpc).toHaveBeenCalledWith('admin_begin_manual_import',expect.objectContaining({p_searchable:searchable,p_raw:expect.objectContaining({provider:'manual',lang:'ar',content,_source_json:JSON.stringify({content})})}))})
  it('returns useful JSON validation without touching the database',async()=>{const result=await importAdminManualTranscriptResult({url:'https://youtu.be/Dgj9fQYbCZY',title:'Title',channel:'',json:'{',searchable:true});expect(result).toEqual({ok:false,error:expect.stringContaining('Invalid transcript JSON')});expect(mocks.rpc).not.toHaveBeenCalled()})
  it('fails closed when the manual library migration is unavailable instead of mixing Shows into the list',async()=>{
   mocks.rpc.mockResolvedValue({data:null,error:{code:'PGRST202',message:'RPC missing'}})
@@ -43,7 +74,7 @@ describe('website transcript server boundaries',()=>{
  it('denies non-admin imports and lists before database access',async()=>{mocks.access.mockResolvedValue({admin:false,userId:'other'});mocks.guard.mockRejectedValue(new Error('Forbidden'));await expect(addAdminYouTubeTranscript('https://youtu.be/Dgj9fQYbCZY')).rejects.toThrow('Forbidden');await expect(importAdminManualTranscript({url:'https://youtu.be/Dgj9fQYbCZY',title:'Title',channel:'',arabic:'text',searchable:true})).rejects.toThrow('Forbidden');await expect(listAdminTranscripts()).rejects.toThrow('Forbidden');expect(mocks.from).not.toHaveBeenCalled();expect(mocks.rpc).not.toHaveBeenCalled()})
  it('reuses stored historical content without queuing or calling a provider',async()=>{const lookup={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:{id:'saved'},error:null})};mocks.from.mockReturnValue(lookup);mocks.rpc.mockResolvedValue({data:'saved',error:null});expect(await addAdminYouTubeTranscript('https://youtu.be/Dgj9fQYbCZY')).toBe('saved');expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith('admin_record_transcript_origin',{p_actor:'11111111-1111-4111-8111-111111111111',p_id:'saved'})})
  it('queues new URLs through the existing ingestion RPC and authenticated actor',async()=>{const lookup={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:null,error:null})};mocks.from.mockReturnValue(lookup);mocks.rpc.mockResolvedValue({data:'new',error:null});expect(await addAdminYouTubeTranscript('https://youtu.be/Dgj9fQYbCZY')).toBe('new');expect(mocks.rpc).toHaveBeenCalledWith('register_youtube_transcript',{p_user:'11111111-1111-4111-8111-111111111111',p_youtube_id:'Dgj9fQYbCZY'})})
- it('normalises timed manual content and publishes only on explicit intent',async()=>{mocks.rpc.mockResolvedValue({data:'manual',error:null});await importAdminManualTranscript({url:'https://youtu.be/Dgj9fQYbCZY',title:'Title',channel:'Source',arabic:'00:00:01,200 --> 00:00:03,700\nتعلم العربية',searchable:false});expect(mocks.rpc).toHaveBeenCalledWith('admin_import_manual_source',expect.objectContaining({p_searchable:false,p_raw:{provider:'manual',lang:'ar',content:[{text:'تعلم العربية',offset:1200,duration:2500}]}}))})
+ it('normalises timed manual content and publishes only on explicit intent',async()=>{mocks.rpc.mockResolvedValue({data:'manual',error:null});await importAdminManualTranscript({url:'https://youtu.be/Dgj9fQYbCZY',title:'Title',channel:'Source',arabic:'00:00:01,200 --> 00:00:03,700\nتعلم العربية',searchable:false});expect(mocks.rpc).toHaveBeenCalledWith('admin_begin_manual_import',expect.objectContaining({p_searchable:false,p_raw:{provider:'manual',lang:'ar',content:[{text:'تعلم العربية',offset:1200,duration:2500}]}}))})
  it('uses one ranked search RPC with its compound rank/id cursor',async()=>{mocks.rpc.mockResolvedValue({data:[],error:null});await searchTranscriptWord('استطاع',99,2);expect(mocks.rpc).toHaveBeenCalledWith('search_transcript_word',{p_word:'استطاع',p_after:99,p_after_rank:2,p_limit:20})})
  it('does not expose unpublished canonical data through the public loader',async()=>{const lookup={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:null,error:null})};mocks.from.mockReturnValue(lookup);expect(await loadPublicTranscript('11111111-1111-4111-8111-111111111111')).toBeNull();expect(lookup.eq).toHaveBeenCalledWith('status','ready');expect(lookup.eq).toHaveBeenCalledWith('searchable',true);expect(mocks.from).toHaveBeenCalledTimes(1)})
 })
@@ -58,7 +89,7 @@ it('requires a recognized YouTube URL or ID and a trimmed non-empty title before
 it('trims the title and supplies no duplicate source field for simple JSON imports',async()=>{
   mocks.rpc.mockResolvedValue({data:'saved',error:null})
   await importAdminManualTranscriptResult({url:'https://www.youtube.com/watch?v=Dgj9fQYbCZY',title:'  Video Title  ',json:JSON.stringify({content:[{text:'\u0645\u0631\u062d\u0628\u0627',offset:0,duration:5000,english:'Hello'}]}),searchable:true})
-  expect(mocks.rpc).toHaveBeenCalledWith('admin_import_manual_source',expect.objectContaining({p_title:'Video Title',p_channel:'Unknown channel',p_youtube_id:'Dgj9fQYbCZY'}))
+  expect(mocks.rpc).toHaveBeenCalledWith('admin_begin_manual_import',expect.objectContaining({p_title:'Video Title',p_channel:'Unknown channel',p_youtube_id:'Dgj9fQYbCZY'}))
 })
 it('denies download before database access for non-admins',async()=>{
   mocks.guard.mockRejectedValue(new Error('Forbidden'))
@@ -129,7 +160,7 @@ describe('admin transcript title search',()=>{
   expect(await listAdminTranscripts(1,'  Lesson  ')).toMatchObject({rows:[{title:'Arabic Lesson'}],total:41})
   expect(mocks.rpc).toHaveBeenCalledWith('admin_list_manual_transcripts',expect.objectContaining({p_page:1,p_search:'Lesson',p_group:null,p_ungrouped:false}))
   await listAdminTranscripts(0,'قصة إبراهيم','ungrouped')
-  expect(mocks.rpc).toHaveBeenLastCalledWith('admin_list_manual_transcripts',expect.objectContaining({p_search:'قصة إبراهيم',p_group:null,p_ungrouped:true}))
+  expect(mocks.rpc).toHaveBeenCalledWith('admin_list_manual_transcripts',expect.objectContaining({p_search:'قصة إبراهيم',p_group:null,p_ungrouped:true}))
   await expect(listAdminTranscripts(0,'','invalid')).rejects.toThrow()
  })
  it('persists group, video ID and explicit clock duration in the atomic Edit RPC',async()=>{
@@ -178,7 +209,7 @@ it('imports invalid optional enrichment unchanged and distinguishes real storage
  const json=JSON.stringify([{text:'Original 42%',tokens:[{arabic:'',headword:3},null],timestamp:'00:01'}])
  mocks.rpc.mockResolvedValue({data:{id:'saved',enrichment:'unavailable'},error:null})
  expect(await importAdminManualTranscriptResult({url:'AWMFILE0001',title:'Source',json,searchable:true})).toMatchObject({ok:true,enrichment:'unavailable'})
- expect(mocks.rpc).toHaveBeenCalledWith('admin_import_manual_source',expect.objectContaining({p_raw:expect.objectContaining({_source_json:json})}))
+ expect(mocks.rpc).toHaveBeenCalledWith('admin_begin_manual_import',expect.objectContaining({p_raw:expect.objectContaining({_source_json:json})}))
  mocks.rpc.mockResolvedValue({data:null,error:{code:'XX000',message:'Storage failure'}})
  expect(await importAdminManualTranscriptResult({url:'AWMFILE0001',title:'Source',json,searchable:true})).toMatchObject({ok:false,error:expect.stringContaining('Storage failure')})
 })
