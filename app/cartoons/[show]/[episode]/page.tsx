@@ -37,11 +37,14 @@ export async function generateMetadata({
 }
 
 export default async function Page({
-  params,
+  params, searchParams,
 }: {
   params: Promise<{ show: string; episode: string }>
+  searchParams: Promise<{t?:string}>
 }) {
   const { show, episode } = await params
+  const raw = Number((await searchParams).t ?? 0)
+  const initialStart = Number.isFinite(raw) && raw >= 0 && raw <= 86400 ? raw : 0
 
   const ep = await fetchEpisodeForPublic(show, episode)
   if (!ep) notFound()
@@ -49,5 +52,5 @@ export default async function Page({
   const showData = await fetchShowBySlugPublic(show)
   const showTitle = showData?.title ?? show
 
-  return <EpisodePage episode={ep} showTitle={showTitle} />
+  return <EpisodePage episode={ep} showTitle={showTitle} initialStart={initialStart} />
 }

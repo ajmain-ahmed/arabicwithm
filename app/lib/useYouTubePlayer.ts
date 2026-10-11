@@ -16,6 +16,9 @@ interface YTPlayer {
   isMuted(): boolean
   getVolume(): number
   setVolume(volume: number): void
+  getAvailablePlaybackRates?(): number[]
+  getPlaybackRate?(): number
+  setPlaybackRate?(rate: number): void
   destroy(): void
 }
 
@@ -42,6 +45,7 @@ interface YouTubePlayerOptions {
   muted?: boolean
   onEnded?: () => void
   reloadKey?: string | number
+  endAt?: number
 }
 
 let youtubeApiPromise: Promise<void> | null = null
@@ -99,6 +103,7 @@ export default function useYouTubePlayer(
   const [autoplayBlocked, setAutoplayBlocked] = useState(false)
   const [errorCode, setErrorCode] = useState<number | null>(null)
   const [retryNonce, setRetryNonce] = useState(0)
+  const [playbackRate, setPlaybackRateValue] = useState(1)
   const autoplay = options.autoplay === true
   const normalizedVideoId = normalizeYouTubeId(videoId)
 
@@ -133,13 +138,15 @@ export default function useYouTubePlayer(
 
       const embedUrl = getYouTubeEmbedUrl(normalizedVideoId, {
         autoplay,
-        muted: mutedRef.current,
+        // The native fallback cannot observe an autoplay rejection to retry.
+        // Start it muted so playback is allowed without a prior gesture.
+        muted: autoplay || mutedRef.current,
         startAt: startAtRef.current,
       })
       if (!embedUrl) return
 
       const iframe = document.createElement('iframe')
-      iframe.src = embedUrl
+      iframe.src = options.endAt != null && Number.isFinite(options.endAt) ? `${embedUrl}&end=${Math.floor(options.endAt)}` : embedUrl
       iframe.title = 'YouTube video player'
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
       iframe.allowFullscreen = true
@@ -213,6 +220,7 @@ export default function useYouTubePlayer(
                 }
               }
             },
+            onPlaybackRateChange: (event: { data: number }) => { if (!cancelled) setPlaybackRateValue(event.data) },
             onError: (e: { data: number }) => {
               if (cancelled) return
               setIsPlaying(false)
@@ -266,7 +274,7 @@ export default function useYouTubePlayer(
       setIsReady(false)
       setIsPlaying(false)
     }
-  }, [autoplay, normalizedVideoId, options.reloadKey, retryNonce])
+  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, retryNonce])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {
@@ -338,6 +346,13 @@ export default function useYouTubePlayer(
     return playerRef.current?.getCurrentTime?.() ?? 0
   }, [])
 
+  const setPlaybackRate = useCallback((rate: number) => {
+    const player = playerRef.current
+    if (player?.getAvailablePlaybackRates?.().includes(rate)) player.setPlaybackRate?.(rate)
+    return player?.getPlaybackRate?.() ?? 1
+  }, [])
+  const getPlaybackRates = useCallback(() => playerRef.current?.getAvailablePlaybackRates?.() ?? [1], [])
+
   const retry = useCallback(() => {
     setErrorCode(null)
     setAutoplayBlocked(false)
@@ -355,6 +370,9 @@ export default function useYouTubePlayer(
     unMute,
     playWithSound,
     getCurrentTime,
+    getPlaybackRates,
+    playbackRate,
+    setPlaybackRate,
     isReady,
     isPlaying,
     isMuted,

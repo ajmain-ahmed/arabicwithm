@@ -1,0 +1,5087 @@
+{
+  "clips": [
+    {
+      "video": {
+        "id": "0c7c43a2-02af-4778-80af-5f3f74c6f987",
+        "title": "Episode 11",
+        "status": "ready",
+        "channel": "Unknown channel",
+        "thumbnail": "https://i.ytimg.com/vi/A_KFsHJO3js/hqdefault.jpg",
+        "youtube_id": "A_KFsHJO3js",
+        "duration_seconds": 687,
+        "translation_status": "ready"
+      },
+      "segments": [
+        {
+          "id": 33623,
+          "position": 127,
+          "end_seconds": 449,
+          "english_text": "This is what happened, Your Honour. I want justice in",
+          "original_text": "هذا ما حدث يا سيدي القاضي أريد العدل في",
+          "start_seconds": 445,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "pronoun",
+                "arabic": "هذا",
+                "english": "this",
+                "headword": "هذا",
+                "entry_type": "word",
+                "transliteration": "hādhā"
+              },
+              {
+                "pos": "pronoun",
+                "arabic": "ما",
+                "english": "what",
+                "headword": "ما",
+                "entry_type": "word",
+                "transliteration": "mā"
+              },
+              {
+                "pos": "verb",
+                "arabic": "حدث",
+                "english": "happened",
+                "headword": "حدث",
+                "entry_type": "word",
+                "transliteration": "ḥadath"
+              },
+              {
+                "pos": "particle",
+                "arabic": "يا",
+                "english": "O",
+                "headword": "يا",
+                "entry_type": "word",
+                "transliteration": "yā"
+              },
+              {
+                "pos": "noun",
+                "arabic": "سيدي",
+                "english": "sir",
+                "headword": "سيد",
+                "entry_type": "word",
+                "transliteration": "sayyidī"
+              },
+              {
+                "pos": "noun",
+                "arabic": "القاضي",
+                "english": "the judge",
+                "headword": "قاضٍ",
+                "entry_type": "word",
+                "transliteration": "al-qāḍī"
+              },
+              {
+                "pos": "verb",
+                "arabic": "أريد",
+                "english": "I want",
+                "headword": "أراد",
+                "entry_type": "word",
+                "transliteration": "urīdu"
+              },
+              {
+                "pos": "noun",
+                "arabic": "العدل",
+                "english": "justice",
+                "headword": "عدل",
+                "entry_type": "word",
+                "transliteration": "al-ʿadl"
+              },
+              {
+                "pos": "preposition",
+                "arabic": "في",
+                "english": "in",
+                "headword": "في",
+                "entry_type": "word",
+                "transliteration": "fī"
+              }
+            ],
+            "paragraph": 128,
+            "timestamp": "07:25",
+            "translation": "This is what happened, Your Honour. I want justice in"
+          },
+          "for_you_fingerprints": [
+            "30c0e2c73e08f1373736741345d4e05b",
+            "419e2ed4b79d2e71ae43693465c759a5",
+            "429a601e77b377ad24e3de92ae957c28",
+            "b084985853c9bebc861d4c087821c744",
+            "b2da49627c99c10cb02712501e8684ea",
+            "bf616bfae96bd2460fc6bfad154713f0"
+          ]
+        },
+        {
+          "id": 33624,
+          "position": 128,
+          "end_seconds": 451,
+          "english_text": "this matter.",
+          "original_text": "هذه المسألة",
+          "start_seconds": 449,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "pronoun",
+                "arabic": "هذه",
+                "english": "this",
+                "headword": "هذا",
+                "entry_type": "word",
+                "transliteration": "hādhihi"
+              },
+              {
+                "pos": "noun",
+                "arabic": "المسألة",
+                "english": "the matter",
+                "headword": "مسألة",
+                "entry_type": "word",
+                "transliteration": "al-masʾala"
+              }
+            ],
+            "paragraph": 129,
+            "timestamp": "07:29",
+            "translation": "this matter."
+          },
+          "for_you_fingerprints": []
+        },
+        {
+          "id": 33625,
+          "position": 129,
+          "end_seconds": 455,
+          "english_text": "Yes.",
+          "original_text": "نعم",
+          "start_seconds": 451,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "interjection",
+                "arabic": "نعم",
+                "english": "yes",
+                "headword": "نعم",
+                "entry_type": "word",
+                "transliteration": "naʿam"
+              }
+            ],
+            "paragraph": 130,
+            "timestamp": "07:31",
+            "translation": "Yes."
+          },
+          "for_you_fingerprints": []
+        },
+        {
+          "id": 33626,
+          "position": 130,
+          "end_seconds": 459,
+          "english_text": "There is no god but You; glory be to You, indeed I was among",
+          "original_text": "لا إله إلا أنت سبحانك إني كنت من",
+          "start_seconds": 455,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "particle",
+                "arabic": "لا",
+                "english": "no",
+                "headword": "لا",
+                "entry_type": "word",
+                "transliteration": "lā"
+              },
+              {
+                "pos": "noun",
+                "arabic": "إله",
+                "english": "god",
+                "headword": "إله",
+                "entry_type": "word",
+                "transliteration": "ilāha"
+              },
+              {
+                "pos": "particle",
+                "arabic": "إلا",
+                "english": "except",
+                "headword": "إلا",
+                "entry_type": "word",
+                "transliteration": "illā"
+              },
+              {
+                "pos": "pronoun",
+                "arabic": "أنت",
+                "english": "you",
+                "headword": "أنت",
+                "entry_type": "word",
+                "transliteration": "anta"
+              },
+              {
+                "pos": "noun",
+                "arabic": "سبحانك",
+                "english": "glory be to You",
+                "headword": "سبحان",
+                "entry_type": "word",
+                "transliteration": "subḥānaka"
+              },
+              {
+                "pos": "conjunction",
+                "arabic": "إني",
+                "english": "indeed I",
+                "headword": "إن",
+                "entry_type": "word",
+                "transliteration": "innī"
+              },
+              {
+                "pos": "verb",
+                "arabic": "كنت",
+                "english": "I was",
+                "headword": "كان",
+                "entry_type": "word",
+                "transliteration": "kuntu"
+              },
+              {
+                "pos": "preposition",
+                "arabic": "من",
+                "english": "among",
+                "headword": "من",
+                "entry_type": "word",
+                "transliteration": "min"
+              }
+            ],
+            "paragraph": 131,
+            "timestamp": "07:35",
+            "translation": "There is no god but You; glory be to You, indeed I was among"
+          },
+          "for_you_fingerprints": [
+            "2c1731300eff0dfddcd3892b46a6a232",
+            "3f7d43a6c976f5d1c081ca442c94e6b8",
+            "675ebd8ddabb60f9da5d73f6fbb8fff1",
+            "babdacd0c3ce83316513be51a81dc7da",
+            "d59606959ea611e2d89d1d7c1b4964c7"
+          ]
+        },
+        {
+          "id": 33627,
+          "position": 131,
+          "end_seconds": 461,
+          "english_text": "the wrongdoers.",
+          "original_text": "الظالمين",
+          "start_seconds": 459,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "noun",
+                "arabic": "الظالمين",
+                "english": "the wrongdoers",
+                "headword": "ظالم",
+                "entry_type": "word",
+                "transliteration": "al-ẓālimīn"
+              }
+            ],
+            "paragraph": 132,
+            "timestamp": "07:39",
+            "translation": "the wrongdoers."
+          },
+          "for_you_fingerprints": []
+        },
+        {
+          "id": 33628,
+          "position": 132,
+          "end_seconds": 462,
+          "english_text": "Mahmoud!",
+          "original_text": "محمود",
+          "start_seconds": 461,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "proper_noun",
+                "arabic": "محمود",
+                "english": "Mahmoud",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "Maḥmūd"
+              }
+            ],
+            "paragraph": 133,
+            "timestamp": "07:41",
+            "translation": "Mahmoud!"
+          },
+          "for_you_fingerprints": []
+        },
+        {
+          "id": 33629,
+          "position": 133,
+          "end_seconds": 463,
+          "english_text": "Amina!",
+          "original_text": "أمينة",
+          "start_seconds": 462,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "proper_noun",
+                "arabic": "أمينة",
+                "english": "Amina",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "Amīna"
+              }
+            ],
+            "paragraph": 134,
+            "timestamp": "07:42",
+            "translation": "Amina!"
+          },
+          "for_you_fingerprints": []
+        },
+        {
+          "id": 33630,
+          "position": 134,
+          "end_seconds": 465,
+          "english_text": "What have you done to yourself?",
+          "original_text": "ما هذا الذي فعلته في نفسك",
+          "start_seconds": 463,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "pronoun",
+                "arabic": "ما",
+                "english": "what",
+                "headword": "ما",
+                "entry_type": "word",
+                "transliteration": "mā"
+              },
+              {
+                "pos": "pronoun",
+                "arabic": "هذا",
+                "english": "this",
+                "headword": "هذا",
+                "entry_type": "word",
+                "transliteration": "hādhā"
+              },
+              {
+                "pos": "pronoun",
+                "arabic": "الذي",
+                "english": "that",
+                "headword": "الذي",
+                "entry_type": "word",
+                "transliteration": "alladhī"
+              },
+              {
+                "pos": "verb",
+                "arabic": "فعلته",
+                "english": "you did",
+                "headword": "فعل",
+                "entry_type": "word",
+                "transliteration": "faʿaltahu"
+              },
+              {
+                "pos": "preposition",
+                "arabic": "في",
+                "english": "in",
+                "headword": "في",
+                "entry_type": "word",
+                "transliteration": "fī"
+              },
+              {
+                "pos": "noun",
+                "arabic": "نفسك",
+                "english": "yourself",
+                "headword": "نفس",
+                "entry_type": "word",
+                "transliteration": "nafsika"
+              }
+            ],
+            "paragraph": 135,
+            "timestamp": "07:43",
+            "translation": "What have you done to yourself?"
+          },
+          "for_you_fingerprints": [
+            "260d12d76b4215895c95606f4e0f71b5",
+            "6e16e4eb8b004398a16b46a551ef1fc2",
+            "e00c7ac5c64392c3827c824ab67adda4"
+          ]
+        },
+        {
+          "id": 33631,
+          "position": 135,
+          "end_seconds": 469,
+          "english_text": "I could not kill my companion, Amina. I would",
+          "original_text": "لم أستطع أن أقتل صاحبي يا أمينة كنت",
+          "start_seconds": 465,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "particle",
+                "arabic": "لم",
+                "english": "did not",
+                "headword": "لم",
+                "entry_type": "word",
+                "transliteration": "lam"
+              },
+              {
+                "pos": "verb",
+                "arabic": "أستطع",
+                "english": "I could",
+                "headword": "استطاع",
+                "entry_type": "word",
+                "transliteration": "astaṭiʿ"
+              },
+              {
+                "pos": "conjunction",
+                "arabic": "أن",
+                "english": "to",
+                "headword": "أن",
+                "entry_type": "word",
+                "transliteration": "an"
+              },
+              {
+                "pos": "verb",
+                "arabic": "أقتل",
+                "english": "kill",
+                "headword": "قتل",
+                "entry_type": "word",
+                "transliteration": "aqtula"
+              },
+              {
+                "pos": "noun",
+                "arabic": "صاحبي",
+                "english": "my companion",
+                "headword": "صاحب",
+                "entry_type": "word",
+                "transliteration": "ṣāḥibī"
+              },
+              {
+                "pos": "particle",
+                "arabic": "يا",
+                "english": "O",
+                "headword": "يا",
+                "entry_type": "word",
+                "transliteration": "yā"
+              },
+              {
+                "pos": "proper_noun",
+                "arabic": "أمينة",
+                "english": "Amina",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "Amīna"
+              },
+              {
+                "pos": "verb",
+                "arabic": "كنت",
+                "english": "I would have",
+                "headword": "كان",
+                "entry_type": "word",
+                "transliteration": "kuntu"
+              }
+            ],
+            "paragraph": 136,
+            "timestamp": "07:45",
+            "translation": "I could not kill my companion, Amina. I would"
+          },
+          "for_you_fingerprints": [
+            "95c280b343c324793b1abecaaaaf80b8",
+            "9cd970a695c8ea1c07b143eb975b907b",
+            "c3c5345d60a9c286e9a02ffdfba41b55",
+            "cfcaf4e93341af3773f300a6530466ea",
+            "d0aa65c3dd9114a434bb02c0f4d64ec3"
+          ]
+        },
+        {
+          "id": 33632,
+          "position": 136,
+          "end_seconds": 473,
+          "english_text": "have died after him if I killed him. Does he not have a soul like us?",
+          "original_text": "سأموت بعده لو قتلته ألا يحمل روحًا مثلنا",
+          "start_seconds": 469,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "verb",
+                "arabic": "سأموت",
+                "english": "I would die",
+                "headword": "مات",
+                "entry_type": "word",
+                "transliteration": "sa-amūtu"
+              },
+              {
+                "pos": "adverb",
+                "arabic": "بعده",
+                "english": "after him",
+                "headword": "بعد",
+                "entry_type": "word",
+                "transliteration": "baʿdahu"
+              },
+              {
+                "pos": "conjunction",
+                "arabic": "لو",
+                "english": "if",
+                "headword": "لو",
+                "entry_type": "word",
+                "transliteration": "law"
+              },
+              {
+                "pos": "verb",
+                "arabic": "قتلته",
+                "english": "I killed him",
+                "headword": "قتل",
+                "entry_type": "word",
+                "transliteration": "qataltuhu"
+              },
+              {
+                "pos": "particle",
+                "arabic": "ألا",
+                "english": "does ... not",
+                "headword": "ألا",
+                "entry_type": "word",
+                "transliteration": "alā"
+              },
+              {
+                "pos": "verb",
+                "arabic": "يحمل",
+                "english": "has",
+                "headword": "حمل",
+                "entry_type": "word",
+                "transliteration": "yaḥmilu"
+              },
+              {
+                "pos": "noun",
+                "arabic": "روحًا",
+                "english": "a soul",
+                "headword": "روح",
+                "entry_type": "word",
+                "transliteration": "rūḥan"
+              },
+              {
+                "pos": "preposition",
+                "arabic": "مثلنا",
+                "english": "like us",
+                "headword": "مثل",
+                "entry_type": "word",
+                "transliteration": "mithlunā"
+              }
+            ],
+            "paragraph": 137,
+            "timestamp": "07:49",
+            "translation": "have died after him if I killed him. Does he not have a soul like us?"
+          },
+          "for_you_fingerprints": [
+            "260c37045ab585c82364b65b2c38fe1e",
+            "2e48c393de2bfede122c3f250e5018dd",
+            "32e2456a5b6358dd3a017a95c00f3f29",
+            "cddba1e7c423f6bd707cca1149dee409",
+            "ed55c1b0dc58849f626a2a07cca67f2b"
+          ]
+        }
+      ],
+      "clip_end_ms": 473000,
+      "clip_start_ms": 445000
+    },
+    {
+      "video": {
+        "id": "0ef7b068-6948-4026-bbf2-fec2854ab7b9",
+        "title": "آداب رد السلفة | ياسر الحزيمي",
+        "status": "ready",
+        "channel": "Unknown channel",
+        "thumbnail": "https://i.ytimg.com/vi/qliEVMcxgRU/hqdefault.jpg",
+        "youtube_id": "qliEVMcxgRU",
+        "duration_seconds": 825,
+        "translation_status": "ready"
+      },
+      "segments": [
+        {
+          "id": 41148,
+          "position": 35,
+          "end_seconds": 143.36,
+          "english_text": "and values. A person becomes changeable, no longer resembling themselves",
+          "original_text": "وَالْقِيَم وَيُصْبِحُ الْمَرْء مُتَلَوِّنًا لَا يُشَبِّه نَفْسَهُ",
+          "start_seconds": 138.879,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "noun",
+                "arabic": "وَالْقِيَم",
+                "english": "and values",
+                "headword": "قيمة",
+                "entry_type": "word",
+                "transliteration": "waālqiyam"
+              },
+              {
+                "pos": "verb",
+                "arabic": "وَيُصْبِحُ",
+                "english": "and becomes",
+                "headword": "أصبح",
+                "entry_type": "word",
+                "transliteration": "wayuṣbiḥu"
+              },
+              {
+                "pos": "noun",
+                "arabic": "الْمَرْء",
+                "english": "a person",
+                "headword": "مرء",
+                "entry_type": "word",
+                "transliteration": "ālmarʾ"
+              },
+              {
+                "pos": "adjective",
+                "arabic": "مُتَلَوِّنًا",
+                "english": "changeable; fickle",
+                "headword": "متلون",
+                "entry_type": "word",
+                "transliteration": "mutalawinanā"
+              },
+              {
+                "pos": "particle",
+                "arabic": "لَا",
+                "english": "not; no",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "laā"
+              },
+              {
+                "pos": "verb",
+                "arabic": "يُشَبِّه",
+                "english": "likens; compares",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "yushabih"
+              },
+              {
+                "pos": "pronoun",
+                "arabic": "نَفْسَهُ",
+                "english": "himself",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "nafsahu"
+              }
+            ],
+            "paragraph": 36,
+            "timestamp": "02:18.879",
+            "translation": "and values. A person becomes changeable, no longer resembling themselves"
+          },
+          "for_you_fingerprints": [
+            "275d199425f9b9feb2a31f39581b8fad",
+            "51b56118bb8b9b109f2b11d160e8f3b0",
+            "55b46a83845b06e9cbff7f3d28e0bea8",
+            "ad891cdc326f1b29f54ac4ce4eecb1c3"
+          ]
+        },
+        {
+          "id": 41149,
+          "position": 36,
+          "end_seconds": 147.12,
+          "english_text": "but instead their shifting desires, like stagnant water",
+          "original_text": "بَلْ يُشَبِّه اَطْمَاعَهُ الْمُتَغَيِّرَه كَالْمَاء الْاَسِن",
+          "start_seconds": 143.36,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "conjunction",
+                "arabic": "بَلْ",
+                "english": "rather; instead",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "bal"
+              },
+              {
+                "pos": "verb",
+                "arabic": "يُشَبِّه",
+                "english": "likens; compares",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "yushabih"
+              },
+              {
+                "pos": "noun",
+                "arabic": "اَطْمَاعَهُ",
+                "english": "his greedy desires",
+                "headword": "طمع",
+                "entry_type": "word",
+                "transliteration": "āaṭmaāʿahu"
+              },
+              {
+                "pos": "adjective",
+                "arabic": "الْمُتَغَيِّرَه",
+                "english": "changing; shifting",
+                "headword": "متغير",
+                "entry_type": "word",
+                "transliteration": "ālmutaghayirah"
+              },
+              {
+                "pos": "noun",
+                "arabic": "كَالْمَاء",
+                "english": "like water",
+                "headword": "ماء",
+                "entry_type": "word",
+                "transliteration": "kaālmaāʾ"
+              },
+              {
+                "pos": "adjective",
+                "arabic": "الْاَسِن",
+                "english": "stagnant; stale",
+                "headword": "آسن",
+                "entry_type": "word",
+                "transliteration": "ālāasin"
+              }
+            ],
+            "paragraph": 37,
+            "timestamp": "02:23.360",
+            "translation": "but instead their shifting desires, like stagnant water"
+          },
+          "for_you_fingerprints": [
+            "6d546b39865e16c68d9038659983ca1f",
+            "70146856c8f656bee48903336de3c282",
+            "7f0fd853c1771c7184a52a7f6e79aab3"
+          ]
+        },
+        {
+          "id": 41150,
+          "position": 37,
+          "end_seconds": 148.12,
+          "english_text": "waiting",
+          "original_text": "يَنْتَظِرُ",
+          "start_seconds": 147.12,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "verb",
+                "arabic": "يَنْتَظِرُ",
+                "english": "he waits",
+                "headword": "انتظر",
+                "entry_type": "word",
+                "transliteration": "yantaẓiru"
+              }
+            ],
+            "paragraph": 38,
+            "timestamp": "02:27.120",
+            "translation": "waiting"
+          },
+          "for_you_fingerprints": []
+        },
+        {
+          "id": 41151,
+          "position": 38,
+          "end_seconds": 150.76,
+          "english_text": "for whatever flows down into it. The Prophet, peace and blessings be upon him,",
+          "original_text": "مَا يَنْحَدِرُ وَقَدْ نَهَى النَّبِيّ صَلَّى اللَّه عَلَيْهِ",
+          "start_seconds": 148.12,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "pronoun",
+                "arabic": "مَا",
+                "english": "what; that which",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "maā"
+              },
+              {
+                "pos": "verb",
+                "arabic": "يَنْحَدِرُ",
+                "english": "flows down",
+                "headword": "انحدر",
+                "entry_type": "word",
+                "transliteration": "yanḥadiru"
+              },
+              {
+                "pos": "particle",
+                "arabic": "وَقَدْ",
+                "english": "and indeed",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "waqad"
+              },
+              {
+                "pos": "verb",
+                "arabic": "نَهَى",
+                "english": "forbade",
+                "headword": "نهى",
+                "entry_type": "word",
+                "transliteration": "nahaā"
+              },
+              {
+                "pos": "noun",
+                "arabic": "النَّبِيّ",
+                "english": "the Prophet",
+                "headword": "نبي",
+                "entry_type": "word",
+                "transliteration": "ālnabiy"
+              },
+              {
+                "pos": "verb",
+                "arabic": "صَلَّى",
+                "english": "blessed; prayed",
+                "headword": "صلى",
+                "entry_type": "word",
+                "transliteration": "ṣalaā"
+              },
+              {
+                "pos": "noun",
+                "arabic": "اللَّه",
+                "english": "God",
+                "headword": "الله",
+                "entry_type": "word",
+                "transliteration": "āllah"
+              },
+              {
+                "pos": "preposition",
+                "arabic": "عَلَيْهِ",
+                "english": "on it; on him",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "ʿalayhi"
+              }
+            ],
+            "paragraph": 39,
+            "timestamp": "02:28.120",
+            "translation": "for whatever flows down into it. The Prophet, peace and blessings be upon him,"
+          },
+          "for_you_fingerprints": [
+            "0bed41a14fea1e9f805338034a35b53e",
+            "40639bfc44f736ef2e6346e373a98d32",
+            "5c6d7c35154c4dc73b468b16c213f9e9",
+            "5dd8fd7c6464e4af1587e3af973b80cd",
+            "98fc38d414b753062d4d95a88579a1c4"
+          ]
+        },
+        {
+          "id": 41152,
+          "position": 39,
+          "end_seconds": 154.36,
+          "english_text": "forbade eagerly coveting wealth. The Arabs condemned",
+          "original_text": "وَسَلَّمَ عَنْ اِشْرَاف النَّفْس لِلْمَال وَقَبَّحَتْ الْعَرَب",
+          "start_seconds": 150.76,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "verb",
+                "arabic": "وَسَلَّمَ",
+                "english": "and granted peace",
+                "headword": "سلم",
+                "entry_type": "word",
+                "transliteration": "wasalama"
+              },
+              {
+                "pos": "preposition",
+                "arabic": "عَنْ",
+                "english": "about; from",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "ʿan"
+              },
+              {
+                "pos": "noun",
+                "arabic": "اِشْرَاف",
+                "english": "eager coveting",
+                "headword": "إشراف",
+                "entry_type": "word",
+                "transliteration": "āishraāf"
+              },
+              {
+                "pos": "noun",
+                "arabic": "النَّفْس",
+                "english": "the soul",
+                "headword": "نفس",
+                "entry_type": "word",
+                "transliteration": "ālnafs"
+              },
+              {
+                "pos": "noun",
+                "arabic": "لِلْمَال",
+                "english": "for wealth",
+                "headword": "مال",
+                "entry_type": "word",
+                "transliteration": "lilmaāl"
+              },
+              {
+                "pos": "verb",
+                "arabic": "وَقَبَّحَتْ",
+                "english": "and condemned",
+                "headword": "قبح",
+                "entry_type": "word",
+                "transliteration": "waqabaḥat"
+              },
+              {
+                "pos": "noun",
+                "arabic": "الْعَرَب",
+                "english": "the Arabs",
+                "headword": "عرب",
+                "entry_type": "word",
+                "transliteration": "ālʿarab"
+              }
+            ],
+            "paragraph": 40,
+            "timestamp": "02:30.760",
+            "translation": "forbade eagerly coveting wealth. The Arabs condemned"
+          },
+          "for_you_fingerprints": [
+            "82b9e8b6b3ef403b4924e0812ab55bc1",
+            "bb369b95a0fbb270ba667d6195c44e92",
+            "da419a3717bfbf9e512de00a1188eacb",
+            "f07258eb4b84ce564f3817697301bb17"
+          ]
+        },
+        {
+          "id": 41153,
+          "position": 40,
+          "end_seconds": 158.04,
+          "english_text": "chasing after things one wants, the humiliation of asking, and collecting the scraps",
+          "original_text": "مُلَاحَقَه الْاَطْمَاع وَذُلّ الْسُؤَال وَتَتَبُّع سَقَط مَتَاع",
+          "start_seconds": 154.36,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "noun",
+                "arabic": "مُلَاحَقَه",
+                "english": "pursuit; chasing",
+                "headword": "ملاحقة",
+                "entry_type": "word",
+                "transliteration": "mulaāḥaqah"
+              },
+              {
+                "pos": "noun",
+                "arabic": "الْاَطْمَاع",
+                "english": "covetous desires",
+                "headword": "طمع",
+                "entry_type": "word",
+                "transliteration": "ālāaṭmaāʿ"
+              },
+              {
+                "pos": "noun",
+                "arabic": "وَذُلّ",
+                "english": "and humiliation",
+                "headword": "ذل",
+                "entry_type": "word",
+                "transliteration": "wadhul"
+              },
+              {
+                "pos": "noun",
+                "arabic": "الْسُؤَال",
+                "english": "the question",
+                "headword": "سؤال",
+                "entry_type": "word",
+                "transliteration": "ālsuʾaāl"
+              },
+              {
+                "pos": "noun",
+                "arabic": "وَتَتَبُّع",
+                "english": "and picking up; tracking",
+                "headword": "تتبع",
+                "entry_type": "word",
+                "transliteration": "watatabuʿ"
+              },
+              {
+                "pos": "noun",
+                "arabic": "سَقَط",
+                "english": "scraps; discarded things",
+                "headword": "سقط",
+                "entry_type": "word",
+                "transliteration": "saqaṭ"
+              },
+              {
+                "pos": "noun",
+                "arabic": "مَتَاع",
+                "english": "goods; belongings",
+                "headword": "متاع",
+                "entry_type": "word",
+                "transliteration": "mataāʿ"
+              }
+            ],
+            "paragraph": 41,
+            "timestamp": "02:34.360",
+            "translation": "chasing after things one wants, the humiliation of asking, and collecting the scraps"
+          },
+          "for_you_fingerprints": [
+            "29573f54173b8501ad5bc897a7d3e15a",
+            "3b7f1cc8a4b904d2c7ec7d6cf209a80a",
+            "779e1b22d68ca682103e451b2c295b3f",
+            "bf92dc68a80b256134c01d5680efe7d1"
+          ]
+        },
+        {
+          "id": 41154,
+          "position": 41,
+          "end_seconds": 161.519,
+          "english_text": "of gifts and leftovers from other people's tables. Ibn al-Qayyim, may God have mercy on him, said:",
+          "original_text": "الْهِبَات وفتاه الْمَوَائِد يَقُولُ اِبْن الْقَيِّم رَحِمَهُ",
+          "start_seconds": 158.04,
+          "canonical_paragraph": null,
+          "for_you_fingerprints": [
+            "14484dbd271e2b61fd586e7a66483dbe",
+            "36fc0bc68d98ade145e338912a134264",
+            "cbb78d28cf47ea905187c911345d2e8a",
+            "dac872a4def9d62da406b958bf945ead"
+          ]
+        },
+        {
+          "id": 41155,
+          "position": 42,
+          "end_seconds": 165.72,
+          "english_text": "'Whenever you place your hand in another person's bowl, you also place",
+          "original_text": "اللَّه مَا وَضَعْتَ يَدَكَ فِي قَصْعَه اَحَد اِلَّا وَضَعْتَ",
+          "start_seconds": 161.519,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "noun",
+                "arabic": "اللَّه",
+                "english": "God",
+                "headword": "الله",
+                "entry_type": "word",
+                "transliteration": "āllah"
+              },
+              {
+                "pos": "pronoun",
+                "arabic": "مَا",
+                "english": "what; that which",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "maā"
+              },
+              {
+                "pos": "verb",
+                "arabic": "وَضَعْتَ",
+                "english": "you placed",
+                "headword": "وضع",
+                "entry_type": "word",
+                "transliteration": "waḍaʿta"
+              },
+              {
+                "pos": "noun",
+                "arabic": "يَدَكَ",
+                "english": "your hand",
+                "headword": "يد",
+                "entry_type": "word",
+                "transliteration": "yadaka"
+              },
+              {
+                "pos": "preposition",
+                "arabic": "فِي",
+                "english": "in",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "fiy"
+              },
+              {
+                "pos": "noun",
+                "arabic": "قَصْعَه",
+                "english": "large bowl",
+                "headword": "قصعة",
+                "entry_type": "word",
+                "transliteration": "qaṣʿah"
+              },
+              {
+                "pos": "pronoun",
+                "arabic": "اَحَد",
+                "english": "someone; one",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "āaḥad"
+              },
+              {
+                "pos": "particle",
+                "arabic": "اِلَّا",
+                "english": "except; only",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "āilaā"
+              },
+              {
+                "pos": "verb",
+                "arabic": "وَضَعْتَ",
+                "english": "you placed",
+                "headword": "وضع",
+                "entry_type": "word",
+                "transliteration": "waḍaʿta"
+              }
+            ],
+            "paragraph": 43,
+            "timestamp": "02:41.519",
+            "translation": "'Whenever you place your hand in another person's bowl, you also place"
+          },
+          "for_you_fingerprints": [
+            "0aeebe29bbb499c77b8206174f23a8c1",
+            "0e29e24a47f0d903a0fe28b41ddd6e18",
+            "2fd114ab1c95738506591fd728afa686",
+            "cee83c4dbe10f94c6a2c77d957a7d3f8",
+            "eb4dc1c80914614791cb6b49e693e93e",
+            "ff91d2a732559370562de5c8eafe253a"
+          ]
+        },
+        {
+          "id": 41156,
+          "position": 43,
+          "end_seconds": 170.159,
+          "english_text": "your cheek beneath his hand.' Proud souls refuse humiliation.",
+          "original_text": "خَدَّكَ لَهُ وَاِنَّمَا تَاْنَفُ مِنْ الذُّلّ النُّفُوس الْاَبِيَّه",
+          "start_seconds": 165.72,
+          "canonical_paragraph": {
+            "tokens": [
+              {
+                "pos": "noun",
+                "arabic": "خَدَّكَ",
+                "english": "your cheek",
+                "headword": "خد",
+                "entry_type": "word",
+                "transliteration": "khadaka"
+              },
+              {
+                "pos": "preposition",
+                "arabic": "لَهُ",
+                "english": "for him; to him",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "lahu"
+              },
+              {
+                "pos": "particle",
+                "arabic": "وَاِنَّمَا",
+                "english": "and only; merely",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "waāinamaā"
+              },
+              {
+                "pos": "verb",
+                "arabic": "تَاْنَفُ",
+                "english": "is too proud to accept",
+                "headword": "أنف",
+                "entry_type": "word",
+                "transliteration": "taānafu"
+              },
+              {
+                "pos": "preposition",
+                "arabic": "مِنْ",
+                "english": "from; of",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "min"
+              },
+              {
+                "pos": "noun",
+                "arabic": "الذُّلّ",
+                "english": "humiliation",
+                "headword": "ذل",
+                "entry_type": "word",
+                "transliteration": "āldhul"
+              },
+              {
+                "pos": "noun",
+                "arabic": "النُّفُوس",
+                "english": "souls; people",
+                "headword": "نفوس",
+                "entry_type": "word",
+                "transliteration": "ālnufuws"
+              },
+              {
+                "pos": "adjective",
+                "arabic": "الْاَبِيَّه",
+                "english": "proud; refusing indignity",
+                "headword": null,
+                "entry_type": "word",
+                "transliteration": "ālāabiyah"
+              }
+            ],
+            "paragraph": 44,
+            "timestamp": "02:45.720",
+            "translation": "your cheek beneath his hand.' Proud souls refuse humiliation."
+          },
+          "for_you_fingerprints": [
+            "04c3a83000cc33db6ad22d26325488f7",
+            "6335a0a51bfff735b5b03c3d9bf07ddd",
+            "779531e117542e7a37746559f349e5f8",
+            "f5b2c8c98d37f9aac930316678d04d58",
+            "fb945f0a2e9df8a83540bb49c867f2c4"
+          ]
+        }
+      ],
+      "clip_end_ms": 170159,
+      "clip_start_ms": 138879
+    }
+  ],
+  "nahw": [
+    {
+      "id": "a7d347c2-5607-4548-88f2-bc27214a1fb3:2",
+      "book_id": "2c9aaa93-0e5e-48c8-83e9-0dd3f7744949",
+      "targets": [
+        {
+          "arabic": "وَضَعَتْ",
+          "word_type": {
+            "why": "The reviewed verb form presents the action or state as completed in this Arabic clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "حَقِيبَتَهَا",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "sentence_role": {
+            "why": "What did she put down? Her bag receives the action.",
+            "category": "object",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Bag is the direct object of put. The grammatical state is distinct from its visible ending.",
+            "category": "accusative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "قُرْبَ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2,
+          "sentence_role": {
+            "why": "Near is an adverbial noun introducing door in a possessive construction, not a preposition.",
+            "category": "idafa_first",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Near functions as a place adverbial and is accusative here. The grammatical state is distinct from its visible ending.",
+            "category": "accusative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "الْبَابِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3,
+          "sentence_role": {
+            "why": "Door follows near in the possessive construction.",
+            "category": "idafa_second",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Door is the second noun in the possessive construction. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "verb",
+            "cefr": "A1",
+            "arabic": "وَضَعَتْ",
+            "english": "she put",
+            "headword": "وضع",
+            "entry_type": "word",
+            "transliteration": "waḍaʿat"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "حَقِيبَتَهَا",
+            "english": "her bag",
+            "headword": "حقيبة",
+            "entry_type": "word",
+            "transliteration": "ḥaqībatahā"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "قُرْبَ",
+            "english": "near",
+            "headword": "قرب",
+            "entry_type": "word",
+            "transliteration": "qurba"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "الْبَابِ",
+            "english": "the door",
+            "headword": "باب",
+            "entry_type": "word",
+            "transliteration": "al-bābi"
+          },
+          {
+            "pos": "verb",
+            "cefr": "A1",
+            "arabic": "وَنَظَرَتْ",
+            "english": "and looked",
+            "headword": "نظر",
+            "entry_type": "word",
+            "transliteration": "wanaẓarat"
+          },
+          {
+            "pos": "adverb",
+            "cefr": "A1",
+            "arabic": "حَوْلَهَا.",
+            "english": "around her",
+            "headword": "حول",
+            "entry_type": "word",
+            "transliteration": "ḥawlahā"
+          }
+        ],
+        "paragraph": 1,
+        "timestamp": "",
+        "translation": "She put her bag down by the door and looked around."
+      },
+      "source_id": "a7d347c2-5607-4548-88f2-bc27214a1fb3",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "f1754cd17a22e917e7c18f3084249d5c",
+      "source_label": "A Secret in Amman",
+      "phrase_breaks": [
+        4
+      ],
+      "chapter_number": 1,
+      "review_version": 1,
+      "paragraph_index": 2
+    },
+    {
+      "id": "23e60427-aec5-4b96-81bc-3ef8394886bf:0",
+      "book_id": "6e48b69e-68db-4b80-88c5-f38a7a611cd1",
+      "targets": [
+        {
+          "arabic": "كَانَ",
+          "word_type": {
+            "why": "The reviewed verb form presents the action or state as completed in this Arabic clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "فَارِسُ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "sentence_role": {
+            "why": "Faris is the noun whose state kana describes.",
+            "category": "kana_noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "The noun of kana remains nominative. The grammatical state is distinct from its visible ending.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "فِي",
+          "word_type": {
+            "why": "This standalone particle introduces a following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 4
+        },
+        {
+          "arabic": "مَكْتَبِهِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 5,
+          "grammatical_case": {
+            "why": "Office follows in. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "الرِّسَالَةُ.",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 8,
+          "sentence_role": {
+            "why": "What arrived? The message is the subject, even though an object pronoun is attached to the verb.",
+            "category": "subject",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Message is the subject of arrived. The grammatical state is distinct from its visible ending.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "verb",
+            "cefr": "A1",
+            "arabic": "كَانَ",
+            "english": "was",
+            "headword": "كون",
+            "entry_type": "word",
+            "transliteration": "kāna"
+          },
+          {
+            "pos": "proper_noun",
+            "cefr": "A1",
+            "arabic": "فَارِسُ",
+            "english": "Faris",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "fārisu"
+          },
+          {
+            "pos": "proper_noun",
+            "cefr": "A1",
+            "arabic": "مَرْوَانَ",
+            "english": "Marwan",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "marwāna"
+          },
+          {
+            "pos": "adverb",
+            "cefr": "A2",
+            "arabic": "وَحْدَهُ",
+            "english": "alone / on its own",
+            "headword": "وحد",
+            "entry_type": "word",
+            "transliteration": "waḥdahu"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "فِي",
+            "english": "in",
+            "headword": "في",
+            "entry_type": "word",
+            "transliteration": "fī"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B1",
+            "arabic": "مَكْتَبِهِ",
+            "english": "his desk",
+            "headword": "مكتب",
+            "entry_type": "word",
+            "transliteration": "maktabihi"
+          },
+          {
+            "pos": "conjunction",
+            "cefr": "A2",
+            "arabic": "حِينَ",
+            "english": "showed",
+            "headword": "حين",
+            "entry_type": "word",
+            "transliteration": "ḥīna"
+          },
+          {
+            "pos": "verb",
+            "cefr": "A1",
+            "arabic": "وَصَلَتْهُ",
+            "english": "reached him",
+            "headword": "وصل",
+            "entry_type": "word",
+            "transliteration": "waṣalathu"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "الرِّسَالَةُ.",
+            "english": "letter",
+            "headword": "رسالة",
+            "entry_type": "word",
+            "transliteration": "ar-risālatu"
+          }
+        ],
+        "paragraph": 1,
+        "timestamp": "",
+        "translation": "Faris Marwan was alone in his office when the message arrived.",
+        "paragraph_end": true,
+        "paragraph_start": true,
+        "paragraph_break_after": true
+      },
+      "source_id": "23e60427-aec5-4b96-81bc-3ef8394886bf",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "4ad422540fa6b94dd0fdb5f1ddf7fecc",
+      "source_label": "A Debt of Silence",
+      "phrase_breaks": [
+        6
+      ],
+      "chapter_number": 1,
+      "review_version": 1,
+      "paragraph_index": 0
+    },
+    {
+      "id": 14341,
+      "targets": [
+        {
+          "arabic": "أَنَا",
+          "word_type": {
+            "why": "Ana is the independent personal pronoun I.",
+            "category": "pronoun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0,
+          "sentence_role": {
+            "why": "I is the topic before the verbal predicate need.",
+            "category": "topic",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "أَحْتَاجُ",
+          "word_type": {
+            "why": "The reviewed form is an imperfect verb. Its time and grammatical state depend on the surrounding Arabic, not just its prefix.",
+            "category": "present",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1
+        },
+        {
+          "arabic": "إِلَى",
+          "relations": [
+            {
+              "why": "To governs beginning in the genitive state; the adjective new follows its noun in that state.",
+              "type": "governs",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "3:4"
+            }
+          ],
+          "word_type": {
+            "why": "This standalone particle introduces a following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2
+        },
+        {
+          "arabic": "بِدَايَةٍ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3,
+          "sentence_role": {
+            "why": "New describes the beginning.",
+            "category": "described_noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Beginning follows to. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "جَدِيدَةٍ",
+          "relations": [
+            {
+              "why": "New describes beginning and agrees with its genitive state.",
+              "type": "describes",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "3:4"
+            }
+          ],
+          "word_type": {
+            "why": "This word describes a noun in the Arabic phrase and agrees with it.",
+            "category": "adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 4,
+          "sentence_role": {
+            "why": "New agrees with beginning.",
+            "category": "role_adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "New agrees with the genitive noun beginning. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "فِي",
+          "relations": [
+            {
+              "why": "In governs place in the genitive state, irrespective of the larger verbal predicate function.",
+              "type": "governs",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "6:7"
+            }
+          ],
+          "word_type": {
+            "why": "This standalone particle introduces a following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 5
+        },
+        {
+          "arabic": "مَكَانٍ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 6,
+          "sentence_role": {
+            "why": "New describes the place.",
+            "category": "described_noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Place follows in. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "جَدِيدٍ",
+          "relations": [
+            {
+              "why": "New describes place and agrees with its genitive state.",
+              "type": "describes",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "6:7"
+            }
+          ],
+          "word_type": {
+            "why": "This word describes a noun in the Arabic phrase and agrees with it.",
+            "category": "adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 7,
+          "sentence_role": {
+            "why": "New agrees with place.",
+            "category": "role_adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "New agrees with the genitive noun place. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "أَحْتَاجُ إِلَى بِدَايَةٍ جَدِيدَةٍ فِي مَكَانٍ جَدِيدٍ غَيْرِ هَذَا.",
+          "relations": [
+            {
+              "why": "The whole verbal clause tells us about I, with its implicit subject referring back to that topic.",
+              "type": "predicates",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "0:1"
+            }
+          ],
+          "structure": {
+            "why": "The complete need-clause, including its complements, occupies the nominative predicate position. The implicit subject I links it back to the independent topic.",
+            "validated": true,
+            "confidence": 1,
+            "clause_type": "verbal",
+            "role_subtype": "verbal_predicate"
+          },
+          "token_end": 10,
+          "token_index": 1,
+          "sentence_role": {
+            "why": "The complete verbal clause tells us what the speaker needs. Its implicit subject refers back to the independent topic I; the verb and its complements together form the predicate, not the verb alone.",
+            "category": "verbal_predicate",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "pronoun",
+            "arabic": "أَنَا",
+            "english": "I",
+            "headword": "انا",
+            "entry_type": "word",
+            "transliteration": "anā"
+          },
+          {
+            "pos": "verb",
+            "arabic": "أَحْتَاجُ",
+            "english": "I need",
+            "headword": "حوج",
+            "entry_type": "word",
+            "transliteration": "aḥtāju"
+          },
+          {
+            "pos": "preposition",
+            "arabic": "إِلَى",
+            "english": "to",
+            "headword": "الى",
+            "entry_type": "word",
+            "transliteration": "ilā"
+          },
+          {
+            "pos": "noun",
+            "arabic": "بِدَايَةٍ",
+            "english": "a start",
+            "headword": "بداية",
+            "entry_type": "word",
+            "transliteration": "bidāyatin"
+          },
+          {
+            "pos": "adjective",
+            "arabic": "جَدِيدَةٍ",
+            "english": "new",
+            "headword": "جديد",
+            "entry_type": "word",
+            "transliteration": "jadīdatin"
+          },
+          {
+            "pos": "preposition",
+            "arabic": "فِي",
+            "english": "in",
+            "headword": "في",
+            "entry_type": "word",
+            "transliteration": "fī"
+          },
+          {
+            "pos": "noun",
+            "arabic": "مَكَانٍ",
+            "english": "place",
+            "headword": "مكان",
+            "entry_type": "word",
+            "transliteration": "makānin"
+          },
+          {
+            "pos": "adjective",
+            "arabic": "جَدِيدٍ",
+            "english": "new",
+            "headword": "جديد",
+            "entry_type": "word",
+            "transliteration": "jadīdin"
+          },
+          {
+            "pos": "adjective",
+            "arabic": "غَيْرِ",
+            "english": "other than",
+            "headword": "غير",
+            "entry_type": "word",
+            "transliteration": "ghayri"
+          },
+          {
+            "pos": "pronoun",
+            "arabic": "هَذَا.",
+            "english": "this",
+            "headword": "هذا",
+            "entry_type": "word",
+            "transliteration": "hādhā"
+          }
+        ],
+        "paragraph": 1,
+        "timestamp": "00:00",
+        "translation": "I need a fresh start, in some place other than here."
+      },
+      "source_id": "9c4c8da5-48d4-4dd8-a980-1b68404dca1b",
+      "validated": true,
+      "episode_id": "f9f10be2-9469-4742-be13-c86cc372e3a1",
+      "source_kind": "transcript",
+      "content_hash": "af0ac0487a13ce928a19591764ce7733",
+      "source_label": "Samantha Leaves Home",
+      "phrase_breaks": [],
+      "start_seconds": 0,
+      "review_version": 1
+    },
+    {
+      "id": "4555ae2d-38ec-47d2-919f-578145ea0e1a:0",
+      "book_id": "d0ad54b5-8311-4d81-bf39-eab5607f023b",
+      "targets": [
+        {
+          "arabic": "اِسْتَيْقَظَتْ",
+          "word_type": {
+            "why": "The reviewed verb form presents the action or state as completed in this Arabic clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "مَرْيَمُ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "sentence_role": {
+            "why": "Who woke up? Mariam.",
+            "category": "subject",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Mariam is the subject of woke. The grammatical state is distinct from its visible ending.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "مِنْ",
+          "word_type": {
+            "why": "This standalone particle introduces a following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2
+        },
+        {
+          "arabic": "نَوْمٍ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3,
+          "sentence_role": {
+            "why": "Fitful describes this sleep.",
+            "category": "described_noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Sleep follows from. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "مُتَقَطِّعٍ",
+          "word_type": {
+            "why": "This word describes a noun in the Arabic phrase and agrees with it.",
+            "category": "adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 4,
+          "sentence_role": {
+            "why": "Fitful agrees with sleep.",
+            "category": "role_adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Fitful agrees with the genitive noun sleep. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "يَطْرُقُ",
+          "word_type": {
+            "why": "The reviewed form is an imperfect verb. Its time and grammatical state depend on the surrounding Arabic, not just its prefix.",
+            "category": "present",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 8
+        },
+        {
+          "arabic": "زُجَاجَ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 9,
+          "sentence_role": {
+            "why": "What does the rain tap? The glass receives the action.",
+            "category": "object",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Glass is the direct object of taps. The grammatical state is distinct from its visible ending.",
+            "category": "accusative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "النَّافِذَةِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 10,
+          "sentence_role": {
+            "why": "Window follows glass in the glass of the window.",
+            "category": "idafa_second",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Window is the second noun in the possessive construction. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "verb",
+            "cefr": "A2",
+            "arabic": "اِسْتَيْقَظَتْ",
+            "english": "wake / awake",
+            "headword": "يقظ",
+            "entry_type": "word",
+            "transliteration": "āistayqaẓat"
+          },
+          {
+            "pos": "proper_noun",
+            "cefr": "A1",
+            "arabic": "مَرْيَمُ",
+            "english": "Mariam",
+            "headword": "مريم",
+            "entry_type": "word",
+            "transliteration": "maryamu"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "مِنْ",
+            "english": "from / of",
+            "headword": "من",
+            "entry_type": "word",
+            "transliteration": "min"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "نَوْمٍ",
+            "english": "sleep",
+            "headword": "نوم",
+            "entry_type": "word",
+            "transliteration": "nawmin"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "مُتَقَطِّعٍ",
+            "english": "interrupted / broken",
+            "headword": "قطع",
+            "entry_type": "word",
+            "transliteration": "mutaqaṭiʿin"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "عَلَى",
+            "english": "on / against",
+            "headword": "على",
+            "entry_type": "word",
+            "transliteration": "ʿalaā"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B1",
+            "arabic": "مَطَرٍ",
+            "english": "rain",
+            "headword": "مطر",
+            "entry_type": "word",
+            "transliteration": "maṭarin"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "خَفِيفٍ",
+            "english": "light",
+            "headword": "خف",
+            "entry_type": "word",
+            "transliteration": "khafiyfin"
+          },
+          {
+            "pos": "verb",
+            "cefr": "A2",
+            "arabic": "يَطْرُقُ",
+            "english": "tap / knock",
+            "headword": "طرق",
+            "entry_type": "word",
+            "transliteration": "yaṭruqu"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "زُجَاجَ",
+            "english": "glass",
+            "headword": "زجاج",
+            "entry_type": "word",
+            "transliteration": "zujaāja"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B1",
+            "arabic": "النَّافِذَةِ",
+            "english": "window",
+            "headword": "نافذة",
+            "entry_type": "word",
+            "transliteration": "ālnaāfidhaai"
+          }
+        ],
+        "timestamp": "",
+        "punctuation": ".",
+        "translation": "Mariam woke from a fitful sleep to the sound of light rain tapping against the windowpane."
+      },
+      "source_id": "4555ae2d-38ec-47d2-919f-578145ea0e1a",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "a538657678d81b5dbf99731a8abeff33",
+      "source_label": "The Stranger Who Knows My Name",
+      "phrase_breaks": [
+        5
+      ],
+      "chapter_number": 1,
+      "review_version": 1,
+      "paragraph_index": 0
+    },
+    {
+      "id": "ab1c7a59-2ba2-4e2f-b94f-fc0ae90adc5f:2",
+      "book_id": "b4e26072-d3e3-43ec-87cd-a9d5fab8aa32",
+      "targets": [
+        {
+          "arabic": "رَفَعَتْ",
+          "word_type": {
+            "why": "The reviewed verb form presents the action or state as completed in this Arabic clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "يَدَهَا",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "sentence_role": {
+            "why": "What did she raise? Her hand receives the action.",
+            "category": "object",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Her hand is the direct object of raised. The grammatical state is distinct from its visible ending.",
+            "category": "accusative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "الظِّلُّ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3,
+          "sentence_role": {
+            "why": "Who raised a hand in the second clause? The shadow.",
+            "category": "subject",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Shadow is the subject of the second verb. The grammatical state is distinct from its visible ending.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "يَدَهُ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 4,
+          "sentence_role": {
+            "why": "What did the shadow raise? Its hand receives the action.",
+            "category": "object",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Its hand is the direct object of the second verb. The grammatical state is distinct from its visible ending.",
+            "category": "accusative",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "verb",
+            "cefr": "A2",
+            "arabic": "رَفَعَتْ",
+            "english": "she raised",
+            "headword": "رفع",
+            "entry_type": "word",
+            "transliteration": "rafaʿat"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "يَدَهَا",
+            "english": "her hand",
+            "headword": "يد",
+            "entry_type": "word",
+            "transliteration": "yadahā"
+          },
+          {
+            "pos": "verb",
+            "cefr": "A2",
+            "arabic": "فَرَفَعَ",
+            "english": "and raised",
+            "headword": "رفع",
+            "entry_type": "word",
+            "transliteration": "fa-rafaʿa"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "الظِّلُّ",
+            "english": "the shadow",
+            "headword": "ظل",
+            "entry_type": "word",
+            "transliteration": "al-ẓillu"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "يَدَهُ",
+            "english": "its hand",
+            "headword": "يد",
+            "entry_type": "word",
+            "transliteration": "yadahu"
+          }
+        ],
+        "timestamp": "",
+        "punctuation": ".",
+        "translation": "She raised her hand, and her shadow raised its hand too."
+      },
+      "source_id": "ab1c7a59-2ba2-4e2f-b94f-fc0ae90adc5f",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "a5684e8c50bc32d4e23a2d01ba6e2f56",
+      "source_label": "Layla & the Shadow",
+      "phrase_breaks": [
+        2
+      ],
+      "chapter_number": 1,
+      "review_version": 1,
+      "paragraph_index": 2
+    },
+    {
+      "id": "0bebfa2d-b451-4f5a-b8ca-e07c2cbc170e:1",
+      "book_id": "27a6ba6a-a1e3-4584-bdde-49842be91ea3",
+      "targets": [
+        {
+          "arabic": "فَتَحَتْ",
+          "word_type": {
+            "why": "The reviewed verb form presents the action or state as completed in this Arabic clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "عَيْنَيْهَا،",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "sentence_role": {
+            "why": "What did she open? Her eyes receive the action.",
+            "category": "object",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Eyes is a dual direct object. Its accusative marker here is yāʾ, not fatḥah. The grammatical state is distinct from its visible ending.",
+            "category": "accusative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "ثُمَّ",
+          "word_type": {
+            "why": "Then links the two actions in their order.",
+            "category": "conjunction",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2
+        },
+        {
+          "arabic": "نَظَرَتْ",
+          "word_type": {
+            "why": "The reviewed verb form presents the action or state as completed in this Arabic clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3
+        },
+        {
+          "arabic": "إِلَى",
+          "word_type": {
+            "why": "This standalone particle introduces a following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 4
+        },
+        {
+          "arabic": "السَّاعَةِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 5,
+          "grammatical_case": {
+            "why": "Clock follows to. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "السَّرِيرِ.",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 7,
+          "sentence_role": {
+            "why": "Bed follows side in beside the bed.",
+            "category": "idafa_second",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Bed is the second noun in the possessive construction. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "verb",
+            "cefr": "A1",
+            "arabic": "فَتَحَتْ",
+            "english": "opened",
+            "headword": "فتح",
+            "entry_type": "word",
+            "transliteration": "fataḥat"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "عَيْنَيْهَا،",
+            "english": "her eyes",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "ʿaynayhā"
+          },
+          {
+            "pos": "conjunction",
+            "cefr": "A1",
+            "arabic": "ثُمَّ",
+            "english": "then",
+            "headword": "ثم",
+            "entry_type": "word",
+            "transliteration": "thumma"
+          },
+          {
+            "pos": "verb",
+            "cefr": "A1",
+            "arabic": "نَظَرَتْ",
+            "english": "looked",
+            "headword": "نظر",
+            "entry_type": "word",
+            "transliteration": "naẓarat"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "إِلَى",
+            "english": "to",
+            "headword": "الى",
+            "entry_type": "word",
+            "transliteration": "ʾilā"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "السَّاعَةِ",
+            "english": "clock / time",
+            "headword": "ساعة",
+            "entry_type": "word",
+            "transliteration": "as-sāʿati"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "بِجَانِبِ",
+            "english": "beside",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "bijānibi"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "السَّرِيرِ.",
+            "english": "bed",
+            "headword": "سرير",
+            "entry_type": "word",
+            "transliteration": "as-sarīri"
+          }
+        ],
+        "paragraph": 2,
+        "timestamp": "",
+        "translation": "She opened her eyes, then looked at the clock beside the bed.",
+        "paragraph_end": true,
+        "paragraph_start": true,
+        "paragraph_break_after": true
+      },
+      "source_id": "0bebfa2d-b451-4f5a-b8ca-e07c2cbc170e",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "24fe59e27f404fbc6772e17048c362bb",
+      "source_label": "Small Plans, Busy Days",
+      "phrase_breaks": [
+        2
+      ],
+      "chapter_number": 1,
+      "review_version": 1,
+      "paragraph_index": 1
+    },
+    {
+      "id": "4e69c687-757e-4103-9a87-3373757ba91b:0",
+      "book_id": "534cf977-42a7-4989-914b-2f58395779c4",
+      "targets": [
+        {
+          "arabic": "لَمْ",
+          "word_type": {
+            "why": "Lam negates a past event and makes the following imperfect verb jussive.",
+            "category": "jussive_particle",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "يَفْهَمْ",
+          "word_type": {
+            "why": "The reviewed form is an imperfect verb. Its time and grammatical state depend on the surrounding Arabic, not just its prefix.",
+            "category": "present",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "grammatical_case": {
+            "why": "The imperfect verb follows lam, which makes it jussive. Its ending here is sukūn. The grammatical state is distinct from its visible ending.",
+            "category": "jussive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "دَانِيَالُ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2,
+          "sentence_role": {
+            "why": "Who did not understand? Daniel.",
+            "category": "subject",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Daniel is the subject of understand. The grammatical state is distinct from its visible ending.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "فِي",
+          "word_type": {
+            "why": "This standalone particle introduces a following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 4
+        },
+        {
+          "arabic": "اللَّحْظَةِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 5,
+          "sentence_role": {
+            "why": "First describes the moment.",
+            "category": "described_noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Moment follows in. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "الْأُولَى،",
+          "word_type": {
+            "why": "This word describes a noun in the Arabic phrase and agrees with it.",
+            "category": "adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 6,
+          "sentence_role": {
+            "why": "First agrees with the moment it describes.",
+            "category": "role_adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "First agrees with the genitive noun moment. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "أَصْوَاتُ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 9,
+          "sentence_role": {
+            "why": "The sounds are what seemed distant in the embedded clause.",
+            "category": "subject",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Sounds is the subject of seemed. The grammatical state is distinct from its visible ending.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "الْقَاعَةِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 10,
+          "sentence_role": {
+            "why": "Hall follows sounds in the sounds of the hall.",
+            "category": "idafa_second",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Hall is the second noun in the possessive construction. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "particle",
+            "cefr": "A1",
+            "arabic": "لَمْ",
+            "english": "did not",
+            "headword": "لم",
+            "entry_type": "word",
+            "transliteration": "lam"
+          },
+          {
+            "pos": "verb",
+            "cefr": "A2",
+            "arabic": "يَفْهَمْ",
+            "english": "understand",
+            "headword": "فهم",
+            "entry_type": "word",
+            "transliteration": "yafhama"
+          },
+          {
+            "pos": "proper_noun",
+            "cefr": "A1",
+            "arabic": "دَانِيَالُ",
+            "english": "Daniel",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "dāniyāl"
+          },
+          {
+            "pos": "proper_noun",
+            "cefr": "A1",
+            "arabic": "مِيرْسَر،",
+            "english": "Mercer",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "mīrsar"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "فِي",
+            "english": "in",
+            "headword": "في",
+            "entry_type": "word",
+            "transliteration": "fī"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B1",
+            "arabic": "اللَّحْظَةِ",
+            "english": "the moment",
+            "headword": "لحظة",
+            "entry_type": "word",
+            "transliteration": "al-llaḥẓati"
+          },
+          {
+            "pos": "adjective",
+            "cefr": "A1",
+            "arabic": "الْأُولَى،",
+            "english": "first",
+            "headword": "اولى",
+            "entry_type": "word",
+            "transliteration": "al-ʾūlaā"
+          },
+          {
+            "pos": "adverb",
+            "cefr": "A1",
+            "arabic": "لِمَاذَا",
+            "english": "why",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "limāḏā"
+          },
+          {
+            "pos": "verb",
+            "cefr": "A2",
+            "arabic": "بَدَتْ",
+            "english": "seem",
+            "headword": "بدا",
+            "entry_type": "word",
+            "transliteration": "badat"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "أَصْوَاتُ",
+            "english": "sounds",
+            "headword": "صوت",
+            "entry_type": "word",
+            "transliteration": "ʾaṣwātu"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B1",
+            "arabic": "الْقَاعَةِ",
+            "english": "courtroom",
+            "headword": "قاعة",
+            "entry_type": "word",
+            "transliteration": "alqāʿati"
+          },
+          {
+            "pos": "adjective",
+            "cefr": "A1",
+            "arabic": "بَعِيدَةً.",
+            "english": "far",
+            "headword": "بعيد",
+            "entry_type": "word",
+            "transliteration": "baʿīdatan"
+          }
+        ],
+        "paragraph": 1,
+        "timestamp": "",
+        "translation": "At first, Daniel Mercer did not understand why the sounds in the courtroom seemed so far away."
+      },
+      "source_id": "4e69c687-757e-4103-9a87-3373757ba91b",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "50440509b27e9a3162af12c666cccecd",
+      "source_label": "The Prisoner's Proof",
+      "phrase_breaks": [
+        7
+      ],
+      "chapter_number": 1,
+      "review_version": 1,
+      "paragraph_index": 0
+    },
+    {
+      "id": "af580a89-c2de-4419-bb59-4ac3d3ef1441:34",
+      "book_id": "6fb6426f-2d56-44e0-88f6-86c39e3d1f18",
+      "targets": [
+        {
+          "arabic": "إِنَّ",
+          "relations": [
+            {
+              "why": "Inna governs friend as its accusative noun; the visible marker on this singular noun is fathah.",
+              "type": "governs",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "1:2"
+            },
+            {
+              "why": "Inna takes the complete laysa clause as its predicate in the nominative position; this does not turn every internal word nominative.",
+              "type": "governs",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "2:6"
+            }
+          ],
+          "token_index": 0
+        },
+        {
+          "arabic": "الصَّدِيقَ",
+          "structure": {
+            "why": "Friend is the accusative noun of inna; fathah is its visible case sign in this singular noun.",
+            "validated": true,
+            "confidence": 1,
+            "case_marker": "fatha"
+          },
+          "word_type": {
+            "why": "Friend names the person about whom the statement is made.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "sentence_role": {
+            "why": "Friend is the noun of inna and is accusative, not the subject of a separate active verb.",
+            "category": "inna_noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Inna governs friend in the accusative state, marked here by fathah.",
+            "category": "accusative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "لَيْسَ",
+          "relations": [
+            {
+              "why": "Laysa governs property as its accusative predicate, distinct from the larger clause being the predicate of inna.",
+              "type": "governs",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "3:4"
+            }
+          ],
+          "word_type": {
+            "why": "Laysa is the fixed defective verb used to negate the following predicate, not an ordinary present verb.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2
+        },
+        {
+          "arabic": "مِلْكًا",
+          "structure": {
+            "why": "Property is the accusative predicate of laysa, whose implicit noun refers back to friend.",
+            "validated": true,
+            "confidence": 1,
+            "case_marker": "fatha"
+          },
+          "word_type": {
+            "why": "Property is a nominal expression serving as the predicate of laysa.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3,
+          "grammatical_case": {
+            "why": "Property is the predicate of laysa and is accusative with fathah.",
+            "category": "accusative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "لَيْسَ مِلْكًا لِلْعَهْدِ الْأَوَّلِ.",
+          "relations": [
+            {
+              "why": "The complete clause is not property of the first bond tells us about friend; the implicit noun of laysa links it back to friend.",
+              "type": "predicates",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "1:2"
+            }
+          ],
+          "structure": {
+            "why": "The clause beginning with laysa supplies the predicate of inna. Its internal predicate property is accusative, while the entire clause occupies the nominative predicate position.",
+            "validated": true,
+            "confidence": 1,
+            "clause_type": "verbal",
+            "role_subtype": "verbal_predicate"
+          },
+          "token_end": 6,
+          "token_index": 2,
+          "sentence_role": {
+            "why": "The complete laysa clause is the predicate of inna in the nominative position. Its implicit noun refers back to friend.",
+            "category": "inna_predicate",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "particle",
+            "cefr": "A1",
+            "arabic": "إِنَّ",
+            "english": "that",
+            "headword": "ان",
+            "entry_type": "word",
+            "transliteration": "ʾinna"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "الصَّدِيقَ",
+            "english": "the friend",
+            "headword": "صديق",
+            "entry_type": "word",
+            "transliteration": "aṣ-ṣadīqa"
+          },
+          {
+            "pos": "verb",
+            "cefr": "A1",
+            "arabic": "لَيْسَ",
+            "english": "is not",
+            "headword": "ليس",
+            "entry_type": "word",
+            "transliteration": "laysa"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B2",
+            "arabic": "مِلْكًا",
+            "english": "property / ownership",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "milkana"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B2",
+            "arabic": "لِلْعَهْدِ",
+            "english": "to the first bond / covenant",
+            "headword": "عهد",
+            "entry_type": "word",
+            "transliteration": "lil-ʿahdi"
+          },
+          {
+            "pos": "adjective",
+            "cefr": "A1",
+            "arabic": "الْأَوَّلِ.",
+            "english": "first",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "al-ʾawwali"
+          }
+        ],
+        "paragraph": 25,
+        "timestamp": "",
+        "translation": "A friend is not the property of the friendship’s earliest days.",
+        "paragraph_end": true,
+        "paragraph_start": true,
+        "paragraph_break_after": true
+      },
+      "source_id": "af580a89-c2de-4419-bb59-4ac3d3ef1441",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "ad696311ea36d06f7b13c342393a345d",
+      "source_label": "Between People & Days",
+      "phrase_breaks": [],
+      "chapter_number": 3,
+      "review_version": 1,
+      "paragraph_index": 34
+    },
+    {
+      "id": 14295,
+      "targets": [
+        {
+          "arabic": "هَلْ",
+          "word_type": {
+            "why": "Hal introduces a yes/no question.",
+            "category": "interrogative_particle",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "جَهَّزْتُمْ",
+          "word_type": {
+            "why": "The reviewed verb form presents the action or state as completed in this Arabic clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1
+        },
+        {
+          "arabic": "هَدَايَا",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2,
+          "sentence_role": {
+            "why": "What did you prepare? The gifts receive the action.",
+            "category": "object",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Gifts is the direct object. Its final alif prevents a visible short case vowel. The grammatical state is distinct from its visible ending.",
+            "category": "accusative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "عِيدِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3,
+          "sentence_role": {
+            "why": "Occasion introduces birth in the birthday expression.",
+            "category": "idafa_first",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Occasion is the second noun after gifts; it also introduces birth. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "مِيلَادِهَا؟",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 4,
+          "sentence_role": {
+            "why": "Birth follows occasion in the birthday expression.",
+            "category": "idafa_second",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Birth is the second noun in the possessive construction. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "particle",
+            "arabic": "هَلْ",
+            "english": "did / do",
+            "headword": "هل",
+            "entry_type": "word",
+            "transliteration": "hal"
+          },
+          {
+            "pos": "verb",
+            "arabic": "جَهَّزْتُمْ",
+            "english": "you prepared",
+            "headword": "جهز",
+            "entry_type": "word",
+            "transliteration": "jahhaztum"
+          },
+          {
+            "pos": "noun",
+            "arabic": "هَدَايَا",
+            "english": "gifts",
+            "headword": "هدية",
+            "entry_type": "word",
+            "transliteration": "hadāyā"
+          },
+          {
+            "pos": "noun",
+            "arabic": "عِيدِ",
+            "english": "festival / birthday",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "ʿīdi"
+          },
+          {
+            "pos": "noun",
+            "arabic": "مِيلَادِهَا؟",
+            "english": "her birthday",
+            "headword": "ميلاد",
+            "entry_type": "word",
+            "transliteration": "mīlādihā"
+          }
+        ],
+        "paragraph": 4,
+        "timestamp": "00:04",
+        "translation": "Did you prepare her birthday gifts?"
+      },
+      "source_id": "37efab1b-411b-4cda-9ac9-2d829e526a15",
+      "validated": true,
+      "episode_id": "fe1493dd-bcc7-4d7b-8b23-868e531180c0",
+      "source_kind": "transcript",
+      "content_hash": "93ae5704be86a77255fe6a1d98276c6e",
+      "source_label": "Gift for Mom",
+      "phrase_breaks": [],
+      "start_seconds": 4,
+      "review_version": 1
+    },
+    {
+      "id": "5d602353-285b-42e2-b144-009c2244f0e3:4",
+      "book_id": "b4e26072-d3e3-43ec-87cd-a9d5fab8aa32",
+      "targets": [
+        {
+          "arabic": "حَاوَلَتْ",
+          "relations": [
+            {
+              "why": "Layla is the overt doer of tried; this relation belongs to the first verbal clause.",
+              "type": "subject",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "1:2"
+            }
+          ],
+          "word_type": {
+            "why": "Tried presents the completed action in the first clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "لَيْلَى",
+          "word_type": {
+            "why": "Layla is the named person performing the action.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "sentence_role": {
+            "why": "Who tried to catch it? Layla is the overt subject of tried.",
+            "category": "subject",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "أَنْ",
+          "relations": [
+            {
+              "why": "An makes the following imperfect verb catch subjunctive, marked with fathah before the attached object pronoun.",
+              "type": "governs",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "3:4"
+            }
+          ],
+          "word_type": {
+            "why": "An introduces the following imperfect verb and governs its subjunctive state.",
+            "category": "subjunctive_particle",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2
+        },
+        {
+          "arabic": "تُمْسِكَهُ",
+          "structure": {
+            "why": "The imperfect verb is subjunctive after an; the attached object pronoun is separate from the verb ending.",
+            "validated": true,
+            "confidence": 1,
+            "case_marker": "fatha"
+          },
+          "word_type": {
+            "why": "Catch is an imperfect verb with an attached object pronoun.",
+            "category": "present",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3,
+          "grammatical_case": {
+            "why": "The imperfect catch is subjunctive after an. Its attached object pronoun does not change that state.",
+            "category": "accusative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "لَمْ",
+          "relations": [
+            {
+              "why": "Lam negates touch and makes that imperfect verb jussive, marked here by final sukun.",
+              "type": "governs",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "7:8"
+            }
+          ],
+          "word_type": {
+            "why": "Lam negates the following imperfect verb and governs its jussive state.",
+            "category": "jussive_particle",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 6
+        },
+        {
+          "arabic": "تَلْمَسْ",
+          "structure": {
+            "why": "Touch is jussive after lam; here the visible sign on the final consonant is sukun.",
+            "validated": true,
+            "confidence": 1,
+            "case_marker": "sukun"
+          },
+          "word_type": {
+            "why": "Touch is an imperfect verb in the clause about her hand.",
+            "category": "present",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 7,
+          "grammatical_case": {
+            "why": "The imperfect touch is jussive after lam, shown here by the final sukun.",
+            "category": "jussive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "الْجِدَارَ",
+          "word_type": {
+            "why": "Wall names the thing touched in the restricted object construction.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 9,
+          "sentence_role": {
+            "why": "What did her hand touch? Only the wall; illa restricts the direct object rather than removing its object function.",
+            "category": "object",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "verb",
+            "cefr": "A2",
+            "arabic": "حَاوَلَتْ",
+            "english": "she tried",
+            "headword": "حول",
+            "entry_type": "word",
+            "transliteration": "ḥāwalat"
+          },
+          {
+            "pos": "proper_noun",
+            "cefr": "A1",
+            "arabic": "لَيْلَى",
+            "english": "Layla",
+            "headword": "ليلى",
+            "entry_type": "word",
+            "transliteration": "Laylā"
+          },
+          {
+            "pos": "conjunction",
+            "cefr": "A2",
+            "arabic": "أَنْ",
+            "english": "to",
+            "headword": "ان",
+            "entry_type": "word",
+            "transliteration": "an"
+          },
+          {
+            "pos": "verb",
+            "cefr": "A2",
+            "arabic": "تُمْسِكَهُ",
+            "english": "catch it / grab it",
+            "headword": "مسك",
+            "entry_type": "word",
+            "transliteration": "tumsikahu"
+          },
+          {
+            "pos": "conjunction",
+            "cefr": "A2",
+            "arabic": "لَكِنَّ",
+            "english": "but",
+            "headword": "لاكن",
+            "entry_type": "word",
+            "transliteration": "lākinna"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "يَدَهَا",
+            "english": "her hand",
+            "headword": "يد",
+            "entry_type": "word",
+            "transliteration": "yadahā"
+          },
+          {
+            "pos": "particle",
+            "cefr": "A2",
+            "arabic": "لَمْ",
+            "english": "did not",
+            "headword": "لم",
+            "entry_type": "word",
+            "transliteration": "lam"
+          },
+          {
+            "pos": "verb",
+            "cefr": "A2",
+            "arabic": "تَلْمَسْ",
+            "english": "touch",
+            "headword": "لمس",
+            "entry_type": "word",
+            "transliteration": "talmas"
+          },
+          {
+            "pos": "particle",
+            "cefr": "A2",
+            "arabic": "إِلَّا",
+            "english": "except / nothing but",
+            "headword": "الا",
+            "entry_type": "word",
+            "transliteration": "illā"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "الْجِدَارَ",
+            "english": "the wall",
+            "headword": "جدار",
+            "entry_type": "word",
+            "transliteration": "al-jidāra"
+          }
+        ],
+        "timestamp": "",
+        "punctuation": ".",
+        "translation": "Layla tried to catch it, but her hand touched nothing but the wall."
+      },
+      "source_id": "5d602353-285b-42e2-b144-009c2244f0e3",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "d9ec59e44ccebd2d0e09e12ebbb4e751",
+      "source_label": "Layla & the Shadow",
+      "phrase_breaks": [
+        4
+      ],
+      "chapter_number": 6,
+      "review_version": 1,
+      "paragraph_index": 4
+    },
+    {
+      "id": "e2d66a92-174f-4249-a5ba-651cffdfc5ff:0",
+      "book_id": "b4e26072-d3e3-43ec-87cd-a9d5fab8aa32",
+      "targets": [
+        {
+          "arabic": "كَانَ",
+          "relations": [
+            {
+              "why": "Kana has a nominative noun, here the delayed phrase a small celebration; kana does not make its noun accusative.",
+              "type": "governs",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "3:5"
+            },
+            {
+              "why": "Kana gives the whole prepositional phrase the predicate function in the accusative position; the internal noun school stays genitive.",
+              "type": "governs",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "1:3"
+            }
+          ],
+          "word_type": {
+            "why": "Kana is a past-tense defective verb in this sentence.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "فِي الْمَدْرَسَةِ",
+          "relations": [
+            {
+              "why": "In the school supplies the predicate of kana about the full noun phrase a small celebration.",
+              "type": "predicates",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "3:5"
+            }
+          ],
+          "structure": {
+            "why": "The whole prepositional phrase is a quasi-sentence occupying the accusative predicate position of kana; school itself is genitive.",
+            "validated": true,
+            "confidence": 1,
+            "phrase_type": "prepositional",
+            "role_subtype": "quasi_predicate"
+          },
+          "token_end": 3,
+          "token_index": 1,
+          "sentence_role": {
+            "why": "The whole prepositional phrase in the school is the fronted predicate of kana, a quasi-sentence in the predicate position; school alone is the genitive object of the preposition.",
+            "category": "kana_predicate",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "حَفْلٌ صَغِيرٌ",
+          "structure": {
+            "why": "A small celebration is the complete delayed noun phrase of kana and occupies its nominative noun position.",
+            "validated": true,
+            "confidence": 1,
+            "phrase_type": "noun_phrase"
+          },
+          "token_end": 5,
+          "token_index": 3,
+          "sentence_role": {
+            "why": "The complete noun phrase a small celebration is the delayed noun of kana; small describes the celebration and belongs to its phrase.",
+            "category": "kana_noun",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "فِي",
+          "relations": [
+            {
+              "why": "In governs school in the genitive state; the predicate function belongs to the whole phrase, not to school alone.",
+              "type": "governs",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "2:3"
+            }
+          ],
+          "word_type": {
+            "why": "In introduces the nominal expression the school.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1
+        },
+        {
+          "arabic": "الْمَدْرَسَةِ",
+          "structure": {
+            "why": "School follows the preposition in, regardless of the phrase's predicate function. The visible ending is reviewed independently of the grammatical function.",
+            "validated": true,
+            "confidence": 1,
+            "case_marker": "kasra"
+          },
+          "word_type": {
+            "why": "School names the place in the prepositional phrase.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2,
+          "grammatical_case": {
+            "why": "School follows the preposition in, regardless of the phrase's predicate function.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "حَفْلٌ",
+          "structure": {
+            "why": "Celebration is the noun of kana, which remains nominative even when delayed. The visible ending is reviewed independently of the grammatical function.",
+            "validated": true,
+            "confidence": 1,
+            "case_marker": "damma"
+          },
+          "word_type": {
+            "why": "Celebration names the event whose location kana describes.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3,
+          "grammatical_case": {
+            "why": "Celebration is the noun of kana, which remains nominative even when delayed.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "صَغِيرٌ",
+          "relations": [
+            {
+              "why": "Small describes celebration and agrees with its nominative state within the larger noun phrase.",
+              "type": "describes",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "3:4"
+            }
+          ],
+          "structure": {
+            "why": "Small agrees with the nominative noun celebration. The visible ending is reviewed independently of the grammatical function.",
+            "validated": true,
+            "confidence": 1,
+            "case_marker": "damma"
+          },
+          "word_type": {
+            "why": "Small describes celebration and agrees with it.",
+            "category": "adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 4,
+          "grammatical_case": {
+            "why": "Small agrees with the nominative noun celebration.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "verb",
+            "cefr": "A1",
+            "arabic": "كَانَ",
+            "english": "there was / was",
+            "headword": "كون",
+            "entry_type": "word",
+            "transliteration": "kāna"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "فِي",
+            "english": "in / at",
+            "headword": "في",
+            "entry_type": "word",
+            "transliteration": "fī"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "الْمَدْرَسَةِ",
+            "english": "the school",
+            "headword": "مدرسة",
+            "entry_type": "word",
+            "transliteration": "al-madrasati"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "حَفْلٌ",
+            "english": "a celebration / event",
+            "headword": "حفل",
+            "entry_type": "word",
+            "transliteration": "ḥaflun"
+          },
+          {
+            "pos": "adjective",
+            "cefr": "A1",
+            "arabic": "صَغِيرٌ",
+            "english": "small / little",
+            "headword": "صغير",
+            "entry_type": "word",
+            "transliteration": "ṣaghīrun"
+          },
+          {
+            "pos": "pronoun",
+            "cefr": "A1",
+            "arabic": "ذَلِكَ",
+            "english": "that",
+            "headword": "ذلك",
+            "entry_type": "word",
+            "transliteration": "dhālika"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "الصَّبَاحَ",
+            "english": "morning",
+            "headword": "صباح",
+            "entry_type": "word",
+            "transliteration": "al-ṣabāḥa"
+          }
+        ],
+        "timestamp": "",
+        "punctuation": ".",
+        "translation": "There was a little celebration at school that morning."
+      },
+      "source_id": "e2d66a92-174f-4249-a5ba-651cffdfc5ff",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "67c73df5846fabdc04181c4c697cf4e5",
+      "source_label": "Layla & the Shadow",
+      "phrase_breaks": [],
+      "chapter_number": 2,
+      "review_version": 1,
+      "paragraph_index": 0
+    },
+    {
+      "id": "4b25ccfa-b645-4983-957c-d755c864f4e6:0",
+      "book_id": "ae67df5f-fe41-4f4c-bad7-4949506e8342",
+      "targets": [
+        {
+          "arabic": "هُنَاكَ",
+          "relations": [
+            {
+              "why": "The fronted locative predicate there gives information about the full delayed topic a familiar moment.",
+              "type": "predicates",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "1:3"
+            }
+          ],
+          "structure": {
+            "why": "The locative adverb there is a fronted quasi-sentence predicate, attached to an understood expression of existence.",
+            "validated": true,
+            "confidence": 1,
+            "phrase_type": "adverbial",
+            "role_subtype": "quasi_predicate"
+          },
+          "token_index": 0,
+          "sentence_role": {
+            "why": "The locative expression there comes before the indefinite topic and functions as the fronted predicate; it does not name the topic.",
+            "category": "fronted_predicate",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "لَحْظَةٌ مَأْلُوفَةٌ",
+          "structure": {
+            "why": "The noun moment and its adjective familiar form the complete delayed topic phrase.",
+            "validated": true,
+            "confidence": 1,
+            "phrase_type": "noun_phrase"
+          },
+          "token_end": 3,
+          "token_index": 1,
+          "sentence_role": {
+            "why": "The full noun phrase a familiar moment is the delayed topic after the fronted locative predicate there; the adjective is included in the topic phrase.",
+            "category": "delayed_topic",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "لَحْظَةٌ",
+          "word_type": {
+            "why": "Moment names a time or event in this nominal sentence.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "grammatical_case": {
+            "why": "Moment is the delayed topic and therefore nominative here.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "مَأْلُوفَةٌ",
+          "relations": [
+            {
+              "why": "Familiar describes moment and agrees with it; it is inside the larger delayed-topic phrase.",
+              "type": "describes",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "1:2"
+            }
+          ],
+          "word_type": {
+            "why": "Familiar describes moment and agrees with it in this phrase.",
+            "category": "adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2,
+          "grammatical_case": {
+            "why": "Familiar agrees with the nominative noun moment.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "فِي",
+          "relations": [
+            {
+              "why": "The preposition in governs many in the genitive state, marked here with kasrah.",
+              "type": "governs",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "4:5"
+            }
+          ],
+          "word_type": {
+            "why": "In introduces the following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3
+        },
+        {
+          "arabic": "كَثِيرٍ",
+          "structure": {
+            "why": "Many is genitive after in; the state is jarr and the visible sign here is kasrah.",
+            "validated": true,
+            "confidence": 1,
+            "case_marker": "kasra"
+          },
+          "word_type": {
+            "why": "Many is a nominal expression governed by the preposition in here.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 4,
+          "grammatical_case": {
+            "why": "Many follows the preposition in and is genitive here.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "جَلَسَاتِ",
+          "relations": [
+            {
+              "why": "Sessions is the first element and study is the genitive second element of study sessions.",
+              "type": "idafa",
+              "validated": true,
+              "confidence": 1,
+              "target_span": "7:8"
+            }
+          ],
+          "word_type": {
+            "why": "Sessions names the plural events in the study sessions construction.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 6,
+          "sentence_role": {
+            "why": "Sessions introduces study in the possessive construction study sessions.",
+            "category": "idafa_first",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Sessions follows the preposition from and is genitive here.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "الدِّرَاسَةِ.",
+          "word_type": {
+            "why": "Study is the verbal noun used as the second element of the possessive construction.",
+            "category": "masdar",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 7,
+          "sentence_role": {
+            "why": "Study completes the possessive construction study sessions.",
+            "category": "idafa_second",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Study is the second element of the possessive construction.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "adverb",
+            "cefr": "B1",
+            "arabic": "هُنَاكَ",
+            "english": "there",
+            "headword": "هناك",
+            "entry_type": "word",
+            "transliteration": "hunaāka"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "لَحْظَةٌ",
+            "english": "moment",
+            "headword": "لحظة",
+            "entry_type": "word",
+            "transliteration": "laḥẓaaun"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B1",
+            "arabic": "مَأْلُوفَةٌ",
+            "english": "الف alf pl. الوف ulūf, آلاف ālāf thousand; millennium│الوف مؤلف (mu’allafa) or آلاف مؤلفة thousands and thousa…",
+            "headword": "الف",
+            "entry_type": "word",
+            "transliteration": "maʾaluwfaaun"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "فِي",
+            "english": "in",
+            "headword": "في",
+            "entry_type": "word",
+            "transliteration": "fiy"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B1",
+            "arabic": "كَثِيرٍ",
+            "english": "katīr pl. كثار kitār much, many, numerous, abundant, plentiful, copious",
+            "headword": "كثير",
+            "entry_type": "word",
+            "transliteration": "kathiyrin"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "مِنْ",
+            "english": "from",
+            "headword": "من",
+            "entry_type": "word",
+            "transliteration": "min"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B1",
+            "arabic": "جَلَسَاتِ",
+            "english": "jalasa i (جلوس julūs) to sit down (الى with s.o., at a tabl., etc., على on a chair)",
+            "headword": "جلس",
+            "entry_type": "word",
+            "transliteration": "jalasaāti"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B1",
+            "arabic": "الدِّرَاسَةِ.",
+            "english": "دراسة dirasa pl. -āt studies; study│ دراسة عالية (‘āliya) collegiate studies; دراسة ثانوية (tānawīya) attendan…",
+            "headword": "دراسة",
+            "entry_type": "word",
+            "transliteration": "āldiraāsaai"
+          }
+        ],
+        "paragraph": 1,
+        "timestamp": "",
+        "translation": "There is a familiar moment in many study sessions."
+      },
+      "source_id": "4b25ccfa-b645-4983-957c-d755c864f4e6",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "63b30d055eaddebe69cf52eaa229b641",
+      "source_label": "When Learning Feels Real",
+      "phrase_breaks": [],
+      "chapter_number": 4,
+      "review_version": 1,
+      "paragraph_index": 0
+    },
+    {
+      "id": "a7d347c2-5607-4548-88f2-bc27214a1fb3:0",
+      "book_id": "2c9aaa93-0e5e-48c8-83e9-0dd3f7744949",
+      "targets": [
+        {
+          "arabic": "وَصَلَتْ",
+          "word_type": {
+            "why": "The reviewed verb form presents the action or state as completed in this Arabic clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "نُورٌ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "sentence_role": {
+            "why": "Who arrived? Noor.",
+            "category": "subject",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Noor is the subject of arrived. The grammatical state is distinct from its visible ending.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "إِلَى",
+          "word_type": {
+            "why": "This standalone particle introduces a following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2
+        },
+        {
+          "arabic": "شَقَّتِهَا",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3,
+          "sentence_role": {
+            "why": "New describes her flat.",
+            "category": "described_noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Flat follows the preposition to. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "الْجَدِيدَةِ",
+          "word_type": {
+            "why": "This word describes a noun in the Arabic phrase and agrees with it.",
+            "category": "adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 4,
+          "sentence_role": {
+            "why": "New agrees with the flat it describes.",
+            "category": "role_adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "New agrees with the genitive noun flat. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "فِي",
+          "word_type": {
+            "why": "This standalone particle introduces a following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 5
+        },
+        {
+          "arabic": "عَمَّانَ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 6,
+          "grammatical_case": {
+            "why": "Amman follows in. As a diptote, its genitive marker here is fatḥah rather than kasrah. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "verb",
+            "cefr": "A2",
+            "arabic": "وَصَلَتْ",
+            "english": "arrived",
+            "headword": "وصل",
+            "entry_type": "word",
+            "transliteration": "waṣalat"
+          },
+          {
+            "pos": "proper_noun",
+            "cefr": "A1",
+            "arabic": "نُورٌ",
+            "english": "Noor",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "nūrun"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "إِلَى",
+            "english": "to",
+            "headword": "الى",
+            "entry_type": "word",
+            "transliteration": "ʾilā"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "شَقَّتِهَا",
+            "english": "her flat",
+            "headword": "شقة",
+            "entry_type": "word",
+            "transliteration": "shaqqatihā"
+          },
+          {
+            "pos": "adjective",
+            "cefr": "A1",
+            "arabic": "الْجَدِيدَةِ",
+            "english": "new",
+            "headword": "جديد",
+            "entry_type": "word",
+            "transliteration": "al-jadīdati"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "فِي",
+            "english": "in",
+            "headword": "في",
+            "entry_type": "word",
+            "transliteration": "fī"
+          },
+          {
+            "pos": "proper_noun",
+            "cefr": "A1",
+            "arabic": "عَمَّانَ",
+            "english": "Amman",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "ʿammāna"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "بَعْدَ",
+            "english": "after",
+            "headword": "بعد",
+            "entry_type": "word",
+            "transliteration": "baʿda"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "ظُهْرِ",
+            "english": "afternoon",
+            "headword": "ظهر",
+            "entry_type": "word",
+            "transliteration": "ẓuhri"
+          },
+          {
+            "pos": "pronoun",
+            "cefr": "A1",
+            "arabic": "ذَلِكَ",
+            "english": "that",
+            "headword": "ذلك",
+            "entry_type": "word",
+            "transliteration": "dhalika"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "الْيَوْمِ.",
+            "english": "the day",
+            "headword": "يوم",
+            "entry_type": "word",
+            "transliteration": "al-yawmi"
+          }
+        ],
+        "paragraph": 1,
+        "timestamp": "",
+        "translation": "Noor arrived at her new flat in Amman that afternoon."
+      },
+      "source_id": "a7d347c2-5607-4548-88f2-bc27214a1fb3",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "b9b940e83fa5182dd5d001d121684114",
+      "source_label": "A Secret in Amman",
+      "phrase_breaks": [
+        7
+      ],
+      "chapter_number": 1,
+      "review_version": 1,
+      "paragraph_index": 0
+    },
+    {
+      "id": "23e60427-aec5-4b96-81bc-3ef8394886bf:1",
+      "book_id": "6e48b69e-68db-4b80-88c5-f38a7a611cd1",
+      "targets": [
+        {
+          "arabic": "أَنْهَى",
+          "word_type": {
+            "why": "The reviewed verb form presents the action or state as completed in this Arabic clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "مُرَاجَعَةَ",
+          "word_type": {
+            "why": "Reviewing names the action itself without tying it to a particular tense.",
+            "category": "masdar",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "sentence_role": {
+            "why": "What did he finish? The reviewing is the direct object.",
+            "category": "object",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Reviewing is the direct object of finished. The grammatical state is distinct from its visible ending.",
+            "category": "accusative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "آخِرِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2,
+          "sentence_role": {
+            "why": "Last introduces file in the possessive construction.",
+            "category": "idafa_first",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Last is the second noun after reviewing; it also introduces file. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "مِلَفٍّ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3,
+          "sentence_role": {
+            "why": "File follows last in the possessive construction.",
+            "category": "idafa_second",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "File is the second noun in the possessive construction. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "ثُمَّ",
+          "word_type": {
+            "why": "Then links the two actions in their order.",
+            "category": "conjunction",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 5
+        },
+        {
+          "arabic": "مَدَّ",
+          "word_type": {
+            "why": "The reviewed verb form presents the action or state as completed in this Arabic clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 6
+        },
+        {
+          "arabic": "يَدَهُ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 7,
+          "sentence_role": {
+            "why": "What did he extend? His hand receives the action.",
+            "category": "object",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Hand is the direct object of extended. The grammatical state is distinct from its visible ending.",
+            "category": "accusative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "إِلَى",
+          "word_type": {
+            "why": "This standalone particle introduces a following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 8
+        },
+        {
+          "arabic": "الْهَاتِفِ.",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 9,
+          "grammatical_case": {
+            "why": "Phone follows to. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "particle",
+            "cefr": "A1",
+            "arabic": "أَنْهَى",
+            "english": "indeed he/it",
+            "headword": "ان",
+            "entry_type": "word",
+            "transliteration": "ʾanhā"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B1",
+            "arabic": "مُرَاجَعَةَ",
+            "english": "review",
+            "headword": "مراجعة",
+            "entry_type": "word",
+            "transliteration": "murājaʿata"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "آخِرِ",
+            "english": "other",
+            "headword": "اخر",
+            "entry_type": "word",
+            "transliteration": "ʾākhiri"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A2",
+            "arabic": "مِلَفٍّ",
+            "english": "file",
+            "headword": "ملف",
+            "entry_type": "word",
+            "transliteration": "milaffin"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "أَمَامَهُ،",
+            "english": "in front of it",
+            "headword": "امام",
+            "entry_type": "word",
+            "transliteration": "ʾamāmahu"
+          },
+          {
+            "pos": "conjunction",
+            "cefr": "A1",
+            "arabic": "ثُمَّ",
+            "english": "then",
+            "headword": "ثم",
+            "entry_type": "word",
+            "transliteration": "thumma"
+          },
+          {
+            "pos": "verb",
+            "cefr": "A2",
+            "arabic": "مَدَّ",
+            "english": "and held it out",
+            "headword": "مد",
+            "entry_type": "word",
+            "transliteration": "madda"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "يَدَهُ",
+            "english": "his hand",
+            "headword": "يد",
+            "entry_type": "word",
+            "transliteration": "yadahu"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "إِلَى",
+            "english": "to",
+            "headword": "الى",
+            "entry_type": "word",
+            "transliteration": "ʾilā"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "الْهَاتِفِ.",
+            "english": "phone",
+            "headword": "هاتف",
+            "entry_type": "word",
+            "transliteration": "al-hātifi"
+          }
+        ],
+        "paragraph": 2,
+        "timestamp": "",
+        "translation": "He finished reviewing the last file in front of him, then reached for his phone.",
+        "paragraph_end": false,
+        "paragraph_start": true,
+        "paragraph_break_after": false
+      },
+      "source_id": "23e60427-aec5-4b96-81bc-3ef8394886bf",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "806704cc65a2d76669ceb12c193b369c",
+      "source_label": "A Debt of Silence",
+      "phrase_breaks": [
+        5
+      ],
+      "chapter_number": 1,
+      "review_version": 1,
+      "paragraph_index": 1
+    },
+    {
+      "id": "0bebfa2d-b451-4f5a-b8ca-e07c2cbc170e:0",
+      "book_id": "27a6ba6a-a1e3-4584-bdde-49842be91ea3",
+      "targets": [
+        {
+          "arabic": "اِسْتَيْقَظَتْ",
+          "word_type": {
+            "why": "The reviewed verb form presents the action or state as completed in this Arabic clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "رِيمُ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "sentence_role": {
+            "why": "Who woke up? Reem.",
+            "category": "subject",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Reem is the subject of woke. The grammatical state is distinct from its visible ending.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "فِي",
+          "word_type": {
+            "why": "This standalone particle introduces a following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2
+        },
+        {
+          "arabic": "صَبَاحِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3,
+          "sentence_role": {
+            "why": "Morning is the first noun in the morning of Monday.",
+            "category": "idafa_first",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Morning follows in. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "يَوْمِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 4,
+          "sentence_role": {
+            "why": "Day follows morning in the possessive construction; it also introduces Monday.",
+            "category": "idafa_second",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Day is the second noun after morning. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "الاِثْنَيْنِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 5,
+          "sentence_role": {
+            "why": "Monday follows day in the possessive construction.",
+            "category": "idafa_second",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Monday is the second noun after day. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "السَّابِعَةِ",
+          "word_type": {
+            "why": "This word describes a noun in the Arabic phrase and agrees with it.",
+            "category": "adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 8,
+          "sentence_role": {
+            "why": "Seventh describes the hour.",
+            "category": "role_adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Seventh agrees with the genitive noun hour. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "verb",
+            "cefr": "A1",
+            "arabic": "اِسْتَيْقَظَتْ",
+            "english": "woke up",
+            "headword": "يقظ",
+            "entry_type": "word",
+            "transliteration": "istayqaẓat"
+          },
+          {
+            "pos": "proper_noun",
+            "cefr": "A1",
+            "arabic": "رِيمُ",
+            "english": "Reem",
+            "headword": null,
+            "entry_type": "word",
+            "transliteration": "rīmu"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "فِي",
+            "english": "in",
+            "headword": "في",
+            "entry_type": "word",
+            "transliteration": "fī"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "صَبَاحِ",
+            "english": "morning",
+            "headword": "صباح",
+            "entry_type": "word",
+            "transliteration": "ṣabāḥi"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "يَوْمِ",
+            "english": "day",
+            "headword": "يوم",
+            "entry_type": "word",
+            "transliteration": "yawmi"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "الاِثْنَيْنِ",
+            "english": "Monday",
+            "headword": "اثنان",
+            "entry_type": "word",
+            "transliteration": "alithnayni"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "قَبْلَ",
+            "english": "before",
+            "headword": "قبل",
+            "entry_type": "word",
+            "transliteration": "qabla"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "السَّاعَةِ",
+            "english": "clock / time",
+            "headword": "ساعة",
+            "entry_type": "word",
+            "transliteration": "as-sāʿati"
+          },
+          {
+            "pos": "number",
+            "cefr": "A1",
+            "arabic": "السَّابِعَةِ",
+            "english": "seven / seventh",
+            "headword": "سبع",
+            "entry_type": "word",
+            "transliteration": "as-sābiʿati"
+          },
+          {
+            "pos": "adverb",
+            "cefr": "A1",
+            "arabic": "بِقَلِيلٍ.",
+            "english": "a little",
+            "headword": "قليل",
+            "entry_type": "word",
+            "transliteration": "biqalīlin"
+          }
+        ],
+        "paragraph": 1,
+        "timestamp": "",
+        "translation": "Reem woke on Monday morning just before seven.",
+        "paragraph_end": true,
+        "paragraph_start": true,
+        "paragraph_break_after": true
+      },
+      "source_id": "0bebfa2d-b451-4f5a-b8ca-e07c2cbc170e",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "ee16863cbf0f7db9bd34346876224541",
+      "source_label": "Small Plans, Busy Days",
+      "phrase_breaks": [
+        6
+      ],
+      "chapter_number": 1,
+      "review_version": 1,
+      "paragraph_index": 0
+    },
+    {
+      "id": "ab1c7a59-2ba2-4e2f-b94f-fc0ae90adc5f:0",
+      "book_id": "b4e26072-d3e3-43ec-87cd-a9d5fab8aa32",
+      "targets": [
+        {
+          "arabic": "فِي",
+          "word_type": {
+            "why": "This standalone particle introduces a following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 0
+        },
+        {
+          "arabic": "صَبَاحٍ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 1,
+          "sentence_role": {
+            "why": "Sunny describes this morning.",
+            "category": "described_noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Morning follows the preposition in. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "مُشْمِسٍ",
+          "word_type": {
+            "why": "This word describes a noun in the Arabic phrase and agrees with it.",
+            "category": "adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 2,
+          "sentence_role": {
+            "why": "Sunny agrees with morning.",
+            "category": "role_adjective",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Sunny agrees with the genitive noun morning. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "خَرَجَتْ",
+          "word_type": {
+            "why": "The reviewed verb form presents the action or state as completed in this Arabic clause.",
+            "category": "past",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 3
+        },
+        {
+          "arabic": "لَيْلَى",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 4,
+          "sentence_role": {
+            "why": "Who went out? Layla.",
+            "category": "subject",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Layla is the subject. Its final alif prevents a visible case vowel. The grammatical state is distinct from its visible ending.",
+            "category": "nominative",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "إِلَى",
+          "word_type": {
+            "why": "This standalone particle introduces a following nominal expression and governs genitive case.",
+            "category": "preposition",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 5
+        },
+        {
+          "arabic": "فِنَاءِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 6,
+          "sentence_role": {
+            "why": "Courtyard is the first noun in the courtyard of the house.",
+            "category": "idafa_first",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "Courtyard follows the preposition to. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        },
+        {
+          "arabic": "الْبَيْتِ",
+          "word_type": {
+            "why": "This occurrence names a person, thing, place or idea; any attached possessive pronoun remains part of the source token.",
+            "category": "noun",
+            "validated": true,
+            "confidence": 1
+          },
+          "token_index": 7,
+          "sentence_role": {
+            "why": "House follows courtyard in the possessive construction.",
+            "category": "idafa_second",
+            "validated": true,
+            "confidence": 1
+          },
+          "grammatical_case": {
+            "why": "House is the second noun in the possessive construction. The grammatical state is distinct from its visible ending.",
+            "category": "genitive",
+            "validated": true,
+            "confidence": 1
+          }
+        }
+      ],
+      "paragraph": {
+        "tokens": [
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "فِي",
+            "english": "in",
+            "headword": "في",
+            "entry_type": "word",
+            "transliteration": "fī"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "صَبَاحٍ",
+            "english": "a morning",
+            "headword": "صباح",
+            "entry_type": "word",
+            "transliteration": "ṣabāḥin"
+          },
+          {
+            "pos": "adjective",
+            "cefr": "A2",
+            "arabic": "مُشْمِسٍ",
+            "english": "sunny",
+            "headword": "مشمس",
+            "entry_type": "word",
+            "transliteration": "mushmisin"
+          },
+          {
+            "pos": "verb",
+            "cefr": "A1",
+            "arabic": "خَرَجَتْ",
+            "english": "she went out",
+            "headword": "خرج",
+            "entry_type": "word",
+            "transliteration": "kharajat"
+          },
+          {
+            "pos": "proper_noun",
+            "cefr": "A1",
+            "arabic": "لَيْلَى",
+            "english": "Layla",
+            "headword": "ليلى",
+            "entry_type": "word",
+            "transliteration": "Laylā"
+          },
+          {
+            "pos": "preposition",
+            "cefr": "A1",
+            "arabic": "إِلَى",
+            "english": "to / into",
+            "headword": "الى",
+            "entry_type": "word",
+            "transliteration": "ilā"
+          },
+          {
+            "pos": "noun",
+            "cefr": "B1",
+            "arabic": "فِنَاءِ",
+            "english": "the courtyard / yard",
+            "headword": "فناء",
+            "entry_type": "word",
+            "transliteration": "fināʾi"
+          },
+          {
+            "pos": "noun",
+            "cefr": "A1",
+            "arabic": "الْبَيْتِ",
+            "english": "the house",
+            "headword": "بيت",
+            "entry_type": "word",
+            "transliteration": "al-bayti"
+          }
+        ],
+        "timestamp": "",
+        "punctuation": ".",
+        "translation": "One sunny morning, Layla went out into the yard."
+      },
+      "source_id": "ab1c7a59-2ba2-4e2f-b94f-fc0ae90adc5f",
+      "validated": true,
+      "source_kind": "book",
+      "content_hash": "abb051b9150b8000f017658828fe8a93",
+      "source_label": "Layla & the Shadow",
+      "phrase_breaks": [
+        3
+      ],
+      "chapter_number": 1,
+      "review_version": 1,
+      "paragraph_index": 0
+    }
+  ],
+  "sarf": [
+    {
+      "id": "14594",
+      "cefr": "B1",
+      "payload": {
+        "arabic": "أَنْتَ تَحْمِلُ شَطِيرَةً خَلْفَ ظَهْرِكَ!",
+        "english": "You're holding a sandwich behind your back!",
+        "targets": [
+          {
+            "verb": {
+              "id": "hans:5254:1:حمل",
+              "form": 1,
+              "root": "حمل",
+              "arabic": "حَمَلَ",
+              "form_i": {
+                "past": "حَمَلَ",
+                "masdars": [],
+                "present": "يَحْمِلُ",
+                "past_vowel": "a",
+                "present_vowels": [
+                  "i"
+                ]
+              },
+              "source": "Hans Wehr",
+              "meaning": "to carry, bear; to lift, pick up , load up and take along : to hold",
+              "quadriliteral_pattern": null
+            },
+            "meaning": "you are holding",
+            "surface": "تَحْمِلُ",
+            "token_index": 1
+          }
+        ]
+      },
+      "position": 11,
+      "source_id": "2e79872b-079b-4d77-9cfc-799233186d99",
+      "source_kind": "transcript",
+      "content_hash": "d60edd34b969171112b9a002df790248",
+      "source_label": "I Love Krabby Patties!",
+      "start_seconds": 27
+    },
+    {
+      "id": "f623eb29-52d0-4d80-bc2a-f2614640849e:6",
+      "cefr": "A1",
+      "book_id": "b4e26072-d3e3-43ec-87cd-a9d5fab8aa32",
+      "payload": {
+        "arabic": "صَفَّقَ الْأَطْفَالُ",
+        "english": "The children clapped.",
+        "targets": [
+          {
+            "verb": {
+              "id": "hans:12435:2:صفّق",
+              "form": 2,
+              "root": "صفق",
+              "arabic": "صَفَّقَ",
+              "source": "Hans Wehr",
+              "meaning": "to flap, clap, smack · to clap one’s hands , applaud",
+              "quadriliteral_pattern": null
+            },
+            "meaning": "clapped / applauded",
+            "surface": "صَفَّقَ",
+            "token_index": 0
+          }
+        ]
+      },
+      "source_id": "f623eb29-52d0-4d80-bc2a-f2614640849e",
+      "source_kind": "book",
+      "content_hash": "8e1ba4487bb7b45e086ec2729872832a",
+      "source_label": "Layla & the Shadow",
+      "chapter_number": 11,
+      "paragraph_index": 6
+    },
+    {
+      "id": "51b43784-625a-4a42-a853-2cf7abfb0a04:199",
+      "cefr": "B2",
+      "book_id": "534cf977-42a7-4989-914b-2f58395779c4",
+      "payload": {
+        "arabic": "تَابَعَ دَانِيَالُ: «لَكِنَّ مُسَاعَدَتَكَ لَهَا لَا تَعْنِي أَنْ تُقَرِّرَ مَتَى يَجِبُ أَنْ أَتَوَقَّفَ.»",
+        "english": "Daniel continued, ‘But helping her doesn't mean you decide when I should stop.’",
+        "targets": [
+          {
+            "verb": {
+              "id": "hans:2529:3:تابع",
+              "form": 3,
+              "root": "تبع",
+              "arabic": "تَابَعَ",
+              "source": "Hans Wehr",
+              "meaning": "to follow · to agree, concur , be in agreement or conformity",
+              "quadriliteral_pattern": null
+            },
+            "meaning": "continued",
+            "surface": "تَابَعَ",
+            "token_index": 0
+          }
+        ]
+      },
+      "source_id": "51b43784-625a-4a42-a853-2cf7abfb0a04",
+      "source_kind": "book",
+      "content_hash": "75df5c6dd62c2446bf366a520f9c6688",
+      "source_label": "The Prisoner's Proof",
+      "chapter_number": 9,
+      "paragraph_index": 199
+    },
+    {
+      "id": "d61acf3b-0dec-4776-9889-d7f39fe84afd:81",
+      "cefr": "A1",
+      "book_id": "27a6ba6a-a1e3-4584-bdde-49842be91ea3",
+      "payload": {
+        "arabic": "بَعْدَ قَلِيلٍ أَحْضَرَ الْمُوَظَّفُ الْمَشْرُوبَاتِ.",
+        "english": "A little later, the employee brought the drinks.",
+        "targets": [
+          {
+            "verb": {
+              "id": "hans:4831:4:أحضر",
+              "form": 4,
+              "root": "حضر",
+              "arabic": "أَحْضَرَ",
+              "source": "Hans Wehr",
+              "meaning": "to fetch, get, bring , procure, supply · to take",
+              "quadriliteral_pattern": null
+            },
+            "meaning": "brought",
+            "surface": "أَحْضَرَ",
+            "token_index": 2
+          }
+        ]
+      },
+      "source_id": "d61acf3b-0dec-4776-9889-d7f39fe84afd",
+      "source_kind": "book",
+      "content_hash": "846d1131e0a389238e10ebb7e28a8bc3",
+      "source_label": "Small Plans, Busy Days",
+      "chapter_number": 5,
+      "paragraph_index": 81
+    },
+    {
+      "id": "c711b97f-6252-4ea0-9089-b55b9d27d35a:118",
+      "cefr": "C1",
+      "book_id": "e70aa4ab-e43d-4031-bd57-e2df824c227b",
+      "payload": {
+        "arabic": "ثُمَّ تَغَيَّرَ صَوْتُ الْغُرْفَةِ.",
+        "english": "Then the sound inside the room changed.",
+        "targets": [
+          {
+            "verb": {
+              "id": "hans:15839:5:تغيّر",
+              "form": 5,
+              "root": "غير",
+              "arabic": "تَغَيَّرَ",
+              "source": "Hans Wehr",
+              "meaning": "to be altered, be modified, be changed, change, alter, vary, undergo an alteration or change",
+              "quadriliteral_pattern": null
+            },
+            "meaning": "change",
+            "surface": "تَغَيَّرَ",
+            "token_index": 1
+          }
+        ]
+      },
+      "source_id": "c711b97f-6252-4ea0-9089-b55b9d27d35a",
+      "source_kind": "book",
+      "content_hash": "1707de4a99f49e615d9f7b700fa114b1",
+      "source_label": "Blackwood Manor",
+      "chapter_number": 8,
+      "paragraph_index": 118
+    }
+  ],
+  "patterns": [
+    {
+      "id": "68ce36c7-81e4-4240-b20e-96165b879305:43",
+      "cefr": "B2",
+      "book_id": "534cf977-42a7-4989-914b-2f58395779c4",
+      "payload": {
+        "arabic": "كَبِيرٌ بِمَا يَكْفِي لِيَكُونَ مُهِمًّا.»",
+        "english": "Large enough to matter.’",
+        "targets": [
+          {
+            "surface": "كَبِيرٌ",
+            "token_index": 0,
+            "pattern_index": 0,
+            "dictionary_entry_id": 18408
+          }
+        ]
+      },
+      "source_id": "68ce36c7-81e4-4240-b20e-96165b879305",
+      "source_kind": "book",
+      "content_hash": "129b6220155f61a29f52a7d8b1045511",
+      "source_label": "The Prisoner's Proof",
+      "chapter_number": 10,
+      "paragraph_index": 43
+    },
+    {
+      "id": "a5f4c5f2-91ff-4535-b54b-2aa91db554c7:6",
+      "cefr": "B2",
+      "book_id": "534cf977-42a7-4989-914b-2f58395779c4",
+      "payload": {
+        "arabic": "حِينَ سَمِعَ مِفْتَاحًا فِي الْمَمَرِّ، رَفَعَ رَأْسَهُ تِلْقَائِيًّا.",
+        "english": "When he heard a key in the corridor, he lifted his head automatically.",
+        "targets": [
+          {
+            "surface": "مِفْتَاحًا",
+            "token_index": 2,
+            "pattern_index": 5,
+            "dictionary_entry_id": 15932
+          }
+        ]
+      },
+      "source_id": "a5f4c5f2-91ff-4535-b54b-2aa91db554c7",
+      "source_kind": "book",
+      "content_hash": "4ebc3d6614fa70503d77e55f28049586",
+      "source_label": "The Prisoner's Proof",
+      "chapter_number": 12,
+      "paragraph_index": 6
+    },
+    {
+      "id": "15777",
+      "cefr": "B1",
+      "payload": {
+        "arabic": "وَإِذَا قَالَتْ إِنَّهَا تُرِيدُ قَصْرًا كَبِيرًا مِثْلَ قَصْرِي؟",
+        "english": "And if she says she wants a grand palace like mine?",
+        "targets": [
+          {
+            "surface": "كَبِيرًا",
+            "token_index": 5,
+            "pattern_index": 0,
+            "dictionary_entry_id": 18408
+          }
+        ]
+      },
+      "position": 3,
+      "source_id": "6236cc57-5a70-47fe-93d8-93e510944825",
+      "source_kind": "transcript",
+      "content_hash": "0dc3f97f46cfd596711ae425b9c36002",
+      "source_label": "Aladin's Palace",
+      "start_seconds": 9
+    },
+    {
+      "id": "c711b97f-6252-4ea0-9089-b55b9d27d35a:153",
+      "cefr": "C1",
+      "book_id": "e70aa4ab-e43d-4031-bd57-e2df824c227b",
+      "payload": {
+        "arabic": "لَمْ يَكُنْ مِفْتَاحًا شَبِيهًا وَلَا نُسْخَةً أُخْرَى غَيْرَ مَعْرُوفَةٍ.",
+        "english": "It was not merely a similar key, nor another previously unknown copy.",
+        "targets": [
+          {
+            "surface": "مِفْتَاحًا",
+            "token_index": 2,
+            "pattern_index": 5,
+            "dictionary_entry_id": 15932
+          }
+        ]
+      },
+      "source_id": "c711b97f-6252-4ea0-9089-b55b9d27d35a",
+      "source_kind": "book",
+      "content_hash": "61ab7e1cdbd675275e8a2f6709bfac11",
+      "source_label": "Blackwood Manor",
+      "chapter_number": 8,
+      "paragraph_index": 153
+    },
+    {
+      "id": "68ce36c7-81e4-4240-b20e-96165b879305:41",
+      "cefr": "B2",
+      "book_id": "534cf977-42a7-4989-914b-2f58395779c4",
+      "payload": {
+        "arabic": "«لَكِنَّ الْفَرْقَ عَنْ تَقْرِيرِ الْمُحَاكَمَةِ كَبِيرٌ بِمَا يَكْفِي؟»",
+        "english": "‘But the difference from the trial report is large enough?’",
+        "targets": [
+          {
+            "surface": "كَبِيرٌ",
+            "token_index": 5,
+            "pattern_index": 0,
+            "dictionary_entry_id": 18408
+          }
+        ]
+      },
+      "source_id": "68ce36c7-81e4-4240-b20e-96165b879305",
+      "source_kind": "book",
+      "content_hash": "26dbf8ce16c467e1af615165d8b26c29",
+      "source_label": "The Prisoner's Proof",
+      "chapter_number": 10,
+      "paragraph_index": 41
+    }
+  ]
+}

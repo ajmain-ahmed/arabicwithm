@@ -26,8 +26,8 @@ const calls: string[] = []
 const destroy = vi.fn()
 const pause = vi.fn()
 const seek = vi.fn()
-function Harness({ id, start }: { id?: string; start?: number }) {
-  const player = useYouTubePlayer(id, undefined, start, { autoplay: true, muted: true })
+function Harness({ id, start, muted = true }: { id?: string; start?: number; muted?: boolean }) {
+  const player = useYouTubePlayer(id, undefined, start, { autoplay: true, muted })
   useEffect(() => { controls = player })
   const { wrapRef } = player
   return <div ref={wrapRef} />
@@ -130,6 +130,14 @@ describe('YouTube player lifecycle', () => {
     expect(iframe?.referrerPolicy).toBe('strict-origin-when-cross-origin')
     expect(iframe?.allowFullscreen).toBe(true)
     expect(controls.errorCode).toBeNull()
+  })
+  it('keeps native fallback autoplay muted even when sound was requested', async () => {
+    await act(async () => root.render(<Harness id="dQw4w9WgXcQ" muted={false} />))
+    await act(async () => { await vi.advanceTimersByTimeAsync(60) })
+    await act(async () => options.events.onError({ data: 153 }))
+    const url = new URL(host.querySelector('iframe')!.src)
+    expect(url.searchParams.get('autoplay')).toBe('1')
+    expect(url.searchParams.get('mute')).toBe('1')
   })
 })
 

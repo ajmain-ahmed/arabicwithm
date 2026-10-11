@@ -1,2 +1,2 @@
-import TranscriptSearch from './TranscriptSearch'
-export default function SearchPage(){return <TranscriptSearch/>}
+import { redirect } from 'next/navigation'
+export default function FormerTranscriptSearchPage(){ redirect('/search') }

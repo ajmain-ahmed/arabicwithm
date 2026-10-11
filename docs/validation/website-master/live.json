@@ -1,0 +1,32 @@
+{
+  "pages": [
+    {
+      "path": "/explore",
+      "milliseconds": 637,
+      "overflow": false,
+      "tabs": 0
+    },
+    {
+      "path": "/search",
+      "milliseconds": 689,
+      "overflow": false,
+      "tabs": 0
+    },
+    {
+      "path": "/memory",
+      "milliseconds": 113,
+      "overflow": false,
+      "tabs": 0
+    }
+  ],
+  "pageErrors": [],
+  "covers": [
+    {
+      "status": 200,
+      "milliseconds": 656,
+      "cacheControl": "public, max-age=60, stale-while-revalidate=60",
+      "bytes": 94336
+    }
+  ],
+  "searchRolloutRequired": true
+}

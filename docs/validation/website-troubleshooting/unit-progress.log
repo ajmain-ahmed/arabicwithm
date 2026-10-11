@@ -1,0 +1,291 @@
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/(admin)/admin/transcripts/AdminTranscripts.test.tsx
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/(admin)/admin/transcripts/AdminTranscripts.test.tsx
+Running offers Save draft alongside Cancel and Import and saves unfinished inputs without import validation
+Running opens saved drafts with exact input and can update the same draft without duplicates
+Running keeps draft inputs intact on save failure and never discards a draft after a failed import
+Running removes a saved draft only after verified import and retains it after an import failure
+Running uses one JSON box, defaults publication on, and retains an explicit opt-out
+Running shows useful server validation errors without closing the JSON editor
+Running offers only the essential manual-import inputs
+Running shows the missing final duration before Import and submits clock-style duration after checking
+Running rejects raw seconds in the duration field immediately and prevents Import
+Running confirms deletion for legacy and generated rows, keeps Cancel safe, then refreshes
+Running populates Edit with current JSON, keeps unsaved changes through list refresh, and formats without changing data
+Running keeps invalid edits and returns from Saving on failure, then permits correction and save
+Running downloads saved canonical JSON without replacing current unsaved edits
+Running prevents duplicate saves and re-enables Save after a thrown request
+Running allows minutes / HH:MM fallback without changing existing clock interpretation
+Running searches beyond the current page, resets group filters, and reveals matches without expanding groups
+Running loads saved group and duration, changes assignment and keeps channel metadata out of the visible form
+Running creates a group from Import without losing unsaved JSON and makes it immediately selectable
+Running opens Add Transcript inside a flat group with that group preselected
+Running places duration formats below the input and exposes help by tap
+Running moves an old unassigned transcript without re-saving its content, even after JSON formatting
+Running uses the latest null assignment from Edit rather than an older list assignment
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/(admin)/admin/transcripts/AdminTranscripts.test.tsx
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/resumableManualImport.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/resumableManualImport.test.ts
+Running small source retains arbitrary fields, diacritics, nullable endpoints and grouping
+Running large enriched source resumes committed batches, handles lost acknowledgements and checks all records before publishing
+Running a 57014 rolls back only the current batch, and retry neither duplicates nor loses data
+Running uses byte-aware limits without truncation, rejects duplicate videos and protects published records
+Running blocks publication when saved records are missing and denies client/non-admin mutations
+Running preserves classifier decisions when the third matching transcript arrives
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/resumableManualImport.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/reviewer/ReviewerWorkspace.test.tsx
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/(admin)/admin/transcripts/AdminTranscripts.test.tsx
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/(admin)/admin/transcripts/AdminTranscripts.test.tsx
+Running offers Save draft alongside Cancel and Import and saves unfinished inputs without import validation
+Running opens saved drafts with exact input and can update the same draft without duplicates
+Running keeps draft inputs intact on save failure and never discards a draft after a failed import
+Running removes a saved draft only after verified import and retains it after an import failure
+Running uses one JSON box, defaults publication on, and retains an explicit opt-out
+Running shows useful server validation errors without closing the JSON editor
+Running offers only the essential manual-import inputs
+Running shows the missing final duration before Import and submits clock-style duration after checking
+Running rejects raw seconds in the duration field immediately and prevents Import
+Running confirms deletion for legacy and generated rows, keeps Cancel safe, then refreshes
+Running populates Edit with current JSON, keeps unsaved changes through list refresh, and formats without changing data
+Running keeps invalid edits and returns from Saving on failure, then permits correction and save
+Running downloads saved canonical JSON without replacing current unsaved edits
+Running prevents duplicate saves and re-enables Save after a thrown request
+Running allows minutes / HH:MM fallback without changing existing clock interpretation
+Running searches beyond the current page, resets group filters, and reveals matches without expanding groups
+Running loads saved group and duration, changes assignment and keeps channel metadata out of the visible form
+Running creates a group from Import without losing unsaved JSON and makes it immediately selectable
+Running opens Add Transcript inside a flat group with that group preselected
+Running places duration formats below the input and exposes help by tap
+Running moves an old unassigned transcript without re-saving its content, even after JSON formatting
+Running uses the latest null assignment from Edit rather than an older list assignment
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/(admin)/admin/transcripts/AdminTranscripts.test.tsx
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/resumableManualImport.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/resumableManualImport.test.ts
+Running small source retains arbitrary fields, diacritics, nullable endpoints and grouping
+Running large enriched source resumes committed batches, handles lost acknowledgements and checks all records before publishing
+Running a 57014 rolls back only the current batch, and retry neither duplicates nor loses data
+Running uses byte-aware limits without truncation, rejects duplicate videos and protects published records
+Running blocks publication when saved records are missing and denies client/non-admin mutations
+Running preserves classifier decisions when the third matching transcript arrives
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/resumableManualImport.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/reviewer/ReviewerWorkspace.test.tsx
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/reviewer/ReviewerWorkspace.test.tsx
+Running submits an inline Editor comment with the exact source snapshot, without a modal, reload or scroll
+Running preserves independent drafts and failed comments, prevents duplicate clicks, and restores previous comments
+Running ignores late comment completions after changing chapter scope
+Running lets Admin copy exact saved passages, all chapter corrections and selections across pages with brief feedback
+Running keeps Editor comments visible without exposing individual, bulk or selection collection controls
+Running retains Admin copy access in My Suggestions while keeping the list in its existing own-record mode
+Running rechecks Admin access on copy and leaves the clipboard untouched when backend access is revoked
+Running offers Admin scope/export controls inside Reviewer Workspace and requires selection before querying all suggestions
+Running shows query failures as errors with retry rather than stale cards or a false empty result
+Running keeps chapter selection when switching views and scrolls after each source page renders
+Running allows Admin Accept/Reject with immediate status updates and blocks duplicate mutations
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/reviewer/ReviewerWorkspace.test.tsx
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/word-search/WordSearchAccess.test.tsx
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/word-search/WordSearchAccess.test.tsx
+Running serves the existing game page without requiring a session
+Running starts and completes the existing puzzle for null
+Running starts and completes the existing puzzle for {"id":"free"}
+Running starts and completes the existing puzzle for {"id":"premium"}
+Running starts and completes the existing puzzle for {"id":"editor"}
+Running starts and completes the existing puzzle for {"id":"admin"}
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/word-search/WordSearchAccess.test.tsx
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/platformMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/platformMigration.test.ts
+Running actual PostgreSQL migration and Memory transactions > is rerunnable, exempts exactly the original books and preserves old XP
+Running actual PostgreSQL migration and Memory transactions > records 8, resumes for 22 in the other direction, then rejects further practice without losing XP
+Running actual PostgreSQL migration and Memory transactions > does not let concurrent requests overspend the quota
+Running actual PostgreSQL migration and Memory transactions > allows Premium beyond 30 without increasing XP; retries and repeated sources cannot farm XP
+Running actual PostgreSQL migration and Memory transactions > allows centrally authorised admins beyond the free limit without a subscription
+Running actual PostgreSQL migration and Memory transactions > resets by persisted date; expiration removes access but preserves all progress
+Running actual PostgreSQL migration and Memory transactions > rejects stale billing events
+Running actual PostgreSQL migration and Memory transactions > protects direct database access and service-only mutations
+Running stores feedback metadata and protects direct client writes
+Running awards XP once per distinct card per day and retains weekly practice counts
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/platformMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/(admin)/admin/components/ChapterEditDialog.test.tsx
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/(admin)/admin/components/ChapterEditDialog.test.tsx
+Running keeps both audio sections optional and omits manual narrator/duration fields
+Running saves pasted Arabic and English paths without waiting for metadata
+Running saves linked audio when duration is unavailable
+Running shows invalid source errors and prevents metadata writes
+Running removes a newly linked draft before any database record exists
+Running creates a chapter with selected initial audio: Arabic undefined
+Running creates a chapter with selected initial audio: English undefined
+Running creates a chapter with selected initial audio: Arabic English
+Running retains the created chapter and successful first language on a second-language failure
+Running loads and preserves legacy Arabic audio when editing a chapter
+Running defaults Arabic publishing for missing/null flags and preserves explicit false
+Running uploads immediately for an existing chapter and retries a failed write without another upload
+Running keeps the other language editable during an upload and suppresses duplicate submissions
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/(admin)/admin/components/ChapterEditDialog.test.tsx
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/transcriptGroupsMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/transcriptGroupsMigration.test.ts
+Running backfills only proven manual imports without deleting shared records or episodes
+Running finds exact, partial, Arabic variants, diacritics, punctuation and whitespace across all pages
+Running searches parent and subgroup names and returns database counts without duplication
+Running creates and renames groups but prevents deeper nesting and deletion of populated groups
+Running imports into a subgroup and atomically edits metadata, moves and returns to Ungrouped
+Running rejects duplicate imports, stale edits, invalid groups and episode-linked target videos
+Running denies non-admin RPC access and client table writes with RLS and grants
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/transcriptGroupsMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/finalOverhaulMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/finalOverhaulMigration.test.ts
+Running final overhaul database policy > saves independent Premium and Editor with optional notes and no billing changes
+Running final overhaul database policy > Admin inherits Premium; final Admin protection rolls back combined changes
+Running final overhaul database policy > accepts large canonical imports and persists rich raw token data
+Running final overhaul database policy > rejects malformed data atomically and denies direct client mutations
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/finalOverhaulMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/manualAwmImportMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/manualAwmImportMigration.test.ts
+Running imports a valid AWM file ungrouped with phrases, identical starts and milliseconds intact
+Running edits an existing transcript with the same validation and preserves its identity and raw enrichment
+Running rejects duplicate imports without changing any existing canonical content
+Running rolls back invalid grouping and invalid enrichment with precise operation/segment errors
+Running keeps partial legacy enrichment in raw storage without manufacturing canonical properties
+Running retains generated validation and denies non-admin and client RPC execution
+Running rolls back an edit that fails grouping AFTER indexing, including prior segment IDs and translation jobs
+Running uses the same Arabic-letter rule in SQL and preflight and rejects every invalid token atomically
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/manualAwmImportMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/reviewMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/reviewMigration.test.ts
+Running database role and review security > seeds protected roles and prevents final Admin demotion
+Running database role and review security > uses safe directory fields with genuine subscriptions, search, counts and pagination
+Running database role and review security > blocks browser role RPC spoofing and canonical/suggestion/role/audit writes or deletes
+Running database role and review security > allows reviewer submissions without canonical mutations and owns suggestion reads
+Running database role and review security > persists comment-only feedback with reviewer/chapter/line attribution for Admin review
+Running database role and review security > edits/withdraws only own pending suggestions, preserving history
+Running database role and review security > applies English correction atomically and retains token metadata and review attribution
+Running database role and review security > detects changed/deleted targets and concurrent source changes without overwriting
+Running database role and review security > accepts/rejects/replies on show suggestions and protects authorship on role revocation
+Running database role and review security > requires annotated tokens, allows Admin review of their own suggestion and still denies Editors
+Running database role and review security > serializes simultaneous demotions so one Admin survives
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/reviewMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/websitePremiumMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/websitePremiumMigration.test.ts
+Running Premium and session policy in real PostgreSQL > manual revoke preserves paid access and does not edit billing
+Running Premium and session policy in real PostgreSQL > counts starts, not the 50 cards, and allows same-session resume/retry
+Running Premium and session policy in real PostgreSQL > blocks queue replacement and cross-account progress
+Running Premium and session policy in real PostgreSQL > allows multiple Premium sessions and resets on a new London day
+Running Premium and session policy in real PostgreSQL > manual Premium removes the session limit and revoking it restores the daily cap
+Running Premium and session policy in real PostgreSQL > denies direct anonymous/authenticated protected APIs and raw guest chapters
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/websitePremiumMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/websiteTranscriptMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/websiteTranscriptMigration.test.ts
+Running website generation migration and shared transcript boundaries > rejects non-admin actors and direct authenticated generation/deletion
+Running website generation migration and shared transcript boundaries > deduplicates the video ID without replacing source or invoking another provider
+Running website generation migration and shared transcript boundaries > keeps real integer timing chronological, skips enrichment, and queues translation
+Running website generation migration and shared transcript boundaries > reports translation failure without publication, then publishes complete paired English for the existing search
+Running website generation migration and shared transcript boundaries > retains legacy indexing and deletes all owned rows for any origin without touching shared data
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/websiteTranscriptMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/transcriptJsonEditMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/transcriptJsonEditMigration.test.ts
+Running validates and authorises before replacement, preserving the saved source
+Running corrects Arabic/timing, adds and removes segments/tokens while retaining transcript identity and metadata
+Running rolls back metadata, source and child rows if indexing fails after validation
+Running rejects a stale editor without replacing newer saved work
+Running preserves generated publication opt-out, rejects missing English for published data and cancels stale translation jobs
+Running keeps real JSON indexing and token enrichment when saving group, video ID and duration together
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/transcriptJsonEditMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/standaloneTranscriptGroupsMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/standaloneTranscriptGroupsMigration.test.ts
+Running restores every old standalone record with no backfill, excluding Shows and unrelated imports
+Running creates flat groups, preserves legacy internal parents and counts only direct assignments
+Running moves to a group and back without changing ANY transcript, segment, token or translation values
+Running imports with optional group and still supports actual edits through the existing indexer
+Running denies Show moves, non-admins, stale versions and client table access
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/standaloneTranscriptGroupsMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/manualDraftMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/manualDraftMigration.test.ts
+Running saves incomplete form text verbatim and lists it in Drafts without importing or publishing
+Running replays a lost save acknowledgement without duplication and protects changed drafts from stale saves or deletes
+Running enforces ownership, administrator authorization, RLS and service-only RPC privileges
+Running can delete a version-matched draft and list an empty group without altering transcripts or groups
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/manualDraftMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/manualSourceFirstMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/manualSourceFirstMigration.test.ts
+Running imports mixed content and completely malformed enrichment through actual RPC and canonical triggers
+Running preserves valid enrichment and reports partial enrichment independently of import status
+Running allows retry without uploading, reindexing source, or changing timestamps and published data
+Running records optional dictionary failures internally while genuine storage failures roll back
+Running rejects structural errors together and protects an existing record on failed edit or duplicate import
+Running keeps private snapshots and mutation RPCs unavailable to clients and non-admins
+Running retries a legacy saved transcript without upload and preserves valid existing canonical enrichment
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/manualSourceFirstMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/audiobookMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/audiobookMigration.test.ts
+Running audiobook migration > allows one valid source per chapter and rejects ambiguous records
+Running audiobook migration > stores audio progress separately and blocks direct authenticated reads
+Running audiobook migration > migrates legacy audio and progress without changing paths and isolates languages
+Running audiobook migration > adds stable sources without changing historical data or language uniqueness
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/audiobookMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/wordSearchMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/wordSearchMigration.test.ts
+Running Word Search completion migration > persists XP and active time atomically
+Running Word Search completion migration > returns zero and does not duplicate XP or time on retry
+Running Word Search completion migration > blocks direct writes and service-only RPC calls from browser roles
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/wordSearchMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/websiteGenerationRepair.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/websiteGenerationRepair.test.ts
+Running preserves existing records and indexer while adding generation configuration
+Running registers an unpublished draft and safely reuses it for repeated submissions
+Running reports missing credentials and denies invalid videos, episodes and non-admins
+Running saves reviewed JSON on the same record and rejects stale edits without overwriting
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/websiteGenerationRepair.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/memoryReviewMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/memoryReviewMigration.test.ts
+Running reproduces the service-role/no-JWT failure and rejects another user
+Running persists with authenticated identity, caps client XP and retries idempotently
+Running does not trust a client premium flag; verified Admin access does bypass the cap
+Running denies anonymous access without weakening the authenticated contract
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/memoryReviewMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/websiteLearningMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/websiteLearningMigration.test.ts
+Running aggregates all lifetime records while bounding the daily chart response
+Running denies direct client access and works for the website service without a user JWT
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/websiteLearningMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/bookReadingTimeMigration.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/bookReadingTimeMigration.test.ts
+Running book reading-time migration > adds a nullable positive duration and is rerunnable
+Running book reading-time migration > fills only blank descriptions
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/lib/bookReadingTimeMigration.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/actions/admin-books.test.ts
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/actions/admin-books.test.ts
+Running valid input persists in PostgreSQL and can be retrieved/rendered in Admin lists
+Running rejects invalid fields without a DB mutation {"slug":""}
+Running rejects invalid fields without a DB mutation {"title":""}
+Running rejects invalid fields without a DB mutation {"description":"short"}
+Running rejects invalid fields without a DB mutation {"reading_time_minutes":0}
+Running rejects invalid fields without a DB mutation {"reading_time_minutes":1.5}
+Running rejects invalid fields without a DB mutation {"reading_time_minutes":null}
+Running rejects invalid fields without a DB mutation {"level":"wrong"}
+Running returns a clear duplicate-slug error and preserves the first book
+Running fails closed with a reviewable permission message for non-Admin users
+Running maps schema drift to an actionable result without leaking SQL
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/actions/admin-books.test.ts
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/components/navbar/NavigationAccess.test.tsx
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/components/navbar/NavigationAccess.test.tsx
+Running omits Word Search from desktop and responsive website navigation on mobile=false
+Running omits Word Search from desktop and responsive website navigation on mobile=true
+Running shows the desktop Admin entry only for admin permissions and retains account navigation
+Running shows the desktop Admin entry only for editor permissions and retains account navigation
+Running shows the desktop Admin entry only for user permissions and retains account navigation
+Running offers the correct mobile destinations for admin permissions
+Running offers the correct mobile destinations for editor permissions
+Running offers the correct mobile destinations for user permissions
+Running keeps exactly five primary destinations for guest on Home and Word Search
+Running keeps exactly five primary destinations for user on Home and Word Search
+Running keeps exactly five primary destinations for admin on Home and Word Search
+Running keeps exactly five primary destinations for premium on Home and Word Search
+Running keeps floating mobile navigation at five destinations with none active on Word Search
+Running leaves Home Admin access solely in Quick Actions on mobile=false
+Running leaves Home Admin access solely in Quick Actions on mobile=true
+Running routes every normal mobile entry once and closes without permission UI
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/components/navbar/NavigationAccess.test.tsx
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/(admin)/admin/components/BookEditDialog.test.tsx
+Started C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/(admin)/admin/components/BookEditDialog.test.tsx
+Running submits a valid new book, refreshes the library and closes only after success
+Running renders server validation/storage errors and retains the form
+Running rejects a blank description and locks rapid duplicate Save presses
+Finished C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/(admin)/admin/components/BookEditDialog.test.tsx
+Queued C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/app/memory/MemoryPage.test.tsx

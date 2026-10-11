@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import LearningSignInGate from '@/app/components/LearningSignInGate'
+import InfoOutlined from '@mui/icons-material/InfoOutlined'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { initialPractice, practiceReducer } from '@/app/lib/memorySession'
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore, useTransition } from 'react'
@@ -44,7 +46,9 @@ function subscribeToDirection(onChange: () => void): () => void {
 }
 
 export default function MemoryPage(props: { library: MemoryLibrary; loadError?: string }) {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+  if (loading) return <LinearProgress aria-label="Loading Memory" />
+  if (!user) return <LearningSignInGate activity="Memory" />
   return <MemorySession key={`${user?.id ?? 'guest'}:${props.library.selectedShowId ?? ''}:${props.library.selectedEpisodeId ?? ''}`} {...props} />
 }
 
@@ -277,10 +281,10 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         {progressLoading && <Box role="status" sx={{ mt: 2 }}><Typography>Loading Memory progress...</Typography><LinearProgress /></Box>}
         {progressError && <Alert severity="error" sx={{ mt: 2 }} action={<Button onClick={retryProgress} disabled={progressLoading}>Retry</Button>}>{progressError}</Alert>}
         {!progressError && sessionError && <Alert severity="warning" sx={{ mt: 2 }} action={<Button onClick={retryProgress}>Retry</Button>}>{sessionError} Your completed-card statistics are still available.</Alert>}
-        {!loading && !user && <Alert severity="info" sx={{ mt: 2 }}>You can practise without signing in. Sign in only if you want to save your progress.</Alert>}
+
         {saveError && <Alert severity="error" sx={{ mt: 2 }}>{saveError}</Alert>}
         {ready && <Typography sx={{ mt: 2 }} color="text.secondary">{premium ? 'Unlimited daily Memory practice' : `${used} / ${MEMORY.dailyFreeSessions} sessions today`}</Typography>}
-        {limited && <Alert severity="info" sx={{ mt: 2 }} action={<Button onClick={() => setUpgrade(true)}>Upgrade to AWM+</Button>}>You&apos;ve used today&apos;s free Memory session. You can still resume it or view its recap.</Alert>}
+        {limited && <Paper role="status" variant="outlined" sx={{ mt: 2, mx: 'auto', maxWidth: 480, p: {xs: 2, sm: 3}, textAlign: 'center', borderRadius: 3 }}><InfoOutlined sx={{ color: 'var(--awm-gold)', mb: 1 }} /><Typography>You&apos;ve used today&apos;s free Memory session.</Typography><Typography sx={{ mt: 1, color: 'text.secondary' }}>Unlock unlimited Memory sessions. You can still resume your saved session or view its recap.</Typography><Button fullWidth variant="contained" onClick={() => setUpgrade(true)} sx={{ mt: 2, minHeight: 48, textTransform: 'none', fontSize: {xs: 13, sm: 15} }}>Upgrade to Arabic with M</Button></Paper>}
         {saved && !started && <Button onClick={()=>void resume()} disabled={!ready || saving}>{saved.index===saved.cards.length?'View saved recap':'Resume saved session'} - {saved.completed} completed</Button>}
         {started && <Button disabled={saving} onClick={() => void saveAndExit()} sx={{ mt: 2 }}>{user ? 'Save & Exit' : 'Exit practice'}</Button>}
         {loadError && <Alert severity="error" sx={{ mt: 2.5 }}>{loadError}</Alert>}

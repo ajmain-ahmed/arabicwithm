@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { boundedFetch, withDataDeadline } from '@/app/lib/boundedFetch'
 
 /** Refresh auth cookies before Server Components inspect the session. */
 export async function proxy(request: NextRequest) {
@@ -8,6 +9,7 @@ export async function proxy(request: NextRequest) {
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   if (!url || !key) return response
   const client = createServerClient(url, key, {
+    global: { fetch: boundedFetch },
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll(cookies) {
@@ -18,7 +20,13 @@ export async function proxy(request: NextRequest) {
     },
   })
   // getUser verifies the session remotely; never authorize from an unverified cookie.
-  await client.auth.getUser()
+  try {
+    await withDataDeadline(8000, () => client.auth.getUser())
+  } catch (error) {
+    // Public routes remain available during Auth outages. Protected pages and
+    // actions still verify identity with their own server-side guards.
+    console.error('[proxy] Unable to refresh session:', error instanceof Error ? error.message : 'Auth unavailable')
+  }
   return response
 }
 export const config = {

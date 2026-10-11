@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { boundedFetch } from '@/app/lib/boundedFetch';
 import { cookies } from "next/headers";
 
 export async function getAuthClient() {
@@ -7,6 +8,7 @@ export async function getAuthClient() {
     (process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL)!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
+      global: {fetch: boundedFetch},
       cookies: {
         getAll() {
           return cookieStore.getAll();

@@ -95,7 +95,6 @@ export default async function ChapterPage({
     })
     throw error
   }
-  const previousChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : null
   const nextChapter = chapterIndex >= 0 && chapterIndex < chapters.length - 1 ? chapters[chapterIndex + 1] : null
 
   return (
@@ -115,18 +114,13 @@ export default async function ChapterPage({
 
         <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
 
-        <Box component="nav" aria-label="Chapter navigation" sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, mt: 3 }}>
-          {previousChapter && (
-            <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(previousChapter.slug)}`} startIcon={<ArrowBack />} variant="outlined" sx={{ maxWidth: '100%', color: 'var(--awm-bark)', borderColor: 'rgba(44,26,14,0.2)', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
-              {previousChapter.title}
-            </Button>
-          )}
+        <Box component="nav" aria-label="Chapter navigation" sx={{ display: 'grid', gridTemplateColumns: nextChapter ? 'repeat(2,minmax(0,1fr))' : 'minmax(0,280px)', justifyContent: 'center', alignItems: 'stretch', gap: { xs: 1, sm: 1.5 }, mt: 3, '& .MuiButton-root': { minHeight: 48, px: {xs: 1, sm: 2}, fontSize: {xs: 13, sm: 15} } }}>
           <Button href={`/books/${encodeURIComponent(book.slug)}`} startIcon={<FormatListBulleted />} variant="outlined" sx={{ color: 'var(--awm-muted)', borderColor: 'rgba(122,110,101,0.3)', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
-              All chapters
+              All Chapters
           </Button>
           {nextChapter && (
             <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(nextChapter.slug)}`} endIcon={<ArrowForward />} variant="contained" sx={{ maxWidth: '100%', bgcolor: '#b8860b', color: '#fff', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: '#946c08' } }}>
-              {nextChapter.title}
+              Next Chapter
             </Button>
           )}
         </Box>

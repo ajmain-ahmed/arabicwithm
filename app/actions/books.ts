@@ -219,19 +219,40 @@ export const fetchChaptersForBookPublic = unstable_cache(
 
     if (error) throw new Error(error.message)
 
-    const extras = await fetchChapterListExtrasForBookPublic(bookId)
+
     return (data ?? []).map((chapter) => ({
       id: String(chapter.id),
       slug: String(chapter.slug),
       title: String(chapter.title),
       chapterNumber: Number(chapter.chapter_number),
-      teaser: extras[String(chapter.id)]?.teaser,
-      blockCount: extras[String(chapter.id)]?.blockCount ?? 0,
+
+      blockCount: 0,
     }))
   },
   ["books", "public", "chapters", "chapter-teasers-v3"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
+
+
+export async function fetchChapterCardsForBookPublic(bookId: string): Promise<PublicChapter[]> {
+  const chapters = await fetchChaptersForBookPublic(bookId)
+  try {
+    const extras = await fetchChapterListExtrasForBookPublic(bookId)
+    return chapters.map(ch => ({...ch, ...extras[ch.id]}))
+  } catch (error) {
+    console.error('[chapter teasers] unavailable', error)
+    return chapters
+  }
+}
+
+export const fetchChapterNavigationForPublic = unstable_cache(async (): Promise<Record<string, PublicChapter[]>> => {
+  if (!hasServiceClientConfig()) return {}
+  const {data,error} = await serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number').order('chapter_number')
+  if(error) throw new Error(error.message)
+  const result: Record<string, PublicChapter[]> = {}
+  for(const row of data ?? []) (result[row.book_id] ??= []).push({id:row.id,slug:row.slug,title:row.title,chapterNumber:row.chapter_number,blockCount:0})
+  return result
+}, ['chapter-navigation-v1'], {revalidate:60,tags:['books-public']})
 
 const fetchChapterContent = unstable_cache(
   async (bookId: string, chapterSlug: string): Promise<PublicChapterWithContent | null> => {

@@ -34,6 +34,7 @@ vi.mock("@/app/actions/memory", () => ({
   resumeMemorySession:mocks.resume,
   submitMemoryReview: mocks.review,
 }));
+vi.mock("@/app/components/AuthDialog", () => ({default: ({open,onClose}:{open:boolean;onClose:()=>void}) => open?<aside role="dialog"><button onClick={onClose}>Close sign-in</button></aside>:null}));
 import MemoryPage from "./MemoryPage";
 import type { MemoryLibrary } from "@/app/actions/memory";
 const cards = Array.from({ length: 2 }, (_, i) => ({
@@ -197,10 +198,14 @@ it("does not advance or navigate when a review resolves after unmount", async ()
 });
 it("guest starts request sign-in without creating a Memory session", async () => {
   mocks.auth.user=null
-  const auth=vi.fn();window.addEventListener('open-auth-dialog',auth)
-  await mount();await click('Start')
-  expect(auth).toHaveBeenCalledOnce();expect(mocks.begin).not.toHaveBeenCalled();expect(mocks.review).not.toHaveBeenCalled()
-  window.removeEventListener('open-auth-dialog',auth)
+  await mount()
+  expect(host.querySelector('[role="dialog"]')).not.toBeNull()
+  expect(host.textContent).not.toContain('Start')
+  await click('Close sign-in')
+  expect(host.querySelector('[role="dialog"]')).toBeNull()
+  await click('Sign In')
+  expect(host.querySelector('[role="dialog"]')).not.toBeNull()
+  expect(mocks.begin).not.toHaveBeenCalled();expect(mocks.review).not.toHaveBeenCalled()
 });
 
 it("does not let an old progress refresh erase a successful review", async () => {

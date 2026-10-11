@@ -1,0 +1,12 @@
+{
+  "authTitle": true,
+  "protectedState": true,
+  "source": "https://www.youtube.com/watch?v=VBd6bOlOm9o&t=679",
+  "mobileOverflow": false,
+  "apiAvailable": true,
+  "playing": true,
+  "nativeSpeedVerified": true,
+  "pageErrors": [],
+  "scope": "Production website with real public Supabase content. No real account signed in.",
+  "stage": "Before the final closing-theme guard. Native player and public-data rendering were verified; the later filtered request encountered Supabase connection timeouts."
+}

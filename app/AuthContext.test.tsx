@@ -28,3 +28,12 @@ it('does not restore an old session after a newer sign-out event or after unmoun
  await act(async()=>finish({data:{session:adminSession}}))
  expect(host.textContent).not.toContain('"user":"admin"');expect(mocks.access).not.toHaveBeenCalled()
 })
+it('does not refresh over navigation when the first event restores an existing session', async () => {
+  mocks.session.mockImplementation(() => new Promise(() => {}))
+  await act(async () => root.render(<AuthProvider><Probe/></AuthProvider>))
+  await act(async () => mocks.callback!('SIGNED_IN', adminSession))
+  expect(host.textContent).toContain('"user":"admin"')
+  expect(mocks.refresh).not.toHaveBeenCalled()
+  await act(async () => mocks.callback!('SIGNED_OUT', null))
+  expect(mocks.refresh).toHaveBeenCalledOnce()
+})

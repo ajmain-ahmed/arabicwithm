@@ -36,7 +36,7 @@ export default function Navbar() {
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
     const [scrolled, setScrolled] = useState(false)
     const navbarRef = useRef<HTMLElement>(null)
-    const { isAdmin, isReviewer } = useAccountAccess()
+    const { isAdmin, isReviewer } = useAccountAccess(drawerOpen || Boolean(userMenuAnchor) ? 'menu-open' : 'menu-closed')
 
     const showAdminLink = isAdmin && pathname !== '/'
 

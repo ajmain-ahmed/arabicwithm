@@ -45,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     let stateChanged = false
+    let initialized = false
     let identity: string | null = null
 
     // Grab the current session on mount
@@ -52,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then(({ data: { session } }: { data: { session: Session | null } }) => {
         // Only apply getSession result if onAuthStateChange hasn't already fired
         if (active && !stateChanged) {
+          initialized = true
           identity=session?.user.id??null
           setSession(session)
           setUser(session?.user ?? null)
@@ -72,12 +74,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!active) return
       const nextIdentity=session?.user.id??null
       const identityChanged=nextIdentity!==identity
+      // Restoring the initial cookie session is hydration, not a new login.
+      // A refresh here can race a user's first navigation and replace it.
+      const shouldRefresh = initialized && identityChanged
+      initialized = true
       identity=nextIdentity
       stateChanged = true
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
-      if (identityChanged&&(_event === "SIGNED_IN" || _event === "SIGNED_OUT")) router.refresh()
+      if (shouldRefresh&&(_event === "SIGNED_IN" || _event === "SIGNED_OUT")) router.refresh()
     })
 
     return () => { active=false; subscription.unsubscribe() }

@@ -19,8 +19,10 @@ import {
   Close,
   VolunteerActivismRounded,
   GridOnRounded,
+  AccountTreeOutlined,
+  SearchOutlined,
 } from '@mui/icons-material'
-import { Box, Button, CircularProgress, Container, Dialog, DialogContent, DialogTitle, IconButton, Skeleton, SwipeableDrawer, Typography, Paper, useMediaQuery } from '@mui/material'
+import { Box, Button, Container, Dialog, DialogContent, DialogTitle, IconButton, Skeleton, SwipeableDrawer, Typography, Paper, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useAuth } from '@/app/AuthContext'
 import { useAccountAccess } from '@/app/lib/useAccountAccess'
@@ -62,8 +64,10 @@ interface ActivityUpdate { userId: string; activity: LearningActivity }
 interface PremiumUpdate { authKey: string; premium: boolean }
 
 const QUICK_LINKS = [
+  { title: 'Search', label: 'Search shows, episodes and books', href: '/search', icon: SearchOutlined },
+  { title: 'Grammar', label: 'Naḥw and Ṣarf activities', href: '/grammar', icon: AccountTreeOutlined },
   { title: 'Word Search', label: 'Find Arabic words from real transcripts', href: '/word-search', icon: GridOnRounded },
-  { title: 'Explore', label: 'Discover a random clip', href: '/explore', icon: ExploreOutlined },
+  { title: 'Explore', label: 'Browse AWM videos and reading', href: '/explore', icon: ExploreOutlined },
   { title: 'Read', label: 'Open graded books', href: '/books', icon: AutoStories },
   { title: 'Watch', label: 'Browse full episodes', href: '/cartoons', icon: Headphones },
   { title: 'Settings', label: 'Manage your learning profile', href: (userId: string) => `/profile/${userId}#profile-settings`, icon: SettingsOutlined },
@@ -311,7 +315,7 @@ function LearningStats({
 }
 
 export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
-  const { user, session, loading } = useAuth()
+  const { user, session } = useAuth()
   const { isAdmin } = useAccountAccess()
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
   const [premiumUpdate, setPremiumUpdate] = useState<PremiumUpdate | null>(null)
@@ -404,8 +408,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
     }
   }, [user])
 
-  if (loading) return <Box sx={{ minHeight: '65vh', display: 'grid', placeItems: 'center' }}><CircularProgress sx={{ color: '#b8860b' }} /></Box>
-
+  // Public content stays available while an expired session is being recovered.
   const displayName = String(user?.user_metadata?.full_name ?? user?.email?.split('@')[0] ?? 'learner').split(' ')[0]
 
   if (!user) {

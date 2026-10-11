@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Box, Chip, Container, Paper, Typography } from '@mui/material'
 import { AccessTimeRounded, ArrowBack, ChevronRight, HeadphonesRounded } from '@mui/icons-material'
-import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
+import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChapterCardsForBookPublic } from '@/app/actions/books'
 import BookReadingCta from './BookReadingCta'
 import BookListRemovalButton from './BookListRemovalButton'
 import ChapterAccessLock, { ChapterLink } from './ChapterAccessLock'
@@ -29,7 +29,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
   const book = await fetchBookBySlugPublic(slug)
   if (!book) notFound()
 
-  const [chapters, audioChapters] = await Promise.all([fetchChaptersForBookPublic(book.id), fetchPublishedAudioForBook(book.id)])
+  const [chapters, audioChapters] = await Promise.all([fetchChapterCardsForBookPublic(book.id), fetchPublishedAudioForBook(book.id)])
   const audioChapterIds = new Set(audioChapters.map((audio) => audio.chapterId))
 
   return (

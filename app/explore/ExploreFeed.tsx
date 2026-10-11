@@ -206,7 +206,7 @@ function ExploreVideo({
     active && isYouTube ? source.id : undefined,
     setCurrentTime,
     undefined,
-    { autoplay: false, muted: !soundEnabled, onEnded }
+    { autoplay: true, muted: !soundEnabled, onEnded }
   )
   /* The player is the source of truth once ready: the user can also unmute
      or change volume with YouTube's own controls, which fire onVolumeChange. */
@@ -358,7 +358,8 @@ function ExploreVideo({
           </Box>
         )}
         <Box sx={{ position: 'absolute', zIndex: 4, right: { xs: 'max(6px, env(safe-area-inset-right))', md: 12 }, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 0.85 }}>
-          <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
+          {/* A native fallback uses YouTube's controls without API commands. */}
+          {(!isYouTube || isReady) && <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
             <IconButton
               onClick={toggleSound}
               aria-label={soundMuted ? 'Turn Explore sound on' : 'Mute Explore video'}
@@ -366,7 +367,7 @@ function ExploreVideo({
             >
               {soundMuted ? <VolumeOff /> : <VolumeUp />}
             </IconButton>
-          </Tooltip>
+          </Tooltip>}
           <Tooltip title="Go to episode" placement="left">
             <IconButton
               component={Link}

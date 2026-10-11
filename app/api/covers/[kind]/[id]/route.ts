@@ -1,3 +1,4 @@
+import { withDataDeadline } from '@/app/lib/boundedFetch'
 import { createHash } from 'node:crypto'
 import { serviceClient } from '@/app/lib/supabase'
 import { getYouTubeThumbnailUrl } from '@/app/lib/cartoons'
@@ -10,7 +11,7 @@ import { getYouTubeThumbnailUrl } from '@/app/lib/cartoons'
 // path. Clients revalidate so an overwritten object cannot remain stale.
 
 async function fetchCoverRow(table: string, id: string) {
-  const { data, error } = await serviceClient.from(table).select('*').eq('id', id).maybeSingle()
+  const { data, error } = await serviceClient.from(table).select(table === 'episodes' ? 'id,slug,cover,youtube_id' : 'id,slug,cover').eq('id', id).maybeSingle()
   if (error) throw error
   return data ?? null
 }
@@ -26,7 +27,7 @@ async function fetchCoverBytes(bucket: string, path: string): Promise<CoverBytes
   return { bytes, etag: createHash('md5').update(new Uint8Array(bytes)).digest('hex') }
 }
 
-const COVER_CACHE_CONTROL = 'public, no-cache, must-revalidate'
+const COVER_CACHE_CONTROL = 'public, max-age=60, stale-while-revalidate=60'
 
 function coverResponse(cover: CoverBytes, ifNoneMatch: string | null): Response {
   const etag = `"${cover.etag}"`
@@ -46,6 +47,7 @@ function coverResponse(cover: CoverBytes, ifNoneMatch: string | null): Response 
 export async function GET(request: Request, { params }: { params: Promise<{ kind: string; id: string }> }) {
   const { kind, id } = await params
   if (!['shows', 'episodes', 'books'].includes(kind) || !/^[\w-]+$/.test(id)) return new Response(null, { status: 404 })
+  return withDataDeadline(6000, async () => {
   try {
     const table = kind as 'shows' | 'episodes' | 'books'
     const data = await fetchCoverRow(table, id)
@@ -87,8 +89,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
         .eq('show_id', String(row.id))
         .order('created_at', { ascending: false })
         .limit(8)
-      for (const episode of episodes ?? []) {
-        const cover = await fetchCoverBytes('covers', `episodes/${episode.slug}.webp`)
+      const rows = episodes ?? []
+      for (let i=0;i<rows.length;i+=2) {
+        const covers = await Promise.all(rows.slice(i,i+2).map(episode => fetchCoverBytes('covers', `episodes/${episode.slug}.webp`)))
+        const cover = covers.find(Boolean)
         if (cover) return coverResponse(cover, request.headers.get('if-none-match'))
       }
       for (const episode of episodes ?? []) {
@@ -103,4 +107,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
     console.error('[catalogue cover]', { kind, id, error })
     return new Response(null, { status: 503 })
   }
+  })
 }

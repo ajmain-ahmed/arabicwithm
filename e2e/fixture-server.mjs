@@ -32,6 +32,7 @@ const showId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 const metadata = new Map()
 const handles=new Map(),profiles=new Map(),roles=new Map(),accessAudit=[]
 const roleFor=id=>roles.get(id)??(id===ids.admin?'admin':id===ids.reviewer?'editor':'user')
+const rpcLog=[];let failSearch=false
 let failAudioSave = false
 const manualPremium=new Map(), memoryStarts=new Map(), memorySnapshots=new Map(), memoryReviews=new Map(), ownReviews=new Map(), earned=new Set(), wordTotals=new Map()
 const effective=id=>id===ids.premium||roleFor(id)==='admin'||manualPremium.get(id)===true
@@ -74,6 +75,8 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   const chunks = []; for await (const chunk of req) chunks.push(chunk)
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
+  if(url.pathname==='/fixture/request-log')return json(res,{rpc:rpcLog})
+  if(url.pathname==='/fixture/search-failure'){failSearch=body.fail;return json(res,{})}
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
   if(url.pathname==='/fixture/import-failure'){failImportAfter=body.after??null;return json(res,{})}
   if(url.pathname==='/fixture/reset-overhaul'){failImportAfter=null;formDrafts.clear();importJobs.clear();handles.clear();profiles.clear();roles.clear();accessAudit.length=0;manualPremium.clear();memoryStarts.clear();memorySnapshots.clear();memoryReviews.clear();ownReviews.clear();earned.clear();wordTotals.clear();metadata.clear();tables.youtube_transcripts.length=0;tables.transcript_groups.length=0;tables.admin_manual_transcripts.length=0;tables.transcript_segments.length=0;return json(res,{})}
@@ -94,9 +97,28 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if (req.method === 'PUT' && userId) metadata.set(userId, { ...metadata.get(userId), ...body.data })
     return userId ? json(res, account(userId)) : json(res, { message: 'Auth session missing!' }, 401)
   }
+  if (url.pathname === '/auth/v1/token' && req.method === 'POST') {
+    const id = Object.values(ids).find(id => account(id).email === body.email)
+    if (!id) return json(res,{message:'Invalid credentials'},400)
+    const expires = Math.floor(Date.now()/1000)+3600
+    const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url')
+    return json(res,{access_token:`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:id,aud:'authenticated',exp:expires,role:'authenticated'})}.fixture-signature`,refresh_token:'fixture-refresh',expires_in:3600,expires_at:expires,token_type:'bearer',user:account(id)})
+  }
   if (url.pathname === '/auth/v1/logout') return json(res, {})
   if (url.pathname.startsWith('/rest/v1/rpc/')) {
     const rpc = url.pathname.split('/').at(-1)
+    rpcLog.push(rpc)
+    const learning = JSON.parse(readFileSync('e2e/learning-data.json','utf8'))
+    if(rpc==='website_search_content_v1') {
+      if(failSearch)return json(res,{code:'57014',message:'statement timeout'},500)
+      const hits=[{key:'b:'+bookId,kind:'book',title:'Test Book',source:'Test Book',arabic:'',english:'A graded book.',href:'/books/test-book'},
+      {key:'c:'+chapterId,kind:'chapter',title:'First Chapter',source:'Test Book',arabic:'',english:'A book. Paragraph 1.',href:'/books/test-book/chapter-1#sentence-0'},
+      {key:'e:'+tables.episodes[0].id,kind:'episode',title:'Clip 0',source:'Test Show',arabic:'',english:'This is a book.',href:'/cartoons/test-show/clip-0?t=12'},
+      {key:'s:'+showId,kind:'show',title:'Test Show',source:'Test Show',arabic:'',english:'Test show.',href:'/cartoons/test-show'}];
+      return json(res,hits.filter(h=>h.key>(body.p_after??'') && (h.kind!=='chapter'||body.p_books)))
+    }
+    if(rpc==='nahw_candidates') return json(res,learning.nahw)
+    if(rpc==='prepared_practice_candidates') return json(res,body.p_offset ? [] : body.p_kind==='sarf'?learning.sarf:learning.patterns)
     if(['admin_save_manual_draft','admin_load_manual_draft','admin_list_manual_drafts','admin_delete_manual_draft'].includes(rpc)){
       if(roleFor(body.p_actor)!=='admin')return json(res,{message:'Forbidden'},403)
       if(rpc==='admin_list_manual_drafts'){
