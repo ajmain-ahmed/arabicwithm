@@ -40,13 +40,8 @@ export default function Navbar() {
 
     const showAdminLink = isAdmin && pathname !== '/'
 
-<<<<<<< HEAD
     const supportsOverlay = pathname === '/' || pathname === '/explore'
-    const isOverlay = supportsOverlay && !scrolled && !drawerOpen && !userMenuAnchor && !contactOpen && !authDialogOpen
-=======
-    const supportsOverlay = pathname === '/' || pathname === '/explore' || pathname === '/vocabulary'
     const isOverlay = supportsOverlay && !scrolled && !drawerOpen && !userMenuAnchor && !authDialogOpen
->>>>>>> origin/main
     const navColor = isOverlay ? '#fff' : 'var(--awm-forest)'
 
     useEffect(() => {

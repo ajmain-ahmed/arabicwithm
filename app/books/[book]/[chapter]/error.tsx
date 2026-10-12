@@ -23,7 +23,7 @@ export default function BookReaderError({
           <Typography component="h1" sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 30, sm: 38 }, fontWeight: 600 }}>
             This chapter could not be opened
           </Typography>
-          <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>
+          <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', lineHeight: 1.65 }}>
             The reader could not load the chapter data. Please try again; if the problem continues, return to the books page and choose the chapter again.
           </Typography>
           {error.digest && (

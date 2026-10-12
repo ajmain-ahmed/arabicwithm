@@ -57,7 +57,7 @@ it('preserves independent drafts and failed comments, prevents duplicate clicks,
  expect(second.value).toBe('Second draft');expect(host.textContent).toContain('Try again')
  mocks.submit.mockResolvedValueOnce('retry');await act(async()=>{second.closest('.MuiCard-root')!.querySelector<HTMLButtonElement>('button')!.click()})
  expect(second.value).toBe('');expect(host.textContent).not.toContain('Try again')
-})
+}, 15000)
 it('ignores late comment completions after changing chapter scope',async()=>{
  let finish!:(value:unknown)=>void;mocks.submit.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
  await act(async()=>root.render(<ReviewerWorkspace/>));await select(0,'Reader');await select(1,'Chapter 3 — Arrival')

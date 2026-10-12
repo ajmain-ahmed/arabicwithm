@@ -70,7 +70,7 @@ export default async function ChapterPage({
             <Typography component="h1" sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 29, sm: 36 }, fontWeight: 600 }}>
               Chapter content is unavailable
             </Typography>
-            <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>
+            <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', lineHeight: 1.65 }}>
               We found {listed.title}, but its reading content could not be loaded. Please return to the book and choose the chapter again.
             </Typography>
             <Button href={`/books/${encodeURIComponent(book.slug)}`} startIcon={<ArrowBack />} variant="contained" sx={{ mt: 3, bgcolor: 'var(--awm-gold)', textTransform: 'none', '&:hover': { bgcolor: '#946c08' } }}>
@@ -103,11 +103,11 @@ export default async function ChapterPage({
       <Container maxWidth="xl">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>
           <Link href={`/books/${encodeURIComponent(book.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', '&:hover': { color: '#b8860b' } }}>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { color: '#b8860b' } }}>
               <ArrowBack sx={{ fontSize: 18 }} /> {book.title}
             </Box>
           </Link>
-          <Typography sx={{ color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 13 }}>
+          <Typography sx={{ color: 'var(--awm-muted-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13 }}>
             {chapter.chapterNumber} of {chapters.length}
           </Typography>
         </Box>
@@ -115,11 +115,11 @@ export default async function ChapterPage({
         <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
 
         <Box component="nav" aria-label="Chapter navigation" sx={{ display: 'grid', gridTemplateColumns: nextChapter ? 'repeat(2,minmax(0,1fr))' : 'minmax(0,280px)', justifyContent: 'center', alignItems: 'stretch', gap: { xs: 1, sm: 1.5 }, mt: 3, '& .MuiButton-root': { minHeight: 48, px: {xs: 1, sm: 2}, fontSize: {xs: 13, sm: 15} } }}>
-          <Button href={`/books/${encodeURIComponent(book.slug)}`} startIcon={<FormatListBulleted />} variant="outlined" sx={{ color: 'var(--awm-muted)', borderColor: 'rgba(122,110,101,0.3)', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
+          <Button href={`/books/${encodeURIComponent(book.slug)}`} startIcon={<FormatListBulleted />} variant="outlined" sx={{ color: 'var(--awm-muted)', borderColor: 'rgba(122,110,101,0.3)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
               All Chapters
           </Button>
           {nextChapter && (
-            <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(nextChapter.slug)}`} endIcon={<ArrowForward />} variant="contained" sx={{ maxWidth: '100%', bgcolor: '#b8860b', color: '#fff', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: '#946c08' } }}>
+            <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(nextChapter.slug)}`} endIcon={<ArrowForward />} variant="contained" sx={{ maxWidth: '100%', bgcolor: '#b8860b', color: '#fff', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { bgcolor: '#946c08' } }}>
               Next Chapter
             </Button>
           )}

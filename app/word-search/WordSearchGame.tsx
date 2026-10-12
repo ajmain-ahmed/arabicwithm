@@ -318,7 +318,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
       {!started ? (
         <Paper elevation={0} sx={{ mx: 'auto', maxWidth: 720, p: { xs: 2, sm: 3 }, textAlign: 'center', borderRadius: '16px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
           <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 28, sm: 34 }, fontWeight: 600, color: 'text.primary' }}>Choose your difficulty</Typography>
-          <Typography sx={{ mt: 0.5, mb: 2.25, color: 'text.secondary', fontFamily: 'Jost, sans-serif' }}>Select a level, then start your puzzle.</Typography>
+          <Typography sx={{ mt: 0.5, mb: 2.25, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}>Select a level, then start your puzzle.</Typography>
           <WordSearchDifficultySelector value={selectedDifficulty} disabled={busy} onChange={setSelectedDifficulty} />
           <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 0.75 }}>
             <Chip label={`${selectedConfig.gridSize} × ${selectedConfig.gridSize} grid`} variant="outlined" />
@@ -332,7 +332,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
       ) : !puzzle || puzzle.placements.length === 0 ? (
         <Paper elevation={0} sx={{ p: 4, textAlign: 'center', borderRadius: '14px', border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
           <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 26, color: 'text.primary' }}>No puzzle available</Typography>
-          <Typography sx={{ mt: 0.75, color: 'text.secondary', fontFamily: 'Jost, sans-serif' }}>Not enough reliable vocabulary is available for this activity yet.</Typography>
+          <Typography sx={{ mt: 0.75, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}>Not enough reliable vocabulary is available for this activity yet.</Typography>
           <Button onClick={() => void newGame()} disabled={busy} variant="contained" sx={{ mt: 2 }}>Try another source</Button>
         </Paper>
       ) : (
@@ -376,7 +376,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
             <Typography id="word-search-complete-title" component="h2" sx={{ mt: 1.5, fontFamily: 'var(--font-heading)', fontSize: 32, fontWeight: 600, color: 'text.primary' }}>
               {completion.level > completion.previousLevel ? 'Level Up!' : 'Word Search Complete!'}
             </Typography>
-            <Typography sx={{ mt: 0.5, color: 'text.secondary', fontFamily: 'Jost, sans-serif' }}>Nice work — you found every word.</Typography>
+            <Typography sx={{ mt: 0.5, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}>Nice work — you found every word.</Typography>
             <Typography sx={{ mt: 2, color: 'primary.main', fontFamily: 'var(--font-heading)', fontSize: 40, fontWeight: 700, lineHeight: 1 }}>
               {user ? `+${completion.awarded} XP` : 'Sign in to save XP'}
             </Typography>
@@ -387,9 +387,9 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
                 ['Time', formatWordSearchDuration(completion.durationSeconds)],
                 ['Words', `${completion.wordsFound} / ${completion.wordCount}`],
                 ['Accuracy', `${accuracy}%`],
-              ].map(([label, value]) => <Box key={label} sx={{ minWidth: 0, p: 1.25, borderRadius: '10px', bgcolor: 'action.hover' }}><Typography sx={{ color: 'text.secondary', fontFamily: 'Jost, sans-serif', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase' }}>{label}</Typography><Typography sx={{ mt: 0.3, overflowWrap: 'anywhere', color: 'text.primary', fontFamily: 'var(--font-heading)', fontSize: 17, fontWeight: 700 }}>{value}</Typography></Box>)}
+              ].map(([label, value]) => <Box key={label} sx={{ minWidth: 0, p: 1.25, borderRadius: '10px', bgcolor: 'action.hover' }}><Typography sx={{ color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase' }}>{label}</Typography><Typography sx={{ mt: 0.3, overflowWrap: 'anywhere', color: 'text.primary', fontFamily: 'var(--font-heading)', fontSize: 17, fontWeight: 700 }}>{value}</Typography></Box>)}
             </Box>
-            <Typography sx={{ mt: 1.5, color: 'text.secondary', fontFamily: 'Jost, sans-serif', fontSize: 12 }}>{completion.mistakes} mistake{completion.mistakes === 1 ? '' : 's'} · {completion.hintsUsed} hint{completion.hintsUsed === 1 ? '' : 's'} · {completion.revealsUsed} reveal{completion.revealsUsed === 1 ? '' : 's'}</Typography>
+            <Typography sx={{ mt: 1.5, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 }}>{completion.mistakes} mistake{completion.mistakes === 1 ? '' : 's'} · {completion.hintsUsed} hint{completion.hintsUsed === 1 ? '' : 's'} · {completion.revealsUsed} reveal{completion.revealsUsed === 1 ? '' : 's'}</Typography>
             <Button fullWidth variant="contained" onClick={() => router.push('/')} sx={{ mt: 2.5, minHeight: 48, borderRadius: '10px', textTransform: 'none', fontWeight: 700 }}>Continue</Button>
             <Button fullWidth color="secondary" onClick={() => void newGame()} sx={{ mt: 0.75, textTransform: 'none' }}>Play Again</Button>
           </DialogContent>

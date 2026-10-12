@@ -36,7 +36,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
     <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 3, md: 6 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 6 } }}>
       <Container maxWidth="lg">
         <Link href="/books" style={{ color: 'inherit', textDecoration: 'none' }}>
-          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', mb: 3, '&:hover': { color: '#b8860b' } }}>
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', mb: 3, '&:hover': { color: '#b8860b' } }}>
             <ArrowBack sx={{ fontSize: 18 }} /> Back to books
           </Box>
         </Link>
@@ -113,8 +113,8 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                     {chapter.chapterNumber}
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}>{chapter.title}</Typography>
-                    {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
+                    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}>{chapter.title}</Typography>
+                    {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
                   </Box>
                   <ChapterAccessLock chapterNumber={chapter.chapterNumber} />
                   {audioChapterIds.has(chapter.id) && <HeadphonesRounded aria-label="Audiobook available" sx={{ color: 'var(--awm-gold)', fontSize: 20 }} />}

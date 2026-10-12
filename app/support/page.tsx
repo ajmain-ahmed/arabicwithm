@@ -56,10 +56,10 @@ export default async function SupportPage({
               <Box component="span" sx={{ display: 'block' }}>Support</Box>
               <Box component="span" sx={{ display: 'block', whiteSpace: 'nowrap' }}>Arabic with M</Box>
             </Typography>
-            <Typography sx={{ mt: 2, maxWidth: 650, color: 'rgba(255,255,255,.9)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 16, sm: 18 }, lineHeight: 1.75 }}>
+            <Typography sx={{ mt: 2, maxWidth: 650, color: 'rgba(255,255,255,.9)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 16, sm: 18 }, lineHeight: 1.75 }}>
               Arabic with M turns stories, cartoons and carefully graded reading into practical learning experiences. Contributions help fund content production, platform hosting, development, infrastructure and the learning tools behind those resources.
             </Typography>
-            <Typography sx={{ mt: 1.5, maxWidth: 650, color: 'rgba(255,255,255,.9)', fontFamily: 'Jost, sans-serif', lineHeight: 1.7 }}>
+            <Typography sx={{ mt: 1.5, maxWidth: 650, color: 'rgba(255,255,255,.9)', fontFamily: 'var(--font-sans), sans-serif', lineHeight: 1.7 }}>
               Support is entirely optional. Every contribution helps us expand the book and video library, improve the learning experience and keep investing in the services needed to deliver high-quality Arabic content.
             </Typography>
           </Box>

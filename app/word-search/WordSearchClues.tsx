@@ -41,7 +41,7 @@ export default function WordSearchClues({
         return (
           <Box component="li" key={word.id} sx={{ minWidth: 0, pl: 0.25, py: 0.4 }}>
             <Box sx={{ minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-              <Typography sx={{ minWidth: 0, overflowWrap: 'anywhere', color: found ? 'success.main' : 'text.primary', fontFamily: 'Jost, sans-serif', fontWeight: found ? 700 : 500, textDecoration: found ? 'line-through' : 'none' }}>
+              <Typography sx={{ minWidth: 0, overflowWrap: 'anywhere', color: found ? 'success.main' : 'text.primary', fontFamily: 'var(--font-sans), sans-serif', fontWeight: found ? 700 : 500, textDecoration: found ? 'line-through' : 'none' }}>
                 {word.english}
               </Typography>
               <Tooltip title={wordRevealed ? 'Hide Arabic' : 'Show Arabic'}>
@@ -62,7 +62,7 @@ export default function WordSearchClues({
                   {word.lemma}
                 </Typography>
                 {differentSurface && (
-                  <Typography sx={{ mt: 0.2, color: 'text.secondary', fontFamily: 'Jost, sans-serif', fontSize: 11.5 }}>
+                  <Typography sx={{ mt: 0.2, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11.5 }}>
                     Seen as <Box component="span" lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), serif', fontSize: 15 }}>{word.surfaceForm}</Box>
                   </Typography>
                 )}
@@ -90,8 +90,8 @@ export default function WordSearchClues({
                     <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), serif', fontSize: 17, lineHeight: 1.55, textAlign: 'right' }}>
                       {word.context.sentenceArabic}
                     </Typography>
-                    {word.context.translation && <Typography sx={{ mt: 0.35, color: 'text.secondary', fontFamily: 'Jost, sans-serif', fontSize: 11.5, lineHeight: 1.45 }}>{word.context.translation}</Typography>}
-                    <Typography sx={{ mt: 0.45, color: 'text.secondary', fontFamily: 'Jost, sans-serif', fontSize: 10.5 }}>{sourceLabel}</Typography>
+                    {word.context.translation && <Typography sx={{ mt: 0.35, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11.5, lineHeight: 1.45 }}>{word.context.translation}</Typography>}
+                    <Typography sx={{ mt: 0.45, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5 }}>{sourceLabel}</Typography>
                   </Box>
                 </Collapse>
               </>

@@ -140,7 +140,7 @@ function AudioSession({ audio, chapterTitle, label, render, authKey, signedIn }:
 
   const button = <Button data-reader-audio-trigger disabled={loading} onClick={togglePlayback}
     startIcon={playing ? <PauseRounded /> : <PlayArrowRounded />}
-    sx={{ minHeight: 44, width: { xs: '100%', md: 'auto' }, px: 2, borderRadius: '10px', color: { xs: 'var(--awm-bark)', md: '#fff' }, bgcolor: { xs: 'var(--awm-white)', md: 'rgba(255,255,255,.08)' }, border: '1px solid', borderColor: { xs: 'var(--awm-gold)', md: 'rgba(255,255,255,.25)' }, textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
+    sx={{ minHeight: 44, width: { xs: '100%', md: 'auto' }, px: 2, borderRadius: '10px', color: { xs: 'var(--awm-bark)', md: '#fff' }, bgcolor: { xs: 'var(--awm-white)', md: 'rgba(255,255,255,.08)' }, border: '1px solid', borderColor: { xs: 'var(--awm-gold)', md: 'rgba(255,255,255,.25)' }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
     {loading ? 'Preparing audio…' : playing ? 'Pause Audio' : label}
   </Button>
   const player = <>

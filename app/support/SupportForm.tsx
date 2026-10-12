@@ -88,7 +88,7 @@ export default function SupportForm() {
       </Button>
       <Box sx={{ mt: 1.5, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)' }}>
         <LockRounded aria-hidden="true" sx={{ fontSize: 15 }} />
-        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 12 }}>Secure one-time payment processed by Stripe</Typography>
+        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 }}>Secure one-time payment processed by Stripe</Typography>
       </Box>
     </Box>
   )
