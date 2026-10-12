@@ -24,8 +24,8 @@ export default function ToggleRow({
       '&:hover': { borderColor: `${activeColor}88`, background: `${activeColor}0d` },
     }}>
       <Box sx={{ pr: 2 }}>
-        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>{label}</Typography>
-        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)', mt: 0.3, lineHeight: 1.4 }}>{description}</Typography>
+        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.95rem', fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>{label}</Typography>
+        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)', mt: 0.3, lineHeight: 1.4 }}>{description}</Typography>
       </Box>
       <Box sx={{
         width: 38, height: 22, borderRadius: '999px', flexShrink: 0,

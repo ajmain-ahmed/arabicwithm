@@ -192,7 +192,7 @@ export default function ChapterEditDialog({
         {error && (
           <Typography
             sx={{
-              fontFamily: "Jost, sans-serif",
+              fontFamily: "var(--font-sans), sans-serif",
               fontSize: "0.95rem",
               color: "#c0392b",
               background: "rgba(192,57,43,0.06)",
@@ -210,8 +210,8 @@ export default function ChapterEditDialog({
         {!loading && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Tabs value={tab} onChange={(_, v) => setTab(v)} textColor="primary" indicatorColor="primary">
-              <Tab label="Details" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.95rem" }} />
-              <Tab label="Content JSON" sx={{ textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.95rem" }} />
+              <Tab label="Details" sx={{ textTransform: "none", fontFamily: "var(--font-sans), sans-serif", fontWeight: 600, fontSize: "0.95rem" }} />
+              <Tab label="Content JSON" sx={{ textTransform: "none", fontFamily: "var(--font-sans), sans-serif", fontWeight: 600, fontSize: "0.95rem" }} />
             </Tabs>
 
             {tab === 0 && (
@@ -283,7 +283,7 @@ export default function ChapterEditDialog({
             color="error"
             onClick={handleDelete}
             startIcon={<Delete sx={{ fontSize: "1rem" }} />}
-            sx={{ fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", order: { xs: 2, sm: 0 }, width: { xs: "100%", sm: "auto" } }}
+            sx={{ fontFamily: "var(--font-sans), sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", order: { xs: 2, sm: 0 }, width: { xs: "100%", sm: "auto" } }}
           >
             Delete
           </Button>
@@ -293,7 +293,7 @@ export default function ChapterEditDialog({
           variant="outlined"
           onClick={onClose}
           disabled={saving}
-          sx={{ fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", borderColor: "rgba(122,110,101,0.3)", color: "#7a6e65", width: { xs: "100%", sm: "auto" } }}
+          sx={{ fontFamily: "var(--font-sans), sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", borderColor: "rgba(122,110,101,0.3)", color: "#7a6e65", width: { xs: "100%", sm: "auto" } }}
         >
           Cancel
         </Button>
@@ -302,7 +302,7 @@ export default function ChapterEditDialog({
           onClick={handleSave}
           disabled={saving || loading}
           startIcon={<Save sx={{ fontSize: "1rem" }} />}
-          sx={{ background: "#2c1a0e", color: "#f5ede0", fontFamily: "Jost, sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", width: { xs: "100%", sm: "auto" }, "&:hover": { background: "#1a0f08" } }}
+          sx={{ background: "#2c1a0e", color: "#f5ede0", fontFamily: "var(--font-sans), sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", width: { xs: "100%", sm: "auto" }, "&:hover": { background: "#1a0f08" } }}
         >
           {saving ? "Saving…" : "Save"}
         </Button>

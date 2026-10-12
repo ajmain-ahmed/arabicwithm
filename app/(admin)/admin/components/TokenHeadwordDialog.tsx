@@ -59,7 +59,7 @@ export default function TokenHeadwordDialog({
     >
       <DialogTitle
         sx={{
-          fontFamily: "'EB Garamond', serif",
+          fontFamily: "var(--font-serif), serif",
           fontSize: "1.6rem",
           fontWeight: 700,
           color: "#2c1a0e",
@@ -135,7 +135,7 @@ export default function TokenHeadwordDialog({
           />
 
           <Box sx={{ borderTop: "1px solid rgba(122,110,101,0.15)", pt: 2, mt: 0.5 }}>
-            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.95rem", color: "#9e8a7a", fontWeight: 600, mb: 1 }}>
+            <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", fontSize: "0.95rem", color: "#9e8a7a", fontWeight: 600, mb: 1 }}>
               Hans Wehr
             </Typography>
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mb: 2 }}>
@@ -160,7 +160,7 @@ export default function TokenHeadwordDialog({
           onClick={onClose}
           sx={{
             textTransform: "none",
-            fontFamily: "Jost, sans-serif",
+            fontFamily: "var(--font-sans), sans-serif",
             fontSize: "1.05rem",
             fontWeight: 600,
             borderRadius: "10px",
@@ -194,7 +194,7 @@ function DialogField({ label, value, onBlur, saving, arabic, multiline, isEditin
 
   return (
     <Box>
-      <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.95rem", color: "#9e8a7a", fontWeight: 600, mb: 0.5 }}>
+      <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", fontSize: "0.95rem", color: "#9e8a7a", fontWeight: 600, mb: 0.5 }}>
         {label}
       </Typography>
       {isEditing ? (
@@ -214,7 +214,7 @@ function DialogField({ label, value, onBlur, saving, arabic, multiline, isEditin
           sx={{
             "& .MuiInputBase-root": {
               borderRadius: "8px",
-              fontFamily: arabic ? "'EB Garamond', serif" : "Jost, sans-serif",
+              fontFamily: arabic ? "var(--font-serif), serif" : "var(--font-sans), sans-serif",
               fontSize: arabic ? "1.5rem" : "1.15rem",
               ...(arabic && { direction: "rtl" }),
             },
@@ -223,7 +223,7 @@ function DialogField({ label, value, onBlur, saving, arabic, multiline, isEditin
       ) : (
         <Typography
           sx={{
-            fontFamily: arabic ? "'EB Garamond', serif" : "Jost, sans-serif",
+            fontFamily: arabic ? "var(--font-serif), serif" : "var(--font-sans), sans-serif",
             fontSize: arabic ? "1.6rem" : "1.2rem",
             fontWeight: arabic ? 700 : 400,
             color: arabic ? "#2c1a0e" : "#4a3f36",
@@ -243,12 +243,12 @@ function DialogField({ label, value, onBlur, saving, arabic, multiline, isEditin
 function ReadOnlyField({ label, value, arabic }: { label: string; value?: React.ReactNode; arabic?: boolean }) {
   return (
     <Box>
-      <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.95rem", color: "#9e8a7a", fontWeight: 600, mb: 0.5 }}>
+      <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", fontSize: "0.95rem", color: "#9e8a7a", fontWeight: 600, mb: 0.5 }}>
         {label}
       </Typography>
       <Typography
         sx={{
-          fontFamily: arabic ? "'EB Garamond', serif" : "Jost, sans-serif",
+          fontFamily: arabic ? "var(--font-serif), serif" : "var(--font-sans), sans-serif",
           fontSize: arabic ? "1.5rem" : "1.2rem",
           fontWeight: arabic ? 700 : 600,
           color: "#2c1a0e",

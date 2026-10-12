@@ -449,7 +449,7 @@ export default function ChapterReader({
       <Box sx={{ px: { xs: 2, md: 4 }, py: { xs: 2.25, md: 2.75 }, bgcolor: '#0e2e1f' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
           <Box sx={{ textAlign: 'center', minWidth: 0 }}>
-            <Typography sx={{ color: '#d4a843', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.45 }}>
+            <Typography sx={{ color: '#d4a843', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.45 }}>
               {bookTitle} · {language === 'ar' ? 'Arabic' : 'English'}
             </Typography>
             <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 31 }, lineHeight: 1.15, fontWeight: 600 }}>
@@ -471,7 +471,7 @@ export default function ChapterReader({
                 onClick={() => selectView('lines')}
                 startIcon={<ViewAgenda sx={{ fontSize: 17 }} />}
                 aria-pressed={view === 'lines'}
-                sx={{ color: view === 'lines' ? '#0e2e1f' : '#fff', bgcolor: view === 'lines' ? '#d4a843' : 'transparent', borderColor: 'rgba(255,255,255,0.25)!important', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: view === 'lines' ? '#d4a843' : 'rgba(255,255,255,0.1)' } }}
+                sx={{ color: view === 'lines' ? '#0e2e1f' : '#fff', bgcolor: view === 'lines' ? '#d4a843' : 'transparent', borderColor: 'rgba(255,255,255,0.25)!important', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { bgcolor: view === 'lines' ? '#d4a843' : 'rgba(255,255,255,0.1)' } }}
               >
                 Line by line
               </Button>
@@ -479,7 +479,7 @@ export default function ChapterReader({
                 onClick={() => selectView('book')}
                 startIcon={<MenuBook sx={{ fontSize: 17 }} />}
                 aria-pressed={view === 'book'}
-                sx={{ color: view === 'book' ? '#0e2e1f' : '#fff', bgcolor: view === 'book' ? '#d4a843' : 'transparent', borderColor: 'rgba(255,255,255,0.25)!important', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: view === 'book' ? '#d4a843' : 'rgba(255,255,255,0.1)' } }}
+                sx={{ color: view === 'book' ? '#0e2e1f' : '#fff', bgcolor: view === 'book' ? '#d4a843' : 'transparent', borderColor: 'rgba(255,255,255,0.25)!important', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { bgcolor: view === 'book' ? '#d4a843' : 'rgba(255,255,255,0.1)' } }}
               >
                 Book view
               </Button>
@@ -487,7 +487,7 @@ export default function ChapterReader({
               onClick={() => setSettingsOpen(true)}
               startIcon={<Settings sx={{ fontSize: 17 }} />}
               aria-expanded={settingsOpen}
-              sx={{ color: '#fff', bgcolor: 'transparent', borderColor: 'rgba(255,255,255,0.25)!important', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
+              sx={{ color: '#fff', bgcolor: 'transparent', borderColor: 'rgba(255,255,255,0.25)!important', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
             >
               Settings
             </Button>
@@ -545,11 +545,11 @@ export default function ChapterReader({
                           <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 23 * textScale, md: 29 * textScale }, fontWeight: 500, lineHeight: 1.9, color: 'var(--awm-bark)', textAlign: 'right' }}>
                             <ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} mobile={mobileWordPopup} onMobileOpen={openDefinition} />
                           </Typography>
-                          {block.translation && <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 14 * textScale, md: 15 * textScale }, lineHeight: 1.7 }}>{block.translation}</Typography>}
+                          {block.translation && <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14 * textScale, md: 15 * textScale }, lineHeight: 1.7 }}>{block.translation}</Typography>}
                         </>
                       ) : (
                         <>
-                          <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 18 * textScale, md: 20 * textScale }, lineHeight: 1.75 }}>{block.translation}</Typography>
+                          <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 18 * textScale, md: 20 * textScale }, lineHeight: 1.75 }}>{block.translation}</Typography>
                           <Typography component="div" lang="ar" dir="rtl" sx={{ mt: 1, color: 'var(--awm-muted)', fontFamily: READER_FONT_FAMILIES[readerFont], fontSize: { xs: 18 * textScale, md: 21 * textScale }, lineHeight: 1.8, textAlign: 'right' }}><ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} mobile={mobileWordPopup} onMobileOpen={openDefinition} /></Typography>
                         </>
                       )}
@@ -568,7 +568,7 @@ export default function ChapterReader({
             <Button onClick={() => selectLanguage('en')} aria-pressed={language === 'en'} variant={language === 'en' ? 'contained' : 'outlined'} sx={{ bgcolor: language === 'en' ? '#0e2e1f' : 'transparent', color: language === 'en' ? '#fff' : 'var(--awm-bark)' }}>English</Button>
             <Button onClick={() => selectLanguage('ar')} aria-pressed={language === 'ar'} variant={language === 'ar' ? 'contained' : 'outlined'} sx={{ bgcolor: language === 'ar' ? '#0e2e1f' : 'transparent', color: language === 'ar' ? '#fff' : 'var(--awm-bark)' }}>Arabic</Button>
           </ButtonGroup>
-          <Box lang={language} dir={language === 'ar' ? 'rtl' : 'ltr'} sx={{ maxWidth: 1120, mx: 'auto', fontFamily: language === 'ar' ? READER_FONT_FAMILIES[readerFont] : 'Jost, sans-serif', fontSize: { xs: (language === 'ar' ? 23 : 18) * textScale, md: (language === 'ar' ? 28 : 20) * textScale }, fontWeight: language === 'ar' ? 500 : 400, lineHeight: language === 'ar' ? 2.05 : 1.9, color: 'var(--awm-bark)', textAlign: language === 'ar' ? 'justify' : 'left', textAlignLast: language === 'ar' ? 'right' : 'auto', textJustify: 'inter-word' }}>
+          <Box lang={language} dir={language === 'ar' ? 'rtl' : 'ltr'} sx={{ maxWidth: 1120, mx: 'auto', fontFamily: language === 'ar' ? READER_FONT_FAMILIES[readerFont] : 'var(--font-sans), sans-serif', fontSize: { xs: (language === 'ar' ? 23 : 18) * textScale, md: (language === 'ar' ? 28 : 20) * textScale }, fontWeight: language === 'ar' ? 500 : 400, lineHeight: language === 'ar' ? 2.05 : 1.9, color: 'var(--awm-bark)', textAlign: language === 'ar' ? 'justify' : 'left', textAlignLast: language === 'ar' ? 'right' : 'auto', textJustify: 'inter-word' }}>
             {paragraphs.map((paragraph, paragraphIndex) => (
               <Box component="p" key={paragraphIndex} sx={{ m: 0, '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
                 {language === 'ar'
@@ -595,7 +595,7 @@ export default function ChapterReader({
         onClose={() => setBookmarkNotice('')}
         message={bookmarkNotice}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        slotProps={{ content: { sx: { minWidth: 0, bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', fontFamily: 'Jost, sans-serif', fontSize: 12 } } }}
+        slotProps={{ content: { sx: { minWidth: 0, bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 } } }}
       />
     </>
   )

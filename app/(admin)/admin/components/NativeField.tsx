@@ -7,7 +7,7 @@ export const nativeInputStyle: React.CSSProperties = {
   width: "100%",
   padding: "10px 12px",
   fontSize: "0.95rem",
-  fontFamily: "Jost, sans-serif",
+  fontFamily: "var(--font-sans), sans-serif",
   color: "var(--awm-bark)",
   backgroundColor: "var(--awm-cream)",
   border: "1px solid color-mix(in srgb, var(--awm-muted) 32%, transparent)",
@@ -19,7 +19,7 @@ export const nativeInputStyle: React.CSSProperties = {
 
 export const nativeLabelStyle: React.CSSProperties = {
   display: "block",
-  fontFamily: "Jost, sans-serif",
+  fontFamily: "var(--font-sans), sans-serif",
   fontSize: "0.75rem",
   fontWeight: 600,
   color: "var(--awm-muted)",

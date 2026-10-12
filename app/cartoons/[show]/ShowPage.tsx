@@ -116,7 +116,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
           >
             <Box sx={{ minWidth: 0 }}>
               <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 27, md: 38 }, fontWeight: 600, color: BARK, lineHeight: 1.12 }}>{show.title}</Typography>
-              {show.description && <Typography sx={{ display: { xs: 'none', sm: '-webkit-box' }, mt: 0.5, maxWidth: 720, color: MUTED, fontFamily: 'Jost, sans-serif', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{show.description}</Typography>}
+              {show.description && <Typography sx={{ display: { xs: 'none', sm: '-webkit-box' }, mt: 0.5, maxWidth: 720, color: MUTED, fontFamily: 'var(--font-sans), sans-serif', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{show.description}</Typography>}
             </Box>
             <Button disabled={episodes.length === 0} onClick={goToRandomEpisode} startIcon={<PlayArrow />} variant="contained" sx={{ flexShrink: 0, alignSelf: { xs: 'flex-start', sm: 'auto' }, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', px: { xs: 1.5, sm: 2.25 }, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' }, '@media (max-width: 359.95px)': { width: '100%', alignSelf: 'stretch' } }}>{ctaLabel}</Button>
           </Box>
@@ -126,22 +126,22 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
             sx={{
               display: { xs: 'none', md: 'flex' },
               mb: { xs: 1, md: 2 },
-              '& .MuiBreadcrumbs-li': { fontFamily: 'Jost, sans-serif' },
+              '& .MuiBreadcrumbs-li': { fontFamily: 'var(--font-sans), sans-serif' },
             }}
           >
             <Typography
               onClick={() => router.push('/')}
-              sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.9rem', md: '1rem' }, color: 'var(--awm-muted)', cursor: 'pointer', '&:hover': { color: GOLD } }}
+              sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: '0.9rem', md: '1rem' }, color: 'var(--awm-muted)', cursor: 'pointer', '&:hover': { color: GOLD } }}
             >
               Home
             </Typography>
             <Typography
               onClick={() => router.push('/cartoons')}
-              sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.9rem', md: '1rem' }, color: 'var(--awm-muted)', cursor: 'pointer', '&:hover': { color: GOLD } }}
+              sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: '0.9rem', md: '1rem' }, color: 'var(--awm-muted)', cursor: 'pointer', '&:hover': { color: GOLD } }}
             >
               Cartoons
             </Typography>
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: '0.9rem', md: '1rem' }, color: 'var(--awm-bark)', fontWeight: 600 }}>
+            <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: '0.9rem', md: '1rem' }, color: 'var(--awm-bark)', fontWeight: 600 }}>
               {show.title}
             </Typography>
           </Breadcrumbs>
@@ -155,7 +155,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
               height: 40,
               px: 2,
               borderRadius: '6px',
-              fontFamily: '"Jost", system-ui, sans-serif',
+              fontFamily: 'var(--font-sans), system-ui, sans-serif',
               fontSize: 13,
               fontWeight: 500,
               textTransform: 'none',

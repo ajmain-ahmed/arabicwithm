@@ -58,19 +58,12 @@ export const fetchNewOnShows = unstable_cache(
 export const fetchNewOnEpisodes = unstable_cache(
   async (): Promise<NewOnEpisode[]> => {
     if (!hasServiceClientConfig()) return []
-    const withCrop = await serviceClient
+    const { data, error } = await serviceClient
       .from("episodes")
       .select("id, slug, title, level, show_id, cover_crop")
       .order("created_at", { ascending: false })
       .limit(12)
-    const result = withCrop.error && /cover_crop/i.test(withCrop.error.message)
-      ? await serviceClient
-          .from("episodes")
-          .select("id, slug, title, level, show_id")
-          .order("created_at", { ascending: false })
-          .limit(12)
-      : withCrop
-    const { data, error } = result
+
     if (error) {
       console.error("[fetchNewOnEpisodes] error:", error)
       return []

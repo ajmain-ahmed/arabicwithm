@@ -248,7 +248,11 @@ export default function FloatingVideoPlayer() {
     } catch { /* ignore */ }
   }, [isMobile, motionX, motionY, orientation])
 
+  /* Attach the window listeners only for the duration of an active resize:
+     a permanent non-passive touchmove on window would otherwise block smooth
+     scrolling on every page, even while the player is closed. */
   useEffect(() => {
+    if (!isResizing) return
     const onMouseMove = (e: MouseEvent) => onResize(e.clientX, e.clientY)
     const onMouseUp = () => endResize()
     const onTouchMove = (e: TouchEvent) => {
@@ -268,7 +272,7 @@ export default function FloatingVideoPlayer() {
       window.removeEventListener('touchmove', onTouchMove)
       window.removeEventListener('touchend', onTouchEnd)
     }
-  }, [onResize, endResize])
+  }, [isResizing, onResize, endResize])
 
   if (!pipOpen) return null
 
@@ -315,7 +319,7 @@ export default function FloatingVideoPlayer() {
           }}
         >
           <DragIndicator sx={{ fontSize: 18, color: '#d4a843', flexShrink: 0 }} />
-          <Typography noWrap sx={{ flex: 1, minWidth: 0, fontFamily: 'Jost, sans-serif', fontSize: 11.5, fontWeight: 600 }}>
+          <Typography noWrap sx={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-sans), sans-serif', fontSize: 11.5, fontWeight: 600 }}>
             {title}
           </Typography>
           <IconButton
@@ -369,7 +373,7 @@ export default function FloatingVideoPlayer() {
         {(errorCode != null || autoplayBlocked) && (
           <Box sx={{ position: 'absolute', zIndex: 4, inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.78)', p: 2, textAlign: 'center' }}>
             <Box>
-              <Typography sx={{ mb: 1.25, color: '#fff', fontFamily: 'Jost, sans-serif', fontSize: 12.5, fontWeight: 700 }}>
+              <Typography sx={{ mb: 1.25, color: '#fff', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, fontWeight: 700 }}>
                 {errorCode != null ? `YouTube player error ${errorCode}` : 'Your browser blocked playback with sound.'}
               </Typography>
               <Button
@@ -406,7 +410,7 @@ export default function FloatingVideoPlayer() {
           <Typography
             noWrap
             sx={{
-              fontFamily: 'Jost, sans-serif',
+              fontFamily: 'var(--font-sans), sans-serif',
               fontSize: '0.75rem',
               fontWeight: 500,
               color: '#fff',

@@ -71,11 +71,12 @@ export default function LearningActivityTracker() {
     syncingRef.current = true
 
     try {
-      const activity = await recordActiveLearning({
+      /* recordActiveLearning returns a cheap ack; the dashboard refetches
+         activity on mount, so there is nothing to publish here. */
+      await recordActiveLearning({
         date: localDateKey(new Date()),
         ...snapshot,
       })
-      if (userIdRef.current === userId) publish(userId, activity)
     } catch (error) {
       if (userIdRef.current === userId) {
         pendingRef.current.activeSeconds += snapshot.activeSeconds
@@ -87,7 +88,7 @@ export default function LearningActivityTracker() {
     } finally {
       syncingRef.current = false
     }
-  }, [publish])
+  }, [])
 
   useEffect(() => {
     if (loading || !user?.id) return

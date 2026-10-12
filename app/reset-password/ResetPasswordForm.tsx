@@ -8,19 +8,18 @@ import { supabase } from '../lib/supabase/client'
 import ClientStyles from '@/app/components/ClientStyles'
 
 const PAGE_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@700&family=Jost:wght@300;400;500;600&display=swap');
   :root {
     --cream: var(--awm-cream-light); --bark: var(--awm-bark); --forest: var(--awm-forest);
     --gold: var(--awm-gold); --gold-lt: var(--awm-gold-light); --muted: var(--awm-muted);
   }
   .rp-input .MuiFilledInput-root {
     background: rgba(44,26,14,0.04); border-radius: 2px;
-    font-family: 'Jost', sans-serif;
+    font-family: var(--font-sans), sans-serif;
   }
   .rp-input .MuiFilledInput-root:hover { background: rgba(44,26,14,0.07); }
   .rp-input .MuiFilledInput-root:before,
   .rp-input .MuiFilledInput-root:after { display: none; }
-  .rp-input .MuiInputLabel-root { font-family: 'Jost', sans-serif; font-size: 0.9rem; }
+  .rp-input .MuiInputLabel-root { font-family: var(--font-sans), sans-serif; font-size: 0.9rem; }
 `
 
 type ResetPasswordFormProps = {
@@ -131,7 +130,7 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
             }}>
               Set New Password
             </Typography>
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.82rem', color: 'var(--muted)' }}>
+            <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: 'var(--muted)' }}>
               Choose a strong password for your account.
             </Typography>
           </Box>
@@ -139,7 +138,7 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
           {/* Body */}
           <Box sx={{ px: 4, py: 3.5, display: 'flex', flexDirection: 'column', gap: 2 }}>
             {message && (
-              <Alert severity={message.type} sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.85rem', borderRadius: '2px' }}>
+              <Alert severity={message.type} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.85rem', borderRadius: '2px' }}>
                 {message.text}
               </Alert>
             )}
@@ -193,7 +192,7 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
               sx={{
                 background: 'linear-gradient(135deg, #b8860b, #d4a843)',
                 color: 'var(--forest)',
-                fontFamily: 'Jost, sans-serif',
+                fontFamily: 'var(--font-sans), sans-serif',
                 fontWeight: 700,
                 fontSize: '0.875rem',
                 textTransform: 'none',

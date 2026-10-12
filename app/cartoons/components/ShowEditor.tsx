@@ -133,7 +133,7 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
             disabled={saving}
             sx={{
               textTransform: "none",
-              fontFamily: "Jost, sans-serif",
+              fontFamily: "var(--font-sans), sans-serif",
               color: "#c0392b",
               borderColor: "rgba(192,57,43,0.3)",
             }}
@@ -150,7 +150,7 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
           disabled={saving}
           sx={{
             textTransform: "none",
-            fontFamily: "Jost, sans-serif",
+            fontFamily: "var(--font-sans), sans-serif",
             borderColor: "rgba(122,110,101,0.3)",
             color: "#7a6e65",
           }}
@@ -165,7 +165,7 @@ export default function ShowEditor({ show, onSaved, onCancel }: ShowEditorProps)
           disabled={saving || !slug.trim() || !title.trim()}
           sx={{
             textTransform: "none",
-            fontFamily: "Jost, sans-serif",
+            fontFamily: "var(--font-sans), sans-serif",
             bgcolor: "#2c1a0e",
             color: "#f5ede0",
             "&:hover": { bgcolor: "#1a0f08" },

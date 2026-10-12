@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { serviceClient } from '@/app/lib/supabase'
+import { rateLimit } from '@/app/lib/rateLimit'
 import { getYouTubeThumbnailUrl } from '@/app/lib/cartoons'
 
 // Covers are cached by this route's response headers (see coverResponse below):
@@ -9,10 +10,25 @@ import { getYouTubeThumbnailUrl } from '@/app/lib/cartoons'
 // response layer (browser + CDN); the Data Cache must never sit in the request
 // path, and admin re-uploads propagate within the max-age window.
 
-async function fetchCoverRow(table: string, id: string) {
-  const { data, error } = await serviceClient.from(table).select('*').eq('id', id).maybeSingle()
+// Only the columns this route reads — never select('*'): on episodes that
+// would drag the full transcript JSONB through Postgres on every image request.
+const COVER_COLUMNS: Record<'shows' | 'episodes' | 'books', string> = {
+  shows: 'id, slug, cover',
+  episodes: 'id, slug, cover, youtube_id',
+  books: 'id, slug, cover',
+}
+
+interface CoverRow {
+  id: string
+  slug: string
+  cover?: string | null
+  youtube_id?: string | null
+}
+
+async function fetchCoverRow(table: 'shows' | 'episodes' | 'books', id: string): Promise<CoverRow | null> {
+  const { data, error } = await serviceClient.from(table).select(COVER_COLUMNS[table]).eq('id', id).maybeSingle()
   if (error) throw error
-  return data ?? null
+  return (data ?? null) as CoverRow | null
 }
 
 type CoverBytes = { bytes: ArrayBuffer; etag: string }
@@ -43,14 +59,33 @@ function coverResponse(cover: CoverBytes, ifNoneMatch: string | null): Response 
 // caller-supplied Storage paths. Public covers are served as cacheable bytes;
 // legacy private-bucket covers still get a per-request signed link, whose
 // rotating token makes them uncacheable.
+// Short TTL so repeat scans of missing ids don't re-hit the DB/storage, while
+// newly added covers still appear within minutes. YouTube redirect targets are
+// stable, so those can cache for a day.
+const NOT_FOUND_CACHE_CONTROL = 'public, max-age=300'
+const REDIRECT_CACHE_CONTROL = 'public, max-age=86400'
+
+function notFound(): Response {
+  return new Response(null, { status: 404, headers: { 'Cache-Control': NOT_FOUND_CACHE_CONTROL } })
+}
+
+function redirect(url: string): Response {
+  return new Response(null, { status: 307, headers: { Location: url, 'Cache-Control': REDIRECT_CACHE_CONTROL } })
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ kind: string; id: string }> }) {
   const { kind, id } = await params
-  if (!['shows', 'episodes', 'books'].includes(kind) || !/^[\w-]+$/.test(id)) return new Response(null, { status: 404 })
+  if (!['shows', 'episodes', 'books'].includes(kind) || !/^[\w-]+$/.test(id)) return notFound()
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown'
+  const limit = rateLimit(`covers:${ip}`, 120, 60_000)
+  if (!limit.ok) {
+    return new Response(null, { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } })
+  }
   try {
     const table = kind as 'shows' | 'episodes' | 'books'
     const data = await fetchCoverRow(table, id)
-    if (!data) return new Response(null, { status: 404 })
-    const row = data as Record<string, unknown>
+    if (!data) return notFound()
+    const row = data
     let path = typeof row.cover === 'string' ? row.cover.trim() : ''
     let bucket = 'covers'
     if (/^https?:\/\//i.test(path)) {
@@ -61,7 +96,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
         path = ''
       } else {
         const match = url.pathname.match(/^\/storage\/v1\/object\/(?:public|sign|authenticated)\/([^/]+)\/(.+)$/)
-        if (!match) return new Response(null, { status: 404 })
+        if (!match) return notFound()
         bucket = decodeURIComponent(match[1]); path = decodeURIComponent(match[2])
       }
     } else {
@@ -93,12 +128,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
       }
       for (const episode of episodes ?? []) {
         const fallback = getYouTubeThumbnailUrl(String(episode.youtube_id ?? ''))
-        if (fallback) return Response.redirect(fallback, 307)
+        if (fallback) return redirect(fallback)
       }
     }
     const fallback = kind === 'episodes' ? getYouTubeThumbnailUrl(String(row.youtube_id ?? '')) : undefined
-    if (fallback) return Response.redirect(fallback, 307)
-    return new Response(null, { status: 404 })
+    if (fallback) return redirect(fallback)
+    return notFound()
   } catch (error) {
     console.error('[catalogue cover]', { kind, id, error })
     return new Response(null, { status: 503 })

@@ -27,7 +27,7 @@ export default function SearchField({
         "& .MuiInputBase-root": {
           bgcolor: "#fff",
           borderRadius: "12px",
-          fontFamily: "Jost, sans-serif",
+          fontFamily: "var(--font-sans), sans-serif",
           fontSize: "0.95rem",
         },
       }}

@@ -23,7 +23,7 @@ function CheckoutFeedbackInner() {
   }
   return (
     <Snackbar open={!dismissed} autoHideDuration={6000} onClose={close} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-      <Alert onClose={close} severity={message.severity} variant="filled" sx={{ width: '100%', fontFamily: 'Jost, sans-serif' }}>
+      <Alert onClose={close} severity={message.severity} variant="filled" sx={{ width: '100%', fontFamily: 'var(--font-sans), sans-serif' }}>
         {message.text}
       </Alert>
     </Snackbar>

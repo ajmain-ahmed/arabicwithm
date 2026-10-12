@@ -93,7 +93,7 @@ export default function ThumbnailCropper({
       </DialogTitle>
 
       <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pb: 1 }}>
-        <Typography sx={{ color: "#7a6e65", fontFamily: "Jost, sans-serif", fontSize: "0.88rem" }}>
+        <Typography sx={{ color: "#7a6e65", fontFamily: "var(--font-sans), sans-serif", fontSize: "0.88rem" }}>
           {description}
         </Typography>
 
@@ -195,7 +195,7 @@ export default function ThumbnailCropper({
         <Button
           onClick={() => setDraft({ ...DEFAULT_THUMBNAIL_CROP })}
           size="small"
-          sx={{ alignSelf: "center", color: "#7a6e65", textTransform: "none", fontFamily: "Jost, sans-serif" }}
+          sx={{ alignSelf: "center", color: "#7a6e65", textTransform: "none", fontFamily: "var(--font-sans), sans-serif" }}
         >
           Reset position
         </Button>

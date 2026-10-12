@@ -34,11 +34,11 @@ export default function BookReadingCta({ bookSlug, chapters }: { bookSlug: strin
     <>
       {currentChapter ? (
         <Box sx={{ mb: 2 }}>
-          <Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'Jost, sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' }}>Currently reading</Typography>
-          <Typography sx={{ mt: 0.4, color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontSize: 14, fontWeight: 600 }}>{currentChapter.title} · Chapter {currentChapter.chapterNumber} of {chapters.length}</Typography>
+          <Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' }}>Currently reading</Typography>
+          <Typography sx={{ mt: 0.4, color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 14, fontWeight: 600 }}>{currentChapter.title} · Chapter {currentChapter.chapterNumber} of {chapters.length}</Typography>
         </Box>
       ) : (
-        <Typography sx={{ mb: 2, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 13 }}>Choose a language to begin reading.</Typography>
+        <Typography sx={{ mb: 2, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13 }}>Choose a language to begin reading.</Typography>
       )}
 
       <Box sx={{ display: 'inline-grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, maxWidth: '100%' }}>

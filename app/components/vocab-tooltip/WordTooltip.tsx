@@ -26,7 +26,7 @@ export default function WordTooltip({
       <Box sx={{ textAlign: 'center' }}>
         <Typography
           sx={{
-            fontFamily: '"EB Garamond", Georgia, serif',
+            fontFamily: 'var(--font-serif), Georgia, serif',
             fontSize: `calc(1.6rem * ${textScale})`,
             fontWeight: 700,
             color: 'var(--bark, #2c1a0e)',
@@ -37,7 +37,7 @@ export default function WordTooltip({
         </Typography>
         <Typography
           sx={{
-            fontFamily: 'Jost, sans-serif',
+            fontFamily: 'var(--font-sans), sans-serif',
             fontSize: `calc(0.85rem * ${textScale})`,
             color: 'var(--muted, #7a6e65)',
             mt: 0.5,
@@ -64,7 +64,7 @@ export default function WordTooltip({
             sx={{
               bgcolor: 'rgba(184,134,11,0.15)',
               color: '#b8860b',
-              fontFamily: 'Jost, sans-serif',
+              fontFamily: 'var(--font-sans), sans-serif',
               fontWeight: 600,
               fontSize: `calc(0.7rem * ${textScale})`,
               letterSpacing: '0.04em',
@@ -75,7 +75,7 @@ export default function WordTooltip({
 
       <Typography
         sx={{
-          fontFamily: 'Jost, sans-serif',
+          fontFamily: 'var(--font-sans), sans-serif',
           fontSize: `calc(0.95rem * ${textScale})`,
           color: 'var(--bark, #2c1a0e)',
           textAlign: 'center',

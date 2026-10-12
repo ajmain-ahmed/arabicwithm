@@ -140,7 +140,7 @@ export default function ImageUploadField({
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
       <Typography
         sx={{
-          fontFamily: "Jost, sans-serif",
+          fontFamily: "var(--font-sans), sans-serif",
           fontSize: "0.85rem",
           fontWeight: 600,
           color: "#7a6e65",
@@ -196,7 +196,7 @@ export default function ImageUploadField({
             startIcon={uploading ? <CircularProgress size={16} /> : <CloudUpload />}
             sx={{
               textTransform: "none",
-              fontFamily: "Jost, sans-serif",
+              fontFamily: "var(--font-sans), sans-serif",
               fontWeight: 600,
               borderRadius: "10px",
               borderColor: "rgba(184,134,11,0.4)",
@@ -237,7 +237,7 @@ export default function ImageUploadField({
               variant="outlined"
               sx={{
                 textTransform: "none",
-                fontFamily: "Jost, sans-serif",
+                fontFamily: "var(--font-sans), sans-serif",
                 fontWeight: 600,
                 borderRadius: "8px",
                 borderColor: "rgba(184,134,11,0.4)",
@@ -251,7 +251,7 @@ export default function ImageUploadField({
           {path && (
             <Typography
               sx={{
-                fontFamily: "Jost, sans-serif",
+                fontFamily: "var(--font-sans), sans-serif",
                 fontSize: "0.75rem",
                 color: "#9e8a7a",
               }}
@@ -265,7 +265,7 @@ export default function ImageUploadField({
       {error && (
         <Typography
           sx={{
-            fontFamily: "Jost, sans-serif",
+            fontFamily: "var(--font-sans), sans-serif",
             fontSize: "0.8rem",
             color: "#c0392b",
             background: "rgba(192,57,43,0.06)",

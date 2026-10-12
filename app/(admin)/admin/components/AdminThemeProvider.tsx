@@ -10,7 +10,7 @@ export default function AdminThemeProvider({ children }: { children: ReactNode }
   const adminTheme = useMemo(() => createTheme(createAwmTheme(mode), {
     typography: {
       fontSize: 16,
-      fontFamily: "Jost, 'EB Garamond', sans-serif",
+      fontFamily: "var(--font-sans), var(--font-serif), sans-serif",
       h4: { fontSize: "2rem" },
       h5: { fontSize: "1.5rem" },
       h6: { fontSize: "1.25rem" },

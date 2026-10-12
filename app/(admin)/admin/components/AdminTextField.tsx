@@ -10,12 +10,12 @@ export default function AdminTextField(props: TextFieldProps) {
       {...rest}
       sx={{
         "& .MuiInputBase-root": {
-          fontFamily: "Jost, sans-serif",
+          fontFamily: "var(--font-sans), sans-serif",
           fontSize: "0.9rem",
           borderRadius: "8px",
         },
         "& .MuiInputLabel-root": {
-          fontFamily: "Jost, sans-serif",
+          fontFamily: "var(--font-sans), sans-serif",
           fontSize: "0.85rem",
         },
         ...sx,

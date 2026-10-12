@@ -61,7 +61,7 @@ export default function BookReaderSettingsDialog({
           <Typography variant="body2" color="text.secondary">Show word definitions and dotted underlines. Turn off for uninterrupted reading.</Typography>
         </Box>
         <Box sx={{ p: 2, border: '1px solid rgba(122,110,101,0.18)', borderRadius: '12px', bgcolor: 'rgba(122,110,101,0.04)' }}>
-          <Typography sx={{ mb: 1.25, color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>
+          <Typography sx={{ mb: 1.25, color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}>
             Arabic font
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1 }}>
@@ -79,27 +79,27 @@ export default function BookReaderSettingsDialog({
         </Box>
 
         <Box sx={{ p: 2, border: '1px solid rgba(122,110,101,0.18)', borderRadius: '12px', bgcolor: 'rgba(122,110,101,0.04)' }}>
-          <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>Offline reading</Typography>
-          <Typography sx={{ mt: 0.25, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12.5 }}>Export the current chapter in {languageLabel}.</Typography>
+          <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}>Offline reading</Typography>
+          <Typography sx={{ mt: 0.25, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5 }}>Export the current chapter in {languageLabel}.</Typography>
           <Box sx={{ mt: 1.5 }}><PdfDownloadButton bookSlug={bookSlug} chapterSlug={chapterSlug} language={language} label="Download Chapter" /></Box>
         </Box>
 
         <Box sx={{ p: 2, border: '1px solid rgba(122,110,101,0.18)', borderRadius: '12px', bgcolor: 'rgba(122,110,101,0.04)' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 2 }}>
             <Box>
-              <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>
+              <Typography sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}>
                 Text size
               </Typography>
-              <Typography sx={{ mt: 0.25, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12.5 }}>
+              <Typography sx={{ mt: 0.25, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5 }}>
                 Adjust the chapter text
               </Typography>
             </Box>
-            <Typography aria-live="polite" sx={{ color: 'var(--awm-gold)', fontFamily: 'Jost, sans-serif', fontWeight: 700 }}>
+            <Typography aria-live="polite" sx={{ color: 'var(--awm-gold)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }}>
               {Math.round(textScale * 100)}%
             </Typography>
           </Box>
           <Box sx={{ mt: 1.5, display: 'grid', gridTemplateColumns: '32px minmax(150px, 1fr) 42px', alignItems: 'center', columnGap: { xs: 1.5, sm: 2.5 } }}>
-            <Typography aria-hidden="true" sx={{ color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700, textAlign: 'center' }}>A</Typography>
+            <Typography aria-hidden="true" sx={{ color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, fontWeight: 700, textAlign: 'center' }}>A</Typography>
             <Slider
               value={textScale}
               min={MIN_BOOK_TEXT_SCALE}
@@ -109,7 +109,7 @@ export default function BookReaderSettingsDialog({
               aria-label="Book text size"
               sx={{ color: '#b8860b', '& .MuiSlider-thumb': { width: 18, height: 18 }, '& .MuiSlider-track, & .MuiSlider-rail': { height: 5 } }}
             />
-            <Typography aria-hidden="true" sx={{ color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 24, lineHeight: 1, fontWeight: 700, textAlign: 'center' }}>A</Typography>
+            <Typography aria-hidden="true" sx={{ color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 24, lineHeight: 1, fontWeight: 700, textAlign: 'center' }}>A</Typography>
           </Box>
         </Box>
       </DialogContent>

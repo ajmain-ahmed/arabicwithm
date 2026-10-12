@@ -106,7 +106,7 @@ export default function PracticeWordButton({ entry }: { entry: VocabEntry }) {
             borderRadius: '9999px',
             bgcolor: '#0e2e1f',
             color: '#fff',
-            fontFamily: 'Jost, sans-serif',
+            fontFamily: 'var(--font-sans), sans-serif',
             fontSize: 13,
             justifyContent: 'center',
           },

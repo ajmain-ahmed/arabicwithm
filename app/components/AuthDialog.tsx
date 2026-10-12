@@ -37,7 +37,10 @@ function getEmailLinkClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
   if (!url || !key) throw new Error('Missing Supabase configuration')
-  if (!emailLinkClient) emailLinkClient = createClient(url, key)
+  /* Never persistSession: if Supabase ever returns a session from these
+     calls, a copy would sit in localStorage under the default key, unread and
+     never cleared by the cookie-based ssr client. */
+  if (!emailLinkClient) emailLinkClient = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
   return emailLinkClient
 }
 
@@ -60,7 +63,6 @@ interface SnackbarMessage {
 
 // ─── styles ─────────────────────────────────────────────────────────────────
 const DIALOG_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@700&family=Jost:wght@300;400;500;600&display=swap');
 
   :root {
     --sand:   var(--awm-cream);
@@ -75,14 +77,14 @@ const DIALOG_CSS = `
   .auth-input-awm .MuiFilledInput-root {
     background: rgba(44,26,14,0.04);
     border-radius: 2px;
-    font-family: 'Jost', sans-serif;
+    font-family: var(--font-sans), sans-serif;
     font-size: 0.9rem;
   }
   .auth-input-awm .MuiFilledInput-root:hover {
     background: rgba(44,26,14,0.07);
   }
   .auth-input-awm .MuiInputLabel-root {
-    font-family: 'Jost', sans-serif;
+    font-family: var(--font-sans), sans-serif;
     font-size: 0.9rem;
   }
   .auth-input-awm .MuiFilledInput-root:before,
@@ -237,7 +239,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
           onClose={() => setSnackbar(null)}
           severity={snackbar?.severity}
           variant="filled"
-          sx={{ width: '100%', fontFamily: 'Jost, sans-serif' }}
+          sx={{ width: '100%', fontFamily: 'var(--font-sans), sans-serif' }}
         >
           {snackbar?.text}
         </Alert>
@@ -289,7 +291,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
             {title}
           </Typography>
           <Typography sx={{
-            fontFamily: 'Jost, sans-serif',
+            fontFamily: 'var(--font-sans), sans-serif',
             fontSize: '0.82rem',
             color: 'var(--muted)',
             lineHeight: 1.6,
@@ -314,7 +316,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
               sx={{
                 mb: 3,
                 '& .MuiToggleButton-root': {
-                  fontFamily: 'Jost, sans-serif',
+                  fontFamily: 'var(--font-sans), sans-serif',
                   fontWeight: 500,
                   fontSize: '0.82rem',
                   letterSpacing: '0.06em',
@@ -396,7 +398,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
               sx={{
                 background: 'linear-gradient(135deg, #b8860b, #d4a843)',
                 color: '#fff',
-                fontFamily: 'Jost, sans-serif',
+                fontFamily: 'var(--font-sans), sans-serif',
                 fontWeight: 700,
                 fontSize: '0.875rem',
                 textTransform: 'none',
@@ -417,7 +419,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
                   component="span"
                   onClick={() => setForgotPassword(true)}
                   sx={{
-                    fontFamily: 'Jost, sans-serif',
+                    fontFamily: 'var(--font-sans), sans-serif',
                     fontSize: '0.8rem',
                     color: 'var(--gold)',
                     cursor: 'pointer',
@@ -436,7 +438,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
                   component="span"
                   onClick={() => setForgotPassword(false)}
                   sx={{
-                    fontFamily: 'Jost, sans-serif',
+                    fontFamily: 'var(--font-sans), sans-serif',
                     fontSize: '0.8rem',
                     color: 'var(--gold)',
                     cursor: 'pointer',
@@ -454,7 +456,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
                 <Divider
                   sx={{
                     my: 0.5,
-                    fontFamily: 'Jost, sans-serif',
+                    fontFamily: 'var(--font-sans), sans-serif',
                     fontSize: '0.75rem',
                     color: 'var(--muted)',
                     '&::before, &::after': { borderColor: 'color-mix(in srgb, var(--awm-black) 12%, transparent)' },
@@ -474,7 +476,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
                   sx={{
                     borderColor: 'var(--gold)',
                     color: 'var(--bark)',
-                    fontFamily: 'Jost, sans-serif',
+                    fontFamily: 'var(--font-sans), sans-serif',
                     fontWeight: 400,
                     fontSize: '0.88rem',
                     textTransform: 'none',

@@ -14,7 +14,7 @@ export default function CefrChip({ level, sx, ...props }: CefrChipProps) {
     bgcolor: palette.background,
     color: palette.foreground,
     borderColor: palette.background,
-    fontFamily: 'Jost, sans-serif',
+    fontFamily: 'var(--font-sans), sans-serif',
     fontWeight: 700,
     letterSpacing: '0.035em',
   } as const

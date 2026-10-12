@@ -103,7 +103,7 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
       </Typography>
 
       {error && (
-        <Typography role="alert" sx={{ p: 1.25, borderRadius: "8px", color: "var(--awm-error)", bgcolor: "color-mix(in srgb, var(--awm-error) 8%, transparent)", fontFamily: "Jost, sans-serif", fontSize: "0.9rem" }}>
+        <Typography role="alert" sx={{ p: 1.25, borderRadius: "8px", color: "var(--awm-error)", bgcolor: "color-mix(in srgb, var(--awm-error) 8%, transparent)", fontFamily: "var(--font-sans), sans-serif", fontSize: "0.9rem" }}>
           {error}
         </Typography>
       )}
@@ -149,7 +149,7 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
             disabled={saving}
             sx={{
               textTransform: "none",
-              fontFamily: "Jost, sans-serif",
+              fontFamily: "var(--font-sans), sans-serif",
               color: "#c0392b",
               borderColor: "rgba(192,57,43,0.3)",
             }}
@@ -166,7 +166,7 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
           disabled={saving}
           sx={{
             textTransform: "none",
-            fontFamily: "Jost, sans-serif",
+            fontFamily: "var(--font-sans), sans-serif",
             borderColor: "rgba(122,110,101,0.3)",
             color: "#7a6e65",
           }}
@@ -181,7 +181,7 @@ export default function EpisodeEditor({ showId, episode, onSaved, onCancel }: Ep
           disabled={saving || !slug.trim() || !title.trim()}
           sx={{
             textTransform: "none",
-            fontFamily: "Jost, sans-serif",
+            fontFamily: "var(--font-sans), sans-serif",
             bgcolor: "#2c1a0e",
             color: "#f5ede0",
             "&:hover": { bgcolor: "#1a0f08" },

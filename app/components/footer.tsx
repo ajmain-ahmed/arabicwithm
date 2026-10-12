@@ -72,10 +72,9 @@ const SOCIALS = [
    CSS
 ───────────────────────────────────────────── */
 const FOOTER_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap');
 
   .awm-footer-link {
-    font-family: 'Jost', sans-serif;
+    font-family: var(--font-sans), sans-serif;
     font-size: 0.85rem;
     font-weight: 400;
     color: var(--awm-muted);
@@ -91,7 +90,7 @@ const FOOTER_CSS = `
   .awm-footer-link:hover { color: var(--awm-gold); }
 
   .awm-legal-link {
-    font-family: 'Jost', sans-serif;
+    font-family: var(--font-sans), sans-serif;
     font-size: 0.72rem;
     color: var(--awm-muted-light);
     cursor: pointer;
@@ -166,7 +165,7 @@ export default function Footer({ onContactClick }: FooterProps) {
               </Box>
 
               <Typography sx={{
-                fontFamily: 'Jost, sans-serif',
+                fontFamily: 'var(--font-sans), sans-serif',
                 fontSize: '0.88rem', fontWeight: 300,
                 color: 'var(--awm-muted)', lineHeight: 1.8,
               }}>
@@ -176,7 +175,7 @@ export default function Footer({ onContactClick }: FooterProps) {
               {/* contact */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Email sx={{ fontSize: 15, color: 'rgba(184,134,11,0.7)' }} />
-                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.83rem', color: 'var(--awm-muted)' }}>
+                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.83rem', color: 'var(--awm-muted)' }}>
                   hello@arabicwithm.com
                 </Typography>
               </Box>
@@ -211,7 +210,7 @@ export default function Footer({ onContactClick }: FooterProps) {
           {sections.map(section => (
             <Grid key={section.title} size={{ xs: 6, sm: 4, md: 2 }}>
               <Typography sx={{
-                fontFamily: 'Jost, sans-serif',
+                fontFamily: 'var(--font-sans), sans-serif',
                 fontSize: '0.68rem', fontWeight: 600,
                 letterSpacing: '0.16em', textTransform: 'uppercase',
                 color: '#b8860b', mb: 2.5,
@@ -248,7 +247,7 @@ export default function Footer({ onContactClick }: FooterProps) {
             gap: 2,
           }}>
             <Typography sx={{
-              fontFamily: 'Jost, sans-serif',
+              fontFamily: 'var(--font-sans), sans-serif',
               fontSize: '0.72rem', color: '#767676', letterSpacing: '0.04em',
             }}>
               © {new Date().getFullYear()} ArabicWithM. All rights reserved.

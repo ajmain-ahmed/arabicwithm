@@ -209,7 +209,7 @@ export default function BooksAdminPage() {
           <Typography variant="h4" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 600, color: "#2c1a0e" }}>
             Books
           </Typography>
-          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+          <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
             {books.length.toLocaleString()} books · {totalChapters.toLocaleString()} chapters
           </Typography>
         </Box>
@@ -221,7 +221,7 @@ export default function BooksAdminPage() {
             bgcolor: "#2c1a0e",
             color: "#f5ede0",
             textTransform: "none",
-            fontFamily: "Jost, sans-serif",
+            fontFamily: "var(--font-sans), sans-serif",
             fontWeight: 600,
             borderRadius: "10px",
             "&:hover": { bgcolor: "#1a0f08" },
@@ -240,7 +240,7 @@ export default function BooksAdminPage() {
       </Box>
 
       {error && (
-        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "Jost, sans-serif" }}>{error}</Typography>
+        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "var(--font-sans), sans-serif" }}>{error}</Typography>
       )}
 
       <Paper elevation={0} sx={{ borderRadius: "16px", border: "1px solid rgba(122,110,101,0.15)", overflow: "hidden" }}>
@@ -268,13 +268,13 @@ export default function BooksAdminPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4, fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
                     Loading books…
                   </TableCell>
                 </TableRow>
               ) : filteredBooks.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4, fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
                     No books match your search.
                   </TableCell>
                 </TableRow>
@@ -295,7 +295,7 @@ export default function BooksAdminPage() {
                         sx={{
                           cursor: "pointer",
                           backgroundColor: isExpanded ? "rgba(184,134,11,0.04)" : "inherit",
-                          "& td": { fontFamily: "Jost, sans-serif" },
+                          "& td": { fontFamily: "var(--font-sans), sans-serif" },
                         }}
                       >
                         <TableCell width={50}>
@@ -311,7 +311,7 @@ export default function BooksAdminPage() {
                           </IconButton>
                         </TableCell>
                         <TableCell sx={{ fontWeight: 600, color: "#2c1a0e" }}>{book.title}</TableCell>
-                        <TableCell sx={{ direction: "rtl", fontFamily: "'EB Garamond', serif", fontSize: "1.05rem" }}>
+                        <TableCell sx={{ direction: "rtl", fontFamily: "var(--font-serif), serif", fontSize: "1.05rem" }}>
                           {book.title_ar}
                         </TableCell>
                         <TableCell sx={{ color: "#7a6e65" }}>{book.slug}</TableCell>
@@ -342,7 +342,7 @@ export default function BooksAdminPage() {
                                   onClick={() => openNewChapter(book.id)}
                                   sx={{
                                     textTransform: "none",
-                                    fontFamily: "Jost, sans-serif",
+                                    fontFamily: "var(--font-sans), sans-serif",
                                     fontWeight: 600,
                                     color: "#2c1a0e",
                                     borderRadius: "8px",
@@ -367,13 +367,13 @@ export default function BooksAdminPage() {
                                     <TableBody>
                                       {visibleChapters.length === 0 ? (
                                         <TableRow>
-                                          <TableCell colSpan={4} align="center" sx={{ py: 3, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                                          <TableCell colSpan={4} align="center" sx={{ py: 3, fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
                                             {q ? "No chapters match your search." : "No chapters for this book yet."}
                                           </TableCell>
                                         </TableRow>
                                       ) : (
                                         visibleChapters.map((chapter) => (
-                                          <TableRow key={chapter.id} hover sx={{ "& td": { fontFamily: "Jost, sans-serif" } }}>
+                                          <TableRow key={chapter.id} hover sx={{ "& td": { fontFamily: "var(--font-sans), sans-serif" } }}>
                                             <TableCell>{chapter.chapter_number}</TableCell>
                                             <TableCell sx={{ fontWeight: 600 }}>
                                               <Link

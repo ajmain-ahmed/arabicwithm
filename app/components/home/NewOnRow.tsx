@@ -104,7 +104,7 @@ function RowTile({
       <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(5,23,15,0) 42%, rgba(5,23,15,0.85) 100%)' }} />
       <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, p: { xs: 1.25, md: 1.5 } }}>
         {item.meta && (
-          <Typography sx={{ color: 'rgba(255,255,255,0.78)', fontFamily: 'Jost, sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', textShadow: '0 1px 8px rgba(0,0,0,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <Typography sx={{ color: 'rgba(255,255,255,0.78)', fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', textShadow: '0 1px 8px rgba(0,0,0,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {item.meta}
           </Typography>
         )}

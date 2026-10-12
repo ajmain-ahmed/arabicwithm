@@ -79,7 +79,7 @@ export default function HansWehrAdminPage() {
         <Typography variant="h4" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 600, color: "#2c1a0e" }}>
           Hans Wehr
         </Typography>
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+        <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
           Search the Hans Wehr dictionary by ID, word, or definition.
         </Typography>
       </Box>
@@ -114,7 +114,7 @@ export default function HansWehrAdminPage() {
                 />
               }
               label="Exact match"
-              sx={{ mt: 0.5, "& .MuiFormControlLabel-label": { fontFamily: "Jost, sans-serif", fontSize: "0.85rem", color: "#7a6e65" } }}
+              sx={{ mt: 0.5, "& .MuiFormControlLabel-label": { fontFamily: "var(--font-sans), sans-serif", fontSize: "0.85rem", color: "#7a6e65" } }}
             />
           </Box>
 
@@ -128,7 +128,7 @@ export default function HansWehrAdminPage() {
               placeholder="Search headword…"
               sx={{
                 "& .MuiInputBase-input": {
-                  fontFamily: "'EB Garamond', serif",
+                  fontFamily: "var(--font-serif), serif",
                   fontSize: "1.1rem",
                   direction: "rtl",
                 },
@@ -144,7 +144,7 @@ export default function HansWehrAdminPage() {
                 />
               }
               label="Exact match"
-              sx={{ mt: 0.5, "& .MuiFormControlLabel-label": { fontFamily: "Jost, sans-serif", fontSize: "0.85rem", color: "#7a6e65" } }}
+              sx={{ mt: 0.5, "& .MuiFormControlLabel-label": { fontFamily: "var(--font-sans), sans-serif", fontSize: "0.85rem", color: "#7a6e65" } }}
             />
           </Box>
 
@@ -167,7 +167,7 @@ export default function HansWehrAdminPage() {
                 />
               }
               label="Exact match"
-              sx={{ mt: 0.5, "& .MuiFormControlLabel-label": { fontFamily: "Jost, sans-serif", fontSize: "0.85rem", color: "#7a6e65" } }}
+              sx={{ mt: 0.5, "& .MuiFormControlLabel-label": { fontFamily: "var(--font-sans), sans-serif", fontSize: "0.85rem", color: "#7a6e65" } }}
             />
           </Box>
         </Box>
@@ -182,7 +182,7 @@ export default function HansWehrAdminPage() {
               bgcolor: "#2c1a0e",
               color: "#f5ede0",
               textTransform: "none",
-              fontFamily: "Jost, sans-serif",
+              fontFamily: "var(--font-sans), sans-serif",
               fontWeight: 600,
               borderRadius: "10px",
               "&:hover": { bgcolor: "#1a0f08" },
@@ -195,7 +195,7 @@ export default function HansWehrAdminPage() {
       </Paper>
 
       {error && (
-        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "Jost, sans-serif" }}>{error}</Typography>
+        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "var(--font-sans), sans-serif" }}>{error}</Typography>
       )}
 
       {hasSearched && !loading && (
@@ -212,7 +212,7 @@ export default function HansWehrAdminPage() {
               <TableBody>
                 {results.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={3} sx={{ py: 4, textAlign: "center", fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                    <TableCell colSpan={3} sx={{ py: 4, textAlign: "center", fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
                       No Hans Wehr entries match your search.
                     </TableCell>
                   </TableRow>
@@ -234,7 +234,7 @@ export default function HansWehrAdminPage() {
                           sx={{
                             ...bodyCellSx,
                             direction: "rtl",
-                            fontFamily: "'EB Garamond', serif",
+                            fontFamily: "var(--font-serif), serif",
                             fontSize: "1.25rem",
                             fontWeight: 600,
                             color: "#2c1a0e",
@@ -245,7 +245,7 @@ export default function HansWehrAdminPage() {
                         <TableCell sx={{ ...bodyCellSx, minWidth: 360, maxWidth: 520 }}>
                           <Typography
                             sx={{
-                              fontFamily: "Jost, sans-serif",
+                              fontFamily: "var(--font-sans), sans-serif",
                               fontSize: "1rem",
                               color: "#4a3f36",
                               lineHeight: 1.6,
@@ -281,13 +281,13 @@ export default function HansWehrAdminPage() {
 const headerCellSx = {
   fontWeight: 700,
   fontSize: "1rem",
-  fontFamily: "Jost, sans-serif",
+  fontFamily: "var(--font-sans), sans-serif",
   backgroundColor: "#f5ede0",
   color: "#2c1a0e",
 }
 
 const bodyCellSx = {
   verticalAlign: "middle",
-  fontFamily: "Jost, sans-serif",
+  fontFamily: "var(--font-sans), sans-serif",
   fontSize: "1rem",
 }

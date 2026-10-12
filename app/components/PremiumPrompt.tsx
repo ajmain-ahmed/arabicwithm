@@ -40,7 +40,7 @@ export default function PremiumPrompt({ open, onClose, reason }: { open: boolean
         {PREMIUM_BENEFITS.map((benefit) => <Box component="li" key={benefit.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.1, px: 1.5, py: 1.25, borderRadius: '10px', bgcolor: 'background.default', textAlign: 'left' }}>
           <CheckCircleRounded aria-hidden="true" sx={{ flex: '0 0 auto', color: 'primary.main', fontSize: 21 }} />
           <Typography sx={{ minWidth: 0, flex: 1, fontWeight: 700 }}>{benefit.label}</Typography>
-          {benefit.appOnly && <Box component="span" sx={{ flex: '0 0 auto', px: 0.8, py: 0.35, borderRadius: '9999px', bgcolor: 'color-mix(in srgb, var(--awm-forest) 9%, transparent)', color: 'var(--awm-forest)', fontFamily: 'Jost, sans-serif', fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap' }}>📱 App only</Box>}
+          {benefit.appOnly && <Box component="span" sx={{ flex: '0 0 auto', px: 0.8, py: 0.35, borderRadius: '9999px', bgcolor: 'color-mix(in srgb, var(--awm-forest) 9%, transparent)', color: 'var(--awm-forest)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap' }}>📱 App only</Box>}
         </Box>)}
       </Box>
       <Typography sx={{ mt: 2 }} color="text.secondary">New books and features as they arrive.</Typography>

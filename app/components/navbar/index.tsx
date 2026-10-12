@@ -36,7 +36,7 @@ export default function Navbar() {
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
     const [scrolled, setScrolled] = useState(false)
 
-    const supportsOverlay = pathname === '/' || pathname === '/explore' || pathname === '/vocabulary'
+    const supportsOverlay = pathname === '/' || pathname === '/explore'
     const isOverlay = supportsOverlay && !scrolled && !drawerOpen && !userMenuAnchor && !contactOpen && !authDialogOpen
     const navColor = isOverlay ? '#fff' : 'var(--awm-forest)'
 

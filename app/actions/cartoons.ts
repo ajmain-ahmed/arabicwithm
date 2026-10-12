@@ -40,22 +40,6 @@ function uniqueTags(values: Array<string | null | undefined>): string[] {
   return Array.from(tags.values())
 }
 
-function isMissingSocialVideoColumn(error: { code?: string; message?: string } | null): boolean {
-  return Boolean(
-    error &&
-    (error.code === "42703" || error.code === "PGRST204") &&
-    /(?:instagram_id|tiktok_id|facebook_id)/i.test(error.message ?? "")
-  )
-}
-
-function isMissingCoverCropColumn(error: { code?: string; message?: string } | null): boolean {
-  return Boolean(
-    error &&
-    (error.code === "42703" || error.code === "PGRST204") &&
-    /cover_crop/i.test(error.message ?? "")
-  )
-}
-
 /* ── Shows ─────────────────────────────────────────────────────────── */
 
 export const fetchShowsForPublic = unstable_cache(
@@ -206,35 +190,18 @@ export const fetchEpisodesForShowPublic = unstable_cache(
       return []
     }
 
-    const withSocialAndCrop = await serviceClient
+    const { data, error } = await serviceClient
       .from("episodes")
       .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
       .eq("show_id", show.id)
       .order("created_at", { ascending: false })
-
-    const withSocial = isMissingCoverCropColumn(withSocialAndCrop.error)
-      ? await serviceClient
-          .from("episodes")
-          .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, created_at")
-          .eq("show_id", show.id)
-          .order("created_at", { ascending: false })
-      : withSocialAndCrop
-    const fallback = isMissingSocialVideoColumn(withSocial.error)
-      ? await serviceClient
-          .from("episodes")
-          .select("id, slug, title, level, tags, description, youtube_id, cover, cover_crop, created_at")
-          .eq("show_id", show.id)
-          .order("created_at", { ascending: false })
-      : null
-    const data = (fallback?.data ?? withSocial.data) as unknown as Record<string, unknown>[] | null
-    const error = fallback ? fallback.error : withSocial.error
 
     if (error) {
       console.error("[fetchEpisodesForShowPublic] error:", error.message)
       throw new Error(error.message)
     }
 
-    return (data ?? []).map((row) => mapEpisodeRow(row))
+    return ((data ?? []) as unknown as Record<string, unknown>[]).map((row) => mapEpisodeRow(row))
   },
   ["cartoons", "episodes", "catalogue-storage-covers-v3"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
@@ -249,32 +216,17 @@ export const fetchAllEpisodesForPublic = unstable_cache(
       return []
     }
 
-    const withSocialAndCrop = await serviceClient
+    const { data, error } = await serviceClient
       .from("episodes")
       .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
       .order("created_at", { ascending: false })
-
-    const withSocial = isMissingCoverCropColumn(withSocialAndCrop.error)
-      ? await serviceClient
-          .from("episodes")
-          .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, created_at")
-          .order("created_at", { ascending: false })
-      : withSocialAndCrop
-    const fallback = isMissingSocialVideoColumn(withSocial.error)
-      ? await serviceClient
-          .from("episodes")
-          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, cover_crop, created_at")
-          .order("created_at", { ascending: false })
-      : null
-    const data = (fallback?.data ?? withSocial.data) as unknown as Record<string, unknown>[] | null
-    const error = fallback ? fallback.error : withSocial.error
 
     if (error) {
       console.error("[fetchAllEpisodesForPublic] error:", error.message)
       throw new Error(error.message)
     }
 
-    return (data ?? []).map((row) => ({ ...mapEpisodeRow(row), showId: String(row.show_id) }))
+    return ((data ?? []) as unknown as Record<string, unknown>[]).map((row) => ({ ...mapEpisodeRow(row), showId: String(row.show_id) }))
   },
   ["cartoons", "all-episodes", "public", "catalogue-storage-covers-v3"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
@@ -334,34 +286,13 @@ export const fetchEpisodeForPublic = unstable_cache(
       return null
     }
 
-    const withSocialAndCrop = await serviceClient
+    const { data, error } = await serviceClient
       .from("episodes")
       .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, transcript, created_at")
       .eq("show_id", show.id)
       .eq("slug", episodeSlug)
       .limit(1)
       .single()
-
-    const withSocial = isMissingCoverCropColumn(withSocialAndCrop.error)
-      ? await serviceClient
-          .from("episodes")
-          .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript, created_at")
-          .eq("show_id", show.id)
-          .eq("slug", episodeSlug)
-          .limit(1)
-          .single()
-      : withSocialAndCrop
-    const fallback = isMissingSocialVideoColumn(withSocial.error)
-      ? await serviceClient
-          .from("episodes")
-          .select("id, slug, title, level, tags, description, youtube_id, cover, cover_crop, transcript, created_at")
-          .eq("show_id", show.id)
-          .eq("slug", episodeSlug)
-          .limit(1)
-          .single()
-      : null
-    const data = (fallback?.data ?? withSocial.data) as unknown as Record<string, unknown> | null
-    const error = fallback ? fallback.error : withSocial.error
 
     if (error || !data) {
       console.error("[fetchEpisodeForPublic] error:", error?.message)
@@ -502,7 +433,7 @@ export const fetchExploreEpisodeMetasForPublic = unstable_cache(
       return []
     }
 
-    const [showResult, initialEpisodeResult] = await Promise.all([
+    const [showResult, episodeResult] = await Promise.all([
       serviceClient.from("shows").select("id, slug, title"),
       serviceClient
         .from("episodes")
@@ -510,22 +441,10 @@ export const fetchExploreEpisodeMetasForPublic = unstable_cache(
         .order("created_at", { ascending: true }),
     ])
 
-    const socialEpisodeResult = isMissingCoverCropColumn(initialEpisodeResult.error)
-      ? await serviceClient
-          .from("episodes")
-          .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, created_at")
-          .order("created_at", { ascending: true })
-      : initialEpisodeResult
-    const legacyEpisodeResult = isMissingSocialVideoColumn(socialEpisodeResult.error)
-      ? await serviceClient
-          .from("episodes")
-          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, cover_crop, created_at")
-          .order("created_at", { ascending: true })
-      : null
     const shows = showResult.data
     const showError = showResult.error
-    const episodes = (legacyEpisodeResult?.data ?? socialEpisodeResult.data) as unknown as Record<string, unknown>[] | null
-    const episodeError = legacyEpisodeResult ? legacyEpisodeResult.error : socialEpisodeResult.error
+    const episodes = episodeResult.data as unknown as Record<string, unknown>[] | null
+    const episodeError = episodeResult.error
 
     if (showError || episodeError) {
       const message = showError?.message ?? episodeError?.message ?? "Unknown error"
@@ -556,26 +475,11 @@ export const fetchExploreEpisodeByIdPublic = unstable_cache(
   async (episodeId: string): Promise<ExploreEpisode | null> => {
     if (!hasServiceClientConfig()) return null
 
-    const withSocialAndCrop = await serviceClient
+    const { data: row, error } = await serviceClient
       .from("episodes")
       .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, transcript, created_at")
       .eq("id", episodeId)
       .maybeSingle()
-    const withSocial = isMissingCoverCropColumn(withSocialAndCrop.error)
-      ? await serviceClient
-          .from("episodes")
-          .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, transcript, created_at")
-          .eq("id", episodeId)
-          .maybeSingle()
-      : withSocialAndCrop
-    const rowResult = isMissingSocialVideoColumn(withSocial.error)
-      ? await serviceClient
-          .from("episodes")
-          .select("id, show_id, slug, title, level, tags, description, youtube_id, cover, cover_crop, transcript, created_at")
-          .eq("id", episodeId)
-          .maybeSingle()
-      : withSocial
-    const { data: row, error } = rowResult
     if (error) throw new Error(error.message)
     if (!row) return null
 

@@ -31,6 +31,7 @@ import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { stripDiacritics } from '@/app/lib/arabic'
 import {
   EpisodeFull,
+  ScriptBlock,
   CartoonWordEntry,
   getEpisodeVideoSources,
   type VideoProvider,
@@ -56,7 +57,6 @@ const NAVBAR_HEIGHT = 64 // px
 // ──────────────────────────────────────────────────────────────────────────────
 
 const PAGE_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@700&family=Jost:wght@300;400;500;600&display=swap');
 
   :root {
     --navbar-height: ${NAVBAR_HEIGHT}px;
@@ -67,8 +67,6 @@ const PAGE_CSS = `
     --muted:       var(--awm-muted);
     --cream:       var(--awm-cream-light);
     --sand:        var(--awm-cream);
-    --font-serif:  Georgia, "Times New Roman", serif;
-    --font-sans:   system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
   html, body { background: var(--cream); margin: 0; }
@@ -86,7 +84,7 @@ const PAGE_CSS = `
   .script-block.active { background: rgba(184,134,11,0.12); border-left-color: var(--gold); }
 
   .arabic-line {
-    font-family: "EB Garamond", Georgia, serif;
+    font-family: var(--font-serif), Georgia, serif;
     direction: rtl;
     text-align: right;
     line-height: 1.8;
@@ -94,7 +92,7 @@ const PAGE_CSS = `
     font-weight: 700;
   }
   .english-line {
-    font-family: Jost, var(--font-sans);
+    font-family: var(--font-sans);
     color: var(--muted);
     line-height: 1.6;
   }
@@ -102,7 +100,7 @@ const PAGE_CSS = `
   .vocab-table {
     width: 100%;
     border-collapse: collapse;
-    font-family: Jost, var(--font-sans);
+    font-family: var(--font-sans);
   }
   .vocab-table th {
     text-align: left;
@@ -124,14 +122,14 @@ const PAGE_CSS = `
   .vocab-table tr:last-child td { border-bottom: none; }
   .vocab-table tr:hover td { background: rgba(184,134,11,0.04); }
   .vocab-arabic {
-    font-family: "EB Garamond", Georgia, serif;
+    font-family: var(--font-serif), Georgia, serif;
     font-weight: 700;
     direction: rtl;
     text-align: right;
   }
 
   .note-line {
-    font-family: Jost, var(--font-sans);
+    font-family: var(--font-sans);
     font-size: 0.85rem;
     color: var(--muted);
     line-height: 1.6;
@@ -165,7 +163,7 @@ function SettingsButton({ onClick }: SettingsButtonProps) {
         border: '1px solid rgba(184,134,11,0.3)',
         borderRadius: '8px',
         textTransform: 'none',
-        fontFamily: 'Jost, sans-serif',
+        fontFamily: 'var(--font-sans), sans-serif',
         fontWeight: 600,
         fontSize: '0.85rem',
         px: 1.5,
@@ -228,13 +226,12 @@ function ArabicLineText({
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'))
 
   const [activeEntry, setActiveEntry] = useState<CartoonWordEntry | null>(null)
-  const [activePartIndex, setActivePartIndex] = useState<number | null>(null)
   const [open, setOpen] = useState(false)
 
   const [mobileEntry, setMobileEntry] = useState<CartoonWordEntry | null>(null)
   const [mobileAnchor, setMobileAnchor] = useState<HTMLElement | null>(null)
 
-  const childRef = useRef<HTMLSpanElement | null>(null)
+  const [anchorEl, setAnchorEl] = useState<HTMLSpanElement | null>(null)
   const leaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const clearLeaveTimer = useCallback(() => {
@@ -249,17 +246,15 @@ function ArabicLineText({
     leaveTimerRef.current = setTimeout(() => {
       setOpen(false)
       setActiveEntry(null)
-      setActivePartIndex(null)
-      childRef.current = null
+      setAnchorEl(null)
     }, 50)
   }, [clearLeaveTimer])
 
-  const handleOpen = useCallback((entry: CartoonWordEntry, el: HTMLSpanElement, partIndex: number) => {
+  const handleOpen = useCallback((entry: CartoonWordEntry, el: HTMLSpanElement) => {
     clearLeaveTimer()
     setActiveEntry(entry)
-    setActivePartIndex(partIndex)
     setOpen(true)
-    childRef.current = el
+    setAnchorEl(el)
     dispatchWordLookup()
   }, [clearLeaveTimer])
 
@@ -401,133 +396,137 @@ function ArabicLineText({
 
   return (
     <>
-      {segments.map((seg, i) => {
-        if (seg.type === 'text') {
-          return <span key={i}>{seg.text}</span>
-        }
-
-        /* ── Unmatched Arabic word — highlight missing lemma match ── */
-        if (seg.type === 'unmatched-word') {
-          return (
-            <span
-              key={i}
-              style={{
-                borderBottom: '2px dotted #c62828',
-                paddingBottom: showDiacritics ? '10px' : '4px',
-              }}
+      {/* One tooltip per line, anchored to whichever word is hovered — a
+          per-word Tooltip here would mount 1,000+ MUI Popper instances. */}
+      <HtmlTooltip
+        open={open && !isMobile && activeEntry != null}
+        title={
+          open && activeEntry ? (
+            <Box
+              onMouseEnter={clearLeaveTimer}
+              onMouseLeave={scheduleClose}
+              sx={{ position: 'relative' }}
             >
-              {seg.text}
-            </span>
+              <Box sx={{ p: 2.5 }}>
+                <WordTooltip entry={activeEntry} textScale={textScale} />
+              </Box>
+            </Box>
+          ) : (
+            <></>
           )
         }
+        placement="bottom"
+        arrow
+        describeChild
+        disableHoverListener
+        disableFocusListener
+        disableTouchListener
+        slotProps={{
+          popper: {
+            anchorEl: anchorEl ?? undefined,
+            modifiers: [
+              {
+                name: 'preventOverflow',
+                enabled: true,
+                options: {
+                  padding: 16,
+                  boundary: 'viewport',
+                },
+              },
+              {
+                name: 'flip',
+                enabled: true,
+                options: {
+                  padding: 16,
+                },
+              },
+            ],
+          },
+        }}
+      >
+        <span>
+          {segments.map((seg, i) => {
+            if (seg.type === 'text') {
+              return <span key={i}>{seg.text}</span>
+            }
 
-        const { text: wordText, entry, index } = seg
-        const isActive = activeEntry === entry && open && activePartIndex === index
-        const underlineColor = 'var(--gold)'
-
-        /* ── Mobile: tap word → bottom-sheet summary ── */
-        if (isMobile) {
-          return (
-            <span
-              key={i}
-              role="button" tabIndex={0} aria-label={`Define ${wordText}`}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenDrawer(entry, e.currentTarget) } }}
-              onClick={(e) => {
-                e.stopPropagation()
-                handleOpenDrawer(entry, e.currentTarget)
-              }}
-              className="vocab-word"
-              style={{
-                cursor: 'pointer',
-                borderBottom: `2px dotted ${underlineColor}`,
-                paddingBottom: showDiacritics ? '10px' : '4px',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-              }}
-            >
-              {wordText}
-            </span>
-          )
-        }
-
-        /* ── Desktop: hover word → tooltip ── */
-        return (
-          <HtmlTooltip
-            key={i}
-            open={isActive}
-            title={
-              isActive ? (
-                <Box
-                  onMouseEnter={clearLeaveTimer}
-                  onMouseLeave={scheduleClose}
-                  sx={{ position: 'relative' }}
+            /* ── Unmatched Arabic word — highlight missing lemma match ── */
+            if (seg.type === 'unmatched-word') {
+              return (
+                <span
+                  key={i}
+                  style={{
+                    borderBottom: '2px dotted #c62828',
+                    paddingBottom: showDiacritics ? '10px' : '4px',
+                  }}
                 >
-                  <Box sx={{ p: 2.5 }}>
-                    <WordTooltip entry={activeEntry} textScale={textScale} />
-                  </Box>
-                </Box>
-              ) : (
-                <></>
+                  {seg.text}
+                </span>
               )
             }
-            placement="bottom"
-            arrow
-            describeChild
-            disableHoverListener
-            disableFocusListener
-            disableTouchListener
-            slotProps={{
-              popper: {
-                modifiers: [
-                  {
-                    name: 'preventOverflow',
-                    enabled: true,
-                    options: {
-                      padding: 16,
-                      boundary: 'viewport',
-                    },
-                  },
-                  {
-                    name: 'flip',
-                    enabled: true,
-                    options: {
-                      padding: 16,
-                    },
-                  },
-                ],
-              },
-            }}
-          >
-            <span
-              role="button" tabIndex={0} aria-label={`Define ${wordText}`}
-              onClick={e => { e.stopPropagation(); setOpen(false); handleOpenDrawer(entry, e.currentTarget) }}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(false); handleOpenDrawer(entry, e.currentTarget) } }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
-                handleOpen(entry, e.currentTarget, index)
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
-                scheduleClose()
-              }}
-              className="vocab-word"
-              style={{
-                cursor: 'pointer',
-                borderBottom: `2px dotted ${underlineColor}`,
-                paddingBottom: showDiacritics ? '10px' : '4px',
-                transition: 'background 0.15s',
-              }}
-            >
-              {wordText}
-            </span>
-          </HtmlTooltip>
-        )
-      })}
+
+            const { text: wordText, entry } = seg
+            const underlineColor = 'var(--gold)'
+
+            /* ── Mobile: tap word → bottom-sheet summary ── */
+            if (isMobile) {
+              return (
+                <span
+                  key={i}
+                  role="button" tabIndex={0} aria-label={`Define ${wordText}`}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpenDrawer(entry, e.currentTarget) } }}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleOpenDrawer(entry, e.currentTarget)
+                  }}
+                  className="vocab-word"
+                  style={{
+                    cursor: 'pointer',
+                    borderBottom: `2px dotted ${underlineColor}`,
+                    paddingBottom: showDiacritics ? '10px' : '4px',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent'
+                  }}
+                >
+                  {wordText}
+                </span>
+              )
+            }
+
+            /* ── Desktop: hover word → shared tooltip anchored at the word ── */
+            return (
+              <span
+                key={i}
+                role="button" tabIndex={0} aria-label={`Define ${wordText}`}
+                onClick={e => { e.stopPropagation(); setOpen(false); handleOpenDrawer(entry, e.currentTarget) }}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(false); handleOpenDrawer(entry, e.currentTarget) } }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
+                  handleOpen(entry, e.currentTarget)
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent'
+                  scheduleClose()
+                }}
+                className="vocab-word"
+                style={{
+                  cursor: 'pointer',
+                  borderBottom: `2px dotted ${underlineColor}`,
+                  paddingBottom: showDiacritics ? '10px' : '4px',
+                  transition: 'background 0.15s',
+                }}
+              >
+                {wordText}
+              </span>
+            )
+          })}
+        </span>
+      </HtmlTooltip>
 
       <MobileDefinitionSheet
         open={Boolean(mobileAnchor)}
@@ -540,6 +539,165 @@ function ArabicLineText({
     </>
   )
 }
+
+/* ─────────────────────────────────────────────
+   ScriptBlockView — memoized transcript block.
+   During playback the active index changes every few seconds; without
+   memoization each change re-renders every block and every word span.
+───────────────────────────────────────────── */
+interface ScriptBlockViewProps {
+  block: ScriptBlock
+  index: number
+  isActive: boolean
+  hasNext: boolean
+  isYouTubeSource: boolean
+  wordTapSeek: boolean
+  showDiacritics: boolean
+  textScale: number
+  textFontFamily: string
+  expanded: boolean
+  wordMap: Record<string, CartoonWordEntry>
+  diacritizedMap: Record<string, CartoonWordEntry>
+  activeBlockRef: React.RefObject<HTMLDivElement | null>
+  onSeek: (timestamp: number) => void
+  onToggleNotes: (index: number) => void
+  onDrawerOpenChange: (open: boolean) => void
+}
+
+const ScriptBlockView = React.memo(function ScriptBlockView({
+  block,
+  index,
+  isActive,
+  hasNext,
+  isYouTubeSource,
+  wordTapSeek,
+  showDiacritics,
+  textScale,
+  textFontFamily,
+  expanded,
+  wordMap,
+  diacritizedMap,
+  activeBlockRef,
+  onSeek,
+  onToggleNotes,
+  onDrawerOpenChange,
+}: ScriptBlockViewProps) {
+  const hasTimestamp = block.timestamp != null
+  return (
+    <>
+      <Box
+        ref={isActive ? activeBlockRef : undefined}
+        className={`script-block ${isActive ? 'active' : ''}`}
+        onClick={(e) => {
+          if (vocabTrackerRef.openCount > 0) return
+          if ((e.target as HTMLElement).closest('.vocab-word')) return
+          if (hasTimestamp && isYouTubeSource) {
+            onSeek(block.timestamp!)
+          }
+        }}
+        sx={{ cursor: hasTimestamp ? 'pointer' : 'default', opacity: hasTimestamp ? 1 : 0.75 }}
+      >
+        {/* Block title / timestamp */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+            {hasTimestamp && (
+              <Typography sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1 }}>
+                {(() => { const s = block.timestamp!; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` })()}
+              </Typography>
+            )}
+            <Typography sx={{ fontFamily: 'var(--font-sans)', fontSize: `calc(0.75rem * ${textScale})`, color: 'var(--muted)', fontWeight: 500 }}>
+              {block.title}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Arabic */}
+        <Typography component="div" className="arabic-line" sx={{ fontFamily: textFontFamily, fontSize: `calc(1.35rem * ${textScale})`, mb: 0.5 }}>
+          <ArabicLineText
+            textScale={textScale}
+            text={showDiacritics ? block.arabicDiacritic : block.arabicPlain}
+            words={block.words}
+            wordMap={wordMap}
+            diacritizedMap={diacritizedMap}
+            showDiacritics={showDiacritics}
+            onDrawerOpenChange={onDrawerOpenChange}
+            onWordActivate={wordTapSeek && hasTimestamp && isYouTubeSource
+              ? () => onSeek(block.timestamp!)
+              : undefined}
+          />
+        </Typography>
+
+        {/* English */}
+        {block.english && (
+          <Typography className="english-line" sx={{ fontSize: `calc(0.88rem * ${textScale})`, mb: 1.5 }}>
+            {block.english}
+          </Typography>
+        )}
+
+        {/* Notes — expandable / collapsible */}
+        {block.notes.length > 0 && (
+          <>
+            <Button
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleNotes(index)
+              }}
+              endIcon={expanded ? <ExpandLess sx={{ fontSize: '1rem' }} /> : <ExpandMore sx={{ fontSize: '1rem' }} />}
+              sx={{
+                mt: 1,
+                py: 0.3,
+                px: 1.5,
+                minHeight: 28,
+                fontFamily: 'var(--font-sans), sans-serif',
+                fontSize: `calc(0.75rem * ${textScale})`,
+                fontWeight: 500,
+                color: 'var(--muted)',
+                border: '1px solid rgba(122,110,101,0.2)',
+                borderRadius: '999px',
+                background: 'transparent',
+                textTransform: 'none',
+                gap: 0.5,
+                '& .MuiButton-endIcon': { ml: 0 },
+                '&:hover': { background: 'rgba(184,134,11,0.06)', borderColor: 'rgba(184,134,11,0.35)' },
+              }}
+            >
+              Notes ({block.notes.length})
+            </Button>
+            {expanded && (
+              <Box sx={{ mt: 1 }}>
+                {block.notes.map((note, ni) => (
+                  <Typography
+                    key={ni}
+                    component="div"
+                    sx={{
+                      fontFamily: 'var(--font-sans), sans-serif',
+                      fontSize: `calc(0.82rem * ${textScale})`,
+                      color: 'var(--muted)',
+                      lineHeight: 1.6,
+                      py: 0.5,
+                      borderLeft: '2px solid var(--gold)',
+                      pl: 1.25,
+                      mb: 0.75,
+                      '& em': {
+                        color: 'var(--bark)',
+                        fontWeight: 600,
+                        fontStyle: 'normal',
+                      },
+                    }}
+                  >
+                    <SafeHtml text={note} />
+                  </Typography>
+                ))}
+              </Box>
+            )}
+          </>
+        )}
+      </Box>
+      {hasNext && <Divider sx={{ borderColor: 'rgba(44,26,14,0.06)', my: 0.5 }} />}
+    </>
+  )
+})
 
 /* ─────────────────────────────────────────────
    Main Component
@@ -614,9 +772,9 @@ export default function EpisodePage({
   const skipInitialScroll = useRef(true)
 
   const textFontFamily = {
-    naskh: 'var(--font-book-naskh), "EB Garamond", serif',
-    garamond: '"EB Garamond", Georgia, serif',
-    amiri: 'var(--font-book-amiri), "EB Garamond", serif',
+    naskh: 'var(--font-book-naskh), var(--font-serif), serif',
+    garamond: 'var(--font-serif), Georgia, serif',
+    amiri: 'var(--font-book-amiri), var(--font-serif), serif',
   }[textFont]
 
   const scrollOffsetRef = useRef(0)
@@ -700,6 +858,14 @@ export default function EpisodePage({
   const allNotesExpanded = blocksWithNotes.length > 0 && blocksWithNotes.every((i) => expandedNotes.has(i))
 
   const openSettings = useCallback(() => setSettingsOpen(true), [])
+  const toggleNotes = useCallback((index: number) => {
+    setExpandedNotes((prev) => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }, [])
   const openMobileVideoFullscreen = useCallback(() => {
     const container = mobileVideoContainerRef.current
     if (!container?.requestFullscreen) return
@@ -786,8 +952,8 @@ export default function EpisodePage({
               {errorCode != null && isYouTubeSource && (
                 <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 3 }}>
                   <Box sx={{ textAlign: 'center', color: '#fff' }}>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 700 }}>YouTube could not load this video.</Typography>
-                    <Typography sx={{ mt: 0.5, mb: 1.5, fontFamily: 'Jost, sans-serif', fontSize: 12, opacity: 0.75 }}>Player error {errorCode}</Typography>
+                    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }}>YouTube could not load this video.</Typography>
+                    <Typography sx={{ mt: 0.5, mb: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, opacity: 0.75 }}>Player error {errorCode}</Typography>
                     <Button onClick={retry} variant="contained" startIcon={<Refresh />} sx={{ bgcolor: 'var(--gold)', color: '#fff', textTransform: 'none' }}>
                       Retry video
                     </Button>
@@ -807,7 +973,7 @@ export default function EpisodePage({
                         height: 27,
                         bgcolor: source.provider === selectedSource?.provider ? '#d4a843' : 'rgba(0,0,0,0.62)',
                         color: source.provider === selectedSource?.provider ? '#0e2e1f' : '#fff',
-                        fontFamily: 'Jost, sans-serif',
+                        fontFamily: 'var(--font-sans), sans-serif',
                         fontWeight: 700,
                         '&:hover': { bgcolor: source.provider === selectedSource?.provider ? '#d4a843' : 'rgba(0,0,0,0.8)' },
                       }}
@@ -835,28 +1001,28 @@ export default function EpisodePage({
               <Breadcrumbs
                 separator={<ChevronRight sx={{ fontSize: 14, color: 'var(--muted)' }} />}
                 sx={{
-                  '& .MuiBreadcrumbs-li': { fontFamily: 'Jost, sans-serif', fontSize: '0.78rem' },
+                  '& .MuiBreadcrumbs-li': { fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem' },
                 }}
               >
                 <Typography
                   onClick={() => router.push('/')}
-                  sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--muted)', cursor: 'pointer', '&:hover': { color: 'var(--gold)' } }}
+                  sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--muted)', cursor: 'pointer', '&:hover': { color: 'var(--gold)' } }}
                 >
                   Home
                 </Typography>
                 <Typography
                   onClick={() => router.push('/cartoons')}
-                  sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--muted)', cursor: 'pointer', '&:hover': { color: 'var(--gold)' } }}
+                  sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--muted)', cursor: 'pointer', '&:hover': { color: 'var(--gold)' } }}
                 >
                   Cartoons
                 </Typography>
                 <Typography
                   onClick={() => router.push(`/cartoons/${episode.show}`)}
-                  sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--muted)', cursor: 'pointer', '&:hover': { color: 'var(--gold)' } }}
+                  sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--muted)', cursor: 'pointer', '&:hover': { color: 'var(--gold)' } }}
                 >
                   {showTitle}
                 </Typography>
-                <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--bark)', fontWeight: 500 }}>
+                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--bark)', fontWeight: 500 }}>
                   {episode.title}
                 </Typography>
               </Breadcrumbs>
@@ -867,7 +1033,7 @@ export default function EpisodePage({
                   onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
                   size="small"
                   startIcon={<PsychologyOutlined sx={{ fontSize: 18 }} />}
-                  sx={{ color: 'var(--awm-forest)', border: '1px solid color-mix(in srgb, var(--awm-forest) 28%, transparent)', borderRadius: '8px', textTransform: 'none', fontFamily: 'Jost, sans-serif', fontWeight: 700, '&:hover': { bgcolor: 'color-mix(in srgb, var(--awm-forest) 7%, transparent)' } }}
+                  sx={{ color: 'var(--awm-forest)', border: '1px solid color-mix(in srgb, var(--awm-forest) 28%, transparent)', borderRadius: '8px', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, '&:hover': { bgcolor: 'color-mix(in srgb, var(--awm-forest) 7%, transparent)' } }}
                 >
                   Memory
                 </Button>
@@ -890,7 +1056,7 @@ export default function EpisodePage({
                   }}
                 >
                   <IconButton onClick={openMobileVideoFullscreen} aria-label="Open video full screen" sx={{ position: 'absolute', zIndex: 4, top: 8, right: 8, width: 38, height: 38, bgcolor: 'rgba(0,0,0,.56)', color: '#fff', border: '1px solid rgba(255,255,255,.25)', '&:hover': { bgcolor: 'rgba(0,0,0,.76)' } }}><Fullscreen /></IconButton>
-                  {videoSources.length > 1 && <Box sx={{ position: 'absolute', zIndex: 4, left: 8, bottom: 8, right: 54, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>{videoSources.map((source) => <Chip key={source.provider} label={source.label} clickable size="small" onClick={() => setSelectedProvider(source.provider)} sx={{ height: 25, bgcolor: source.provider === selectedSource?.provider ? 'var(--awm-gold-light)' : 'rgba(0,0,0,.62)', color: source.provider === selectedSource?.provider ? '#0e2e1f' : '#fff', fontFamily: 'Jost, sans-serif', fontWeight: 700 }} />)}</Box>}
+                  {videoSources.length > 1 && <Box sx={{ position: 'absolute', zIndex: 4, left: 8, bottom: 8, right: 54, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>{videoSources.map((source) => <Chip key={source.provider} label={source.label} clickable size="small" onClick={() => setSelectedProvider(source.provider)} sx={{ height: 25, bgcolor: source.provider === selectedSource?.provider ? 'var(--awm-gold-light)' : 'rgba(0,0,0,.62)', color: source.provider === selectedSource?.provider ? '#0e2e1f' : '#fff', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }} />)}</Box>}
                   {selectedSource?.provider !== 'youtube' && selectedSource ? (
                     <SocialVideoEmbed source={selectedSource} title={episode.title} />
                   ) : (
@@ -899,7 +1065,7 @@ export default function EpisodePage({
                   {errorCode != null && isYouTubeSource && (
                     <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 2 }}>
                       <Box sx={{ textAlign: 'center', color: '#fff' }}>
-                        <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: 12, fontWeight: 700 }}>Video unavailable</Typography>
+                        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, fontWeight: 700 }}>Video unavailable</Typography>
                         <Button onClick={retry} size="small" startIcon={<Refresh />} sx={{ mt: 0.75, color: '#fff', fontSize: 11, textTransform: 'none' }}>
                           Retry
                         </Button>
@@ -921,7 +1087,7 @@ export default function EpisodePage({
                 variant={isMobileViewport ? 'fullWidth' : 'standard'}
                 sx={{
                   flex: 1,
-                  '& .MuiTab-root': { fontFamily: 'Jost, var(--font-sans)', fontSize: { xs: '0.74rem', sm: '0.82rem' }, fontWeight: 500, textTransform: 'none', letterSpacing: '0.03em', color: 'var(--muted)', minWidth: 0, px: { xs: 1, sm: 2 }, py: 1.5 },
+                  '& .MuiTab-root': { fontFamily: 'var(--font-sans)', fontSize: { xs: '0.74rem', sm: '0.82rem' }, fontWeight: 500, textTransform: 'none', letterSpacing: '0.03em', color: 'var(--muted)', minWidth: 0, px: { xs: 1, sm: 2 }, py: 1.5 },
                   '& .Mui-selected': { color: 'var(--forest) !important', fontWeight: 600 },
                   '& .MuiTabs-indicator': { background: 'var(--gold)', height: '2px' },
                 }}
@@ -958,7 +1124,7 @@ export default function EpisodePage({
                       sx={{
                         border: '1.5px solid rgba(122,110,101,0.25)',
                         color: 'var(--awm-muted)',
-                        fontFamily: 'Jost, sans-serif',
+                        fontFamily: 'var(--font-sans), sans-serif',
                         fontWeight: 600,
                         fontSize: '0.9rem',
                         textTransform: 'none',
@@ -988,132 +1154,29 @@ export default function EpisodePage({
                   }}
                 >
                   {episode.scriptBlocks.length === 0 ? (
-                    <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No script found in this episode file.</Typography>
+                    <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No script found in this episode file.</Typography>
                   ) : (
-                    episode.scriptBlocks.map((block, i) => {
-                      const hasTimestamp = block.timestamp != null
-                      const isActive = activeIndex === i
-                      const isLast = i === episode.scriptBlocks.length - 1
-                      return (
-                        <React.Fragment key={i}>
-                          <Box
-                            ref={isActive ? activeBlockRef : undefined}
-                            className={`script-block ${isActive ? 'active' : ''}`}
-                            onClick={(e) => {
-                              if (vocabTrackerRef.openCount > 0) return
-                              if ((e.target as HTMLElement).closest('.vocab-word')) return
-                              if (hasTimestamp && isYouTubeSource) {
-                                seekTo(block.timestamp!)
-                              }
-                            }}
-                            sx={{ cursor: hasTimestamp ? 'pointer' : 'default', opacity: hasTimestamp ? 1 : 0.75 }}
-                          >
-                            {/* Block title / timestamp */}
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-                                {hasTimestamp && (
-                                  <Typography sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: '0.65rem', color: 'var(--gold)', letterSpacing: '0.04em', fontWeight: 600, lineHeight: 1 }}>
-                                    {(() => { const s = block.timestamp!; const m = Math.floor(s / 60); const sec = Math.floor(s % 60); return `${m}:${sec.toString().padStart(2, '0')}` })()}
-                                  </Typography>
-                                )}
-                                <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', fontSize: `calc(0.75rem * ${textScale})`, color: 'var(--muted)', fontWeight: 500 }}>
-                                  {block.title}
-                                </Typography>
-                              </Box>
-                            </Box>
-
-                            {/* Arabic */}
-                            <Typography component="div" className="arabic-line" sx={{ fontFamily: textFontFamily, fontSize: `calc(1.35rem * ${textScale})`, mb: 0.5 }}>
-                              <ArabicLineText
-                                textScale={textScale}
-                                text={showDiacritics ? block.arabicDiacritic : block.arabicPlain}
-                                words={block.words}
-                                wordMap={episode.wordMap}
-                                diacritizedMap={episode.diacritizedMap}
-                                showDiacritics={showDiacritics}
-                                onDrawerOpenChange={setMobileWordDrawerOpen}
-                                onWordActivate={jumpVideoToTappedWord && hasTimestamp && isYouTubeSource
-                                  ? () => seekTo(block.timestamp!)
-                                  : undefined}
-                              />
-                            </Typography>
-
-                            {/* English */}
-                            {block.english && (
-                              <Typography className="english-line" sx={{ fontSize: `calc(0.88rem * ${textScale})`, mb: 1.5 }}>
-                                {block.english}
-                              </Typography>
-                            )}
-
-                            {/* Notes — expandable / collapsible */}
-                            {block.notes.length > 0 && (
-                              <>
-                                <Button
-                                  size="small"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    setExpandedNotes((prev) => {
-                                      const next = new Set(prev)
-                                      if (next.has(i)) next.delete(i)
-                                      else next.add(i)
-                                      return next
-                                    })
-                                  }}
-                                  endIcon={expandedNotes.has(i) ? <ExpandLess sx={{ fontSize: '1rem' }} /> : <ExpandMore sx={{ fontSize: '1rem' }} />}
-                                  sx={{
-                                    mt: 1,
-                                    py: 0.3,
-                                    px: 1.5,
-                                    minHeight: 28,
-                                    fontFamily: 'Jost, sans-serif',
-                                    fontSize: `calc(0.75rem * ${textScale})`,
-                                    fontWeight: 500,
-                                    color: 'var(--muted)',
-                                    border: '1px solid rgba(122,110,101,0.2)',
-                                    borderRadius: '999px',
-                                    background: 'transparent',
-                                    textTransform: 'none',
-                                    gap: 0.5,
-                                    '& .MuiButton-endIcon': { ml: 0 },
-                                    '&:hover': { background: 'rgba(184,134,11,0.06)', borderColor: 'rgba(184,134,11,0.35)' },
-                                  }}
-                                >
-                                  Notes ({block.notes.length})
-                                </Button>
-                                {expandedNotes.has(i) && (
-                                  <Box sx={{ mt: 1 }}>
-                                    {block.notes.map((note, ni) => (
-                                      <Typography
-                                        key={ni}
-                                        component="div"
-                                        sx={{
-                                          fontFamily: 'Jost, sans-serif',
-                                          fontSize: `calc(0.82rem * ${textScale})`,
-                                          color: 'var(--muted)',
-                                          lineHeight: 1.6,
-                                          py: 0.5,
-                                          borderLeft: '2px solid var(--gold)',
-                                          pl: 1.25,
-                                          mb: 0.75,
-                                          '& em': {
-                                            color: 'var(--bark)',
-                                            fontWeight: 600,
-                                            fontStyle: 'normal',
-                                          },
-                                        }}
-                                      >
-                                        <SafeHtml text={note} />
-                                      </Typography>
-                                    ))}
-                                  </Box>
-                                )}
-                              </>
-                            )}
-                          </Box>
-                          {!isLast && <Divider sx={{ borderColor: 'rgba(44,26,14,0.06)', my: 0.5 }} />}
-                        </React.Fragment>
-                      )
-                    })
+                    episode.scriptBlocks.map((block, i) => (
+                      <ScriptBlockView
+                        key={i}
+                        block={block}
+                        index={i}
+                        isActive={activeIndex === i}
+                        hasNext={i < episode.scriptBlocks.length - 1}
+                        isYouTubeSource={isYouTubeSource}
+                        wordTapSeek={jumpVideoToTappedWord}
+                        showDiacritics={showDiacritics}
+                        textScale={textScale}
+                        textFontFamily={textFontFamily}
+                        expanded={expandedNotes.has(i)}
+                        wordMap={episode.wordMap}
+                        diacritizedMap={episode.diacritizedMap}
+                        activeBlockRef={activeBlockRef}
+                        onSeek={seekTo}
+                        onToggleNotes={toggleNotes}
+                        onDrawerOpenChange={setMobileWordDrawerOpen}
+                      />
+                    ))
                   )}
                 </Box>
               )}
@@ -1122,7 +1185,7 @@ export default function EpisodePage({
               {tab === 1 && (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 1 } }}>
                   {episode.vocabList.length === 0 ? (
-                    <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No vocabulary list found.</Typography>
+                    <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No vocabulary list found.</Typography>
                   ) : (
                     episode.vocabList.map((row) => (
                       <Box
@@ -1177,7 +1240,7 @@ export default function EpisodePage({
                         {/* Transliteration */}
                         <Typography
                           sx={{
-                            fontFamily: 'Jost, sans-serif',
+                            fontFamily: 'var(--font-sans), sans-serif',
                             fontSize: `calc(0.82rem * ${textScale})`,
                             color: 'var(--muted)',
                             flex: { md: '0 0 auto' },
@@ -1190,7 +1253,7 @@ export default function EpisodePage({
                         {/* English */}
                         <Typography
                           sx={{
-                            fontFamily: 'Jost, sans-serif',
+                            fontFamily: 'var(--font-sans), sans-serif',
                             fontSize: `calc(0.9rem * ${textScale})`,
                             color: 'var(--bark)',
                             flex: 1,
@@ -1210,7 +1273,7 @@ export default function EpisodePage({
               {tab === 2 && (
                 <Box>
                   {episode.grammarPoints.length === 0 ? (
-                    <Typography sx={{ fontFamily: 'Jost, var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No grammar points found.</Typography>
+                    <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No grammar points found.</Typography>
                   ) : (
                     <>
                       {/* Mobile: cards */}
@@ -1231,14 +1294,14 @@ export default function EpisodePage({
                             }}
                           >
                             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.75rem * ${textScale})`, fontWeight: 700, color: 'var(--gold)', mt: 0.4, flexShrink: 0 }}>
+                              <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: `calc(0.75rem * ${textScale})`, fontWeight: 700, color: 'var(--gold)', mt: 0.4, flexShrink: 0 }}>
                                 {String(gp.number).padStart(2, '0')}
                               </Typography>
-                              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.95rem * ${textScale})`, fontWeight: 600, color: 'var(--bark)', lineHeight: 1.4 }}>
+                              <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: `calc(0.95rem * ${textScale})`, fontWeight: 600, color: 'var(--bark)', lineHeight: 1.4 }}>
                                 <SafeHtml text={gp.pattern} />
                               </Typography>
                             </Box>
-                            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.85rem * ${textScale})`, color: 'var(--bark)', lineHeight: 1.6 }}>
+                            <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: `calc(0.85rem * ${textScale})`, color: 'var(--bark)', lineHeight: 1.6 }}>
                               {gp.explanation}
                             </Typography>
                             <Box sx={{ textAlign: 'right', direction: 'rtl', background: 'rgba(14,46,31,0.03)', borderRadius: '8px', px: 1.5, py: 1 }}>
@@ -1264,13 +1327,13 @@ export default function EpisodePage({
                           <tbody>
                             {episode.grammarPoints.map((gp) => (
                               <tr key={gp.number}>
-                                <td style={{ textAlign: 'center', fontFamily: 'Jost, sans-serif', fontSize: `calc(0.8rem * ${textScale})`, color: 'var(--muted)' }}>
+                                <td style={{ textAlign: 'center', fontFamily: 'var(--font-sans), sans-serif', fontSize: `calc(0.8rem * ${textScale})`, color: 'var(--muted)' }}>
                                   {gp.number}
                                 </td>
-                                <td style={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.9rem * ${textScale})`, fontWeight: 600, color: 'var(--bark)' }}>
+                                <td style={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: `calc(0.9rem * ${textScale})`, fontWeight: 600, color: 'var(--bark)' }}>
                                   <SafeHtml text={gp.pattern} />
                                 </td>
-                                <td style={{ fontFamily: 'Jost, sans-serif', fontSize: `calc(0.85rem * ${textScale})`, color: 'var(--bark)' }}>
+                                <td style={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: `calc(0.85rem * ${textScale})`, color: 'var(--bark)' }}>
                                   {gp.explanation}
                                 </td>
                                 <td className="vocab-arabic" style={{ fontFamily: textFontFamily, fontSize: `calc(1rem * ${textScale})` }}>

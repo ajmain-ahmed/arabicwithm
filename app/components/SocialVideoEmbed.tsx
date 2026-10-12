@@ -24,7 +24,7 @@ export default function SocialVideoEmbed({
   if (!src) {
     return (
       <Box sx={{ width: '100%', height: '100%', display: 'grid', placeItems: 'center', p: 3, bgcolor: '#090909' }}>
-        <Typography sx={{ color: '#fff', fontFamily: 'Jost, sans-serif', textAlign: 'center' }}>
+        <Typography sx={{ color: '#fff', fontFamily: 'var(--font-sans), sans-serif', textAlign: 'center' }}>
           This video source could not be embedded.
         </Typography>
       </Box>

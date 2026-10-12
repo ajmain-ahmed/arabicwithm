@@ -4,7 +4,10 @@ import HomeDashboard from '@/app/components/home/HomeDashboard'
 import { fetchNewOnEpisodes, fetchNewOnShows } from '@/app/components/home/catalogueRows'
 import { dailyRotationIndex } from '@/app/lib/dailyRotation'
 
-export const revalidate = false
+// Hourly so the featured episode/book rotation turns over with the day;
+// catalogue data comes from the unstable_cache'd fetches (zero DB queries),
+// and admin edits still bust immediately via revalidatePath + updateTag.
+export const revalidate = 3600
 
 export default async function HomePage() {
   const [books, shows] = await Promise.all([

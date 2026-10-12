@@ -338,7 +338,7 @@ function ExploreVideo({
                   height: 27,
                   bgcolor: candidate.provider === source?.provider ? '#d4a843' : 'rgba(0,0,0,0.62)',
                   color: candidate.provider === source?.provider ? '#0e2e1f' : '#fff',
-                  fontFamily: 'Jost, sans-serif',
+                  fontFamily: 'var(--font-sans), sans-serif',
                   fontWeight: 700,
                   '&:hover': { bgcolor: candidate.provider === source?.provider ? '#d4a843' : 'rgba(0,0,0,0.8)' },
                 }}
@@ -380,8 +380,8 @@ function ExploreVideo({
         {errorCode != null && isYouTube && (
           <Box sx={{ position: 'absolute', zIndex: 5, inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 3 }}>
             <Box sx={{ textAlign: 'center', color: '#fff' }}>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontWeight: 700 }}>This video cannot be played here.</Typography>
-              <Typography sx={{ mt: 0.5, mb: 1.5, fontFamily: 'Jost, sans-serif', fontSize: 12, opacity: 0.78 }}>It may be unavailable or restricted from embedded playback.</Typography>
+              <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }}>This video cannot be played here.</Typography>
+              <Typography sx={{ mt: 0.5, mb: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, opacity: 0.78 }}>It may be unavailable or restricted from embedded playback.</Typography>
               <Button component="a" href={`https://www.youtube.com/watch?v=${encodeURIComponent(source.id)}`} target="_blank" rel="noopener noreferrer" variant="contained" endIcon={<ArrowForward />} sx={{ bgcolor: '#b8860b', color: '#fff', textTransform: 'none' }}>
                 Open on YouTube
               </Button>
@@ -413,7 +413,7 @@ function ExploreVideo({
             <CefrChip level={episode.level} size="small" />
             {episode.tags.slice(0, 3).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.09)', color: '#8b6508' }} />)}
           </Box>
-          {episode.description && <Typography sx={{ mt: 1.5, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 13.5, lineHeight: 1.55 }}>{episode.description}</Typography>}
+          {episode.description && <Typography sx={{ mt: 1.5, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13.5, lineHeight: 1.55 }}>{episode.description}</Typography>}
         </Box>
 
         <Box ref={transcriptBodyRef} sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 2.5, py: 2 }}>
@@ -432,7 +432,7 @@ function ExploreVideo({
                 transition: 'background-color .18s ease, border-color .18s ease',
               }}
             >
-              <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), "EB Garamond", serif', fontSize: 22, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.65, textAlign: 'right' }}>
+              <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), var(--font-serif), serif', fontSize: 22, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.65, textAlign: 'right' }}>
                 {(line.words?.length ?? 0) > 0
                   ? (line.words ?? []).map((word, wordIndex) => (
                       <ExploreDefinitionWord
@@ -446,7 +446,7 @@ function ExploreVideo({
                     ))
                   : line.arabic}
               </Typography>
-              {line.translation && <Typography sx={{ mt: 0.35, fontFamily: 'Jost, sans-serif', fontSize: 13, color: 'var(--awm-muted)', lineHeight: 1.55 }}>{line.translation}</Typography>}
+              {line.translation && <Typography sx={{ mt: 0.35, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'var(--awm-muted)', lineHeight: 1.55 }}>{line.translation}</Typography>}
             </Box>
           ))}
         </Box>
@@ -485,14 +485,14 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionP
         <Box sx={{ px: { xs: 2.25, md: 4 }, py: { xs: 1.75, md: 2.5 }, bgcolor: '#0e2e1f', color: '#fff' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <MenuBook sx={{ color: '#d4a843', fontSize: 20 }} />
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', color: '#d4a843', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+            <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', color: '#d4a843', fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
               Random reading · Page {page.pageNumber}
             </Typography>
           </Box>
           <Typography component="h2" sx={{ mt: 0.6, fontFamily: 'var(--font-heading)', fontSize: { xs: 23, md: 30 }, fontWeight: 600, lineHeight: 1.15 }}>
             {page.bookTitle}
           </Typography>
-          <Typography sx={{ mt: 0.4, fontFamily: 'Jost, sans-serif', fontSize: 12.5, opacity: 0.76 }}>
+          <Typography sx={{ mt: 0.4, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, opacity: 0.76 }}>
             Chapter {page.chapterNumber}: {page.chapterTitle}
           </Typography>
         </Box>
@@ -500,7 +500,7 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionP
         <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: { xs: 2.25, md: 4 }, py: { xs: 1.5, md: 2.5 } }}>
           {page.blocks.map((block, blockIndex) => (
             <Box key={blockIndex} sx={{ py: { xs: 1, md: 1.35 }, borderBottom: blockIndex < page.blocks.length - 1 ? '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)' : 0 }}>
-              <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), "EB Garamond", serif', fontSize: { xs: 22, md: 28 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.85, textAlign: 'right' }}>
+              <Typography component="div" lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), var(--font-serif), serif', fontSize: { xs: 22, md: 28 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.85, textAlign: 'right' }}>
                 {block.words.map((word, wordIndex) => (
                   <ExploreDefinitionWord
                     key={`${word.plain}-${wordIndex}`}
@@ -514,7 +514,7 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionP
                 {block.punctuation}
               </Typography>
               {block.translation && (
-                <Typography sx={{ mt: 0.35, fontFamily: 'Jost, sans-serif', fontSize: { xs: 13, md: 14.5 }, color: 'var(--awm-muted)', lineHeight: 1.6 }}>
+                <Typography sx={{ mt: 0.35, fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 13, md: 14.5 }, color: 'var(--awm-muted)', lineHeight: 1.6 }}>
                   {block.translation}
                 </Typography>
               )}
@@ -751,7 +751,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
         <Box component="section" sx={{ height: '100%', display: 'grid', placeItems: 'center', bgcolor: 'var(--awm-cream-light)' }}>
           <Box sx={{ textAlign: 'center' }}>
             <CircularProgress size={34} sx={{ color: 'var(--awm-gold)' }} />
-            <Typography sx={{ mt: 1.5, fontFamily: 'Jost, sans-serif', fontSize: 13, color: 'var(--awm-muted)' }}>Loading more…</Typography>
+            <Typography sx={{ mt: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'var(--awm-muted)' }}>Loading more…</Typography>
           </Box>
         </Box>
       )}
@@ -760,7 +760,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
           <Box>
             <ExploreOutlined sx={{ fontSize: 54, color: 'var(--awm-gold)' }} />
             <Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: 'var(--awm-bark)' }}>You&apos;ve explored it all</Typography>
-            <Typography sx={{ mt: 0.5, fontFamily: 'Jost, sans-serif', fontSize: 14, color: 'var(--awm-muted)' }}>Keep scrolling to start back at the beginning.</Typography>
+            <Typography sx={{ mt: 0.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 14, color: 'var(--awm-muted)' }}>Keep scrolling to start back at the beginning.</Typography>
           </Box>
         </Box>
       )}

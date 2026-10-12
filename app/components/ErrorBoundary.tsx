@@ -60,7 +60,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           </Typography>
           <Typography
             sx={{
-              fontFamily: 'Jost, sans-serif',
+              fontFamily: 'var(--font-sans), sans-serif',
               fontSize: '0.95rem',
               color: 'var(--awm-muted)',
               maxWidth: 400,
@@ -73,7 +73,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             onClick={() => window.location.reload()}
             sx={{
               textTransform: 'none',
-              fontFamily: 'Jost, sans-serif',
+              fontFamily: 'var(--font-sans), sans-serif',
               fontWeight: 500,
               borderColor: '#b8860b',
               color: '#b8860b',

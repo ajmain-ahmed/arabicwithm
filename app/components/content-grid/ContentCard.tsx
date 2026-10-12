@@ -306,7 +306,7 @@ export default function ContentCard({
               mb: 1,
               overflow: 'hidden',
               color: MUTED,
-              fontFamily: 'Jost, sans-serif',
+              fontFamily: 'var(--font-sans), sans-serif',
               fontSize: 11.5,
               lineHeight: 1.4,
               WebkitLineClamp: 2,

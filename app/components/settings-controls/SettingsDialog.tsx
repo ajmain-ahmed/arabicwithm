@@ -39,9 +39,9 @@ export default function SettingsDialog({
   onEdit,
 }: SettingsDialogProps) {
   const textFontFamily = {
-    naskh: 'var(--font-book-naskh), "EB Garamond", serif',
-    garamond: '"EB Garamond", Georgia, serif',
-    amiri: 'var(--font-book-amiri), "EB Garamond", serif',
+    naskh: 'var(--font-book-naskh), var(--font-serif), serif',
+    garamond: 'var(--font-serif), Georgia, serif',
+    amiri: 'var(--font-book-amiri), var(--font-serif), serif',
   }[textFont]
 
   return (
@@ -61,7 +61,7 @@ export default function SettingsDialog({
             activeColor="#b8860b"
           />
           <Box sx={{ py: 1.5, px: 1.5, borderRadius: '10px', border: '1px solid rgba(122,110,101,0.15)', background: 'rgba(122,110,101,0.03)' }}>
-            <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: 'var(--awm-bark)' }}>Arabic Font</Typography>
+            <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.95rem', fontWeight: 600, color: 'var(--awm-bark)' }}>Arabic Font</Typography>
             <Typography lang="ar" dir="rtl" sx={{ my: 1.25, fontFamily: textFontFamily, fontSize: 27, color: 'var(--awm-bark)', textAlign: 'center', lineHeight: 1.5 }}>
               العَرَبِيَّةُ لُغَةٌ جَمِيلَةٌ
             </Typography>
@@ -72,7 +72,7 @@ export default function SettingsDialog({
                   size="small"
                   variant={textFont === value ? 'contained' : 'outlined'}
                   onClick={() => onTextFontChange(value)}
-                  sx={{ minWidth: 0, px: 0.75, bgcolor: textFont === value ? '#b8860b' : 'transparent', color: textFont === value ? '#fff' : 'var(--awm-bark)', borderColor: 'rgba(184,134,11,0.35)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', fontSize: { xs: 11, sm: 12 }, textTransform: 'none', '&:hover': { bgcolor: textFont === value ? '#966d09' : 'rgba(184,134,11,0.06)' } }}
+                  sx={{ minWidth: 0, px: 0.75, bgcolor: textFont === value ? '#b8860b' : 'transparent', color: textFont === value ? '#fff' : 'var(--awm-bark)', borderColor: 'rgba(184,134,11,0.35)', borderRadius: '8px', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 11, sm: 12 }, textTransform: 'none', '&:hover': { bgcolor: textFont === value ? '#966d09' : 'rgba(184,134,11,0.06)' } }}
                 >
                   {label}
                 </Button>
@@ -82,17 +82,17 @@ export default function SettingsDialog({
           <Box sx={{ py: 1.5, px: 1.5, borderRadius: '10px', border: '1px solid rgba(122,110,101,0.15)', background: 'rgba(122,110,101,0.03)' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 2 }}>
               <Box>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.95rem', fontWeight: 600, color: 'var(--awm-bark)' }}>Text Size</Typography>
-              <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)', mt: 0.3 }}>{textSizeDescription}</Typography>
+              <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.95rem', fontWeight: 600, color: 'var(--awm-bark)' }}>Text Size</Typography>
+              <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)', mt: 0.3 }}>{textSizeDescription}</Typography>
               </Box>
-              <Typography aria-live="polite" sx={{ color: '#b8860b', fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700 }}>
+              <Typography aria-live="polite" sx={{ color: '#b8860b', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, fontWeight: 700 }}>
                 {Math.round(textScale * 100)}%
               </Typography>
             </Box>
             <Box sx={{ mt: 1.5, display: 'grid', gridTemplateColumns: '32px minmax(150px, 1fr) 42px', alignItems: 'center', columnGap: { xs: 1.5, sm: 2.5 } }}>
-              <Typography aria-hidden="true" sx={{ fontFamily: 'Jost, sans-serif', fontSize: 13, fontWeight: 700, color: 'var(--awm-muted)', textAlign: 'center' }}>A</Typography>
+              <Typography aria-hidden="true" sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, fontWeight: 700, color: 'var(--awm-muted)', textAlign: 'center' }}>A</Typography>
               <Slider value={textScale} min={textScaleMin} max={textScaleMax} step={0.1} onChange={(_, v) => onTextScaleChange(v as number)} sx={{ color: '#b8860b', width: '100%', '& .MuiSlider-thumb': { width: 18, height: 18 }, '& .MuiSlider-track, & .MuiSlider-rail': { height: 5 } }} />
-              <Typography aria-hidden="true" sx={{ fontFamily: 'Jost, sans-serif', fontSize: 24, lineHeight: 1, fontWeight: 700, color: 'var(--awm-muted)', textAlign: 'center' }}>A</Typography>
+              <Typography aria-hidden="true" sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 24, lineHeight: 1, fontWeight: 700, color: 'var(--awm-muted)', textAlign: 'center' }}>A</Typography>
             </Box>
           </Box>
         </Box>
@@ -107,7 +107,7 @@ export default function SettingsDialog({
               flex: 1,
               color: 'var(--awm-bark)',
               borderColor: 'rgba(44,26,14,0.25)',
-              fontFamily: 'Jost, sans-serif',
+              fontFamily: 'var(--font-sans), sans-serif',
               fontWeight: 600,
               fontSize: '0.9rem',
               textTransform: 'none',
@@ -128,7 +128,7 @@ export default function SettingsDialog({
             flex: onEdit ? 1 : undefined,
             background: '#2c1a0e',
             color: '#f5ede0',
-            fontFamily: 'Jost, sans-serif',
+            fontFamily: 'var(--font-sans), sans-serif',
             fontWeight: 600,
             fontSize: '0.95rem',
             textTransform: 'none',

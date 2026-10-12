@@ -454,8 +454,7 @@ export async function createEpisode(input: EpisodeInput): Promise<EpisodeSaveRes
 
 export async function updateEpisode(
   id: string,
-  input: Partial<EpisodeInput>,
-  revalidate?: string
+  input: Partial<EpisodeInput>
 ): Promise<EpisodeSaveResult> {
   await guardAdmin()
 
@@ -530,9 +529,6 @@ export async function updateEpisode(
   if (nextShowSlug && nextEpisodeSlug) {
     revalidateEpisodePage(nextShowSlug, nextEpisodeSlug)
   }
-  if (revalidate) {
-    revalidatePath(revalidate)
-  }
   return { ok: true, id }
 }
 
@@ -553,11 +549,23 @@ export async function deleteEpisode(id: string): Promise<void> {
   if (path) revalidateEpisodePage(path.showSlug, path.episodeSlug)
 }
 
+/* Server Action bodies fail opaquely around ~1 MB; give content editors a
+   clear error before they hit that. */
+const MAX_CONTENT_JSON_BYTES = 900_000
+
+function assertContentSize(value: unknown, label: string): void {
+  const size = JSON.stringify(value ?? null)?.length ?? 0
+  if (size > MAX_CONTENT_JSON_BYTES) {
+    throw new Error(`${label} is too large (${Math.round(size / 1024)} KB serialized). Split it into smaller blocks.`)
+  }
+}
+
 export async function updateEpisodeTranscript(
   id: string,
   transcript: unknown
 ): Promise<void> {
   await guardAdmin()
+  assertContentSize(transcript, "Transcript")
 
   const path = await fetchEpisodePathById(id)
 
@@ -857,6 +865,7 @@ export async function updateChapterContent(
   content: unknown
 ): Promise<void> {
   await guardAdmin()
+  assertContentSize(content, "Chapter content")
 
   const path = await fetchChapterPathById(id)
 

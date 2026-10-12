@@ -234,7 +234,7 @@ export default function ChapterHeadwordsPage() {
             <Typography
               sx={{
                 direction: "rtl",
-                fontFamily: "'EB Garamond', serif",
+                fontFamily: "var(--font-serif), serif",
                 fontSize: "1.75rem",
                 fontWeight: 700,
                 color: "#2c1a0e",
@@ -244,7 +244,7 @@ export default function ChapterHeadwordsPage() {
             >
               {token.arabic || token.plain || "—"}
             </Typography>
-            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "1.15rem", color: "#7a6e65", mt: 0.5 }}>
+            <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", fontSize: "1.15rem", color: "#7a6e65", mt: 0.5 }}>
               HW: <strong style={{ color: isUnmatched ? "#c0392b" : "#2c1a0e" }}>{entry?.word ?? "—"}</strong>
             </Typography>
           </Box>
@@ -271,7 +271,7 @@ export default function ChapterHeadwordsPage() {
         sx={{
           mb: 2,
           textTransform: "none",
-          fontFamily: "Jost, sans-serif",
+          fontFamily: "var(--font-sans), sans-serif",
           color: "#7a6e65",
           "&:hover": { color: "#b8860b", background: "transparent" },
         }}
@@ -284,7 +284,7 @@ export default function ChapterHeadwordsPage() {
           <Typography variant="h4" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 600, color: "#2c1a0e" }}>
             {chapter ? chapter.title : "Chapter headwords"}
           </Typography>
-          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
+          <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
             {loading
               ? "Loading…"
               : `${rows.length.toLocaleString()} word${rows.length === 1 ? "" : "s"} · ${unmatchedCount} unmatched`}
@@ -293,15 +293,15 @@ export default function ChapterHeadwordsPage() {
       </Box>
 
       {error && (
-        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "Jost, sans-serif" }}>{error}</Typography>
+        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "var(--font-sans), sans-serif" }}>{error}</Typography>
       )}
 
       {loading ? (
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
+        <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
           Loading chapter and headwords…
         </Typography>
       ) : rows.length === 0 ? (
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
+        <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
           No word headwords found in this chapter.
         </Typography>
       ) : isMobile ? (
@@ -395,7 +395,7 @@ export default function ChapterHeadwordsPage() {
                         sx={{
                           ...bodyCellSx,
                           direction: "rtl",
-                          fontFamily: "'EB Garamond', serif",
+                          fontFamily: "var(--font-serif), serif",
                           fontSize: "1.5rem",
                           fontWeight: 600,
                           color: "#2c1a0e",
@@ -469,14 +469,14 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 const headerCellSx = {
   fontWeight: 700,
   fontSize: "1.15rem",
-  fontFamily: "Jost, sans-serif",
+  fontFamily: "var(--font-sans), sans-serif",
   backgroundColor: "#f5ede0",
   color: "#2c1a0e",
 }
 
 const bodyCellSx = {
   verticalAlign: "middle",
-  fontFamily: "Jost, sans-serif",
+  fontFamily: "var(--font-sans), sans-serif",
   fontSize: "1.1rem",
 }
 
@@ -507,7 +507,7 @@ function EditableCell({ value, onBlur, saving, arabic, multiline, isEditing, isE
     return (
       <Typography
         sx={{
-          fontFamily: arabic ? "'EB Garamond', serif" : "Jost, sans-serif",
+          fontFamily: arabic ? "var(--font-serif), serif" : "var(--font-sans), sans-serif",
           fontSize: arabic ? "1.5rem" : "1.1rem",
           fontWeight: arabic ? 700 : 400,
           color: arabic ? "#2c1a0e" : "inherit",
@@ -551,7 +551,7 @@ function EditableCell({ value, onBlur, saving, arabic, multiline, isEditing, isE
       sx={{
         "& .MuiInputBase-root": {
           borderRadius: "8px",
-          fontFamily: arabic ? "'EB Garamond', serif" : "Jost, sans-serif",
+          fontFamily: arabic ? "var(--font-serif), serif" : "var(--font-sans), sans-serif",
           fontSize: arabic ? "1.5rem" : "1.05rem",
           ...(arabic && { direction: "rtl" }),
         },

@@ -22,7 +22,7 @@ export default async function BooksPage() {
           <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 36 }, fontWeight: 600, color: 'var(--awm-bark)' }}>
             Library
           </Typography>
-          <Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 14 }}>
+          <Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 14 }}>
             {books.length} {books.length === 1 ? 'book' : 'books'}
           </Typography>
         </Box>
@@ -82,7 +82,7 @@ export default async function BooksPage() {
                     <Typography sx={{ minHeight: { xs: '2.5em', sm: '2.4em' }, fontFamily: 'var(--font-heading)', fontSize: { xs: 12.5, sm: 20 }, lineHeight: 1.2, fontWeight: 600, color: 'var(--awm-bark)', mb: { xs: 0.5, sm: 1.25 }, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                       {book.title}
                     </Typography>
-                    <Typography sx={{ display: { xs: 'none', sm: '-webkit-box' }, minHeight: '4.5em', color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 13.5, lineHeight: 1.5, overflow: 'hidden', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', mb: 1.75 }}>
+                    <Typography sx={{ display: { xs: 'none', sm: '-webkit-box' }, minHeight: '4.5em', color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13.5, lineHeight: 1.5, overflow: 'hidden', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', mb: 1.75 }}>
                       {book.description}
                     </Typography>
                     <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 0.75, flexWrap: 'wrap', mb: 2, minHeight: 24 }}>
@@ -90,7 +90,7 @@ export default async function BooksPage() {
                       {book.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ display: { xs: 'none', sm: 'inline-flex' }, bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />)}
                     </Box>
                     <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: { xs: 0.6, sm: 1.5 }, borderTop: '1px solid rgba(44,26,14,0.07)' }}>
-                      <Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: { xs: 9, sm: 13 } }}>
+                      <Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 9, sm: 13 } }}>
                         {book.chapterCount} {book.chapterCount === 1 ? 'chapter' : 'chapters'}
                       </Typography>
                       <ChevronRight sx={{ color: '#b8860b', fontSize: { xs: 15, sm: 24 } }} />

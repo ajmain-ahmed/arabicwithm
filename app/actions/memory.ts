@@ -2,9 +2,9 @@
 
 import { isMissingDatabaseFeature, LEARNING_SETUP_MESSAGE } from '@/app/lib/databaseErrors'
 import { z } from 'zod'
-import { fetchPremiumStatus } from '@/app/actions/premium'
+import { premiumStatusForUser } from '@/app/lib/premiumStatus'
 import { MEMORY, platformDate } from '@/app/lib/entitlements'
-import { getAuthenticatedUserId } from '@/app/actions/auth'
+import { getAuthenticatedAccess, getAuthenticatedUserId, type AuthenticatedAccess } from '@/app/actions/auth'
 import {
   extractMemoryCards,
   parseMemoryCardId,
@@ -14,7 +14,9 @@ import {
   type MemoryRating,
 } from '@/app/lib/memory'
 import { hasServiceClientConfig, serviceClient } from '@/app/lib/supabase'
+import { rateLimit } from '@/app/lib/rateLimit'
 import { unstable_cache } from 'next/cache'
+import { headers } from 'next/headers'
 
 /* Production data is refreshed only via updateTag/revalidatePath from the
    admin CMS. In dev, re-fetch every minute so content added through
@@ -57,6 +59,13 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   if (!hasServiceClientConfig()) {
     return { cards: [], shows: [], scope: 'global', scopeTitle: 'Random practice', missingScope: false }
   }
+
+  /* Public action that streams episode transcripts — throttle per IP so a
+     script can't bulk-download the catalogue. */
+  const headerList = await headers()
+  const ip = headerList.get('x-forwarded-for')?.split(',')[0]?.trim() || headerList.get('x-real-ip') || 'unknown'
+  const limited = rateLimit(`memory-library:${ip}`, 30, 60_000)
+  if (!limited.ok) throw new Error('Too many practice requests. Please try again shortly.')
 
   let sourceQuery = serviceClient
     .from('episodes')
@@ -146,8 +155,9 @@ const fetchMemoryCardSource = unstable_cache(
 )
 
 export async function recordMemoryReview(cardId: string, rating: MemoryRating, completionId: string, nextSession: SavedMemorySession): Promise<{ accepted: boolean; awarded: number; totalXp: number; used: number }> {
-  const [userId, entitlement] = await Promise.all([getAuthenticatedUserId(), fetchPremiumStatus()])
-  if (!userId || !entitlement.signedIn) throw new Error('Sign in to save Memory practice.')
+  const access = await getAuthenticatedAccess()
+  if (!access) throw new Error('Sign in to save Memory practice.')
+  const entitlement = await premiumStatusForUser(access.userId, access.admin)
   z.string().uuid().parse(completionId)
   const state = sessionSchema.parse(nextSession)
   if (state.index < 1 || state.cards[state.index - 1]?.id !== cardId || state.completionIds[state.index - 1] !== completionId) throw new Error('Invalid session progress.')
@@ -170,16 +180,19 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating, c
   if (!validCards.some((card) => card.id === cardId)) throw new Error('This Memory card is no longer available.')
 
   const { data, error } = await serviceClient.rpc('complete_memory_card', {
-    p_user_id: userId, p_completion_id: completionId, p_card_id: cardId, p_rating: rating,
+    p_user_id: access.userId, p_completion_id: completionId, p_card_id: cardId, p_rating: rating,
     p_xp: MEMORY.xpPerCard, p_daily_limit: MEMORY.dailyFreeCards, p_has_premium: entitlement.premium, p_session: state,
   })
   if (error) throw new Error('Unable to save Memory progress. Please try again.')
   return data as { accepted: boolean; awarded: number; totalXp: number; used: number }
 }
 
-export async function fetchMemoryProgress() {
-  const userId = await getAuthenticatedUserId()
-  if (!userId) throw new Error('Sign in to view your Memory progress.')
+export async function fetchMemoryProgress(preset?: AuthenticatedAccess) {
+  /* Callers that already verified the caller (e.g. the activity sync) pass
+     their access through so we don't repeat the auth round trip per request. */
+  const access = preset ?? await getAuthenticatedAccess()
+  if (!access) throw new Error('Sign in to view your Memory progress.')
+  const userId = access.userId
   const today = platformDate()
   const monday = new Date(today + 'T12:00:00Z')
   monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7)
@@ -188,7 +201,7 @@ export async function fetchMemoryProgress() {
     serviceClient.rpc('memory_totals', { p_user_id: userId }),
     serviceClient.rpc('memory_totals', { p_user_id: userId, p_since: monday.toISOString().slice(0, 10) }),
     serviceClient.from('memory_legacy_progress').select('xp').eq('user_id', userId).maybeSingle(),
-    fetchPremiumStatus(),
+    premiumStatusForUser(access.userId, access.admin),
   ])
   const errors = [daily.error, total.error, week.error, legacy.error]
   if (errors.some(Boolean)) console.error('[memory database queries]', errors.filter(Boolean))
@@ -225,8 +238,8 @@ export async function fetchSavedMemorySession(): Promise<SavedMemorySession | nu
 
 // Expected storage errors must cross the production Server Action boundary as
 // data: thrown errors are intentionally redacted by Next.js.
-export async function loadMemoryProgress() {
-  try { return { ok: true as const, data: await fetchMemoryProgress() } }
+export async function loadMemoryProgress(preset?: AuthenticatedAccess) {
+  try { return { ok: true as const, data: await fetchMemoryProgress(preset) } }
   catch (error) {
     console.error('[memory progress]', error)
     return { ok: false as const, error: error instanceof Error && error.message === LEARNING_SETUP_MESSAGE ? LEARNING_SETUP_MESSAGE : 'Unable to load Memory progress. Please sign in and try again.' }

@@ -232,8 +232,8 @@ export default function CartoonsPage({
     >
       <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
         <Breadcrumbs separator={<NavigateNext sx={{ fontSize: 16, color: 'var(--awm-muted-light)' }} />} sx={{ display: { xs: 'none', md: 'flex' }, mb: 2 }}>
-          <Typography onClick={() => router.push('/')} sx={{ color: MUTED, cursor: 'pointer', fontFamily: 'Jost, sans-serif', '&:hover': { color: GOLD } }}>Home</Typography>
-          <Typography sx={{ color: BARK, fontWeight: 600, fontFamily: 'Jost, sans-serif' }}>Watch</Typography>
+          <Typography onClick={() => router.push('/')} sx={{ color: MUTED, cursor: 'pointer', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { color: GOLD } }}>Home</Typography>
+          <Typography sx={{ color: BARK, fontWeight: 600, fontFamily: 'var(--font-sans), sans-serif' }}>Watch</Typography>
         </Breadcrumbs>
 
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1.5, mb: { xs: 1.5, md: 3 } }}>
@@ -260,7 +260,7 @@ export default function CartoonsPage({
                 borderRadius: 0,
                 color: MUTED,
                 borderColor: 'color-mix(in srgb, var(--awm-bark) 14%, transparent)',
-                fontFamily: 'Jost, sans-serif',
+                fontFamily: 'var(--font-sans), sans-serif',
                 fontSize: { xs: 12, sm: 14 },
                 fontWeight: 700,
                 textTransform: 'none',
@@ -378,7 +378,7 @@ export default function CartoonsPage({
                   boundaryCount={1}
                   sx={{
                     '& .MuiPaginationItem-root': {
-                      fontFamily: 'Jost, sans-serif',
+                      fontFamily: 'var(--font-sans), sans-serif',
                       fontWeight: 600,
                       color: MUTED,
                       border: '1px solid rgba(44,26,14,0.12)',

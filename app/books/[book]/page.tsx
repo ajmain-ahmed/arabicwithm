@@ -5,7 +5,7 @@ import { ArrowBack, ChevronRight } from '@mui/icons-material'
 import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
 import BookReadingCta from './BookReadingCta'
 import BookListRemovalButton from './BookListRemovalButton'
-import ChapterAccessLock, { PremiumChapterLink } from './ChapterAccessLock'
+import ChapterAccessLock, { BookPremiumProvider, PremiumChapterLink } from './ChapterAccessLock'
 import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 
@@ -33,7 +33,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
     <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 3, md: 6 } }}>
       <Container maxWidth="lg">
         <Link href="/books" style={{ color: 'inherit', textDecoration: 'none' }}>
-          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', mb: 3, '&:hover': { color: '#b8860b' } }}>
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', mb: 3, '&:hover': { color: '#b8860b' } }}>
             <ArrowBack sx={{ fontSize: 18 }} /> Back to books
           </Box>
         </Link>
@@ -57,7 +57,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                   sx={{
                     mt: 1.25,
                     maxWidth: 600,
-                    fontFamily: '"EB Garamond", Georgia, serif',
+                    fontFamily: 'var(--font-serif), Georgia, serif',
                     fontSize: { xs: 17, md: 19 },
                     lineHeight: 1.5,
                     color: '#b8860b',
@@ -83,13 +83,14 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
         <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 25, sm: 30 }, fontWeight: 600, color: 'var(--awm-bark)', mb: 2 }}>
           Chapters
         </Typography>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1.25,
-          }}
-        >
+        <BookPremiumProvider>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.25,
+            }}
+          >
           {chapters.map((chapter) => (
             <Box key={chapter.id}>
               <PremiumChapterLink
@@ -104,8 +105,8 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                     {chapter.chapterNumber}
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}>{chapter.title}</Typography>
-                    {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
+                    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}>{chapter.title}</Typography>
+                    {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
                   </Box>
                   <ChapterAccessLock premiumExempt={book.premiumExempt} freeChapterCount={book.freeChapterCount} chapterCount={book.chapterCount} chapterNumber={chapter.chapterNumber} />
                   <ChevronRight sx={{ color: 'var(--awm-muted-light)' }} />
@@ -113,7 +114,8 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
               </PremiumChapterLink>
             </Box>
           ))}
-        </Box>
+          </Box>
+        </BookPremiumProvider>
       </Container>
     </Box>
   )

@@ -30,7 +30,7 @@ export default function CartoonsError({ reset }: { reset: () => void }) {
       </Typography>
       <Typography
         sx={{
-          fontFamily: 'Jost, sans-serif',
+          fontFamily: 'var(--font-sans), sans-serif',
           fontSize: '0.95rem',
           color: 'var(--awm-muted)',
           maxWidth: 400,
@@ -43,7 +43,7 @@ export default function CartoonsError({ reset }: { reset: () => void }) {
         onClick={reset}
         sx={{
           textTransform: 'none',
-          fontFamily: 'Jost, sans-serif',
+          fontFamily: 'var(--font-sans), sans-serif',
           fontWeight: 500,
           borderColor: '#b8860b',
           color: '#b8860b',

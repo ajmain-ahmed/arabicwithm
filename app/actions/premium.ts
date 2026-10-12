@@ -1,26 +1,17 @@
 'use server'
-import { isMissingDatabaseFeature } from '@/app/lib/databaseErrors'
 import { getAuthenticatedAccess, getAuthenticatedUserId } from '@/app/actions/auth'
 import { rateLimit } from '@/app/lib/rateLimit'
 import { serviceClient } from '@/app/lib/supabase'
-import { hasPremium, hasPremiumAccess, PREMIUM } from '@/app/lib/entitlements'
+import { premiumStatusForUser, type PremiumStatusData } from '@/app/lib/premiumStatus'
+import { hasPremium, PREMIUM } from '@/app/lib/entitlements'
 import { stripeClient, siteUrl } from '@/app/lib/billing'
 
-export interface PremiumStatus {
-  premium: boolean
-  signedIn: boolean
-  manageable: boolean
-  admin: boolean
-}
+export type PremiumStatus = PremiumStatusData
 
 export async function fetchPremiumStatus(): Promise<PremiumStatus> {
   const access = await getAuthenticatedAccess()
   if (!access) return { premium: false, signedIn: false, manageable: false, admin: false }
-  if (access.admin) return { premium: true, signedIn: true, manageable: false, admin: true }
-  const { data, error } = await serviceClient.from('subscriptions').select('status, current_period_end, customer_id').eq('user_id', access.userId).maybeSingle()
-  if (isMissingDatabaseFeature(error)) return { premium: false, signedIn: true, manageable: false, admin: false }
-  if (error) throw new Error('Unable to verify AWM+ access.')
-  return { premium: hasPremiumAccess(false, data), signedIn: true, manageable: Boolean(data?.customer_id), admin: false }
+  return premiumStatusForUser(access.userId, access.admin)
 }
 export async function startPremiumCheckout(): Promise<string> {
   const access = await getAuthenticatedAccess()

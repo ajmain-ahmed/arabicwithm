@@ -142,7 +142,7 @@ export default function PageBanner({
       {/* Arabic subtitle */}
       <Typography
         sx={{
-          fontFamily: '"EB Garamond", Georgia, serif',
+          fontFamily: 'var(--font-serif), Georgia, serif',
           fontSize: { xs: '22px', sm: '26px', md: '36px' },
           fontWeight: 600,
           color: GOLD_LT,
@@ -159,7 +159,7 @@ export default function PageBanner({
       {/* Description */}
       <Typography
         sx={{
-          fontFamily: '"Jost", system-ui, sans-serif',
+          fontFamily: 'var(--font-sans), system-ui, sans-serif',
           fontSize: { xs: '14px', sm: '16px', md: '20px' },
           fontWeight: 500,
           lineHeight: 1.5,
@@ -221,7 +221,7 @@ export default function PageBanner({
         sx={{
           backgroundColor: GOLD,
           color: BARK,
-          fontFamily: '"Jost", system-ui, sans-serif',
+          fontFamily: 'var(--font-sans), system-ui, sans-serif',
           fontSize: { xs: 16, md: 19 },
           fontWeight: 500,
           textTransform: 'none',

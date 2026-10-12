@@ -127,7 +127,7 @@ export default function PhrasesAdminPage() {
             <Typography
               sx={{
                 direction: "rtl",
-                fontFamily: "'EB Garamond', serif",
+                fontFamily: "var(--font-serif), serif",
                 fontSize: "1.75rem",
                 fontWeight: 700,
                 color: "#2c1a0e",
@@ -137,7 +137,7 @@ export default function PhrasesAdminPage() {
             >
               {phrase.phrase_ar_di || "—"}
             </Typography>
-            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "1.15rem", color: "#7a6e65", mt: 0.5 }}>
+            <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", fontSize: "1.15rem", color: "#7a6e65", mt: 0.5 }}>
               {phrase.english || "—"}
             </Typography>
           </Box>
@@ -162,21 +162,21 @@ export default function PhrasesAdminPage() {
         <Typography variant="h4" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 600, color: "#2c1a0e" }}>
           Phrases
         </Typography>
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+        <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
           {loading ? "Loading…" : `${phrases.length.toLocaleString()} phrase${phrases.length === 1 ? "" : "s"}`}
         </Typography>
       </Box>
 
       {error && (
-        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "Jost, sans-serif" }}>{error}</Typography>
+        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "var(--font-sans), sans-serif" }}>{error}</Typography>
       )}
 
       {loading ? (
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
+        <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
           Loading phrases…
         </Typography>
       ) : phrases.length === 0 ? (
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
+        <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
           No phrases found.
         </Typography>
       ) : isMobile ? (
@@ -311,7 +311,7 @@ function PhraseDialog({ phrase, isEditing, onClose, onToggleEdit, onUpdate, savi
     >
       <DialogTitle
         sx={{
-          fontFamily: "'EB Garamond', serif",
+          fontFamily: "var(--font-serif), serif",
           fontSize: "1.6rem",
           fontWeight: 700,
           color: "#2c1a0e",
@@ -383,7 +383,7 @@ function PhraseDialog({ phrase, isEditing, onClose, onToggleEdit, onUpdate, savi
           onClick={onClose}
           sx={{
             textTransform: "none",
-            fontFamily: "Jost, sans-serif",
+            fontFamily: "var(--font-sans), sans-serif",
             fontSize: "1.05rem",
             fontWeight: 600,
             borderRadius: "10px",
@@ -420,7 +420,7 @@ function DialogField({ label, value, onBlur, saving, arabic, multiline, isEditin
 
   return (
     <Box>
-      <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "0.95rem", color: "#9e8a7a", fontWeight: 600, mb: 0.5 }}>
+      <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", fontSize: "0.95rem", color: "#9e8a7a", fontWeight: 600, mb: 0.5 }}>
         {label}
       </Typography>
       {canEdit ? (
@@ -440,7 +440,7 @@ function DialogField({ label, value, onBlur, saving, arabic, multiline, isEditin
           sx={{
             "& .MuiInputBase-root": {
               borderRadius: "8px",
-              fontFamily: arabic ? "'EB Garamond', serif" : "Jost, sans-serif",
+              fontFamily: arabic ? "var(--font-serif), serif" : "var(--font-sans), sans-serif",
               fontSize: arabic ? "1.5rem" : "1.15rem",
               ...(arabic && { direction: "rtl" }),
             },
@@ -449,7 +449,7 @@ function DialogField({ label, value, onBlur, saving, arabic, multiline, isEditin
       ) : (
         <Typography
           sx={{
-            fontFamily: arabic ? "'EB Garamond', serif" : "Jost, sans-serif",
+            fontFamily: arabic ? "var(--font-serif), serif" : "var(--font-sans), sans-serif",
             fontSize: arabic ? "1.6rem" : "1.2rem",
             fontWeight: arabic ? 700 : 400,
             color: arabic ? "#2c1a0e" : "#4a3f36",
@@ -469,14 +469,14 @@ function DialogField({ label, value, onBlur, saving, arabic, multiline, isEditin
 const headerCellSx = {
   fontWeight: 700,
   fontSize: "1.15rem",
-  fontFamily: "Jost, sans-serif",
+  fontFamily: "var(--font-sans), sans-serif",
   backgroundColor: "#f5ede0",
   color: "#2c1a0e",
 }
 
 const bodyCellSx = {
   verticalAlign: "middle",
-  fontFamily: "Jost, sans-serif",
+  fontFamily: "var(--font-sans), sans-serif",
   fontSize: "1.1rem",
 }
 
@@ -500,7 +500,7 @@ function EditableCell({ value, onBlur, saving, arabic, multiline, isEditing }: E
     return (
       <Typography
         sx={{
-          fontFamily: arabic ? "'EB Garamond', serif" : "Jost, sans-serif",
+          fontFamily: arabic ? "var(--font-serif), serif" : "var(--font-sans), sans-serif",
           fontSize: arabic ? "1.5rem" : "1.1rem",
           fontWeight: arabic ? 700 : 400,
           color: arabic ? "#2c1a0e" : "inherit",
@@ -533,7 +533,7 @@ function EditableCell({ value, onBlur, saving, arabic, multiline, isEditing }: E
       sx={{
         "& .MuiInputBase-root": {
           borderRadius: "8px",
-          fontFamily: arabic ? "'EB Garamond', serif" : "Jost, sans-serif",
+          fontFamily: arabic ? "var(--font-serif), serif" : "var(--font-sans), sans-serif",
           fontSize: arabic ? "1.5rem" : "1.05rem",
           ...(arabic && { direction: "rtl" }),
         },

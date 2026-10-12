@@ -57,7 +57,7 @@ function FilterButtonGroup({
             height: 40,
             px: 1.5,
             borderRadius: '6px',
-            fontFamily: '"Jost", system-ui, sans-serif',
+            fontFamily: 'var(--font-sans), system-ui, sans-serif',
             fontSize: 13,
             fontWeight: 500,
             textTransform: 'none',
@@ -166,7 +166,7 @@ export default function FilterSidebar({
               }}
               displayEmpty
               inputProps={{ 'aria-label': 'Filter by additional tag' }}
-              sx={{ height: 40, borderRadius: '6px', bgcolor: WARM_WHITE, fontFamily: 'Jost, sans-serif', fontSize: 13 }}
+              sx={{ height: 40, borderRadius: '6px', bgcolor: WARM_WHITE, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13 }}
             >
               <MenuItem value="">All tags</MenuItem>
               {additionalTags.map((tag) => <MenuItem key={tag} value={tag}>{tag}</MenuItem>)}
@@ -200,7 +200,7 @@ export default function FilterSidebar({
               sx={{
                 height: 36,
                 borderRadius: '6px',
-                fontFamily: '"Jost", system-ui, sans-serif',
+                fontFamily: 'var(--font-sans), system-ui, sans-serif',
                 fontSize: 12,
                 fontWeight: 600,
                 textTransform: 'none',
@@ -238,7 +238,7 @@ export default function FilterSidebar({
         sx={{
           height: 40,
           borderRadius: '6px',
-          fontFamily: '"Jost", system-ui, sans-serif',
+          fontFamily: 'var(--font-sans), system-ui, sans-serif',
           fontSize: 13,
           fontWeight: 500,
           textTransform: 'none',

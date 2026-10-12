@@ -6,7 +6,14 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
   const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-  if (!url || !key) return response
+  // No Supabase auth cookie → no session to refresh or verify. Skipping the
+  // remote getUser() saves an Auth API round trip on every anonymous request
+  // (the vast majority of traffic). Cookie names follow @supabase/ssr's
+  // `sb-<ref>-auth-token` / `-refresh-token` convention, with `.N` chunk suffixes.
+  const hasAuthCookie = request.cookies
+    .getAll()
+    .some(({ name }) => name.startsWith('sb-') && (name.includes('-auth-token') || name.includes('-refresh-token')))
+  if (!url || !key || !hasAuthCookie) return response
   const client = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
@@ -22,5 +29,5 @@ export async function proxy(request: NextRequest) {
   return response
 }
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|api/billing/webhook|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|woff2?|ttf|mp4)$).*)'],
+  matcher: ['/((?!_next/static|_next/image|api/billing/webhook|api/covers|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|woff2?|ttf|mp4)$).*)'],
 }

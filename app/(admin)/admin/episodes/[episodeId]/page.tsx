@@ -295,7 +295,7 @@ export default function EpisodeHeadwordsPage() {
             <Typography
               sx={{
                 direction: "rtl",
-                fontFamily: "'EB Garamond', serif",
+                fontFamily: "var(--font-serif), serif",
                 fontSize: "1.75rem",
                 fontWeight: 700,
                 color: "#2c1a0e",
@@ -305,7 +305,7 @@ export default function EpisodeHeadwordsPage() {
             >
               {token.arabic || token.plain || "—"}
             </Typography>
-            <Typography sx={{ fontFamily: "Jost, sans-serif", fontSize: "1.15rem", color: "#7a6e65", mt: 0.5 }}>
+            <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", fontSize: "1.15rem", color: "#7a6e65", mt: 0.5 }}>
               {isPhrase ? "Phrase" : "HW"}:{" "}
               <strong style={{ color: isUnmatched ? "#c0392b" : "#2c1a0e" }}>{entry?.word ?? "—"}</strong>
             </Typography>
@@ -333,7 +333,7 @@ export default function EpisodeHeadwordsPage() {
         sx={{
           mb: 2,
           textTransform: "none",
-          fontFamily: "Jost, sans-serif",
+          fontFamily: "var(--font-sans), sans-serif",
           color: "#7a6e65",
           "&:hover": { color: "#b8860b", background: "transparent" },
         }}
@@ -346,7 +346,7 @@ export default function EpisodeHeadwordsPage() {
           <Typography variant="h4" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 600, color: "#2c1a0e" }}>
             {episode ? episode.title : "Episode headwords"}
           </Typography>
-          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
+          <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
             {loading
               ? "Loading…"
               : `${rows.length.toLocaleString()} word${rows.length === 1 ? "" : "s"} · ${unmatchedCount} unmatched${phraseCount > 0 ? ` · ${phraseCount} phrase${phraseCount === 1 ? "" : "s"}` : ""}`}
@@ -357,22 +357,22 @@ export default function EpisodeHeadwordsPage() {
           startIcon={<Edit />}
           onClick={openEpisodeEditor}
           disabled={!episode}
-          sx={{ bgcolor: "#2c1a0e", color: "#f5ede0", borderRadius: "10px", textTransform: "none", fontFamily: "Jost, sans-serif", fontWeight: 700, "&:hover": { bgcolor: "#1a0f08" } }}
+          sx={{ bgcolor: "#2c1a0e", color: "#f5ede0", borderRadius: "10px", textTransform: "none", fontFamily: "var(--font-sans), sans-serif", fontWeight: 700, "&:hover": { bgcolor: "#1a0f08" } }}
         >
           Edit episode details
         </Button>
       </Box>
 
       {error && (
-        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "Jost, sans-serif" }}>{error}</Typography>
+        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "var(--font-sans), sans-serif" }}>{error}</Typography>
       )}
 
       {loading ? (
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
+        <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
           Loading episode and headwords…
         </Typography>
       ) : rows.length === 0 ? (
-        <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
+        <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
           No word headwords found in this transcript.
         </Typography>
       ) : isMobile ? (
@@ -466,7 +466,7 @@ export default function EpisodeHeadwordsPage() {
                         sx={{
                           ...bodyCellSx,
                           direction: "rtl",
-                          fontFamily: "'EB Garamond', serif",
+                          fontFamily: "var(--font-serif), serif",
                           fontSize: "1.5rem",
                           fontWeight: 600,
                           color: "#2c1a0e",
@@ -548,14 +548,14 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 const headerCellSx = {
   fontWeight: 700,
   fontSize: "1.15rem",
-  fontFamily: "Jost, sans-serif",
+  fontFamily: "var(--font-sans), sans-serif",
   backgroundColor: "#f5ede0",
   color: "#2c1a0e",
 }
 
 const bodyCellSx = {
   verticalAlign: "middle",
-  fontFamily: "Jost, sans-serif",
+  fontFamily: "var(--font-sans), sans-serif",
   fontSize: "1.1rem",
 }
 
@@ -586,7 +586,7 @@ function EditableCell({ value, onBlur, saving, arabic, multiline, isEditing, isE
     return (
       <Typography
         sx={{
-          fontFamily: arabic ? "'EB Garamond', serif" : "Jost, sans-serif",
+          fontFamily: arabic ? "var(--font-serif), serif" : "var(--font-sans), sans-serif",
           fontSize: arabic ? "1.5rem" : "1.1rem",
           fontWeight: arabic ? 700 : 400,
           color: arabic ? "#2c1a0e" : "inherit",
@@ -630,7 +630,7 @@ function EditableCell({ value, onBlur, saving, arabic, multiline, isEditing, isE
       sx={{
         "& .MuiInputBase-root": {
           borderRadius: "8px",
-          fontFamily: arabic ? "'EB Garamond', serif" : "Jost, sans-serif",
+          fontFamily: arabic ? "var(--font-serif), serif" : "var(--font-sans), sans-serif",
           fontSize: arabic ? "1.5rem" : "1.05rem",
           ...(arabic && { direction: "rtl" }),
         },

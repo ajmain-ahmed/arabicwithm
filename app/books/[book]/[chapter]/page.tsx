@@ -68,11 +68,11 @@ export default async function ChapterPage({
       <Container maxWidth="xl">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>
           <Link href={`/books/${encodeURIComponent(book.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', '&:hover': { color: '#b8860b' } }}>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { color: '#b8860b' } }}>
               <ArrowBack sx={{ fontSize: 18 }} /> {book.title}
             </Box>
           </Link>
-          <Typography sx={{ color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 13 }}>
+          <Typography sx={{ color: 'var(--awm-muted-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13 }}>
             {chapter.chapterNumber} of {chapters.length}
           </Typography>
         </Box>
@@ -83,21 +83,21 @@ export default async function ChapterPage({
           <Box>
             {previousChapter && (
               <Link href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(previousChapter.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                <Button startIcon={<ArrowBack />} sx={{ color: 'var(--awm-bark)', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
+                <Button startIcon={<ArrowBack />} sx={{ color: 'var(--awm-bark)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
                   {previousChapter.title}
                 </Button>
               </Link>
             )}
           </Box>
           <Link href={`/books/${encodeURIComponent(book.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-            <Button startIcon={<FormatListBulleted />} sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
+            <Button startIcon={<FormatListBulleted />} sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
               All chapters
             </Button>
           </Link>
           <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
             {nextChapter && (
               <Link href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(nextChapter.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                <Button endIcon={<ArrowForward />} variant="contained" sx={{ bgcolor: '#b8860b', color: '#fff', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: '#946c08' } }}>
+                <Button endIcon={<ArrowForward />} variant="contained" sx={{ bgcolor: '#b8860b', color: '#fff', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { bgcolor: '#946c08' } }}>
                   {nextChapter.title}
                 </Button>
               </Link>

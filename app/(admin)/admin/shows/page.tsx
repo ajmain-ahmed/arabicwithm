@@ -205,7 +205,7 @@ export default function ShowsAdminPage() {
           <Typography variant="h4" sx={{ fontFamily: 'var(--font-heading)', fontWeight: 600, color: "#2c1a0e" }}>
             Shows
           </Typography>
-          <Typography sx={{ fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+          <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
             {shows.length.toLocaleString()} shows · {totalEpisodes.toLocaleString()} episodes
           </Typography>
         </Box>
@@ -217,7 +217,7 @@ export default function ShowsAdminPage() {
             bgcolor: "#2c1a0e",
             color: "#f5ede0",
             textTransform: "none",
-            fontFamily: "Jost, sans-serif",
+            fontFamily: "var(--font-sans), sans-serif",
             fontWeight: 600,
             borderRadius: "10px",
             "&:hover": { bgcolor: "#1a0f08" },
@@ -264,13 +264,13 @@ export default function ShowsAdminPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4, fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
                     Loading shows…
                   </TableCell>
                 </TableRow>
               ) : filteredShows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 4, fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
                     No shows match your search.
                   </TableCell>
                 </TableRow>
@@ -291,7 +291,7 @@ export default function ShowsAdminPage() {
                         sx={{
                           cursor: "pointer",
                           backgroundColor: isExpanded ? "rgba(184,134,11,0.04)" : "inherit",
-                          "& td": { fontFamily: "Jost, sans-serif" },
+                          "& td": { fontFamily: "var(--font-sans), sans-serif" },
                         }}
                       >
                         <TableCell width={50}>
@@ -307,7 +307,7 @@ export default function ShowsAdminPage() {
                           </IconButton>
                         </TableCell>
                         <TableCell sx={{ fontWeight: 600, color: "#2c1a0e" }}>{show.title}</TableCell>
-                        <TableCell sx={{ direction: "rtl", fontFamily: "'EB Garamond', serif", fontSize: "1.05rem" }}>
+                        <TableCell sx={{ direction: "rtl", fontFamily: "var(--font-serif), serif", fontSize: "1.05rem" }}>
                           {show.title_ar}
                         </TableCell>
                         <TableCell sx={{ color: "#7a6e65" }}>{show.slug}</TableCell>
@@ -338,7 +338,7 @@ export default function ShowsAdminPage() {
                                   onClick={() => openNewEpisode(show.id)}
                                   sx={{
                                     textTransform: "none",
-                                    fontFamily: "Jost, sans-serif",
+                                    fontFamily: "var(--font-sans), sans-serif",
                                     fontWeight: 600,
                                     color: "#2c1a0e",
                                     borderRadius: "8px",
@@ -365,13 +365,13 @@ export default function ShowsAdminPage() {
                                     <TableBody>
                                       {visibleEpisodes.length === 0 ? (
                                         <TableRow>
-                                          <TableCell colSpan={6} align="center" sx={{ py: 3, fontFamily: "Jost, sans-serif", color: "#7a6e65" }}>
+                                          <TableCell colSpan={6} align="center" sx={{ py: 3, fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
                                             {q ? "No episodes match your search." : "No episodes for this show yet."}
                                           </TableCell>
                                         </TableRow>
                                       ) : (
                                         visibleEpisodes.map((episode) => (
-                                          <TableRow key={episode.id} hover sx={{ "& td": { fontFamily: "Jost, sans-serif" } }}>
+                                          <TableRow key={episode.id} hover sx={{ "& td": { fontFamily: "var(--font-sans), sans-serif" } }}>
                                             <TableCell sx={{ fontWeight: 600 }}>
                                               <Link
                                                 href={`/admin/episodes/${episode.id}`}
