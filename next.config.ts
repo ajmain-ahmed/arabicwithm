@@ -5,9 +5,13 @@ const supabaseHostname = supabaseUrl ? new URL(supabaseUrl).hostname : null
 const isDev = process.env.NODE_ENV === "development"
 
 const nextConfig: NextConfig = {
+  // Isolate browser fixtures from the real catalogue's server caches.
+  distDir: process.env.AWM_BROWSER_TEST === '1' ? '.next-browser' : '.next',
   reactStrictMode: false,
   poweredByHeader: false,
   compress: true,
+  serverExternalPackages: ['pdfkit'],
+  outputFileTracingIncludes: { '/api/reviewer/export': ['./public/fonts/review/*.ttf'] },
   staticPageGenerationTimeout: 180,
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -24,6 +28,7 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    serverActions: { bodySizeLimit: "51mb" },
     /* Catalogue content changes rarely (admin edits bust the server
        caches), so let browsers reuse recently visited dynamic pages
        instead of re-requesting them on every navigation. */
@@ -57,6 +62,7 @@ const nextConfig: NextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               `img-src 'self' data: blob: https://i.ytimg.com https://*.tiktokcdn.com https://*.cdninstagram.com https://*.fbcdn.net https://images.unsplash.com https://ichef.bbci.co.uk https://s.france24.com https://cnn-arabic-images.cnn.io https://images.skynewsarabia.com https://www.akhbarona.com${supabaseUrl ? ` ${supabaseUrl}` : ''}`,
               `connect-src 'self' ${supabaseUrl ?? "https://whbxgwucsoguqzpnpzjd.supabase.co"}`,
+              "media-src 'self' blob: https:",
               "frame-src https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://youtube-nocookie.com https://www.instagram.com https://instagram.com https://www.tiktok.com https://www.facebook.com https://web.facebook.com",
               "object-src 'none'",
               "base-uri 'self'",

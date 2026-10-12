@@ -8,10 +8,10 @@ import {
   LEARNING_ACTIVITY_EVENT,
   WORD_LOOKUP_EVENT,
   activityKindForPath,
-  localDateKey,
   shouldCountActiveTime,
 } from '@/app/lib/activity'
 import { usePlayerStore } from '@/store/playerStore'
+import { platformDate } from '@/app/lib/entitlements'
 
 const TICK_INTERVAL_MS = 15_000
 const SYNC_AFTER_SECONDS = 60
@@ -71,12 +71,11 @@ export default function LearningActivityTracker() {
     syncingRef.current = true
 
     try {
-      /* recordActiveLearning returns a cheap ack; the dashboard refetches
-         activity on mount, so there is nothing to publish here. */
-      await recordActiveLearning({
-        date: localDateKey(new Date()),
+      const activity = await recordActiveLearning({
+        date: platformDate(),
         ...snapshot,
-      })
+      }, userId)
+      if (activity && userIdRef.current === userId) publish(userId, activity)
     } catch (error) {
       if (userIdRef.current === userId) {
         pendingRef.current.activeSeconds += snapshot.activeSeconds
@@ -84,11 +83,11 @@ export default function LearningActivityTracker() {
         pendingRef.current.videoSeconds += snapshot.videoSeconds
         pendingRef.current.wordLookups += snapshot.wordLookups
       }
-      console.error('Unable to save learning activity:', error)
+      if (userIdRef.current === userId) console.error('Unable to save learning activity:', error)
     } finally {
       syncingRef.current = false
     }
-  }, [])
+  }, [publish])
 
   useEffect(() => {
     if (loading || !user?.id) return
@@ -97,7 +96,7 @@ export default function LearningActivityTracker() {
       .then((activity) => {
         if (!cancelled && userIdRef.current === user.id) publish(user.id, activity)
       })
-      .catch((error: unknown) => console.error('Unable to load learning activity:', error))
+      .catch((error: unknown) => { if (!cancelled && userIdRef.current === user.id) console.error('Unable to load learning activity:', error) })
     return () => { cancelled = true }
   }, [loading, publish, user?.id])
 

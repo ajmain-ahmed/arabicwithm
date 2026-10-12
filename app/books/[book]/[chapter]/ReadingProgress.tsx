@@ -7,6 +7,7 @@ import { supabase } from '@/app/lib/supabase/client'
 interface ProgressEntry {
   chapterSlug: string
   updatedAt: string
+  hiddenFromList?: boolean
 }
 
 export default function ReadingProgress({ bookSlug, chapterSlug }: { bookSlug: string; chapterSlug: string }) {
@@ -21,21 +22,23 @@ export default function ReadingProgress({ bookSlug, chapterSlug }: { bookSlug: s
       ? rawProgress as Record<string, ProgressEntry>
       : {}
 
-    if (progress[bookSlug]?.chapterSlug === chapterSlug) return
+    if (progress[bookSlug]?.chapterSlug === chapterSlug && !progress[bookSlug]?.hiddenFromList) return
 
     void supabase.auth.updateUser({
       data: {
         book_progress: {
           ...progress,
           [bookSlug]: {
+            ...progress[bookSlug],
             chapterSlug,
             updatedAt: new Date().toISOString(),
+            hiddenFromList: false,
           },
         },
       },
     }).then(({ error }: { error: { message: string } | null }) => {
       if (error) console.error('Unable to save reading progress:', error.message)
-    })
+    }).catch(() => { console.error('Unable to save reading progress: network request failed') })
   }, [bookSlug, chapterSlug, loading, user])
 
   return null

@@ -704,10 +704,11 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
 ───────────────────────────────────────────── */
 export default function EpisodePage({
   episode,
-  showTitle,
+  showTitle, initialStart = 0,
 }: {
   episode: EpisodeFull
   showTitle: string
+  initialStart?: number
 }) {
   const router = useRouter()
   const isAdmin = useIsAdmin()
@@ -807,7 +808,7 @@ export default function EpisodePage({
   const { wrapRef, seekTo, isPlaying: localVideoPlaying, errorCode, retry } = useYouTubePlayer(
     isYouTubeSource ? selectedSource.id : undefined,
     handleTimeUpdate,
-    undefined,
+    initialStart,
     { reloadKey: isMobile ? 'mobile' : 'desktop' }
   )
 

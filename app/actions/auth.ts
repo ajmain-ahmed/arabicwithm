@@ -2,27 +2,13 @@
 
 "use server"
 
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
+import { cache } from "react"
+import { getAuthClient } from '@/app/lib/supabase/server'
 import { unstable_rethrow } from "next/navigation"
 import type { User } from "@supabase/supabase-js"
+import { serviceClient } from '@/app/lib/supabase'
+import type { AccountRole } from '@/app/lib/reviews'
 
-async function getAuthClient() {
-  const cookieStore = await cookies()
-  return createServerClient(
-    (process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL)!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
-      cookies: {
-        getAll() { return cookieStore.getAll() },
-        setAll(values) {
-          // Server Actions can persist refreshes; rendering relies on proxy.ts.
-          try { values.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch { /* Server Component cookies are read-only. */ }
-        },
-      },
-    }
-  )
-}
 
 async function getAuthenticatedUser(): Promise<User | null> {
   try {
@@ -45,26 +31,32 @@ async function getAuthenticatedUser(): Promise<User | null> {
 export interface AuthenticatedAccess {
   userId: string
   admin: boolean
-}
-
-const ADMIN_UIDS = new Set(
-  [process.env.ADMIN, process.env.ADMIN2].filter((v): v is string => Boolean(v))
-)
-
-function hasAdminAccess(user: User): boolean {
-  return user.app_metadata?.role === "admin"
-    || user.app_metadata?.is_admin === true
-    || ADMIN_UIDS.has(user.id)
+  role?: AccountRole
 }
 
 /** Server-verified identity and application role used by all authorization checks. */
-export async function getAuthenticatedAccess(): Promise<AuthenticatedAccess | null> {
+const accessForRequest = cache(async (): Promise<AuthenticatedAccess | null> => {
   const user = await getAuthenticatedUser()
-  return user ? { userId: user.id, admin: hasAdminAccess(user) } : null
+  if (!user) return null
+  const { data, error } = await serviceClient.rpc('account_role', { p_user_id: user.id })
+  if (error) throw new Error('Unable to verify account access. Apply the user management migration.')
+  const role: AccountRole = data === 'admin' || data === 'editor' ? data : 'user'
+  return { userId: user.id, admin: role === 'admin', role }
+})
+
+export async function getAuthenticatedAccess(): Promise<AuthenticatedAccess | null> {
+  return accessForRequest()
+}
+
+export async function guardReviewer(): Promise<AuthenticatedAccess> {
+  const access = await getAuthenticatedAccess()
+  if (!access || !['editor', 'admin'].includes(access.role ?? 'user')) throw new Error('Forbidden')
+  return access
 }
 
 export async function getAuthenticatedUserId(): Promise<string | null> {
-  return (await getAuthenticatedAccess())?.userId ?? null
+  // Identity-only routes must not depend on reviewer/admin role availability.
+  return (await getAuthenticatedUser())?.id ?? null
 }
 
 export async function isAdminUser(): Promise<boolean> {

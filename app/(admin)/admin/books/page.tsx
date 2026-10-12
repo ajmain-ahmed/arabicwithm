@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import {
   Box,
   Typography,
@@ -19,34 +20,35 @@ import {
 } from "@mui/material"
 import { Edit, Add, ExpandMore } from "@mui/icons-material"
 import {
-  fetchBooksForAdmin,
-  fetchChaptersForBookAdmin,
+  fetchBooksIndexForAdmin,
+  type BooksAdminIndex,
   type BookRow,
   type ChapterRow,
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
+import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import SearchField from "../components/SearchField"
-import BookEditDialog from "../components/BookEditDialog"
-import ChapterEditDialog from "../components/ChapterEditDialog"
 import CefrChip from "@/app/components/CefrChip"
+
+const BookEditDialog = dynamic(() => import("../components/BookEditDialog"), { loading: () => <Typography role="status">Loading editor...</Typography> })
+const ChapterEditDialog = dynamic(() => import("../components/ChapterEditDialog"), { loading: () => <Typography role="status">Loading editor...</Typography> })
 
 type BookSortKey = keyof BookRow
 type SortDir = "asc" | "desc"
 
-async function fetchAllChapters(): Promise<ChapterRow[]> {
-  const all: ChapterRow[] = []
-  const booksData = await fetchBooksForAdmin()
-  for (const book of booksData) {
-    const chapters = await fetchChaptersForBookAdmin(book.id)
-    all.push(...chapters)
-  }
-  return all
+function groupRows(rows: ChapterRow[]): Record<string, ChapterRow[]> {
+  const grouped: Record<string, ChapterRow[]> = {}
+  for (const row of rows) (grouped[row.book_id] ??= []).push(row)
+  for (const list of Object.values(grouped)) list.sort((a, b) => a.chapter_number - b.chapter_number)
+  return grouped
 }
 
 export default function BooksAdminPage() {
-  const [books, setBooks] = useState<BookRow[]>([])
-  const [chaptersByBookId, setChaptersByBookId] = useState<Record<string, ChapterRow[]>>({})
-  const [loading, setLoading] = useState(true)
+  const cache = useAdminListCache()
+  const snapshot = cache.peek<BooksAdminIndex>("books")
+  const [books, setBooks] = useState<BookRow[]>(snapshot?.books ?? [])
+  const [chaptersByBookId, setChaptersByBookId] = useState<Record<string, ChapterRow[]>>(() => groupRows(snapshot?.chapters ?? []))
+  const [loading, setLoading] = useState(!snapshot)
   const [error, setError] = useState<string | null>(null)
 
   const [query, setQuery] = useState("")
@@ -61,35 +63,30 @@ export default function BooksAdminPage() {
   const [chapterDialogBookId, setChapterDialogBookId] = useState<string>("")
   const [chapterDialogOpen, setChapterDialogOpen] = useState(false)
 
-  const load = async () => {
-    setLoading(true)
+  const mounted = useRef(true)
+  const loadVersion = useRef(0)
+  const load = useCallback(async (force = false) => {
+    const version = ++loadVersion.current
+    setLoading(!cache.peek("books"))
     setError(null)
     try {
-      const [booksData, chaptersData] = await Promise.all([
-        fetchBooksForAdmin(),
-        fetchAllChapters(),
-      ])
+      const { books: booksData, chapters: chaptersData } = await cache.load("books", fetchBooksIndexForAdmin, force)
+      if (!mounted.current || version !== loadVersion.current) return
       setBooks(booksData)
 
-      const grouped: Record<string, ChapterRow[]> = {}
-      for (const ch of chaptersData) {
-        if (!grouped[ch.book_id]) grouped[ch.book_id] = []
-        grouped[ch.book_id].push(ch)
-      }
-      for (const list of Object.values(grouped)) {
-        list.sort((a, b) => a.chapter_number - b.chapter_number)
-      }
-      setChaptersByBookId(grouped)
+      setChaptersByBookId(groupRows(chaptersData))
     } catch (e: unknown) {
-      setError(errorMessage(e) ?? "Failed to load content")
+      if (mounted.current && version === loadVersion.current) setError(errorMessage(e) ?? "Failed to load content")
     } finally {
-      setLoading(false)
+      if (mounted.current && version === loadVersion.current) setLoading(false)
     }
-  }
+  }, [cache])
 
   useEffect(() => {
-    load()
-  }, [])
+    mounted.current = true
+    void load()
+    return () => { mounted.current = false; loadVersion.current += 1 }
+  }, [load])
 
   const toggleExpand = (bookId: string) => {
     setExpandedBookIds((prev) => {
@@ -414,23 +411,23 @@ export default function BooksAdminPage() {
         </TableContainer>
       </Paper>
 
-      <BookEditDialog
+      {bookDialogOpen && <BookEditDialog
         open={bookDialogOpen}
         onClose={() => setBookDialogOpen(false)}
         bookId={editBookId}
-        onSaved={load}
-        onDeleted={load}
-      />
+        onSaved={() => void load(true)}
+        onDeleted={() => void load(true)}
+      />}
 
-      <ChapterEditDialog
+      {chapterDialogOpen && <ChapterEditDialog
         open={chapterDialogOpen}
         onClose={() => setChapterDialogOpen(false)}
         chapterId={editChapterId}
         bookId={chapterDialogBookId || books[0]?.id || ""}
         books={books}
-        onSaved={load}
-        onDeleted={load}
-      />
+        onSaved={() => void load(true)}
+        onDeleted={() => void load(true)}
+      />}
     </Box>
   )
 }

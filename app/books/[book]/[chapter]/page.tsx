@@ -1,36 +1,26 @@
-import { LockedChapter } from "@/app/components/PremiumPrompt"
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Box, Button, Container, Typography } from '@mui/material'
 import { ArrowBack, ArrowForward, FormatListBulleted } from '@mui/icons-material'
 import {
   fetchBookBySlugPublic,
-  fetchBooksForPublic,
   fetchChapterForPublic,
   fetchChaptersForBookPublic,
 } from '@/app/actions/books'
 import ReadingProgress from './ReadingProgress'
 import ChapterReader from './ChapterReader'
 import { normalizeBookReaderLanguage } from '@/app/lib/bookReaderSettings'
+import SignInRequired from '@/app/components/SignInRequired'
+import { fetchPublishedChapterAudio } from '@/app/actions/audiobooks'
+import { getAuthenticatedUserId } from '@/app/actions/auth'
 
-export const revalidate = false
-
-export async function generateStaticParams() {
-  const books = await fetchBooksForPublic()
-  const params = await Promise.all(
-    books.map(async (book) => {
-      const chapters = await fetchChaptersForBookPublic(book.id)
-      return chapters.map((chapter) => ({ book: book.slug, chapter: chapter.slug }))
-    })
-  )
-  return params.flat()
-}
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: Promise<{ book: string; chapter: string }> }) {
   const { book: bookSlug, chapter: chapterSlug } = await params
   const book = await fetchBookBySlugPublic(bookSlug)
   if (!book) return { title: 'Chapter Not Found' }
-  const chapter = await fetchChapterForPublic(book.id, chapterSlug)
+  const chapter = (await fetchChaptersForBookPublic(book.id)).find((item) => item.slug === chapterSlug)
   return chapter ? { title: `${chapter.title} — ${book.title}` } : { title: 'Chapter Not Found' }
 }
 
@@ -48,61 +38,91 @@ export default async function ChapterPage({
   const book = await fetchBookBySlugPublic(bookSlug)
   if (!book) notFound()
 
-  const [chapter, chapters] = await Promise.all([
-    fetchChapterForPublic(book.id, chapterSlug),
-    fetchChaptersForBookPublic(book.id),
-  ])
+  let chapter: Awaited<ReturnType<typeof fetchChapterForPublic>>
+  let chapters: Awaited<ReturnType<typeof fetchChaptersForBookPublic>>
+  try {
+    ;[chapter, chapters] = await Promise.all([
+      fetchChapterForPublic(book.id, chapterSlug),
+      fetchChaptersForBookPublic(book.id),
+    ])
+  } catch (error) {
+    console.error('[book-reader] Unable to load chapter data', {
+      bookSlug,
+      chapterSlug,
+      error,
+    })
+    throw error
+  }
   if (!chapter) {
     const listed = chapters.find(item => item.slug === chapterSlug)
     if (!listed) notFound()
-    return <LockedChapter bookSlug={book.slug} chapterTitle={listed.title} />
+    if (!await getAuthenticatedUserId()) return <SignInRequired title={`Sign in to read ${listed.title}`} />
+
+    console.error('[book-reader] Chapter metadata exists but readable content is unavailable', {
+      bookSlug,
+      chapterSlug,
+      bookId: book.id,
+    })
+    return (
+      <Box component="main" sx={{ minHeight: '70vh', display: 'grid', placeItems: 'center', bgcolor: 'var(--awm-cream-light)', py: 6 }}>
+        <Container maxWidth="sm">
+          <Box sx={{ p: { xs: 3, sm: 5 }, textAlign: 'center', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '16px', bgcolor: 'var(--awm-white)' }}>
+            <Typography component="h1" sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 29, sm: 36 }, fontWeight: 600 }}>
+              Chapter content is unavailable
+            </Typography>
+            <Typography sx={{ mt: 1.25, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', lineHeight: 1.65 }}>
+              We found {listed.title}, but its reading content could not be loaded. Please return to the book and choose the chapter again.
+            </Typography>
+            <Button href={`/books/${encodeURIComponent(book.slug)}`} startIcon={<ArrowBack />} variant="contained" sx={{ mt: 3, bgcolor: 'var(--awm-gold)', textTransform: 'none', '&:hover': { bgcolor: '#946c08' } }}>
+              Back to {book.title}
+            </Button>
+          </Box>
+        </Container>
+      </Box>
+    )
   }
 
   const chapterIndex = chapters.findIndex((item) => item.slug === chapter.slug)
-  const previousChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : null
+  let audio: Awaited<ReturnType<typeof fetchPublishedChapterAudio>>[]
+  try {
+    audio = await Promise.all([fetchPublishedChapterAudio(chapter.id, 'ar'), fetchPublishedChapterAudio(chapter.id, 'en')])
+  } catch (error) {
+    console.error('[book-reader] Unable to load chapter audio', {
+      bookSlug,
+      chapterSlug,
+      chapterId: chapter.id,
+      error,
+    })
+    throw error
+  }
   const nextChapter = chapterIndex >= 0 && chapterIndex < chapters.length - 1 ? chapters[chapterIndex + 1] : null
 
   return (
-    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 2.5, md: 5 } }}>
+    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 2.5, md: 5 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 5 } }}>
       <ReadingProgress bookSlug={book.slug} chapterSlug={chapter.slug} />
       <Container maxWidth="xl">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>
           <Link href={`/books/${encodeURIComponent(book.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { color: '#b8860b' } }}>
+            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', '&:hover': { color: '#b8860b' } }}>
               <ArrowBack sx={{ fontSize: 18 }} /> {book.title}
             </Box>
           </Link>
-          <Typography sx={{ color: 'var(--awm-muted-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13 }}>
+          <Typography sx={{ color: 'var(--awm-muted-light)', fontFamily: 'Jost, sans-serif', fontSize: 13 }}>
             {chapter.chapterNumber} of {chapters.length}
           </Typography>
         </Box>
 
-        <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} />
+        <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr auto 1fr' }, gap: 1.5, alignItems: 'center', mt: 3 }}>
-          <Box>
-            {previousChapter && (
-              <Link href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(previousChapter.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                <Button startIcon={<ArrowBack />} sx={{ color: 'var(--awm-bark)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
-                  {previousChapter.title}
-                </Button>
-              </Link>
-            )}
-          </Box>
-          <Link href={`/books/${encodeURIComponent(book.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-            <Button startIcon={<FormatListBulleted />} sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
-              All chapters
+        <Box component="nav" aria-label="Chapter navigation" sx={{ display: 'grid', gridTemplateColumns: nextChapter ? 'repeat(2,minmax(0,1fr))' : 'minmax(0,280px)', justifyContent: 'center', alignItems: 'stretch', gap: { xs: 1, sm: 1.5 }, mt: 3, '& .MuiButton-root': { minHeight: 48, px: {xs: 1, sm: 2}, fontSize: {xs: 13, sm: 15} } }}>
+          <Button href={`/books/${encodeURIComponent(book.slug)}`} startIcon={<FormatListBulleted />} variant="outlined" sx={{ color: 'var(--awm-muted)', borderColor: 'rgba(122,110,101,0.3)', textTransform: 'none', fontFamily: 'Jost, sans-serif' }}>
+              All Chapters
+          </Button>
+          {nextChapter && (
+            <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(nextChapter.slug)}`} endIcon={<ArrowForward />} variant="contained" sx={{ maxWidth: '100%', bgcolor: '#b8860b', color: '#fff', textTransform: 'none', fontFamily: 'Jost, sans-serif', '&:hover': { bgcolor: '#946c08' } }}>
+              Next Chapter
             </Button>
-          </Link>
-          <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
-            {nextChapter && (
-              <Link href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(nextChapter.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                <Button endIcon={<ArrowForward />} variant="contained" sx={{ bgcolor: '#b8860b', color: '#fff', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { bgcolor: '#946c08' } }}>
-                  {nextChapter.title}
-                </Button>
-              </Link>
-            )}
-          </Box>
+          )}
         </Box>
       </Container>
     </Box>

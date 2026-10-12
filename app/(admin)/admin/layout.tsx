@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { Box, Container, CssBaseline } from "@mui/material"
 import { isAdminUser } from "@/app/actions/auth"
+import AdminListCacheProvider from "./components/AdminListCacheProvider"
 import AdminNav from "./components/AdminNav"
 import AdminThemeProvider from "./components/AdminThemeProvider"
 
@@ -21,23 +22,25 @@ export default async function AdminLayout({
 
   return (
     <AdminThemeProvider>
-      <Box className="awm-admin-shell" sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", bgcolor: "var(--awm-cream-light)", color: "var(--awm-bark)" }}>
-        <CssBaseline />
-        <AdminNav />
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            width: "100%",
-            maxWidth: "100%",
-            overflowX: "hidden",
-          }}
-        >
-          <Container maxWidth="xl" sx={{ py: { xs: 2, md: 3 } }}>
-            {children}
-          </Container>
+      <AdminListCacheProvider>
+        <Box className="awm-admin-shell" sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", bgcolor: "var(--awm-cream-light)", color: "var(--awm-bark)" }}>
+          <CssBaseline />
+          <AdminNav />
+          <Box
+            component="main"
+            sx={{
+              flexGrow: 1,
+              width: "100%",
+              maxWidth: "100%",
+              overflowX: "hidden",
+            }}
+          >
+            <Container maxWidth="xl" sx={{ py: { xs: 2, md: 3 } }}>
+              {children}
+            </Container>
+          </Box>
         </Box>
-      </Box>
+      </AdminListCacheProvider>
     </AdminThemeProvider>
   )
 }

@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-10",
+  "application": "Website",
+  "production_build": "passed",
+  "typescript": "passed",
+  "scoped_lint": "passed",
+  "focused_tests": {
+    "distinct_passed": 37
+  },
+  "browser_acceptance": {
+    "passed": 12,
+    "backend": "isolated fixture with synthetic accounts and public learning records"
+  },
+  "curriculum_export": "passed",
+  "live_public_playback": "passed before the final read-time theme guard",
+  "final_live_recheck": "not passed: Supabase connection timeouts; retry state shown",
+  "full_regression_suite": "not completed: collection/resource stalls",
+  "supabase_schema_or_data_mutations": false,
+  "deployed": false
+}

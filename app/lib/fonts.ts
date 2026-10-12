@@ -29,7 +29,7 @@ export const ebGaramond = EB_Garamond({
 export const jost = Jost({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  // Use Jost's variable font; fixed-weight Google URLs intermittently break Turbopack's query parser.
 })
 
 export const brandFont = Baloo_Bhaijaan_2({

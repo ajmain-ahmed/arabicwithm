@@ -1,10 +1,11 @@
 'use server'
 
-import { loadMemoryProgress } from '@/app/actions/memory'
-import { getAuthenticatedAccess, type AuthenticatedAccess } from '@/app/actions/auth'
-import { ACTIVE_DAY_MINIMUM_SECONDS, localDateKey, parseLearningActivity, type LearningActivity } from '@/app/lib/activity'
+import { loadLearningSnapshot } from '@/app/lib/learningSnapshot'
+import { getAuthenticatedUserId } from '@/app/actions/auth'
+import { parseLearningActivity, type LearningActivity } from '@/app/lib/activity'
 import { rateLimit } from '@/app/lib/rateLimit'
 import { serviceClient } from '@/app/lib/supabase'
+import { platformDate } from '@/app/lib/entitlements'
 
 interface RecordActivityInput {
   date: string
@@ -17,17 +18,23 @@ interface RecordActivityInput {
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const MAX_BATCH_SECONDS = 120
 
+async function requireUserId(): Promise<string> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) throw new Error('You must be signed in to save learning activity.')
+  return userId
+}
+
+function databaseError(context: string, error: unknown): Error {
+  console.error(`[activity] ${context}:`, error)
+  return new Error('Unable to load learning activity. Please try again.')
+}
+
 /* Legacy activity lived in user_metadata, which nothing writes anymore (the
    values were migrated into learning_profiles / learning_activity_daily).
    Snapshot the parsed metadata once per user instead of paying an Admin API
    round trip on every sync. */
 const legacyCache = new Map<string, LearningActivity>()
 const LEGACY_CACHE_MAX = 10_000
-
-function databaseError(context: string, error: unknown): Error {
-  console.error(`[activity] ${context}:`, error)
-  return new Error('Unable to load learning activity. Please try again.')
-}
 
 async function legacyActivityForUser(userId: string): Promise<LearningActivity> {
   const cached = legacyCache.get(userId)
@@ -64,76 +71,43 @@ async function ensureLearningProfile(userId: string) {
   return created
 }
 
-async function activityForUser(access: AuthenticatedAccess): Promise<LearningActivity> {
-  const userId = access.userId
+async function activityForUser(userId: string): Promise<LearningActivity> {
   const [profile, legacy] = await Promise.all([
     ensureLearningProfile(userId),
     legacyActivityForUser(userId),
   ])
-  const earliest = new Date()
-  earliest.setDate(earliest.getDate() - 400)
-  const { data, error } = await serviceClient
-    .from('learning_activity_daily')
-    .select('activity_date, active_seconds, reading_seconds, video_seconds, word_lookups')
-    .eq('user_id', userId)
-    .gte('activity_date', localDateKey(earliest))
-    .order('activity_date')
-  if (error) throw databaseError('daily activity lookup failed', error)
-
-  const daily = (data ?? []).map((day) => ({
-    date: day.activity_date,
-    activeSeconds: Number(day.active_seconds),
-    readingSeconds: Number(day.reading_seconds),
-    videoSeconds: Number(day.video_seconds),
-    wordLookups: Number(day.word_lookups),
-  }))
-  const activeDates = Array.from(new Set([
-    ...legacy.activeDates,
-    ...daily.filter((day) => day.activeSeconds >= ACTIVE_DAY_MINIMUM_SECONDS).map((day) => day.date),
-  ])).sort().slice(-400)
-
-  return {
-    memory: await loadMemoryProgress(access).then(result => result.ok ? result.data : undefined),
-    totalSeconds: Number(profile.legacy_active_seconds) + Number(profile.tracked_active_seconds),
-    activeDates,
-    daily,
-    weeklyGoalSeconds: profile.weekly_goal_seconds,
-  }
+  return loadLearningSnapshot(userId, { learning_activity: legacy }, profile)
 }
 
 export async function fetchLearningActivity(): Promise<LearningActivity> {
-  const access = await getAuthenticatedAccess()
-  if (!access) throw new Error('You must be signed in to save learning activity.')
-  return activityForUser(access)
+  return activityForUser(await requireUserId())
 }
 
-/* Cheap ack: the client already holds its pending-activity state, so a sync
-   must not re-run the full read pipeline (that was ~10+ queries, three auth
-   round trips, and an Admin API call per sync per user). The dashboard
-   refetches on mount. */
-export async function recordActiveLearning(input: RecordActivityInput): Promise<void> {
-  const access = await getAuthenticatedAccess()
-  if (!access) throw new Error('You must be signed in to save learning activity.')
-  const limited = rateLimit(`activity:${access.userId}`, 30, 60 * 1000)
-  if (!limited.ok) return
-  await ensureLearningProfile(access.userId)
+export async function recordActiveLearning(input: RecordActivityInput, expectedUserId?: string): Promise<LearningActivity | null> {
+  const userId = await getAuthenticatedUserId()
+  // A background flush can finish after sign-out or an account switch.
+  if (!userId || (expectedUserId && expectedUserId !== userId)) return null
+  const limited = rateLimit(`activity:${userId}`, 30, 60 * 1000)
+  if (!limited.ok) return activityForUser(userId)
+  await ensureLearningProfile(userId)
 
   const seconds = Math.min(MAX_BATCH_SECONDS, Math.max(0, Math.floor(Number(input.activeSeconds) || 0)))
   const videoSeconds = Math.min(seconds, Math.max(0, Math.floor(Number(input.videoSeconds) || 0)))
   const readingSeconds = Math.min(seconds - videoSeconds, Math.max(0, Math.floor(Number(input.readingSeconds) || 0)))
   const wordLookups = Math.min(100, Math.max(0, Math.floor(Number(input.wordLookups) || 0)))
-  const today = localDateKey(new Date())
+  const today = platformDate()
   const requested = typeof input.date === 'string' && DATE_KEY_PATTERN.test(input.date) && !Number.isNaN(Date.parse(input.date))
     ? input.date
     : today
-  const earliest = new Date()
-  earliest.setDate(earliest.getDate() - 400)
-  /* Clamp to the same 400-day window the read query returns. */
-  const date = requested <= today && requested >= localDateKey(earliest) ? requested : today
-  if (seconds === 0 && wordLookups === 0) return
+  /* Clamp to the same ~400-day window the history RPC returns. */
+  const earliest = new Date(`${today}T12:00:00Z`)
+  earliest.setUTCDate(earliest.getUTCDate() - 400)
+  const earliestKey = earliest.toISOString().slice(0, 10)
+  const date = requested <= today && requested >= earliestKey ? requested : today
+  if (seconds === 0 && wordLookups === 0) return activityForUser(userId)
 
   const { error } = await serviceClient.rpc('increment_learning_activity', {
-    p_user_id: access.userId,
+    p_user_id: userId,
     p_activity_date: date,
     p_active_seconds: seconds,
     p_reading_seconds: readingSeconds,
@@ -144,4 +118,6 @@ export async function recordActiveLearning(input: RecordActivityInput): Promise<
     console.error('[recordActiveLearning] rpc failed:', error)
     throw new Error('Unable to record learning activity. Please try again.')
   }
+  return activityForUser(userId)
 }
+

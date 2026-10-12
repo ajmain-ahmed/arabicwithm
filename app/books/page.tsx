@@ -5,7 +5,7 @@ import { fetchBooksForPublic } from '@/app/actions/books'
 import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 
-export const revalidate = false
+export const revalidate = 60
 
 export const metadata = {
   title: 'Arabic Books | ArabicWithM',
@@ -35,7 +35,7 @@ export default async function BooksPage() {
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))', lg: 'repeat(5, minmax(0, 1fr))' },
+              gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))', lg: 'repeat(5, minmax(0, 1fr))' },
               gap: { xs: 1, sm: 2, lg: 2.5 },
             }}
           >

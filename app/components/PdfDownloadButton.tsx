@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material'
 import { Download } from '@mui/icons-material'
 import { downloadBookPdf, type BookPdfPayload } from '@/app/lib/bookPdf'
-import { fetchPremiumStatus } from '@/app/actions/premium'
+import { fetchEntitlements } from '@/app/actions/entitlements'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 export default function PdfDownloadButton({ bookSlug, chapterSlug, small = false, fullWidth = false }: {
   bookSlug: string; chapterSlug?: string; language?: 'ar' | 'en'; label?: string; small?: boolean; fullWidth?: boolean
@@ -16,7 +16,7 @@ export default function PdfDownloadButton({ bookSlug, chapterSlug, small = false
   async function choose() {
     setBusy(true); setError('')
     try {
-      if (!(await fetchPremiumStatus()).premium) { setUpgrade(true); return }
+      if (!(await fetchEntitlements()).canDownloadBooks) { setUpgrade(true); return }
       const results = await Promise.all((['ar', 'en'] as const).map(async language => {
         const query = new URLSearchParams({ lang: language })
         if (chapterSlug) query.set('chapter', chapterSlug)
@@ -34,7 +34,7 @@ export default function PdfDownloadButton({ bookSlug, chapterSlug, small = false
     try { await downloadBookPdf(file) } catch { setError('Unable to render this PDF. Please try again.') } finally { setBusy(false) }
   }
   return <>
-    <Button onClick={() => void choose()} disabled={busy} startIcon={<Download />} size={small ? 'small' : 'medium'} variant="outlined" fullWidth={fullWidth}>Download PDF</Button>
+    <Button onClick={() => void choose()} disabled={busy} startIcon={<Download />} size={small ? 'small' : 'medium'} variant="outlined" fullWidth={fullWidth} sx={{minHeight:44,px:2.25,borderRadius:'9px',textTransform:'none',fontWeight:700}}>Download PDF</Button>
     {error && <Alert severity="error">{error}</Alert>}
     <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="xs" aria-labelledby="pdf-title">
       <DialogTitle id="pdf-title">Download PDF</DialogTitle>

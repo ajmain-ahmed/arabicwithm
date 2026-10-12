@@ -1,0 +1,22 @@
+import React,{act} from 'react'
+import {createRoot,type Root} from 'react-dom/client'
+import {afterEach,beforeEach,expect,it,vi} from 'vitest'
+vi.mock('@mui/material',()=>({
+ Paper:({children}:{children:React.ReactNode})=><div>{children}</div>,
+ Box:({children,role}:{children:React.ReactNode;role?:string})=><div role={role}>{children}</div>,
+ Typography:({children}:{children:React.ReactNode})=><p>{children}</p>,
+ Button:({children,onClick,disabled,...props}:{children:React.ReactNode;onClick:()=>void;disabled?:boolean;['aria-label']?:string;['aria-pressed']?:boolean})=><button disabled={disabled} onClick={onClick} aria-label={props['aria-label']} aria-pressed={props['aria-pressed']}>{children}</button>,
+ TextField:({label,value,onChange}:{label:string;value:string;onChange:(e:React.ChangeEvent<HTMLInputElement>)=>void})=><input aria-label={label} value={value} onChange={onChange}/>,
+}))
+import WebsiteActivity from './WebsiteActivity'
+let host:HTMLDivElement,root:Root
+beforeEach(()=>{host=document.createElement('div');document.body.append(host);root=createRoot(host)})
+afterEach(async()=>{await act(async()=>root.unmount());host.remove()})
+async function click(text:string){const b=[...host.querySelectorAll('button')].find(b=>b.textContent===text)!;await act(async()=>b.click())}
+async function type(value:string){const input=host.querySelector('input')!;await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}))})}
+it('keeps the target-specific answer hidden until a correct response',async()=>{
+ await act(async()=>root.render(<WebsiteActivity activity="conjugation"/>));expect(host.textContent).not.toContain('The sound perfect stem')
+ await type('قالت');await click('Check Answer');expect(host.querySelector('[role=status]')!.textContent).toContain('Try again')
+ await type('كتبت');await click('Check Answer');expect(host.querySelector('[role=status]')!.textContent).toContain('Correct');expect(host.textContent).toContain('first-person singular')
+})
+it('selects and deselects the target with an accessible button',async()=>{await act(async()=>root.render(<WebsiteActivity activity="roles"/>));const word=host.querySelector('[aria-label="Select الطَّالِبُ"]')!;await act(async()=>word.dispatchEvent(new MouseEvent('click',{bubbles:true})));expect(word.getAttribute('aria-pressed')).toBe('true');await act(async()=>word.dispatchEvent(new MouseEvent('click',{bubbles:true})));expect(word.getAttribute('aria-pressed')).toBe('false')})

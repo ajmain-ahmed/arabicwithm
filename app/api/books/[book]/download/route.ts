@@ -1,4 +1,4 @@
-import { fetchPremiumStatus } from "@/app/actions/premium"
+import { fetchEntitlements } from '@/app/actions/entitlements'
 import type { NextRequest } from 'next/server'
 import {
   fetchBookBySlugPublic,
@@ -28,7 +28,7 @@ function filenamePart(value: string): string {
 }
 
 export async function GET(request: NextRequest, context: { params: Promise<{ book: string }> }) {
-  if (!(await fetchPremiumStatus()).premium) return Response.json({ error: "PDF downloads are available with AWM+." }, { status: 403, headers: { "Cache-Control": "private, no-store" } })
+  if (!(await fetchEntitlements()).canDownloadBooks) return Response.json({ error: "PDF downloads are available with AWM+." }, { status: 403, headers: { "Cache-Control": "private, no-store" } })
   const { book: bookSlug } = await context.params
   const language = request.nextUrl.searchParams.get('lang') === 'en' ? 'en' : 'ar'
   const requestedChapter = request.nextUrl.searchParams.get('chapter')

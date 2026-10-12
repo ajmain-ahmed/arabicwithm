@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest"
+    "test": "vitest",
+    "test:browser": "playwright test",
+    "setup:audiobooks": "node --env-file=.env.local scripts/setup-audiobook-storage.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -21,11 +23,13 @@
     "@mui/material-nextjs": "^9.3.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.1",
+    "bidi-js": "1.0.3",
     "fast-xml-parser": "^5.8.0",
     "framer-motion": "^12.38.0",
     "gray-matter": "^4.0.3",
     "lucide-react": "^1.17.0",
     "next": "16.2.3",
+    "pdfkit": "0.17.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "stripe": "^22.6.1",
@@ -34,8 +38,10 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pdfkit": "0.17.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.2",

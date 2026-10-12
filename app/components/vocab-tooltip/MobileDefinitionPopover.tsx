@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { Fade, Paper, Popper, useMediaQuery } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import WordTooltip from './WordTooltip'
 import type { VocabEntry } from './index'
 
@@ -72,9 +73,9 @@ export default function MobileDefinitionPopover({
               WebkitOverflowScrolling: 'touch',
               p: 1.5,
               borderRadius: '13px',
-              bgcolor: 'rgba(255,252,247,.97)',
-              border: '1px solid rgba(184,134,11,.25)',
-              boxShadow: '0 12px 34px rgba(44,26,14,.2)',
+              bgcolor: (theme) => alpha(theme.palette.background.paper, 0.92),
+              border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.28)}`,
+              boxShadow: (theme) => `0 12px 34px ${alpha(theme.palette.common.black, 0.24)}`,
               backdropFilter: 'blur(12px)',
               WebkitBackdropFilter: 'blur(12px)',
             }}

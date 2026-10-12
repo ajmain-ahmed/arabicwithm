@@ -3,6 +3,8 @@
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { type Database } from "./supabase/database.types"
 
+import { boundedFetch } from '@/app/lib/boundedFetch'
+
 type ServiceClient = ReturnType<typeof createServiceClient<Database>>
 
 let cachedClient: ServiceClient | null = null
@@ -13,7 +15,7 @@ function createClient(): ServiceClient {
   if (!serviceUrl || !serviceKey) {
     throw new Error("Missing required env vars: SUPABASE_URL and/or SUPABASE_SERVICE_KEY")
   }
-  return createServiceClient<Database>(serviceUrl, serviceKey)
+  return createServiceClient<Database>(serviceUrl, serviceKey, {global:{fetch:boundedFetch}})
 }
 
 export function getServiceClient(): ServiceClient {

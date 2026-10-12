@@ -187,7 +187,7 @@ function ExploreVideo({
   const [currentTime, setCurrentTime] = useState(0)
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
-  const [soundAllowed, setSoundAllowed] = useState(false)
+  const soundBlockedRef = useRef(false)
   const source = sources.find((candidate) => candidate.provider === selectedProvider) ?? sources[0]
   const isYouTube = source?.provider === 'youtube'
   const {
@@ -200,21 +200,21 @@ function ExploreVideo({
     mute,
     unMute,
     playWithSound,
+    autoplayBlocked,
     errorCode,
   } = useYouTubePlayer(
     active && isYouTube ? source.id : undefined,
     setCurrentTime,
     undefined,
-    { autoplay: false, muted: !soundEnabled || !soundAllowed, onEnded }
+    { autoplay: true, muted: !soundEnabled, onEnded }
   )
   /* The player is the source of truth once ready: the user can also unmute
      or change volume with YouTube's own controls, which fire onVolumeChange. */
-  const soundMuted = isReady ? isMuted : !soundEnabled || !soundAllowed
+  const soundMuted = isReady ? isMuted : !soundEnabled
 
   useEffect(() => {
     if (!active) return
     onPlaybackChange(isPlaying)
-    return () => onPlaybackChange(false)
   }, [active, isPlaying, onPlaybackChange])
 
   useEffect(() => {
@@ -223,18 +223,30 @@ function ExploreVideo({
       pauseVideo()
       return
     }
-    if (soundEnabled && soundAllowed) unMute()
+    // One policy rejection enables a muted fallback for this player. Starting
+    // that fallback must not trigger another automatic unmute/play loop.
+    if (autoplayBlocked) soundBlockedRef.current = true
+    if (soundEnabled && !soundBlockedRef.current) unMute()
     else mute()
     playVideo()
-  }, [active, isReady, mute, pauseVideo, playVideo, soundAllowed, soundEnabled, unMute])
+  }, [active, autoplayBlocked, isReady, mute, pauseVideo, playVideo, soundEnabled, unMute])
+
+  useEffect(() => {
+    const requestSound = () => {
+      if (!active || !isReady || !soundEnabled || !soundBlockedRef.current) return
+      soundBlockedRef.current = false
+      playWithSound()
+    }
+    window.addEventListener('awm-explore-gesture', requestSound)
+    return () => window.removeEventListener('awm-explore-gesture', requestSound)
+  }, [active, isReady, playWithSound, soundEnabled])
 
   const toggleSound = () => {
     if (soundMuted) {
-      setSoundAllowed(true)
+      soundBlockedRef.current = false
       setExploreSoundPreference(true)
       playWithSound()
     } else {
-      setSoundAllowed(false)
       setExploreSoundPreference(false)
       mute()
     }
@@ -277,11 +289,9 @@ function ExploreVideo({
         sx={{
           position: 'relative',
           width: '100%',
-          height: { xs: 'calc(100% - env(safe-area-inset-bottom))', md: '100%' },
+          height: '100%',
           maxHeight: '100%',
           minHeight: 0,
-          /* Clears the fixed navbar; the transcript panel does the same. */
-          pt: { xs: 'calc(56px + env(safe-area-inset-top))', md: 'calc(64px + env(safe-area-inset-top))' },
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
@@ -289,8 +299,9 @@ function ExploreVideo({
       >
         {/* 9:16 frame sized to the tighter of column width or available
             height (container units), so the player never letterboxes. */}
-        <Box sx={{ flex: 1, minHeight: 0, display: 'grid', placeItems: 'center', containerType: 'size' }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'grid', placeItems: { xs: 'start center', md: 'center' }, containerType: 'size' }}>
         <Box
+          data-explore-player={active ? 'active' : 'inactive'}
           sx={{
             position: 'relative',
             width: '100%',
@@ -347,7 +358,8 @@ function ExploreVideo({
           </Box>
         )}
         <Box sx={{ position: 'absolute', zIndex: 4, right: { xs: 'max(6px, env(safe-area-inset-right))', md: 12 }, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 0.85 }}>
-          <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
+          {/* A native fallback uses YouTube's controls without API commands. */}
+          {(!isYouTube || isReady) && <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
             <IconButton
               onClick={toggleSound}
               aria-label={soundMuted ? 'Turn Explore sound on' : 'Mute Explore video'}
@@ -355,7 +367,7 @@ function ExploreVideo({
             >
               {soundMuted ? <VolumeOff /> : <VolumeUp />}
             </IconButton>
-          </Tooltip>
+          </Tooltip>}
           <Tooltip title="Go to episode" placement="left">
             <IconButton
               component={Link}
@@ -399,7 +411,6 @@ function ExploreVideo({
           height: '100%',
           maxHeight: '100dvh',
           boxSizing: 'border-box',
-          pt: '64px',
           flexDirection: 'column',
           overflow: 'hidden',
           border: '1px solid rgba(44,26,14,0.08)',
@@ -465,7 +476,7 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionP
         display: 'grid',
         placeItems: 'center',
         px: { xs: 1.5, sm: 3, md: 6 },
-        pt: { xs: 'calc(68px + env(safe-area-inset-top))', md: '88px' },
+        pt: { xs: 1.5, md: 3 },
         pb: { xs: 'calc(12px + env(safe-area-inset-bottom))', md: 3 },
       }}
     >
@@ -687,14 +698,16 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
   }
 
   return (
+      <>
       <Box
         id="explore-feed"
         ref={feedRef}
-      component="main"
+        onPointerDownCapture={() => window.dispatchEvent(new Event('awm-explore-gesture'))}
+      component="div"
       sx={{
-        height: '100vh',
+        height: 'calc(100vh - var(--awm-navbar-height))',
         '@supports (height: 100dvh)': {
-          height: '100dvh',
+          height: 'calc(100dvh - var(--awm-navbar-height))',
         },
         width: '100%',
         maxWidth: '100vw',
@@ -745,7 +758,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
           ) : (
             <ExploreBookPageSlide page={item.page} itemIndex={index} onDefinitionOpen={openDefinition} onDefinitionPeek={handleDefinitionPeek} />
           )}
-        </Box>
+      </Box>
       ))}
       {loadingMore && (
         <Box component="section" sx={{ height: '100%', display: 'grid', placeItems: 'center', bgcolor: 'var(--awm-cream-light)' }}>
@@ -783,5 +796,6 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
         </Popover>
       )}
     </Box>
+    </>
   )
 }

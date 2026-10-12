@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
+import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import {
   Dialog,
   DialogTitle,
@@ -40,7 +41,12 @@ export default function BookEditDialog({
   onSaved,
   onDeleted,
 }: BookEditDialogProps) {
+  const cache = useAdminListCache()
+  const busy = useRef(false)
+  const mounted = useRef(true)
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const [loading, setLoading] = useState(false)
+  const [coverUploading, setCoverUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -49,6 +55,7 @@ export default function BookEditDialog({
   const [cover, setCover] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [author, setAuthor] = useState("")
+  const [readingTimeMinutes, setReadingTimeMinutes] = useState("")
   const [titleAr, setTitleAr] = useState("")
   const [description, setDescription] = useState("")
   const [level, setLevel] = useState("")
@@ -70,6 +77,7 @@ export default function BookEditDialog({
       setSlug("")
       setTitle("")
       setAuthor("")
+      setReadingTimeMinutes("")
       setTitleAr("")
       setDescription("")
       setLevel("")
@@ -91,6 +99,7 @@ export default function BookEditDialog({
         setSlug(row.slug)
         setTitle(row.title)
         setAuthor(row.author ?? "")
+        setReadingTimeMinutes(row.reading_time_minutes?.toString() ?? "")
         setTitleAr(row.title_ar ?? "")
         setDescription(row.description ?? "")
         setLevel(row.level)
@@ -103,13 +112,17 @@ export default function BookEditDialog({
   }, [open, bookId, isNew])
 
   const handleSave = async () => {
+    if (busy.current || coverUploading || loading || !loaded) return
+    busy.current = true
     setSaving(true)
     setError(null)
     try {
+      if (description.trim().length < 20) throw new Error("Add a meaningful description of at least 20 characters.")
       const input: BookInput = {
         slug,
         title,
         author: author.trim() || null,
+        reading_time_minutes: readingTimeMinutes ? Number(readingTimeMinutes) : null,
         title_ar: titleAr || null,
         description: description || null,
         cover,
@@ -118,38 +131,40 @@ export default function BookEditDialog({
         cover_crop: coverCrop,
       }
 
-      if (isNew) {
-      setLoading(false)
-        await createBook(input)
-      } else {
-        await updateBook(bookId!, input)
-      }
+      const result = isNew ? await createBook(input) : await updateBook(bookId!, input)
+      if (!mounted.current) return
+      if (!result.ok) { setError(result.error); return }
 
+      cache.invalidate("books")
       onSaved?.()
       onClose()
     } catch (e: unknown) {
-      setError(errorMessage(e) ?? "Save failed")
+      if (mounted.current) setError(errorMessage(e) ?? "Save failed")
     } finally {
-      setSaving(false)
+      busy.current = false
+      if (mounted.current) setSaving(false)
     }
   }
 
   const handleDelete = async () => {
-    if (isNew) return
+    if (isNew || busy.current) return
     if (!confirm("Delete this book and its chapters? This cannot be undone.")) return
+    busy.current = true; setSaving(true)
     try {
       await deleteBook(bookId!)
+      if (!mounted.current) return
+      cache.invalidate("books")
       onDeleted?.()
       onClose()
     } catch (e: unknown) {
-      setError(errorMessage(e) ?? "Delete failed")
-    }
+      if (mounted.current) setError(errorMessage(e) ?? "Delete failed")
+    } finally { busy.current = false; if (mounted.current) setSaving(false) }
   }
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => { if (!busy.current && !coverUploading) onClose() }}
       maxWidth="sm"
       fullWidth
       slotProps={{
@@ -177,7 +192,7 @@ export default function BookEditDialog({
         }}
       >
         {isNew ? "New Book" : "Edit Book"}
-        <IconButton onClick={onClose} size="small" sx={{ color: "#7a6e65", mr: -0.5 }}>
+        <IconButton onClick={onClose} disabled={saving || coverUploading} size="small" sx={{ color: "#7a6e65", mr: -0.5 }}>
           <Close sx={{ fontSize: "1.2rem" }} />
         </IconButton>
       </DialogTitle>
@@ -203,11 +218,12 @@ export default function BookEditDialog({
 
         {!loading && loaded && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <AdminTextField label="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} fullWidth size="small" />
-            <AdminTextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" />
+            <AdminTextField label="Slug" required value={slug} onChange={(e) => setSlug(e.target.value)} fullWidth size="small" />
+            <AdminTextField label="Title" required value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" />
             <AdminTextField label="Title Arabic" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} fullWidth size="small" />
-            <AdminTextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" />
+            <AdminTextField label="Description" required helperText="At least 20 characters; shown on the public book page." value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" />
             <ImageUploadField
+              onUploadingChange={setCoverUploading}
               label="Cover image"
               bucket="covers"
               path={slug ? `books/${slug}.webp` : ""}
@@ -224,10 +240,20 @@ export default function BookEditDialog({
                 setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })
               }}
             />
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
               <AdminTextField label="Level" value={level} onChange={(e) => setLevel(e.target.value)} fullWidth size="small" />
               <AdminTextField label="Author" value={author} onChange={(e) => setAuthor(e.target.value)} fullWidth size="small" />
               <AdminTextField label="Category" value={category} onChange={(e) => setCategory(e.target.value)} fullWidth size="small" />
+              <AdminTextField
+                label="Reading Time"
+                value={readingTimeMinutes}
+                onChange={(e) => setReadingTimeMinutes(e.target.value)}
+                type="number"
+                helperText="Estimated duration in minutes"
+                slotProps={{ htmlInput: { min: 1, step: 1 } }}
+                fullWidth
+                size="small"
+              />
             </Box>
           </Box>
         )}
@@ -239,6 +265,7 @@ export default function BookEditDialog({
             variant="outlined"
             color="error"
             onClick={handleDelete}
+            disabled={saving || coverUploading}
             startIcon={<Delete sx={{ fontSize: "1rem" }} />}
             sx={{ fontFamily: "var(--font-sans), sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", order: { xs: 2, sm: 0 }, width: { xs: "100%", sm: "auto" } }}
           >
@@ -249,7 +276,7 @@ export default function BookEditDialog({
         <Button
           variant="outlined"
           onClick={onClose}
-          disabled={saving}
+          disabled={saving || coverUploading}
           sx={{ fontFamily: "var(--font-sans), sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", borderColor: "rgba(122,110,101,0.3)", color: "#7a6e65", width: { xs: "100%", sm: "auto" } }}
         >
           Cancel
@@ -257,7 +284,7 @@ export default function BookEditDialog({
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={!loaded || saving || loading}
+          disabled={!loaded || saving || loading || coverUploading}
           startIcon={<Save sx={{ fontSize: "1rem" }} />}
           sx={{ background: "#2c1a0e", color: "#f5ede0", fontFamily: "var(--font-sans), sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", width: { xs: "100%", sm: "auto" }, "&:hover": { background: "#1a0f08" } }}
         >

@@ -1,0 +1,526 @@
+[
+  {
+    "path": "/",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1220,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "EXPLORE · WATCH · READ · MEMORY\n\nLearn Arabic through cartoons and books\nStart Learning\nBrowse Cartoons\nShows\n\nDragon Ball Z\n\nB1-B2\n\nMiscellaneous\n\nB1-B2\n\nYu-Gi-Oh\n\nB1-B2\n\nPowerpuff Girls\n\nB1-B2\n\nStranger Things\n\nB1-C1\n\nIn Your Name, O Allah\n\nB2-C1\n\nHunter X Hunter\n\nB1-B2\n\nThe Amazing World of Gumball\n\nB1-B2\n\nNaruto\n\nA2-B1\n\nInvincible\n\nB1-B2\n\nSpy F",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/explore",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 8582,
+    "title": "Explore Arabic | ArabicWithM",
+    "text": "B1\nEveryday Arabic\nDialogue\n\nA wrestler explains how family tragedy, medical costs, and a criminal gang pushed him into becoming the villainous Space Wrestler.\n\nخَطَرَفِيالذِّهْنِسُؤَالٌمُبَاشَرَةً.\n\nA question came to my mind immediately.\n\nهَلْلَكَأَنْتَشْرَحَلَنَا…\n\nCan you explain to us…\n\nلِمَاذَايُصْبِحُشَخْصٌمِثْلُكَ…\n\nwhy does someone like yo",
+    "overflow": false,
+    "frames": [
+      {
+        "src": "https://www.youtube.com/embed/jxlerr-qars?autoplay=0&rel=0&enablejsapi=1&playsinline=1&origin=http%3A%2F%2F127.0.0.1%3A3037&widgetid=1&forigin=http%3A%2F%2F127.0.0.1%3A3037%2Fexplore&aoriginsup=1&vf=6",
+        "width": 443,
+        "height": 787,
+        "allow": "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      }
+    ],
+    "playback": [
+      {
+        "paused": false,
+        "currentTime": 6.732708,
+        "muted": true,
+        "readyState": 4
+      }
+    ]
+  },
+  {
+    "path": "/cartoons",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1159,
+    "title": "Arabic Cartoons | ArabicWithM",
+    "text": "Home\n\nWatch\n\nAll Episodes\nAll Shows\nShuffle\n\nFilters\n\nCATEGORY\n\nAll Categories\nAction\nAnime\nCartoon\nComedy\nEveryday Arabic\nHistory\nIslamic Heritage\nSci-Fi\nSuperhero\n\nADDITIONAL TAGS\n\nAll tags\n​\n\nLEVEL\n\nA0\nA1\nA2\nB1\nB2\nC1\nC2\nA1-A2\nA2-B1\nB1-B2\nB2-C1\nReset Filters\n\n109 episodes\n\nB1\n\nAnissa vs Mark\n\nB2\n\nThe Killer’s Repentance | Ṣaḥīḥ al-Bukhārī 3470 | ",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/books",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1039,
+    "title": "Arabic Books | ArabicWithM",
+    "text": "Library\n\n10 books\n\nA Debt of Silence\n\nNine years after witnessing a killing, accountant Faris Marwan is pressured by powerful Rami Qattan to support a false theft accusation against a dead man. When new records surface, Faris must confront the debt that bought his silence and decide what truth will cost him now.\n\nB1\n\n5 chapters\n\nA Secret in Amman\n\n",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/search",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1046,
+    "title": "Search | ArabicWithM",
+    "text": "Back to Quick Actions\nSearch\n\nFind shows, episodes and books in Arabic or English.\n\nBook titles are searchable. Sign in to search book text and read chapters.\nSearch learning content\nSearch learning content\nSearch",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/grammar",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1071,
+    "title": "Grammar | ArabicWithM",
+    "text": "Grammar\n\nYour personal Grammar activities are protected.\n\nSign In",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/memory",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1053,
+    "title": "Memory Flashcards | ArabicWithM",
+    "text": "Memory\n\nYour personal Memory activities are protected.\n\nSign In",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/word-search",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1251,
+    "title": "Arabic Word Search | ArabicWithM",
+    "text": "Back home\nWord Search\n\nUse each English meaning as a clue, then find the canonical Arabic vocabulary word in the grid.\n\nBASED ON A REAL TRANSCRIPT\n\nIslamic Stories · Be Patient, O Mother!\n\nOpen episode\nChoose your difficulty\n\nSelect a level, then start your puzzle.\n\nEasy\nRegular\nHard\n14 × 14 grid\n8 target words\nAll directions\nStart Regular",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/practice",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1052,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "EXPLORE · WATCH · READ · MEMORY\n\nLearn Arabic through cartoons and books\nStart Learning\nBrowse Cartoons\nShows\n\nDragon Ball Z\n\nB1-B2\n\nMiscellaneous\n\nB1-B2\n\nYu-Gi-Oh\n\nB1-B2\n\nPowerpuff Girls\n\nB1-B2\n\nStranger Things\n\nB1-C1\n\nIn Your Name, O Allah\n\nB2-C1\n\nHunter X Hunter\n\nB1-B2\n\nThe Amazing World of Gumball\n\nB1-B2\n\nNaruto\n\nA2-B1\n\nInvincible\n\nB1-B2\n\nSpy F",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/vocabulary",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1072,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "EXPLORE · WATCH · READ · MEMORY\n\nLearn Arabic through cartoons and books\nStart Learning\nBrowse Cartoons\nShows\n\nDragon Ball Z\n\nB1-B2\n\nMiscellaneous\n\nB1-B2\n\nYu-Gi-Oh\n\nB1-B2\n\nPowerpuff Girls\n\nB1-B2\n\nStranger Things\n\nB1-C1\n\nIn Your Name, O Allah\n\nB2-C1\n\nHunter X Hunter\n\nB1-B2\n\nThe Amazing World of Gumball\n\nB1-B2\n\nNaruto\n\nA2-B1\n\nInvincible\n\nB1-B2\n\nSpy F",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/feedback",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1039,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "Give Feedback\nSign in to submit feedback.\nSign in\n\nHow is your experience? (1–5 stars)\n\n1 Star\n2 Stars\n3 Stars\n4 Stars\n5 Stars\nEmpty\nComments (optional)\nComments (optional)\nSubmit feedback",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/support",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1062,
+    "title": "Support Us — Arabic with M",
+    "text": "Support\nArabic with M\n\nArabic with M turns stories, cartoons and carefully graded reading into practical learning experiences. Contributions help fund content production, platform hosting, development, infrastructure and the learning tools behind those resources.\n\nSupport is entirely optional. Every contribution helps us expand the book and video l",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/profile",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1060,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "My Profile\n\nSign in to view your learning profile.\n\nSign in",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/reset-password",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1056,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "ArabicWithM\n\nSet New Password\n\nChoose a strong password for your account.\n\nThis password reset link is invalid or has expired. Please request a new link.\nNew password\nConfirm new password\nUpdate Password",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/admin",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1052,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "EXPLORE · WATCH · READ · MEMORY\n\nLearn Arabic through cartoons and books\nStart Learning\nBrowse Cartoons\nShows\n\nDragon Ball Z\n\nB1-B2\n\nMiscellaneous\n\nB1-B2\n\nYu-Gi-Oh\n\nB1-B2\n\nPowerpuff Girls\n\nB1-B2\n\nStranger Things\n\nB1-C1\n\nIn Your Name, O Allah\n\nB2-C1\n\nHunter X Hunter\n\nB1-B2\n\nThe Amazing World of Gumball\n\nB1-B2\n\nNaruto\n\nA2-B1\n\nInvincible\n\nB1-B2\n\nSpy F",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/cartoons/inv/inv-25",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1135,
+    "title": "Anissa vs Mark | ArabicWithM",
+    "text": "Home\n\nCartoons\n\nInvincible\n\nAnissa vs Mark\n\nMemory\nSettings\nScript\nVocabulary List\nGrammar Points\n\n0:00\n\nRemember, we tried being rational...\n\nتذكر أننا بدأنا بعقلانية...\n\n0:20\n\nYou dare interrupt while I'm teaching you?\n\nأتجَرُؤ على مقاطعتي خلال تعليمك؟\n\n0:25\n\nI was never a good student...\n\nلم أكن طالباً نجيباً قط...\n\n0:30\n\nYou have a mission assi",
+    "overflow": false,
+    "frames": [
+      {
+        "src": "https://www.youtube.com/embed/8i5sKUyVpPY?autoplay=0&rel=0&enablejsapi=1&playsinline=1&origin=http%3A%2F%2F127.0.0.1%3A3037&widgetid=1&forigin=http%3A%2F%2F127.0.0.1%3A3037%2Fcartoons%2Finv%2Finv-25&aoriginsup=1&vf=6",
+        "width": 500,
+        "height": 684,
+        "allow": "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      }
+    ],
+    "playback": [
+      {
+        "paused": true,
+        "currentTime": 0,
+        "muted": false,
+        "readyState": 0
+      }
+    ]
+  },
+  {
+    "path": "/books/dos",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1060,
+    "title": "A Debt of Silence | Arabic Books",
+    "text": "Back to books\n\nA Debt of Silence\n\nBy Julian Mercer\n\nNine years after witnessing a killing, accountant Faris Marwan is pressured by powerful Rami Qattan to support a false theft accusation against a dead man. When new records surface, Faris must confront the debt that bought his silence and decide what truth will cost him now.\n\nB1\n30 min read\nAudiob",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/books/dos/dos-1",
+    "width": 1440,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1148,
+    "title": "The Summons — A Debt of Silence",
+    "text": "Sign in to read The Summons\nSign in",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1040,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "EXPLORE · WATCH · READ · MEMORY\n\nLearn Arabic through cartoons and books\nStart Learning\nBrowse Cartoons\nShows\n\nDragon Ball Z\n\nB1-B2\n\nMiscellaneous\n\nB1-B2\n\nYu-Gi-Oh\n\nB1-B2\n\nPowerpuff Girls\n\nB1-B2\n\nStranger Things\n\nB1-C1\n\nIn Your Name, O Allah\n\nB2-C1\n\nHunter X Hunter\n\nB1-B2\n\nThe Amazing World of Gumball\n\nB1-B2\n\nNaruto\n\nA2-B1\n\nInvincible\n\nB1-B2\n\nSpy F",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/explore",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 8397,
+    "title": "Explore Arabic | ArabicWithM",
+    "text": "",
+    "overflow": false,
+    "frames": [
+      {
+        "src": "https://www.youtube.com/embed/5GioN0rSy2I?autoplay=0&rel=0&enablejsapi=1&playsinline=1&origin=http%3A%2F%2F127.0.0.1%3A3037&widgetid=1&forigin=http%3A%2F%2F127.0.0.1%3A3037%2Fexplore&aoriginsup=1&vf=6",
+        "width": 390,
+        "height": 693,
+        "allow": "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      }
+    ],
+    "playback": [
+      {
+        "paused": false,
+        "currentTime": 6.614853,
+        "muted": true,
+        "readyState": 4
+      }
+    ]
+  },
+  {
+    "path": "/cartoons",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1274,
+    "title": "Arabic Cartoons | ArabicWithM",
+    "text": "Episodes\nShows\nShuffle\nFilters\n\nAnissa vs Mark\n\nThe Killer’s Repentance | Ṣaḥīḥ al-Bukhārī 3470 | Part Two\n\nMark Meets Anissa\n\nEarth Made You Weak\n\nThe Killer’s Repentance | Ṣaḥīḥ al-Bukhārī 3470 | Part One\n\nStop Holding Back!\n\nI Made A Mistake!\n\nTo Infinity & Beyond!\n\nThe Deed That Moved the Boulder | Part 4 | Sahih al-Bukhari 2272\n\nFire and Water",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/books",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1052,
+    "title": "Arabic Books | ArabicWithM",
+    "text": "Library\n\n10 books\n\nA Debt of Silence\n\n5 chapters\n\nA Secret in Amman\n\n6 chapters\n\nBetween People & Days\n\n8 chapters\n\nBlackwood Manor\n\n15 chapters\n\nLayla & the Shadow\n\n11 chapters\n\nSmall Plans, Busy Days\n\n6 chapters\n\nThe Measure of Character\n\n5 chapters\n\nThe Prisoner's Proof\n\n12 chapters\n\nThe Stranger Who Knows My Name\n\n8 chapters\n\nWhen Learning Feel",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/search",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1037,
+    "title": "Search | ArabicWithM",
+    "text": "Back to Quick Actions\nSearch\n\nFind shows, episodes and books in Arabic or English.\n\nBook titles are searchable. Sign in to search book text and read chapters.\nSearch learning content\nSearch learning content\nSearch",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/grammar",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1049,
+    "title": "Grammar | ArabicWithM",
+    "text": "Grammar\n\nYour personal Grammar activities are protected.\n\nSign In",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/memory",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1044,
+    "title": "Memory Flashcards | ArabicWithM",
+    "text": "Memory\n\nYour personal Memory activities are protected.\n\nSign In",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/word-search",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1266,
+    "title": "Arabic Word Search | ArabicWithM",
+    "text": "Back home\nWord Search\n\nUse each English meaning as a clue, then find the canonical Arabic vocabulary word in the grid.\n\nBASED ON A REAL TRANSCRIPT\n\nInvincible · Mark and Amber Break Up\n\nOpen episode\nChoose your difficulty\n\nSelect a level, then start your puzzle.\n\nEasy\nRegular\nHard\n14 × 14 grid\n8 target words\nAll directions\nStart Regular",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/practice",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1042,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "EXPLORE · WATCH · READ · MEMORY\n\nLearn Arabic through cartoons and books\nStart Learning\nBrowse Cartoons\nShows\n\nDragon Ball Z\n\nB1-B2\n\nMiscellaneous\n\nB1-B2\n\nYu-Gi-Oh\n\nB1-B2\n\nPowerpuff Girls\n\nB1-B2\n\nStranger Things\n\nB1-C1\n\nIn Your Name, O Allah\n\nB2-C1\n\nHunter X Hunter\n\nB1-B2\n\nThe Amazing World of Gumball\n\nB1-B2\n\nNaruto\n\nA2-B1\n\nInvincible\n\nB1-B2\n\nSpy F",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/vocabulary",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1054,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "EXPLORE · WATCH · READ · MEMORY\n\nLearn Arabic through cartoons and books\nStart Learning\nBrowse Cartoons\nShows\n\nDragon Ball Z\n\nB1-B2\n\nMiscellaneous\n\nB1-B2\n\nYu-Gi-Oh\n\nB1-B2\n\nPowerpuff Girls\n\nB1-B2\n\nStranger Things\n\nB1-C1\n\nIn Your Name, O Allah\n\nB2-C1\n\nHunter X Hunter\n\nB1-B2\n\nThe Amazing World of Gumball\n\nB1-B2\n\nNaruto\n\nA2-B1\n\nInvincible\n\nB1-B2\n\nSpy F",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/feedback",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1047,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "Give Feedback\nSign in to submit feedback.\nSign in\n\nHow is your experience? (1–5 stars)\n\n1 Star\n2 Stars\n3 Stars\n4 Stars\n5 Stars\nEmpty\nComments (optional)\nComments (optional)\nSubmit feedback",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/support",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1056,
+    "title": "Support Us — Arabic with M",
+    "text": "Support\nArabic with M\n\nArabic with M turns stories, cartoons and carefully graded reading into practical learning experiences. Contributions help fund content production, platform hosting, development, infrastructure and the learning tools behind those resources.\n\nSupport is entirely optional. Every contribution helps us expand the book and video l",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/profile",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1049,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "My Profile\n\nSign in to view your learning profile.\n\nSign in",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/reset-password",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1040,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "ArabicWithM\n\nSet New Password\n\nChoose a strong password for your account.\n\nThis password reset link is invalid or has expired. Please request a new link.\nNew password\nConfirm new password\nUpdate Password",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/admin",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1057,
+    "title": "ArabicWithM — Learn Arabic with Cartoons",
+    "text": "EXPLORE · WATCH · READ · MEMORY\n\nLearn Arabic through cartoons and books\nStart Learning\nBrowse Cartoons\nShows\n\nDragon Ball Z\n\nB1-B2\n\nMiscellaneous\n\nB1-B2\n\nYu-Gi-Oh\n\nB1-B2\n\nPowerpuff Girls\n\nB1-B2\n\nStranger Things\n\nB1-C1\n\nIn Your Name, O Allah\n\nB2-C1\n\nHunter X Hunter\n\nB1-B2\n\nThe Amazing World of Gumball\n\nB1-B2\n\nNaruto\n\nA2-B1\n\nInvincible\n\nB1-B2\n\nSpy F",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/cartoons/inv/inv-25",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1059,
+    "title": "Anissa vs Mark | ArabicWithM",
+    "text": "Script\nVocab\nGrammar\nSettings\nMemory\nAnissa vs Mark\n\n0:00\n\nRemember, we tried being rational...\n\nتذكر أننا بدأنا بعقلانية...\n\n0:20\n\nYou dare interrupt while I'm teaching you?\n\nأتجَرُؤ على مقاطعتي خلال تعليمك؟\n\n0:25\n\nI was never a good student...\n\nلم أكن طالباً نجيباً قط...\n\n0:30\n\nYou have a mission assigned to you by your true people...\n\nلديك مهمة ",
+    "overflow": false,
+    "frames": [
+      {
+        "src": "https://www.youtube.com/embed/8i5sKUyVpPY?autoplay=0&rel=0&enablejsapi=1&playsinline=1&origin=http%3A%2F%2F127.0.0.1%3A3037&widgetid=1&forigin=http%3A%2F%2F127.0.0.1%3A3037%2Fcartoons%2Finv%2Finv-25&aoriginsup=1&vf=6",
+        "width": 390,
+        "height": 324,
+        "allow": "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      }
+    ],
+    "playback": [
+      {
+        "paused": true,
+        "currentTime": 0,
+        "muted": false,
+        "readyState": 4
+      }
+    ]
+  },
+  {
+    "path": "/books/dos",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1043,
+    "title": "A Debt of Silence | Arabic Books",
+    "text": "Back to books\n\nA Debt of Silence\n\nBy Julian Mercer\n\nNine years after witnessing a killing, accountant Faris Marwan is pressured by powerful Rami Qattan to support a false theft accusation against a dead man. When new records surface, Faris must confront the debt that bought his silence and decide what truth will cost him now.\n\nB1\n30 min read\nAudiob",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  },
+  {
+    "path": "/books/dos/dos-1",
+    "width": 390,
+    "errors": [],
+    "failedRequests": [],
+    "status": 200,
+    "milliseconds": 1182,
+    "title": "The Summons — A Debt of Silence",
+    "text": "Sign in to read The Summons\nSign in",
+    "overflow": false,
+    "frames": [],
+    "playback": []
+  }
+]

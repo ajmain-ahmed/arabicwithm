@@ -11,15 +11,25 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-type Table<Row> = { Row: Row; Insert: Partial<Row>; Update: Partial<Row>; Relationships: [] }
+type Table<Row> = { Row: { [K in keyof Row]: Row[K] }; Insert: { [K in keyof Row]?: Row[K] }; Update: { [K in keyof Row]?: Row[K] }; Relationships: [] }
 export interface Database {
   public: {
     Tables: {
+      admin_manual_transcripts: Table<{transcript_id:string;group_id:string|null;created_at:string}>
+      youtube_transcripts: Table<import('@/app/actions/transcripts').TranscriptRow & {raw_transcript:Json|null}>
+      transcript_segments: Table<import('@/app/actions/transcripts').TranscriptSegment & {transcript_id:string}>
+      account_roles: Table<{ user_id: string; role: 'user' | 'editor' | 'admin'; updated_at: string }>
+      access_change_audit: Table<import('@/app/lib/reviews').AccessChange>
+      content_suggestions: Table<import('@/app/lib/reviews').ContentSuggestion>
       feedback: Table<{ id: string; user_id: string; rating: number; comment: string | null; created_at: string }>
       subscriptions: Table<{ user_id: string; customer_id: string; subscription_id: string | null; status: string; current_period_end: string; cancel_at_period_end: boolean; event_created: number }>
       memory_reviews: Table<{ user_id: string; completion_id: string; card_id: string; rating: string; activity_date: string; xp: number; created_at: string }>
       memory_sessions: Table<{ user_id: string; state: Json; updated_at: string }>
       memory_legacy_progress: Table<{ user_id: string; xp: number }>
+      word_search_completions: Table<{ id: string; user_id: string; puzzle_id: string; source_type: 'episode' | 'book'; source_id: string; difficulty: string; word_count: number; words_found: number; mistakes: number; hints_used: number; reveals_used: number; duration_seconds: number; xp_earned: number; activity_date: string; completed_at: string }>
+      book_chapter_audio: Table<{ id: string; chapter_id: string; language: 'ar' | 'en'; source_type: 'supabase_storage' | 'youtube' | 'external_url'; storage_bucket: string | null; external_url: string | null; storage_path: string | null; external_video_id: string | null; duration_seconds: number | null; narrator: string | null; is_published: boolean; created_at: string; updated_at: string }>
+      book_audio_progress: Table<{ user_id: string; chapter_id: string; language: 'ar' | 'en'; position_seconds: number; completed: boolean; updated_at: string }>
+      leaderboard_public_profiles: Table<{user_id:string;display_name:string;avatar_url:string|null;handle:string|null;updated_at:string}>
       public_profiles: Table<{ user_id: string; display_name: string; is_public: boolean; share_reading: boolean; created_at: string }>
 
       shows: {
@@ -118,6 +128,7 @@ export interface Database {
           slug: string
           title: string
           author: string | null
+          reading_time_minutes: number | null
           premium_exempt: boolean
           free_chapter_count: number
           title_ar: string | null
@@ -135,6 +146,7 @@ export interface Database {
           slug: string
           title: string
           author?: string | null
+          reading_time_minutes?: number | null
           premium_exempt?: boolean
           free_chapter_count?: number
           title_ar?: string | null
@@ -152,6 +164,7 @@ export interface Database {
           slug?: string
           title?: string
           author?: string | null
+          reading_time_minutes?: number | null
           premium_exempt?: boolean
           free_chapter_count?: number
           title_ar?: string | null
@@ -316,8 +329,54 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      account_has_premium: { Args: { p_user_id: string }; Returns: boolean }
+      admin_set_manual_premium: { Args: {p_actor:string;p_target:string;p_enabled:boolean;p_reason:string}; Returns:boolean }
+      admin_set_account_access: { Args: {p_actor:string;p_target:string;p_role:string;p_premium:boolean;p_notes:string}; Returns:Json }
+      admin_manual_premium_details: { Args:{p_actor:string;p_target:string};Returns:Json }
+      website_memory_session_usage: {Args:{p_user_id:string};Returns:number}
+      website_begin_memory_session: {Args:{p_user_id:string;p_state:Json};Returns:Json}
+      website_save_memory_session: {Args:{p_user_id:string;p_state:Json};Returns:Json}
+      website_complete_memory_card_v2: {Args:{p_user_id:string;p_completion_id:string;p_card_id:string;p_rating:string;p_session:Json};Returns:Json}
+      admin_record_transcript_origin: { Args:{p_actor:string;p_id:string};Returns:string }
+      register_youtube_transcript: { Args:{p_user:string;p_youtube_id:string};Returns:string }
+      admin_review_generated_transcript: {Args:{p_actor:string;p_id:string;p_raw:Json;p_title:string;p_searchable:boolean;p_updated_at:string};Returns:string}
+      admin_generate_youtube_transcript: { Args:{p_actor:string;p_youtube_id:string};Returns:Json }
+      admin_delete_youtube_transcript: { Args:{p_actor:string;p_id:string};Returns:boolean }
+      admin_list_manual_transcripts: {Args:{p_actor:string;p_page:number;p_search:string;p_group:string|null;p_ungrouped:boolean};Returns:Json}
+      admin_manage_transcript_group: {Args:{p_actor:string;p_name:string|null;p_parent:string|null;p_id:string|null;p_delete:boolean};Returns:string}
+      admin_manual_enrichment: {Args:{p_actor:string;p_id:string};Returns:Json}
+      admin_retry_manual_enrichment: {Args:{p_actor:string;p_id:string};Returns:Json}
+      admin_save_manual_draft: {Args:{p_actor:string;p_id:string;p_payload:Json;p_version?:string|null};Returns:Json}
+      admin_load_manual_draft: {Args:{p_actor:string;p_id:string};Returns:Json}
+      admin_list_manual_drafts: {Args:{p_actor:string;p_page?:number;p_search?:string;p_rows?:boolean};Returns:Json}
+      admin_delete_manual_draft: {Args:{p_actor:string;p_id:string;p_version:string};Returns:boolean}
+      admin_begin_manual_import: {Args:Database['public']['Functions']['admin_import_grouped_transcript']['Args']&{p_key:string};Returns:Json}
+      admin_append_manual_import: {Args:{p_actor:string;p_import:string;p_offset:number;p_limit?:number;p_bytes?:number};Returns:Json}
+      admin_resume_manual_import: {Args:{p_actor:string;p_id:string};Returns:Json}
+      admin_manual_import_state: {Args:{p_actor:string;p_import:string};Returns:Json}
+      admin_finish_manual_import: {Args:{p_actor:string;p_import:string};Returns:Json}
+      admin_import_manual_source: {Args:Database['public']['Functions']['admin_import_grouped_transcript']['Args'];Returns:Json}
+      admin_save_manual_source: {Args:Database['public']['Functions']['admin_save_grouped_transcript']['Args'];Returns:Json}
+      admin_import_grouped_transcript: {Args:{p_actor:string;p_youtube_id:string;p_title:string;p_channel:string;p_raw:Json;p_searchable:boolean;p_group:string|null;p_duration:number|null};Returns:string}
+      admin_move_standalone_transcript: {Args:{p_actor:string;p_id:string;p_group:string|null;p_previous_group:string|null;p_updated_at:string};Returns:string}
+      admin_save_grouped_transcript: {Args:{p_actor:string;p_id:string;p_raw:Json;p_title:string;p_channel:string;p_searchable:boolean;p_updated_at:string;p_youtube_id:string;p_group:string|null;p_duration:number|null};Returns:string}
+      admin_update_transcript_json: { Args:{p_actor:string;p_id:string;p_raw:Json;p_title:string;p_channel:string;p_searchable:boolean;p_updated_at:string};Returns:string }
+      admin_import_youtube_transcript: { Args:{p_actor:string;p_youtube_id:string;p_title:string;p_channel:string;p_raw:Json;p_searchable:boolean};Returns:string }
+      search_transcript_word: { Args:{p_word:string;p_after:number;p_after_rank:number;p_limit:number};Returns:Json }
+      website_memory_totals: { Args: { p_user_id: string; p_since?: string }; Returns: Json }
+      website_learning_history: { Args: { p_user_id: string }; Returns: Json }
+      set_public_handle: {Args:{p_handle:string};Returns:string}
+      account_role: { Args: { p_user_id: string }; Returns: string }
+      change_account_role: { Args: { p_actor: string; p_target: string; p_role: string; p_reason: string }; Returns: undefined }
+      admin_user_directory: { Args: { p_actor: string; p_tab: string; p_search: string; p_page: number; p_size: number }; Returns: Json }
+      review_source: { Args: { p_type: string; p_target: string }; Returns: Json }
+      submit_content_suggestion: { Args: { p_actor: string; p_type: string; p_target: string; p_line: number; p_document: Json; p_arabic: string; p_english: string; p_comment: string; p_reason: string }; Returns: string }
+      edit_content_suggestion: { Args: { p_actor: string; p_id: string; p_withdraw: boolean; p_arabic: string; p_english: string; p_comment: string; p_reason: string }; Returns: undefined }
+      review_content_suggestion: { Args: { p_actor: string; p_id: string; p_action: string; p_response: string; p_tokens: Json }; Returns: Json }
       memory_totals: { Args: { p_user_id: string; p_since?: string }; Returns: Json }
       complete_memory_card: { Args: { p_user_id: string; p_completion_id: string; p_card_id: string; p_rating: string; p_xp: number; p_daily_limit: number; p_has_premium: boolean; p_session: Json }; Returns: Json }
+      learning_xp_totals: { Args: { p_user_id: string; p_since?: string | null }; Returns: Json }
+      complete_word_search: { Args: { p_user_id: string; p_completion_id: string; p_puzzle_id: string; p_source_type: string; p_source_id: string; p_difficulty: string; p_word_count: number; p_words_found: number; p_mistakes: number; p_hints_used: number; p_reveals_used: number; p_duration_seconds: number; p_xp: number }; Returns: Json }
       apply_subscription_event: { Args: { p_user_id: string; p_event_created: number; p_subscription_id: string; p_status: string; p_period_end: string; p_cancel_at_period_end: boolean }; Returns: undefined }
 
       increment_learning_activity: {

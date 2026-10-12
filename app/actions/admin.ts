@@ -17,6 +17,10 @@ import {
   normalizeThumbnailCrop,
   type ThumbnailCrop,
 } from "@/app/lib/thumbnailCrop"
+import { z } from 'zod'
+import { unstable_rethrow } from 'next/navigation'
+import { bookInputSchema, bookSaveError } from '@/app/lib/bookInput'
+import type { ActionResult } from '@/app/lib/actionResult'
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 
@@ -238,7 +242,7 @@ export async function fetchShowsForAdmin(): Promise<ShowRow[]> {
 
   const { data, error } = await serviceClient
     .from("shows")
-    .select("*")
+    .select("id,slug,title,title_ar,description,cover,cover_crop,level,category")
     .order("title", { ascending: true })
 
   if (error) {
@@ -351,7 +355,7 @@ export async function fetchAllEpisodesForAdmin(): Promise<EpisodeRow[]> {
 
   const { data, error } = await serviceClient
     .from("episodes")
-    .select("*")
+    .select("id,show_id,slug,title,level,tags,description,youtube_id,instagram_id,tiktok_id,facebook_id,cover,cover_crop,created_at")
     .order("show_id", { ascending: true })
     .order("created_at", { ascending: true })
 
@@ -591,6 +595,7 @@ export type BookRow = {
   slug: string
   title: string
   author: string | null
+  reading_time_minutes: number | null
   title_ar: string | null
   description: string | null
   cover: string | null
@@ -608,7 +613,7 @@ export async function fetchBooksForAdmin(): Promise<BookRow[]> {
 
   const { data, error } = await serviceClient
     .from("books")
-    .select("*")
+    .select("id,slug,title,author,reading_time_minutes,title_ar,description,cover,cover_crop,level,category,created_at,updated_at")
     .order("title", { ascending: true })
 
   if (error) {
@@ -636,69 +641,40 @@ export async function fetchBookForAdmin(id: string): Promise<BookRow | null> {
   return mapBookRow(data as Record<string, unknown>)
 }
 
-export async function createBook(input: BookInput): Promise<string> {
-  await guardAdmin()
-
-  const { data, error } = await serviceClient
-    .from("books")
-    .insert({
-      slug: input.slug,
-      title: input.title,
-      author: input.author?.trim() || null,
-      title_ar: input.title_ar,
-      description: input.description,
-      cover: input.cover,
-      cover_crop: normalizeThumbnailCrop(input.cover_crop),
-      level: input.level,
-      category: input.category,
-    } as never)
-    .select("id")
-    .single()
-
-  if (error || !data) {
-    console.error("[createBook] error:", error?.message)
-    throw new Error(error?.message ?? "Failed to create book")
+export async function createBook(input: BookInput): Promise<ActionResult<string>> {
+  try {
+    await guardAdmin()
+    const parsed = bookInputSchema.safeParse(input)
+    if (!parsed.success) return {ok:false,error:parsed.error.issues[0].message}
+    const value = parsed.data
+    const {data,error} = await serviceClient.from('books').insert({...value,author:value.author || null,updated_at:new Date().toISOString()} as never).select('id').single()
+    if (error || !data) { console.error('[createBook]',error); return {ok:false,error:bookSaveError(error)} }
+    updateTag('books-public'); revalidateBookIndex(); revalidateBookPage(value.slug); revalidatePath('/admin/books')
+    return {ok:true,data:String(data.id)}
+  } catch (error) {
+    unstable_rethrow(error); console.error('[createBook]',error)
+    return {ok:false,error:error instanceof Error && error.message==='Forbidden'?'Administrator access is required to save books.':'Unable to save the book. Please try again.'}
   }
-
-  updateTag("books-public")
-  revalidateBookIndex()
-  revalidateBookPage(input.slug)
-  return data.id
 }
 
-export async function updateBook(
-  id: string,
-  input: Partial<BookInput>
-): Promise<void> {
-  await guardAdmin()
-
-  const previousSlug = await fetchBookSlugById(id)
-
-  const payload: Record<string, unknown> = {}
-  if (input.slug !== undefined) payload.slug = input.slug
-  if (input.title !== undefined) payload.title = input.title
-  if (input.author !== undefined) payload.author = input.author?.trim() || null
-  if (input.title_ar !== undefined) payload.title_ar = input.title_ar
-  if (input.description !== undefined) payload.description = input.description
-  if (input.cover !== undefined) payload.cover = input.cover
-  if (input.cover_crop !== undefined) payload.cover_crop = normalizeThumbnailCrop(input.cover_crop)
-  if (input.level !== undefined) payload.level = input.level
-  if (input.category !== undefined) payload.category = input.category
-
-  const { error } = await serviceClient
-    .from("books")
-    .update(payload as never)
-    .eq("id", id)
-
-  if (error) {
-    console.error("[updateBook] error:", error.message)
-    throw new Error(error.message)
+export async function updateBook(id:string,input:Partial<BookInput>):Promise<ActionResult<string>> {
+  try {
+    await guardAdmin()
+    if (!z.string().uuid().safeParse(id).success) return {ok:false,error:'Invalid book ID.'}
+    const parsed = bookInputSchema.partial().safeParse(input)
+    if (!parsed.success) return {ok:false,error:parsed.error.issues[0].message}
+    const previousSlug = await fetchBookSlugById(id)
+    if (!previousSlug) return {ok:false,error:'This book is no longer available. Refresh the library.'}
+    const {data,error} = await serviceClient.from('books').update({...parsed.data,updated_at:new Date().toISOString()} as never).eq('id',id).select('id').maybeSingle()
+    if (error || !data) { console.error('[updateBook]',error); return {ok:false,error:error?bookSaveError(error):'This book is no longer available. Refresh the library.'} }
+    updateTag('books-public'); revalidateBookIndex(); revalidateBookPage(previousSlug)
+    if(parsed.data.slug && parsed.data.slug!==previousSlug)revalidateBookPage(parsed.data.slug)
+    revalidatePath('/admin/books')
+    return {ok:true,data:id}
+  } catch(error) {
+    unstable_rethrow(error); console.error('[updateBook]',error)
+    return {ok:false,error:error instanceof Error && error.message==='Forbidden'?'Administrator access is required to save books.':'Unable to save the book. Please try again.'}
   }
-
-  updateTag("books-public")
-  revalidateBookIndex()
-  if (previousSlug) revalidateBookPage(previousSlug)
-  if (input.slug && input.slug !== previousSlug) revalidateBookPage(input.slug)
 }
 
 export async function deleteBook(id: string): Promise<void> {
@@ -745,7 +721,7 @@ export async function fetchChaptersForBookAdmin(
 
   const { data, error } = await serviceClient
     .from("chapters")
-    .select("*")
+    .select("id,book_id,slug,title,chapter_number,created_at,updated_at")
     .eq("book_id", bookId)
     .order("chapter_number", { ascending: true })
 
@@ -1131,6 +1107,9 @@ function mapBookRow(row: Record<string, unknown>): BookRow {
     slug: String(row.slug),
     title: String(row.title),
     author: toStringOrNull(row.author),
+    reading_time_minutes: typeof row.reading_time_minutes === "number" && row.reading_time_minutes > 0
+      ? Math.round(row.reading_time_minutes)
+      : null,
     title_ar: toStringOrNull(row.title_ar),
     description: toStringOrNull(row.description),
     cover: toStringOrNull(row.cover),
@@ -1166,4 +1145,28 @@ function mapPhraseRow(row: Record<string, unknown>): PhraseRow {
     cefr: String(row.cefr),
     notes: row.notes ? String(row.notes) : null,
   }
+}
+
+export interface BooksAdminIndex { books: BookRow[]; chapters: ChapterRow[] }
+export interface ShowsAdminIndex { shows: ShowRow[]; episodes: EpisodeRow[] }
+
+/** One authorization check and two bounded summary queries; no manuscripts. */
+export async function fetchBooksIndexForAdmin(): Promise<BooksAdminIndex> {
+  await guardAdmin()
+  const [books, chapters] = await Promise.all([
+    serviceClient.from('books').select('id,slug,title,author,reading_time_minutes,title_ar,description,cover,cover_crop,level,category,created_at,updated_at').order('title').limit(1000),
+    serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number,created_at,updated_at').order('chapter_number').limit(1000),
+  ])
+  if (books.error || chapters.error) throw new Error('Unable to load the book catalogue.')
+  return { books: (books.data ?? []).map(row => mapBookRow(row)), chapters: (chapters.data ?? []).map(row => mapChapterRow(row)) }
+}
+
+export async function fetchShowsIndexForAdmin(): Promise<ShowsAdminIndex> {
+  await guardAdmin()
+  const [shows, episodes] = await Promise.all([
+    serviceClient.from('shows').select('id,slug,title,title_ar,description,cover,cover_crop,level,category').order('title').limit(1000),
+    serviceClient.from('episodes').select('id,show_id,slug,title,level,tags,description,youtube_id,instagram_id,tiktok_id,facebook_id,cover,cover_crop,created_at').order('show_id').order('created_at').limit(1000),
+  ])
+  if (shows.error || episodes.error) throw new Error('Unable to load the show catalogue.')
+  return { shows: (shows.data ?? []).map(row => mapShowRow(row)), episodes: (episodes.data ?? []).map(row => mapEpisodeRow(row)) }
 }

@@ -48,6 +48,7 @@ function getEmailLinkClient() {
 interface AuthDialogProps {
   open: boolean
   onClose: () => void
+  purpose?: string
   initialMode?: 'register' | 'signin'
 }
 
@@ -104,7 +105,7 @@ function GoldDivider() {
 }
 
 // ─── component ───────────────────────────────────────────────────────────────
-export default function AuthDialog({ open, onClose, initialMode = 'signin' }: AuthDialogProps) {
+export default function AuthDialog({ open, onClose, purpose, initialMode = 'signin' }: AuthDialogProps) {
   const [authMode, setAuthMode] = useState<'register' | 'signin'>(initialMode)
   const [forgotPassword, setForgotPassword] = useState(false)
   const [formData, setFormData] = useState<FormData>({ email: '', password: '' })
@@ -178,7 +179,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
+        options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(window.location.pathname + window.location.search)}` },
       })
       if (error) {
         showSnackbar('error', error.message)
@@ -210,7 +211,7 @@ export default function AuthDialog({ open, onClose, initialMode = 'signin' }: Au
     ? 'Reset Password'
     : authMode === 'register'
       ? 'Create Account'
-      : 'Welcome Back'
+      : purpose ?? 'Welcome Back'
 
   const subtitle = forgotPassword
     ? "Enter your email and we'll send a reset link."

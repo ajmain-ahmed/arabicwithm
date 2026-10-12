@@ -1,7 +1,8 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import {
   Box,
   Typography,
@@ -20,24 +21,35 @@ import {
 } from "@mui/material"
 import { Edit, Add, ExpandMore } from "@mui/icons-material"
 import {
-  fetchShowsForAdmin,
-  fetchAllEpisodesForAdmin,
+  fetchShowsIndexForAdmin,
+  type ShowsAdminIndex,
   type ShowRow,
   type EpisodeRow,
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
+import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import SearchField from "../components/SearchField"
-import ShowEditDialog from "../components/ShowEditDialog"
-import EpisodeEditDialog from "../components/EpisodeEditDialog"
 import CefrChip from "@/app/components/CefrChip"
+
+const ShowEditDialog = dynamic(() => import("../components/ShowEditDialog"), { loading: () => <Typography role="status">Loading editor...</Typography> })
+const EpisodeEditDialog = dynamic(() => import("../components/EpisodeEditDialog"), { loading: () => <Typography role="status">Loading editor...</Typography> })
 
 type ShowSortKey = keyof ShowRow
 type SortDir = "asc" | "desc"
 
+function groupRows(rows: EpisodeRow[]): Record<string, EpisodeRow[]> {
+  const grouped: Record<string, EpisodeRow[]> = {}
+  for (const row of rows) (grouped[row.show_id] ??= []).push(row)
+  for (const list of Object.values(grouped)) list.sort((a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? ""))
+  return grouped
+}
+
 export default function ShowsAdminPage() {
-  const [shows, setShows] = useState<ShowRow[]>([])
-  const [episodesByShowId, setEpisodesByShowId] = useState<Record<string, EpisodeRow[]>>({})
-  const [loading, setLoading] = useState(true)
+  const cache = useAdminListCache()
+  const snapshot = cache.peek<ShowsAdminIndex>("shows")
+  const [shows, setShows] = useState<ShowRow[]>(snapshot?.shows ?? [])
+  const [episodesByShowId, setEpisodesByShowId] = useState<Record<string, EpisodeRow[]>>(() => groupRows(snapshot?.episodes ?? []))
+  const [loading, setLoading] = useState(!snapshot)
   const [error, setError] = useState<string | null>(null)
 
   const [query, setQuery] = useState("")
@@ -52,35 +64,30 @@ export default function ShowsAdminPage() {
   const [episodeDialogShowId, setEpisodeDialogShowId] = useState<string>("")
   const [episodeDialogOpen, setEpisodeDialogOpen] = useState(false)
 
-  const load = async () => {
-    setLoading(true)
+  const mounted = useRef(true)
+  const loadVersion = useRef(0)
+  const load = useCallback(async (force = false) => {
+    const version = ++loadVersion.current
+    setLoading(!cache.peek("shows"))
     setError(null)
     try {
-      const [showsData, episodesData] = await Promise.all([
-        fetchShowsForAdmin(),
-        fetchAllEpisodesForAdmin(),
-      ])
+      const { shows: showsData, episodes: episodesData } = await cache.load("shows", fetchShowsIndexForAdmin, force)
+      if (!mounted.current || version !== loadVersion.current) return
       setShows(showsData)
 
-      const grouped: Record<string, EpisodeRow[]> = {}
-      for (const ep of episodesData) {
-        if (!grouped[ep.show_id]) grouped[ep.show_id] = []
-        grouped[ep.show_id].push(ep)
-      }
-      for (const list of Object.values(grouped)) {
-        list.sort((a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? ""))
-      }
-      setEpisodesByShowId(grouped)
+      setEpisodesByShowId(groupRows(episodesData))
     } catch (e: unknown) {
-      setError(errorMessage(e) ?? "Failed to load content")
+      if (mounted.current && version === loadVersion.current) setError(errorMessage(e) ?? "Failed to load content")
     } finally {
-      setLoading(false)
+      if (mounted.current && version === loadVersion.current) setLoading(false)
     }
-  }
+  }, [cache])
 
   useEffect(() => {
-    load()
-  }, [])
+    mounted.current = true
+    void load()
+    return () => { mounted.current = false; loadVersion.current += 1 }
+  }, [load])
 
   const toggleExpand = (showId: string) => {
     setExpandedShowIds((prev) => {
@@ -422,23 +429,23 @@ export default function ShowsAdminPage() {
         </TableContainer>
       </Paper>
 
-      <ShowEditDialog
+      {showDialogOpen && <ShowEditDialog
         open={showDialogOpen}
         onClose={() => setShowDialogOpen(false)}
         showId={editShowId}
-        onSaved={load}
-        onDeleted={load}
-      />
+        onSaved={() => void load(true)}
+        onDeleted={() => void load(true)}
+      />}
 
-      <EpisodeEditDialog
+      {episodeDialogOpen && <EpisodeEditDialog
         open={episodeDialogOpen}
         onClose={() => setEpisodeDialogOpen(false)}
         episodeId={editEpisodeId}
         showId={episodeDialogShowId || shows[0]?.id || ""}
         shows={shows}
-        onSaved={load}
-        onDeleted={load}
-      />
+        onSaved={() => void load(true)}
+        onDeleted={() => void load(true)}
+      />}
     </Box>
   )
 }

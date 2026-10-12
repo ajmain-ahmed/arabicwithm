@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Box, Button, ButtonGroup, Divider, IconButton, Paper, Snackbar, Typography, Menu, MenuItem, useMediaQuery } from '@mui/material'
 import { Bookmark, BookmarkBorder, MenuBook, Settings, ViewAgenda } from '@mui/icons-material'
 import { HtmlTooltip, MobileDefinitionPopover, WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
@@ -8,7 +8,7 @@ import type { PublicBookBlock, PublicBookToken } from '@/app/actions/books'
 import { groupChapterBlocks } from '@/app/lib/bookParagraphs'
 import { useAuth } from '@/app/AuthContext'
 import { dispatchWordLookup } from '@/app/lib/activity'
-import { supabase } from '@/app/lib/supabase/client'
+import { syncBookBookmark } from '@/app/lib/bookBookmarkSync'
 import {
   BOOK_SENTENCE_BOOKMARK_EVENT,
   BOOK_SENTENCE_BOOKMARK_STORAGE_KEY,
@@ -27,6 +27,9 @@ import {
   type BookReaderLanguage,
 } from '@/app/lib/bookReaderSettings'
 import BookReaderSettingsDialog from './BookReaderSettingsDialog'
+import ChapterAudioPlayer from './ChapterAudioPlayer'
+import { BOOK_LANGUAGE_STOP_EVENT } from '@/app/lib/bookReaderSettings'
+import type { ChapterAudioSummary } from '@/app/actions/audiobooks'
 
 type ReaderView = 'lines' | 'book'
 const READER_VIEW_STORAGE_KEY = 'awm-book-reader-view'
@@ -246,6 +249,7 @@ export default function ChapterReader({
   chapterSlug,
   content,
   initialLanguage,
+  audio = [],
 }: {
   bookSlug: string
   bookTitle: string
@@ -253,6 +257,7 @@ export default function ChapterReader({
   chapterSlug: string
   content: PublicBookBlock[]
   initialLanguage?: BookReaderLanguage
+  audio?: ChapterAudioSummary[]
 }) {
   const { user } = useAuth()
   const mobileWordPopup = useMediaQuery('(max-width:899.95px)')
@@ -284,6 +289,15 @@ export default function ChapterReader({
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
   const [bookmarkNotice, setBookmarkNotice] = useState('')
+  const bookmarkRequest = useRef(0)
+  useEffect(() => () => { bookmarkRequest.current += 1 }, [])
+  const syncBookmark = (value: BookSentenceBookmark | null) => {
+    if (!user) return
+    const request = ++bookmarkRequest.current
+    void syncBookBookmark(user.id, value).then(ok => {
+      if (!ok && request === bookmarkRequest.current) setBookmarkNotice('Reading position updated on this device. Account sync failed; try again when connected.')
+    })
+  }
   const view = useSyncExternalStore(subscribeToReaderView, getReaderViewSnapshot, () => 'lines')
   const textScale = useSyncExternalStore(subscribeToTextScale, getTextScaleSnapshot, () => DEFAULT_BOOK_TEXT_SCALE)
   const readerFont = useSyncExternalStore(subscribeToReaderFont, getReaderFontSnapshot, () => DEFAULT_BOOK_READER_FONT)
@@ -357,7 +371,7 @@ export default function ChapterReader({
       } catch {
         // The in-memory state still updates for this visit.
       }
-      if (user) void supabase.auth.updateUser({ data: { book_sentence_bookmark: null } })
+      syncBookmark(null)
       return
     }
 
@@ -382,9 +396,7 @@ export default function ChapterReader({
       // The bookmark remains available in memory for this visit.
     }
 
-    if (user) {
-      void supabase.auth.updateUser({ data: { book_sentence_bookmark: nextBookmark } })
-    }
+    syncBookmark(nextBookmark)
   }
 
   const isBookmarkedSentence = (blockIndex: number) => bookmark?.bookSlug === bookSlug
@@ -421,6 +433,7 @@ export default function ChapterReader({
   }
 
   const selectLanguage = (nextLanguage: BookReaderLanguage) => {
+    if(nextLanguage!==language) window.dispatchEvent(new Event(BOOK_LANGUAGE_STOP_EVENT))
     try {
       window.localStorage.setItem(READER_LANGUAGE_STORAGE_KEY, nextLanguage)
       window.dispatchEvent(new Event(READER_LANGUAGE_CHANGE_EVENT))
@@ -429,8 +442,11 @@ export default function ChapterReader({
     }
   }
 
-  return (
+  const mobileAudioLayout = mobileWordPopup
+  const selectedAudio = audio.find(item => item.language === language)
+  const renderReader = ({ button, player }: { button: ReactNode; player: ReactNode }) => (
     <>
+      {mobileAudioLayout && button && <Box data-reader-mobile-audio sx={{ mb: 1.5 }}>{button}</Box>}
       <BookReaderSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -446,22 +462,25 @@ export default function ChapterReader({
         languageLabel={language === 'ar' ? 'Arabic' : 'English'}
       />
       <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', overflow: 'hidden' }}>
-      <Box sx={{ px: { xs: 2, md: 4 }, py: { xs: 2.25, md: 2.75 }, bgcolor: '#0e2e1f' }}>
+      <Box data-reader-heading sx={{ px: { xs: 2, md: 4 }, py: { xs: 2.25, md: 2.75 }, bgcolor: '#0e2e1f' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
           <Box sx={{ textAlign: 'center', minWidth: 0 }}>
             <Typography sx={{ color: '#d4a843', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.45 }}>
               {bookTitle} · {language === 'ar' ? 'Arabic' : 'English'}
             </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 1.5 }}>
             <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 31 }, lineHeight: 1.15, fontWeight: 600 }}>
               {chapterTitle}
             </Typography>
+            {!mobileAudioLayout && button}
+            </Box>
           </Box>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
             <ButtonGroup
               aria-label="Reading view"
               sx={{
-                bgcolor: 'rgba(255,255,255,0.08)',
+                bgcolor: 'transparent',
                 borderRadius: '8px',
                 width: '100%', maxWidth: 430,
                 '& .MuiButton-root': { whiteSpace: 'nowrap', minWidth: 'auto', px: { xs: 0.75, md: 1.6 }, fontSize: { xs: 11, md: 13 }, minHeight: 44, flex: 1, '& .MuiButton-startIcon': { mr: 0.5, ml: 0 } },
@@ -497,6 +516,7 @@ export default function ChapterReader({
         </Box>
       </Box>
 
+      {player}
       {view === 'lines' ? (
         <Box sx={{ px: { xs: 2.5, md: 6 }, py: { xs: 3, md: 5 } }}>
           {paragraphs.map((paragraph, paragraphIndex) => (
@@ -599,4 +619,7 @@ export default function ChapterReader({
       />
     </>
   )
+  return selectedAudio
+    ? <ChapterAudioPlayer key={`${selectedAudio.chapterId}/${selectedAudio.language}`} audio={selectedAudio} chapterTitle={chapterTitle} label={selectedAudio.language === language ? 'Play Audio' : `Play Audio (${selectedAudio.language === 'en' ? 'English' : 'Arabic'})`} render={renderReader} />
+    : renderReader({ button: null, player: null })
 }

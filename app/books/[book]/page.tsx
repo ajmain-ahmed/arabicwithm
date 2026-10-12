@@ -1,15 +1,17 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Box, Chip, Container, Paper, Typography } from '@mui/material'
-import { ArrowBack, ChevronRight } from '@mui/icons-material'
-import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChaptersForBookPublic } from '@/app/actions/books'
+import { AccessTimeRounded, ArrowBack, ChevronRight, HeadphonesRounded } from '@mui/icons-material'
+import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChapterCardsForBookPublic } from '@/app/actions/books'
 import BookReadingCta from './BookReadingCta'
 import BookListRemovalButton from './BookListRemovalButton'
-import ChapterAccessLock, { BookPremiumProvider, PremiumChapterLink } from './ChapterAccessLock'
+import ChapterAccessLock, { ChapterLink } from './ChapterAccessLock'
 import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
+import { formatReadingTime } from '@/app/lib/readingTime'
+import { fetchPublishedAudioForBook } from '@/app/actions/audiobooks'
 
-export const revalidate = false
+export const revalidate = 60
 
 export async function generateStaticParams() {
   const books = await fetchBooksForPublic()
@@ -27,13 +29,14 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
   const book = await fetchBookBySlugPublic(slug)
   if (!book) notFound()
 
-  const chapters = await fetchChaptersForBookPublic(book.id)
+  const [chapters, audioChapters] = await Promise.all([fetchChapterCardsForBookPublic(book.id), fetchPublishedAudioForBook(book.id)])
+  const audioChapterIds = new Set(audioChapters.map((audio) => audio.chapterId))
 
   return (
-    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 3, md: 6 } }}>
+    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 3, md: 6 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 6 } }}>
       <Container maxWidth="lg">
         <Link href="/books" style={{ color: 'inherit', textDecoration: 'none' }}>
-          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', mb: 3, '&:hover': { color: '#b8860b' } }}>
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', mb: 3, '&:hover': { color: '#b8860b' } }}>
             <ArrowBack sx={{ fontSize: 18 }} /> Back to books
           </Box>
         </Link>
@@ -57,7 +60,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                   sx={{
                     mt: 1.25,
                     maxWidth: 600,
-                    fontFamily: 'var(--font-serif), Georgia, serif',
+                    fontFamily: '"EB Garamond", Georgia, serif',
                     fontSize: { xs: 17, md: 19 },
                     lineHeight: 1.5,
                     color: '#b8860b',
@@ -71,10 +74,19 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
               )}
               <Box sx={{ display: 'flex', gap: 1, mt: 2.5, flexWrap: 'wrap' }}>
                 {book.level && <CefrChip level={book.level} size="small" />}
+                {book.readingTimeMinutes && (
+                  <Chip
+                    icon={<AccessTimeRounded />}
+                    label={formatReadingTime(book.readingTimeMinutes)}
+                    size="small"
+                    sx={{ bgcolor: 'rgba(14,46,31,0.08)', color: 'var(--awm-forest)', '& .MuiChip-icon': { color: 'inherit' } }}
+                  />
+                )}
                 {book.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />)}
+                {audioChapterIds.size > 0 && <Chip icon={<HeadphonesRounded />} label={`Audiobook · ${audioChapterIds.size} ${audioChapterIds.size === 1 ? 'chapter' : 'chapters'}`} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508', '& .MuiChip-icon': { color: 'inherit' } }} />}
               </Box>
               <Box sx={{ mt: 3 }}>
-                <BookReadingCta bookSlug={book.slug} chapters={chapters} />
+                <BookReadingCta bookId={book.id} bookSlug={book.slug} chapters={chapters} />
               </Box>
             </Box>
           </Box>
@@ -83,21 +95,17 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
         <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 25, sm: 30 }, fontWeight: 600, color: 'var(--awm-bark)', mb: 2 }}>
           Chapters
         </Typography>
-        <BookPremiumProvider>
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1.25,
-            }}
-          >
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1.25,
+          }}
+        >
           {chapters.map((chapter) => (
             <Box key={chapter.id}>
-              <PremiumChapterLink
+              <ChapterLink
                 href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`}
-                premiumExempt={book.premiumExempt}
-                freeChapterCount={book.freeChapterCount}
-                chapterCount={book.chapterCount}
                 chapterNumber={chapter.chapterNumber}
               >
                 <Paper elevation={0} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, p: { xs: 1.5, sm: 2 }, textAlign: 'left', borderRadius: '10px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', transition: 'border-color 0.15s ease, transform 0.15s ease', '&:hover': { borderColor: 'rgba(184,134,11,0.45)', transform: { sm: 'translateX(3px)' } } }}>
@@ -105,17 +113,17 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
                     {chapter.chapterNumber}
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}>{chapter.title}</Typography>
-                    {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
+                    <Typography sx={{ fontFamily: 'Jost, sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}>{chapter.title}</Typography>
+                    {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'Jost, sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
                   </Box>
-                  <ChapterAccessLock premiumExempt={book.premiumExempt} freeChapterCount={book.freeChapterCount} chapterCount={book.chapterCount} chapterNumber={chapter.chapterNumber} />
+                  <ChapterAccessLock chapterNumber={chapter.chapterNumber} />
+                  {audioChapterIds.has(chapter.id) && <HeadphonesRounded aria-label="Audiobook available" sx={{ color: 'var(--awm-gold)', fontSize: 20 }} />}
                   <ChevronRight sx={{ color: 'var(--awm-muted-light)' }} />
                 </Paper>
-              </PremiumChapterLink>
+              </ChapterLink>
             </Box>
           ))}
-          </Box>
-        </BookPremiumProvider>
+        </Box>
       </Container>
     </Box>
   )

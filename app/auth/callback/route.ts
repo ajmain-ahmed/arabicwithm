@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const ALLOWED_DESTINATIONS = new Set(['/', '/reset-password'])
+const ALLOWED_DESTINATIONS = new Set(['/', '/reset-password', '/memory', '/grammar'])
 
 /* Email links (confirm signup, magic link, recovery, email change) carry
    token_hash + type; OAuth carries code. Both become a session below. */
@@ -14,8 +14,9 @@ export async function GET(request: NextRequest) {
   const tokenHash = requestUrl.searchParams.get('token_hash')
   const otpType = requestUrl.searchParams.get('type')
   const requestedDestination = requestUrl.searchParams.get('next') ?? '/'
-  const destination = ALLOWED_DESTINATIONS.has(requestedDestination)
-    ? requestedDestination
+  const candidate = requestedDestination.startsWith('/') ? new URL(requestedDestination, requestUrl.origin) : null
+  const destination = candidate && candidate.origin === requestUrl.origin && ALLOWED_DESTINATIONS.has(candidate.pathname)
+    ? candidate.pathname + candidate.search
     : '/'
 
   const hasTokenHash = Boolean(tokenHash) && EMAIL_OTP_TYPES.has(String(otpType))

@@ -2,20 +2,28 @@
 
 import { isMissingDatabaseFeature, LEARNING_SETUP_MESSAGE } from '@/app/lib/databaseErrors'
 import { z } from 'zod'
-import { premiumStatusForUser } from '@/app/lib/premiumStatus'
+import { actionResult } from '@/app/lib/actionResult'
+import { memorySessionSchema as sessionSchema, type SavedMemorySession } from '@/app/lib/memorySession'
+export type { SavedMemorySession } from '@/app/lib/memorySession'
+import { fetchEntitlements } from '@/app/actions/entitlements'
 import { MEMORY, platformDate } from '@/app/lib/entitlements'
-import { getAuthenticatedAccess, getAuthenticatedUserId, type AuthenticatedAccess } from '@/app/actions/auth'
+import { getAuthenticatedUserId } from '@/app/actions/auth'
 import {
   extractMemoryCards,
   parseMemoryCardId,
+  prioritizeMemoryCards,
+  rankMemoryCards,
+  recommendMemoryCardCount,
   sampleMemoryCards,
   type MemoryCard,
   type MemoryEpisodeInput,
   type MemoryRating,
+  type MemoryReviewSignal,
+  unseenMemoryCards,
 } from '@/app/lib/memory'
 import { hasServiceClientConfig, serviceClient } from '@/app/lib/supabase'
-import { rateLimit } from '@/app/lib/rateLimit'
 import { unstable_cache } from 'next/cache'
+import { rateLimit } from '@/app/lib/rateLimit'
 import { headers } from 'next/headers'
 
 /* Production data is refreshed only via updateTag/revalidatePath from the
@@ -37,11 +45,15 @@ export interface MemoryLibrary {
   selectedShowId?: string
   selectedEpisodeId?: string
   missingScope: boolean
+  recommendedCardCount: 5 | 10 | 15 | 20
+  availableCardCount: number
+  newOnly: boolean
 }
 
 export interface MemoryScopeInput {
   showId?: string
   episodeId?: string
+  newOnly?: boolean
 }
 
 type EpisodeRecord = Record<string, unknown>
@@ -56,8 +68,9 @@ function sampleEpisodeRows(rows: EpisodeRecord[], limit: number): EpisodeRecord[
 }
 
 export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<MemoryLibrary> {
+  if (!z.object({showId:z.string().uuid().optional(),episodeId:z.string().uuid().optional(),newOnly:z.boolean().optional()}).safeParse(input).success) return { cards: [], shows: [], scope: 'global', scopeTitle: 'Memory', missingScope: true, recommendedCardCount: 5, availableCardCount: 0, newOnly: false }
   if (!hasServiceClientConfig()) {
-    return { cards: [], shows: [], scope: 'global', scopeTitle: 'Random practice', missingScope: false }
+    return { cards: [], shows: [], scope: 'global', scopeTitle: 'Random practice', missingScope: false, recommendedCardCount: 5, availableCardCount: 0, newOnly: false }
   }
 
   /* Public action that streams episode transcripts — throttle per IP so a
@@ -69,7 +82,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
 
   let sourceQuery = serviceClient
     .from('episodes')
-    .select('id, show_id, slug, title, cover, youtube_id, created_at')
+    .select('id, show_id, slug, title, cover, youtube_id, level, created_at')
     .order('created_at', { ascending: false })
   if (input.episodeId) sourceQuery = sourceQuery.eq('id', input.episodeId)
   else if (input.showId) sourceQuery = sourceQuery.eq('show_id', input.showId)
@@ -88,20 +101,23 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   const showsById = new Map(shows.map((show) => [show.id, show]))
   const scope = input.episodeId ? 'episode' : input.showId ? 'show' : 'global'
 
-  const sampledRows = scope === 'episode'
-    ? ((sourceRows ?? []) as unknown as EpisodeRecord[])
-    : sampleEpisodeRows((sourceRows ?? []) as unknown as EpisodeRecord[], 24)
+  const sourceRecords = (sourceRows ?? []) as unknown as EpisodeRecord[]
+  const selectedSources = scope === 'episode'
+    ? sourceRecords
+    : scope === 'show'
+      ? sourceRecords
+      : sampleEpisodeRows(sourceRecords, input.newOnly ? sourceRecords.length : 24)
 
   /* Fetch transcripts in small batches: a few episodes usually yield enough
      cards for a session, so don't download all 24 transcripts up front. */
   const episodes: MemoryEpisodeInput[] = []
   const allCards: MemoryCard[] = []
   const BATCH_SIZE = 6
-  for (let offset = 0; offset < sampledRows.length && allCards.length < MEMORY.sessionCards; offset += BATCH_SIZE) {
-    const batchIds = sampledRows.slice(offset, offset + BATCH_SIZE).map((row) => String(row.id)).filter(Boolean)
+  for (let offset = 0; offset < selectedSources.length; offset += BATCH_SIZE) {
+    const batchIds = selectedSources.slice(offset, offset + BATCH_SIZE).map((row) => String(row.id)).filter(Boolean)
     const { data: episodeRows, error: episodeError } = await serviceClient
       .from('episodes')
-      .select('id, show_id, slug, title, transcript')
+      .select('id, show_id, slug, title, level, transcript')
       .in('id', batchIds)
     if (episodeError) throw new Error(episodeError.message)
     for (const row of (episodeRows ?? []) as unknown as EpisodeRecord[]) {
@@ -115,23 +131,53 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
         episodeSlug: String(row.slug),
         episodeTitle: String(row.title),
         cover: `/api/covers/episodes/${row.id}`,
+        level: row.level ? String(row.level) : undefined,
         transcript: row.transcript,
       }
       episodes.push(episode)
       allCards.push(...extractMemoryCards(episode))
     }
   }
+  const rankedCards = rankMemoryCards(allCards)
+  const userId = await getAuthenticatedUserId()
+  let reviewSignals: MemoryReviewSignal[] = []
+  if (userId && rankedCards.length > 0) {
+    const { data: reviewRows, error: reviewError } = await serviceClient
+      .from('memory_reviews')
+      .select('card_id, rating, activity_date, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1000)
+    if (reviewError && input.newOnly) throw new Error('Unable to load Memory card history. Please try again.')
+    if (reviewError) console.error('[memory review ranking]', reviewError.message)
+    else reviewSignals = (reviewRows ?? []).flatMap((review) => {
+      if (review.rating !== 'again' && review.rating !== 'known') return []
+      return [{
+        cardId: String(review.card_id),
+        rating: review.rating,
+        reviewedAt: String(review.created_at ?? review.activity_date),
+      }]
+    })
+  }
+  const newOnly = Boolean(input.newOnly && userId)
+  const eligibleCards = newOnly
+    ? unseenMemoryCards(rankedCards, reviewSignals)
+    : rankedCards
+  const cards = prioritizeMemoryCards(eligibleCards, reviewSignals).slice(0, MEMORY.sessionCards)
   const selectedShow = input.showId ? showsById.get(input.showId) : undefined
   const selectedEpisode = input.episodeId ? episodes[0] : undefined
 
   return {
-    cards: sampleMemoryCards(allCards, MEMORY.sessionCards),
+    cards: scope === 'global' ? sampleMemoryCards(cards, MEMORY.sessionCards) : cards,
     shows,
     scope,
-    scopeTitle: selectedEpisode?.episodeTitle ?? selectedShow?.title ?? 'Random practice',
+    scopeTitle: selectedEpisode ? `${selectedEpisode.showTitle} — ${selectedEpisode.episodeTitle}` : selectedShow?.title ?? 'Random practice',
     selectedShowId: selectedEpisode?.showId ?? selectedShow?.id,
     selectedEpisodeId: selectedEpisode?.id,
     missingScope: Boolean((input.episodeId || input.showId) && (sourceRows ?? []).length === 0),
+    recommendedCardCount: recommendMemoryCardCount(cards.length),
+    availableCardCount: cards.length,
+    newOnly,
   }
 }
 
@@ -142,11 +188,13 @@ const fetchMemoryCardSource = unstable_cache(
   async (episodeId: string) => {
     const { data: episode, error: episodeError } = await serviceClient
       .from('episodes')
-      .select('id, show_id, slug, title, transcript')
+      .select('id, show_id, slug, title, level, transcript')
       .eq('id', episodeId)
       .maybeSingle()
-    if (episodeError || !episode) return null
-    const { data: show } = await serviceClient.from('shows').select('id, slug, title').eq('id', episode.show_id).maybeSingle()
+    if (episodeError) throw new Error('Unable to verify the Memory source. Please retry.')
+    if (!episode) return null
+    const { data: show, error: showError } = await serviceClient.from('shows').select('id, slug, title').eq('id', episode.show_id).maybeSingle()
+    if (showError) throw new Error('Unable to verify the Memory source. Please retry.')
     if (!show) return null
     return { episode, show }
   },
@@ -155,9 +203,8 @@ const fetchMemoryCardSource = unstable_cache(
 )
 
 export async function recordMemoryReview(cardId: string, rating: MemoryRating, completionId: string, nextSession: SavedMemorySession): Promise<{ accepted: boolean; awarded: number; totalXp: number; used: number }> {
-  const access = await getAuthenticatedAccess()
-  if (!access) throw new Error('Sign in to save Memory practice.')
-  const entitlement = await premiumStatusForUser(access.userId, access.admin)
+  const [userId, entitlement] = await Promise.all([getAuthenticatedUserId(), fetchEntitlements()])
+  if (!userId || !entitlement.signedIn) throw new Error('Sign in to save Memory practice.')
   z.string().uuid().parse(completionId)
   const state = sessionSchema.parse(nextSession)
   if (state.index < 1 || state.cards[state.index - 1]?.id !== cardId || state.completionIds[state.index - 1] !== completionId) throw new Error('Invalid session progress.')
@@ -175,33 +222,31 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating, c
     showTitle: String(show.title),
     episodeSlug: String(episode.slug),
     episodeTitle: String(episode.title),
+    level: episode.level ? String(episode.level) : undefined,
     transcript: episode.transcript,
   })
   if (!validCards.some((card) => card.id === cardId)) throw new Error('This Memory card is no longer available.')
 
-  const { data, error } = await serviceClient.rpc('complete_memory_card', {
-    p_user_id: access.userId, p_completion_id: completionId, p_card_id: cardId, p_rating: rating,
-    p_xp: MEMORY.xpPerCard, p_daily_limit: MEMORY.dailyFreeCards, p_has_premium: entitlement.premium, p_session: state,
+  const { data, error } = await serviceClient.rpc('website_complete_memory_card_v2', {
+    p_user_id: userId, p_completion_id: completionId, p_card_id: cardId, p_rating: rating,
+    p_session: state,
   })
-  if (error) throw new Error('Unable to save Memory progress. Please try again.')
-  return data as { accepted: boolean; awarded: number; totalXp: number; used: number }
+  if (error) { console.error('[memory review RPC]', error); throw new Error('Unable to save Memory progress. Please try again.') }
+  return z.object({accepted:z.boolean(),awarded:z.number().int().min(0).max(5),totalXp:z.number().int().nonnegative(),used:z.number().int().nonnegative()}).parse(data)
 }
 
-export async function fetchMemoryProgress(preset?: AuthenticatedAccess) {
-  /* Callers that already verified the caller (e.g. the activity sync) pass
-     their access through so we don't repeat the auth round trip per request. */
-  const access = preset ?? await getAuthenticatedAccess()
-  if (!access) throw new Error('Sign in to view your Memory progress.')
-  const userId = access.userId
+export async function fetchMemoryProgress() {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) throw new Error('Sign in to view your Memory progress.')
   const today = platformDate()
   const monday = new Date(today + 'T12:00:00Z')
   monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7)
   const [daily, total, week, legacy, entitlement] = await Promise.all([
-    serviceClient.from('memory_reviews').select('completion_id', { count: 'exact', head: true }).eq('user_id', userId).eq('activity_date', today),
-    serviceClient.rpc('memory_totals', { p_user_id: userId }),
-    serviceClient.rpc('memory_totals', { p_user_id: userId, p_since: monday.toISOString().slice(0, 10) }),
+    serviceClient.rpc('website_memory_session_usage', {p_user_id:userId}),
+    serviceClient.rpc('website_memory_totals', { p_user_id: userId }),
+    serviceClient.rpc('website_memory_totals', { p_user_id: userId, p_since: monday.toISOString().slice(0, 10) }),
     serviceClient.from('memory_legacy_progress').select('xp').eq('user_id', userId).maybeSingle(),
-    premiumStatusForUser(access.userId, access.admin),
+    fetchEntitlements(),
   ])
   const errors = [daily.error, total.error, week.error, legacy.error]
   if (errors.some(Boolean)) console.error('[memory database queries]', errors.filter(Boolean))
@@ -209,21 +254,14 @@ export async function fetchMemoryProgress(preset?: AuthenticatedAccess) {
   if (errors.some(Boolean)) throw new Error('Unable to load Memory progress. Please try again.')
   const all = (total.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
   const weekly = (week.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
-  return { used: daily.count ?? 0, total: all.cards, totalXp: all.xp + Number(legacy.data?.xp ?? 0), weekCards: weekly.cards, weekXp: weekly.xp, premium: entitlement.premium }
+  return { used: daily.data ?? 0, total: all.cards, totalXp: all.xp + Number(legacy.data?.xp ?? 0), weekCards: weekly.cards, weekXp: weekly.xp, premium: entitlement.premium }
 }
 
-const sessionSchema = z.object({
-  cards: z.array(z.object({ id: z.string().max(100), showId: z.string(), showSlug: z.string(), showTitle: z.string(), episodeId: z.string(), episodeSlug: z.string(), episodeTitle: z.string(), cover: z.string().optional(), timestamp: z.number().nullable(), arabic: z.string().max(20000), english: z.string().max(20000) })).max(MEMORY.sessionCards),
-  index: z.number().int().min(0).max(MEMORY.sessionCards), completed: z.number().int().min(0).max(MEMORY.sessionCards),
-  sessionXp: z.number().int().min(0).max(MEMORY.sessionCards * MEMORY.xpPerCard), direction: z.enum(['arabic','english']),
-  completionIds: z.array(z.string().uuid()).max(MEMORY.sessionCards),
-})
-export type SavedMemorySession = z.infer<typeof sessionSchema>
 export async function saveMemorySession(input: SavedMemorySession) {
   const userId = await getAuthenticatedUserId()
   if (!userId) throw new Error('Sign in to save your session.')
   const state = sessionSchema.parse(input)
-  const { error } = await serviceClient.from('memory_sessions').upsert({ user_id: userId, state, updated_at: new Date().toISOString() })
+  const { error } = await serviceClient.rpc('website_save_memory_session',{p_user_id:userId,p_state:state})
   if (error) throw new Error('Unable to save session. Please try again.')
 }
 export async function fetchSavedMemorySession(): Promise<SavedMemorySession | null> {
@@ -233,13 +271,13 @@ export async function fetchSavedMemorySession(): Promise<SavedMemorySession | nu
   if (isMissingDatabaseFeature(error)) throw new Error(LEARNING_SETUP_MESSAGE)
   if (error) throw new Error('Unable to load saved session.')
   const parsed = sessionSchema.safeParse(data?.state)
-  return parsed.success && parsed.data.index < parsed.data.cards.length ? parsed.data : null
+  return parsed.success && parsed.data.cards.length > 0 ? parsed.data : null
 }
 
 // Expected storage errors must cross the production Server Action boundary as
 // data: thrown errors are intentionally redacted by Next.js.
-export async function loadMemoryProgress(preset?: AuthenticatedAccess) {
-  try { return { ok: true as const, data: await fetchMemoryProgress(preset) } }
+export async function loadMemoryProgress() {
+  try { return { ok: true as const, data: await fetchMemoryProgress() } }
   catch (error) {
     console.error('[memory progress]', error)
     return { ok: false as const, error: error instanceof Error && error.message === LEARNING_SETUP_MESSAGE ? LEARNING_SETUP_MESSAGE : 'Unable to load Memory progress. Please sign in and try again.' }
@@ -251,4 +289,41 @@ export async function loadSavedMemorySession() {
     console.error('[memory session]', error)
     return { ok: false as const, error: error instanceof Error && error.message === LEARNING_SETUP_MESSAGE ? LEARNING_SETUP_MESSAGE : 'Unable to load your saved session. Please try again.' }
   }
+}
+
+export async function submitMemoryReview(cardId:string,rating:MemoryRating,completionId:string,state:SavedMemorySession) {
+  return actionResult('memory review',()=>recordMemoryReview(cardId,rating,completionId,state),'Unable to save this card. Your place is unchanged; please retry. If the source was removed, choose New cards.')
+}
+export async function persistMemorySession(state:SavedMemorySession) {
+  return actionResult('memory save',()=>saveMemorySession(state),'Unable to save your session. Please try again.')
+}
+
+/** Atomic start reservation, idempotent by client-generated session ID. */
+export async function beginMemorySession(input: SavedMemorySession): Promise<{status:'ready';state:SavedMemorySession;used:number}|{status:'upgrade'}> {
+ const userId=await getAuthenticatedUserId()
+ if(!userId)throw new Error('Sign in to start Memory practice.')
+ const state=sessionSchema.parse(input)
+ if(!state.sessionId || state.index!==0 || state.completed!==0 || state.sessionXp!==0)throw new Error('Invalid session start.')
+ const {data,error}=await serviceClient.rpc('website_begin_memory_session',{p_user_id:userId,p_state:state})
+ if(error)throw new Error('Unable to start Memory practice. Please retry.')
+ const result=z.object({accepted:z.boolean(),used:z.number().int().nonnegative(),state:sessionSchema.optional()}).parse(data)
+ if(!result.accepted)return {status:'upgrade'}
+ if(!result.state)throw new Error('Unable to restore session.')
+ return {status:'ready',state:result.state,used:result.used}
+}
+
+export async function resumeMemorySession(input:SavedMemorySession):Promise<{status:'ready';state:SavedMemorySession}|{status:'upgrade'}> {
+ const userId=await getAuthenticatedUserId()
+ if(!userId)throw new Error('Sign in to resume Memory practice.')
+ let state=sessionSchema.parse(input)
+ // Historical completed snapshots remain recaps, not new start reservations.
+ if(!state.sessionId && state.index===state.cards.length)return {status:'ready',state}
+ if(!state.sessionId){
+  const start=await beginMemorySession({...state,sessionId:crypto.randomUUID(),index:0,completed:0,sessionXp:0})
+  if(start.status==='upgrade')return start
+  state={...state,sessionId:start.state.sessionId}
+ }
+ const {data,error}=await serviceClient.rpc('website_save_memory_session',{p_user_id:userId,p_state:state})
+ if(error)throw new Error('Unable to resume this session. Please retry.')
+ return {status:'ready',state:sessionSchema.parse(data)}
 }

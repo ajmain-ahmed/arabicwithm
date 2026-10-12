@@ -62,17 +62,20 @@ export default function EpisodeHeadwordsPage() {
 
   const [savingTranscript, setSavingTranscript] = useState<Record<string, boolean>>({})
   const [savingDefinition, setSavingDefinition] = useState<Record<number, boolean>>({})
-  const cancelledRef = useRef(false)
+  const activeTarget = useRef<string | null>(episodeId)
+  const loadRevision = useRef(0)
+  const invalidateLoad = useCallback(() => { activeTarget.current = null; loadRevision.current += 1 }, [])
 
   const loadEpisode = useCallback(async () => {
-    if (!episodeId) return
+    if (!episodeId || activeTarget.current !== episodeId) return
 
+    const request = ++loadRevision.current
     setLoading(true)
     setError(null)
 
     try {
       const ep = await fetchEpisodeForAdmin(episodeId)
-      if (cancelledRef.current) return
+      if (request !== loadRevision.current) return
       if (!ep) {
         setError("Episode not found")
         setLoading(false)
@@ -96,7 +99,7 @@ export default function EpisodeHeadwordsPage() {
         phraseIds.length > 0 ? fetchPhrases(phraseIds) : [],
       ])
 
-      if (cancelledRef.current) return
+      if (request !== loadRevision.current) return
 
       const entryByWord = new Map(hansEntries.map((e) => [e.word, e]))
       const phraseById = new Map(phraseRows.map((p) => [p.id, p]))
@@ -125,27 +128,29 @@ export default function EpisodeHeadwordsPage() {
         })
       )
     } catch (e: unknown) {
-      if (cancelledRef.current) return
+      if (request !== loadRevision.current) return
       setError(errorMessage(e) ?? "Failed to load episode")
     } finally {
-      if (!cancelledRef.current) setLoading(false)
+      if (request === loadRevision.current) setLoading(false)
     }
   }, [episodeId])
 
   useEffect(() => {
-    cancelledRef.current = false
+    activeTarget.current = episodeId
+    setEpisode(null);setRows([]);setEditingRowKey(null);setExpandedRows(new Set());setDialogRowKey(null);setDialogEditing(false);setEpisodeEditOpen(false)
+    setSavingTranscript({});setSavingDefinition({})
     loadEpisode()
-    return () => {
-      cancelledRef.current = true
-    }
-  }, [loadEpisode])
+    return invalidateLoad
+  }, [loadEpisode, episodeId, invalidateLoad])
 
   const openEpisodeEditor = async () => {
     setEpisodeEditOpen(true)
     if (shows.length > 0) return
     try {
-      setShows(await fetchShowsForEpisodeEdit())
+      const loadedShows = await fetchShowsForEpisodeEdit()
+      if (activeTarget.current === episodeId) setShows(loadedShows)
     } catch (e: unknown) {
+      if (activeTarget.current !== episodeId) return
       setError(errorMessage(e) ?? "Failed to load shows for episode editor")
     }
   }
@@ -187,8 +192,10 @@ export default function EpisodeHeadwordsPage() {
         await updateEpisodeTranscript(episodeId, transcript)
         await loadEpisode()
       } catch (e: unknown) {
+        if (activeTarget.current !== episodeId) return
         setError(errorMessage(e) ?? `Failed to update ${field}`)
       } finally {
+        if (activeTarget.current !== episodeId) return
         setSavingTranscript((prev) => ({ ...prev, [`${rowIndex}-${field}`]: false }))
       }
     },
@@ -211,12 +218,14 @@ export default function EpisodeHeadwordsPage() {
         }
         await loadEpisode()
       } catch (e: unknown) {
+        if (activeTarget.current !== episodeId) return
         setError(errorMessage(e) ?? "Failed to update definition")
       } finally {
+        if (activeTarget.current !== episodeId) return
         setSavingDefinition((prev) => ({ ...prev, [entryId]: false }))
       }
     },
-    [rows, loadEpisode]
+    [rows, loadEpisode, episodeId]
   )
 
   const toggleEditRow = (rowKey: string) => {

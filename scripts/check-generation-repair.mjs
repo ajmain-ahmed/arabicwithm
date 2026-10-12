@@ -1,0 +1,11 @@
+import {createClient} from '@supabase/supabase-js'
+const db=createClient(process.env.SUPABASE_URL,process.env.SUPABASE_SERVICE_KEY,{auth:{persistSession:false}})
+const {data:roles,error:roleError}=await db.from('account_roles').select('user_id').eq('role','admin').limit(1)
+if(roleError||!roles?.length)throw new Error('Unable to verify Admin role for integration test')
+const result=await db.rpc('admin_generate_youtube_transcript',{p_actor:roles[0].user_id,p_youtube_id:'3S3cFw0hvLs'})
+if(result.error)throw new Error(`Generation REST RPC failed: ${result.error.code}`)
+const {data:video,error}=await db.from('youtube_transcripts').select('raw_transcript,status').eq('id',result.data.id).single()
+if(error||!video)throw new Error('Unable to reopen saved provider transcript')
+const {count,error:segmentError}=await db.from('transcript_segments').select('id',{count:'exact',head:true}).eq('transcript_id',result.data.id)
+if(segmentError)throw new Error('Unable to load saved reader segments')
+console.log(JSON.stringify({generationRestRpc:true,reusedExisting:result.data.duplicate,status:video.status,rawSegments:video.raw_transcript.content.length,readerSegments:count,websiteSupabaseUrlConfigured:Boolean(process.env.SUPABASE_URL),websiteServiceKeyConfigured:Boolean(process.env.SUPABASE_SERVICE_KEY)}))

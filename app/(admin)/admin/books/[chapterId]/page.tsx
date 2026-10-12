@@ -53,17 +53,20 @@ export default function ChapterHeadwordsPage() {
 
   const [savingContent, setSavingContent] = useState<Record<string, boolean>>({})
   const [savingHans, setSavingHans] = useState<Record<number, boolean>>({})
-  const cancelledRef = useRef(false)
+  const activeTarget = useRef<string | null>(chapterId)
+  const loadRevision = useRef(0)
+  const invalidateLoad = useCallback(() => { activeTarget.current = null; loadRevision.current += 1 }, [])
 
   const loadChapter = useCallback(async () => {
-    if (!chapterId) return
+    if (!chapterId || activeTarget.current !== chapterId) return
 
+    const request = ++loadRevision.current
     setLoading(true)
     setError(null)
 
     try {
       const ch = await fetchChapterForAdmin(chapterId)
-      if (cancelledRef.current) return
+      if (request !== loadRevision.current) return
       if (!ch) {
         setError("Chapter not found")
         setLoading(false)
@@ -75,7 +78,7 @@ export default function ChapterHeadwordsPage() {
       const headwords = Array.from(new Set(tokens.map((t) => t.headword).filter(Boolean)))
       const entries = headwords.length > 0 ? await fetchHansWehrEntries(headwords) : []
 
-      if (cancelledRef.current) return
+      if (request !== loadRevision.current) return
 
       const entryByWord = new Map(entries.map((e) => [e.word, e]))
 
@@ -86,20 +89,20 @@ export default function ChapterHeadwordsPage() {
         }))
       )
     } catch (e: unknown) {
-      if (cancelledRef.current) return
+      if (request !== loadRevision.current) return
       setError(errorMessage(e) ?? "Failed to load chapter")
     } finally {
-      if (!cancelledRef.current) setLoading(false)
+      if (request === loadRevision.current) setLoading(false)
     }
   }, [chapterId])
 
   useEffect(() => {
-    cancelledRef.current = false
+    activeTarget.current = chapterId
+    setChapter(null);setRows([]);setEditingRowKey(null);setExpandedRows(new Set());setDialogRowKey(null);setDialogEditing(false)
+    setSavingContent({});setSavingHans({})
     loadChapter()
-    return () => {
-      cancelledRef.current = true
-    }
-  }, [loadChapter])
+    return invalidateLoad
+  }, [loadChapter, chapterId, invalidateLoad])
 
   const unmatchedCount = useMemo(() => rows.filter((r) => !r.entry).length, [rows])
 
@@ -137,8 +140,10 @@ export default function ChapterHeadwordsPage() {
         await updateChapterContent(chapterId, content)
         await loadChapter()
       } catch (e: unknown) {
+        if (activeTarget.current !== chapterId) return
         setError(errorMessage(e) ?? `Failed to update ${field}`)
       } finally {
+        if (activeTarget.current !== chapterId) return
         setSavingContent((prev) => ({ ...prev, [`${rowIndex}-${field}`]: false }))
       }
     },
@@ -157,12 +162,14 @@ export default function ChapterHeadwordsPage() {
         await updateHansWehrDefinition(entryId, value)
         await loadChapter()
       } catch (e: unknown) {
+        if (activeTarget.current !== chapterId) return
         setError(errorMessage(e) ?? "Failed to update Hans Wehr definition")
       } finally {
+        if (activeTarget.current !== chapterId) return
         setSavingHans((prev) => ({ ...prev, [entryId]: false }))
       }
     },
-    [rows, loadChapter]
+    [rows, loadChapter, chapterId]
   )
 
   const toggleEditRow = (rowKey: string) => {

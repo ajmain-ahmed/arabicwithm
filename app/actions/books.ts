@@ -1,6 +1,6 @@
 "use server"
 
-import { fetchPremiumStatus } from "@/app/actions/premium"
+import { getAuthenticatedUserId } from "@/app/actions/auth"
 import { canAccessBookChapter } from "@/app/lib/entitlements"
 import { unstable_cache } from "next/cache"
 import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
@@ -9,10 +9,9 @@ import { stripDiacritics } from "@/app/lib/arabic"
 import type { CartoonWordEntry } from "@/app/lib/cartoons"
 import { normalizeThumbnailCrop, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 
-/* Production catalogue data is refreshed only via updateTag/revalidatePath
-   from the admin CMS. In dev, re-fetch every minute so content added through
-   the live admin (or direct DB edits) surfaces without clearing .next. */
-const publicRevalidate = process.env.NODE_ENV === "development" ? 60 : false
+/* Keep admin invalidation fast, while also picking up authoritative Supabase
+   changes made outside this process instead of caching them indefinitely. */
+const publicRevalidate = 60
 
 export interface PublicBook {
   id: string
@@ -27,6 +26,7 @@ export interface PublicBook {
   tags: string[]
   chapterCount: number
   author: string
+  readingTimeMinutes?: number
   premiumExempt: boolean
   freeChapterCount: number
 }
@@ -67,6 +67,7 @@ export interface ExploreBookBlock {
   words: CartoonWordEntry[]
   translation: string
   punctuation?: string
+  paragraphNumber?: number
 }
 
 export interface ExploreBookPage {
@@ -84,19 +85,23 @@ export interface ExploreBookPage {
 
 function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook {
   const slug = String(row.slug)
+  const coverVersion = row.updated_at ?? row.created_at
   return {
     id: String(row.id),
     slug,
     title: String(row.title),
     titleAr: row.title_ar ? String(row.title_ar) : undefined,
     description: row.description ? String(row.description) : undefined,
-    cover: `/api/covers/books/${row.id}`,
+    cover: `/api/covers/books/${row.id}${coverVersion ? `?v=${encodeURIComponent(String(coverVersion))}` : ''}`,
     coverCrop: normalizeThumbnailCrop(row.cover_crop),
     level: String(row.level ?? ""),
     category: row.category ? String(row.category) : undefined,
     tags: Array.isArray(row.tags) ? row.tags.map((tag) => String(tag)).filter(Boolean) : [],
     chapterCount,
     author: typeof row.author === "string" && row.author.trim() ? row.author : "Author not listed",
+    readingTimeMinutes: typeof row.reading_time_minutes === "number" && row.reading_time_minutes > 0
+      ? Math.round(row.reading_time_minutes)
+      : undefined,
     premiumExempt: row.premium_exempt === true,
     freeChapterCount: typeof row.free_chapter_count === "number" ? row.free_chapter_count : 5,
   }
@@ -139,7 +144,7 @@ export const fetchBooksForPublic = unstable_cache(
       mapBook(book, chapterCounts.get(String(book.id)) ?? 0)
     )
   },
-  ["books", "public", "book-catalogue-storage-v5"],
+  ["books", "public", "book-catalogue-storage-v6"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
@@ -163,7 +168,7 @@ export const fetchBookBySlugPublic = unstable_cache(
     if (countError) throw new Error(countError.message)
     return mapBook(book as Record<string, unknown>, count ?? 0)
   },
-  ["books", "public", "detail", "book-catalogue-storage-v5"],
+  ["books", "public", "detail", "book-catalogue-storage-v6"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
@@ -214,19 +219,40 @@ export const fetchChaptersForBookPublic = unstable_cache(
 
     if (error) throw new Error(error.message)
 
-    const extras = await fetchChapterListExtrasForBookPublic(bookId)
+
     return (data ?? []).map((chapter) => ({
       id: String(chapter.id),
       slug: String(chapter.slug),
       title: String(chapter.title),
       chapterNumber: Number(chapter.chapter_number),
-      teaser: extras[String(chapter.id)]?.teaser,
-      blockCount: extras[String(chapter.id)]?.blockCount ?? 0,
+
+      blockCount: 0,
     }))
   },
   ["books", "public", "chapters", "chapter-teasers-v3"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
+
+
+export async function fetchChapterCardsForBookPublic(bookId: string): Promise<PublicChapter[]> {
+  const chapters = await fetchChaptersForBookPublic(bookId)
+  try {
+    const extras = await fetchChapterListExtrasForBookPublic(bookId)
+    return chapters.map(ch => ({...ch, ...extras[ch.id]}))
+  } catch (error) {
+    console.error('[chapter teasers] unavailable', error)
+    return chapters
+  }
+}
+
+export const fetchChapterNavigationForPublic = unstable_cache(async (): Promise<Record<string, PublicChapter[]>> => {
+  if (!hasServiceClientConfig()) return {}
+  const {data,error} = await serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number').order('chapter_number')
+  if(error) throw new Error(error.message)
+  const result: Record<string, PublicChapter[]> = {}
+  for(const row of data ?? []) (result[row.book_id] ??= []).push({id:row.id,slug:row.slug,title:row.title,chapterNumber:row.chapter_number,blockCount:0})
+  return result
+}, ['chapter-navigation-v1'], {revalidate:60,tags:['books-public']})
 
 const fetchChapterContent = unstable_cache(
   async (bookId: string, chapterSlug: string): Promise<PublicChapterWithContent | null> => {
@@ -300,7 +326,7 @@ export async function fetchChapterForPublic(bookId: string, chapterSlug: string)
   ])
   if (!book || !chapterResult.data) return null
   const chapterNumber = Number(chapterResult.data.chapter_number)
-  if (!canAccessBookChapter(false, book, chapterNumber) && !(await fetchPremiumStatus()).premium) return null
+  if (!canAccessBookChapter(Boolean(await getAuthenticatedUserId()), chapterNumber)) return null
   return fetchChapterContent(bookId, chapterSlug)
 }
 
@@ -310,6 +336,7 @@ const EXPLORE_BLOCKS_PER_PAGE = 5
    content is only fetched per chapter, for batches that contain one
    of its pages. ── */
 export interface ExploreBookChapterMeta {
+  bookId?: string
   chapterId: string
   bookSlug: string
   bookTitle: string
@@ -352,8 +379,9 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
 
     const allPages = ((chapters ?? []) as Record<string, unknown>[]).flatMap((chapter) => {
       const book = booksById.get(String(chapter.book_id))
-      if (!book || !canAccessBookChapter(false, book, Number(chapter.chapter_number))) return []
+      if (!book) return []
       return [{
+        bookId: String(chapter.book_id),
         chapterId: String(chapter.id),
         bookSlug: book.slug,
         bookTitle: book.title,
@@ -391,7 +419,8 @@ function buildExploreBookPages(
       const core = typeof token.arabic === "string" ? token.arabic : ""
       if (!core) return []
       const arabic = `${typeof token.prefix === "string" ? token.prefix : ""}${core}${typeof token.suffix === "string" ? token.suffix : ""}`
-      const lemma = typeof token.headword === "string" ? token.headword.trim() : ""
+      const lemma = typeof token.lemma === "string" ? token.lemma.trim() : ""
+      const headword = typeof token.headword === "string" ? token.headword.trim() : ""
       return [{
         arabic,
         plain: stripDiacritics(arabic),
@@ -399,7 +428,9 @@ function buildExploreBookPages(
         english: typeof token.english === "string" ? token.english : "",
         cefr: typeof token.cefr === "string" ? token.cefr.toLowerCase() : undefined,
         pos: typeof token.pos === "string" ? token.pos : undefined,
-        lemma: lemma || core,
+        lemma: lemma || undefined,
+        headword: headword || undefined,
+        root: typeof token.root === "string" ? token.root.trim() || undefined : undefined,
         entry_type: token.entry_type === "phrase" ? "phrase" : "word",
       }]
     })
@@ -410,6 +441,9 @@ function buildExploreBookPages(
       words,
       translation,
       punctuation: typeof block.punctuation === "string" ? block.punctuation : undefined,
+      paragraphNumber: typeof block.paragraph === "number" && Number.isFinite(block.paragraph)
+        ? block.paragraph
+        : undefined,
     }]
   })
 
@@ -433,7 +467,7 @@ function buildExploreBookPages(
   return pages
 }
 
-export const fetchExploreBookChapterPages = unstable_cache(
+const fetchExploreBookChapterPagesCached = unstable_cache(
   async (chapterId: string): Promise<ExploreBookPage[]> => {
     if (!hasServiceClientConfig()) return []
 
@@ -447,8 +481,6 @@ export const fetchExploreBookChapterPages = unstable_cache(
 
     const book = (await fetchBooksForPublic()).find((book) => book.id === String(chapter.book_id))
     if (!book) return []
-    if (!canAccessBookChapter(false, book, Number(chapter.chapter_number))) return []
-
     return buildExploreBookPages(chapter as Record<string, unknown>, {
       slug: book.slug,
       title: book.title,
@@ -460,6 +492,11 @@ export const fetchExploreBookChapterPages = unstable_cache(
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
+export async function fetchExploreBookChapterPages(chapterId: string): Promise<ExploreBookPage[]> {
+  if (!await getAuthenticatedUserId()) return []
+  return fetchExploreBookChapterPagesCached(chapterId)
+}
+
 /* ── Page counts per chapter. Only the counts are cached; deriving
    them reads chapter content once per cold cache, after which batch
    planning costs bytes, not megabytes. ── */
@@ -468,7 +505,7 @@ export const fetchExploreBookChapterPageCounts = unstable_cache(
     const metas = await fetchExploreBookChapterMetasForPublic()
     const entries = await Promise.all(
       metas.map(async (meta) => {
-        const pages = await fetchExploreBookChapterPages(meta.chapterId)
+        const pages = await fetchExploreBookChapterPagesCached(meta.chapterId)
         return [meta.chapterId, pages.length] as const
       })
     )
