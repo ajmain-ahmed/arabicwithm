@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Box } from '@mui/material'
 import { motion, useReducedMotion } from 'framer-motion'
 
@@ -12,6 +13,15 @@ interface BrandLogoProps {
 
 export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = false }: BrandLogoProps) {
     const reduceMotion = useReducedMotion()
+    /* Gate the entrance animation on post-hydration state: server and first
+       client render must produce identical markup or hydration fails (which
+       cascades into the image rows never revealing). */
+    const [runEntrance, setRunEntrance] = useState(false)
+    useEffect(() => {
+        if (!shouldAnimate || reduceMotion) return
+        const frame = requestAnimationFrame(() => setRunEntrance(true))
+        return () => cancelAnimationFrame(frame)
+    }, [shouldAnimate, reduceMotion])
 
     return (
         <Box
@@ -49,7 +59,7 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = 
             />
             <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', minWidth: 0, height: isMobile ? 26 : 38 }}>
                 <motion.span
-                    initial={shouldAnimate && !reduceMotion ? { opacity: 0, y: isMobile ? 6 : 7 } : false}
+                    initial={runEntrance ? { opacity: 0, y: isMobile ? 6 : 7 } : false}
                     animate={{ opacity: 1, y: isMobile ? 1 : 2 }}
                     transition={{ duration: 0.28, ease: 'easeOut' }}
                     style={{
