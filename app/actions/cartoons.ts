@@ -232,38 +232,6 @@ export const fetchAllEpisodesForPublic = unstable_cache(
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
-/* ── Shuffle: picks from the full filtered catalogue server-side, since
-     the watch page now only receives the current page's slice. ── */
-export async function pickRandomEpisodeForWatch(filters: {
-  category?: string
-  level?: string
-  additionalTag?: string
-}): Promise<{ showSlug: string; slug: string } | null> {
-  const [shows, allEpisodes] = await Promise.all([
-    fetchShowsForPublic(),
-    fetchAllEpisodesForPublic(),
-  ])
-  const showById = new Map(shows.map((show) => [show.id, show]))
-  const showCategoryBySlug = new Map<string, string>()
-  for (const show of shows) {
-    const category = canonicalizeCartoonCategory(show.category)
-    if (category) showCategoryBySlug.set(show.slug, category)
-  }
-  const category = filters.category?.trim() ?? ""
-  const level = filters.level?.trim() ?? ""
-  const additionalTag = filters.additionalTag?.trim().toLowerCase() ?? ""
-  const pool = allEpisodes.flatMap((episode) => {
-    const show = showById.get(episode.showId)
-    if (!show) return []
-    if (category && category !== "All Categories" && showCategoryBySlug.get(show.slug) !== category) return []
-    if (level && episode.level !== level) return []
-    if (additionalTag && !episode.tags.some((tag) => tag.toLowerCase() === additionalTag)) return []
-    return [{ showSlug: show.slug, slug: episode.slug }]
-  })
-  if (pool.length === 0) return null
-  return pool[Math.floor(Math.random() * pool.length)]
-}
-
 export const fetchEpisodeForPublic = unstable_cache(
   async (
     showSlug: string,

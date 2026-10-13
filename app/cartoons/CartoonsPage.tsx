@@ -1,5 +1,4 @@
 'use client'
-import { Shuffle } from '@mui/icons-material'
 
 import { useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -32,7 +31,6 @@ import { WATCH_LEVELS } from '@/app/lib/cartoons'
 import { ContentCard, FilterSidebar } from '@/app/components/content-grid'
 import ShowEditDialog from './components/ShowEditDialog'
 import { deleteShow } from '@/app/actions/admin'
-import { pickRandomEpisodeForWatch } from '@/app/actions/cartoons'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
 import { errorMessage } from '@/app/lib/errors'
 
@@ -49,7 +47,7 @@ export interface WatchEpisode extends EpisodeMeta {
 }
 
 type WatchView = 'episodes' | 'shows'
-type WatchControl = WatchView | 'shuffle'
+type WatchControl = WatchView
 
 export interface WatchFilters {
   category: string
@@ -134,7 +132,6 @@ export default function CartoonsPage({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingShow, setEditingShow] = useState<ShowMeta | undefined>()
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [shuffleBusy, setShuffleBusy] = useState(false)
 
   const activeCategory = filters.category || 'All Categories'
   const activeAdditionalTag = filters.additionalTag
@@ -174,23 +171,6 @@ export default function CartoonsPage({
   const pageCount = view === 'episodes' ? episodePageCount : showPageCount
   const totalItems = view === 'episodes' ? totalEpisodes : totalShows
   const activeFilterCount = (filters.category ? 1 : 0) + (filters.additionalTag ? 1 : 0) + (filters.level ? 1 : 0)
-
-  const goToRandomEpisode = async () => {
-    if (totalEpisodes === 0 || shuffleBusy) return
-    setShuffleBusy(true)
-    try {
-      const target = await pickRandomEpisodeForWatch({
-        category: activeCategory,
-        level: activeLevel,
-        additionalTag: activeAdditionalTag,
-      })
-      if (target) router.push(`/cartoons/${target.showSlug}/${target.slug}`)
-    } catch (error: unknown) {
-      alert(errorMessage(error) ?? 'Failed to pick a random episode')
-    } finally {
-      setShuffleBusy(false)
-    }
-  }
 
   const handleDeleteShow = async (id: string) => {
     if (!isAdmin || !confirm('Are you sure you want to delete this show? This cannot be undone.')) return
@@ -242,8 +222,7 @@ export default function CartoonsPage({
             exclusive
             value={view}
             onChange={(_, nextControl: WatchControl | null) => {
-              if (nextControl === 'shuffle') void goToRandomEpisode()
-              else if (nextControl) setView(nextControl)
+              if (nextControl) setView(nextControl)
             }}
             aria-label="Watch catalogue view"
             size="small"
@@ -278,7 +257,6 @@ export default function CartoonsPage({
               <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>Shows</Box>
               <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>All Shows</Box>
             </ToggleButton>
-            <ToggleButton value="shuffle" aria-label="Open a random episode" title="Random episode" disabled={totalEpisodes === 0 || shuffleBusy}><Shuffle sx={{ display: { xs: 'none', sm: 'inline-flex' }, mr: 0.75, fontSize: 19 }} />Shuffle</ToggleButton>
           </ToggleButtonGroup>
           </Box>
 
