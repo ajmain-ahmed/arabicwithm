@@ -8,7 +8,7 @@ vi.mock('@/app/lib/useAccountAccess',()=>({useAccountAccess:()=>({isAdmin:home.i
 // Navigation tests exercise destinations rather than decorative icon rendering.
 vi.mock('@mui/icons-material', () => {
   const Icon = () => <svg aria-hidden="true" />
-  return { AccessTimeRounded: Icon, AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon, SearchOutlined: Icon }
+  return { AccessTimeRounded: Icon, AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon, SearchOutlined: Icon, OndemandVideo: Icon, QrCodeScanner: Icon, Apple: Icon, PlayArrow: Icon }
 })
 vi.mock('next/link',()=>({default:({href,children,...props}:{href:string;children:React.ReactNode})=><a href={href} {...props}>{children}</a>}))
 vi.mock('@/app/actions/activity',()=>({fetchLearningActivity:vi.fn()}))
@@ -24,7 +24,8 @@ it('keeps the public homepage visible during session recovery', () => {
   try {
     const html = renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]}/>)
     expect(html).toContain('Learn Arabic through cartoons and books')
-    expect(html).toContain('Browse Cartoons')
+    expect(html).toContain('Start Watching')
+    expect(html).toContain('Start Reading')
   } finally {
     home.user = previousUser
     home.loading = false

@@ -67,15 +67,15 @@ html[data-theme='dark'] {
   --awm-gold: #e1b957;
   --awm-gold-light: #f0cf7a;
   --awm-gold-lighter: #f5dda1;
-  --awm-cream: #202b25;
-  --awm-cream-light: #101713;
+  --awm-cream: #1b1b1e;
+  --awm-cream-light: #000000;
   --awm-muted: #c5b9ae;
   --awm-muted-light: #a99d93;
   --awm-forest: #9bd5b5;
   --awm-error: #ff8e82;
-  --awm-white: #18211c;
+  --awm-white: #141416;
   --awm-black: #f8f3ea;
-  --awm-elevated-bg: #0b100d;
+  --awm-elevated-bg: #0a0a0c;
   --awm-elevated-border: rgba(244,234,219,0.14);
   --awm-elevated-shadow: 0 14px 44px rgba(0,0,0,0.6);
 }

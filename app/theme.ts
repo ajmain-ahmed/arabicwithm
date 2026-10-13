@@ -221,17 +221,17 @@ export function createAwmTheme(mode: AwmColorMode) {
         main: "#e1b957",
         light: "#f0cf7a",
         dark: "#b78b2d",
-        contrastText: "#101713",
+        contrastText: "#000000",
       },
       secondary: {
         main: "#9bd5b5",
         light: "#c7ead6",
         dark: "#5c9878",
-        contrastText: "#101713",
+        contrastText: "#000000",
       },
       background: {
-        default: "#101713",
-        paper: "#18211c",
+        default: "#000000",
+        paper: "#141416",
       },
       text: {
         primary: "#f4eadb",

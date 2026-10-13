@@ -69,7 +69,7 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = 
                         position: 'relative',
                         fontFamily: 'var(--font-decorative)',
                         fontSize: isMobile ? 'clamp(.88rem, 4.4vw, 1.28rem)' : '1.72rem',
-                        fontWeight: 700,
+                        fontWeight: 400,
                         color: overlay ? '#fff' : 'var(--awm-forest)',
                         textShadow: overlay ? '0 1px 8px rgba(0,0,0,0.48)' : 'none',
                         letterSpacing: '-0.025em',

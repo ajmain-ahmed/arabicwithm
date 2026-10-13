@@ -35,7 +35,7 @@ export const jost = Jost({
 export const brandFont = Baloo_Bhaijaan_2({
   variable: "--font-decorative",
   subsets: ["arabic", "latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
 })
 
 export const headingFont = Nunito_Sans({

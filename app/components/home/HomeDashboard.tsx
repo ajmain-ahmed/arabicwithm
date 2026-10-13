@@ -34,6 +34,7 @@ import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
 import { parseReadingList } from '@/app/lib/readingList'
 import CefrChip from '@/app/components/CefrChip'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, HOME_CAROUSEL_CARD_ASPECT_RATIO, type CatalogueRowItem } from './NewOnRow'
+import AppDownloadSection from './AppDownloadSection'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
@@ -432,6 +433,10 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
                 <BooksSection books={books} />
               </Box>
             </Box>
+          </Container>
+
+          <Container maxWidth="lg" sx={{ mt: { xs: 5, md: 7 }, mb: { xs: 5, md: 7 } }}>
+            <AppDownloadSection />
           </Container>
         </Box>
       </Box>
