@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   AccessTimeRounded,
   AdminPanelSettings,
@@ -13,6 +13,7 @@ import {
   Headphones,
   LocalFireDepartmentRounded,
   MenuBook,
+  OndemandVideo,
   PsychologyOutlined,
   AccountCircleOutlined,
   SettingsOutlined,
@@ -72,10 +73,6 @@ const QUICK_LINKS = [
   { title: 'Support Us', label: 'Help us create more learning resources', href: '/support', icon: VolunteerActivismRounded },
 ]
 
-function openAuth(mode: 'register' | 'signin') {
-  window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode } }))
-}
-
 function showRowItems(shows: NewOnShow[]): CatalogueRowItem[] {
   return shows.map((show) => ({
     key: show.id,
@@ -129,6 +126,11 @@ export function UpgradeSection() {
 
 function BookCard({ book }: { book: PublicBook }) {
   const [loaded, setLoaded] = useState(false)
+  /* Reveal immediately when the SSR'd image finished before hydration
+     attached onLoad, otherwise it stays stuck invisible. */
+  const coverImgRef = useCallback((node: HTMLImageElement | null) => {
+    if (node?.complete) setLoaded(true)
+  }, [])
   return (
     <Paper
       component={Link}
@@ -155,6 +157,7 @@ function BookCard({ book }: { book: PublicBook }) {
       {!loaded && <Skeleton variant="rectangular" animation="wave" sx={{ position: 'absolute', inset: 0, zIndex: 1, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)' }} />}
       <Box
         component="img"
+        ref={coverImgRef}
         src={book.cover || `/api/covers/books/${book.id}`}
         alt={book.titleAr ? `${book.title} — ${book.titleAr}` : book.title}
         loading="lazy"
@@ -397,14 +400,12 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
     return (
       <Box component="main" sx={{ bgcolor: 'var(--awm-cream-light)' }}>
         <Box sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
-          <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(5,23,15,0.9) 0%, rgba(5,23,15,0.72) 52%, rgba(5,23,15,0.38) 100%)' }} />
           <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 14 }, pb: { xs: 5, md: 6 } }}>
             <Box sx={{ maxWidth: 720 }}>
-              <Typography sx={{ color: '#d4a843', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: 12, letterSpacing: '0.14em', textTransform: 'uppercase', textShadow: '0 2px 12px rgba(0,0,0,0.45)' }}>Explore · Watch · Read · Memory</Typography>
-              <Typography component="h1" sx={{ mt: 1.5, color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 42, sm: 54, md: 67 }, fontWeight: 600, lineHeight: 1.02, textShadow: '0 3px 22px rgba(0,0,0,0.55)' }}>Learn Arabic through cartoons and books</Typography>
+              <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 42, sm: 54, md: 67 }, fontWeight: 600, lineHeight: 1.02, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.75), 0 4px 28px rgba(0,0,0,0.55)' }}>Learn Arabic through cartoons and books</Typography>
               <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-                <Button onClick={() => openAuth('register')} variant="contained" endIcon={<ArrowForward />} sx={{ bgcolor: '#d4a843', color: '#0e2e1f', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#e3bb58' } }}>Start Learning</Button>
-                <Button component={Link} href="/cartoons" sx={{ color: '#fff', border: '1px solid rgba(255,255,255,0.5)', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', bgcolor: 'rgba(0,0,0,0.16)' }}>Browse Cartoons</Button>
+                <Button component={Link} href="/cartoons" variant="contained" startIcon={<OndemandVideo />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Watching</Button>
+                <Button component={Link} href="/books" variant="contained" startIcon={<MenuBook />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Reading</Button>
               </Box>
             </Box>
           </Container>

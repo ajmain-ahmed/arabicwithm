@@ -8,7 +8,7 @@ import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 
 /** Pixels per second. Shared by every slowly moving homepage showcase row. */
-export const AUTO_SCROLL_SPEED = 8
+export const AUTO_SCROLL_SPEED = 26
 const AUTO_RESUME_DELAY_MS = 1_600
 const DRAG_ACTIVATION_DISTANCE_PX = 6
 
@@ -58,6 +58,11 @@ function RowTile({
   loopStart?: boolean
 }) {
   const [loaded, setLoaded] = useState(false)
+  /* SSR'd images can finish before hydration attaches onLoad, which would
+     leave them stuck invisible — reveal immediately if already complete. */
+  const imgRef = useCallback((node: HTMLImageElement | null) => {
+    if (node?.complete) setLoaded(true)
+  }, [])
   const imagePositionSx = compact
     ? { objectPosition: `${item.imageCrop?.x ?? 50}% ${item.imageCrop?.y ?? 50}%`, transform: 'none' }
     : thumbnailCropCss(item.imageCrop)
@@ -100,6 +105,7 @@ function RowTile({
       )}
       <Box
         component="img"
+        ref={imgRef}
         draggable={false}
         src={item.imageSrc}
         alt=""
