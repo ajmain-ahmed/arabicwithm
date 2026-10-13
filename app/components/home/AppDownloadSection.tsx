@@ -1,5 +1,18 @@
 import { Box, Button, Typography } from '@mui/material'
-import { Apple, PlayArrow, QrCodeScanner } from '@mui/icons-material'
+import { Apple, QrCodeScanner } from '@mui/icons-material'
+
+/* The Google Play mark (MUI has no brand icon) — single colour via
+   currentColor so it follows each button's foreground. */
+function GooglePlayIcon({ fontSize = 24 }: { fontSize?: number }) {
+  return (
+    <svg width={fontSize} height={fontSize} viewBox="0 0 24 24" aria-hidden="true" focusable="false" style={{ display: 'block' }}>
+      <path
+        fill="currentColor"
+        d="M4.3 2.6v18.8c0 .9 1 1.5 1.8 1l15.3-9.4c.7-.4.7-1.5 0-1.9L6.1 1.6c-.8-.5-1.8.1-1.8 1Z"
+      />
+    </svg>
+  )
+}
 
 /* Placeholder QR (fake code until the real store link exists). Deterministic
    pattern so server and client render identical modules. */
@@ -52,7 +65,7 @@ function StoreButton({ store, label, sub, dark }: { store: 'apple' | 'google'; l
       component="a"
       href="#download-app"
       onClick={(event) => event.preventDefault()}
-      startIcon={store === 'apple' ? <Apple sx={{ fontSize: 26, color: fg }} /> : <PlayArrow sx={{ fontSize: 24, color: fg }} />}
+      startIcon={store === 'apple' ? <Apple sx={{ fontSize: 26, color: fg }} /> : <Box component="span" sx={{ color: fg, display: 'flex', mr: -0.25 }}><GooglePlayIcon fontSize={22} /></Box>}
       style={{ backgroundColor: bg, color: fg }}
       sx={{
         display: 'flex',
@@ -98,7 +111,7 @@ export default function AppDownloadSection() {
       <Box aria-hidden="true" sx={{ position: 'absolute', top: -120, right: -80, width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(212,168,67,0.16), transparent 65%)' }} />
       <Box aria-hidden="true" sx={{ position: 'absolute', bottom: -140, left: '38%', width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(212,168,67,0.1), transparent 65%)' }} />
 
-      <Box sx={{ position: 'relative', display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.15fr 1fr' }, alignItems: 'center', gap: { xs: 3, md: 5 }, px: { xs: 2.5, sm: 4, md: 6 }, pt: { xs: 4, md: 6 } }}>
+      <Box sx={{ position: 'relative', display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.15fr 1fr' }, alignItems: 'center', gap: { xs: 3, md: 5 }, px: { xs: 2.5, sm: 4, md: 6 }, py: { xs: 4, md: 6 } }}>
         <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
           <Typography sx={{ color: '#d4a843', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: 11.5, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
             Mobile App
@@ -133,17 +146,16 @@ export default function AppDownloadSection() {
         </Box>
 
         {/* phone mockup */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end', minWidth: 0 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0 }}>
           <Box
             component="img"
             src="/homepage/app-mockup.png"
             alt="ArabicWithM mobile app home screen"
             sx={{
-              width: { xs: 'min(58vw, 240px)', md: 'min(100%, 300px)' },
+              width: { xs: 'min(58vw, 240px)', md: 'min(100%, 290px)' },
               height: 'auto',
               display: 'block',
-              transform: 'translateY(12%)',
-              filter: 'drop-shadow(0 30px 44px rgba(0,0,0,0.5))',
+              filter: 'drop-shadow(0 26px 40px rgba(0,0,0,0.5))',
             }}
           />
         </Box>
