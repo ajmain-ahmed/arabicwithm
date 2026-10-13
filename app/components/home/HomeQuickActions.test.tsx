@@ -54,13 +54,12 @@ describe('website Home shortcuts',()=>{
   })
 })
 
-it('renders exactly one Home Admin entry inside Quick Actions only for admins',()=>{
+it('does not render Quick Actions or an Admin entry on the homepage',()=>{
   for(const isAdmin of [true,false]){
     home.isAdmin=isAdmin
     const host=document.createElement('div')
     host.innerHTML=renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]}/>)
-    expect(host.querySelectorAll('a[href="/admin/users"]')).toHaveLength(isAdmin?1:0)
-    expect(host.querySelectorAll('nav[aria-label="Quick Actions"] a[href="/admin/users"]')).toHaveLength(isAdmin?1:0)
-    expect(host.querySelectorAll('nav[aria-label="Quick Actions"] a[href="/word-search"]')).toHaveLength(1)
+    expect(host.querySelectorAll('nav[aria-label="Quick Actions"]')).toHaveLength(0)
+    expect(host.querySelectorAll('a[href="/admin/users"]')).toHaveLength(0)
   }
 })

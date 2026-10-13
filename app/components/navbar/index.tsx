@@ -34,14 +34,13 @@ export default function Navbar() {
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
     const [authDialogMode, setAuthDialogMode] = useState<'register' | 'signin'>('signin')
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
-    const [scrolled, setScrolled] = useState(false)
     const navbarRef = useRef<HTMLElement>(null)
     const { isAdmin, isReviewer } = useAccountAccess(drawerOpen || Boolean(userMenuAnchor) ? 'menu-open' : 'menu-closed')
 
     const showAdminLink = isAdmin && pathname !== '/'
 
     const supportsOverlay = pathname === '/' || pathname === '/explore'
-    const isOverlay = supportsOverlay && !scrolled && !drawerOpen && !userMenuAnchor && !authDialogOpen
+    const isOverlay = supportsOverlay && !drawerOpen && !userMenuAnchor && !authDialogOpen
     const navColor = isOverlay ? '#fff' : 'var(--awm-forest)'
 
     useEffect(() => {
@@ -61,17 +60,6 @@ export default function Navbar() {
         window.addEventListener('resize', measure)
         return () => { observer?.disconnect(); window.removeEventListener('resize', measure); document.documentElement.style.removeProperty('--awm-navbar-height') }
     }, [])
-
-    useEffect(() => {
-        const target = pathname === '/explore' ? document.getElementById('explore-feed') : window
-        const update = () => {
-            const scrollTop = target instanceof Window ? target.scrollY : target?.scrollTop ?? 0
-            setScrolled(scrollTop > 24)
-        }
-        update()
-        target?.addEventListener('scroll', update, { passive: true })
-        return () => target?.removeEventListener('scroll', update)
-    }, [pathname])
 
     useEffect(() => {
         const handler = (event: Event) => {

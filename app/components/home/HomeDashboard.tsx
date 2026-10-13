@@ -25,9 +25,7 @@ import {
 import { Box, Button, Container, Dialog, DialogContent, DialogTitle, IconButton, Skeleton, SwipeableDrawer, Typography, Paper, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useAuth } from '@/app/AuthContext'
-import { useAccountAccess } from '@/app/lib/useAccountAccess'
 import { fetchLearningActivity } from '@/app/actions/activity'
-import { fetchPremiumStatus } from '@/app/actions/premium'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import CheckoutFeedback from '@/app/components/CheckoutFeedback'
 import HomeQuickActions from '@/app/components/home/HomeQuickActions'
@@ -61,7 +59,6 @@ interface FeaturedEpisode {
   episode: EpisodeMeta
 }
 interface ActivityUpdate { userId: string; activity: LearningActivity }
-interface PremiumUpdate { authKey: string; premium: boolean }
 
 const QUICK_LINKS = [
   { title: 'Search', label: 'Search shows, episodes and books', href: '/search', icon: SearchOutlined },
@@ -102,7 +99,7 @@ function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
   }))
 }
 
-function UpgradeSection() {
+export function UpgradeSection() {
   const [open, setOpen] = useState(false)
   return (
     <Box component="section" aria-labelledby="upgrade-heading" sx={{ px: { xs: 2, sm: 3 }, py: { xs: 3.5, md: 6 } }}>
@@ -315,13 +312,10 @@ function LearningStats({
 }
 
 export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
-  const { user, session } = useAuth()
-  const { isAdmin } = useAccountAccess()
+  const { user } = useAuth()
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
-  const [premiumUpdate, setPremiumUpdate] = useState<PremiumUpdate | null>(null)
   const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
   const [dashboardLoadedAt] = useState(Date.now)
-  const premiumAuthKey = user ? `${user.id}:${session?.expires_at ?? 'pending'}` : null
   const progress = useMemo(() => {
     return parseReadingList(user?.user_metadata?.book_progress) as Record<string, ProgressEntry>
   }, [user])
@@ -364,18 +358,6 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
       .catch((error: unknown) => console.error('Unable to load dashboard activity:', error))
     return () => { cancelled = true }
   }, [user?.id])
-
-  useEffect(() => {
-    if (!premiumAuthKey) return
-    const authKey = premiumAuthKey
-    let cancelled = false
-    void fetchPremiumStatus()
-      .then((status) => {
-        if (!cancelled) setPremiumUpdate({ authKey, premium: status.premium })
-      })
-      .catch((error: unknown) => console.error('Unable to verify AWM+ status:', error))
-    return () => { cancelled = true }
-  }, [premiumAuthKey])
 
   useEffect(() => {
     const readBookmark = (event?: Event) => {
@@ -451,9 +433,6 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
             </Box>
           </Container>
         </Box>
-
-        <Container maxWidth="lg" sx={{ py: 4 }}><SectionHeading title="Quick Actions" /><QuickLinks /></Container>
-        <UpgradeSection />
       </Box>
     )
   }
@@ -517,9 +496,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
   now={dashboardNow}
 />
         </Box>
-        <Box sx={{ mt: { xs: 6, md: 9 } }}><SectionHeading title="Quick Actions" /><QuickLinks userId={user.id} isAdmin={isAdmin} /></Box>
       </Container>
-      {premiumUpdate?.authKey === premiumAuthKey && !premiumUpdate.premium && <UpgradeSection />}
       <CheckoutFeedback />
     </Box>
   )
