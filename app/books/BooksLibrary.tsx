@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Box, Chip, Paper, Slider, Typography } from '@mui/material'
-import { AutoStories, ChevronRight } from '@mui/icons-material'
+import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Typography } from '@mui/material'
+import { AutoStories, ChevronRight, Close, Tune } from '@mui/icons-material'
 import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 
-const LEVELS = ['All', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
+const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
 
 interface LibraryBook {
   id: string
@@ -22,57 +22,156 @@ interface LibraryBook {
   chapterCount: number
 }
 
+const FILTER_BUTTON_SX = {
+  height: 36,
+  borderRadius: '6px',
+  fontFamily: 'var(--font-sans), sans-serif',
+  fontSize: 12,
+  fontWeight: 600,
+  textTransform: 'none' as const,
+  color: 'var(--awm-muted)',
+  backgroundColor: 'var(--awm-cream-light)',
+  border: '1px solid rgba(44,26,14,0.1)',
+  '&:hover': { backgroundColor: 'rgba(184,134,11,0.04)' },
+  '&.Mui-selected': { color: '#fff', bgcolor: 'var(--awm-gold)', border: '1px solid var(--awm-gold)' },
+  '&.Mui-selected:hover': { bgcolor: 'var(--awm-gold)' },
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 1.25 }}>
+      {children}
+    </Typography>
+  )
+}
+
 export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
-  const [levelIndex, setLevelIndex] = useState(0)
-  const activeLevel = LEVELS[levelIndex]
-  const visible = activeLevel === 'All' ? books : books.filter((book) => book.level === activeLevel)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [level, setLevel] = useState('')
+  const [genres, setGenres] = useState<string[]>([])
+
+  const allGenres = useMemo(
+    () => Array.from(new Set(books.flatMap((book) => book.tags))).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
+    [books],
+  )
+
+  const toggleGenre = (tag: string) =>
+    setGenres((current) => (current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag]))
+
+  const visible = books.filter((book) => {
+    if (level && book.level !== level) return false
+    if (genres.length > 0 && !book.tags.some((tag) => genres.includes(tag))) return false
+    return true
+  })
+
+  const activeFilterCount = (level ? 1 : 0) + genres.length
 
   return (
     <Box>
-      {/* Difficulty slider */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: { xs: 2, sm: 3 } }}>
-        <Box sx={{ flex: { xs: 1, sm: '0 1 360px' }, maxWidth: 420, ml: { xs: 0, sm: 'auto' } }}>
-          <Slider
-            aria-label="Filter books by difficulty"
-            value={levelIndex}
-            onChange={(_, value) => setLevelIndex(value as number)}
-            min={0}
-            max={LEVELS.length - 1}
-            step={1}
-            marks={LEVELS.map((level, index) => ({ value: index, label: level }))}
-            sx={{
-              '& .MuiSlider-track': { height: 4, background: 'linear-gradient(90deg, var(--awm-gold-light), var(--awm-gold))', border: 'none' },
-              '& .MuiSlider-rail': { height: 4, bgcolor: 'color-mix(in srgb, var(--awm-bark) 14%, transparent)' },
-              '& .MuiSlider-thumb': {
-                width: 18,
-                height: 18,
-                bgcolor: 'var(--awm-gold)',
-                border: '2px solid var(--awm-white)',
-                boxShadow: '0 2px 8px rgba(44,26,14,0.3)',
-                '&:hover, &.Mui-focusVisible, &.Mui-active': { boxShadow: '0 0 0 6px color-mix(in srgb, var(--awm-gold) 18%, transparent)' },
-              },
-              '& .MuiSlider-mark': { width: 2, height: 2, borderRadius: '50%', bgcolor: 'color-mix(in srgb, var(--awm-bark) 30%, transparent)' },
-              '& .MuiSlider-markLabel': {
-                fontFamily: 'var(--font-sans), sans-serif',
-                fontSize: 11,
-                fontWeight: 500,
-                color: 'var(--awm-muted)',
-                top: 26,
-              },
-              '& .MuiSlider-markLabelActive': { color: 'var(--awm-bark)', fontWeight: 700 },
-              mt: 0.5,
-              mb: 3,
-            }}
-          />
-        </Box>
-        <Typography sx={{ ml: 'auto', color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 14, whiteSpace: 'nowrap' }}>
-          {visible.length} {visible.length === 1 ? 'book' : 'books'}
-        </Typography>
+      {/* Configure row */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: { xs: 2, sm: 3 } }}>
+        <Button
+          onClick={() => setDialogOpen(true)}
+          startIcon={<Tune sx={{ fontSize: 18 }} />}
+          sx={{
+            minHeight: 40,
+            px: 2,
+            borderRadius: '8px',
+            color: 'var(--awm-bark)',
+            border: '1px solid color-mix(in srgb, var(--awm-bark) 16%, transparent)',
+            backgroundColor: 'var(--awm-white)',
+            textTransform: 'none',
+            fontFamily: 'var(--font-sans), sans-serif',
+            fontWeight: 600,
+            fontSize: 13.5,
+            '&:hover': { backgroundColor: 'color-mix(in srgb, var(--awm-gold) 6%, var(--awm-white))', borderColor: 'color-mix(in srgb, var(--awm-gold) 40%, transparent)' },
+          }}
+        >
+          Configure{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+        </Button>
       </Box>
+
+      {/* Filter dialog — same pattern as the /cartoons filters */}
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        fullWidth
+        maxWidth="xs"
+        slotProps={{ paper: { sx: { borderRadius: '16px', backgroundImage: 'none' } } }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'var(--font-heading)', fontWeight: 600, color: 'var(--awm-bark)', pb: 1 }}>
+          Filters
+          <IconButton onClick={() => setDialogOpen(false)} aria-label="Close filters" sx={{ color: 'var(--awm-muted)' }}>
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ borderColor: 'color-mix(in srgb, var(--awm-gold) 18%, transparent)' }}>
+          <Box sx={{ mb: 3 }}>
+            <SectionLabel>Difficulty</SectionLabel>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.75 }}>
+              <Button className={level === '' ? 'Mui-selected' : ''} onClick={() => setLevel('')} sx={FILTER_BUTTON_SX}>All</Button>
+              {LEVELS.map((option) => (
+                <Button key={option} className={level === option ? 'Mui-selected' : ''} onClick={() => setLevel(level === option ? '' : option)} sx={FILTER_BUTTON_SX}>
+                  {option}
+                </Button>
+              ))}
+            </Box>
+          </Box>
+          {allGenres.length > 0 && (
+            <Box>
+              <SectionLabel>Genre</SectionLabel>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                {allGenres.map((tag) => {
+                  const active = genres.includes(tag)
+                  return (
+                    <Chip
+                      key={tag}
+                      label={tag}
+                      clickable
+                      onClick={() => toggleGenre(tag)}
+                      sx={{
+                        borderRadius: '6px',
+                        fontFamily: 'var(--font-sans), sans-serif',
+                        fontWeight: 600,
+                        fontSize: 12,
+                        bgcolor: active ? 'var(--awm-gold)' : 'var(--awm-cream-light)',
+                        color: active ? '#fff' : 'var(--awm-muted)',
+                        border: `1px solid ${active ? 'var(--awm-gold)' : 'rgba(44,26,14,0.1)'}`,
+                        '&:hover': { bgcolor: active ? 'var(--awm-gold)' : 'rgba(184,134,11,0.06)' },
+                      }}
+                    />
+                  )
+                })}
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'space-between', px: 2.5, py: 1.75 }}>
+          <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'var(--awm-muted)' }}>
+            {visible.length} of {books.length} books
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              onClick={() => { setLevel(''); setGenres([]) }}
+              disabled={activeFilterCount === 0}
+              sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}
+            >
+              Clear all
+            </Button>
+            <Button
+              onClick={() => setDialogOpen(false)}
+              variant="contained"
+              sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, borderRadius: '8px', px: 2.5, '&:hover': { bgcolor: '#174832' } }}
+            >
+              Done
+            </Button>
+          </Box>
+        </DialogActions>
+      </Dialog>
 
       {visible.length === 0 ? (
         <Paper elevation={0} sx={{ p: 5, textAlign: 'center', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)' }}>
-          <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 24, color: 'var(--awm-bark)' }}>No books at this level yet</Typography>
+          <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 24, color: 'var(--awm-bark)' }}>No books match these filters</Typography>
         </Paper>
       ) : (
         <Box
