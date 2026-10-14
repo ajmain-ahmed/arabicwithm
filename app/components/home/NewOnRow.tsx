@@ -23,7 +23,7 @@ export interface CatalogueRowItem {
   imageCrop?: ThumbnailCrop
 }
 
-export const COMPACT_HOME_CARD_WIDTH = { xs: 'clamp(128px, 38vw, 152px)', sm: 164, md: 184, lg: 196 } as const
+export const COMPACT_HOME_CARD_WIDTH = { xs: 'clamp(150px, 46vw, 182px)', sm: 198, md: 222, lg: 238 } as const
 export const HOME_CAROUSEL_CARD_ASPECT_RATIO = '4 / 5'
 
 const ARROW_SX = {
@@ -438,10 +438,10 @@ export default function NewOnRow({
         }}
       >
         {items.map((item) => (
-          <RowTile key={item.key} item={item} mobileWidth={mobileCardWidth ?? (compact ? 'clamp(128px, 38vw, 152px)' : '62vw')} compact={compact} />
+          <RowTile key={item.key} item={item} mobileWidth={mobileCardWidth ?? (compact ? COMPACT_HOME_CARD_WIDTH.xs : '62vw')} compact={compact} />
         ))}
         {shouldLoop && items.map((item, index) => (
-          <RowTile key={`loop-${item.key}`} item={item} mobileWidth={mobileCardWidth ?? (compact ? 'clamp(128px, 38vw, 152px)' : '62vw')} compact={compact} isClone loopStart={index === 0} />
+          <RowTile key={`loop-${item.key}`} item={item} mobileWidth={mobileCardWidth ?? (compact ? COMPACT_HOME_CARD_WIDTH.xs : '62vw')} compact={compact} isClone loopStart={index === 0} />
         ))}
       </Box>
     </Box>
