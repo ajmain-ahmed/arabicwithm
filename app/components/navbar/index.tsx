@@ -263,8 +263,8 @@ export default function Navbar() {
                                                             key={label}
                                                             onClick={() => {
                                                                 setLearnAnchor(null)
-                                                                /* Grammar needs an account; prompt instead of navigating. */
-                                                                if (label === 'Grammar' && !isLoggedIn) openSignIn()
+                                                                /* The Learn destinations need an account; prompt instead of navigating. */
+                                                                if (!isLoggedIn) openSignIn()
                                                                 else router.push(route)
                                                             }}
                                                             sx={{ borderRadius: '8px', gap: 1.5, py: 1.1, alignItems: 'flex-start' }}

@@ -33,12 +33,21 @@ it.each([false, true])('groups the learning destinations under Learn on mobile=%
     await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
     const labels = [...document.querySelectorAll('.mobile-list-btn')].map(button => button.textContent)
     for (const label of ['Memory', 'Grammar', 'Word Search']) expect(labels).toContain(label)
-    /* Grammar prompts sign-in instead of navigating for guests. */
-    mocks.push.mockClear()
-    await act(async () => (document.querySelectorAll('.mobile-list-btn')[[...document.querySelectorAll('.mobile-list-btn')].findIndex(button => button.textContent === 'Grammar')] as HTMLElement).click())
-    expect(mocks.push).not.toHaveBeenCalled()
+    /* Every Learn destination prompts sign-in instead of navigating for guests. */
+    for (const label of ['Memory', 'Grammar', 'Word Search']) {
+      await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
+      mocks.push.mockClear()
+      const items = [...document.querySelectorAll('.mobile-list-btn')]
+      await act(async () => (items[items.findIndex(button => button.textContent === label)] as HTMLElement).click())
+      expect(mocks.push).not.toHaveBeenCalled()
+    }
+    /* Signed-in users navigate normally. */
+    mocks.auth.user = { id: 'learner', email: 'learner@example.com' }
+    await act(async () => root.render(<Navbar />))
     await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
-    await act(async () => (document.querySelectorAll('.mobile-list-btn')[[...document.querySelectorAll('.mobile-list-btn')].findIndex(button => button.textContent === 'Memory')] as HTMLElement).click())
+    mocks.push.mockClear()
+    const signedInItems = [...document.querySelectorAll('.mobile-list-btn')]
+    await act(async () => (signedInItems[signedInItems.findIndex(button => button.textContent === 'Memory')] as HTMLElement).click())
     expect(mocks.push).toHaveBeenCalledWith('/memory')
   } else {
     expect(host.querySelector('a[href="/word-search"]')).toBeNull()
@@ -47,6 +56,9 @@ it.each([false, true])('groups the learning destinations under Learn on mobile=%
     await act(async () => (nav.querySelector('[aria-haspopup="menu"]') as HTMLElement).click())
     const menu = document.querySelector('[role="menu"]')!
     for (const label of ['Memory', 'Grammar', 'Word Search']) expect(menu.textContent).toContain(label)
+    mocks.push.mockClear()
+    await act(async () => (Array.from(menu.querySelectorAll('[role="menuitem"]')).find(item => item.textContent!.includes('Grammar')) as HTMLElement).click())
+    expect(mocks.push).not.toHaveBeenCalled()
   }
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove() })

@@ -162,7 +162,7 @@ export default function MobileDrawer({
                     }),
                     ...(['Memory', 'Grammar', 'Word Search'] as const).map(label => {
                         const Icon = primaryIcons[label]
-                        return { label, icon: <Icon sx={{ fontSize: 18 }} />, onClick: () => (label === 'Grammar' && !isLoggedIn ? onAuthOpen() : pushAndClose(LEARN_ITEMS.find(item => item.label === label)?.route ?? '/memory')) }
+                        return { label, icon: <Icon sx={{ fontSize: 18 }} />, onClick: () => (!isLoggedIn ? onAuthOpen() : pushAndClose(LEARN_ITEMS.find(item => item.label === label)?.route ?? '/memory')) }
                     }),
                     { label: 'Give Feedback', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/feedback') },
                     { label: 'Support Us', icon: <VolunteerActivismRounded sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/support') },
