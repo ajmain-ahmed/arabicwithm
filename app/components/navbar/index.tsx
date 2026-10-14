@@ -58,7 +58,9 @@ export default function Navbar() {
 
     const showAdminLink = isAdmin && pathname !== '/'
 
-    const supportsOverlay = pathname === '/' || pathname === '/explore'
+    /* /explore's dark navbar treatment only makes sense over its dark hero in
+       dark mode; in light mode it keeps the standard solid bar. */
+    const supportsOverlay = pathname === '/' || (pathname === '/explore' && mode === 'dark')
     const isOverlay = supportsOverlay && !drawerOpen && !userMenuAnchor && !authDialogOpen
     const navColor = isOverlay ? '#fff' : 'var(--awm-forest)'
 
