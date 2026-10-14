@@ -212,7 +212,7 @@ export default function Navbar() {
                                            rest of the nav (e.g. Watch) stays clickable while open. */
                                         <Box
                                             key="Learn"
-                                            sx={{ position: 'relative', py: 2, cursor: 'pointer' }}
+                                            sx={{ position: 'relative', cursor: 'pointer' }}
                                             onMouseEnter={() => { cancelLearnClose(); setLearnOpen(true) }}
                                             onMouseLeave={scheduleLearnClose}
                                         >
@@ -224,11 +224,13 @@ export default function Navbar() {
                                                 aria-haspopup="menu"
                                                 aria-expanded={learnOpen}
                                                 sx={{
+                                                    display: 'inline-block',
                                                     fontWeight: 500,
                                                     letterSpacing: '0.06em',
                                                     fontSize: { md: '0.8rem', lg: '0.875rem' },
                                                     whiteSpace: 'nowrap',
                                                     color: navColor,
+                                                    py: 2,
                                                 }}
                                             >
                                                 Learn
