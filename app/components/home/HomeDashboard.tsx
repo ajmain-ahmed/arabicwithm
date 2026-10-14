@@ -435,9 +435,55 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
             </Box>
           </Container>
 
-          <Container maxWidth="lg" sx={{ mt: { xs: 5, md: 7 }, mb: { xs: 5, md: 7 } }}>
-            <AppDownloadSection />
-          </Container>
+          {/* Full-width backdrop so the brand marks can bleed off both
+              viewport edges without creating a horizontal scrollbar. The SVG
+              is used as a CSS mask so the fill follows the theme tokens. */}
+          <Box sx={{ position: 'relative', overflow: 'hidden', mt: { xs: 5, md: 7 }, mb: { xs: 5, md: 7 } }}>
+            {[
+              {
+                display: { xs: 'none', md: 'block' },
+                left: { md: '-9%', lg: '-6%', xl: '-4%' },
+                top: '50%',
+                width: { md: '30vw', lg: '26vw', xl: '400px' },
+                transform: 'translateY(-58%) rotate(-10deg)',
+                opacity: 0.07,
+              },
+              {
+                display: 'block',
+                right: { xs: '-18%', md: '-8%', lg: '-5%', xl: '-3%' },
+                top: { xs: '4%', md: '50%' },
+                width: { xs: '52vw', md: '28vw', lg: '24vw', xl: '380px' },
+                transform: { xs: 'rotate(8deg)', md: 'translateY(-42%) rotate(9deg)' },
+                opacity: { xs: 0.05, md: 0.07 },
+              },
+            ].map((pos, i) => (
+              <Box
+                key={i}
+                aria-hidden="true"
+                sx={{
+                  position: 'absolute',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                  maxWidth: 560,
+                  minWidth: { xs: 240, md: 380 },
+                  aspectRatio: '550 / 586',
+                  bgcolor: 'var(--awm-bark)',
+                  maskImage: 'url(/homepage/arabicwithm-notext.svg)',
+                  maskSize: 'contain',
+                  maskRepeat: 'no-repeat',
+                  maskPosition: 'center',
+                  WebkitMaskImage: 'url(/homepage/arabicwithm-notext.svg)',
+                  WebkitMaskSize: 'contain',
+                  WebkitMaskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'center',
+                  ...pos,
+                }}
+              />
+            ))}
+            <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+              <AppDownloadSection />
+            </Container>
+          </Box>
         </Box>
       </Box>
     )
