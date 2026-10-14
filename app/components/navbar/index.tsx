@@ -1,7 +1,7 @@
 'use client'
 
 import { AdminPanelSettings, AccountTreeOutlined, DarkModeOutlined, GridOnRounded, LightModeOutlined, MenuOutlined, Person, PsychologyOutlined } from '@mui/icons-material'
-import { AppBar, Avatar, Box, Button, Container, IconButton, Menu, MenuItem, Toolbar, Tooltip, Typography, useMediaQuery } from '@mui/material'
+import { AppBar, Avatar, Box, Button, Container, IconButton, Toolbar, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -40,7 +40,7 @@ export default function Navbar() {
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
     const [authDialogMode, setAuthDialogMode] = useState<'register' | 'signin'>('signin')
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
-    const [learnAnchor, setLearnAnchor] = useState<null | HTMLElement>(null)
+    const [learnOpen, setLearnOpen] = useState(false)
     const learnCloseTimer = useRef<number | null>(null)
     const navbarRef = useRef<HTMLElement>(null)
     const { isAdmin, isReviewer } = useAccountAccess(drawerOpen || Boolean(userMenuAnchor) ? 'menu-open' : 'menu-closed')
@@ -51,13 +51,9 @@ export default function Navbar() {
             learnCloseTimer.current = null
         }
     }
-    const openLearnMenu = (element: HTMLElement) => {
-        cancelLearnClose()
-        setLearnAnchor(element)
-    }
     const scheduleLearnClose = () => {
         cancelLearnClose()
-        learnCloseTimer.current = window.setTimeout(() => setLearnAnchor(null), 160)
+        learnCloseTimer.current = window.setTimeout(() => setLearnOpen(false), 110)
     }
 
     const showAdminLink = isAdmin && pathname !== '/'
@@ -212,72 +208,84 @@ export default function Navbar() {
                             <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', width: '100%', alignItems: 'center' }}>
                                 <Box component="nav" aria-label="Primary navigation" sx={{ display: 'flex', alignItems: 'center', gap: { md: 2.5, lg: 4 } }}>
                                     {NAV_ITEMS.map((item) => item === 'Learn' ? (
+                                        /* Non-modal hover dropdown: a plain positioned panel, so the
+                                           rest of the nav (e.g. Watch) stays clickable while open. */
                                         <Box
                                             key="Learn"
-                                            onMouseEnter={(event) => openLearnMenu(event.currentTarget)}
+                                            sx={{ position: 'relative', py: 2, cursor: 'pointer' }}
+                                            onMouseEnter={() => { cancelLearnClose(); setLearnOpen(true) }}
                                             onMouseLeave={scheduleLearnClose}
                                         >
                                             <Typography
                                                 className="nav-link"
                                                 variant="body2"
-                                                onClick={(event) => openLearnMenu(event.currentTarget)}
+                                                component="span"
+                                                onClick={() => setLearnOpen((open) => !open)}
                                                 aria-haspopup="menu"
-                                                aria-expanded={Boolean(learnAnchor)}
+                                                aria-expanded={learnOpen}
                                                 sx={{
                                                     fontWeight: 500,
                                                     letterSpacing: '0.06em',
                                                     fontSize: { md: '0.8rem', lg: '0.875rem' },
                                                     whiteSpace: 'nowrap',
                                                     color: navColor,
-                                                    cursor: 'pointer',
-                                                    py: 2,
                                                 }}
                                             >
                                                 Learn
                                             </Typography>
-                                            <Menu
-                                                anchorEl={learnAnchor}
-                                                open={Boolean(learnAnchor)}
-                                                onClose={() => setLearnAnchor(null)}
-                                                disableScrollLock
-                                                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
-                                                transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-                                                slotProps={{
-                                                    list: { onMouseEnter: cancelLearnClose, onMouseLeave: scheduleLearnClose, dense: true, sx: { p: 0.5 } },
-                                                    paper: {
-                                                        sx: {
-                                                            mt: 0.5,
-                                                            minWidth: 236,
-                                                            borderRadius: '12px',
-                                                            border: '1px solid color-mix(in srgb, var(--awm-gold) 18%, transparent)',
-                                                            boxShadow: '0 16px 40px rgba(44,26,14,0.2)',
-                                                            backgroundImage: 'none',
-                                                        },
-                                                    },
-                                                }}
-                                            >
-                                                {LEARN_ITEMS.map(({ label, description, route }) => {
-                                                    const Icon = LEARN_ICONS[label] ?? PsychologyOutlined
-                                                    return (
-                                                        <MenuItem
-                                                            key={label}
-                                                            onClick={() => {
-                                                                setLearnAnchor(null)
-                                                                /* The Learn destinations need an account; prompt instead of navigating. */
-                                                                if (!isLoggedIn) openSignIn()
-                                                                else router.push(route)
-                                                            }}
-                                                            sx={{ borderRadius: '8px', gap: 1.5, py: 1.1, alignItems: 'flex-start' }}
-                                                        >
-                                                            <Icon sx={{ fontSize: 19, color: 'var(--awm-gold)', mt: 0.2 }} />
-                                                            <Box>
-                                                                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.85rem', lineHeight: 1.3 }}>{label}</Typography>
-                                                                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.72rem', color: 'var(--awm-muted)', lineHeight: 1.35 }}>{description}</Typography>
+                                            {learnOpen && (
+                                                <Box
+                                                    role="menu"
+                                                    aria-label="Learn"
+                                                    onMouseEnter={cancelLearnClose}
+                                                    onMouseLeave={scheduleLearnClose}
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: '100%',
+                                                        left: 0,
+                                                        pt: 0.5,
+                                                        zIndex: 1300,
+                                                        minWidth: 236,
+                                                        borderRadius: '12px',
+                                                        border: '1px solid color-mix(in srgb, var(--awm-gold) 18%, transparent)',
+                                                        boxShadow: '0 16px 40px rgba(44,26,14,0.2)',
+                                                        bgcolor: 'var(--awm-white)',
+                                                        p: 0.5,
+                                                    }}
+                                                >
+                                                    {LEARN_ITEMS.map(({ label, description, route }) => {
+                                                        const Icon = LEARN_ICONS[label] ?? PsychologyOutlined
+                                                        return (
+                                                            <Box
+                                                                key={label}
+                                                                role="menuitem"
+                                                                onClick={() => {
+                                                                    setLearnOpen(false)
+                                                                    /* The Learn destinations need an account; prompt instead of navigating. */
+                                                                    if (!isLoggedIn) openSignIn()
+                                                                    else router.push(route)
+                                                                }}
+                                                                sx={{
+                                                                    display: 'flex',
+                                                                    gap: 1.5,
+                                                                    alignItems: 'flex-start',
+                                                                    px: 1.25,
+                                                                    py: 1.1,
+                                                                    borderRadius: '8px',
+                                                                    cursor: 'pointer',
+                                                                    '&:hover': { bgcolor: 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' },
+                                                                }}
+                                                            >
+                                                                <Icon sx={{ fontSize: 19, color: 'var(--awm-gold)', mt: 0.2 }} />
+                                                                <Box>
+                                                                    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.85rem', lineHeight: 1.3, color: 'var(--awm-bark)' }}>{label}</Typography>
+                                                                    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.72rem', color: 'var(--awm-muted)', lineHeight: 1.35 }}>{description}</Typography>
+                                                                </Box>
                                                             </Box>
-                                                        </MenuItem>
-                                                    )
-                                                })}
-                                            </Menu>
+                                                        )
+                                                    })}
+                                                </Box>
+                                            )}
                                         </Box>
                                     ) : (
                                         <Link key={item} href={NAV_ROUTES[item]} onNavigate={() => { if (item === 'Explore') setExploreSoundPreference(true) }} style={{ color: 'inherit', textDecoration: 'none' }}>
