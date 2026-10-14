@@ -77,6 +77,20 @@ export async function fetchPublishedAudioForBook(bookId: string): Promise<Chapte
   return ((data ?? []) as Record<string, unknown>[]).map(summary)
 }
 
+/* Library-level "has audiobook" flags for the books catalogue. */
+export async function fetchBookIdsWithPublishedAudio(bookIds: string[]): Promise<string[]> {
+  if (bookIds.length === 0) return []
+  const { data: chapters, error } = await serviceClient.from('chapters').select('id, book_id').in('book_id', bookIds)
+  if (isMissingDatabaseFeature(error) || error) return []
+  const chapterIds = (chapters ?? []).map((chapter) => String(chapter.id))
+  if (chapterIds.length === 0) return []
+  const { data: audio } = await serviceClient.from('book_chapter_audio').select('chapter_id').eq('is_published', true).in('chapter_id', chapterIds)
+  const audioChapters = new Set(((audio ?? []) as Array<{ chapter_id: string }>).map((row) => String(row.chapter_id)))
+  return Array.from(new Set(
+    (chapters ?? []).filter((chapter) => audioChapters.has(String(chapter.id))).map((chapter) => String(chapter.book_id))
+  ))
+}
+
 export async function fetchPublishedChapterAudio(chapterId: string, language: AudioLanguage = 'ar'): Promise<ChapterAudioSummary | null> {
   // Read legacy rows during deployment before the language migration is applied.
   const { data, error } = await serviceClient.from('book_chapter_audio').select('*').eq('chapter_id', chapterId).eq('is_published', true)

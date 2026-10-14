@@ -21,6 +21,7 @@ interface LibraryBook {
   cover?: string | null
   coverCrop?: Parameters<typeof thumbnailCropCss>[0]
   chapterCount: number
+  premiumExempt: boolean
 }
 
 const FILTER_BUTTON_SX = {
@@ -46,10 +47,13 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
+export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBook[]; audioBookIds: string[] }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [level, setLevel] = useState('')
   const [categories, setCategories] = useState<string[]>([])
+  const [audioOnly, setAudioOnly] = useState(false)
+  const [premiumOnly, setPremiumOnly] = useState(false)
+  const audioIds = useMemo(() => new Set(audioBookIds), [audioBookIds])
 
   /* Genre = the book's category; deduped case-insensitively ("Young Adult"
      vs "Young Adults" style duplicates collapse to one chip). */
@@ -69,20 +73,26 @@ export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
     if (level && book.level !== level) return false
     if (categories.length > 0 && !book.category) return false
     if (categories.length > 0 && !categories.some((c) => c.toLowerCase() === book.category!.toLowerCase())) return false
+    if (audioOnly && !audioIds.has(book.id)) return false
+    if (premiumOnly && book.premiumExempt) return false
     return true
   })
 
-  const activeFilterCount = (level ? 1 : 0) + categories.length
+  const activeFilterCount = (level ? 1 : 0) + categories.length + (audioOnly ? 1 : 0) + (premiumOnly ? 1 : 0)
 
   /* Grey out options that would produce zero results (given the other
      active filters), so the empty state is unreachable through the UI. */
-  const comboHasResults = (candidateLevel: string, candidateCategories: string[]) =>
+  const comboHasResults = (candidateLevel: string, candidateCategories: string[], wantAudio = audioOnly, wantPremium = premiumOnly) =>
     books.some((book) =>
       (!candidateLevel || book.level === candidateLevel) &&
-      (candidateCategories.length === 0 || Boolean(book.category && candidateCategories.some((c) => c.toLowerCase() === book.category!.toLowerCase()))))
+      (candidateCategories.length === 0 || Boolean(book.category && candidateCategories.some((c) => c.toLowerCase() === book.category!.toLowerCase()))) &&
+      (!wantAudio || audioIds.has(book.id)) &&
+      (!wantPremium || !book.premiumExempt))
   const disabledLevels = LEVELS.filter((option) => !comboHasResults(option, categories) && level !== option)
   const disabledCategories = allCategories.filter((category) =>
     !comboHasResults(level, [...categories.filter((c) => c.toLowerCase() !== category.toLowerCase()), category]))
+  const audioDisabled = !comboHasResults(level, categories, true, premiumOnly) && !audioOnly
+  const premiumDisabled = !comboHasResults(level, categories, audioOnly, true) && !premiumOnly
 
   const disabledSx = {
     color: 'color-mix(in srgb, var(--awm-muted) 55%, transparent)',
@@ -188,6 +198,45 @@ export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
               </Box>
             </Box>
           )}
+          <Box>
+            <SectionLabel>More</SectionLabel>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+              <Chip
+                label="Has audiobook"
+                clickable
+                disabled={audioDisabled}
+                onClick={() => setAudioOnly((v) => !v)}
+                sx={{
+                  borderRadius: '6px',
+                  fontFamily: 'var(--font-sans), sans-serif',
+                  fontWeight: 600,
+                  fontSize: 12,
+                  bgcolor: audioOnly ? 'var(--awm-gold)' : 'var(--awm-cream-light)',
+                  color: audioOnly ? '#fff' : 'var(--awm-muted)',
+                  border: `1px solid ${audioOnly ? 'var(--awm-gold)' : 'rgba(44,26,14,0.1)'}`,
+                  '&:hover': { bgcolor: audioOnly ? 'var(--awm-gold)' : 'rgba(184,134,11,0.06)' },
+                  '&.Mui-disabled': disabledSx,
+                }}
+              />
+              <Chip
+                label="AWM+ exclusive"
+                clickable
+                disabled={premiumDisabled}
+                onClick={() => setPremiumOnly((v) => !v)}
+                sx={{
+                  borderRadius: '6px',
+                  fontFamily: 'var(--font-sans), sans-serif',
+                  fontWeight: 600,
+                  fontSize: 12,
+                  bgcolor: premiumOnly ? 'var(--awm-gold)' : 'var(--awm-cream-light)',
+                  color: premiumOnly ? '#fff' : 'var(--awm-muted)',
+                  border: `1px solid ${premiumOnly ? 'var(--awm-gold)' : 'rgba(44,26,14,0.1)'}`,
+                  '&:hover': { bgcolor: premiumOnly ? 'var(--awm-gold)' : 'rgba(184,134,11,0.06)' },
+                  '&.Mui-disabled': disabledSx,
+                }}
+              />
+            </Box>
+          </Box>
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'space-between', px: 2.5, py: 1.75 }}>
           <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'var(--awm-muted)' }}>
@@ -195,7 +244,7 @@ export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
-              onClick={() => { setLevel(''); setCategories([]) }}
+              onClick={() => { setLevel(''); setCategories([]); setAudioOnly(false); setPremiumOnly(false) }}
               disabled={activeFilterCount === 0}
               sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}
             >
