@@ -3,7 +3,7 @@
 import { Movie } from '@mui/icons-material'
 import React from 'react'
 
-export { NAV_ITEMS, NAV_ROUTES, profileRoute } from '@/app/lib/navigation'
+export { NAV_ITEMS, NAV_ROUTES, LEARN_ITEMS, profileRoute } from '@/app/lib/navigation'
 
 export const CARTOON_SLUG_MAP: Record<string, string> = {
     'Teenage Mutant Ninja Turtles': 'tmnt',

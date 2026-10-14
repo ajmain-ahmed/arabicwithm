@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({ pathname: '/', mobile: false, role: 'admin', p
 // Navigation tests exercise destinations rather than decorative icon rendering.
 vi.mock('@mui/icons-material', () => {
   const Icon = () => <svg aria-hidden="true" />
-  return { AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon }
+  return { AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon }
 })
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => mocks.auth }))
 vi.mock('@/app/lib/useAccountAccess', () => ({ useAccountAccess: () => ({ isAdmin: mocks.role === 'admin', isReviewer: mocks.role !== 'user' }) }))
@@ -26,13 +26,21 @@ beforeEach(() => {
   mocks.auth.user = { id: 'admin', email: 'admin@example.com' }
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
 })
-it.each([false, true])('omits Word Search from desktop and responsive website navigation on mobile=%s', async mobile => {
+it.each([false, true])('groups the learning destinations under Learn on mobile=%s', async mobile => {
   mocks.mobile = mobile; mocks.auth.user = null; mocks.role = 'user'
   await act(async () => root.render(<Navbar />))
   if (mobile) {
     await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
-    expect([...document.querySelectorAll('[role="button"]')].some(button => button.textContent === 'Word Search')).toBe(false)
-  } else expect(host.querySelector('a[href="/word-search"]')).toBeNull()
+    const labels = [...document.querySelectorAll('.mobile-list-btn')].map(button => button.textContent)
+    for (const label of ['Memory', 'Grammar', 'Word Search']) expect(labels).toContain(label)
+  } else {
+    expect(host.querySelector('a[href="/word-search"]')).toBeNull()
+    const nav = host.querySelector('nav[aria-label="Primary navigation"]')!
+    expect(nav.textContent).toContain('Learn')
+    await act(async () => (nav.querySelector('[aria-haspopup="menu"]') as HTMLElement).click())
+    const menu = document.querySelector('[role="menu"]')!
+    for (const label of ['Memory', 'Grammar', 'Word Search']) expect(menu.textContent).toContain(label)
+  }
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove() })
 it.each(['admin', 'editor', 'user'])('shows the desktop Admin entry only for %s permissions and retains account navigation', async role => {
@@ -64,14 +72,16 @@ it.each(['admin', 'editor', 'user'])('offers the correct mobile destinations for
   expect(Boolean(admin)).toBe(role === 'admin')
   expect(buttons.some(button => button.textContent === 'Reviewer')).toBe(role !== 'user')
   expect(buttons.some(button => button.textContent === 'My Profile')).toBe(true)
-  expect(buttons.some(button => button.textContent === 'Word Search')).toBe(false)
+  expect(buttons.some(button => button.textContent === 'Word Search')).toBe(true)
   if (admin) {
     await act(async () => (admin as HTMLElement).click())
     expect(mocks.push).toHaveBeenCalledWith('/admin/users')
   }
 })
 
-const expectedPrimary = ['Home', 'Explore', 'Watch', 'Read', 'Memory']
+const expectedPrimary = ['Home', 'Explore', 'Watch', 'Read', 'Learn']
+const expectedPrimaryHrefs = ['/', '/explore', '/cartoons', '/books']
+const expectedFloating = ['Home', 'Explore', 'Watch', 'Read', 'Memory']
 it.each(['guest', 'user', 'admin', 'premium'])('keeps exactly five primary destinations for %s on Home and Word Search', async role => {
   mocks.role = role
   mocks.auth.user = role === 'guest' ? null : { id: role, email: `${role}@example.com` }
@@ -79,16 +89,16 @@ it.each(['guest', 'user', 'admin', 'premium'])('keeps exactly five primary desti
     mocks.pathname = pathname
     mocks.mobile = false
     await act(async () => root.render(<Navbar />))
-    const links = [...host.querySelectorAll('nav[aria-label="Primary navigation"] a')]
-    expect(links.map(link => link.textContent)).toEqual(expectedPrimary)
-    expect(links.map(link => link.getAttribute('href'))).toEqual(['/', '/explore', '/cartoons', '/books', '/memory'])
+    const nav = host.querySelector('nav[aria-label="Primary navigation"]')!
+    for (const label of expectedPrimary) expect(nav.textContent).toContain(label)
+    const links = [...nav.querySelectorAll('a')]
+    expect(links.map(link => link.getAttribute('href'))).toEqual(expectedPrimaryHrefs)
     expect(links.some(link => link.getAttribute('aria-current') === 'page')).toBe(false)
     mocks.mobile = true
     await act(async () => root.render(<Navbar />))
     await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
     const labels = [...document.querySelectorAll('.mobile-list-btn')].map(button => button.textContent)
-    expect(labels.filter(label => expectedPrimary.includes(label!))).toEqual(expectedPrimary)
-    expect(labels).not.toContain('Word Search')
+    for (const label of ['Home', 'Explore', 'Watch', 'Read', 'Memory', 'Grammar', 'Word Search']) expect(labels).toContain(label)
     await act(async () => root.render(<div />))
   }
 })
@@ -99,7 +109,7 @@ it('keeps floating mobile navigation at five destinations with none active on Wo
   await act(async () => root.render(<MobileBottomNav />))
   await act(async () => (host.querySelector('[aria-label="Open navigation"]') as HTMLElement).click())
   const buttons = [...document.querySelectorAll('#mobile-navigation button')]
-  expect(buttons.map(button => button.textContent)).toEqual(expectedPrimary)
+  expect(buttons.map(button => button.textContent)).toEqual(expectedFloating)
   expect(buttons.some(button => button.hasAttribute('aria-current'))).toBe(false)
   await act(async () => (buttons[3] as HTMLElement).click())
   expect(mocks.push).toHaveBeenCalledWith('/books')
@@ -117,7 +127,7 @@ it.each([false, true])('leaves Home Admin access solely in Quick Actions on mobi
 
 it('routes every normal mobile entry once and closes without permission UI',async()=>{
  mocks.mobile=true;mocks.role='user';mocks.pathname='/books'
- const entries=[['My Profile','/profile/admin'],['Home','/'],['Explore','/explore'],['Watch','/cartoons'],['Read','/books'],['Memory','/memory'],['Give Feedback','/feedback'],['Support Us','/support']]
+ const entries=[['My Profile','/profile/admin'],['Home','/'],['Explore','/explore'],['Watch','/cartoons'],['Read','/books'],['Memory','/memory'],['Grammar','/grammar'],['Word Search','/word-search'],['Give Feedback','/feedback'],['Support Us','/support']]
  await act(async()=>root.render(<Navbar/>))
  for(const [label,href] of entries){
   await act(async()=> (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
