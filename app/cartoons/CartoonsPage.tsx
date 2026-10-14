@@ -52,7 +52,6 @@ type WatchControl = WatchView
 export interface WatchFilters {
   category: string
   level: string
-  additionalTag: string
 }
 
 export function CartoonsPageSkeleton() {
@@ -102,7 +101,6 @@ export default function CartoonsPage({
   showAdditionalTags,
   episodeCounts,
   availableCategories,
-  availableAdditionalTags,
   filters,
   page,
   episodePageCount,
@@ -115,7 +113,6 @@ export default function CartoonsPage({
   showAdditionalTags: Record<string, string[]>
   episodeCounts: Record<string, number>
   availableCategories: string[]
-  availableAdditionalTags: string[]
   filters: WatchFilters
   page: number
   episodePageCount: number
@@ -134,7 +131,6 @@ export default function CartoonsPage({
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const activeCategory = filters.category || 'All Categories'
-  const activeAdditionalTag = filters.additionalTag
   const activeLevel = filters.level
 
   /* Filter changes reset pagination and sync to the URL, so the server can
@@ -149,10 +145,6 @@ export default function CartoonsPage({
   const setActiveCategory = (category: string) => updateFilters((params) => {
     if (!category || category === 'All Categories') params.delete('category')
     else params.set('category', category)
-  })
-  const setActiveAdditionalTag = (tag: string) => updateFilters((params) => {
-    if (!tag) params.delete('additionalTag')
-    else params.set('additionalTag', tag)
   })
   const setActiveLevel = (level: string) => updateFilters((params) => {
     if (!level) params.delete('level')
@@ -170,7 +162,7 @@ export default function CartoonsPage({
   const visibleItems = view === 'episodes' ? episodes : shows
   const pageCount = view === 'episodes' ? episodePageCount : showPageCount
   const totalItems = view === 'episodes' ? totalEpisodes : totalShows
-  const activeFilterCount = (filters.category ? 1 : 0) + (filters.additionalTag ? 1 : 0) + (filters.level ? 1 : 0)
+  const activeFilterCount = (filters.category ? 1 : 0) + (filters.level ? 1 : 0)
 
   const handleDeleteShow = async (id: string) => {
     if (!isAdmin || !confirm('Are you sure you want to delete this show? This cannot be undone.')) return
@@ -189,11 +181,8 @@ export default function CartoonsPage({
     <FilterSidebar
       categories={availableCategories}
       levels={WATCH_LEVELS}
-      additionalTags={availableAdditionalTags}
       activeCategory={activeCategory}
       setActiveCategory={setActiveCategory}
-      activeAdditionalTag={activeAdditionalTag}
-      setActiveAdditionalTag={setActiveAdditionalTag}
       activeLevel={activeLevel}
       setActiveLevel={setActiveLevel}
       onMobileClose={() => setFilterDrawerOpen(false)}

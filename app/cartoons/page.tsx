@@ -47,7 +47,6 @@ async function Catalogue({ searchParams }: { searchParams: Promise<SearchParams>
   const categoryLabels = new Map<string, string>()
   const mainCategoryKeys = new Set<string>()
   const showAdditionalTags: Record<string, string[]> = {}
-  const additionalTagLabels = new Map<string, string>()
   for (const show of shows) {
     const category = canonicalizeCartoonCategory(show.category)
     if (category) {
@@ -62,7 +61,6 @@ async function Catalogue({ searchParams }: { searchParams: Promise<SearchParams>
       const broadCategory = canonicalizeCartoonCategory(tag)
       if (broadCategory && mainCategoryKeys.has(broadCategory.toLowerCase())) continue
       showTags.set(tag.toLowerCase(), tag)
-      additionalTagLabels.set(tag.toLowerCase(), tag)
     }
     showAdditionalTags[show.slug] = Array.from(showTags.values())
   }
@@ -71,14 +69,9 @@ async function Catalogue({ searchParams }: { searchParams: Promise<SearchParams>
     'All Categories',
     ...Array.from(categoryLabels.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
   ]
-  const availableAdditionalTags = Array.from(additionalTagLabels.values()).sort((a, b) =>
-    a.localeCompare(b, undefined, { sensitivity: 'base' })
-  )
-
   const filters = {
     category: sanitizeParam(firstParam(sp.category), availableCategories),
     level: sanitizeParam(firstParam(sp.level), WATCH_LEVELS),
-    additionalTag: sanitizeParam(firstParam(sp.additionalTag), availableAdditionalTags),
   }
 
   const episodeRows = allEpisodes.flatMap((episode) => {
@@ -90,14 +83,12 @@ async function Catalogue({ searchParams }: { searchParams: Promise<SearchParams>
   const filteredEpisodes = episodeRows.filter(({ episode, showCategory }) => {
     if (filters.category && showCategory !== filters.category) return false
     if (filters.level && episode.level !== filters.level) return false
-    if (filters.additionalTag && !episode.tags.some((tag) => tag.toLowerCase() === filters.additionalTag.toLowerCase())) return false
     return true
   })
 
   const filteredShows = shows.filter((show) => {
     if (filters.category && showCategories[show.slug] !== filters.category) return false
     if (filters.level && show.level !== filters.level) return false
-    if (filters.additionalTag && !(showAdditionalTags[show.slug] ?? []).some((tag) => tag.toLowerCase() === filters.additionalTag.toLowerCase())) return false
     return true
   })
 
@@ -120,7 +111,6 @@ async function Catalogue({ searchParams }: { searchParams: Promise<SearchParams>
       showAdditionalTags={Object.fromEntries(slice(filteredShows).map((show) => [show.slug, showAdditionalTags[show.slug] ?? []]))}
       episodeCounts={Object.fromEntries(slice(filteredShows).map((show) => [show.slug, episodesByShow.get(show.id)?.length ?? 0]))}
       availableCategories={availableCategories}
-      availableAdditionalTags={availableAdditionalTags}
       filters={filters}
       page={page}
       episodePageCount={episodePageCount}
