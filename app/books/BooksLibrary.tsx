@@ -16,6 +16,7 @@ interface LibraryBook {
   author?: string | null
   description?: string | null
   level?: string | null
+  category?: string | null
   tags: string[]
   cover?: string | null
   coverCrop?: Parameters<typeof thumbnailCropCss>[0]
@@ -48,28 +49,38 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [level, setLevel] = useState('')
-  const [genres, setGenres] = useState<string[]>([])
+  const [categories, setCategories] = useState<string[]>([])
 
-  const allGenres = useMemo(
-    () => Array.from(new Set(books.flatMap((book) => book.tags))).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
-    [books],
-  )
+  /* Genre = the book's category; deduped case-insensitively ("Young Adult"
+     vs "Young Adults" style duplicates collapse to one chip). */
+  const allCategories = useMemo(() => {
+    const byKey = new Map<string, string>()
+    for (const book of books) {
+      const category = book.category?.trim()
+      if (category && !byKey.has(category.toLowerCase())) byKey.set(category.toLowerCase(), category)
+    }
+    return Array.from(byKey.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+  }, [books])
 
-  const toggleGenre = (tag: string) =>
-    setGenres((current) => (current.includes(tag) ? current.filter((t) => t !== tag) : [...current, tag]))
+  const toggleCategory = (category: string) =>
+    setCategories((current) => (current.some((c) => c.toLowerCase() === category.toLowerCase()) ? current.filter((c) => c.toLowerCase() !== category.toLowerCase()) : [...current, category]))
 
   const visible = books.filter((book) => {
     if (level && book.level !== level) return false
-    if (genres.length > 0 && !book.tags.some((tag) => genres.includes(tag))) return false
+    if (categories.length > 0 && !book.category) return false
+    if (categories.length > 0 && !categories.some((c) => c.toLowerCase() === book.category!.toLowerCase())) return false
     return true
   })
 
-  const activeFilterCount = (level ? 1 : 0) + genres.length
+  const activeFilterCount = (level ? 1 : 0) + categories.length
 
   return (
     <Box>
-      {/* Configure row */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: { xs: 2, sm: 3 } }}>
+      {/* Header row: title + filters, aligned */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: { xs: 2, sm: 3 } }}>
+        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 36 }, fontWeight: 600, color: 'var(--awm-bark)' }}>
+          Library
+        </Typography>
         <Button
           onClick={() => setDialogOpen(true)}
           startIcon={<Tune sx={{ fontSize: 18 }} />}
@@ -87,7 +98,7 @@ export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
             '&:hover': { backgroundColor: 'color-mix(in srgb, var(--awm-gold) 6%, var(--awm-white))', borderColor: 'color-mix(in srgb, var(--awm-gold) 40%, transparent)' },
           }}
         >
-          Configure{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+          Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
         </Button>
       </Box>
 
@@ -117,18 +128,18 @@ export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
               ))}
             </Box>
           </Box>
-          {allGenres.length > 0 && (
+          {allCategories.length > 0 && (
             <Box>
               <SectionLabel>Genre</SectionLabel>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                {allGenres.map((tag) => {
-                  const active = genres.includes(tag)
+                {allCategories.map((tag) => {
+                  const active = categories.some((c) => c.toLowerCase() === tag.toLowerCase())
                   return (
                     <Chip
                       key={tag}
                       label={tag}
                       clickable
-                      onClick={() => toggleGenre(tag)}
+                      onClick={() => toggleCategory(tag)}
                       sx={{
                         borderRadius: '6px',
                         fontFamily: 'var(--font-sans), sans-serif',
@@ -152,7 +163,7 @@ export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
-              onClick={() => { setLevel(''); setGenres([]) }}
+              onClick={() => { setLevel(''); setCategories([]) }}
               disabled={activeFilterCount === 0}
               sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}
             >
