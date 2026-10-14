@@ -131,7 +131,7 @@ export default function AppDownloadSection() {
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: '#f5ede0' }}>
                 <QrCodeScanner sx={{ fontSize: 19, color: '#d4a843' }} />
-                <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 17, fontWeight: 600 }}>Get the app</Typography>
+                <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 17, fontWeight: 600, color: '#f5ede0' }}>Get the app</Typography>
               </Box>
               <Typography sx={{ mt: 0.5, color: 'rgba(245,237,224,0.72)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, lineHeight: 1.55 }}>
                 Scan the code with your phone camera to download the free app.
