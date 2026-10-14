@@ -41,7 +41,7 @@ const FILTER_BUTTON_SX = {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 1.25 }}>
+    <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 1.75 }}>
       {children}
     </Typography>
   )
@@ -53,6 +53,7 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
   const [categories, setCategories] = useState<string[]>([])
   const [audioOnly, setAudioOnly] = useState(false)
   const [premiumOnly, setPremiumOnly] = useState(false)
+  const [freeOnly, setFreeOnly] = useState(false)
   const audioIds = useMemo(() => new Set(audioBookIds), [audioBookIds])
 
   /* Genre = the book's category; deduped case-insensitively ("Young Adult"
@@ -75,24 +76,27 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
     if (categories.length > 0 && !categories.some((c) => c.toLowerCase() === book.category!.toLowerCase())) return false
     if (audioOnly && !audioIds.has(book.id)) return false
     if (premiumOnly && book.premiumExempt) return false
+    if (freeOnly && !book.premiumExempt) return false
     return true
   })
 
-  const activeFilterCount = (level ? 1 : 0) + categories.length + (audioOnly ? 1 : 0) + (premiumOnly ? 1 : 0)
+  const activeFilterCount = (level ? 1 : 0) + categories.length + (audioOnly ? 1 : 0) + (premiumOnly ? 1 : 0) + (freeOnly ? 1 : 0)
 
   /* Grey out options that would produce zero results (given the other
      active filters), so the empty state is unreachable through the UI. */
-  const comboHasResults = (candidateLevel: string, candidateCategories: string[], wantAudio = audioOnly, wantPremium = premiumOnly) =>
+  const comboHasResults = (candidateLevel: string, candidateCategories: string[], flags: { audio?: boolean; premium?: boolean; free?: boolean } = { audio: audioOnly, premium: premiumOnly, free: freeOnly }) =>
     books.some((book) =>
       (!candidateLevel || book.level === candidateLevel) &&
       (candidateCategories.length === 0 || Boolean(book.category && candidateCategories.some((c) => c.toLowerCase() === book.category!.toLowerCase()))) &&
-      (!wantAudio || audioIds.has(book.id)) &&
-      (!wantPremium || !book.premiumExempt))
+      (!flags.audio || audioIds.has(book.id)) &&
+      (!flags.premium || !book.premiumExempt) &&
+      (!flags.free || book.premiumExempt))
   const disabledLevels = LEVELS.filter((option) => !comboHasResults(option, categories) && level !== option)
   const disabledCategories = allCategories.filter((category) =>
     !comboHasResults(level, [...categories.filter((c) => c.toLowerCase() !== category.toLowerCase()), category]))
-  const audioDisabled = !comboHasResults(level, categories, true, premiumOnly) && !audioOnly
-  const premiumDisabled = !comboHasResults(level, categories, audioOnly, true) && !premiumOnly
+  const audioDisabled = !comboHasResults(level, categories, { audio: true, premium: premiumOnly, free: freeOnly }) && !audioOnly
+  const premiumDisabled = !comboHasResults(level, categories, { audio: audioOnly, premium: true, free: freeOnly }) && !premiumOnly
+  const freeDisabled = !comboHasResults(level, categories, { audio: audioOnly, premium: premiumOnly, free: true }) && !freeOnly
 
   const disabledSx = {
     color: 'color-mix(in srgb, var(--awm-muted) 55%, transparent)',
@@ -143,8 +147,8 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
             <Close />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers sx={{ borderColor: 'color-mix(in srgb, var(--awm-gold) 18%, transparent)' }}>
-          <Box sx={{ mb: 3 }}>
+        <DialogContent dividers sx={{ borderColor: 'color-mix(in srgb, var(--awm-gold) 18%, transparent)', py: 3 }}>
+          <Box sx={{ mb: 4 }}>
             <SectionLabel>Difficulty</SectionLabel>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.75 }}>
               <Button
@@ -169,9 +173,9 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
             </Box>
           </Box>
           {allCategories.length > 0 && (
-            <Box>
+            <Box sx={{ mb: 4 }}>
               <SectionLabel>Genre</SectionLabel>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {allCategories.map((tag) => {
                   const active = categories.some((c) => c.toLowerCase() === tag.toLowerCase())
                   return (
@@ -200,7 +204,24 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
           )}
           <Box>
             <SectionLabel>More</SectionLabel>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              <Chip
+                label="Free"
+                clickable
+                disabled={freeDisabled}
+                onClick={() => setFreeOnly((v) => !v)}
+                sx={{
+                  borderRadius: '6px',
+                  fontFamily: 'var(--font-sans), sans-serif',
+                  fontWeight: 600,
+                  fontSize: 12,
+                  bgcolor: freeOnly ? 'var(--awm-gold)' : 'var(--awm-cream-light)',
+                  color: freeOnly ? '#fff' : 'var(--awm-muted)',
+                  border: `1px solid ${freeOnly ? 'var(--awm-gold)' : 'rgba(44,26,14,0.1)'}`,
+                  '&:hover': { bgcolor: freeOnly ? 'var(--awm-gold)' : 'rgba(184,134,11,0.06)' },
+                  '&.Mui-disabled': disabledSx,
+                }}
+              />
               <Chip
                 label="Has audiobook"
                 clickable
@@ -244,7 +265,7 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
           </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
-              onClick={() => { setLevel(''); setCategories([]); setAudioOnly(false); setPremiumOnly(false) }}
+              onClick={() => { setLevel(''); setCategories([]); setAudioOnly(false); setPremiumOnly(false); setFreeOnly(false) }}
               disabled={activeFilterCount === 0}
               sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}
             >
