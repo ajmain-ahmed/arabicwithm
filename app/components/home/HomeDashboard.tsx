@@ -399,7 +399,32 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
 
   if (!user) {
     return (
-      <Box component="main" sx={{ bgcolor: 'var(--awm-cream-light)' }}>
+      <Box
+        component="main"
+        sx={{
+          position: 'relative',
+          bgcolor: 'var(--awm-cream-light)',
+          /* Faint brand-mark pattern across the whole homepage. CSS-masked so
+             the fill follows the theme; sits above the page background but
+             below every content section. */
+          '& > *': { position: 'relative', zIndex: 1 },
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            inset: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+            bgcolor: 'var(--awm-bark)',
+            opacity: { xs: 0.04, md: 0.045 },
+            maskImage: 'url(/homepage/arabicwithm-notext.svg)',
+            maskSize: { xs: '230px', md: '330px' },
+            maskRepeat: 'repeat',
+            WebkitMaskImage: 'url(/homepage/arabicwithm-notext.svg)',
+            WebkitMaskSize: { xs: '230px', md: '330px' },
+            WebkitMaskRepeat: 'repeat',
+          },
+        }}
+      >
         <Box sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
           <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 14 }, pb: { xs: 5, md: 6 } }}>
             <Box sx={{ maxWidth: 720 }}>
@@ -435,50 +460,9 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
             </Box>
           </Container>
 
-          {/* Full-width backdrop pattern: the brand mark tiled in two offset,
-              differently-sized layers (CSS-masked so the fill follows the
-              theme tokens), bleeding to the viewport edges without a
-              horizontal scrollbar. */}
-          <Box sx={{ position: 'relative', overflow: 'hidden', mt: { xs: 5, md: 7 }, mb: { xs: 5, md: 7 } }}>
-            <Box
-              aria-hidden="true"
-              sx={{
-                position: 'absolute',
-                inset: { xs: '-8% -20%', md: '-14% -12%' },
-                bgcolor: 'var(--awm-bark)',
-                opacity: { xs: 0.05, md: 0.055 },
-                pointerEvents: 'none',
-                maskImage: 'url(/homepage/arabicwithm-notext.svg)',
-                maskSize: { xs: '230px', md: '330px' },
-                maskRepeat: 'repeat',
-                WebkitMaskImage: 'url(/homepage/arabicwithm-notext.svg)',
-                WebkitMaskSize: { xs: '230px', md: '330px' },
-                WebkitMaskRepeat: 'repeat',
-              }}
-            />
-            <Box
-              aria-hidden="true"
-              sx={{
-                position: 'absolute',
-                inset: { xs: '-8% -20%', md: '-14% -12%' },
-                bgcolor: 'var(--awm-bark)',
-                opacity: { xs: 0.03, md: 0.045 },
-                pointerEvents: 'none',
-                transform: 'rotate(-9deg) scale(1.25)',
-                maskImage: 'url(/homepage/arabicwithm-notext.svg)',
-                maskSize: { xs: '340px', md: '520px' },
-                maskRepeat: 'repeat',
-                maskPosition: '110px 60px',
-                WebkitMaskImage: 'url(/homepage/arabicwithm-notext.svg)',
-                WebkitMaskSize: { xs: '340px', md: '520px' },
-                WebkitMaskRepeat: 'repeat',
-                WebkitMaskPosition: '110px 60px',
-              }}
-            />
-            <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-              <AppDownloadSection />
-            </Container>
-          </Box>
+          <Container maxWidth="lg" sx={{ mt: { xs: 5, md: 7 }, mb: { xs: 5, md: 7 } }}>
+            <AppDownloadSection />
+          </Container>
         </Box>
       </Box>
     )
