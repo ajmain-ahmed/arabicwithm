@@ -11,6 +11,11 @@ interface ColorModeContextValue {
 
 const ColorModeContext = createContext<ColorModeContextValue | null>(null);
 
+/* Brief universal colour transition while the theme flips; the class is
+   removed right after so hover/focus animations stay instant. Injected
+   inline because the CSS pipeline strips universal selectors. */
+const THEME_ANIM_CSS = `.theme-animating,.theme-animating *,.theme-animating *::before,.theme-animating *::after{transition:background-color .4s ease,color .4s ease,border-color .4s ease,fill .4s ease,stroke .4s ease,box-shadow .4s ease !important}`;
+
 export function useColorMode(): ColorModeContextValue {
   const context = useContext(ColorModeContext);
   if (!context) throw new Error("useColorMode must be used within ThemeProvider");
@@ -38,13 +43,19 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!preferenceLoaded) return;
-    document.documentElement.dataset.theme = mode;
-    document.documentElement.style.colorScheme = mode;
+    const root = document.documentElement;
+    /* Tween the switch: the class applies a brief universal colour
+       transition, then comes off so hover animations stay instant. */
+    root.classList.add("theme-animating");
+    root.dataset.theme = mode;
+    root.style.colorScheme = mode;
+    const settle = window.setTimeout(() => root.classList.remove("theme-animating"), 450);
     try {
       window.localStorage.setItem("awm-color-mode", mode);
     } catch {
       // The preference still applies for this page when storage is unavailable.
     }
+    return () => window.clearTimeout(settle);
   }, [mode, preferenceLoaded]);
 
   const toggleColorMode = useCallback(() => {
@@ -56,6 +67,7 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
 
   return (
     <ColorModeContext.Provider value={contextValue}>
+      <style>{THEME_ANIM_CSS}</style>
       <MuiThemeProvider theme={theme}>
         <CssBaseline />
         {children}

@@ -80,6 +80,13 @@ html[data-theme='dark'] {
   --awm-elevated-shadow: 0 14px 44px rgba(0,0,0,0.6);
 }
 
+/* Smooth theme switches: ThemeProvider adds .theme-animating for a moment
+   while flipping data-theme, so every surface tweens instead of jumping.
+   The class is removed right after so hover/focus animations stay instant.
+   NOTE: lives in ThemeProvider.tsx as an inline <style> — this project's
+   CSS pipeline strips universal-selector rules from globals.css. */
+
+
 html {
   min-height: 100vh;
   min-height: 100dvh;
