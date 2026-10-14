@@ -74,6 +74,23 @@ export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
 
   const activeFilterCount = (level ? 1 : 0) + categories.length
 
+  /* Grey out options that would produce zero results (given the other
+     active filters), so the empty state is unreachable through the UI. */
+  const comboHasResults = (candidateLevel: string, candidateCategories: string[]) =>
+    books.some((book) =>
+      (!candidateLevel || book.level === candidateLevel) &&
+      (candidateCategories.length === 0 || Boolean(book.category && candidateCategories.some((c) => c.toLowerCase() === book.category!.toLowerCase()))))
+  const disabledLevels = LEVELS.filter((option) => !comboHasResults(option, categories) && level !== option)
+  const disabledCategories = allCategories.filter((category) =>
+    !comboHasResults(level, [...categories.filter((c) => c.toLowerCase() !== category.toLowerCase()), category]))
+
+  const disabledSx = {
+    color: 'color-mix(in srgb, var(--awm-muted) 55%, transparent)',
+    backgroundColor: 'transparent',
+    border: '1px solid rgba(44,26,14,0.06)',
+    cursor: 'not-allowed',
+  }
+
   return (
     <Box>
       {/* Header row: title + filters, aligned */}
@@ -120,9 +137,22 @@ export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
           <Box sx={{ mb: 3 }}>
             <SectionLabel>Difficulty</SectionLabel>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 0.75 }}>
-              <Button className={level === '' ? 'Mui-selected' : ''} onClick={() => setLevel('')} sx={FILTER_BUTTON_SX}>All</Button>
+              <Button
+                className={level === '' ? 'Mui-selected' : ''}
+                disabled={!comboHasResults('', categories) && level !== ''}
+                onClick={() => setLevel('')}
+                sx={FILTER_BUTTON_SX}
+              >
+                All
+              </Button>
               {LEVELS.map((option) => (
-                <Button key={option} className={level === option ? 'Mui-selected' : ''} onClick={() => setLevel(level === option ? '' : option)} sx={FILTER_BUTTON_SX}>
+                <Button
+                  key={option}
+                  className={level === option ? 'Mui-selected' : ''}
+                  disabled={disabledLevels.includes(option)}
+                  onClick={() => setLevel(level === option ? '' : option)}
+                  sx={{ ...FILTER_BUTTON_SX, '&:disabled': disabledSx }}
+                >
                   {option}
                 </Button>
               ))}
@@ -139,6 +169,7 @@ export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
                       key={tag}
                       label={tag}
                       clickable
+                      disabled={disabledCategories.includes(tag)}
                       onClick={() => toggleCategory(tag)}
                       sx={{
                         borderRadius: '6px',
@@ -149,6 +180,7 @@ export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
                         color: active ? '#fff' : 'var(--awm-muted)',
                         border: `1px solid ${active ? 'var(--awm-gold)' : 'rgba(44,26,14,0.1)'}`,
                         '&:hover': { bgcolor: active ? 'var(--awm-gold)' : 'rgba(184,134,11,0.06)' },
+                        '&.Mui-disabled': disabledSx,
                       }}
                     />
                   )
@@ -180,18 +212,13 @@ export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
         </DialogActions>
       </Dialog>
 
-      {visible.length === 0 ? (
-        <Paper elevation={0} sx={{ p: 5, textAlign: 'center', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)' }}>
-          <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 24, color: 'var(--awm-bark)' }}>No books match these filters</Typography>
-        </Paper>
-      ) : (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))', lg: 'repeat(5, minmax(0, 1fr))' },
-            gap: { xs: 1, sm: 2, lg: 2.5 },
-          }}
-        >
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))', lg: 'repeat(5, minmax(0, 1fr))' },
+          gap: { xs: 1, sm: 2, lg: 2.5 },
+        }}
+      >
           {visible.map((book) => (
             <Link
               key={book.id}
@@ -252,8 +279,7 @@ export default function BooksLibrary({ books }: { books: LibraryBook[] }) {
               </Paper>
             </Link>
           ))}
-        </Box>
-      )}
+      </Box>
     </Box>
   )
 }
