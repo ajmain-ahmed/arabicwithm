@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 const home = vi.hoisted(() => ({ isAdmin: false, loading: false, user: { id: 'user-id', user_metadata: {} } as { id: string; user_metadata: Record<string, unknown> } | null }))
 vi.mock('@/app/AuthContext',()=>({useAuth:()=>({user:home.user,session:null,loading:home.loading})}))
+vi.mock('@/app/components/ThemeProvider',()=>({useColorMode:()=>({mode:'light',toggleColorMode:vi.fn()})}))
 vi.mock('@/app/lib/useAccountAccess',()=>({useAccountAccess:()=>({isAdmin:home.isAdmin})}))
 // Navigation tests exercise destinations rather than decorative icon rendering.
 vi.mock('@mui/icons-material', () => {

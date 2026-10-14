@@ -26,6 +26,7 @@ import {
 import { Box, Button, Container, Dialog, DialogContent, DialogTitle, IconButton, Skeleton, SwipeableDrawer, Typography, Paper, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { useAuth } from '@/app/AuthContext'
+import { useColorMode } from '@/app/components/ThemeProvider'
 import { fetchLearningActivity } from '@/app/actions/activity'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import CheckoutFeedback from '@/app/components/CheckoutFeedback'
@@ -317,6 +318,7 @@ function LearningStats({
 
 export default function HomeDashboard({ books, featuredBook, featuredEpisode, chaptersByBook, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
   const { user } = useAuth()
+  const { mode } = useColorMode()
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
   const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
   const [dashboardLoadedAt] = useState(Date.now)
@@ -426,6 +428,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
         }}
       >
         <Box sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+          {mode === 'dark' && <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.42) 55%, rgba(0,0,0,0.6) 100%)' }} />}
           <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 14 }, pb: { xs: 5, md: 6 } }}>
             <Box sx={{ maxWidth: 720 }}>
               <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 42, sm: 54, md: 67 }, fontWeight: 600, lineHeight: 1.02, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.75), 0 4px 28px rgba(0,0,0,0.55)' }}>Learn Arabic through cartoons and books</Typography>
@@ -480,7 +483,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
   return (
     <Box component="main" sx={{ bgcolor: 'var(--awm-cream-light)', pb: { xs: 7, md: 11 } }}>
       <Box sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, pt: { xs: 14.5, md: 18 }, pb: { xs: 8, md: 10 }, overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center 42%' }}>
-        <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(5,23,15,0.82)' }} />
+        <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, bgcolor: mode === 'dark' ? 'rgba(0,0,0,0.78)' : 'rgba(5,23,15,0.82)' }} />
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Typography sx={{ color: '#d4a843', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Your learning</Typography>
           <Typography component="h1" sx={{ mt: 0.75, color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 40, md: 58 }, fontWeight: 600, lineHeight: 1.08 }}>Welcome back, {displayName}</Typography>
