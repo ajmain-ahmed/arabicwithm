@@ -314,7 +314,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                         denseMobileTile
                         mobileAspectRatio="4 / 5"
                         mobileTitleSize={10}
-                        overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
+                        overlayIcon={<PlayArrow sx={{ fontSize: 20, color: '#1a0f08', ml: 0.3 }} />}
                         metaItems={[]}
                       />
                   </Box>

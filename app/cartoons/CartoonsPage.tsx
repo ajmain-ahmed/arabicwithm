@@ -307,7 +307,7 @@ export default function CartoonsPage({
                     mobileAspectRatio="4 / 5"
                     mobileImagePosition="center"
                     mobileTitleSize={10}
-                    overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
+                    overlayIcon={<PlayArrow sx={{ fontSize: 20, color: '#1a0f08', ml: 0.3 }} />}
                     metaItems={[{ icon: <Movie sx={{ fontSize: 15, color: 'var(--awm-muted-light)' }} />, label: episode.showTitle }]}
                   />
                 ))}
@@ -339,7 +339,7 @@ export default function CartoonsPage({
                       denseMobileTile
                       mobileAspectRatio="4 / 5"
                       mobileImagePosition="center"
-                      overlayIcon={<PlayArrow sx={{ fontSize: 20, color: BARK, ml: 0.3 }} />}
+                      overlayIcon={<PlayArrow sx={{ fontSize: 20, color: '#1a0f08', ml: 0.3 }} />}
                       metaItems={[{ icon: <School sx={{ fontSize: 14, color: 'var(--awm-muted-light)' }} />, label: `${episodeCounts[show.slug] ?? 0} episodes` }]}
                     />
                   </Box>

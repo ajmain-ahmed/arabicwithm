@@ -234,6 +234,7 @@ export default function ContentCard({
                 height: compactMobileRow ? { xs: 34, sm: 44 } : 44,
                 borderRadius: '50%',
                 backgroundColor: 'rgba(255,255,255,0.92)',
+                color: '#1a0f08',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

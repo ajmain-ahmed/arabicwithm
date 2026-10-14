@@ -124,8 +124,13 @@ html[data-theme='dark'] .MuiOutlinedInput-root {
 
 html[data-theme='dark'] .MuiInputLabel-root,
 html[data-theme='dark'] .MuiFormLabel-root,
-html[data-theme='dark'] .MuiFormHelperText-root,
-html[data-theme='dark'] .MuiSvgIcon-root {
+html[data-theme='dark'] .MuiFormHelperText-root {
+  color: inherit;
+}
+
+/* Only icons inside inputs should inherit; a blanket .MuiSvgIcon-root rule
+   defeats per-icon colours (gold accents, play buttons) in dark mode. */
+html[data-theme='dark'] .MuiInputBase-root .MuiSvgIcon-root {
   color: inherit;
 }
 
