@@ -33,6 +33,13 @@ it.each([false, true])('groups the learning destinations under Learn on mobile=%
     await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
     const labels = [...document.querySelectorAll('.mobile-list-btn')].map(button => button.textContent)
     for (const label of ['Memory', 'Grammar', 'Word Search']) expect(labels).toContain(label)
+    /* Grammar prompts sign-in instead of navigating for guests. */
+    mocks.push.mockClear()
+    await act(async () => (document.querySelectorAll('.mobile-list-btn')[[...document.querySelectorAll('.mobile-list-btn')].findIndex(button => button.textContent === 'Grammar')] as HTMLElement).click())
+    expect(mocks.push).not.toHaveBeenCalled()
+    await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
+    await act(async () => (document.querySelectorAll('.mobile-list-btn')[[...document.querySelectorAll('.mobile-list-btn')].findIndex(button => button.textContent === 'Memory')] as HTMLElement).click())
+    expect(mocks.push).toHaveBeenCalledWith('/memory')
   } else {
     expect(host.querySelector('a[href="/word-search"]')).toBeNull()
     const nav = host.querySelector('nav[aria-label="Primary navigation"]')!

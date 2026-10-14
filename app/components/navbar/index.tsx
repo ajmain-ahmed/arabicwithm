@@ -261,7 +261,12 @@ export default function Navbar() {
                                                     return (
                                                         <MenuItem
                                                             key={label}
-                                                            onClick={() => { setLearnAnchor(null); router.push(route) }}
+                                                            onClick={() => {
+                                                                setLearnAnchor(null)
+                                                                /* Grammar needs an account; prompt instead of navigating. */
+                                                                if (label === 'Grammar' && !isLoggedIn) openSignIn()
+                                                                else router.push(route)
+                                                            }}
                                                             sx={{ borderRadius: '8px', gap: 1.5, py: 1.1, alignItems: 'flex-start' }}
                                                         >
                                                             <Icon sx={{ fontSize: 19, color: 'var(--awm-gold)', mt: 0.2 }} />
