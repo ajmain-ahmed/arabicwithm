@@ -343,7 +343,14 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
                     <Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 9, sm: 13 } }}>
                       {book.chapterCount} {book.chapterCount === 1 ? 'chapter' : 'chapters'}
                     </Typography>
-                    <ChevronRight sx={{ color: '#b8860b', fontSize: { xs: 15, sm: 24 } }} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
+                      {!book.premiumExempt && (
+                        <Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 8, sm: 10.5 }, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                          AWM+ Exclusive
+                        </Typography>
+                      )}
+                      <ChevronRight sx={{ color: '#b8860b', fontSize: { xs: 15, sm: 24 } }} />
+                    </Box>
                   </Box>
                 </Box>
               </Paper>
