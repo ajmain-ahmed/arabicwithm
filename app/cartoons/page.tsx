@@ -92,6 +92,24 @@ async function Catalogue({ searchParams }: { searchParams: Promise<SearchParams>
     return true
   })
 
+  /* Grey out filter options that would produce zero results (given the other
+     active filter), so users never reach an empty grid through the UI. */
+  const episodesMatch = (category: string, level: string) =>
+    episodeRows.some(({ episode, showCategory }) =>
+      (!category || category === 'All Categories' || showCategory === category) &&
+      (!level || episode.level === level))
+  const showsMatch = (category: string, level: string) =>
+    shows.some((show) =>
+      (!category || category === 'All Categories' || showCategories[show.slug] === category) &&
+      (!level || show.level === level))
+  const optionHasResults = (category: string, level: string) => episodesMatch(category, level) || showsMatch(category, level)
+  const disabledCategories = availableCategories.filter(
+    (category) => category !== 'All Categories' && !optionHasResults(category, filters.level)
+  )
+  const disabledLevels = WATCH_LEVELS.filter(
+    (level) => !optionHasResults(filters.category || 'All Categories', level)
+  )
+
   const episodePageCount = Math.max(1, Math.ceil(filteredEpisodes.length / PAGE_SIZE))
   const showPageCount = Math.max(1, Math.ceil(filteredShows.length / PAGE_SIZE))
   const requestedPage = Number.parseInt(firstParam(sp.page), 10)
@@ -111,6 +129,8 @@ async function Catalogue({ searchParams }: { searchParams: Promise<SearchParams>
       showAdditionalTags={Object.fromEntries(slice(filteredShows).map((show) => [show.slug, showAdditionalTags[show.slug] ?? []]))}
       episodeCounts={Object.fromEntries(slice(filteredShows).map((show) => [show.slug, episodesByShow.get(show.id)?.length ?? 0]))}
       availableCategories={availableCategories}
+      disabledCategories={disabledCategories}
+      disabledLevels={disabledLevels}
       filters={filters}
       page={page}
       episodePageCount={episodePageCount}

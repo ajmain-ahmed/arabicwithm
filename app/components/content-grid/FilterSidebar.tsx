@@ -25,6 +25,8 @@ export interface FilterSidebarProps {
   setActiveGenre?: (g: string) => void
   activeLanguage?: string
   setActiveLanguage?: (lang: string) => void
+  disabledCategories?: string[]
+  disabledLevels?: string[]
   onMobileClose?: () => void
   hideTitle?: boolean
 }
@@ -34,41 +36,56 @@ function FilterButtonGroup({
   active,
   onChange,
   onMobileClose,
+  disabledOptions,
 }: {
   options: string[]
   active: string
   onChange: (v: string) => void
   onMobileClose?: () => void
+  disabledOptions?: string[]
 }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-      {options.map((opt) => (
-        <Button
-          key={opt}
-          onClick={() => {
-            onChange(active === opt ? '' : opt)
-            onMobileClose?.()
-          }}
-          sx={{
-            justifyContent: 'flex-start',
-            height: 40,
-            px: 1.5,
-            borderRadius: '6px',
-            fontFamily: 'var(--font-sans), system-ui, sans-serif',
-            fontSize: 13,
-            fontWeight: 500,
-            textTransform: 'none',
-            color: active === opt ? BARK : MUTED,
-            backgroundColor: active === opt ? 'rgba(184,134,11,0.06)' : WARM_WHITE,
-            border: `1px solid ${active === opt ? GOLD : 'rgba(44,26,14,0.1)'}`,
-            borderLeft: active === opt ? `3px solid ${GOLD}` : `1px solid rgba(44,26,14,0.1)`,
-            '&:hover': { backgroundColor: 'rgba(184,134,11,0.04)' },
-            transition: 'all 0.15s',
-          }}
-        >
-          {opt}
-        </Button>
-      ))}
+      {options.map((opt) => {
+        /* Options that would yield zero results are greyed out, unless the
+           option is currently active (it stays tappable so it can be toggled
+           off, e.g. when arriving via a stale URL). */
+        const disabled = Boolean(disabledOptions?.includes(opt)) && active !== opt
+        return (
+          <Button
+            key={opt}
+            disabled={disabled}
+            onClick={() => {
+              onChange(active === opt ? '' : opt)
+              onMobileClose?.()
+            }}
+            sx={{
+              justifyContent: 'flex-start',
+              height: 40,
+              px: 1.5,
+              borderRadius: '6px',
+              fontFamily: 'var(--font-sans), system-ui, sans-serif',
+              fontSize: 13,
+              fontWeight: 500,
+              textTransform: 'none',
+              color: active === opt ? BARK : MUTED,
+              backgroundColor: active === opt ? 'rgba(184,134,11,0.06)' : WARM_WHITE,
+              border: `1px solid ${active === opt ? GOLD : 'rgba(44,26,14,0.1)'}`,
+              borderLeft: active === opt ? `3px solid ${GOLD}` : `1px solid rgba(44,26,14,0.1)`,
+              '&:hover': { backgroundColor: 'rgba(184,134,11,0.04)' },
+              '&:disabled': {
+                color: 'color-mix(in srgb, var(--awm-muted) 55%, transparent)',
+                backgroundColor: 'transparent',
+                border: '1px solid rgba(44,26,14,0.06)',
+                cursor: 'not-allowed',
+              },
+              transition: 'all 0.15s',
+            }}
+          >
+            {opt}
+          </Button>
+        )
+      })}
     </Box>
   )
 }
@@ -106,16 +123,18 @@ export default function FilterSidebar({
   setActiveGenre,
   activeLanguage,
   setActiveLanguage,
+  disabledCategories,
+  disabledLevels,
   onMobileClose,
   hideTitle,
 }: FilterSidebarProps) {
   const hasFilters = Boolean((activeCategory && activeCategory !== categories[0]) || activeLevel || activeGenre || activeLanguage)
   const clearAll = () => {
+    /* Route through the setters: on /cartoons they navigate (clearing the
+       URL params server-side); on client-filtered pages they update state.
+       Raw history.replaceState rewrites the URL without re-rendering. */
     setActiveCategory(categories[0] ?? '')
     setActiveLevel(''); setActiveGenre?.(''); setActiveLanguage?.('')
-    const url = new URL(window.location.href)
-    for (const key of ['category', 'level', 'genre', 'language', 'tag', 'tags', 'additionalTag']) url.searchParams.delete(key)
-    window.history.replaceState(null, '', url.pathname + url.search + url.hash)
     onMobileClose?.()
   }
   return (
@@ -145,6 +164,7 @@ export default function FilterSidebar({
             active={activeCategory}
             onChange={(v) => setActiveCategory(v || categories[0] || '')}
             onMobileClose={onMobileClose}
+            disabledOptions={disabledCategories}
           />
         </FilterSection>
       )}
@@ -164,32 +184,42 @@ export default function FilterSidebar({
       {/* ── Level ── */}
       <FilterSection label="Level">
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.75 }}>
-          {levels.map((lvl) => (
-            <Button
-              key={lvl}
-              onClick={() => {
-                setActiveLevel(activeLevel === lvl ? '' : lvl)
-                onMobileClose?.()
-              }}
-              sx={{
-                height: 36,
-                borderRadius: '6px',
-                fontFamily: 'var(--font-sans), system-ui, sans-serif',
-                fontSize: 12,
-                fontWeight: 600,
-                textTransform: 'none',
-                color: activeLevel === lvl ? '#fff' : MUTED,
-                backgroundColor: activeLevel === lvl ? GOLD : WARM_WHITE,
-                border: `1px solid ${activeLevel === lvl ? GOLD : 'rgba(44,26,14,0.1)'}`,
-                '&:hover': {
-                  backgroundColor: activeLevel === lvl ? GOLD : 'rgba(184,134,11,0.04)',
-                },
-                transition: 'all 0.15s',
-              }}
-            >
-              {lvl}
-            </Button>
-          ))}
+          {levels.map((lvl) => {
+            const disabled = Boolean(disabledLevels?.includes(lvl)) && activeLevel !== lvl
+            return (
+              <Button
+                key={lvl}
+                disabled={disabled}
+                onClick={() => {
+                  setActiveLevel(activeLevel === lvl ? '' : lvl)
+                  onMobileClose?.()
+                }}
+                sx={{
+                  height: 36,
+                  borderRadius: '6px',
+                  fontFamily: 'var(--font-sans), system-ui, sans-serif',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  color: activeLevel === lvl ? '#fff' : MUTED,
+                  backgroundColor: activeLevel === lvl ? GOLD : WARM_WHITE,
+                  border: `1px solid ${activeLevel === lvl ? GOLD : 'rgba(44,26,14,0.1)'}`,
+                  '&:hover': {
+                    backgroundColor: activeLevel === lvl ? GOLD : 'rgba(184,134,11,0.04)',
+                  },
+                  '&:disabled': {
+                    color: 'color-mix(in srgb, var(--awm-muted) 55%, transparent)',
+                    backgroundColor: 'transparent',
+                    border: '1px solid rgba(44,26,14,0.06)',
+                    cursor: 'not-allowed',
+                  },
+                  transition: 'all 0.15s',
+                }}
+              >
+                {lvl}
+              </Button>
+            )
+          })}
         </Box>
       </FilterSection>
 

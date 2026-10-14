@@ -101,6 +101,8 @@ export default function CartoonsPage({
   showAdditionalTags,
   episodeCounts,
   availableCategories,
+  disabledCategories,
+  disabledLevels,
   filters,
   page,
   episodePageCount,
@@ -113,6 +115,8 @@ export default function CartoonsPage({
   showAdditionalTags: Record<string, string[]>
   episodeCounts: Record<string, number>
   availableCategories: string[]
+  disabledCategories: string[]
+  disabledLevels: string[]
   filters: WatchFilters
   page: number
   episodePageCount: number
@@ -185,6 +189,8 @@ export default function CartoonsPage({
       setActiveCategory={setActiveCategory}
       activeLevel={activeLevel}
       setActiveLevel={setActiveLevel}
+      disabledCategories={disabledCategories}
+      disabledLevels={disabledLevels}
       onMobileClose={() => setFilterDrawerOpen(false)}
     />
   )
