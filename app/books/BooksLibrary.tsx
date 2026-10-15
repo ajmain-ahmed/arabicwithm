@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Typography } from '@mui/material'
-import { AutoStories, ChevronRight, Close, Tune } from '@mui/icons-material'
+import { AutoStories, ChevronRight, Close, Headphones, Tune } from '@mui/icons-material'
 import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 
@@ -335,8 +335,13 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
                   <Typography sx={{ display: { xs: 'none', sm: '-webkit-box' }, minHeight: '4.5em', color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13.5, lineHeight: 1.5, overflow: 'hidden', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', mb: 1.75 }}>
                     {book.description}
                   </Typography>
-                  <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 0.75, flexWrap: 'wrap', mb: 2, minHeight: 24 }}>
+                  <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 0.75, flexWrap: 'wrap', alignItems: 'center', mb: 2, minHeight: 24 }}>
                     {book.level && <CefrChip level={book.level} size="small" />}
+                    {audioIds.has(book.id) && (
+                      <Box component="span" title="Audiobook available" sx={{ display: 'inline-flex', color: 'var(--awm-gold)', ml: 0.25 }}>
+                        <Headphones sx={{ fontSize: 19 }} />
+                      </Box>
+                    )}
                     {book.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ display: { xs: 'none', sm: 'inline-flex' }, bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />)}
                   </Box>
                   <Box sx={{ mt: 'auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', pt: { xs: 0.6, sm: 1.5 }, borderTop: '1px solid rgba(44,26,14,0.07)' }}>
