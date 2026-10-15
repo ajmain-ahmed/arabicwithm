@@ -12,6 +12,16 @@ async function fill(label:string,value:string){const input=[...document.querySel
 async function validForm(){await fill('YouTube URL or video ID','ZBynl03Vp-w');await fill('Video Title','A video');await fill('Transcript JSON','[{"arabic":"\\u0645\\u0631\\u062d\\u0628\\u0627","start_ms":1000,"end_ms":5000}]');await act(async()=>{await new Promise(resolve=>setTimeout(resolve,800))})}
 const importButton=()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Import') as HTMLButtonElement
 const draftButton=()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Save draft') as HTMLButtonElement
+it.each([[true,true],[true,false],[false,true],[false,false]])('submits independent publication choices search=%s, For You=%s',async(searchable,explorePublished)=>{
+ await open()
+ const checks=[...document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')]
+ expect(checks.map(input=>input.checked)).toEqual([true,true])
+ if(!searchable)await act(async()=>checks[0].click())
+ if(!explorePublished)await act(async()=>checks[1].click())
+ expect(checks.map(input=>input.checked)).toEqual([searchable,explorePublished])
+ await validForm();await act(async()=>importButton().click())
+ expect(mocks.import).toHaveBeenCalledWith(expect.objectContaining({searchable,explorePublished}))
+})
 it('offers Save draft alongside Cancel and Import and saves unfinished inputs without import validation',async()=>{
  await open();expect(draftButton().disabled).toBe(false)
  const actions=[...document.querySelectorAll('[role="dialog"] button')].map(b=>b.textContent)
@@ -61,7 +71,7 @@ it('shows useful server validation errors without closing the JSON editor',async
 it('offers only the essential manual-import inputs',async()=>{
   await open()
   const dialog=document.querySelector('[role="dialog"]')!
-  expect([...dialog.querySelectorAll('label')].map(label=>label.textContent?.replace(/\s*\*$/, ''))).toEqual(['Video Title','YouTube URL or video ID','Group (optional)','Video duration','Transcript JSON','Publish to the shared searchable transcript library'])
+  expect([...dialog.querySelectorAll('label')].map(label=>label.textContent?.replace(/\s*\*$/, ''))).toEqual(['Video Title','YouTube URL or video ID','Group (optional)','Video duration','Transcript JSON','Publish to searchable transcript libraryAvailable in transcript search and the directory.','Publish to For YouProvides clips for Explore ? For You.'])
   expect(dialog.textContent).not.toMatch(/Channel \/ source|Arabic SRT|English SRT|VTT|Import Transcript/)
   expect([...dialog.querySelectorAll('button')].map(button=>button.textContent)).toContain('Import')
 })
@@ -102,6 +112,16 @@ async function openEdit(){
  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='Edit / Publish')!.click())
 }
 const editSave=()=>[...document.querySelectorAll('[role="dialog"] button')].find(button=>button.textContent==='Save Changes') as HTMLButtonElement
+it('reloads both stored publication values and saves a For You-only change',async()=>{
+ await openEdit()
+ expect([...document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')].map(c=>c.checked)).toEqual([true,false])
+ const forYou=document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')[1]
+ await act(async()=>forYou.click())
+ mocks.save.mockResolvedValue({ok:true,json:savedJson,updatedAt:'2026-10-08T12:00:00Z'})
+ await act(async()=>editSave().click())
+ expect(mocks.save).toHaveBeenCalledWith(editRow.id,expect.objectContaining({searchable:true,explorePublished:true}))
+ expect(mocks.move).not.toHaveBeenCalled()
+})
 it('populates Edit with current JSON, keeps unsaved changes through list refresh, and formats without changing data',async()=>{
  await openEdit();expect(document.querySelector('textarea')?.value).toBe(savedJson)
  const corrected=savedJson.replace('Hello','Welcome');await fill('Transcript JSON',corrected)
@@ -119,7 +139,7 @@ it('keeps invalid edits and returns from Saving on failure, then permits correct
  await fill('Transcript JSON',savedJson.replace('Hello','Corrected'))
  mocks.save.mockResolvedValueOnce({ok:true,json:savedJson,updatedAt:'2026-10-08T12:00:00Z'})
  await act(async()=>editSave().click())
- expect(mocks.save).toHaveBeenLastCalledWith(editRow.id,{json:savedJson.replace('Hello','Corrected'),title:editRow.title,channel:editRow.channel,searchable:true,updatedAt:editRow.updated_at,duration:'0:10',durationFormat:'clock',url:'',groupId:null})
+ expect(mocks.save).toHaveBeenLastCalledWith(editRow.id,{json:savedJson.replace('Hello','Corrected'),title:editRow.title,channel:editRow.channel,searchable:true,explorePublished:false,updatedAt:editRow.updated_at,duration:'0:10',durationFormat:'clock',url:'',groupId:null})
  expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Saved')
  await fill('Transcript JSON',savedJson.replace('Hello','Welcome'))
  mocks.save.mockResolvedValueOnce({ok:true,json:savedJson,updatedAt:'2026-10-08T12:01:00Z'})

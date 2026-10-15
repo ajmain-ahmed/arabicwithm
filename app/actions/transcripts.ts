@@ -12,10 +12,10 @@ import { MAX_TRANSCRIPT_BYTES, normaliseManualTranscriptJson, serialiseTranscrip
 import {transcriptDatabaseError} from '@/app/lib/transcriptDatabaseError'
 import { MissingTranscriptDuration, parseVideoDuration } from '@/app/lib/transcriptTiming'
 
-export interface TranscriptRow {id:string;youtube_id:string;canonical_url:string;title:string;channel:string|null;thumbnail:string;duration_seconds:number|null;provider:string;status:string;translation_status:string;searchable:boolean;created_at:string;updated_at:string;error_code:string|null;website_generation?:boolean;group_id?:string|null;draft_id?:string;draft_version?:string}
+export interface TranscriptRow {id:string;youtube_id:string;canonical_url:string;title:string;channel:string|null;thumbnail:string;duration_seconds:number|null;provider:string;status:string;translation_status:string;searchable:boolean;explore_published?:boolean;created_at:string;updated_at:string;error_code:string|null;website_generation?:boolean;group_id?:string|null;draft_id?:string;draft_version?:string}
 export interface TranscriptSegment {id:number;position:number;original_text:string;english_text:string|null;start_seconds:number;end_seconds:number|null;start_ms?:number;end_ms?:number|null;canonical_paragraph?:Json|null}
 export interface TranscriptHit {segment_id:number;transcript_id:string;youtube_id:string;title:string;channel:string|null;thumbnail:string;start_seconds:number;end_seconds:number|null;original_text:string;english_text:string|null;matched_surfaces:string[];match_type:string;match_rank:number;previous_text:string|null;next_text:string|null}
-const columns='id,youtube_id,canonical_url,title,channel,thumbnail,duration_seconds,provider,status,translation_status,searchable,created_at,updated_at,error_code'
+const columns='id,youtube_id,canonical_url,title,channel,thumbnail,duration_seconds,provider,status,translation_status,searchable,explore_published,created_at,updated_at,error_code'
 function missingGenerationColumn(error:{code?:string;message:string}|null):boolean{return Boolean(error&&['42703','PGRST204'].includes(error.code??'')&&error.message.includes('website_generation'))}
 async function adminIdentity():Promise<string> {const access=await getAuthenticatedAccess();if(!access?.admin) throw new Error('Forbidden');return access.userId}
 async function recordAdminOrigin(actor:string,id:string):Promise<void> {
@@ -59,8 +59,8 @@ export async function listAdminTranscripts(page=0,titleSearch='',groupFilter='')
   const list=data as unknown as ManualTranscriptList,draftList=draftData as unknown as {rows:TranscriptRow[];total:number;count:number}
   return {...list,...(drafts?{rows:draftList.rows,total:draftList.total}:{}),groups:[{id:'drafts',name:'Drafts',parent_id:null,direct_count:draftList.count,transcript_count:draftList.count},...(list.groups??[])]}
 }
-export interface ManualDraftInput {url:string;title:string;channel:string;json:string;searchable:boolean;duration:string;durationFormat:'clock'|'minutes';groupId:string|null}
-const manualDraftInput=z.object({url:z.string().max(2048),title:z.string().max(300),channel:z.string().max(300),json:z.string().max(MAX_TRANSCRIPT_BYTES).refine(value=>Buffer.byteLength(value,'utf8')<=MAX_TRANSCRIPT_BYTES,'Draft JSON exceeds 20 MB.'),searchable:z.boolean(),duration:z.string().max(30),durationFormat:z.enum(['clock','minutes']),groupId:z.string().uuid().nullable()})
+export interface ManualDraftInput {url:string;title:string;channel:string;json:string;searchable:boolean;explorePublished?:boolean;duration:string;durationFormat:'clock'|'minutes';groupId:string|null}
+const manualDraftInput=z.object({url:z.string().max(2048),title:z.string().max(300),channel:z.string().max(300),json:z.string().max(MAX_TRANSCRIPT_BYTES).refine(value=>Buffer.byteLength(value,'utf8')<=MAX_TRANSCRIPT_BYTES,'Draft JSON exceeds 20 MB.'),searchable:z.boolean(),explorePublished:z.boolean().default(true),duration:z.string().max(30),durationFormat:z.enum(['clock','minutes']),groupId:z.string().uuid().nullable()})
 function draftError(error:unknown):string{return error instanceof z.ZodError?error.issues[0].message:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to save draft.'}
 function draftDatabaseError(operation:string,error:{code?:string;message:string}):Error{return new Error(error.message.includes('draft_conflict')?'This draft changed in another tab. Reopen it before saving or deleting.':transcriptDatabaseError(operation,error))}
 export async function saveAdminManualDraft(id:string,payload:ManualDraftInput,updatedAt:string|null=null):Promise<{ok:true;id:string;updatedAt:string}|{ok:false;error:string}>{
@@ -143,15 +143,15 @@ export async function validateAdminManualTranscript(input:{url:string;json:strin
     return {ok:true,segments:raw.content.length,durationSource}
   }catch(error){return {ok:false,error:error instanceof z.ZodError?error.issues[0].message:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to check the transcript.',needsDuration:error instanceof MissingTranscriptDuration}}
 }
-async function prepareManualImport(input:{url:string;title:string;channel?:string;json?:string;arabic?:string;english?:string;searchable:boolean;duration?:string;durationSeconds?:number;durationFormat?:'clock'|'minutes';groupId?:string|null}):Promise<ManualImportState> {
+async function prepareManualImport(input:{url:string;title:string;channel?:string;json?:string;arabic?:string;english?:string;searchable:boolean;explorePublished?:boolean;duration?:string;durationSeconds?:number;durationFormat?:'clock'|'minutes';groupId?:string|null}):Promise<ManualImportState> {
   const actor=await adminIdentity()
-  const value=z.object({url:z.string().trim().max(2048),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300).default(''),json:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),arabic:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),english:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),searchable:z.boolean(),duration:z.string().max(30).optional(),durationFormat:z.enum(['clock','minutes']).default('clock'),durationSeconds:z.number().finite().positive().max(43200).optional(),groupId:z.string().uuid().nullable().optional()}).parse(input)
+  const value=z.object({url:z.string().trim().max(2048),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300).default(''),json:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),arabic:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),english:z.string().max(MAX_TRANSCRIPT_BYTES).optional(),searchable:z.boolean(),explorePublished:z.boolean().default(true),duration:z.string().max(30).optional(),durationFormat:z.enum(['clock','minutes']).default('clock'),durationSeconds:z.number().finite().positive().max(43200).optional(),groupId:z.string().uuid().nullable().optional()}).parse(input)
   const id=manualVideoId(value.url)
   const durationMs=parseVideoDuration(value.duration??'',value.durationFormat)
   const raw=value.json!==undefined?(await resolveManualJson(value.json,id,value.duration,value.durationSeconds,value.durationFormat)).raw:normaliseManualTranscript(value.arabic??'',value.english)
-  const parameters={p_youtube_id:id,p_title:value.title,p_channel:value.channel||'Unknown channel',p_raw:{...raw,...(value.json!==undefined?{_source_json:value.json}:{})} as unknown as Json,p_searchable:value.searchable,p_group:value.groupId??null,p_duration:durationMs===undefined?value.durationSeconds??null:durationMs/1000}
+  const parameters={p_youtube_id:id,p_title:value.title,p_channel:value.channel||'Unknown channel',p_raw:{...raw,...(value.json!==undefined?{_source_json:value.json}:{})} as unknown as Json,p_searchable:value.searchable,p_explore_published:value.explorePublished,p_group:value.groupId??null,p_duration:durationMs===undefined?value.durationSeconds??null:durationMs/1000}
   const key=createHash('sha256').update(JSON.stringify(parameters)).digest('hex')
-  const {data,error}=await serviceClient.rpc('admin_begin_manual_import',{p_actor:actor,p_key:key,...parameters})
+  const {data,error}=await serviceClient.rpc('website_begin_manual_import',{p_actor:actor,p_key:key,...parameters})
   if(error)throw importFailure(error)
   return importState.parse(data)
 }
@@ -183,7 +183,7 @@ export async function resumeAdminManualImport(id:string):Promise<ImportReply>{
 }
 export async function finishAdminManualImport(id:string):Promise<ImportReply>{
  try{const actor=await adminIdentity();z.string().uuid().parse(id)
-  const {data,error}=await serviceClient.rpc('admin_finish_manual_import',{p_actor:actor,p_import:id})
+  const {data,error}=await serviceClient.rpc('website_finish_manual_import',{p_actor:actor,p_import:id})
   if(error)throw importFailure(error)
   const state=importState.parse(data)
   if(!state.completed||state.committed!==state.expected)throw new Error('Import verification failed.')
@@ -242,10 +242,10 @@ export async function loadPublicTranscript(id:string,after=-1,seconds?:number){r
 export async function loadAdminTranscript(id:string,after=-1,seconds?:number){await guardAdmin();return loadTranscript(id,after,seconds,true)}
 
 /** Export every stored segment, independently of the viewer's 100-row window. */
-export async function downloadAdminTranscriptJson(id: string): Promise<{ filename: string; json: string; updatedAt: string; durationSeconds: number | null; title: string; channel: string | null; searchable: boolean; youtubeId:string;groupId:string|null }> {
+export async function downloadAdminTranscriptJson(id: string): Promise<{ filename: string; json: string; updatedAt: string; durationSeconds: number | null; title: string; channel: string | null; searchable: boolean; explorePublished: boolean; youtubeId:string;groupId:string|null }> {
   await guardAdmin()
   z.string().uuid().parse(id)
-  const { data: video, error } = await serviceClient.from('youtube_transcripts').select('title,channel,searchable,raw_transcript,updated_at,duration_seconds,youtube_id').eq('id', id).maybeSingle()
+  const { data: video, error } = await serviceClient.from('youtube_transcripts').select('title,channel,searchable,explore_published,raw_transcript,updated_at,duration_seconds,youtube_id').eq('id', id).maybeSingle()
   if (error) throw new Error('Unable to load transcript for download.')
   if (!video) throw new Error('Transcript is no longer available.')
   const segments: TranscriptSegment[] = []
@@ -266,22 +266,22 @@ export async function downloadAdminTranscriptJson(id: string): Promise<{ filenam
   if (!segments.length) throw new Error('This transcript has no segments to download yet.')
   const {data:membership,error:groupError}=await serviceClient.from('admin_manual_transcripts').select('group_id').eq('transcript_id',id).maybeSingle()
   if(groupError)throw new Error('Unable to load transcript group. Apply the transcript groups migration.')
-  return { youtubeId:video.youtube_id,groupId:membership?.group_id??null,filename: transcriptJsonFilename(video.title), json: serialiseTranscriptJson(segments, video.raw_transcript), updatedAt: video.updated_at, durationSeconds: video.duration_seconds, title: video.title, channel: video.channel, searchable: video.searchable }
+  return { youtubeId:video.youtube_id,groupId:membership?.group_id??null,filename: transcriptJsonFilename(video.title), json: serialiseTranscriptJson(segments, video.raw_transcript), updatedAt: video.updated_at, durationSeconds: video.duration_seconds, title: video.title, channel: video.channel, searchable: video.searchable, explorePublished: video.explore_published??false }
 }
 
 /** Validate with Manual Import, then commit content and metadata in one RPC. */
-export async function saveAdminTranscriptJson(id: string, input: {json:string;title:string;channel:string;searchable:boolean;updatedAt:string;duration?:string;durationFormat?:'clock'|'minutes';url?:string;groupId?:string|null}): Promise<{ok:true;updatedAt:string;json:string;enrichment?:ManualEnrichmentStatus}|{ok:false;error:string}> {
+export async function saveAdminTranscriptJson(id: string, input: {json:string;title:string;channel:string;searchable:boolean;explorePublished?:boolean;updatedAt:string;duration?:string;durationFormat?:'clock'|'minutes';url?:string;groupId?:string|null}): Promise<{ok:true;updatedAt:string;json:string;enrichment?:ManualEnrichmentStatus}|{ok:false;error:string}> {
   try {
     const actor = await adminIdentity()
     z.string().uuid().parse(id)
-    const value = z.object({json:z.string().max(MAX_TRANSCRIPT_BYTES),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300),searchable:z.boolean(),updatedAt:z.string().datetime({offset:true}),duration:z.string().max(30).optional(),durationFormat:z.enum(['clock','minutes']).default('clock'),url:z.string().trim().max(2048).optional(),groupId:z.string().uuid().nullable().optional()}).parse(input)
+    const value = z.object({json:z.string().max(MAX_TRANSCRIPT_BYTES),title:z.string().trim().min(1,'Enter a video title.').max(300),channel:z.string().trim().max(300),searchable:z.boolean(),explorePublished:z.boolean().default(true),updatedAt:z.string().datetime({offset:true}),duration:z.string().max(30).optional(),durationFormat:z.enum(['clock','minutes']).default('clock'),url:z.string().trim().max(2048).optional(),groupId:z.string().uuid().nullable().optional()}).parse(input)
     const {data:video,error:readError} = await serviceClient.from('youtube_transcripts').select('youtube_id,duration_seconds').eq('id',id).single()
     if(readError)throw new Error(transcriptDatabaseError('Edit lookup',readError))
     if(!video)throw new Error('Transcript not found.')
     const youtubeId=value.url===undefined?video.youtube_id:manualVideoId(value.url)
     const durationMs=parseVideoDuration(value.duration??'',value.durationFormat)
     const {raw} = await resolveManualJson(value.json,youtubeId,value.duration,undefined,value.durationFormat,youtubeId===video.youtube_id?video.duration_seconds:null)
-    const {data,error} = await serviceClient.rpc('admin_save_manual_source',{p_actor:actor,p_id:id,p_raw:{...raw,_source_json:value.json} as unknown as Json,p_title:value.title,p_channel:value.channel,p_searchable:value.searchable,p_updated_at:value.updatedAt,p_youtube_id:youtubeId,p_group:value.groupId??null,p_duration:durationMs===undefined?null:durationMs/1000})
+    const {data,error} = await serviceClient.rpc('website_save_manual_source',{p_actor:actor,p_id:id,p_raw:{...raw,_source_json:value.json} as unknown as Json,p_title:value.title,p_channel:value.channel,p_searchable:value.searchable,p_explore_published:value.explorePublished,p_updated_at:value.updatedAt,p_youtube_id:youtubeId,p_group:value.groupId??null,p_duration:durationMs===undefined?null:durationMs/1000})
     if (error) throw new Error(error.code==='23503'?'The selected group no longer exists. Choose another group.':error.code==='23505'?'This YouTube video already has a transcript.':/Video duration|Only manual/.test(error.message)?error.message:/transcript_edit_conflict/.test(error.message)?'This transcript changed after you opened it. Reopen Edit before saving. Your edits are still here.':/transcript_edit_busy/.test(error.message)?'Wait for transcript processing and translation to finish before editing.':/generation_incomplete/.test(error.message)?'Published generated transcripts need English for every segment. Add the missing translations or turn publication off.':transcriptDatabaseError('Edit',error))
     for (const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${id}`]) revalidatePath(path)
     const result=z.object({updatedAt:z.string(),enrichment:z.enum(['ready','partial','unavailable'])}).parse(data)

@@ -26,8 +26,8 @@ const calls: string[] = []
 const destroy = vi.fn()
 const pause = vi.fn()
 const seek = vi.fn()
-function Harness({ id, start, muted = true }: { id?: string; start?: number; muted?: boolean }) {
-  const player = useYouTubePlayer(id, undefined, start, { autoplay: true, muted })
+function Harness({ id, start, end, muted = true }: { id?: string; start?: number; end?:number; muted?: boolean }) {
+  const player = useYouTubePlayer(id, undefined, start, { autoplay: true, muted, endAt:end })
   useEffect(() => { controls = player })
   const { wrapRef } = player
   return <div ref={wrapRef} />
@@ -59,6 +59,11 @@ beforeEach(() => {
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers() })
 describe('YouTube player lifecycle', () => {
+  it('passes the clip end to the API player so playback stops before excluded material',async()=>{
+    await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" start={600} end={635}/>))
+    await act(async()=>{await vi.advanceTimersByTimeAsync(60)})
+    expect(options.playerVars).toMatchObject({start:600,end:635})
+  })
   it('sizes the replacement iframe and mutes before autoplay', async () => {
     await act(async () => { root.render(<Harness id="dQw4w9WgXcQ" />) })
     await act(async () => { await vi.advanceTimersByTimeAsync(60) })

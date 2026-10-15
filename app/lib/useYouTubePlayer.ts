@@ -184,6 +184,7 @@ export default function useYouTubePlayer(
             enablejsapi: 1,
             playsinline: 1,
             start: startAtRef.current && startAtRef.current > 0 ? Math.floor(startAtRef.current) : undefined,
+            end: options.endAt != null && Number.isFinite(options.endAt) ? Math.floor(options.endAt) : undefined,
             origin: typeof window !== 'undefined' ? window.location.origin : undefined,
           },
           events: {

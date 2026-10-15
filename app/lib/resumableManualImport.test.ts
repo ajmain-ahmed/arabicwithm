@@ -39,6 +39,8 @@ beforeAll(async()=>{
  `)
  await db.exec(readFileSync('supabase/migrations/20261009164750_resumable_manual_transcript_import.sql','utf8'))
  await db.exec(readFileSync('app/lib/fixtures/manual-import-classifier-reference.sql','utf8'))
+ await db.exec('alter table transcript_segments add column for_you_manual_excluded boolean not null default false')
+ await db.exec(readFileSync('supabase/migrations/20261015230613_transcript_publishing_controls.sql','utf8'))
 },30000)
 afterAll(async()=>{await db?.close()})
 type State={importId:string;id:string;committed:number;expected:number;tokens:number;completed:boolean;enrichment:string}
@@ -115,3 +117,31 @@ it('preserves classifier decisions when the third matching transcript arrives',a
  await db.query('select transcript_private.classify_for_you($1)',[ids[2]])
  expect((await db.query('select id,for_you_theme_score score,for_you_music_only music from transcript_segments where transcript_id=any($1::uuid[]) order by id',[ids])).rows).toEqual(before)
 },20000)
+
+it.each([[true,true],[true,false],[false,true],[false,false]])('persists independent website publication search=%s, For You=%s across import and retry',async(searchable,explore)=>{
+ const raw={content:[{text:'\u0645\u0631\u062d\u0628\u0627',offset:60000,duration:3000,english:'Hello'}]}
+ const video='pubtest00'+Number(searchable)+Number(explore)
+ let state=(await db.query<{s:State}>('select website_begin_manual_import($1,$2,$3,$4,$5,$6,$7,$8,null,null) s',[actor,('a'+Number(searchable)+Number(explore)).padEnd(64,'f'),video,'Publication test','Channel',raw,searchable,explore])).rows[0].s
+ state=await append(state)
+ await db.query('select website_finish_manual_import($1,$2)',[actor,state.importId])
+ expect((await db.query('select searchable,explore_published from youtube_transcripts where id=$1',[state.id])).rows[0]).toEqual({searchable,explore_published:explore})
+
+ const version=(await db.query<{updated_at:string}>('select updated_at from youtube_transcripts where id=$1',[state.id])).rows[0].updated_at
+ await db.query('select website_save_manual_source($1,$2,$3,$4,$5,$6,$7,$8,$9,null,null)',[actor,state.id,raw,'Edited title','Channel',!searchable,explore,version,video])
+ expect((await db.query('select searchable,explore_published,title from youtube_transcripts where id=$1',[state.id])).rows[0]).toEqual({searchable:!searchable,explore_published:explore,title:'Edited title'})
+ // A delayed finish acknowledgement cannot republish a subsequently edited record.
+ await db.query('update youtube_transcripts set explore_published=not explore_published where id=$1',[state.id])
+ await db.query('select website_finish_manual_import($1,$2)',[actor,state.importId])
+ expect((await db.query('select explore_published from youtube_transcripts where id=$1',[state.id])).rows[0]).toEqual({explore_published:!explore})
+})
+it('keeps durable video/time exclusions across segment regeneration, without deleting search data',async()=>{
+ const raw={content:[{text:'theme',offset:8000,duration:4000},{text:'story',offset:57000,duration:4000},{text:'closing',offset:635000,duration:3000}]}
+ let state=await begin('ru6DAbFzVio',raw,'9'.repeat(64));state=await append(state);await finish(state)
+ expect((await db.query('select for_you_manual_excluded from transcript_segments where transcript_id=$1 order by position',[state.id])).rows).toEqual([{for_you_manual_excluded:true},{for_you_manual_excluded:false},{for_you_manual_excluded:true}])
+ await db.query('update transcript_segments set for_you_manual_excluded=false where transcript_id=$1',[state.id])
+ expect((await db.query('select count(*)::int n from transcript_segments where transcript_id=$1 and for_you_manual_excluded',[state.id])).rows[0]).toEqual({n:2})
+ let blocked=await begin('3S3cFw0hvLs',{content:[{text:'stored',offset:0,duration:2000}]},'8'.repeat(64));blocked=await append(blocked);await finish(blocked)
+ await db.query('update youtube_transcripts set explore_published=true where id=$1',[blocked.id])
+ expect((await db.query('select searchable,explore_published from youtube_transcripts where id=$1',[blocked.id])).rows[0]).toEqual({searchable:true,explore_published:false})
+ expect((await db.query('select original_text from transcript_segments where transcript_id=$1',[blocked.id])).rows[0]).toEqual({original_text:'stored'})
+})
