@@ -295,11 +295,14 @@ function ExploreVideo({
           boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
+          alignItems: { md: 'center' },
+          justifyContent: { md: 'center' },
+          gap: { md: 1.5 },
         }}
       >
-        {/* 9:16 frame sized to the tighter of column width or available
-            height (container units), so the player never letterboxes. */}
-        <Box sx={{ flex: 1, minHeight: 0, display: 'grid', placeItems: { xs: 'start center', md: 'center' }, containerType: 'size' }}>
+        {/* 9:16 frame sized to the available height (container units), so the
+            player never letterboxes. Desktop: card + action rail as a row. */}
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { md: 2.25 }, containerType: 'size', width: '100%' }}>
         <Box
           data-explore-player={active ? 'active' : 'inactive'}
           sx={{
@@ -311,8 +314,9 @@ function ExploreVideo({
             /* Older browsers: full width, minor letterboxing on tall screens. */
             '@supports (width: 1cqh)': { width: 'min(100%, 56.25cqh)' },
             overflow: 'hidden',
-            borderRadius: { xs: 0, md: '18px' },
-            boxShadow: { xs: 'none', md: '0 22px 60px rgba(14,46,31,0.24)' },
+            borderRadius: { xs: 0, md: '20px' },
+            boxShadow: { xs: 'none', md: '0 30px 80px rgba(0,0,0,0.55)' },
+            border: { md: '1px solid rgba(255,255,255,0.08)' },
           }}
         >
         {!active && episode.cover && (
@@ -357,37 +361,18 @@ function ExploreVideo({
             ))}
           </Box>
         )}
-        <Box sx={{ position: 'absolute', zIndex: 4, right: { xs: 'max(6px, env(safe-area-inset-right))', md: 12 }, top: '50%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'column', gap: 0.85 }}>
-          {/* A native fallback uses YouTube's controls without API commands. */}
-          {(!isYouTube || isReady) && <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
-            <IconButton
-              onClick={toggleSound}
-              aria-label={soundMuted ? 'Turn Explore sound on' : 'Mute Explore video'}
-              sx={{ width: 44, height: 44, bgcolor: 'transparent', color: 'var(--awm-gold-light)', filter: 'drop-shadow(0 1px 3px #000)', '&:hover': { bgcolor: 'transparent', transform: 'scale(1.08)' }, '&:active': { transform: 'scale(.95)' }, '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 } }}
-            >
-              {soundMuted ? <VolumeOff /> : <VolumeUp />}
-            </IconButton>
-          </Tooltip>}
-          <Tooltip title="Go to episode" placement="left">
-            <IconButton
-              component={Link}
-              href={`/cartoons/${episode.showSlug}/${episode.slug}`}
-              aria-label={`Go to episode: ${episode.title}`}
-              sx={{ width: 44, height: 44, bgcolor: 'transparent', color: 'var(--awm-gold-light)', filter: 'drop-shadow(0 1px 3px #000)', '&:hover': { bgcolor: 'transparent', transform: 'scale(1.08)' }, '&:active': { transform: 'scale(.95)' }, '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 } }}
-            >
-              <PlayCircleOutlineRounded />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Practise this episode in Memory" placement="left">
-            <IconButton
-              component={Link}
-              href={`/memory?episode=${encodeURIComponent(episode.id)}`}
-              aria-label={`Practise ${episode.title} in Memory`}
-              sx={{ width: 44, height: 44, bgcolor: 'transparent', color: 'var(--awm-gold-light)', filter: 'drop-shadow(0 1px 3px #000)', '&:hover': { bgcolor: 'transparent', transform: 'scale(1.08)' }, '&:active': { transform: 'scale(.95)' }, '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 } }}
-            >
-              <PsychologyOutlined />
-            </IconButton>
-          </Tooltip>
+        <Box sx={{ display: { xs: 'none', md: 'block' }, position: 'absolute', zIndex: 3, left: 0, right: 0, bottom: 0, px: 2.25, pb: 2, pt: 6, background: 'linear-gradient(180deg, transparent, rgba(0,0,0,0.72))', pointerEvents: 'none' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
+            <CefrChip level={episode.level} size="small" />
+            {episode.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.16)', color: '#fff', height: 22, fontSize: 11 }} />)}
+          </Box>
+          <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 19, fontWeight: 600, color: '#fff', lineHeight: 1.25, textShadow: '0 1px 8px rgba(0,0,0,0.6)' }}>
+            {episode.title}
+          </Typography>
+          <Typography sx={{ mt: 0.35, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
+            {episode.showTitle}
+          </Typography>
+        </Box>
         </Box>
         {errorCode != null && isYouTube && (
           <Box sx={{ position: 'absolute', zIndex: 5, inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 3 }}>
@@ -401,7 +386,83 @@ function ExploreVideo({
           </Box>
         )}
         </Box>
+        <Box sx={{
+          position: { xs: 'absolute', md: 'static' },
+          zIndex: 4,
+          right: { xs: 'max(6px, env(safe-area-inset-right))', md: 'auto' },
+          top: { xs: '50%', md: 'auto' },
+          transform: { xs: 'translateY(-50%)', md: 'none' },
+          alignSelf: { md: 'flex-end' },
+          mb: { md: 3 },
+          display: 'flex',
+          flexDirection: 'column',
+          gap: { xs: 0.85, md: 1.4 },
+        }}>
+          {/* A native fallback uses YouTube's controls without API commands. */}
+          {(!isYouTube || isReady) && <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+              <IconButton
+                onClick={toggleSound}
+                aria-label={soundMuted ? 'Turn Explore sound on' : 'Mute Explore video'}
+                sx={{
+                  width: { xs: 44, md: 50 }, height: { xs: 44, md: 50 },
+                  color: { xs: 'var(--awm-gold-light)', md: '#fff' },
+                  bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.14)' },
+                  filter: { xs: 'drop-shadow(0 1px 3px #000)', md: 'none' },
+                  '&:hover': { bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.24)' }, transform: 'scale(1.08)' },
+                  '&:active': { transform: 'scale(.95)' },
+                  '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 },
+                }}
+              >
+                {soundMuted ? <VolumeOff /> : <VolumeUp />}
+              </IconButton>
+              <Typography sx={{ display: { xs: 'none', md: 'block' }, fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>{soundMuted ? 'Sound' : 'Mute'}</Typography>
+            </Box>
+          </Tooltip>}
+          <Tooltip title="Go to episode" placement="left">
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+              <IconButton
+                component={Link}
+                href={`/cartoons/${episode.showSlug}/${episode.slug}`}
+                aria-label={`Go to episode: ${episode.title}`}
+                sx={{
+                  width: { xs: 44, md: 50 }, height: { xs: 44, md: 50 },
+                  color: { xs: 'var(--awm-gold-light)', md: '#fff' },
+                  bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.14)' },
+                  filter: { xs: 'drop-shadow(0 1px 3px #000)', md: 'none' },
+                  '&:hover': { bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.24)' }, transform: 'scale(1.08)' },
+                  '&:active': { transform: 'scale(.95)' },
+                  '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 },
+                }}
+              >
+                <PlayCircleOutlineRounded />
+              </IconButton>
+              <Typography sx={{ display: { xs: 'none', md: 'block' }, fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>Full episode</Typography>
+            </Box>
+          </Tooltip>
+          <Tooltip title="Practise this episode in Memory" placement="left">
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+              <IconButton
+                component={Link}
+                href={`/memory?episode=${encodeURIComponent(episode.id)}`}
+                aria-label={`Practise ${episode.title} in Memory`}
+                sx={{
+                  width: { xs: 44, md: 50 }, height: { xs: 44, md: 50 },
+                  color: { xs: 'var(--awm-gold-light)', md: '#fff' },
+                  bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.14)' },
+                  filter: { xs: 'drop-shadow(0 1px 3px #000)', md: 'none' },
+                  '&:hover': { bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.24)' }, transform: 'scale(1.08)' },
+                  '&:active': { transform: 'scale(.95)' },
+                  '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 },
+                }}
+              >
+                <PsychologyOutlined />
+              </IconButton>
+              <Typography sx={{ display: { xs: 'none', md: 'block' }, fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>Memory</Typography>
+            </Box>
+          </Tooltip>
         </Box>
+
       </Box>
 
       <Box
@@ -413,18 +474,18 @@ function ExploreVideo({
           boxSizing: 'border-box',
           flexDirection: 'column',
           overflow: 'hidden',
-          border: '1px solid rgba(44,26,14,0.08)',
+          border: '1px solid rgba(255,255,255,0.09)',
           borderRadius: '18px',
-          bgcolor: 'var(--awm-white)',
-          boxShadow: '0 16px 46px rgba(44,26,14,0.08)',
+          bgcolor: '#101312',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
         }}
       >
-        <Box sx={{ px: 3, py: 2.5, borderBottom: '1px solid rgba(44,26,14,0.07)' }}>
+        <Box sx={{ px: 3, py: 2.5, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
             <CefrChip level={episode.level} size="small" />
-            {episode.tags.slice(0, 3).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.09)', color: '#8b6508' }} />)}
+            {episode.tags.slice(0, 3).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.85)', height: 24 }} />)}
           </Box>
-          {episode.description && <Typography sx={{ mt: 1.5, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13.5, lineHeight: 1.55 }}>{episode.description}</Typography>}
+          {episode.description && <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.72)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13.5, lineHeight: 1.55 }}>{episode.description}</Typography>}
         </Box>
 
         <Box ref={transcriptBodyRef} sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 2.5, py: 2 }}>
@@ -443,7 +504,7 @@ function ExploreVideo({
                 transition: 'background-color .18s ease, border-color .18s ease',
               }}
             >
-              <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), var(--font-serif), serif', fontSize: 22, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.65, textAlign: 'right' }}>
+              <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), var(--font-serif), serif', fontSize: 22, fontWeight: 600, color: '#f5ede0', lineHeight: 1.65, textAlign: 'right' }}>
                 {(line.words?.length ?? 0) > 0
                   ? (line.words ?? []).map((word, wordIndex) => (
                       <ExploreDefinitionWord
@@ -457,7 +518,7 @@ function ExploreVideo({
                     ))
                   : line.arabic}
               </Typography>
-              {line.translation && <Typography sx={{ mt: 0.35, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'var(--awm-muted)', lineHeight: 1.55 }}>{line.translation}</Typography>}
+              {line.translation && <Typography sx={{ mt: 0.35, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(245,237,224,0.62)', lineHeight: 1.55 }}>{line.translation}</Typography>}
             </Box>
           ))}
         </Box>
@@ -691,8 +752,8 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
 
   if (items.length === 0) {
     return (
-      <Box sx={{ minHeight: '70vh', display: 'grid', placeItems: 'center', px: 3, textAlign: 'center', bgcolor: 'var(--awm-cream-light)' }}>
-        <Box><ExploreOutlined sx={{ fontSize: 54, color: 'var(--awm-gold)' }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: 'var(--awm-bark)' }}>No videos to explore yet</Typography></Box>
+      <Box sx={{ minHeight: '70vh', display: 'grid', placeItems: 'center', px: 3, textAlign: 'center', bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' } }}>
+        <Box><ExploreOutlined sx={{ fontSize: 54, color: 'var(--awm-gold)' }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: { xs: 'var(--awm-bark)', md: '#f5ede0' } }}>No videos to explore yet</Typography></Box>
       </Box>
     )
   }
@@ -716,7 +777,8 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
         scrollSnapType: 'y mandatory',
         overscrollBehaviorY: 'contain',
         WebkitOverflowScrolling: 'touch',
-        bgcolor: 'var(--awm-cream-light)',
+        /* Desktop is a TikTok-style immersive stage; mobile keeps the cream page. */
+        bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' },
         ...(isMobileDefinitionLayout && selectedDefinition ? { overflowY: 'hidden' } : {}),
       }}
     >
@@ -731,15 +793,15 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
             scrollSnapAlign: 'start',
             scrollSnapStop: 'always',
             display: item.kind === 'video' ? 'grid' : 'block',
-            gridTemplateColumns: item.kind === 'video' ? { xs: '1fr', md: 'minmax(330px, 500px) minmax(0, 1fr)' } : undefined,
+            gridTemplateColumns: item.kind === 'video' ? { xs: '1fr', md: 'minmax(0, 1fr) minmax(320px, 380px)' } : undefined,
             alignItems: { xs: 'stretch', md: 'center' },
-            gap: { xs: 0, md: 3 },
+            gap: { xs: 0, md: 2.5 },
             maxWidth: 1536,
             mx: 'auto',
             px: { xs: 0, md: 3, lg: 5 },
-            py: { xs: 0, md: 3 },
+            py: { xs: 0, md: 2 },
             position: 'relative',
-            bgcolor: 'var(--awm-cream-light)',
+            bgcolor: { xs: 'var(--awm-cream-light)', md: 'transparent' },
           }}
         >
           {item.kind === 'video' ? (
@@ -761,19 +823,19 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
       </Box>
       ))}
       {loadingMore && (
-        <Box component="section" sx={{ height: '100%', display: 'grid', placeItems: 'center', bgcolor: 'var(--awm-cream-light)' }}>
+        <Box component="section" sx={{ height: '100%', display: 'grid', placeItems: 'center', bgcolor: { xs: 'var(--awm-cream-light)', md: 'transparent' } }}>
           <Box sx={{ textAlign: 'center' }}>
             <CircularProgress size={34} sx={{ color: 'var(--awm-gold)' }} />
-            <Typography sx={{ mt: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'var(--awm-muted)' }}>Loading more…</Typography>
+            <Typography sx={{ mt: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: { xs: 'var(--awm-muted)', md: 'rgba(245,237,224,0.7)' } }}>Loading more…</Typography>
           </Box>
         </Box>
       )}
       {!loadingMore && !hasMore && items.length > 1 && (
-        <Box component="section" sx={{ height: '100%', display: 'grid', placeItems: 'center', px: 3, textAlign: 'center', bgcolor: 'var(--awm-cream-light)' }}>
+        <Box component="section" sx={{ height: '100%', display: 'grid', placeItems: 'center', px: 3, textAlign: 'center', bgcolor: { xs: 'var(--awm-cream-light)', md: 'transparent' } }}>
           <Box>
             <ExploreOutlined sx={{ fontSize: 54, color: 'var(--awm-gold)' }} />
-            <Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: 'var(--awm-bark)' }}>You&apos;ve explored it all</Typography>
-            <Typography sx={{ mt: 0.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 14, color: 'var(--awm-muted)' }}>Keep scrolling to start back at the beginning.</Typography>
+            <Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 30, color: { xs: 'var(--awm-bark)', md: '#f5ede0' } }}>You&apos;ve explored it all</Typography>
+            <Typography sx={{ mt: 0.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 14, color: { xs: 'var(--awm-muted)', md: 'rgba(245,237,224,0.7)' } }}>Keep scrolling to start back at the beginning.</Typography>
           </Box>
         </Box>
       )}
