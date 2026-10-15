@@ -262,27 +262,6 @@ function ExploreVideo({
     return result
   }, [currentTime, episode.transcriptLines])
 
-  /* Keep the highlighted line in view. Unlike the episode page's
-     scrollIntoView, this scrolls the transcript container itself — an
-     ancestor scroll would fight the feed's scroll snapping. */
-  const transcriptBodyRef = useRef<HTMLDivElement | null>(null)
-  const activeLineRef = useRef<HTMLDivElement | null>(null)
-  const skipInitialLineScroll = useRef(true)
-  useEffect(() => {
-    if (activeLine < 0) return
-    if (skipInitialLineScroll.current) {
-      skipInitialLineScroll.current = false
-      return
-    }
-    const container = transcriptBodyRef.current
-    const line = activeLineRef.current
-    if (!container || !line || container.getBoundingClientRect().height === 0) return
-    const containerRect = container.getBoundingClientRect()
-    const lineRect = line.getBoundingClientRect()
-    const top = container.scrollTop + (lineRect.top - containerRect.top) - (container.clientHeight - lineRect.height) / 2
-    container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' })
-  }, [activeLine])
-
   return (
     <>
       <Box
@@ -465,65 +444,6 @@ function ExploreVideo({
 
       </Box>
 
-      <Box
-        sx={{
-          display: { xs: 'none', md: 'flex' },
-          minWidth: 0,
-          height: '100%',
-          maxHeight: '100dvh',
-          boxSizing: 'border-box',
-          flexDirection: 'column',
-          overflow: 'hidden',
-          border: '1px solid rgba(255,255,255,0.09)',
-          borderRadius: '18px',
-          bgcolor: '#101312',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
-        }}
-      >
-        <Box sx={{ px: 3, py: 2.5, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <CefrChip level={episode.level} size="small" />
-            {episode.tags.slice(0, 3).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.85)', height: 24 }} />)}
-          </Box>
-          {episode.description && <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.72)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13.5, lineHeight: 1.55 }}>{episode.description}</Typography>}
-        </Box>
-
-        <Box ref={transcriptBodyRef} sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 2.5, py: 2 }}>
-          {episode.transcriptLines.map((line, index) => (
-            <Box
-              key={`${line.timestamp ?? 'line'}-${index}`}
-              ref={index === activeLine ? activeLineRef : undefined}
-              sx={{
-                px: 1.5,
-                py: 1.2,
-                mb: 0.75,
-                borderInlineStart: '3px solid',
-                borderColor: index === activeLine ? '#b8860b' : 'transparent',
-                borderRadius: '8px',
-                bgcolor: index === activeLine ? 'rgba(184,134,11,0.09)' : 'transparent',
-                transition: 'background-color .18s ease, border-color .18s ease',
-              }}
-            >
-              <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), var(--font-serif), serif', fontSize: 22, fontWeight: 600, color: '#f5ede0', lineHeight: 1.65, textAlign: 'right' }}>
-                {(line.words?.length ?? 0) > 0
-                  ? (line.words ?? []).map((word, wordIndex) => (
-                      <ExploreDefinitionWord
-                        key={`${word.plain}-${wordIndex}`}
-                        entry={word}
-                        context={`episode:${episode.id}:line:${index}`}
-                        itemIndex={itemIndex}
-                        onOpen={onDefinitionOpen}
-                        onPeek={onDefinitionPeek}
-                      />
-                    ))
-                  : line.arabic}
-              </Typography>
-              {line.translation && <Typography sx={{ mt: 0.35, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(245,237,224,0.62)', lineHeight: 1.55 }}>{line.translation}</Typography>}
-            </Box>
-          ))}
-        </Box>
-
-      </Box>
     </>
   )
 }
@@ -793,7 +713,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
             scrollSnapAlign: 'start',
             scrollSnapStop: 'always',
             display: item.kind === 'video' ? 'grid' : 'block',
-            gridTemplateColumns: item.kind === 'video' ? { xs: '1fr', md: 'minmax(0, 1fr) minmax(320px, 380px)' } : undefined,
+            gridTemplateColumns: '1fr',
             alignItems: { xs: 'stretch', md: 'center' },
             gap: { xs: 0, md: 2.5 },
             maxWidth: 1536,
