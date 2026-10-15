@@ -21,7 +21,14 @@ const FOOTER_SECTIONS = (onContactClick?: () => void) => [
       { label: 'Explore',  href: '/explore',  onClick: undefined },
       { label: 'Watch',    href: '/cartoons', onClick: undefined },
       { label: 'Read',     href: '/books',    onClick: undefined },
-      { label: 'Memory',   href: '/memory',   onClick: undefined },
+    ],
+  },
+  {
+    title: 'Learn',
+    links: [
+      { label: 'Memory',      href: '/memory',      onClick: undefined },
+      { label: 'Grammar',     href: '/grammar',     onClick: undefined },
+      { label: 'Word Search', href: '/word-search', onClick: undefined },
     ],
   },
   {
