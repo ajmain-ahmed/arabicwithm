@@ -694,6 +694,7 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
         width: '100%',
         maxWidth: 784,
         pt: { md: '21px' },
+        maxHeight: 'calc(100dvh - 113px)',
       }}
     >
       <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 0.5, px: 0.5 }}>
@@ -715,6 +716,8 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
                 outline: active ? '2px solid rgba(212,168,67,0.7)' : '2px solid transparent',
                 outlineOffset: 2,
                 transition: 'outline-color .15s ease',
+                '& img': { filter: 'brightness(0.62)', transition: 'filter .2s ease' },
+                '&:hover img': { filter: 'brightness(1)' },
               }}
             >
               <ContentCard
