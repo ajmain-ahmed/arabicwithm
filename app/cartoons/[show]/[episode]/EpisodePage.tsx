@@ -24,7 +24,8 @@ import {
   IconButton,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ChevronLeft, ChevronRight, ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, Fullscreen, PsychologyOutlined, Refresh, Settings as SettingsIcon } from '@mui/icons-material'
+import { ChevronLeft, ChevronRight, ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, Fullscreen, PlayArrow, PsychologyOutlined, Refresh, Settings as SettingsIcon } from '@mui/icons-material'
+import { ContentCard } from '@/app/components/content-grid'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
@@ -674,7 +675,6 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
 type RelatedEpisode = EpisodeMeta & { showSlug: string }
 
 function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; currentSlug: string }) {
-  const router = useRouter()
   return (
     <Box
       component="aside"
@@ -701,48 +701,41 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
           No other episodes in this show yet.
         </Typography>
       )}
-      {related.map((item) => {
-        const active = item.slug === currentSlug
-        return (
-          <Box
-            key={item.id}
-            onClick={() => router.push(`/cartoons/${item.showSlug}/${item.slug}`)}
-            sx={{
-              display: 'flex',
-              gap: 1.25,
-              p: 0.75,
-              borderRadius: '12px',
-              cursor: 'pointer',
-              border: '1px solid',
-              borderColor: active ? 'rgba(212,168,67,0.5)' : 'transparent',
-              bgcolor: active ? 'rgba(212,168,67,0.1)' : 'rgba(255,255,255,0.04)',
-              '&:hover': { bgcolor: active ? 'rgba(212,168,67,0.12)' : 'rgba(255,255,255,0.09)' },
-              transition: 'background-color .15s ease',
-            }}
-          >
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1 }}>
+        {related.map((item) => {
+          const active = item.slug === currentSlug
+          return (
             <Box
-              component="img"
-              src={item.cover || `/api/covers/episodes/${item.id}`}
-              alt=""
-              loading="lazy"
-              sx={{ width: 200, aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: '10px', flexShrink: 0, bgcolor: '#000' }}
-            />
-            <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.5, py: 0.25 }}>
-              <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 14.5, fontWeight: 600, color: '#f5ede0', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                {item.title}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, mt: 'auto' }}>
-                {item.level && <CefrChip level={item.level} size="small" sx={{ height: 17, fontSize: '0.58rem' }} />}
-                {active && (
-                  <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, color: 'var(--awm-gold-light)' }}>
-                    Now playing
-                  </Typography>
-                )}
-              </Box>
+              key={item.id}
+              sx={{
+                borderRadius: '4px',
+                outline: active ? '2px solid rgba(212,168,67,0.7)' : '2px solid transparent',
+                outlineOffset: 2,
+                transition: 'outline-color .15s ease',
+              }}
+            >
+              <ContentCard
+                slug={item.slug}
+                hrefPrefix={`/cartoons/${item.showSlug}`}
+                cover={item.cover ?? ''}
+                title={item.title}
+                description={item.description}
+                level={item.level}
+                tags={item.tags}
+                showTags={false}
+                aspectRatio="4 / 5"
+                imageFit="cover"
+                imageCrop={item.coverCrop}
+                denseMobileTile
+                mobileAspectRatio="4 / 5"
+                mobileImagePosition="center"
+                overlayIcon={<PlayArrow sx={{ fontSize: 20, color: '#1a0f08', ml: 0.3 }} />}
+                metaItems={[]}
+              />
             </Box>
-          </Box>
-        )
-      })}
+          )
+        })}
+      </Box>
     </Box>
   )
 }

@@ -72,7 +72,7 @@ export default async function Page({
       return { item, score }
     })
     .sort((left, right) => right.score - left.score)
-    .slice(0, 7)
+    .slice(0, 8)
     .map(({ item }) => ({ ...item, showSlug: showSlugById.get(item.showId) ?? show }))
 
   return <EpisodePage episode={ep} showTitle={showTitle} initialStart={initialStart} related={related} />
