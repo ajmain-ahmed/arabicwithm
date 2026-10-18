@@ -953,10 +953,11 @@ export default function EpisodePage({
             display: { xs: 'flex', md: 'grid' },
             flexDirection: { xs: 'column', md: 'unset' },
             gridTemplateColumns: {
-              md: 'minmax(320px, 1fr) minmax(0, 1.45fr) minmax(230px, 0.85fr)',
-              lg: 'minmax(420px, 1fr) minmax(0, 1.55fr) minmax(320px, 0.95fr)',
+              md: 'minmax(240px, 280px) min(56.25cqh, 520px) minmax(340px, 1fr)',
+              lg: 'minmax(270px, 330px) min(56.25cqh, 660px) minmax(420px, 1fr)',
             },
-            gap: { xs: 0, md: 2.5 },
+            gap: { xs: 0, md: 3 },
+            containerType: 'size',
             px: { xs: 0, md: 2.5, lg: 4 },
             alignItems: { xs: 'stretch', md: 'stretch' },
             height: { md: '100%' },
@@ -977,17 +978,15 @@ export default function EpisodePage({
               height: '100%',
             }}
           >
-            <Box sx={{ flex: 1, minHeight: 0, display: 'grid', placeItems: 'center', containerType: 'size', width: '100%' }}>
+            <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
               <Box
                 sx={{
                   position: 'relative',
                   width: '100%',
+                  height: '100%',
                   maxWidth: '100%',
                   maxHeight: '100%',
                   aspectRatio: '9 / 16',
-                  /* Explore-style sizing: the card fills the available height
-                     and derives its width (9:16), like the feed player. */
-                  '@supports (width: 1cqh)': { width: 'min(100%, 56.25cqh)' },
                   borderRadius: '20px',
                   overflow: 'hidden',
                   bgcolor: '#000',
