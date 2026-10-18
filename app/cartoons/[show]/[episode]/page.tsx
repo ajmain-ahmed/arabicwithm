@@ -2,7 +2,6 @@
 import { notFound } from 'next/navigation'
 import {
   fetchEpisodeForPublic,
-  fetchShowBySlugPublic,
   fetchShowsForPublic,
   fetchEpisodesForShowPublic,
   fetchAllEpisodesForPublic,
@@ -50,9 +49,6 @@ export default async function Page({
   const ep = await fetchEpisodeForPublic(show, episode)
   if (!ep) notFound()
 
-  const showData = await fetchShowBySlugPublic(show)
-  const showTitle = showData?.title ?? show
-
   /* Related "up next": scored across the whole catalogue (cached fetches, so
      no extra DB cost) — same show weighs most, then same level, then shared
      tags. */
@@ -75,5 +71,5 @@ export default async function Page({
     .slice(0, 12)
     .map(({ item }) => ({ ...item, showSlug: showSlugById.get(item.showId) ?? show }))
 
-  return <EpisodePage episode={ep} showTitle={showTitle} initialStart={initialStart} related={related} />
+  return <EpisodePage episode={ep} initialStart={initialStart} related={related} />
 }

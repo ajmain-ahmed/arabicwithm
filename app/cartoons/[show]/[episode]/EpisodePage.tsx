@@ -20,11 +20,10 @@ import {
   Divider,
   useMediaQuery,
   Chip,
-  Breadcrumbs,
   IconButton,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { Settings, ExpandMore, ExpandLess, ChevronRight, Fullscreen, PsychologyOutlined, Refresh } from '@mui/icons-material'
+import { ExpandMore, ExpandLess, Fullscreen, Refresh } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
@@ -145,38 +144,6 @@ const PAGE_CSS = `
     font-style: normal;
   }
 `
-
-/* ─────────────────────────────────────────────
-   Settings button — opens the settings dialog
-───────────────────────────────────────────── */
-interface SettingsButtonProps {
-  onClick: () => void
-}
-
-function SettingsButton({ onClick }: SettingsButtonProps) {
-  return (
-    <Button
-      onClick={onClick}
-      size="small"
-      startIcon={<Settings sx={{ fontSize: 18 }} />}
-      sx={{
-        color: 'var(--gold)',
-        border: '1px solid rgba(184,134,11,0.3)',
-        borderRadius: '8px',
-        textTransform: 'none',
-        fontFamily: 'var(--font-sans), sans-serif',
-        fontWeight: 600,
-        fontSize: '0.85rem',
-        px: 1.5,
-        minWidth: 0,
-        '&:hover': { bgcolor: 'rgba(184,134,11,0.08)' },
-      }}
-      aria-label="Settings"
-    >
-      Settings
-    </Button>
-  )
-}
 
 /* ─────────────────────────────────────────────
    MobileFixedHeader — portal into <body>
@@ -781,10 +748,9 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
 ───────────────────────────────────────────── */
 export default function EpisodePage({
   episode,
-  showTitle, initialStart = 0, related = [],
+  initialStart = 0, related = [],
 }: {
   episode: EpisodeFull
-  showTitle: string
   initialStart?: number
   related?: Array<EpisodeMeta & { showSlug: string }>
 }) {
@@ -987,8 +953,8 @@ export default function EpisodePage({
             display: { xs: 'flex', md: 'grid' },
             flexDirection: { xs: 'column', md: 'unset' },
             gridTemplateColumns: {
-              md: 'minmax(200px, 240px) minmax(0, 1fr) minmax(360px, 480px)',
-              lg: 'minmax(240px, 300px) minmax(0, 1fr) minmax(440px, 580px)',
+              md: 'minmax(240px, 300px) minmax(0, 1fr) minmax(420px, 540px)',
+              lg: 'minmax(300px, 380px) minmax(0, 1fr) minmax(520px, 680px)',
             },
             gap: { xs: 0, md: 2.5 },
             maxWidth: 1728,
@@ -1011,40 +977,8 @@ export default function EpisodePage({
               minWidth: 0,
               minHeight: 0,
               height: '100%',
-              gap: 1.75,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexShrink: 0 }}>
-              <Breadcrumbs
-                separator={<ChevronRight sx={{ fontSize: 14, color: 'rgba(245,237,224,0.5)' }} />}
-                sx={{ '& .MuiBreadcrumbs-li': { fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem' } }}
-              >
-                <Typography onClick={() => router.push('/')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>
-                  Home
-                </Typography>
-                <Typography onClick={() => router.push('/cartoons')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>
-                  Cartoons
-                </Typography>
-                <Typography onClick={() => router.push(`/cartoons/${episode.show}`)} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>
-                  {showTitle}
-                </Typography>
-                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: '#f5ede0', fontWeight: 500 }}>
-                  {episode.title}
-                </Typography>
-              </Breadcrumbs>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-                <Button
-                  onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
-                  size="small"
-                  startIcon={<PsychologyOutlined sx={{ fontSize: 18 }} />}
-                  sx={{ color: 'var(--awm-gold-light)', border: '1px solid color-mix(in srgb, var(--awm-gold) 40%, transparent)', borderRadius: '8px', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, '&:hover': { bgcolor: 'rgba(212,168,67,0.1)' } }}
-                >
-                  Memory
-                </Button>
-                <SettingsButton onClick={openSettings} />
-              </Box>
-            </Box>
-
             <Box sx={{ flex: 1, minHeight: 0, display: 'grid', placeItems: 'center', containerType: 'size', width: '100%' }}>
               <Box
                 sx={{
