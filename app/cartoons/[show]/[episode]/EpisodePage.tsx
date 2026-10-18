@@ -960,7 +960,7 @@ export default function EpisodePage({
               md: 'minmax(0, 1fr) auto minmax(0, 1fr)',
               lg: 'minmax(0, 1fr) auto minmax(0, 1fr)',
             },
-            gap: { xs: 0, md: 3 },
+            gap: { xs: 0, md: 5 },
             px: { xs: 0, md: 2.5, lg: 4 },
             alignItems: { xs: 'stretch', md: 'stretch' },
           }}
@@ -1142,7 +1142,7 @@ export default function EpisodePage({
 
             </Box>
 
-            <Box sx={{ background: 'var(--awm-white)', borderRadius: { xs: '0 0 12px 12px', md: '12px' }, px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 } }}>
+            <Box sx={{ background: 'var(--awm-white)', borderRadius: { xs: '0 0 12px 12px', md: '12px' }, px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 }, mt: { xs: 0, md: '2px' } }}>
               {tab === 0 && (
                 <Typography component="h1" sx={{ display: { xs: 'block', md: 'none' }, mb: 2, px: 1, textAlign: 'center', fontFamily: 'var(--font-heading)', fontSize: 23, fontWeight: 600, lineHeight: 1.2, color: 'var(--awm-bark)' }}>
                   {episode.title}
