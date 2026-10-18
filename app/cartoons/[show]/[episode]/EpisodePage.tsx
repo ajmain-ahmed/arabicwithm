@@ -964,7 +964,7 @@ export default function EpisodePage({
         sx={{
           background: { xs: 'var(--cream)', md: '#0a0c0b' },
           mt: { xs: 0, md: 0 },
-          pt: { xs: 0, md: 0 },
+          pt: { xs: 0, md: 2.5 },
           pb: { xs: 6, md: 1.5 },
           height: { md: 'calc(100dvh - var(--awm-navbar-height))' },
           boxSizing: 'border-box',
