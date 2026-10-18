@@ -690,6 +690,7 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
         justifySelf: 'end',
         width: '100%',
         maxWidth: 360,
+        pt: { md: '19px' },
       }}
     >
       <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 0.5, px: 0.5 }}>
@@ -1198,7 +1199,7 @@ export default function EpisodePage({
 
             </Box>
 
-            <Box sx={{ background: 'var(--awm-white)', borderRadius: '0 0 12px 12px', px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 } }}>
+            <Box sx={{ background: 'var(--awm-white)', borderRadius: '0 0 12px 12px', px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 }, flex: { md: 1 }, minHeight: { md: 0 } }}>
               {tab === 0 && (
                 <Typography component="h1" sx={{ display: { xs: 'block', md: 'none' }, mb: 2, px: 1, textAlign: 'center', fontFamily: 'var(--font-heading)', fontSize: 23, fontWeight: 600, lineHeight: 1.2, color: 'var(--awm-bark)' }}>
                   {episode.title}
