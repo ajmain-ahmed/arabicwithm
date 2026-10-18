@@ -686,7 +686,9 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
         overflowY: 'auto',
         scrollbarWidth: 'none',
         '&::-webkit-scrollbar': { display: 'none' },
-        pr: 0.25,
+        justifySelf: 'end',
+        width: '100%',
+        maxWidth: 360,
       }}
     >
       <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 0.5, px: 0.5 }}>
@@ -953,8 +955,8 @@ export default function EpisodePage({
             display: { xs: 'flex', md: 'grid' },
             flexDirection: { xs: 'column', md: 'unset' },
             gridTemplateColumns: {
-              md: 'minmax(240px, 280px) min(56.25cqh, 520px) minmax(340px, 1fr)',
-              lg: 'minmax(270px, 330px) min(56.25cqh, 660px) minmax(420px, 1fr)',
+              md: 'minmax(0, 1fr) min(56.25cqh, 520px) minmax(0, 1fr)',
+              lg: 'minmax(0, 1fr) min(56.25cqh, 660px) minmax(0, 1fr)',
             },
             gap: { xs: 0, md: 3 },
             containerType: 'size',
@@ -1048,7 +1050,9 @@ export default function EpisodePage({
               minHeight: 0,
               overflowY: { md: 'auto' },
               scrollbarWidth: { md: 'thin' },
-              pr: { md: 0.5 },
+              justifySelf: 'start',
+              width: '100%',
+              maxWidth: { md: 620, lg: 760 },
             }}
           >
             {isMobile && (
