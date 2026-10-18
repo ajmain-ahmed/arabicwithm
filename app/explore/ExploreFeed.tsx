@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { ArrowForward, ExploreOutlined, MenuBook, PlayCircleOutlineRounded, PsychologyOutlined, VolumeOff, VolumeUp } from '@mui/icons-material'
+import { ArrowForward, ExploreOutlined, KeyboardArrowDown, KeyboardArrowUp, MenuBook, PlayCircleOutlineRounded, PsychologyOutlined, VolumeOff, VolumeUp } from '@mui/icons-material'
 import { Box, Button, Chip, CircularProgress, IconButton, Popover, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
 import { WordTooltip, HtmlTooltip, MobileDefinitionSheet, type VocabEntry } from '@/app/components/vocab-tooltip'
 import CefrChip from '@/app/components/CefrChip'
@@ -264,7 +264,7 @@ function ExploreVideo({
       >
         {/* 9:16 frame sized to the available height (container units), so the
             player never letterboxes. Desktop: card + action rail as a row. */}
-        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { md: 2.25 }, containerType: 'size', width: '100%' }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: { md: 2.25 }, containerType: 'size', width: '100%' }}>
         <Box
           data-explore-player={active ? 'active' : 'inactive'}
           sx={{
@@ -353,6 +353,7 @@ function ExploreVideo({
           right: { xs: 'max(6px, env(safe-area-inset-right))', md: 'auto' },
           top: { xs: '50%', md: 'auto' },
           transform: { xs: 'translateY(-50%)', md: 'none' },
+          mb: { md: 2.5 },
           display: 'flex',
           flexDirection: 'column',
           gap: { xs: 0.85, md: 1.4 },
@@ -595,6 +596,19 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
     itemRefs.current.get(nextIndex)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [items.length])
 
+  /* Manual prev/next navigation (chevron buttons) — same bookkeeping as the
+     auto-advance path so the IntersectionObserver doesn't fight the scroll. */
+  const goToIndex = useCallback((index: number) => {
+    if (index < 0 || index >= items.length) return
+    programmaticTargetRef.current = index
+    scrollLockUntilRef.current = Date.now() + 1_000
+    setSelectedDefinition(null)
+    peekItemIndexRef.current = null
+    activeIndexRef.current = index
+    setActiveIndex(index)
+    itemRefs.current.get(index)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [items.length])
+
   const openDefinition = useCallback<OpenDefinition>((entry, anchor, context, itemIndex) => {
     anchor.focus({ preventScroll: true })
     const cacheKey = definitionCacheKey(context, entry)
@@ -660,17 +674,14 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
   }
 
   return (
-      <>
+      <Box sx={{ position: 'relative', height: 'calc(100dvh - var(--awm-navbar-height))', '@supports (height: 100dvh)': { height: 'calc(100dvh - var(--awm-navbar-height))' }, minHeight: 'calc(100vh - var(--awm-navbar-height))' }}>
       <Box
         id="explore-feed"
         ref={feedRef}
         onPointerDownCapture={() => window.dispatchEvent(new Event('awm-explore-gesture'))}
       component="div"
       sx={{
-        height: 'calc(100vh - var(--awm-navbar-height))',
-        '@supports (height: 100dvh)': {
-          height: 'calc(100dvh - var(--awm-navbar-height))',
-        },
+        height: '100%',
         width: '100%',
         maxWidth: '100vw',
         overflowY: 'auto',
@@ -755,7 +766,30 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
           {selectedDefinition && <Box key={selectedDefinition.cacheKey} sx={{ p: 2.5 }}><WordTooltip entry={selectedDefinition.entry} /></Box>}
         </Popover>
       )}
+
+      {/* Desktop prev/next chevrons at the right edge — wheel/trackpad scroll
+         keeps working exactly the same. */}
+      <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', right: 22, top: '50%', transform: 'translateY(-50%)', flexDirection: 'column', gap: 1.25, zIndex: 20 }}>
+        <Tooltip title="Previous video" placement="left">
+          <IconButton
+            onClick={() => goToIndex(activeIndex <= 0 ? items.length - 1 : activeIndex - 1)}
+            aria-label="Previous video"
+            sx={{ width: 42, height: 42, bgcolor: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.14)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}
+          >
+            <KeyboardArrowUp />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Next video" placement="left">
+          <IconButton
+            onClick={() => goToIndex(items.length === 0 ? 0 : (activeIndex + 1) % items.length)}
+            aria-label="Next video"
+            sx={{ width: 42, height: 42, bgcolor: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.14)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}
+          >
+            <KeyboardArrowDown />
+          </IconButton>
+        </Tooltip>
+      </Box>
     </Box>
-    </>
+    </Box>
   )
 }
