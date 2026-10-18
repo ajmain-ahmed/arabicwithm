@@ -171,20 +171,13 @@ function ExploreVideo({
   onEnded,
   onPlaybackChange,
   soundEnabled,
-  itemIndex,
-  onDefinitionOpen,
-  onDefinitionPeek,
 }: {
   episode: ExploreEpisode
   active: boolean
   onEnded: () => void
   onPlaybackChange: (playing: boolean) => void
   soundEnabled: boolean
-  itemIndex: number
-  onDefinitionOpen: OpenDefinition
-  onDefinitionPeek: (itemIndex: number | null) => void
 }) {
-  const [currentTime, setCurrentTime] = useState(0)
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
   const soundBlockedRef = useRef(false)
@@ -204,7 +197,7 @@ function ExploreVideo({
     errorCode,
   } = useYouTubePlayer(
     active && isYouTube ? source.id : undefined,
-    setCurrentTime,
+    undefined,
     undefined,
     { autoplay: true, muted: !soundEnabled, onEnded }
   )
@@ -251,16 +244,6 @@ function ExploreVideo({
       mute()
     }
   }
-
-  const activeLine = useMemo(() => {
-    let result = -1
-    for (let index = 0; index < episode.transcriptLines.length; index += 1) {
-      const timestamp = episode.transcriptLines[index].timestamp
-      if (timestamp != null && timestamp <= currentTime) result = index
-      else if (timestamp != null) break
-    }
-    return result
-  }, [currentTime, episode.transcriptLines])
 
   return (
     <>
@@ -440,35 +423,6 @@ function ExploreVideo({
         </Box>
         </Box>
 
-        {/* Active transcript line under the video — swaps as playback advances. */}
-        {(() => {
-          const lineIndex = activeLine >= 0 ? activeLine : 0
-          const line = episode.transcriptLines[lineIndex]
-          if (!line) return null
-          return (
-            <Box sx={{ display: { xs: 'none', md: 'block' }, width: '100%', maxWidth: 580, textAlign: 'center', mt: 2.5, minHeight: 96, px: 2 }}>
-              <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), var(--font-serif), serif', fontSize: 26, fontWeight: 600, color: '#f5ede0', lineHeight: 1.6 }}>
-                {(line.words?.length ?? 0) > 0
-                  ? (line.words ?? []).map((word, wordIndex) => (
-                      <ExploreDefinitionWord
-                        key={`${word.plain}-${wordIndex}`}
-                        entry={word}
-                        context={`episode:${episode.id}:line:${lineIndex}`}
-                        itemIndex={itemIndex}
-                        onOpen={onDefinitionOpen}
-                        onPeek={onDefinitionPeek}
-                      />
-                    ))
-                  : line.arabic}
-              </Typography>
-              {line.translation && (
-                <Typography sx={{ mt: 0.75, fontFamily: 'var(--font-sans), sans-serif', fontSize: 14.5, color: 'rgba(245,237,224,0.75)', lineHeight: 1.6 }}>
-                  {line.translation}
-                </Typography>
-              )}
-            </Box>
-          )
-        })()}
       </Box>
 
     </>
@@ -759,9 +713,6 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
                 onEnded={() => advanceOnce(index)}
                 onPlaybackChange={setGlobalVideoPlaying}
                 soundEnabled={soundEnabled}
-                itemIndex={index}
-                onDefinitionOpen={openDefinition}
-                onDefinitionPeek={handleDefinitionPeek}
               />
             </>
           ) : (
