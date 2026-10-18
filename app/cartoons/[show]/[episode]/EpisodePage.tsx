@@ -694,7 +694,7 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
         width: '100%',
         maxWidth: 784,
         pt: { md: '21px' },
-        maxHeight: 'calc(100dvh - 113px)',
+        maxHeight: 'calc(100dvh - 129px)',
       }}
     >
       <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 0.5, px: 0.5 }}>
@@ -947,7 +947,7 @@ export default function EpisodePage({
           background: { xs: 'var(--cream)', md: '#0a0c0b' },
           mt: { xs: 0, md: 0 },
           pt: { xs: 0, md: 4 },
-          pb: { xs: 6, md: 3 },
+          pb: { xs: 6, md: 4 },
           minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' },
           boxSizing: 'border-box',
         }}
@@ -960,7 +960,7 @@ export default function EpisodePage({
               md: 'minmax(0, 1fr) auto minmax(0, 1fr)',
               lg: 'minmax(0, 1fr) auto minmax(0, 1fr)',
             },
-            gap: { xs: 0, md: 5 },
+            gap: { xs: 0, md: 6 },
             px: { xs: 0, md: 2.5, lg: 4 },
             alignItems: { xs: 'stretch', md: 'stretch' },
           }}
