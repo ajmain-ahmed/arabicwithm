@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   AdminPanelSettings,
   AutoStories,
@@ -18,16 +18,29 @@ import {
   SearchOutlined,
 } from '@mui/icons-material'
 import { Box, Button, Container, Paper, Skeleton, Typography } from '@mui/material'
+import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
+import { fetchLearningActivity } from '@/app/actions/activity'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import CefrChip from '@/app/components/CefrChip'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, HOME_CAROUSEL_CARD_ASPECT_RATIO, type CatalogueRowItem } from './NewOnRow'
 import AppDownloadSection from './AppDownloadSection'
+import LearningStats from './LearningStats'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
+import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
+import { parseReadingList } from '@/app/lib/readingList'
+import {
+  LEARNING_ACTIVITY_EVENT,
+  parseLearningActivity,
+  type LearningActivity,
+} from '@/app/lib/activity'
+
+interface ProgressEntry { chapterSlug: string; updatedAt?: string; hiddenFromList?: boolean }
+interface ActivityUpdate { userId: string; activity: LearningActivity }
 
 export interface FeaturedEpisode {
   show: ShowMeta
@@ -186,8 +199,10 @@ function BooksSection({ books }: { books: PublicBook[] }) {
   )
 }
 
-export default function HomeDashboard({ books, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
+export default function HomeDashboard({ books, chaptersByBook, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
   const { mode } = useColorMode()
+  const { user } = useAuth()
+  const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
   const { newShowItems, newEpisodeItems } = useMemo(() => {
     return {
       newShowItems: showRowItems(newShows),
@@ -195,9 +210,47 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
     }
   }, [newEpisodes, newShows])
 
-  /* Signed-in users currently see the same homepage as guests. The
-     personalised dashboard lives in SignedInHome.tsx (set aside, not
-     rendered) until we bring it back. */
+  useEffect(() => {
+    const handleActivityUpdate = (event: Event) => {
+      setActivityUpdate((event as CustomEvent<ActivityUpdate>).detail)
+    }
+    window.addEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
+    return () => window.removeEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
+  }, [])
+
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    void fetchLearningActivity()
+      .then((activity) => {
+        if (!cancelled) setActivityUpdate({ userId: user.id, activity })
+      })
+      .catch((error: unknown) => console.error('Unable to load dashboard activity:', error))
+    return () => { cancelled = true }
+  }, [user?.id])
+
+  const progress = useMemo(() => {
+    if (!user) return {} as Record<string, ProgressEntry>
+    return parseReadingList(user.user_metadata?.book_progress) as Record<string, ProgressEntry>
+  }, [user])
+  const booksInProgress = useMemo(() => {
+    if (!user) return 0
+    return Object.entries(progress).filter(([bookSlug, saved]) => (
+      !saved.hiddenFromList && books.some((book) => book.slug === bookSlug) &&
+      chaptersByBook[bookSlug]?.some((chapter) => chapter.slug === saved.chapterSlug)
+    )).length
+  }, [user, progress, books, chaptersByBook])
+  const displayName = user ? String(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'learner').split(' ')[0] : ''
+  const activity = user
+    ? activityUpdate?.userId === user.id
+      ? activityUpdate.activity
+      : parseLearningActivity(user.user_metadata)
+    : null
+  const streak = activity ? summarizeLearningDashboard(activity, new Date()).streak : 0
+  const hour = new Date().getHours()
+  const daypart = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
+  const greeting = `Good ${daypart}, ${displayName}!`
+
   return (
       <Box
         component="main"
@@ -228,12 +281,21 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
         <Box sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
           {mode === 'dark' && <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.42) 55%, rgba(0,0,0,0.6) 100%)' }} />}
           <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 14 }, pb: { xs: 5, md: 6 } }}>
-            <Box sx={{ maxWidth: 720 }}>
-              <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 42, sm: 54, md: 67 }, fontWeight: 600, lineHeight: 1.02, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.75), 0 4px 28px rgba(0,0,0,0.55)' }}>Learn Arabic through cartoons and books</Typography>
-              <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+            <Box sx={{ maxWidth: user ? 900 : 720, mx: user ? 'auto' : 0, textAlign: user ? 'center' : 'left' }}>
+              {user ? (
+                <Typography component="h1" suppressHydrationWarning sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 40, sm: 52, md: 62 }, fontWeight: 600, lineHeight: 1.05, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.75), 0 4px 28px rgba(0,0,0,0.55)' }}>{greeting}</Typography>
+              ) : (
+                <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 42, sm: 54, md: 67 }, fontWeight: 600, lineHeight: 1.02, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.75), 0 4px 28px rgba(0,0,0,0.55)' }}>Learn Arabic through cartoons and books</Typography>
+              )}
+              <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: user ? 'center' : 'flex-start' }}>
                 <Button component={Link} href="/cartoons" variant="contained" startIcon={<OndemandVideo />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Watching</Button>
                 <Button component={Link} href="/books" variant="contained" startIcon={<MenuBook />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Reading</Button>
               </Box>
+              {user && activity && (
+                <Box sx={{ mt: { xs: 4, md: 5 }, textAlign: 'left' }}>
+                  <LearningStats activity={activity} streak={streak} booksInProgress={booksInProgress} now={new Date()} />
+                </Box>
+              )}
             </Box>
           </Container>
         </Box>
