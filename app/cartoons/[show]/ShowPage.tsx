@@ -118,7 +118,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
               <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 27, md: 38 }, fontWeight: 600, color: BARK, lineHeight: 1.12 }}>{show.title}</Typography>
               {show.description && <Typography sx={{ display: { xs: 'none', sm: '-webkit-box' }, mt: 0.5, maxWidth: 720, color: MUTED, fontFamily: 'var(--font-sans), sans-serif', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{show.description}</Typography>}
             </Box>
-            <Button disabled={episodes.length === 0} onClick={goToRandomEpisode} startIcon={<PlayArrow />} variant="contained" sx={{ flexShrink: 0, alignSelf: { xs: 'flex-start', sm: 'auto' }, bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', px: { xs: 1.5, sm: 2.25 }, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#174832' }, '@media (max-width: 359.95px)': { width: '100%', alignSelf: 'stretch' } }}>{ctaLabel}</Button>
+            <Button disabled={episodes.length === 0} onClick={goToRandomEpisode} startIcon={<PlayArrow />} variant="contained" sx={{ flexShrink: 0, alignSelf: { xs: 'flex-start', sm: 'auto' }, bgcolor: '#14532d', color: '#fff', borderRadius: '9999px', px: { xs: 1.5, sm: 2.25 }, textTransform: 'none', fontWeight: 700, border: '1px solid rgba(155,213,181,0.25)', '&:hover': { bgcolor: '#1a6b3a' }, '@media (max-width: 359.95px)': { width: '100%', alignSelf: 'stretch' } }}>{ctaLabel}</Button>
           </Box>
           {/* Breadcrumbs */}
           <Breadcrumbs
