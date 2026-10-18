@@ -725,7 +725,6 @@ function RelatedRail({ related, currentSlug, variant }: { related: RelatedEpisod
         sx={{
           display: 'grid',
           gap: 1,
-          minWidth: 0,
           ...(isStrip
             ? {
                 width: 'max-content',
@@ -737,6 +736,7 @@ function RelatedRail({ related, currentSlug, variant }: { related: RelatedEpisod
             : {
                 gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                 mt: { lg: '14px' },
+                minWidth: 0,
               }),
         }}
       >
