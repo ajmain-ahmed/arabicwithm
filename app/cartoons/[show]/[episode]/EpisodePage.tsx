@@ -953,12 +953,10 @@ export default function EpisodePage({
             display: { xs: 'flex', md: 'grid' },
             flexDirection: { xs: 'column', md: 'unset' },
             gridTemplateColumns: {
-              md: 'minmax(240px, 300px) minmax(0, 1fr) minmax(420px, 540px)',
-              lg: 'minmax(300px, 380px) minmax(0, 1fr) minmax(520px, 680px)',
+              md: 'minmax(320px, 1fr) minmax(0, 1.45fr) minmax(230px, 0.85fr)',
+              lg: 'minmax(420px, 1fr) minmax(0, 1.55fr) minmax(320px, 0.95fr)',
             },
             gap: { xs: 0, md: 2.5 },
-            maxWidth: 1728,
-            mx: 'auto',
             px: { xs: 0, md: 2.5, lg: 4 },
             alignItems: { xs: 'stretch', md: 'stretch' },
             height: { md: '100%' },
@@ -984,9 +982,12 @@ export default function EpisodePage({
                 sx={{
                   position: 'relative',
                   width: '100%',
-                  height: '100%',
                   maxWidth: '100%',
                   maxHeight: '100%',
+                  aspectRatio: '9 / 16',
+                  /* Explore-style sizing: the card fills the available height
+                     and derives its width (9:16), like the feed player. */
+                  '@supports (width: 1cqh)': { width: 'min(100%, 56.25cqh)' },
                   borderRadius: '20px',
                   overflow: 'hidden',
                   bgcolor: '#000',
