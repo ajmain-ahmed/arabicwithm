@@ -13,6 +13,7 @@ import ClientStyles from '@/app/components/ClientStyles'
 import SocialVideoEmbed from '@/app/components/SocialVideoEmbed'
 import {
   Box,
+  Breadcrumbs,
   Typography,
   Tabs,
   Tab,
@@ -23,7 +24,7 @@ import {
   IconButton,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ChevronLeft, ChevronRight, ExpandMore, ExpandLess, Fullscreen, Refresh } from '@mui/icons-material'
+import { ChevronLeft, ChevronRight, ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, Fullscreen, PsychologyOutlined, Refresh, Settings as SettingsIcon } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
@@ -750,9 +751,10 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
 ───────────────────────────────────────────── */
 export default function EpisodePage({
   episode,
-  initialStart = 0, related = [],
+  showTitle, initialStart = 0, related = [],
 }: {
   episode: EpisodeFull
+  showTitle: string
   initialStart?: number
   related?: Array<EpisodeMeta & { showSlug: string }>
 }) {
@@ -964,7 +966,7 @@ export default function EpisodePage({
         sx={{
           background: { xs: 'var(--cream)', md: '#0a0c0b' },
           mt: { xs: 0, md: 0 },
-          pt: { xs: 0, md: 2.5 },
+          pt: { xs: 0, md: 4 },
           pb: { xs: 6, md: 1.5 },
           height: { md: 'calc(100dvh - var(--awm-navbar-height))' },
           boxSizing: 'border-box',
@@ -1001,7 +1003,7 @@ export default function EpisodePage({
               height: '100%',
             }}
           >
-            <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+            <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', pb: { md: 4 } }}>
               <Box
                 sx={{
                   position: 'relative',
@@ -1110,7 +1112,64 @@ export default function EpisodePage({
               </Box>
             )}
 
-            <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: 'var(--awm-white)', borderRadius: '12px 12px 0 0', px: { xs: 1, md: 4 }, display: 'flex', alignItems: 'center' }}>
+            {!isMobileViewport && (
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2, flexShrink: 0, flexWrap: 'wrap' }}>
+                <Breadcrumbs
+                  separator={<BreadcrumbSep sx={{ fontSize: 13, color: 'rgba(245,237,224,0.5)' }} />}
+                  sx={{ '& .MuiBreadcrumbs-li': { fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem' } }}
+                >
+                  <Typography onClick={() => router.push('/')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>Home</Typography>
+                  <Typography onClick={() => router.push('/cartoons')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>Cartoons</Typography>
+                  <Typography onClick={() => router.push(`/cartoons/${episode.show}`)} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>{showTitle}</Typography>
+                  <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: '#f5ede0', fontWeight: 500 }}>{episode.title}</Typography>
+                </Breadcrumbs>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                  {scriptPageCount > 1 && (
+                    <>
+                      <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, color: 'var(--awm-muted)', whiteSpace: 'nowrap' }}>
+                        Page {scriptPage + 1} of {scriptPageCount}
+                      </Typography>
+                      <IconButton
+                        onClick={() => setScriptPage((page) => Math.max(0, page - 1))}
+                        disabled={scriptPage === 0}
+                        aria-label="Previous transcript page"
+                        size="small"
+                        sx={{ color: 'var(--awm-muted)', '&:hover:not(:disabled)': { color: 'var(--awm-gold)' } }}
+                      >
+                        <ChevronLeft />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => setScriptPage((page) => Math.min(scriptPageCount - 1, page + 1))}
+                        disabled={scriptPage >= scriptPageCount - 1}
+                        aria-label="Next transcript page"
+                        size="small"
+                        sx={{ color: 'var(--awm-muted)', '&:hover:not(:disabled)': { color: 'var(--awm-gold)' } }}
+                      >
+                        <ChevronRight />
+                      </IconButton>
+                    </>
+                  )}
+                  <Button
+                    onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
+                    size="small"
+                    startIcon={<PsychologyOutlined sx={{ fontSize: 17 }} />}
+                    sx={{ color: 'var(--awm-gold-light)', border: '1px solid color-mix(in srgb, var(--awm-gold) 40%, transparent)', borderRadius: '8px', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, minHeight: 34, '&:hover': { bgcolor: 'rgba(212,168,67,0.1)' } }}
+                  >
+                    Memory
+                  </Button>
+                  <Button
+                    onClick={openSettings}
+                    size="small"
+                    startIcon={<SettingsIcon sx={{ fontSize: 17 }} />}
+                    sx={{ color: 'var(--awm-gold-light)', border: '1px solid color-mix(in srgb, var(--awm-gold) 40%, transparent)', borderRadius: '8px', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, minHeight: 34, '&:hover': { bgcolor: 'rgba(212,168,67,0.1)' } }}
+                  >
+                    Settings
+                  </Button>
+                </Box>
+              </Box>
+            )}
+
+            <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: 'var(--awm-white)', borderRadius: '12px 12px 0 0', px: { xs: 1, md: 4 }, display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
               <Tabs
                 value={tab}
                 onChange={(_, v) => {
@@ -1179,7 +1238,7 @@ export default function EpisodePage({
               )}
 
               {/* ── Script Tab ── */}
-              {tab === 0 && (
+              {(!isMobileViewport || tab === 0) && (
                 <Box
                   sx={{
                     display: { xs: 'block', md: 'flex' },
@@ -1215,34 +1274,11 @@ export default function EpisodePage({
                       )
                     })
                   )}
-                  {isDesktopWatch && scriptPageCount > 1 && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, py: 2, borderTop: '1px solid rgba(122,110,101,0.15)', mt: 1 }}>
-                      <IconButton
-                        onClick={() => setScriptPage((page) => Math.max(0, page - 1))}
-                        disabled={scriptPage === 0}
-                        aria-label="Previous transcript page"
-                        sx={{ color: 'var(--awm-muted)', '&:hover': { color: 'var(--awm-gold)' } }}
-                      >
-                        <ChevronLeft />
-                      </IconButton>
-                      <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'var(--awm-muted)' }}>
-                        Page {scriptPage + 1} of {scriptPageCount}
-                      </Typography>
-                      <IconButton
-                        onClick={() => setScriptPage((page) => Math.min(scriptPageCount - 1, page + 1))}
-                        disabled={scriptPage >= scriptPageCount - 1}
-                        aria-label="Next transcript page"
-                        sx={{ color: 'var(--awm-muted)', '&:hover': { color: 'var(--awm-gold)' } }}
-                      >
-                        <ChevronRight />
-                      </IconButton>
-                    </Box>
-                  )}
                 </Box>
               )}
 
-              {/* ── Vocabulary List Tab ── */}
-              {tab === 1 && (
+              {/* ── Vocabulary List Tab (mobile only) ── */}
+              {isMobileViewport && tab === 1 && (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 1 } }}>
                   {episode.vocabList.length === 0 ? (
                     <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No vocabulary list found.</Typography>
@@ -1329,8 +1365,8 @@ export default function EpisodePage({
                 </Box>
               )}
 
-              {/* ── Grammar Points Tab ── */}
-              {tab === 2 && (
+              {/* ── Grammar Points Tab (mobile only) ── */}
+              {isMobileViewport && tab === 2 && (
                 <Box>
                   {episode.grammarPoints.length === 0 ? (
                     <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No grammar points found.</Typography>
