@@ -1149,23 +1149,29 @@ export default function EpisodePage({
                       </IconButton>
                     </>
                   )}
-                  <Button
-                    onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
-                    size="small"
-                    startIcon={<PsychologyOutlined sx={{ fontSize: 17 }} />}
-                    sx={{ color: 'var(--awm-gold-light)', border: '1px solid color-mix(in srgb, var(--awm-gold) 40%, transparent)', borderRadius: '8px', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, minHeight: 34, '&:hover': { bgcolor: 'rgba(212,168,67,0.1)' } }}
-                  >
-                    Memory
-                  </Button>
-                  <Button
-                    onClick={openSettings}
-                    size="small"
-                    startIcon={<SettingsIcon sx={{ fontSize: 17 }} />}
-                    sx={{ color: 'var(--awm-gold-light)', border: '1px solid color-mix(in srgb, var(--awm-gold) 40%, transparent)', borderRadius: '8px', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, minHeight: 34, '&:hover': { bgcolor: 'rgba(212,168,67,0.1)' } }}
-                  >
-                    Settings
-                  </Button>
                 </Box>
+              </Box>
+            )}
+
+            {/* Desktop: the old tab-bar strip now hosts Memory + Settings. */}
+            {!isMobileViewport && (
+              <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: 'var(--awm-white)', borderRadius: '12px 12px 0 0', px: 2.5, py: 1, display: 'flex', alignItems: 'center', gap: 1, mb: 0, flexShrink: 0 }}>
+                <Button
+                  onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
+                  size="small"
+                  startIcon={<PsychologyOutlined sx={{ fontSize: 17 }} />}
+                  sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.82rem', letterSpacing: '0.03em', minHeight: 34, px: 1.5, '&:hover': { color: 'var(--awm-gold)', bgcolor: 'rgba(184,134,11,0.06)' } }}
+                >
+                  Memory
+                </Button>
+                <Button
+                  onClick={openSettings}
+                  size="small"
+                  startIcon={<SettingsIcon sx={{ fontSize: 17 }} />}
+                  sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.82rem', letterSpacing: '0.03em', minHeight: 34, px: 1.5, '&:hover': { color: 'var(--awm-gold)', bgcolor: 'rgba(184,134,11,0.06)' } }}
+                >
+                  Settings
+                </Button>
               </Box>
             )}
 
