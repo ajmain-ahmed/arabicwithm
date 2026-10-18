@@ -692,7 +692,7 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
         position: 'sticky',
         top: 'calc(var(--awm-navbar-height) + 32px)',
         width: '100%',
-        maxWidth: 520,
+        maxWidth: 560,
         pt: { md: 0 },
       }}
     >
@@ -704,7 +704,7 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
           No other episodes in this show yet.
         </Typography>
       )}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1 }}>
         {related.map((item) => {
           const active = item.slug === currentSlug
           return (
@@ -965,7 +965,7 @@ export default function EpisodePage({
           {/* ── Left column (desktop only): related videos ── */}
           <RelatedRail related={related} currentSlug={episode.slug} />
 
-          {/* ── Middle (desktop only): sticky video ── */}
+          {/* ── Middle (desktop only): sticky breadcrumbs + video ── */}
           {!isMobile && (
           <Box
             sx={{
@@ -977,12 +977,23 @@ export default function EpisodePage({
               top: 'calc(var(--awm-navbar-height) + 32px)',
             }}
           >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, flexShrink: 0, flexWrap: 'wrap', minHeight: { md: 34 } }}>
+              <Breadcrumbs
+                separator={<BreadcrumbSep sx={{ fontSize: 13, color: 'rgba(245,237,224,0.5)' }} />}
+                sx={{ '& .MuiBreadcrumbs-li': { fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem' } }}
+              >
+                <Typography onClick={() => router.push('/')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>Home</Typography>
+                <Typography onClick={() => router.push('/cartoons')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>Cartoons</Typography>
+                <Typography onClick={() => router.push(`/cartoons/${episode.show}`)} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>{showTitle}</Typography>
+                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: '#f5ede0', fontWeight: 500 }}>{episode.title}</Typography>
+              </Breadcrumbs>
+            </Box>
             <Box sx={{ display: 'block' }}>
               <Box
                 sx={{
                   position: 'relative',
                   mx: 'auto',
-                  height: 'calc(100dvh - var(--awm-navbar-height) - 48px)',
+                  height: 'calc(100dvh - var(--awm-navbar-height) - 98px)',
                   maxWidth: '100%',
                   aspectRatio: '9 / 16',
                   borderRadius: '20px',
@@ -1078,20 +1089,6 @@ export default function EpisodePage({
                     </Box>
                   )}
                 </Box>
-              </Box>
-            )}
-
-            {!isMobileViewport && (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2, flexShrink: 0, flexWrap: 'wrap', minHeight: { md: 34 } }}>
-                <Breadcrumbs
-                  separator={<BreadcrumbSep sx={{ fontSize: 13, color: 'rgba(245,237,224,0.5)' }} />}
-                  sx={{ '& .MuiBreadcrumbs-li': { fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem' } }}
-                >
-                  <Typography onClick={() => router.push('/')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>Home</Typography>
-                  <Typography onClick={() => router.push('/cartoons')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>Cartoons</Typography>
-                  <Typography onClick={() => router.push(`/cartoons/${episode.show}`)} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>{showTitle}</Typography>
-                  <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: '#f5ede0', fontWeight: 500 }}>{episode.title}</Typography>
-                </Breadcrumbs>
               </Box>
             )}
 
