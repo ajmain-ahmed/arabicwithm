@@ -6,6 +6,7 @@ import {
   fetchShowsForPublic,
   fetchEpisodesForShowPublic,
 } from '@/app/actions/cartoons'
+import type { EpisodeMeta } from '@/app/lib/cartoons'
 import EpisodePage from './EpisodePage'
 
 export const revalidate = false
@@ -51,6 +52,10 @@ export default async function Page({
 
   const showData = await fetchShowBySlugPublic(show)
   const showTitle = showData?.title ?? show
+  /* Cached fetch (shared with the show page) — no extra DB cost in steady state. */
+  const related: EpisodeMeta[] = (await fetchEpisodesForShowPublic(show))
+    .filter((item) => item.slug !== ep.slug)
+    .slice(0, 12)
 
-  return <EpisodePage episode={ep} showTitle={showTitle} initialStart={initialStart} />
+  return <EpisodePage episode={ep} showTitle={showTitle} initialStart={initialStart} related={related} />
 }

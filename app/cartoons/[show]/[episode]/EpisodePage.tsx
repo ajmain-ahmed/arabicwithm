@@ -31,6 +31,7 @@ import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { stripDiacritics } from '@/app/lib/arabic'
 import {
   EpisodeFull,
+  EpisodeMeta,
   ScriptBlock,
   CartoonWordEntry,
   getEpisodeVideoSources,
@@ -700,15 +701,90 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
 })
 
 /* ─────────────────────────────────────────────
+   RelatedRail — YouTube-style "Up next" list (desktop)
+───────────────────────────────────────────── */
+function RelatedRail({ related, showSlug, currentSlug }: { related: EpisodeMeta[]; showSlug: string; currentSlug: string }) {
+  const router = useRouter()
+  return (
+    <Box
+      component="aside"
+      aria-label="Up next"
+      sx={{
+        display: { xs: 'none', md: 'flex' },
+        flexDirection: 'column',
+        gap: 1.1,
+        minHeight: 0,
+        overflowY: 'auto',
+        scrollbarWidth: 'none',
+        '&::-webkit-scrollbar': { display: 'none' },
+        pr: 0.25,
+      }}
+    >
+      <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 0.5, px: 0.5 }}>
+        Up next
+      </Typography>
+      {related.length === 0 && (
+        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(245,237,224,0.6)', px: 0.5 }}>
+          No other episodes in this show yet.
+        </Typography>
+      )}
+      {related.map((item) => {
+        const active = item.slug === currentSlug
+        return (
+          <Box
+            key={item.id}
+            onClick={() => router.push(`/cartoons/${showSlug}/${item.slug}`)}
+            sx={{
+              display: 'flex',
+              gap: 1.25,
+              p: 0.75,
+              borderRadius: '12px',
+              cursor: 'pointer',
+              border: '1px solid',
+              borderColor: active ? 'rgba(212,168,67,0.5)' : 'transparent',
+              bgcolor: active ? 'rgba(212,168,67,0.1)' : 'rgba(255,255,255,0.04)',
+              '&:hover': { bgcolor: active ? 'rgba(212,168,67,0.12)' : 'rgba(255,255,255,0.09)' },
+              transition: 'background-color .15s ease',
+            }}
+          >
+            <Box
+              component="img"
+              src={item.cover || `/api/covers/episodes/${item.id}`}
+              alt=""
+              loading="lazy"
+              sx={{ width: 118, aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, bgcolor: '#000' }}
+            />
+            <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.5, py: 0.25 }}>
+              <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 13.5, fontWeight: 600, color: '#f5ede0', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                {item.title}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, mt: 'auto' }}>
+                {item.level && <CefrChip level={item.level} size="small" sx={{ height: 17, fontSize: '0.58rem' }} />}
+                {active && (
+                  <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, color: 'var(--awm-gold-light)' }}>
+                    Now playing
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          </Box>
+        )
+      })}
+    </Box>
+  )
+}
+
+/* ─────────────────────────────────────────────
    Main Component
 ───────────────────────────────────────────── */
 export default function EpisodePage({
   episode,
-  showTitle, initialStart = 0,
+  showTitle, initialStart = 0, related = [],
 }: {
   episode: EpisodeFull
   showTitle: string
   initialStart?: number
+  related?: EpisodeMeta[]
 }) {
   const router = useRouter()
   const isAdmin = useIsAdmin()
@@ -896,98 +972,136 @@ export default function EpisodePage({
       <Box
         component="main"
         sx={{
-          background: 'var(--cream)',
-          mt: { xs: 0, md: '-64px' },
-          pt: {
-            xs: 0,
-            md: '96px',
-          },
-          pb: { xs: 6, md: 10 },
+          background: { xs: 'var(--cream)', md: '#0a0c0b' },
+          mt: { xs: 0, md: 0 },
+          pt: { xs: 0, md: 'calc(var(--awm-navbar-height) + 16px)' },
+          pb: { xs: 6, md: 2.5 },
+          height: { md: '100dvh' },
+          overflow: { md: 'hidden' },
         }}
       >
         <Box
           sx={{
             display: { xs: 'flex', md: 'grid' },
             flexDirection: { xs: 'column', md: 'unset' },
-            gridTemplateColumns: { md: 'minmax(360px, 500px) minmax(0, 1fr)' },
-            gap: { xs: 0, md: 3, lg: 5 },
-            maxWidth: 1536,
+            gridTemplateColumns: {
+              md: 'minmax(210px, 250px) minmax(0, 1fr) minmax(320px, 420px)',
+              lg: 'minmax(260px, 320px) minmax(0, 1fr) minmax(380px, 480px)',
+            },
+            gap: { xs: 0, md: 2.5 },
+            maxWidth: 1728,
             mx: 'auto',
-            px: { xs: 0, md: 3, lg: 6 },
-            alignItems: { xs: 'stretch', md: 'start' },
+            px: { xs: 0, md: 2.5, lg: 4 },
+            alignItems: { xs: 'stretch', md: 'stretch' },
+            height: { md: '100%' },
+            minHeight: 0,
           }}
         >
-          {/* ── Left column (desktop only) ── */}
+          {/* ── Left column (desktop only): related videos ── */}
+          <RelatedRail related={related} showSlug={episode.show} currentSlug={episode.slug} />
+
+          {/* ── Middle (desktop only): breadcrumbs + big video ── */}
           {!isMobile && (
           <Box
             sx={{
               display: { xs: 'none', md: 'flex' },
-              /* The column stretches to the transcript's height so the
-                 sticky player inside it never hits its bottom boundary
-                 (which is what pushed the video up under the navbar). */
-              alignSelf: 'stretch',
               flexDirection: 'column',
-              gap: 2.5,
-              px: 0,
-              pt: 0,
+              minWidth: 0,
+              minHeight: 0,
+              height: '100%',
+              gap: 1.75,
             }}
           >
-            <Box
-              sx={{
-                position: { md: 'sticky' },
-                top: { md: 84 },
-                width: '100%',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                boxShadow: '0 12px 40px rgba(44,26,14,0.18)',
-                background: '#000',
-                height: 'min(76dvh, 760px)',
-                flexShrink: 0,
-              }}
-            >
-              {selectedSource?.provider !== 'youtube' && selectedSource ? (
-                <SocialVideoEmbed source={selectedSource} title={episode.title} />
-              ) : (
-                <Box ref={wrapRef} sx={{ width: '100%', height: '100%' }} />
-              )}
-              {errorCode != null && isYouTubeSource && (
-                <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 3 }}>
-                  <Box sx={{ textAlign: 'center', color: '#fff' }}>
-                    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }}>YouTube could not load this video.</Typography>
-                    <Typography sx={{ mt: 0.5, mb: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, opacity: 0.75 }}>Player error {errorCode}</Typography>
-                    <Button onClick={retry} variant="contained" startIcon={<Refresh />} sx={{ bgcolor: 'var(--gold)', color: '#fff', textTransform: 'none' }}>
-                      Retry video
-                    </Button>
-                  </Box>
-                </Box>
-              )}
-              {videoSources.length > 1 && (
-                <Box sx={{ position: 'absolute', zIndex: 5, bottom: 14, left: 14, right: 76, display: 'flex', gap: 0.65, flexWrap: 'wrap' }}>
-                  {videoSources.map((source) => (
-                    <Chip
-                      key={source.provider}
-                      label={source.label}
-                      clickable
-                      onClick={() => setSelectedProvider(source.provider)}
-                      size="small"
-                      sx={{
-                        height: 27,
-                        bgcolor: source.provider === selectedSource?.provider ? '#d4a843' : 'rgba(0,0,0,0.62)',
-                        color: source.provider === selectedSource?.provider ? '#0e2e1f' : '#fff',
-                        fontFamily: 'var(--font-sans), sans-serif',
-                        fontWeight: 700,
-                        '&:hover': { bgcolor: source.provider === selectedSource?.provider ? '#d4a843' : 'rgba(0,0,0,0.8)' },
-                      }}
-                    />
-                  ))}
-                </Box>
-              )}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, flexShrink: 0 }}>
+              <Breadcrumbs
+                separator={<ChevronRight sx={{ fontSize: 14, color: 'rgba(245,237,224,0.5)' }} />}
+                sx={{ '& .MuiBreadcrumbs-li': { fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem' } }}
+              >
+                <Typography onClick={() => router.push('/')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>
+                  Home
+                </Typography>
+                <Typography onClick={() => router.push('/cartoons')} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>
+                  Cartoons
+                </Typography>
+                <Typography onClick={() => router.push(`/cartoons/${episode.show}`)} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>
+                  {showTitle}
+                </Typography>
+                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: '#f5ede0', fontWeight: 500 }}>
+                  {episode.title}
+                </Typography>
+              </Breadcrumbs>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                <Button
+                  onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
+                  size="small"
+                  startIcon={<PsychologyOutlined sx={{ fontSize: 18 }} />}
+                  sx={{ color: 'var(--awm-gold-light)', border: '1px solid color-mix(in srgb, var(--awm-gold) 40%, transparent)', borderRadius: '8px', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, '&:hover': { bgcolor: 'rgba(212,168,67,0.1)' } }}
+                >
+                  Memory
+                </Button>
+                <SettingsButton onClick={openSettings} />
+              </Box>
             </Box>
 
+            <Box sx={{ flex: 1, minHeight: 0, display: 'grid', placeItems: 'center', containerType: 'size', width: '100%' }}>
+              <Box
+                sx={{
+                  position: 'relative',
+                  width: '100%',
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  aspectRatio: '16 / 9',
+                  '@supports (width: 1cqh)': { width: 'min(100%, 177.78cqh)' },
+                  borderRadius: '20px',
+                  overflow: 'hidden',
+                  bgcolor: '#000',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  boxShadow: '0 30px 80px rgba(0,0,0,0.55)',
+                }}
+              >
+                {selectedSource?.provider !== 'youtube' && selectedSource ? (
+                  <SocialVideoEmbed source={selectedSource} title={episode.title} />
+                ) : (
+                  <Box ref={wrapRef} sx={{ width: '100%', height: '100%' }} />
+                )}
+                {errorCode != null && isYouTubeSource && (
+                  <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 3 }}>
+                    <Box sx={{ textAlign: 'center', color: '#fff' }}>
+                      <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }}>YouTube could not load this video.</Typography>
+                      <Typography sx={{ mt: 0.5, mb: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, opacity: 0.75 }}>Player error {errorCode}</Typography>
+                      <Button onClick={retry} variant="contained" startIcon={<Refresh />} sx={{ bgcolor: 'var(--gold)', color: '#fff', textTransform: 'none' }}>
+                        Retry video
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+                {videoSources.length > 1 && (
+                  <Box sx={{ position: 'absolute', zIndex: 5, bottom: 14, left: 14, right: 76, display: 'flex', gap: 0.65, flexWrap: 'wrap' }}>
+                    {videoSources.map((source) => (
+                      <Chip
+                        key={source.provider}
+                        label={source.label}
+                        clickable
+                        onClick={() => setSelectedProvider(source.provider)}
+                        size="small"
+                        sx={{
+                          height: 27,
+                          bgcolor: source.provider === selectedSource?.provider ? '#d4a843' : 'rgba(0,0,0,0.62)',
+                          color: source.provider === selectedSource?.provider ? '#0e2e1f' : '#fff',
+                          fontFamily: 'var(--font-sans), sans-serif',
+                          fontWeight: 700,
+                          '&:hover': { bgcolor: source.provider === selectedSource?.provider ? '#d4a843' : 'rgba(0,0,0,0.8)' },
+                        }}
+                      />
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            </Box>
           </Box>
           )}
 
-          {/* ── Right: Tabs ── */}
+          {/* ── Right: Tabs (breadcrumbs + actions moved above the video) ── */}
           <Box
             sx={{
               display: 'flex',
@@ -995,54 +1109,13 @@ export default function EpisodePage({
               minWidth: 0,
               px: { xs: 2.5, md: 0 },
               mt: { xs: 0.5, md: 0 },
+              height: { md: '100%' },
+              minHeight: 0,
+              overflowY: { md: 'auto' },
+              scrollbarWidth: { md: 'thin' },
+              pr: { md: 0.5 },
             }}
           >
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-              {/* Breadcrumbs */}
-              <Breadcrumbs
-                separator={<ChevronRight sx={{ fontSize: 14, color: 'var(--muted)' }} />}
-                sx={{
-                  '& .MuiBreadcrumbs-li': { fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem' },
-                }}
-              >
-                <Typography
-                  onClick={() => router.push('/')}
-                  sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--muted)', cursor: 'pointer', '&:hover': { color: 'var(--gold)' } }}
-                >
-                  Home
-                </Typography>
-                <Typography
-                  onClick={() => router.push('/cartoons')}
-                  sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--muted)', cursor: 'pointer', '&:hover': { color: 'var(--gold)' } }}
-                >
-                  Cartoons
-                </Typography>
-                <Typography
-                  onClick={() => router.push(`/cartoons/${episode.show}`)}
-                  sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--muted)', cursor: 'pointer', '&:hover': { color: 'var(--gold)' } }}
-                >
-                  {showTitle}
-                </Typography>
-                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--bark)', fontWeight: 500 }}>
-                  {episode.title}
-                </Typography>
-              </Breadcrumbs>
-
-              {/* Settings + Memory live here on desktop; mobile has them as tabs. */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-                <Button
-                  onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
-                  size="small"
-                  startIcon={<PsychologyOutlined sx={{ fontSize: 18 }} />}
-                  sx={{ color: 'var(--awm-forest)', border: '1px solid color-mix(in srgb, var(--awm-forest) 28%, transparent)', borderRadius: '8px', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, '&:hover': { bgcolor: 'color-mix(in srgb, var(--awm-forest) 7%, transparent)' } }}
-                >
-                  Memory
-                </Button>
-                <SettingsButton onClick={openSettings} />
-              </Box>
-
-            </Box>
-
             {isMobile && (
               <Box sx={{ position: 'sticky', top: `${navbarHeight}px`, zIndex: 22, mb: 1.25, mx: -2.5, width: 'calc(100% + 40px)', bgcolor: '#000', boxShadow: '0 8px 24px color-mix(in srgb, var(--awm-bark) 20%, transparent)' }}>
                 <Box
