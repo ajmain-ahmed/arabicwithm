@@ -24,7 +24,7 @@ import {
   IconButton,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ChevronLeft, ChevronRight, ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, Fullscreen, PlayArrow, PsychologyOutlined, Refresh, Settings as SettingsIcon } from '@mui/icons-material'
+import { ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, Fullscreen, PlayArrow, PsychologyOutlined, Refresh, Settings as SettingsIcon } from '@mui/icons-material'
 import { ContentCard } from '@/app/components/content-grid'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
@@ -762,7 +762,6 @@ export default function EpisodePage({
   const [textFont, setTextFont] = useState<'naskh' | 'garamond' | 'amiri'>('naskh')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set())
-  const [scriptPage, setScriptPage] = useState(0)
   const [localActiveIndex, setLocalActiveIndex] = useState<number | null>(null)
   const videoSources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(videoSources[0]?.provider)
@@ -894,25 +893,6 @@ export default function EpisodePage({
       activeBlockRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
   }, [activeIndex, isMobile])
-
-  /* Desktop transcript pagination: playback follows the active block across
-     pages; the user can also flip manually. Mobile keeps the full scroll. */
-  const SCRIPT_PAGE_SIZE = 8
-  const isDesktopWatch = !isMobileViewport
-  const scriptPageCount = Math.max(1, Math.ceil(episode.scriptBlocks.length / SCRIPT_PAGE_SIZE))
-  /* Follow playback across pages (React's render-phase state adjustment —
-     manual pager flips stick until the active block moves again). */
-  const [followedActiveIndex, setFollowedActiveIndex] = useState(activeIndex)
-  if (activeIndex !== followedActiveIndex) {
-    setFollowedActiveIndex(activeIndex)
-    if (isDesktopWatch && activeIndex != null) {
-      setScriptPage(Math.floor(activeIndex / SCRIPT_PAGE_SIZE))
-    }
-  }
-  const scriptPageStart = Math.min(scriptPage, scriptPageCount - 1) * SCRIPT_PAGE_SIZE
-  const visibleScriptBlocks = isDesktopWatch
-    ? episode.scriptBlocks.slice(scriptPageStart, scriptPageStart + SCRIPT_PAGE_SIZE)
-    : episode.scriptBlocks
 
   const blocksWithNotes = episode.scriptBlocks
     .map((block, i) => ({ hasNotes: block.notes.length > 0, index: i }))
@@ -1139,31 +1119,6 @@ export default function EpisodePage({
                 >
                   Settings
                 </Button>
-                {scriptPageCount > 1 && (
-                  <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, color: 'var(--awm-muted)', whiteSpace: 'nowrap' }}>
-                      Page {scriptPage + 1} of {scriptPageCount}
-                    </Typography>
-                    <IconButton
-                      onClick={() => setScriptPage((page) => Math.max(0, page - 1))}
-                      disabled={scriptPage === 0}
-                      aria-label="Previous transcript page"
-                      size="small"
-                      sx={{ color: 'var(--awm-muted)', '&:hover:not(:disabled)': { color: 'var(--awm-gold)' } }}
-                    >
-                      <ChevronLeft />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => setScriptPage((page) => Math.min(scriptPageCount - 1, page + 1))}
-                      disabled={scriptPage >= scriptPageCount - 1}
-                      aria-label="Next transcript page"
-                      size="small"
-                      sx={{ color: 'var(--awm-muted)', '&:hover:not(:disabled)': { color: 'var(--awm-gold)' } }}
-                    >
-                      <ChevronRight />
-                    </IconButton>
-                  </Box>
-                )}
               </Box>
             )}
 
@@ -1247,9 +1202,7 @@ export default function EpisodePage({
                   {episode.scriptBlocks.length === 0 ? (
                     <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No script found in this episode file.</Typography>
                   ) : (
-                    visibleScriptBlocks.map((block, offset) => {
-                      const i = scriptPageStart + offset
-                      return (
+                    episode.scriptBlocks.map((block, i) => (
                       <ScriptBlockView
                         key={i}
                         block={block}
@@ -1269,8 +1222,7 @@ export default function EpisodePage({
                         onToggleNotes={toggleNotes}
                         onDrawerOpenChange={setMobileWordDrawerOpen}
                       />
-                      )
-                    })
+                    ))
                   )}
                 </Box>
               )}
