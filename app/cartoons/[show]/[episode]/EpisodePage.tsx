@@ -904,7 +904,7 @@ export default function EpisodePage({
 
   /* Desktop transcript pagination: playback follows the active block across
      pages; the user can also flip manually. Mobile keeps the full scroll. */
-  const SCRIPT_PAGE_SIZE = 8
+  const SCRIPT_PAGE_SIZE = 12
   const isDesktopWatch = !isMobileViewport
   const scriptPageCount = Math.max(1, Math.ceil(episode.scriptBlocks.length / SCRIPT_PAGE_SIZE))
   /* Follow playback across pages (React's render-phase state adjustment —
@@ -1077,6 +1077,7 @@ export default function EpisodePage({
               justifySelf: 'start',
               width: '100%',
               maxWidth: { md: 620, lg: 760 },
+              pb: { md: 4 },
             }}
           >
             {isMobile && (
