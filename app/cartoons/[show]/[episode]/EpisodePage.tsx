@@ -692,7 +692,7 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
         position: 'sticky',
         top: 'calc(var(--awm-navbar-height) + 32px)',
         width: '100%',
-        maxWidth: 390,
+        maxWidth: 520,
         pt: { md: 0 },
       }}
     >
