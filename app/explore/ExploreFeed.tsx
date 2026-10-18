@@ -689,6 +689,9 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
         scrollSnapType: 'y mandatory',
         overscrollBehaviorY: 'contain',
         WebkitOverflowScrolling: 'touch',
+        /* TikTok-style: the feed scrolls but never shows a scrollbar. */
+        scrollbarWidth: 'none',
+        '&::-webkit-scrollbar': { display: 'none' },
         /* Desktop is a TikTok-style immersive stage; mobile keeps the cream page. */
         bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' },
         ...(isMobileDefinitionLayout && selectedDefinition ? { overflowY: 'hidden' } : {}),
