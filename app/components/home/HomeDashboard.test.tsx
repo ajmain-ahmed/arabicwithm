@@ -26,7 +26,7 @@ function daypart(date: Date) {
 }
 
 describe('homepage hero', () => {
-  it('shows a time-based greeting and the activity stats for signed-in users', () => {
+  it('shows a time-based greeting with streak and AWM+ pills for signed-in users', () => {
     home.user = { id: 'user-id', user_metadata: { full_name: 'Test User' } }
     home.statsRendered = false
     const html = renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]} />)
@@ -34,7 +34,9 @@ describe('homepage hero', () => {
     expect(html).not.toContain('Learn Arabic through cartoons and books')
     expect(html).not.toContain('Start Watching')
     expect(html).not.toContain('Start Reading')
-    expect(home.statsRendered).toBe(true)
+    expect(html).toContain('0 days streak')
+    expect(html).toContain('AWM+')
+    expect(home.statsRendered).toBe(false)
   })
 
   it('keeps the public heading and hides stats for guests', () => {

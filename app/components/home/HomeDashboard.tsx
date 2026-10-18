@@ -9,6 +9,7 @@ import {
   ExploreOutlined,
   GridOnRounded,
   Headphones,
+  LocalFireDepartmentRounded,
   MenuBook,
   OndemandVideo,
   AccountCircleOutlined,
@@ -25,21 +26,18 @@ import PremiumPrompt from '@/app/components/PremiumPrompt'
 import CefrChip from '@/app/components/CefrChip'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, HOME_CAROUSEL_CARD_ASPECT_RATIO, type CatalogueRowItem } from './NewOnRow'
 import AppDownloadSection from './AppDownloadSection'
-import LearningStats from './LearningStats'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
-import { parseReadingList } from '@/app/lib/readingList'
 import {
   LEARNING_ACTIVITY_EVENT,
   parseLearningActivity,
   type LearningActivity,
 } from '@/app/lib/activity'
 
-interface ProgressEntry { chapterSlug: string; updatedAt?: string; hiddenFromList?: boolean }
 interface ActivityUpdate { userId: string; activity: LearningActivity }
 
 export interface FeaturedEpisode {
@@ -199,10 +197,11 @@ function BooksSection({ books }: { books: PublicBook[] }) {
   )
 }
 
-export default function HomeDashboard({ books, chaptersByBook, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
+export default function HomeDashboard({ books, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
   const { mode } = useColorMode()
   const { user } = useAuth()
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
+  const [premiumOpen, setPremiumOpen] = useState(false)
   const { newShowItems, newEpisodeItems } = useMemo(() => {
     return {
       newShowItems: showRowItems(newShows),
@@ -229,17 +228,6 @@ export default function HomeDashboard({ books, chaptersByBook, newShows, newEpis
     return () => { cancelled = true }
   }, [user?.id])
 
-  const progress = useMemo(() => {
-    if (!user) return {} as Record<string, ProgressEntry>
-    return parseReadingList(user.user_metadata?.book_progress) as Record<string, ProgressEntry>
-  }, [user])
-  const booksInProgress = useMemo(() => {
-    if (!user) return 0
-    return Object.entries(progress).filter(([bookSlug, saved]) => (
-      !saved.hiddenFromList && books.some((book) => book.slug === bookSlug) &&
-      chaptersByBook[bookSlug]?.some((chapter) => chapter.slug === saved.chapterSlug)
-    )).length
-  }, [user, progress, books, chaptersByBook])
   const displayName = user ? String(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'learner').split(' ')[0] : ''
   const activity = user
     ? activityUpdate?.userId === user.id
@@ -293,9 +281,13 @@ export default function HomeDashboard({ books, chaptersByBook, newShows, newEpis
                   <Button component={Link} href="/books" variant="contained" startIcon={<MenuBook />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Reading</Button>
                 </Box>
               )}
-              {user && activity && (
-                <Box sx={{ mt: { xs: 4, md: 5 }, textAlign: 'left' }}>
-                  <LearningStats activity={activity} streak={streak} booksInProgress={booksInProgress} now={new Date()} />
+              {user && (
+                <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: '0.9rem' }}>
+                    <LocalFireDepartmentRounded sx={{ fontSize: 18 }} />
+                    {streak} day{streak === 1 ? '' : 's'} streak
+                  </Box>
+                  <Button onClick={() => setPremiumOpen(true)} variant="contained" startIcon={<AutoStories />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>AWM+</Button>
                 </Box>
               )}
             </Box>
@@ -329,6 +321,7 @@ export default function HomeDashboard({ books, chaptersByBook, newShows, newEpis
             <AppDownloadSection />
           </Container>
         </Box>
+        <PremiumPrompt open={premiumOpen} onClose={() => setPremiumOpen(false)} />
       </Box>
   )
 }
