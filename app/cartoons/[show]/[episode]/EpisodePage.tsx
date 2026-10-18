@@ -692,7 +692,7 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
         position: 'sticky',
         top: 'calc(var(--awm-navbar-height) + 32px)',
         width: '100%',
-        maxWidth: 560,
+        maxWidth: 784,
         pt: { md: 0 },
       }}
     >
@@ -1094,12 +1094,12 @@ export default function EpisodePage({
 
             {/* Desktop: the old tab-bar strip now hosts Memory + Settings. */}
             {!isMobileViewport && (
-              <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: 'var(--awm-white)', borderRadius: '12px 12px 0 0', px: 2.5, py: 1, display: 'flex', alignItems: 'center', gap: 1, mb: 0, flexShrink: 0, minHeight: { md: 50 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexShrink: 0, minHeight: { md: 34 } }}>
                 <Button
                   onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
                   size="small"
                   startIcon={<PsychologyOutlined sx={{ fontSize: 17 }} />}
-                  sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.82rem', letterSpacing: '0.03em', minHeight: 34, px: 1.5, '&:hover': { color: 'var(--awm-gold)', bgcolor: 'rgba(184,134,11,0.06)' } }}
+                  sx={{ color: 'rgba(245,237,224,0.65)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.82rem', letterSpacing: '0.03em', minHeight: 34, px: 1.5, '&:hover': { color: 'var(--awm-gold-light)', bgcolor: 'rgba(245,237,224,0.06)' } }}
                 >
                   Memory
                 </Button>
@@ -1107,7 +1107,7 @@ export default function EpisodePage({
                   onClick={openSettings}
                   size="small"
                   startIcon={<SettingsIcon sx={{ fontSize: 17 }} />}
-                  sx={{ color: 'var(--awm-muted)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.82rem', letterSpacing: '0.03em', minHeight: 34, px: 1.5, '&:hover': { color: 'var(--awm-gold)', bgcolor: 'rgba(184,134,11,0.06)' } }}
+                  sx={{ color: 'rgba(245,237,224,0.65)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.82rem', letterSpacing: '0.03em', minHeight: 34, px: 1.5, '&:hover': { color: 'var(--awm-gold-light)', bgcolor: 'rgba(245,237,224,0.06)' } }}
                 >
                   Settings
                 </Button>
@@ -1139,7 +1139,7 @@ export default function EpisodePage({
 
             </Box>
 
-            <Box sx={{ background: 'var(--awm-white)', borderRadius: '0 0 12px 12px', px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 } }}>
+            <Box sx={{ background: 'var(--awm-white)', borderRadius: { xs: '0 0 12px 12px', md: '12px' }, px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 } }}>
               {tab === 0 && (
                 <Typography component="h1" sx={{ display: { xs: 'block', md: 'none' }, mb: 2, px: 1, textAlign: 'center', fontFamily: 'var(--font-heading)', fontSize: 23, fontWeight: 600, lineHeight: 1.2, color: 'var(--awm-bark)' }}>
                   {episode.title}
