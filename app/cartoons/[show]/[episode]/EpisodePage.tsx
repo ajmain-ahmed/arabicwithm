@@ -674,30 +674,46 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
 ───────────────────────────────────────────── */
 type RelatedEpisode = EpisodeMeta & { showSlug: string }
 
-function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; currentSlug: string }) {
+function RelatedRail({ related, currentSlug, variant }: { related: RelatedEpisode[]; currentSlug: string; variant: 'rail' | 'strip' }) {
+  const isStrip = variant === 'strip'
   return (
     <Box
-      component="aside"
+      component={isStrip ? 'section' : 'aside'}
       aria-label="Up next"
       sx={{
-        display: { xs: 'none', md: 'flex' },
         flexDirection: 'column',
         gap: 1.1,
         minHeight: 0,
-        overflowY: 'auto',
         scrollbarWidth: 'none',
         '&::-webkit-scrollbar': { display: 'none' },
-        justifySelf: 'end',
-        alignSelf: 'start',
-        position: 'sticky',
-        top: 'calc(var(--awm-navbar-height) + 32px)',
-        width: '100%',
-        maxWidth: 784,
-        height: 'calc(100dvh - 129px)',
-        pt: { md: '7px' },
+        ...(isStrip
+          ? {
+              /* md–lg: horizontal strip below the video/transcript grid */
+              display: { xs: 'none', md: 'flex', lg: 'none' },
+              overflowX: 'auto',
+              overflowY: 'hidden',
+              scrollSnapType: 'x proximity',
+              width: '100%',
+              px: { md: 2.5, lg: 4 },
+              pt: { md: 3 },
+              pb: { md: 4 },
+            }
+          : {
+              /* lg+: vertical sticky rail left of the video */
+              display: { xs: 'none', lg: 'flex' },
+              overflowY: 'auto',
+              justifySelf: 'end',
+              alignSelf: 'start',
+              position: 'sticky',
+              top: 'calc(var(--awm-navbar-height) + 32px)',
+              width: '100%',
+              maxWidth: 784,
+              height: 'calc(100dvh - 129px)',
+              pt: { lg: '7px' },
+            }),
       }}
     >
-      <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 0.5, px: 0.5 }}>
+      <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 0.5, px: 0.5, flexShrink: 0 }}>
         Up next
       </Typography>
       {related.length === 0 && (
@@ -705,7 +721,25 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
           No other episodes in this show yet.
         </Typography>
       )}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1, mt: { md: '14px' } }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 1,
+          minWidth: 0,
+          ...(isStrip
+            ? {
+                width: 'max-content',
+                minWidth: '100%',
+                gridAutoFlow: 'column',
+                gridAutoColumns: { md: '180px' },
+                alignItems: 'start',
+              }
+            : {
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                mt: { lg: '14px' },
+              }),
+        }}
+      >
         {related.map((item) => {
           const active = item.slug === currentSlug
           return (
@@ -716,6 +750,7 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
                 outline: active ? '2px solid rgba(212,168,67,0.7)' : '2px solid transparent',
                 outlineOffset: 2,
                 transition: 'outline-color .15s ease',
+                scrollSnapAlign: 'start',
                 '& img': { filter: 'brightness(0.62)', transition: 'filter .2s ease' },
                 '&:hover img': { filter: 'brightness(1)' },
               }}
@@ -957,16 +992,16 @@ export default function EpisodePage({
             display: { xs: 'flex', md: 'grid' },
             flexDirection: { xs: 'column', md: 'unset' },
             gridTemplateColumns: {
-              md: 'minmax(0, 1fr) auto minmax(0, 1fr)',
+              md: 'auto minmax(0, 1fr)',
               lg: 'minmax(0, 1fr) auto minmax(0, 1fr)',
             },
-            gap: { xs: 0, md: 6 },
+            gap: { xs: 0, md: 3, lg: 6 },
             px: { xs: 0, md: 2.5, lg: 4 },
             alignItems: { xs: 'stretch', md: 'stretch' },
           }}
         >
-          {/* ── Left column (desktop only): related videos ── */}
-          <RelatedRail related={related} currentSlug={episode.slug} />
+          {/* ── Left (lg+ only): sticky related rail ── */}
+          <RelatedRail related={related} currentSlug={episode.slug} variant="rail" />
 
           {/* ── Middle (desktop only): sticky breadcrumbs + video ── */}
           {!isMobile && (
@@ -996,7 +1031,10 @@ export default function EpisodePage({
                 sx={{
                   position: 'relative',
                   mx: 'auto',
-                  height: 'calc(100dvh - var(--awm-navbar-height) - 114px)',
+                  height: {
+                    md: 'min(calc(100dvh - 179px), 760px)',
+                    lg: 'calc(100dvh - var(--awm-navbar-height) - 114px)',
+                  },
                   maxWidth: '100%',
                   aspectRatio: '9 / 16',
                   borderRadius: '20px',
@@ -1393,6 +1431,9 @@ export default function EpisodePage({
             </Box>
           </Box>
         </Box>
+
+        {/* ── md–lg: related episodes as a horizontal strip below the grid ── */}
+        <RelatedRail related={related} currentSlug={episode.slug} variant="strip" />
       </Box>
 
       {/* ── Admin Edit Dialog ── */}
