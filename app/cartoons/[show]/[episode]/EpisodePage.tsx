@@ -1077,7 +1077,6 @@ export default function EpisodePage({
               justifySelf: 'start',
               width: '100%',
               maxWidth: { md: 620, lg: 760 },
-              pb: { md: 4 },
             }}
           >
             {isMobile && (
@@ -1200,7 +1199,7 @@ export default function EpisodePage({
 
             </Box>
 
-            <Box sx={{ background: 'var(--awm-white)', borderRadius: '0 0 12px 12px', px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 }, flex: { md: 1 }, minHeight: { md: 0 } }}>
+            <Box sx={{ background: 'var(--awm-white)', borderRadius: '0 0 12px 12px', px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 } }}>
               {tab === 0 && (
                 <Typography component="h1" sx={{ display: { xs: 'block', md: 'none' }, mb: 2, px: 1, textAlign: 'center', fontFamily: 'var(--font-heading)', fontSize: 23, fontWeight: 600, lineHeight: 1.2, color: 'var(--awm-bark)' }}>
                   {episode.title}
