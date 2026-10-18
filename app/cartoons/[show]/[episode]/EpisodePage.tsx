@@ -725,10 +725,10 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
               src={item.cover || `/api/covers/episodes/${item.id}`}
               alt=""
               loading="lazy"
-              sx={{ width: 118, aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: '8px', flexShrink: 0, bgcolor: '#000' }}
+              sx={{ width: 200, aspectRatio: '16 / 9', objectFit: 'cover', borderRadius: '10px', flexShrink: 0, bgcolor: '#000' }}
             />
             <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.5, py: 0.25 }}>
-              <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 13.5, fontWeight: 600, color: '#f5ede0', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+              <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 14.5, fontWeight: 600, color: '#f5ede0', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                 {item.title}
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.6, mt: 'auto' }}>
