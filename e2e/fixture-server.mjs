@@ -150,13 +150,13 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       if(membership)membership.group_id=body.p_group;else tables.admin_manual_transcripts.push({transcript_id:row.id,group_id:body.p_group})
       return json(res,row.updated_at)
     }
-    if(['admin_begin_manual_import','admin_append_manual_import','admin_finish_manual_import','admin_resume_manual_import'].includes(rpc)){
+    if(['admin_begin_manual_import','website_begin_manual_import','admin_append_manual_import','admin_finish_manual_import','website_finish_manual_import','admin_resume_manual_import'].includes(rpc)){
       if(roleFor(body.p_actor)!=='admin')return json(res,{message:'Forbidden'},403)
-      if(rpc==='admin_begin_manual_import'){
+      if(rpc==='admin_begin_manual_import'||rpc==='website_begin_manual_import'){
         const existing=importJobs.get(body.p_key);if(existing&&tables.youtube_transcripts.some(row=>row.id===existing.id))return json(res,existing.state)
         if(tables.youtube_transcripts.some(row=>row.youtube_id===body.p_youtube_id))return json(res,{code:'P0001',message:'This video already exists'},400)
         const id=randomUUID(),importId=randomUUID(),raw=structuredClone(body.p_raw),state={importId,id,expected:raw.content.length,committed:0,tokens:0,completed:false,enrichment:'unavailable'}
-        const job={id,raw,state,searchable:body.p_searchable};importJobs.set(body.p_key,job);importJobs.set(importId,job)
+        const job={id,raw,state,searchable:body.p_searchable,explorePublished:body.p_explore_published??true};importJobs.set(body.p_key,job);importJobs.set(importId,job)
         tables.youtube_transcripts.push({id,youtube_id:body.p_youtube_id,canonical_url:`https://www.youtube.com/watch?v=${body.p_youtube_id}`,title:body.p_title,channel:body.p_channel,thumbnail:`${backendUrl}/storage/v1/object/public/covers/test.webp`,provider:'manual',source_origin:'website_admin_transcript',episode_id:null,status:'indexing',translation_status:'unavailable',searchable:false,raw_transcript:null,duration_seconds:body.p_duration??null,created_at:'2026-10-07T00:00:00Z',updated_at:'2026-10-07T00:00:00Z'})
         tables.admin_manual_transcripts.push({transcript_id:id,group_id:body.p_group??null});return json(res,state)
       }
@@ -171,7 +171,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
         job.state.committed+=batch.length;job.state.tokens+=batch.reduce((n,c)=>n+c.text.split(/\s+/).filter(Boolean).length,0);return json(res,job.state)
       }
       if(job.state.committed!==job.state.expected)return json(res,{message:'Import verification failed'},400)
-      const row=tables.youtube_transcripts.find(row=>row.id===job.id);row.status='ready';row.searchable=job.searchable;row.raw_transcript=structuredClone(job.raw);row.original_json=job.raw._source_json;delete row.raw_transcript._source_json;row.enrichment_status='unavailable';row.translation_status='ready';job.state.completed=true;return json(res,job.state)
+      const row=tables.youtube_transcripts.find(row=>row.id===job.id);row.status='ready';row.searchable=job.searchable;row.explore_published=job.explorePublished;row.raw_transcript=structuredClone(job.raw);row.original_json=job.raw._source_json;delete row.raw_transcript._source_json;row.enrichment_status='unavailable';row.translation_status='ready';job.state.completed=true;return json(res,job.state)
     }
     if(rpc==='admin_import_youtube_transcript'||rpc==='admin_import_grouped_transcript'||rpc==='admin_import_manual_source'){
       if(roleFor(body.p_actor)!=='admin')return json(res,{message:'Forbidden'},403)
@@ -186,6 +186,16 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
         return json(res,{id,enrichment:'unavailable'})
       }
       return json(res,id)
+    }
+    if(rpc==='website_save_manual_source'){
+      if(roleFor(body.p_actor)!=='admin')return json(res,{message:'Forbidden'},403)
+      const row=tables.youtube_transcripts.find(row=>row.id===body.p_id)
+      if(!row||row.updated_at!==body.p_updated_at)return json(res,{message:'transcript_edit_conflict'},409)
+      Object.assign(row,{title:body.p_title,channel:body.p_channel,searchable:body.p_searchable,explore_published:body.p_explore_published,raw_transcript:structuredClone(body.p_raw),youtube_id:body.p_youtube_id,updated_at:new Date().toISOString()})
+      row.original_json=row.raw_transcript._source_json;delete row.raw_transcript._source_json
+      tables.transcript_segments=tables.transcript_segments.filter(s=>s.transcript_id!==row.id)
+      row.raw_transcript.content.forEach((c,position)=>tables.transcript_segments.push({id:tables.transcript_segments.length+1,transcript_id:row.id,position,original_text:c.text,english_text:c.english??null,start_seconds:c.offset/1000,end_seconds:c.duration===null?null:(c.offset+c.duration)/1000}))
+      return json(res,{updatedAt:row.updated_at,enrichment:'unavailable'})
     }
     if(rpc==='admin_manual_enrichment'||rpc==='admin_retry_manual_enrichment'){const row=tables.youtube_transcripts.find(row=>row.id===body.p_id);return json(res,row?{status:row.enrichment_status??'unavailable',diagnostics:[],originalJson:row.original_json??null}:null)}
     if (rpc === 'account_role') {
