@@ -703,7 +703,9 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
 /* ─────────────────────────────────────────────
    RelatedRail — YouTube-style "Up next" list (desktop)
 ───────────────────────────────────────────── */
-function RelatedRail({ related, showSlug, currentSlug }: { related: EpisodeMeta[]; showSlug: string; currentSlug: string }) {
+type RelatedEpisode = EpisodeMeta & { showSlug: string }
+
+function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; currentSlug: string }) {
   const router = useRouter()
   return (
     <Box
@@ -733,7 +735,7 @@ function RelatedRail({ related, showSlug, currentSlug }: { related: EpisodeMeta[
         return (
           <Box
             key={item.id}
-            onClick={() => router.push(`/cartoons/${showSlug}/${item.slug}`)}
+            onClick={() => router.push(`/cartoons/${item.showSlug}/${item.slug}`)}
             sx={{
               display: 'flex',
               gap: 1.25,
@@ -784,7 +786,7 @@ export default function EpisodePage({
   episode: EpisodeFull
   showTitle: string
   initialStart?: number
-  related?: EpisodeMeta[]
+  related?: Array<EpisodeMeta & { showSlug: string }>
 }) {
   const router = useRouter()
   const isAdmin = useIsAdmin()
@@ -985,8 +987,8 @@ export default function EpisodePage({
             display: { xs: 'flex', md: 'grid' },
             flexDirection: { xs: 'column', md: 'unset' },
             gridTemplateColumns: {
-              md: 'minmax(210px, 250px) minmax(0, 1fr) minmax(320px, 420px)',
-              lg: 'minmax(260px, 320px) minmax(0, 1fr) minmax(380px, 480px)',
+              md: 'minmax(200px, 240px) minmax(0, 1fr) minmax(360px, 480px)',
+              lg: 'minmax(240px, 300px) minmax(0, 1fr) minmax(440px, 580px)',
             },
             gap: { xs: 0, md: 2.5 },
             maxWidth: 1728,
@@ -998,7 +1000,7 @@ export default function EpisodePage({
           }}
         >
           {/* ── Left column (desktop only): related videos ── */}
-          <RelatedRail related={related} showSlug={episode.show} currentSlug={episode.slug} />
+          <RelatedRail related={related} currentSlug={episode.slug} />
 
           {/* ── Middle (desktop only): breadcrumbs + big video ── */}
           {!isMobile && (
@@ -1048,10 +1050,9 @@ export default function EpisodePage({
                 sx={{
                   position: 'relative',
                   width: '100%',
+                  height: '100%',
                   maxWidth: '100%',
                   maxHeight: '100%',
-                  aspectRatio: '16 / 9',
-                  '@supports (width: 1cqh)': { width: 'min(100%, 177.78cqh)' },
                   borderRadius: '20px',
                   overflow: 'hidden',
                   bgcolor: '#000',
