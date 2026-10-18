@@ -688,9 +688,12 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
         scrollbarWidth: 'none',
         '&::-webkit-scrollbar': { display: 'none' },
         justifySelf: 'end',
+        alignSelf: 'start',
+        position: 'sticky',
+        top: 'calc(var(--awm-navbar-height) + 32px)',
         width: '100%',
         maxWidth: 390,
-        pt: { md: '19px' },
+        pt: { md: 0 },
       }}
     >
       <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold)', mb: 0.5, px: 0.5 }}>
@@ -941,10 +944,9 @@ export default function EpisodePage({
           background: { xs: 'var(--cream)', md: '#0a0c0b' },
           mt: { xs: 0, md: 0 },
           pt: { xs: 0, md: 4 },
-          pb: { xs: 6, md: 1.5 },
-          height: { md: 'calc(100dvh - var(--awm-navbar-height))' },
+          pb: { xs: 6, md: 6 },
+          minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' },
           boxSizing: 'border-box',
-          overflow: { md: 'hidden' },
         }}
       >
         <Box
@@ -952,39 +954,36 @@ export default function EpisodePage({
             display: { xs: 'flex', md: 'grid' },
             flexDirection: { xs: 'column', md: 'unset' },
             gridTemplateColumns: {
-              md: 'minmax(0, 1fr) min(56.25cqh, 620px) minmax(0, 1fr)',
-              lg: 'minmax(0, 1fr) min(56.25cqh, 840px) minmax(0, 1fr)',
+              md: 'minmax(0, 1fr) auto minmax(0, 1fr)',
+              lg: 'minmax(0, 1fr) auto minmax(0, 1fr)',
             },
             gap: { xs: 0, md: 3 },
-            containerType: 'size',
             px: { xs: 0, md: 2.5, lg: 4 },
             alignItems: { xs: 'stretch', md: 'stretch' },
-            height: { md: '100%' },
-            minHeight: 0,
           }}
         >
           {/* ── Left column (desktop only): related videos ── */}
           <RelatedRail related={related} currentSlug={episode.slug} />
 
-          {/* ── Middle (desktop only): breadcrumbs + big video ── */}
+          {/* ── Middle (desktop only): sticky video ── */}
           {!isMobile && (
           <Box
             sx={{
               display: { xs: 'none', md: 'flex' },
               flexDirection: 'column',
               minWidth: 0,
-              minHeight: 0,
-              height: '100%',
+              alignSelf: 'start',
+              position: 'sticky',
+              top: 'calc(var(--awm-navbar-height) + 32px)',
             }}
           >
-            <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', pt: { md: '50px' }, pb: { md: 4 } }}>
+            <Box sx={{ display: 'block' }}>
               <Box
                 sx={{
                   position: 'relative',
-                  width: '100%',
-                  height: '100%',
+                  mx: 'auto',
+                  height: 'calc(100dvh - var(--awm-navbar-height) - 48px)',
                   maxWidth: '100%',
-                  maxHeight: '100%',
                   aspectRatio: '9 / 16',
                   borderRadius: '20px',
                   overflow: 'hidden',
@@ -1035,7 +1034,7 @@ export default function EpisodePage({
           </Box>
           )}
 
-          {/* ── Right: Tabs (breadcrumbs + actions moved above the video) ── */}
+          {/* ── Right: breadcrumbs + actions + flowing transcript ── */}
           <Box
             sx={{
               display: 'flex',
@@ -1043,10 +1042,6 @@ export default function EpisodePage({
               minWidth: 0,
               px: { xs: 2.5, md: 0 },
               mt: { xs: 0.5, md: 0 },
-              height: { md: '100%' },
-              minHeight: 0,
-              overflowY: { md: 'auto' },
-              scrollbarWidth: { md: 'thin' },
               justifySelf: 'start',
               width: '100%',
               maxWidth: { md: 620, lg: 760 },
