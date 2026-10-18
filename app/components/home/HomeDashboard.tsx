@@ -417,7 +417,7 @@ export default function HomeDashboard({ books, featuredBook, featuredEpisode, ch
             zIndex: 0,
             pointerEvents: 'none',
             bgcolor: 'var(--awm-bark)',
-            opacity: { xs: 0.04, md: 0.045 },
+            opacity: { xs: 0.022, md: 0.028 },
             maskImage: 'url(/homepage/arabicwithm-notext.svg)',
             maskSize: { xs: '230px', md: '330px' },
             maskRepeat: 'repeat',
