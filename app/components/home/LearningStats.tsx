@@ -37,14 +37,14 @@ export default function LearningStats({
     ? 'No previous-week comparison yet'
     : `${comparison >= 0 ? 'Up' : 'Down'} ${Math.abs(comparison)}% from last week`
   const metrics = [
-    ...(activity.memory ? [{ id: 'memory', ...summary.memory, icon: PsychologyOutlined }] : []),
-    ...(activity.wordSearch ? [{ id: 'word-search', ...summary.wordSearch, icon: GridOnRounded }] : []),
-    { id: 'week', label: 'Learning this week', value: formatLearningTime(week.thisWeekSeconds), icon: CalendarMonthRounded, description: `${week.activeDays} active day${week.activeDays === 1 ? '' : 's'} this week. ${comparisonText}.` },
-    { id: 'today', label: 'Active today', value: formatLearningTime(week.todaySeconds), icon: AccessTimeRounded, description: 'Active learning time recorded today while reading, watching, or practising.' },
-    { id: 'reading', label: 'Reading this week', value: formatLearningTime(week.readingSeconds), icon: MenuBook, description: 'Time spent actively reading ArabicWithM books during the current week.' },
-    { id: 'streak', label: 'Current streak', value: `${streak} day${streak === 1 ? '' : 's'}`, icon: LocalFireDepartmentRounded, description: 'Consecutive calendar days with recorded learning activity.' },
-    { id: 'books', label: 'Books in progress', value: String(booksInProgress), icon: AutoStories, description: 'Books with saved reading progress on this account.' },
-    { id: 'definitions', label: 'Words inspected this week', value: String(week.wordLookups), icon: ExploreOutlined, description: 'Arabic word definitions opened during the current week.' },
+    ...(activity.memory ? [{ id: 'memory', ...summary.memory, shortLabel: 'Memory', icon: PsychologyOutlined }] : []),
+    ...(activity.wordSearch ? [{ id: 'word-search', ...summary.wordSearch, shortLabel: 'Word Search', icon: GridOnRounded }] : []),
+    { id: 'week', label: 'Learning this week', value: formatLearningTime(week.thisWeekSeconds), shortLabel: 'This week', icon: CalendarMonthRounded, description: `${week.activeDays} active day${week.activeDays === 1 ? '' : 's'} this week. ${comparisonText}.` },
+    { id: 'today', label: 'Active today', value: formatLearningTime(week.todaySeconds), shortLabel: 'Today', icon: AccessTimeRounded, description: 'Active learning time recorded today while reading, watching, or practising.' },
+    { id: 'reading', label: 'Reading this week', value: formatLearningTime(week.readingSeconds), shortLabel: 'Reading', icon: MenuBook, description: 'Time spent actively reading ArabicWithM books during the current week.' },
+    { id: 'streak', label: 'Current streak', value: `${streak} day${streak === 1 ? '' : 's'}`, shortLabel: 'Streak', icon: LocalFireDepartmentRounded, description: 'Consecutive calendar days with recorded learning activity.' },
+    { id: 'books', label: 'Books in progress', value: String(booksInProgress), shortLabel: 'Books', icon: AutoStories, description: 'Books with saved reading progress on this account.' },
+    { id: 'definitions', label: 'Words inspected this week', value: String(week.wordLookups), shortLabel: 'Words', icon: ExploreOutlined, description: 'Arabic word definitions opened during the current week.' },
   ]
   const selected = metrics.find((metric) => metric.id === selectedMetric) ?? null
   const closeDetail = () => setSelectedMetric(null)
@@ -74,7 +74,7 @@ export default function LearningStats({
           ) : (
             <>
               <Icon aria-hidden="true" sx={{ color: 'var(--awm-gold)', fontSize: { sm: 22, md: 24 } }} />
-              <Typography sx={{ mt: 0.6, maxWidth: '100%', color: 'var(--awm-muted-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.25, overflowWrap: 'anywhere' }}>{metric.label}</Typography>
+              <Typography sx={{ mt: 0.6, maxWidth: '100%', color: 'var(--awm-muted-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.25, overflowWrap: 'anywhere' }}>{metric.shortLabel ?? metric.label}</Typography>
               <Typography sx={{ mt: 0.3, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { sm: 17, md: 20 }, fontWeight: 600, lineHeight: 1.1, textAlign: 'center' }}>{metric.value}</Typography>
             </>
           )
