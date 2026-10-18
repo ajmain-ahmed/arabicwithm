@@ -32,6 +32,8 @@ describe('homepage hero', () => {
     const html = renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]} />)
     expect(html).toContain(`Good ${daypart(new Date())}, Test!`)
     expect(html).not.toContain('Learn Arabic through cartoons and books')
+    expect(html).not.toContain('Start Watching')
+    expect(html).not.toContain('Start Reading')
     expect(home.statsRendered).toBe(true)
   })
 
