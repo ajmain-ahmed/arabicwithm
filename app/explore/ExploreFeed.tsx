@@ -352,7 +352,6 @@ function ExploreVideo({
             {episode.showTitle}
           </Typography>
         </Box>
-        </Box>
         {errorCode != null && isYouTube && (
           <Box sx={{ position: 'absolute', zIndex: 5, inset: 0, display: 'grid', placeItems: 'center', bgcolor: 'rgba(0,0,0,0.82)', p: 3 }}>
             <Box sx={{ textAlign: 'center', color: '#fff' }}>
@@ -371,8 +370,6 @@ function ExploreVideo({
           right: { xs: 'max(6px, env(safe-area-inset-right))', md: 'auto' },
           top: { xs: '50%', md: 'auto' },
           transform: { xs: 'translateY(-50%)', md: 'none' },
-          alignSelf: { md: 'flex-end' },
-          mb: { md: 3 },
           display: 'flex',
           flexDirection: 'column',
           gap: { xs: 0.85, md: 1.4 },
@@ -441,7 +438,37 @@ function ExploreVideo({
             </Box>
           </Tooltip>
         </Box>
+        </Box>
 
+        {/* Active transcript line under the video — swaps as playback advances. */}
+        {(() => {
+          const lineIndex = activeLine >= 0 ? activeLine : 0
+          const line = episode.transcriptLines[lineIndex]
+          if (!line) return null
+          return (
+            <Box sx={{ display: { xs: 'none', md: 'block' }, width: '100%', maxWidth: 580, textAlign: 'center', mt: 2.5, minHeight: 96, px: 2 }}>
+              <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), var(--font-serif), serif', fontSize: 26, fontWeight: 600, color: '#f5ede0', lineHeight: 1.6 }}>
+                {(line.words?.length ?? 0) > 0
+                  ? (line.words ?? []).map((word, wordIndex) => (
+                      <ExploreDefinitionWord
+                        key={`${word.plain}-${wordIndex}`}
+                        entry={word}
+                        context={`episode:${episode.id}:line:${lineIndex}`}
+                        itemIndex={itemIndex}
+                        onOpen={onDefinitionOpen}
+                        onPeek={onDefinitionPeek}
+                      />
+                    ))
+                  : line.arabic}
+              </Typography>
+              {line.translation && (
+                <Typography sx={{ mt: 0.75, fontFamily: 'var(--font-sans), sans-serif', fontSize: 14.5, color: 'rgba(245,237,224,0.75)', lineHeight: 1.6 }}>
+                  {line.translation}
+                </Typography>
+              )}
+            </Box>
+          )
+        })()}
       </Box>
 
     </>
