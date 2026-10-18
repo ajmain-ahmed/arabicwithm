@@ -598,7 +598,7 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
 
         {/* English */}
         {block.english && (
-          <Typography className="english-line" sx={{ fontSize: `calc(0.88rem * ${textScale})`, mb: 1.5 }}>
+          <Typography className="english-line" sx={{ fontSize: `calc(0.88rem * ${textScale})`, mb: 1 }}>
             {block.english}
           </Typography>
         )}
@@ -1003,7 +1003,7 @@ export default function EpisodePage({
               height: '100%',
             }}
           >
-            <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', pb: { md: 4 } }}>
+            <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', pt: { md: '50px' }, pb: { md: 4 } }}>
               <Box
                 sx={{
                   position: 'relative',
@@ -1113,7 +1113,7 @@ export default function EpisodePage({
             )}
 
             {!isMobileViewport && (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2, flexShrink: 0, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, mb: 2, flexShrink: 0, flexWrap: 'wrap', minHeight: { md: 34 } }}>
                 <Breadcrumbs
                   separator={<BreadcrumbSep sx={{ fontSize: 13, color: 'rgba(245,237,224,0.5)' }} />}
                   sx={{ '& .MuiBreadcrumbs-li': { fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem' } }}
@@ -1123,39 +1123,12 @@ export default function EpisodePage({
                   <Typography onClick={() => router.push(`/cartoons/${episode.show}`)} sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'rgba(245,237,224,0.65)', cursor: 'pointer', '&:hover': { color: 'var(--awm-gold-light)' } }}>{showTitle}</Typography>
                   <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: '#f5ede0', fontWeight: 500 }}>{episode.title}</Typography>
                 </Breadcrumbs>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-                  {scriptPageCount > 1 && (
-                    <>
-                      <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, color: 'var(--awm-muted)', whiteSpace: 'nowrap' }}>
-                        Page {scriptPage + 1} of {scriptPageCount}
-                      </Typography>
-                      <IconButton
-                        onClick={() => setScriptPage((page) => Math.max(0, page - 1))}
-                        disabled={scriptPage === 0}
-                        aria-label="Previous transcript page"
-                        size="small"
-                        sx={{ color: 'var(--awm-muted)', '&:hover:not(:disabled)': { color: 'var(--awm-gold)' } }}
-                      >
-                        <ChevronLeft />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => setScriptPage((page) => Math.min(scriptPageCount - 1, page + 1))}
-                        disabled={scriptPage >= scriptPageCount - 1}
-                        aria-label="Next transcript page"
-                        size="small"
-                        sx={{ color: 'var(--awm-muted)', '&:hover:not(:disabled)': { color: 'var(--awm-gold)' } }}
-                      >
-                        <ChevronRight />
-                      </IconButton>
-                    </>
-                  )}
-                </Box>
               </Box>
             )}
 
             {/* Desktop: the old tab-bar strip now hosts Memory + Settings. */}
             {!isMobileViewport && (
-              <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: 'var(--awm-white)', borderRadius: '12px 12px 0 0', px: 2.5, py: 1, display: 'flex', alignItems: 'center', gap: 1, mb: 0, flexShrink: 0 }}>
+              <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: 'var(--awm-white)', borderRadius: '12px 12px 0 0', px: 2.5, py: 1, display: 'flex', alignItems: 'center', gap: 1, mb: 0, flexShrink: 0, minHeight: { md: 50 } }}>
                 <Button
                   onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
                   size="small"
@@ -1172,6 +1145,31 @@ export default function EpisodePage({
                 >
                   Settings
                 </Button>
+                {scriptPageCount > 1 && (
+                  <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, color: 'var(--awm-muted)', whiteSpace: 'nowrap' }}>
+                      Page {scriptPage + 1} of {scriptPageCount}
+                    </Typography>
+                    <IconButton
+                      onClick={() => setScriptPage((page) => Math.max(0, page - 1))}
+                      disabled={scriptPage === 0}
+                      aria-label="Previous transcript page"
+                      size="small"
+                      sx={{ color: 'var(--awm-muted)', '&:hover:not(:disabled)': { color: 'var(--awm-gold)' } }}
+                    >
+                      <ChevronLeft />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => setScriptPage((page) => Math.min(scriptPageCount - 1, page + 1))}
+                      disabled={scriptPage >= scriptPageCount - 1}
+                      aria-label="Next transcript page"
+                      size="small"
+                      sx={{ color: 'var(--awm-muted)', '&:hover:not(:disabled)': { color: 'var(--awm-gold)' } }}
+                    >
+                      <ChevronRight />
+                    </IconButton>
+                  </Box>
+                )}
               </Box>
             )}
 
