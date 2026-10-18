@@ -23,7 +23,7 @@ import {
   IconButton,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ExpandMore, ExpandLess, Fullscreen, Refresh } from '@mui/icons-material'
+import { ChevronLeft, ChevronRight, ExpandMore, ExpandLess, Fullscreen, Refresh } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
@@ -766,6 +766,7 @@ export default function EpisodePage({
   const [textFont, setTextFont] = useState<'naskh' | 'garamond' | 'amiri'>('naskh')
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [expandedNotes, setExpandedNotes] = useState<Set<number>>(new Set())
+  const [scriptPage, setScriptPage] = useState(0)
   const [localActiveIndex, setLocalActiveIndex] = useState<number | null>(null)
   const videoSources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(videoSources[0]?.provider)
@@ -898,6 +899,25 @@ export default function EpisodePage({
     }
   }, [activeIndex, isMobile])
 
+  /* Desktop transcript pagination: playback follows the active block across
+     pages; the user can also flip manually. Mobile keeps the full scroll. */
+  const SCRIPT_PAGE_SIZE = 8
+  const isDesktopWatch = !isMobileViewport
+  const scriptPageCount = Math.max(1, Math.ceil(episode.scriptBlocks.length / SCRIPT_PAGE_SIZE))
+  /* Follow playback across pages (React's render-phase state adjustment —
+     manual pager flips stick until the active block moves again). */
+  const [followedActiveIndex, setFollowedActiveIndex] = useState(activeIndex)
+  if (activeIndex !== followedActiveIndex) {
+    setFollowedActiveIndex(activeIndex)
+    if (isDesktopWatch && activeIndex != null) {
+      setScriptPage(Math.floor(activeIndex / SCRIPT_PAGE_SIZE))
+    }
+  }
+  const scriptPageStart = Math.min(scriptPage, scriptPageCount - 1) * SCRIPT_PAGE_SIZE
+  const visibleScriptBlocks = isDesktopWatch
+    ? episode.scriptBlocks.slice(scriptPageStart, scriptPageStart + SCRIPT_PAGE_SIZE)
+    : episode.scriptBlocks
+
   const blocksWithNotes = episode.scriptBlocks
     .map((block, i) => ({ hasNotes: block.notes.length > 0, index: i }))
     .filter((b) => b.hasNotes)
@@ -944,8 +964,8 @@ export default function EpisodePage({
         sx={{
           background: { xs: 'var(--cream)', md: '#0a0c0b' },
           mt: { xs: 0, md: 0 },
-          pt: { xs: 0, md: 'calc(var(--awm-navbar-height) + 16px)' },
-          pb: { xs: 6, md: 2.5 },
+          pt: { xs: 0, md: 'calc(var(--awm-navbar-height) + 6px)' },
+          pb: { xs: 6, md: 1.5 },
           height: { md: '100dvh' },
           overflow: { md: 'hidden' },
         }}
@@ -955,8 +975,8 @@ export default function EpisodePage({
             display: { xs: 'flex', md: 'grid' },
             flexDirection: { xs: 'column', md: 'unset' },
             gridTemplateColumns: {
-              md: 'minmax(0, 1fr) min(56.25cqh, 520px) minmax(0, 1fr)',
-              lg: 'minmax(0, 1fr) min(56.25cqh, 660px) minmax(0, 1fr)',
+              md: 'minmax(0, 1fr) min(56.25cqh, 620px) minmax(0, 1fr)',
+              lg: 'minmax(0, 1fr) min(56.25cqh, 840px) minmax(0, 1fr)',
             },
             gap: { xs: 0, md: 3 },
             containerType: 'size',
@@ -1169,7 +1189,9 @@ export default function EpisodePage({
                   {episode.scriptBlocks.length === 0 ? (
                     <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No script found in this episode file.</Typography>
                   ) : (
-                    episode.scriptBlocks.map((block, i) => (
+                    visibleScriptBlocks.map((block, offset) => {
+                      const i = scriptPageStart + offset
+                      return (
                       <ScriptBlockView
                         key={i}
                         block={block}
@@ -1189,7 +1211,31 @@ export default function EpisodePage({
                         onToggleNotes={toggleNotes}
                         onDrawerOpenChange={setMobileWordDrawerOpen}
                       />
-                    ))
+                      )
+                    })
+                  )}
+                  {isDesktopWatch && scriptPageCount > 1 && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, py: 2, borderTop: '1px solid rgba(122,110,101,0.15)', mt: 1 }}>
+                      <IconButton
+                        onClick={() => setScriptPage((page) => Math.max(0, page - 1))}
+                        disabled={scriptPage === 0}
+                        aria-label="Previous transcript page"
+                        sx={{ color: 'var(--awm-muted)', '&:hover': { color: 'var(--awm-gold)' } }}
+                      >
+                        <ChevronLeft />
+                      </IconButton>
+                      <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'var(--awm-muted)' }}>
+                        Page {scriptPage + 1} of {scriptPageCount}
+                      </Typography>
+                      <IconButton
+                        onClick={() => setScriptPage((page) => Math.min(scriptPageCount - 1, page + 1))}
+                        disabled={scriptPage >= scriptPageCount - 1}
+                        aria-label="Next transcript page"
+                        sx={{ color: 'var(--awm-muted)', '&:hover': { color: 'var(--awm-gold)' } }}
+                      >
+                        <ChevronRight />
+                      </IconButton>
+                    </Box>
                   )}
                 </Box>
               )}
