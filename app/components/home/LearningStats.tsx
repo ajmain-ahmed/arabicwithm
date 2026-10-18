@@ -63,7 +63,7 @@ export default function LearningStats({
     <Paper elevation={0} sx={{ p: { xs: 1.5, sm: 2 }, border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '15px', bgcolor: 'var(--awm-white)' }}>
       <Typography component="h2" sx={{ mb: { xs: 1.25, sm: 1.5 }, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 21, sm: 24 }, fontWeight: 600, lineHeight: 1.15 }}>Your learning activity</Typography>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(4,minmax(0,1fr))', sm: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.65, sm: 1 } }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(4,minmax(0,1fr))', sm: `repeat(${metrics.length},minmax(0,1fr))` }, gap: { xs: 0.65, sm: 1 } }}>
         {metrics.map((metric) => {
           const Icon = metric.icon
           const tileContent = mobileDetail ? (
@@ -73,9 +73,9 @@ export default function LearningStats({
             </>
           ) : (
             <>
-              <Icon aria-hidden="true" sx={{ color: 'var(--awm-gold)', fontSize: 22 }} />
-              <Typography sx={{ mt: 1, color: 'var(--awm-muted-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase' }}>{metric.label}</Typography>
-              <Typography sx={{ mt: 0.35, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { sm: 20, md: 24 }, fontWeight: 600, lineHeight: 1.1 }}>{metric.value}</Typography>
+              <Icon aria-hidden="true" sx={{ color: 'var(--awm-gold)', fontSize: { sm: 22, md: 24 } }} />
+              <Typography sx={{ mt: 0.6, maxWidth: '100%', color: 'var(--awm-muted-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', textAlign: 'center', lineHeight: 1.25, overflowWrap: 'anywhere' }}>{metric.label}</Typography>
+              <Typography sx={{ mt: 0.3, color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { sm: 17, md: 20 }, fontWeight: 600, lineHeight: 1.1, textAlign: 'center' }}>{metric.value}</Typography>
             </>
           )
           return mobileDetail ? (
@@ -83,7 +83,7 @@ export default function LearningStats({
               {tileContent}
             </Box>
           ) : (
-            <Box key={metric.id} sx={{ minWidth: 0, p: { sm: 1.5, md: 2 }, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', border: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)', borderRadius: '10px', bgcolor: 'var(--awm-cream-light)' }}>
+            <Box key={metric.id} sx={{ minWidth: 0, minHeight: { sm: 96, md: 104 }, p: { sm: 1, md: 1.25 }, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid color-mix(in srgb, var(--awm-bark) 8%, transparent)', borderRadius: '10px', bgcolor: 'var(--awm-cream-light)' }}>
               {tileContent}
             </Box>
           )
