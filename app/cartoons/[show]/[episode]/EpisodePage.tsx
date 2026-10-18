@@ -689,7 +689,7 @@ function RelatedRail({ related, currentSlug }: { related: RelatedEpisode[]; curr
         '&::-webkit-scrollbar': { display: 'none' },
         justifySelf: 'end',
         width: '100%',
-        maxWidth: 360,
+        maxWidth: 390,
         pt: { md: '19px' },
       }}
     >
