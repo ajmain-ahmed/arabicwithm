@@ -67,10 +67,11 @@ function ChevronNav({ onUp, onDown, upDisabled, downDisabled, hidden, sx }: { on
 }
 
 /** Determinate loading state shown in place of the first clip: same page
-    structure, with a skeleton video area and a 0-100% progress circle. */
-function ForYouLoading({ progress, switcher }: { progress: number; switcher?: ReactNode }) {
+    structure, with a skeleton video area and a 0-100% progress circle. The
+    controls sit beside the skeleton exactly where they land once loaded. */
+function ForYouLoading({ progress, leftControls, rightControls, mobileControls }: { progress: number; leftControls?: ReactNode; rightControls?: ReactNode; mobileControls?: ReactNode }) {
   return <Box>
-    <Box sx={{ width: 'min(100%, calc((100dvh - 340px) * 16 / 9))', mx: { md: 'auto' } }}>
+    <Box sx={{ position: 'relative', width: 'min(100%, calc((100dvh - 340px) * 16 / 9))', mx: { md: 'auto' } }}>
       <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: '12px', md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' } }}>
         <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
           <Box sx={{ textAlign: 'center' }}>
@@ -79,12 +80,14 @@ function ForYouLoading({ progress, switcher }: { progress: number; switcher?: Re
           </Box>
         </Box>
       </Box>
+      {leftControls}
+      {rightControls}
     </Box>
     <Box sx={{ mt: { xs: 2, md: 3 }, display: 'flex', justifyContent: 'center', gap: 3 }}>
       <Skeleton variant="text" width={180} height={30} />
       <Skeleton variant="text" width={120} height={30} />
     </Box>
-    {switcher && <Box sx={{ mt: { xs: 3, md: 4 }, display: 'flex', justifyContent: 'center' }}>{switcher}</Box>}
+    {mobileControls && <Box sx={{ mt: { xs: 3 }, display: { xs: 'flex', md: 'none' }, justifyContent: 'center', alignItems: 'center', gap: 1.5 }}>{mobileControls}</Box>}
   </Box>
 }
 
@@ -159,7 +162,12 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher }: { i
       <Box sx={{ mt: 0.5 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {initialLoading
-          ? <ForYouLoading progress={progress} switcher={switcher} />
+          ? <ForYouLoading
+              progress={progress}
+              leftControls={<ChevronNav hidden="mobile" onUp={() => undefined} onDown={() => undefined} upDisabled downDisabled sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}
+              rightControls={railSwitcher ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', right: -66, bottom: 0 }}>{railSwitcher}</Box> : undefined}
+              mobileControls={<>{switcher}<ChevronNav hidden="desktop" onUp={() => undefined} onDown={() => undefined} upDisabled downDisabled /></>}
+            />
           : clips[index]
             ? <Box sx={{ minWidth: 0, width: 'min(100%, calc((100dvh - 340px) * 16 / 9))', mx: { md: 'auto' } }}>
                 <ClipPlayer
