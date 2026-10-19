@@ -12,6 +12,8 @@ import { getEpisodeVideoSources, getYouTubeThumbnailUrl, type ExploreEpisode, ty
 import type { ExploreBookPage } from '@/app/actions/books'
 import { dispatchWordLookup } from '@/app/lib/activity'
 import { usePlayerStore } from '@/store/playerStore'
+import { useExploreFeedCache } from '@/store/exploreFeedStore'
+import { LoadingCircle } from '@/app/components/PageLoading'
 import { fetchExploreFeedPage } from '@/app/actions/explore'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 import {
@@ -557,13 +559,18 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionP
   )
 }
 
-export default function ExploreFeed({ seed, initialItems, initialHasMore, railTop }: { seed: string; initialItems: ExploreFeedItem[]; initialHasMore: boolean; railTop?: ReactNode }) {
+export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
   const theme = useTheme()
   const isMobileDefinitionLayout = useMediaQuery(theme.breakpoints.down('lg'))
   const setGlobalVideoPlaying = usePlayerStore((state) => state.setIsPlaying)
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
-  const [items, setItems] = useState(initialItems)
-  const [hasMore, setHasMore] = useState(initialHasMore)
+  /* Session cache: returning visitors restore the feed instantly and only a
+     fresh batch is fetched; first-time visitors fetch page 0 client-side. */
+  const cachedItems = useExploreFeedCache((state) => state.items)
+  const setCachedItems = useExploreFeedCache((state) => state.setItems)
+  const [items, setItems] = useState<ExploreFeedItem[]>(cachedItems)
+  const [hasMore, setHasMore] = useState(cachedItems.length > 0)
+  const [initialLoaded, setInitialLoaded] = useState(cachedItems.length > 0)
   const [loadingMore, setLoadingMore] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectedDefinition, setSelectedDefinition] = useState<SelectedDefinition | null>(null)
@@ -580,16 +587,49 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore, railTo
   const advancedFromRef = useRef<number | null>(null)
   const programmaticTargetRef = useRef<number | null>(null)
   const scrollLockUntilRef = useRef(0)
+  const seedRef = useRef(crypto.randomUUID())
   const nextPageRef = useRef(1)
   const loadingBatchRef = useRef(false)
-  const seenKeysRef = useRef(new Set(initialItems.map(feedItemKey)))
+  const seenKeysRef = useRef(new Set(cachedItems.map(feedItemKey)))
+  const initialLoadStartedRef = useRef(false)
+
+  /* Keep the session cache in sync so a remount (or the For You view) can
+     restore without re-fetching. */
+  useEffect(() => {
+    setCachedItems(items)
+  }, [items, setCachedItems])
+
+  useEffect(() => {
+    if (initialLoadStartedRef.current) return
+    initialLoadStartedRef.current = true
+    const restore = cachedItems.length > 0
+    setItems((current) => (restore ? current : []))
+    setLoadingMore(true)
+    void fetchExploreFeedPage(seedRef.current, 0)
+      .then((batch) => {
+        const fresh = batch.items.filter((item) => {
+          const key = feedItemKey(item)
+          if (seenKeysRef.current.has(key)) return false
+          seenKeysRef.current.add(key)
+          return true
+        })
+        setItems((current) => [...current, ...fresh])
+        setHasMore(batch.hasMore)
+        nextPageRef.current = 1
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        setLoadingMore(false)
+        setInitialLoaded(true)
+      })
+  }, [cachedItems])
 
   const loadNextBatch = useCallback(async () => {
     if (loadingBatchRef.current || !hasMore) return
     loadingBatchRef.current = true
     setLoadingMore(true)
     try {
-      const batch = await fetchExploreFeedPage(seed, nextPageRef.current)
+      const batch = await fetchExploreFeedPage(seedRef.current, nextPageRef.current)
       nextPageRef.current += 1
       const fresh = batch.items.filter((item) => {
         const key = feedItemKey(item)
@@ -605,7 +645,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore, railTo
       loadingBatchRef.current = false
       setLoadingMore(false)
     }
-  }, [hasMore, seed])
+  }, [hasMore])
 
   useEffect(() => {
     if (activeIndex >= items.length - EXPLORE_PREFETCH_AHEAD) void loadNextBatch()
@@ -708,6 +748,14 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore, railTo
     itemRefs.current.forEach((node) => observer.observe(node))
     return () => observer.disconnect()
   }, [activateIndex, items])
+
+  if (items.length === 0 && !initialLoaded) {
+    return (
+      <Box sx={{ height: 'calc(100dvh - var(--awm-navbar-height))', bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, display: 'grid', placeItems: 'center' }}>
+        <LoadingCircle size={62} dark />
+      </Box>
+    )
+  }
 
   if (items.length === 0) {
     return (

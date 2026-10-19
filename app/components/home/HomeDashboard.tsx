@@ -25,7 +25,8 @@ import { fetchLearningActivity } from '@/app/actions/activity'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
 import AppDownloadSection from './AppDownloadSection'
-import { fetchMyList, type MyListItem } from '@/app/actions/myList'
+import { fetchMyList } from '@/app/actions/myList'
+import { useMyListCache } from '@/store/myListStore'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
@@ -134,9 +135,11 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
   const { user } = useAuth()
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
   const [premiumOpen, setPremiumOpen] = useState(false)
-  const [myListItems, setMyListItems] = useState<MyListItem[]>([])
-  const [myListLoaded, setMyListLoaded] = useState(false)
-  const myListLoading = Boolean(user) && !myListLoaded
+  /* My List is fetched once per session and cached in the store; show-page
+     add/remove keeps the cache in sync. */
+  const myListCacheItems = useMyListCache((state) => state.items)
+  const setMyListCache = useMyListCache((state) => state.set)
+  const myListLoading = Boolean(user) && myListCacheItems === null
   const { newShowItems, newEpisodeItems } = useMemo(() => {
     return {
       newShowItems: showRowItems(newShows),
@@ -164,18 +167,15 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
   }, [user?.id])
 
   useEffect(() => {
-    if (!user?.id) return
+    if (!user?.id || myListCacheItems !== null) return
     let cancelled = false
     void fetchMyList()
       .then((items) => {
-        if (!cancelled) setMyListItems(items)
+        if (!cancelled) setMyListCache(items)
       })
       .catch((error: unknown) => console.error('Unable to load My List:', error))
-      .finally(() => {
-        if (!cancelled) setMyListLoaded(true)
-      })
     return () => { cancelled = true }
-  }, [user?.id])
+  }, [user?.id, myListCacheItems, setMyListCache])
 
   const displayName = user ? String(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'learner').split(' ')[0] : ''
   const activity = user
@@ -184,14 +184,14 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
       : parseLearningActivity(user.user_metadata)
     : null
   const streak = activity ? summarizeLearningDashboard(activity, new Date()).streak : 0
-  const myListRowItems: CatalogueRowItem[] = useMemo(() => myListItems.map((item) => ({
+  const myListRowItems: CatalogueRowItem[] = useMemo(() => (myListCacheItems ?? []).map((item) => ({
     key: item.showId,
     href: `/cartoons/${encodeURIComponent(item.slug)}`,
     title: item.title,
     level: item.level,
     imageSrc: `/api/covers/shows/${item.showId}`,
     imageCrop: item.coverCrop,
-  })), [myListItems])
+  })), [myListCacheItems])
   const bookRowItems: CatalogueRowItem[] = useMemo(() => books.map((book) => ({
     key: book.id,
     href: `/books/${encodeURIComponent(book.slug)}`,

@@ -1,7 +1,4 @@
-import { connection } from 'next/server'
 import type { Metadata } from 'next'
-import { fetchExploreFeedPage } from '@/app/actions/explore'
-import { getExploreSeed } from '@/app/lib/explore'
 import ExploreViews from './ExploreViews'
 
 
@@ -10,18 +7,10 @@ export const metadata: Metadata = {
   description: 'Discover randomized Arabic videos and book passages with translations.',
 }
 
-export default async function ExplorePage() {
-  await connection()
-  const seed = getExploreSeed()
-  const initialBatch = await fetchExploreFeedPage(seed, 0)
-  return (
-    <>
-    <ExploreViews
-      key={seed}
-      seed={seed}
-      items={initialBatch.items}
-      hasMore={initialBatch.hasMore}
-    />
-    </>
-  )
+/* The feed is fetched client-side (see ExploreFeed): the page shell renders
+   instantly, first-time visitors get a loading state, and returning visitors
+   restore their cached feed from the Zustand store with only a small fresh
+   batch fetched. */
+export default function ExplorePage() {
+  return <ExploreViews />
 }

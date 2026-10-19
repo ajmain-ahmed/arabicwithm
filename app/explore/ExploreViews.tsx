@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Box, IconButton, Tooltip, Typography } from '@mui/material'
 import { ExploreOutlined, PersonOutlineRounded } from '@mui/icons-material'
-import type { ExploreFeedItem } from '@/app/lib/explore'
 import ExploreFeed from './ExploreFeed'
 import ForYouFeed from './ForYouFeed'
 
@@ -52,11 +51,11 @@ function ViewSwitch({ view, onChange, layout = 'rail' }: { view: ExploreView; on
   )
 }
 
-export default function ExploreViews({ seed, items, hasMore }: { seed: string; items: ExploreFeedItem[]; hasMore: boolean }) {
+export default function ExploreViews() {
   const [view, setView] = useState<ExploreView>('explore')
   const railSwitch = <ViewSwitch view={view} onChange={setView} />
   const rowSwitch = <ViewSwitch view={view} onChange={setView} layout="row" />
   return view === 'explore'
-    ? <ExploreFeed seed={seed} initialItems={items} initialHasMore={hasMore} railTop={railSwitch} />
+    ? <ExploreFeed railTop={railSwitch} />
     : <ForYouFeed switcher={rowSwitch} railSwitcher={railSwitch} />
 }

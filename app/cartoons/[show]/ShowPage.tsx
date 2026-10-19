@@ -18,6 +18,7 @@ import { deleteEpisode } from '@/app/actions/admin'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
 import { useAuth } from '@/app/AuthContext'
 import { addToMyList, fetchMyListShowIds, removeFromMyList } from '@/app/actions/myList'
+import { useMyListCache } from '@/store/myListStore'
 import { errorMessage } from '@/app/lib/errors'
 
 /* ── MUI Icons ── */
@@ -52,10 +53,17 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingEpisode, setEditingEpisode] = useState<EpisodeMeta | undefined>(undefined)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [inMyList, setInMyList] = useState(false)
+  const myListCache = useMyListCache((state) => state.items)
+  const myListAdd = useMyListCache((state) => state.add)
+  const myListRemove = useMyListCache((state) => state.remove)
+  const [inMyList, setInMyList] = useState(() => myListCache?.some((item) => item.showId === show.id) ?? false)
 
   useEffect(() => {
     if (!user) return
+    if (myListCache) {
+      setInMyList(myListCache.some((item) => item.showId === show.id))
+      return
+    }
     let cancelled = false
     fetchMyListShowIds()
       .then((ids) => {
@@ -63,14 +71,22 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
       })
       .catch(() => undefined)
     return () => { cancelled = true }
-  }, [user, show.id])
+  }, [user, myListCache, show.id])
 
   const toggleMyList = useCallback(async () => {
     const next = !inMyList
     setInMyList(next)
     const result = next ? await addToMyList(show.id) : await removeFromMyList(show.id)
-    if (!result.ok) setInMyList(!next)
-  }, [inMyList, show.id])
+    if (!result.ok) {
+      setInMyList(!next)
+      return
+    }
+    if (next) {
+      if (myListCache) myListAdd({ showId: show.id, slug: show.slug, title: show.title, description: show.description, level: show.level, coverCrop: show.coverCrop, addedAt: new Date().toISOString() })
+    } else if (myListCache) {
+      myListRemove(show.id)
+    }
+  }, [inMyList, show.id, show.slug, show.title, show.description, show.level, show.coverCrop, myListCache, myListAdd, myListRemove])
 
   const handleDeleteEpisode = async (id: string) => {
     if (!isAdmin) return
