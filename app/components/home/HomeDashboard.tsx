@@ -280,8 +280,8 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
                   height: { xs: 'clamp(188px, 57.5vw, 228px)', sm: 248, md: 278, lg: 298 },
                   flexShrink: 0,
                   borderRadius: '10px',
-                  border: '1.5px dashed rgba(44,26,14,0.22)',
-                  bgcolor: 'rgba(44,26,14,0.045)',
+                  border: '1.5px dashed color-mix(in srgb, var(--awm-bark) 38%, transparent)',
+                  bgcolor: 'color-mix(in srgb, var(--awm-bark) 5%, transparent)',
                   display: 'grid',
                   placeItems: 'center',
                   color: 'var(--awm-muted)',
@@ -294,7 +294,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
                   <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 21, md: 26 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25 }}>
                     Start adding shows to your list!
                   </Typography>
-                  <Typography sx={{ mt: 0.75, fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 13, md: 14.5 }, color: 'var(--awm-muted)', lineHeight: 1.55, maxWidth: 420 }}>
+                  <Typography sx={{ mt: 0.75, fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 13, md: 14.5 }, color: 'var(--awm-muted)', lineHeight: 1.55 }}>
                     Tap to explore the catalogue and keep every show you love one click away.
                   </Typography>
                 </Box>

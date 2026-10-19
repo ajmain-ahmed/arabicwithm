@@ -62,7 +62,7 @@ export default function Navbar() {
        dark mode; in light mode it keeps the standard solid bar. */
     const supportsOverlay = pathname === '/' || (pathname === '/explore' && mode === 'dark')
     const isOverlay = supportsOverlay && !drawerOpen && !userMenuAnchor && !authDialogOpen
-    const navColor = isOverlay ? '#fff' : 'var(--awm-forest)'
+    const navColor = isOverlay ? '#fff' : mode === 'dark' ? '#f5ede0' : 'var(--awm-forest)'
 
     useEffect(() => {
         hasAnimated = true
