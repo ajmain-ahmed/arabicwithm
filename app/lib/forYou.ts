@@ -1,11 +1,18 @@
 export interface ForYouToken { arabic:string; english:string }
 export interface ForYouSegment {
  id:number; position:number; original_text:string; english_text:string|null;
- start_seconds:number; end_seconds:number; canonical_paragraph?:unknown; tokens:ForYouToken[]
+ start_seconds:number; end_seconds:number; canonical_paragraph?:unknown; source_tokens?:unknown; tokens:ForYouToken[]
 }
 export interface ForYouClip {
  video:{id:string;youtube_id:string;title:string;channel:string|null};
  clip_start_ms:number;clip_end_ms:number;segments:ForYouSegment[]
+}
+
+/** Hourly seed for the very first For You batch: every visitor in the same
+    hour gets the same opening clips, so the initial fetch is shared via the
+    data cache instead of hitting the RPC once per visitor. */
+export function hourlySeed(): string {
+  return `hour-${new Date().toISOString().slice(0, 13)}`
 }
 const record=(value:unknown):value is Record<string,unknown>=>Boolean(value&&typeof value==='object'&&!Array.isArray(value))
 const firstText=(...values:unknown[]):string=>values.find((v):v is string=>typeof v==='string'&&Boolean(v.trim()))?.trim()??''

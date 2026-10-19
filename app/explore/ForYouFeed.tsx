@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Alert, Box, Button, CircularProgress, IconButton, Skeleton, Typography } from '@mui/material'
 import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material'
 import { fetchForYouClips } from '@/app/actions/forYou'
+import { hourlySeed } from '@/app/lib/forYou'
 import type { ForYouClip, ForYouToken } from '@/app/lib/forYou'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 
@@ -110,9 +111,12 @@ export default function ForYouFeed({ initialClips, switcher }: { initialClips?: 
     setBusy(true); setError('')
     if (clips.length === 0) setProgress(0)
     const seen = [...excluded, ...clips.slice(0, index + 1).flatMap((clip) => clip.segments.map((segment) => segment.id))]
+    // First load of the session shares an hourly seed so the data cache can
+    // serve every visitor in that window; later loads are unique.
+    const seed = clips.length === 0 && excluded.length === 0 ? hourlySeed() : crypto.randomUUID()
     try {
       // Requery on every navigation; do not retain prefetched unpublished clips.
-      const batch = await fetchForYouClips(crypto.randomUUID(), seen.slice(-10000), clips.slice(0, index + 1).map((clip) => clip.video.id).slice(-100))
+      const batch = await fetchForYouClips(seed, seen.slice(-10000), clips.slice(0, index + 1).map((clip) => clip.video.id).slice(-100))
       setExcluded(seen.slice(-10000))
       if (batch.length) {
         const merged = [...clips, ...batch]
