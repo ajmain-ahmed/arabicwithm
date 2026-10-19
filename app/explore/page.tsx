@@ -3,7 +3,6 @@ import type { Metadata } from 'next'
 import { fetchExploreFeedPage } from '@/app/actions/explore'
 import { getExploreSeed } from '@/app/lib/explore'
 import ExploreViews from './ExploreViews'
-import { fetchForYouClips } from '@/app/actions/forYou'
 
 
 export const metadata: Metadata = {
@@ -15,11 +14,9 @@ export default async function ExplorePage() {
   await connection()
   const seed = getExploreSeed()
   const initialBatch = await fetchExploreFeedPage(seed, 0)
-  const clips = await fetchForYouClips(seed)
   return (
     <>
     <ExploreViews
-      clips={clips}
       key={seed}
       seed={seed}
       items={initialBatch.items}

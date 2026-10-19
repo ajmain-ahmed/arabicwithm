@@ -497,6 +497,33 @@ export async function fetchExploreBookChapterPages(chapterId: string): Promise<E
   return fetchExploreBookChapterPagesCached(chapterId)
 }
 
+/** Batch variant for the explore feed: one query for many chapters' pages. */
+export async function fetchExploreBookChapterPagesByChapterIds(chapterIds: string[]): Promise<Map<string, ExploreBookPage[]>> {
+  const pagesByChapter = new Map<string, ExploreBookPage[]>()
+  const uniqueIds = Array.from(new Set(chapterIds))
+  if (!hasServiceClientConfig() || uniqueIds.length === 0) return pagesByChapter
+  if (!await getAuthenticatedUserId()) return pagesByChapter
+  const { data: chapters, error } = await serviceClient
+    .from("chapters")
+    .select("id, book_id, slug, title, chapter_number, content")
+    .in("id", uniqueIds)
+  if (error) throw new Error(error.message)
+  if (!chapters?.length) return pagesByChapter
+  const books = await fetchBooksForPublic()
+  const bookById = new Map(books.map((book) => [book.id, book]))
+  for (const chapter of chapters) {
+    const book = bookById.get(String(chapter.book_id))
+    if (!book) continue
+    pagesByChapter.set(String(chapter.id), buildExploreBookPages(chapter as Record<string, unknown>, {
+      slug: book.slug,
+      title: book.title,
+      cover: book.cover,
+      level: book.level,
+    }))
+  }
+  return pagesByChapter
+}
+
 /* ── Page counts per chapter. Only the counts are cached; deriving
    them reads chapter content once per cold cache, after which batch
    planning costs bytes, not megabytes. ── */

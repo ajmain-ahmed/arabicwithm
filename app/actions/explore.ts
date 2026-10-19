@@ -2,11 +2,11 @@
 
 import { z } from 'zod'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
-import { fetchExploreEpisodeByIdPublic, fetchExploreEpisodeMetasForPublic } from '@/app/actions/cartoons'
+import { fetchExploreEpisodeMetasForPublic, fetchExploreEpisodesByIdsPublic } from '@/app/actions/cartoons'
 import {
   fetchExploreBookChapterMetasForPublic,
   fetchExploreBookChapterPageCounts,
-  fetchExploreBookChapterPages,
+  fetchExploreBookChapterPagesByChapterIds,
 } from '@/app/actions/books'
 import {
   buildExploreFeedPlan,
@@ -16,15 +16,24 @@ import {
   type ExploreFeedPlanItem,
 } from '@/app/lib/explore'
 
-// Catalogue reads are cached; unique per-visit feed batches are not.
-async function hydrateExplorePlanItem(item: ExploreFeedPlanItem): Promise<ExploreFeedItem | null> {
-  if (item.kind === 'video') {
-    const episode = await fetchExploreEpisodeByIdPublic(item.episodeId)
-    return episode ? { kind: 'video', episode } : null
+// Catalogue reads are cached; unique per-visit feed batches are not. Two
+// batched queries hydrate a whole page instead of one query per item.
+async function hydrateExplorePlanItems(planItems: ExploreFeedPlanItem[]): Promise<ExploreFeedItem[]> {
+  const [episodeById, pagesByChapter] = await Promise.all([
+    fetchExploreEpisodesByIdsPublic(planItems.filter((item) => item.kind === 'video').map((item) => item.episodeId)),
+    fetchExploreBookChapterPagesByChapterIds(planItems.filter((item) => item.kind === 'book').map((item) => item.chapterId)),
+  ])
+  const items: ExploreFeedItem[] = []
+  for (const planItem of planItems) {
+    if (planItem.kind === 'video') {
+      const episode = episodeById.get(planItem.episodeId)
+      if (episode) items.push({ kind: 'video', episode })
+    } else {
+      const page = pagesByChapter.get(planItem.chapterId)?.[planItem.pageIndex]
+      if (page) items.push({ kind: 'book', page })
+    }
   }
-  const pages = await fetchExploreBookChapterPages(item.chapterId)
-  const page = pages[item.pageIndex]
-  return page ? { kind: 'book', page } : null
+  return items
 }
 
 async function fetchExploreFeedBatch(seed: string, page: number): Promise<ExploreFeedBatch> {
@@ -37,9 +46,7 @@ async function fetchExploreFeedBatch(seed: string, page: number): Promise<Explor
       : [[], {}]
     const plan = buildExploreFeedPlan(episodeMetas, bookChapterMetas, bookPageCounts, seed)
     const batch = sliceExploreFeedBatch(plan, page)
-    const items = (await Promise.all(batch.items.map(hydrateExplorePlanItem))).filter(
-      (item): item is ExploreFeedItem => item !== null,
-    )
+    const items = await hydrateExplorePlanItems(batch.items)
     return { items, hasMore: batch.hasMore }
 }
 

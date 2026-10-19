@@ -504,6 +504,34 @@ export const fetchExploreEpisodeByIdPublic = unstable_cache(
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
+/** Batch variant for the explore feed: two queries for many episodes, and no
+    transcript column — the feed UI never reads transcriptLines. */
+export async function fetchExploreEpisodesByIdsPublic(episodeIds: string[]): Promise<Map<string, ExploreEpisode>> {
+  const uniqueIds = Array.from(new Set(episodeIds))
+  const episodes = new Map<string, ExploreEpisode>()
+  if (!hasServiceClientConfig() || uniqueIds.length === 0) return episodes
+  const { data: rows, error } = await serviceClient
+    .from("episodes")
+    .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
+    .in("id", uniqueIds)
+  if (error) throw new Error(error.message)
+  if (!rows?.length) return episodes
+  const showIds = Array.from(new Set(rows.map((row) => String(row.show_id))))
+  const { data: shows } = await serviceClient.from("shows").select("id, slug, title").in("id", showIds)
+  const showById = new Map((shows ?? []).map((show) => [String(show.id), show]))
+  for (const row of rows) {
+    const show = showById.get(String(row.show_id))
+    if (!show) continue
+    episodes.set(String(row.id), {
+      ...mapEpisodeRow(row as Record<string, unknown>),
+      showSlug: String(show.slug),
+      showTitle: String(show.title),
+      transcriptLines: [],
+    })
+  }
+  return episodes
+}
+
 function mapEpisodeRow(
   row: Record<string, unknown>
 ): EpisodeMeta {

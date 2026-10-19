@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Box, IconButton, Tooltip, Typography } from '@mui/material'
 import { ExploreOutlined, PersonOutlineRounded } from '@mui/icons-material'
-import type { ForYouClip } from '@/app/lib/forYou'
 import type { ExploreFeedItem } from '@/app/lib/explore'
 import ExploreFeed from './ExploreFeed'
 import ForYouFeed from './ForYouFeed'
@@ -53,10 +52,10 @@ function ViewSwitch({ view, onChange }: { view: ExploreView; onChange: (view: Ex
   )
 }
 
-export default function ExploreViews({ clips, seed, items, hasMore }: { clips: ForYouClip[]; seed: string; items: ExploreFeedItem[]; hasMore: boolean }) {
+export default function ExploreViews({ seed, items, hasMore }: { seed: string; items: ExploreFeedItem[]; hasMore: boolean }) {
   const [view, setView] = useState<ExploreView>('explore')
   const switcher = <ViewSwitch view={view} onChange={setView} />
   return view === 'explore'
     ? <ExploreFeed seed={seed} initialItems={items} initialHasMore={hasMore} railTop={switcher} />
-    : <ForYouFeed initialClips={clips} switcher={switcher} />
+    : <ForYouFeed switcher={switcher} />
 }
