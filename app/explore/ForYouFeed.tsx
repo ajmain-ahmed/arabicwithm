@@ -24,8 +24,11 @@ function ClipPlayer({ clip, leftControls, rightControls }: { clip: ForYouClip; l
   const { wrapRef, errorCode, retry } = useYouTubePlayer(clip.video.youtube_id, setTime, clip.clip_start_ms / 1000, { endAt: clip.clip_end_ms / 1000 })
   const active = clip.segments.find(s => s.start_seconds <= time && s.end_seconds > time) ?? clip.segments[0]
   return <Box>
-    <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: '12px', md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
-      <Box ref={wrapRef} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+    {/* Outer box = positioning context for the out-of-frame controls. */}
+    <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9' }}>
+      <Box sx={{ position: 'relative', width: '100%', height: '100%', bgcolor: '#000', borderRadius: { xs: '12px', md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
+        <Box ref={wrapRef} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+      </Box>
       {leftControls}
       {rightControls}
     </Box>
@@ -152,8 +155,8 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher }: { i
                 <ClipPlayer
                   key={`${clips[index].video.id}:${clips[index].clip_start_ms}`}
                   clip={clips[index]}
-                  leftControls={<ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} sx={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', zIndex: 6 }} />}
-                  rightControls={railSwitcher ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', right: 14, bottom: 10, zIndex: 6 }}>{railSwitcher}</Box> : undefined}
+                  leftControls={<ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}
+                  rightControls={railSwitcher ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', right: -66, bottom: 0 }}>{railSwitcher}</Box> : undefined}
                 />
               </Box>
             : <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography>}
