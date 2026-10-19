@@ -24,8 +24,10 @@ import {
   IconButton,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, Fullscreen, PlayArrow, PsychologyOutlined, Refresh, Settings as SettingsIcon } from '@mui/icons-material'
+import { ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, Fullscreen, PlayArrow, PsychologyOutlined, Refresh, Settings as SettingsIcon, BookmarkAddOutlined, BookmarkOutlined } from '@mui/icons-material'
 import { ContentCard } from '@/app/components/content-grid'
+import { useAuth } from '@/app/AuthContext'
+import { addToMyList, fetchMyListEpisodeIds, removeFromMyList } from '@/app/actions/myList'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
@@ -795,6 +797,8 @@ export default function EpisodePage({
 }) {
   const router = useRouter()
   const isAdmin = useIsAdmin()
+  const { user } = useAuth()
+  const [inMyList, setInMyList] = useState(false)
   const closePip = usePlayerStore((state) => state.closePip)
   const setGlobalVideoPlaying = usePlayerStore((state) => state.setIsPlaying)
   const [tab, setTab] = useState(0)
@@ -832,6 +836,24 @@ export default function EpisodePage({
       cancelled = true
     }
   }, [isAdmin])
+
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    fetchMyListEpisodeIds()
+      .then((ids) => {
+        if (!cancelled) setInMyList(ids.includes(episode.id))
+      })
+      .catch(() => undefined)
+    return () => { cancelled = true }
+  }, [user, episode.id])
+
+  const toggleMyList = useCallback(async () => {
+    const next = !inMyList
+    setInMyList(next)
+    const result = next ? await addToMyList(episode.id) : await removeFromMyList(episode.id)
+    if (!result.ok) setInMyList(!next)
+  }, [inMyList, episode.id])
 
   const theme = useTheme()
   const isMobileViewport = useMediaQuery(theme.breakpoints.down('md'))
@@ -1113,6 +1135,9 @@ export default function EpisodePage({
                   }}
                 >
                   <IconButton onClick={openMobileVideoFullscreen} aria-label="Open video full screen" sx={{ position: 'absolute', zIndex: 4, top: 8, right: 8, width: 38, height: 38, bgcolor: 'rgba(0,0,0,.56)', color: '#fff', border: '1px solid rgba(255,255,255,.25)', '&:hover': { bgcolor: 'rgba(0,0,0,.76)' } }}><Fullscreen /></IconButton>
+                  {user && (
+                    <IconButton onClick={() => void toggleMyList()} aria-label={inMyList ? 'Remove from My List' : 'Add to My List'} sx={{ position: 'absolute', zIndex: 4, top: 8, right: 54, width: 38, height: 38, bgcolor: inMyList ? 'rgba(212,168,67,.72)' : 'rgba(0,0,0,.56)', color: '#fff', border: '1px solid rgba(255,255,255,.25)', '&:hover': { bgcolor: 'rgba(0,0,0,.76)' } }}>{inMyList ? <BookmarkOutlined /> : <BookmarkAddOutlined />}</IconButton>
+                  )}
                   {videoSources.length > 1 && <Box sx={{ position: 'absolute', zIndex: 4, left: 8, bottom: 8, right: 54, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>{videoSources.map((source) => <Chip key={source.provider} label={source.label} clickable size="small" onClick={() => setSelectedProvider(source.provider)} sx={{ height: 25, bgcolor: source.provider === selectedSource?.provider ? 'var(--awm-gold-light)' : 'rgba(0,0,0,.62)', color: source.provider === selectedSource?.provider ? '#0e2e1f' : '#fff', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }} />)}</Box>}
                   {selectedSource?.provider !== 'youtube' && selectedSource ? (
                     <SocialVideoEmbed source={selectedSource} title={episode.title} />
@@ -1152,6 +1177,16 @@ export default function EpisodePage({
                 >
                   Settings
                 </Button>
+                {user && (
+                  <Button
+                    onClick={() => void toggleMyList()}
+                    size="small"
+                    startIcon={inMyList ? <BookmarkOutlined sx={{ fontSize: 17 }} /> : <BookmarkAddOutlined sx={{ fontSize: 17 }} />}
+                    sx={{ color: inMyList ? 'var(--awm-gold-light)' : 'rgba(245,237,224,0.65)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.82rem', letterSpacing: '0.03em', minHeight: 34, px: 1.5, '&:hover': { color: 'var(--awm-gold-light)', bgcolor: 'rgba(245,237,224,0.06)' } }}
+                  >
+                    {inMyList ? 'In My List' : 'My List'}
+                  </Button>
+                )}
               </Box>
             )}
 

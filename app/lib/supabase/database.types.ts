@@ -31,6 +31,7 @@ export interface Database {
       book_audio_progress: Table<{ user_id: string; chapter_id: string; language: 'ar' | 'en'; position_seconds: number; completed: boolean; updated_at: string }>
       leaderboard_public_profiles: Table<{user_id:string;display_name:string;avatar_url:string|null;handle:string|null;updated_at:string}>
       public_profiles: Table<{ user_id: string; display_name: string; is_public: boolean; share_reading: boolean; created_at: string }>
+      my_list: Table<{ user_id: string; episode_id: string; created_at: string }>
 
       shows: {
         Row: {

@@ -26,6 +26,7 @@ import PremiumPrompt from '@/app/components/PremiumPrompt'
 import CefrChip from '@/app/components/CefrChip'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, HOME_CAROUSEL_CARD_ASPECT_RATIO, type CatalogueRowItem } from './NewOnRow'
 import AppDownloadSection from './AppDownloadSection'
+import { fetchMyList, type MyListItem } from '@/app/actions/myList'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
@@ -202,6 +203,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
   const { user } = useAuth()
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
   const [premiumOpen, setPremiumOpen] = useState(false)
+  const [myListItems, setMyListItems] = useState<MyListItem[]>([])
   const { newShowItems, newEpisodeItems } = useMemo(() => {
     return {
       newShowItems: showRowItems(newShows),
@@ -228,6 +230,17 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
     return () => { cancelled = true }
   }, [user?.id])
 
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    void fetchMyList()
+      .then((items) => {
+        if (!cancelled) setMyListItems(items)
+      })
+      .catch((error: unknown) => console.error('Unable to load My List:', error))
+    return () => { cancelled = true }
+  }, [user?.id])
+
   const displayName = user ? String(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'learner').split(' ')[0] : ''
   const activity = user
     ? activityUpdate?.userId === user.id
@@ -235,6 +248,15 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
       : parseLearningActivity(user.user_metadata)
     : null
   const streak = activity ? summarizeLearningDashboard(activity, new Date()).streak : 0
+  const myListRowItems: CatalogueRowItem[] = useMemo(() => myListItems.map((item) => ({
+    key: item.episodeId,
+    href: `/cartoons/${encodeURIComponent(item.showSlug)}/${encodeURIComponent(item.slug)}`,
+    title: item.title,
+    meta: item.showTitle,
+    level: item.level,
+    imageSrc: `/api/covers/episodes/${item.episodeId}`,
+    imageCrop: item.coverCrop,
+  })), [myListItems])
   const hour = new Date().getHours()
   const daypart = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
   const greeting = `Good ${daypart}, ${displayName}!`
@@ -295,7 +317,13 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
         </Box>
 
         <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 4, md: 5 } }}>
-          <Container maxWidth={false}>
+          {user && myListRowItems.length > 0 && (
+            <Container maxWidth={false}>
+              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
+              <NewOnRow items={myListRowItems} ariaLabel="My List" autoScroll compact />
+            </Container>
+          )}
+          <Container maxWidth={false} sx={user && myListRowItems.length > 0 ? { mt: { xs: 2.5, md: 3.25 } } : undefined}>
             {newShowItems.length > 0 && <>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Shows</Typography>
               <NewOnRow items={newShowItems} ariaLabel="Shows" autoScroll compact />
