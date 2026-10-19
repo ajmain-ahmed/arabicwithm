@@ -18,12 +18,12 @@ import {
   AccountTreeOutlined,
   SearchOutlined,
 } from '@mui/icons-material'
-import { Box, Button, Container, Paper, Typography } from '@mui/material'
+import { Box, Button, Container, Paper, Skeleton, Typography } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
 import { fetchLearningActivity } from '@/app/actions/activity'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
-import NewOnRow, { type CatalogueRowItem } from './NewOnRow'
+import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
 import AppDownloadSection from './AppDownloadSection'
 import { fetchMyList, type MyListItem } from '@/app/actions/myList'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
@@ -135,6 +135,8 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
   const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
   const [premiumOpen, setPremiumOpen] = useState(false)
   const [myListItems, setMyListItems] = useState<MyListItem[]>([])
+  const [myListLoaded, setMyListLoaded] = useState(false)
+  const myListLoading = Boolean(user) && !myListLoaded
   const { newShowItems, newEpisodeItems } = useMemo(() => {
     return {
       newShowItems: showRowItems(newShows),
@@ -169,6 +171,9 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
         if (!cancelled) setMyListItems(items)
       })
       .catch((error: unknown) => console.error('Unable to load My List:', error))
+      .finally(() => {
+        if (!cancelled) setMyListLoaded(true)
+      })
     return () => { cancelled = true }
   }, [user?.id])
 
@@ -262,7 +267,17 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
               <NewOnRow items={myListRowItems} ariaLabel="My List" autoScroll compact />
             </Container>
           )}
-          <Container maxWidth={false} sx={user && myListRowItems.length > 0 ? { mt: { xs: 2.5, md: 3.25 } } : undefined}>
+          {user && myListLoading && myListRowItems.length === 0 && (
+            <Container maxWidth={false} aria-label="Loading My List">
+              <Skeleton variant="text" width={110} height={28} />
+              <Box sx={{ display: 'flex', gap: { xs: 1, md: 1.5 }, overflow: 'hidden', mt: 0.5 }}>
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <Skeleton key={index} variant="rounded" sx={{ width: COMPACT_HOME_CARD_WIDTH, maxWidth: '38vw', aspectRatio: '4 / 5', borderRadius: '10px', flexShrink: 0 }} />
+                ))}
+              </Box>
+            </Container>
+          )}
+          <Container maxWidth={false} sx={user && (myListRowItems.length > 0 || myListLoading) ? { mt: { xs: 2.5, md: 3.25 } } : undefined}>
             {newShowItems.length > 0 && <>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Shows</Typography>
               <NewOnRow items={newShowItems} ariaLabel="Shows" autoScroll compact />
