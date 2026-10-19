@@ -24,7 +24,7 @@ import {
   IconButton,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, Fullscreen, PlayArrow, PsychologyOutlined, Refresh, Settings as SettingsIcon } from '@mui/icons-material'
+import { ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, Fullscreen, KeyboardArrowLeft, KeyboardArrowRight, PlayArrow, PsychologyOutlined, Refresh, Settings as SettingsIcon, SpaceBar } from '@mui/icons-material'
 import { ContentCard } from '@/app/components/content-grid'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
@@ -888,12 +888,37 @@ export default function EpisodePage({
 
   const activeIndex = isYouTubeSource ? localActiveIndex : null
 
-  const { wrapRef, seekTo, isPlaying: localVideoPlaying, errorCode, retry } = useYouTubePlayer(
+  const { wrapRef, seekTo, isPlaying: localVideoPlaying, errorCode, retry, playVideo, pauseVideo, getCurrentTime } = useYouTubePlayer(
     isYouTubeSource ? selectedSource.id : undefined,
     handleTimeUpdate,
     initialStart,
     { reloadKey: isMobile ? 'mobile' : 'desktop' }
   )
+
+  /* Keyboard shortcuts (desktop): space toggles playback, arrow keys jump
+     between script timestamps (relative to the player's current time, so they
+     work while paused too). */
+  useEffect(() => {
+    if (isMobile) return
+    const handler = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
+      if (event.code === 'Space') {
+        event.preventDefault()
+        if (localVideoPlaying) pauseVideo()
+        else playVideo()
+        return
+      }
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+      const time = getCurrentTime() ?? 0
+      const current = findActiveIndex(time)
+      const neighbour = event.key === 'ArrowLeft' ? current - 1 : current + 1
+      const block = episode.scriptBlocks[neighbour]
+      if (block?.timestamp != null) seekTo(block.timestamp)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isMobile, localVideoPlaying, episode.scriptBlocks, pauseVideo, playVideo, seekTo, getCurrentTime, findActiveIndex])
 
   useEffect(() => {
     setGlobalVideoPlaying(localVideoPlaying)
@@ -1152,6 +1177,17 @@ export default function EpisodePage({
                 >
                   Settings
                 </Button>
+                <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 2.5, color: 'rgba(245,237,224,0.42)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, pr: 0.5, whiteSpace: 'nowrap' }}>
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                    <SpaceBar sx={{ fontSize: 15 }} /> play/pause
+                  </Box>
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                    <KeyboardArrowLeft sx={{ fontSize: 15 }} /> prev timestamp
+                  </Box>
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                    next timestamp <KeyboardArrowRight sx={{ fontSize: 15 }} />
+                  </Box>
+                </Box>
               </Box>
             )}
 
