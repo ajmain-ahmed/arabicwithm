@@ -31,6 +31,7 @@ import {
   type ChapterInput,
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
+import { validateBookTokenGrammar } from '@/app/lib/bookTokenGrammar'
 import { deleteChapterAudioForAdmin, fetchChapterAudioForAdmin, saveChapterAudioResult, resolveAudiobookForAdmin } from '@/app/actions/audiobooks'
 import { readAudioDuration } from '@/app/lib/audioMetadata'
 import { normalizeAudiobookSource } from '@/app/lib/audiobookSource'
@@ -152,6 +153,7 @@ export default function ChapterEditDialog({
       } catch {
         throw new Error("Chapter content JSON is invalid")
       }
+      validateBookTokenGrammar(content)
 
       const chapterNum = Number(chapterNumber)
       if (Number.isNaN(chapterNum)) {
