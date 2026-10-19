@@ -304,7 +304,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
               )}
               {user && (
                 <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
-                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: '0.9rem' }}>
+                  <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, bgcolor: '#b91c1c', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: '0.9rem' }}>
                     <LocalFireDepartmentRounded sx={{ fontSize: 18 }} />
                     {streak} day{streak === 1 ? '' : 's'} streak
                   </Box>
