@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
-import { Alert, Box, Button, CircularProgress, Skeleton, Typography } from '@mui/material'
-import { NavigateNext } from '@mui/icons-material'
+import { Alert, Box, Button, CircularProgress, IconButton, Skeleton, Typography } from '@mui/material'
+import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material'
 import { fetchForYouClips } from '@/app/actions/forYou'
 import type { ForYouClip, ForYouToken } from '@/app/lib/forYou'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
+
+const MAX_RETAINED_CLIPS = 60
 
 export function ForYouWords({ tokens }: { tokens: ForYouToken[] }) {
   return <Box dir="rtl" sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2, py: 1 }}>
@@ -21,7 +23,6 @@ function ClipPlayer({ clip }: { clip: ForYouClip }) {
   const { wrapRef, errorCode, retry } = useYouTubePlayer(clip.video.youtube_id, setTime, clip.clip_start_ms / 1000, { endAt: clip.clip_end_ms / 1000 })
   const active = clip.segments.find(s => s.start_seconds <= time && s.end_seconds > time) ?? clip.segments[0]
   return <Box>
-    <Typography variant="h5" dir="auto" sx={{ color: { xs: 'var(--awm-bark)', md: '#f5ede0' }, fontFamily: 'var(--font-heading)', fontWeight: 600, mb: 2 }}>{clip.video.title}</Typography>
     <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: '12px', md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
       <Box ref={wrapRef} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
     </Box>
@@ -33,11 +34,35 @@ function ClipPlayer({ clip }: { clip: ForYouClip }) {
   </Box>
 }
 
+function ChevronNav({ onUp, onDown, upDisabled, downDisabled, hidden }: { onUp: () => void; onDown: () => void; upDisabled: boolean; downDisabled: boolean; hidden?: 'mobile' | 'desktop' }) {
+  const button = (label: string, onClick: () => void, disabled: boolean, icon: ReactNode) => (
+    <IconButton
+      onClick={onClick}
+      aria-label={label}
+      disabled={disabled}
+      sx={{
+        width: { xs: 44, md: 50 }, height: { xs: 44, md: 50 },
+        color: { xs: 'var(--awm-gold)', md: '#fff' },
+        bgcolor: { xs: 'rgba(184,134,11,0.12)', md: 'rgba(255,255,255,0.14)' },
+        '&:hover': { bgcolor: { xs: 'rgba(184,134,11,0.22)', md: 'rgba(255,255,255,0.24)' } },
+        '&:disabled': { color: { xs: 'var(--awm-muted-light)', md: 'rgba(255,255,255,0.3)' }, bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.06)' } },
+      }}
+    >
+      {icon}
+    </IconButton>
+  )
+  return (
+    <Box sx={{ display: hidden === 'mobile' ? { xs: 'none', md: 'flex' } : { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: { xs: 0.75, md: 1.25 }, alignItems: 'center', flexShrink: 0 }}>
+      {button('Previous clip', onUp, upDisabled, <KeyboardArrowUp />)}
+      {button('Next clip', onDown, downDisabled, <KeyboardArrowDown />)}
+    </Box>
+  )
+}
+
 /** Determinate loading state shown in place of the first clip: same page
     structure, with a skeleton video area and a 0-100% progress circle. */
 function ForYouLoading({ progress, switcher }: { progress: number; switcher?: ReactNode }) {
   return <Box>
-    <Skeleton variant="text" width="34%" height={36} sx={{ mx: 'auto', mb: 2 }} />
     <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: '12px', md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' } }}>
       <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
         <Box sx={{ textAlign: 'center' }}>
@@ -50,10 +75,7 @@ function ForYouLoading({ progress, switcher }: { progress: number; switcher?: Re
       <Skeleton variant="text" width={180} height={30} />
       <Skeleton variant="text" width={120} height={30} />
     </Box>
-    <Box sx={{ mt: { xs: 3, md: 4 }, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-      {switcher}
-      <Button variant="contained" disabled endIcon={<NavigateNext />} sx={{ bgcolor: '#b8860b', color: '#fff', px: 3.5, py: 1.1, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, fontSize: '0.95rem', opacity: 0.7 }}>Loading…</Button>
-    </Box>
+    {switcher && <Box sx={{ mt: { xs: 3, md: 4 }, display: 'flex', justifyContent: 'center' }}>{switcher}</Box>}
   </Box>
 }
 
@@ -68,11 +90,11 @@ export default function ForYouFeed({ initialClips, switcher }: { initialClips?: 
   useEffect(() => {
     if (loadStarted) return
     setLoadStarted(true)
-    void next()
+    void loadMore()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Ease the progress bar toward 90% while the request is in flight.
+  // Ease the progress bar toward 90% while the initial request is in flight.
   useEffect(() => {
     if (!busy) return
     const timer = setInterval(() => {
@@ -81,37 +103,56 @@ export default function ForYouFeed({ initialClips, switcher }: { initialClips?: 
     return () => clearInterval(timer)
   }, [busy])
 
-  async function next() {
+  async function loadMore() {
     if (busy) return
     setBusy(true); setError('')
     if (clips.length === 0) setProgress(0)
-    const seen = [...excluded, ...(clips[index]?.segments.map(s => s.id) ?? [])]
+    const seen = [...excluded, ...clips.slice(0, index + 1).flatMap((clip) => clip.segments.map((segment) => segment.id))]
     try {
       // Requery on every navigation; do not retain prefetched unpublished clips.
-      const batch = await fetchForYouClips(crypto.randomUUID(), seen.slice(-10000), clips.slice(0, index + 1).map(c => c.video.id).slice(-100))
-      setExcluded(seen.slice(-10000)); setClips(batch); setIndex(0); setProgress(100)
+      const batch = await fetchForYouClips(crypto.randomUUID(), seen.slice(-10000), clips.slice(0, index + 1).map((clip) => clip.video.id).slice(-100))
+      setExcluded(seen.slice(-10000))
+      if (batch.length) {
+        const merged = [...clips, ...batch]
+        const trim = Math.max(0, merged.length - MAX_RETAINED_CLIPS)
+        setClips(merged.slice(trim))
+        setIndex(index + 1 - trim)
+      }
+      setProgress(100)
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load clips.') } finally { setBusy(false) }
+  }
+
+  function step(offset: 1 | -1) {
+    if (offset === -1) {
+      setIndex((value) => Math.max(0, value - 1))
+      return
+    }
+    if (index < clips.length - 1) setIndex(index + 1)
+    else void loadMore()
   }
 
   const initialLoading = clips.length === 0 && busy
 
   return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, py: { xs: 3, md: 4 } }}>
-    <Box sx={{ maxWidth: 1800, mx: 'auto', px: { xs: 2, sm: 3, md: 6 } }}>
+    <Box sx={{ maxWidth: 2400, mx: 'auto', px: { xs: 2, sm: 3, md: 5 } }}>
       <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold)', textAlign: 'center' }}>For You</Typography>
       <Box sx={{ mt: 2 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {initialLoading
           ? <ForYouLoading progress={progress} switcher={switcher} />
           : clips[index]
-            ? <ClipPlayer key={`${clips[index].video.id}:${clips[index].clip_start_ms}`} clip={clips[index]} />
+            ? <Box sx={{ display: { md: 'flex' }, gap: { md: 2.5 }, alignItems: 'center' }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <ClipPlayer key={`${clips[index].video.id}:${clips[index].clip_start_ms}`} clip={clips[index]} />
+                </Box>
+                <ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} />
+              </Box>
             : <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography>}
       </Box>
       {!initialLoading && (
         <Box sx={{ mt: { xs: 3, md: 4 }, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
           {switcher}
-          <Button variant="contained" endIcon={<NavigateNext />} disabled={busy} onClick={() => void next()} sx={{ bgcolor: '#b8860b', color: '#fff', px: 3.5, py: 1.1, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, fontSize: '0.95rem', '&:hover': { bgcolor: '#a07c0a' } }}>
-            {busy ? 'Loading…' : 'Next clip'}
-          </Button>
+          <ChevronNav hidden="desktop" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} />
         </Box>
       )}
     </Box>
