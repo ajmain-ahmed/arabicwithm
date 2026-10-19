@@ -94,7 +94,7 @@ export default function LearningActivityTracker() {
     let cancelled = false
     void fetchLearningActivity()
       .then((activity) => {
-        if (!cancelled && userIdRef.current === user.id) publish(user.id, activity)
+        if (activity && !cancelled && userIdRef.current === user.id) publish(user.id, activity)
       })
       .catch((error: unknown) => { if (!cancelled && userIdRef.current === user.id) console.error('Unable to load learning activity:', error) })
     return () => { cancelled = true }

@@ -58,5 +58,5 @@ export default function ExploreViews({ seed, items, hasMore }: { seed: string; i
   const rowSwitch = <ViewSwitch view={view} onChange={setView} layout="row" />
   return view === 'explore'
     ? <ExploreFeed seed={seed} initialItems={items} initialHasMore={hasMore} railTop={railSwitch} />
-    : <ForYouFeed switcher={rowSwitch} />
+    : <ForYouFeed switcher={rowSwitch} railSwitcher={railSwitch} />
 }

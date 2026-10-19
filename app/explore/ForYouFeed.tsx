@@ -35,7 +35,7 @@ function ClipPlayer({ clip }: { clip: ForYouClip }) {
   </Box>
 }
 
-function ChevronNav({ onUp, onDown, upDisabled, downDisabled, hidden }: { onUp: () => void; onDown: () => void; upDisabled: boolean; downDisabled: boolean; hidden?: 'mobile' | 'desktop' }) {
+function ChevronNav({ onUp, onDown, upDisabled, downDisabled, hidden, sx }: { onUp: () => void; onDown: () => void; upDisabled: boolean; downDisabled: boolean; hidden?: 'mobile' | 'desktop'; sx?: object }) {
   const button = (label: string, onClick: () => void, disabled: boolean, icon: ReactNode) => (
     <IconButton
       onClick={onClick}
@@ -53,7 +53,7 @@ function ChevronNav({ onUp, onDown, upDisabled, downDisabled, hidden }: { onUp: 
     </IconButton>
   )
   return (
-    <Box sx={{ display: hidden === 'mobile' ? { xs: 'none', md: 'flex' } : { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: { xs: 0.75, md: 1.25 }, alignItems: 'center', flexShrink: 0 }}>
+    <Box sx={{ display: hidden === 'mobile' ? { xs: 'none', md: 'flex' } : { xs: 'flex', md: 'none' }, flexDirection: 'column', gap: { xs: 0.75, md: 1.25 }, alignItems: 'center', flexShrink: 0, ...(sx ?? {}) }}>
       {button('Previous clip', onUp, upDisabled, <KeyboardArrowUp />)}
       {button('Next clip', onDown, downDisabled, <KeyboardArrowDown />)}
     </Box>
@@ -82,7 +82,7 @@ function ForYouLoading({ progress, switcher }: { progress: number; switcher?: Re
   </Box>
 }
 
-export default function ForYouFeed({ initialClips, switcher }: { initialClips?: ForYouClip[]; switcher?: ReactNode }) {
+export default function ForYouFeed({ initialClips, switcher, railSwitcher }: { initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode }) {
   const [clips, setClips] = useState<ForYouClip[]>(initialClips ?? [])
   const [loadStarted, setLoadStarted] = useState(Boolean(initialClips?.length))
   const [index, setIndex] = useState(0), [error, setError] = useState(''), [busy, setBusy] = useState(false)
@@ -139,22 +139,21 @@ export default function ForYouFeed({ initialClips, switcher }: { initialClips?: 
 
   const initialLoading = clips.length === 0 && busy
 
-  return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, py: { xs: 3, md: 3 } }}>
+  return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, pt: { xs: 3, md: 6 }, pb: { xs: 3, md: 5 } }}>
     <Box sx={{ maxWidth: 2400, mx: 'auto', px: { xs: 2, sm: 3, md: 5 } }}>
       <Box sx={{ mt: 0.5 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {initialLoading
           ? <ForYouLoading progress={progress} switcher={switcher} />
           : clips[index]
-            ? <Box sx={{ display: { md: 'flex' }, gap: { md: 2.5 }, alignItems: 'center' }}>
-                <ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} />
-                {/* Sized to viewport height so the tokens and controls stay in view. */}
-                <Box sx={{ minWidth: 0, width: 'min(100%, calc((100dvh - 340px) * 16 / 9))', mx: { md: 'auto' } }}>
-                  <ClipPlayer key={`${clips[index].video.id}:${clips[index].clip_start_ms}`} clip={clips[index]} />
-                </Box>
-                <Box sx={{ display: { xs: 'none', md: 'flex' }, flexDirection: 'column', gap: { md: 1.4 }, alignItems: 'center', flexShrink: 0 }}>
-                  {switcher}
-                </Box>
+            ? <Box sx={{ position: 'relative', minWidth: 0, width: 'min(100%, calc((100dvh - 340px) * 16 / 9))', mx: { md: 'auto' } }}>
+                <ClipPlayer key={`${clips[index].video.id}:${clips[index].clip_start_ms}`} clip={clips[index]} />
+                <ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} sx={{ position: 'absolute', left: -66, top: '38%', transform: 'translateY(-50%)' }} />
+                {railSwitcher && (
+                  <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', right: -66, top: '76%', transform: 'translateY(-50%)' }}>
+                    {railSwitcher}
+                  </Box>
+                )}
               </Box>
             : <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography>}
       </Box>

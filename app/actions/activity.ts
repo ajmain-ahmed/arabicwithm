@@ -18,12 +18,6 @@ interface RecordActivityInput {
 const DATE_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 const MAX_BATCH_SECONDS = 120
 
-async function requireUserId(): Promise<string> {
-  const userId = await getAuthenticatedUserId()
-  if (!userId) throw new Error('You must be signed in to save learning activity.')
-  return userId
-}
-
 function databaseError(context: string, error: unknown): Error {
   console.error(`[activity] ${context}:`, error)
   return new Error('Unable to load learning activity. Please try again.')
@@ -79,8 +73,10 @@ async function activityForUser(userId: string): Promise<LearningActivity> {
   return loadLearningSnapshot(userId, { learning_activity: legacy }, profile)
 }
 
-export async function fetchLearningActivity(): Promise<LearningActivity> {
-  return activityForUser(await requireUserId())
+export async function fetchLearningActivity(): Promise<LearningActivity | null> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) return null
+  return activityForUser(userId)
 }
 
 export async function recordActiveLearning(input: RecordActivityInput, expectedUserId?: string): Promise<LearningActivity | null> {

@@ -112,7 +112,7 @@ export default function SignedInHome({ books, featuredBook, featuredEpisode, cha
     let cancelled = false
     void fetchLearningActivity()
       .then((activity) => {
-        if (!cancelled) setActivityUpdate({ userId: user.id, activity })
+        if (activity && !cancelled) setActivityUpdate({ userId: user.id, activity })
       })
       .catch((error: unknown) => console.error('Unable to load dashboard activity:', error))
     return () => { cancelled = true }

@@ -155,7 +155,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
     let cancelled = false
     void fetchLearningActivity()
       .then((activity) => {
-        if (!cancelled) setActivityUpdate({ userId: user.id, activity })
+        if (activity && !cancelled) setActivityUpdate({ userId: user.id, activity })
       })
       .catch((error: unknown) => console.error('Unable to load dashboard activity:', error))
     return () => { cancelled = true }
