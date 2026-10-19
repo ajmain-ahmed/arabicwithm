@@ -27,15 +27,15 @@ create or replace function public.transcript_for_you_groups(p_seed text, p_exclu
  VOLATILE SECURITY DEFINER
  SET search_path TO ''
 AS $function$
-declare
-  result jsonb;
 begin
   if not exists (select 1 from public.for_you_cache_state where refreshed_at > now() - interval '5 minutes')
      or not exists (select 1 from public.for_you_candidates) then
-    perform pg_advisory_xact_lock(727272);
-    -- Re-check under the lock: another worker may have just refreshed.
-    if not exists (select 1 from public.for_you_cache_state where refreshed_at > now() - interval '5 minutes')
-       or not exists (select 1 from public.for_you_candidates) then
+    -- Non-blocking: a concurrent refresher (or a failed refresh) must never
+    -- fail the request — stale candidates are served instead.
+    if pg_try_advisory_lock(727272) then
+      begin
+        if not exists (select 1 from public.for_you_cache_state where refreshed_at > now() - interval '5 minutes')
+           or not exists (select 1 from public.for_you_candidates) then
       delete from public.for_you_candidates;
       insert into public.for_you_candidates (transcript_id, segment_id, position, start_seconds)
         select t.id, s.id, s.position, s.start_seconds
@@ -55,10 +55,30 @@ begin
           and s.end_seconds<=43200 and s.end_seconds-s.start_seconds<=60
           and (t.duration_seconds is null or s.end_seconds<=t.duration_seconds)
           and btrim(s.original_text)<>'' and s.original_text ~ U&'[\0621-\064A]';
-      insert into public.for_you_cache_state (id, refreshed_at) values (true, now())
-        on conflict (id) do update set refreshed_at=excluded.refreshed_at;
+          insert into public.for_you_cache_state (id, refreshed_at) values (true, now())
+            on conflict (id) do update set refreshed_at=excluded.refreshed_at;
+        end if;
+      exception when others then
+        null;
+      end;
+      perform pg_advisory_unlock(727272);
     end if;
   end if;
+
+  return public.transcript_for_you_groups_impl(p_seed, p_excluded, p_recent, p_limit, p_group_ids);
+end;
+$function$;
+
+-- Selection core (renamed from the original function).
+create or replace function public.transcript_for_you_groups_impl(p_seed text, p_excluded bigint[] DEFAULT '{}'::bigint[], p_recent uuid[] DEFAULT '{}'::uuid[], p_limit integer DEFAULT 5, p_group_ids uuid[] DEFAULT '{}'::uuid[])
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ VOLATILE SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  result jsonb;
+begin
 
   with recursive selected_groups(id) as (
     select g.id from public.transcript_groups g where g.id=any(coalesce(p_group_ids,'{}'))
