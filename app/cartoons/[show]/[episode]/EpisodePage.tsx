@@ -1177,15 +1177,15 @@ export default function EpisodePage({
                 >
                   Settings
                 </Button>
-                <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 2.5, color: 'rgba(245,237,224,0.42)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, pr: 0.5, whiteSpace: 'nowrap' }}>
+                <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 2.5, color: 'rgba(245,237,224,0.5)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, fontWeight: 600, pr: 0.5, whiteSpace: 'nowrap' }}>
                   <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-                    <SpaceBar sx={{ fontSize: 15 }} /> play/pause
+                    <SpaceBar sx={{ fontSize: 17 }} /> play/pause
                   </Box>
                   <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-                    <KeyboardArrowLeft sx={{ fontSize: 15 }} /> prev timestamp
+                    <KeyboardArrowLeft sx={{ fontSize: 17 }} /> prev timestamp
                   </Box>
                   <Box component="span" sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
-                    next timestamp <KeyboardArrowRight sx={{ fontSize: 15 }} />
+                    next timestamp <KeyboardArrowRight sx={{ fontSize: 17 }} />
                   </Box>
                 </Box>
               </Box>
