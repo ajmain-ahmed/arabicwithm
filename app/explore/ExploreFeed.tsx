@@ -176,6 +176,7 @@ function ExploreVideo({
   railTop,
   onPrev,
   onNext,
+  onStarted,
 }: {
   episode: ExploreEpisode
   active: boolean
@@ -185,6 +186,7 @@ function ExploreVideo({
   railTop?: ReactNode
   onPrev?: () => void
   onNext?: () => void
+  onStarted?: () => void
 }) {
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
@@ -230,7 +232,8 @@ function ExploreVideo({
     if (soundEnabled && !soundBlockedRef.current) unMute()
     else mute()
     playVideo()
-  }, [active, autoplayBlocked, isReady, mute, pauseVideo, playVideo, soundEnabled, unMute])
+    onStarted?.()
+  }, [active, autoplayBlocked, isReady, mute, pauseVideo, playVideo, soundEnabled, unMute, onStarted])
 
   useEffect(() => {
     const requestSound = () => {
@@ -598,10 +601,14 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
   const startAtRef = useRef<number | null>(null)
 
   /* Keep the session cache in sync so a remount (or the For You view) can
-     restore without re-fetching. */
+     restore without re-fetching. Only the WATCHED prefix is cached: on return
+     the feed lands on a fresh video with exactly the previously watched items
+     scrollable above it. watchedCount grows only when a video actually starts
+     playing, so transient scroll events can't inflate the cache. */
+  const [watchedCount, setWatchedCount] = useState(cachedItems.length > 0 ? cachedItems.length : 1)
   useEffect(() => {
-    setCachedItems(items)
-  }, [items, setCachedItems])
+    setCachedItems(items.slice(0, watchedCount))
+  }, [items, watchedCount, setCachedItems])
 
   useEffect(() => {
     if (initialLoadStartedRef.current) return
@@ -838,6 +845,7 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
                 railTop={railTop}
                 onPrev={() => goToIndex(activeIndex <= 0 ? items.length - 1 : activeIndex - 1)}
                 onNext={() => goToIndex(items.length === 0 ? 0 : (activeIndex + 1) % items.length)}
+                onStarted={() => setWatchedCount((count) => Math.max(count, index + 1))}
               />
             </>
           ) : (
