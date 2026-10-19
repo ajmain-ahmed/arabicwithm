@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   AdminPanelSettings,
   AutoStories,
@@ -18,20 +18,18 @@ import {
   AccountTreeOutlined,
   SearchOutlined,
 } from '@mui/icons-material'
-import { Box, Button, Container, Paper, Skeleton, Typography } from '@mui/material'
+import { Box, Button, Container, Paper, Typography } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
 import { fetchLearningActivity } from '@/app/actions/activity'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
-import CefrChip from '@/app/components/CefrChip'
-import NewOnRow, { COMPACT_HOME_CARD_WIDTH, HOME_CAROUSEL_CARD_ASPECT_RATIO, type CatalogueRowItem } from './NewOnRow'
+import NewOnRow, { type CatalogueRowItem } from './NewOnRow'
 import AppDownloadSection from './AppDownloadSection'
 import { fetchMyList, type MyListItem } from '@/app/actions/myList'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
-import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
 import {
   LEARNING_ACTIVITY_EVENT,
@@ -131,73 +129,6 @@ export function UpgradeSection() {
   )
 }
 
-function BookCard({ book }: { book: PublicBook }) {
-  const [loaded, setLoaded] = useState(false)
-  /* Reveal immediately when the SSR'd image finished before hydration
-     attached onLoad, otherwise it stays stuck invisible. */
-  const coverImgRef = useCallback((node: HTMLImageElement | null) => {
-    if (node?.complete) setLoaded(true)
-  }, [])
-  return (
-    <Paper
-      component={Link}
-      href={`/books/${encodeURIComponent(book.slug)}`}
-      elevation={0}
-      sx={{
-        position: 'relative',
-        display: 'block',
-        width: COMPACT_HOME_CARD_WIDTH,
-        maxWidth: '100%',
-        aspectRatio: HOME_CAROUSEL_CARD_ASPECT_RATIO,
-        justifySelf: 'center',
-        minWidth: 0,
-        overflow: 'hidden',
-        color: '#fff',
-        textDecoration: 'none',
-        border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)',
-        borderRadius: { xs: '10px', sm: '14px' },
-        bgcolor: '#0e2e1f',
-        transition: 'transform .2s ease, box-shadow .2s ease',
-        '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 14px 32px color-mix(in srgb, var(--awm-bark) 12%, transparent)' },
-      }}
-    >
-      {!loaded && <Skeleton variant="rectangular" animation="wave" sx={{ position: 'absolute', inset: 0, zIndex: 1, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)' }} />}
-      <Box
-        component="img"
-        ref={coverImgRef}
-        src={book.cover || `/api/covers/books/${book.id}`}
-        alt={book.titleAr ? `${book.title} — ${book.titleAr}` : book.title}
-        loading="lazy"
-        onLoad={() => setLoaded(true)}
-        onError={(e) => {
-          setLoaded(true)
-          e.currentTarget.style.display = 'none'
-        }}
-        sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: loaded ? 1 : 0, transition: 'opacity 0.3s ease', ...thumbnailCropCss(book.coverCrop) }}
-      />
-      <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(5,23,15,0.04) 22%, rgba(5,23,15,0.94) 100%)' }} />
-      <Box sx={{ position: 'absolute', zIndex: 2, left: 0, right: 0, bottom: 0, p: { xs: 1, sm: 1.25 }, minWidth: 0 }}>
-        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '0.88rem', sm: '1rem' }, fontWeight: 700, color: '#fff', lineHeight: 1.15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textShadow: '0 2px 8px rgba(0,0,0,.55)' }}>{book.title}</Typography>
-        {book.titleAr && (
-          <Typography lang="ar" dir="rtl" sx={{ mt: 0.15, fontFamily: 'var(--font-serif)', fontSize: { xs: '0.75rem', sm: '0.85rem' }, color: 'rgba(255,255,255,.82)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{book.titleAr}</Typography>
-        )}
-        {book.level && <CefrChip size="small" level={book.level} sx={{ mt: 0.65, height: 18, borderRadius: '9999px', fontSize: '0.6rem' }} />}
-      </Box>
-    </Paper>
-  )
-}
-
-function BooksSection({ books }: { books: PublicBook[] }) {
-  if (books.length === 0) return null
-  return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: { xs: 1, md: 1.5 } }}>
-      {books.slice(0, 4).map((book) => (
-        <BookCard key={book.id} book={book} />
-      ))}
-    </Box>
-  )
-}
-
 export default function HomeDashboard({ books, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
   const { mode } = useColorMode()
   const { user } = useAuth()
@@ -256,6 +187,15 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
     imageSrc: `/api/covers/shows/${item.showId}`,
     imageCrop: item.coverCrop,
   })), [myListItems])
+  const bookRowItems: CatalogueRowItem[] = useMemo(() => books.map((book) => ({
+    key: book.id,
+    href: `/books/${encodeURIComponent(book.slug)}`,
+    title: book.title,
+    meta: book.titleAr ?? undefined,
+    level: book.level,
+    imageSrc: book.cover || `/api/covers/books/${book.id}`,
+    imageCrop: book.coverCrop,
+  })), [books])
   const hour = new Date().getHours()
   const daypart = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
   const greeting = `Good ${daypart}, ${displayName}!`
@@ -331,17 +271,10 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
               <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Latest Episodes</Typography>
               <NewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" autoScroll compact />
             </>}
-          </Container>
-
-          <Container maxWidth={false} sx={{ mt: { xs: 4, md: 5 } }}>
-            {/* Fluid row: fills one line on wide screens, wraps only when the
-                catalogue outgrows the width; centred so the heading aligns. */}
-            <Box sx={{ maxWidth: 2200, mx: 'auto' }}>
-              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2, textAlign: 'center' }}>Featured books in Arabic &amp; English</Typography>
-              <Box sx={{ mt: 2 }}>
-                <BooksSection books={books} />
-              </Box>
-            </Box>
+            {bookRowItems.length > 0 && <>
+              <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Books</Typography>
+              <NewOnRow items={bookRowItems} ariaLabel="Books" autoScroll compact />
+            </>}
           </Container>
 
           <Container maxWidth="lg" sx={{ mt: { xs: 5, md: 7 }, mb: { xs: 5, md: 7 } }}>
