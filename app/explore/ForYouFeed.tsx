@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Alert,Box,Button,Stack,Typography } from '@mui/material'
 import { fetchForYouClips } from '@/app/actions/forYou'
 import type { ForYouClip,ForYouToken } from '@/app/lib/forYou'
@@ -30,7 +30,7 @@ function ClipPlayer({clip}:{clip:ForYouClip}) {
  </Stack>
 }
 
-export default function ForYouFeed({initialClips}:{initialClips:ForYouClip[]}) {
+export default function ForYouFeed({initialClips,switcher}:{initialClips:ForYouClip[];switcher?:ReactNode}) {
  const [clips,setClips]=useState(initialClips),[index,setIndex]=useState(0),[error,setError]=useState(''),[busy,setBusy]=useState(false)
  const [excluded,setExcluded]=useState<number[]>([])
  async function next(){
@@ -44,6 +44,7 @@ export default function ForYouFeed({initialClips}:{initialClips:ForYouClip[]}) {
   }catch(e){setError(e instanceof Error?e.message:'Unable to load clips.')}finally{setBusy(false)}
  }
  return <Box sx={{maxWidth:800,mx:'auto',px:{xs:2,sm:3},py:3}}>
+  {switcher&&<Box sx={{position:'fixed',right:'max(6px, env(safe-area-inset-right))',top:'50%',transform:'translateY(-50%)',zIndex:1100}}>{switcher}</Box>}
   {error&&<Alert severity="error">{error}</Alert>}
   {clips[index]?<ClipPlayer key={`${clips[index].video.id}:${clips[index].clip_start_ms}`} clip={clips[index]}/>:<Typography>No more clips available.</Typography>}
   <Button variant="contained" disabled={busy} onClick={()=>void next()} sx={{mt:2}}>{busy?'Loading…':clips.length?'Next clip':'Reload clips'}</Button>

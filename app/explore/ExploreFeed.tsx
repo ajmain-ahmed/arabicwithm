@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import Link from 'next/link'
 import { ArrowForward, ExploreOutlined, KeyboardArrowDown, KeyboardArrowUp, MenuBook, PlayCircleOutlineRounded, PsychologyOutlined, VolumeOff, VolumeUp } from '@mui/icons-material'
 import { Box, Button, Chip, CircularProgress, IconButton, Popover, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
@@ -171,12 +171,14 @@ function ExploreVideo({
   onEnded,
   onPlaybackChange,
   soundEnabled,
+  railTop,
 }: {
   episode: ExploreEpisode
   active: boolean
   onEnded: () => void
   onPlaybackChange: (playing: boolean) => void
   soundEnabled: boolean
+  railTop?: ReactNode
 }) {
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
@@ -358,6 +360,7 @@ function ExploreVideo({
           flexDirection: 'column',
           gap: { xs: 0.85, md: 1.4 },
         }}>
+          {railTop}
           {/* A native fallback uses YouTube's controls without API commands. */}
           {(!isYouTube || isReady) && <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
@@ -513,7 +516,7 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionP
   )
 }
 
-export default function ExploreFeed({ seed, initialItems, initialHasMore }: { seed: string; initialItems: ExploreFeedItem[]; initialHasMore: boolean }) {
+export default function ExploreFeed({ seed, initialItems, initialHasMore, railTop }: { seed: string; initialItems: ExploreFeedItem[]; initialHasMore: boolean; railTop?: ReactNode }) {
   const theme = useTheme()
   const isMobileDefinitionLayout = useMediaQuery(theme.breakpoints.down('lg'))
   const setGlobalVideoPlaying = usePlayerStore((state) => state.setIsPlaying)
@@ -727,6 +730,7 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore }: { se
                 onEnded={() => advanceOnce(index)}
                 onPlaybackChange={setGlobalVideoPlaying}
                 soundEnabled={soundEnabled}
+                railTop={railTop}
               />
             </>
           ) : (
