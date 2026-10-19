@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
-import { Alert, Box, Button, Typography } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Skeleton, Typography } from '@mui/material'
 import { NavigateNext } from '@mui/icons-material'
 import { fetchForYouClips } from '@/app/actions/forYou'
 import type { ForYouClip, ForYouToken } from '@/app/lib/forYou'
@@ -21,8 +21,8 @@ function ClipPlayer({ clip }: { clip: ForYouClip }) {
   const { wrapRef, errorCode, retry } = useYouTubePlayer(clip.video.youtube_id, setTime, clip.clip_start_ms / 1000, { endAt: clip.clip_end_ms / 1000 })
   const active = clip.segments.find(s => s.start_seconds <= time && s.end_seconds > time) ?? clip.segments[0]
   return <Box>
-    <Typography variant="h5" dir="auto" sx={{ color: { xs: 'var(--awm-bark)', md: '#f5ede0' }, fontFamily: 'var(--font-heading)', fontWeight: 600, textAlign: 'center', mb: 2 }}>{clip.video.title}</Typography>
-    <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: '12px', md: '20px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
+    <Typography variant="h5" dir="auto" sx={{ color: { xs: 'var(--awm-bark)', md: '#f5ede0' }, fontFamily: 'var(--font-heading)', fontWeight: 600, mb: 2 }}>{clip.video.title}</Typography>
+    <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: '12px', md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
       <Box ref={wrapRef} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
     </Box>
     {errorCode && <Alert severity="warning" sx={{ mt: 2 }}>The video could not be loaded. <Button onClick={retry}>Retry</Button></Alert>}
@@ -33,11 +33,36 @@ function ClipPlayer({ clip }: { clip: ForYouClip }) {
   </Box>
 }
 
+/** Determinate loading state shown in place of the first clip: same page
+    structure, with a skeleton video area and a 0-100% progress circle. */
+function ForYouLoading({ progress, switcher }: { progress: number; switcher?: ReactNode }) {
+  return <Box>
+    <Skeleton variant="text" width="34%" height={36} sx={{ mx: 'auto', mb: 2 }} />
+    <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: '12px', md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' } }}>
+      <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <CircularProgress variant="determinate" value={progress} size={58} sx={{ color: '#d4a843' }} />
+          <Typography sx={{ mt: 1.25, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, fontWeight: 700, color: { xs: 'var(--awm-muted)', md: 'rgba(255,255,255,0.72)' } }}>{Math.round(progress)}%</Typography>
+        </Box>
+      </Box>
+    </Box>
+    <Box sx={{ mt: { xs: 2, md: 3 }, display: 'flex', justifyContent: 'center', gap: 3 }}>
+      <Skeleton variant="text" width={180} height={30} />
+      <Skeleton variant="text" width={120} height={30} />
+    </Box>
+    <Box sx={{ mt: { xs: 3, md: 4 }, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+      {switcher}
+      <Button variant="contained" disabled endIcon={<NavigateNext />} sx={{ bgcolor: '#b8860b', color: '#fff', px: 3.5, py: 1.1, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, fontSize: '0.95rem', opacity: 0.7 }}>Loading…</Button>
+    </Box>
+  </Box>
+}
+
 export default function ForYouFeed({ initialClips, switcher }: { initialClips?: ForYouClip[]; switcher?: ReactNode }) {
   const [clips, setClips] = useState<ForYouClip[]>(initialClips ?? [])
   const [loadStarted, setLoadStarted] = useState(Boolean(initialClips?.length))
   const [index, setIndex] = useState(0), [error, setError] = useState(''), [busy, setBusy] = useState(false)
   const [excluded, setExcluded] = useState<number[]>([])
+  const [progress, setProgress] = useState(0)
   // Clips are fetched lazily: the explore feed is the default view, so this
   // data is only requested the first time someone opens the For You view.
   useEffect(() => {
@@ -47,32 +72,48 @@ export default function ForYouFeed({ initialClips, switcher }: { initialClips?: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Ease the progress bar toward 90% while the request is in flight.
+  useEffect(() => {
+    if (!busy) return
+    const timer = setInterval(() => {
+      setProgress((value) => Math.min(90, value + Math.max(0.6, (90 - value) * 0.07)))
+    }, 120)
+    return () => clearInterval(timer)
+  }, [busy])
+
   async function next() {
     if (busy) return
     setBusy(true); setError('')
+    if (clips.length === 0) setProgress(0)
     const seen = [...excluded, ...(clips[index]?.segments.map(s => s.id) ?? [])]
     try {
       // Requery on every navigation; do not retain prefetched unpublished clips.
       const batch = await fetchForYouClips(crypto.randomUUID(), seen.slice(-10000), clips.slice(0, index + 1).map(c => c.video.id).slice(-100))
-      setExcluded(seen.slice(-10000)); setClips(batch); setIndex(0)
+      setExcluded(seen.slice(-10000)); setClips(batch); setIndex(0); setProgress(100)
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load clips.') } finally { setBusy(false) }
   }
 
-  return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, py: { xs: 3, md: 5 } }}>
-    <Box sx={{ maxWidth: 1100, mx: 'auto', px: { xs: 2, sm: 3 } }}>
+  const initialLoading = clips.length === 0 && busy
+
+  return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, py: { xs: 3, md: 4 } }}>
+    <Box sx={{ maxWidth: 1800, mx: 'auto', px: { xs: 2, sm: 3, md: 6 } }}>
       <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold)', textAlign: 'center' }}>For You</Typography>
-      <Box sx={{ mt: 0.75, mb: { xs: 2, md: 3 } }}>
+      <Box sx={{ mt: 2 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        {clips[index]
-          ? <ClipPlayer key={`${clips[index].video.id}:${clips[index].clip_start_ms}`} clip={clips[index]} />
-          : <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography>}
+        {initialLoading
+          ? <ForYouLoading progress={progress} switcher={switcher} />
+          : clips[index]
+            ? <ClipPlayer key={`${clips[index].video.id}:${clips[index].clip_start_ms}`} clip={clips[index]} />
+            : <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography>}
       </Box>
-      <Box sx={{ mt: { xs: 3, md: 4 }, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-        {switcher}
-        <Button variant="contained" endIcon={<NavigateNext />} disabled={busy} onClick={() => void next()} sx={{ bgcolor: '#b8860b', color: '#fff', px: 3.5, py: 1.1, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, fontSize: '0.95rem', '&:hover': { bgcolor: '#a07c0a' } }}>
-          {busy ? 'Loading…' : 'Next clip'}
-        </Button>
-      </Box>
+      {!initialLoading && (
+        <Box sx={{ mt: { xs: 3, md: 4 }, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+          {switcher}
+          <Button variant="contained" endIcon={<NavigateNext />} disabled={busy} onClick={() => void next()} sx={{ bgcolor: '#b8860b', color: '#fff', px: 3.5, py: 1.1, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, fontSize: '0.95rem', '&:hover': { bgcolor: '#a07c0a' } }}>
+            {busy ? 'Loading…' : 'Next clip'}
+          </Button>
+        </Box>
+      )}
     </Box>
   </Box>
 }
