@@ -911,7 +911,7 @@ export default function EpisodePage({
       }
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
       const time = getCurrentTime() ?? 0
-      const current = findActiveIndex(time)
+      const current = findActiveIndex(time) ?? -1
       const neighbour = event.key === 'ArrowLeft' ? current - 1 : current + 1
       const block = episode.scriptBlocks[neighbour]
       if (block?.timestamp != null) seekTo(block.timestamp)
