@@ -63,11 +63,13 @@ function ChevronNav({ onUp, onDown, upDisabled, downDisabled, hidden }: { onUp: 
     structure, with a skeleton video area and a 0-100% progress circle. */
 function ForYouLoading({ progress, switcher }: { progress: number; switcher?: ReactNode }) {
   return <Box>
-    <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: '12px', md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' } }}>
-      <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <CircularProgress variant="determinate" value={progress} size={58} sx={{ color: '#d4a843' }} />
-          <Typography sx={{ mt: 1.25, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, fontWeight: 700, color: { xs: 'var(--awm-muted)', md: 'rgba(255,255,255,0.72)' } }}>{Math.round(progress)}%</Typography>
+    <Box sx={{ width: 'min(100%, calc((100dvh - 340px) * 16 / 9))', mx: { md: 'auto' } }}>
+      <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: '12px', md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' } }}>
+        <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
+          <Box sx={{ textAlign: 'center' }}>
+            <CircularProgress variant="determinate" value={progress} size={58} sx={{ color: '#d4a843' }} />
+            <Typography sx={{ mt: 1.25, fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, fontWeight: 700, color: { xs: 'var(--awm-muted)', md: 'rgba(255,255,255,0.72)' } }}>{Math.round(progress)}%</Typography>
+          </Box>
         </Box>
       </Box>
     </Box>
@@ -133,16 +135,16 @@ export default function ForYouFeed({ initialClips, switcher }: { initialClips?: 
 
   const initialLoading = clips.length === 0 && busy
 
-  return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, py: { xs: 3, md: 4 } }}>
+  return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, py: { xs: 3, md: 3 } }}>
     <Box sx={{ maxWidth: 2400, mx: 'auto', px: { xs: 2, sm: 3, md: 5 } }}>
-      <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--awm-gold)', textAlign: 'center' }}>For You</Typography>
-      <Box sx={{ mt: 2 }}>
+      <Box sx={{ mt: 0.5 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {initialLoading
           ? <ForYouLoading progress={progress} switcher={switcher} />
           : clips[index]
             ? <Box sx={{ display: { md: 'flex' }, gap: { md: 2.5 }, alignItems: 'center' }}>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
+                {/* Sized to viewport height so the tokens and controls stay in view. */}
+                <Box sx={{ minWidth: 0, width: 'min(100%, calc((100dvh - 340px) * 16 / 9))', mx: { md: 'auto' } }}>
                   <ClipPlayer key={`${clips[index].video.id}:${clips[index].clip_start_ms}`} clip={clips[index]} />
                 </Box>
                 <ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} />
