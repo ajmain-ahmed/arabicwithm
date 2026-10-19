@@ -147,16 +147,19 @@ export default function ForYouFeed({ initialClips, switcher }: { initialClips?: 
           ? <ForYouLoading progress={progress} switcher={switcher} />
           : clips[index]
             ? <Box sx={{ display: { md: 'flex' }, gap: { md: 2.5 }, alignItems: 'center' }}>
+                <ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} />
                 {/* Sized to viewport height so the tokens and controls stay in view. */}
                 <Box sx={{ minWidth: 0, width: 'min(100%, calc((100dvh - 340px) * 16 / 9))', mx: { md: 'auto' } }}>
                   <ClipPlayer key={`${clips[index].video.id}:${clips[index].clip_start_ms}`} clip={clips[index]} />
                 </Box>
-                <ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} />
+                <Box sx={{ display: { xs: 'none', md: 'flex' }, flexDirection: 'column', gap: { md: 1.4 }, alignItems: 'center', flexShrink: 0 }}>
+                  {switcher}
+                </Box>
               </Box>
             : <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography>}
       </Box>
       {!initialLoading && (
-        <Box sx={{ mt: { xs: 3, md: 4 }, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+        <Box sx={{ mt: { xs: 3 }, display: { xs: 'flex', md: 'none' }, justifyContent: 'center', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
           {switcher}
           <ChevronNav hidden="desktop" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} />
         </Box>
