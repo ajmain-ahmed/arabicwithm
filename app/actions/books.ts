@@ -6,6 +6,7 @@ import { unstable_cache } from "next/cache"
 import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
 import { extractChapterTeaser } from "@/app/lib/bookChapterTeaser"
 import { stripDiacritics } from "@/app/lib/arabic"
+import { isGrammarLabel, type BookTokenGrammar } from '@/app/lib/bookTokenGrammar'
 import type { CartoonWordEntry } from "@/app/lib/cartoons"
 import { normalizeThumbnailCrop, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 
@@ -40,7 +41,7 @@ export interface PublicChapter {
   blockCount: number
 }
 
-export interface PublicBookToken {
+export interface PublicBookToken extends BookTokenGrammar {
   arabic: string
   prefix?: string
   suffix?: string
@@ -57,6 +58,10 @@ export interface PublicBookBlock {
   translation: string
   punctuation?: string
   paragraph?: number
+  timestamp?: string
+  paragraph_start?: boolean
+  paragraph_end?: boolean
+  paragraph_break_after?: boolean
 }
 
 export interface PublicChapterWithContent extends PublicChapter {
@@ -277,6 +282,10 @@ const fetchChapterContent = unstable_cache(
       return {
         translation: typeof block.translation === "string" ? block.translation : "",
         punctuation: typeof block.punctuation === "string" ? block.punctuation : undefined,
+        timestamp: typeof block.timestamp === 'string' ? block.timestamp : undefined,
+        paragraph_start: typeof block.paragraph_start === 'boolean' ? block.paragraph_start : undefined,
+        paragraph_end: typeof block.paragraph_end === 'boolean' ? block.paragraph_end : undefined,
+        paragraph_break_after: typeof block.paragraph_break_after === 'boolean' ? block.paragraph_break_after : undefined,
         paragraph: typeof block.paragraph === "number" && Number.isFinite(block.paragraph)
           ? Math.max(1, Math.trunc(block.paragraph))
           : undefined,
@@ -293,6 +302,8 @@ const fetchChapterContent = unstable_cache(
             transliteration: typeof token.transliteration === "string" ? token.transliteration : undefined,
             pos: typeof token.pos === "string" ? token.pos : undefined,
             cefr: typeof token.cefr === "string" ? token.cefr : undefined,
+            syntactic_role: isGrammarLabel(token.syntactic_role) ? token.syntactic_role : null,
+            grammatical_case: isGrammarLabel(token.grammatical_case) ? token.grammatical_case : null,
             entryType: (token.entry_type === "phrase" ? "phrase" : "word") as PublicBookToken["entryType"],
           }
         }).filter((token) => token.arabic),
@@ -308,7 +319,7 @@ const fetchChapterContent = unstable_cache(
       content,
     }
   },
-  ["books", "public", "chapter", "cartoon-tooltip-v1", "book-punctuation-v1"],
+  ["books", "public", "chapter", "cartoon-tooltip-v1", "book-punctuation-v1", "book-grammar-v1"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 

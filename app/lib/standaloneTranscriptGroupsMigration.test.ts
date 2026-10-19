@@ -70,6 +70,20 @@ it('moves to a group and back without changing ANY transcript, segment, token or
  expect((await list(title,null,true)).rows[0].id).toBe(video.id)
  expect((await snapshot()).rows).toEqual(before)
 })
+it('renames a populated group without changing memberships or any transcript data',async()=>{
+ const videos=(await db.query<{id:string}>("select id from youtube_transcripts where youtube_id in ('MANUAL00001','P0000000001')")).rows
+ for(const video of videos)await db.query('insert into admin_manual_transcripts(transcript_id,group_id) values($1,$2) on conflict(transcript_id) do update set group_id=excluded.group_id',[video.id,child])
+ const snapshot=()=>db.query(`select (select jsonb_agg(to_jsonb(t) order by id) from youtube_transcripts t) videos,
+ (select jsonb_agg(to_jsonb(s) order by id) from transcript_segments s) segments,
+ (select jsonb_agg(to_jsonb(k)) from transcript_tokens k) tokens,
+ (select jsonb_agg(to_jsonb(m) order by transcript_id) from admin_manual_transcripts m) memberships`)
+ const before=(await snapshot()).rows
+ const result=await db.query<{id:string}>('select admin_manage_transcript_group($1,$2,null,$3) id',[actor,'Arabic Podcasts',child])
+ expect(result.rows[0].id).toBe(child)
+ expect((await list('',child)).rows.map(row=>row.id).sort()).toEqual(videos.map(row=>row.id).sort())
+ expect((await list()).groups.find(group=>group.id===child)).toMatchObject({name:'Arabic Podcasts',transcript_count:2})
+ expect((await snapshot()).rows).toEqual(before)
+})
 it('imports with optional group and still supports actual edits through the existing indexer',async()=>{
  const raw={content:[{text:'مرحبا',offset:1234,duration:5000,english:'Hello',tokens:[{arabic:'مرحبا',english:'hello',POS:'noun',headword:'مرحبا',entry_type:'word',transliteration:'marhaban'}]}]}
  const id=(await db.query<{id:string}>('select admin_import_grouped_transcript($1,$2,$3,$4,$5,true,null,null) id',[actor,'NEWVIDEO001','New ungrouped','Channel',raw])).rows[0].id

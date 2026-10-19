@@ -50,6 +50,22 @@ punctuation renders without becoming part of a hoverable dictionary token.
   belong to the Supabase `phrases` table, not `hanswehr_dictionary`.
 - A multiword expression stored as one phrase token must remain one token.
 
+### Optional book grammar labels
+
+Book tokens may additionally include `syntactic_role` and `grammatical_case`.
+Each accepts `null` or an object with string `arabic` and `english` properties,
+for example `"grammatical_case": { "arabic": "مَنْصُوبٌ", "english": "Accusative" }`.
+Both are optional; the reader treats missing labels as `null`. Do not infer or
+backfill grammar for older chapters. The Admin JSON editor validates these labels
+before saving, and all chapter write actions validate them again after Admin
+authorization. Invalid labels identify the sentence, token and field.
+
+The labels stay inside existing `chapters.content` JSONB token objects. There
+are no extra columns or migration requirements. Admin retrieval/JSON copying
+preserves the original token and sentence keys, including paragraph numbering,
+boundary flags and empty compatibility timestamps. Public reader tokens expose
+both labels without adding a grammar display or changing paragraph grouping.
+
 ## Hans Wehr reference
 
 The reference export `hanswehr_dictionary_rows.csv` has 24,799 rows and these

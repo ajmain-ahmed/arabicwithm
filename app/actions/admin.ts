@@ -20,6 +20,7 @@ import {
 import { z } from 'zod'
 import { unstable_rethrow } from 'next/navigation'
 import { bookInputSchema, bookSaveError } from '@/app/lib/bookInput'
+import { validateBookTokenGrammar } from '@/app/lib/bookTokenGrammar'
 import type { ActionResult } from '@/app/lib/actionResult'
 
 /* ── Types ─────────────────────────────────────────────────────────── */
@@ -757,6 +758,7 @@ export async function fetchChapterForAdmin(
 
 export async function createChapter(input: ChapterInput): Promise<string> {
   await guardAdmin()
+  validateBookTokenGrammar(input.content)
 
   const { data, error } = await serviceClient
     .from("chapters")
@@ -787,6 +789,8 @@ export async function updateChapter(
   input: Partial<ChapterInput>
 ): Promise<void> {
   await guardAdmin()
+
+  validateBookTokenGrammar(input.content)
 
   const previousPath = await fetchChapterPathById(id)
 
@@ -842,6 +846,8 @@ export async function updateChapterContent(
 ): Promise<void> {
   await guardAdmin()
   assertContentSize(content, "Chapter content")
+
+  validateBookTokenGrammar(content)
 
   const path = await fetchChapterPathById(id)
 
