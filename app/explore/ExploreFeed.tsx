@@ -271,6 +271,43 @@ function ExploreVideo({
         {/* 9:16 frame sized to the available height (container units), so the
             player never letterboxes. Desktop: card + action rail as a row. */}
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: { md: 2.25 }, containerType: 'size', width: '100%' }}>
+        {/* Prev/next chevrons at the left midpoint of the video (desktop). */}
+        {(onPrev || onNext) && (
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, flexDirection: 'column', gap: 1.25, alignItems: 'center', alignSelf: 'center', flexShrink: 0 }}>
+            <Tooltip title="Previous video" placement="right">
+              <IconButton
+                onClick={onPrev}
+                aria-label="Previous video"
+                sx={{
+                  width: 50, height: 50,
+                  color: '#fff',
+                  bgcolor: 'rgba(255,255,255,0.14)',
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.24)', transform: 'scale(1.08)' },
+                  '&:active': { transform: 'scale(.95)' },
+                  '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 },
+                }}
+              >
+                <KeyboardArrowUp />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Next video" placement="right">
+              <IconButton
+                onClick={onNext}
+                aria-label="Next video"
+                sx={{
+                  width: 50, height: 50,
+                  color: '#fff',
+                  bgcolor: 'rgba(255,255,255,0.14)',
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.24)', transform: 'scale(1.08)' },
+                  '&:active': { transform: 'scale(.95)' },
+                  '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 },
+                }}
+              >
+                <KeyboardArrowDown />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
         <Box
           data-explore-player={active ? 'active' : 'inactive'}
           sx={{
@@ -364,46 +401,6 @@ function ExploreVideo({
           flexDirection: 'column',
           gap: { xs: 0.85, md: 1.4 },
         }}>
-          {/* Prev/next chevrons at the top of the rail — wheel/trackpad
-             scroll keeps working exactly the same. */}
-          {(onPrev || onNext) && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.85, md: 1.4 }, alignItems: 'center' }}>
-              <Tooltip title="Previous video" placement="left">
-                <IconButton
-                  onClick={onPrev}
-                  aria-label="Previous video"
-                  sx={{
-                    width: { xs: 44, md: 50 }, height: { xs: 44, md: 50 },
-                    color: { xs: 'var(--awm-gold-light)', md: '#fff' },
-                    bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.14)' },
-                    filter: { xs: 'drop-shadow(0 1px 3px #000)', md: 'none' },
-                    '&:hover': { bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.24)' }, transform: 'scale(1.08)' },
-                    '&:active': { transform: 'scale(.95)' },
-                    '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 },
-                  }}
-                >
-                  <KeyboardArrowUp />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Next video" placement="left">
-                <IconButton
-                  onClick={onNext}
-                  aria-label="Next video"
-                  sx={{
-                    width: { xs: 44, md: 50 }, height: { xs: 44, md: 50 },
-                    color: { xs: 'var(--awm-gold-light)', md: '#fff' },
-                    bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.14)' },
-                    filter: { xs: 'drop-shadow(0 1px 3px #000)', md: 'none' },
-                    '&:hover': { bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.24)' }, transform: 'scale(1.08)' },
-                    '&:active': { transform: 'scale(.95)' },
-                    '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 },
-                  }}
-                >
-                  <KeyboardArrowDown />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          )}
           {railTop}
           {/* A native fallback uses YouTube's controls without API commands. */}
           {(!isYouTube || isReady) && <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
