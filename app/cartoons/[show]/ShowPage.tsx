@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import {
   Box,
   Typography,
@@ -16,6 +16,8 @@ import { FilterSidebar, ContentCard } from '@/app/components/content-grid'
 import EpisodeEditDialog from '../components/EpisodeEditDialog'
 import { deleteEpisode } from '@/app/actions/admin'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
+import { useAuth } from '@/app/AuthContext'
+import { addToMyList, fetchMyListShowIds, removeFromMyList } from '@/app/actions/myList'
 import { errorMessage } from '@/app/lib/errors'
 
 /* ── MUI Icons ── */
@@ -26,6 +28,8 @@ import {
   NavigateNext,
   Edit,
   Delete,
+  BookmarkAddOutlined,
+  BookmarkOutlined,
 } from '@mui/icons-material'
 
 /* ── Palette ── */
@@ -42,11 +46,31 @@ interface ShowPageProps {
 export default function ShowPage({ show, episodes }: ShowPageProps) {
   const isAdmin = useIsAdmin()
   const router = useRouter()
+  const { user } = useAuth()
   const [activeLevel, setActiveLevel] = useState('')
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingEpisode, setEditingEpisode] = useState<EpisodeMeta | undefined>(undefined)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [inMyList, setInMyList] = useState(false)
+
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    fetchMyListShowIds()
+      .then((ids) => {
+        if (!cancelled) setInMyList(ids.includes(show.id))
+      })
+      .catch(() => undefined)
+    return () => { cancelled = true }
+  }, [user, show.id])
+
+  const toggleMyList = useCallback(async () => {
+    const next = !inMyList
+    setInMyList(next)
+    const result = next ? await addToMyList(show.id) : await removeFromMyList(show.id)
+    if (!result.ok) setInMyList(!next)
+  }, [inMyList, show.id])
 
   const handleDeleteEpisode = async (id: string) => {
     if (!isAdmin) return
@@ -69,16 +93,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
     return episodes.filter((e) => e.level === activeLevel)
   }, [episodes, activeLevel])
 
-  const goToRandomEpisode = () => {
-    const pool = filteredEpisodes.length > 0 ? filteredEpisodes : episodes
-    if (pool.length === 0) return
-    const randomEp = pool[Math.floor(Math.random() * pool.length)]
-    router.push(`/cartoons/${show.slug}/${randomEp.slug}`)
-  }
-
   const activeFilterCount = activeLevel ? 1 : 0
-
-  const ctaLabel = episodes.length > 0 ? 'Watch a Random Episode' : 'Coming Soon'
 
   return (
     <Box
@@ -118,7 +133,9 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
               <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 27, md: 38 }, fontWeight: 600, color: BARK, lineHeight: 1.12 }}>{show.title}</Typography>
               {show.description && <Typography sx={{ display: { xs: 'none', sm: '-webkit-box' }, mt: 0.5, maxWidth: 720, color: MUTED, fontFamily: 'var(--font-sans), sans-serif', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{show.description}</Typography>}
             </Box>
-            <Button disabled={episodes.length === 0} onClick={goToRandomEpisode} startIcon={<PlayArrow />} variant="contained" sx={{ flexShrink: 0, alignSelf: { xs: 'flex-start', sm: 'auto' }, bgcolor: '#14532d', color: '#fff', borderRadius: '9999px', px: { xs: 1.5, sm: 2.25 }, textTransform: 'none', fontWeight: 700, border: '1px solid rgba(155,213,181,0.25)', '&:hover': { bgcolor: '#1a6b3a' }, '@media (max-width: 359.95px)': { width: '100%', alignSelf: 'stretch' } }}>{ctaLabel}</Button>
+            {user && (
+              <Button onClick={() => void toggleMyList()} startIcon={inMyList ? <BookmarkOutlined /> : <BookmarkAddOutlined />} variant="contained" sx={{ flexShrink: 0, alignSelf: { xs: 'flex-start', sm: 'auto' }, bgcolor: '#14532d', color: '#fff', borderRadius: '9999px', px: { xs: 1.5, sm: 2.25 }, textTransform: 'none', fontWeight: 700, border: '1px solid rgba(155,213,181,0.25)', '&:hover': { bgcolor: '#1a6b3a' }, '@media (max-width: 359.95px)': { width: '100%', alignSelf: 'stretch' } }}>{inMyList ? 'In My List' : 'Add to My List'}</Button>
+            )}
           </Box>
           {/* Breadcrumbs */}
           <Breadcrumbs

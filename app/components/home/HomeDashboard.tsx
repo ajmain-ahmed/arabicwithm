@@ -249,12 +249,11 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
     : null
   const streak = activity ? summarizeLearningDashboard(activity, new Date()).streak : 0
   const myListRowItems: CatalogueRowItem[] = useMemo(() => myListItems.map((item) => ({
-    key: item.episodeId,
-    href: `/cartoons/${encodeURIComponent(item.showSlug)}/${encodeURIComponent(item.slug)}`,
+    key: item.showId,
+    href: `/cartoons/${encodeURIComponent(item.slug)}`,
     title: item.title,
-    meta: item.showTitle,
     level: item.level,
-    imageSrc: `/api/covers/episodes/${item.episodeId}`,
+    imageSrc: `/api/covers/shows/${item.showId}`,
     imageCrop: item.coverCrop,
   })), [myListItems])
   const hour = new Date().getHours()
