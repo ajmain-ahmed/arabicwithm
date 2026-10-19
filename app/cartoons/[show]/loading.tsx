@@ -1,5 +1,5 @@
-import { CataloguePageLoading } from '@/app/components/PageLoading'
+import { ShowPageLoading } from '@/app/components/PageLoading'
 
 export default function Loading() {
-  return <CataloguePageLoading />
+  return <ShowPageLoading />
 }

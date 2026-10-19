@@ -13,6 +13,7 @@ import {
   MenuBook,
   OndemandVideo,
   AccountCircleOutlined,
+  ArrowForward,
   SettingsOutlined,
   VolunteerActivismRounded,
   AccountTreeOutlined,
@@ -265,7 +266,42 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
               </Box>
             </Container>
           )}
-          <Container maxWidth={false} sx={user && (myListRowItems.length > 0 || myListLoading) ? { mt: { xs: 2.5, md: 3.25 } } : undefined}>
+          {user && !myListLoading && myListRowItems.length === 0 && (
+            <Container maxWidth={false}>
+              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
+              <Box
+                component={Link}
+                href="/cartoons"
+                sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, md: 3 }, mt: 1.5, textDecoration: 'none' }}
+              >
+                <Box sx={{
+                  width: COMPACT_HOME_CARD_WIDTH,
+                  maxWidth: '38vw',
+                  height: { xs: 'clamp(188px, 57.5vw, 228px)', sm: 248, md: 278, lg: 298 },
+                  flexShrink: 0,
+                  borderRadius: '10px',
+                  border: '1.5px dashed rgba(44,26,14,0.22)',
+                  bgcolor: 'rgba(44,26,14,0.045)',
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: 'var(--awm-muted)',
+                  transition: 'border-color .2s ease, color .2s ease, transform .2s ease',
+                  '&:hover': { borderColor: 'var(--awm-gold)', color: 'var(--awm-gold)', transform: 'translateY(-3px)' },
+                }}>
+                  <ArrowForward sx={{ fontSize: 34 }} />
+                </Box>
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 21, md: 26 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.25 }}>
+                    Start adding shows to your list!
+                  </Typography>
+                  <Typography sx={{ mt: 0.75, fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 13, md: 14.5 }, color: 'var(--awm-muted)', lineHeight: 1.55, maxWidth: 420 }}>
+                    Tap to explore the catalogue and keep every show you love one click away.
+                  </Typography>
+                </Box>
+              </Box>
+            </Container>
+          )}
+          <Container maxWidth={false} sx={user ? { mt: { xs: 2.5, md: 3.25 } } : undefined}>
             {newShowItems.length > 0 && <>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Shows</Typography>
               <NewOnRow items={newShowItems} ariaLabel="Shows" autoScroll compact />

@@ -2655,3 +2655,342 @@ revalidating cache with key: async (seed)=>loadForYouClips(seed, [], [])-for-you
 [auth] getUser error: invalid JWT: unable to parse or verify signature, token signature is invalid: signature is invalid
  POST / 200 in 105ms (next.js: 3ms, proxy.ts: 48ms, application-code: 54ms)
   └─ ƒ fetchMyList() in 48ms app/actions/myList.ts
+ POST / 200 in 1818ms (next.js: 3ms, proxy.ts: 1056ms, application-code: 759ms)
+  └─ ƒ getAuthenticatedAccess() in 752ms app/actions/auth.ts
+ GET / 200 in 421ms (next.js: 3ms, proxy.ts: 187ms, application-code: 231ms)
+ POST / 200 in 529ms (next.js: 4ms, proxy.ts: 86ms, application-code: 440ms)
+  └─ ƒ getAuthenticatedAccess() in 432ms app/actions/auth.ts
+ GET /api/covers/shows/b7ea8daf-a9f9-4ac5-9121-6176838fecf6 304 in 235ms (next.js: 56ms, application-code: 179ms)
+ GET /api/covers/shows/6fa791f7-16ae-4180-becc-fb17694b0685 304 in 243ms (next.js: 59ms, application-code: 184ms)
+ GET /api/covers/shows/9e78b0c3-ddda-4424-8ad7-2751178f117b 304 in 250ms (next.js: 53ms, application-code: 196ms)
+ GET /api/covers/shows/fbf4757f-668f-43ff-8396-ebec65f938c0 304 in 297ms (next.js: 61ms, application-code: 235ms)
+[browser] You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled (app/components/navbar/BrandLogo.tsx:15:42)
+ GET /api/covers/shows/359d4d3f-b495-45f7-831f-3bd615eb393d 304 in 144ms (next.js: 5ms, application-code: 139ms)
+ GET /api/covers/shows/f5127267-551b-4305-8d49-cb4302f5dffa 304 in 142ms (next.js: 3ms, application-code: 139ms)
+ GET /api/covers/shows/6392d7e4-eb9c-433d-af0a-ab9038ff7072 304 in 474ms (next.js: 47ms, application-code: 428ms)
+ GET /api/covers/shows/397a0009-64c4-4f57-8ac1-646a5efa6392 304 in 227ms (next.js: 8ms, application-code: 219ms)
+ GET /api/covers/shows/1f0c3564-3ec9-4824-8d2f-6b3fe7719c09 304 in 200ms (next.js: 3ms, application-code: 198ms)
+ GET /api/covers/episodes/c3b75859-1f45-449d-859c-c8b3ca828986 304 in 108ms (next.js: 2ms, application-code: 105ms)
+ GET /api/covers/shows/97432a72-7274-444e-bff6-e4bad73077fa 304 in 200ms (next.js: 3ms, application-code: 197ms)
+ GET /api/covers/shows/3bb7abcf-e2e0-4800-9fd0-bdca2ba36822 304 in 204ms (next.js: 7ms, application-code: 197ms)
+ GET /api/covers/episodes/76066a2c-ddba-4231-84ba-9d187cfb7f53 304 in 140ms (next.js: 2ms, application-code: 137ms)
+ GET /api/covers/episodes/775e0643-27fd-43c8-93e3-7513934ea686 304 in 175ms (next.js: 5ms, application-code: 170ms)
+ GET /api/covers/episodes/91f9be4e-2238-4cd7-9127-5753bd0a6719 304 in 160ms (next.js: 35ms, application-code: 125ms)
+ GET /api/covers/episodes/9c737a21-1c34-4486-a16e-4e04d1dba705 304 in 122ms (next.js: 6ms, application-code: 116ms)
+ GET /api/covers/shows/d9fdda6c-8c62-45e3-abbd-775d98f740ef 304 in 777ms (next.js: 50ms, application-code: 727ms)
+ GET /api/covers/episodes/68b46036-b7ba-4f6f-a1d1-e99600c72ae2 304 in 158ms (next.js: 1770µs, application-code: 156ms)
+ GET /api/covers/episodes/2e016bc6-87a8-4eba-a850-f6526f4d5649 304 in 140ms (next.js: 3ms, application-code: 137ms)
+ GET /api/covers/episodes/8746bd72-37b6-4a99-a3a5-84b022e48be3 304 in 135ms (next.js: 3ms, application-code: 132ms)
+ GET /api/covers/episodes/83662391-d7e3-4318-8100-6741beaddb8d 304 in 145ms (next.js: 7ms, application-code: 138ms)
+ GET /api/covers/episodes/54d10780-8dfd-4ae9-8212-afba488ed840 304 in 143ms (next.js: 1827µs, application-code: 141ms)
+ GET /api/covers/books/6e48b69e-68db-4b80-88c5-f38a7a611cd1?v=2026-10-03T22%3A42%3A49.677%2B00%3A00 304 in 117ms (next.js: 2ms, application-code: 115ms)
+ GET /api/covers/episodes/c64d0018-3718-4d45-add5-f9b4a1b32fbf 304 in 152ms (next.js: 2ms, application-code: 150ms)
+ GET /api/covers/episodes/b98d94a4-a984-4c78-85d8-c226a37585e7 304 in 368ms (next.js: 2ms, application-code: 366ms)
+ GET /api/covers/books/e70aa4ab-e43d-4031-bd57-e2df824c227b?v=2026-10-03T22%3A41%3A32.51%2B00%3A00 304 in 121ms (next.js: 1630µs, application-code: 119ms)
+ GET /api/covers/books/66b9af8b-0d11-4912-a826-78295e08cda9?v=2026-10-19T17%3A10%3A30.586%2B00%3A00 304 in 122ms (next.js: 1664µs, application-code: 120ms)
+ GET /api/covers/books/2c9aaa93-0e5e-48c8-83e9-0dd3f7744949?v=2026-10-14T22%3A42%3A59.918034%2B00%3A00 304 in 240ms (next.js: 2ms, application-code: 238ms)
+ GET /api/covers/books/6fb6426f-2d56-44e0-88f6-86c39e3d1f18?v=2026-10-04T09%3A18%3A34.443%2B00%3A00 304 in 226ms (next.js: 1863µs, application-code: 224ms)
+ GET /api/covers/books/b4e26072-d3e3-43ec-87cd-a9d5fab8aa32?v=2026-10-03T22%3A40%3A38.167%2B00%3A00 304 in 210ms (next.js: 2ms, application-code: 207ms)
+ POST / 200 in 252ms (next.js: 2ms, proxy.ts: 58ms, application-code: 191ms)
+  └─ ƒ getAuthenticatedAccess() in 180ms app/actions/auth.ts
+ GET /api/covers/books/27a6ba6a-a1e3-4584-bdde-49842be91ea3?v=2026-10-03T22%3A39%3A20.056%2B00%3A00 304 in 181ms (next.js: 2ms, application-code: 179ms)
+ GET /api/covers/books/39e52504-f8ae-4c15-bead-77b8b116cf37?v=2026-10-03T22%3A37%3A49.295%2B00%3A00 304 in 192ms (next.js: 5ms, application-code: 187ms)
+ GET /api/covers/books/534cf977-42a7-4989-914b-2f58395779c4?v=2026-10-03T22%3A41%3A54.05%2B00%3A00 304 in 184ms (next.js: 46ms, application-code: 138ms)
+ GET /api/covers/books/ae67df5f-fe41-4f4c-bad7-4949506e8342?v=2026-10-03T22%3A36%3A20.712%2B00%3A00 304 in 128ms (next.js: 4ms, application-code: 124ms)
+ GET /api/covers/books/d0ad54b5-8311-4d81-bf39-eab5607f023b?v=2026-10-03T22%3A36%3A44.808%2B00%3A00 304 in 233ms (next.js: 55ms, application-code: 177ms)
+ POST / 200 in 268ms (next.js: 3ms, proxy.ts: 72ms, application-code: 192ms)
+  └─ ƒ fetchLearningActivity() in 186ms app/actions/activity.ts
+ POST / 200 in 367ms (next.js: 3ms, proxy.ts: 208ms, application-code: 157ms)
+  └─ ƒ fetchMyList() in 151ms app/actions/myList.ts
+ GET / 200 in 122ms (next.js: 4ms, proxy.ts: 111ms, application-code: 7ms)
+ GET /cartoons 200 in 141ms (next.js: 31ms, proxy.ts: 68ms, application-code: 42ms)
+ GET /api/covers/episodes/3b395a4d-3e8e-4628-b42a-a77719dc509b 304 in 141ms (next.js: 4ms, application-code: 137ms)
+ POST /cartoons 200 in 244ms (next.js: 3ms, proxy.ts: 91ms, application-code: 150ms)
+  └─ ƒ isAdminUser() in 138ms app/actions/auth.ts
+ GET /api/covers/episodes/02155130-417a-4518-921d-dcf66a60e3a8 304 in 248ms (next.js: 52ms, application-code: 197ms)
+ GET /api/covers/episodes/43481da2-2652-4c9e-bda4-e0b37e97a238 304 in 198ms (next.js: 8ms, application-code: 190ms)
+ GET /api/covers/episodes/ed1375a9-b596-47d2-aeaa-c29b912a9687 304 in 272ms (next.js: 47ms, application-code: 225ms)
+ GET /api/covers/episodes/fb85ae25-3cf3-4b1b-a7df-c65b08bd4cf3 304 in 290ms (next.js: 42ms, application-code: 247ms)
+ GET /api/covers/episodes/313f7890-7b61-471e-a810-ba2147085dee 304 in 138ms (next.js: 1983µs, application-code: 136ms)
+ GET /api/covers/episodes/0e9300ca-96d8-4e62-8dd2-b29724690cd2 304 in 214ms (next.js: 1613µs, application-code: 212ms)
+ GET /api/covers/episodes/24afc8c7-9971-4b48-88bf-05c621c85242 304 in 194ms (next.js: 3ms, application-code: 191ms)
+ GET /api/covers/episodes/0564d1b0-6e74-441f-ae57-a6a37d731a24 304 in 195ms (next.js: 49ms, application-code: 146ms)
+ GET /api/covers/episodes/f3a1558d-76f2-49e3-a765-ee03cf3512c8 304 in 204ms (next.js: 38ms, application-code: 166ms)
+ GET /api/covers/episodes/b2e3e55f-25e5-4f07-a34b-768d7ba9b765 304 in 216ms (next.js: 45ms, application-code: 171ms)
+ GET /api/covers/episodes/33bac0d9-0cf4-4425-99b5-ce7cf89bbb15 304 in 273ms (next.js: 42ms, application-code: 231ms)
+ GET /cartoons/qss/qss-10 200 in 1074ms (next.js: 486ms, proxy.ts: 329ms, generate-params: 462ms, application-code: 259ms)
+ GET /api/covers/episodes/001b79a5-16eb-4bc3-a64d-4ea344cf9365 304 in 233ms (next.js: 47ms, application-code: 186ms)
+ GET /api/covers/episodes/d75369cb-3f75-4b97-85b5-92e2bc63a909 304 in 238ms (next.js: 40ms, application-code: 198ms)
+ GET /api/covers/episodes/3d4100a2-7ffc-480b-a3a5-d32f046f342f 304 in 186ms (next.js: 3ms, application-code: 183ms)
+ GET /api/covers/episodes/ee8ef74b-e267-4ca5-9849-c70ebb95f5e1 304 in 247ms (next.js: 43ms, application-code: 204ms)
+ POST /cartoons/qss/qss-10 200 in 301ms (next.js: 44ms, proxy.ts: 89ms, generate-params: 37ms, application-code: 167ms)
+  └─ ƒ isAdminUser() in 159ms app/actions/auth.ts
+ GET /api/covers/episodes/09578dad-2a5b-4f0b-8e9e-1c855030574c 304 in 141ms (next.js: 3ms, application-code: 138ms)
+ GET /api/covers/episodes/d44d7e68-b4f4-47b1-9460-058ec6afbc5b 304 in 163ms (next.js: 6ms, application-code: 157ms)
+ GET /api/covers/episodes/4d286e3c-af60-4b7c-9776-6b5e3358344b 304 in 470ms (next.js: 50ms, application-code: 420ms)
+ POST /cartoons/qss/qss-10 200 in 441ms (next.js: 40ms, proxy.ts: 78ms, generate-params: 36ms, application-code: 323ms)
+  └─ ƒ recordActiveLearning({"activeSeconds":15,"date":"2026-10-19","readingSeconds":0,"...":"2 items not stringified"}, "2bf7c7ea-44ab-48c7-aaf0-33a659d0d72c") in 315ms app/actions/activity.ts
+ GET /cartoons/qss/qss-9 200 in 6.5s (next.js: 43ms, proxy.ts: 513ms, generate-params: 38ms, application-code: 5.9s)
+ POST /cartoons/qss/qss-10 200 in 7.7s (next.js: 40ms, proxy.ts: 417ms, generate-params: 35ms, application-code: 7.3s)
+  └─ ƒ getAuthenticatedAccess() in 7267ms app/actions/auth.ts
+ POST /cartoons/qss/qss-9 200 in 2.7s (next.js: 41ms, proxy.ts: 1371ms, generate-params: 36ms, application-code: 1270ms)
+  └─ ƒ isAdminUser() in 1262ms app/actions/auth.ts
+ POST /cartoons/qss/qss-9 200 in 608ms (next.js: 40ms, proxy.ts: 159ms, generate-params: 35ms, application-code: 409ms)
+  └─ ƒ getAuthenticatedAccess() in 402ms app/actions/auth.ts
+ POST /cartoons/qss/qss-9 200 in 867ms (next.js: 42ms, proxy.ts: 132ms, generate-params: 37ms, application-code: 693ms)
+  └─ ƒ recordActiveLearning({"activeSeconds":30,"date":"2026-10-19","readingSeconds":0,"...":"2 items not stringified"}, "2bf7c7ea-44ab-48c7-aaf0-33a659d0d72c") in 685ms app/actions/activity.ts
+ POST /cartoons/qss/qss-9 200 in 540ms (next.js: 40ms, proxy.ts: 91ms, generate-params: 35ms, application-code: 409ms)
+  └─ ƒ recordActiveLearning({"activeSeconds":15,"date":"2026-10-19","readingSeconds":0,"...":"2 items not stringified"}, "2bf7c7ea-44ab-48c7-aaf0-33a659d0d72c") in 402ms app/actions/activity.ts
+ POST /cartoons/qss/qss-9 200 in 262ms (next.js: 42ms, proxy.ts: 105ms, generate-params: 36ms, application-code: 115ms)
+  └─ ƒ getAuthenticatedAccess() in 109ms app/actions/auth.ts
+ GET /cartoons/qss 200 in 4.4s (next.js: 399ms, proxy.ts: 4.0s, generate-params: 368ms, application-code: 31ms)
+ POST /cartoons/qss 200 in 3.9s (next.js: 41ms, proxy.ts: 2.7s, generate-params: 36ms, application-code: 1177ms)
+  └─ ƒ isAdminUser() in 1170ms app/actions/auth.ts
+ POST /cartoons/qss 200 in 1691ms (next.js: 43ms, proxy.ts: 1466ms, generate-params: 38ms, application-code: 181ms)
+  └─ ƒ getAuthenticatedAccess() in 174ms app/actions/auth.ts
+ POST /cartoons/qss 200 in 551ms (next.js: 39ms, proxy.ts: 65ms, generate-params: 35ms, application-code: 446ms)
+  └─ ƒ getAuthenticatedAccess() in 440ms app/actions/auth.ts
+ POST /cartoons 200 in 441ms (next.js: 3ms, proxy.ts: 214ms, application-code: 224ms)
+  └─ ƒ isAdminUser() in 217ms app/actions/auth.ts
+ GET /cartoons/inv/inv-23 200 in 1247ms (next.js: 38ms, proxy.ts: 426ms, generate-params: 34ms, application-code: 782ms)
+ GET /api/covers/episodes/84455a09-3056-4bf9-8ea5-4e67cb504fa3 304 in 207ms (next.js: 51ms, application-code: 157ms)
+ POST /cartoons/inv/inv-23 200 in 239ms (next.js: 41ms, proxy.ts: 91ms, generate-params: 37ms, application-code: 107ms)
+  └─ ƒ isAdminUser() in 96ms app/actions/auth.ts
+ GET /api/covers/episodes/e64a781d-498b-4366-8bb0-810ba536c73c 304 in 227ms (next.js: 43ms, application-code: 184ms)
+ GET /api/covers/episodes/2a214345-b648-407d-8453-5e7057da6832 304 in 179ms (next.js: 5ms, application-code: 174ms)
+ GET /api/covers/episodes/8f925874-0a8b-4aac-882b-ab975e464562 304 in 198ms (next.js: 6ms, application-code: 193ms)
+ GET /api/covers/episodes/87339dcf-7b43-454e-9d4b-2456e839a8f8 304 in 217ms (next.js: 7ms, application-code: 210ms)
+ GET /api/covers/episodes/c34b58d4-02e9-4538-a213-566219088a86 304 in 132ms (next.js: 1917µs, application-code: 130ms)
+ GET /api/covers/episodes/8a4348ca-fce7-49b4-8785-52f421fcbf87 304 in 209ms (next.js: 8ms, application-code: 201ms)
+ POST /cartoons 200 in 194ms (next.js: 3ms, proxy.ts: 93ms, application-code: 98ms)
+  └─ ƒ isAdminUser() in 92ms app/actions/auth.ts
+ GET /api/covers/shows/69fc10d2-9bab-4cee-bd4a-4607baea5a3d 200 in 201ms (next.js: 60ms, application-code: 141ms)
+ GET /api/covers/shows/c827717f-2594-4518-9f14-a59932eb5e03 200 in 205ms (next.js: 56ms, application-code: 149ms)
+ GET /api/covers/shows/d53be7a7-ac0b-4806-82fd-403732008c5d 200 in 151ms (next.js: 12ms, application-code: 139ms)
+ GET /api/covers/shows/af9a5654-2fd6-4413-af52-3ca1eb4eb45b 200 in 229ms (next.js: 52ms, application-code: 176ms)
+ GET /api/covers/shows/2d12c89f-c62e-406c-ae12-a9cf45b5e7fd 200 in 166ms (next.js: 3ms, application-code: 162ms)
+ GET /api/covers/shows/bf512712-710f-4daa-a4f4-50e82e86f6d2 200 in 200ms (next.js: 8ms, application-code: 192ms)
+ GET /api/covers/shows/8682e5b6-8377-4b18-a933-d562a08f2bca 200 in 227ms (next.js: 8ms, application-code: 219ms)
+ GET /api/covers/shows/81d3e2ed-5eb6-409b-a04e-cfdfcafe20be 200 in 264ms (next.js: 5ms, application-code: 259ms)
+ GET /cartoons/hxh 200 in 498ms (next.js: 44ms, proxy.ts: 188ms, generate-params: 37ms, application-code: 267ms)
+ GET /api/covers/episodes/6919792e-a42d-4b03-a689-a3abfe1b2a6c 304 in 194ms (next.js: 36ms, application-code: 158ms)
+ POST /cartoons/hxh 200 in 265ms (next.js: 42ms, proxy.ts: 68ms, generate-params: 36ms, application-code: 156ms)
+  └─ ƒ isAdminUser() in 149ms app/actions/auth.ts
+ POST /cartoons/hxh 200 in 534ms (next.js: 41ms, proxy.ts: 93ms, generate-params: 35ms, application-code: 401ms)
+  └─ ƒ recordActiveLearning({"activeSeconds":30,"date":"2026-10-19","readingSeconds":0,"...":"2 items not stringified"}, "2bf7c7ea-44ab-48c7-aaf0-33a659d0d72c") in 390ms app/actions/activity.ts
+ POST /cartoons/hxh 200 in 653ms (next.js: 40ms, proxy.ts: 493ms, generate-params: 35ms, application-code: 119ms)
+  └─ ƒ getAuthenticatedAccess() in 112ms app/actions/auth.ts
+ POST /cartoons/hxh 200 in 373ms (next.js: 4ms, proxy.ts: 209ms, generate-params: 37µs, application-code: 160ms)
+  └─ ƒ isAdminUser() in 154ms app/actions/auth.ts
+ POST /cartoons/hxh 200 in 353ms (next.js: 40ms, proxy.ts: 49ms, generate-params: 35ms, application-code: 263ms)
+  └─ ƒ recordActiveLearning({"activeSeconds":0,"date":"2026-10-19","readingSeconds":0,"...":"2 items not stringified"}, "2bf7c7ea-44ab-48c7-aaf0-33a659d0d72c") in 257ms app/actions/activity.ts
+ POST /cartoons/hxh 200 in 1072ms (next.js: 42ms, proxy.ts: 616ms, generate-params: 37ms, application-code: 414ms)
+  └─ ƒ getAuthenticatedAccess() in 406ms app/actions/auth.ts
+ POST /cartoons/hxh 200 in 217ms (next.js: 41ms, proxy.ts: 52ms, generate-params: 37ms, application-code: 125ms)
+  └─ ƒ isAdminUser() in 118ms app/actions/auth.ts
+ GET / 200 in 126ms (next.js: 4ms, proxy.ts: 81ms, application-code: 41ms)
+ POST /cartoons/hxh 200 in 230ms (next.js: 5ms, proxy.ts: 78ms, generate-params: 37µs, application-code: 147ms)
+  └─ ƒ getAuthenticatedAccess() in 141ms app/actions/auth.ts
+ POST /cartoons 200 in 164ms (next.js: 3ms, proxy.ts: 62ms, application-code: 99ms)
+  └─ ƒ isAdminUser() in 92ms app/actions/auth.ts
+ GET /cartoons/awgb 200 in 302ms (next.js: 40ms, proxy.ts: 99ms, generate-params: 35ms, application-code: 163ms)
+ GET /api/covers/episodes/7cc22da9-5064-4b0a-a713-56afda6428e5 304 in 175ms (next.js: 26ms, application-code: 149ms)
+ GET /api/covers/episodes/2a91b52c-bb7b-457f-a191-b8419afe3a81 304 in 245ms (next.js: 42ms, application-code: 203ms)
+ GET /api/covers/episodes/ee5dc465-7902-4b6a-9df4-8aea0553ced7 304 in 262ms (next.js: 53ms, application-code: 209ms)
+ POST /cartoons/awgb 200 in 309ms (next.js: 47ms, proxy.ts: 120ms, generate-params: 39ms, application-code: 143ms)
+  └─ ƒ isAdminUser() in 128ms app/actions/auth.ts
+ GET /api/covers/episodes/1156eae0-1e25-42f2-ac38-5fc090fa8be5 304 in 344ms (next.js: 48ms, application-code: 297ms)
+ GET /api/covers/episodes/602bc346-a11d-4d7b-a343-10bf3d283518 304 in 119ms (next.js: 1792µs, application-code: 117ms)
+ GET /api/covers/episodes/a684e6e7-be1d-4ce6-b917-099c3d6ef9c2 304 in 159ms (next.js: 1981µs, application-code: 157ms)
+ GET /api/covers/episodes/f5ac7fc2-36a0-4c9c-9cc7-b9280c7ee6e1 304 in 344ms (next.js: 8ms, application-code: 336ms)
+ GET /api/covers/episodes/14344a65-de77-4a66-804e-aeebbc1de3ed 304 in 143ms (next.js: 2ms, application-code: 141ms)
+ GET /api/covers/episodes/fe1493dd-bcc7-4d7b-8b23-868e531180c0 304 in 183ms (next.js: 4ms, application-code: 179ms)
+ GET /api/covers/episodes/c0b66c59-8116-42dc-bb37-e4cd7251dc51 304 in 169ms (next.js: 1851µs, application-code: 167ms)
+ GET /api/covers/episodes/57248ed2-2783-4735-b0c8-f8e7072d94c9 304 in 181ms (next.js: 3ms, application-code: 178ms)
+ GET /api/covers/episodes/a42e0c7b-3436-483e-948e-a45823f37e90 304 in 187ms (next.js: 4ms, application-code: 182ms)
+ GET / 200 in 826ms (next.js: 4ms, proxy.ts: 803ms, application-code: 20ms)
+ GET /cartoons/pb 200 in 147ms (next.js: 42ms, proxy.ts: 66ms, generate-params: 36ms, application-code: 38ms)
+ POST /cartoons/pb 200 in 295ms (next.js: 5ms, proxy.ts: 93ms, generate-params: 37µs, application-code: 197ms)
+  └─ ƒ isAdminUser() in 191ms app/actions/auth.ts
+ POST /cartoons/pb 200 in 248ms (next.js: 41ms, proxy.ts: 65ms, generate-params: 36ms, application-code: 142ms)
+  └─ ƒ removeFromMyList("6392d7e4-eb9c-433d-af0a-ab9038ff7072") in 136ms app/actions/myList.ts
+ GET / 200 in 794ms (next.js: 4ms, proxy.ts: 772ms, application-code: 19ms)
+ POST / 200 in 153ms (next.js: 2ms, proxy.ts: 58ms, application-code: 92ms)
+  └─ ƒ getAuthenticatedAccess() in 87ms app/actions/auth.ts
+ POST / 200 in 348ms (next.js: 3ms, proxy.ts: 90ms, application-code: 255ms)
+  └─ ƒ recordActiveLearning({"activeSeconds":0,"date":"2026-10-19","readingSeconds":0,"...":"2 items not stringified"}, "2bf7c7ea-44ab-48c7-aaf0-33a659d0d72c") in 247ms app/actions/activity.ts
+ POST / 200 in 640ms (next.js: 4ms, proxy.ts: 428ms, application-code: 207ms)
+  └─ ƒ getAuthenticatedAccess() in 198ms app/actions/auth.ts
+ POST / 200 in 611ms (next.js: 3ms, proxy.ts: 78ms, application-code: 531ms)
+  └─ ƒ recordActiveLearning({"activeSeconds":0,"date":"2026-10-19","readingSeconds":0,"...":"2 items not stringified"}, "2bf7c7ea-44ab-48c7-aaf0-33a659d0d72c") in 523ms app/actions/activity.ts
+ POST / 200 in 628ms (next.js: 2ms, proxy.ts: 313ms, application-code: 313ms)
+  └─ ƒ getAuthenticatedAccess() in 308ms app/actions/auth.ts
+ POST /cartoons 200 in 335ms (next.js: 14ms, proxy.ts: 157ms, application-code: 164ms)
+  └─ ƒ isAdminUser() in 158ms app/actions/auth.ts
+ GET /api/covers/episodes/76066a2c-ddba-4231-84ba-9d187cfb7f53 304 in 205ms (next.js: 5ms, application-code: 200ms)
+ GET /api/covers/episodes/c3b75859-1f45-449d-859c-c8b3ca828986 304 in 286ms (next.js: 42ms, application-code: 244ms)
+ GET /api/covers/episodes/775e0643-27fd-43c8-93e3-7513934ea686 304 in 288ms (next.js: 9ms, application-code: 279ms)
+ GET /api/covers/episodes/91f9be4e-2238-4cd7-9127-5753bd0a6719 304 in 302ms (next.js: 16ms, application-code: 287ms)
+ GET /api/covers/episodes/b98d94a4-a984-4c78-85d8-c226a37585e7 304 in 310ms (next.js: 8ms, application-code: 301ms)
+ GET /api/covers/episodes/9c737a21-1c34-4486-a16e-4e04d1dba705 304 in 159ms (next.js: 3ms, application-code: 157ms)
+ GET /api/covers/episodes/68b46036-b7ba-4f6f-a1d1-e99600c72ae2 304 in 178ms (next.js: 1701µs, application-code: 176ms)
+ GET /api/covers/episodes/2e016bc6-87a8-4eba-a850-f6526f4d5649 304 in 161ms (next.js: 1664µs, application-code: 160ms)
+ GET /api/covers/episodes/83662391-d7e3-4318-8100-6741beaddb8d 304 in 137ms (next.js: 1873µs, application-code: 135ms)
+ GET /api/covers/episodes/8746bd72-37b6-4a99-a3a5-84b022e48be3 304 in 196ms (next.js: 2ms, application-code: 194ms)
+ GET /api/covers/episodes/c64d0018-3718-4d45-add5-f9b4a1b32fbf 304 in 168ms (next.js: 3ms, application-code: 166ms)
+ GET /api/covers/episodes/02155130-417a-4518-921d-dcf66a60e3a8 304 in 156ms (next.js: 5ms, application-code: 151ms)
+ GET /api/covers/episodes/54d10780-8dfd-4ae9-8212-afba488ed840 304 in 240ms (next.js: 16ms, application-code: 224ms)
+ GET /api/covers/episodes/ed1375a9-b596-47d2-aeaa-c29b912a9687 304 in 212ms (next.js: 1764µs, application-code: 210ms)
+ GET /api/covers/episodes/43481da2-2652-4c9e-bda4-e0b37e97a238 304 in 131ms (next.js: 2ms, application-code: 128ms)
+ GET /api/covers/episodes/fb85ae25-3cf3-4b1b-a7df-c65b08bd4cf3 304 in 280ms (next.js: 2ms, application-code: 278ms)
+ GET /api/covers/episodes/0e9300ca-96d8-4e62-8dd2-b29724690cd2 304 in 128ms (next.js: 3ms, application-code: 125ms)
+ GET /api/covers/episodes/3b395a4d-3e8e-4628-b42a-a77719dc509b 304 in 252ms (next.js: 37ms, application-code: 216ms)
+ GET /api/covers/episodes/313f7890-7b61-471e-a810-ba2147085dee 304 in 179ms (next.js: 2ms, application-code: 176ms)
+ GET /api/covers/episodes/24afc8c7-9971-4b48-88bf-05c621c85242 304 in 138ms (next.js: 2ms, application-code: 136ms)
+ POST /cartoons 200 in 359ms (next.js: 5ms, proxy.ts: 57ms, application-code: 297ms)
+  └─ ƒ recordActiveLearning({"activeSeconds":0,"date":"2026-10-19","readingSeconds":0,"...":"2 items not stringified"}, "2bf7c7ea-44ab-48c7-aaf0-33a659d0d72c") in 288ms app/actions/activity.ts
+ POST /cartoons 200 in 571ms (next.js: 3ms, proxy.ts: 203ms, application-code: 365ms)
+  └─ ƒ getAuthenticatedAccess() in 360ms app/actions/auth.ts
+ POST /cartoons 200 in 406ms (next.js: 3ms, proxy.ts: 84ms, application-code: 319ms)
+  └─ ƒ isAdminUser() in 313ms app/actions/auth.ts
+ POST /cartoons 200 in 667ms (next.js: 3ms, proxy.ts: 530ms, application-code: 134ms)
+  └─ ƒ getAuthenticatedAccess() in 127ms app/actions/auth.ts
+ POST /cartoons 200 in 813ms (next.js: 3ms, proxy.ts: 337ms, application-code: 474ms)
+  └─ ƒ getAuthenticatedAccess() in 467ms app/actions/auth.ts
+⚠ Fast Refresh had to perform a full reload when ./app/components/PageLoading.tsx changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+✓ Compiled in 42ms
+ GET /cartoons 200 in 1266ms (next.js: 8ms, proxy.ts: 954ms, application-code: 304ms)
+[browser] You have Reduced Motion enabled on your device. Animations may not appear as expected.. For more information and steps for solving, visit https://motion.dev/troubleshooting/reduced-motion-disabled (app/components/navbar/BrandLogo.tsx:15:42)
+ POST /cartoons 200 in 999ms (next.js: 3ms, proxy.ts: 94ms, application-code: 902ms)
+  └─ ƒ recordActiveLearning({"activeSeconds":0,"date":"2026-10-19","readingSeconds":0,"...":"2 items not stringified"}, "2bf7c7ea-44ab-48c7-aaf0-33a659d0d72c") in 897ms app/actions/activity.ts
+ POST /cartoons 200 in 567ms (next.js: 3ms, proxy.ts: 414ms, application-code: 150ms)
+  └─ ƒ getAuthenticatedAccess() in 145ms app/actions/auth.ts
+ POST /cartoons 200 in 480ms (next.js: 2ms, proxy.ts: 146ms, application-code: 332ms)
+  └─ ƒ fetchLearningActivity() in 327ms app/actions/activity.ts
+ POST /cartoons 200 in 384ms (next.js: 3ms, proxy.ts: 191ms, application-code: 190ms)
+  └─ ƒ isAdminUser() in 185ms app/actions/auth.ts
+ POST /cartoons 200 in 1340ms (next.js: 2ms, proxy.ts: 916ms, application-code: 421ms)
+  └─ ƒ getAuthenticatedAccess() in 416ms app/actions/auth.ts
+✓ Compiled in 130ms
+ POST /cartoons 200 in 766ms (next.js: 5ms, proxy.ts: 565ms, application-code: 196ms)
+  └─ ƒ getAuthenticatedAccess() in 190ms app/actions/auth.ts
+ GET / 200 in 121ms (next.js: 6ms, proxy.ts: 75ms, application-code: 40ms)
+ POST /cartoons 200 in 425ms (next.js: 2ms, proxy.ts: 86ms, application-code: 337ms)
+  └─ ƒ getAuthenticatedAccess() in 331ms app/actions/auth.ts
+ GET /api/covers/shows/6fa791f7-16ae-4180-becc-fb17694b0685 304 in 199ms (next.js: 3ms, application-code: 196ms)
+ GET /api/covers/shows/9e78b0c3-ddda-4424-8ad7-2751178f117b 304 in 296ms (next.js: 53ms, application-code: 243ms)
+ GET /api/covers/shows/fbf4757f-668f-43ff-8396-ebec65f938c0 304 in 198ms (next.js: 1735µs, application-code: 196ms)
+ GET /api/covers/shows/b7ea8daf-a9f9-4ac5-9121-6176838fecf6 304 in 249ms (next.js: 3ms, application-code: 246ms)
+ GET /api/covers/shows/f5127267-551b-4305-8d49-cb4302f5dffa 304 in 158ms (next.js: 8ms, application-code: 150ms)
+ GET /api/covers/shows/359d4d3f-b495-45f7-831f-3bd615eb393d 304 in 186ms (next.js: 4ms, application-code: 182ms)
+ GET /api/covers/shows/397a0009-64c4-4f57-8ac1-646a5efa6392 304 in 275ms (next.js: 1937µs, application-code: 273ms)
+ GET /api/covers/shows/1f0c3564-3ec9-4824-8d2f-6b3fe7719c09 304 in 184ms (next.js: 1906µs, application-code: 182ms)
+ GET /api/covers/shows/6392d7e4-eb9c-433d-af0a-ab9038ff7072 304 in 702ms (next.js: 43ms, application-code: 659ms)
+ POST / 200 in 428ms (next.js: 3ms, proxy.ts: 157ms, application-code: 268ms)
+  └─ ƒ fetchMyList() in 260ms app/actions/myList.ts
+ GET /api/covers/shows/d9fdda6c-8c62-45e3-abbd-775d98f740ef 304 in 761ms (next.js: 49ms, application-code: 712ms)
+ GET /api/covers/books/6e48b69e-68db-4b80-88c5-f38a7a611cd1?v=2026-10-03T22%3A42%3A49.677%2B00%3A00 304 in 151ms (next.js: 1860µs, application-code: 149ms)
+ GET /api/covers/shows/3bb7abcf-e2e0-4800-9fd0-bdca2ba36822 304 in 237ms (next.js: 44ms, application-code: 192ms)
+ GET /api/covers/books/2c9aaa93-0e5e-48c8-83e9-0dd3f7744949?v=2026-10-14T22%3A42%3A59.918034%2B00%3A00 304 in 146ms (next.js: 3ms, application-code: 143ms)
+ GET /api/covers/shows/97432a72-7274-444e-bff6-e4bad73077fa 304 in 353ms (next.js: 1771µs, application-code: 351ms)
+ GET /api/covers/books/e70aa4ab-e43d-4031-bd57-e2df824c227b?v=2026-10-03T22%3A41%3A32.51%2B00%3A00 304 in 126ms (next.js: 2ms, application-code: 124ms)
+ GET /api/covers/books/6fb6426f-2d56-44e0-88f6-86c39e3d1f18?v=2026-10-04T09%3A18%3A34.443%2B00%3A00 304 in 170ms (next.js: 2ms, application-code: 168ms)
+ GET /api/covers/books/66b9af8b-0d11-4912-a826-78295e08cda9?v=2026-10-19T17%3A10%3A30.586%2B00%3A00 304 in 147ms (next.js: 6ms, application-code: 141ms)
+ GET /api/covers/books/b4e26072-d3e3-43ec-87cd-a9d5fab8aa32?v=2026-10-03T22%3A40%3A38.167%2B00%3A00 304 in 145ms (next.js: 3ms, application-code: 142ms)
+ GET /api/covers/books/39e52504-f8ae-4c15-bead-77b8b116cf37?v=2026-10-03T22%3A37%3A49.295%2B00%3A00 304 in 150ms (next.js: 6ms, application-code: 145ms)
+ GET /api/covers/books/27a6ba6a-a1e3-4584-bdde-49842be91ea3?v=2026-10-03T22%3A39%3A20.056%2B00%3A00 304 in 155ms (next.js: 2ms, application-code: 152ms)
+ GET /api/covers/books/534cf977-42a7-4989-914b-2f58395779c4?v=2026-10-03T22%3A41%3A54.05%2B00%3A00 304 in 155ms (next.js: 2ms, application-code: 152ms)
+ GET /api/covers/books/d0ad54b5-8311-4d81-bf39-eab5607f023b?v=2026-10-03T22%3A36%3A44.808%2B00%3A00 304 in 177ms (next.js: 6ms, application-code: 171ms)
+ GET /api/covers/books/ae67df5f-fe41-4f4c-bad7-4949506e8342?v=2026-10-03T22%3A36%3A20.712%2B00%3A00 304 in 154ms (next.js: 1793µs, application-code: 153ms)
+ GET /cartoons/hxh 200 in 519ms (next.js: 51ms, proxy.ts: 4ms, generate-params: 37ms, application-code: 463ms)
+ GET /api/covers/episodes/6919792e-a42d-4b03-a689-a3abfe1b2a6c 200 in 177ms (next.js: 41ms, application-code: 137ms)
+ GET / 200 in 247ms (next.js: 3ms, proxy.ts: 3ms, application-code: 241ms)
+ GET /api/covers/shows/fbf4757f-668f-43ff-8396-ebec65f938c0 200 in 103ms (next.js: 2ms, application-code: 101ms)
+ GET /api/covers/shows/9e78b0c3-ddda-4424-8ad7-2751178f117b 200 in 214ms (next.js: 53ms, application-code: 161ms)
+ GET /api/covers/shows/6fa791f7-16ae-4180-becc-fb17694b0685 200 in 221ms (next.js: 62ms, application-code: 159ms)
+ GET /api/covers/shows/b7ea8daf-a9f9-4ac5-9121-6176838fecf6 200 in 258ms (next.js: 58ms, application-code: 200ms)
+ GET /api/covers/shows/d9fdda6c-8c62-45e3-abbd-775d98f740ef 200 in 328ms (next.js: 50ms, application-code: 279ms)
+ GET /api/covers/shows/359d4d3f-b495-45f7-831f-3bd615eb393d 200 in 97ms (next.js: 1623µs, application-code: 95ms)
+ GET /api/covers/shows/f5127267-551b-4305-8d49-cb4302f5dffa 200 in 150ms (next.js: 1726µs, application-code: 149ms)
+ GET /api/covers/shows/6392d7e4-eb9c-433d-af0a-ab9038ff7072 200 in 372ms (next.js: 46ms, application-code: 326ms)
+ GET /api/covers/episodes/68b46036-b7ba-4f6f-a1d1-e99600c72ae2 200 in 130ms (next.js: 1957µs, application-code: 128ms)
+ GET /api/covers/episodes/b98d94a4-a984-4c78-85d8-c226a37585e7 200 in 194ms (next.js: 1739µs, application-code: 192ms)
+ GET /api/covers/episodes/c3b75859-1f45-449d-859c-c8b3ca828986 200 in 111ms (next.js: 2ms, application-code: 109ms)
+ GET /api/covers/episodes/9c737a21-1c34-4486-a16e-4e04d1dba705 200 in 142ms (next.js: 5ms, application-code: 137ms)
+ GET /api/covers/episodes/76066a2c-ddba-4231-84ba-9d187cfb7f53 200 in 131ms (next.js: 1856µs, application-code: 129ms)
+ GET /api/covers/episodes/775e0643-27fd-43c8-93e3-7513934ea686 200 in 171ms (next.js: 2ms, application-code: 169ms)
+ GET /api/covers/episodes/91f9be4e-2238-4cd7-9127-5753bd0a6719 200 in 170ms (next.js: 3ms, application-code: 167ms)
+ GET /api/covers/shows/397a0009-64c4-4f57-8ac1-646a5efa6392 200 in 115ms (next.js: 1784µs, application-code: 113ms)
+ GET /api/covers/episodes/2e016bc6-87a8-4eba-a850-f6526f4d5649 200 in 133ms (next.js: 1782µs, application-code: 131ms)
+ GET /api/covers/shows/97432a72-7274-444e-bff6-e4bad73077fa 200 in 108ms (next.js: 1738µs, application-code: 107ms)
+ GET /api/covers/shows/1f0c3564-3ec9-4824-8d2f-6b3fe7719c09 200 in 133ms (next.js: 1819µs, application-code: 131ms)
+ GET /api/covers/shows/3bb7abcf-e2e0-4800-9fd0-bdca2ba36822 200 in 121ms (next.js: 38ms, application-code: 83ms)
+ GET /api/covers/episodes/8746bd72-37b6-4a99-a3a5-84b022e48be3 200 in 96ms (next.js: 4ms, application-code: 92ms)
+ GET /api/covers/episodes/83662391-d7e3-4318-8100-6741beaddb8d 200 in 113ms (next.js: 4ms, application-code: 109ms)
+ GET /api/covers/books/2c9aaa93-0e5e-48c8-83e9-0dd3f7744949?v=2026-10-14T22%3A42%3A59.918034%2B00%3A00 200 in 97ms (next.js: 6ms, application-code: 91ms)
+ GET /api/covers/books/6e48b69e-68db-4b80-88c5-f38a7a611cd1?v=2026-10-03T22%3A42%3A49.677%2B00%3A00 200 in 120ms (next.js: 6ms, application-code: 114ms)
+ GET /api/covers/episodes/54d10780-8dfd-4ae9-8212-afba488ed840 200 in 142ms (next.js: 4ms, application-code: 138ms)
+ GET /api/covers/episodes/c64d0018-3718-4d45-add5-f9b4a1b32fbf 200 in 145ms (next.js: 3ms, application-code: 142ms)
+ GET /api/covers/books/6fb6426f-2d56-44e0-88f6-86c39e3d1f18?v=2026-10-04T09%3A18%3A34.443%2B00%3A00 200 in 105ms (next.js: 2ms, application-code: 103ms)
+ GET /api/covers/books/e70aa4ab-e43d-4031-bd57-e2df824c227b?v=2026-10-03T22%3A41%3A32.51%2B00%3A00 200 in 87ms (next.js: 4ms, application-code: 84ms)
+ GET /api/covers/books/66b9af8b-0d11-4912-a826-78295e08cda9?v=2026-10-19T17%3A10%3A30.586%2B00%3A00 200 in 110ms (next.js: 11ms, application-code: 99ms)
+ GET /api/covers/books/b4e26072-d3e3-43ec-87cd-a9d5fab8aa32?v=2026-10-03T22%3A40%3A38.167%2B00%3A00 200 in 92ms (next.js: 2ms, application-code: 89ms)
+ GET /api/covers/books/27a6ba6a-a1e3-4584-bdde-49842be91ea3?v=2026-10-03T22%3A39%3A20.056%2B00%3A00 200 in 101ms (next.js: 2ms, application-code: 99ms)
+ GET /api/covers/books/39e52504-f8ae-4c15-bead-77b8b116cf37?v=2026-10-03T22%3A37%3A49.295%2B00%3A00 200 in 102ms (next.js: 1795µs, application-code: 101ms)
+ GET /api/covers/books/534cf977-42a7-4989-914b-2f58395779c4?v=2026-10-03T22%3A41%3A54.05%2B00%3A00 200 in 83ms (next.js: 2ms, application-code: 80ms)
+ GET /api/covers/books/d0ad54b5-8311-4d81-bf39-eab5607f023b?v=2026-10-03T22%3A36%3A44.808%2B00%3A00 200 in 103ms (next.js: 1798µs, application-code: 101ms)
+ GET /api/covers/books/ae67df5f-fe41-4f4c-bad7-4949506e8342?v=2026-10-03T22%3A36%3A20.712%2B00%3A00 200 in 82ms (next.js: 2ms, application-code: 80ms)
+[auth] getUser error: invalid JWT: unable to parse or verify signature, token signature is invalid: signature is invalid
+ POST / 200 in 150ms (next.js: 3ms, proxy.ts: 99ms, application-code: 48ms)
+  └─ ƒ getAuthenticatedAccess() in 42ms app/actions/auth.ts
+[auth] getUser error: invalid JWT: unable to parse or verify signature, token signature is invalid: signature is invalid
+ POST / 200 in 84ms (next.js: 3ms, proxy.ts: 39ms, application-code: 41ms)
+  └─ ƒ fetchLearningActivity() in 34ms app/actions/activity.ts
+[auth] getUser error: invalid JWT: unable to parse or verify signature, token signature is invalid: signature is invalid
+ POST / 200 in 89ms (next.js: 3ms, proxy.ts: 39ms, application-code: 46ms)
+  └─ ƒ fetchMyList() in 40ms app/actions/myList.ts
+ GET / 200 in 273ms (next.js: 2ms, proxy.ts: 3ms, application-code: 267ms)
+ GET /api/covers/shows/b7ea8daf-a9f9-4ac5-9121-6176838fecf6 200 in 245ms (next.js: 56ms, application-code: 189ms)
+ GET /api/covers/shows/9e78b0c3-ddda-4424-8ad7-2751178f117b 200 in 256ms (next.js: 51ms, application-code: 205ms)
+ GET /api/covers/shows/fbf4757f-668f-43ff-8396-ebec65f938c0 200 in 209ms (next.js: 5ms, application-code: 204ms)
+ GET /api/covers/shows/6fa791f7-16ae-4180-becc-fb17694b0685 200 in 298ms (next.js: 60ms, application-code: 238ms)
+ GET /api/covers/shows/f5127267-551b-4305-8d49-cb4302f5dffa 200 in 185ms (next.js: 1621µs, application-code: 184ms)
+ GET /api/covers/shows/359d4d3f-b495-45f7-831f-3bd615eb393d 200 in 201ms (next.js: 1736µs, application-code: 200ms)
+ GET /api/covers/episodes/c3b75859-1f45-449d-859c-c8b3ca828986 200 in 172ms (next.js: 3ms, application-code: 169ms)
+ GET /api/covers/episodes/68b46036-b7ba-4f6f-a1d1-e99600c72ae2 200 in 890ms (next.js: 1874µs, application-code: 889ms)
+ GET /api/covers/shows/6392d7e4-eb9c-433d-af0a-ab9038ff7072 200 in 1380ms (next.js: 42ms, application-code: 1338ms)
+ GET /api/covers/episodes/76066a2c-ddba-4231-84ba-9d187cfb7f53 200 in 181ms (next.js: 40ms, application-code: 141ms)
+ GET /api/covers/episodes/775e0643-27fd-43c8-93e3-7513934ea686 200 in 924ms (next.js: 1566µs, application-code: 922ms)
+ GET /api/covers/episodes/b98d94a4-a984-4c78-85d8-c226a37585e7 200 in 1114ms (next.js: 1962µs, application-code: 1112ms)
+ GET /api/covers/episodes/9c737a21-1c34-4486-a16e-4e04d1dba705 200 in 782ms (next.js: 39ms, application-code: 743ms)
+ GET /api/covers/shows/397a0009-64c4-4f57-8ac1-646a5efa6392 200 in 114ms (next.js: 5ms, application-code: 109ms)
+ GET /api/covers/episodes/91f9be4e-2238-4cd7-9127-5753bd0a6719 200 in 138ms (next.js: 1731µs, application-code: 137ms)
+ GET /api/covers/shows/d9fdda6c-8c62-45e3-abbd-775d98f740ef 200 in 1544ms (next.js: 47ms, application-code: 1497ms)
+ GET /api/covers/shows/97432a72-7274-444e-bff6-e4bad73077fa 200 in 132ms (next.js: 1536µs, application-code: 131ms)
+ GET /api/covers/shows/1f0c3564-3ec9-4824-8d2f-6b3fe7719c09 200 in 157ms (next.js: 2ms, application-code: 155ms)
+ GET /api/covers/shows/3bb7abcf-e2e0-4800-9fd0-bdca2ba36822 200 in 141ms (next.js: 1939µs, application-code: 139ms)
+ GET /api/covers/episodes/54d10780-8dfd-4ae9-8212-afba488ed840 200 in 156ms (next.js: 6ms, application-code: 150ms)
+ GET /api/covers/books/6e48b69e-68db-4b80-88c5-f38a7a611cd1?v=2026-10-03T22%3A42%3A49.677%2B00%3A00 200 in 143ms (next.js: 1557µs, application-code: 142ms)
+ GET /api/covers/episodes/c64d0018-3718-4d45-add5-f9b4a1b32fbf 200 in 152ms (next.js: 2ms, application-code: 149ms)
+ GET /api/covers/books/e70aa4ab-e43d-4031-bd57-e2df824c227b?v=2026-10-03T22%3A41%3A32.51%2B00%3A00 200 in 121ms (next.js: 6ms, application-code: 114ms)
+ GET /api/covers/books/2c9aaa93-0e5e-48c8-83e9-0dd3f7744949?v=2026-10-14T22%3A42%3A59.918034%2B00%3A00 200 in 190ms (next.js: 55ms, application-code: 135ms)
+ GET /api/covers/books/6fb6426f-2d56-44e0-88f6-86c39e3d1f18?v=2026-10-04T09%3A18%3A34.443%2B00%3A00 200 in 150ms (next.js: 2ms, application-code: 148ms)
+ GET /api/covers/books/27a6ba6a-a1e3-4584-bdde-49842be91ea3?v=2026-10-03T22%3A39%3A20.056%2B00%3A00 200 in 112ms (next.js: 1564µs, application-code: 111ms)
+ GET /api/covers/books/66b9af8b-0d11-4912-a826-78295e08cda9?v=2026-10-19T17%3A10%3A30.586%2B00%3A00 200 in 140ms (next.js: 3ms, application-code: 137ms)
+ GET /api/covers/books/b4e26072-d3e3-43ec-87cd-a9d5fab8aa32?v=2026-10-03T22%3A40%3A38.167%2B00%3A00 200 in 140ms (next.js: 1717µs, application-code: 138ms)
+ GET /api/covers/episodes/8746bd72-37b6-4a99-a3a5-84b022e48be3 200 in 667ms (next.js: 3ms, application-code: 664ms)
+ GET /api/covers/books/39e52504-f8ae-4c15-bead-77b8b116cf37?v=2026-10-03T22%3A37%3A49.295%2B00%3A00 200 in 159ms (next.js: 3ms, application-code: 157ms)
+ GET /api/covers/books/d0ad54b5-8311-4d81-bf39-eab5607f023b?v=2026-10-03T22%3A36%3A44.808%2B00%3A00 200 in 151ms (next.js: 1683µs, application-code: 150ms)
+ GET /api/covers/episodes/2e016bc6-87a8-4eba-a850-f6526f4d5649 200 in 949ms (next.js: 2ms, application-code: 947ms)
+ GET /api/covers/episodes/83662391-d7e3-4318-8100-6741beaddb8d 200 in 721ms (next.js: 3ms, application-code: 719ms)
+ GET /api/covers/books/ae67df5f-fe41-4f4c-bad7-4949506e8342?v=2026-10-03T22%3A36%3A20.712%2B00%3A00 200 in 120ms (next.js: 2ms, application-code: 118ms)
+ GET /api/covers/books/534cf977-42a7-4989-914b-2f58395779c4?v=2026-10-03T22%3A41%3A54.05%2B00%3A00 200 in 755ms (next.js: 2ms, application-code: 753ms)
+[auth] getUser error: invalid JWT: unable to parse or verify signature, token signature is invalid: signature is invalid
+ POST / 200 in 672ms (next.js: 3ms, proxy.ts: 510ms, application-code: 159ms)
+  └─ ƒ getAuthenticatedAccess() in 152ms app/actions/auth.ts
+[auth] getUser error: invalid JWT: unable to parse or verify signature, token signature is invalid: signature is invalid
+ POST / 200 in 315ms (next.js: 3ms, proxy.ts: 41ms, application-code: 270ms)
+  └─ ƒ fetchLearningActivity() in 264ms app/actions/activity.ts
+[auth] getUser error: invalid JWT: unable to parse or verify signature, token signature is invalid: signature is invalid
+ POST / 200 in 447ms (next.js: 3ms, proxy.ts: 295ms, application-code: 150ms)
+  └─ ƒ fetchMyList() in 145ms app/actions/myList.ts

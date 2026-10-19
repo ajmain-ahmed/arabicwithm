@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Box, CircularProgress, Skeleton, Typography } from '@mui/material'
+import { Box, CircularProgress, Container, Skeleton, Typography } from '@mui/material'
 
 /** Determinate progress circle that eases toward 90% while the route's data
     streams in, then snaps to 100%. Paired with layout skeletons so every page
@@ -88,6 +88,56 @@ export function ExplorePageLoading() {
   return (
     <Box component="main" sx={{ height: 'calc(100dvh - var(--awm-navbar-height))', bgcolor: '#0a0c0b', display: 'grid', placeItems: 'center' }}>
       <LoadingCircle size={62} dark />
+    </Box>
+  )
+}
+
+/** Show page: header + filter sidebar + 4/5 episode card grid. */
+export function ShowPageLoading() {
+  return (
+    <Box component="main" sx={{ minHeight: '100dvh', bgcolor: 'var(--awm-cream-light)', pb: { xs: 0, md: 8 } }}>
+      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
+        {/* Header: title + My List pill */}
+        <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 2 }}>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Skeleton variant="text" width="32%" height={46} />
+            <Skeleton variant="text" width="56%" height={18} sx={{ mt: 0.5 }} />
+          </Box>
+          <Skeleton variant="rounded" width={152} height={40} sx={{ borderRadius: '9999px', flexShrink: 0 }} />
+        </Box>
+        {/* Breadcrumbs (desktop) */}
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2, mt: { xs: 2, md: 3 } }}>
+          <Skeleton variant="text" width={48} height={18} />
+          <Skeleton variant="text" width={68} height={18} />
+          <Skeleton variant="text" width={120} height={18} />
+        </Box>
+        {/* Mobile filters row */}
+        <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+          <Skeleton variant="rounded" width={96} height={40} sx={{ borderRadius: '6px' }} />
+          <Skeleton variant="text" width={76} height={18} />
+        </Box>
+        {/* Sidebar + episode grid */}
+        <Box sx={{ display: 'flex', gap: 3, mt: { xs: 2, md: 2.5 } }}>
+          <Box sx={{ width: 240, flexShrink: 0, display: { xs: 'none', md: 'block' } }}>
+            <Box sx={{ position: 'sticky', top: 100 }}>
+              <Skeleton variant="rounded" height={24} width="55%" sx={{ mb: 1.5 }} />
+              {Array.from({ length: 7 }).map((_, index) => (
+                <Skeleton key={index} variant="rounded" height={34} sx={{ borderRadius: '9999px', mb: 1 }} />
+              ))}
+            </Box>
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-end', mb: 2 }}>
+              <Skeleton variant="text" width={90} height={18} />
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' }, gap: { xs: 0.75, sm: 1 } }}>
+              {Array.from({ length: 8 }).map((_, index) => (
+                <Skeleton key={index} variant="rounded" sx={{ height: { xs: 180, sm: 300, lg: 320, xl: 340 }, borderRadius: '10px' }} />
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      </Container>
     </Box>
   )
 }
