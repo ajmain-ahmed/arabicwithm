@@ -43,7 +43,7 @@ async function fetchCoverBytes(bucket: string, path: string): Promise<CoverBytes
   return { bytes, etag: createHash('md5').update(new Uint8Array(bytes)).digest('hex') }
 }
 
-const COVER_CACHE_CONTROL = 'public, max-age=60, stale-while-revalidate=60'
+const COVER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=3600'
 
 function coverResponse(cover: CoverBytes, ifNoneMatch: string | null): Response {
   const etag = `"${cover.etag}"`

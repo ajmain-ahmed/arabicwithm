@@ -6,6 +6,7 @@ import { KeyboardArrowDown, KeyboardArrowUp } from '@mui/icons-material'
 import { fetchForYouClips } from '@/app/actions/forYou'
 import { hourlySeed } from '@/app/lib/forYou'
 import type { ForYouClip, ForYouToken } from '@/app/lib/forYou'
+import { useForYouCache } from '@/store/forYouStore'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 
 const MAX_RETAINED_CLIPS = 60
@@ -88,11 +89,20 @@ function ForYouLoading({ progress, switcher }: { progress: number; switcher?: Re
 }
 
 export default function ForYouFeed({ initialClips, switcher, railSwitcher }: { initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode }) {
-  const [clips, setClips] = useState<ForYouClip[]>(initialClips ?? [])
-  const [loadStarted, setLoadStarted] = useState(Boolean(initialClips?.length))
-  const [index, setIndex] = useState(0), [error, setError] = useState(''), [busy, setBusy] = useState(false)
-  const [excluded, setExcluded] = useState<number[]>([])
+  /* Session cache: view switches restore clips, position, and exclusions. */
+  const cachedClips = useForYouCache((state) => state.clips)
+  const cachedIndex = useForYouCache((state) => state.index)
+  const cachedExcluded = useForYouCache((state) => state.excluded)
+  const setCache = useForYouCache((state) => state.setAll)
+  const [clips, setClips] = useState<ForYouClip[]>(initialClips ?? cachedClips)
+  const [loadStarted, setLoadStarted] = useState(Boolean(initialClips?.length) || cachedClips.length > 0)
+  const [index, setIndex] = useState(cachedIndex), [error, setError] = useState(''), [busy, setBusy] = useState(false)
+  const [excluded, setExcluded] = useState<number[]>(cachedExcluded)
   const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    setCache(clips, index, excluded)
+  }, [clips, index, excluded, setCache])
   // Clips are fetched lazily: the explore feed is the default view, so this
   // data is only requested the first time someone opens the For You view.
   useEffect(() => {

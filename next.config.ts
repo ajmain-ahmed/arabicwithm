@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
        caches), so let browsers reuse recently visited dynamic pages
        instead of re-requesting them on every navigation. */
     staleTimes: {
-      dynamic: 300,
+      dynamic: 1800,
       static: 1800,
     },
     optimizePackageImports: [
