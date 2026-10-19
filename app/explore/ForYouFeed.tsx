@@ -19,13 +19,15 @@ export function ForYouWords({ tokens }: { tokens: ForYouToken[] }) {
   </Box>
 }
 
-function ClipPlayer({ clip }: { clip: ForYouClip }) {
+function ClipPlayer({ clip, leftControls, rightControls }: { clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode }) {
   const [time, setTime] = useState(clip.clip_start_ms / 1000)
   const { wrapRef, errorCode, retry } = useYouTubePlayer(clip.video.youtube_id, setTime, clip.clip_start_ms / 1000, { endAt: clip.clip_end_ms / 1000 })
   const active = clip.segments.find(s => s.start_seconds <= time && s.end_seconds > time) ?? clip.segments[0]
   return <Box>
     <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: '12px', md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
       <Box ref={wrapRef} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+      {leftControls}
+      {rightControls}
     </Box>
     {errorCode && <Alert severity="warning" sx={{ mt: 2 }}>The video could not be loaded. <Button onClick={retry}>Retry</Button></Alert>}
     {active && <Box sx={{ mt: { xs: 2, md: 3 }, color: { md: '#f5ede0' } }}>
@@ -146,14 +148,13 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher }: { i
         {initialLoading
           ? <ForYouLoading progress={progress} switcher={switcher} />
           : clips[index]
-            ? <Box sx={{ position: 'relative', minWidth: 0, width: 'min(100%, calc((100dvh - 340px) * 16 / 9))', mx: { md: 'auto' } }}>
-                <ClipPlayer key={`${clips[index].video.id}:${clips[index].clip_start_ms}`} clip={clips[index]} />
-                <ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} sx={{ position: 'absolute', left: -66, top: '38%', transform: 'translateY(-50%)' }} />
-                {railSwitcher && (
-                  <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', right: -66, top: '76%', transform: 'translateY(-50%)' }}>
-                    {railSwitcher}
-                  </Box>
-                )}
+            ? <Box sx={{ minWidth: 0, width: 'min(100%, calc((100dvh - 340px) * 16 / 9))', mx: { md: 'auto' } }}>
+                <ClipPlayer
+                  key={`${clips[index].video.id}:${clips[index].clip_start_ms}`}
+                  clip={clips[index]}
+                  leftControls={<ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} sx={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', zIndex: 6 }} />}
+                  rightControls={railSwitcher ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', right: 14, bottom: 10, zIndex: 6 }}>{railSwitcher}</Box> : undefined}
+                />
               </Box>
             : <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography>}
       </Box>
