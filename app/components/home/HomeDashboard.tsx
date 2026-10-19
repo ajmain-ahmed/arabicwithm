@@ -271,7 +271,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
               <Box
                 component={Link}
-                href="/cartoons"
+                href="/cartoons?view=shows"
                 sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, md: 3 }, mt: 1.5, textDecoration: 'none' }}
               >
                 <Box sx={{

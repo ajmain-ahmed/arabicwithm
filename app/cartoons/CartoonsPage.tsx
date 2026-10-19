@@ -128,7 +128,7 @@ export default function CartoonsPage({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [view, setView] = useState<WatchView>('episodes')
+  const [view, setView] = useState<WatchView>(searchParams.get('view') === 'shows' ? 'shows' : 'episodes')
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingShow, setEditingShow] = useState<ShowMeta | undefined>()
