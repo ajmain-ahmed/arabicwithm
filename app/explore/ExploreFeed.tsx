@@ -172,6 +172,8 @@ function ExploreVideo({
   onPlaybackChange,
   soundEnabled,
   railTop,
+  onPrev,
+  onNext,
 }: {
   episode: ExploreEpisode
   active: boolean
@@ -179,6 +181,8 @@ function ExploreVideo({
   onPlaybackChange: (playing: boolean) => void
   soundEnabled: boolean
   railTop?: ReactNode
+  onPrev?: () => void
+  onNext?: () => void
 }) {
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
@@ -360,6 +364,46 @@ function ExploreVideo({
           flexDirection: 'column',
           gap: { xs: 0.85, md: 1.4 },
         }}>
+          {/* Prev/next chevrons at the top of the rail — wheel/trackpad
+             scroll keeps working exactly the same. */}
+          {(onPrev || onNext) && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.85, md: 1.4 }, alignItems: 'center' }}>
+              <Tooltip title="Previous video" placement="left">
+                <IconButton
+                  onClick={onPrev}
+                  aria-label="Previous video"
+                  sx={{
+                    width: { xs: 44, md: 50 }, height: { xs: 44, md: 50 },
+                    color: { xs: 'var(--awm-gold-light)', md: '#fff' },
+                    bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.14)' },
+                    filter: { xs: 'drop-shadow(0 1px 3px #000)', md: 'none' },
+                    '&:hover': { bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.24)' }, transform: 'scale(1.08)' },
+                    '&:active': { transform: 'scale(.95)' },
+                    '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 },
+                  }}
+                >
+                  <KeyboardArrowUp />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Next video" placement="left">
+                <IconButton
+                  onClick={onNext}
+                  aria-label="Next video"
+                  sx={{
+                    width: { xs: 44, md: 50 }, height: { xs: 44, md: 50 },
+                    color: { xs: 'var(--awm-gold-light)', md: '#fff' },
+                    bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.14)' },
+                    filter: { xs: 'drop-shadow(0 1px 3px #000)', md: 'none' },
+                    '&:hover': { bgcolor: { xs: 'transparent', md: 'rgba(255,255,255,0.24)' }, transform: 'scale(1.08)' },
+                    '&:active': { transform: 'scale(.95)' },
+                    '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 },
+                  }}
+                >
+                  <KeyboardArrowDown />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          )}
           {railTop}
           {/* A native fallback uses YouTube's controls without API commands. */}
           {(!isYouTube || isReady) && <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
@@ -731,6 +775,8 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore, railTo
                 onPlaybackChange={setGlobalVideoPlaying}
                 soundEnabled={soundEnabled}
                 railTop={railTop}
+                onPrev={() => goToIndex(activeIndex <= 0 ? items.length - 1 : activeIndex - 1)}
+                onNext={() => goToIndex(items.length === 0 ? 0 : (activeIndex + 1) % items.length)}
               />
             </>
           ) : (
@@ -773,29 +819,6 @@ export default function ExploreFeed({ seed, initialItems, initialHasMore, railTo
           {selectedDefinition && <Box key={selectedDefinition.cacheKey} sx={{ p: 2.5 }}><WordTooltip entry={selectedDefinition.entry} /></Box>}
         </Popover>
       )}
-
-      {/* Desktop prev/next chevrons at the right edge — wheel/trackpad scroll
-         keeps working exactly the same. */}
-      <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', right: 22, top: '50%', transform: 'translateY(-50%)', flexDirection: 'column', gap: 1.25, zIndex: 20 }}>
-        <Tooltip title="Previous video" placement="left">
-          <IconButton
-            onClick={() => goToIndex(activeIndex <= 0 ? items.length - 1 : activeIndex - 1)}
-            aria-label="Previous video"
-            sx={{ width: 42, height: 42, bgcolor: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.14)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}
-          >
-            <KeyboardArrowUp />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Next video" placement="left">
-          <IconButton
-            onClick={() => goToIndex(items.length === 0 ? 0 : (activeIndex + 1) % items.length)}
-            aria-label="Next video"
-            sx={{ width: 42, height: 42, bgcolor: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.14)', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' } }}
-          >
-            <KeyboardArrowDown />
-          </IconButton>
-        </Tooltip>
-      </Box>
     </Box>
     </Box>
   )
