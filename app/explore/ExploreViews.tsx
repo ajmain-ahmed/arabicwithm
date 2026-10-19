@@ -19,13 +19,13 @@ const RAIL_ICON_SX = {
   '&:focus-visible': { outline: '2px solid currentColor', outlineOffset: 2 },
 } as const
 
-function ViewSwitch({ view, onChange }: { view: ExploreView; onChange: (view: ExploreView) => void }) {
+function ViewSwitch({ view, onChange, layout = 'rail' }: { view: ExploreView; onChange: (view: ExploreView) => void; layout?: 'rail' | 'row' }) {
   const buttons = [
     { id: 'explore' as const, label: 'Explore', icon: <ExploreOutlined /> },
     { id: 'foryou' as const, label: 'For You', icon: <PersonOutlineRounded /> },
   ]
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.85, md: 1.4 }, alignItems: 'center' }}>
+    <Box sx={{ display: 'flex', flexDirection: layout === 'rail' ? 'column' : 'row', gap: { xs: 0.85, md: layout === 'rail' ? 1.4 : 1 }, alignItems: 'center' }}>
       {buttons.map((button) => {
         const active = view === button.id
         return (
@@ -43,7 +43,7 @@ function ViewSwitch({ view, onChange }: { view: ExploreView; onChange: (view: Ex
               >
                 {button.icon}
               </IconButton>
-              <Typography sx={{ display: { xs: 'none', md: 'block' }, fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>{button.label}</Typography>
+              <Typography sx={{ display: layout === 'rail' ? { xs: 'none', md: 'block' } : 'none', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>{button.label}</Typography>
             </Box>
           </Tooltip>
         )
@@ -54,8 +54,9 @@ function ViewSwitch({ view, onChange }: { view: ExploreView; onChange: (view: Ex
 
 export default function ExploreViews({ seed, items, hasMore }: { seed: string; items: ExploreFeedItem[]; hasMore: boolean }) {
   const [view, setView] = useState<ExploreView>('explore')
-  const switcher = <ViewSwitch view={view} onChange={setView} />
+  const railSwitch = <ViewSwitch view={view} onChange={setView} />
+  const rowSwitch = <ViewSwitch view={view} onChange={setView} layout="row" />
   return view === 'explore'
-    ? <ExploreFeed seed={seed} initialItems={items} initialHasMore={hasMore} railTop={switcher} />
-    : <ForYouFeed switcher={switcher} />
+    ? <ExploreFeed seed={seed} initialItems={items} initialHasMore={hasMore} railTop={railSwitch} />
+    : <ForYouFeed switcher={rowSwitch} />
 }
