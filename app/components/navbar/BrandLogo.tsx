@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Box } from '@mui/material'
 import { motion, useReducedMotion } from 'framer-motion'
+import { useColorMode } from '@/app/components/ThemeProvider'
 
 interface BrandLogoProps {
     isMobile: boolean
@@ -13,6 +14,7 @@ interface BrandLogoProps {
 
 export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = false }: BrandLogoProps) {
     const reduceMotion = useReducedMotion()
+    const { mode } = useColorMode()
     /* Gate the entrance animation on post-hydration state: server and first
        client render must produce identical markup or hydration fails (which
        cascades into the image rows never revealing). */
@@ -70,7 +72,7 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = 
                         fontFamily: 'var(--font-decorative)',
                         fontSize: isMobile ? 'clamp(.88rem, 4.4vw, 1.28rem)' : '1.72rem',
                         fontWeight: 400,
-                        color: overlay ? '#fff' : 'var(--awm-forest)',
+                        color: overlay ? '#fff' : mode === 'dark' ? '#f5ede0' : 'var(--awm-forest)',
                         textShadow: overlay ? '0 1px 8px rgba(0,0,0,0.48)' : 'none',
                         letterSpacing: '-0.025em',
                         lineHeight: 1,
