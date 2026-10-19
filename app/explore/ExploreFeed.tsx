@@ -592,6 +592,10 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
   const loadingBatchRef = useRef(false)
   const seenKeysRef = useRef(new Set(cachedItems.map(feedItemKey)))
   const initialLoadStartedRef = useRef(false)
+  /* On a cached return visit the user lands on the first FRESH item, with the
+     previously watched items scrollable above it. */
+  const restoreCountRef = useRef(cachedItems.length)
+  const startAtRef = useRef<number | null>(null)
 
   /* Keep the session cache in sync so a remount (or the For You view) can
      restore without re-fetching. */
@@ -616,6 +620,9 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
         setItems((current) => [...current, ...fresh])
         setHasMore(batch.hasMore)
         nextPageRef.current = 1
+        if (restoreCountRef.current > 0 && fresh.length > 0) {
+          startAtRef.current = restoreCountRef.current
+        }
       })
       .catch(() => undefined)
       .finally(() => {
@@ -692,6 +699,15 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
     setActiveIndex(index)
     itemRefs.current.get(index)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [items.length])
+
+  /* Cached return visit: once the fresh batch has been appended, land on the
+     first new item so earlier (cached) items sit above it. */
+  useEffect(() => {
+    const target = startAtRef.current
+    if (target == null || items.length <= target) return
+    startAtRef.current = null
+    goToIndex(target)
+  }, [items.length, goToIndex])
 
   const openDefinition = useCallback<OpenDefinition>((entry, anchor, context, itemIndex) => {
     anchor.focus({ preventScroll: true })
