@@ -91,13 +91,24 @@ export async function fetchBookIdsWithPublishedAudio(bookIds: string[]): Promise
   ))
 }
 
-export async function fetchPublishedChapterAudio(chapterId: string, language: AudioLanguage = 'ar'): Promise<ChapterAudioSummary | null> {
+/* One query for both languages — the chapter page probes 'ar' and 'en'
+   together on every visit. */
+export async function fetchPublishedChapterAudioForChapter(chapterId: string): Promise<Record<AudioLanguage, ChapterAudioSummary | null>> {
   // Read legacy rows during deployment before the language migration is applied.
   const { data, error } = await serviceClient.from('book_chapter_audio').select('*').eq('chapter_id', chapterId).eq('is_published', true)
-  if (isMissingDatabaseFeature(error)) return null
+  if (isMissingDatabaseFeature(error)) return { ar: null, en: null }
   if (error) throw new Error('Unable to load audiobook availability.')
-  const row = data?.find(row => (row.language ?? 'ar') === language)
-  return row ? summary(row as Record<string, unknown>) : null
+  const rows = (data ?? []) as Record<string, unknown>[]
+  const pick = (language: AudioLanguage) => {
+    const row = rows.find((candidate) => (candidate.language ?? 'ar') === language)
+    return row ? summary(row) : null
+  }
+  return { ar: pick('ar'), en: pick('en') }
+}
+
+export async function fetchPublishedChapterAudio(chapterId: string, language: AudioLanguage = 'ar'): Promise<ChapterAudioSummary | null> {
+  const rows = await fetchPublishedChapterAudioForChapter(chapterId)
+  return rows[language]
 }
 
 export async function requestChapterAudio(chapterId: string, language: AudioLanguage = 'ar'): Promise<ChapterAudioPlayback> {

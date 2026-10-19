@@ -21,7 +21,6 @@ import {
 import { Box, Button, Container, Paper, Skeleton, Typography } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
-import { fetchLearningActivity } from '@/app/actions/activity'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
 import AppDownloadSection from './AppDownloadSection'
@@ -154,17 +153,6 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
     window.addEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
     return () => window.removeEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
   }, [])
-
-  useEffect(() => {
-    if (!user?.id) return
-    let cancelled = false
-    void fetchLearningActivity()
-      .then((activity) => {
-        if (activity && !cancelled) setActivityUpdate({ userId: user.id, activity })
-      })
-      .catch((error: unknown) => console.error('Unable to load dashboard activity:', error))
-    return () => { cancelled = true }
-  }, [user?.id])
 
   useEffect(() => {
     if (!user?.id || myListCacheItems !== null) return

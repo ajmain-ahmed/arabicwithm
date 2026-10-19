@@ -11,7 +11,7 @@ import ReadingProgress from './ReadingProgress'
 import ChapterReader from './ChapterReader'
 import { normalizeBookReaderLanguage } from '@/app/lib/bookReaderSettings'
 import SignInRequired from '@/app/components/SignInRequired'
-import { fetchPublishedChapterAudio } from '@/app/actions/audiobooks'
+import { fetchPublishedChapterAudioForChapter, type ChapterAudioSummary } from '@/app/actions/audiobooks'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
 
 export const dynamic = 'force-dynamic'
@@ -83,9 +83,10 @@ export default async function ChapterPage({
   }
 
   const chapterIndex = chapters.findIndex((item) => item.slug === chapter.slug)
-  let audio: Awaited<ReturnType<typeof fetchPublishedChapterAudio>>[]
+  let audio: [ChapterAudioSummary | null, ChapterAudioSummary | null]
   try {
-    audio = await Promise.all([fetchPublishedChapterAudio(chapter.id, 'ar'), fetchPublishedChapterAudio(chapter.id, 'en')])
+    const audioByLanguage = await fetchPublishedChapterAudioForChapter(chapter.id)
+    audio = [audioByLanguage.ar, audioByLanguage.en]
   } catch (error) {
     console.error('[book-reader] Unable to load chapter audio', {
       bookSlug,
