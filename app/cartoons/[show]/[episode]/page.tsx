@@ -47,19 +47,17 @@ export default async function Page({
   const raw = Number((await searchParams).t ?? 0)
   const initialStart = Number.isFinite(raw) && raw >= 0 && raw <= 86400 ? raw : 0
 
-  const ep = await fetchEpisodeForPublic(show, episode)
-  if (!ep) notFound()
-
-  const showData = await fetchShowBySlugPublic(show)
-  const showTitle = showData?.title ?? show
-
-  /* Related "up next": scored across the whole catalogue (cached fetches, so
-     no extra DB cost) — same show weighs most, then same level, then shared
-     tags. */
-  const [allEpisodes, shows] = await Promise.all([
+  /* All fetches in parallel — the episode gates the 404, the rest are
+     independent catalogue reads (cached). */
+  const [ep, showData, allEpisodes, shows] = await Promise.all([
+    fetchEpisodeForPublic(show, episode),
+    fetchShowBySlugPublic(show),
     fetchAllEpisodesForPublic(),
     fetchShowsForPublic(),
   ])
+  if (!ep) notFound()
+
+  const showTitle = showData?.title ?? show
   const showSlugById = new Map(shows.map((item) => [item.id, item.slug]))
   const currentTags = new Set(ep.tags.map((tag) => tag.toLowerCase()))
   const related = allEpisodes

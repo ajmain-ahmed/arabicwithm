@@ -1,9 +1,5 @@
-import { Box, Skeleton, Typography } from '@mui/material'
+import { GenericPageLoading } from '@/app/components/PageLoading'
 
-export default function AdminLoading() {
-  return <Box role="status" aria-label="Loading Admin section">
-    <Typography variant="h4" sx={{ mb: 2 }}>Admin</Typography>
-    <Skeleton variant="rounded" height={52} sx={{ mb: 2 }} />
-    <Skeleton variant="rounded" height={260} />
-  </Box>
+export default function Loading() {
+  return <GenericPageLoading />
 }
