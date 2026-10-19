@@ -38,7 +38,7 @@ export function GenericPageLoading() {
         </Box>
         <Box sx={{ width: '100%', display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3,1fr)', lg: 'repeat(4,1fr)' }, gap: 2, mt: 2 }}>
           {Array.from({ length: 8 }).map((_, index) => (
-            <Skeleton key={index} variant="rounded" sx={{ aspectRatio: '4 / 5', borderRadius: '12px' }} />
+            <Skeleton key={index} variant="rounded" sx={{ height: { xs: 320, md: 360 }, borderRadius: '12px' }} />
           ))}
         </Box>
       </Box>
@@ -56,7 +56,7 @@ export function WatchPageLoading() {
           <Skeleton variant="text" width={90} height={22} sx={darkSkeleton} />
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, mt: '14px' }}>
             {Array.from({ length: 9 }).map((_, index) => (
-              <Skeleton key={index} variant="rounded" sx={{ aspectRatio: '5 / 6', borderRadius: '4px', ...darkSkeleton }} />
+              <Skeleton key={index} variant="rounded" sx={{ height: { md: 264 }, borderRadius: '4px', ...darkSkeleton }} />
             ))}
           </Box>
         </Box>
@@ -103,7 +103,7 @@ export function CataloguePageLoading() {
         </Box>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,1fr)', sm: 'repeat(2,1fr)', lg: 'repeat(4,1fr)', xl: 'repeat(6,1fr)' }, gap: 1 }}>
           {Array.from({ length: 12 }).map((_, index) => (
-            <Skeleton key={index} variant="rounded" sx={{ aspectRatio: '5 / 6', borderRadius: '10px' }} />
+            <Skeleton key={index} variant="rounded" sx={{ height: { xs: 180, sm: 240, lg: 260, xl: 280 }, borderRadius: '10px' }} />
           ))}
         </Box>
         <Box sx={{ display: 'grid', placeItems: 'center', py: 2 }}>

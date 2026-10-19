@@ -272,7 +272,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
               <Skeleton variant="text" width={110} height={28} />
               <Box sx={{ display: 'flex', gap: { xs: 1, md: 1.5 }, overflow: 'hidden', mt: 0.5 }}>
                 {Array.from({ length: 8 }).map((_, index) => (
-                  <Skeleton key={index} variant="rounded" sx={{ width: COMPACT_HOME_CARD_WIDTH, maxWidth: '38vw', aspectRatio: '4 / 5', borderRadius: '10px', flexShrink: 0 }} />
+                  <Skeleton key={index} variant="rounded" sx={{ width: COMPACT_HOME_CARD_WIDTH, maxWidth: '38vw', height: { xs: 'clamp(188px, 57.5vw, 228px)', sm: 248, md: 278, lg: 298 }, borderRadius: '10px', flexShrink: 0 }} />
                 ))}
               </Box>
             </Container>
