@@ -32,5 +32,5 @@
     ".next-browser/types/**/*.ts",
     ".next-browser/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "supabase/functions"]
+  "exclude": ["node_modules", "supabase/functions", ".next-browser", ".next/dev"]
 }
