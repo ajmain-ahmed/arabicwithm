@@ -7,7 +7,6 @@ import {
   Breadcrumbs,
   Button,
   Container,
-  Drawer,
   IconButton,
   Pagination,
   Skeleton,
@@ -16,19 +15,17 @@ import {
   Typography,
 } from '@mui/material'
 import {
-  Close,
   Delete,
   Edit,
   Movie,
   NavigateNext,
   PlayArrow,
   School,
-  Tune,
   VideoLibrary,
 } from '@mui/icons-material'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 import { WATCH_LEVELS } from '@/app/lib/cartoons'
-import { ContentCard, FilterSidebar } from '@/app/components/content-grid'
+import { CatalogueLayout, ContentCard, FilterSidebar } from '@/app/components/content-grid'
 import ShowEditDialog from './components/ShowEditDialog'
 import { deleteShow } from '@/app/actions/admin'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
@@ -129,7 +126,6 @@ export default function CartoonsPage({
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [view, setView] = useState<WatchView>(searchParams.get('view') === 'shows' ? 'shows' : 'episodes')
-  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingShow, setEditingShow] = useState<ShowMeta | undefined>()
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -191,28 +187,18 @@ export default function CartoonsPage({
       setActiveLevel={setActiveLevel}
       disabledCategories={disabledCategories}
       disabledLevels={disabledLevels}
-      onMobileClose={() => setFilterDrawerOpen(false)}
     />
   )
 
   return (
-    <Box
-      component="main"
-      sx={{
-        minHeight: { xs: 'calc(100vh - 56px)', md: '100vh' },
-        '@supports (height: 100dvh)': { minHeight: { xs: 'calc(100dvh - 56px)', md: '100dvh' } },
-        bgcolor: WARM_WHITE,
-        pb: { xs: 2, md: 8 },
-      }}
-    >
-      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
+    <CatalogueLayout
+      breadcrumbs={(
         <Breadcrumbs separator={<NavigateNext sx={{ fontSize: 16, color: 'var(--awm-muted-light)' }} />} sx={{ display: { xs: 'none', md: 'flex' }, mb: 2 }}>
           <Typography onClick={() => router.push('/')} sx={{ color: MUTED, cursor: 'pointer', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { color: GOLD } }}>Home</Typography>
           <Typography sx={{ color: BARK, fontWeight: 600, fontFamily: 'var(--font-sans), sans-serif' }}>Watch</Typography>
         </Breadcrumbs>
-
-        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1.5, mb: { xs: 1.5, md: 3 } }}>
-          <Box sx={{ display: 'flex', width: { xs: '100%', sm: 'auto' }, alignItems: 'center' }}>
+      )}
+      headerStart={(
           <ToggleButtonGroup
             exclusive
             value={view}
@@ -255,34 +241,20 @@ export default function CartoonsPage({
               <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>All Shows</Box>
             </ToggleButton>
           </ToggleButtonGroup>
-          </Box>
+      )}
+      activeFilterCount={activeFilterCount}
+      onClearFilters={resetFilters}
+      filtersPanel={filtersPanel}
+      countLabel={`${totalItems} ${view === 'episodes' ? 'episodes' : 'shows'}`}
+    >
+      <ShowEditDialog open={dialogOpen} show={editingShow} onClose={() => setDialogOpen(false)} onSaved={() => { setDialogOpen(false); router.refresh() }} />
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
-            <Button startIcon={<Tune />} onClick={() => setFilterDrawerOpen(true)} sx={{ display: { xs: 'inline-flex', md: 'none' }, minHeight: 42, px: 2, borderRadius: '8px', color: BARK, border: '1px solid rgba(44,26,14,.15)', textTransform: 'none' }}>
-              Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-            </Button>
-            {activeFilterCount > 0 && <Button onClick={resetFilters} sx={{ minHeight: 44 }}>Clear all</Button>}
-          </Box>
+      {visibleItems.length === 0 ? (
+        <Box sx={{ py: 10, textAlign: 'center' }}>
+          <Typography sx={{ color: BARK, fontFamily: 'var(--font-heading)', fontSize: 22 }}>No {view} match your filters</Typography>
+          <Button onClick={resetFilters} sx={{ mt: 1.5, color: GOLD, textTransform: 'none' }}>Reset filters</Button>
         </Box>
-
-        <Box sx={{ display: 'flex', gap: { md: 4, lg: 5 } }}>
-          <Box sx={{ width: 240, flexShrink: 0, display: { xs: 'none', md: 'block' } }}>
-            <Box sx={{ position: 'sticky', top: 100 }}>{filtersPanel}</Box>
-          </Box>
-
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ display: { xs: 'none', md: 'block' }, mb: 2, color: MUTED, textAlign: 'right', fontSize: 13 }}>
-              {totalItems} {view === 'episodes' ? 'episodes' : 'shows'}
-            </Typography>
-
-            <ShowEditDialog open={dialogOpen} show={editingShow} onClose={() => setDialogOpen(false)} onSaved={() => { setDialogOpen(false); router.refresh() }} />
-
-            {visibleItems.length === 0 ? (
-              <Box sx={{ py: 10, textAlign: 'center' }}>
-                <Typography sx={{ color: BARK, fontFamily: 'var(--font-heading)', fontSize: 22 }}>No {view} match your filters</Typography>
-                <Button onClick={resetFilters} sx={{ mt: 1.5, color: GOLD, textTransform: 'none' }}>Reset filters</Button>
-              </Box>
-            ) : view === 'episodes' ? (
+      ) : view === 'episodes' ? (
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.75, sm: 1 } }}>
                 {episodes.map((episode) => (
                   <ContentCard
@@ -307,7 +279,7 @@ export default function CartoonsPage({
                   />
                 ))}
               </Box>
-            ) : (
+      ) : (
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.75, sm: 1 } }}>
                 {shows.map((show) => (
                   <Box key={show.id} sx={{ position: 'relative', minWidth: 0 }}>
@@ -340,7 +312,7 @@ export default function CartoonsPage({
                   </Box>
                 ))}
               </Box>
-            )}
+      )}
 
             {pageCount > 1 && (
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: { xs: 3, md: 5 } }}>
@@ -370,17 +342,6 @@ export default function CartoonsPage({
                 />
               </Box>
             )}
-          </Box>
-        </Box>
-      </Container>
-
-      <Drawer anchor="left" open={filterDrawerOpen} onClose={() => setFilterDrawerOpen(false)} slotProps={{ paper: { sx: { width: 310, bgcolor: WARM_WHITE, p: 3 } } }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography sx={{ color: BARK, fontFamily: 'var(--font-heading)', fontSize: 22 }}>Filters</Typography>
-          <IconButton onClick={() => setFilterDrawerOpen(false)} aria-label="Close filters"><Close /></IconButton>
-        </Box>
-        {filtersPanel}
-      </Drawer>
-    </Box>
+    </CatalogueLayout>
   )
 }
