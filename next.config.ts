@@ -44,6 +44,11 @@ const nextConfig: NextConfig = {
       'lucide-react',
     ],
   },
+  async redirects() {
+    // Resolve the Admin entry redirect before rendering the streamed router
+    // tree, avoiding a hook-order crash during initial client navigation.
+    return [{ source: '/admin', destination: '/admin/shows', permanent: false }]
+  },
   async headers() {
     return [
       {
