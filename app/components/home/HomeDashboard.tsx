@@ -11,6 +11,7 @@ import {
   Headphones,
   LocalFireDepartmentRounded,
   MenuBook,
+  DiamondOutlined,
   OndemandVideo,
   AccountCircleOutlined,
   ArrowForward,
@@ -221,9 +222,9 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
           },
         }}
       >
-        <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 520 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: { xs: 'center', md: 'center 46%' } }}>
+        <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
           {mode === 'dark' && <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.42) 55%, rgba(0,0,0,0.6) 100%)' }} />}
-          <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 11 }, pb: { xs: 5, md: 5 } }}>
+          <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 14 }, pb: { xs: 5, md: 6 } }}>
             <Box sx={{ maxWidth: user ? 1140 : 720, mx: user ? 'auto' : 0, textAlign: user ? 'center' : 'left' }}>
               {user ? (
                 <Typography component="h1" suppressHydrationWarning sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 40, sm: 52, md: 62 }, fontWeight: 600, lineHeight: 1.05, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.75), 0 4px 28px rgba(0,0,0,0.55)' }}>{greeting}</Typography>
@@ -242,7 +243,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
                     <LocalFireDepartmentRounded sx={{ fontSize: 18 }} />
                     {streak} day{streak === 1 ? '' : 's'} streak
                   </Box>
-                  <Button onClick={() => setPremiumOpen(true)} variant="contained" startIcon={<AutoStories />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>AWM+</Button>
+                  <Button onClick={() => setPremiumOpen(true)} variant="contained" startIcon={<DiamondOutlined sx={{ color: 'var(--awm-gold-light)' }} />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>AWM+</Button>
                 </Box>
               )}
             </Box>

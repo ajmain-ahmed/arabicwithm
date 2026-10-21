@@ -16,7 +16,6 @@ import BrandLogo from './BrandLogo'
 import { setExploreSoundPreference } from '@/app/lib/explore'
 import MobileDrawer from './MobileDrawer'
 import UserMenu from './UserMenu'
-import PremiumMemberMark from './PremiumMemberMark'
 import { NAV_ITEMS, NAV_ROUTES } from './constants'
 import { NAV_CSS } from './styles'
 
@@ -180,7 +179,6 @@ export default function Navbar() {
                                             >
                                                 {userInitial}
                                             </Avatar>
-                                            <PremiumMemberMark userId={user!.id} />
                                         </IconButton>
                                     ) : (
                                         <IconButton onClick={openSignIn} sx={{ width: 44, height: 44, p: 0.75, color: navColor, transition: 'color .25s ease' }} aria-label="Sign in">
@@ -241,7 +239,6 @@ export default function Navbar() {
                                             >
                                                 {userInitial}
                                             </Avatar>
-                                            <PremiumMemberMark userId={user!.id} />
                                         </IconButton>
                                     ) : (
                                         <Button

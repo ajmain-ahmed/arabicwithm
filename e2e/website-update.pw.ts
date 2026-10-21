@@ -1,4 +1,7 @@
 import { test, expect, type BrowserContext, type Page } from '@playwright/test'
+import {installYouTubeFixture} from './helpers/youtube'
+test.beforeEach(async({page})=>{await installYouTubeFixture(page)})
+
 
 async function signIn(context: BrowserContext, kind: 'free' | 'premium' | 'admin') {
   const id = { free: '11111111-1111-4111-8111-111111111111', premium: '22222222-2222-4222-8222-222222222222', admin: '44444444-4444-4444-8444-444444444444' }[kind]
@@ -23,7 +26,7 @@ for (const width of [320, 390, 768, 1440, 1920]) {
     expect(badges).toHaveLength(2); expect(badges[0]).toEqual(badges[1]); expect(badges[0].loaded).toBe(true)
     const visualHeights = await cta.locator('img[src*="store-badges"]').evaluateAll(elements => elements.map(element => element.getBoundingClientRect().height * (element.getAttribute('src')!.endsWith('.png') ? 166 / 250 : 1)))
     expect(Math.abs(visualHeights[0] - visualHeights[1])).toBeLessThan(1)
-    await expect(cta.getByLabel('Email address')).toBeVisible()
+    await expect(cta.getByRole('img',{name:'QR code placeholder'})).toBeVisible()
     await noOverflow(page)
     await cta.screenshot({ path: `test-results/app-cta-${width}.png` })
     await signIn(context, 'premium')
@@ -83,25 +86,14 @@ for (const width of [320, 390, 768, 1440, 1920]) {
   })
 }
 
-test('guest consent persists once; account holders can opt in and withdraw without retyping email', async ({ page, context, request }) => {
-  await page.goto('/')
-  const cta = page.locator('#download-app')
-  await expect(cta.getByRole('checkbox')).toHaveCount(0)
-  await cta.getByLabel('Email address').fill('  Launch@Test.example ')
-  await cta.getByRole('button', { name: 'Email me once the app launches', exact: true }).click()
-  await expect(cta.getByRole('status')).toContainText('You’re on the list')
-  await page.reload()
-  await cta.getByLabel('Email address').fill('launch@test.example')
-  await cta.getByRole('button', { name: 'Email me once the app launches', exact: true }).click()
-  await expect(cta.getByRole('status')).toContainText('You’re on the list')
-  const rows = await (await request.get('https://localhost:4310/fixture/launch-preferences', { ignoreHTTPSErrors: true })).json()
-  expect(rows.filter((row: { email: string }) => row.email === 'launch@test.example')).toHaveLength(1)
-  await signIn(context, 'free'); await page.reload()
-  await expect(cta.getByLabel('Email address')).toHaveCount(0)
-  await cta.getByRole('button', { name: 'Notify me using my account email' }).click()
-  await expect(cta.getByRole('button', { name: 'Turn off app-launch emails' })).toBeVisible()
-  await cta.getByRole('button', { name: 'Turn off app-launch emails' }).click()
-  await expect(cta.getByRole('status')).toContainText('switched off')
+test('restored app section has QR/store controls without email signup for guests and accounts',async({page,context})=>{
+ await page.goto('/')
+ const cta=page.locator('#download-app')
+ await expect(cta.getByLabel('Email address')).toHaveCount(0)
+ await expect(cta.getByRole('img',{name:'QR code placeholder'})).toBeVisible()
+ await signIn(context,'free');await page.reload()
+ await expect(cta.getByLabel('Email address')).toHaveCount(0)
+ await expect(cta.getByRole('img',{name:'QR code placeholder'})).toBeVisible()
 })
 
 test('free account is gated by the existing Premium prompt in Listen', async ({ page, context }) => {
@@ -121,12 +113,12 @@ for (const width of [320, 390, 768, 1024, 1440, 1920]) {
     await expect(arabic).toHaveText('\u0643\u0650\u062a\u064e\u0627\u0628\u064c')
     await arabic.hover()
     await expect(page.getByRole('tooltip')).toHaveCount(0)
-    await page.getByRole('button', { name: 'Transcript settings' }).click()
+    await page.getByRole('button', { name: 'Settings' }).click()
     await page.getByRole('switch', { name: 'Tashk\u012bl' }).click()
     await page.getByRole('button', { name: 'Done', exact: true }).click()
     await expect(arabic).toHaveText('\u0643\u062a\u0627\u0628')
     await expect(page.getByText('book', { exact: true }).first()).toBeVisible()
-    await page.getByRole('button', { name: 'Transcript settings' }).click()
+    await page.getByRole('button', { name: 'Settings' }).click()
     await page.getByRole('switch', { name: 'Tashk\u012bl' }).click()
     await page.getByRole('button', { name: 'Done', exact: true }).click()
     await expect(arabic).toHaveText('\u0643\u0650\u062a\u064e\u0627\u0628\u064c')

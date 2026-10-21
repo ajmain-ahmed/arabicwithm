@@ -3,7 +3,7 @@
 import { z } from 'zod'
 import { unstable_cache } from 'next/cache'
 import { serviceClient } from '@/app/lib/supabase'
-import { forYouTokens, hourlySeed, type ForYouClip } from '@/app/lib/forYou'
+import { forYouTokens, hourlySeed, type ForYouClip, type ForYouSegment } from '@/app/lib/forYou'
 
 async function loadForYouClips(seed: string, excluded: number[], recent: string[]): Promise<ForYouClip[]> {
  const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(100)}).parse({seed,excluded,recent})
@@ -32,3 +32,23 @@ export async function fetchForYouClips(seed:string,excluded:number[]=[],recent:s
 }
 
 export { hourlySeed }
+
+/** Load a source once on opening a clip, never on time updates or seeks.
+ * For You publication is independent of searchable-library publication. */
+export async function fetchForYouTranscript(id:string):Promise<ForYouSegment[]> {
+ z.string().uuid().parse(id)
+ const {data:video,error}=await serviceClient.from('youtube_transcripts').select('id,raw_transcript').eq('id',id).eq('status','ready').eq('explore_published',true).filter('source_origin','eq','website_admin_transcript').maybeSingle()
+ if(error)throw new Error('Unable to load the source transcript.')
+ if(!video)return []
+ const raw=video.raw_transcript as {content?:{tokens?:unknown}[]}|null
+ const segments:ForYouSegment[]=[]
+ for(let after=-1;;){
+  const {data,error}=await serviceClient.from('transcript_segments').select('id,position,original_text,english_text,start_seconds,end_seconds,canonical_paragraph').eq('transcript_id',id).gt('position',after).order('position').limit(500)
+  if(error)throw new Error('Unable to load the source transcript.')
+  const batch=data??[]
+  for(const segment of batch)segments.push({...segment,end_seconds:segment.end_seconds??segment.start_seconds,tokens:forYouTokens(segment.canonical_paragraph,raw?.content?.[segment.position])})
+  if(batch.length<500)break
+  after=batch[batch.length-1].position
+ }
+ return segments
+}

@@ -1,4 +1,4 @@
-export interface ForYouToken { arabic:string; english:string }
+export interface ForYouToken { arabic:string; english:string; start_seconds?:number; end_seconds?:number }
 export interface ForYouSegment {
  id:number; position:number; original_text:string; english_text:string|null;
  start_seconds:number; end_seconds:number; canonical_paragraph?:unknown; source_tokens?:unknown; tokens:ForYouToken[]
@@ -30,6 +30,13 @@ export function forYouTokens(canonical:unknown,source:unknown):ForYouToken[] {
   if(!arabic)return []
   const enriched=canonicalTokens[index]
   const matching=record(enriched)&&firstText(enriched.arabic,enriched.ar,enriched.surface)===arabic?enriched:{}
-  return [{arabic,english:firstText(token.english,token.gloss,token.translation,matching.english,matching.gloss,matching.translation)}]
+  const start = typeof token.start_seconds === 'number' ? token.start_seconds : typeof token.start_ms === 'number' ? token.start_ms / 1000 : typeof token.start === 'number' ? token.start : undefined
+  const end = typeof token.end_seconds === 'number' ? token.end_seconds : typeof token.end_ms === 'number' ? token.end_ms / 1000 : typeof token.end === 'number' ? token.end : undefined
+  return [{arabic,english:firstText(token.english,token.gloss,token.translation,matching.english,matching.gloss,matching.translation), ...(start !== undefined && end !== undefined && end > start ? {start_seconds:start,end_seconds:end}: {})}]
  })
+}
+
+/** Gaps must not fall back to an unrelated first sentence. */
+export function segmentAtTime(segments:ForYouSegment[], seconds:number):ForYouSegment|undefined {
+ return segments.find(segment=>segment.start_seconds<=seconds && seconds<segment.end_seconds)
 }

@@ -1,37 +1,55 @@
 'use client'
 
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { Alert, Box, Button, CircularProgress, IconButton, Skeleton, Typography, Dialog, DialogTitle, DialogContent, DialogActions, FormControlLabel, Switch, Tooltip } from '@mui/material'
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { Alert, Box, Button, CircularProgress, IconButton, Skeleton, Typography, Popover, FormControlLabel, Switch, Tooltip } from '@mui/material'
 import { KeyboardArrowDown, KeyboardArrowUp, SettingsOutlined } from '@mui/icons-material'
-import { fetchForYouClips } from '@/app/actions/forYou'
+import { fetchForYouClips, fetchForYouTranscript } from '@/app/actions/forYou'
 import { displayArabic } from '@/app/lib/displayArabic'
-import { hourlySeed } from '@/app/lib/forYou'
-import type { ForYouClip, ForYouToken } from '@/app/lib/forYou'
+import { hourlySeed, segmentAtTime } from '@/app/lib/forYou'
+import type { ForYouClip, ForYouToken, ForYouSegment } from '@/app/lib/forYou'
 import { useForYouCache } from '@/store/forYouStore'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
-import { getExploreSoundPreference, setExploreSoundPreference, subscribeToExploreSoundPreference } from '@/app/lib/explore'
+import { getExploreSoundPreference, subscribeToExploreSoundPreference } from '@/app/lib/explore'
 
+import { blockedForYouSources, excludeForYouSource } from '@/app/lib/forYouPlayback'
+
+const sourceTranscripts = new Map<string, Promise<ForYouSegment[]>>()
 const MAX_RETAINED_CLIPS = 60
 
 interface TranscriptSettings { tashkeel: boolean; meanings: boolean; sentence: boolean }
 const DEFAULT_SETTINGS: TranscriptSettings = { tashkeel: true, meanings: true, sentence: true }
 
-export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS }: { tokens: ForYouToken[]; settings?: TranscriptSettings }) {
+export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tokens: ForYouToken[]; settings?: TranscriptSettings; time?:number }) {
   return <Box dir="rtl" sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2, py: 1 }}>
-    {tokens.map((token, index) => <Box component="span" key={index} sx={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
+    {tokens.map((token, index) => <Box component="span" key={index} data-active-token={time !== undefined && token.start_seconds !== undefined && token.end_seconds !== undefined && token.start_seconds <= time && time < token.end_seconds ? 'true' : undefined} sx={{ borderRadius: 1, '&[data-active-token="true"]': { bgcolor: 'color-mix(in srgb, var(--awm-gold) 25%, transparent)' }, display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
       <Typography component="span" lang="ar" sx={{ color: 'inherit', fontFamily: 'var(--font-serif)', fontSize: { xs: '1.8rem', md: '2.2rem' } }}>{displayArabic(token.arabic, settings.tashkeel)}</Typography>
       {settings.meanings && token.english && <Typography component="span" lang="en" dir="ltr" sx={{ color: 'inherit', opacity: .75, fontSize: '.9rem', textAlign: 'center', overflowWrap: 'anywhere' }}>{token.english}</Typography>}
     </Box>)}
   </Box>
 }
 
-function ClipPlayer({ clip, leftControls, rightControls, settings }: { settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode }) {
+export function ClipPlayer({ clip, leftControls, rightControls, settings, onUnavailable }: { settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
   const [time, setTime] = useState(clip.clip_start_ms / 1000)
+  const [segments,setSegments]=useState(clip.segments)
+  const [ended,setEnded]=useState(false)
+  useEffect(()=>{
+    let active=true
+    if(!sourceTranscripts.has(clip.video.id)){
+      if(sourceTranscripts.size>=20)sourceTranscripts.delete(sourceTranscripts.keys().next().value!)
+      sourceTranscripts.set(clip.video.id,fetchForYouTranscript(clip.video.id).catch(error=>{sourceTranscripts.delete(clip.video.id);throw error}))
+    }
+    void sourceTranscripts.get(clip.video.id)!.then(rows=>{if(active&&rows.length)setSegments(rows)}).catch(()=>{/* Selected clip remains usable; no stale sentence is shown outside its timing. */})
+    return()=>{active=false}
+  },[clip.video.id])
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
-  const { wrapRef, errorCode, retry, isReady, isMuted, autoplayBlocked, playWithSound, mute } = useYouTubePlayer(clip.video.youtube_id, setTime, clip.clip_start_ms / 1000, { autoplay: true, muted: !soundEnabled, mutedAutoplayFallback: true, endAt: clip.clip_end_ms / 1000 })
+  function updateTime(seconds:number){
+    setTime(seconds)
+    if(seconds>=clip.clip_start_ms/1000 && seconds<clip.clip_end_ms/1000)setEnded(false)
+  }
+  const { wrapRef, isReady, isMuted, autoplayBlocked, playWithSound, mute, seekTo } = useYouTubePlayer(clip.video.youtube_id, updateTime, clip.clip_start_ms / 1000, { autoplay: true, muted: !soundEnabled, mutedAutoplayFallback: true, endAt: clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>setEnded(true), onError:code=>onUnavailable(clip.video.youtube_id,code) })
   useEffect(() => { if (!soundEnabled) mute() }, [soundEnabled, mute])
-  const active = clip.segments.find(s => s.start_seconds <= time && s.end_seconds > time) ?? clip.segments[0]
-  return <Box>
+  const active = segmentAtTime(segments,time)
+  return <Box data-for-you-source={clip.video.youtube_id}>
     {/* Outer box = positioning context for the out-of-frame controls. */}
     <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9' }}>
       <Box sx={{ position: 'relative', width: '100%', height: '100%', bgcolor: '#000', borderRadius: { xs: '12px', md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
@@ -40,10 +58,10 @@ function ClipPlayer({ clip, leftControls, rightControls, settings }: { settings:
       {leftControls}
       {rightControls}
     </Box>
-    <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center' }}>{isReady ? <Button onClick={() => { if (isMuted || autoplayBlocked) { setExploreSoundPreference(true); playWithSound() } else { setExploreSoundPreference(false); mute() } }} sx={{ minHeight: 44, color: { xs: 'var(--awm-forest)', md: 'var(--awm-gold-light)' } }}>{autoplayBlocked ? 'Play with sound' : isMuted ? 'Turn sound on' : 'Mute'}</Button> : <Typography sx={{ py: 1.5, fontSize: 12, textAlign: 'center', color: { xs: 'var(--awm-muted)', md: '#f5ede0' } }}>Use the player controls for playback and sound.</Typography>}</Box>
-    {errorCode && <Alert severity="warning" sx={{ mt: 2 }}>The video could not be loaded. <Button onClick={retry}>Retry</Button></Alert>}
+    {ended && <Box sx={{display:'flex',justifyContent:'center',mt:1}}><Button onClick={()=>{setEnded(false);seekTo(clip.clip_start_ms/1000)}} sx={{color:{md:'var(--awm-gold-light)'}}}>Replay clip</Button></Box>}
+    {isReady && (isMuted || autoplayBlocked) && <Box sx={{display:'flex',justifyContent:'center',mt:1}}><Button onClick={playWithSound} sx={{color:{md:'var(--awm-gold-light)'}}}>{autoplayBlocked?'Play with sound':'Turn sound on'}</Button></Box>}
     {active && <Box sx={{ mt: { xs: 2, md: 3 }, color: { md: '#f5ede0' } }}>
-      {active.tokens.length ? <ForYouWords key={active.id} tokens={active.tokens} settings={settings} /> : <Typography lang="ar" dir="rtl" sx={{ fontSize: { xs: '1.8rem', md: '2.2rem' }, textAlign: 'center' }}>{displayArabic(active.original_text, settings.tashkeel)}</Typography>}
+      {active.tokens.length ? <ForYouWords key={active.id} tokens={active.tokens} settings={settings} time={time} /> : <Typography lang="ar" dir="rtl" sx={{ fontSize: { xs: '1.8rem', md: '2.2rem' }, textAlign: 'center' }}>{displayArabic(active.original_text, settings.tashkeel)}</Typography>}
       {settings.sentence && active.english_text && <Typography lang="en" dir="ltr" sx={{ mt: 0.5, textAlign: 'center', color: 'inherit', opacity: .75 }}>{active.english_text}</Typography>}
     </Box>}
   </Box>
@@ -79,7 +97,7 @@ function ChevronNav({ onUp, onDown, upDisabled, downDisabled, hidden, sx }: { on
     controls sit beside the skeleton exactly where they land once loaded. */
 function ForYouLoading({ progress, leftControls, rightControls, mobileControls }: { progress: number; leftControls?: ReactNode; rightControls?: ReactNode; mobileControls?: ReactNode }) {
   return <Box>
-    <Box sx={{ width: { xs: '100%', md: 'min(calc(100% - 160px), calc((100dvh - 390px) * 16 / 9))' }, mx: { md: 'auto' }, position: 'relative', left: 0 }}>
+    <Box sx={{ width: { xs: '100%', md: 'min(calc(100% - 330px), calc((100dvh - 390px) * 16 / 9))' }, mx: { md: 'auto' }, position: 'relative', left: {xs:0,md:-90} }}>
       <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: '12px', md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' } }}>
         <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
           <Box sx={{ textAlign: 'center' }}>
@@ -101,7 +119,7 @@ function ForYouLoading({ progress, leftControls, rightControls, mobileControls }
 
 export default function ForYouFeed({ initialClips, switcher, railSwitcher, desktopControls }: { initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode; desktopControls?: (settings: ReactNode) => ReactNode }) {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement|null>(null)
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('awm-for-you-settings') ?? '{}')
@@ -118,9 +136,9 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
   const cachedIndex = useForYouCache((state) => state.index)
   const cachedExcluded = useForYouCache((state) => state.excluded)
   const setCache = useForYouCache((state) => state.setAll)
-  const [clips, setClips] = useState<ForYouClip[]>(initialClips ?? cachedClips)
-  const [loadStarted, setLoadStarted] = useState(Boolean(initialClips?.length) || cachedClips.length > 0)
-  const [index, setIndex] = useState(cachedIndex), [error, setError] = useState(''), [busy, setBusy] = useState(false)
+  const [clips, setClips] = useState<ForYouClip[]>(()=> (initialClips ?? cachedClips).filter(clip=>!blockedForYouSources().has(clip.video.youtube_id)))
+  const [loadStarted, setLoadStarted] = useState(()=> (initialClips??cachedClips).some(clip=>!blockedForYouSources().has(clip.video.youtube_id)))
+  const [index, setIndex] = useState(()=>Math.min(cachedIndex,Math.max(0,(initialClips??cachedClips).filter(clip=>!blockedForYouSources().has(clip.video.youtube_id)).length-1))), [error, setError] = useState(''), [busy, setBusy] = useState(false)
   const [excluded, setExcluded] = useState<number[]>(cachedExcluded)
   const [progress, setProgress] = useState(0)
 
@@ -145,26 +163,40 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
     return () => clearInterval(timer)
   }, [busy])
 
+  const loadingRef=useRef(false)
   async function loadMore() {
-    if (busy) return
+    if (loadingRef.current) return
+    loadingRef.current=true
     setBusy(true); setError('')
     if (clips.length === 0) setProgress(0)
-    const seen = [...excluded, ...clips.slice(0, index + 1).flatMap((clip) => clip.segments.map((segment) => segment.id))]
+    const seen = new Set([...excluded, ...clips.slice(0, index + 1).flatMap((clip) => clip.segments.map((segment) => segment.id))])
     // First load of the session shares an hourly seed so the data cache can
     // serve every visitor in that window; later loads are unique.
     const seed = clips.length === 0 && excluded.length === 0 ? hourlySeed() : crypto.randomUUID()
     try {
       // Requery on every navigation; do not retain prefetched unpublished clips.
-      const batch = await fetchForYouClips(seed, seen.slice(-10000), clips.slice(0, index + 1).map((clip) => clip.video.id).slice(-100))
-      setExcluded(seen.slice(-10000))
-      if (batch.length) {
-        const merged = [...clips, ...batch]
+      const blocked=blockedForYouSources()
+      let next:ForYouClip[]=[]
+      // A cached first batch may contain only blocked sources. Exclude those
+      // segment IDs and ask for another batch, with a finite retry budget.
+      for(let attempt=0;attempt<8;attempt++){
+        const batch=await fetchForYouClips(seed,[...seen].slice(-10000),clips.slice(0,index+1).map(clip=>clip.video.id).slice(-100))
+        next=batch.filter(clip=>!blocked.has(clip.video.youtube_id))
+        if(next.length||!batch.length)break
+        const before=seen.size
+        batch.forEach(clip=>clip.segments.forEach(segment=>seen.add(segment.id)))
+        if(seen.size===before)break
+      }
+      setExcluded([...seen].slice(-10000))
+      const usable=clips.filter(clip=>!blocked.has(clip.video.youtube_id))
+      if (next.length) {
+        const merged = [...usable, ...next]
         const trim = Math.max(0, merged.length - MAX_RETAINED_CLIPS)
         setClips(merged.slice(trim))
-        setIndex(clips.length === 0 ? 0 : index + 1 - trim)
+        setIndex(Math.max(0,usable.length - trim))
       }
       setProgress(100)
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load clips.') } finally { setBusy(false) }
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load clips.') } finally { loadingRef.current=false; setBusy(false) }
   }
 
   function step(offset: 1 | -1) {
@@ -176,43 +208,51 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
     else void loadMore()
   }
 
+  function unavailable(source:string,code:number){
+    setSettingsAnchor(null)
+    excludeForYouSource(source,code)
+    const remaining=clips.filter(clip=>clip.video.youtube_id!==source)
+    const before=clips.slice(0,index).filter(clip=>clip.video.youtube_id!==source).length
+    setClips(remaining);setIndex(Math.max(0,Math.min(before,remaining.length-1)))
+    if(!remaining.length)void loadMore()
+  }
+  const settingsButton=<Box sx={{display:'flex',flexDirection:'column',alignItems:'center'}}><Tooltip title="Settings"><IconButton aria-label="Settings" onClick={event=>setSettingsAnchor(event.currentTarget)} sx={{width:44,height:44,color:{xs:'var(--awm-bark)',md:'var(--awm-cream)'},bgcolor:{md:'rgba(255,255,255,.14)'}}}><SettingsOutlined/></IconButton></Tooltip><Typography sx={{display:{xs:'none',md:'block'},fontSize:11,color:'#fff',mt:.5}}>Settings</Typography></Box>
+  const desktopRail=<Box sx={{display:{xs:'none',md:'flex'},flexDirection:'column',alignItems:'center',gap:1}}>{desktopControls?.(settingsButton)??<>{railSwitcher}{settingsButton}</>}</Box>
   const initialLoading = clips.length === 0 && busy
 
   return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, pt: { xs: 0, md: 3 }, pb: { xs: 3, md: 5 } }}>
     <Box sx={{ maxWidth: 2400, mx: 'auto', px: { xs: 2, sm: 3, md: 5 } }}>
-      <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', mb: 2 }}>
-        {desktopControls?.(<Tooltip title="Transcript settings"><IconButton aria-label="Transcript settings" onClick={() => setSettingsOpen(true)} sx={{ width: 40, height: 40, borderRadius: '50%', color: 'var(--awm-cream)', bgcolor: 'rgba(255,255,255,.08)', ml: 1, mt: '5px', '&:hover': { bgcolor: 'rgba(255,255,255,.16)' } }}><SettingsOutlined sx={{ fontSize: 21 }} /></IconButton></Tooltip>)}
-      </Box>
-      <Box sx={{ display: { xs: 'flex', md: 'none' }, justifyContent: 'flex-end', mb: 1 }}><Tooltip title="Transcript settings"><IconButton aria-label="Transcript settings" onClick={() => setSettingsOpen(true)} sx={{ width: 44, height: 44, color: 'var(--awm-bark)' }}><SettingsOutlined /></IconButton></Tooltip></Box>
-      <Dialog open={settingsOpen} onClose={() => setSettingsOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>Transcript settings</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column' }}>
-          {([['tashkeel', 'Tashk\u012bl'], ['meanings', 'Inline word meanings'], ['sentence', 'English sentence']] as const).map(([key, label]) => <FormControlLabel key={key} label={label} control={<Switch checked={settings[key]} onChange={() => toggleSetting(key)} />} />)}
-        </DialogContent>
-        <DialogActions><Button onClick={() => setSettingsOpen(false)}>Done</Button></DialogActions>
-      </Dialog>
+      <Box sx={{display:{xs:'flex',md:'none'},justifyContent:'flex-end'}}>{settingsButton}</Box>
+      <Popover open={Boolean(settingsAnchor)} anchorEl={settingsAnchor} onClose={()=>setSettingsAnchor(null)} anchorOrigin={{vertical:'bottom',horizontal:'right'}} transformOrigin={{vertical:'top',horizontal:'right'}} slotProps={{paper:{sx:{p:2,width:'max-content',maxWidth:'calc(100vw - 32px)',borderRadius:'12px'}}}}>
+        <Typography component="h2" sx={{fontWeight:600,mb:1}}>Settings</Typography>
+        <Box sx={{display:'flex',flexDirection:'column'}}>
+          {([['tashkeel','Tashkīl'],['meanings','Inline word meanings'],['sentence','English sentence']] as const).map(([key,label])=><FormControlLabel key={key} label={label} control={<Switch checked={settings[key]} onChange={()=>toggleSetting(key)}/>}/>)}
+        </Box>
+        <Button onClick={()=>setSettingsAnchor(null)}>Done</Button>
+      </Popover>
       <Box sx={{ mt: 0.5 }}>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {initialLoading
           ? <ForYouLoading
               progress={progress}
               leftControls={<ChevronNav hidden="mobile" onUp={() => undefined} onDown={() => undefined} upDisabled downDisabled sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}
-              rightControls={railSwitcher ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', right: -66, bottom: 0 }}>{railSwitcher}</Box> : undefined}
+              rightControls={desktopRail ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', left: 'calc(100% + 16px)', top: 0 }}>{desktopRail}</Box> : undefined}
               mobileControls={<>{switcher}<ChevronNav hidden="desktop" onUp={() => undefined} onDown={() => undefined} upDisabled downDisabled /></>}
             />
           : clips[index]
-            ? <Box sx={{ minWidth: 0, width: { xs: '100%', md: 'min(calc(100% - 160px), calc((100dvh - 390px) * 16 / 9))' }, mx: { md: 'auto' }, position: 'relative', left: 0 }}>
+            ? <Box sx={{ minWidth: 0, width: { xs: '100%', md: 'min(calc(100% - 330px), calc((100dvh - 390px) * 16 / 9))' }, mx: { md: 'auto' }, position: 'relative', left: {xs:0,md:-90} }}>
                 <ClipPlayer
                   key={`${clips[index].video.id}:${clips[index].clip_start_ms}`}
                   clip={clips[index]}
+                  onUnavailable={unavailable}
                   settings={settings}
                   leftControls={<ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}
-                  rightControls={railSwitcher ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', right: -66, bottom: 0 }}>{railSwitcher}</Box> : undefined}
+                  rightControls={desktopRail ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', left: 'calc(100% + 16px)', top: 0 }}>{desktopRail}</Box> : undefined}
                 />
               </Box>
             : <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography>}
       </Box>
-      {!initialLoading && !clips[index] && <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', mt: 2 }}>{switcher}</Box>}
+      {!initialLoading && !clips[index] && <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', mt: 2 }}>{desktopRail}</Box>}
       {!initialLoading && (
         <Box sx={{ mt: { xs: 3 }, display: { xs: 'flex', md: 'none' }, justifyContent: 'center', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
           {switcher}
