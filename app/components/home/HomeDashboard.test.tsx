@@ -34,7 +34,7 @@ describe('homepage hero', () => {
     expect(html).not.toContain('Learn Arabic through cartoons and books')
     expect(html).not.toContain('Start Watching')
     expect(html).not.toContain('Start Reading')
-    expect(html).toContain('0 days streak')
+    expect(new DOMParser().parseFromString(html, 'text/html').querySelector('[aria-label="0 day streak"]')?.textContent).toBe('0')
     expect(html).toContain('AWM+')
     expect(home.statsRendered).toBe(false)
   })

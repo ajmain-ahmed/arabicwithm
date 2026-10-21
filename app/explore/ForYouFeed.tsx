@@ -12,18 +12,20 @@ import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { getExploreSoundPreference, subscribeToExploreSoundPreference } from '@/app/lib/explore'
 
 import { blockedForYouSources, excludeForYouSource } from '@/app/lib/forYouPlayback'
+import TextSizeControl, { safeTextSize, TEXT_SCALES } from '@/app/components/settings-controls/TextSizeControl'
+import MobileClipNavigator from './MobileClipNavigator'
 
 const sourceTranscripts = new Map<string, Promise<ForYouSegment[]>>()
 const MAX_RETAINED_CLIPS = 60
 
-interface TranscriptSettings { tashkeel: boolean; meanings: boolean; sentence: boolean }
+interface TranscriptSettings { tashkeel: boolean; meanings: boolean; sentence: boolean; arabicSize?: number; englishSize?: number }
 const DEFAULT_SETTINGS: TranscriptSettings = { tashkeel: true, meanings: true, sentence: true }
 
 export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tokens: ForYouToken[]; settings?: TranscriptSettings; time?:number }) {
   return <Box dir="rtl" sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2, py: 1 }}>
-    {tokens.map((token, index) => <Box component="span" key={index} data-active-token={time !== undefined && token.start_seconds !== undefined && token.end_seconds !== undefined && token.start_seconds <= time && time < token.end_seconds ? 'true' : undefined} sx={{ borderRadius: 1, '&[data-active-token="true"]': { bgcolor: 'color-mix(in srgb, var(--awm-gold) 25%, transparent)' }, display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
-      <Typography component="span" lang="ar" sx={{ color: 'inherit', fontFamily: 'var(--font-serif)', fontSize: { xs: '1.8rem', md: '2.2rem' } }}>{displayArabic(token.arabic, settings.tashkeel)}</Typography>
-      {settings.meanings && token.english && <Typography component="span" lang="en" dir="ltr" sx={{ color: 'inherit', opacity: .75, fontSize: '.9rem', textAlign: 'center', overflowWrap: 'anywhere' }}>{token.english}</Typography>}
+    {tokens.map((token, index) => <Box component="span" key={index} data-active-token={time !== undefined && token.start_seconds !== undefined && token.end_seconds !== undefined && token.start_seconds <= time && time < token.end_seconds ? 'true' : undefined} sx={{ minWidth:0,maxWidth:'100%',overflowWrap:'anywhere',borderRadius: 1, '&[data-active-token="true"]': { bgcolor: 'color-mix(in srgb, var(--awm-gold) 25%, transparent)' }, display: 'inline-flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Typography component="span" lang="ar" sx={{ color: 'inherit', fontFamily: 'var(--font-serif)', fontSize: { xs: `${1.8 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem`, md: `${2.2 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem` } }}>{displayArabic(token.arabic, settings.tashkeel)}</Typography>
+      {settings.meanings && token.english && <Typography component="span" lang="en" dir="ltr" sx={{ color: 'inherit', opacity: .75, fontSize: `${.9 * TEXT_SCALES[safeTextSize(settings.englishSize)]}rem`, textAlign: 'center', overflowWrap: 'anywhere' }}>{token.english}</Typography>}
     </Box>)}
   </Box>
 }
@@ -60,9 +62,9 @@ export function ClipPlayer({ clip, leftControls, rightControls, settings, onUnav
     </Box>
     {ended && <Box sx={{display:'flex',justifyContent:'center',mt:1}}><Button onClick={()=>{setEnded(false);seekTo(clip.clip_start_ms/1000)}} sx={{color:{md:'var(--awm-gold-light)'}}}>Replay clip</Button></Box>}
     {isReady && (isMuted || autoplayBlocked) && <Box sx={{display:'flex',justifyContent:'center',mt:1}}><Button onClick={playWithSound} sx={{color:{md:'var(--awm-gold-light)'}}}>{autoplayBlocked?'Play with sound':'Turn sound on'}</Button></Box>}
-    {active && <Box sx={{ mt: { xs: 2, md: 3 }, color: { md: '#f5ede0' } }}>
-      {active.tokens.length ? <ForYouWords key={active.id} tokens={active.tokens} settings={settings} time={time} /> : <Typography lang="ar" dir="rtl" sx={{ fontSize: { xs: '1.8rem', md: '2.2rem' }, textAlign: 'center' }}>{displayArabic(active.original_text, settings.tashkeel)}</Typography>}
-      {settings.sentence && active.english_text && <Typography lang="en" dir="ltr" sx={{ mt: 0.5, textAlign: 'center', color: 'inherit', opacity: .75 }}>{active.english_text}</Typography>}
+    {active && <Box data-feed-transcript sx={{ mt: { xs: 2, md: 3 }, color: { md: '#f5ede0' }, maxHeight:{xs:'35dvh',md:'none'},overflowY:'auto',overscrollBehavior:'contain' }}>
+      {active.tokens.length ? <ForYouWords key={active.id} tokens={active.tokens} settings={settings} time={time} /> : <Typography lang="ar" dir="rtl" sx={{ fontSize: { xs: `${1.8 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem`, md: `${2.2 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem` }, textAlign: 'center' }}>{displayArabic(active.original_text, settings.tashkeel)}</Typography>}
+      {settings.sentence && active.english_text && <Typography lang="en" dir="ltr" sx={{ mt: 0.5, textAlign: 'center', color: 'inherit', opacity: .75, fontSize: `${TEXT_SCALES[safeTextSize(settings.englishSize)]}rem` }}>{active.english_text}</Typography>}
     </Box>}
   </Box>
 }
@@ -123,14 +125,15 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('awm-for-you-settings') ?? '{}')
-      setSettings(Object.fromEntries(Object.entries(DEFAULT_SETTINGS).map(([key, value]) => [key, typeof saved[key] === 'boolean' ? saved[key] : value])) as unknown as TranscriptSettings)
+      setSettings({ ...Object.fromEntries(Object.entries(DEFAULT_SETTINGS).map(([key, value]) => [key, typeof saved[key] === 'boolean' ? saved[key] : value])), arabicSize:safeTextSize(saved.arabicSize),englishSize:safeTextSize(saved.englishSize) } as unknown as TranscriptSettings)
     } catch {}
   }, [])
-  function toggleSetting(key: keyof TranscriptSettings) {
+  function toggleSetting(key: 'tashkeel'|'meanings'|'sentence') {
     const next = { ...settings, [key]: !settings[key] }
     setSettings(next)
     try { localStorage.setItem('awm-for-you-settings', JSON.stringify(next)) } catch {}
   }
+  function resizeText(key:'arabicSize'|'englishSize',value:number){ const next={...settings,[key]:safeTextSize(value)};setSettings(next);try{localStorage.setItem('awm-for-you-settings',JSON.stringify(next))}catch{} }
   /* Session cache: view switches restore clips, position, and exclusions. */
   const cachedClips = useForYouCache((state) => state.clips)
   const cachedIndex = useForYouCache((state) => state.index)
@@ -216,7 +219,7 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
     setClips(remaining);setIndex(Math.max(0,Math.min(before,remaining.length-1)))
     if(!remaining.length)void loadMore()
   }
-  const settingsButton=<Box sx={{display:'flex',flexDirection:'column',alignItems:'center'}}><Tooltip title="Settings"><IconButton aria-label="Settings" onClick={event=>setSettingsAnchor(event.currentTarget)} sx={{width:44,height:44,color:{xs:'var(--awm-bark)',md:'var(--awm-cream)'},bgcolor:{md:'rgba(255,255,255,.14)'}}}><SettingsOutlined/></IconButton></Tooltip><Typography sx={{display:{xs:'none',md:'block'},fontSize:11,color:'#fff',mt:.5}}>Settings</Typography></Box>
+  const settingsButton=<Box sx={{display:'flex',flexDirection:'column',alignItems:'center'}}><Tooltip title="Settings"><IconButton aria-label="Settings" aria-expanded={!!settingsAnchor} onClick={event=>setSettingsAnchor(event.currentTarget)} sx={{width:{xs:44,md:50},height:{xs:44,md:50},color:{xs:'var(--awm-bark)',md:'#fff'},bgcolor:settingsAnchor?'rgba(184,134,11,.24)':{md:'rgba(255,255,255,.14)'},border:settingsAnchor?'1px solid var(--awm-gold)':'1px solid transparent','&:hover':{bgcolor:'rgba(184,134,11,.3)'},'&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}><SettingsOutlined/></IconButton></Tooltip><Typography sx={{display:{xs:'none',md:'block'},fontSize:11,color:'#fff',mt:.5}}>Settings</Typography></Box>
   const desktopRail=<Box sx={{display:{xs:'none',md:'flex'},flexDirection:'column',alignItems:'center',gap:1}}>{desktopControls?.(settingsButton)??<>{railSwitcher}{settingsButton}</>}</Box>
   const initialLoading = clips.length === 0 && busy
 
@@ -225,6 +228,8 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
       <Box sx={{display:{xs:'flex',md:'none'},justifyContent:'flex-end'}}>{settingsButton}</Box>
       <Popover open={Boolean(settingsAnchor)} anchorEl={settingsAnchor} onClose={()=>setSettingsAnchor(null)} anchorOrigin={{vertical:'bottom',horizontal:'right'}} transformOrigin={{vertical:'top',horizontal:'right'}} slotProps={{paper:{sx:{p:2,width:'max-content',maxWidth:'calc(100vw - 32px)',borderRadius:'12px'}}}}>
         <Typography component="h2" sx={{fontWeight:600,mb:1}}>Settings</Typography>
+        <TextSizeControl label="Arabic text size" value={safeTextSize(settings.arabicSize)} onChange={value=>resizeText('arabicSize',value)}/>
+        <TextSizeControl label="English text size" value={safeTextSize(settings.englishSize)} onChange={value=>resizeText('englishSize',value)}/>
         <Box sx={{display:'flex',flexDirection:'column'}}>
           {([['tashkeel','Tashkīl'],['meanings','Inline word meanings'],['sentence','English sentence']] as const).map(([key,label])=><FormControlLabel key={key} label={label} control={<Switch checked={settings[key]} onChange={()=>toggleSetting(key)}/>}/>)}
         </Box>
@@ -241,14 +246,14 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
             />
           : clips[index]
             ? <Box sx={{ minWidth: 0, width: { xs: '100%', md: 'min(calc(100% - 330px), calc((100dvh - 390px) * 16 / 9))' }, mx: { md: 'auto' }, position: 'relative', left: {xs:0,md:-90} }}>
-                <ClipPlayer
+                <MobileClipNavigator clipKey={`${clips[index].video.id}:${clips[index].clip_start_ms}`} canPrevious={index>0} busy={busy} step={step}><ClipPlayer
                   key={`${clips[index].video.id}:${clips[index].clip_start_ms}`}
                   clip={clips[index]}
                   onUnavailable={unavailable}
                   settings={settings}
                   leftControls={<ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}
                   rightControls={desktopRail ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', left: 'calc(100% + 16px)', top: 0 }}>{desktopRail}</Box> : undefined}
-                />
+                /></MobileClipNavigator>
               </Box>
             : <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography>}
       </Box>

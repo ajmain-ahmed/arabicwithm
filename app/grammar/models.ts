@@ -151,5 +151,5 @@ export function formLabel(v: Verb) { return v.form ? `Form ${roman[v.form - 1]}`
 }>)[v.quadriliteral_pattern ?? '']?.label ?? ''; }
 export const catalogue = {
     nahw: [{ id: 'word_type', title: 'Word Type' }, { id: 'sentence_role', title: 'Sentence Role' }, { id: 'grammatical_case', title: 'Case Endings' }, { id: 'rules', title: 'Revise Na\u1e25w Rules' }],
-    sarf: [{ id: 'roots', title: 'Root Types' }, { id: 'context', title: 'Context \u1e62arf' }, { id: 'weak', title: 'Weak Verbs' }, { id: 'patterns', title: 'Word Patterns' }, { id: 'ten', title: 'Revise the Ten Forms' }],
+    sarf: [{ id: 'context', title: 'Context \u1e62arf' }, { id: 'weak', title: 'Weak Verbs' }, { id: 'patterns', title: 'Word Patterns' }, { id: 'ten', title: 'Revise the Ten Forms' }],
 };

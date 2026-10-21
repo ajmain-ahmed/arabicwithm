@@ -29,7 +29,7 @@ for(const width of [390,1440]){
   const settings=page.getByRole('button',{name:'Settings',exact:true});const frame=page.locator('[data-for-you-source] iframe')
   if(width>=900){const [s,f]=await Promise.all([settings.boundingBox(),frame.boundingBox()]);expect(s!.x).toBeGreaterThan(f!.x+f!.width);expect(s!.y).toBeLessThan(f!.y+f!.height)}
   await settings.click();await expect(page.getByRole('heading',{name:'Settings',exact:true})).toBeVisible()
-  const panel=page.getByRole('heading',{name:'Settings',exact:true}).locator('..');const bounds=await panel.boundingBox();expect(bounds!.width).toBeLessThan(330);expect(bounds!.height).toBeLessThan(300)
+  const panel=page.getByRole('heading',{name:'Settings',exact:true}).locator('..');const bounds=await panel.boundingBox();expect(bounds!.width).toBeLessThan(330);expect(bounds!.height).toBeLessThan(460)
   await panel.getByRole('button',{name:'Done',exact:true}).click()
   await time(page,500.5);await expect(page.locator('[data-active-token=true]')).toHaveText('جَدِيدٌnew')
   await time(page,510);await expect(page.getByText('Later sentence',{exact:true})).toBeVisible()

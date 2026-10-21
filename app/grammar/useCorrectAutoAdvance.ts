@@ -8,7 +8,7 @@ export default function useCorrectAutoAdvance(correct: boolean, advance: () => v
   useEffect(() => { latest.current = advance }, [advance])
   useEffect(() => {
     if (!correct) return
-    const timer = setTimeout(() => latest.current(), 800)
+    const timer = setTimeout(() => latest.current(), 1500)
     return () => clearTimeout(timer)
   }, [correct])
 }

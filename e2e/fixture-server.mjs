@@ -143,6 +143,15 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       return json(res,hits.filter(h=>h.key>(body.p_after??'') && (h.kind!=='chapter'||body.p_books)))
     }
     if(rpc==='nahw_candidates') return json(res,learning.nahw)
+    if(rpc==='website_grammar_candidates') {
+      const examples=[
+        {tokens:[{arabic:'كَتَبَ'},{arabic:'الطَّالِبُ'},{arabic:'دَرْسًا'}],translation:'The student wrote a lesson.',target:1,role:'Doer / subject of the verb',key:'subject'},
+        {tokens:[{arabic:'قَرَأَ'},{arabic:'عَلِيٌّ'},{arabic:'الْكِتَابَ'}],translation:'Ali read the book.',target:2,role:'Direct object',key:'object'},
+        {tokens:[{arabic:'الْمُعَلِّمُ'},{arabic:'فِي'},{arabic:'الْمَدْرَسَةِ'}],translation:'The teacher is in the school.',target:0,role:'Topic',key:'topic'},
+      ]
+      const rows=examples.map((p,i)=>({id:i+1,sentence_hash:String(i+1).repeat(32),chapter_id:i%2?null:chapterId,paragraph_index:i%2?null:i,segment_id:i%2?44:null,cefr_rank:i+1,payload:{tokens:p.tokens,translation:p.translation,facts:[{token_index:p.target,mode:body.p_mode,key:body.p_mode==='sentence_role'?p.key:body.p_mode==='word_type'?'noun':i===1?'accusative':'nominative',english:body.p_mode==='sentence_role'?p.role:body.p_mode==='word_type'?'Noun':i===1?'Accusative':'Nominative',arabic:body.p_mode==='sentence_role'?'فَاعِلٌ':body.p_mode==='word_type'?'اِسْمٌ':i===1?'مَنْصُوبٌ':'مَرْفُوعٌ'}]}}))
+      return json(res,rows.filter(r=>!(body.p_recent??[]).includes(r.sentence_hash)&&(!body.p_cefr||r.cefr_rank<=body.p_cefr)))
+    }
     if(rpc==='prepared_practice_candidates') return json(res,body.p_offset ? [] : body.p_kind==='sarf'?learning.sarf:learning.patterns)
     if(['admin_save_manual_draft','admin_load_manual_draft','admin_list_manual_drafts','admin_delete_manual_draft'].includes(rpc)){
       if(roleFor(body.p_actor)!=='admin')return json(res,{message:'Forbidden'},403)

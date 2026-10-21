@@ -303,6 +303,7 @@ export default function useYouTubePlayer(
       segmentSafetyRef.current = null
       const player = playerRef.current
       playerRef.current = null
+      try { player?.pauseVideo?.() } catch {}
       try {
         player?.destroy?.()
       } catch {}
