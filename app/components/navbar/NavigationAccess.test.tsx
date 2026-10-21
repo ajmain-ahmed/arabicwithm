@@ -6,13 +6,14 @@ const mocks = vi.hoisted(() => ({ pathname: '/', mobile: false, role: 'admin', p
 // Navigation tests exercise destinations rather than decorative icon rendering.
 vi.mock('@mui/icons-material', () => {
   const Icon = () => <svg aria-hidden="true" />
-  return { AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon }
+  return { AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon, SchoolOutlined: Icon }
 })
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => mocks.auth }))
 vi.mock('@/app/lib/useAccountAccess', () => ({ useAccountAccess: () => ({ isAdmin: mocks.role === 'admin', isReviewer: mocks.role !== 'user' }) }))
 vi.mock('@/app/components/ThemeProvider', () => ({ useColorMode: () => ({ mode: 'light', toggleColorMode: vi.fn() }) }))
 vi.mock('@/app/components/AuthDialog', () => ({ default: () => null }))
 vi.mock('./ContactDialog', () => ({ default: () => null }))
+vi.mock('./PremiumMemberMark', () => ({ default: () => null }))
 vi.mock('./BrandLogo', () => ({ default: () => <span>Arabic With M</span> }))
 vi.mock('@/app/lib/supabase/client', () => ({ supabase: { auth: { signOut: vi.fn() } } }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }), usePathname: () => mocks.pathname }))
@@ -26,40 +27,17 @@ beforeEach(() => {
   mocks.auth.user = { id: 'admin', email: 'admin@example.com' }
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
 })
-it.each([false, true])('groups the learning destinations under Learn on mobile=%s', async mobile => {
-  mocks.mobile = mobile; mocks.auth.user = null; mocks.role = 'user'
-  await act(async () => root.render(<Navbar />))
-  if (mobile) {
-    await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
-    const labels = [...document.querySelectorAll('.mobile-list-btn')].map(button => button.textContent)
-    for (const label of ['Memory', 'Grammar', 'Word Search']) expect(labels).toContain(label)
-    /* Every Learn destination prompts sign-in instead of navigating for guests. */
-    for (const label of ['Memory', 'Grammar', 'Word Search']) {
-      await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
-      mocks.push.mockClear()
-      const items = [...document.querySelectorAll('.mobile-list-btn')]
-      await act(async () => (items[items.findIndex(button => button.textContent === label)] as HTMLElement).click())
-      expect(mocks.push).not.toHaveBeenCalled()
-    }
-    /* Signed-in users navigate normally. */
-    mocks.auth.user = { id: 'learner', email: 'learner@example.com' }
-    await act(async () => root.render(<Navbar />))
-    await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
-    mocks.push.mockClear()
-    const signedInItems = [...document.querySelectorAll('.mobile-list-btn')]
-    await act(async () => (signedInItems[signedInItems.findIndex(button => button.textContent === 'Memory')] as HTMLElement).click())
-    expect(mocks.push).toHaveBeenCalledWith('/memory')
-  } else {
-    expect(host.querySelector('a[href="/word-search"]')).toBeNull()
-    const nav = host.querySelector('nav[aria-label="Primary navigation"]')!
-    expect(nav.textContent).toContain('Learn')
-    await act(async () => (nav.querySelector('[aria-haspopup="menu"]') as HTMLElement).click())
-    const menu = document.querySelector('[role="menu"]')!
-    for (const label of ['Memory', 'Grammar', 'Word Search']) expect(menu.textContent).toContain(label)
-    mocks.push.mockClear()
-    await act(async () => (Array.from(menu.querySelectorAll('[role="menuitem"]')).find(item => item.textContent!.includes('Grammar')) as HTMLElement).click())
-    expect(mocks.push).not.toHaveBeenCalled()
-  }
+it.each([false, true])('links to the Learn hub without listing individual learning tools on mobile=%s', async mobile => {
+ mocks.mobile = mobile; mocks.auth.user = null; mocks.role = 'user'
+ await act(async () => root.render(<Navbar />))
+ if (mobile) {
+  await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
+  const items = [...document.querySelectorAll('.mobile-list-btn')]
+  expect(items.map(button => button.textContent)).toContain('Learn')
+  for (const label of ['Memory','Grammar','Word Search']) expect(items.map(button => button.textContent)).not.toContain(label)
+  await act(async () => (items.find(button => button.textContent === 'Learn') as HTMLElement).click())
+  expect(mocks.push).toHaveBeenCalledWith('/learn')
+ } else expect(host.querySelector('nav a[href="/learn"]')).not.toBeNull()
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove() })
 it.each(['admin', 'editor', 'user'])('shows the desktop Admin entry only for %s permissions and retains account navigation', async role => {
@@ -91,7 +69,7 @@ it.each(['admin', 'editor', 'user'])('offers the correct mobile destinations for
   expect(Boolean(admin)).toBe(role === 'admin')
   expect(buttons.some(button => button.textContent === 'Reviewer')).toBe(role !== 'user')
   expect(buttons.some(button => button.textContent === 'My Profile')).toBe(true)
-  expect(buttons.some(button => button.textContent === 'Word Search')).toBe(true)
+  expect(buttons.some(button => button.textContent === 'Learn')).toBe(true)
   if (admin) {
     await act(async () => (admin as HTMLElement).click())
     expect(mocks.push).toHaveBeenCalledWith('/admin/users')
@@ -99,8 +77,8 @@ it.each(['admin', 'editor', 'user'])('offers the correct mobile destinations for
 })
 
 const expectedPrimary = ['Home', 'Explore', 'Watch', 'Read', 'Learn']
-const expectedPrimaryHrefs = ['/', '/explore', '/cartoons', '/books']
-const expectedFloating = ['Home', 'Explore', 'Watch', 'Read', 'Memory']
+const expectedPrimaryHrefs = ['/', '/explore', '/cartoons', '/books', '/learn']
+const expectedFloating = ['Home', 'Explore', 'Watch', 'Read', 'Learn']
 it.each(['guest', 'user', 'admin', 'premium'])('keeps exactly five primary destinations for %s on Home and Word Search', async role => {
   mocks.role = role
   mocks.auth.user = role === 'guest' ? null : { id: role, email: `${role}@example.com` }
@@ -117,7 +95,7 @@ it.each(['guest', 'user', 'admin', 'premium'])('keeps exactly five primary desti
     await act(async () => root.render(<Navbar />))
     await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
     const labels = [...document.querySelectorAll('.mobile-list-btn')].map(button => button.textContent)
-    for (const label of ['Home', 'Explore', 'Watch', 'Read', 'Memory', 'Grammar', 'Word Search']) expect(labels).toContain(label)
+    for (const label of ['Home', 'Explore', 'Watch', 'Read', 'Learn']) expect(labels).toContain(label)
     await act(async () => root.render(<div />))
   }
 })
@@ -134,19 +112,17 @@ it('keeps floating mobile navigation at five destinations with none active on Wo
   expect(mocks.push).toHaveBeenCalledWith('/books')
 })
 
-it.each([false, true])('leaves Home Admin access solely in Quick Actions on mobile=%s', async mobile => {
-  mocks.mobile = mobile
-  await act(async () => root.render(<Navbar />))
-  expect(host.querySelector('a[href="/admin/users"]')).toBeNull()
-  const trigger = host.querySelector(mobile ? '[aria-label="Open menu"]' : '[aria-label="Open user menu"]') as HTMLElement
-  await act(async () => trigger.click())
-  expect(document.querySelector('a[href="/admin/users"]')).toBeNull()
-  expect([...document.querySelectorAll('.mobile-list-btn')].some(button => button.textContent === 'Admin')).toBe(false)
+it.each([false, true])('preserves authorised Home management navigation on mobile=%s', async mobile => {
+ mocks.mobile = mobile
+ await act(async () => root.render(<Navbar />))
+ const trigger = host.querySelector(mobile ? '[aria-label="Open menu"]' : '[aria-label="Open user menu"]') as HTMLElement
+ await act(async () => trigger.click())
+ expect(document.body.textContent).toContain('Admin')
 })
 
 it('routes every normal mobile entry once and closes without permission UI',async()=>{
  mocks.mobile=true;mocks.role='user';mocks.pathname='/books'
- const entries=[['My Profile','/profile/admin'],['Home','/'],['Explore','/explore'],['Watch','/cartoons'],['Read','/books'],['Memory','/memory'],['Grammar','/grammar'],['Word Search','/word-search'],['Give Feedback','/feedback'],['Support Us','/support']]
+ const entries=[['My Profile','/profile/admin'],['Home','/'],['Explore','/explore'],['Watch','/cartoons'],['Read','/books'],['Learn','/learn'],['Give Feedback','/feedback'],['Support Us','/support']]
  await act(async()=>root.render(<Navbar/>))
  for(const [label,href] of entries){
   await act(async()=> (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())

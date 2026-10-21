@@ -46,6 +46,8 @@ let failImportAfter=null
 const formDrafts=new Map()
 const importJobs=new Map()
 const tables = {
+  email_preferences: [],
+  book_audio_progress: [],
   youtube_transcripts: [],
   transcript_groups: [],
   admin_manual_transcripts: [],
@@ -68,13 +70,19 @@ const audioObjects = new Map(['ar', 'en'].map(language => [`audiobooks/fixture/$
 const cover = Buffer.from('UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA', 'base64')
 const backend = https.createServer({ key: readFileSync(privateKey), cert: readFileSync(certificate) }, async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', webUrl)
-  res.setHeader('Access-Control-Allow-Headers', 'authorization, apikey, x-client-info, content-type, range, prefer, accept, x-supabase-api-version, x-upsert')
+  res.setHeader('Access-Control-Allow-Headers', 'authorization, apikey, x-client-info, content-type, content-profile, accept-profile, range, prefer, accept, x-supabase-api-version, x-upsert')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD')
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return }
   const url = new URL(req.url, backendUrl)
   const chunks = []; for await (const chunk of req) chunks.push(chunk)
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
+  if(url.pathname==='/fixture/website-update') {
+    const second='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
+    for(const language of ['ar','en']) if(!tables.book_chapter_audio.some(row=>row.chapter_id===second&&row.language===language)) tables.book_chapter_audio.push({...tables.book_chapter_audio.find(row=>row.language===language),chapter_id:second})
+    return json(res,{})
+  }
+  if(url.pathname==='/fixture/launch-preferences') return json(res,tables.email_preferences)
   if(url.pathname==='/fixture/request-log')return json(res,{rpc:rpcLog})
   if(url.pathname==='/fixture/search-failure'){failSearch=body.fail;return json(res,{})}
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
@@ -109,6 +117,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     const rpc = url.pathname.split('/').at(-1)
     rpcLog.push(rpc)
     const learning = JSON.parse(readFileSync('e2e/learning-data.json','utf8'))
+    if(rpc==='transcript_for_you_groups')return json(res,[0,1].map(i=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Test For You',channel:'Fixture'},clip_start_ms:0,clip_end_ms:60000,segments:[{id:42+i,position:0,start_seconds:0,end_seconds:60,original_text:'\u0643\u0650\u062a\u064e\u0627\u0628\u064c',english_text:'A book.',source_tokens:[{arabic:'\u0643\u0650\u062a\u064e\u0627\u0628\u064c',english:'book'}]}]})))
     if(rpc==='website_search_content_v1') {
       if(failSearch)return json(res,{code:'57014',message:'statement timeout'},500)
       const hits=[{key:'b:'+bookId,kind:'book',title:'Test Book',source:'Test Book',arabic:'',english:'A graded book.',href:'/books/test-book'},
@@ -255,6 +264,14 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   if (url.pathname.startsWith('/rest/v1/')) {
     const table = url.pathname.split('/').at(-1)
     if (req.method !== 'GET' && req.method !== 'HEAD') {
+      if(table==='email_preferences') {
+        const index=tables.email_preferences.findIndex(row=>row.email===body.email&&row.purpose===body.purpose)
+        if(index<0)tables.email_preferences.push(body);else if(!(req.headers.prefer??'').includes('ignore-duplicates'))tables.email_preferences[index]=body
+      }
+      if(table==='book_audio_progress') {
+        const index=tables.book_audio_progress.findIndex(row=>row.user_id===body.user_id&&row.chapter_id===body.chapter_id&&row.language===body.language)
+        if(index<0)tables.book_audio_progress.push(body);else tables.book_audio_progress[index]=body
+      }
       if (table === 'book_chapter_audio') {
         if (failAudioSave) return json(res, { message: 'Simulated database save failure', code: 'XX000' }, 500)
         const index = tables[table].findIndex(row => row.chapter_id === body.chapter_id && row.language === body.language)
@@ -325,7 +342,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   json(res, { message: 'Unknown fixture endpoint' }, 404)
 })
 backend.listen(backendPort, '127.0.0.1', () => {
-  const next = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'dev', '--hostname', '127.0.0.1', '--port', String(webPort)], {
+  const next = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'dev', ...(process.env.AWM_TEST_WEBPACK === '1' ? ['--webpack'] : []), '--hostname', '127.0.0.1', '--port', String(webPort)], {
     stdio: 'inherit',
     env: { ...process.env, AWM_BROWSER_TEST: '1', SUPABASE_URL: backendUrl, NEXT_PUBLIC_SUPABASE_URL: backendUrl, SUPABASE_SERVICE_KEY: 'fixture-service-key', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'fixture-public-key', NEXT_PUBLIC_SITE_URL: webUrl, NODE_EXTRA_CA_CERTS: certificate },
   })

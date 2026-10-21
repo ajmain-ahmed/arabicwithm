@@ -1,6 +1,6 @@
 'use client'
 
-import { AdminPanelSettings, AccountTreeOutlined, DarkModeOutlined, GridOnRounded, LightModeOutlined, MenuOutlined, Person, PsychologyOutlined } from '@mui/icons-material'
+import { AdminPanelSettings, DarkModeOutlined, LightModeOutlined, MenuOutlined, Person } from '@mui/icons-material'
 import { AppBar, Avatar, Box, Button, Container, IconButton, Toolbar, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import Link from 'next/link'
@@ -16,16 +16,11 @@ import BrandLogo from './BrandLogo'
 import { setExploreSoundPreference } from '@/app/lib/explore'
 import MobileDrawer from './MobileDrawer'
 import UserMenu from './UserMenu'
-import { NAV_ITEMS, NAV_ROUTES, LEARN_ITEMS } from './constants'
+import PremiumMemberMark from './PremiumMemberMark'
+import { NAV_ITEMS, NAV_ROUTES } from './constants'
 import { NAV_CSS } from './styles'
 
 let hasAnimated = false
-
-const LEARN_ICONS: Record<string, typeof PsychologyOutlined> = {
-    Memory: PsychologyOutlined,
-    Grammar: AccountTreeOutlined,
-    'Word Search': GridOnRounded,
-}
 
 export default function Navbar() {
     const theme = useTheme()
@@ -40,21 +35,8 @@ export default function Navbar() {
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
     const [authDialogMode, setAuthDialogMode] = useState<'register' | 'signin'>('signin')
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
-    const [learnOpen, setLearnOpen] = useState(false)
-    const learnCloseTimer = useRef<number | null>(null)
     const navbarRef = useRef<HTMLElement>(null)
-    const { isAdmin, isReviewer } = useAccountAccess(drawerOpen || Boolean(userMenuAnchor) ? 'menu-open' : 'menu-closed')
-
-    const cancelLearnClose = () => {
-        if (learnCloseTimer.current !== null) {
-            window.clearTimeout(learnCloseTimer.current)
-            learnCloseTimer.current = null
-        }
-    }
-    const scheduleLearnClose = () => {
-        cancelLearnClose()
-        learnCloseTimer.current = window.setTimeout(() => setLearnOpen(false), 110)
-    }
+    const { isAdmin, isReviewer } = useAccountAccess()
 
     const showAdminLink = isAdmin && pathname !== '/'
 
@@ -123,7 +105,7 @@ export default function Navbar() {
                 onClose={() => setDrawerOpen(false)}
                 isLoggedIn={isLoggedIn}
                 user={user}
-                isAdmin={showAdminLink}
+                isAdmin={isAdmin}
                 isReviewer={isReviewer}
                 onAuthOpen={openSignIn}
                 navigate={safePush}
@@ -134,7 +116,7 @@ export default function Navbar() {
                 anchorEl={userMenuAnchor}
                 onClose={() => setUserMenuAnchor(null)}
                 user={user}
-                isAdmin={showAdminLink}
+                isAdmin={isAdmin}
                 isReviewer={isReviewer}
                 onLogout={() => {
                     setUserMenuAnchor(null)
@@ -198,6 +180,7 @@ export default function Navbar() {
                                             >
                                                 {userInitial}
                                             </Avatar>
+                                            <PremiumMemberMark userId={user!.id} />
                                         </IconButton>
                                     ) : (
                                         <IconButton onClick={openSignIn} sx={{ width: 44, height: 44, p: 0.75, color: navColor, transition: 'color .25s ease' }} aria-label="Sign in">
@@ -209,89 +192,7 @@ export default function Navbar() {
                         ) : (
                             <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', width: '100%', alignItems: 'center' }}>
                                 <Box component="nav" aria-label="Primary navigation" sx={{ display: 'flex', alignItems: 'center', gap: { md: 2.5, lg: 4 } }}>
-                                    {NAV_ITEMS.map((item) => item === 'Learn' ? (
-                                        /* Non-modal hover dropdown: a plain positioned panel, so the
-                                           rest of the nav (e.g. Watch) stays clickable while open. */
-                                        <Box
-                                            key="Learn"
-                                            sx={{ position: 'relative', cursor: 'pointer' }}
-                                            onMouseEnter={() => { cancelLearnClose(); setLearnOpen(true) }}
-                                            onMouseLeave={scheduleLearnClose}
-                                        >
-                                            <Typography
-                                                className="nav-link"
-                                                variant="body2"
-                                                component="span"
-                                                onClick={() => setLearnOpen((open) => !open)}
-                                                aria-haspopup="menu"
-                                                aria-expanded={learnOpen}
-                                                sx={{
-                                                    display: 'inline-block',
-                                                    fontWeight: 500,
-                                                    letterSpacing: '0.06em',
-                                                    fontSize: { md: '0.8rem', lg: '0.875rem' },
-                                                    whiteSpace: 'nowrap',
-                                                    color: navColor,
-                                                    py: 2,
-                                                }}
-                                            >
-                                                Learn
-                                            </Typography>
-                                            {learnOpen && (
-                                                <Box
-                                                    role="menu"
-                                                    aria-label="Learn"
-                                                    onMouseEnter={cancelLearnClose}
-                                                    onMouseLeave={scheduleLearnClose}
-                                                    sx={{
-                                                        position: 'absolute',
-                                                        top: '100%',
-                                                        left: 0,
-                                                        pt: 0.5,
-                                                        zIndex: 1300,
-                                                        minWidth: 236,
-                                                        borderRadius: '12px',
-                                                        border: '1px solid color-mix(in srgb, var(--awm-gold) 18%, transparent)',
-                                                        boxShadow: '0 16px 40px rgba(44,26,14,0.2)',
-                                                        bgcolor: 'var(--awm-white)',
-                                                        p: 0.5,
-                                                    }}
-                                                >
-                                                    {LEARN_ITEMS.map(({ label, description, route }) => {
-                                                        const Icon = LEARN_ICONS[label] ?? PsychologyOutlined
-                                                        return (
-                                                            <Box
-                                                                key={label}
-                                                                role="menuitem"
-                                                                onClick={() => {
-                                                                    setLearnOpen(false)
-                                                                    /* The Learn destinations need an account; prompt instead of navigating. */
-                                                                    if (!isLoggedIn) openSignIn()
-                                                                    else router.push(route)
-                                                                }}
-                                                                sx={{
-                                                                    display: 'flex',
-                                                                    gap: 1.5,
-                                                                    alignItems: 'flex-start',
-                                                                    px: 1.25,
-                                                                    py: 1.1,
-                                                                    borderRadius: '8px',
-                                                                    cursor: 'pointer',
-                                                                    '&:hover': { bgcolor: 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' },
-                                                                }}
-                                                            >
-                                                                <Icon sx={{ fontSize: 19, color: 'var(--awm-gold)', mt: 0.2 }} />
-                                                                <Box>
-                                                                    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, fontSize: '0.85rem', lineHeight: 1.3, color: 'var(--awm-bark)' }}>{label}</Typography>
-                                                                    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.72rem', color: 'var(--awm-muted)', lineHeight: 1.35 }}>{description}</Typography>
-                                                                </Box>
-                                                            </Box>
-                                                        )
-                                                    })}
-                                                </Box>
-                                            )}
-                                        </Box>
-                                    ) : (
+                                    {NAV_ITEMS.map((item) => (
                                         <Link key={item} href={NAV_ROUTES[item]} onNavigate={() => { if (item === 'Explore') setExploreSoundPreference(true) }} style={{ color: 'inherit', textDecoration: 'none' }}>
                                             <Typography
                                                 className="nav-link"
@@ -340,6 +241,7 @@ export default function Navbar() {
                                             >
                                                 {userInitial}
                                             </Avatar>
+                                            <PremiumMemberMark userId={user!.id} />
                                         </IconButton>
                                     ) : (
                                         <Button

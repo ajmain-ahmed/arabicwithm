@@ -7,6 +7,7 @@ import { getYouTubeEmbedUrl, normalizeYouTubeId } from './cartoons'
    YouTube IFrame API Types
 ───────────────────────────────────────────── */
 interface YTPlayer {
+  getDuration?(): number
   getCurrentTime(): number
   seekTo(seconds: number, allowSeekAhead: boolean): void
   playVideo(): void
@@ -43,6 +44,7 @@ declare global {
 interface YouTubePlayerOptions {
   autoplay?: boolean
   muted?: boolean
+  mutedAutoplayFallback?: boolean
   onEnded?: () => void
   reloadKey?: string | number
   endAt?: number
@@ -120,6 +122,7 @@ export default function useYouTubePlayer(
     if (!normalizedVideoId || !wrap) return
 
     let cancelled = false
+    let triedMutedFallback = false
 
     const clearWrap = (el: HTMLDivElement) => {
       el.replaceChildren()
@@ -193,6 +196,10 @@ export default function useYouTubePlayer(
               setErrorCode(null)
               setAutoplayBlocked(false)
               if (mutedRef.current) playerRef.current?.mute?.()
+              else if (options.mutedAutoplayFallback) {
+                playerRef.current?.unMute?.()
+                if ((playerRef.current?.getVolume?.() ?? 100) === 0) playerRef.current?.setVolume?.(100)
+              }
               setIsMuted(readEffectiveMuted(playerRef.current, mutedRef.current))
               if (startAtRef.current && startAtRef.current > 0) playerRef.current?.seekTo?.(startAtRef.current, true)
               if (autoplay) playerRef.current?.playVideo?.()
@@ -235,7 +242,12 @@ export default function useYouTubePlayer(
             onAutoplayBlocked: () => {
               if (cancelled) return
               setIsPlaying(false)
-              setAutoplayBlocked(true)
+              if (autoplay && options.mutedAutoplayFallback && !triedMutedFallback) {
+                triedMutedFallback = true
+                playerRef.current?.mute?.()
+                setIsMuted(true)
+                playerRef.current?.playVideo?.()
+              } else setAutoplayBlocked(true)
             },
             onVolumeChange: () => {
               if (cancelled) return
@@ -275,7 +287,7 @@ export default function useYouTubePlayer(
       setIsReady(false)
       setIsPlaying(false)
     }
-  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, retryNonce])
+  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, options.mutedAutoplayFallback, retryNonce])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {
@@ -347,6 +359,8 @@ export default function useYouTubePlayer(
     return playerRef.current?.getCurrentTime?.() ?? 0
   }, [])
 
+  const getDuration = useCallback(() => playerRef.current?.getDuration?.() ?? 0, [])
+
   const setPlaybackRate = useCallback((rate: number) => {
     const player = playerRef.current
     if (player?.getAvailablePlaybackRates?.().includes(rate)) player.setPlaybackRate?.(rate)
@@ -371,6 +385,7 @@ export default function useYouTubePlayer(
     unMute,
     playWithSound,
     getCurrentTime,
+    getDuration,
     getPlaybackRates,
     playbackRate,
     setPlaybackRate,

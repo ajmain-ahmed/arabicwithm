@@ -1,6 +1,6 @@
 'use client'
 
-import { AccountTreeOutlined, AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, GridOnRounded, HomeOutlined, Movie, Person, PsychologyOutlined, RateReviewOutlined, VolunteerActivismRounded } from '@mui/icons-material'
+import { AccountTreeOutlined, AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, GridOnRounded, HomeOutlined, Movie, Person, PsychologyOutlined, RateReviewOutlined, SchoolOutlined, VolunteerActivismRounded } from '@mui/icons-material'
 import {
     Avatar,
     Box,
@@ -17,7 +17,8 @@ import { User } from '@supabase/supabase-js'
 import GoldLine from './GoldLine'
 import { LEARN_ITEMS, NAV_ROUTES, profileRoute, type NavigateFn } from './constants'
 
-const primaryIcons = { Home: HomeOutlined, Explore: ExploreOutlined, Watch: Movie, Read: BookOutlined, Memory: PsychologyOutlined, Grammar: AccountTreeOutlined, 'Word Search': GridOnRounded }
+const primaryIcons = { Home: HomeOutlined, Explore: ExploreOutlined, Watch: Movie, Read: BookOutlined, Learn: SchoolOutlined }
+const learningIcons = { Memory: PsychologyOutlined, Grammar: AccountTreeOutlined, 'Word Search': GridOnRounded }
 
 interface MobileDrawerProps {
     open: boolean
@@ -156,14 +157,14 @@ export default function MobileDrawer({
                     ...(isLoggedIn && user ? [{ label: 'My Profile', icon: <Person sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(profileRoute(user!.id)) }] : []),
                     ...(isLoggedIn && isAdmin ? [{ label: 'Admin', icon: <AdminPanelSettings sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/admin/users') }] : []),
                     ...(isLoggedIn && isReviewer ? [{ label: 'Reviewer', icon: <RateReviewOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/reviewer') }] : []),
-                    ...(['Home', 'Explore', 'Watch', 'Read'] as const).map(label => {
+                    ...(['Home', 'Explore', 'Watch', 'Read', 'Learn'] as const).map(label => {
                         const Icon = primaryIcons[label]
                         return { label, icon: <Icon sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(NAV_ROUTES[label]) }
                     }),
-                    ...(['Memory', 'Grammar', 'Word Search'] as const).map(label => {
-                        const Icon = primaryIcons[label]
-                        return { label, icon: <Icon sx={{ fontSize: 18 }} />, onClick: () => (!isLoggedIn ? onAuthOpen() : pushAndClose(LEARN_ITEMS.find(item => item.label === label)?.route ?? '/memory')) }
-                    }),
+                    ...(isAdmin || isReviewer ? LEARN_ITEMS.map(({ label, route }) => {
+                        const Icon = learningIcons[label]
+                        return { label, icon: <Icon sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(route) }
+                    }) : []),
                     { label: 'Give Feedback', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/feedback') },
                     { label: 'Support Us', icon: <VolunteerActivismRounded sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/support') },
                 ].map((item) => (

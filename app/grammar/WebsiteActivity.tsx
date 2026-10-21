@@ -1,14 +1,16 @@
 'use client'
 import { useState } from 'react'
 import { Box, Button, Paper, TextField, Typography } from '@mui/material'
+import useCorrectAutoAdvance from './useCorrectAutoAdvance'
 import { websiteQuestions, caseOptions, correctSpan, matchesAnswer } from './websiteQuestions'
 
-export default function WebsiteActivity({ activity }: { activity: string }) {
-  const questions = websiteQuestions.filter(q => q.activity === activity)
+export default function WebsiteActivity({ activity, rootLength = 0 }: { activity: string; rootLength?: number }) {
+  const questions = websiteQuestions.filter(q => q.activity === activity && (activity !== 'roots' || !rootLength || q.answer?.length === rootLength))
   const [index,setIndex]=useState(0),[selected,setSelected]=useState<number[]>([]),[answer,setAnswer]=useState(''),[parts,setParts]=useState(['','','',''])
   const [checked,setChecked]=useState(false),[correct,setCorrect]=useState(false)
   const q=questions[index]
   function reset() { setSelected([]);setAnswer('');setParts(['','','','']);setChecked(false);setCorrect(false) }
+  useCorrectAutoAdvance(checked && correct, () => { setIndex(i => i + 1); reset() })
   if(!q) return <Paper sx={{p:3}}><Typography>Activity completed</Typography><Button onClick={()=>{setIndex(0);reset()}}>Practise again</Button></Paper>
   function check() {setChecked(true);setCorrect(q.span ? correctSpan(selected,q.span) : q.caseParts ? q.caseParts.every((v,i)=>v===parts[i]) : matchesAnswer(answer,q.answer!))}
   return <Paper variant="outlined" sx={{p:{xs:2,sm:3},borderRadius:3}}><Typography>{index+1} / {questions.length} · Reviewed foundations</Typography>

@@ -20,3 +20,10 @@ it('keeps the target-specific answer hidden until a correct response',async()=>{
  await type('كتبت');await click('Check Answer');expect(host.querySelector('[role=status]')!.textContent).toContain('Correct');expect(host.textContent).toContain('first-person singular')
 })
 it('selects and deselects the target with an accessible button',async()=>{await act(async()=>root.render(<WebsiteActivity activity="roles"/>));const word=host.querySelector('[aria-label="Select الطَّالِبُ"]')!;await act(async()=>word.dispatchEvent(new MouseEvent('click',{bubbles:true})));expect(word.getAttribute('aria-pressed')).toBe('true');await act(async()=>word.dispatchEvent(new MouseEvent('click',{bubbles:true})));expect(word.getAttribute('aria-pressed')).toBe('false')})
+it('filters reviewed root identification by three or four radicals',async()=>{
+ await act(async()=>root.render(<WebsiteActivity activity="roots" rootLength={4}/>))
+ expect(host.textContent).toContain('four-letter root');expect(host.textContent).toContain('1 / 1')
+ await type('دحرج');await click('Check Answer');expect(host.querySelector('[role=status]')!.textContent).toContain('Correct')
+ await act(async()=>root.render(<WebsiteActivity key="three" activity="roots" rootLength={3}/>))
+ expect(host.textContent).toContain('three-letter root');expect(host.textContent).toContain('1 / 3')
+})

@@ -24,13 +24,14 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
+    <Box sx={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
       <LearningActivityTracker />
       <Box
         component="main"
         sx={{
           pt: 'var(--awm-navbar-height)',
+          flex: '1 0 auto',
           pb: 0,
           minWidth: 0,
           overflowX: isExploreRoute ? 'hidden' : undefined,
@@ -46,6 +47,6 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       {!isExploreRoute && <Footer />}
       <MobileBottomNav />
       {!isExploreRoute && <LazyFloatingVideoPlayer />}
-    </>
+    </Box>
   )
 }

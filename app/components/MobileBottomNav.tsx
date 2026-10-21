@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Box, Button, Fab, Popover, useMediaQuery } from '@mui/material'
-import { Close, ExploreOutlined, Home, MenuBook, Menu, Movie, PsychologyOutlined } from '@mui/icons-material'
+import { Close, ExploreOutlined, Home, MenuBook, Menu, Movie, SchoolOutlined } from '@mui/icons-material'
 import { setExploreSoundPreference } from '@/app/lib/explore'
 /* The floating bottom nav keeps direct one-tap destinations; the Learn
    grouping lives in the main navbar dropdown. */
@@ -11,7 +11,7 @@ const destinations = [
   { label: 'Explore', href: '/explore', Icon: ExploreOutlined },
   { label: 'Watch', href: '/cartoons', Icon: Movie },
   { label: 'Read', href: '/books', Icon: MenuBook },
-  { label: 'Memory', href: '/memory', Icon: PsychologyOutlined },
+  { label: 'Learn', href: '/learn', Icon: SchoolOutlined },
 ]
 export default function MobileBottomNav() {
   const mobile = useMediaQuery('(max-width:899.95px)')

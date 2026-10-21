@@ -26,8 +26,8 @@ const calls: string[] = []
 const destroy = vi.fn()
 const pause = vi.fn()
 const seek = vi.fn()
-function Harness({ id, start, end, muted = true }: { id?: string; start?: number; end?:number; muted?: boolean }) {
-  const player = useYouTubePlayer(id, undefined, start, { autoplay: true, muted, endAt:end })
+function Harness({ id, start, end, muted = true, fallback = false }: { id?: string; start?: number; end?:number; muted?: boolean; fallback?: boolean }) {
+  const player = useYouTubePlayer(id, undefined, start, { autoplay: true, muted, endAt:end, mutedAutoplayFallback: fallback })
   useEffect(() => { controls = player })
   const { wrapRef } = player
   return <div ref={wrapRef} />
@@ -59,6 +59,20 @@ beforeEach(() => {
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers() })
 describe('YouTube player lifecycle', () => {
+  it('retries blocked autoplay muted once, then offers manual playback if still blocked', async () => {
+    playerMuted = false
+    await act(async () => root.render(<Harness id="dQw4w9WgXcQ" muted={false} fallback />))
+    await act(async () => { await vi.advanceTimersByTimeAsync(60); options.events.onReady() })
+    expect(calls).toEqual(['unmute', 'play'])
+    await act(async () => options.events.onAutoplayBlocked())
+    expect(calls).toEqual(['unmute', 'play', 'mute', 'play'])
+    expect(controls.isMuted).toBe(true)
+    await act(async () => options.events.onAutoplayBlocked())
+    expect(calls).toHaveLength(4)
+    expect(controls.autoplayBlocked).toBe(true)
+    await act(async () => controls.playWithSound())
+    expect(calls.slice(-2)).toEqual(['unmute', 'play'])
+  })
   it('passes the clip end to the API player so playback stops before excluded material',async()=>{
     await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" start={600} end={635}/>))
     await act(async()=>{await vi.advanceTimersByTimeAsync(60)})

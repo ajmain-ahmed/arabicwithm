@@ -275,7 +275,7 @@ function ExploreVideo({
       >
         {/* 9:16 frame sized to the available height (container units), so the
             player never letterboxes. Desktop: card + action rail as a row. */}
-        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: { md: 2.25 }, containerType: 'size', width: '100%' }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: { xs: 'flex-start', md: 'flex-end' }, justifyContent: 'center', gap: { md: 2.25 }, containerType: 'size', width: '100%' }}>
         {/* Prev/next chevrons at the left midpoint of the video (desktop). */}
         {(onPrev || onNext) && (
           <Box sx={{ display: { xs: 'none', md: 'flex' }, flexDirection: 'column', gap: 1.25, alignItems: 'center', alignSelf: 'center', flexShrink: 0 }}>
@@ -774,7 +774,7 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
 
   if (items.length === 0 && !initialLoaded) {
     return (
-      <Box sx={{ height: 'calc(100dvh - var(--awm-navbar-height))', bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, display: 'grid', placeItems: 'center' }}>
+      <Box sx={{ height: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))', bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, display: 'grid', placeItems: 'center' }}>
         <LoadingCircle size={62} dark />
       </Box>
     )
@@ -789,7 +789,7 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
   }
 
   return (
-      <Box sx={{ position: 'relative', height: 'calc(100dvh - var(--awm-navbar-height))', '@supports (height: 100dvh)': { height: 'calc(100dvh - var(--awm-navbar-height))' }, minHeight: 'calc(100vh - var(--awm-navbar-height))' }}>
+      <Box sx={{ position: 'relative', height: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))', '@supports (height: 100dvh)': { height: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' }, minHeight: 'calc(100vh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' }}>
       <Box
         id="explore-feed"
         ref={feedRef}
@@ -842,7 +842,7 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
                 onEnded={() => advanceOnce(index)}
                 onPlaybackChange={setGlobalVideoPlaying}
                 soundEnabled={soundEnabled}
-                railTop={railTop}
+                railTop={index === activeIndex ? railTop : undefined}
                 onPrev={() => goToIndex(activeIndex <= 0 ? items.length - 1 : activeIndex - 1)}
                 onNext={() => goToIndex(items.length === 0 ? 0 : (activeIndex + 1) % items.length)}
                 onStarted={() => setWatchedCount((count) => Math.max(count, index + 1))}
