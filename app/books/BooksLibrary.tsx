@@ -82,6 +82,19 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
 
   const activeFilterCount = (level ? 1 : 0) + categories.length + (audioOnly ? 1 : 0)
 
+  // Use canonical categories and tags already supplied by the library.
+  // Books without either remain discoverable in their own fallback section.
+  const discoverySections = new Map<string, { title: string; books: LibraryBook[] }>()
+  for (const book of visible) {
+    const labels = [...new Set([book.category, ...book.tags].map(value => value?.trim()).filter((value): value is string => Boolean(value)))]
+    for (const label of labels.length ? labels : ['More books']) {
+      const key = label.toLocaleLowerCase()
+      const section = discoverySections.get(key) ?? { title: label, books: [] }
+      if (!section.books.some(existing => existing.id === book.id)) section.books.push(book)
+      discoverySections.set(key, section)
+    }
+  }
+
   /* Grey out options that would produce zero results (given the other
      active filters), so the empty state is unreachable through the UI. */
   const comboHasResults = (candidateLevel: string, candidateCategories: string[], flags: { audio?: boolean } = { audio: audioOnly || mode === 'listen' }) =>
@@ -250,7 +263,16 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
         </DialogActions>
       </Dialog>
 
-      <Box component="section" aria-label={mode === 'listen' ? 'Audiobook library' : 'Book library'} sx={LIBRARY_GRID_SX}>
+      {mode === 'read' && <Box data-mobile-read-sections sx={{ display: { xs: 'block', sm: 'none' } }}>
+        {[...discoverySections.entries()].map(([key, section]) => <Box component="section" aria-label={section.title} key={key} sx={{ mb: 3 }}>
+          <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 23, color: 'var(--awm-bark)', mb: 1 }}>{section.title}</Typography>
+          <Box data-mobile-book-grid sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1.25, '@media (max-width: 299px)': { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' } }}>
+            {section.books.map(book => <LibraryBookCard key={book.id} book={book} compact />)}
+          </Box>
+        </Box>)}
+        {!visible.length && <Typography>No books match these filters.</Typography>}
+      </Box>}
+      <Box component="section" aria-label={mode === 'listen' ? 'Audiobook library' : 'Book library'} sx={{ ...LIBRARY_GRID_SX, ...(mode === 'read' ? { display: { xs: 'none', sm: 'grid' } } : {}) }}>
         {visible.map(book => <LibraryBookCard key={book.id} book={book} listen={mode === 'listen'} />)}
         {!visible.length && <Typography>{mode === 'listen' ? 'No audiobooks match these filters.' : 'No books match these filters.'}</Typography>}
       </Box>

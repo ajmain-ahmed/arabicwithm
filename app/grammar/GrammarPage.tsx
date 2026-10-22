@@ -46,7 +46,7 @@ function GrammarContent() {
 }
 function RuleLibrary({ show }: {
     show: (r: Rule) => void;
-}) { return <Box>{(['A1','A2','B1','B2','C1','C2'] as const).map(level=><Box component="section" key={level} aria-label={`${level} rules`} sx={{mb:4}}><Typography component="h2" variant="h5" sx={{mb:2}}>{level}</Typography><Box sx={{display:'grid',gridTemplateColumns:{xs:'1fr',sm:'repeat(2,minmax(0,1fr))',md:'repeat(3,minmax(0,1fr))',lg:'repeat(4,minmax(0,1fr))'},gap:2}}>{Object.entries(curriculum.rules).filter(([key])=>ruleLevels[key as keyof typeof ruleLevels]===level).map(([key,r])=><Button key={key} sx={{minHeight:110,p:2,flexDirection:'column',borderRadius:3}} variant="outlined" onClick={()=>show(r)}><span>{r.title}</span><Arabic>{r.arabic}</Arabic></Button>)}</Box></Box>)}</Box>; }
+}) { return <Box>{(['A1','A2','B1','B2','C1','C2'] as const).map(level=><Box component="section" key={level} aria-label={`${level} rules`} sx={{mb:3}}><Typography component="h2" variant="h5" sx={{mb:1.25}}>{level}</Typography><Box sx={{display:'grid',gridTemplateColumns:{xs:'repeat(2,minmax(0,1fr))',md:'repeat(3,minmax(0,1fr))',lg:'repeat(4,minmax(0,1fr))'},gap:1.25}}>{Object.entries(curriculum.rules).filter(([key])=>ruleLevels[key as keyof typeof ruleLevels]===level).map(([key,r])=><Button key={key} sx={{minHeight:88,minWidth:0,p:1,gap:.25,flexDirection:'column',borderRadius:3,fontSize:'calc(var(--grammar-english-size) * .875)',overflowWrap:'anywhere','& [data-grammar-arabic]':{fontSize:'calc(var(--grammar-arabic-size) * .875)',my:0,lineHeight:1.35}}} variant="outlined" onClick={()=>show(r)}><span>{r.title}</span><Arabic>{r.arabic}</Arabic></Button>)}</Box></Box>)}</Box>; }
 
 function NahwActivity({ activity, show }: {
     activity: string;

@@ -59,6 +59,13 @@ const tables = {
   episodes: Array.from({ length: 4 }, (_, i) => ({ id: `dddddddd-dddd-4ddd-8ddd-ddddddddddd${i}`, show_id: showId, slug: `clip-${i}`, title: `Clip ${i}`, youtube_id: ['abcdefghij0', 'abcdefghij1', 'abcdefghij2', 'abcdefghij3'][i], level: 'A1', tags: [], transcript: [{ timestamp: '0:00', tokens: [{ arabic: '\u0647\u0630\u0627', english: 'this', pos: 'pronoun', cefr: 'a1' }, { arabic: ['\u0643\u062a\u0627\u0628','\u0642\u0644\u0645','\u0628\u064a\u062a','\u0645\u0627\u0621'][i], english: ['book','pen','house','water'][i], pos: 'noun', cefr: 'a1' }], translation: ['This is a book.','This is a pen.','This is a house.','This is water.'][i] }], created_at: '2026-01-01T00:00:00Z' })),
   book_chapter_audio: ['ar', 'en'].map(language => ({ chapter_id: chapterId, language, is_published: true, source_type: 'supabase_storage', storage_bucket: 'audiobooks', storage_path: `fixture/${language}/chapter.wav`, duration_seconds: 60, narrator: 'Fixture Narrator', external_url: null, external_video_id: null })),
 }
+// Seed discovery metadata before the homepage warms the public library cache.
+tables.books = Array.from({ length: 6 }, (_, i) => ({ ...tables.books[0],
+  id: i ? `bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb${i}` : bookId,
+  slug: i ? `layout-book-${i}` : 'test-book', title: i ? `Book ${i + 1}` : 'Test Book',
+  category: i < 3 ? 'Mystery' : 'History', tags: i % 2 ? ['Short Reads'] : [],
+}))
+
 tables.chapters.push({ id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', book_id: bookId, slug: 'chapter-6', title: 'Sixth Chapter', chapter_number: 6, content })
 function userFromToken(token) { try { return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString()).sub } catch { return null } }
 function json(res, data, status = 200) { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(data)) }

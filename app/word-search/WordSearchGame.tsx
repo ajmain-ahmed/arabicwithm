@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { Celebration, CheckCircle, EmojiEvents, Refresh, RestartAlt } from '@mui/icons-material'
-import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogContent, IconButton, Tooltip, Paper, Typography } from '@mui/material'
+import { Celebration, CheckCircle, EmojiEvents } from '@mui/icons-material'
+import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogContent, Paper, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { completeWordSearch, fetchPuzzleVocabulary, type WordSearchCompletionResult } from '@/app/actions/puzzles'
 import WordSearchShell from './WordSearchShell'
@@ -110,19 +110,6 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
     // saveCompletion is intentionally invoked only on the first final-word transition.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [found.size, mistakes, puzzle, revealsUsed, source])
-
-  const reset = () => {
-    setFound(new Set())
-    setDrag(null)
-    setInvalidCells(new Set())
-    setMessage('')
-    setMistakes(0)
-    setRevealsUsed(0)
-    setCompletion(null)
-    setPendingCompletion(null)
-    setCompletionError('')
-    setRound((current) => current + 1)
-  }
 
   const installPuzzle = (nextSource: PuzzleVocabularySource, nextPuzzle: WordSearchPuzzle, difficulty: WordSearchDifficulty) => {
     setFound(new Set())
@@ -272,11 +259,10 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
   const controls = started ? (
     <Box sx={{mb:2.5}}>
       <Box sx={{display:'flex',justifyContent:'center',mb:1.25}}><WordSearchDifficultySelector value={selectedDifficulty} disabled={busy || savingCompletion} onChange={setSelectedDifficulty}/></Box>
-      <Box data-word-search-status sx={{display:'flex',flexWrap:'nowrap',justifyContent:'center',alignItems:'center',gap:{xs:.5,sm:1},'& .MuiChip-label':{px:{xs:.75,sm:1.5},fontSize:{xs:11,sm:13}}}}>
-        <Chip label={`${activeConfig.label} ${activeConfig.gridSize}?${activeConfig.gridSize}`} variant="outlined"/>
-        <Chip label={`${found.size} / ${puzzle?.placements.length ?? 0} found`}/>
-        <Tooltip title="Restart game"><span><IconButton aria-label="Restart game" onClick={reset} disabled={!puzzle||busy||complete} sx={{width:40,height:44}}><RestartAlt/></IconButton></span></Tooltip>
-        <Tooltip title="New game"><span><IconButton aria-label="New game" onClick={()=>void newGame()} disabled={busy} sx={{width:40,height:44}}>{busy?<CircularProgress size={20}/>:<Refresh/>}</IconButton></span></Tooltip>
+      <Box data-word-search-status sx={{display:'flex',flexWrap:'wrap',justifyContent:'center',alignItems:'center',gap:.5,'& .MuiChip-root, & .MuiButton-root':{height:44,borderRadius:'999px',fontSize:13,fontWeight:600},'& .MuiChip-root':{color:'var(--awm-bark)',bgcolor:'var(--awm-cream)',border:'1px solid color-mix(in srgb, var(--awm-gold) 30%, transparent)'},'& .MuiChip-label':{px:1}}}>
+        <Chip label={`${activeConfig.label} ${activeConfig.gridSize}\u00d7${activeConfig.gridSize}`}/>
+        <Chip label={`${found.size} of ${puzzle?.placements.length ?? 0} found`}/>
+        <Button aria-label="New game" variant="contained" onClick={()=>void newGame()} disabled={busy} sx={{px:1,minWidth:0,textTransform:'none'}}>{busy?<CircularProgress size={20} aria-label="Loading new game"/>:'New Game'}</Button>
       </Box>
     </Box>
   ) : undefined
