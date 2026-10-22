@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({ user: null as null | { id: string }, complete:
 // Keep access tests focused on the game rather than loading decorative icons.
 vi.mock('@mui/icons-material', () => {
   const Icon = () => <svg aria-hidden="true" />
-  return { Celebration: Icon, CheckCircle: Icon, EmojiEvents: Icon, LightbulbOutlined: Icon, Refresh: Icon, TimerOutlined: Icon, ExpandLess: Icon, ExpandMore: Icon, Visibility: Icon, VisibilityOff: Icon }
+  return { OpenInNew: Icon, ArrowBack: Icon, Celebration: Icon, CheckCircle: Icon, EmojiEvents: Icon, LightbulbOutlined: Icon, Refresh: Icon, TimerOutlined: Icon, ExpandLess: Icon, ExpandMore: Icon, Visibility: Icon, VisibilityOff: Icon }
 })
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => ({ user: mocks.user }) }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))

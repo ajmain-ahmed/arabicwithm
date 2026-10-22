@@ -1,104 +1,21 @@
 'use client'
-
-import { useState } from 'react'
-import { ExpandLess, ExpandMore, Visibility, VisibilityOff } from '@mui/icons-material'
-import { Box, Button, Collapse, IconButton, Tooltip, Typography } from '@mui/material'
-import { normalizePuzzleArabic, type WordSearchPlacement } from '@/app/lib/transcriptPuzzles'
-
-export default function WordSearchClues({
-  words,
-  foundIds,
-  sourceLabel,
-  onReveal,
-}: {
-  words: readonly WordSearchPlacement[]
-  foundIds: ReadonlySet<string>
-  sourceLabel: string
-  onReveal: () => void
-}) {
-  const [revealed, setRevealed] = useState<Set<string>>(() => new Set())
-  const [expanded, setExpanded] = useState<Set<string>>(() => new Set())
-
-  const toggleReveal = (id: string) => {
-    setRevealed((current) => {
-      const next = new Set(current)
-      if (next.has(id)) next.delete(id)
-      else {
-        next.add(id)
-        onReveal()
-      }
-      return next
-    })
-  }
-
-  return (
-    <Box component="ol" sx={{ m: 0, mt: 1.5, pl: 2.5, display: 'grid', gap: 1 }}>
-      {words.map((word) => {
-        const wordRevealed = revealed.has(word.id)
-        const contextExpanded = expanded.has(word.id)
-        const found = foundIds.has(word.id)
-        const differentSurface = normalizePuzzleArabic(word.surfaceForm) !== normalizePuzzleArabic(word.lemma)
-        return (
-          <Box component="li" key={word.id} sx={{ minWidth: 0, pl: 0.25, py: 0.4 }}>
-            <Box sx={{ minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
-              <Typography sx={{ minWidth: 0, overflowWrap: 'anywhere', color: found ? 'success.main' : 'text.primary', fontFamily: 'var(--font-sans), sans-serif', fontWeight: found ? 700 : 500, textDecoration: found ? 'line-through' : 'none' }}>
-                {word.english}
-              </Typography>
-              <Tooltip title={wordRevealed ? 'Hide Arabic' : 'Show Arabic'}>
-                <IconButton
-                  type="button"
-                  onClick={() => toggleReveal(word.id)}
-                  aria-label={`${wordRevealed ? 'Hide' : 'Show'} Arabic for ${word.english}`}
-                  size="small"
-                  sx={{ width: 40, height: 40, flexShrink: 0, color: 'secondary.main' }}
-                >
-                  {wordRevealed ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                </IconButton>
-              </Tooltip>
-            </Box>
-            {wordRevealed && (
-              <Box sx={{ animation: 'awm-clue-reveal .18s ease-out', '@keyframes awm-clue-reveal': { from: { opacity: 0, transform: 'translateY(-3px)' }, to: { opacity: 1, transform: 'translateY(0)' } }, '@media (prefers-reduced-motion: reduce)': { animation: 'none' } }}>
-                <Typography lang="ar" dir="rtl" sx={{ mt: 0.1, color: 'primary.main', fontFamily: 'var(--font-book-naskh), serif', fontSize: 20, fontWeight: 700, lineHeight: 1.35, textAlign: 'right' }}>
-                  {word.lemma}
-                </Typography>
-                {differentSurface && (
-                  <Typography sx={{ mt: 0.2, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11.5 }}>
-                    Seen as <Box component="span" lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), serif', fontSize: 15 }}>{word.surfaceForm}</Box>
-                  </Typography>
-                )}
-              </Box>
-            )}
-            {word.context?.sentenceArabic && (
-              <>
-                <Button
-                  type="button"
-                  size="small"
-                  color="secondary"
-                  onClick={() => setExpanded((current) => {
-                    const next = new Set(current)
-                    if (next.has(word.id)) next.delete(word.id)
-                    else next.add(word.id)
-                    return next
-                  })}
-                  endIcon={contextExpanded ? <ExpandLess /> : <ExpandMore />}
-                  sx={{ mt: 0.15, minHeight: 32, px: 0, fontSize: 11, textTransform: 'none' }}
-                >
-                  {contextExpanded ? 'Hide example' : 'View example'}
-                </Button>
-                <Collapse in={contextExpanded} unmountOnExit>
-                  <Box sx={{ mt: 0.4, p: 1, borderRadius: '8px', bgcolor: 'action.hover' }}>
-                    <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-book-naskh), serif', fontSize: 17, lineHeight: 1.55, textAlign: 'right' }}>
-                      {word.context.sentenceArabic}
-                    </Typography>
-                    {word.context.translation && <Typography sx={{ mt: 0.35, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11.5, lineHeight: 1.45 }}>{word.context.translation}</Typography>}
-                    <Typography sx={{ mt: 0.45, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5 }}>{sourceLabel}</Typography>
-                  </Box>
-                </Collapse>
-              </>
-            )}
-          </Box>
-        )
-      })}
-    </Box>
-  )
+import {useRef,useState} from 'react'
+import {CheckCircle} from '@mui/icons-material'
+import {Box,Chip,Typography} from '@mui/material'
+import type {WordSearchPlacement} from '@/app/lib/transcriptPuzzles'
+export default function WordSearchClues({words,foundIds,onReveal}:{words:readonly WordSearchPlacement[];foundIds:ReadonlySet<string>;sourceLabel:string;onReveal:()=>void}){
+ const [selected,setSelected]=useState<string|null>(null)
+ const opened=useRef(new Set<string>())
+ const word=words.find(item=>item.id===selected)
+ return <Box data-word-search-vocabulary sx={{mt:1.5}}>
+  <Box dir="rtl" sx={{display:'flex',flexWrap:'wrap',gap:1}}>
+   {words.map(item=><Chip key={item.id} component="button" type="button" clickable label={item.lemma} lang="ar" dir="rtl" aria-expanded={selected===item.id} aria-controls={selected===item.id?'word-search-word-details':undefined} icon={foundIds.has(item.id)?<CheckCircle/>:undefined} color={foundIds.has(item.id)?'success':'default'} variant="outlined" onClick={()=>{setSelected(current=>current===item.id?null:item.id);if(!opened.current.has(item.id)){opened.current.add(item.id);onReveal()}}} sx={{fontFamily:'var(--font-book-naskh), serif',fontSize:20,height:'auto',minHeight:40,maxWidth:'100%','& .MuiChip-label':{whiteSpace:'normal',py:.5}}}/>)}
+  </Box>
+  {word&&<Box id="word-search-word-details" role="region" aria-label={`Details for ${word.lemma}`} sx={{mt:1.5,p:2,borderRadius:'10px',bgcolor:'action.hover',overflowWrap:'anywhere'}}>
+   <Typography lang="ar" dir="rtl" sx={{fontFamily:'var(--font-book-naskh), serif',fontSize:24}}>{word.lemma}</Typography>
+   <Typography lang="en" dir="ltr" sx={{mt:.5,fontWeight:600}}>{word.english}</Typography>
+   {word.context?.sentenceArabic&&<Typography lang="ar" dir="rtl" sx={{mt:1.5,fontFamily:'var(--font-book-naskh), serif',fontSize:20,lineHeight:1.7}}>{word.context.sentenceArabic}</Typography>}
+   {word.context?.translation&&<Typography lang="en" dir="ltr" sx={{mt:.5,color:'text.secondary'}}>{word.context.translation}</Typography>}
+  </Box>}
+ </Box>
 }

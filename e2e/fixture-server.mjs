@@ -89,6 +89,11 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
   if(url.pathname==='/fixture/import-failure'){failImportAfter=body.after??null;return json(res,{})}
   if(url.pathname==='/fixture/reset-overhaul'){failImportAfter=null;formDrafts.clear();importJobs.clear();handles.clear();profiles.clear();roles.clear();accessAudit.length=0;manualPremium.clear();memoryStarts.clear();memorySnapshots.clear();memoryReviews.clear();ownReviews.clear();earned.clear();wordTotals.clear();metadata.clear();tables.youtube_transcripts.length=0;tables.transcript_groups.length=0;tables.admin_manual_transcripts.length=0;tables.transcript_segments.length=0;return json(res,{})}
+  if(url.pathname==='/fixture/word-search'){
+    const words=['\u0643\u062a\u0627\u0628','\u0645\u062f\u0631\u0633\u0629','\u062c\u0645\u064a\u0644','\u0633\u0631\u064a\u0639','\u0637\u0639\u0627\u0645','\u0643\u0628\u064a\u0631','\u0635\u063a\u064a\u0631','\u0637\u0631\u064a\u0642','\u0645\u062f\u064a\u0646\u0629','\u0639\u0644\u0645']
+    tables.episodes.forEach(episode=>{episode.transcript=[{timestamp:'0:00',tokens:words.map((arabic,i)=>({arabic,lemma:arabic,headword:arabic,english:`Meaning ${i}`,pos:'noun',cefr:'a1'})),translation:'Stored fixture example.'}]})
+    return json(res,{})
+  }
   if(url.pathname==='/fixture/for-you-playback'){
     forYouPlayback=true
     tables.transcript_groups=[{id:'77777777-7777-4777-8777-777777777770',name:'Fixture A'},{id:'77777777-7777-4777-8777-777777777771',name:'Fixture B'}]
