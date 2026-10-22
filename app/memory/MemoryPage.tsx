@@ -8,7 +8,6 @@ import { initialPractice, practiceReducer } from '@/app/lib/memorySession'
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, useSyncExternalStore, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  ArrowBack,
   ArrowForward,
   CheckCircleOutlined,
   PlayCircleOutlineRounded,
@@ -230,7 +229,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
 
   return (
     <Box component="main" sx={{ minHeight: { xs: 'calc(100vh - 56px)', md: 'calc(100vh - 64px)' }, '@supports (height: 100dvh)': { minHeight: { xs: 'calc(100dvh - 56px)', md: 'calc(100dvh - 64px)' } }, bgcolor: 'var(--awm-cream-light)', pb: { xs: 4, md: 8 } }}>
-      <Container maxWidth="md" sx={{ pt: { xs: 2.5, md: 5 }, px: { xs: 2, sm: 3 } }}>
+      <Container maxWidth="md" sx={{ pt: activePractice ? {xs:1.5,md:2} : { xs: 2.5, md: 5 }, px: { xs: 2, sm: 3 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box sx={{ width: 44, height: 44, display: 'grid', placeItems: 'center', borderRadius: '12px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 13%, transparent)', color: 'var(--awm-gold)' }}><PsychologyOutlined /></Box>
           <Box>
@@ -283,10 +282,8 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         {!progressError && sessionError && <Alert severity="warning" sx={{ mt: 2 }} action={<Button onClick={retryProgress}>Retry</Button>}>{sessionError} Your completed-card statistics are still available.</Alert>}
 
         {saveError && <Alert severity="error" sx={{ mt: 2 }}>{saveError}</Alert>}
-        {ready && <Typography sx={{ mt: 2 }} color="text.secondary">{premium ? 'Unlimited daily Memory practice' : `${used} / ${MEMORY.dailyFreeSessions} sessions today`}</Typography>}
         {limited && <Paper role="status" variant="outlined" sx={{ mt: 2, mx: 'auto', maxWidth: 480, p: {xs: 2, sm: 3}, textAlign: 'center', borderRadius: 3 }}><InfoOutlined sx={{ color: 'var(--awm-gold)', mb: 1 }} /><Typography>You&apos;ve used today&apos;s free Memory session.</Typography><Typography sx={{ mt: 1, color: 'text.secondary' }}>Unlock unlimited Memory sessions. You can still resume your saved session or view its recap.</Typography><Button fullWidth variant="contained" onClick={() => setUpgrade(true)} sx={{ mt: 2, minHeight: 48, textTransform: 'none', fontSize: {xs: 13, sm: 15} }}>Upgrade to Arabic with M</Button></Paper>}
         {saved && !started && <Button onClick={()=>void resume()} disabled={!ready || saving}>{saved.index===saved.cards.length?'View saved recap':'Resume saved session'} - {saved.completed} completed</Button>}
-        {started && <Button disabled={saving} onClick={() => void saveAndExit()} sx={{ mt: 2 }}>{user ? 'Save & Exit' : 'Exit practice'}</Button>}
         {loadError && <Alert severity="error" sx={{ mt: 2.5 }}>{loadError}</Alert>}
         {library.missingScope && <Alert severity="warning" sx={{ mt: 2.5 }}>That source is no longer available. Choose a show or switch to Random practice.</Alert>}
 
@@ -304,12 +301,12 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
           </Paper>
         ) : complete ? (
           <Paper elevation={0} sx={{ mt: 3, p: { xs: 4, md: 6 }, textAlign: 'center', borderRadius: '18px', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)' }}>
-            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif' }}>{completed} cards completed{user ? ` · ${sessionXp} XP earned` : ''}</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving || navigating} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button></Box>
+            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif' }}>{completed} cards completed{user ? ` · ${sessionXp} XP earned` : ''}</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving || navigating} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button><Button disabled={saving} onClick={()=>void saveAndExit()}>{user ? 'Save and Exit' : 'Exit practice'}</Button></Box>
           </Paper>
         ) : card && (
-          <Box sx={{ mt: 3 }}>
-            <Box sx={{ mb: 1.25, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}><Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 }}>Card {index + 1} of {cards.length}</Typography><Box sx={{ display: 'flex', gap: 0.75 }}>{user && <Chip size="small" label={`${sessionXp} session XP · ${totalXp} total`} sx={{ bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)', color: 'var(--awm-bark)', fontWeight: 700 }} />}</Box></Box>
-            <LinearProgress variant="determinate" value={(index / cards.length) * 100} sx={{ mb: 1.5, height: 6, borderRadius: 99, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold)', borderRadius: 99 } }} />
+          <Box sx={{ mt: 1.5 }}>
+
+
             <Paper elevation={0} aria-live="polite" sx={{ p: { xs: 2.25, sm: 3.5 }, borderRadius: '18px', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', bgcolor: 'var(--awm-white)', boxShadow: '0 12px 36px color-mix(in srgb, var(--awm-bark) 9%, transparent)' }}>
               <Box sx={{ textAlign: 'center' }}>
                 <Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 800, letterSpacing: '.12em', textTransform: 'uppercase' }}>{promptIsArabic ? 'Translate into English' : 'Translate into Arabic'}</Typography>
@@ -338,8 +335,13 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
                 <Button component={Link} href={`/cartoons/${encodeURIComponent(card.showSlug)}/${encodeURIComponent(card.episodeSlug)}`} startIcon={<PlayCircleOutlineRounded />} size="small" sx={{ display: 'flex', mx: 'auto', mt: 1.25, color: 'var(--awm-muted)', textTransform: 'none' }}>View source episode</Button>
               </Box>
             </Paper>
-            <Button disabled={(Boolean(user) && !ready) || saving || navigating || limited} onClick={skip} startIcon={<ArrowBack sx={{ transform: 'rotate(180deg)' }} />} sx={{ mt: 1, color: 'var(--awm-muted)', textTransform: 'none' }}>Skip</Button>
-            <Button onClick={requestNewCards} disabled={loading || saving || navigating}>New</Button>
+            <Box data-memory-actions sx={{display:'flex',justifyContent:'center',alignItems:'center',gap:1,mt:1.5,'& > button':{minHeight:44,textTransform:'none'}}}>
+              <Button disabled={(Boolean(user) && !ready) || saving || navigating || limited} onClick={skip}>Skip</Button>
+              <Button onClick={requestNewCards} disabled={loading || saving || navigating}>New</Button>
+              <Button disabled={saving} onClick={()=>void saveAndExit()}>{user ? 'Save and Exit' : 'Exit practice'}</Button>
+            </Box>
+            <LinearProgress variant="determinate" value={(index / cards.length) * 100} sx={{ mb: 1.5, height: 6, borderRadius: 99, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold)', borderRadius: 99 } }} />
+            <Box data-memory-progress sx={{ flexWrap:'wrap', mt: 1.25, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2 }}><Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 }}>Card {index + 1} of {cards.length}</Typography><Box sx={{ display: 'flex', gap: 0.75 }}>{user && <Chip size="small" label={`${sessionXp} session XP · ${totalXp} total`} sx={{ bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)', color: 'var(--awm-bark)', fontWeight: 700 }} />}</Box></Box>
           </Box>
         )}
         </motion.div>

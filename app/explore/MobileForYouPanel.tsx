@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { Box, Button, IconButton, Typography } from '@mui/material'
-import { VolumeOff, VolumeUp } from '@mui/icons-material'
+import { VolumeOff, VolumeUp, KeyboardArrowUp, KeyboardArrowDown } from '@mui/icons-material'
 import { displayArabic } from '@/app/lib/displayArabic'
 import { segmentAtTime, type ForYouClip, type ForYouSegment } from '@/app/lib/forYou'
 import { safeTextSize, TEXT_SCALES } from '@/app/components/settings-controls/TextSizeControl'
@@ -17,6 +17,7 @@ interface Props {
   filterControl?: ReactNode
   muted?: boolean
   onSound?: () => void
+  navigation?: {previous:()=>void;next:()=>void;previousDisabled:boolean;nextDisabled:boolean}
   settingsButton?: ReactNode
   ready: boolean
   playing: boolean
@@ -34,7 +35,7 @@ function timestamp(seconds: number) {
 }
 
 /** Mobile presentation only. All controls use the existing, single live player. */
-export default function MobileForYouPanel({ clip, segments, time, settings, settingsButton, switcher, filterControl, muted, onSound, ready, rates, rate, onRate }: Props) {
+export default function MobileForYouPanel({ clip, segments, time, settings, settingsButton, navigation, switcher, filterControl, muted, onSound, ready, rates, rate, onRate }: Props) {
   const start = clip.clip_start_ms / 1000, end = clip.clip_end_ms / 1000
   const lines = useMemo(() => segments.filter(line => line.start_seconds < end && line.end_seconds > start).sort((a,b) => a.start_seconds - b.start_seconds), [segments, start, end])
   const active = time >= start && time < end ? segmentAtTime(lines, time) : undefined
@@ -57,12 +58,14 @@ export default function MobileForYouPanel({ clip, segments, time, settings, sett
   const nextRate = rates[(Math.max(0, rates.indexOf(rate)) + 1) % rates.length] ?? 1
 
   return <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', flex: 1, minHeight: 0, bgcolor: '#111d18', color: '#f5ede0' }}>
-    <Box data-mobile-for-you-toolbar sx={{ display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center', gap: {xs:.5,sm:1}, px: 'max(8px, env(safe-area-inset-right))', '& > *': { flexShrink: 0 }, '& .MuiIconButton-root': { width: {xs:36,sm:40}, height:44 }, '& > .MuiButton-root': { minWidth: 32, width: 32 }, '& [role=group] button': { width: { xs: 60, sm: 72 }, px: .5, fontSize: 12 }, py: .75, minHeight: 56, flexShrink: 0, borderBottom: '1px solid rgba(245,237,224,.08)' }}>
+    <Box data-mobile-for-you-toolbar sx={{ display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center', gap:{xs:.25,sm:.75},px:'max(4px, env(safe-area-inset-right))', '@media (min-width:360px) and (max-width:899.95px)': {gap:.375,px:1,'& .MuiIconButton-root':{width:36},'& [role=group] button':{width:54}}, '& > *': { flexShrink: 0 }, '& .MuiIconButton-root': { width:{xs:32,sm:40}, height:44 }, '& > .MuiButton-root': { minWidth:28,width:28 }, '& [role=group] button': { width:{xs:48,sm:64}, px: .5, fontSize: 11, whiteSpace:'nowrap' }, py: .75, minHeight: 56, flexShrink: 0, borderBottom: '1px solid rgba(245,237,224,.08)' }}>
+      {navigation&&<IconButton aria-label="Previous video" disabled={navigation.previousDisabled} onClick={navigation.previous} sx={{color:'inherit'}}><KeyboardArrowUp/></IconButton>}
       <IconButton aria-label={muted ? 'Unmute clip' : 'Mute clip'} disabled={!ready} onClick={onSound} sx={{ width:40,height:40,color:'inherit' }}>{muted ? <VolumeOff/> : <VolumeUp/>}</IconButton>
       <Button aria-label="Playback speed" title={`Change speed to ${nextRate}×`} disabled={!ready || rates.length < 2} onClick={() => onRate(nextRate)} sx={{ minWidth: 44, minHeight: 40, px: .75, color: 'inherit', fontWeight: 600, '&.Mui-disabled': { color: 'rgba(245,237,224,.5)' } }}>{rate}×</Button>
       <Box>{switcher}</Box>
       <Box>{filterControl}</Box>
       <Box>{settingsButton}</Box>
+      {navigation&&<IconButton aria-label="Next video" disabled={navigation.nextDisabled} onClick={navigation.next} sx={{color:'inherit'}}><KeyboardArrowDown/></IconButton>}
     </Box>
     <Box ref={scroller} data-mobile-clip-transcript data-feed-transcript onWheel={manualScroll} onTouchStart={manualScroll} onPointerDown={manualScroll} sx={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', scrollPaddingBlock: 1, px: 'max(12px, env(safe-area-inset-left))', pt: 1.25, pb: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}>
       {lines.map(line => <Box key={line.id} ref={(node: HTMLDivElement | null) => { if (node) cards.current.set(line.id,node); else cards.current.delete(line.id) }} data-clip-line={line.id} data-active-segment={active?.id === line.id ? 'true' : 'false'} aria-current={active?.id === line.id ? 'true' : undefined} sx={{ p: { xs: 1.5, sm: 2 }, mb: 1.25, borderRadius: '16px', bgcolor: '#1c2c24', border: '1px solid rgba(245,237,224,.12)', '&[data-active-segment="true"]': { borderColor: 'var(--awm-gold-light)', bgcolor: '#223b2d', boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--awm-gold-light) 25%, transparent)' } }}>

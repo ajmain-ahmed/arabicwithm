@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { Celebration, CheckCircle, EmojiEvents, Refresh, TimerOutlined } from '@mui/icons-material'
-import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogContent, Paper, Typography } from '@mui/material'
+import { Celebration, CheckCircle, EmojiEvents, Refresh, RestartAlt } from '@mui/icons-material'
+import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogContent, IconButton, Tooltip, Paper, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { completeWordSearch, fetchPuzzleVocabulary, type WordSearchCompletionResult } from '@/app/actions/puzzles'
 import WordSearchShell from './WordSearchShell'
@@ -40,8 +40,6 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
   const [message, setMessage] = useState('')
   const [mistakes, setMistakes] = useState(0)
   const [revealsUsed, setRevealsUsed] = useState(0)
-  const [elapsedSeconds, setElapsedSeconds] = useState(0)
-  const [timerRunning, setTimerRunning] = useState(false)
   const [round, setRound] = useState(0)
   const [completion, setCompletion] = useState<CompletionSummary | null>(null)
   const [pendingCompletion, setPendingCompletion] = useState<WordSearchCompletionStats | null>(null)
@@ -65,23 +63,12 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
 
   useEffect(() => {
     if (!started || !source || !puzzle?.placements.length) {
-      setTimerRunning(false)
       return
     }
     startedAtRef.current = Date.now()
     completionIdRef.current = crypto.randomUUID()
     completionSubmittedRef.current = false
-    setElapsedSeconds(0)
-    setTimerRunning(true)
   }, [puzzle, round, source, started])
-
-  useEffect(() => {
-    if (!timerRunning) return
-    const update = () => setElapsedSeconds(Math.max(0, Math.floor((Date.now() - startedAtRef.current) / 1000)))
-    update()
-    const timer = window.setInterval(update, 1000)
-    return () => window.clearInterval(timer)
-  }, [timerRunning])
 
   const saveCompletion = async (stats: WordSearchCompletionStats) => {
     if (!source) return
@@ -110,7 +97,6 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
   useEffect(() => {
     if (!puzzle || !source || !shouldCompleteWordSearch(found.size, puzzle.placements.length, completionSubmittedRef.current)) return
     completionSubmittedRef.current = true
-    setTimerRunning(false)
     const stats: WordSearchCompletionStats = {
       wordCount: puzzle.placements.length,
       wordsFound: found.size,
@@ -119,7 +105,6 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
       revealsUsed,
       durationSeconds: Math.max(1, Math.floor((Date.now() - startedAtRef.current) / 1000)),
     }
-    setElapsedSeconds(stats.durationSeconds)
     setPendingCompletion(stats)
     void saveCompletion(stats)
     // saveCompletion is intentionally invoked only on the first final-word transition.
@@ -285,13 +270,14 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
   const activeConfig = WORD_SEARCH_DIFFICULTIES[activeDifficulty]
   const selectedConfig = WORD_SEARCH_DIFFICULTIES[selectedDifficulty]
   const controls = started ? (
-    <Box sx={{ mb: 2.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
-      <WordSearchDifficultySelector value={selectedDifficulty} disabled={busy || savingCompletion} onChange={setSelectedDifficulty} />
-      <Chip label={`${activeConfig.label} · ${activeConfig.gridSize}×${activeConfig.gridSize}`} color="secondary" variant="outlined" sx={{ fontWeight: 800 }} />
-      <Chip label={`${found.size} / ${puzzle?.placements.length ?? 0} found`} sx={(theme) => ({ bgcolor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.2 : 0.12), color: 'text.primary', fontWeight: 800 })} />
-      <Chip icon={<TimerOutlined />} label={formatWordSearchDuration(elapsedSeconds)} variant="outlined" sx={{ fontWeight: 700 }} />
-      <Button onClick={reset} disabled={!puzzle || busy || complete} startIcon={<Refresh />} color="secondary">Restart</Button>
-      <Button onClick={() => void newGame()} disabled={busy} variant="contained" sx={{ ml: { sm: 'auto' } }}>{busy ? <CircularProgress size={20} color="inherit" /> : 'New Game'}</Button>
+    <Box sx={{mb:2.5}}>
+      <Box sx={{display:'flex',justifyContent:'center',mb:1.25}}><WordSearchDifficultySelector value={selectedDifficulty} disabled={busy || savingCompletion} onChange={setSelectedDifficulty}/></Box>
+      <Box data-word-search-status sx={{display:'flex',flexWrap:'nowrap',justifyContent:'center',alignItems:'center',gap:{xs:.5,sm:1},'& .MuiChip-label':{px:{xs:.75,sm:1.5},fontSize:{xs:11,sm:13}}}}>
+        <Chip label={`${activeConfig.label} ${activeConfig.gridSize}?${activeConfig.gridSize}`} variant="outlined"/>
+        <Chip label={`${found.size} / ${puzzle?.placements.length ?? 0} found`}/>
+        <Tooltip title="Restart game"><span><IconButton aria-label="Restart game" onClick={reset} disabled={!puzzle||busy||complete} sx={{width:40,height:44}}><RestartAlt/></IconButton></span></Tooltip>
+        <Tooltip title="New game"><span><IconButton aria-label="New game" onClick={()=>void newGame()} disabled={busy} sx={{width:40,height:44}}>{busy?<CircularProgress size={20}/>:<Refresh/>}</IconButton></span></Tooltip>
+      </Box>
     </Box>
   ) : undefined
 

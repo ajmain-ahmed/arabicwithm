@@ -45,7 +45,7 @@ export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tok
   </Box>
 }
 
-export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, settings, onUnavailable }: { mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
+export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable }: { navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
   const isPhone = useMediaQuery('(max-width:899.95px)')
   const [time, setTime] = useState(clip.clip_start_ms / 1000)
   const [segments,setSegments]=useState(clip.segments)
@@ -87,7 +87,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
     </Box>
     {ended && <Box sx={{display:{xs:'none',md:'flex'},justifyContent:'center',mt:1}}><Button onClick={()=>{setEnded(false);seekTo(clip.clip_start_ms/1000)}} sx={{color:{md:'var(--awm-gold-light)'}}}>Replay clip</Button></Box>}
     {isReady && (isMuted || autoplayBlocked) && <Box sx={{display:{xs:'none',md:'flex'},justifyContent:'center',mt:1}}><Button onClick={playWithSound} sx={{color:{md:'var(--awm-gold-light)'}}}>{autoplayBlocked?'Play with sound':'Turn sound on'}</Button></Box>}
-    <MobileForYouPanel clip={clip} segments={segments} time={time} settings={settings} settingsButton={mobileToolbar} switcher={mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
+    <MobileForYouPanel clip={clip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
     {active && <Box data-desktop-clip-transcript data-feed-transcript sx={{ display: { xs: 'none', md: 'block' }, mt: { xs: 2, md: 3 }, color: { md: '#f5ede0' }, maxHeight:{xs:'35dvh',md:'none'},overflowY:'auto',overscrollBehavior:'contain' }}>
       {active.tokens.length ? <ForYouWords key={active.id} tokens={active.tokens} settings={settings} time={time} /> : <Typography lang="ar" dir="rtl" sx={{ fontSize: { xs: `${1.8 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem`, md: `${2.2 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem` }, textAlign: 'center' }}>{displayArabic(active.original_text, settings.tashkeel)}</Typography>}
       {settings.sentence && active.english_text && <Typography lang="en" dir="ltr" sx={{ mt: 0.5, textAlign: 'center', color: 'inherit', opacity: .75, fontSize: `${TEXT_SCALES[safeTextSize(settings.englishSize)]}rem` }}>{active.english_text}</Typography>}
@@ -304,6 +304,7 @@ function Feed({ initialClips, railSwitcher, desktopControls, mobileSwitcher, fil
                   clip={clips[index]}
                   onUnavailable={unavailable}
                   settings={settings}
+                  navigation={{previous:()=>step(-1),next:()=>step(1),previousDisabled:index===0,nextDisabled:busy&&index>=clips.length-1}}
                   mobileToolbar={mobileSettingsButton}
                   mobileSwitcher={mobileSwitcher} filterControl={filterControl}
                   leftControls={<ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy && index >= clips.length - 1} sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}

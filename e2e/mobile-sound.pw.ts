@@ -34,13 +34,13 @@ for(const width of [320,390,844,1440])test(`sound state and one-row toolbar at $
  const history=[await source.getAttribute('data-for-you-source')]
  for(let i=0;i<6;i++){
   const previous=await source.getAttribute('data-for-you-source');await page.waitForTimeout(750)
-  await page.locator('[data-feed-gesture-zone]').hover();await page.mouse.wheel(0,100)
+  if(i%2===0)await toolbar.getByRole('button',{name:'Next video',exact:true}).click();else{await page.locator('[data-feed-gesture-zone]').hover();await page.mouse.wheel(0,100)}
   await expect(source).not.toHaveAttribute('data-for-you-source',previous!)
   await expect(source.locator('iframe')).toBeVisible()
   await expect.poll(state).toMatchObject({muted:false,volume:100,playing:true})
   history.push(await source.getAttribute('data-for-you-source'))
  }
- await page.waitForTimeout(750);await page.locator('[data-feed-gesture-zone]').first().dispatchEvent('wheel',{deltaY:-100})
+ await page.waitForTimeout(750);await toolbar.getByRole('button',{name:'Previous video',exact:true}).click()
  await expect(source).toHaveAttribute('data-for-you-source',history[history.length-2]!)
  await expect.poll(state).toMatchObject({muted:false,volume:100,playing:true})
  expect(await page.evaluate(()=>(window as unknown as {__ytPlayers:{playing:boolean;destroyed?:boolean}[]}).__ytPlayers.filter(p=>p.playing&&!p.destroyed).length)).toBe(1)
@@ -50,6 +50,11 @@ for(const width of [320,390,844,1440])test(`sound state and one-row toolbar at $
  await toolbar.getByRole('button',{name:'Mute clip',exact:true}).dispatchEvent('pointerdown',{pointerType:'touch'})
  await toolbar.getByRole('button',{name:'Mute clip',exact:true}).click()
  await expect.poll(state).toMatchObject({muted:true})
+ const mutedSource=await source.getAttribute('data-for-you-source')
+ await toolbar.getByRole('button',{name:'Next video',exact:true}).click()
+ await expect(source).not.toHaveAttribute('data-for-you-source',mutedSource!)
+ await expect(source.locator('iframe')).toBeVisible()
+ await expect.poll(state).toMatchObject({muted:true,playing:true})
  await toolbar.getByRole('button',{name:'Unmute clip',exact:true}).dispatchEvent('pointerdown',{pointerType:'touch'})
  await toolbar.getByRole('button',{name:'Unmute clip',exact:true}).click()
  await expect.poll(state).toMatchObject({muted:false})
