@@ -6,6 +6,7 @@ import {
     Box,
     Button,
     Drawer,
+    Divider,
     List,
     ListItem,
     ListItemButton,
@@ -13,6 +14,7 @@ import {
     ListItemText,
     Typography,
 } from '@mui/material'
+import { Fragment } from 'react'
 import { User } from '@supabase/supabase-js'
 import GoldLine from './GoldLine'
 import { LEARN_ITEMS, NAV_ROUTES, profileRoute, type NavigateFn } from './constants'
@@ -168,7 +170,8 @@ export default function MobileDrawer({
                     { label: 'Give Feedback', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/feedback') },
                     { label: 'Support Us', icon: <VolunteerActivismRounded sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/support') },
                 ].map((item) => (
-                    <ListItem disablePadding key={item.label}>
+                    <Fragment key={item.label}>
+                    <ListItem disablePadding>
                         <ListItemButton
                             className="mobile-list-btn"
                             onClick={item.onClick}
@@ -184,6 +187,8 @@ export default function MobileDrawer({
                             />
                         </ListItemButton>
                     </ListItem>
+                    {isLoggedIn && !isAdmin && !isReviewer && (item.label === 'My Profile' || item.label === 'Learn') && <Divider component="li" role="separator" data-nav-divider={item.label} sx={{ mx: 3, my: 1, borderColor: 'color-mix(in srgb, var(--awm-gold) 30%, transparent)' }} />}
+                    </Fragment>
                 ))}
 
 

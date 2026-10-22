@@ -9,7 +9,7 @@ vi.mock('@mui/icons-material', () => {
   return { AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon, SchoolOutlined: Icon }
 })
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => mocks.auth }))
-vi.mock('@/app/lib/useAccountAccess', () => ({ useAccountAccess: () => ({ isAdmin: mocks.role === 'admin', isReviewer: mocks.role !== 'user' }) }))
+vi.mock('@/app/lib/useAccountAccess', () => ({ useAccountAccess: () => ({ isAdmin: mocks.role === 'admin', isReviewer: ['admin','editor'].includes(mocks.role) }) }))
 vi.mock('@/app/components/ThemeProvider', () => ({ useColorMode: () => ({ mode: 'light', toggleColorMode: vi.fn() }) }))
 vi.mock('@/app/components/AuthDialog', () => ({ default: () => null }))
 vi.mock('./ContactDialog', () => ({ default: () => null }))
@@ -133,4 +133,15 @@ it('routes every normal mobile entry once and closes without permission UI',asyn
   mocks.push.mockClear();await act(async()=>item.click())
   expect(mocks.push).toHaveBeenCalledExactlyOnceWith(href)
  }
+})
+
+
+it.each(['user', 'premium'])('groups the normal %s mobile menu with dividers after Profile and Learn', async role => {
+  mocks.mobile = true; mocks.role = role
+  await act(async () => root.render(<Navbar />))
+  await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
+  expect([...document.querySelectorAll('.mobile-list-btn')].map(node => node.textContent)).toEqual(['My Profile','Home','Explore','Watch','Read','Learn','Give Feedback','Support Us'])
+  const dividers = [...document.querySelectorAll('[data-nav-divider]')]
+  expect(dividers.map(node => node.getAttribute('data-nav-divider'))).toEqual(['My Profile','Learn'])
+  expect(dividers.map(node => node.previousElementSibling?.textContent)).toEqual(['My Profile','Learn'])
 })

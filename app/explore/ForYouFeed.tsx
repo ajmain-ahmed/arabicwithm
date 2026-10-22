@@ -14,11 +14,12 @@ import { getExploreSoundPreference, subscribeToExploreSoundPreference } from '@/
 import { blockedForYouSources, excludeForYouSource } from '@/app/lib/forYouPlayback'
 import TextSizeControl, { safeTextSize, TEXT_SCALES } from '@/app/components/settings-controls/TextSizeControl'
 import MobileClipNavigator from './MobileClipNavigator'
+import MobileForYouPanel from './MobileForYouPanel'
 
 const sourceTranscripts = new Map<string, Promise<ForYouSegment[]>>()
 const MAX_RETAINED_CLIPS = 60
-// Reserve room for the toolbar and an Arabic/English pair on short screens.
-const MOBILE_PLAYER_HEIGHT = 'max(96px, min(52dvh, calc((100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px)) * .6), calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px) - 190px)))'
+// Match the reference's wide player while leaving space for transcript cards.
+const MOBILE_PLAYER_HEIGHT = 'max(96px, min(56.25vw, 44dvh, calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px) - 230px)))'
 
 function prepareTranscript(source: string) {
   if (!sourceTranscripts.has(source)) {
@@ -57,12 +58,9 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, s
     setTime(seconds)
     if(seconds>=clip.clip_start_ms/1000 && seconds<clip.clip_end_ms/1000)setEnded(false)
   }
-  const { wrapRef, isReady, isMuted, autoplayBlocked, playWithSound, mute, seekTo } = useYouTubePlayer(clip.video.youtube_id, updateTime, clip.clip_start_ms / 1000, { autoplay: true, muted: !soundEnabled, mutedAutoplayFallback: true, endAt: clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>setEnded(true), onError:code=>onUnavailable(clip.video.youtube_id,code) })
+  const { wrapRef, isReady, isMuted, isPlaying, autoplayBlocked, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates } = useYouTubePlayer(clip.video.youtube_id, updateTime, clip.clip_start_ms / 1000, { autoplay: true, muted: !soundEnabled, mutedAutoplayFallback: true, endAt: clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>setEnded(true), onError:code=>onUnavailable(clip.video.youtube_id,code) })
   useEffect(() => { if (!soundEnabled) mute() }, [soundEnabled, mute])
   const active = segmentAtTime(segments,time)
-  const mobileActive = time >= clip.clip_start_ms / 1000 && time < clip.clip_end_ms / 1000
-    ? segmentAtTime(segments.filter(segment => segment.start_seconds < clip.clip_end_ms / 1000 && segment.end_seconds > clip.clip_start_ms / 1000), time)
-    : null
   return <Box data-for-you-source={clip.video.youtube_id} sx={{ display: { xs: 'flex', md: 'block' }, flexDirection: 'column', flex: { xs: 1, md: 'initial' }, minHeight: 0 }}>
 
     {/* Outer box = positioning context for the out-of-frame controls. */}
@@ -75,13 +73,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, s
     </Box>
     {ended && <Box sx={{display:{xs:'none',md:'flex'},justifyContent:'center',mt:1}}><Button onClick={()=>{setEnded(false);seekTo(clip.clip_start_ms/1000)}} sx={{color:{md:'var(--awm-gold-light)'}}}>Replay clip</Button></Box>}
     {isReady && (isMuted || autoplayBlocked) && <Box sx={{display:{xs:'none',md:'flex'},justifyContent:'center',mt:1}}><Button onClick={playWithSound} sx={{color:{md:'var(--awm-gold-light)'}}}>{autoplayBlocked?'Play with sound':'Turn sound on'}</Button></Box>}
-    <Box data-mobile-for-you-toolbar sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', minHeight: 48, pl: 'max(12px, env(safe-area-inset-left))', pr: 'max(12px, env(safe-area-inset-right))', py: .5, borderBottom: '1px solid color-mix(in srgb, var(--awm-bark) 10%, transparent)', flexShrink: 0 }}>{mobileToolbar}</Box>
-    <Box data-mobile-clip-transcript data-feed-transcript sx={{ display: { xs: 'block', md: 'none' }, pl: 'max(16px, env(safe-area-inset-left))', pr: 'max(16px, env(safe-area-inset-right))', py: 1.5, flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain' }}>
-      {mobileActive && <Box key={mobileActive.id} data-clip-line={mobileActive.id}>
-        <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-serif)', textAlign: 'center', lineHeight: 1.65, overflowWrap: 'anywhere', fontSize: `${1.8 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem` }}>{displayArabic(mobileActive.original_text || mobileActive.tokens.map(token => token.arabic).join(' '), settings.tashkeel)}</Typography>
-        {settings.sentence && mobileActive.english_text && <Typography lang="en" dir="ltr" sx={{ textAlign: 'center', mt: .5, color: 'var(--awm-muted)', overflowWrap: 'anywhere', fontSize: `${TEXT_SCALES[safeTextSize(settings.englishSize)]}rem` }}>{mobileActive.english_text}</Typography>}
-      </Box>}
-    </Box>
+    <MobileForYouPanel clip={clip} segments={segments} time={time} settings={settings} settingsButton={mobileToolbar} ready={isReady} playing={isPlaying} onPlay={() => { if (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
     {active && <Box data-desktop-clip-transcript data-feed-transcript sx={{ display: { xs: 'none', md: 'block' }, mt: { xs: 2, md: 3 }, color: { md: '#f5ede0' }, maxHeight:{xs:'35dvh',md:'none'},overflowY:'auto',overscrollBehavior:'contain' }}>
       {active.tokens.length ? <ForYouWords key={active.id} tokens={active.tokens} settings={settings} time={time} /> : <Typography lang="ar" dir="rtl" sx={{ fontSize: { xs: `${1.8 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem`, md: `${2.2 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem` }, textAlign: 'center' }}>{displayArabic(active.original_text, settings.tashkeel)}</Typography>}
       {settings.sentence && active.english_text && <Typography lang="en" dir="ltr" sx={{ mt: 0.5, textAlign: 'center', color: 'inherit', opacity: .75, fontSize: `${TEXT_SCALES[safeTextSize(settings.englishSize)]}rem` }}>{active.english_text}</Typography>}
@@ -265,17 +257,18 @@ export default function ForYouFeed({ initialClips, railSwitcher, desktopControls
     if(!remaining.length)void loadMore()
   }
   const settingsButton=<Box sx={{display:'flex',flexDirection:{xs:'row',md:'column'},gap:{xs:1,md:0},alignItems:'center'}}><Tooltip title="Settings"><IconButton aria-label="Settings" aria-expanded={!!settingsAnchor} onClick={event=>setSettingsAnchor(event.currentTarget)} sx={{width:{xs:44,md:50},height:{xs:44,md:50},color:'#fff',bgcolor:settingsAnchor?{xs:'var(--awm-forest)',md:'rgba(184,134,11,.24)'}:{xs:'var(--awm-forest)',md:'rgba(255,255,255,.14)'},border:settingsAnchor?'1px solid var(--awm-gold)':'1px solid transparent','&:hover':{color:'#fff',bgcolor:{xs:'var(--awm-forest)',md:'rgba(184,134,11,.3)'}},'&:active':{color:'#fff'},'&.Mui-disabled':{color:'rgba(255,255,255,.5)'},'&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}><SettingsOutlined/></IconButton></Tooltip><Typography sx={{fontSize:{xs:13,md:11},color:{xs:'var(--awm-bark)',md:'#fff'},mt:{xs:0,md:.5}}}>Settings</Typography></Box>
+  const mobileSettingsButton = <IconButton aria-label="Settings" aria-expanded={!!settingsAnchor} onClick={event => setSettingsAnchor(event.currentTarget)} sx={{ width: 40, height: 40, color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,.1)' }, '&:focus-visible': { outline: '2px solid var(--awm-gold-light)', outlineOffset: 2 } }}><SettingsOutlined /></IconButton>
   const desktopRail=<Box sx={{display:{xs:'none',md:'flex'},flexDirection:'column',alignItems:'center',gap:1}}>{desktopControls?.(settingsButton)??<>{railSwitcher}{settingsButton}</>}</Box>
   const initialLoading = clips.length === 0 && busy
 
-  return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, pt: { xs: 0, md: 3 }, height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'auto' }, pb: { xs: 0, md: 5 } }}>
+  return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: '#111d18', md: '#0a0c0b' }, pt: { xs: 0, md: 3 }, height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'auto' }, pb: { xs: 0, md: 5 } }}>
     <Box sx={{ maxWidth: 2400, mx: 'auto', height: { xs: '100%', md: 'auto' }, px: { xs: 0, sm: 0, md: 5 } }}>
       <Popover open={Boolean(settingsAnchor)} anchorEl={settingsAnchor} onClose={()=>setSettingsAnchor(null)} anchorOrigin={{vertical:'bottom',horizontal:'right'}} transformOrigin={{vertical:'top',horizontal:'right'}} slotProps={{paper:{sx:{p:2,width:'max-content',maxWidth:'calc(100vw - 32px)',borderRadius:'12px'}}}}>
         <Typography component="h2" sx={{fontWeight:600,mb:1}}>Settings</Typography>
         <TextSizeControl label="Arabic text size" value={safeTextSize(settings.arabicSize)} onChange={value=>resizeText('arabicSize',value)}/>
         <TextSizeControl label="English text size" value={safeTextSize(settings.englishSize)} onChange={value=>resizeText('englishSize',value)}/>
         <Box sx={{display:'flex',flexDirection:'column'}}>
-          {([['tashkeel','Tashkīl'],['meanings','Inline word meanings'],['sentence','English sentence']] as const).map(([key,label])=><FormControlLabel key={key} sx={key === 'meanings' ? { display: { xs: 'none', md: 'inline-flex' } } : undefined} label={label} control={<Switch checked={settings[key]} onChange={()=>toggleSetting(key)}/>}/>)}
+          {([['tashkeel','Tashkīl'],['meanings','Inline word meanings'],['sentence','English sentence']] as const).map(([key,label])=><FormControlLabel key={key} label={label} control={<Switch checked={settings[key]} onChange={()=>toggleSetting(key)}/>}/>)}
         </Box>
         <Button onClick={()=>setSettingsAnchor(null)}>Done</Button>
       </Popover>
@@ -294,7 +287,7 @@ export default function ForYouFeed({ initialClips, railSwitcher, desktopControls
                   clip={clips[index]}
                   onUnavailable={unavailable}
                   settings={settings}
-                  mobileToolbar={settingsButton}
+                  mobileToolbar={mobileSettingsButton}
                   leftControls={<ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy && index >= clips.length - 1} sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}
                   rightControls={desktopRail ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', left: 'calc(100% + 16px)', top: 0 }}>{desktopRail}</Box> : undefined}
                 /></MobileClipNavigator>
