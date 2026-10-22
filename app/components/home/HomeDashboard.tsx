@@ -19,6 +19,7 @@ import {
   VolunteerActivismRounded,
   AccountTreeOutlined,
   SearchOutlined,
+  PsychologyOutlined,
 } from '@mui/icons-material'
 import { Box, Button, Container, Paper, Skeleton, Typography } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
@@ -315,6 +316,18 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
               <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Books</Typography>
               <NewOnRow items={bookRowItems} ariaLabel="Books" autoScroll compact />
             </>}
+          </Container>
+
+          <Container maxWidth={false} sx={{ display: { xs: 'block', md: 'none' }, mt: 3 }}>
+            <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 600, color: 'var(--awm-bark)' }}>Quick Actions</Typography>
+            <Box component="nav" aria-label="Quick Actions" data-mobile-home-actions sx={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 1.5, mt: 1.5 }}>
+              {[
+                { title: 'Memory', href: '/memory', Icon: PsychologyOutlined },
+                { title: 'Grammar', href: '/grammar', Icon: AccountTreeOutlined },
+                { title: 'Word Search', href: '/word-search', Icon: GridOnRounded },
+                { title: 'Explore', href: '/explore', Icon: ExploreOutlined },
+              ].map(({ title, href, Icon }) => <Paper key={href} component={Link} href={href} elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minHeight: 76, p: 2, borderRadius: '10px', textDecoration: 'none', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><Icon sx={{ color: 'var(--awm-gold)' }} /><Typography sx={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14 }}>{title}</Typography></Paper>)}
+            </Box>
           </Container>
 
           <Container maxWidth="lg" sx={{ mt: { xs: 5, md: 7 }, mb: { xs: 5, md: 7 } }}>

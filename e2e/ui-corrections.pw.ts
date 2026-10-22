@@ -24,7 +24,8 @@ for(const width of [390,1440]){
  test(`playback, seeking, replay and compact Settings at ${width}`,async({page,request})=>{
   await request.post(`${backend}/fixture/for-you-playback`);await youtube(page);await page.setViewportSize({width,height:1000});await page.goto('/explore')
   await page.getByRole('button',{name:'For You feed',exact:true}).click()
-  await expect(page.getByText('Opening sentence',{exact:true})).toBeVisible()
+  const transcript = page.locator(width >= 900 ? '[data-desktop-clip-transcript]' : '[data-mobile-clip-transcript]')
+  await expect(transcript.locator('[lang=en]').last()).toHaveText('Opening sentence')
   await expect(page.getByRole('button',{name:'Mute',exact:true})).toHaveCount(0)
   const settings=page.getByRole('button',{name:'Settings',exact:true});const frame=page.locator('[data-for-you-source] iframe')
   if(width>=900){const [s,f]=await Promise.all([settings.boundingBox(),frame.boundingBox()]);expect(s!.x).toBeGreaterThan(f!.x+f!.width);expect(s!.y).toBeLessThan(f!.y+f!.height)}
@@ -32,12 +33,12 @@ for(const width of [390,1440]){
   const panel=page.getByRole('heading',{name:'Settings',exact:true}).locator('..');const bounds=await panel.boundingBox();expect(bounds!.width).toBeLessThan(330);expect(bounds!.height).toBeLessThan(460)
   await panel.getByRole('button',{name:'Done',exact:true}).click()
   await time(page,500.5);await expect(page.locator('[data-active-token=true]')).toHaveText('جَدِيدٌnew')
-  await time(page,510);await expect(page.getByText('Later sentence',{exact:true})).toBeVisible()
-  await time(page,375);await expect(page.getByText('Earlier sentence',{exact:true})).toBeVisible()
-  await time(page,522);await page.getByRole('button',{name:'Replay clip',exact:true}).click()
-  await expect(page.getByText('Opening sentence',{exact:true})).toBeVisible()
+  await time(page,510);await expect(transcript.locator('[lang=en]').last()).toHaveText('Later sentence')
+  await time(page,375);if(width>=900)await expect(transcript.locator('[lang=en]').last()).toHaveText('Earlier sentence');else await expect(transcript).not.toContainText('Earlier sentence')
+  await time(page,522);if(width>=900)await page.getByRole('button',{name:'Replay clip',exact:true}).click();else{await expect(page.getByRole('button',{name:'Replay clip',exact:true})).toHaveCount(0);await time(page,495)}
+  await expect(transcript.locator('[lang=en]').last()).toHaveText('Opening sentence')
   expect(await page.evaluate(()=>(window as unknown as {__ytPlayers:{time:number}[]}).__ytPlayers.at(-1)!.time)).toBe(495)
-  await time(page,522);await time(page,0,1);await expect(page.getByText('Opening sentence',{exact:true})).toBeVisible()
+  await time(page,522);await time(page,0,1);await expect(transcript.locator('[lang=en]').last()).toHaveText('Opening sentence')
   await expect(page.getByRole('button',{name:'Replay clip',exact:true})).toHaveCount(0)
   expect(await page.evaluate(()=>(window as unknown as {__ytPlayers:{time:number}[]}).__ytPlayers.at(-1)!.time)).toBe(495)
   await page.screenshot({path:`test-results/for-you-corrections-${width}.png`,fullPage:true})

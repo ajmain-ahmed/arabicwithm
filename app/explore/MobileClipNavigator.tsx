@@ -83,8 +83,8 @@ export default function MobileClipNavigator({ clipKey, canPrevious, busy, step, 
     }
   }, [])
 
-  return <Box ref={viewport} data-mobile-clip-feed sx={{ position: 'relative', minHeight: { xs: 380, md: 0 }, overscrollBehaviorY: 'contain' }}>
+  return <Box ref={viewport} data-mobile-clip-feed sx={{ position: 'relative', height: { xs: '100%', md: 'auto' }, display: { xs: 'flex', md: 'block' }, flexDirection: 'column', minHeight: 0, overscrollBehaviorY: 'contain' }}>
     {children}
-    <Typography sx={{ display: { xs: 'block', md: 'none' }, textAlign: 'center', fontSize: 12, mt: 3, color: 'text.secondary' }}>Scroll down for the next clip · scroll up to go back</Typography>
+    <Typography sx={{ display: { xs: 'block', md: 'none' }, textAlign: 'center', fontSize: 12, px: 2, py: .75, color: 'text.secondary', flexShrink: 0 }}>Scroll down for the next clip · scroll up to go back</Typography>
   </Box>
 }

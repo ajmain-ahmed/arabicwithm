@@ -320,9 +320,10 @@ function ExploreVideo({
             width: '100%',
             maxWidth: '100%',
             maxHeight: '100%',
-            aspectRatio: '9 / 16',
-            /* Older browsers: full width, minor letterboxing on tall screens. */
-            '@supports (width: 1cqh)': { width: 'min(100%, 56.25cqh)' },
+            height: { xs: '100%', md: 'auto' },
+            aspectRatio: { xs: 'auto', md: '9 / 16' },
+            /* Mobile fills the stage; desktop retains the height-fitted 9:16 card. */
+            '@supports (width: 1cqh)': { width: { xs: '100%', md: 'min(100%, 56.25cqh)' } },
             overflow: 'hidden',
             borderRadius: { xs: 0, md: '20px' },
             boxShadow: { xs: 'none', md: '0 30px 80px rgba(0,0,0,0.55)' },
@@ -774,7 +775,7 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
 
   if (items.length === 0 && !initialLoaded) {
     return (
-      <Box sx={{ height: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))', bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, display: 'grid', placeItems: 'center' }}>
+      <Box sx={{ height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' }, bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, display: 'grid', placeItems: 'center' }}>
         <LoadingCircle size={62} dark />
       </Box>
     )
@@ -789,7 +790,7 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
   }
 
   return (
-      <Box sx={{ position: 'relative', height: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))', '@supports (height: 100dvh)': { height: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' }, minHeight: 'calc(100vh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' }}>
+      <Box sx={{ position: 'relative', height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' }, '@supports (height: 100dvh)': { height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' } }, minHeight: { xs: 0, md: 'calc(100vh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' } }}>
       <Box
         id="explore-feed"
         ref={feedRef}

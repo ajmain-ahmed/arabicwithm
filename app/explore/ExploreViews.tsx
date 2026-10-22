@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Box, Fade, IconButton, Typography } from '@mui/material'
+import { Box, Button, Fade, IconButton, Typography } from '@mui/material'
 import { Close, ExploreOutlined, PersonOutlineRounded } from '@mui/icons-material'
 import ExploreFeed from './ExploreFeed'
 import ForYouFeed from './ForYouFeed'
@@ -9,6 +9,9 @@ import ForYouFeed from './ForYouFeed'
 type ExploreView = 'explore' | 'foryou'
 
 function ViewSwitch({ view, onChange, hint, onDismiss, mobile = false, horizontal = false, trailing }: { view: ExploreView; onChange: (view: ExploreView) => void; hint: boolean; onDismiss: () => void; mobile?: boolean; horizontal?: boolean; trailing?: ReactNode }) {
+  if (mobile) return <Box role="group" aria-label="Explore views" sx={{ display: 'flex', p: .5, borderRadius: '9999px', bgcolor: 'rgba(0,0,0,.3)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,.2)' }}>
+    {(['explore', 'foryou'] as const).map(id => <Button key={id} aria-label={`${id === 'explore' ? 'Explore' : 'For You'} feed`} aria-pressed={view === id} onClick={() => onChange(id)} sx={{ width: 96, minHeight: 40, borderRadius: '9999px', color: '#fff', bgcolor: view === id ? 'rgba(255,255,255,.22)' : 'transparent', fontWeight: view === id ? 700 : 500, textTransform: 'none', '&:hover': { bgcolor: 'rgba(255,255,255,.3)' }, '&:focus-visible': { outline: '2px solid var(--awm-gold-light)', outlineOffset: 2 } }}>{id === 'explore' ? 'Explore' : 'For You'}</Button>)}
+  </Box>
   return <Box sx={{ position: 'relative', display: 'flex', flexDirection: mobile || horizontal ? 'row' : 'column', alignItems: horizontal ? 'flex-start' : 'center', gap: 1, minWidth: 0 }}>
     {([{ id: 'explore', label: 'Explore', Icon: ExploreOutlined }, { id: 'foryou', label: 'For You', Icon: PersonOutlineRounded }] as const).map(({ id, label, Icon }) => <Box key={id} sx={{ position: 'relative', textAlign: 'center' }}>
       <IconButton aria-label={`${label} feed`} aria-pressed={view === id} onClick={() => onChange(id)} sx={{ width: mobile ? 44 : 50, height: mobile ? 44 : 50, color: mobile ? 'var(--awm-forest)' : '#fff', bgcolor: view === id ? 'rgba(184,134,11,.24)' : mobile ? 'transparent' : 'rgba(255,255,255,.14)', border: view === id ? '1px solid var(--awm-gold)' : '1px solid transparent', '&:hover': { bgcolor: 'rgba(184,134,11,.3)' }, '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><Icon /></IconButton>
@@ -38,8 +41,8 @@ export default function ExploreViews() {
   }, [view])
   const dismiss = () => { setHintFor(null); if (timer.current) clearTimeout(timer.current) }
   const rail = <ViewSwitch view={view} onChange={setView} hint={hintFor === view} onDismiss={dismiss} />
-  return <Box sx={{ '--awm-explore-switch-height': { xs: '56px', md: '0px' } }}>
-    <Box sx={{ display: { xs: 'flex', md: 'none' }, px: 1.5, height: 56, alignItems: 'center', bgcolor: 'var(--awm-cream-light)' }}><ViewSwitch mobile view={view} onChange={setView} hint={hintFor === view} onDismiss={dismiss} /></Box>
+  return <Box sx={{ position: 'relative', '--awm-explore-switch-height': '0px' }}>
+    <Box data-mobile-explore-switch sx={{ display: { xs: 'flex', md: 'none' }, position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}><ViewSwitch mobile view={view} onChange={setView} hint={false} onDismiss={dismiss} /></Box>
     {view === 'explore' ? <ExploreFeed railTop={<Box sx={{ display: { xs: 'none', md: 'block' } }}>{rail}</Box>} /> : <ForYouFeed desktopControls={settings => <ViewSwitch view={view} onChange={setView} hint={hintFor === view} onDismiss={dismiss} trailing={settings} />} />}
   </Box>
 }
