@@ -28,8 +28,8 @@ const calls: string[] = []
 const destroy = vi.fn()
 const pause = vi.fn()
 const seek = vi.fn((seconds:number)=>{playerTime=seconds})
-function Harness({ id, start, end, muted = true, fallback = false, synced=false }: { id?: string; start?: number; end?:number; muted?: boolean; fallback?: boolean; synced?:boolean }) {
-  const player = useYouTubePlayer(id, updateTime, start, { autoplay: true, muted, endAt:end, mutedAutoplayFallback: fallback, requireTimeUpdates:synced, onEnded:ended, onError:failed })
+function Harness({ id, start, end, muted = true, fallback = false, synced=false, verify=false }: { id?: string; start?: number; end?:number; muted?: boolean; fallback?: boolean; synced?:boolean; verify?:boolean }) {
+  const player = useYouTubePlayer(id, updateTime, start, { verifySoundState:verify, autoplay: true, muted, endAt:end, mutedAutoplayFallback: fallback, requireTimeUpdates:synced, onEnded:ended, onError:failed })
   useEffect(() => { controls = player })
   const { wrapRef } = player
   return <div ref={wrapRef} />
@@ -197,4 +197,15 @@ it('seeks to exact fractional times initially and on same-video timestamp naviga
  await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" start={401.72}/>))
  expect(seek).toHaveBeenLastCalledWith(401.72,true)
  expect(destroy).not.toHaveBeenCalled()
+})
+
+it('reports the real mobile mute state when the player rejects an unmute command',async()=>{
+ await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" verify/>))
+ await act(async()=>{await vi.advanceTimersByTimeAsync(60);options.events.onReady()})
+ const unmute=vi.spyOn(window.YT.Player.prototype,'unMute').mockImplementation(()=>{})
+ await act(async()=>controls.playWithSound())
+ expect(playerMuted).toBe(true);expect(controls.isMuted).toBe(true)
+ unmute.mockRestore()
+ await act(async()=>controls.playWithSound())
+ expect(playerMuted).toBe(false);expect(controls.isMuted).toBe(false)
 })

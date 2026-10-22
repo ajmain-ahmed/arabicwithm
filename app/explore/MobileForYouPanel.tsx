@@ -57,12 +57,12 @@ export default function MobileForYouPanel({ clip, segments, time, settings, sett
   const nextRate = rates[(Math.max(0, rates.indexOf(rate)) + 1) % rates.length] ?? 1
 
   return <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', flex: 1, minHeight: 0, bgcolor: '#111d18', color: '#f5ede0' }}>
-    <Box data-mobile-for-you-toolbar sx={{ display: 'grid', gridTemplateColumns: '80px auto 80px', justifyContent: 'center', alignItems: 'center', justifyItems: 'center', gap: .5, px: 'max(12px, env(safe-area-inset-right))', pb: .5, minHeight: 44, flexShrink: 0, borderBottom: '1px solid rgba(245,237,224,.08)' }}>
+    <Box data-mobile-for-you-toolbar sx={{ display: 'flex', flexWrap: 'nowrap', justifyContent: 'center', alignItems: 'center', gap: .25, px: 'max(4px, env(safe-area-inset-right))', '& > *': { flexShrink: 0 }, '& .MuiIconButton-root': { width: 36, height: 40 }, '& > .MuiButton-root': { minWidth: 32, width: 32 }, '& [role=group] button': { width: { xs: 64, sm: 72 }, px: .5, fontSize: 12 }, pb: .5, minHeight: 44, flexShrink: 0, borderBottom: '1px solid rgba(245,237,224,.08)' }}>
       <IconButton aria-label={muted ? 'Unmute clip' : 'Mute clip'} disabled={!ready} onClick={onSound} sx={{ width:40,height:40,color:'inherit' }}>{muted ? <VolumeOff/> : <VolumeUp/>}</IconButton>
       <Button aria-label="Playback speed" title={`Change speed to ${nextRate}×`} disabled={!ready || rates.length < 2} onClick={() => onRate(nextRate)} sx={{ minWidth: 44, minHeight: 40, px: .75, color: 'inherit', fontWeight: 600, '&.Mui-disabled': { color: 'rgba(245,237,224,.5)' } }}>{rate}×</Button>
-      <Box sx={{gridColumn:2,gridRow:'1 / span 2'}}>{switcher}</Box>
-      <Box sx={{gridColumn:3,gridRow:2}}>{filterControl}</Box>
-      <Box sx={{gridColumn:3,gridRow:1}}>{settingsButton}</Box>
+      <Box>{switcher}</Box>
+      <Box>{filterControl}</Box>
+      <Box>{settingsButton}</Box>
     </Box>
     <Box ref={scroller} data-mobile-clip-transcript data-feed-transcript onWheel={manualScroll} onTouchStart={manualScroll} onPointerDown={manualScroll} sx={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', scrollPaddingBlock: 1, px: 'max(12px, env(safe-area-inset-left))', pt: 1.25, pb: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}>
       {lines.map(line => <Box key={line.id} ref={(node: HTMLDivElement | null) => { if (node) cards.current.set(line.id,node); else cards.current.delete(line.id) }} data-clip-line={line.id} data-active-segment={active?.id === line.id ? 'true' : 'false'} aria-current={active?.id === line.id ? 'true' : undefined} sx={{ p: { xs: 1.5, sm: 2 }, mb: 1.25, borderRadius: '16px', bgcolor: '#1c2c24', border: '1px solid rgba(245,237,224,.12)', '&[data-active-segment="true"]': { borderColor: 'var(--awm-gold-light)', bgcolor: '#223b2d', boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--awm-gold-light) 25%, transparent)' } }}>

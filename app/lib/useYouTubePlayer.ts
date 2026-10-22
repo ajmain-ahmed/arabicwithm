@@ -42,6 +42,7 @@ declare global {
 }
 
 interface YouTubePlayerOptions {
+  verifySoundState?: boolean
   autoplay?: boolean
   muted?: boolean
   mutedAutoplayFallback?: boolean
@@ -268,7 +269,7 @@ export default function useYouTubePlayer(
               if (autoplay && options.mutedAutoplayFallback && !triedMutedFallback) {
                 triedMutedFallback = true
                 playerRef.current?.mute?.()
-                setIsMuted(true)
+                setIsMuted(options.verifySoundState ? readEffectiveMuted(playerRef.current, true) : true)
                 playerRef.current?.playVideo?.()
               } else setAutoplayBlocked(true)
             },
@@ -311,7 +312,7 @@ export default function useYouTubePlayer(
       setIsReady(false)
       setIsPlaying(false)
     }
-  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, options.mutedAutoplayFallback, options.requireTimeUpdates, retryNonce])
+  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, options.mutedAutoplayFallback, options.requireTimeUpdates, options.verifySoundState, retryNonce])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {
@@ -362,13 +363,13 @@ export default function useYouTubePlayer(
 
   const mute = useCallback(() => {
     playerRef.current?.mute?.()
-    setIsMuted(true)
-  }, [])
+    setIsMuted(options.verifySoundState ? readEffectiveMuted(playerRef.current, true) : true)
+  }, [options.verifySoundState])
 
   const unMute = useCallback(() => {
     playerRef.current?.unMute?.()
-    setIsMuted(false)
-  }, [])
+    setIsMuted(options.verifySoundState ? readEffectiveMuted(playerRef.current, true) : false)
+  }, [options.verifySoundState])
 
   const playWithSound = useCallback(() => {
     const player = playerRef.current
@@ -378,8 +379,8 @@ export default function useYouTubePlayer(
     if ((player?.getVolume?.() ?? 100) === 0) player?.setVolume?.(100)
     player?.playVideo?.()
     setAutoplayBlocked(false)
-    setIsMuted(false)
-  }, [])
+    setIsMuted(options.verifySoundState ? readEffectiveMuted(playerRef.current, true) : false)
+  }, [options.verifySoundState])
 
   const getCurrentTime = useCallback(() => {
     return playerRef.current?.getCurrentTime?.() ?? 0

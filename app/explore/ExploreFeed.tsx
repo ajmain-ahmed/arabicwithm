@@ -210,7 +210,7 @@ function ExploreVideo({
     active && isYouTube ? source.id : undefined,
     undefined,
     undefined,
-    { autoplay: true, muted: !soundEnabled, mutedAutoplayFallback: isPhone, onEnded }
+    { autoplay: true, muted: !soundEnabled, verifySoundState: isPhone, mutedAutoplayFallback: isPhone, onEnded }
   )
   /* The player is the source of truth once ready: the user can also unmute
      or change volume with YouTube's own controls, which fire onVolumeChange. */
@@ -567,6 +567,9 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionP
 
 export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
   const theme = useTheme()
+  const [hydrated,setHydrated] = useState(false)
+  useEffect(()=>setHydrated(true),[])
+  const videosOnly = useMediaQuery(theme.breakpoints.down('md'))
   const isMobileDefinitionLayout = useMediaQuery(theme.breakpoints.down('lg'))
   const setGlobalVideoPlaying = usePlayerStore((state) => state.setIsPlaying)
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
@@ -574,7 +577,8 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
      fresh batch is fetched; first-time visitors fetch page 0 client-side. */
   const cachedItems = useExploreFeedCache((state) => state.items)
   const setCachedItems = useExploreFeedCache((state) => state.setItems)
-  const [items, setItems] = useState<ExploreFeedItem[]>(cachedItems)
+  const [items, setItems] = useState<ExploreFeedItem[]>(()=>cachedItems.filter(item=>!videosOnly||item.kind==='video'))
+  useEffect(()=>{if(videosOnly)setItems(current=>current.filter(item=>item.kind==='video'))},[videosOnly])
   const [hasMore, setHasMore] = useState(cachedItems.length > 0)
   const [initialLoaded, setInitialLoaded] = useState(cachedItems.length > 0)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -614,14 +618,14 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
   }, [items, watchedCount, setCachedItems])
 
   useEffect(() => {
-    if (initialLoadStartedRef.current) return
+    if (!hydrated || initialLoadStartedRef.current) return
     initialLoadStartedRef.current = true
     const restore = cachedItems.length > 0
     setItems((current) => (restore ? current : []))
     setLoadingMore(true)
-    void fetchExploreFeedPage(seedRef.current, 0)
+    void fetchExploreFeedPage(seedRef.current, 0, videosOnly)
       .then((batch) => {
-        const fresh = batch.items.filter((item) => {
+        const fresh = batch.items.filter(item=>!videosOnly||item.kind==='video').filter((item) => {
           const key = feedItemKey(item)
           if (seenKeysRef.current.has(key)) return false
           seenKeysRef.current.add(key)
@@ -639,16 +643,16 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
         setLoadingMore(false)
         setInitialLoaded(true)
       })
-  }, [cachedItems])
+  }, [cachedItems, videosOnly, hydrated])
 
   const loadNextBatch = useCallback(async () => {
     if (loadingBatchRef.current || !hasMore) return
     loadingBatchRef.current = true
     setLoadingMore(true)
     try {
-      const batch = await fetchExploreFeedPage(seedRef.current, nextPageRef.current)
+      const batch = await fetchExploreFeedPage(seedRef.current, nextPageRef.current, videosOnly)
       nextPageRef.current += 1
-      const fresh = batch.items.filter((item) => {
+      const fresh = batch.items.filter(item=>!videosOnly||item.kind==='video').filter((item) => {
         const key = feedItemKey(item)
         if (seenKeysRef.current.has(key)) return false
         seenKeysRef.current.add(key)
@@ -662,7 +666,7 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
       loadingBatchRef.current = false
       setLoadingMore(false)
     }
-  }, [hasMore])
+  }, [hasMore, videosOnly])
 
   useEffect(() => {
     if (activeIndex >= items.length - EXPLORE_PREFETCH_AHEAD) void loadNextBatch()

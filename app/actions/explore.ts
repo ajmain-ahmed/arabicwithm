@@ -36,12 +36,12 @@ async function hydrateExplorePlanItems(planItems: ExploreFeedPlanItem[]): Promis
   return items
 }
 
-async function fetchExploreFeedBatch(seed: string, page: number): Promise<ExploreFeedBatch> {
+async function fetchExploreFeedBatch(seed: string, page: number, videosOnly = false): Promise<ExploreFeedBatch> {
     const [episodeMetas, userId] = await Promise.all([
       fetchExploreEpisodeMetasForPublic(),
       getAuthenticatedUserId(),
     ])
-    const [bookChapterMetas, bookPageCounts] = userId
+    const [bookChapterMetas, bookPageCounts] = userId && !videosOnly
       ? await Promise.all([fetchExploreBookChapterMetasForPublic(), fetchExploreBookChapterPageCounts()])
       : [[], {}]
     const plan = buildExploreFeedPlan(episodeMetas, bookChapterMetas, bookPageCounts, seed)
@@ -55,8 +55,8 @@ const batchInputSchema = z.object({
   page: z.number().int().min(0).max(500),
 })
 
-export async function fetchExploreFeedPage(seed: string, page: number): Promise<ExploreFeedBatch> {
+export async function fetchExploreFeedPage(seed: string, page: number, videosOnly = false): Promise<ExploreFeedBatch> {
   const parsed = batchInputSchema.safeParse({ seed, page })
   if (!parsed.success) return { items: [], hasMore: false }
-  return fetchExploreFeedBatch(parsed.data.seed, parsed.data.page)
+  return fetchExploreFeedBatch(parsed.data.seed, parsed.data.page, videosOnly)
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { Alert, Box, Button, CircularProgress, IconButton, Skeleton, Typography, Popover, FormControlLabel, Switch, Tooltip } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, IconButton, Skeleton, Typography, Popover, FormControlLabel, Switch, Tooltip, useMediaQuery } from '@mui/material'
 import { KeyboardArrowDown, KeyboardArrowUp, SettingsOutlined } from '@mui/icons-material'
 import { fetchForYouClips, fetchForYouTranscript } from '@/app/actions/forYou'
 import { displayArabic } from '@/app/lib/displayArabic'
@@ -46,6 +46,7 @@ export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tok
 }
 
 export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, settings, onUnavailable }: { mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
+  const isPhone = useMediaQuery('(max-width:899.95px)')
   const [time, setTime] = useState(clip.clip_start_ms / 1000)
   const [segments,setSegments]=useState(clip.segments)
   const [ended,setEnded]=useState(false)
@@ -59,8 +60,19 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
     setTime(seconds)
     if(seconds>=clip.clip_start_ms/1000 && seconds<clip.clip_end_ms/1000)setEnded(false)
   }
-  const { wrapRef, isReady, isMuted, isPlaying, autoplayBlocked, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates } = useYouTubePlayer(clip.video.youtube_id, updateTime, clip.clip_start_ms / 1000, { autoplay: true, muted: !soundEnabled, mutedAutoplayFallback: true, endAt: clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>setEnded(true), onError:code=>onUnavailable(clip.video.youtube_id,code) })
+  const { wrapRef, isReady, isMuted, isPlaying, autoplayBlocked, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates } = useYouTubePlayer(clip.video.youtube_id, updateTime, clip.clip_start_ms / 1000, { verifySoundState: isPhone, autoplay: true, muted: !soundEnabled, mutedAutoplayFallback: true, endAt: clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>setEnded(true), onError:code=>onUnavailable(clip.video.youtube_id,code) })
   useEffect(() => { if (!soundEnabled) mute() }, [soundEnabled, mute])
+  useEffect(() => {
+    if (!isPhone || !isReady) return
+    if (soundEnabled) playWithSound()
+    else mute()
+  }, [isPhone, isReady, soundEnabled, playWithSound, mute])
+  useEffect(() => {
+    if (!isPhone || !isReady || !soundEnabled || !isMuted) return
+    const enable = () => playWithSound()
+    document.addEventListener('pointerdown', enable, { once: true })
+    return () => document.removeEventListener('pointerdown', enable)
+  }, [isPhone, isReady, soundEnabled, isMuted, playWithSound])
   const active = segmentAtTime(segments,time)
   return <Box data-for-you-source={clip.video.youtube_id} sx={{ display: { xs: 'flex', md: 'block' }, flexDirection: 'column', flex: { xs: 1, md: 'initial' }, minHeight: 0 }}>
 
