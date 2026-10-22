@@ -9,7 +9,11 @@ export default function MobileClipNavigator({ clipKey, canPrevious, busy, step, 
   const lockedUntil = useRef(0)
   const latest = useRef({ canPrevious, busy, step })
   useEffect(() => { latest.current = { canPrevious, busy, step } }, [canPrevious, busy, step])
-  useEffect(() => { lockedUntil.current = Date.now() + 700 }, [clipKey])
+  useEffect(() => {
+    lockedUntil.current = Date.now() + 700
+    if(window.matchMedia?.('(max-width:899.95px)').matches && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+      viewport.current?.animate?.([{opacity:.65,transform:'translateY(8px)'},{opacity:1,transform:'translateY(0)'}],{duration:160,easing:'ease-out'})
+  }, [clipKey])
 
   useEffect(() => {
     const node = viewport.current

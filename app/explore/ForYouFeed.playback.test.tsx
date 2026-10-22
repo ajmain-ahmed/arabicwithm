@@ -1,7 +1,8 @@
 import React, { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { beforeEach, expect, it, vi } from 'vitest'
-const mocks = vi.hoisted(() => ({ clips: vi.fn(), transcript: vi.fn().mockResolvedValue([]), mute: vi.fn(), active: new Set<string>() }))
+const mocks = vi.hoisted(() => ({ clips: vi.fn(), transcript: vi.fn().mockResolvedValue([]), mute: vi.fn(), active: new Set<string>(), mobile:false }))
+vi.mock('@mui/material',async original=>({...await original<typeof import('@mui/material')>(),useMediaQuery:()=>mocks.mobile}))
 vi.mock('@/app/actions/forYou', () => ({ fetchForYouClips: mocks.clips, fetchForYouTranscript: mocks.transcript }))
 vi.mock('@/app/lib/useYouTubePlayer', async () => {
  const { useEffect } = await import('react')
@@ -19,6 +20,7 @@ beforeEach(() => {
  Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
  useForYouCache.setState({ clips: [], index: 0, excluded: [] })
  localStorage.clear()
+ mocks.mobile=false
  mocks.clips.mockReset().mockResolvedValue([])
  mocks.active.clear()
 })
@@ -88,4 +90,18 @@ it('changes Arabic and English sizes independently, keeps bounds, and retains pr
   await act(async () => root.render(<ForYouFeed />))
   expect([size('ar'), size('en')]).toEqual(sizes)
  }, [1,2,3,4,5].map(clip))
+})
+
+it('requests a fresh random mobile batch on re-entry rather than restoring the cached opening',async()=>{
+ mocks.mobile=true
+ mocks.clips.mockResolvedValueOnce([1,2,3,4,5].map(clip)).mockResolvedValueOnce([6,7,8,9,10].map(clip))
+ await mounted(async(host,root)=>{
+  expect(new Set(useForYouCache.getState().clips.map(item=>item.video.id)).size).toBe(5)
+  const firstSeed=mocks.clips.mock.calls[0][0]
+  expect(firstSeed).not.toMatch(/^hour-/)
+  await act(async()=>root.render(<></>))
+  await act(async()=>root.render(<ForYouFeed/>))
+  expect(mocks.clips.mock.calls[1][0]).not.toBe(firstSeed)
+  expect(useForYouCache.getState().clips.every(item=>Number(item.video.id.split('-')[1])>=6)).toBe(true)
+ })
 })

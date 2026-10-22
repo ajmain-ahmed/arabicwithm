@@ -412,6 +412,7 @@ export default function useYouTubePlayer(
     unMute,
     playWithSound,
     getCurrentTime,
+    getSoundMuted: () => readEffectiveMuted(playerRef.current, mutedRef.current),
     getDuration,
     getPlaybackRates,
     playbackRate,
