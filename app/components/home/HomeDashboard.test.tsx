@@ -19,6 +19,7 @@ vi.mock('./LearningStats', () => ({
 vi.mock('next/link', () => ({ default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => <a href={href} {...props}>{children}</a> }))
 
 import HomeDashboard from './HomeDashboard'
+import { localDateKey } from '@/app/lib/activity'
 
 function daypart(date: Date) {
   const hour = date.getHours()
@@ -26,6 +27,18 @@ function daypart(date: Date) {
 }
 
 describe('homepage hero', () => {
+  it.each([0, 1, 4, 30])('shows only the number for a %i-day streak', (streak) => {
+    const activeDates = Array.from({ length: streak }, (_, offset) => {
+      const date = new Date()
+      date.setDate(date.getDate() - offset)
+      return localDateKey(date)
+    })
+    home.user = { id: 'user-id', user_metadata: { full_name: 'Test User', learning_activity: { activeDates, daily: activeDates.map(date => ({ date, activeSeconds: 60 })), totalSeconds: streak * 60 } } }
+    const html = renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]} />)
+    const pill = new DOMParser().parseFromString(html, 'text/html').querySelector(`[aria-label="${streak} day streak"]`)
+    expect(pill?.textContent).toBe(String(streak))
+  })
+
   it('shows a time-based greeting with streak and AWM+ pills for signed-in users', () => {
     home.user = { id: 'user-id', user_metadata: { full_name: 'Test User' } }
     home.statsRendered = false

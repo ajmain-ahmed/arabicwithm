@@ -18,6 +18,17 @@ import MobileClipNavigator from './MobileClipNavigator'
 const sourceTranscripts = new Map<string, Promise<ForYouSegment[]>>()
 const MAX_RETAINED_CLIPS = 60
 
+function prepareTranscript(source: string) {
+  if (!sourceTranscripts.has(source)) {
+    if (sourceTranscripts.size >= 20) sourceTranscripts.delete(sourceTranscripts.keys().next().value!)
+    sourceTranscripts.set(source, fetchForYouTranscript(source).catch(error => {
+      sourceTranscripts.delete(source)
+      throw error
+    }))
+  }
+  return sourceTranscripts.get(source)!
+}
+
 interface TranscriptSettings { tashkeel: boolean; meanings: boolean; sentence: boolean; arabicSize?: number; englishSize?: number }
 const DEFAULT_SETTINGS: TranscriptSettings = { tashkeel: true, meanings: true, sentence: true }
 
@@ -36,11 +47,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, settings, onUnav
   const [ended,setEnded]=useState(false)
   useEffect(()=>{
     let active=true
-    if(!sourceTranscripts.has(clip.video.id)){
-      if(sourceTranscripts.size>=20)sourceTranscripts.delete(sourceTranscripts.keys().next().value!)
-      sourceTranscripts.set(clip.video.id,fetchForYouTranscript(clip.video.id).catch(error=>{sourceTranscripts.delete(clip.video.id);throw error}))
-    }
-    void sourceTranscripts.get(clip.video.id)!.then(rows=>{if(active&&rows.length)setSegments(rows)}).catch(()=>{/* Selected clip remains usable; no stale sentence is shown outside its timing. */})
+    void prepareTranscript(clip.video.id).then(rows=>{if(active&&rows.length)setSegments(rows)}).catch(()=>{/* Selected clip remains usable; no stale sentence is shown outside its timing. */})
     return()=>{active=false}
   },[clip.video.id])
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
@@ -144,6 +151,10 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
   const [index, setIndex] = useState(()=>Math.min(cachedIndex,Math.max(0,(initialClips??cachedClips).filter(clip=>!blockedForYouSources().has(clip.video.youtube_id)).length-1))), [error, setError] = useState(''), [busy, setBusy] = useState(false)
   const [excluded, setExcluded] = useState<number[]>(cachedExcluded)
   const [progress, setProgress] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const feedRef = useRef({ clips, index })
+  useEffect(() => { feedRef.current = { clips, index } }, [clips, index])
+  const advanceAfterLoad = useRef(false)
 
   useEffect(() => {
     setCache(clips, index, excluded)
@@ -167,23 +178,24 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
   }, [busy])
 
   const loadingRef=useRef(false)
-  async function loadMore() {
+  async function loadMore(advance = false) {
+    if (advance) advanceAfterLoad.current = true
     if (loadingRef.current) return
     loadingRef.current=true
     setBusy(true); setError('')
     if (clips.length === 0) setProgress(0)
-    const seen = new Set([...excluded, ...clips.slice(0, index + 1).flatMap((clip) => clip.segments.map((segment) => segment.id))])
+    const seen = new Set([...excluded, ...clips.flatMap((clip) => clip.segments.map((segment) => segment.id))])
     // First load of the session shares an hourly seed so the data cache can
     // serve every visitor in that window; later loads are unique.
     const seed = clips.length === 0 && excluded.length === 0 ? hourlySeed() : crypto.randomUUID()
     try {
-      // Requery on every navigation; do not retain prefetched unpublished clips.
+      // Fetch five results, excluding every buffered clip as well as history.
       const blocked=blockedForYouSources()
       let next:ForYouClip[]=[]
       // A cached first batch may contain only blocked sources. Exclude those
       // segment IDs and ask for another batch, with a finite retry budget.
       for(let attempt=0;attempt<8;attempt++){
-        const batch=await fetchForYouClips(seed,[...seen].slice(-10000),clips.slice(0,index+1).map(clip=>clip.video.id).slice(-100))
+        const batch=await fetchForYouClips(seed,[...seen].slice(-10000),clips.map(clip=>clip.video.id).slice(-100))
         next=batch.filter(clip=>!blocked.has(clip.video.youtube_id))
         if(next.length||!batch.length)break
         const before=seen.size
@@ -191,24 +203,44 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
         if(seen.size===before)break
       }
       setExcluded([...seen].slice(-10000))
-      const usable=clips.filter(clip=>!blocked.has(clip.video.youtube_id))
+      // Navigation can continue while this request is in flight. Preserve the
+      // latest active clip, rather than jumping to the newly appended batch.
+      const latest = feedRef.current
+      const activeClip = latest.clips[latest.index]
+      const usable=latest.clips.filter(clip=>!blockedForYouSources().has(clip.video.youtube_id))
+      next = next.filter(clip => !blockedForYouSources().has(clip.video.youtube_id) && !usable.some(existing => existing.video.id === clip.video.id && existing.clip_start_ms === clip.clip_start_ms))
+      setHasMore(next.length > 0)
       if (next.length) {
         const merged = [...usable, ...next]
-        const trim = Math.max(0, merged.length - MAX_RETAINED_CLIPS)
+        const activeIndex = Math.max(0, usable.indexOf(activeClip))
+        const target = advanceAfterLoad.current ? Math.min(activeIndex + 1, merged.length - 1) : activeIndex
+        const trim = Math.min(target, Math.max(0, merged.length - MAX_RETAINED_CLIPS))
         setClips(merged.slice(trim))
-        setIndex(Math.max(0,usable.length - trim))
+        setIndex(target - trim)
       }
       setProgress(100)
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load clips.') } finally { loadingRef.current=false; setBusy(false) }
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load clips.') } finally { advanceAfterLoad.current=false; loadingRef.current=false; setBusy(false) }
   }
+
+  useEffect(() => {
+    if (clips.length && index > 0 && index >= clips.length - 2 && hasMore) void loadMore()
+    // A failed/empty request is retried by the next deliberate navigation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [index, clips.length, hasMore])
+
+  const nextSource = clips[index + 1]?.video.id
+  useEffect(() => {
+    if (nextSource) void prepareTranscript(nextSource).catch(() => {})
+  }, [nextSource])
 
   function step(offset: 1 | -1) {
     if (offset === -1) {
+      advanceAfterLoad.current = false
       setIndex((value) => Math.max(0, value - 1))
       return
     }
     if (index < clips.length - 1) setIndex(index + 1)
-    else void loadMore()
+    else void loadMore(true)
   }
 
   function unavailable(source:string,code:number){
@@ -219,7 +251,7 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
     setClips(remaining);setIndex(Math.max(0,Math.min(before,remaining.length-1)))
     if(!remaining.length)void loadMore()
   }
-  const settingsButton=<Box sx={{display:'flex',flexDirection:'column',alignItems:'center'}}><Tooltip title="Settings"><IconButton aria-label="Settings" aria-expanded={!!settingsAnchor} onClick={event=>setSettingsAnchor(event.currentTarget)} sx={{width:{xs:44,md:50},height:{xs:44,md:50},color:{xs:'var(--awm-bark)',md:'#fff'},bgcolor:settingsAnchor?'rgba(184,134,11,.24)':{md:'rgba(255,255,255,.14)'},border:settingsAnchor?'1px solid var(--awm-gold)':'1px solid transparent','&:hover':{bgcolor:'rgba(184,134,11,.3)'},'&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}><SettingsOutlined/></IconButton></Tooltip><Typography sx={{display:{xs:'none',md:'block'},fontSize:11,color:'#fff',mt:.5}}>Settings</Typography></Box>
+  const settingsButton=<Box sx={{display:'flex',flexDirection:'column',alignItems:'center'}}><Tooltip title="Settings"><IconButton aria-label="Settings" aria-expanded={!!settingsAnchor} onClick={event=>setSettingsAnchor(event.currentTarget)} sx={{width:{xs:44,md:50},height:{xs:44,md:50},color:'#fff',bgcolor:settingsAnchor?{xs:'var(--awm-forest)',md:'rgba(184,134,11,.24)'}:{xs:'var(--awm-forest)',md:'rgba(255,255,255,.14)'},border:settingsAnchor?'1px solid var(--awm-gold)':'1px solid transparent','&:hover':{color:'#fff',bgcolor:{xs:'var(--awm-forest)',md:'rgba(184,134,11,.3)'}},'&:active':{color:'#fff'},'&.Mui-disabled':{color:'rgba(255,255,255,.5)'},'&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}><SettingsOutlined/></IconButton></Tooltip><Typography sx={{display:{xs:'none',md:'block'},fontSize:11,color:'#fff',mt:.5}}>Settings</Typography></Box>
   const desktopRail=<Box sx={{display:{xs:'none',md:'flex'},flexDirection:'column',alignItems:'center',gap:1}}>{desktopControls?.(settingsButton)??<>{railSwitcher}{settingsButton}</>}</Box>
   const initialLoading = clips.length === 0 && busy
 
@@ -246,12 +278,12 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
             />
           : clips[index]
             ? <Box sx={{ minWidth: 0, width: { xs: '100%', md: 'min(calc(100% - 330px), calc((100dvh - 390px) * 16 / 9))' }, mx: { md: 'auto' }, position: 'relative', left: {xs:0,md:-90} }}>
-                <MobileClipNavigator clipKey={`${clips[index].video.id}:${clips[index].clip_start_ms}`} canPrevious={index>0} busy={busy} step={step}><ClipPlayer
+                <MobileClipNavigator clipKey={`${clips[index].video.id}:${clips[index].clip_start_ms}`} canPrevious={index>0} busy={busy && index >= clips.length - 1} step={step}><ClipPlayer
                   key={`${clips[index].video.id}:${clips[index].clip_start_ms}`}
                   clip={clips[index]}
                   onUnavailable={unavailable}
                   settings={settings}
-                  leftControls={<ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}
+                  leftControls={<ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy && index >= clips.length - 1} sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}
                   rightControls={desktopRail ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', left: 'calc(100% + 16px)', top: 0 }}>{desktopRail}</Box> : undefined}
                 /></MobileClipNavigator>
               </Box>
@@ -261,7 +293,7 @@ export default function ForYouFeed({ initialClips, switcher, railSwitcher, deskt
       {!initialLoading && (
         <Box sx={{ mt: { xs: 3 }, display: { xs: 'flex', md: 'none' }, justifyContent: 'center', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
           {switcher}
-          <ChevronNav hidden="desktop" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy} />
+          <ChevronNav hidden="desktop" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy && index >= clips.length - 1} />
         </Box>
       )}
     </Box>
