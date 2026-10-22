@@ -9,12 +9,13 @@ import { hourlySeed, segmentAtTime } from '@/app/lib/forYou'
 import type { ForYouClip, ForYouToken, ForYouSegment } from '@/app/lib/forYou'
 import { useForYouCache } from '@/store/forYouStore'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
-import { getExploreSoundPreference, subscribeToExploreSoundPreference } from '@/app/lib/explore'
+import { getExploreSoundPreference, subscribeToExploreSoundPreference, setExploreSoundPreference } from '@/app/lib/explore'
 
 import { blockedForYouSources, excludeForYouSource } from '@/app/lib/forYouPlayback'
 import TextSizeControl, { safeTextSize, TEXT_SCALES } from '@/app/components/settings-controls/TextSizeControl'
 import MobileClipNavigator from './MobileClipNavigator'
 import MobileForYouPanel from './MobileForYouPanel'
+import ForYouGroupFilter from './ForYouGroupFilter'
 
 const sourceTranscripts = new Map<string, Promise<ForYouSegment[]>>()
 const MAX_RETAINED_CLIPS = 60
@@ -44,7 +45,7 @@ export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tok
   </Box>
 }
 
-export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, settings, onUnavailable }: { mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
+export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, settings, onUnavailable }: { mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
   const [time, setTime] = useState(clip.clip_start_ms / 1000)
   const [segments,setSegments]=useState(clip.segments)
   const [ended,setEnded]=useState(false)
@@ -68,12 +69,13 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, s
       <Box sx={{ position: 'relative', width: '100%', height: '100%', bgcolor: '#000', borderRadius: { xs: 0, md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
         <Box ref={wrapRef} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
       </Box>
+      {(['left','right'] as const).map(edge => <Box key={edge} data-feed-gesture-edge sx={{display:{xs:'block',md:'none'},position:'absolute',top:0,bottom:48,[edge]:0,width:14,zIndex:2}} />)}
       {leftControls}
       {rightControls}
     </Box>
     {ended && <Box sx={{display:{xs:'none',md:'flex'},justifyContent:'center',mt:1}}><Button onClick={()=>{setEnded(false);seekTo(clip.clip_start_ms/1000)}} sx={{color:{md:'var(--awm-gold-light)'}}}>Replay clip</Button></Box>}
     {isReady && (isMuted || autoplayBlocked) && <Box sx={{display:{xs:'none',md:'flex'},justifyContent:'center',mt:1}}><Button onClick={playWithSound} sx={{color:{md:'var(--awm-gold-light)'}}}>{autoplayBlocked?'Play with sound':'Turn sound on'}</Button></Box>}
-    <MobileForYouPanel clip={clip} segments={segments} time={time} settings={settings} settingsButton={mobileToolbar} ready={isReady} playing={isPlaying} onPlay={() => { if (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
+    <MobileForYouPanel clip={clip} segments={segments} time={time} settings={settings} settingsButton={mobileToolbar} switcher={mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { setExploreSoundPreference(isMuted); if(isMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
     {active && <Box data-desktop-clip-transcript data-feed-transcript sx={{ display: { xs: 'none', md: 'block' }, mt: { xs: 2, md: 3 }, color: { md: '#f5ede0' }, maxHeight:{xs:'35dvh',md:'none'},overflowY:'auto',overscrollBehavior:'contain' }}>
       {active.tokens.length ? <ForYouWords key={active.id} tokens={active.tokens} settings={settings} time={time} /> : <Typography lang="ar" dir="rtl" sx={{ fontSize: { xs: `${1.8 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem`, md: `${2.2 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem` }, textAlign: 'center' }}>{displayArabic(active.original_text, settings.tashkeel)}</Typography>}
       {settings.sentence && active.english_text && <Typography lang="en" dir="ltr" sx={{ mt: 0.5, textAlign: 'center', color: 'inherit', opacity: .75, fontSize: `${TEXT_SCALES[safeTextSize(settings.englishSize)]}rem` }}>{active.english_text}</Typography>}
@@ -131,7 +133,7 @@ function ForYouLoading({ progress, leftControls, rightControls, mobileControls }
   </Box>
 }
 
-export default function ForYouFeed({ initialClips, railSwitcher, desktopControls }: { initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode; desktopControls?: (settings: ReactNode) => ReactNode }) {
+function Feed({ initialClips, railSwitcher, desktopControls, mobileSwitcher, filterControl, groups = [] }: { mobileSwitcher?: ReactNode; filterControl?: ReactNode; groups?: string[]; initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode; desktopControls?: (settings: ReactNode) => ReactNode }) {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement|null>(null)
   useEffect(() => {
@@ -200,7 +202,7 @@ export default function ForYouFeed({ initialClips, railSwitcher, desktopControls
       // A cached first batch may contain only blocked sources. Exclude those
       // segment IDs and ask for another batch, with a finite retry budget.
       for(let attempt=0;attempt<8;attempt++){
-        const batch=await fetchForYouClips(seed,[...seen].slice(-10000),clips.map(clip=>clip.video.id).slice(-100))
+        const batch=await fetchForYouClips(seed,[...seen].slice(-10000),clips.map(clip=>clip.video.id).slice(-100),groups)
         next=batch.filter(clip=>!blocked.has(clip.video.youtube_id))
         if(next.length||!batch.length)break
         const before=seen.size
@@ -288,14 +290,22 @@ export default function ForYouFeed({ initialClips, railSwitcher, desktopControls
                   onUnavailable={unavailable}
                   settings={settings}
                   mobileToolbar={mobileSettingsButton}
+                  mobileSwitcher={mobileSwitcher} filterControl={filterControl}
                   leftControls={<ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy && index >= clips.length - 1} sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}
                   rightControls={desktopRail ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', left: 'calc(100% + 16px)', top: 0 }}>{desktopRail}</Box> : undefined}
                 /></MobileClipNavigator>
               </Box>
-            : <Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography>}
+            : <Box><Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography><Box sx={{display:{xs:"flex",md:"none"},justifyContent:"center",alignItems:"center",gap:1,pt:2}}>{mobileSwitcher}{filterControl}</Box></Box>}
       </Box>
       {!initialLoading && !clips[index] && <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', mt: 2 }}>{desktopRail}</Box>}
 
     </Box>
   </Box>
+}
+
+let sessionGroups: string[] = []
+export default function ForYouFeed(props: React.ComponentProps<typeof Feed>) {
+ const [groups,setGroups]=useState<string[]>(sessionGroups)
+ const [version,setVersion]=useState(0)
+ return <Feed {...props} key={version} groups={groups} filterControl={<ForYouGroupFilter value={groups} onApply={value=>{useForYouCache.setState({clips:[],index:0,excluded:[]});sessionGroups=value;setGroups(value);setVersion(v=>v+1)}}/>}/>
 }

@@ -1,9 +1,9 @@
 // @vitest-environment node
 import {beforeEach,expect,it,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({from:vi.fn(),video:vi.fn(),segments:vi.fn(),filter:vi.fn()}))
-vi.mock('@/app/lib/supabase',()=>({serviceClient:{from:mocks.from}}))
+const mocks=vi.hoisted(()=>({from:vi.fn(),video:vi.fn(),segments:vi.fn(),filter:vi.fn(),rpc:vi.fn()}))
+vi.mock('@/app/lib/supabase',()=>({serviceClient:{from:mocks.from,rpc:mocks.rpc}}))
 vi.mock('next/cache',()=>({unstable_cache:(fn:unknown)=>fn}))
-import {fetchForYouTranscript} from './forYou'
+import {fetchForYouTranscript,fetchForYouClips,fetchForYouGroups} from './forYou'
 const id='99999999-9999-4999-8999-999999999990'
 beforeEach(()=>{
  vi.clearAllMocks()
@@ -25,4 +25,15 @@ it('does not load segments when a source is no longer published',async()=>{
  mocks.video.mockResolvedValue({data:null,error:null})
  expect(await fetchForYouTranscript(id)).toEqual([])
  expect(mocks.from).toHaveBeenCalledTimes(1)
+})
+
+it('passes selected groups and five-result limit to the publication-aware RPC',async()=>{
+ mocks.rpc.mockResolvedValue({data:[],error:null})
+ await fetchForYouClips('filtered',[],[],[id])
+ expect(mocks.rpc).toHaveBeenCalledWith('transcript_for_you_groups',expect.objectContaining({p_group_ids:[id],p_limit:5}))
+ await expect(fetchForYouClips('filtered',[],[],['invalid'])).rejects.toThrow()
+})
+it('loads real group names',async()=>{
+ mocks.from.mockReturnValue({select:()=>({order:()=>Promise.resolve({data:[{id,name:'Actual group'}],error:null})})})
+ expect(await fetchForYouGroups()).toEqual([{id,name:'Actual group'}])
 })

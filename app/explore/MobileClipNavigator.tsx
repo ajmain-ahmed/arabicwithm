@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, type ReactNode } from 'react'
-import { Box, Typography } from '@mui/material'
+import { Box } from '@mui/material'
 
 /** A gesture changes only the active clip; buffered clips never mount players. */
 export default function MobileClipNavigator({ clipKey, canPrevious, busy, step, children }: { clipKey: string; canPrevious: boolean; busy: boolean; step: (direction: 1 | -1) => void; children: ReactNode }) {
@@ -85,6 +85,6 @@ export default function MobileClipNavigator({ clipKey, canPrevious, busy, step, 
 
   return <Box ref={viewport} data-mobile-clip-feed sx={{ position: 'relative', height: { xs: '100%', md: 'auto' }, display: { xs: 'flex', md: 'block' }, flexDirection: 'column', minHeight: 0, overscrollBehaviorY: 'contain' }}>
     {children}
-    <Typography sx={{ display: { xs: 'block', md: 'none' }, textAlign: 'center', fontSize: 12, px: 2, py: .75, color: 'rgba(245,237,224,.65)', bgcolor: '#111d18', flexShrink: 0 }}>Scroll down for the next clip · scroll up to go back</Typography>
+
   </Box>
 }

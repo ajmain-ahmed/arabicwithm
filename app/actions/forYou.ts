@@ -5,9 +5,9 @@ import { unstable_cache } from 'next/cache'
 import { serviceClient } from '@/app/lib/supabase'
 import { forYouTokens, hourlySeed, type ForYouClip, type ForYouSegment } from '@/app/lib/forYou'
 
-async function loadForYouClips(seed: string, excluded: number[], recent: string[]): Promise<ForYouClip[]> {
+async function loadForYouClips(seed: string, excluded: number[], recent: string[], groups: string[] = []): Promise<ForYouClip[]> {
  const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(100)}).parse({seed,excluded,recent})
- const {data,error}=await serviceClient.rpc('transcript_for_you_groups',{p_seed:input.seed,p_excluded:input.excluded,p_recent:input.recent,p_limit:5,p_group_ids:[]})
+ const {data,error}=await serviceClient.rpc('transcript_for_you_groups',{p_seed:input.seed,p_excluded:input.excluded,p_recent:input.recent,p_limit:5,p_group_ids:groups})
  if(error)throw new Error('Unable to load For You clips. Please retry.')
  const clips=(data??[]) as unknown as ForYouClip[]
  if(!clips.length)return []
@@ -24,11 +24,12 @@ const fetchInitialForYouClips = unstable_cache(
 
 /** No persisted clip rows: every batch checks current publication (via the
     5-minute candidate cache inside the RPC). */
-export async function fetchForYouClips(seed:string,excluded:number[]=[],recent:string[]=[]):Promise<ForYouClip[]> {
+export async function fetchForYouClips(seed:string,excluded:number[]=[],recent:string[]=[],groups:string[]=[]):Promise<ForYouClip[]> {
  const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(100)}).safeParse({seed,excluded,recent})
  if(!input.success) throw new Error('Unable to load For You clips. Please retry.')
- if(input.data.excluded.length===0&&input.data.recent.length===0) return fetchInitialForYouClips(input.data.seed)
- return loadForYouClips(input.data.seed,input.data.excluded,input.data.recent)
+ z.array(z.string().uuid()).max(100).parse(groups)
+ if(groups.length===0&&input.data.excluded.length===0&&input.data.recent.length===0) return fetchInitialForYouClips(input.data.seed)
+ return loadForYouClips(input.data.seed,input.data.excluded,input.data.recent,groups)
 }
 
 export { hourlySeed }
@@ -51,4 +52,11 @@ export async function fetchForYouTranscript(id:string):Promise<ForYouSegment[]> 
   after=batch[batch.length-1].position
  }
  return segments
+}
+
+
+export async function fetchForYouGroups(): Promise<{id:string;name:string}[]> {
+ const {data,error}=await serviceClient.from('transcript_groups').select('id,name').order('name')
+ if(error)throw new Error('Unable to load content groups.')
+ return data ?? []
 }

@@ -42,7 +42,7 @@ export default function ExploreViews() {
   const dismiss = () => { setHintFor(null); if (timer.current) clearTimeout(timer.current) }
   const rail = <ViewSwitch view={view} onChange={setView} hint={hintFor === view} onDismiss={dismiss} />
   return <Box sx={{ position: 'relative', '--awm-explore-switch-height': '0px' }}>
-    <Box data-mobile-explore-switch sx={{ display: { xs: 'flex', md: 'none' }, position: 'absolute', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}><ViewSwitch mobile view={view} onChange={setView} hint={false} onDismiss={dismiss} /></Box>
-    {view === 'explore' ? <ExploreFeed railTop={<Box sx={{ display: { xs: 'none', md: 'block' } }}>{rail}</Box>} /> : <ForYouFeed desktopControls={settings => <ViewSwitch view={view} onChange={setView} hint={hintFor === view} onDismiss={dismiss} trailing={settings} />} />}
+    <Box data-mobile-explore-switch sx={{ display: { xs: view === 'explore' ? 'flex' : 'none', md: 'none' }, position: 'absolute', top: 12, left: 'max(12px, env(safe-area-inset-left))', zIndex: 10 }}><ViewSwitch mobile view={view} onChange={setView} hint={false} onDismiss={dismiss} /></Box>
+    {view === 'explore' ? <ExploreFeed railTop={<Box sx={{ display: { xs: 'none', md: 'block' } }}>{rail}</Box>} /> : <ForYouFeed mobileSwitcher={<ViewSwitch mobile view={view} onChange={setView} hint={false} onDismiss={dismiss} />} desktopControls={settings => <ViewSwitch view={view} onChange={setView} hint={hintFor === view} onDismiss={dismiss} trailing={settings} />} />}
   </Box>
 }
