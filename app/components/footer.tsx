@@ -157,7 +157,7 @@ export default function Footer({ onContactClick }: FooterProps) {
               <Box>
                 <Box
                   component="img"
-                  src="/homepage/arabicwithm-notext.png"
+                  src="/homepage/awm-logo.png"
                   alt="ArabicWithM"
                   sx={{ height: 52, width: 'auto', display: 'block', mb: 1 }}
                 />
