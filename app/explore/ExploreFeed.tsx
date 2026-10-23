@@ -202,7 +202,6 @@ function ExploreVideo({
     playVideo,
     pauseVideo,
     mute,
-    unMute,
     playWithSound,
     autoplayBlocked,
     errorCode,
@@ -210,7 +209,7 @@ function ExploreVideo({
     active && isYouTube ? source.id : undefined,
     undefined,
     undefined,
-    { autoplay: true, muted: isPhone ? false : !soundEnabled, verifySoundState: isPhone, mutedAutoplayFallback: isPhone, onEnded }
+    { autoplay: true, muted: isPhone ? false : !soundEnabled, verifySoundState: true, mutedAutoplayFallback: true, onEnded }
   )
   /* The player is the source of truth once ready: the user can also unmute
      or change volume with YouTube's own controls, which fire onVolumeChange. */
@@ -231,11 +230,11 @@ function ExploreVideo({
     // One policy rejection enables a muted fallback for this player. Starting
     // that fallback must not trigger another automatic unmute/play loop.
     if (autoplayBlocked || (phoneMuted && soundEnabled)) soundBlockedRef.current = true
-    if (soundEnabled && !soundBlockedRef.current) unMute()
+    if (soundEnabled && !soundBlockedRef.current) playWithSound()
     else mute()
     playVideo()
     onStarted?.()
-  }, [active, autoplayBlocked, phoneMuted, isReady, mute, pauseVideo, playVideo, soundEnabled, unMute, onStarted])
+  }, [active, autoplayBlocked, phoneMuted, isReady, mute, pauseVideo, playVideo, soundEnabled, playWithSound, onStarted])
 
   useEffect(() => {
     const requestSound = () => {

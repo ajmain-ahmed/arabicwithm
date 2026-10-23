@@ -19,6 +19,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     return (
       <ErrorBoundary key={pathname}>
         <Box className="awm-site-pages">{children}</Box>
+        <Footer />
       </ErrorBoundary>
     )
   }
@@ -29,10 +30,11 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       <LearningActivityTracker />
       <Box
         component="main"
-        className={pathname === '/' ? undefined : 'awm-site-pages'}
+        className="awm-site-pages"
         sx={{
           pt: 'var(--awm-navbar-height)',
           flex: '1 0 auto',
+          minHeight: '100dvh',
           pb: 0,
           minWidth: 0,
           overflowX: isExploreRoute ? 'hidden' : undefined,
@@ -45,7 +47,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           <GlobalDataInit>{children}</GlobalDataInit>
         </ErrorBoundary>
       </Box>
-      {!isExploreRoute && <Footer />}
+      <Footer />
       <MobileBottomNav />
       {!isExploreRoute && <LazyFloatingVideoPlayer />}
     </Box>

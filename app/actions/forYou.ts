@@ -1,5 +1,11 @@
 'use server'
 
+import { getAuthenticatedUserId } from '@/app/actions/auth'
+
+async function requireForYouUser() {
+ if (!(await getAuthenticatedUserId())) throw new Error('Sign in to use For You.')
+}
+
 import { z } from 'zod'
 import { unstable_cache } from 'next/cache'
 import { serviceClient } from '@/app/lib/supabase'
@@ -25,6 +31,7 @@ const fetchInitialForYouClips = unstable_cache(
 /** No persisted clip rows: every batch checks current publication (via the
     5-minute candidate cache inside the RPC). */
 export async function fetchForYouClips(seed:string,excluded:number[]=[],recent:string[]=[],groups:string[]=[]):Promise<ForYouClip[]> {
+ await requireForYouUser()
  const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(100)}).safeParse({seed,excluded,recent})
  if(!input.success) throw new Error('Unable to load For You clips. Please retry.')
  z.array(z.string().uuid()).max(100).parse(groups)
@@ -37,6 +44,7 @@ export { hourlySeed }
 /** Load a source once on opening a clip, never on time updates or seeks.
  * For You publication is independent of searchable-library publication. */
 export async function fetchForYouTranscript(id:string):Promise<ForYouSegment[]> {
+ await requireForYouUser()
  z.string().uuid().parse(id)
  const {data:video,error}=await serviceClient.from('youtube_transcripts').select('id,raw_transcript').eq('id',id).eq('status','ready').eq('explore_published',true).filter('source_origin','eq','website_admin_transcript').maybeSingle()
  if(error)throw new Error('Unable to load the source transcript.')
@@ -56,6 +64,7 @@ export async function fetchForYouTranscript(id:string):Promise<ForYouSegment[]> 
 
 
 export async function fetchForYouGroups(): Promise<{id:string;name:string}[]> {
+ await requireForYouUser()
  const {data,error}=await serviceClient.from('transcript_groups').select('id,name').order('name')
  if(error)throw new Error('Unable to load content groups.')
  return data ?? []

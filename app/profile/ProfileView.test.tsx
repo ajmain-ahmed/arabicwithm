@@ -6,7 +6,7 @@ import { emptyLearningActivity } from '@/app/lib/activity'
 import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
 const mocks = vi.hoisted(() => ({ trophies:vi.fn(), update: vi.fn(), getUser: vi.fn(), metadata: { book_progress: { story: { chapterSlug: 'one', updatedAt: '2026-10-01' }, other: { chapterSlug: 'two' } }, book_sentence_bookmark: { bookSlug: 'story' } } }))
 vi.mock('@/app/actions/profiles', () => ({ updateProfile: vi.fn(),saveTrophyHighlights:mocks.trophies }))
-vi.mock('@/app/components/PremiumPrompt', () => ({ PremiumSection: () => null }))
+vi.mock('@/app/components/PremiumPrompt', () => ({ PremiumSection: () => null, default: ({open}:{open:boolean}) => open ? <div data-upgrade-popup>AWM+ information</div> : null }))
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => ({ loading: false, user: { id: 'user', user_metadata: mocks.metadata } }) }))
 vi.mock('@/app/lib/supabase/client', () => ({ supabase: { auth: { updateUser: mocks.update, getUser: mocks.getUser } } }))
 import ProfileView from './ProfileView'
@@ -86,4 +86,17 @@ it('shows recorded chart values and exposes achievement requirements to keyboard
   const saveHighlights = [...document.querySelectorAll('button')].find(b => b.textContent === 'Save trophy highlights')!
   await act(async () => saveHighlights.click())
   expect(mocks.trophies).toHaveBeenCalledWith(['words-50'])
+})
+
+it('places the upgrade below the profile header only for non-premium owners', async () => {
+ await act(async()=>root.render(<ProfileView profile={profile(false)}/>))
+ const upgrade=[...host.querySelectorAll('button')].find(b=>b.textContent==='Upgrade to AWM+')!
+ expect(upgrade).toBeTruthy()
+ expect(host.querySelector('header')?.nextElementSibling?.contains(upgrade)).toBe(true)
+ await act(async()=>upgrade.click())
+ expect(host.querySelector('[data-upgrade-popup]')).not.toBeNull()
+ await act(async()=>root.render(<ProfileView profile={profile(true)}/>))
+ expect([...host.querySelectorAll('button')].some(b=>b.textContent==='Upgrade to AWM+')).toBe(false)
+ await act(async()=>root.render(<ProfileView profile={{...profile(false),own:false}}/>))
+ expect([...host.querySelectorAll('button')].some(b=>b.textContent==='Upgrade to AWM+')).toBe(false)
 })

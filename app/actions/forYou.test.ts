@@ -1,12 +1,14 @@
 // @vitest-environment node
 import {beforeEach,expect,it,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({from:vi.fn(),video:vi.fn(),segments:vi.fn(),filter:vi.fn(),rpc:vi.fn()}))
+const mocks=vi.hoisted(()=>({user:vi.fn(),from:vi.fn(),video:vi.fn(),segments:vi.fn(),filter:vi.fn(),rpc:vi.fn()}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{from:mocks.from,rpc:mocks.rpc}}))
+vi.mock('@/app/actions/auth',()=>({getAuthenticatedUserId:mocks.user}))
 vi.mock('next/cache',()=>({unstable_cache:(fn:unknown)=>fn}))
 import {fetchForYouTranscript,fetchForYouClips,fetchForYouGroups} from './forYou'
 const id='99999999-9999-4999-8999-999999999990'
 beforeEach(()=>{
  vi.clearAllMocks()
+ mocks.user.mockResolvedValue('signed-in-user')
  mocks.video.mockResolvedValue({data:{id,raw_transcript:{content:[{tokens:[{arabic:'كِتَابٌ',english:'book',start_ms:495000,end_ms:496000}]}]}},error:null})
  mocks.segments.mockResolvedValue({data:[{id:1,position:0,original_text:'كِتَابٌ',english_text:'A book.',start_seconds:495,end_seconds:500,canonical_paragraph:null}],error:null})
  mocks.from.mockImplementation((table:string)=>{
@@ -36,4 +38,13 @@ it('passes selected groups and five-result limit to the publication-aware RPC',a
 it('loads real group names',async()=>{
  mocks.from.mockReturnValue({select:()=>({order:()=>Promise.resolve({data:[{id,name:'Actual group'}],error:null})})})
  expect(await fetchForYouGroups()).toEqual([{id,name:'Actual group'}])
+})
+
+it('rejects guests before querying clips, transcripts, or groups',async()=>{
+ mocks.user.mockResolvedValue(null)
+ await expect(fetchForYouClips('seed')).rejects.toThrow('Sign in')
+ await expect(fetchForYouTranscript(id)).rejects.toThrow('Sign in')
+ await expect(fetchForYouGroups()).rejects.toThrow('Sign in')
+ expect(mocks.rpc).not.toHaveBeenCalled()
+ expect(mocks.from).not.toHaveBeenCalled()
 })

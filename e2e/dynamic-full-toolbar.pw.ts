@@ -12,8 +12,8 @@ for(const width of [320,360,390,430,900,1440])test(`dynamic Full transcript and 
  if(width<900){
   const toolbar=page.locator('[data-mobile-for-you-toolbar]')
   await expect(toolbar.getByRole('button',{name:'More playback controls'})).toHaveCount(0)
-  for(const name of ['Previous video','Next video','Mute clip','Playback speed','Filter content','Settings','Explore feed','For You feed','Full'])await expect(toolbar.getByRole('button',{name,exact:true})).toBeVisible()
-  await expect(toolbar.getByRole('button',{name:'Short',exact:true})).toHaveCount(0)
+  for(const name of ['Previous video','Next video','Mute clip','Playback speed','Filter content','Settings','Explore feed','For You feed','Short'])await expect(toolbar.getByRole('button',{name,exact:true})).toBeVisible()
+  await expect(toolbar.getByRole('button',{name:'Full',exact:true})).toHaveCount(0)
   const gaps=await toolbar.locator(':scope > *').evaluateAll(nodes=>nodes.slice(1).map((el,i)=>el.getBoundingClientRect().left-nodes[i].getBoundingClientRect().right));expect(Math.max(...gaps)-Math.min(...gaps)).toBeLessThan(1)
   const dimensions=await toolbar.locator('.MuiIconButton-root').evaluateAll(nodes=>nodes.map(el=>{const b=el.getBoundingClientRect();return [b.width,b.height]}));for(const d of dimensions)expect(d).toEqual(dimensions[0])
   const y=await toolbar.getByRole('button').evaluateAll(nodes=>nodes.map(el=>{const b=el.getBoundingClientRect();return b.y+b.height/2}));expect(Math.max(...y)-Math.min(...y)).toBeLessThan(2)
@@ -26,7 +26,7 @@ for(const width of [320,360,390,430,900,1440])test(`dynamic Full transcript and 
   const y=await toolbar.getByRole('button').evaluateAll(nodes=>nodes.map(el=>{const b=el.getBoundingClientRect();return b.y+b.height/2}));expect(Math.max(...y)-Math.min(...y)).toBeLessThan(2)
  }
  await page.evaluate(()=>{(window as unknown as {__ytTime:(t:number)=>void}).__ytTime(501)})
- await mode.getByRole('button',{name:'Full',exact:true}).click()
+ await mode.getByRole('button',{name:width<900?'Short':'Full',exact:true}).click()
  expect(await geometry()).toEqual(before);await expect(source).toHaveAttribute('data-for-you-source',id!)
  await expect.poll(()=>page.evaluate(()=>(window as unknown as {__ytPlayers:unknown[]}).__ytPlayers.length)).toBeGreaterThan(1)
  await page.waitForTimeout(250)
@@ -46,7 +46,7 @@ for(const width of [320,360,390,430,900,1440])test(`dynamic Full transcript and 
  await expect(page.getByRole('button',{name:'Done',exact:true})).toBeHidden()
  await page.waitForTimeout(250)
  await page.screenshot({path:`test-results/dynamic-full-${width}.png`,fullPage:true})
- await mode.getByRole('button',{name:'Short',exact:true}).click();await expect.poll(()=>page.evaluate(()=>(window as unknown as {__ytPlayers:{time:number}[]}).__ytPlayers.at(-1)!.time)).toBe(495)
+ await mode.getByRole('button',{name:width<900?'Full':'Short',exact:true}).click();await expect.poll(()=>page.evaluate(()=>(window as unknown as {__ytPlayers:{time:number}[]}).__ytPlayers.at(-1)!.time)).toBe(495)
  if(width<900){
   const toolbar=page.locator('[data-mobile-for-you-toolbar]'),feed=page.locator('[data-mobile-clip-feed]')
   await toolbar.getByRole('button',{name:'Next video',exact:true}).click();await expect(source).not.toHaveAttribute('data-for-you-source',id!)

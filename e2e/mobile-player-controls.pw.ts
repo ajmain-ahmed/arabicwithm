@@ -6,7 +6,7 @@ for(const width of [320,360,390,430])test(`mobile native timeline ownership at $
  await installYouTubeFixture(page);await page.setViewportSize({width,height:900});await page.goto('/explore');await page.getByRole('button',{name:'For You feed',exact:true}).click()
  const source=page.locator('[data-for-you-source]'),toolbar=page.locator('[data-mobile-for-you-toolbar]'),zone=page.locator('[data-feed-gesture-zone]'),panel=page.locator('[data-mobile-clip-transcript]')
  await expect(source.locator('iframe')).toBeVisible()
- await toolbar.getByRole('button',{name:'Full',exact:true}).click();await expect(toolbar.getByRole('button',{name:'Short',exact:true})).toBeVisible()
+ await toolbar.getByRole('button',{name:'Short',exact:true}).click();await expect(toolbar.getByRole('button',{name:'Full',exact:true})).toBeVisible()
  const timeline=page.frameLocator('iframe[title="YouTube video player"]').getByRole('slider',{name:'Native timeline fixture'})
  await expect(timeline).toBeVisible();await page.waitForTimeout(300)
  const id=await source.getAttribute('data-for-you-source'),count=await page.evaluate(()=>(window as unknown as {__ytPlayers:unknown[]}).__ytPlayers.length)
@@ -39,7 +39,7 @@ for(const width of [320,360,390,430])test(`mobile native timeline ownership at $
  await page.frameLocator('iframe[title="YouTube video player"]').getByRole('button',{name:'Native play/pause fixture'}).click();await expect.poll(playing).toBe(!before)
  const geometry=await page.locator('[data-for-you-player]').boundingBox(),overlay=await zone.boundingBox();expect(geometry!.height-overlay!.height).toBeGreaterThanOrEqual(Math.max(79,geometry!.height*.4-1))
  await toolbar.dispatchEvent('wheel',{deltaY:140});await panel.dispatchEvent('wheel',{deltaY:140});await expect(source).toHaveAttribute('data-for-you-source',id!)
- await toolbar.getByRole('button',{name:'Short',exact:true}).click();await page.waitForTimeout(800)
+ await toolbar.getByRole('button',{name:'Full',exact:true}).click();await page.waitForTimeout(800)
  const z=(await zone.boundingBox())!,x=z.x+z.width/2,y=z.y+z.height-5
  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});await page.waitForTimeout(60)
  for(let i=1;i<=6;i++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y-i*15}]});await page.waitForTimeout(20)}
