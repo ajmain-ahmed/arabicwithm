@@ -197,7 +197,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
           },
         }}
       >
-        {user ? <Container maxWidth="lg" sx={{py:3}}><HomeProfileHeader /></Container> : (        <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        {user ? <HomeProfileHeader /> : (        <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
           {mode === 'dark' && <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.42) 55%, rgba(0,0,0,0.6) 100%)' }} />}
           <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 14 }, pb: { xs: 5, md: 6 } }}>
             <Box sx={{ maxWidth: user ? 1140 : 720, mx: user ? 'auto' : 0, textAlign: user ? 'center' : 'left' }}>
