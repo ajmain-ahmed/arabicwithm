@@ -101,6 +101,17 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     tables.episodes.forEach(episode=>{episode.transcript=[{timestamp:'0:00',tokens:words.map((arabic,i)=>({arabic,lemma:arabic,headword:arabic,english:`Meaning ${i}`,pos:'noun',cefr:'a1'})),translation:'Stored fixture example.'}]})
     return json(res,{})
   }
+  if(url.pathname==='/fixture/dynamic-for-you'){
+    for(const video of tables.youtube_transcripts){
+      for(const [index,start] of [180,480,900].entries()){
+        const tokens=[{arabic:'\u0643\u0650\u062a\u064e\u0627\u0628',english:'book',start_seconds:start,end_seconds:start+5},{arabic:'\u062c\u064e\u062f\u0650\u064a\u062f',english:'new',start_seconds:start+5,end_seconds:start+10}]
+        const position=index+3
+        video.raw_transcript.content[position]={tokens}
+        tables.transcript_segments.push({id:10000+tables.transcript_segments.length,position,transcript_id:video.id,start_seconds:start,end_seconds:start+10,original_text:'\u0643\u062a\u0627\u0628 \u062c\u062f\u064a\u062f',english_text:`Minute ${start/60}`,tokens})
+      }
+    }
+    return json(res,{})
+  }
   if(url.pathname==='/fixture/for-you-playback'){
     forYouPlayback=true
     tables.transcript_groups=[{id:'77777777-7777-4777-8777-777777777770',name:'Fixture A'},{id:'77777777-7777-4777-8777-777777777771',name:'Fixture B'}]

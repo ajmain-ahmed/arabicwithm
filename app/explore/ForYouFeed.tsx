@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { Alert, Box, Button, CircularProgress, IconButton, Skeleton, Typography, Popover, FormControlLabel, Switch, Tooltip, useMediaQuery, ToggleButton, ToggleButtonGroup } from '@mui/material'
-import { KeyboardArrowDown, KeyboardArrowUp, SettingsOutlined } from '@mui/icons-material'
+import { Alert, Box, Button, CircularProgress, IconButton, Skeleton, Typography, Popover, FormControlLabel, Switch, Tooltip, useMediaQuery } from '@mui/material'
+import { KeyboardArrowDown, KeyboardArrowUp, SettingsOutlined, VolumeOff, VolumeUp } from '@mui/icons-material'
 import { fetchForYouClips, fetchForYouTranscript } from '@/app/actions/forYou'
 import { displayArabic } from '@/app/lib/displayArabic'
 import { hourlySeed, segmentAtTime } from '@/app/lib/forYou'
@@ -14,6 +14,7 @@ import { getExploreSoundPreference, subscribeToExploreSoundPreference, setExplor
 import { blockedForYouSources, excludeForYouSource } from '@/app/lib/forYouPlayback'
 import TextSizeControl, { safeTextSize, TEXT_SCALES } from '@/app/components/settings-controls/TextSizeControl'
 import MobileClipNavigator from './MobileClipNavigator'
+import ShortFullSwitch from './ShortFullSwitch'
 import MobileForYouPanel from './MobileForYouPanel'
 import ForYouGroupFilter from './ForYouGroupFilter'
 
@@ -65,7 +66,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
     if(seconds>=clip.clip_start_ms/1000 && seconds<clip.clip_end_ms/1000)setEnded(false)
   }
   if(modeStart.full!==full)setModeStart({full,start:full?time:Math.min(Math.max(time,clip.clip_start_ms/1000),clip.clip_end_ms/1000-.1)})
-  const { wrapRef, isReady, isMuted, isPlaying, autoplayBlocked, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates, getSoundMuted } = useYouTubePlayer(clip.video.youtube_id, updateTime, modeStart.start, { verifySoundState: isPhone, autoplay: true, muted: !soundEnabled, mutedAutoplayFallback: true, endAt: full ? undefined : clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>setEnded(true), onError:code=>onUnavailable(clip.video.youtube_id,code) })
+  const { wrapRef, isReady, isMuted, isPlaying, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates, getSoundMuted } = useYouTubePlayer(clip.video.youtube_id, updateTime, modeStart.start, { verifySoundState: isPhone, autoplay: true, muted: !soundEnabled, mutedAutoplayFallback: true, endAt: full ? undefined : clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>setEnded(true), onError:code=>onUnavailable(clip.video.youtube_id,code) })
   useEffect(() => { if (!soundEnabled) mute() }, [soundEnabled, mute])
   useEffect(() => {
     if (!isPhone || !isReady) return
@@ -79,7 +80,10 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
     return () => document.removeEventListener('pointerdown', enable)
   }, [isPhone, isReady, soundEnabled, isMuted, playWithSound])
   const visibleClip = full ? {...clip,clip_start_ms:0,clip_end_ms:Math.max(...segments.map(s=>s.end_seconds),clip.clip_end_ms/1000)*1000} : clip
-  const active = segmentAtTime(segments,time)
+  const active = full || (time>=clip.clip_start_ms/1000 && time<clip.clip_end_ms/1000) ? segmentAtTime(segments,time) : undefined
+  const rates=getPlaybackRates?.()??[1],rate=playbackRate??1
+  const nextRate=rates[(Math.max(0,rates.indexOf(rate))+1)%rates.length]??1
+  const sound=()=>{const muted=getSoundMuted?.()??isMuted;setExploreSoundPreference(muted);if(muted)playWithSound();else mute()}
   return <Box data-for-you-source={clip.video.youtube_id} sx={{ display: { xs: 'flex', md: 'block' }, flexDirection: 'column', flex: { xs: 1, md: 'initial' }, minHeight: 0 }}>
 
     {full&&transcriptError&&<Alert severity="error">{transcriptError}</Alert>}
@@ -93,12 +97,19 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
       {rightControls}
     </Box>
     {ended && <Box sx={{display:{xs:'none',md:'flex'},justifyContent:'center',mt:1}}><Button onClick={()=>{setEnded(false);seekTo(clip.clip_start_ms/1000)}} sx={{color:{md:'var(--awm-gold-light)'}}}>Replay clip</Button></Box>}
-    {isReady && (isMuted || autoplayBlocked) && <Box sx={{display:{xs:'none',md:'flex'},justifyContent:'center',mt:1}}><Button onClick={playWithSound} sx={{color:{md:'var(--awm-gold-light)'}}}>{autoplayBlocked?'Play with sound':'Turn sound on'}</Button></Box>}
-    <MobileForYouPanel modeControl={modeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
-    <Box data-desktop-clip-transcript data-feed-transcript sx={{display:{xs:'none',md:'block'},color:'#f5ede0',mt:2,maxHeight:full?'55dvh':undefined,overflowY:'auto',overscrollBehavior:'contain'}}>
-      {(full ? segments : active ? [active] : []).map(line=><Box key={line.id} data-clip-line={line.id} data-active-segment={active?.id===line.id} onClick={()=>seekTo(line.start_seconds)} sx={{p:1.5,mb:1,borderRadius:2,bgcolor:active?.id===line.id?'rgba(212,168,67,.14)':undefined,cursor:'pointer'}}>
-        {line.tokens.length?<ForYouWords tokens={line.tokens} settings={settings} time={time}/>:<Typography lang="ar" dir="rtl" sx={{textAlign:'center',fontSize:'2rem'}}>{displayArabic(line.original_text,settings.tashkeel)}</Typography>}
-        {settings.sentence&&line.english_text&&<Typography lang="en" sx={{textAlign:'center',fontSize:`${TEXT_SCALES[safeTextSize(settings.englishSize)]}rem`}}>{line.english_text}</Typography>}
+    <Box data-desktop-for-you-toolbar sx={{display:{xs:'none',md:'flex'},alignItems:'center',justifyContent:'space-between',gap:1.25,py:2,color:'#fff','& .MuiIconButton-root':{color:'#fff',width:44,height:44},'& .MuiButton-root':{color:'#fff'}}}>
+      {navigation&&<IconButton aria-label="Previous video" disabled={navigation.previousDisabled} onClick={navigation.previous}><KeyboardArrowUp/></IconButton>}
+      {mobileSwitcher}
+      <IconButton aria-label={isMuted?'Unmute clip':'Mute clip'} disabled={!isReady} onClick={sound}>{isMuted?<VolumeOff/>:<VolumeUp/>}</IconButton>
+      <Button aria-label="Playback speed" disabled={!isReady||rates.length<2} onClick={()=>setPlaybackRate(nextRate)} sx={{minWidth:44,height:44,textTransform:'none'}}>{rate}{'\u00d7'}</Button>
+      {filterControl}{mobileToolbar}{modeControl}
+      {navigation&&<IconButton aria-label="Next video" disabled={navigation.nextDisabled} onClick={navigation.next}><KeyboardArrowDown/></IconButton>}
+    </Box>
+    <MobileForYouPanel activeOnly={full} activeSegment={active} modeControl={modeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
+    <Box data-desktop-clip-transcript data-feed-transcript sx={{display:{xs:'none',md:'block'},color:'#f5ede0',mt:2,overscrollBehavior:'contain'}}>
+      {(active ? [active] : []).map(line=><Box key={line.id} data-clip-line={line.id} data-active-segment={active?.id===line.id} sx={{p:1.5,mb:1,borderRadius:2,bgcolor:'rgba(212,168,67,.14)'}}>
+        {line.tokens.length?<ForYouWords tokens={line.tokens} settings={settings} time={time}/>:<Typography lang="ar" dir="rtl" sx={{color:'inherit',textAlign:'center',fontFamily:'var(--font-serif)',fontSize:`${2.2 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem`}}>{displayArabic(line.original_text,settings.tashkeel)}</Typography>}
+        {settings.sentence&&line.english_text&&<Typography lang="en" sx={{color:'inherit',textAlign:'center',fontSize:`${TEXT_SCALES[safeTextSize(settings.englishSize)]}rem`}}>{line.english_text}</Typography>}
       </Box>)}
     </Box>
   </Box>
@@ -134,7 +145,7 @@ function ChevronNav({ onUp, onDown, upDisabled, downDisabled, hidden, sx }: { on
     controls sit beside the skeleton exactly where they land once loaded. */
 function ForYouLoading({ progress, leftControls, rightControls, mobileControls }: { progress: number; leftControls?: ReactNode; rightControls?: ReactNode; mobileControls?: ReactNode }) {
   return <Box>
-    <Box sx={{ width: { xs: '100%', md: 'min(calc(100% - 330px), calc((100dvh - 390px) * 16 / 9))' }, mx: { md: 'auto' }, height: { xs: '100%', md: 'auto' }, position: 'relative', left: {xs:0,md:-90} }}>
+    <Box sx={{ width: { xs: '100%', md: 'min(100%, 1100px)' }, mx: { md: 'auto' }, height: { xs: '100%', md: 'auto' }, position: 'relative', left:0 }}>
       <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: 0, md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' } }}>
         <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
           <Box sx={{ textAlign: 'center' }}>
@@ -156,7 +167,7 @@ function ForYouLoading({ progress, leftControls, rightControls, mobileControls }
 
 export function Feed({ previewSegments, initialClips, railSwitcher, desktopControls, mobileSwitcher, filterControl, groups = [], freshMobile = false }: { previewSegments?: ForYouSegment[]; freshMobile?: boolean; mobileSwitcher?: ReactNode; filterControl?: ReactNode; groups?: string[]; initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode; desktopControls?: (settings: ReactNode) => ReactNode }) {
   const [full,setFull]=useState(false)
-  const modeControl=(vertical=false)=><ToggleButtonGroup exclusive orientation={vertical?'vertical':'horizontal'} value={full?'full':'short'} onChange={(_,value)=>{if(value)setFull(value==='full')}} aria-label="Viewing mode" sx={{bgcolor:'rgba(255,255,255,.12)',borderRadius:3,'& button':{color:'#fff',minHeight:36,px:1,textTransform:'none',border:0},'& .Mui-selected':{bgcolor:'var(--awm-gold) !important',color:'#fff !important'}}}><ToggleButton value="short">Short</ToggleButton><ToggleButton value="full">Full</ToggleButton></ToggleButtonGroup>
+  const modeControl=()=> <ShortFullSwitch full={full} onChange={setFull}/>
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement|null>(null)
   useEffect(() => {
@@ -289,7 +300,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
   }
   const settingsButton=<Box sx={{display:'flex',flexDirection:{xs:'row',md:'column'},gap:{xs:1,md:0},alignItems:'center'}}><Tooltip title="Settings"><IconButton aria-label="Settings" aria-expanded={!!settingsAnchor} onClick={event=>setSettingsAnchor(event.currentTarget)} sx={{width:{xs:44,md:50},height:{xs:44,md:50},color:'#fff',bgcolor:settingsAnchor?{xs:'var(--awm-forest)',md:'rgba(184,134,11,.24)'}:{xs:'var(--awm-forest)',md:'rgba(255,255,255,.14)'},border:settingsAnchor?'1px solid var(--awm-gold)':'1px solid transparent','&:hover':{color:'#fff',bgcolor:{xs:'var(--awm-forest)',md:'rgba(184,134,11,.3)'}},'&:active':{color:'#fff'},'&.Mui-disabled':{color:'rgba(255,255,255,.5)'},'&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}><SettingsOutlined/></IconButton></Tooltip><Typography sx={{fontSize:{xs:13,md:11},color:{xs:'var(--awm-bark)',md:'#fff'},mt:{xs:0,md:.5}}}>Settings</Typography></Box>
   const mobileSettingsButton = <IconButton aria-label="Settings" aria-expanded={!!settingsAnchor} onClick={event => setSettingsAnchor(event.currentTarget)} sx={{ width: 40, height: 40, color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,.1)' }, '&:focus-visible': { outline: '2px solid var(--awm-gold-light)', outlineOffset: 2 } }}><SettingsOutlined /></IconButton>
-  const desktopRail=<Box sx={{display:{xs:'none',md:'flex'},flexDirection:'column',alignItems:'center',gap:1}}>{desktopControls?.(settingsButton)??<>{railSwitcher}{settingsButton}</>}{modeControl(true)}</Box>
+  const desktopRail=<Box sx={{display:{xs:'none',md:'flex'},flexDirection:'column',alignItems:'center',gap:1}}>{desktopControls?.(settingsButton)??<>{railSwitcher}{settingsButton}</>}{modeControl()}</Box>
   const initialLoading = clips.length === 0 && busy
 
   return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: '#111d18', md: '#0a0c0b' }, pt: { xs: 0, md: 3 }, height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'auto' }, pb: { xs: 0, md: 5 } }}>
@@ -309,10 +320,10 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
           ? <ForYouLoading
               progress={progress}
               leftControls={<ChevronNav hidden="mobile" onUp={() => undefined} onDown={() => undefined} upDisabled downDisabled sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}
-              rightControls={desktopRail ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', left: 'calc(100% + 16px)', top: 0 }}>{desktopRail}</Box> : undefined}
+
             />
           : clips[index]
-            ? <Box sx={{ minWidth: 0, width: { xs: '100%', md: 'min(calc(100% - 330px), calc((100dvh - 390px) * 16 / 9))' }, mx: { md: 'auto' }, height: { xs: '100%', md: 'auto' }, position: 'relative', left: {xs:0,md:-90} }}>
+            ? <Box sx={{ minWidth: 0, width: { xs: '100%', md: 'min(100%, 1100px)' }, mx: { md: 'auto' }, height: { xs: '100%', md: 'auto' }, position: 'relative', left:0 }}>
                 <MobileClipNavigator clipKey={`${clips[index].video.id}:${clips[index].clip_start_ms}`} disabled={full || !!previewSegments} canPrevious={index>0} busy={busy && index >= clips.length - 1} step={step}><ClipPlayer
                   key={`${clips[index].video.id}:${clips[index].clip_start_ms}`}
                   full={full} suppliedSegments={previewSegments} modeControl={modeControl()} clip={clips[index]}
@@ -321,8 +332,8 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
                   navigation={previewSegments ? undefined : {previous:()=>step(-1),next:()=>step(1),previousDisabled:index===0,nextDisabled:busy&&index>=clips.length-1}}
                   mobileToolbar={mobileSettingsButton}
                   mobileSwitcher={mobileSwitcher} filterControl={filterControl}
-                  leftControls={<ChevronNav hidden="mobile" onUp={() => step(-1)} onDown={() => step(1)} upDisabled={index === 0} downDisabled={busy && index >= clips.length - 1} sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}
-                  rightControls={desktopRail ? <Box sx={{ display: { xs: 'none', md: 'flex' }, position: 'absolute', left: 'calc(100% + 16px)', top: 0 }}>{desktopRail}</Box> : undefined}
+
+
                 /></MobileClipNavigator>
               </Box>
             : <Box><Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography><Box sx={{display:{xs:"flex",md:"none"},justifyContent:"center",alignItems:"center",gap:1,pt:2}}>{mobileSwitcher}{filterControl}</Box></Box>}

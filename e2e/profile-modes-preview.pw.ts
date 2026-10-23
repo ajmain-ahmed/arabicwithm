@@ -11,7 +11,9 @@ async function admin(context:BrowserContext){
 for(const width of [390,1440])test(`profile images persist at ${width}`,async({page,context})=>{
  await page.request.post(`${backend}/fixture/reset-overhaul`);await admin(context);await page.setViewportSize({width,height:1000});await page.goto('/')
  const header=page.locator('[data-home-profile]');await expect(header).toBeVisible();await expect(page.getByText(/Good morning|Good afternoon|Good evening/)).toHaveCount(0)
- await expect(header.locator('[data-profile-banner]')).toHaveAttribute('src','/homepage/hero.avif')
+ await expect(header.locator('[data-profile-banner]')).toHaveAttribute('src','/homepage/profile-banner.png')
+ await expect(header.getByText('XP',{exact:true})).toBeVisible()
+ await page.screenshot({path:`test-results/profile-default-${width}.png`})
  await header.getByRole('button',{name:'Edit Profile',exact:true}).click()
  const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=100;c.height=100;c.getContext('2d')!.fillRect(0,0,100,100);return c.toDataURL('image/png').split(',')[1]})
  const image={name:'photo.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}
@@ -31,7 +33,7 @@ for(const width of [320,390,1440])test(`Short Full preserves source and time at 
  await page.evaluate(()=>{(window as unknown as {__ytTime:(t:number)=>void}).__ytTime(501)})
  await page.getByRole('button',{name:'Full',exact:true}).filter({visible:true}).click()
  await expect(source).toHaveAttribute('data-for-you-source',id!)
- await expect(page.locator('[data-clip-line]').filter({visible:true})).toHaveCount(3)
+ await expect(page.locator('[data-clip-line]').filter({visible:true})).toHaveCount(1)
  await expect.poll(()=>page.evaluate(()=>(window as unknown as {__ytPlayers:{time:number}[]}).__ytPlayers.at(-1)!.time)).toBe(501)
  if(width<900){await page.locator('[data-mobile-clip-feed]').dispatchEvent('wheel',{deltaY:150});await expect(source).toHaveAttribute('data-for-you-source',id!)}
  await expect.poll(()=>page.evaluate(()=>(window as unknown as {__ytPlayers:{playing:boolean}[]}).__ytPlayers.length)).toBeGreaterThan(1)
@@ -49,7 +51,7 @@ for(const width of [390,1440])test(`unpublished unsaved Admin preview at ${width
  await editor.getByLabel('Publish to searchable transcript library').uncheck();await editor.getByLabel('Publish to For You').uncheck()
  const before=await(await request.get(`${backend}/rest/v1/youtube_transcripts`)).json()
  await editor.getByRole('button',{name:'Preview',exact:true}).click();await expect(page.getByText('Preview Mode',{exact:true})).toBeVisible();await expect(page.locator('[data-for-you-source] iframe')).toBeVisible()
- await page.getByRole('button',{name:'Full',exact:true}).filter({visible:true}).click();await expect(page.locator('[data-clip-line]').filter({visible:true})).toHaveCount(3)
+ await page.getByRole('button',{name:'Full',exact:true}).filter({visible:true}).click();await expect(page.locator('[data-clip-line]').filter({visible:true})).toHaveCount(1)
  await page.getByRole('button',{name:'Back to Edit',exact:true}).click();await expect(editor.getByLabel('Video Title')).toHaveValue('Private preview');await expect(editor.getByLabel('Publish to For You')).not.toBeChecked()
  expect(await(await request.get(`${backend}/rest/v1/youtube_transcripts`)).json()).toEqual(before)
  await editor.getByRole('button',{name:'Cancel',exact:true}).click()

@@ -15,7 +15,7 @@ export default function HomeProfileHeader() {
   if(!user)return null
   const profile=snapshot?.id===user.id?snapshot:null
   const name=profile?.displayName ?? String(user.user_metadata.full_name ?? 'Arabic learner')
-  const banner=typeof user.user_metadata.banner_url==='string'?user.user_metadata.banner_url:'/homepage/hero.avif'
+  const banner=typeof user.user_metadata.banner_url==='string'?user.user_metadata.banner_url:'/homepage/profile-banner.png'
   async function upload(file?:File){
     if(!file||busy||!user)return
     setError('');setBusy(true)
@@ -45,17 +45,17 @@ export default function HomeProfileHeader() {
     }catch(e){if(uploaded)await supabase.storage.from('profile-media').remove([uploaded]);setError(e instanceof Error?e.message:'Unable to upload image.')}
     finally{setBusy(false)}
   }
-  return <Box component="header" data-home-profile sx={{borderRadius:3,overflow:'hidden',bgcolor:'var(--awm-white)',border:'1px solid color-mix(in srgb,var(--awm-gold) 25%,transparent)'}}>
-    <Box component="img" data-profile-banner src={banner} alt="Profile banner" sx={{display:'block',width:'100%',height:{xs:150,md:240},objectFit:'cover'}}/>
-    <Box sx={{px:{xs:2,md:4},pb:3}}>
-      <Avatar src={user.user_metadata.avatar_url} alt={name} sx={{mt:{xs:'-40px',md:'-52px'},width:{xs:80,md:104},height:{xs:80,md:104},border:'4px solid var(--awm-white)','& img':thumbnailCropCss(user.user_metadata.avatar_crop)}}>{name[0]}</Avatar>
-      <Box sx={{display:'flex',gap:1,alignItems:'center',flexWrap:'wrap',mt:1.5}}>
-        <Typography component="h1" sx={{fontFamily:'var(--font-heading)',fontSize:{xs:28,md:36},mr:1,overflowWrap:'anywhere'}}>{name}</Typography>
+  return <Box component="header" data-home-profile sx={{borderRadius:'20px',overflow:'hidden',bgcolor:'var(--awm-white)',border:'1px solid color-mix(in srgb,var(--awm-gold) 20%,transparent)',boxShadow:'0 8px 30px rgba(44,26,14,.05)'}}>
+    <Box component="img" data-profile-banner src={banner} alt="Profile banner" sx={{display:'block',width:'100%',aspectRatio:{xs:'2.5 / 1',md:'3.8 / 1'},objectFit:'cover',objectPosition:'50% 45%'}}/>
+    <Box sx={{px:{xs:2.5,md:4},pb:{xs:2.5,md:3.5}}}>
+      <Avatar src={user.user_metadata.avatar_url} alt={name} sx={{mt:{xs:'-44px',md:'-56px'},width:{xs:88,md:112},height:{xs:88,md:112},boxShadow:'0 3px 12px rgba(0,0,0,.12)',border:'4px solid var(--awm-white)','& img':thumbnailCropCss(user.user_metadata.avatar_crop)}}>{name[0]}</Avatar>
+      <Box sx={{display:'flex',gap:1,alignItems:'center',flexWrap:'wrap',mt:2,'& .MuiChip-root':{height:30,fontSize:12,bgcolor:'var(--awm-cream)',border:'1px solid color-mix(in srgb,var(--awm-gold) 20%,transparent)'},'& .MuiChip-icon':{fontSize:18,color:'var(--awm-gold)'}}}>
+        <Typography component="h1" sx={{fontFamily:'var(--font-heading)',fontSize:{xs:28,md:36},fontWeight:600,lineHeight:1.15,mr:1,overflowWrap:'anywhere',width:{xs:'100%',sm:'auto'}}}>{name}</Typography>
         {profile&&<Chip aria-label={`Streak ${profile.summary.streak}`} icon={<LocalFireDepartmentRounded/>} label={profile.summary.streak}/>}
         {profile&&<Chip icon={profile.premium?<DiamondOutlined/>:undefined} label={profile.premium?'AWM Plus':'User'}/>}
-        <Button onClick={()=>setOpen(true)} sx={{ml:'auto',textTransform:'none'}}>Edit Profile</Button>
+        <Button onClick={()=>setOpen(true)} sx={{ml:{xs:0,sm:'auto'},textTransform:'none',minHeight:36,fontSize:12,px:1.5,borderRadius:'999px',border:'1px solid color-mix(in srgb,var(--awm-gold) 30%,transparent)'}}>Edit Profile</Button>
       </Box>
-      {profile&&<Box sx={{display:'flex',flexWrap:'wrap',gap:3,mt:2}}>{[['XP',profile.xp],['Words inspected',profile.learning.lifetime?.wordLookups??0],['Memory cards reviewed',profile.memoryCards]].map(([label,value])=><Box key={label}><Typography sx={{fontSize:12,color:'var(--awm-muted)'}}>{label}</Typography><Typography sx={{fontWeight:700}}>{value}</Typography></Box>)}</Box>}
+      {profile&&<Box sx={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:{xs:1.5,sm:4},maxWidth:540,mt:2.5,pt:2,borderTop:'1px solid color-mix(in srgb,var(--awm-bark) 10%,transparent)'}}>{[['XP',profile.xp],['Words inspected',profile.learning.lifetime?.wordLookups??0],['Memory cards reviewed',profile.memoryCards]].map(([label,value])=><Box key={label}><Typography sx={{fontSize:{xs:10,sm:12},lineHeight:1.5,color:'var(--awm-muted)'}}>{label}</Typography><Typography sx={{fontWeight:600,fontSize:20,mt:.25}}>{value}</Typography></Box>)}</Box>}
     </Box>
     <Dialog open={open} onClose={()=>{if(!busy)setOpen(false)}} fullWidth maxWidth="xs"><DialogTitle>Edit Profile</DialogTitle><DialogContent>
       <ProfileAvatar id={user.id} name={name} src={user.user_metadata.avatar_url??null} crop={user.user_metadata.avatar_crop} editable/>
