@@ -19,16 +19,18 @@ vi.mock('./LearningStats', () => ({
 vi.mock('next/link', () => ({ default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => <a href={href} {...props}>{children}</a> }))
 
 import HomeDashboard from './HomeDashboard'
-vi.mock('./HomeProfileHeader',()=>({default:()=> <header data-home-profile>Account profile header</header>}))
 
 describe('homepage hero', () => {
-  it('replaces the signed-in greeting with the shared account profile header',()=>{
+  it('uses the existing public hero with four canonical actions for signed-in users',()=>{
     home.user={id:'user-id',user_metadata:{full_name:'Test User'}}
     const html=renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]}/> )
-    expect(html).toContain('data-home-profile')
-    expect(html).not.toContain('data-home-hero')
+    expect(html).not.toContain('data-home-profile')
+    expect(html).toContain('data-home-hero')
     expect(html).not.toContain('Good morning')
-    expect(html).not.toContain('Start Watching')
+    expect(html).toContain('Start Watching')
+    expect(html).toContain('Start Learning')
+    expect(html).toContain('/books?mode=listen')
+    expect(html).toContain('Browse books')
   })
 
   it('keeps the public heading and hides stats for guests', () => {

@@ -15,7 +15,7 @@ export default function HomeProfileHeader() {
   if(!user)return null
   const profile=snapshot?.id===user.id?snapshot:null
   const name=profile?.displayName ?? String(user.user_metadata.full_name ?? 'Arabic learner')
-  const banner=typeof user.user_metadata.banner_url==='string'?user.user_metadata.banner_url:'/homepage/profile-banner.png'
+  const banner=typeof user.user_metadata.banner_url==='string'?user.user_metadata.banner_url:'/homepage/mosaic-banner.png'
   async function upload(file?:File){
     if(!file||busy||!user)return
     setError('');setBusy(true)

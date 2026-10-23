@@ -11,7 +11,7 @@ async function admin(context:BrowserContext){
 for(const width of [390,1440])test(`profile images persist at ${width}`,async({page,context})=>{
  await page.request.post(`${backend}/fixture/reset-overhaul`);await admin(context);await page.setViewportSize({width,height:1000});await page.goto('/')
  const header=page.locator('[data-home-profile]');await expect(header).toBeVisible();await expect(page.getByText(/Good morning|Good afternoon|Good evening/)).toHaveCount(0)
- await expect(header.locator('[data-profile-banner]')).toHaveAttribute('src','/homepage/profile-banner.png')
+ await expect(header.locator('[data-profile-banner]')).toHaveAttribute('src','/homepage/mosaic-banner.png')
  await expect(header.getByText('XP',{exact:true})).toBeVisible()
  await page.screenshot({path:`test-results/profile-default-${width}.png`})
  await header.getByRole('button',{name:'Edit Profile',exact:true}).click()

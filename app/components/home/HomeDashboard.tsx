@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import HomeProfileHeader from './HomeProfileHeader'
+import { continueReading } from './continueReading'
 import { useEffect, useMemo, useState } from 'react'
 import {
   AdminPanelSettings,
@@ -124,9 +124,10 @@ export function UpgradeSection() {
   )
 }
 
-export default function HomeDashboard({ books, newShows, newEpisodes }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
+export default function HomeDashboard({ books, newShows, newEpisodes, chaptersByBook }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
   const { mode } = useColorMode()
   const { user } = useAuth()
+  const resume=user?continueReading(books,chaptersByBook,user.user_metadata):null
   const [premiumOpen, setPremiumOpen] = useState(false)
   /* My List is fetched once per session and cached in the store; show-page
      add/remove keeps the cache in sync. */
@@ -197,23 +198,30 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
           },
         }}
       >
-        {user ? <HomeProfileHeader /> : (        <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/mosaic-banner.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
           {mode === 'dark' && <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.42) 55%, rgba(0,0,0,0.6) 100%)' }} />}
           <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 14 }, pb: { xs: 5, md: 6 } }}>
-            <Box sx={{ maxWidth: user ? 1140 : 720, mx: user ? 'auto' : 0, textAlign: user ? 'center' : 'left' }}>
+            <Box sx={{ maxWidth: user ? 1140 : 720, mx:0, textAlign:'left' }}>
                 <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 42, sm: 54, md: 67 }, fontWeight: 600, lineHeight: 1.02, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.75), 0 4px 28px rgba(0,0,0,0.55)' }}>Learn Arabic through cartoons and books</Typography>
-              {!user && (
-                <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+              {(
+                <Box sx={{ mt: 3.5, display: user ? 'grid' : 'flex', gridTemplateColumns:{xs:'repeat(2,minmax(0,1fr))',md:'repeat(4,max-content)'}, gap: 1.5, flexWrap: 'wrap', justifyContent: 'flex-start', ...(user ? {'& .MuiButton-root':{px:{xs:1,sm:3},minHeight:48,fontSize:{xs:12,sm:14}}} : {}) }}>
                   <Button component={Link} href="/cartoons" variant="contained" startIcon={<OndemandVideo />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Watching</Button>
                   <Button component={Link} href="/books" variant="contained" startIcon={<MenuBook />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Reading</Button>
+                  {user&&<><Button component={Link} href="/learn" variant="contained" startIcon={<PsychologyOutlined />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Learning</Button><Button component={Link} href="/books?mode=listen" variant="contained" startIcon={<Headphones />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Listening</Button></>}
                 </Box>
               )}
 
             </Box>
           </Container>
-        </Box>) }
+        </Box>
 
         <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 4, md: 5 } }}>
+          {user&&<Container maxWidth={false} sx={{mb:3}}><Typography component="h2" sx={{fontFamily:'var(--font-heading)',fontSize:{xs:20,md:22},fontWeight:600,color:'var(--awm-bark)',mb:1.5}}>{resume?'Continue Reading':'Start Reading'}</Typography>
+            {resume?<Paper data-continue-reading elevation={0} sx={{display:'flex',alignItems:'center',gap:{xs:2,md:3},p:2,borderRadius:3,maxWidth:680,border:'1px solid color-mix(in srgb,var(--awm-gold) 25%,transparent)'}}>
+              {resume.book.cover&&<Box component="img" src={resume.book.cover} alt={`${resume.book.title} cover`} sx={{width:{xs:80,md:100},aspectRatio:'2 / 3',objectFit:'cover',borderRadius:1,flexShrink:0}}/>}
+              <Box sx={{minWidth:0}}><Typography sx={{fontFamily:'var(--font-heading)',fontSize:24,fontWeight:600,overflowWrap:'anywhere'}}>{resume.book.title}</Typography><Typography sx={{color:'var(--awm-muted)',mt:.5}}>{resume.chapter.title}</Typography><Button component={Link} href={resume.href} sx={{mt:1,textTransform:'none'}}>Continue Reading</Button></Box>
+            </Paper>:<Button component={Link} href="/books" variant="outlined" sx={{textTransform:'none',minHeight:44,borderRadius:'999px'}}>Browse books</Button>}
+          </Container>}
           {user && myListRowItems.length > 0 && (
             <Container maxWidth={false}>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
@@ -266,7 +274,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
             </Container>
           )}
           <Container maxWidth={false} sx={user ? { mt: { xs: 2.5, md: 3.25 } } : undefined}>
-            {newShowItems.length > 0 && <>
+            {!user && newShowItems.length > 0 && <>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Shows</Typography>
               <NewOnRow items={newShowItems} ariaLabel="Shows" autoScroll compact />
             </>}

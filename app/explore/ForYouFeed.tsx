@@ -88,7 +88,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
 
     {full&&transcriptError&&<Alert severity="error">{transcriptError}</Alert>}
     {/* Outer box = positioning context for the out-of-frame controls. */}
-    <Box data-for-you-player sx={{ position: 'relative', width: '100%', aspectRatio: 'auto', height: { xs: MOBILE_PLAYER_HEIGHT, md: 'clamp(300px, calc(100dvh - var(--awm-navbar-height) - 260px), 960px)' }, flexShrink: 0 }}>
+    <Box data-for-you-player sx={{ position: 'relative', width: '100%', aspectRatio: { xs: 'auto', md: '16 / 9' }, height: { xs: MOBILE_PLAYER_HEIGHT, md: 'auto' }, flexShrink: 0 }}>
       <Box sx={{ position: 'relative', width: '100%', height: '100%', bgcolor: '#000', borderRadius: { xs: 0, md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
         <Box ref={wrapRef} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
       </Box>
