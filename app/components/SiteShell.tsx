@@ -47,7 +47,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           <GlobalDataInit>{children}</GlobalDataInit>
         </ErrorBoundary>
       </Box>
-      <Footer />
+      {!isExploreRoute && <Footer />}
       <MobileBottomNav />
       {!isExploreRoute && <LazyFloatingVideoPlayer />}
     </Box>

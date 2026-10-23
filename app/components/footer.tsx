@@ -142,7 +142,7 @@ export default function Footer({ onContactClick }: FooterProps) {
 
       {/* ── main columns ── */}
       <Container maxWidth="xl" sx={{ py: { xs: 7, md: 9 } }}>
-        <Grid container spacing={{ xs: 5, md: 4 }}>
+        <Grid container columnSpacing={{ xs: 2, sm: 4 }} rowSpacing={{ xs: 5, md: 4 }} sx={{ alignItems: 'flex-start' }}>
 
           {/* Brand column */}
           <Grid size={{ xs: 12, md: 4 }}>
@@ -211,11 +211,11 @@ export default function Footer({ onContactClick }: FooterProps) {
           </Grid>
 
           {/* spacer */}
-          <Grid size={{ xs: 0, md: 1 }} sx={{ display: 'block', pb: { xs: 'calc(76px + env(safe-area-inset-bottom, 0px))', md: 0 } }} />
+          <Grid size={{ md: 1 }} sx={{ display: { xs: 'none', md: 'block' } }} />
 
           {/* link columns */}
           {sections.map(section => (
-            <Grid key={section.title} size={{ xs: 6, sm: 4, md: 2 }}>
+            <Grid key={section.title} size={{ xs: 4, md: 2 }}>
               <Typography sx={{
                 fontFamily: 'var(--font-sans), sans-serif',
                 fontSize: '0.68rem', fontWeight: 600,
