@@ -11,7 +11,7 @@ vi.mock('@/app/lib/supabase',()=>{let state={importId:'99999999-9999-4999-8999-9
  },from:mocks.from}}})
 vi.mock('@/app/lib/youtubeVideoDuration',()=>({getYouTubeVideoDuration:mocks.duration}))
 vi.mock('next/cache',()=>({revalidatePath:mocks.revalidate}))
-import {addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson,saveAdminTranscriptJson,moveAdminTranscriptGroup,saveAdminManualDraft,loadAdminManualDraft,deleteAdminManualDraft} from './transcripts'
+import {previewAdminTranscript,addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson,saveAdminTranscriptJson,moveAdminTranscriptGroup,saveAdminManualDraft,loadAdminManualDraft,deleteAdminManualDraft} from './transcripts'
 beforeEach(()=>{vi.resetAllMocks();mocks.duration.mockResolvedValue(null);mocks.guard.mockResolvedValue(undefined);mocks.access.mockResolvedValue({admin:true,userId:'11111111-1111-4111-8111-111111111111'})})
 
 describe('manual form drafts',()=>{
@@ -212,4 +212,16 @@ it('imports invalid optional enrichment unchanged and distinguishes real storage
  expect(mocks.rpc).toHaveBeenCalledWith('website_begin_manual_import',expect.objectContaining({p_raw:expect.objectContaining({_source_json:json})}))
  mocks.rpc.mockResolvedValue({data:null,error:{code:'XX000',message:'Storage failure'}})
  expect(await importAdminManualTranscriptResult({url:'AWMFILE0001',title:'Source',json,searchable:true})).toMatchObject({ok:false,error:expect.stringContaining('Storage failure')})
+})
+
+it('denies preview before reading or parsing private draft data',async()=>{
+ mocks.access.mockResolvedValue({admin:false,userId:'other'})
+ await expect(previewAdminTranscript({url:'bad',title:'Private',channel:'',json:'bad',duration:'',durationFormat:'clock'})).rejects.toThrow('Forbidden')
+ expect(mocks.rpc).not.toHaveBeenCalled();expect(mocks.from).not.toHaveBeenCalled()
+})
+it('previews unsaved data without any import, publication or cache mutation',async()=>{
+ const json=JSON.stringify([{text:'\u0643\u062a\u0627\u0628',start_ms:10000,end_ms:25000,tokens:[{arabic:'\u0643\u062a\u0627\u0628',english:'book'}]}])
+ const result=await previewAdminTranscript({url:'abcdefghij0',title:'Private',channel:'',json,duration:'00:25',durationFormat:'clock'})
+ expect(result.clip.video.youtube_id).toBe('abcdefghij0');expect(result.clip.clip_start_ms).toBe(10000);expect(result.segments[0].tokens[0].english).toBe('book')
+ expect(mocks.rpc).not.toHaveBeenCalled();expect(mocks.revalidate).not.toHaveBeenCalled()
 })

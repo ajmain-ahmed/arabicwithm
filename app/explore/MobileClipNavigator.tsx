@@ -4,7 +4,7 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { Box } from '@mui/material'
 
 /** A gesture changes only the active clip; buffered clips never mount players. */
-export default function MobileClipNavigator({ clipKey, canPrevious, busy, step, children }: { clipKey: string; canPrevious: boolean; busy: boolean; step: (direction: 1 | -1) => void; children: ReactNode }) {
+export default function MobileClipNavigator({ disabled = false, clipKey, canPrevious, busy, step, children }: { disabled?: boolean; clipKey: string; canPrevious: boolean; busy: boolean; step: (direction: 1 | -1) => void; children: ReactNode }) {
   const viewport = useRef<HTMLDivElement>(null)
   const lockedUntil = useRef(0)
   const latest = useRef({ canPrevious, busy, step })
@@ -22,7 +22,7 @@ export default function MobileClipNavigator({ clipKey, canPrevious, busy, step, 
     let wheelDistance = 0
     let lastWheel = 0
     let wheelConsumed = false
-    const mobile = () => window.matchMedia('(max-width:899.95px)').matches
+    const mobile = () => !disabled && window.matchMedia('(max-width:899.95px)').matches
     function innerScroll(target: EventTarget | null) {
       let child = target instanceof Element ? target : null
       while (child && child !== node) {
@@ -85,7 +85,7 @@ export default function MobileClipNavigator({ clipKey, canPrevious, busy, step, 
       node.removeEventListener('touchend', touchEnd)
       node.removeEventListener('touchcancel', cancel)
     }
-  }, [])
+  }, [disabled])
 
   return <Box ref={viewport} data-mobile-clip-feed sx={{ position: 'relative', height: { xs: '100%', md: 'auto' }, display: { xs: 'flex', md: 'block' }, flexDirection: 'column', minHeight: 0, overscrollBehaviorY: 'contain' }}>
     {children}

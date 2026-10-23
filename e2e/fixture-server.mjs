@@ -340,6 +340,11 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if (req.method === 'HEAD') { res.writeHead(200); res.end(); return }
     return json(res, (req.headers.accept ?? '').includes('application/vnd.pgrst.object+json') ? rows[0] ?? null : rows)
   }
+  if(url.pathname.startsWith('/storage/v1/object/profile-media/')&&req.method==='POST'){
+    const path=url.pathname.slice('/storage/v1/object/profile-media/'.length)
+    if(!userId||!path.startsWith(userId+'/'))return json(res,{message:'Forbidden'},403)
+    return json(res,{Key:`profile-media/${path}`,Id:path})
+  }
   if (url.pathname.startsWith('/storage/v1/object/upload/sign/')) {
     const objectPath = decodeURIComponent(url.pathname.split('/object/upload/sign/')[1])
     if (req.method === 'POST') return json(res, { url: `/object/upload/sign/${objectPath}?token=fixture-upload` })

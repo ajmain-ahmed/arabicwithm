@@ -210,7 +210,7 @@ function ExploreVideo({
     active && isYouTube ? source.id : undefined,
     undefined,
     undefined,
-    { autoplay: true, muted: !soundEnabled, verifySoundState: isPhone, mutedAutoplayFallback: isPhone, onEnded }
+    { autoplay: true, muted: isPhone ? false : !soundEnabled, verifySoundState: isPhone, mutedAutoplayFallback: isPhone, onEnded }
   )
   /* The player is the source of truth once ready: the user can also unmute
      or change volume with YouTube's own controls, which fire onVolumeChange. */
@@ -412,7 +412,7 @@ function ExploreVideo({
           {railTop}
           {/* A native fallback uses YouTube's controls without API commands. */}
           {(!isYouTube || isReady) && <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: {xs:'none',md:'flex'}, flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
               <IconButton
                 onClick={toggleSound}
                 aria-label={soundMuted ? 'Turn Explore sound on' : 'Mute Explore video'}
