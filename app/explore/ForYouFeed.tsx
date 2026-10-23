@@ -88,7 +88,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
 
     {full&&transcriptError&&<Alert severity="error">{transcriptError}</Alert>}
     {/* Outer box = positioning context for the out-of-frame controls. */}
-    <Box data-for-you-player sx={{ position: 'relative', width: '100%', aspectRatio: { xs: 'auto', md: '16 / 9' }, height: { xs: MOBILE_PLAYER_HEIGHT, md: 'auto' }, flexShrink: 0 }}>
+    <Box data-for-you-player sx={{ position: 'relative', width: '100%', aspectRatio: 'auto', height: { xs: MOBILE_PLAYER_HEIGHT, md: 'clamp(300px, calc(100dvh - var(--awm-navbar-height) - 260px), 960px)' }, flexShrink: 0 }}>
       <Box sx={{ position: 'relative', width: '100%', height: '100%', bgcolor: '#000', borderRadius: { xs: 0, md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
         <Box ref={wrapRef} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
       </Box>
@@ -106,7 +106,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
       {navigation&&<IconButton aria-label="Next video" disabled={navigation.nextDisabled} onClick={navigation.next}><KeyboardArrowDown/></IconButton>}
     </Box>
     <MobileForYouPanel activeOnly={full} activeSegment={active} modeControl={modeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
-    <Box data-desktop-clip-transcript data-feed-transcript sx={{display:{xs:'none',md:'block'},color:'#f5ede0',mt:2,overscrollBehavior:'contain'}}>
+    <Box data-desktop-clip-transcript data-feed-transcript sx={{display:{xs:'none',md:'block'},color:'#f5ede0',mt:2,minHeight:124,overscrollBehavior:'contain'}}>
       {(active ? [active] : []).map(line=><Box key={line.id} data-clip-line={line.id} data-active-segment={active?.id===line.id} sx={{p:1.5,mb:1,borderRadius:2,bgcolor:'rgba(212,168,67,.14)'}}>
         {line.tokens.length?<ForYouWords tokens={line.tokens} settings={settings} time={time}/>:<Typography lang="ar" dir="rtl" sx={{color:'inherit',textAlign:'center',fontFamily:'var(--font-serif)',fontSize:`${2.2 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem`}}>{displayArabic(line.original_text,settings.tashkeel)}</Typography>}
         {settings.sentence&&line.english_text&&<Typography lang="en" sx={{color:'inherit',textAlign:'center',fontSize:`${TEXT_SCALES[safeTextSize(settings.englishSize)]}rem`}}>{line.english_text}</Typography>}
@@ -145,7 +145,7 @@ function ChevronNav({ onUp, onDown, upDisabled, downDisabled, hidden, sx }: { on
     controls sit beside the skeleton exactly where they land once loaded. */
 function ForYouLoading({ progress, leftControls, rightControls, mobileControls }: { progress: number; leftControls?: ReactNode; rightControls?: ReactNode; mobileControls?: ReactNode }) {
   return <Box>
-    <Box sx={{ width: { xs: '100%', md: 'min(100%, 1100px)' }, mx: { md: 'auto' }, height: { xs: '100%', md: 'auto' }, position: 'relative', left:0 }}>
+    <Box sx={{ width: { xs: '100%', md: 'min(100%, 1800px)' }, mx: { md: 'auto' }, height: { xs: '100%', md: 'auto' }, position: 'relative', left:0 }}>
       <Box sx={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', bgcolor: '#000', borderRadius: { xs: 0, md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' } }}>
         <Box sx={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
           <Box sx={{ textAlign: 'center' }}>
@@ -304,7 +304,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
   const initialLoading = clips.length === 0 && busy
 
   return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: '#111d18', md: '#0a0c0b' }, pt: { xs: 0, md: 3 }, height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'auto' }, pb: { xs: 0, md: 5 } }}>
-    <Box sx={{ maxWidth: 2400, mx: 'auto', height: { xs: '100%', md: 'auto' }, px: { xs: 0, sm: 0, md: 5 } }}>
+    <Box sx={{ maxWidth: 2400, mx: 'auto', height: { xs: '100%', md: 'auto' }, px: { xs: 0, sm: 0, md: 3 } }}>
       <Popover open={Boolean(settingsAnchor)} anchorEl={settingsAnchor} onClose={()=>setSettingsAnchor(null)} anchorOrigin={{vertical:'bottom',horizontal:'right'}} transformOrigin={{vertical:'top',horizontal:'right'}} slotProps={{paper:{sx:{p:2,width:'max-content',maxWidth:'calc(100vw - 32px)',borderRadius:'12px'}}}}>
         <Typography component="h2" sx={{fontWeight:600,mb:1}}>Settings</Typography>
         <TextSizeControl label="Arabic text size" value={safeTextSize(settings.arabicSize)} onChange={value=>resizeText('arabicSize',value)}/>
@@ -323,7 +323,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
 
             />
           : clips[index]
-            ? <Box sx={{ minWidth: 0, width: { xs: '100%', md: 'min(100%, 1100px)' }, mx: { md: 'auto' }, height: { xs: '100%', md: 'auto' }, position: 'relative', left:0 }}>
+            ? <Box sx={{ minWidth: 0, width: { xs: '100%', md: 'min(100%, 1800px)' }, mx: { md: 'auto' }, height: { xs: '100%', md: 'auto' }, position: 'relative', left:0 }}>
                 <MobileClipNavigator clipKey={`${clips[index].video.id}:${clips[index].clip_start_ms}`} disabled={full || !!previewSegments} canPrevious={index>0} busy={busy && index >= clips.length - 1} step={step}><ClipPlayer
                   key={`${clips[index].video.id}:${clips[index].clip_start_ms}`}
                   full={full} suppliedSegments={previewSegments} modeControl={modeControl()} clip={clips[index]}
