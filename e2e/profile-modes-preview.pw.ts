@@ -8,25 +8,6 @@ async function admin(context:BrowserContext){
  await context.addCookies([{name:'sb-localhost-auth-token',value:`base64-${encode({access_token:token,refresh_token:'fixture-refresh',expires_at:expires,expires_in:3600,token_type:'bearer',user})}`,domain:'127.0.0.1',path:'/',sameSite:'Lax'}])
 }
 
-for(const width of [390,1440])test(`profile images persist at ${width}`,async({page,context})=>{
- await page.request.post(`${backend}/fixture/reset-overhaul`);await admin(context);await page.setViewportSize({width,height:1000});await page.goto('/')
- const header=page.locator('[data-home-profile]');await expect(header).toBeVisible();await expect(page.getByText(/Good morning|Good afternoon|Good evening/)).toHaveCount(0)
- await expect(header.locator('[data-profile-banner]')).toHaveAttribute('src','/homepage/mosaic-banner.png')
- await expect(header.getByText('XP',{exact:true})).toBeVisible()
- await page.screenshot({path:`test-results/profile-default-${width}.png`})
- await header.getByRole('button',{name:'Edit Profile',exact:true}).click()
- const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=100;c.height=100;c.getContext('2d')!.fillRect(0,0,100,100);return c.toDataURL('image/png').split(',')[1]})
- const image={name:'photo.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}
- await page.getByLabel('Choose a banner', {exact:true}).setInputFiles(image)
- await expect(header.locator('[data-profile-banner]')).toHaveAttribute('src',/profile-media.*banner-/)
- await page.getByLabel('Choose a profile picture',{exact:true}).setInputFiles(image);await page.getByRole('button',{name:'Adjust photo',exact:true}).click();await page.getByRole('button',{name:'Save photo',exact:true}).click()
- await page.getByRole('button',{name:'Done',exact:true}).click();await page.reload()
- await expect(header.locator('[data-profile-banner]')).toHaveAttribute('src',/profile-media.*banner-/)
- await expect(header.locator('.MuiAvatar-img')).toHaveAttribute('src',/profile-media.*avatar-/)
- await expect(header.getByText('XP',{exact:true})).toBeVisible();await expect(header.getByText('AWM Plus',{exact:true})).toBeVisible()
- expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
- await page.screenshot({path:`test-results/profile-header-${width}.png`})
-})
 for(const width of [320,390,1440])test(`Short Full preserves source and time at ${width}`,async({page,request})=>{
  await request.post(`${backend}/fixture/for-you-playback`);await installYouTubeFixture(page);await page.setViewportSize({width,height:1000});await page.goto('/explore');await page.getByRole('button',{name:'For You feed',exact:true}).click()
  const source=page.locator('[data-for-you-source]');await expect(source.locator('iframe')).toBeVisible();const id=await source.getAttribute('data-for-you-source')

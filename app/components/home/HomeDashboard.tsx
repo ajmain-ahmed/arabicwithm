@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import { continueReading } from './continueReading'
 import { useEffect, useMemo, useState } from 'react'
 import {
   AdminPanelSettings,
@@ -10,7 +9,9 @@ import {
   ExploreOutlined,
   GridOnRounded,
   Headphones,
+  LocalFireDepartmentRounded,
   MenuBook,
+  DiamondOutlined,
   OndemandVideo,
   AccountCircleOutlined,
   ArrowForward,
@@ -26,13 +27,21 @@ import { useColorMode } from '@/app/components/ThemeProvider'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
 import AppDownloadSection from './AppDownloadSection'
+import { continueReading } from './continueReading'
 import { fetchMyList } from '@/app/actions/myList'
 import { useMyListCache } from '@/store/myListStore'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
+import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
+import {
+  LEARNING_ACTIVITY_EVENT,
+  parseLearningActivity,
+  type LearningActivity,
+} from '@/app/lib/activity'
 
+interface ActivityUpdate { userId: string; activity: LearningActivity }
 
 export interface FeaturedEpisode {
   show: ShowMeta
@@ -128,6 +137,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
   const { mode } = useColorMode()
   const { user } = useAuth()
   const resume=user?continueReading(books,chaptersByBook,user.user_metadata):null
+  const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
   const [premiumOpen, setPremiumOpen] = useState(false)
   /* My List is fetched once per session and cached in the store; show-page
      add/remove keeps the cache in sync. */
@@ -141,6 +151,13 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
     }
   }, [newEpisodes, newShows])
 
+  useEffect(() => {
+    const handleActivityUpdate = (event: Event) => {
+      setActivityUpdate((event as CustomEvent<ActivityUpdate>).detail)
+    }
+    window.addEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
+    return () => window.removeEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
+  }, [])
 
   useEffect(() => {
     if (!user?.id || myListCacheItems !== null) return
@@ -153,6 +170,13 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
     return () => { cancelled = true }
   }, [user?.id, myListCacheItems, setMyListCache])
 
+  const displayName = user ? String(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'learner').split(' ')[0] : ''
+  const activity = user
+    ? activityUpdate?.userId === user.id
+      ? activityUpdate.activity
+      : parseLearningActivity(user.user_metadata)
+    : null
+  const streak = activity ? summarizeLearningDashboard(activity, new Date()).streak : 0
   const myListRowItems: CatalogueRowItem[] = useMemo(() => (myListCacheItems ?? []).map((item) => ({
     key: item.showId,
     href: `/cartoons/${encodeURIComponent(item.slug)}`,
@@ -170,6 +194,9 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
     imageSrc: book.cover || `/api/covers/books/${book.id}`,
     imageCrop: book.coverCrop,
   })), [books])
+  const hour = new Date().getHours()
+  const daypart = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
+  const greeting = `Good ${daypart}, ${displayName}!`
 
   return (
       <Box
@@ -198,30 +225,35 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
           },
         }}
       >
-        <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/mosaic-banner.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
           {mode === 'dark' && <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.42) 55%, rgba(0,0,0,0.6) 100%)' }} />}
           <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 14 }, pb: { xs: 5, md: 6 } }}>
-            <Box sx={{ maxWidth: user ? 1140 : 720, mx:0, textAlign:'left' }}>
+            <Box sx={{ maxWidth: user ? 1140 : 720, mx: user ? 'auto' : 0, textAlign: user ? 'center' : 'left' }}>
+              {user ? (
+                <Typography component="h1" suppressHydrationWarning sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 40, sm: 52, md: 62 }, fontWeight: 600, lineHeight: 1.05, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.75), 0 4px 28px rgba(0,0,0,0.55)' }}>{greeting}</Typography>
+              ) : (
                 <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 42, sm: 54, md: 67 }, fontWeight: 600, lineHeight: 1.02, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.75), 0 4px 28px rgba(0,0,0,0.55)' }}>Learn Arabic through cartoons and books</Typography>
-              {(
-                <Box sx={{ mt: 3.5, display: user ? 'grid' : 'flex', gridTemplateColumns:{xs:'repeat(2,minmax(0,1fr))',md:'repeat(4,max-content)'}, gap: 1.5, flexWrap: 'wrap', justifyContent: 'flex-start', ...(user ? {'& .MuiButton-root':{px:{xs:1,sm:3},minHeight:48,fontSize:{xs:12,sm:14}}} : {}) }}>
+              )}
+              {!user && (
+                <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
                   <Button component={Link} href="/cartoons" variant="contained" startIcon={<OndemandVideo />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Watching</Button>
                   <Button component={Link} href="/books" variant="contained" startIcon={<MenuBook />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Reading</Button>
-                  {user&&<><Button component={Link} href="/learn" variant="contained" startIcon={<PsychologyOutlined />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Learning</Button><Button component={Link} href="/books?mode=listen" variant="contained" startIcon={<Headphones />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Listening</Button></>}
                 </Box>
               )}
-
+              {user && (
+                <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
+                  <Box component="span" aria-label={`${streak} day streak`} sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, bgcolor: '#b91c1c', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: '0.9rem' }}>
+                    <LocalFireDepartmentRounded sx={{ fontSize: 18 }} />
+                    {streak}
+                  </Box>
+                  <Button onClick={() => setPremiumOpen(true)} variant="contained" startIcon={<DiamondOutlined sx={{ color: 'var(--awm-gold-light)' }} />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>AWM+</Button>
+                </Box>
+              )}
             </Box>
           </Container>
         </Box>
 
         <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 4, md: 5 } }}>
-          {user&&<Container maxWidth={false} sx={{mb:3}}><Typography component="h2" sx={{fontFamily:'var(--font-heading)',fontSize:{xs:20,md:22},fontWeight:600,color:'var(--awm-bark)',mb:1.5}}>{resume?'Continue Reading':'Start Reading'}</Typography>
-            {resume?<Paper data-continue-reading elevation={0} sx={{display:'flex',alignItems:'center',gap:{xs:2,md:3},p:2,borderRadius:3,maxWidth:680,border:'1px solid color-mix(in srgb,var(--awm-gold) 25%,transparent)'}}>
-              {resume.book.cover&&<Box component="img" src={resume.book.cover} alt={`${resume.book.title} cover`} sx={{width:{xs:80,md:100},aspectRatio:'2 / 3',objectFit:'cover',borderRadius:1,flexShrink:0}}/>}
-              <Box sx={{minWidth:0}}><Typography sx={{fontFamily:'var(--font-heading)',fontSize:24,fontWeight:600,overflowWrap:'anywhere'}}>{resume.book.title}</Typography><Typography sx={{color:'var(--awm-muted)',mt:.5}}>{resume.chapter.title}</Typography><Button component={Link} href={resume.href} sx={{mt:1,textTransform:'none'}}>Continue Reading</Button></Box>
-            </Paper>:<Button component={Link} href="/books" variant="outlined" sx={{textTransform:'none',minHeight:44,borderRadius:'999px'}}>Browse books</Button>}
-          </Container>}
           {user && myListRowItems.length > 0 && (
             <Container maxWidth={false}>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
@@ -274,7 +306,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
             </Container>
           )}
           <Container maxWidth={false} sx={user ? { mt: { xs: 2.5, md: 3.25 } } : undefined}>
-            {!user && newShowItems.length > 0 && <>
+            {newShowItems.length > 0 && <>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Shows</Typography>
               <NewOnRow items={newShowItems} ariaLabel="Shows" autoScroll compact />
             </>}
@@ -288,9 +320,10 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
             </>}
           </Container>
 
-          <Container maxWidth={false} sx={{ display: { xs: 'block', md: 'none' }, mt: 3 }}>
+          <Container maxWidth={false} sx={{ display: { xs: 'block', md: user ? 'block' : 'none' }, mt: 3 }}>
+            {user&&resume&&<Box data-desktop-continue-reading sx={{display:{xs:'none',md:'block'},mb:3}}><Typography component="h2" sx={{fontFamily:'var(--font-heading)',fontSize:22,fontWeight:600,color:'var(--awm-bark)',mb:1.5}}>Continue Reading</Typography><Paper component={Link} href={resume.href} elevation={0} sx={{display:'flex',alignItems:'center',gap:2,p:2,maxWidth:680,borderRadius:'10px',textDecoration:'none',color:'var(--awm-bark)',bgcolor:'var(--awm-white)',border:'1px solid color-mix(in srgb,var(--awm-gold) 25%,transparent)','&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}>{resume.book.cover?<Box component="img" src={resume.book.cover} alt="" sx={{width:64,aspectRatio:'2 / 3',objectFit:'cover',borderRadius:1}}/>:<MenuBook sx={{fontSize:40,color:'var(--awm-gold)'}}/>}<Box sx={{minWidth:0}}><Typography sx={{fontWeight:600,fontSize:18}}>{resume.book.title}</Typography><Typography sx={{color:'var(--awm-muted)',mt:.5}}>{resume.chapter.title}</Typography><Typography sx={{color:'var(--awm-gold)',mt:1,fontSize:13}}>Continue Reading</Typography></Box><ArrowForward sx={{ml:'auto',color:'var(--awm-gold)'}}/></Paper></Box>}
             <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 600, color: 'var(--awm-bark)' }}>Quick Actions</Typography>
-            <Box component="nav" aria-label="Quick Actions" data-mobile-home-actions sx={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 1.5, mt: 1.5 }}>
+            <Box component="nav" aria-label="Quick Actions" data-mobile-home-actions sx={{ display: 'grid', gridTemplateColumns: {xs:'repeat(2,minmax(0,1fr))',md:'repeat(4,minmax(0,1fr))'}, gap: 1.5, mt: 1.5 }}>
               {[
                 { title: 'Memory', href: '/memory', Icon: PsychologyOutlined },
                 { title: 'Grammar', href: '/grammar', Icon: AccountTreeOutlined },

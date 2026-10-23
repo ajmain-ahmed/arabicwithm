@@ -19,18 +19,37 @@ vi.mock('./LearningStats', () => ({
 vi.mock('next/link', () => ({ default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => <a href={href} {...props}>{children}</a> }))
 
 import HomeDashboard from './HomeDashboard'
+import { localDateKey } from '@/app/lib/activity'
+
+function daypart(date: Date) {
+  const hour = date.getHours()
+  return hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
+}
 
 describe('homepage hero', () => {
-  it('uses the existing public hero with four canonical actions for signed-in users',()=>{
-    home.user={id:'user-id',user_metadata:{full_name:'Test User'}}
-    const html=renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]}/> )
-    expect(html).not.toContain('data-home-profile')
-    expect(html).toContain('data-home-hero')
-    expect(html).not.toContain('Good morning')
-    expect(html).toContain('Start Watching')
-    expect(html).toContain('Start Learning')
-    expect(html).toContain('/books?mode=listen')
-    expect(html).toContain('Browse books')
+  it.each([0, 1, 4, 30])('shows only the number for a %i-day streak', (streak) => {
+    const activeDates = Array.from({ length: streak }, (_, offset) => {
+      const date = new Date()
+      date.setDate(date.getDate() - offset)
+      return localDateKey(date)
+    })
+    home.user = { id: 'user-id', user_metadata: { full_name: 'Test User', learning_activity: { activeDates, daily: activeDates.map(date => ({ date, activeSeconds: 60 })), totalSeconds: streak * 60 } } }
+    const html = renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]} />)
+    const pill = new DOMParser().parseFromString(html, 'text/html').querySelector(`[aria-label="${streak} day streak"]`)
+    expect(pill?.textContent).toBe(String(streak))
+  })
+
+  it('shows a time-based greeting with streak and AWM+ pills for signed-in users', () => {
+    home.user = { id: 'user-id', user_metadata: { full_name: 'Test User' } }
+    home.statsRendered = false
+    const html = renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]} />)
+    expect(html).toContain(`Good ${daypart(new Date())}, Test!`)
+    expect(html).not.toContain('Learn Arabic through cartoons and books')
+    expect(html).not.toContain('Start Watching')
+    expect(html).not.toContain('Start Reading')
+    expect(new DOMParser().parseFromString(html, 'text/html').querySelector('[aria-label="0 day streak"]')?.textContent).toBe('0')
+    expect(html).toContain('AWM+')
+    expect(home.statsRendered).toBe(false)
   })
 
   it('keeps the public heading and hides stats for guests', () => {
