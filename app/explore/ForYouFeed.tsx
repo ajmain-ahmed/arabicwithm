@@ -15,6 +15,7 @@ import { blockedForYouSources, excludeForYouSource } from '@/app/lib/forYouPlayb
 import TextSizeControl, { safeTextSize, TEXT_SCALES } from '@/app/components/settings-controls/TextSizeControl'
 import MobileClipNavigator from './MobileClipNavigator'
 import ShortFullSwitch from './ShortFullSwitch'
+import DesktopPlayerResize from './DesktopPlayerResize'
 import MobileForYouPanel from './MobileForYouPanel'
 import ForYouGroupFilter from './ForYouGroupFilter'
 
@@ -48,6 +49,8 @@ export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tok
 
 export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl }: { full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
   const isPhone = useMediaQuery('(max-width:899.95px)')
+  const playerSizeRef=useRef<HTMLDivElement>(null)
+  const [playerWidth,setPlayerWidth]=useState<number|null>(null)
   const [modeStart,setModeStart]=useState({full,start:clip.clip_start_ms/1000})
   const [time, setTime] = useState(clip.clip_start_ms / 1000)
   const [fetchedSegments,setSegments]=useState(clip.segments)
@@ -88,7 +91,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
 
     {full&&transcriptError&&<Alert severity="error">{transcriptError}</Alert>}
     {/* Outer box = positioning context for the out-of-frame controls. */}
-    <Box data-for-you-player sx={{ position: 'relative', width: '100%', aspectRatio: { xs: 'auto', md: '16 / 9' }, height: { xs: MOBILE_PLAYER_HEIGHT, md: 'auto' }, flexShrink: 0 }}>
+    <Box ref={playerSizeRef} data-for-you-player sx={{ position: 'relative',mx:'auto', width:{xs:'100%',md:playerWidth===null?'min(100%, calc(max(270px, 100dvh - var(--awm-navbar-height) - 240px) * 16 / 9))':`min(100%, ${playerWidth}px, calc(max(270px, 100dvh - var(--awm-navbar-height) - 240px) * 16 / 9))`}, aspectRatio: { xs: 'auto', md: '16 / 9' }, height: { xs: MOBILE_PLAYER_HEIGHT, md: 'auto' }, flexShrink: 0 }}>
       <Box sx={{ position: 'relative', width: '100%', height: '100%', bgcolor: '#000', borderRadius: { xs: 0, md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
         <Box ref={wrapRef} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
       </Box>
@@ -103,6 +106,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
       <IconButton aria-label={isMuted?'Unmute clip':'Mute clip'} disabled={!isReady} onClick={sound}>{isMuted?<VolumeOff/>:<VolumeUp/>}</IconButton>
       <Button aria-label="Playback speed" disabled={!isReady||rates.length<2} onClick={()=>setPlaybackRate(nextRate)} sx={{minWidth:44,height:44,textTransform:'none'}}>{rate}{'\u00d7'}</Button>
       {filterControl}{mobileToolbar}{modeControl}
+      {!isPhone&&<DesktopPlayerResize playerRef={playerSizeRef} onResize={setPlayerWidth}/>}
       {navigation&&<IconButton aria-label="Next video" disabled={navigation.nextDisabled} onClick={navigation.next}><KeyboardArrowDown/></IconButton>}
     </Box>
     <MobileForYouPanel activeOnly={full} activeSegment={active} modeControl={modeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
