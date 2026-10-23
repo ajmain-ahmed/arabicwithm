@@ -18,7 +18,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   if (isAdminRoute) {
     return (
       <ErrorBoundary key={pathname}>
-        {children}
+        <Box className="awm-site-pages">{children}</Box>
       </ErrorBoundary>
     )
   }
@@ -29,6 +29,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       <LearningActivityTracker />
       <Box
         component="main"
+        className={pathname === '/' ? undefined : 'awm-site-pages'}
         sx={{
           pt: 'var(--awm-navbar-height)',
           flex: '1 0 auto',

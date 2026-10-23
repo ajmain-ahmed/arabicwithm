@@ -47,7 +47,7 @@ export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tok
   </Box>
 }
 
-export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl }: { full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
+export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl }: { full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
   const isPhone = useMediaQuery('(max-width:899.95px)')
   const playerSizeRef=useRef<HTMLDivElement>(null)
   const [playerWidth,setPlayerWidth]=useState<number|null>(null)
@@ -95,7 +95,8 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
       <Box sx={{ position: 'relative', width: '100%', height: '100%', bgcolor: '#000', borderRadius: { xs: 0, md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
         <Box ref={wrapRef} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
       </Box>
-      <Box data-feed-gesture-zone aria-hidden="true" onClick={()=>{if(isPlaying)pauseVideo();else playVideo()}} sx={{display:{xs:'block',md:'none'},position:'absolute',inset:'0 0 48px',zIndex:2,touchAction:'pan-x'}} />
+      {/* Leave the lower 40% (at least 80px) uncovered for native player controls. */}
+      <Box data-feed-gesture-zone aria-hidden="true" onClick={()=>{if(isPlaying)pauseVideo();else playVideo()}} sx={{display:{xs:'block',md:'none'},position:'absolute',inset:'0 0 max(80px, 40%)',zIndex:2,touchAction:'pan-x'}} />
       {leftControls}
       {rightControls}
     </Box>
@@ -109,7 +110,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
       {!isPhone&&<DesktopPlayerResize playerRef={playerSizeRef} onResize={setPlayerWidth}/>}
       {navigation&&<IconButton aria-label="Next video" disabled={navigation.nextDisabled} onClick={navigation.next}><KeyboardArrowDown/></IconButton>}
     </Box>
-    <MobileForYouPanel activeOnly={full} activeSegment={active} modeControl={modeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
+    <MobileForYouPanel activeOnly={full} activeSegment={active} modeControl={mobileModeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
     <Box data-desktop-clip-transcript data-feed-transcript sx={{display:{xs:'none',md:'block'},color:'#f5ede0',mt:2,minHeight:124,overscrollBehavior:'contain'}}>
       {(active ? [active] : []).map(line=><Box key={line.id} data-clip-line={line.id} data-active-segment={active?.id===line.id} sx={{p:1.5,mb:1,borderRadius:2,bgcolor:'rgba(212,168,67,.14)'}}>
         {line.tokens.length?<ForYouWords tokens={line.tokens} settings={settings} time={time}/>:<Typography lang="ar" dir="rtl" sx={{color:'inherit',textAlign:'center',fontFamily:'var(--font-serif)',fontSize:`${2.2 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem`}}>{displayArabic(line.original_text,settings.tashkeel)}</Typography>}
@@ -330,7 +331,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
             ? <Box sx={{ minWidth: 0, width: { xs: '100%', md: 'min(100%, 1800px)' }, mx: { md: 'auto' }, height: { xs: '100%', md: 'auto' }, position: 'relative', left:0 }}>
                 <MobileClipNavigator clipKey={`${clips[index].video.id}:${clips[index].clip_start_ms}`} disabled={full || !!previewSegments} canPrevious={index>0} busy={busy && index >= clips.length - 1} step={step}><ClipPlayer
                   key={`${clips[index].video.id}:${clips[index].clip_start_ms}`}
-                  full={full} suppliedSegments={previewSegments} modeControl={modeControl()} clip={clips[index]}
+                  full={full} suppliedSegments={previewSegments} modeControl={modeControl()} mobileModeControl={<Button data-mobile-mode onClick={()=>setFull(!full)} sx={{color:'inherit',bgcolor:'var(--awm-gold)',borderRadius:'999px',textTransform:'none',fontWeight:600}}>{full?'Short':'Full'}</Button>} clip={clips[index]}
                   onUnavailable={unavailable}
                   settings={settings}
                   navigation={previewSegments ? undefined : {previous:()=>step(-1),next:()=>step(1),previousDisabled:index===0,nextDisabled:busy&&index>=clips.length-1}}
