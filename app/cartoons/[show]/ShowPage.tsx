@@ -286,7 +286,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                   gap: { xs: 0.75, sm: 1 },
                 }}
               >
-                {filteredEpisodes.map((ep) => (
+                {filteredEpisodes.map((ep, index) => (
                   <Box key={ep.slug} sx={{ position: 'relative', minWidth: 0 }}>
                       {isAdmin && (
                         <Box
@@ -344,6 +344,8 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                         aspectRatio="4 / 5"
                         imageFit="cover"
                         imageCrop={ep.coverCrop}
+                        eager={index < 8}
+                        lead={index === 0}
                         denseMobileTile
                         mobileAspectRatio="4 / 5"
                         mobileTitleSize={10}

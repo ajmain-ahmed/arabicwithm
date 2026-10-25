@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
+import Image from 'next/image'
+import React, { useEffect, useRef, useState } from 'react'
 import { Box, Typography, Chip, Paper, Skeleton } from '@mui/material'
 import Link from 'next/link'
 import CefrChip from '@/app/components/CefrChip'
@@ -21,6 +22,31 @@ export interface ContentCardMetaItem {
   label: string
 }
 
+/* Covers mount only when the card scrolls near the viewport (native lazy
+   loading still fetches everything within its lookahead margin on slow
+   connections), keeping off-screen catalogue images off the network. */
+function useCoverNear() {
+  const ref = useRef<HTMLAnchorElement | null>(null)
+  const [near, setNear] = useState(false)
+  useEffect(() => {
+    const element = ref.current
+    if (!element || near) return
+    if (typeof IntersectionObserver === 'undefined') {
+      queueMicrotask(() => setNear(true))
+      return
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) {
+        setNear(true)
+        observer.disconnect()
+      }
+    }, { rootMargin: '160px' })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [near])
+  return { ref, near }
+}
+
 export interface ContentCardProps {
   slug: string
   hrefPrefix: string
@@ -36,6 +62,14 @@ export interface ContentCardProps {
   aspectRatio?: string
   imageFit?: 'cover' | 'contain' | 'natural'
   imageCrop?: ThumbnailCrop
+  imageSizes?: string
+  /* Skip the viewport gate: the cover renders in the initial HTML and relies
+     on next/image's native lazy loading (first-row cards whose image is part
+     of the first paint). Served unoptimized so the lead paint never waits
+     behind a cold optimizer encode; below-fold cards get full optimization. */
+  eager?: boolean
+  /* Boost the single lead card's fetch priority (one per page). */
+  lead?: boolean
   compactMobileRow?: boolean
   denseMobileTile?: boolean
   mobileAspectRatio?: string
@@ -60,6 +94,9 @@ export default function ContentCard({
   aspectRatio = '16 / 9',
   imageFit = 'cover',
   imageCrop,
+  imageSizes = '(max-width: 600px) 33vw, (max-width: 900px) 50vw, (max-width: 1200px) 33vw, 25vw',
+  eager = false,
+  lead = false,
   compactMobileRow = false,
   denseMobileTile = false,
   mobileAspectRatio = '16 / 9',
@@ -71,6 +108,8 @@ export default function ContentCard({
   const [hovered, setHovered] = useState(false)
   const [imgLoading, setImgLoading] = useState(true)
   const [imgError, setImgError] = useState(false)
+  const { ref: nearRef, near } = useCoverNear()
+  const visible = eager || near
   const href = `${hrefPrefix}/${encodeURIComponent(slug)}`
   const allDisplayTags = Array.from(new Set([category, ...tags].filter((tag): tag is string => Boolean(tag?.trim()))))
   const displayTags = maxVisibleTags == null ? allDisplayTags : allDisplayTags.slice(0, maxVisibleTags)
@@ -79,6 +118,7 @@ export default function ContentCard({
     <Paper
       component={Link}
       href={href}
+      ref={nearRef}
       elevation={0}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -124,7 +164,7 @@ export default function ContentCard({
             : imageFit === 'contain' ? 'var(--awm-cream-light)' : 'transparent',
         }}
       >
-        {imgLoading && !imgError && (
+        {imgLoading && !imgError && !eager && (
           <Skeleton
             variant="rectangular"
             width="100%"
@@ -136,52 +176,42 @@ export default function ContentCard({
             }}
           />
         )}
-        {!imgError ? (
-          <Box
-            component="img"
+        {!imgError && visible && (
+          <Image
             src={cover}
             alt={title}
-            loading="lazy"
+            fill
+            sizes={imageSizes}
+            unoptimized={eager}
+            loading={eager ? 'lazy' : undefined}
+            fetchPriority={lead ? 'high' : undefined}
             decoding="async"
             onLoad={() => setImgLoading(false)}
             onError={() => { setImgLoading(false); setImgError(true) }}
-            sx={{
-              width: '100%',
-              height: denseMobileTile
-                ? imageFit === 'natural' ? 'auto' : '100%'
-                : compactMobileRow
-                ? { xs: '100%', sm: imageFit === 'natural' ? 'auto' : '100%' }
-                : imageFit === 'natural' ? 'auto' : '100%',
+            style={{
               display: 'block',
-              objectFit: denseMobileTile
-                ? imageFit === 'natural' ? undefined : imageFit
-                : compactMobileRow
-                ? { xs: imageFit === 'natural' ? 'cover' : imageFit, sm: imageFit === 'natural' ? undefined : imageFit }
-                : imageFit === 'natural' ? undefined : imageFit,
+              objectFit: imageFit === 'natural' ? undefined : imageFit,
               ...(imageCrop
                 ? thumbnailCropCss(imageCrop, hovered && imageFit === 'cover' ? 1.03 : 1)
                 : {
-                    objectPosition: denseMobileTile ? { xs: mobileImagePosition, sm: 'center' } : 'center',
+                    objectPosition: compactMobileRow && mobileImagePosition ? mobileImagePosition : 'center',
                     transform: hovered && imageFit === 'cover' ? 'scale(1.03)' : 'scale(1)',
                   }),
               transition: 'transform 0.3s, opacity 0.3s',
-              opacity: imgLoading ? 0 : 1,
+              opacity: eager ? 1 : imgLoading ? 0 : 1,
             }}
           />
-        ) : (
+        )}
+        {!imgError && !visible && imageFit === 'natural' && (
+          /* Natural-fit cards have no intrinsic box until the image arrives;
+             reserve the fallback height so the layout doesn't jump. */
+          <Box sx={{ width: '100%', minHeight: { xs: 0, sm: 180 } }} />
+        )}
+        {imgError && (
           <Box
             sx={{
               width: '100%',
-              height: denseMobileTile
-                ? { xs: '100%', sm: imageFit === 'natural' ? 'auto' : '100%' }
-                : compactMobileRow
-                ? { xs: '100%', sm: imageFit === 'natural' ? 'auto' : '100%' }
-                : imageFit === 'natural' ? 'auto' : '100%',
-              minHeight: denseMobileTile
-                ? { xs: 0, sm: imageFit === 'natural' ? 180 : 0 }
-                : compactMobileRow
-                ? { xs: 0, sm: imageFit === 'natural' ? 180 : 0 }
-                : imageFit === 'natural' ? 180 : undefined,
+              height: '100%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

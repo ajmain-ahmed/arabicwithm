@@ -41,7 +41,7 @@ it('shows the reading cover/resume link and removes only list visibility', async
   const value = profile()
   value.shelf = [{ slug: 'story', title: 'Story', author: 'Author', cover: '/cover.webp', coverCrop: { x: 50, y: 50, zoom: 1 }, chapter: 'One', position: 1, total: 3, href: '/books/story/one' }]
   await act(async () => root.render(<ProfileView profile={value} />))
-  expect(host.querySelector('img[alt="Story cover"]')?.getAttribute('src')).toBe('/cover.webp')
+  expect(host.querySelector('img[alt="Story cover"]')?.getAttribute('src')).toContain(encodeURIComponent('/cover.webp'))
   expect([...host.querySelectorAll('a')].find(a => a.textContent === 'Continue Reading')?.getAttribute('href')).toBe('/books/story/one')
   const remove = [...host.querySelectorAll('button')].find(b => b.textContent === 'Remove from List')!
   await act(async () => remove.click())

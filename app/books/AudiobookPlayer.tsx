@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import Link from 'next/link'
 import { Alert, Box, Button, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material'
@@ -21,7 +22,12 @@ export default function AudiobookPlayer({ book, chapters, audio }: { book: Libra
   if (!chapter || !current) return <Alert severity="info">No published chapters are available in this language.</Alert>
   return <Box component="section" aria-label="Audiobook player" sx={{ bgcolor: 'var(--awm-white)', borderRadius: '20px', p: { xs: 2, sm: 3, lg: 4 }, textAlign: 'center', minWidth: 0, boxShadow: '0 12px 40px rgba(44,26,14,.08)' }}>
     <Typography sx={{ mb: 2, fontSize: 12, letterSpacing: '.12em', color: 'var(--awm-muted)', textTransform: 'uppercase' }}>Now listening</Typography>
-    {book.cover && <Box component="img" src={book.cover} alt={`${book.title} cover`} sx={{ display: 'block', width: { xs: 'min(64vw, 240px)', md: 240 }, aspectRatio: '2 / 3', objectFit: 'cover', mx: 'auto', borderRadius: '12px', boxShadow: '0 12px 30px #0002', ...thumbnailCropCss(book.coverCrop) }} />}
+    {book.cover && (
+      /* The page's only artwork — eager and preloaded. */
+      <Box sx={{ position: 'relative', width: { xs: 'min(64vw, 240px)', md: '240px' }, aspectRatio: '2 / 3', mx: 'auto', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 12px 30px #0002' }}>
+        <Image src={book.cover} alt={`${book.title} cover`} fill preload sizes="(max-width: 900px) 64vw, 240px" style={{ objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} />
+      </Box>
+    )}
     <Typography component="h1" sx={{ mt: 2, fontFamily: 'var(--font-heading)', fontSize: { xs: 25, md: 32 }, color: 'var(--awm-bark)' }}>{book.title}</Typography>
     <Typography sx={{ mb: 2, color: 'var(--awm-muted)' }}>Chapter {chapter.chapterNumber} · {chapter.title}</Typography>
     <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center', mb: 2 }}>

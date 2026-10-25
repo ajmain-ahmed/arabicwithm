@@ -256,7 +256,7 @@ export default function CartoonsPage({
         </Box>
       ) : view === 'episodes' ? (
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.75, sm: 1 } }}>
-                {episodes.map((episode) => (
+                {episodes.map((episode, index) => (
                   <ContentCard
                     key={episode.id}
                     slug={episode.slug}
@@ -270,6 +270,7 @@ export default function CartoonsPage({
                     aspectRatio="4 / 5"
                     imageFit="cover"
                     imageCrop={episode.coverCrop}
+                    eager={index < 4}
                     denseMobileTile
                     mobileAspectRatio="4 / 5"
                     mobileImagePosition="center"
@@ -281,7 +282,7 @@ export default function CartoonsPage({
               </Box>
       ) : (
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.75, sm: 1 } }}>
-                {shows.map((show) => (
+                {shows.map((show, index) => (
                   <Box key={show.id} sx={{ position: 'relative', minWidth: 0 }}>
                     {isAdmin && (
                       <Box sx={{ position: 'absolute', zIndex: 2, top: 8, left: 8, display: { xs: 'none', sm: 'flex' }, gap: 0.5 }}>
@@ -303,7 +304,8 @@ export default function CartoonsPage({
                       aspectRatio="4 / 5"
                       imageFit="cover"
                       imageCrop={show.coverCrop}
-                      denseMobileTile
+                        eager={index < 4}
+                        denseMobileTile
                       mobileAspectRatio="4 / 5"
                       mobileImagePosition="center"
                       overlayIcon={<PlayArrow sx={{ fontSize: 20, color: '#1a0f08', ml: 0.3 }} />}

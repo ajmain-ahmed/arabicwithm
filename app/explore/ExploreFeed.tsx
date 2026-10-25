@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ArrowForward, ExploreOutlined, KeyboardArrowDown, KeyboardArrowUp, MenuBook, PlayCircleOutlineRounded, PsychologyOutlined, VolumeOff, VolumeUp } from '@mui/icons-material'
 import { Box, Button, Chip, CircularProgress, IconButton, Popover, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
 import { WordTooltip, HtmlTooltip, MobileDefinitionSheet, type VocabEntry } from '@/app/components/vocab-tooltip'
@@ -331,12 +332,15 @@ function ExploreVideo({
             border: { md: '1px solid rgba(255,255,255,0.08)' },
           }}
         >
-        {!active && episode.cover && (
-          <Box
-            component="img"
+        {!active && (episode.cover || getYouTubeThumbnailUrl(episode.youtubeId)) && (
+          /* The stage poster is this page's lead image: eager, high priority. */
+          <Image
             src={episode.cover ?? getYouTubeThumbnailUrl(episode.youtubeId) ?? ''}
             alt=""
-            sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 1, ...thumbnailCropCss(episode.coverCrop) }}
+            fill
+            fetchPriority="high"
+            sizes="(max-width: 900px) 100vw, min(100vw - 320px, 56.25vh)"
+            style={{ position: 'absolute', inset: 0, objectFit: 'cover', opacity: 1, ...thumbnailCropCss(episode.coverCrop) }}
           />
         )}
         {active && source?.provider !== 'youtube' && source && (

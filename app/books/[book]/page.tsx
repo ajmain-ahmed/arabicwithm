@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { Box, Chip, Container, Paper, Typography } from '@mui/material'
 import { AccessTimeRounded, ArrowBack, ChevronRight, HeadphonesRounded } from '@mui/icons-material'
@@ -45,7 +46,10 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: book.cover ? '240px minmax(0, 1fr)' : '1fr' }, gap: { xs: 3, md: 5 }, alignItems: 'start' }}>
             {book.cover && (
               <Box sx={{ width: '100%', maxWidth: { sm: 240 }, mx: { xs: 'auto', sm: 0 } }}>
-                <Box component="img" src={book.cover} alt={`${book.title} cover`} sx={{ display: 'block', width: '100%', aspectRatio: '2 / 3', objectFit: 'cover', borderRadius: '10px', boxShadow: '0 12px 30px rgba(44,26,14,0.16)', ...thumbnailCropCss(book.coverCrop) }} />
+                {/* The page's lead image: eager and preloaded. */}
+                <Box sx={{ position: 'relative', width: '100%', aspectRatio: '2 / 3', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}>
+                  <Image src={book.cover} alt={`${book.title} cover`} fill preload sizes="(max-width: 600px) 90vw, 240px" style={{ objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} />
+                </Box>
                 <BookListRemovalButton bookSlug={book.slug} />
               </Box>
             )}

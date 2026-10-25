@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { Add, AutoStories, LocalFireDepartmentRounded } from '@mui/icons-material'
 import { Alert, Box, Button, Chip, Container, FormControlLabel, LinearProgress, Paper, Switch, TextField, Typography } from '@mui/material'
@@ -57,7 +58,7 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
       <Typography component="h2" variant="h4">Currently Reading</Typography>
       {shelf.length ? <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2,minmax(0,1fr))' }, gap: 2, mt: 2 }}>
         {shelf.map(book => <Paper key={book.slug} elevation={0} sx={{ ...panel, display: 'grid', gridTemplateColumns: { xs: '100px minmax(0,1fr)', sm: '130px minmax(0,1fr)' }, overflow: 'hidden' }}>
-          <Box sx={{ bgcolor: 'var(--awm-cream)', minHeight: 190, overflow: 'hidden' }}>{book.cover ? <Box component="img" src={book.cover} alt={`${book.title} cover`} loading="lazy" sx={{ width: '100%', height: '100%', objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} /> : <AutoStories sx={{ color: 'var(--awm-gold)', m: 3, fontSize: 40 }} />}</Box>
+          <Box sx={{ bgcolor: 'var(--awm-cream)', minHeight: 190, overflow: 'hidden', position: 'relative' }}>{book.cover ? <Image src={book.cover} alt={`${book.title} cover`} fill sizes="130px" style={{ objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} /> : <AutoStories sx={{ color: 'var(--awm-gold)', m: 3, fontSize: 40 }} />}</Box>
           <Box sx={{ minWidth: 0, p: 2 }}><Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: 23, fontWeight: 600 }}>{book.title}</Typography><Typography sx={{ color: 'var(--awm-muted)', fontSize: 12 }}>{book.author}</Typography><Typography sx={{ mt: 1, fontSize: 13 }}>{book.chapter}</Typography><Typography sx={{ mt: 0.5, color: 'var(--awm-muted)', fontSize: 12 }}>Reading position: chapter {book.position} of {book.total}</Typography><LinearProgress aria-label={`${book.title} reading position`} variant="determinate" value={book.total ? Math.max(0, book.position - 1) / book.total * 100 : 0} sx={{ mt: 1, borderRadius: 99 }} /><Button component={Link} href={book.href} sx={{ mt: 1, px: 0 }}>Continue Reading</Button>{profile.own && <BookListRemovalButton bookSlug={book.slug} onRemoved={() => setRemoved(items => [...items, book.slug])} />}</Box>
         </Paper>)}
       </Box> : <Paper elevation={0} sx={{ ...panel, p: 3, mt: 2 }}><Typography>No current book. Your next story is waiting.</Typography><Button component={Link} href="/books" sx={{ mt: 1 }}>Browse books</Button></Paper>}
