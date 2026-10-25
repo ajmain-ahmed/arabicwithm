@@ -1,6 +1,8 @@
 'use server'
 
 import { z } from 'zod'
+import {forYouTokens,type ForYouClip,type ForYouSegment} from '@/app/lib/forYou'
+import {previewClipWindow} from '@/app/lib/previewClip'
 import {createHash} from 'node:crypto'
 import {runManualImport,type ImportReply,type ManualImportState} from '@/app/lib/manualImportRunner'
 import { revalidatePath } from 'next/cache'
@@ -329,4 +331,17 @@ export async function moveAdminTranscriptGroup(id:string,input:{groupId:string|n
   if(error)throw new Error(error.code==='23503'?'The selected group no longer exists. Choose another group.':/conflict/.test(error.message)?'This transcript or its group changed. Reopen Edit before saving. Your edits are still here.':'Unable to move the transcript. Please retry.')
   revalidatePath('/admin/transcripts');return {ok:true,updatedAt:z.string().parse(data)}
  }catch(error){return {ok:false,error:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to move the transcript.'}}
+}
+
+/** Read-only preview of the current form. Never imports, indexes or publishes. */
+export async function previewAdminTranscript(input:{url:string;title:string;channel:string;json:string;duration:string;durationFormat:'clock'|'minutes'}):Promise<{clip:ForYouClip;segments:ForYouSegment[]}> {
+ await adminIdentity()
+ const value=z.object({url:z.string().max(2048),title:z.string().trim().min(1).max(300),channel:z.string().max(300),json:z.string().max(MAX_TRANSCRIPT_BYTES),duration:z.string().max(30),durationFormat:z.enum(['clock','minutes'])}).parse(input)
+ const youtubeId=manualVideoId(value.url)
+ const {raw}=await resolveManualJson(value.json,youtubeId,value.duration,undefined,value.durationFormat)
+ const segments:ForYouSegment[]=raw.content.map((line,position)=>({id:position+1,position,original_text:line.text,english_text:line.english??null,start_seconds:line.offset/1000,end_seconds:(line.offset+(line.duration??0))/1000,tokens:forYouTokens(null,line)}))
+ if(!segments.length||segments.some(line=>line.end_seconds<=line.start_seconds))throw new Error('Preview unavailable: segment timing could not be resolved.')
+ const short=previewClipWindow(segments)
+ if(!short.length)throw new Error('Preview unavailable: no continuous Arabic clip with valid timings. Check gaps and segment lengths (maximum 60 seconds).')
+ return {segments,clip:{video:{id:crypto.randomUUID(),youtube_id:youtubeId,title:value.title,channel:value.channel},clip_start_ms:short[0].start_seconds*1000,clip_end_ms:Math.max(...short.map(line=>line.end_seconds))*1000,segments:short}}
 }

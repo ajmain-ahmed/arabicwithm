@@ -188,6 +188,7 @@ function ExploreVideo({
   onNext?: () => void
   onStarted?: () => void
 }) {
+  const isPhone = useMediaQuery('(max-width:899.95px)')
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
   const soundBlockedRef = useRef(false)
@@ -201,7 +202,6 @@ function ExploreVideo({
     playVideo,
     pauseVideo,
     mute,
-    unMute,
     playWithSound,
     autoplayBlocked,
     errorCode,
@@ -209,10 +209,11 @@ function ExploreVideo({
     active && isYouTube ? source.id : undefined,
     undefined,
     undefined,
-    { autoplay: true, muted: !soundEnabled, onEnded }
+    { autoplay: true, muted: isPhone ? false : !soundEnabled, verifySoundState: true, mutedAutoplayFallback: true, onEnded }
   )
   /* The player is the source of truth once ready: the user can also unmute
      or change volume with YouTube's own controls, which fire onVolumeChange. */
+  const phoneMuted = isPhone && isMuted
   const soundMuted = isReady ? isMuted : !soundEnabled
 
   useEffect(() => {
@@ -228,12 +229,12 @@ function ExploreVideo({
     }
     // One policy rejection enables a muted fallback for this player. Starting
     // that fallback must not trigger another automatic unmute/play loop.
-    if (autoplayBlocked) soundBlockedRef.current = true
-    if (soundEnabled && !soundBlockedRef.current) unMute()
+    if (autoplayBlocked || (phoneMuted && soundEnabled)) soundBlockedRef.current = true
+    if (soundEnabled && !soundBlockedRef.current) playWithSound()
     else mute()
     playVideo()
     onStarted?.()
-  }, [active, autoplayBlocked, isReady, mute, pauseVideo, playVideo, soundEnabled, unMute, onStarted])
+  }, [active, autoplayBlocked, phoneMuted, isReady, mute, pauseVideo, playVideo, soundEnabled, playWithSound, onStarted])
 
   useEffect(() => {
     const requestSound = () => {
@@ -275,7 +276,7 @@ function ExploreVideo({
       >
         {/* 9:16 frame sized to the available height (container units), so the
             player never letterboxes. Desktop: card + action rail as a row. */}
-        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: { md: 2.25 }, containerType: 'size', width: '100%' }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', alignItems: { xs: 'flex-start', md: 'flex-end' }, justifyContent: 'center', gap: { md: 2.25 }, containerType: 'size', width: '100%' }}>
         {/* Prev/next chevrons at the left midpoint of the video (desktop). */}
         {(onPrev || onNext) && (
           <Box sx={{ display: { xs: 'none', md: 'flex' }, flexDirection: 'column', gap: 1.25, alignItems: 'center', alignSelf: 'center', flexShrink: 0 }}>
@@ -320,9 +321,10 @@ function ExploreVideo({
             width: '100%',
             maxWidth: '100%',
             maxHeight: '100%',
-            aspectRatio: '9 / 16',
-            /* Older browsers: full width, minor letterboxing on tall screens. */
-            '@supports (width: 1cqh)': { width: 'min(100%, 56.25cqh)' },
+            height: { xs: '100%', md: 'auto' },
+            aspectRatio: { xs: 'auto', md: '9 / 16' },
+            /* Mobile fills the stage; desktop retains the height-fitted 9:16 card. */
+            '@supports (width: 1cqh)': { width: { xs: '100%', md: 'min(100%, 56.25cqh)' } },
             overflow: 'hidden',
             borderRadius: { xs: 0, md: '20px' },
             boxShadow: { xs: 'none', md: '0 30px 80px rgba(0,0,0,0.55)' },
@@ -409,7 +411,7 @@ function ExploreVideo({
           {railTop}
           {/* A native fallback uses YouTube's controls without API commands. */}
           {(!isYouTube || isReady) && <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: {xs:'none',md:'flex'}, flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
               <IconButton
                 onClick={toggleSound}
                 aria-label={soundMuted ? 'Turn Explore sound on' : 'Mute Explore video'}
@@ -564,6 +566,9 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionP
 
 export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
   const theme = useTheme()
+  const [hydrated,setHydrated] = useState(false)
+  useEffect(()=>setHydrated(true),[])
+  const videosOnly = useMediaQuery(theme.breakpoints.down('md'))
   const isMobileDefinitionLayout = useMediaQuery(theme.breakpoints.down('lg'))
   const setGlobalVideoPlaying = usePlayerStore((state) => state.setIsPlaying)
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
@@ -571,7 +576,8 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
      fresh batch is fetched; first-time visitors fetch page 0 client-side. */
   const cachedItems = useExploreFeedCache((state) => state.items)
   const setCachedItems = useExploreFeedCache((state) => state.setItems)
-  const [items, setItems] = useState<ExploreFeedItem[]>(cachedItems)
+  const [items, setItems] = useState<ExploreFeedItem[]>(()=>cachedItems.filter(item=>!videosOnly||item.kind==='video'))
+  useEffect(()=>{if(videosOnly)setItems(current=>current.filter(item=>item.kind==='video'))},[videosOnly])
   const [hasMore, setHasMore] = useState(cachedItems.length > 0)
   const [initialLoaded, setInitialLoaded] = useState(cachedItems.length > 0)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -611,14 +617,14 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
   }, [items, watchedCount, setCachedItems])
 
   useEffect(() => {
-    if (initialLoadStartedRef.current) return
+    if (!hydrated || initialLoadStartedRef.current) return
     initialLoadStartedRef.current = true
     const restore = cachedItems.length > 0
     setItems((current) => (restore ? current : []))
     setLoadingMore(true)
-    void fetchExploreFeedPage(seedRef.current, 0)
+    void fetchExploreFeedPage(seedRef.current, 0, videosOnly)
       .then((batch) => {
-        const fresh = batch.items.filter((item) => {
+        const fresh = batch.items.filter(item=>!videosOnly||item.kind==='video').filter((item) => {
           const key = feedItemKey(item)
           if (seenKeysRef.current.has(key)) return false
           seenKeysRef.current.add(key)
@@ -636,16 +642,16 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
         setLoadingMore(false)
         setInitialLoaded(true)
       })
-  }, [cachedItems])
+  }, [cachedItems, videosOnly, hydrated])
 
   const loadNextBatch = useCallback(async () => {
     if (loadingBatchRef.current || !hasMore) return
     loadingBatchRef.current = true
     setLoadingMore(true)
     try {
-      const batch = await fetchExploreFeedPage(seedRef.current, nextPageRef.current)
+      const batch = await fetchExploreFeedPage(seedRef.current, nextPageRef.current, videosOnly)
       nextPageRef.current += 1
-      const fresh = batch.items.filter((item) => {
+      const fresh = batch.items.filter(item=>!videosOnly||item.kind==='video').filter((item) => {
         const key = feedItemKey(item)
         if (seenKeysRef.current.has(key)) return false
         seenKeysRef.current.add(key)
@@ -659,7 +665,7 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
       loadingBatchRef.current = false
       setLoadingMore(false)
     }
-  }, [hasMore])
+  }, [hasMore, videosOnly])
 
   useEffect(() => {
     if (activeIndex >= items.length - EXPLORE_PREFETCH_AHEAD) void loadNextBatch()
@@ -774,7 +780,7 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
 
   if (items.length === 0 && !initialLoaded) {
     return (
-      <Box sx={{ height: 'calc(100dvh - var(--awm-navbar-height))', bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, display: 'grid', placeItems: 'center' }}>
+      <Box sx={{ height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' }, bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, display: 'grid', placeItems: 'center' }}>
         <LoadingCircle size={62} dark />
       </Box>
     )
@@ -789,7 +795,7 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
   }
 
   return (
-      <Box sx={{ position: 'relative', height: 'calc(100dvh - var(--awm-navbar-height))', '@supports (height: 100dvh)': { height: 'calc(100dvh - var(--awm-navbar-height))' }, minHeight: 'calc(100vh - var(--awm-navbar-height))' }}>
+      <Box sx={{ position: 'relative', height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' }, '@supports (height: 100dvh)': { height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' } }, minHeight: { xs: 0, md: 'calc(100vh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' } }}>
       <Box
         id="explore-feed"
         ref={feedRef}
@@ -842,7 +848,7 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
                 onEnded={() => advanceOnce(index)}
                 onPlaybackChange={setGlobalVideoPlaying}
                 soundEnabled={soundEnabled}
-                railTop={railTop}
+                railTop={index === activeIndex ? railTop : undefined}
                 onPrev={() => goToIndex(activeIndex <= 0 ? items.length - 1 : activeIndex - 1)}
                 onNext={() => goToIndex(items.length === 0 ? 0 : (activeIndex + 1) % items.length)}
                 onStarted={() => setWatchedCount((count) => Math.max(count, index + 1))}

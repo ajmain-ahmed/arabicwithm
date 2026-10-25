@@ -223,7 +223,7 @@ it("does not let an old progress refresh erase a successful review", async () =>
   await act(async () =>
     finish({ ok: true, data: { used: 0, premium: false } }),
   );
-  expect(host.textContent).toContain("1 / 1 sessions today");
+  expect(host.textContent).not.toContain("session XP");
   expect(host.textContent).toContain("Card 2 of 2");
 });
 

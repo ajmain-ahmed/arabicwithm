@@ -7,6 +7,7 @@ import { getYouTubeEmbedUrl, normalizeYouTubeId } from './cartoons'
    YouTube IFrame API Types
 ───────────────────────────────────────────── */
 interface YTPlayer {
+  getDuration?(): number
   getCurrentTime(): number
   seekTo(seconds: number, allowSeekAhead: boolean): void
   playVideo(): void
@@ -41,11 +42,15 @@ declare global {
 }
 
 interface YouTubePlayerOptions {
+  verifySoundState?: boolean
   autoplay?: boolean
   muted?: boolean
+  mutedAutoplayFallback?: boolean
   onEnded?: () => void
   reloadKey?: string | number
   endAt?: number
+  onError?: (code: number) => void
+  requireTimeUpdates?: boolean
 }
 
 let youtubeApiPromise: Promise<void> | null = null
@@ -95,6 +100,7 @@ export default function useYouTubePlayer(
   const segmentSafetyRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onTimeUpdateRef = useRef(onTimeUpdate)
   const onEndedRef = useRef(options.onEnded)
+  const onErrorRef = useRef(options.onError)
   const mutedRef = useRef(options.muted === true)
   const startAtRef = useRef(startAt)
   const [isReady, setIsReady] = useState(false)
@@ -109,6 +115,7 @@ export default function useYouTubePlayer(
 
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
   useEffect(() => { onEndedRef.current = options.onEnded }, [options.onEnded])
+  useEffect(() => { onErrorRef.current = options.onError }, [options.onError])
   useEffect(() => { mutedRef.current = options.muted === true }, [options.muted])
   useEffect(() => {
     startAtRef.current = startAt
@@ -120,6 +127,19 @@ export default function useYouTubePlayer(
     if (!normalizedVideoId || !wrap) return
 
     let cancelled = false
+    let triedMutedFallback = false
+    let clipEnded = false
+    const reportTime = () => {
+      const time = playerRef.current?.getCurrentTime?.()
+      if (typeof time !== 'number') return
+      setIsMuted(readEffectiveMuted(playerRef.current, mutedRef.current))
+      onTimeUpdateRef.current?.(time)
+      if (options.endAt != null && time >= options.endAt && !clipEnded) {
+        clipEnded = true
+        playerRef.current?.pauseVideo?.()
+        onEndedRef.current?.()
+      } else if (options.endAt != null && time >= (startAtRef.current ?? 0) && time < options.endAt) clipEnded = false
+    }
 
     const clearWrap = (el: HTMLDivElement) => {
       el.replaceChildren()
@@ -127,6 +147,8 @@ export default function useYouTubePlayer(
 
     const mountFallbackEmbed = () => {
       if (cancelled || !wrap.isConnected) return
+      // A plain iframe cannot report seeks or playback time to a transcript.
+      if (options.requireTimeUpdates) { setErrorCode(153); onErrorRef.current?.(153); return }
 
       if (intervalRef.current) clearInterval(intervalRef.current)
       intervalRef.current = null
@@ -146,7 +168,7 @@ export default function useYouTubePlayer(
       if (!embedUrl) return
 
       const iframe = document.createElement('iframe')
-      iframe.src = options.endAt != null && Number.isFinite(options.endAt) ? `${embedUrl}&end=${Math.floor(options.endAt)}` : embedUrl
+      iframe.src = options.endAt != null && Number.isFinite(options.endAt) ? `${embedUrl}&end=${Math.ceil(options.endAt)}` : embedUrl
       iframe.title = 'YouTube video player'
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
       iframe.allowFullscreen = true
@@ -184,7 +206,7 @@ export default function useYouTubePlayer(
             enablejsapi: 1,
             playsinline: 1,
             start: startAtRef.current && startAtRef.current > 0 ? Math.floor(startAtRef.current) : undefined,
-            end: options.endAt != null && Number.isFinite(options.endAt) ? Math.floor(options.endAt) : undefined,
+            end: options.endAt != null && Number.isFinite(options.endAt) ? Math.ceil(options.endAt) : undefined,
             origin: typeof window !== 'undefined' ? window.location.origin : undefined,
           },
           events: {
@@ -193,38 +215,47 @@ export default function useYouTubePlayer(
               setErrorCode(null)
               setAutoplayBlocked(false)
               if (mutedRef.current) playerRef.current?.mute?.()
+              else if (options.mutedAutoplayFallback) {
+                playerRef.current?.unMute?.()
+                if ((playerRef.current?.getVolume?.() ?? 100) === 0) playerRef.current?.setVolume?.(100)
+              }
               setIsMuted(readEffectiveMuted(playerRef.current, mutedRef.current))
               if (startAtRef.current && startAtRef.current > 0) playerRef.current?.seekTo?.(startAtRef.current, true)
               if (autoplay) playerRef.current?.playVideo?.()
               setIsReady(true)
-              intervalRef.current = setInterval(() => {
-                const t = playerRef.current?.getCurrentTime?.()
-                if (typeof t === 'number') onTimeUpdateRef.current?.(t)
-              }, 200)
+              reportTime()
+              intervalRef.current = setInterval(reportTime, 200)
             },
             onStateChange: (event: { data: number }) => {
               if (cancelled) return
               if (event.data === window.YT.PlayerState.PLAYING) {
+                // YouTube's native Replay may restart at video zero.
+                if (clipEnded && options.endAt != null && (playerRef.current?.getCurrentTime?.() ?? 0) < (startAtRef.current ?? 0)) {
+                  playerRef.current?.seekTo?.(startAtRef.current ?? 0, true)
+                  clipEnded = false
+                }
                 setIsPlaying(true)
                 setAutoplayBlocked(false)
                 if (!intervalRef.current)
-                  intervalRef.current = setInterval(() => {
-                    const t = playerRef.current?.getCurrentTime?.()
-                    if (typeof t === 'number') onTimeUpdateRef.current?.(t)
-                  }, 200)
+                  intervalRef.current = setInterval(reportTime, 200)
               } else {
                 setIsPlaying(false)
-                if (intervalRef.current) clearInterval(intervalRef.current)
-                intervalRef.current = null
                 if (event.data === window.YT.PlayerState.ENDED) {
+                  clipEnded = true
                   onEndedRef.current?.()
                 }
               }
+              reportTime()
             },
             onPlaybackRateChange: (event: { data: number }) => { if (!cancelled) setPlaybackRateValue(event.data) },
             onError: (e: { data: number }) => {
               if (cancelled) return
               setIsPlaying(false)
+              if (options.requireTimeUpdates) {
+                setErrorCode(e.data)
+                onErrorRef.current?.(e.data)
+                return
+              }
               if (e.data === 5 || e.data === 153) {
                 mountFallbackEmbed()
                 return
@@ -235,7 +266,12 @@ export default function useYouTubePlayer(
             onAutoplayBlocked: () => {
               if (cancelled) return
               setIsPlaying(false)
-              setAutoplayBlocked(true)
+              if (autoplay && options.mutedAutoplayFallback && !triedMutedFallback) {
+                triedMutedFallback = true
+                playerRef.current?.mute?.()
+                setIsMuted(options.verifySoundState ? readEffectiveMuted(playerRef.current, true) : true)
+                playerRef.current?.playVideo?.()
+              } else setAutoplayBlocked(true)
             },
             onVolumeChange: () => {
               if (cancelled) return
@@ -268,6 +304,7 @@ export default function useYouTubePlayer(
       segmentSafetyRef.current = null
       const player = playerRef.current
       playerRef.current = null
+      try { player?.pauseVideo?.() } catch {}
       try {
         player?.destroy?.()
       } catch {}
@@ -275,17 +312,19 @@ export default function useYouTubePlayer(
       setIsReady(false)
       setIsPlaying(false)
     }
-  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, retryNonce])
+  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, options.mutedAutoplayFallback, options.requireTimeUpdates, options.verifySoundState, retryNonce])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {
       playerRef.current.seekTo(seconds, true)
+      onTimeUpdateRef.current?.(seconds)
       playerRef.current.playVideo?.()
     }
   }, [])
 
   const seekToOnly = useCallback((seconds: number) => {
     playerRef.current?.seekTo?.(seconds, true)
+    onTimeUpdateRef.current?.(seconds)
   }, [])
 
   const playSegment = useCallback((startSeconds: number, durationSeconds: number) => {
@@ -324,13 +363,13 @@ export default function useYouTubePlayer(
 
   const mute = useCallback(() => {
     playerRef.current?.mute?.()
-    setIsMuted(true)
-  }, [])
+    setIsMuted(options.verifySoundState ? readEffectiveMuted(playerRef.current, true) : true)
+  }, [options.verifySoundState])
 
   const unMute = useCallback(() => {
     playerRef.current?.unMute?.()
-    setIsMuted(false)
-  }, [])
+    setIsMuted(options.verifySoundState ? readEffectiveMuted(playerRef.current, true) : false)
+  }, [options.verifySoundState])
 
   const playWithSound = useCallback(() => {
     const player = playerRef.current
@@ -340,12 +379,14 @@ export default function useYouTubePlayer(
     if ((player?.getVolume?.() ?? 100) === 0) player?.setVolume?.(100)
     player?.playVideo?.()
     setAutoplayBlocked(false)
-    setIsMuted(false)
-  }, [])
+    setIsMuted(options.verifySoundState ? readEffectiveMuted(playerRef.current, true) : false)
+  }, [options.verifySoundState])
 
   const getCurrentTime = useCallback(() => {
     return playerRef.current?.getCurrentTime?.() ?? 0
   }, [])
+
+  const getDuration = useCallback(() => playerRef.current?.getDuration?.() ?? 0, [])
 
   const setPlaybackRate = useCallback((rate: number) => {
     const player = playerRef.current
@@ -371,6 +412,8 @@ export default function useYouTubePlayer(
     unMute,
     playWithSound,
     getCurrentTime,
+    getSoundMuted: () => readEffectiveMuted(playerRef.current, mutedRef.current),
+    getDuration,
     getPlaybackRates,
     playbackRate,
     setPlaybackRate,

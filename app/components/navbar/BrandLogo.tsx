@@ -52,7 +52,7 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = 
         >
             <Box
                 component="img"
-                src="/homepage/arabicwithm-notext.png"
+                src="/homepage/awm-logo.png"
                 alt=""
                 aria-hidden="true"
                 sx={{ flexShrink: 0, height: isMobile ? 26 : 38, width: 'auto', objectFit: 'contain' }}

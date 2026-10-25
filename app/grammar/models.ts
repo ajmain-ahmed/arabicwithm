@@ -150,6 +150,6 @@ export function formLabel(v: Verb) { return v.form ? `Form ${roman[v.form - 1]}`
     label: string;
 }>)[v.quadriliteral_pattern ?? '']?.label ?? ''; }
 export const catalogue = {
-    nahw: [{ id: 'sentence_role', title: 'Sentence Role' }, {id:'role_library',title:'Sentence Roles from the Library'}, {id:'structure',title:'Sentence Structure'}, {id:'particles',title:'Particles & Governing Elements'}, {id:'irab',title:'Iʿrāb Practice'}, { id: 'word_type', title: 'Word Type' }, { id: 'grammatical_case', title: 'Case' }, { id: 'phrases', title: 'Phrase & Clause Roles' }, { id: 'governance', title: 'Governance & Iʿrāb' }, { id: 'build', title: 'Build the Sentence' }, { id: 'rules', title: 'Revise Nahw Rules' }],
-    sarf: [{id:'roots',title:'Root Identification'}, {id:'conjugation',title:'Perfect, Imperfect & Imperative'}, {id:'morphology',title:'Participles, Verbal Nouns & Transformations'}, { id: 'forms', title: 'Forms & Roots' }, { id: 'context', title: 'Context Ṣarf' }, { id: 'weak', title: 'Weak Verbs' }, { id: 'patterns', title: 'Word Patterns' }, { id: 'ten', title: 'Revise the Ten Forms' }],
+    nahw: [{ id: 'word_type', title: 'Word Type' }, { id: 'sentence_role', title: 'Sentence Role' }, { id: 'grammatical_case', title: 'Case Endings' }, { id: 'rules', title: 'Revise Na\u1e25w Rules' }],
+    sarf: [{ id: 'context', title: 'Context \u1e62arf' }, { id: 'weak', title: 'Weak Verbs' }, { id: 'patterns', title: 'Word Patterns' }, { id: 'ten', title: 'Revise the Ten Forms' }],
 };

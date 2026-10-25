@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
-import { Alert, Box, Button, Paper } from '@mui/material'
+import { Alert, Box, Button, Paper, Slider, Typography } from '@mui/material'
 import { PauseRounded, PlayArrowRounded, RefreshRounded } from '@mui/icons-material'
 import { requestChapterAudioResult, saveAudioProgress, type ChapterAudioPlayback, type ChapterAudioSummary } from '@/app/actions/audiobooks'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
@@ -9,16 +9,19 @@ import { useAuth } from '@/app/AuthContext'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { BOOK_LANGUAGE_STOP_EVENT } from '@/app/lib/bookReaderSettings'
 
-type VideoControls = { play: () => void; pause: () => void }
+type VideoControls = { play: () => void; pause: () => void; seek: (seconds: number) => void; time: () => number }
 
-function YouTubeAudio({ playback, controlsRef, onPlaying }: {
+function YouTubeAudio({ playback, controlsRef, onPlaying, onTime, onDuration }: {
   playback: Extract<ChapterAudioPlayback, { sourceType: 'youtube' }>
   controlsRef: RefObject<VideoControls | null>
+  onDuration: (duration: number) => void
+  onTime: (time: number) => void
   onPlaying: (playing: boolean) => void
 }) {
-  const { wrapRef, errorCode, retry, isPlaying, playWithSound, pauseVideo } = useYouTubePlayer(playback.videoId, undefined, playback.positionSeconds, { autoplay: true })
-  useEffect(() => { controlsRef.current = { play: playWithSound, pause: pauseVideo }; return () => { controlsRef.current = null } }, [controlsRef, pauseVideo, playWithSound])
+  const { wrapRef, errorCode, retry, isPlaying, playWithSound, pauseVideo, seekToOnly, getCurrentTime, getDuration } = useYouTubePlayer(playback.videoId, onTime, playback.positionSeconds, { autoplay: true })
+  useEffect(() => { controlsRef.current = { play: playWithSound, pause: pauseVideo, seek: seekToOnly, time: getCurrentTime }; return () => { controlsRef.current = null } }, [controlsRef, pauseVideo, playWithSound, seekToOnly, getCurrentTime])
   useEffect(() => { onPlaying(isPlaying) }, [isPlaying, onPlaying])
+  useEffect(() => { const timer = setInterval(() => { const duration = getDuration?.() ?? 0; if (duration > 0) onDuration(duration) }, 1000); return () => clearInterval(timer) }, [getDuration, onDuration])
   const message = errorCode === 100 ? 'This YouTube video is private, removed, or unavailable.'
     : errorCode === 101 || errorCode === 150 ? 'The video owner has disabled embedded playback.'
       : 'YouTube could not play this video. Try again.'
@@ -34,18 +37,21 @@ interface Props {
   chapterTitle: string
   label?: string
   render?: (layout: AudioLayout) => ReactNode
+  dedicated?: boolean
 }
 
 /** One media element owned by the reader; presentation never owns playback. */
-export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play Audio', render }: Props) {
-  const { user } = useAuth()
+export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play Audio', render, dedicated }: Props) {
+  const { user, loading: authLoading } = useAuth()
   const authKey = user?.id ?? 'signed-out'
-  return <AudioSession key={`${authKey}:${audio.chapterId}:${audio.language}`} audio={audio} chapterTitle={chapterTitle} label={label} render={render} authKey={authKey} signedIn={Boolean(user)} />
+  return <AudioSession key={`${authKey}:${audio.chapterId}:${audio.language}`} audio={audio} chapterTitle={chapterTitle} label={label} render={render} dedicated={dedicated} authKey={authKey} signedIn={Boolean(user)} authLoading={Boolean(authLoading)} />
 }
 
-function AudioSession({ audio, chapterTitle, label, render, authKey, signedIn }: Props & { authKey: string; signedIn: boolean }) {
+function AudioSession({ audio, chapterTitle, label, render, dedicated, authKey, signedIn, authLoading }: Props & { authKey: string; signedIn: boolean; authLoading: boolean }) {
   const [source, setSource] = useState<{ authKey: string; playback: ChapterAudioPlayback; expiresAt: number | null } | null>(null)
   const playback = source?.authKey === authKey ? source.playback : null
+  const [position, setPosition] = useState(0)
+  const [duration, setDuration] = useState(audio.durationSeconds ?? 0)
   const [loading, setLoading] = useState(false)
   const [playing, setPlaying] = useState(false)
   const [error, setError] = useState('')
@@ -77,7 +83,7 @@ function AudioSession({ audio, chapterTitle, label, render, authKey, signedIn }:
       requestRef.current.revision++
       playRequestedRef.current=false;busyRef.current=false;resumeRef.current=null
       audioRef.current?.pause();videoRef.current?.pause()
-      setPlaying(false);setLoading(false);setSource(null)
+      setPlaying(false);setLoading(false);setSource(null);setPosition(0)
       if('mediaSession' in navigator) navigator.mediaSession.playbackState='paused'
     }
     window.addEventListener(BOOK_LANGUAGE_STOP_EVENT,stop)
@@ -138,27 +144,42 @@ function AudioSession({ audio, chapterTitle, label, render, authKey, signedIn }:
     void saveAudioProgress(audio.chapterId, completed ? 0 : element.currentTime, completed, audio.language, authKey).catch(() => {})
   }
 
-  const button = <Button data-reader-audio-trigger disabled={loading} onClick={togglePlayback}
+  const button = <Button data-reader-audio-trigger disabled={loading || authLoading} onClick={togglePlayback}
     startIcon={playing ? <PauseRounded /> : <PlayArrowRounded />}
-    sx={{ minHeight: 44, width: { xs: '100%', md: 'auto' }, px: 2, borderRadius: '10px', color: { xs: 'var(--awm-bark)', md: '#fff' }, bgcolor: { xs: 'var(--awm-white)', md: 'rgba(255,255,255,.08)' }, border: '1px solid', borderColor: { xs: 'var(--awm-gold)', md: 'rgba(255,255,255,.25)' }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
-    {loading ? 'Preparing audio…' : playing ? 'Pause Audio' : label}
+    sx={{ minHeight: 44, width: dedicated ? '100%' : { xs: '100%', md: 'auto' }, px: 2, borderRadius: '10px', color: dedicated ? 'var(--awm-white)' : { xs: 'var(--awm-bark)', md: '#fff' }, bgcolor: dedicated ? 'var(--awm-forest)' : { xs: 'var(--awm-white)', md: 'rgba(255,255,255,.08)' }, border: '1px solid', borderColor: { xs: 'var(--awm-gold)', md: 'rgba(255,255,255,.25)' }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
+    {authLoading ? 'Checking account…' : loading ? 'Preparing audio…' : playing ? 'Pause Audio' : label}
   </Button>
+  const formatTime = (seconds: number) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
   const player = <>
-    {(playback || error) && <Paper component="section" aria-label="Chapter audio" elevation={0} sx={{ p: 1.5, minWidth: 0, borderRadius: 0, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'var(--awm-white)' }}>
-      {playback?.sourceType === 'supabase_storage' && <audio ref={audioRef} controls preload="metadata" src={playback.url}
+    {(dedicated || playback || error) && <Paper component="section" aria-label="Chapter audio" elevation={0} sx={{ p: 1.5, minWidth: 0, borderRadius: 0, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'var(--awm-white)' }}>
+      {playback?.sourceType === 'supabase_storage' && <audio ref={audioRef} controls={!dedicated} preload="metadata" src={playback.url}
         onLoadedMetadata={event => {
           const element = event.currentTarget
           const position = resumeRef.current ?? playback.positionSeconds
           if (Number.isFinite(element.duration)) element.currentTime = Math.min(position, Math.max(0, element.duration - 1))
+          setDuration(Number.isFinite(element.duration) ? element.duration : audio.durationSeconds ?? 0)
+          setPosition(element.currentTime)
           resumeRef.current = null
           lastSavedRef.current = Math.floor(element.currentTime)
           if (playRequestedRef.current) { playRequestedRef.current = false; void startMedia(element) }
         }}
         onPlay={() => setPlaying(true)}
-        onTimeUpdate={event => { const second = Math.floor(event.currentTarget.currentTime); if (Math.abs(second - lastSavedRef.current) >= 10) { lastSavedRef.current = second; savePosition() } }}
+        onTimeUpdate={event => { setPosition(event.currentTarget.currentTime); const second = Math.floor(event.currentTarget.currentTime); if (Math.abs(second - lastSavedRef.current) >= 10) { lastSavedRef.current = second; savePosition() } }}
         onPause={() => { setPlaying(false); savePosition() }} onEnded={() => { setPlaying(false); savePosition(true) }}
-        onError={() => { setPlaying(false); setError('Audio couldn\'t be loaded. Tap to retry.') }} style={{ display: 'block', width: '100%' }} />}
-      {playback?.sourceType === 'youtube' && <YouTubeAudio playback={playback} controlsRef={videoRef} onPlaying={setPlaying} />}
+        onError={() => { setPlaying(false); setError('Audio couldn\'t be loaded. Tap to retry.') }} style={{ display: dedicated ? 'none' : 'block', width: '100%' }} />}
+      {playback?.sourceType === 'youtube' && <YouTubeAudio playback={playback} controlsRef={videoRef} onPlaying={setPlaying} onDuration={setDuration} onTime={time => {
+        setPosition(time)
+        if (Math.abs(time - lastSavedRef.current) >= 10) { lastSavedRef.current = time; void saveAudioProgress(audio.chapterId, time, false, audio.language, authKey).catch(() => {}) }
+      }} />}
+      {dedicated && <Box sx={{ px: 1, pt: 1 }}>
+        <Slider aria-label="Audiobook position" min={0} max={duration || 1} step={1} value={Math.min(position, duration || 1)} disabled={!playback || !duration} onChange={(_, value) => {
+          const seconds = value as number
+          if (audioRef.current) audioRef.current.currentTime = seconds
+          videoRef.current?.seek(seconds)
+          setPosition(seconds)
+        }} sx={{ color: 'var(--awm-gold)', py: 2 }} />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}><Typography sx={{ fontSize: 13 }}>{formatTime(position)}</Typography><Typography sx={{ fontSize: 13 }}>{formatTime(duration)}</Typography></Box>
+      </Box>}
       {error && <Alert severity="info" action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}>Retry audio</Button>}>{error}</Alert>}
     </Paper>}
   </>

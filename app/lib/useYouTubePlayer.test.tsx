@@ -22,12 +22,14 @@ let root: Root
 let host: HTMLDivElement
 let playerMuted = true
 let playerVolume = 100
+let playerTime = 4
+const updateTime=vi.fn(), ended=vi.fn(), failed=vi.fn()
 const calls: string[] = []
 const destroy = vi.fn()
 const pause = vi.fn()
-const seek = vi.fn()
-function Harness({ id, start, end, muted = true }: { id?: string; start?: number; end?:number; muted?: boolean }) {
-  const player = useYouTubePlayer(id, undefined, start, { autoplay: true, muted, endAt:end })
+const seek = vi.fn((seconds:number)=>{playerTime=seconds})
+function Harness({ id, start, end, muted = true, fallback = false, synced=false, verify=false }: { id?: string; start?: number; end?:number; muted?: boolean; fallback?: boolean; synced?:boolean; verify?:boolean }) {
+  const player = useYouTubePlayer(id, updateTime, start, { verifySoundState:verify, autoplay: true, muted, endAt:end, mutedAutoplayFallback: fallback, requireTimeUpdates:synced, onEnded:ended, onError:failed })
   useEffect(() => { controls = player })
   const { wrapRef } = player
   return <div ref={wrapRef} />
@@ -37,13 +39,14 @@ beforeEach(() => {
   calls.length = 0
   playerMuted = true
   playerVolume = 100
+  playerTime = 4
   vi.clearAllMocks()
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
   window.YT = {
     Player: class {
       constructor(_element: HTMLElement, input: Record<string, unknown>) { options = input as unknown as Options }
-      getCurrentTime() { return 4 }
+      getCurrentTime() { return playerTime }
       seekTo = seek
       playVideo() { calls.push('play') }
       pauseVideo = pause
@@ -59,6 +62,46 @@ beforeEach(() => {
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers() })
 describe('YouTube player lifecycle', () => {
+  it('continues reporting actual seeks while paused and immediately reports programmatic seeks',async()=>{
+    await act(async()=>root.render(<Harness id="dQw4w9WgXcQ"/>))
+    await act(async()=>{await vi.advanceTimersByTimeAsync(60);options.events.onReady();options.events.onStateChange({data:2})})
+    playerTime=375
+    await act(async()=>{await vi.advanceTimersByTimeAsync(200)})
+    expect(updateTime).toHaveBeenLastCalledWith(375)
+    await act(async()=>controls.seekToOnly(495.2))
+    expect(updateTime).toHaveBeenLastCalledWith(495.2)
+  })
+  it('stops at clip end and redirects native Replay from zero back to clip start',async()=>{
+    await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" start={495} end={522} synced/>))
+    await act(async()=>{await vi.advanceTimersByTimeAsync(60);options.events.onReady()})
+    playerTime=522
+    await act(async()=>{await vi.advanceTimersByTimeAsync(200)})
+    expect(pause).toHaveBeenCalledOnce();expect(ended).toHaveBeenCalledOnce()
+    playerTime=0
+    await act(async()=>{await vi.advanceTimersByTimeAsync(200)})
+    await act(async()=>options.events.onStateChange({data:1}))
+    expect(seek).toHaveBeenLastCalledWith(495,true)
+    expect(updateTime).toHaveBeenLastCalledWith(495)
+  })
+  it.each([100,101,150,153])('reports For You error %s without hiding it behind an unsynchronised fallback',async code=>{
+    await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" synced/>))
+    await act(async()=>{await vi.advanceTimersByTimeAsync(60);options.events.onError({data:code})})
+    expect(failed).toHaveBeenCalledWith(code);expect(host.querySelector('iframe')).toBeNull()
+  })
+  it('retries blocked autoplay muted once, then offers manual playback if still blocked', async () => {
+    playerMuted = false
+    await act(async () => root.render(<Harness id="dQw4w9WgXcQ" muted={false} fallback />))
+    await act(async () => { await vi.advanceTimersByTimeAsync(60); options.events.onReady() })
+    expect(calls).toEqual(['unmute', 'play'])
+    await act(async () => options.events.onAutoplayBlocked())
+    expect(calls).toEqual(['unmute', 'play', 'mute', 'play'])
+    expect(controls.isMuted).toBe(true)
+    await act(async () => options.events.onAutoplayBlocked())
+    expect(calls).toHaveLength(4)
+    expect(controls.autoplayBlocked).toBe(true)
+    await act(async () => controls.playWithSound())
+    expect(calls.slice(-2)).toEqual(['unmute', 'play'])
+  })
   it('passes the clip end to the API player so playback stops before excluded material',async()=>{
     await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" start={600} end={635}/>))
     await act(async()=>{await vi.advanceTimersByTimeAsync(60)})
@@ -154,4 +197,15 @@ it('seeks to exact fractional times initially and on same-video timestamp naviga
  await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" start={401.72}/>))
  expect(seek).toHaveBeenLastCalledWith(401.72,true)
  expect(destroy).not.toHaveBeenCalled()
+})
+
+it('reports the real mobile mute state when the player rejects an unmute command',async()=>{
+ await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" verify/>))
+ await act(async()=>{await vi.advanceTimersByTimeAsync(60);options.events.onReady()})
+ const unmute=vi.spyOn(window.YT.Player.prototype,'unMute').mockImplementation(()=>{})
+ await act(async()=>controls.playWithSound())
+ expect(playerMuted).toBe(true);expect(controls.isMuted).toBe(true)
+ unmute.mockRestore()
+ await act(async()=>controls.playWithSound())
+ expect(playerMuted).toBe(false);expect(controls.isMuted).toBe(false)
 })

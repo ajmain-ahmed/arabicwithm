@@ -3,7 +3,7 @@
 import React from 'react'
 import { Box, Container, Grid, IconButton, Typography } from '@mui/material'
 import { Email } from '@mui/icons-material'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import ClientStyles from '@/app/components/ClientStyles'
 
 /* ─────────────────────────────────────────────
@@ -136,19 +136,13 @@ const FOOTER_CSS = `
 export default function Footer({ onContactClick }: FooterProps) {
   const router   = useRouter()
   const sections = FOOTER_SECTIONS(onContactClick)
-  /* The watch page is a fixed-height stage; the footer would add a page
-     scroll (and a dead strip when scrolled). Hide it there. */
-  const isWatchPage = /^\/cartoons\/[^/]+\/[^/]+/.test(usePathname())
-
-  if (isWatchPage) return null
-
   return (
-    <Box component="footer" sx={{ display: { xs: 'none', md: 'block' }, background: 'var(--awm-white)', borderTop: '1px solid color-mix(in srgb, var(--awm-gold) 18%, transparent)' }}>
+    <Box component="footer" sx={{ display: 'block', pb: { xs: 'calc(76px + env(safe-area-inset-bottom, 0px))', md: 0 }, background: 'var(--awm-white)', borderTop: '1px solid color-mix(in srgb, var(--awm-gold) 18%, transparent)' }}>
       <ClientStyles id="awm-footer-styles" css={FOOTER_CSS} />
 
       {/* ── main columns ── */}
       <Container maxWidth="xl" sx={{ py: { xs: 7, md: 9 } }}>
-        <Grid container spacing={{ xs: 5, md: 4 }}>
+        <Grid container columnSpacing={{ xs: 2, sm: 4 }} rowSpacing={{ xs: 5, md: 4 }} sx={{ alignItems: 'flex-start' }}>
 
           {/* Brand column */}
           <Grid size={{ xs: 12, md: 4 }}>
@@ -157,7 +151,7 @@ export default function Footer({ onContactClick }: FooterProps) {
               <Box>
                 <Box
                   component="img"
-                  src="/homepage/arabicwithm-notext.png"
+                  src="/homepage/awm-logo.png"
                   alt="ArabicWithM"
                   sx={{ height: 52, width: 'auto', display: 'block', mb: 1 }}
                 />
@@ -217,11 +211,11 @@ export default function Footer({ onContactClick }: FooterProps) {
           </Grid>
 
           {/* spacer */}
-          <Grid size={{ xs: 0, md: 1 }} sx={{ display: { xs: 'none', md: 'block' } }} />
+          <Grid size={{ md: 1 }} sx={{ display: { xs: 'none', md: 'block' } }} />
 
           {/* link columns */}
           {sections.map(section => (
-            <Grid key={section.title} size={{ xs: 6, sm: 4, md: 2 }}>
+            <Grid key={section.title} size={{ xs: 4, md: 2 }}>
               <Typography sx={{
                 fontFamily: 'var(--font-sans), sans-serif',
                 fontSize: '0.68rem', fontWeight: 600,

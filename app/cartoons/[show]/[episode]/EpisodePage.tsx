@@ -1195,8 +1195,8 @@ export default function EpisodePage({
               <Tabs
                 value={tab}
                 onChange={(_, v) => {
-                  if (v === 3) { openSettings(); return }
-                  if (v === 4) { router.push(`/memory?episode=${encodeURIComponent(episode.id)}`); return }
+                  if (v === 2) { openSettings(); return }
+                  if (v === 3) { router.push(`/memory?episode=${encodeURIComponent(episode.id)}`); return }
                   setTab(v)
                 }}
                 variant={isMobileViewport ? 'fullWidth' : 'standard'}
@@ -1209,7 +1209,6 @@ export default function EpisodePage({
               >
                 <Tab label="Script" />
                 <Tab label={isMobileViewport ? 'Vocab' : 'Vocabulary List'} />
-                <Tab label={isMobileViewport ? 'Grammar' : 'Grammar Points'} />
                 {isMobileViewport && <Tab label="Settings" />}
                 {isMobileViewport && <Tab label="Memory" />}
               </Tabs>
@@ -1385,7 +1384,7 @@ export default function EpisodePage({
               )}
 
               {/* ── Grammar Points Tab (mobile only) ── */}
-              {isMobileViewport && tab === 2 && (
+              {!isMobileViewport && tab === 2 && (
                 <Box>
                   {episode.grammarPoints.length === 0 ? (
                     <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No grammar points found.</Typography>

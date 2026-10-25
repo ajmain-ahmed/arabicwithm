@@ -34,6 +34,7 @@ const handles=new Map(),profiles=new Map(),roles=new Map(),accessAudit=[]
 const roleFor=id=>roles.get(id)??(id===ids.admin?'admin':id===ids.reviewer?'editor':'user')
 const rpcLog=[];let failSearch=false
 let failAudioSave = false
+let forYouPlayback=false
 const manualPremium=new Map(), memoryStarts=new Map(), memorySnapshots=new Map(), memoryReviews=new Map(), ownReviews=new Map(), earned=new Set(), wordTotals=new Map()
 const effective=id=>id===ids.premium||roleFor(id)==='admin'||manualPremium.get(id)===true
 const usage=id=>[...memoryStarts.values()].filter(row=>row.userId===id).length
@@ -46,6 +47,8 @@ let failImportAfter=null
 const formDrafts=new Map()
 const importJobs=new Map()
 const tables = {
+  email_preferences: [],
+  book_audio_progress: [],
   youtube_transcripts: [],
   transcript_groups: [],
   admin_manual_transcripts: [],
@@ -56,6 +59,13 @@ const tables = {
   episodes: Array.from({ length: 4 }, (_, i) => ({ id: `dddddddd-dddd-4ddd-8ddd-ddddddddddd${i}`, show_id: showId, slug: `clip-${i}`, title: `Clip ${i}`, youtube_id: ['abcdefghij0', 'abcdefghij1', 'abcdefghij2', 'abcdefghij3'][i], level: 'A1', tags: [], transcript: [{ timestamp: '0:00', tokens: [{ arabic: '\u0647\u0630\u0627', english: 'this', pos: 'pronoun', cefr: 'a1' }, { arabic: ['\u0643\u062a\u0627\u0628','\u0642\u0644\u0645','\u0628\u064a\u062a','\u0645\u0627\u0621'][i], english: ['book','pen','house','water'][i], pos: 'noun', cefr: 'a1' }], translation: ['This is a book.','This is a pen.','This is a house.','This is water.'][i] }], created_at: '2026-01-01T00:00:00Z' })),
   book_chapter_audio: ['ar', 'en'].map(language => ({ chapter_id: chapterId, language, is_published: true, source_type: 'supabase_storage', storage_bucket: 'audiobooks', storage_path: `fixture/${language}/chapter.wav`, duration_seconds: 60, narrator: 'Fixture Narrator', external_url: null, external_video_id: null })),
 }
+// Seed discovery metadata before the homepage warms the public library cache.
+tables.books = Array.from({ length: 6 }, (_, i) => ({ ...tables.books[0],
+  id: i ? `bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb${i}` : bookId,
+  slug: i ? `layout-book-${i}` : 'test-book', title: i ? `Book ${i + 1}` : 'Test Book',
+  category: i < 3 ? 'Mystery' : 'History', tags: i % 2 ? ['Short Reads'] : [],
+}))
+
 tables.chapters.push({ id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', book_id: bookId, slug: 'chapter-6', title: 'Sixth Chapter', chapter_number: 6, content })
 function userFromToken(token) { try { return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString()).sub } catch { return null } }
 function json(res, data, status = 200) { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(data)) }
@@ -68,18 +78,55 @@ const audioObjects = new Map(['ar', 'en'].map(language => [`audiobooks/fixture/$
 const cover = Buffer.from('UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA', 'base64')
 const backend = https.createServer({ key: readFileSync(privateKey), cert: readFileSync(certificate) }, async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', webUrl)
-  res.setHeader('Access-Control-Allow-Headers', 'authorization, apikey, x-client-info, content-type, range, prefer, accept, x-supabase-api-version, x-upsert')
+  res.setHeader('Access-Control-Allow-Headers', 'authorization, apikey, x-client-info, content-type, content-profile, accept-profile, range, prefer, accept, x-supabase-api-version, x-upsert')
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD')
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return }
   const url = new URL(req.url, backendUrl)
   const chunks = []; for await (const chunk of req) chunks.push(chunk)
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
+  if(url.pathname==='/fixture/website-update') {
+    const second='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
+    for(const language of ['ar','en']) if(!tables.book_chapter_audio.some(row=>row.chapter_id===second&&row.language===language)) tables.book_chapter_audio.push({...tables.book_chapter_audio.find(row=>row.language===language),chapter_id:second})
+    return json(res,{})
+  }
+  if(url.pathname==='/fixture/launch-preferences') return json(res,tables.email_preferences)
   if(url.pathname==='/fixture/request-log')return json(res,{rpc:rpcLog})
   if(url.pathname==='/fixture/search-failure'){failSearch=body.fail;return json(res,{})}
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
   if(url.pathname==='/fixture/import-failure'){failImportAfter=body.after??null;return json(res,{})}
   if(url.pathname==='/fixture/reset-overhaul'){failImportAfter=null;formDrafts.clear();importJobs.clear();handles.clear();profiles.clear();roles.clear();accessAudit.length=0;manualPremium.clear();memoryStarts.clear();memorySnapshots.clear();memoryReviews.clear();ownReviews.clear();earned.clear();wordTotals.clear();metadata.clear();tables.youtube_transcripts.length=0;tables.transcript_groups.length=0;tables.admin_manual_transcripts.length=0;tables.transcript_segments.length=0;return json(res,{})}
+  if(url.pathname==='/fixture/word-search'){
+    const words=['\u0643\u062a\u0627\u0628','\u0645\u062f\u0631\u0633\u0629','\u062c\u0645\u064a\u0644','\u0633\u0631\u064a\u0639','\u0637\u0639\u0627\u0645','\u0643\u0628\u064a\u0631','\u0635\u063a\u064a\u0631','\u0637\u0631\u064a\u0642','\u0645\u062f\u064a\u0646\u0629','\u0639\u0644\u0645']
+    tables.episodes.forEach(episode=>{episode.transcript=[{timestamp:'0:00',tokens:words.map((arabic,i)=>({arabic,lemma:arabic,headword:arabic,english:`Meaning ${i}`,pos:'noun',cefr:'a1'})),translation:'Stored fixture example.'}]})
+    return json(res,{})
+  }
+  if(url.pathname==='/fixture/dynamic-for-you'){
+    for(const video of tables.youtube_transcripts){
+      for(const [index,start] of [180,480,900,30,90].entries()){
+        const tokens=[{arabic:'\u0643\u0650\u062a\u064e\u0627\u0628',english:'book',start_seconds:start,end_seconds:start+5},{arabic:'\u062c\u064e\u062f\u0650\u064a\u062f',english:'new',start_seconds:start+5,end_seconds:start+10}]
+        const position=index+3
+        video.raw_transcript.content[position]={tokens}
+        tables.transcript_segments.push({id:10000+tables.transcript_segments.length,position,transcript_id:video.id,start_seconds:start,end_seconds:start+10,original_text:'\u0643\u062a\u0627\u0628 \u062c\u062f\u064a\u062f',english_text:`Minute ${start/60}`,tokens})
+      }
+    }
+    return json(res,{})
+  }
+  if(url.pathname==='/fixture/for-you-playback'){
+    forYouPlayback=true
+    tables.transcript_groups=[{id:'77777777-7777-4777-8777-777777777770',name:'Fixture A'},{id:'77777777-7777-4777-8777-777777777771',name:'Fixture B'}]
+    for(let i=0;i<7;i++){
+      const id=`99999999-9999-4999-8999-99999999999${i}`
+      const segments=[{id:800+i*10,position:0,start_seconds:375,end_seconds:390,original_text:'Earlier sentence',english_text:'Earlier sentence',tokens:[{arabic:'سَابِقٌ',english:'earlier'}]},
+      {id:801+i*10,position:1,start_seconds:495,end_seconds:505,original_text:'Opening sentence',english_text:'Opening sentence',tokens:[{arabic:'كِتَابٌ',english:'book',start_seconds:495,end_seconds:500},{arabic:'جَدِيدٌ',english:'new',start_seconds:500,end_seconds:505}]},
+      {id:802+i*10,position:2,start_seconds:505,end_seconds:522,original_text:'Later sentence',english_text:'Later sentence',tokens:[{arabic:'قَلَمٌ',english:'pen'}]}]
+      tables.youtube_transcripts=tables.youtube_transcripts.filter(row=>row.id!==id)
+      tables.transcript_segments=tables.transcript_segments.filter(row=>row.transcript_id!==id)
+      tables.youtube_transcripts.push({id,status:'ready',explore_published:true,source_origin:'website_admin_transcript',raw_transcript:{content:segments.map(segment=>({tokens:segment.tokens}))}})
+      tables.transcript_segments.push(...segments.map(segment=>({...segment,transcript_id:id})))
+    }
+    return json(res,{})
+  }
   if(url.pathname==='/fixture/standalone-transcripts'){
     const raw={content:[{text:'مرحبا',offset:1234,duration:5000,english:'Hello',tokens:[{arabic:'مرحبا',english:'hello',pos:'noun',headword:'مرحبا',entry_type:'word',transliteration:'marhaban'}]}]}
     const id='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
@@ -109,6 +156,8 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     const rpc = url.pathname.split('/').at(-1)
     rpcLog.push(rpc)
     const learning = JSON.parse(readFileSync('e2e/learning-data.json','utf8'))
+    if(rpc==='transcript_for_you_groups'&&forYouPlayback)return json(res,[0,1,2,3,4,5,6].filter(i=>!body.p_excluded?.includes(801+i*10)).filter(i=>!body.p_group_ids?.length||body.p_group_ids.includes(`77777777-7777-4777-8777-77777777777${i%2}`)).slice(0,5).map(i=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Playback fixture',channel:'Fixture'},clip_start_ms:495000,clip_end_ms:522000,segments:tables.transcript_segments.filter(row=>row.transcript_id===`99999999-9999-4999-8999-99999999999${i}`&&row.start_seconds>=495).map(row=>({...row,source_tokens:row.tokens}))})))
+    if(rpc==='transcript_for_you_groups')return json(res,[0,1].map(i=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Test For You',channel:'Fixture'},clip_start_ms:0,clip_end_ms:60000,segments:[{id:42+i,position:0,start_seconds:0,end_seconds:60,original_text:'\u0643\u0650\u062a\u064e\u0627\u0628\u064c',english_text:'A book.',source_tokens:[{arabic:'\u0643\u0650\u062a\u064e\u0627\u0628\u064c',english:'book'}]}]})))
     if(rpc==='website_search_content_v1') {
       if(failSearch)return json(res,{code:'57014',message:'statement timeout'},500)
       const hits=[{key:'b:'+bookId,kind:'book',title:'Test Book',source:'Test Book',arabic:'',english:'A graded book.',href:'/books/test-book'},
@@ -118,6 +167,15 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       return json(res,hits.filter(h=>h.key>(body.p_after??'') && (h.kind!=='chapter'||body.p_books)))
     }
     if(rpc==='nahw_candidates') return json(res,learning.nahw)
+    if(rpc==='website_grammar_candidates') {
+      const examples=[
+        {tokens:[{arabic:'كَتَبَ'},{arabic:'الطَّالِبُ'},{arabic:'دَرْسًا'}],translation:'The student wrote a lesson.',target:1,role:'Doer / subject of the verb',key:'subject'},
+        {tokens:[{arabic:'قَرَأَ'},{arabic:'عَلِيٌّ'},{arabic:'الْكِتَابَ'}],translation:'Ali read the book.',target:2,role:'Direct object',key:'object'},
+        {tokens:[{arabic:'الْمُعَلِّمُ'},{arabic:'فِي'},{arabic:'الْمَدْرَسَةِ'}],translation:'The teacher is in the school.',target:0,role:'Topic',key:'topic'},
+      ]
+      const rows=examples.map((p,i)=>({id:i+1,sentence_hash:String(i+1).repeat(32),chapter_id:i%2?null:chapterId,paragraph_index:i%2?null:i,segment_id:i%2?44:null,cefr_rank:i+1,payload:{tokens:p.tokens,translation:p.translation,facts:[{token_index:p.target,mode:body.p_mode,key:body.p_mode==='sentence_role'?p.key:body.p_mode==='word_type'?'noun':i===1?'accusative':'nominative',english:body.p_mode==='sentence_role'?p.role:body.p_mode==='word_type'?'Noun':i===1?'Accusative':'Nominative',arabic:body.p_mode==='sentence_role'?'فَاعِلٌ':body.p_mode==='word_type'?'اِسْمٌ':i===1?'مَنْصُوبٌ':'مَرْفُوعٌ'}]}}))
+      return json(res,rows.filter(r=>!(body.p_recent??[]).includes(r.sentence_hash)&&(!body.p_cefr||r.cefr_rank<=body.p_cefr)))
+    }
     if(rpc==='prepared_practice_candidates') return json(res,body.p_offset ? [] : body.p_kind==='sarf'?learning.sarf:learning.patterns)
     if(['admin_save_manual_draft','admin_load_manual_draft','admin_list_manual_drafts','admin_delete_manual_draft'].includes(rpc)){
       if(roleFor(body.p_actor)!=='admin')return json(res,{message:'Forbidden'},403)
@@ -255,6 +313,14 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   if (url.pathname.startsWith('/rest/v1/')) {
     const table = url.pathname.split('/').at(-1)
     if (req.method !== 'GET' && req.method !== 'HEAD') {
+      if(table==='email_preferences') {
+        const index=tables.email_preferences.findIndex(row=>row.email===body.email&&row.purpose===body.purpose)
+        if(index<0)tables.email_preferences.push(body);else if(!(req.headers.prefer??'').includes('ignore-duplicates'))tables.email_preferences[index]=body
+      }
+      if(table==='book_audio_progress') {
+        const index=tables.book_audio_progress.findIndex(row=>row.user_id===body.user_id&&row.chapter_id===body.chapter_id&&row.language===body.language)
+        if(index<0)tables.book_audio_progress.push(body);else tables.book_audio_progress[index]=body
+      }
       if (table === 'book_chapter_audio') {
         if (failAudioSave) return json(res, { message: 'Simulated database save failure', code: 'XX000' }, 500)
         const index = tables[table].findIndex(row => row.chapter_id === body.chapter_id && row.language === body.language)
@@ -284,6 +350,11 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     res.setHeader('Content-Range', `0-${Math.max(0, rows.length - 1)}/${rows.length}`)
     if (req.method === 'HEAD') { res.writeHead(200); res.end(); return }
     return json(res, (req.headers.accept ?? '').includes('application/vnd.pgrst.object+json') ? rows[0] ?? null : rows)
+  }
+  if(url.pathname.startsWith('/storage/v1/object/profile-media/')&&req.method==='POST'){
+    const path=url.pathname.slice('/storage/v1/object/profile-media/'.length)
+    if(!userId||!path.startsWith(userId+'/'))return json(res,{message:'Forbidden'},403)
+    return json(res,{Key:`profile-media/${path}`,Id:path})
   }
   if (url.pathname.startsWith('/storage/v1/object/upload/sign/')) {
     const objectPath = decodeURIComponent(url.pathname.split('/object/upload/sign/')[1])
@@ -325,7 +396,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   json(res, { message: 'Unknown fixture endpoint' }, 404)
 })
 backend.listen(backendPort, '127.0.0.1', () => {
-  const next = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'dev', '--hostname', '127.0.0.1', '--port', String(webPort)], {
+  const next = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'dev', ...(process.env.AWM_TEST_WEBPACK === '1' ? ['--webpack'] : []), '--hostname', '127.0.0.1', '--port', String(webPort)], {
     stdio: 'inherit',
     env: { ...process.env, AWM_BROWSER_TEST: '1', SUPABASE_URL: backendUrl, NEXT_PUBLIC_SUPABASE_URL: backendUrl, SUPABASE_SERVICE_KEY: 'fixture-service-key', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'fixture-public-key', NEXT_PUBLIC_SITE_URL: webUrl, NODE_EXTRA_CA_CERTS: certificate },
   })

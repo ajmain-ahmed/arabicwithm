@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { Add, AutoStories, LocalFireDepartmentRounded } from '@mui/icons-material'
 import { Alert, Box, Button, Chip, Container, FormControlLabel, LinearProgress, Paper, Switch, TextField, Typography } from '@mui/material'
 import { checkUsernameAvailability, updateProfile, type PublicProfile } from '@/app/actions/profiles'
-import { PremiumSection } from '@/app/components/PremiumPrompt'
+import PremiumPrompt, { PremiumSection } from '@/app/components/PremiumPrompt'
 import BookListRemovalButton from '@/app/books/[book]/BookListRemovalButton'
 import ProfileAvatar from '@/app/profile/ProfileAvatar'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
@@ -14,6 +14,7 @@ import { usernameSchema } from '@/app/lib/username'
 
 const panel = { border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '16px', bgcolor: 'var(--awm-white)' }
 export default function ProfileView({ profile }: { profile: PublicProfile }) {
+  const [upgradeOpen,setUpgradeOpen]=useState(false)
   const [name, setName] = useState(profile.displayName), [displayName, setDisplayName] = useState(profile.displayName)
   const [savedUsername,setSavedUsername]=useState(profile.username)
   const [username,setUsername]=useState(profile.username??''), [availability,setAvailability]=useState<{value:string;message:string;available:boolean}|null>(null)
@@ -51,6 +52,7 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
         <Box sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: 130, p: 2, textAlign: 'center', borderRadius: '14px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 10%, transparent)' }}><LocalFireDepartmentRounded aria-hidden="true" sx={{ color: 'var(--awm-gold)', fontSize: 38 }} /><Typography sx={{ fontWeight: 700, mt: 0.5 }}>{summary.streak} day streak</Typography><Typography sx={{ color: 'var(--awm-muted)', fontSize: 12 }}>Current streak</Typography></Box>
       </Box>
     </Paper>
+    {profile.own && !profile.premium && <Box sx={{mt:2,textAlign:'center'}}><Button variant="contained" onClick={()=>setUpgradeOpen(true)} sx={{borderRadius:'999px',px:4,py:1.25}}>Upgrade to AWM+</Button><PremiumPrompt open={upgradeOpen} onClose={()=>setUpgradeOpen(false)}/></Box>}
     {(profile.own || profile.shelf.length > 0) && <Box component="section" sx={{ mt: 5 }}>
       <Typography component="h2" variant="h4">Currently Reading</Typography>
       {shelf.length ? <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2,minmax(0,1fr))' }, gap: 2, mt: 2 }}>
@@ -69,6 +71,6 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
       <Button disabled={saving || !name.trim() || Boolean(usernameError) || Boolean(usernameStatus&&!usernameStatus.available)} onClick={() => void save()} variant="contained" sx={{ mt: 2 }}>Save profile</Button>
       {message && <Alert severity={message === 'Profile saved.' ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
     </Paper>}
-    {profile.own && <PremiumSection />}
+    {profile.own && profile.premium && <PremiumSection />}
   </Container>
 }

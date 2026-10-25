@@ -9,7 +9,7 @@ vi.mock('@/app/lib/useAccountAccess',()=>({useAccountAccess:()=>({isAdmin:home.i
 // Navigation tests exercise destinations rather than decorative icon rendering.
 vi.mock('@mui/icons-material', () => {
   const Icon = () => <svg aria-hidden="true" />
-  return { AccessTimeRounded: Icon, AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon, SearchOutlined: Icon, OndemandVideo: Icon, QrCodeScanner: Icon, Apple: Icon, PlayArrow: Icon }
+  return { DiamondOutlined: Icon, AccessTimeRounded: Icon, AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon, SearchOutlined: Icon, OndemandVideo: Icon, QrCodeScanner: Icon, Apple: Icon, PlayArrow: Icon }
 })
 vi.mock('next/link',()=>({default:({href,children,...props}:{href:string;children:React.ReactNode})=><a href={href} {...props}>{children}</a>}))
 vi.mock('@/app/actions/activity',()=>({fetchLearningActivity:vi.fn()}))
@@ -56,12 +56,14 @@ describe('website Home shortcuts',()=>{
   })
 })
 
-it('does not render Quick Actions or an Admin entry on the homepage',()=>{
+it('renders only the four mobile Quick Actions and no Admin entry on the homepage',()=>{
   for(const isAdmin of [true,false]){
     home.isAdmin=isAdmin
     const host=document.createElement('div')
     host.innerHTML=renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]}/>)
-    expect(host.querySelectorAll('nav[aria-label="Quick Actions"]')).toHaveLength(0)
+    expect(host.querySelectorAll('nav[aria-label="Quick Actions"]')).toHaveLength(1)
+    expect(Array.from(host.querySelectorAll('[data-mobile-home-actions] a')).map(link=>link.textContent)).toEqual(['Memory','Explore','Grammar','Word Search'])
+    expect(Array.from(host.querySelectorAll('[data-mobile-home-actions] a')).map(link=>link.getAttribute('href'))).toEqual(['/memory','/explore','/grammar','/word-search'])
     expect(host.querySelectorAll('a[href="/admin/users"]')).toHaveLength(0)
   }
 })
