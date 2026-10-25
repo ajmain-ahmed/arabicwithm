@@ -400,9 +400,12 @@ export default function NewOnRow({
           const distanceY = event.clientY - dragStartYRef.current
           if (!draggedRef.current && Math.abs(distanceX) >= DRAG_ACTIVATION_DISTANCE_PX && Math.abs(distanceX) > Math.abs(distanceY)) {
             draggedRef.current = true
-            if (event.pointerType === 'mouse') event.currentTarget.setPointerCapture(event.pointerId)
+            /* Capture on the scroller for every pointer type: with
+               touch-action: pan-y the browser owns vertical pans (page
+               scroll) and fires pointercancel; horizontal drags stay ours. */
+            event.currentTarget.setPointerCapture(event.pointerId)
           }
-          if (draggedRef.current && pointerTypeRef.current === 'mouse') {
+          if (draggedRef.current) {
             event.preventDefault()
             event.currentTarget.scrollLeft = dragStartScrollRef.current - distanceX
           }
@@ -460,7 +463,10 @@ export default function NewOnRow({
           scrollBehavior: 'smooth',
           overscrollBehaviorX: 'contain',
           WebkitOverflowScrolling: 'touch',
-          touchAction: 'pan-x pinch-zoom',
+          /* pan-y (never pan-x): a vertical finger-drag starting on a tile must
+             always scroll the page; horizontal swipes are handled by the
+             pointer-drag handlers below. */
+          touchAction: 'pan-y pinch-zoom',
           cursor: { md: 'grab' },
           '&:active': { cursor: { md: 'grabbing' } },
           userSelect: 'none',
