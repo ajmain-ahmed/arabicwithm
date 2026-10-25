@@ -396,13 +396,14 @@ export default function NewOnRow({
         }}
         onPointerMove={(event) => {
           if (activePointerIdRef.current !== event.pointerId || dragStartXRef.current === null || dragStartYRef.current === null) return
+          /* Touch scrolling is native (see touch-action above) — a touch
+             pointer gets pointercancel as soon as the browser starts a pan,
+             so only mouse drags are handled manually. */
+          if (pointerTypeRef.current !== 'mouse') return
           const distanceX = event.clientX - dragStartXRef.current
           const distanceY = event.clientY - dragStartYRef.current
           if (!draggedRef.current && Math.abs(distanceX) >= DRAG_ACTIVATION_DISTANCE_PX && Math.abs(distanceX) > Math.abs(distanceY)) {
             draggedRef.current = true
-            /* Capture on the scroller for every pointer type: with
-               touch-action: pan-y the browser owns vertical pans (page
-               scroll) and fires pointercancel; horizontal drags stay ours. */
             event.currentTarget.setPointerCapture(event.pointerId)
           }
           if (draggedRef.current) {
@@ -463,10 +464,12 @@ export default function NewOnRow({
           scrollBehavior: 'smooth',
           overscrollBehaviorX: 'contain',
           WebkitOverflowScrolling: 'touch',
-          /* pan-y (never pan-x): a vertical finger-drag starting on a tile must
-             always scroll the page; horizontal swipes are handled by the
-             pointer-drag handlers below. */
-          touchAction: 'pan-y pinch-zoom',
+          /* Touch: let the browser scroll natively in BOTH axes — horizontal
+             pans move this overflow-x container, vertical pans chain to the
+             page. The browser's gesture disambiguation beats any JS heuristic,
+             and a pan never gets permanently claimed by the wrong direction.
+             The pointer-drag handlers below are mouse-only. */
+          touchAction: 'pan-x pan-y pinch-zoom',
           cursor: { md: 'grab' },
           '&:active': { cursor: { md: 'grabbing' } },
           userSelect: 'none',
