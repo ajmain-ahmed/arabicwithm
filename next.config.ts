@@ -16,6 +16,16 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,
+    /* Fewer generated widths: slots on the site are ~100-800px, so a short
+       ladder cuts cold-optimizer encode work after each deploy. */
+    deviceSizes: [640, 1080, 1920],
+    imageSizes: [96, 192, 384],
+    /* next/image may only proxy our own image endpoints: the covers API
+       (book covers carry a ?v= cache-buster) and static homepage artwork. */
+    localPatterns: [
+      { pathname: '/api/covers/**' },
+      { pathname: '/homepage/**' },
+    ],
     remotePatterns: [
       { protocol: 'https', hostname: 'i.ytimg.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },

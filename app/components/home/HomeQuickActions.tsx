@@ -6,7 +6,7 @@ import { Box, Paper, Typography } from '@mui/material'
 export default function HomeQuickActions({ bookmarkHref, bookmarkLabel }: { bookmarkHref: string; bookmarkLabel: string }) {
   const actions = [
     { title: 'Bookmark', detail: bookmarkLabel, href: bookmarkHref, icon: BookmarkRounded },
-    { title: 'My Profile', detail: 'Your progress & trophy cabinet', href: '/profile', icon: AccountCircleOutlined },
+    { title: 'My Profile', detail: 'Your learning progress', href: '/profile', icon: AccountCircleOutlined },
   ]
   return <Box component="nav" aria-label="Learning shortcuts" sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', md: `repeat(${actions.length},minmax(0,1fr))` }, alignItems: 'stretch', gap: { xs: 1, sm: 2.5 }, mb: 2.5 }}>
     {actions.map(action => <Paper key={action.title} component={Link} href={action.href} elevation={0} sx={{ minWidth: 0, minHeight: { xs: 145, md: 166 }, p: { xs: 1.5, sm: 2, md: 2.5 }, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textDecoration: 'none', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', borderRadius: '16px', transition: 'transform .18s ease, box-shadow .18s ease', '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 10px 24px color-mix(in srgb, var(--awm-gold) 14%, transparent)' }, '&:focus-visible': { outline: '3px solid var(--awm-gold)', outlineOffset: 3 }, '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } } }}>

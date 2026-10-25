@@ -60,7 +60,6 @@ const session = {
   cards: [card],
   index: 1,
   completed: 1,
-  sessionXp: 0,
   direction: "arabic" as const,
   completionIds: [completion],
 };
@@ -87,14 +86,14 @@ beforeEach(() => {
 it("uses the session ledger service API after server-verified identity and source validation", async () => {
   expect(
     await recordMemoryReview(card.id, "known", completion, session),
-  ).toMatchObject({ accepted: true, awarded: 5 });
+  ).toMatchObject({ accepted: true, used: 1 });
   expect(mocks.serviceRpc).toHaveBeenCalledWith(
     "website_complete_memory_card_v2",
     expect.objectContaining({ p_user_id: user, p_completion_id: completion }),
   );
   expect(mocks.cookieRpc).not.toHaveBeenCalled();
 });
-it.each([null, {}, { accepted: true, awarded: -1, used: 1, totalXp: 1 }])(
+it.each([null, {}, { accepted: true, used: -1 }, { accepted: "yes", used: 1 }])(
   "rejects malformed backend responses without advancing %j",
   async (data) => {
     mocks.serviceRpc.mockResolvedValue({ data, error: null });

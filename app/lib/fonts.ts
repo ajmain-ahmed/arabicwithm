@@ -2,28 +2,22 @@ import {
   Amiri,
   Baloo_Bhaijaan_2,
   EB_Garamond,
-  Geist,
-  Geist_Mono,
   Jost,
   Noto_Naskh_Arabic,
   Noto_Sans_Arabic,
   Nunito_Sans,
 } from "next/font/google"
 
-export const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-})
-
-export const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-})
+/* Only faces the homepage actually paints are preloaded (next/font injects
+   <link rel="preload"> by default). The serif and book faces render on
+   inner pages, so they load on demand there instead of blocking first paint;
+   swap display keeps those transitions graceful. */
 
 export const ebGaramond = EB_Garamond({
   variable: "--font-serif",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  preload: false,
 })
 
 export const jost = Jost({
@@ -34,8 +28,8 @@ export const jost = Jost({
 
 export const brandFont = Baloo_Bhaijaan_2({
   variable: "--font-decorative",
-  subsets: ["arabic", "latin"],
-  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  weight: ["400", "700"],
 })
 
 export const headingFont = Nunito_Sans({
@@ -48,16 +42,19 @@ export const bookNaskhFont = Noto_Naskh_Arabic({
   variable: "--font-book-naskh",
   subsets: ["arabic"],
   weight: ["400", "500", "600", "700"],
+  preload: false,
 })
 
 export const bookSansFont = Noto_Sans_Arabic({
   variable: "--font-book-sans",
   subsets: ["arabic"],
   weight: ["400", "500", "600", "700"],
+  preload: false,
 })
 
 export const bookAmiriFont = Amiri({
   variable: "--font-book-amiri",
   subsets: ["arabic"],
   weight: ["400", "700"],
+  preload: false,
 })

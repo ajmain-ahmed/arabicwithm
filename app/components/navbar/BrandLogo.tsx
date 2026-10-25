@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { Box } from '@mui/material'
-import { motion, useReducedMotion } from 'framer-motion'
 import { useColorMode } from '@/app/components/ThemeProvider'
 
 interface BrandLogoProps {
@@ -13,17 +12,16 @@ interface BrandLogoProps {
 }
 
 export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = false }: BrandLogoProps) {
-    const reduceMotion = useReducedMotion()
     const { mode } = useColorMode()
     /* Gate the entrance animation on post-hydration state: server and first
        client render must produce identical markup or hydration fails (which
        cascades into the image rows never revealing). */
     const [runEntrance, setRunEntrance] = useState(false)
     useEffect(() => {
-        if (!shouldAnimate || reduceMotion) return
+        if (!shouldAnimate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
         const frame = requestAnimationFrame(() => setRunEntrance(true))
         return () => cancelAnimationFrame(frame)
-    }, [shouldAnimate, reduceMotion])
+    }, [shouldAnimate])
 
     return (
         <Box
@@ -60,11 +58,12 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = 
                 sx={{ flexShrink: 0, height: isMobile ? 26 : 38, width: 'auto', objectFit: 'contain' }}
             />
             <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', minWidth: 0, height: isMobile ? 26 : 38 }}>
-                <motion.span
-                    initial={runEntrance ? { opacity: 0, y: isMobile ? 6 : 7 } : false}
-                    animate={{ opacity: 1, y: isMobile ? 1 : 2 }}
-                    transition={{ duration: 0.28, ease: 'easeOut' }}
+                <Box
+                    component="span"
+                    className={runEntrance ? 'awm-logo-entrance' : undefined}
                     style={{
+                        ['--awm-logo-rise-from' as string]: isMobile ? '6px' : '7px',
+                        ['--awm-logo-rise-to' as string]: isMobile ? '1px' : '2px',
                         display: 'flex',
                         alignItems: 'center',
                         height: '100%',
@@ -81,7 +80,7 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = 
                     }}
                 >
                     ArabicWithM
-                </motion.span>
+                </Box>
             </Box>
         </Box>
     )

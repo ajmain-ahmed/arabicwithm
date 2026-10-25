@@ -14,14 +14,6 @@ export function calculateWordSearchAccuracy(wordsFound: number, mistakes: number
   return Math.round((correct / (correct + incorrect)) * 100)
 }
 
-export function calculateWordSearchXp(stats: WordSearchCompletionStats): number {
-  const words = Math.max(0, Math.min(10, Math.floor(stats.wordsFound)))
-  if (words === 0 || words !== Math.floor(stats.wordCount)) return 0
-  const perfectBonus = Math.max(0, Math.floor(stats.mistakes)) === 0 ? 5 : 0
-  const noHintBonus = Math.max(0, Math.floor(stats.hintsUsed)) === 0 ? 5 : 0
-  return 20 + words + perfectBonus + noHintBonus
-}
-
 export function formatWordSearchDuration(totalSeconds: number): string {
   const seconds = Math.max(0, Math.floor(totalSeconds))
   const minutes = Math.floor(seconds / 60)

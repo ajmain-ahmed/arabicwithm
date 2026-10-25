@@ -77,10 +77,15 @@ function redirect(url: string): Response {
 export async function GET(request: Request, { params }: { params: Promise<{ kind: string; id: string }> }) {
   const { kind, id } = await params
   if (!['shows', 'episodes', 'books'].includes(kind) || !/^[\w-]+$/.test(id)) return notFound()
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown'
-  const limit = rateLimit(`covers:${ip}`, 120, 60_000)
-  if (!limit.ok) {
-    return new Response(null, { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } })
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || ''
+  /* next/image fetches upstream without forwarding the client IP: limiting an
+     empty key would rate-limit every visitor's optimizer requests together.
+     Only identified clients — the bulk-download guard's target — are throttled. */
+  if (ip) {
+    const limit = rateLimit(`covers:${ip}`, 120, 60_000)
+    if (!limit.ok) {
+      return new Response(null, { status: 429, headers: { 'Retry-After': String(limit.retryAfterSeconds) } })
+    }
   }
   return withDataDeadline(6000, async () => {
   try {

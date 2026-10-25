@@ -31,6 +31,7 @@ it.each([false, true])('groups the learning destinations under Learn on mobile=%
   await act(async () => root.render(<Navbar />))
   if (mobile) {
     await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)) }) // flush the dynamically imported drawer chunk
     const labels = [...document.querySelectorAll('.mobile-list-btn')].map(button => button.textContent)
     for (const label of ['Memory', 'Grammar', 'Word Search']) expect(labels).toContain(label)
     /* Every Learn destination prompts sign-in instead of navigating for guests. */
@@ -45,6 +46,7 @@ it.each([false, true])('groups the learning destinations under Learn on mobile=%
     mocks.auth.user = { id: 'learner', email: 'learner@example.com' }
     await act(async () => root.render(<Navbar />))
     await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)) }) // drawer chunk is cached but still resolves async
     mocks.push.mockClear()
     const signedInItems = [...document.querySelectorAll('.mobile-list-btn')]
     await act(async () => (signedInItems[signedInItems.findIndex(button => button.textContent === 'Memory')] as HTMLElement).click())

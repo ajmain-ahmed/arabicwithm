@@ -23,11 +23,6 @@ export const memorySessionSchema = z
       .max(MEMORY.sessionCards),
     index: z.number().int().min(0).max(MEMORY.sessionCards),
     completed: z.number().int().min(0).max(MEMORY.sessionCards),
-    sessionXp: z
-      .number()
-      .int()
-      .min(0)
-      .max(MEMORY.sessionCards * 5),
     direction: z.enum(["arabic", "english"]),
     completionIds: z.array(z.string().uuid()).max(MEMORY.sessionCards),
   })
@@ -52,7 +47,7 @@ export interface PracticeState extends SavedMemorySession {
 export type PracticeEvent =
   | { type: "begin"; session: SavedMemorySession }
   | { type: "reveal" }
-  | { type: "advance"; completionId: string; awarded: number }
+  | { type: "advance"; completionId: string }
   | { type: "skip"; completionId: string }
   | { type: "select"; cards: MemoryCard[] };
 export function initialPractice(
@@ -63,7 +58,6 @@ export function initialPractice(
     cards,
     index: 0,
     completed: 0,
-    sessionXp: 0,
     direction,
     completionIds: [],
     phase: "selection",
@@ -98,10 +92,7 @@ export function practiceReducer(
   if (
     event.type === "advance" &&
     (!state.revealed ||
-      event.completionId !== state.completionIds[state.index] ||
-      !Number.isInteger(event.awarded) ||
-      event.awarded < 0 ||
-      event.awarded > 5)
+      event.completionId !== state.completionIds[state.index])
   )
     return state;
   const index = state.index + 1;
@@ -111,6 +102,5 @@ export function practiceReducer(
     revealed: false,
     phase: index === state.cards.length ? "complete" : "practice",
     completed: state.completed + (event.type === "advance" ? 1 : 0),
-    sessionXp: state.sessionXp + (event.type === "advance" ? event.awarded : 0),
   };
 }

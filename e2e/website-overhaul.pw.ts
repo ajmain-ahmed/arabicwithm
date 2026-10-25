@@ -73,16 +73,6 @@ test('book review writes the existing personal record and restores after refresh
  await signIn(context,'free');await page.goto('/books/test-book');await page.getByRole('button',{name:'Leave a Review',exact:true}).click();await page.getByLabel('Your review',{exact:true}).fill('A helpful story.');await page.getByRole('button',{name:'Save review',exact:true}).click();await expect(page.getByText('Review saved.')).toBeVisible()
  await page.reload();await page.getByRole('button',{name:'Leave a Review',exact:true}).click();await expect(page.getByLabel('Your review',{exact:true})).toHaveValue('A helpful story.');await expect(page.getByRole('heading',{name:/average|reviews/i})).toHaveCount(0)
 })
-test('earned trophy additions and an empty cabinet survive refresh',async({page,context,request,browser})=>{
- await signIn(context,'free');await request.post(`${backendUrl}/fixture/earned`,{data:{userId:ids.free}})
- await page.goto('/profile');await page.getByRole('button',{name:'Open Trophy Cabinet'}).click()
- const dialog=page.getByRole('dialog');await expect(dialog.locator('[aria-label^="Level 10."]').locator('..').getByRole('button',{name:/^Add .* to cabinet$/})).toHaveCount(0);const trophy=dialog.locator('[aria-label^="Word Explorer 1."]').locator('..')
- while(await dialog.getByRole('button',{name:/^Remove .* from cabinet$/}).count()){const count=await dialog.getByRole('button',{name:/^Remove .* from cabinet$/}).count();await dialog.getByRole('button',{name:/^Remove .* from cabinet$/}).first().click();await expect(dialog.getByRole('button',{name:/^Remove .* from cabinet$/})).toHaveCount(count-1)}
- await trophy.getByRole('button',{name:/^Add .* to cabinet$/}).click();await expect(dialog.getByRole('button',{name:/^Remove .* from cabinet$/})).toHaveCount(1);await expect(dialog.getByText('Trophy highlights saved.')).toBeVisible();await page.reload()
- await expect(page.getByRole('button',{name:'Open Trophy Cabinet'})).toContainText('Word Explorer 1')
- const fresh=await browser.newContext({ignoreHTTPSErrors:true});await signIn(fresh,'free');const restored=await fresh.newPage();await restored.goto(`${webUrl}/profile/${ids.free}`);await expect(restored.getByRole('button',{name:'Open Trophy Cabinet'})).toContainText('Word Explorer 1');await fresh.close()
- await page.getByRole('button',{name:'Open Trophy Cabinet'}).click();await page.getByRole('dialog').getByRole('button',{name:'Remove Word Explorer 1 from cabinet',exact:true}).click();await expect(page.getByRole('dialog').getByRole('button',{name:/^Remove .* from cabinet$/})).toHaveCount(0);await expect(page.getByText('Trophy highlights saved.')).toBeVisible();await page.reload();await expect(page.getByRole('button',{name:'Open Trophy Cabinet'})).not.toContainText('Word Explorer 1')
-})
 
 test('free readers can open later chapters and Explore omits transcript search',async({page,context})=>{
  await page.goto('/explore');await expect(page.getByRole('link',{name:/Search transcripts/i})).toHaveCount(0)
@@ -96,9 +86,9 @@ test('mobile PDF and review controls match and clear the fixed navigation',async
  await review.scrollIntoViewIfNeeded();await expect(review).toBeVisible();await page.screenshot({path:'docs/validation/website/book-actions-mobile.png'});await review.click();await expect(page.getByRole('region',{name:'Your book review'})).toBeVisible()
 })
 
-test('learning activity removes its level tile while the profile keeps its level',async({page,context})=>{
- await signIn(context,'free');await page.goto('/');await expect(page.getByRole('heading',{name:'Your learning activity',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:/^Current level:/})).toHaveCount(0)
- await page.goto('/profile');await expect(page.getByText(/^Level 1 .*toward Level 2$/)).toBeVisible()
+test('learning activity shows streak and weekly tiles without level or XP surfaces',async({page,context})=>{
+ await signIn(context,'free');await page.goto('/');await expect(page.getByRole('button',{name:/^Current level:/})).toHaveCount(0);await expect(page.getByText(/XP/)).toHaveCount(0)
+ await page.goto('/profile');await expect(page.getByText(/Level \d/)).toHaveCount(0);await expect(page.getByText(/XP/)).toHaveCount(0)
 })
 
 
@@ -125,13 +115,3 @@ test('Memory offers small sessions while keeping historical sessions supported',
  await signIn(context,'free');await page.goto('/memory');for(const count of [5,10,15,20])await expect(page.getByRole('button',{name:new RegExp(`^${count} cards`)})).toBeVisible();await expect(page.getByRole('button',{name:/^50 cards/})).toHaveCount(0)
 })
 
-
-test('four-trophy limit explains the fifth attempt and unearned trophies cannot be added',async({page,context,request})=>{
- await signIn(context,'free');await request.post(`${backendUrl}/fixture/earned`,{data:{userId:ids.free,words:1000}});await page.goto('/profile');await page.getByRole('button',{name:'Open Trophy Cabinet'}).click()
- const dialog=page.getByRole('dialog'),remove=dialog.getByRole('button',{name:/^Remove .* from cabinet$/})
- while(await remove.count()){const n=await remove.count();await remove.first().click();await expect(remove).toHaveCount(n-1)}
- for(let i=1;i<=4;i++){await dialog.getByRole('button',{name:`Add Word Explorer ${i} to cabinet`,exact:true}).click();await expect(remove).toHaveCount(i)}
- await dialog.getByRole('button',{name:'Add Word Explorer 5 to cabinet',exact:true}).click();await expect(dialog.getByText('You can highlight up to 4 trophies.',{exact:true})).toBeVisible();await expect(remove).toHaveCount(4)
- await expect(dialog.locator('[aria-label^="Level 10."]').locator('..').getByRole('button',{name:/^Add/})).toHaveCount(0)
- await page.reload();await page.getByRole('button',{name:'Open Trophy Cabinet'}).click();await expect(page.getByRole('dialog').getByRole('button',{name:/^Remove .* from cabinet$/})).toHaveCount(4)
-})

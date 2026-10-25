@@ -21,19 +21,17 @@ const state: SavedMemorySession = {
   cards,
   index: 0,
   completed: 0,
-  sessionXp: 0,
   direction: "arabic",
   completionIds: cards.map(
     (_, i) => `11111111-1111-4111-8111-${String(i).padStart(12, "0")}`,
   ),
 };
-it("accepts canonical 5-XP known cards beyond the old 20-XP session bound", () => {
+it("accepts a fully reviewed restored queue", () => {
   expect(
     memorySessionSchema.safeParse({
       ...state,
-      index: 5,
-      completed: 5,
-      sessionXp: 25,
+      index: 6,
+      completed: 6,
     }).success,
   ).toBe(true);
 });
@@ -57,7 +55,6 @@ it("advances once after reveal, rejects duplicate reviews, completes and restart
     const event = {
       type: "advance" as const,
       completionId: state.completionIds[i],
-      awarded: 5,
     };
     s = practiceReducer(s, event);
     const duplicate = practiceReducer(s, event);
@@ -65,14 +62,13 @@ it("advances once after reveal, rejects duplicate reviews, completes and restart
     expect(s.index).toBe(i + 1);
     expect(s.revealed).toBe(false);
   }
-  expect(s).toMatchObject({ phase: "complete", completed: 6, sessionXp: 30 });
+  expect(s).toMatchObject({ phase: "complete", completed: 6 });
   s = practiceReducer(s, { type: "begin", session: state });
   expect(s).toMatchObject({
     phase: "practice",
     index: 0,
     completed: 0,
     revealed: false,
-    sessionXp: 0,
   });
 });
 it("ignores empty starts, final-card events and stale repeated skips", () => {

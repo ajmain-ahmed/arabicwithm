@@ -7,10 +7,7 @@ import { Alert, Box, Button, Chip, Container, FormControlLabel, LinearProgress, 
 import { checkUsernameAvailability, updateProfile, type PublicProfile } from '@/app/actions/profiles'
 import { PremiumSection } from '@/app/components/PremiumPrompt'
 import BookListRemovalButton from '@/app/books/[book]/BookListRemovalButton'
-import AchievementCabinet from '@/app/profile/AchievementCabinet'
-import ActivityChart from '@/app/profile/ActivityChart'
 import ProfileAvatar from '@/app/profile/ProfileAvatar'
-import LearningProgress from '@/app/profile/LearningProgress'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 
 import { usernameSchema } from '@/app/lib/username'
@@ -33,7 +30,7 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
   const usernameStatus=availability?.value===username?availability:null
   const [isPublic, setPublic] = useState(profile.isPublic), [shareReading, setShareReading] = useState(profile.shareReading)
   const [message, setMessage] = useState(''), [saving, setSaving] = useState(false), [removed, setRemoved] = useState<string[]>([])
-  const { learning, summary } = profile
+  const { summary } = profile
   const shelf = profile.shelf.filter(book => !removed.includes(book.slug))
   async function save() {
     setSaving(true); setMessage('')
@@ -50,16 +47,10 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
           <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mt: 0.75 }}><Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 34, md: 46 }, fontWeight: 600, lineHeight: 1.1, overflowWrap: 'anywhere' }}>{displayName}</Typography>{profile.premium && <Chip aria-label="AWM Plus" label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>AWM<Add aria-hidden="true" sx={{ fontSize: 18 }} /></Box>} sx={{ fontWeight: 700, color: 'var(--awm-bark)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 18%, transparent)', border: '1px solid color-mix(in srgb, var(--awm-gold) 40%, transparent)' }} />}</Box>
           {savedUsername&&<Typography sx={{mt:1,color:'var(--awm-muted)'}}>@{savedUsername}</Typography>}
           <Typography sx={{ mt: 1, color: 'var(--awm-muted)', fontSize: 13 }}>Learning since {profile.joined}</Typography>
-          <Typography sx={{ mt: 2, fontWeight: 700 }}>Level {profile.level} · {summary.level.progressPercent}% toward Level {profile.level + 1}</Typography>
-          <LinearProgress aria-label="Progress toward the next learning level" variant="determinate" value={summary.level.progressPercent} sx={{ mt: 1, height: 8, borderRadius: 99 }} />
-          <Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontSize: 12 }}>{summary.nextLevelPoints.toLocaleString('en-GB')} progression points to your next level. Each recorded learning minute and XP contributes one point.</Typography>
         </Box>
         <Box sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: 130, p: 2, textAlign: 'center', borderRadius: '14px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 10%, transparent)' }}><LocalFireDepartmentRounded aria-hidden="true" sx={{ color: 'var(--awm-gold)', fontSize: 38 }} /><Typography sx={{ fontWeight: 700, mt: 0.5 }}>{summary.streak} day streak</Typography><Typography sx={{ color: 'var(--awm-muted)', fontSize: 12 }}>Current streak</Typography></Box>
       </Box>
     </Paper>
-    <LearningProgress profile={profile} />
-    <ActivityChart activity={learning} />
-    <AchievementCabinet activity={learning} userId={profile.id} editable={profile.own} featuredTrophies={profile.featuredTrophies} />
     {(profile.own || profile.shelf.length > 0) && <Box component="section" sx={{ mt: 5 }}>
       <Typography component="h2" variant="h4">Currently Reading</Typography>
       {shelf.length ? <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2,minmax(0,1fr))' }, gap: 2, mt: 2 }}>

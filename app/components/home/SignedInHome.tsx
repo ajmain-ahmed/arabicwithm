@@ -163,7 +163,7 @@ export default function SignedInHome({ books, featuredBook, featuredEpisode, cha
     : featuredBook ? `/books/${encodeURIComponent(featuredBook.slug)}` : ''
   return (
     <Box component="main" sx={{ bgcolor: 'var(--awm-cream-light)', pb: { xs: 7, md: 11 } }}>
-      <Box sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, pt: { xs: 14.5, md: 18 }, pb: { xs: 8, md: 10 }, overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center 42%' }}>
+      <Box sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, pt: { xs: 14.5, md: 18 }, pb: { xs: 8, md: 10 }, overflow: 'hidden', backgroundImage: 'url(/homepage/hero-1600.avif)', backgroundSize: 'cover', backgroundPosition: 'center 42%' }}>
         <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, bgcolor: mode === 'dark' ? 'rgba(0,0,0,0.78)' : 'rgba(5,23,15,0.82)' }} />
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Typography sx={{ color: '#d4a843', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Your learning</Typography>

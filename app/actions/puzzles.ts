@@ -9,7 +9,6 @@ import {
   fetchExploreBookChapterPages,
   type ExploreBookPage,
 } from '@/app/actions/books'
-import { calculateLearningLevel } from '@/app/lib/activity'
 import { isMissingDatabaseFeature } from '@/app/lib/databaseErrors'
 import { rateLimit } from '@/app/lib/rateLimit'
 import { serviceClient } from '@/app/lib/supabase'
@@ -18,7 +17,6 @@ import {
   type PuzzleSourceReference,
   type PuzzleVocabularySource,
 } from '@/app/lib/transcriptPuzzles'
-import { calculateWordSearchXp, type WordSearchCompletionStats } from '@/app/lib/wordSearchProgress'
 
 const requestSchema = z.object({
   excludeSourceKey: z.string().trim().max(160).optional(),
@@ -122,11 +120,7 @@ export async function fetchPuzzleVocabulary(excludeSourceKey?: string, minimumWo
 }
 
 export interface WordSearchCompletionResult {
-  awarded: number
-  totalXp: number
   duplicate: boolean
-  previousLevel: number
-  level: number
 }
 
 export async function completeWordSearch(rawInput: unknown): Promise<
@@ -136,12 +130,12 @@ export async function completeWordSearch(rawInput: unknown): Promise<
   const parsed = completionSchema.safeParse(rawInput)
   if (!parsed.success) return { ok: false, error: 'This Word Search completion is invalid.' }
   const userId = await getAuthenticatedUserId()
-  if (!userId) return { ok: false, error: 'Sign in to save Word Search XP.' }
+  if (!userId) return { ok: false, error: 'Sign in to save Word Search progress.' }
   const limited = rateLimit(`word-search-complete:${userId}`, 12, 10 * 60 * 1000)
   if (!limited.ok) return { ok: false, error: 'Too many completion attempts. Please try again shortly.' }
 
-  const stats: WordSearchCompletionStats = parsed.data
-  const xp = calculateWordSearchXp(stats)
+  /* The shared RPC still awards XP for the mobile app; the website passes 0
+     and relies on it for completion counts and active-seconds tracking. */
   const { data, error } = await serviceClient.rpc('complete_word_search', {
     p_user_id: userId,
     p_completion_id: parsed.data.completionId,
@@ -155,7 +149,7 @@ export async function completeWordSearch(rawInput: unknown): Promise<
     p_hints_used: parsed.data.hintsUsed,
     p_reveals_used: parsed.data.revealsUsed,
     p_duration_seconds: parsed.data.durationSeconds,
-    p_xp: xp,
+    p_xp: 0,
   })
   if (error) {
     console.error('[word-search] completion RPC failed:', error)
@@ -167,22 +161,6 @@ export async function completeWordSearch(rawInput: unknown): Promise<
     }
   }
 
-  const result = data as { awarded: number; totalXp: number; duplicate: boolean }
-  const profile = await serviceClient
-    .from('learning_profiles')
-    .select('legacy_active_seconds, tracked_active_seconds')
-    .eq('user_id', userId)
-    .maybeSingle()
-  const secondsAfter = profile.data
-    ? Number(profile.data.legacy_active_seconds) + Number(profile.data.tracked_active_seconds)
-    : parsed.data.durationSeconds
-  const awarded = Number(result.awarded ?? 0)
-  const totalXp = Number(result.totalXp ?? awarded)
-  const previousLevel = calculateLearningLevel(
-    Math.max(0, secondsAfter - (result.duplicate ? 0 : parsed.data.durationSeconds)),
-    Math.max(0, totalXp - awarded),
-  ).level
-  const level = calculateLearningLevel(secondsAfter, totalXp).level
-
-  return { ok: true, data: { awarded, totalXp, duplicate: Boolean(result.duplicate), previousLevel, level } }
+  const result = data as { duplicate: boolean }
+  return { ok: true, data: { duplicate: Boolean(result.duplicate) } }
 }

@@ -13,27 +13,18 @@ export interface DailyLearningActivity {
   readingSeconds: number
   videoSeconds: number
   wordLookups: number
-  xp?: number
   memoryCards?: number
   wordSearches?: number
 }
 
 export interface LearningActivity {
-  memory?: { total: number; totalXp: number; weekCards: number; weekXp: number }
-  wordSearch?: { total: number; totalXp: number; weekCompleted: number; weekXp: number }
-  xp?: { totalXp: number; weekXp: number }
+  memory?: { total: number; weekCards: number }
+  wordSearch?: { total: number; weekCompleted: number }
   totalSeconds: number
   activeDates: string[]
   daily: DailyLearningActivity[]
   weeklyGoalSeconds: number | null
   lifetime?: { readingSeconds: number; videoSeconds: number; wordLookups: number }
-}
-
-export interface LearningLevelProgress {
-  level: number
-  currentLevelMinutes: number
-  nextLevelMinutes: number
-  progressPercent: number
 }
 
 export interface WeeklyActivitySummary {
@@ -116,24 +107,6 @@ export function calculateLearningStreak(dateValues: Array<string | undefined>, n
     cursor.setDate(cursor.getDate() - 1)
   }
   return streak
-}
-
-export function minutesRequiredForLevel(level: number): number {
-  const safeLevel = Math.max(1, Math.floor(level))
-  return Math.round(Math.pow(safeLevel - 1, 1.35) * 60)
-}
-
-export function calculateLearningLevel(totalSeconds: number, xp = 0): LearningLevelProgress {
-  const totalMinutes = Math.floor(Math.max(0, totalSeconds) / 60) + Math.max(0, Math.floor(xp))
-  let level = 1
-  while (minutesRequiredForLevel(level + 1) <= totalMinutes) level += 1
-  const currentLevelMinutes = minutesRequiredForLevel(level)
-  const nextLevelMinutes = minutesRequiredForLevel(level + 1)
-  const span = Math.max(1, nextLevelMinutes - currentLevelMinutes)
-  const progressPercent = Math.max(0, Math.min(100, Math.floor(
-    ((totalMinutes - currentLevelMinutes) / span) * 100
-  )))
-  return { level, currentLevelMinutes, nextLevelMinutes, progressPercent }
 }
 
 export function startOfLocalWeek(now = new Date()): Date {

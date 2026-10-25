@@ -6,8 +6,6 @@ import {
   bookSansFont,
   brandFont,
   ebGaramond,
-  geistMono,
-  geistSans,
   headingFont,
   jost,
 } from "@/app/lib/fonts"
@@ -35,7 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${ebGaramond.variable} ${jost.variable} ${brandFont.variable} ${headingFont.variable} ${bookNaskhFont.variable} ${bookSansFont.variable} ${bookAmiriFont.variable}`}
+        className={`${ebGaramond.variable} ${jost.variable} ${brandFont.variable} ${headingFont.variable} ${bookNaskhFont.variable} ${bookSansFont.variable} ${bookAmiriFont.variable}`}
       >
         <AppRouterCacheProvider options={{ key: 'css', enableCssLayer: true }}>
           <AuthProvider>

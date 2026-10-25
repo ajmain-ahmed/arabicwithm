@@ -66,7 +66,7 @@ beforeEach(() => {
   window.localStorage.clear();
   mocks.progress.mockResolvedValue({
     ok: true,
-    data: { used: 0, premium: false, totalXp: 0 },
+    data: { used: 0, premium: false },
   });
   mocks.begin.mockImplementation(async(state)=>({status:'ready',state,used:1}));
   mocks.resume.mockImplementation(async(state)=>({status:'ready',state}));
@@ -74,7 +74,7 @@ beforeEach(() => {
   mocks.save.mockResolvedValue({ ok: true, data: undefined });
   mocks.review.mockResolvedValue({
     ok: true,
-    data: { accepted: true, awarded: 5, used: 1, totalXp: 5 },
+    data: { accepted: true, used: 1 },
   });
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
   host = document.createElement("div");
@@ -97,7 +97,7 @@ async function click(label: string) {
   await act(async () => button(label).click());
 }
 it("starts, reveals, reviews the next card, finishes and restarts with fresh completion IDs", async () => {
-  mocks.progress.mockResolvedValue({ok:true,data:{used:0,premium:true,totalXp:0}});
+  mocks.progress.mockResolvedValue({ok:true,data:{used:0,premium:true}});
   await mount();
   await click("Start");
   const first = mocks.begin.mock.calls[0][0];
@@ -151,7 +151,7 @@ it("locks rapid review/Skip/New/Exit interactions and advances only once", async
   await act(async () =>
     finish({
       ok: true,
-      data: { accepted: true, awarded: 5, used: 1, totalXp: 5 },
+      data: { accepted: true, used: 1 },
     }),
   );
   expect(host.textContent).toContain("Card 2 of 2");
@@ -190,7 +190,7 @@ it("does not advance or navigate when a review resolves after unmount", async ()
   await act(async () =>
     finish({
       ok: true,
-      data: { accepted: true, awarded: 5, used: 1, totalXp: 5 },
+      data: { accepted: true, used: 1 },
     }),
   );
   expect(host.textContent).toBe("Left Memory");
@@ -213,7 +213,7 @@ it("does not let an old progress refresh erase a successful review", async () =>
   mocks.progress
     .mockResolvedValueOnce({
       ok: true,
-      data: { used: 0, premium: false, totalXp: 0 },
+      data: { used: 0, premium: false },
     })
     .mockImplementationOnce(() => new Promise((resolve) => (finish = resolve)));
   await mount();
@@ -221,7 +221,7 @@ it("does not let an old progress refresh erase a successful review", async () =>
   await click("Reveal");
   await click("Knew it");
   await act(async () =>
-    finish({ ok: true, data: { used: 0, premium: false, totalXp: 0 } }),
+    finish({ ok: true, data: { used: 0, premium: false } }),
   );
   expect(host.textContent).toContain("1 / 1 sessions today");
   expect(host.textContent).toContain("Card 2 of 2");
@@ -233,8 +233,8 @@ it('free users finish the whole first session, then see an upgrade on another st
  expect(mocks.begin).toHaveBeenCalledTimes(1);expect(host.textContent).toContain('Upgrade for unlimited Memory sessions')
 })
 it('a completed saved recap is available after the daily free session is used',async()=>{
- const state={sessionId:crypto.randomUUID(),cards,index:cards.length,completed:cards.length,sessionXp:5,direction:'arabic',completionIds:cards.map(()=>crypto.randomUUID())}
- mocks.progress.mockResolvedValue({ok:true,data:{used:1,premium:false,totalXp:5}});mocks.saved.mockResolvedValue({ok:true,data:state})
+ const state={sessionId:crypto.randomUUID(),cards,index:cards.length,completed:cards.length,direction:'arabic',completionIds:cards.map(()=>crypto.randomUUID())}
+ mocks.progress.mockResolvedValue({ok:true,data:{used:1,premium:false}});mocks.saved.mockResolvedValue({ok:true,data:state})
  await mount();await click('View saved recap - 2 completed')
  expect(host.textContent).toContain('Deck complete');expect(mocks.begin).not.toHaveBeenCalled();expect(mocks.resume).toHaveBeenCalledOnce()
 })

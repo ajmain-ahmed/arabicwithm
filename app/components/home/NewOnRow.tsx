@@ -1,7 +1,8 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { Box, IconButton, Skeleton, Typography, useMediaQuery } from '@mui/material'
 import { ChevronLeft, ChevronRight } from '@mui/icons-material'
 import CefrChip from '@/app/components/CefrChip'
@@ -44,6 +45,37 @@ const ARROW_SX = {
   '&:hover': { bgcolor: 'rgba(5,23,15,0.85)', transform: 'translateY(-50%) scale(1.08)' },
 } as const
 
+/** Slots the carousel actually paints, per breakpoint — feeds next/image sizes. */
+const COMPACT_SIZES = '(max-width: 600px) 46vw, (max-width: 900px) 198px, (max-width: 1200px) 222px, 238px'
+const FEATURED_SIZES = '(max-width: 600px) 62vw, (max-width: 900px) 260px, 300px'
+/* Native lazy-loading still pulls images during initial parse on slow
+   connections (Chrome's lookahead margin). Gating the <img> on an
+   IntersectionObserver defers every below-the-fold cover until after
+   hydration, keeping the t=0 request wave for the hero and first paint. */
+function useNearViewport<T extends HTMLElement>(rootMargin = '160px') {
+  const ref = useRef<T | null>(null)
+  const [near, setNear] = useState(false)
+  useEffect(() => {
+    const element = ref.current
+    if (!element || near) return
+    if (typeof IntersectionObserver === 'undefined') {
+      // No observer support: reveal via a microtask rather than a synchronous
+      // setState in the effect body (react-hooks/set-state-in-effect).
+      queueMicrotask(() => setNear(true))
+      return
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) {
+        setNear(true)
+        observer.disconnect()
+      }
+    }, { rootMargin })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [near, rootMargin])
+  return { ref, near }
+}
+
 function RowTile({
   item,
   mobileWidth,
@@ -58,17 +90,19 @@ function RowTile({
   loopStart?: boolean
 }) {
   const [loaded, setLoaded] = useState(false)
+  const { ref: nearRef, near } = useNearViewport<HTMLAnchorElement>()
   /* SSR'd images can finish before hydration attaches onLoad, which would
      leave them stuck invisible — reveal immediately if already complete. */
   const imgRef = useCallback((node: HTMLImageElement | null) => {
     if (node?.complete) setLoaded(true)
   }, [])
-  const imagePositionSx = compact
-    ? { objectPosition: `${item.imageCrop?.x ?? 50}% ${item.imageCrop?.y ?? 50}%`, transform: 'none' }
-    : thumbnailCropCss(item.imageCrop)
+  const imageStyle = compact
+    ? { objectFit: 'cover' as const, objectPosition: `${item.imageCrop?.x ?? 50}% ${item.imageCrop?.y ?? 50}%`, transform: 'none' }
+    : { objectFit: 'cover' as const, ...thumbnailCropCss(item.imageCrop) }
   return (
     <Box
       component={Link}
+      ref={nearRef}
       href={item.href}
       draggable={false}
       aria-label={isClone ? undefined : item.title}
@@ -96,36 +130,35 @@ function RowTile({
         },
       }}
     >
-      {!loaded && (
+      {(!near || !loaded) && (
         <Skeleton
           variant="rectangular"
           animation="wave"
           sx={{ position: 'absolute', inset: 0, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)' }}
         />
       )}
-      <Box
-        component="img"
+      {near && (
+      <Image
         ref={imgRef}
-        draggable={false}
         src={item.imageSrc}
         alt=""
+        fill
+        sizes={compact ? COMPACT_SIZES : FEATURED_SIZES}
+        decoding="async"
+        draggable={false}
         onLoad={() => setLoaded(true)}
         onError={(e) => {
           setLoaded(true)
           // Missing cover: keep the branded gradient tile with the title.
           e.currentTarget.style.display = 'none'
         }}
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
+        style={{
           opacity: loaded ? 1 : 0,
           transition: 'opacity 0.3s ease',
-          ...imagePositionSx,
+          ...imageStyle,
         }}
       />
+      )}
       <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(5,23,15,0) 42%, rgba(5,23,15,0.85) 100%)' }} />
       <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, p: compact ? { xs: 0.9, md: 1.05 } : { xs: 1.25, md: 1.5 } }}>
         {item.meta && (
@@ -184,6 +217,13 @@ export default function NewOnRow({
   const draggedRef = useRef(false)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
+  /* The seamless-loop clones duplicate every tile's <img> in the initial HTML;
+     render them only after mount so first load requests one image per cover. */
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
   const shouldLoop = autoScroll && !reduceMotion && items.length > 1
 
   const showAutoState = useCallback((moving: boolean) => {
@@ -276,14 +316,8 @@ export default function NewOnRow({
     }
   }, [items, shouldLoop, showAutoState])
 
-  /* Warm the browser cache for every tile so arrow-slides don't reveal
-     skeletons for not-yet-loaded covers. */
-  useEffect(() => {
-    for (const item of items) {
-      const img = new Image()
-      img.src = item.imageSrc
-    }
-  }, [items])
+  /* Covers lazy-load on approach (next/image), so no eager warm-up is needed:
+     forcing every src at mount fetched all rows at t=0 regardless of viewport. */
 
   const scrollByPage = (direction: 1 | -1) => {
     const el = scrollerRef.current
@@ -440,7 +474,7 @@ export default function NewOnRow({
         {items.map((item) => (
           <RowTile key={item.key} item={item} mobileWidth={mobileCardWidth ?? (compact ? COMPACT_HOME_CARD_WIDTH.xs : '62vw')} compact={compact} />
         ))}
-        {shouldLoop && items.map((item, index) => (
+        {shouldLoop && mounted && items.map((item, index) => (
           <RowTile key={`loop-${item.key}`} item={item} mobileWidth={mobileCardWidth ?? (compact ? COMPACT_HOME_CARD_WIDTH.xs : '62vw')} compact={compact} isClone loopStart={index === 0} />
         ))}
       </Box>

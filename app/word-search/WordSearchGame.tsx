@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { Celebration, CheckCircle, EmojiEvents, LightbulbOutlined, Refresh, TimerOutlined } from '@mui/icons-material'
+import { Celebration, LightbulbOutlined, Refresh, TimerOutlined } from '@mui/icons-material'
 import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogContent, Paper, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { completeWordSearch, fetchPuzzleVocabulary, type WordSearchCompletionResult } from '@/app/actions/puzzles'
@@ -91,7 +91,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
   const saveCompletion = async (stats: WordSearchCompletionStats) => {
     if (!source) return
     if (!user) {
-      setCompletion({ ...stats, awarded: 0, totalXp: 0, duplicate: false, previousLevel: 1, level: 1 })
+      setCompletion({ ...stats, duplicate: false })
       return
     }
     setSavingCompletion(true)
@@ -371,17 +371,14 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
         {completion && (
           <DialogContent sx={{ p: { xs: 2.5, sm: 4 }, textAlign: 'center' }}>
             <Box sx={{ width: 66, height: 66, mx: 'auto', display: 'grid', placeItems: 'center', borderRadius: '50%', bgcolor: 'color-mix(in srgb, var(--awm-gold) 16%, transparent)', color: 'var(--awm-gold)', animation: 'awm-complete-pop .42s ease-out', '@keyframes awm-complete-pop': { from: { opacity: 0, transform: 'scale(.72)' }, to: { opacity: 1, transform: 'scale(1)' } }, '@media (prefers-reduced-motion: reduce)': { animation: 'none' } }}>
-              {completion.level > completion.previousLevel ? <EmojiEvents sx={{ fontSize: 38 }} /> : <Celebration sx={{ fontSize: 36 }} />}
+              <Celebration sx={{ fontSize: 36 }} />
             </Box>
             <Typography id="word-search-complete-title" component="h2" sx={{ mt: 1.5, fontFamily: 'var(--font-heading)', fontSize: 32, fontWeight: 600, color: 'text.primary' }}>
-              {completion.level > completion.previousLevel ? 'Level Up!' : 'Word Search Complete!'}
+              Word Search Complete!
             </Typography>
             <Typography sx={{ mt: 0.5, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}>Nice work — you found every word.</Typography>
-            <Typography sx={{ mt: 2, color: 'primary.main', fontFamily: 'var(--font-heading)', fontSize: 40, fontWeight: 700, lineHeight: 1 }}>
-              {user ? `+${completion.awarded} XP` : 'Sign in to save XP'}
-            </Typography>
-            {completion.duplicate && <Typography sx={{ mt: 0.65, color: 'text.secondary', fontSize: 12 }}>This completion was already saved, so XP was not awarded twice.</Typography>}
-            {completion.level > completion.previousLevel && <Chip icon={<CheckCircle />} label={`Level ${completion.previousLevel} → Level ${completion.level}`} color="success" sx={{ mt: 1.5, fontWeight: 700 }} />}
+            {!user && <Typography sx={{ mt: 2, color: 'text.secondary', fontFamily: 'var(--font-sans), sans-serif' }}>Sign in to save your progress.</Typography>}
+            {completion.duplicate && <Typography sx={{ mt: 2, color: 'text.secondary', fontSize: 12 }}>This completion was already saved.</Typography>}
             <Box sx={{ mt: 2.5, display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 1 }}>
               {[
                 ['Time', formatWordSearchDuration(completion.durationSeconds)],

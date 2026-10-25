@@ -16,7 +16,7 @@ import {
   Refresh,
   VisibilityOutlined,
 } from '@mui/icons-material'
-import { Alert, Autocomplete, Box, Button, Chip, Container, LinearProgress, Paper, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
+import { Alert, Autocomplete, Box, Button, Container, LinearProgress, Paper, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import PremiumPrompt from "@/app/components/PremiumPrompt"
 import { MEMORY } from "@/app/lib/entitlements"
 import { resumeMemorySession, beginMemorySession, loadMemoryProgress, loadSavedMemorySession, persistMemorySession, type SavedMemorySession, submitMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
@@ -56,11 +56,10 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const router = useRouter()
   const { user, loading } = useAuth()
   const direction = useSyncExternalStore<MemoryDirection>(subscribeToDirection, getDirectionSnapshot, () => 'arabic')
-  const [totalXp, setTotalXp] = useState(0)
   const initialCardCount = library.scope === 'global' ? 10 : Math.min(20, library.recommendedCardCount)
   const [selectedCardCount, setSelectedCardCount] = useState<number>(initialCardCount)
   const [practice, dispatch] = useReducer(practiceReducer, library.cards.slice(0, Math.min(initialCardCount, library.cards.length)), initialPractice)
-  const { cards, index, revealed, completed, sessionXp, completionIds, sessionId } = practice
+  const { cards, index, revealed, completed, completionIds, sessionId } = practice
   const started = practice.phase !== 'selection'
   const complete = practice.phase === 'complete'
   const activePractice = practice.phase === 'practice'
@@ -95,7 +94,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         if (!result.ok) throw new Error(result.error)
         const progress = result.data
         if (!active || version !== reviewVersion.current || request !== progressRequest.current || busyRef.current) return
-        setUsed(progress.used); setPremium(progress.premium); setTotalXp(progress.totalXp); setReady(true); setProgressError('')
+        setUsed(progress.used); setPremium(progress.premium); setReady(true); setProgressError('')
       }).catch(error => {
         if (active && version === reviewVersion.current && request === progressRequest.current && !busyRef.current) { setReady(false); setProgressError(error instanceof Error ? error.message : 'Unable to load Memory progress.') }
       }).finally(() => { if (active) setProgressLoading(false) })
@@ -122,29 +121,26 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     if (!card || !revealed || !completionId || submitted.current.has(completionId) || busyRef.current || navigating || limited || loading || (Boolean(user) && !ready)) return
     busyRef.current = true; setSaving(true); setSaveError(''); reviewVersion.current += 1
     try {
-      let awarded = 0
       if (user) {
-        const response = await submitMemoryReview(card.id, rating, completionId, { sessionId, cards, index: index + 1, completed: completed + 1, sessionXp, direction, completionIds })
+        const response = await submitMemoryReview(card.id, rating, completionId, { sessionId, cards, index: index + 1, completed: completed + 1, direction, completionIds })
         if (!mounted.current) return
         if (!response.ok) { setSaveError(response.error); return }
         const result = response.data
         setUsed(result.used)
         if (!result.accepted) { setUpgrade(true); return }
-        awarded = result.awarded
-        setTotalXp(value => value + awarded)
       }
       submitted.current.add(completionId)
-      dispatch({type:'advance',completionId,awarded})
+      dispatch({type:'advance',completionId})
     } catch { if (mounted.current) setSaveError('Unable to save this card. Your place is unchanged; please retry.') }
     finally { reviewVersion.current += 1; busyRef.current = false; if (mounted.current) setSaving(false) }
-  }, [card, cards, completed, completionIds, direction, index, limited, sessionId, revealed, sessionXp, user, ready, loading, navigating])
+  }, [card, cards, completed, completionIds, direction, index, limited, sessionId, revealed, user, ready, loading, navigating])
 
   const saveAndExit = async () => {
     if (busyRef.current || navigating) return
     if (!user) { router.push('/'); return }
     busyRef.current = true; setSaving(true); setSaveError('')
     try {
-      const result = await persistMemorySession({ sessionId, cards, index, completed, sessionXp, direction, completionIds })
+      const result = await persistMemorySession({ sessionId, cards, index, completed, direction, completionIds })
       if (!mounted.current) return
       if (!result.ok) { setSaveError(result.error); return }
       router.push('/')
@@ -187,7 +183,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     if (!deck.length) return
     busyRef.current = true; setSaving(true); setSaveError('')
     try {
-      const state = pendingStart.current ?? { cards: deck, index: 0, completed: 0, sessionXp: 0, direction, sessionId: crypto.randomUUID(), completionIds: deck.map(() => crypto.randomUUID()) }
+      const state = pendingStart.current ?? { cards: deck, index: 0, completed: 0, direction, sessionId: crypto.randomUUID(), completionIds: deck.map(() => crypto.randomUUID()) }
       pendingStart.current=state
       if (user) {
         const result = await beginMemorySession(state)
@@ -304,11 +300,11 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
           </Paper>
         ) : complete ? (
           <Paper elevation={0} sx={{ mt: 3, p: { xs: 4, md: 6 }, textAlign: 'center', borderRadius: '18px', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)' }}>
-            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif' }}>{completed} cards completed{user ? ` · ${sessionXp} XP earned` : ''}</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving || navigating} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button></Box>
+            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif' }}>{completed} cards completed</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving || navigating} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button></Box>
           </Paper>
         ) : card && (
           <Box sx={{ mt: 3 }}>
-            <Box sx={{ mb: 1.25, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}><Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 }}>Card {index + 1} of {cards.length}</Typography><Box sx={{ display: 'flex', gap: 0.75 }}>{user && <Chip size="small" label={`${sessionXp} session XP · ${totalXp} total`} sx={{ bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)', color: 'var(--awm-bark)', fontWeight: 700 }} />}</Box></Box>
+            <Box sx={{ mb: 1.25, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}><Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 }}>Card {index + 1} of {cards.length}</Typography></Box>
             <LinearProgress variant="determinate" value={(index / cards.length) * 100} sx={{ mb: 1.5, height: 6, borderRadius: 99, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold)', borderRadius: 99 } }} />
             <Paper elevation={0} aria-live="polite" sx={{ p: { xs: 2.25, sm: 3.5 }, borderRadius: '18px', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)', bgcolor: 'var(--awm-white)', boxShadow: '0 12px 36px color-mix(in srgb, var(--awm-bark) 9%, transparent)' }}>
               <Box sx={{ textAlign: 'center' }}>

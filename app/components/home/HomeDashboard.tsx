@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -24,7 +25,6 @@ import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
-import AppDownloadSection from './AppDownloadSection'
 import { fetchMyList } from '@/app/actions/myList'
 import { useMyListCache } from '@/store/myListStore'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
@@ -53,7 +53,7 @@ const QUICK_LINKS = [
   { title: 'Read', label: 'Open graded books', href: '/books', icon: AutoStories },
   { title: 'Watch', label: 'Browse full episodes', href: '/cartoons', icon: Headphones },
   { title: 'Settings', label: 'Manage your learning profile', href: (userId: string) => `/profile/${userId}#profile-settings`, icon: SettingsOutlined },
-  { title: 'My Profile', label: 'View your progress and achievements', href: (userId: string) => `/profile/${userId}`, icon: AccountCircleOutlined },
+  { title: 'My Profile', label: 'View your progress', href: (userId: string) => `/profile/${userId}`, icon: AccountCircleOutlined },
   { title: 'Support Us', label: 'Help us create more learning resources', href: '/support', icon: VolunteerActivismRounded },
 ]
 
@@ -100,6 +100,47 @@ export function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
     imageSrc: `/api/covers/episodes/${episode.id}`,
     imageCrop: episode.coverCrop,
   }))
+}
+
+/* Below-the-fold sections mount after hydration so their render work and
+   image fetches leave the initial critical path. The placeholders reserve the
+   sections' shape to keep layout stable (the chunks themselves stay shared:
+   NewOnRow is already loaded for the eager Shows row). */
+const DeferredNewOnRow = dynamic(() => import('./NewOnRow'), {
+  ssr: false,
+  loading: () => <DeferredRowPlaceholder />,
+})
+const DeferredAppDownloadSection = dynamic(() => import('./AppDownloadSection'), {
+  ssr: false,
+  loading: () => <DeferredAppPlaceholder />,
+})
+
+function DeferredRowPlaceholder() {
+  return (
+    <Box role="status" aria-label="Loading content">
+      <Skeleton variant="text" width={140} height={28} />
+      <Box sx={{ display: 'flex', gap: { xs: 1, md: 1.5 }, overflow: 'hidden', mt: 0.5 }}>
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Skeleton key={index} variant="rounded" sx={{ width: COMPACT_HOME_CARD_WIDTH, maxWidth: '38vw', height: { xs: 'clamp(188px, 57.5vw, 228px)', sm: 248, md: 278, lg: 298 }, borderRadius: '10px', flexShrink: 0 }} />
+        ))}
+      </Box>
+    </Box>
+  )
+}
+
+function DeferredAppPlaceholder() {
+  return (
+    <Box
+      role="status"
+      aria-label="Loading app section"
+      sx={{
+        minHeight: { xs: 720, md: 520 },
+        borderRadius: { xs: '18px', md: '28px' },
+        bgcolor: '#0e2e1f',
+        border: '1px solid rgba(212,168,67,0.22)',
+      }}
+    />
+  )
 }
 
 export function UpgradeSection() {
@@ -221,7 +262,23 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
           },
         }}
       >
-        <Box sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden', backgroundImage: 'url(/homepage/hero.avif)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        <Box sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 520, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+          {/* Responsive AVIF set encoded from the pristine source: the browser
+              picks the width per viewport/DPR, so retina screens are never
+              served an upscale (plain <img>, not next/image — a custom loader
+              would route through the optimizer and reintroduce its cold
+              encode latency). React hoists an automatic imagesrcset preload
+              from this img, so no manual link is needed. */}
+          <Box
+            component="img"
+            src="/homepage/hero-1600.avif"
+            srcSet="/homepage/hero-1200.avif 1200w, /homepage/hero-1600.avif 1600w, /homepage/hero-1920.avif 1920w"
+            sizes="100vw"
+            alt=""
+            fetchPriority="high"
+            decoding="async"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+          />
           {mode === 'dark' && <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.42) 55%, rgba(0,0,0,0.6) 100%)' }} />}
           <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 12, md: 14 }, pb: { xs: 5, md: 6 } }}>
             <Box sx={{ maxWidth: user ? 1140 : 720, mx: user ? 'auto' : 0, textAlign: user ? 'center' : 'left' }}>
@@ -308,16 +365,16 @@ export default function HomeDashboard({ books, newShows, newEpisodes }: { books:
             </>}
             {newEpisodeItems.length > 0 && <>
               <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Latest Episodes</Typography>
-              <NewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" autoScroll compact />
+              <DeferredNewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" autoScroll compact />
             </>}
             {bookRowItems.length > 0 && <>
               <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Books</Typography>
-              <NewOnRow items={bookRowItems} ariaLabel="Books" autoScroll compact />
+              <DeferredNewOnRow items={bookRowItems} ariaLabel="Books" autoScroll compact />
             </>}
           </Container>
 
           <Container maxWidth="lg" sx={{ mt: { xs: 5, md: 7 }, mb: { xs: 5, md: 7 } }}>
-            <AppDownloadSection />
+            <DeferredAppDownloadSection />
           </Container>
         </Box>
         <PremiumPrompt open={premiumOpen} onClose={() => setPremiumOpen(false)} />

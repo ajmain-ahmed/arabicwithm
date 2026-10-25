@@ -22,7 +22,7 @@ const source: PuzzleVocabularySource = {
 let host: HTMLDivElement, root: Root
 beforeEach(() => {
   vi.clearAllMocks(); mocks.user = null; mocks.vocabulary.mockResolvedValue(source)
-  mocks.complete.mockResolvedValue({ ok: true, data: { awarded: 20, totalXp: 20, duplicate: false, previousLevel: 1, level: 1 } })
+  mocks.complete.mockResolvedValue({ ok: true, data: { duplicate: false } })
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
   HTMLElement.prototype.setPointerCapture = vi.fn(); HTMLElement.prototype.hasPointerCapture = () => false
@@ -59,6 +59,6 @@ it.each([null, { id: 'free' }, { id: 'premium' }, { id: 'editor' }, { id: 'admin
   if (user) expect(mocks.complete).toHaveBeenCalledOnce()
   else {
     expect(mocks.complete).not.toHaveBeenCalled()
-    expect(document.body.textContent).toContain('Sign in to save XP')
+    expect(document.body.textContent).toContain('Sign in to save your progress')
   }
 })

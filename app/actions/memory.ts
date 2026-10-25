@@ -202,7 +202,7 @@ const fetchMemoryCardSource = unstable_cache(
   { revalidate: publicRevalidate, tags: ['cartoons-public'] }
 )
 
-export async function recordMemoryReview(cardId: string, rating: MemoryRating, completionId: string, nextSession: SavedMemorySession): Promise<{ accepted: boolean; awarded: number; totalXp: number; used: number }> {
+export async function recordMemoryReview(cardId: string, rating: MemoryRating, completionId: string, nextSession: SavedMemorySession): Promise<{ accepted: boolean; used: number }> {
   const [userId, entitlement] = await Promise.all([getAuthenticatedUserId(), fetchEntitlements()])
   if (!userId || !entitlement.signedIn) throw new Error('Sign in to save Memory practice.')
   z.string().uuid().parse(completionId)
@@ -232,7 +232,9 @@ export async function recordMemoryReview(cardId: string, rating: MemoryRating, c
     p_session: state,
   })
   if (error) { console.error('[memory review RPC]', error); throw new Error('Unable to save Memory progress. Please try again.') }
-  return z.object({accepted:z.boolean(),awarded:z.number().int().min(0).max(5),totalXp:z.number().int().nonnegative(),used:z.number().int().nonnegative()}).parse(data)
+  /* The shared RPC still returns awarded/totalXp for the mobile app; the
+     website only propagates acceptance and the session quota. */
+  return z.object({accepted:z.boolean(),used:z.number().int().nonnegative()}).parse(data)
 }
 
 export async function fetchMemoryProgress() {
@@ -241,20 +243,19 @@ export async function fetchMemoryProgress() {
   const today = platformDate()
   const monday = new Date(today + 'T12:00:00Z')
   monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7)
-  const [daily, total, week, legacy, entitlement] = await Promise.all([
+  const [daily, total, week, entitlement] = await Promise.all([
     serviceClient.rpc('website_memory_session_usage', {p_user_id:userId}),
     serviceClient.rpc('website_memory_totals', { p_user_id: userId }),
     serviceClient.rpc('website_memory_totals', { p_user_id: userId, p_since: monday.toISOString().slice(0, 10) }),
-    serviceClient.from('memory_legacy_progress').select('xp').eq('user_id', userId).maybeSingle(),
     fetchEntitlements(),
   ])
-  const errors = [daily.error, total.error, week.error, legacy.error]
+  const errors = [daily.error, total.error, week.error]
   if (errors.some(Boolean)) console.error('[memory database queries]', errors.filter(Boolean))
   if (errors.some(isMissingDatabaseFeature)) throw new Error(LEARNING_SETUP_MESSAGE)
   if (errors.some(Boolean)) throw new Error('Unable to load Memory progress. Please try again.')
-  const all = (total.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
-  const weekly = (week.data ?? { cards: 0, xp: 0 }) as { cards: number; xp: number }
-  return { used: daily.data ?? 0, total: all.cards, totalXp: all.xp + Number(legacy.data?.xp ?? 0), weekCards: weekly.cards, weekXp: weekly.xp, premium: entitlement.premium }
+  const all = (total.data ?? { cards: 0 }) as { cards: number }
+  const weekly = (week.data ?? { cards: 0 }) as { cards: number }
+  return { used: daily.data ?? 0, total: all.cards, weekCards: weekly.cards, premium: entitlement.premium }
 }
 
 export async function saveMemorySession(input: SavedMemorySession) {
@@ -303,7 +304,7 @@ export async function beginMemorySession(input: SavedMemorySession): Promise<{st
  const userId=await getAuthenticatedUserId()
  if(!userId)throw new Error('Sign in to start Memory practice.')
  const state=sessionSchema.parse(input)
- if(!state.sessionId || state.index!==0 || state.completed!==0 || state.sessionXp!==0)throw new Error('Invalid session start.')
+ if(!state.sessionId || state.index!==0 || state.completed!==0)throw new Error('Invalid session start.')
  const {data,error}=await serviceClient.rpc('website_begin_memory_session',{p_user_id:userId,p_state:state})
  if(error)throw new Error('Unable to start Memory practice. Please retry.')
  const result=z.object({accepted:z.boolean(),used:z.number().int().nonnegative(),state:sessionSchema.optional()}).parse(data)
@@ -319,7 +320,7 @@ export async function resumeMemorySession(input:SavedMemorySession):Promise<{sta
  // Historical completed snapshots remain recaps, not new start reservations.
  if(!state.sessionId && state.index===state.cards.length)return {status:'ready',state}
  if(!state.sessionId){
-  const start=await beginMemorySession({...state,sessionId:crypto.randomUUID(),index:0,completed:0,sessionXp:0})
+  const start=await beginMemorySession({...state,sessionId:crypto.randomUUID(),index:0,completed:0})
   if(start.status==='upgrade')return start
   state={...state,sessionId:start.state.sessionId}
  }

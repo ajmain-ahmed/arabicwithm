@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   activityKindForPath,
-  calculateLearningLevel,
   calculateLearningStreak,
   calculateWeekOverWeekPercent,
   formatLearningTime,
-  minutesRequiredForLevel,
   parseLearningActivity,
   shouldCountActiveTime,
   summarizeWeeklyActivity,
@@ -27,15 +25,6 @@ describe('learning activity', () => {
     const today = new Date(2026, 7, 13, 12)
     expect(calculateLearningStreak(['2026-08-11', '2026-08-12', '2026-08-13'], today)).toBe(3)
     expect(calculateLearningStreak(['2026-08-10', '2026-08-11', '2026-08-12'], today)).toBe(3)
-  })
-
-  it('uses the requested cumulative level curve in whole minutes', () => {
-    expect(minutesRequiredForLevel(1)).toBe(0)
-    expect(minutesRequiredForLevel(2)).toBe(60)
-    expect(minutesRequiredForLevel(10)).toBe(Math.round(Math.pow(9, 1.35) * 60))
-    expect(calculateLearningLevel(0)).toMatchObject({ level: 1, progressPercent: 0 })
-    expect(calculateLearningLevel(60 * 60)).toMatchObject({ level: 2, progressPercent: 0 })
-    expect(calculateLearningLevel(minutesRequiredForLevel(7) * 60).level).toBe(7)
   })
 
   it('summarises Monday-based current and previous weeks', () => {
@@ -80,7 +69,7 @@ describe('learning activity', () => {
   })
 })
 
-it('never counts Memory practice as XP-bearing app time, including picture-in-picture playback', () => {
+it('never counts Memory practice as tracked active app time, including picture-in-picture playback', () => {
   expect(activityKindForPath('/memory', false)).toBeNull()
   expect(activityKindForPath('/memory?show=example', true)).toBeNull()
 })

@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { Box, Button, Typography } from '@mui/material'
 import { Apple, QrCodeScanner } from '@mui/icons-material'
 
@@ -148,16 +149,21 @@ export default function AppDownloadSection() {
         {/* phone mockup */}
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0 }}>
           <Box
-            component="img"
-            src="/homepage/app-mockup.png"
-            alt="ArabicWithM mobile app home screen"
             sx={{
+              position: 'relative',
               width: { xs: 'min(58vw, 240px)', md: 'min(100%, 290px)' },
-              height: 'auto',
-              display: 'block',
+              aspectRatio: '1245 / 2359',
               filter: 'drop-shadow(0 26px 40px rgba(0,0,0,0.5))',
             }}
-          />
+          >
+            <Image
+              src="/homepage/app-mockup.webp"
+              alt="ArabicWithM mobile app home screen"
+              fill
+              sizes="(max-width: 900px) 58vw, 290px"
+              style={{ objectFit: 'contain' }}
+            />
+          </Box>
         </Box>
       </Box>
     </Box>

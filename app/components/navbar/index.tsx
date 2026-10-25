@@ -4,22 +4,29 @@ import { AdminPanelSettings, AccountTreeOutlined, DarkModeOutlined, GridOnRounde
 import { AppBar, Avatar, Box, Button, Container, IconButton, Toolbar, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
 import { useAccountAccess } from '@/app/lib/useAccountAccess'
-import { supabase } from '@/app/lib/supabase/client'
-import AuthDialog from '@/app/components/AuthDialog'
+// The supabase client is imported dynamically inside handleLogout (interaction
+// time) so supabase-js stays out of the initial bundle. The auth dialog is
+// mounted on first open for the same reason — it pulls supabase-js too.
 import ClientStyles from '@/app/components/ClientStyles'
 import BrandLogo from './BrandLogo'
 import { setExploreSoundPreference } from '@/app/lib/explore'
-import MobileDrawer from './MobileDrawer'
 import UserMenu from './UserMenu'
 import { NAV_ITEMS, NAV_ROUTES, LEARN_ITEMS } from './constants'
 import { NAV_CSS } from './styles'
 
 let hasAnimated = false
+
+/* Mounted on first open (see render site): keeps supabase-js, which the
+   dialog imports, out of the anonymous first-load path. */
+const AuthDialog = dynamic(() => import('@/app/components/AuthDialog'), { ssr: false })
+/* The mobile drawer is interaction-only; its chunk loads on first open. */
+const MobileDrawerLazy = dynamic(() => import('./MobileDrawer'), { ssr: false })
 
 const LEARN_ICONS: Record<string, typeof PsychologyOutlined> = {
     Memory: PsychologyOutlined,
@@ -93,6 +100,8 @@ export default function Navbar() {
     }, [])
 
     const handleLogout = async () => {
+        // Interaction-time only: keep supabase-js out of the initial bundle.
+        const { supabase } = await import('@/app/lib/supabase/client')
         await supabase.auth.signOut()
         window.location.href = '/'
     }
@@ -118,8 +127,9 @@ export default function Navbar() {
         <>
             <ClientStyles id="awm-navbar-styles" css={NAV_CSS} />
 
-            <MobileDrawer
-                open={drawerOpen}
+            {/* Interaction-only: defer the drawer chunk until first open. */}
+            {drawerOpen && <MobileDrawerLazy
+                open
                 onClose={() => setDrawerOpen(false)}
                 isLoggedIn={isLoggedIn}
                 user={user}
@@ -127,7 +137,7 @@ export default function Navbar() {
                 isReviewer={isReviewer}
                 onAuthOpen={openSignIn}
                 navigate={safePush}
-            />
+            />}
 
 
             <UserMenu
@@ -142,7 +152,7 @@ export default function Navbar() {
                 }}
             />
 
-            <AuthDialog key={authDialogMode} open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} initialMode={authDialogMode} />
+            {authDialogOpen && <AuthDialog key={authDialogMode} open onClose={() => setAuthDialogOpen(false)} initialMode={authDialogMode} />}
 
             <AppBar
                 ref={navbarRef}

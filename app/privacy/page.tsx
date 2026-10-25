@@ -37,7 +37,7 @@ export default function PrivacyPolicyPage() {
 
         <Section title="2. What we collect">
           <P><strong>Account information.</strong> When you register, we store your email address and a password hash (handled by our authentication provider, Supabase). If you sign in with Google, we receive your name, email address and profile picture from Google. You may optionally add a display name.</P>
-          <P><strong>Learning activity.</strong> To power your progress tracking (streaks, XP, levels, weekly goals), we record: time spent actively watching or reading, the number of words you look up, flashcard reviews, word-search puzzle completions and grammar exercise activity. This data is tied to your account.</P>
+          <P><strong>Learning activity.</strong> To power your progress tracking (streaks and weekly goals), we record: time spent actively watching or reading, the number of words you look up, flashcard reviews, word-search puzzle completions and grammar exercise activity. This data is tied to your account.</P>
           <P><strong>Saved content.</strong> Practice words you save, reading positions and bookmarks are stored against your account so they follow you between devices.</P>
           <P><strong>Content you submit.</strong> Feedback you send, corrections or comments you submit for review, and messages you write to us.</P>
           <P><strong>Support payments.</strong> Donations and AWM+ subscriptions are processed by Stripe. We never see or store your card number — only your subscription status and Stripe customer reference.</P>

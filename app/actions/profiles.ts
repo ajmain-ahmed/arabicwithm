@@ -80,7 +80,7 @@ export async function fetchPublicProfile(identifier: string) {
   const user = account.data.user
   if (!user) return null
   const learning = await loadLearningSnapshot(id, user.user_metadata, activity.data)
-  const summary = summarizeLearningDashboard(learning)
+  const { streak } = summarizeLearningDashboard(learning)
   const progress = parseReadingList(user.user_metadata.book_progress)
   const premium = await accountHasPremium(id)
   const avatar = typeof user.user_metadata.avatar_url === 'string' && /^https?:\/\//.test(user.user_metadata.avatar_url) ? user.user_metadata.avatar_url : null
@@ -117,33 +117,10 @@ export async function fetchPublicProfile(identifier: string) {
     joined: user.created_at.slice(0, 10),
     avatar,
     avatarCrop: normalizeThumbnailCrop(user.user_metadata.avatar_crop),
-    featuredTrophies: Array.isArray(user.user_metadata.featured_trophies) ? user.user_metadata.featured_trophies.filter((id: unknown): id is string => typeof id === 'string').slice(0, 4) : undefined,
     premium,
-    learning,
-    summary,
-    level: summary.level.level,
-    xp: summary.xp,
-    weekXp: summary.weekXp,
-    memoryCards: learning.memory?.total ?? 0,
+    summary: { streak },
     shelf: shelf.filter((book) => book !== null),
   }
 }
 
 export type PublicProfile = NonNullable<Awaited<ReturnType<typeof fetchPublicProfile>>>
-
-/** Persist existing profile display preferences only after validating earned milestones. */
-export async function saveTrophyHighlights(input:string[]) {
- const id=await getAuthenticatedUserId()
- if(!id)throw new Error('Sign in to choose trophies.')
- const selected=z.array(z.string().max(100)).max(4).parse(input)
- const {data:activity,error:activityError}=await serviceClient.from('learning_profiles').select('legacy_active_seconds,tracked_active_seconds,weekly_goal_seconds').eq('user_id',id).maybeSingle()
- if(activityError)throw new Error('Unable to verify your achievements.')
- // User-editable Auth metadata must not manufacture earned milestones.
- const learning=await loadLearningSnapshot(id,{},activity)
- const {achievementMetrics,achievementPreview}=await import('@/app/lib/achievements')
- const valid=achievementPreview(achievementMetrics(learning),selected).map(item=>item.id)
- if(valid.length!==selected.length)throw new Error('Choose only achievements you have earned.')
- const {error}=await serviceClient.auth.admin.updateUserById(id,{user_metadata:{featured_trophies:valid}})
- if(error)throw new Error('Unable to save trophy highlights. Please retry.')
- return valid
-}
