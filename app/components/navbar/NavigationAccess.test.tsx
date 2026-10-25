@@ -32,7 +32,7 @@ it.each([false, true])('links to the Learn hub without listing individual learni
  await act(async () => root.render(<Navbar />))
  if (mobile) {
   await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
-  await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)) }) // flush the dynamically imported drawer chunk
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 150)) }) // flush the dynamically imported drawer chunk
   const items = [...document.querySelectorAll('.mobile-list-btn')]
   expect(items.map(button => button.textContent)).toContain('Learn')
   for (const label of ['Memory','Grammar','Word Search']) expect(items.map(button => button.textContent)).not.toContain(label)

@@ -26,7 +26,7 @@ export const jost = Jost({
 })
 
 export const brandFont = localFont({
-  src: "../fonts/baloo-bhaijaan-2/BalooBhaijaan2-Variable.ttf",
+  src: "../fonts/baloo-bhaijaan-2/BalooBhaijaan2-Variable-latin.woff2",
   variable: "--font-decorative",
   weight: "400 700",
   style: "normal",
@@ -35,7 +35,7 @@ export const brandFont = localFont({
 
 // Bundle Nunito Sans to avoid intermittent Google Fonts URL parsing failures in Turbopack.
 export const headingFont = localFont({
-  src: "../fonts/nunito-sans/NunitoSans-Variable.ttf",
+  src: "../fonts/nunito-sans/NunitoSans-Variable-latin.woff2",
   variable: "--font-heading",
   weight: "400 600",
   style: "normal",

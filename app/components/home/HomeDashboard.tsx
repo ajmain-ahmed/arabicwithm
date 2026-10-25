@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   AdminPanelSettings,
   AutoStories,
@@ -105,10 +105,10 @@ export function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
   }))
 }
 
-/* Below-the-fold sections mount after hydration so their render work and
-   image fetches leave the initial critical path. The placeholders reserve the
-   sections' shape to keep layout stable (the chunks themselves stay shared:
-   NewOnRow is already loaded for the eager Shows row). */
+/* Below-the-fold sections mount only when scrolled near (and then via a
+   client-side dynamic import), so their chunks, render work and image fetches
+   stay out of the LCP window entirely. The placeholders reserve each
+   section's shape to keep layout stable. */
 const DeferredNewOnRow = dynamic(() => import('./NewOnRow'), {
   ssr: false,
   loading: () => <DeferredRowPlaceholder />,
@@ -117,6 +117,33 @@ const DeferredAppDownloadSection = dynamic(() => import('./AppDownloadSection'),
   ssr: false,
   loading: () => <DeferredAppPlaceholder />,
 })
+
+function useSectionNear(rootMargin = '500px') {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [near, setNear] = useState(false)
+  useEffect(() => {
+    const element = ref.current
+    if (!element || near) return
+    if (typeof IntersectionObserver === 'undefined') {
+      queueMicrotask(() => setNear(true))
+      return
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) {
+        setNear(true)
+        observer.disconnect()
+      }
+    }, { rootMargin })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [near, rootMargin])
+  return { ref, near }
+}
+
+function DeferredSection({ placeholder, children }: { placeholder: React.ReactNode; children: React.ReactNode }) {
+  const { ref, near } = useSectionNear()
+  return <Box ref={ref}>{near ? children : placeholder}</Box>
+}
 
 function DeferredRowPlaceholder() {
   return (
@@ -370,11 +397,15 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
             </>}
             {newEpisodeItems.length > 0 && <>
               <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Latest Episodes</Typography>
-              <DeferredNewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" autoScroll compact />
+              <DeferredSection placeholder={<DeferredRowPlaceholder />}>
+                <DeferredNewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" autoScroll compact />
+              </DeferredSection>
             </>}
             {bookRowItems.length > 0 && <>
               <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Books</Typography>
-              <DeferredNewOnRow items={bookRowItems} ariaLabel="Books" autoScroll compact />
+              <DeferredSection placeholder={<DeferredRowPlaceholder />}>
+                <DeferredNewOnRow items={bookRowItems} ariaLabel="Books" autoScroll compact />
+              </DeferredSection>
             </>}
           </Container>
 
@@ -393,7 +424,9 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
           </Container>
 
           <Container maxWidth="lg" sx={{ mt: { xs: 5, md: 7 }, mb: { xs: 5, md: 7 } }}>
-            <DeferredAppDownloadSection />
+            <DeferredSection placeholder={<DeferredAppPlaceholder />}>
+              <DeferredAppDownloadSection />
+            </DeferredSection>
           </Container>
         </Box>
         <PremiumPrompt open={premiumOpen} onClose={() => setPremiumOpen(false)} />
