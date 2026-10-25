@@ -62,8 +62,8 @@ it('renders only the four mobile Quick Actions and no Admin entry on the homepag
     const host=document.createElement('div')
     host.innerHTML=renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]}/>)
     expect(host.querySelectorAll('nav[aria-label="Quick Actions"]')).toHaveLength(1)
-    expect(Array.from(host.querySelectorAll('[data-mobile-home-actions] a')).map(link=>link.textContent)).toEqual(['Memory','Explore','Grammar','Word Search'])
-    expect(Array.from(host.querySelectorAll('[data-mobile-home-actions] a')).map(link=>link.getAttribute('href'))).toEqual(['/memory','/explore','/grammar','/word-search'])
+    expect(Array.from(host.querySelectorAll('[data-mobile-home-actions] a')).map(link=>link.textContent)).toEqual(['Memory','Grammar','Word Search','Explore'])
+    expect(Array.from(host.querySelectorAll('[data-mobile-home-actions] a')).map(link=>link.getAttribute('href'))).toEqual(['/memory','/grammar','/word-search','/explore'])
     expect(host.querySelectorAll('a[href="/admin/users"]')).toHaveLength(0)
   }
 })
