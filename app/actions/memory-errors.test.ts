@@ -21,26 +21,10 @@ it('returns a serializable setup error instead of throwing a redacted production
   if (!result.ok) expect(result.error).toContain('storage')
   expect(console.error).toHaveBeenCalled()
 })
-it('handles absent aggregate data and an absent saved session', async () => {
-<<<<<<< HEAD
+it('handles absent aggregate data', async () => {
   expect(await loadMemoryProgress()).toMatchObject({ ok: true, data: { used: 0, total: 0 } })
-  expect(await loadSavedMemorySession()).toEqual({ ok: true, data: null })
-=======
-  expect(await loadMemoryProgress()).toMatchObject({ ok: true, data: { totalXp: 0, total: 0 } })
->>>>>>> 599bb95 (changes)
 })
 it('handles signed-out progress without a rejected action', async () => {
   mocks.auth.mockResolvedValue(null)
   expect((await loadMemoryProgress()).ok).toBe(false)
-<<<<<<< HEAD
-  expect(await loadSavedMemorySession()).toEqual({ ok: true, data: null })
-})
-
-it('restores a completed snapshot as a recap without starting another session',async()=>{
- const state={sessionId:'55555555-5555-4555-8555-555555555555',cards:[{id:'source:0',showId:'show',showSlug:'show',showTitle:'Show',episodeId:'episode',episodeSlug:'episode',episodeTitle:'Episode',timestamp:0,arabic:'word',english:'word'}],index:1,completed:1,direction:'arabic',completionIds:['66666666-6666-4666-8666-666666666666']}
- mocks.result.data={state}
- await expect(loadSavedMemorySession()).resolves.toEqual({ok:true,data:state})
- expect(mocks.rpc).not.toHaveBeenCalled()
-=======
->>>>>>> 599bb95 (changes)
 })

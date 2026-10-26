@@ -135,19 +135,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   // not save an unfinished queue for restoration on a later visit.
   const saveAndExit = async () => {
     if (busyRef.current || navigating) return
-<<<<<<< HEAD
-    if (!user) { router.push('/'); return }
-    busyRef.current = true; setSaving(true); setSaveError('')
-    try {
-      const result = await persistMemorySession({ sessionId, cards, index, completed, direction, completionIds })
-      if (!mounted.current) return
-      if (!result.ok) { setSaveError(result.error); return }
-      router.push('/')
-    } catch { if (mounted.current) setSaveError('Unable to save your session. Please try again.') }
-    finally { busyRef.current = false; if (mounted.current) setSaving(false) }
-=======
     router.push('/')
->>>>>>> 599bb95 (changes)
   }
 
   useEffect(() => {

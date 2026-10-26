@@ -283,22 +283,3 @@ export async function beginMemorySession(input: SavedMemorySession): Promise<{st
  if(!result.state)throw new Error('Unable to restore session.')
  return {status:'ready',state:result.state,used:result.used}
 }
-<<<<<<< HEAD
-
-export async function resumeMemorySession(input:SavedMemorySession):Promise<{status:'ready';state:SavedMemorySession}|{status:'upgrade'}> {
- const userId=await getAuthenticatedUserId()
- if(!userId)throw new Error('Sign in to resume Memory practice.')
- let state=sessionSchema.parse(input)
- // Historical completed snapshots remain recaps, not new start reservations.
- if(!state.sessionId && state.index===state.cards.length)return {status:'ready',state}
- if(!state.sessionId){
-  const start=await beginMemorySession({...state,sessionId:crypto.randomUUID(),index:0,completed:0})
-  if(start.status==='upgrade')return start
-  state={...state,sessionId:start.state.sessionId}
- }
- const {data,error}=await serviceClient.rpc('website_save_memory_session',{p_user_id:userId,p_state:state})
- if(error)throw new Error('Unable to resume this session. Please retry.')
- return {status:'ready',state:sessionSchema.parse(data)}
-}
-=======
->>>>>>> 599bb95 (changes)
