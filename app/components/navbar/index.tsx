@@ -193,7 +193,7 @@ export default function Navbar() {
                                     <MenuOutlined sx={{ fontSize: 21 }} />
                                 </IconButton>
 
-                                <Box sx={{ minWidth: 0, display: 'flex', justifyContent: 'center', pl: '22px' }}>
+                                <Box sx={{ minWidth: 0, display: 'flex', justifyContent: 'center', pl: '44px' }}>
                                     <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
                                 </Box>
 
