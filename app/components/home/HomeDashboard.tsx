@@ -10,9 +10,7 @@ import {
   ExploreOutlined,
   GridOnRounded,
   Headphones,
-  LocalFireDepartmentRounded,
   MenuBook,
-  DiamondOutlined,
   OndemandVideo,
   AccountCircleOutlined,
   ArrowForward,
@@ -33,16 +31,8 @@ import { useMyListCache } from '@/store/myListStore'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
+import { fetchBooksForPublic } from '@/app/actions/books'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
-import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
-import {
-  LEARNING_ACTIVITY_EVENT,
-  parseLearningActivity,
-  type LearningActivity,
-} from '@/app/lib/activity'
-
-interface ActivityUpdate { userId: string; activity: LearningActivity }
-
 export interface FeaturedEpisode {
   show: ShowMeta
   episode: EpisodeMeta
@@ -206,13 +196,28 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
   const { user } = useAuth()
   const isMobile=useMediaQuery('(max-width:899.95px)')
   const resume=user?continueReading(books,chaptersByBook,user.user_metadata):null
-  const [activityUpdate, setActivityUpdate] = useState<ActivityUpdate | null>(null)
-  const [premiumOpen, setPremiumOpen] = useState(false)
   /* My List is fetched once per session and cached in the store; show-page
-     add/remove keeps the cache in sync. */
+     add/remove keeps the cache in sync. Saved books share the row; they are
+     stored in user metadata (like reading progress), so merge them in. */
   const myListCacheItems = useMyListCache((state) => state.items)
   const setMyListCache = useMyListCache((state) => state.set)
-  const myListLoading = Boolean(user) && myListCacheItems === null
+  const myListBookSlugs = useMemo(() => {
+    const value = user?.user_metadata?.my_list_books
+    return Array.isArray(value) ? value.filter((slug): slug is string => typeof slug === 'string') : []
+  }, [user])
+  const [myListBooks, setMyListBooks] = useState<PublicBook[] | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    if (!user?.id || myListBookSlugs.length === 0) {
+      queueMicrotask(() => { if (!cancelled) setMyListBooks([]) })
+      return () => { cancelled = true }
+    }
+    void fetchBooksForPublic()
+      .then((all) => { if (!cancelled) setMyListBooks(all.filter((book) => myListBookSlugs.includes(book.slug))) })
+      .catch(() => { if (!cancelled) setMyListBooks([]) })
+    return () => { cancelled = true }
+  }, [user, myListBookSlugs])
+  const myListLoading = Boolean(user) && (myListCacheItems === null || myListBooks === null)
   const { newShowItems, newEpisodeItems } = useMemo(() => {
     return {
       newShowItems: showRowItems(newShows),
@@ -221,39 +226,41 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
   }, [newEpisodes, newShows])
 
   useEffect(() => {
-    const handleActivityUpdate = (event: Event) => {
-      setActivityUpdate((event as CustomEvent<ActivityUpdate>).detail)
-    }
-    window.addEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
-    return () => window.removeEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
-  }, [])
-
-  useEffect(() => {
     if (!user?.id || myListCacheItems !== null) return
     let cancelled = false
     void fetchMyList()
       .then((items) => {
         if (!cancelled) setMyListCache(items)
       })
-      .catch((error: unknown) => console.error('Unable to load My List:', error))
+      .catch((error: unknown) => {
+        // Resolve to empty on failure: an unresolved cache pins the section
+        // in its skeleton state forever.
+        if (!cancelled) setMyListCache([])
+        console.error('Unable to load My List:', error)
+      })
     return () => { cancelled = true }
   }, [user?.id, myListCacheItems, setMyListCache])
 
   const displayName = user ? String(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'learner').split(' ')[0] : ''
-  const activity = user
-    ? activityUpdate?.userId === user.id
-      ? activityUpdate.activity
-      : parseLearningActivity(user.user_metadata)
-    : null
-  const streak = activity ? summarizeLearningDashboard(activity, new Date()).streak : 0
-  const myListRowItems: CatalogueRowItem[] = useMemo(() => (myListCacheItems ?? []).map((item) => ({
-    key: item.showId,
-    href: `/cartoons/${encodeURIComponent(item.slug)}`,
-    title: item.title,
-    level: item.level,
-    imageSrc: `/api/covers/shows/${item.showId}`,
-    imageCrop: item.coverCrop,
-  })), [myListCacheItems])
+  const myListRowItems: CatalogueRowItem[] = useMemo(() => [
+    ...(myListCacheItems ?? []).map((item) => ({
+      key: item.showId,
+      href: `/cartoons/${encodeURIComponent(item.slug)}`,
+      title: item.title,
+      level: item.level,
+      imageSrc: `/api/covers/shows/${item.showId}`,
+      imageCrop: item.coverCrop,
+    })),
+    ...(myListBooks ?? []).map((book) => ({
+      key: book.id,
+      href: `/books/${encodeURIComponent(book.slug)}`,
+      title: book.title,
+      meta: book.author,
+      level: book.level,
+      imageSrc: `/api/covers/books/${book.id}`,
+      imageCrop: book.coverCrop,
+    })),
+  ], [myListCacheItems, myListBooks])
   const bookRowItems: CatalogueRowItem[] = useMemo(() => books.map((book) => ({
     key: book.id,
     href: `/books/${encodeURIComponent(book.slug)}`,
@@ -325,15 +332,6 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
                   <Button component={Link} href="/books" variant="contained" startIcon={<MenuBook />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Reading</Button>
                 </Box>
               )}
-              {user && (
-                <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
-                  <Box component="span" aria-label={`${streak} day streak`} sx={{ display: 'inline-flex', alignItems: 'center', gap: 1, bgcolor: '#b91c1c', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: '0.9rem' }}>
-                    <LocalFireDepartmentRounded sx={{ fontSize: 18 }} />
-                    {streak}
-                  </Box>
-                  <Button onClick={() => setPremiumOpen(true)} variant="contained" startIcon={<DiamondOutlined sx={{ color: 'var(--awm-gold-light)' }} />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>AWM+</Button>
-                </Box>
-              )}
             </Box>
           </Container>
         </Box>
@@ -361,7 +359,10 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
               <Box
                 component={Link}
                 href="/cartoons?view=shows"
-                sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, md: 3 }, mt: 1.5, textDecoration: 'none' }}
+                /* fit-content: a block-level flex <a> would stretch to the
+                   full container width and swallow clicks on the empty
+                   space beside the card. */
+                sx={{ display: 'flex', alignItems: 'center', gap: { xs: 2, md: 3 }, mt: 1.5, textDecoration: 'none', width: 'fit-content', maxWidth: '100%' }}
               >
                 <Box sx={{
                   width: COMPACT_HOME_CARD_WIDTH,
@@ -431,7 +432,6 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
             </DeferredSection>
           </Container>
         </Box>
-        <PremiumPrompt open={premiumOpen} onClose={() => setPremiumOpen(false)} />
       </Box>
   )
 }

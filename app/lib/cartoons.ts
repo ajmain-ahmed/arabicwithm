@@ -439,9 +439,6 @@ export interface EpisodeFull extends EpisodeMeta {
   grammarPoints: GrammarPoint[]
   /* ── which transcript format this episode uses ── */
   transcriptFormat: TranscriptFormat
-  /* ── lookup helpers built from script block word tables ── */
-  wordMap: Record<string, CartoonWordEntry>   // plain Arabic → entry
-  diacritizedMap: Record<string, CartoonWordEntry> // diacritized Arabic → entry
 }
 
 export function isNewTranscript(transcript: unknown): transcript is NewTranscript {

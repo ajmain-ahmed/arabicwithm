@@ -25,6 +25,7 @@ import {
   nextExploreIndex,
   setExploreSoundPreference,
   subscribeToExploreSoundPreference,
+  type ExploreFeedBatch,
   type ExploreFeedItem,
 } from '@/app/lib/explore'
 
@@ -568,7 +569,7 @@ function ExploreBookPageSlide({ page, itemIndex, onDefinitionOpen, onDefinitionP
   )
 }
 
-export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
+export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { railTop?: ReactNode; initialSeed: string; initialBatch: ExploreFeedBatch | null }) {
   const theme = useTheme()
   const [hydrated,setHydrated] = useState(false)
   useEffect(()=>setHydrated(true),[])
@@ -577,13 +578,14 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
   const setGlobalVideoPlaying = usePlayerStore((state) => state.setIsPlaying)
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
   /* Session cache: returning visitors restore the feed instantly and only a
-     fresh batch is fetched; first-time visitors fetch page 0 client-side. */
+     fresh batch is fetched; first-time visitors get their first batch from
+     the server-rendered page (initialBatch) and skip the client fetch. */
   const cachedItems = useExploreFeedCache((state) => state.items)
   const setCachedItems = useExploreFeedCache((state) => state.setItems)
-  const [items, setItems] = useState<ExploreFeedItem[]>(()=>cachedItems.filter(item=>!videosOnly||item.kind==='video'))
+  const [items, setItems] = useState<ExploreFeedItem[]>(()=>cachedItems.length > 0 ? cachedItems.filter(item=>!videosOnly||item.kind==='video') : (initialBatch?.items ?? []).filter(item=>!videosOnly||item.kind==='video'))
   useEffect(()=>{if(videosOnly)setItems(current=>current.filter(item=>item.kind==='video'))},[videosOnly])
-  const [hasMore, setHasMore] = useState(cachedItems.length > 0)
-  const [initialLoaded, setInitialLoaded] = useState(cachedItems.length > 0)
+  const [hasMore, setHasMore] = useState(initialBatch ? initialBatch.hasMore : cachedItems.length > 0)
+  const [initialLoaded, setInitialLoaded] = useState(cachedItems.length > 0 || initialBatch != null)
   const [loadingMore, setLoadingMore] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectedDefinition, setSelectedDefinition] = useState<SelectedDefinition | null>(null)
@@ -600,10 +602,10 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
   const advancedFromRef = useRef<number | null>(null)
   const programmaticTargetRef = useRef<number | null>(null)
   const scrollLockUntilRef = useRef(0)
-  const seedRef = useRef(crypto.randomUUID())
+  const seedRef = useRef(initialSeed)
   const nextPageRef = useRef(1)
   const loadingBatchRef = useRef(false)
-  const seenKeysRef = useRef(new Set(cachedItems.map(feedItemKey)))
+  const seenKeysRef = useRef(new Set(cachedItems.length > 0 ? cachedItems.map(feedItemKey) : (initialBatch?.items ?? []).map(feedItemKey)))
   const initialLoadStartedRef = useRef(false)
   /* On a cached return visit the user lands on the first FRESH item, with the
      previously watched items scrollable above it. */
@@ -624,6 +626,13 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
     if (!hydrated || initialLoadStartedRef.current) return
     initialLoadStartedRef.current = true
     const restore = cachedItems.length > 0
+    if (!restore && initialBatch) {
+      /* Server-rendered first visit: items are already in state, so only the
+         pagination cursor is adopted here; the next batch loads on approach. */
+      setHasMore(initialBatch.hasMore)
+      setInitialLoaded(true)
+      return
+    }
     setItems((current) => (restore ? current : []))
     setLoadingMore(true)
     void fetchExploreFeedPage(seedRef.current, 0, videosOnly)
@@ -646,7 +655,7 @@ export default function ExploreFeed({ railTop }: { railTop?: ReactNode }) {
         setLoadingMore(false)
         setInitialLoaded(true)
       })
-  }, [cachedItems, videosOnly, hydrated])
+  }, [cachedItems, videosOnly, hydrated, initialBatch])
 
   const loadNextBatch = useCallback(async () => {
     if (loadingBatchRef.current || !hasMore) return

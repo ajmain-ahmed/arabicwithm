@@ -888,6 +888,21 @@ export default function EpisodePage({
 
   const activeIndex = isYouTubeSource ? localActiveIndex : null
 
+  /* Plain/diacritized lookup maps, derived from the script blocks on the
+     client: sending them from the server re-serializes every word entry two
+     extra times in the RSC payload for zero extra information. */
+  const { wordMap, diacritizedMap } = useMemo(() => {
+    const wordMap: Record<string, CartoonWordEntry> = {}
+    const diacritizedMap: Record<string, CartoonWordEntry> = {}
+    for (const block of episode.scriptBlocks) {
+      for (const entry of block.words) {
+        if (entry.plain) wordMap[entry.plain] = entry
+        if (entry.arabic) diacritizedMap[entry.arabic] = entry
+      }
+    }
+    return { wordMap, diacritizedMap }
+  }, [episode.scriptBlocks])
+
   const { wrapRef, seekTo, isPlaying: localVideoPlaying, errorCode, retry, playVideo, pauseVideo, getCurrentTime } = useYouTubePlayer(
     isYouTubeSource ? selectedSource.id : undefined,
     handleTimeUpdate,
@@ -910,6 +925,11 @@ export default function EpisodePage({
         return
       }
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+      /* When the YouTube iframe element holds focus, the keydown targets it
+         in this document AND the browser's default action forwards the key
+         into the embed (native ±seconds seek). Canceling the default keeps
+         the arrows on transcript timestamps only. */
+      event.preventDefault()
       const time = getCurrentTime() ?? 0
       const current = findActiveIndex(time) ?? -1
       const neighbour = event.key === 'ArrowLeft' ? current - 1 : current + 1
@@ -919,6 +939,31 @@ export default function EpisodePage({
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [isMobile, localVideoPlaying, episode.scriptBlocks, pauseVideo, playVideo, seekTo, getCurrentTime, findActiveIndex])
+
+  /* Clicking the YouTube embed moves focus into the iframe, and from then on
+     the browser routes keys into the embed — the transcript shortcuts below
+     go dead. A cross-origin frame fires no parent pointer/focus/key events,
+     so focus is polled: pointer-driven iframe focus is released, focus that
+     arrived via Tab is kept (the player's own controls stay keyboard-
+     reachable). Parent pointerdown re-arms pointer mode for mixed users. */
+  useEffect(() => {
+    if (isMobile) return
+    let tabNavigation = false
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Tab') tabNavigation = true }
+    const onPointerDown = () => { tabNavigation = false }
+    const releaseEmbedFocus = () => {
+      const active = document.activeElement
+      if (active instanceof HTMLIFrameElement && !tabNavigation) active.blur()
+    }
+    const poll = window.setInterval(releaseEmbedFocus, 250)
+    window.addEventListener('keydown', onKeyDown, true)
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => {
+      window.clearInterval(poll)
+      window.removeEventListener('keydown', onKeyDown, true)
+      document.removeEventListener('pointerdown', onPointerDown, true)
+    }
+  }, [isMobile])
 
   useEffect(() => {
     setGlobalVideoPlaying(localVideoPlaying)
@@ -1283,8 +1328,8 @@ export default function EpisodePage({
                         textScale={textScale}
                         textFontFamily={textFontFamily}
                         expanded={expandedNotes.has(i)}
-                        wordMap={episode.wordMap}
-                        diacritizedMap={episode.diacritizedMap}
+                        wordMap={wordMap}
+                        diacritizedMap={diacritizedMap}
                         activeBlockRef={activeBlockRef}
                         onSeek={seekTo}
                         onToggleNotes={toggleNotes}

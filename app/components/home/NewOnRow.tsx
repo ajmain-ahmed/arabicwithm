@@ -199,6 +199,9 @@ export default function NewOnRow({
   compact?: boolean
 }) {
   const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  /* Auto-moving rows fight the user's own touch swipe on phones/tablets, so
+     the marquee loop is a desktop-only behavior. */
+  const isMobile = useMediaQuery('(max-width:899.95px)')
   const scrollerRef = useRef<HTMLDivElement | null>(null)
   const frameRef = useRef<number | null>(null)
   const autoFrameRef = useRef<number | null>(null)
@@ -217,6 +220,28 @@ export default function NewOnRow({
   const draggedRef = useRef(false)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
+  /* The marquee only makes sense when one full set of tiles overflows the
+     viewport; short rows (e.g. two My List items) stay still so clicks land
+     exactly where the user points. */
+  const [canLoop, setCanLoop] = useState(false)
+  useEffect(() => {
+    const element = scrollerRef.current
+    if (!element) return
+    const measure = () => {
+      const loopStart = element.querySelector<HTMLElement>('[data-loop-start="true"]')
+      const first = element.firstElementChild as HTMLElement | null
+      const setWidth = loopStart && first ? loopStart.offsetLeft - first.offsetLeft : element.scrollWidth
+      setCanLoop(setWidth > element.clientWidth + 8)
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    observer?.observe(element)
+    return () => {
+      window.removeEventListener('resize', measure)
+      observer?.disconnect()
+    }
+  }, [items])
   /* The seamless-loop clones duplicate every tile's <img> in the initial HTML;
      render them only after mount so first load requests one image per cover. */
   const mounted = useSyncExternalStore(
@@ -224,7 +249,7 @@ export default function NewOnRow({
     () => true,
     () => false,
   )
-  const shouldLoop = autoScroll && !reduceMotion && items.length > 1
+  const shouldLoop = autoScroll && !isMobile && !reduceMotion && items.length > 1 && canLoop
 
   const showAutoState = useCallback((moving: boolean) => {
     const element = scrollerRef.current

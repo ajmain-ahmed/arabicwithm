@@ -14,6 +14,11 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isAdminRoute = pathname?.startsWith('/admin') ?? false
   const isExploreRoute = pathname === '/explore'
+  /* Profile has its own fixed bottom tab bar on mobile. */
+  const isProfileRoute = pathname?.startsWith('/profile') ?? false
+  /* Episode watch pages are immersive, full-height stages like /explore. */
+  const isEpisodeRoute = /^\/cartoons\/[^/]+\/[^/]+$/.test(pathname ?? '')
+  const hideFooter = isExploreRoute || isEpisodeRoute
 
   if (isAdminRoute) {
     return (
@@ -31,6 +36,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       <Box
         component="main"
         className="awm-site-pages"
+        data-no-site-texture={isProfileRoute ? 'true' : undefined}
         sx={{
           pt: 'var(--awm-navbar-height)',
           flex: '1 0 auto',
@@ -47,8 +53,8 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           <GlobalDataInit>{children}</GlobalDataInit>
         </ErrorBoundary>
       </Box>
-      {!isExploreRoute && <Footer />}
-      <MobileBottomNav />
+      {!hideFooter && <Footer />}
+      {!isProfileRoute && <MobileBottomNav />}
       {!isExploreRoute && <LazyFloatingVideoPlayer />}
     </Box>
   )

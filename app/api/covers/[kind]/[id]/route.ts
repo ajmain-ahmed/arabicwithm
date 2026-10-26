@@ -35,12 +35,39 @@ async function fetchCoverRow(table: 'shows' | 'episodes' | 'books', id: string):
 type CoverBytes = { bytes: ArrayBuffer; etag: string }
 
 /* Serving bytes (rather than redirecting to a Supabase URL) is what lets us
-   control Cache-Control; repeat views are then served from browser caches. */
-async function fetchCoverBytes(bucket: string, path: string): Promise<CoverBytes | null> {
+   control Cache-Control; repeat views are then served from browser caches.
+   A short in-process TTL keeps repeat proxy hits (grid scans, the explore
+   feed, next/image re-optimizations) off the storage gateway: bytes are
+   immutable per path and an overwritten cover propagates within the TTL,
+   sooner than the browser cache's own max-age would allow. */
+async function fetchCoverBytesUncached(bucket: string, path: string): Promise<CoverBytes | null> {
   const { data, error } = await serviceClient.storage.from(bucket).download(path)
   if (error || !data) return null
   const bytes = await data.arrayBuffer()
   return { bytes, etag: createHash('md5').update(new Uint8Array(bytes)).digest('hex') }
+}
+
+const COVER_BYTES_TTL_MS = 60_000
+const COVER_BYTES_CACHE_LIMIT = 500
+const coverBytesCache = new Map<string, { value: CoverBytes; expiresAt: number }>()
+
+async function fetchCoverBytes(bucket: string, path: string): Promise<CoverBytes | null> {
+  // Test runs mock storage per case; a process-wide TTL would leak hits
+  // between tests in the same file.
+  if (process.env.NODE_ENV === 'test') return fetchCoverBytesUncached(bucket, path)
+  const key = `${bucket}:${path}`
+  const hit = coverBytesCache.get(key)
+  if (hit && hit.expiresAt > Date.now()) return hit.value
+  if (hit) coverBytesCache.delete(key)
+  const value = await fetchCoverBytesUncached(bucket, path)
+  if (value) {
+    if (coverBytesCache.size >= COVER_BYTES_CACHE_LIMIT) {
+      const oldest = coverBytesCache.keys().next().value
+      if (oldest !== undefined) coverBytesCache.delete(oldest)
+    }
+    coverBytesCache.set(key, { value, expiresAt: Date.now() + COVER_BYTES_TTL_MS })
+  }
+  return value
 }
 
 const COVER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=3600'

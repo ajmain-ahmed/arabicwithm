@@ -110,7 +110,7 @@ export async function fetchPublicProfile(identifier: string) {
   return {
     id,
     own,
-    displayName: profile?.display_name ?? String(user.user_metadata.full_name ?? user.user_metadata.name ?? 'Arabic learner'),
+    displayName: profile?.display_name ?? String(user.user_metadata.full_name ?? user.user_metadata.name ?? user.email?.split('@')[0] ?? 'Arabic learner'),
     username: publicIdentity?.handle ?? null,
     isPublic: profile?.is_public ?? false,
     shareReading: profile?.share_reading ?? false,

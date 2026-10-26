@@ -17,6 +17,7 @@ import ClientStyles from '@/app/components/ClientStyles'
 import BrandLogo from './BrandLogo'
 import { setExploreSoundPreference } from '@/app/lib/explore'
 import UserMenu from './UserMenu'
+import MemberActions from './MemberActions'
 import { NAV_ITEMS, NAV_ROUTES } from './constants'
 import { NAV_CSS } from './styles'
 
@@ -97,7 +98,7 @@ export default function Navbar() {
         setAuthDialogOpen(true)
     }
 
-    const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M'
+    const userInitial = (user?.user_metadata?.full_name ? String(user.user_metadata.full_name).charAt(0) : user?.email?.charAt(0))?.toUpperCase() ?? 'M'
 
     const handleBrandClick = () => {
         safePush('/')
@@ -156,7 +157,11 @@ export default function Navbar() {
                 <Container maxWidth="xl">
                     <Toolbar disableGutters sx={{ py: { xs: 0.5, md: 1 }, minHeight: { xs: 56, md: 64 } }}>
                         {isMobile ? (
-                            <Box sx={{ display: 'grid', gridTemplateColumns: '90px minmax(0, 1fr) 90px', alignItems: 'center', width: '100%' }}>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr) auto', alignItems: 'center', width: '100%' }}>
+                                {/* auto columns hug each side's actual content so the brand
+                                    centers between the hamburger and the icon pair — equal
+                                    flanking space reads as centered, unlike fixed 90px
+                                    columns with uneven sides. */}
                                 <IconButton onClick={() => setDrawerOpen(true)} sx={{ width: 44, height: 44, p: 0.75, color: navColor, transition: 'color .25s ease', justifySelf: 'start' }} aria-label="Open menu">
                                     <MenuOutlined sx={{ fontSize: 21 }} />
                                 </IconButton>
@@ -223,13 +228,14 @@ export default function Navbar() {
 
                                 <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
 
-                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 0.75 }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1.25 }}>
                                     {isLoggedIn && showAdminLink && <Button component={Link} href="/admin/users" startIcon={<AdminPanelSettings />} sx={{ color: navColor, textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>Admin</Button>}
                                     <Tooltip title={mode === 'dark' ? 'Use light mode' : 'Use dark mode'}>
                                         <IconButton onClick={toggleColorMode} sx={{ color: navColor, transition: 'color .25s ease' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
                                             {mode === 'dark' ? <LightModeOutlined /> : <DarkModeOutlined />}
                                         </IconButton>
                                     </Tooltip>
+                                    {isLoggedIn && <MemberActions />}
                                     {isLoggedIn ? (
                                         <IconButton
                                             onClick={(e) => setUserMenuAnchor(e.currentTarget)}

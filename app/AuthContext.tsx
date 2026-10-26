@@ -43,6 +43,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  /* Anonymous mounts skip the supabase-js download — but a fresh email/password
+     sign-in (owned by the dialog) then has no listener here. This flag flips
+     when that happens so the effect re-runs and wires the session up. */
+  const [sessionEstablished, setSessionEstablished] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -56,12 +60,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
     const hasHashSession = Boolean(hashParams.get('access_token') && hashParams.get('refresh_token'))
 
-    if (!hasHashSession && !hasStoredSessionCookie()) {
+    if (!hasHashSession && !hasStoredSessionCookie() && !sessionEstablished) {
       // Anonymous: no session can exist, so skip downloading supabase-js
       // and subscribing entirely. The microtask keeps setState out of the
       // synchronous effect body (react-hooks/set-state-in-effect).
       queueMicrotask(() => { if (active) setLoading(false) })
-      return () => { active = false }
+      const onSessionEstablished = () => setSessionEstablished(true)
+      window.addEventListener('awm-session-established', onSessionEstablished, { once: true })
+      return () => {
+        active = false
+        window.removeEventListener('awm-session-established', onSessionEstablished)
+      }
     }
 
     let stateChanged = false
@@ -125,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     return () => { active = false; subscription?.unsubscribe() }
-  }, [router])
+  }, [router, sessionEstablished])
 
   const value = useMemo(() => ({ user, session, loading }), [user, session, loading])
 
