@@ -9,6 +9,7 @@ vi.mock('@mui/icons-material', () => {
   return { AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, DiamondOutlined: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon, SchoolOutlined: Icon }
 })
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => mocks.auth }))
+vi.mock('@/app/actions/profiles', () => ({ fetchMyDisplayName: vi.fn(() => Promise.resolve(null)) }))
 vi.mock('@/app/lib/useAccountAccess', () => ({ useAccountAccess: () => ({ isAdmin: mocks.role === 'admin', isReviewer: ['admin','editor'].includes(mocks.role) }) }))
 vi.mock('@/app/components/ThemeProvider', () => ({ useColorMode: () => ({ mode: 'light', toggleColorMode: vi.fn() }) }))
 vi.mock('@/app/components/AuthDialog', () => ({ default: () => null }))

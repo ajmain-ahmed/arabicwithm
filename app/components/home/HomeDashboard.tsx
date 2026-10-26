@@ -29,6 +29,7 @@ import { continueReading } from './continueReading'
 import { fetchMyList } from '@/app/actions/myList'
 import { useMyListCache } from '@/store/myListStore'
 import MemberActions from '@/app/components/navbar/MemberActions'
+import { fetchMyDisplayName } from '@/app/actions/profiles'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
@@ -242,7 +243,22 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
     return () => { cancelled = true }
   }, [user?.id, myListCacheItems, setMyListCache])
 
-  const displayName = user ? String(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'learner').split(' ')[0] : ''
+  const displayNameFallback = user ? String(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'learner') : ''
+  /* The saved profile name wins over metadata/email — same source the profile
+     page shows. */
+  const [savedDisplayName, setSavedDisplayName] = useState<string | null>(null)
+  useEffect(() => {
+    let active = true
+    if (!user?.id) {
+      queueMicrotask(() => { if (active) setSavedDisplayName(null) })
+      return () => { active = false }
+    }
+    void fetchMyDisplayName()
+      .then(name => { if (active) setSavedDisplayName(name) })
+      .catch(() => { if (active) setSavedDisplayName(null) })
+    return () => { active = false }
+  }, [user?.id])
+  const displayName = (savedDisplayName ?? displayNameFallback).split(' ')[0]
   const myListRowItems: CatalogueRowItem[] = useMemo(() => [
     ...(myListCacheItems ?? []).map((item) => ({
       key: item.showId,

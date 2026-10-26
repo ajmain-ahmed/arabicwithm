@@ -40,6 +40,16 @@ export async function updateProfile(input: z.infer<typeof profileInputSchema>) {
   revalidatePath('/profile')
 }
 
+/* Lightweight name lookup for chrome that should reflect the saved profile
+   (navbar menu, hero greeting) without pulling the whole profile DTO. */
+export async function fetchMyDisplayName(): Promise<string | null> {
+  const userId = await getAuthenticatedUserId()
+  if (!userId) return null
+  const { data, error } = await serviceClient.from('public_profiles').select('display_name').eq('user_id', userId).maybeSingle()
+  if (error) throw new Error('Unable to load display name.')
+  return data?.display_name ? String(data.display_name) : null
+}
+
 export async function checkUsernameAvailability(input: string): Promise<boolean> {
   const userId = await getAuthenticatedUserId()
   if (!userId) throw new Error('Sign in to select a username.')

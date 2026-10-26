@@ -14,6 +14,7 @@ vi.mock('@mui/icons-material', () => {
 vi.mock('next/link',()=>({default:({href,children,...props}:{href:string;children:React.ReactNode})=><a href={href} {...props}>{children}</a>}))
 vi.mock('@/app/actions/activity',()=>({fetchLearningActivity:vi.fn()}))
 vi.mock('@/app/actions/premium',()=>({fetchPremiumStatus:vi.fn()}))
+vi.mock('@/app/actions/profiles',()=>({fetchMyDisplayName:vi.fn(()=>Promise.resolve(null)),updateProfile:vi.fn(),checkUsernameAvailability:vi.fn()}))
 vi.mock('@/app/components/PremiumPrompt',()=>({default:()=>null}))
 vi.mock('@/app/components/CheckoutFeedback',()=>({default:()=>null}))
 import HomeQuickActions from './HomeQuickActions'

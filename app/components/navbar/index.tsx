@@ -10,6 +10,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
 import { useAccountAccess } from '@/app/lib/useAccountAccess'
+import { fetchMyDisplayName } from '@/app/actions/profiles'
 // The supabase client is imported dynamically inside handleLogout (interaction
 // time) so supabase-js stays out of the initial bundle. The auth dialog is
 // mounted on first open for the same reason — it pulls supabase-js too.
@@ -99,7 +100,23 @@ export default function Navbar() {
         setAuthDialogOpen(true)
     }
 
-    const userInitial = (user?.user_metadata?.full_name ? String(user.user_metadata.full_name).charAt(0) : user?.email?.charAt(0))?.toUpperCase() ?? 'M'
+    /* The saved profile display name is the source of truth for chrome like
+       the menu header and avatar initial; metadata/email are only fallbacks
+       for accounts that have never saved a profile. */
+    const [savedName, setSavedName] = useState<string | null>(null)
+    useEffect(() => {
+        let active = true
+        if (!user?.id) {
+            queueMicrotask(() => { if (active) setSavedName(null) })
+            return () => { active = false }
+        }
+        void fetchMyDisplayName()
+            .then(name => { if (active) setSavedName(name) })
+            .catch(() => { if (active) setSavedName(null) })
+        return () => { active = false }
+    }, [user?.id])
+    const resolvedName = savedName ?? (user?.user_metadata?.full_name ? String(user.user_metadata.full_name) : undefined) ?? user?.email?.split('@')[0] ?? ''
+    const userInitial = resolvedName.charAt(0)?.toUpperCase() ?? 'M'
 
     const handleBrandClick = () => {
         safePush('/')
@@ -129,6 +146,7 @@ export default function Navbar() {
                 anchorEl={userMenuAnchor}
                 onClose={() => setUserMenuAnchor(null)}
                 user={user}
+                displayName={resolvedName}
                 isAdmin={isAdmin}
                 isReviewer={isReviewer}
                 onLogout={() => {

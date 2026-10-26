@@ -9,6 +9,7 @@ const home = vi.hoisted(() => ({
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => ({ user: home.user, session: null, loading: false }) }))
 vi.mock('@/app/components/ThemeProvider', () => ({ useColorMode: () => ({ mode: 'light', toggleColorMode: vi.fn() }) }))
 vi.mock('@/app/actions/activity', () => ({ fetchLearningActivity: vi.fn() }))
+vi.mock('@/app/actions/profiles', () => ({ fetchMyDisplayName: vi.fn(() => Promise.resolve(null)) }))
 vi.mock('@/app/components/PremiumPrompt', () => ({ default: () => null }))
 vi.mock('./LearningStats', () => ({
   default: () => {
