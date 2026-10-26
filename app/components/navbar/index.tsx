@@ -39,6 +39,7 @@ export default function Navbar() {
     const isLoggedIn = Boolean(user)
 
     const [drawerOpen, setDrawerOpen] = useState(false)
+    const [drawerMounted, setDrawerMounted] = useState(false)
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
     const [authDialogMode, setAuthDialogMode] = useState<'register' | 'signin'>('signin')
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
@@ -109,9 +110,11 @@ export default function Navbar() {
         <>
             <ClientStyles id="awm-navbar-styles" css={NAV_CSS} />
 
-            {/* Interaction-only: defer the drawer chunk until first open. */}
-            {drawerOpen && <MobileDrawerLazy
-                open
+            {/* Interaction-only: defer the drawer's chunk until first use, then
+                KEEP it mounted and drive it with `open` so MUI's slide/close
+                transitions actually run (mounting already-open skips them). */}
+            {drawerMounted && <MobileDrawerLazy
+                open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
                 isLoggedIn={isLoggedIn}
                 user={user}
@@ -162,7 +165,13 @@ export default function Navbar() {
                                     centers between the hamburger and the icon pair — equal
                                     flanking space reads as centered, unlike fixed 90px
                                     columns with uneven sides. */}
-                                <IconButton onClick={() => setDrawerOpen(true)} sx={{ width: 44, height: 44, p: 0.75, color: navColor, transition: 'color .25s ease', justifySelf: 'start' }} aria-label="Open menu">
+                                <IconButton
+                                    onPointerEnter={() => void import('./MobileDrawer')}
+                                    onTouchStart={() => void import('./MobileDrawer')}
+                                    onClick={() => { setDrawerMounted(true); setDrawerOpen(true) }}
+                                    sx={{ width: 44, height: 44, p: 0.75, color: navColor, transition: 'color .25s ease', justifySelf: 'start' }}
+                                    aria-label="Open menu"
+                                >
                                     <MenuOutlined sx={{ fontSize: 21 }} />
                                 </IconButton>
 
