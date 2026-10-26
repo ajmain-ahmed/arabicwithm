@@ -14,7 +14,6 @@ import {
 import { checkUsernameAvailability, updateProfile, type PublicProfile } from '@/app/actions/profiles'
 import { fetchPremiumStatus, managePremium, startPremiumCheckout, type PremiumStatus } from '@/app/actions/premium'
 import { submitFeedback } from '@/app/actions/feedback'
-import { PremiumSection } from '@/app/components/PremiumPrompt'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import SupportForm from '@/app/support/SupportForm'
 import ProfileAvatar from '@/app/profile/ProfileAvatar'
@@ -221,7 +220,6 @@ function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved:
         </Box>
       )}
       {message && <Alert severity={message === 'Profile saved.' ? 'success' : 'error'} sx={{ mt: 2 }}>{message}</Alert>}
-      {profile.own && profile.premium && <PremiumSection />}
     </Box>
   )
 }
