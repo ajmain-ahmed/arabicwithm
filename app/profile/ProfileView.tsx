@@ -509,7 +509,7 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
       {/* body */}
       <Box sx={{ background: 'var(--awm-cream-light)', minHeight: 'calc(100dvh - var(--awm-navbar-height))', transition: 'background-color 180ms ease', pb: { xs: 9, md: 0 } }}>
         <Container maxWidth="lg" sx={{ py: { xs: 3, md: 6 } }}>
-          <Box sx={{ display: 'flex', gap: { md: 5 }, flexDirection: { xs: 'column', md: 'row' }, alignItems: 'flex-start' }}>
+          <Box sx={{ display: 'flex', gap: { md: 5 }, flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'stretch', md: 'flex-start' } }}>
             {/* sidebar (desktop) */}
             <Box component="nav" aria-label="Profile sections" sx={{ display: { xs: 'none', md: 'flex' }, width: 220, flexShrink: 0, position: 'sticky', top: 96, flexDirection: 'column', gap: 0.5 }}>
               {sections.map(item => (
