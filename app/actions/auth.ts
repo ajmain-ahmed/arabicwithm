@@ -10,7 +10,9 @@ import { serviceClient } from '@/app/lib/supabase'
 import type { AccountRole } from '@/app/lib/reviews'
 
 
-async function getAuthenticatedUser(): Promise<User | null> {
+/* cache() scopes the Supabase Auth round trip to one per request: some flows
+   (e.g. the explore feed) resolve the user several times in a single call. */
+const getAuthenticatedUser = cache(async (): Promise<User | null> => {
   try {
     const supabase = await getAuthClient()
     const { data, error } = await supabase.auth.getUser()
@@ -26,7 +28,7 @@ async function getAuthenticatedUser(): Promise<User | null> {
     console.error("[auth] unexpected error:", e)
     return null
   }
-}
+})
 
 export interface AuthenticatedAccess {
   userId: string

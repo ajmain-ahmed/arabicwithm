@@ -77,7 +77,7 @@ it.each<[string, BookTokenGrammar]>([
   const reader = await fetchChapterForPublic('book', 'chapter')
   const { entry_type: entryType, ...readerToken } = token
   expect(reader?.content[0]).toMatchObject({ ...content[0], tokens: [expect.objectContaining({
-    ...readerToken, entryType, syntactic_role: grammar.syntactic_role ?? null, grammatical_case: grammar.grammatical_case ?? null,
+    ...readerToken, entryType, syntactic_role: grammar.syntactic_role ?? undefined, grammatical_case: grammar.grammatical_case ?? undefined,
   })] })
   // entry_type already maps to the reader's established camelCase entryType.
   expect(reader?.content[0].tokens[0].entryType).toBe('word')

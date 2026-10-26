@@ -18,6 +18,7 @@ interface UserMenuProps {
 export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, isReviewer }: UserMenuProps) {
     const navigationItemSx = { py: 1.2, gap: 1.5, color: 'var(--awm-bark)', '&:hover': { background: 'color-mix(in srgb, var(--awm-gold) 8%, transparent)' } }
     const navigationTextSx = { fontWeight: 600, color: 'var(--awm-bark)' }
+    const displayName = String(user?.user_metadata?.full_name ?? user?.email?.split('@')[0] ?? '')
 
     return (
         <Menu
@@ -41,7 +42,7 @@ export default function UserMenu({ anchorEl, onClose, user, onLogout, isAdmin, i
         >
             <Box sx={{ px: 2, py: 1.5, background: 'color-mix(in srgb, var(--awm-forest) 3%, transparent)' }}>
                 <Typography variant="body1" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                    {user?.email?.split('@')[0]}
+                    {displayName}
                 </Typography>
                 <Typography variant="caption" sx={{ mt: 0.2 }}>
                     {user?.email}

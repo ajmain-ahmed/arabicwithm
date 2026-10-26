@@ -46,3 +46,6 @@ next-env.d.ts
 .npm-cache/
 /supabase/.temp/
 backups/
+
+# local production server logs
+.prod-server*.log

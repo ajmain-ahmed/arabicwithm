@@ -17,7 +17,7 @@ export default function LibraryBookCard({ book, listen = false, compact = false 
   // Enter audio-first pages with a fresh document so in-flight shell actions
   // cannot restore the library tree while a private playback URL is resolving.
   // The Read/Listen mode switch itself remains an App Router transition.
-  return <Box component={listen ? 'a' : Link} href={`/${listen ? 'listen' : 'books'}/${encodeURIComponent(book.slug)}`} sx={{ display: 'block', color: 'inherit', textDecoration: 'none', minWidth: 0, borderRadius: '10px', position: 'relative', transition: 'transform .2s ease, box-shadow .2s ease', '&:focus-visible': { boxShadow: '0 0 24px 5px color-mix(in srgb, var(--awm-forest) 20%, transparent)', outline: '2px solid var(--awm-forest)', outlineOffset: 4 }, '@media (hover: hover) and (pointer: fine)': { '&:hover': { boxShadow: '0 0 24px 5px color-mix(in srgb, var(--awm-forest) 20%, transparent)', transform: 'translateY(-2px) scale(1.025)', zIndex: 1 } }, '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { animation: 'none', transform: 'none' } } }}>
+  return <Box component={listen ? 'a' : Link} href={`/${listen ? 'listen' : 'books'}/${encodeURIComponent(book.slug)}`} sx={{ display: 'block', color: 'inherit', textDecoration: 'none', minWidth: 0, borderRadius: '10px', position: 'relative', '&:focus-visible': { boxShadow: '0 0 24px 5px color-mix(in srgb, var(--awm-forest) 20%, transparent)', outline: '2px solid var(--awm-forest)', outlineOffset: 4 } }}>
     {book.cover ? (
       /* The aspect-ratio box sizes the slot; the image lazy-loads on
          approach via next/image's native lazy + the optimizer. */

@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import { createClient } from '@supabase/supabase-js'
 vi.mock('@/app/actions/auth', () => ({ guardAdmin: async () => {}, getAuthenticatedUserId: async () => 'test' }))
 vi.mock('@/app/actions/entitlements', () => ({ requireEntitlement: async () => {} }))
-vi.mock('next/cache', () => ({ revalidatePath: () => {} }))
+vi.mock('next/cache', () => ({ revalidatePath: () => {}, unstable_cache: (fn: unknown) => fn }))
 import { serviceClient } from '@/app/lib/supabase'
 import { deleteChapterAudioForAdmin, fetchChapterAudioForAdmin, fetchPublishedChapterAudio, requestChapterAudio, saveChapterAudioResult } from './audiobooks'
 

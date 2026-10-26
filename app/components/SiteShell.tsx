@@ -15,6 +15,8 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const isAdminRoute = pathname?.startsWith('/admin') ?? false
   const showFooter = pathname === '/' || pathname === '/learn'
   const isExploreRoute = pathname === '/explore'
+  /* Profile has its own fixed bottom tab bar on mobile. */
+  const isProfileRoute = pathname?.startsWith('/profile') ?? false
 
   if (isAdminRoute) {
     return (
@@ -31,6 +33,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       <Box
         component="main"
         className="awm-site-pages"
+        data-no-site-texture={isProfileRoute ? 'true' : undefined}
         sx={{
           pt: 'var(--awm-navbar-height)',
           flex: '1 0 auto',
@@ -48,7 +51,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
         </ErrorBoundary>
       </Box>
       {showFooter && <Footer />}
-      <MobileBottomNav />
+      {!isProfileRoute && <MobileBottomNav />}
       {!isExploreRoute && <LazyFloatingVideoPlayer />}
     </Box>
   )

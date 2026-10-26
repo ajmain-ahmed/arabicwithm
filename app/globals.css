@@ -283,3 +283,14 @@ html[data-theme='dark'] .awm-site-pages,
 html[data-theme='dark'] .awm-site-pages .awm-admin-shell {
   background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z' fill='%23d4a843' fill-opacity='.08'/%3E%3C/svg%3E");
 }
+/* Some routes (e.g. the profile) render their own surfaces and opt out of
+   the shared texture entirely. The html prefix matches the specificity of
+   the theme rules above so the opt-out wins in dark mode too. */
+html .awm-site-pages[data-no-site-texture],
+html .awm-site-pages[data-no-site-texture] .awm-admin-shell {
+  background-image: none;
+}
+html .awm-site-pages[data-no-site-texture]::before,
+html .awm-site-pages[data-no-site-texture] .awm-admin-shell::before {
+  content: none;
+}

@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
 import { AutoAwesome, CheckCircleRounded } from '@mui/icons-material'
 import { fetchPremiumStatus, managePremium, startPremiumCheckout } from '@/app/actions/premium'
 import type { PremiumStatus } from '@/app/actions/premium'
@@ -30,7 +30,18 @@ export default function PremiumPrompt({ open, onClose, reason }: { open: boolean
     try { window.location.assign(await (premium ? managePremium() : startPremiumCheckout())) }
     catch (e) { setError(e instanceof Error ? e.message : 'Unable to open billing.'); setBusy(false) }
   }
-  if (!status || status.admin) return null
+  /* Show the shell immediately on click; only the billing state waits for the
+     status round trip. Without this the click appears dead until both the
+     lazy chunk and fetchPremiumStatus resolve. */
+  if (status?.admin) return null
+  if (!status) return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth aria-labelledby="premium-title" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: '24px', m: 2, width: 'calc(100% - 32px)', textAlign: 'center', border: '1px solid', borderColor: 'divider' } } }}>
+      <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}>Upgrade to AWM+</DialogTitle>
+      <DialogContent sx={{ px: { xs: 2.5, sm: 4 }, minHeight: 240, display: 'grid', placeItems: 'center' }}>
+        <CircularProgress sx={{ color: 'var(--awm-gold)' }} />
+      </DialogContent>
+    </Dialog>
+  )
   return <Dialog open={open} onClose={busy ? undefined : onClose} maxWidth="sm" fullWidth aria-labelledby="premium-title" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: '24px', m: 2, width: 'calc(100% - 32px)', textAlign: 'center', border: '1px solid', borderColor: 'divider' } } }}>
     <DialogTitle id="premium-title" sx={{ pt: 4, pb: 1, fontSize: 32 }}>{premium ? 'AWM+ active' : 'Upgrade to AWM+'}</DialogTitle>
     <DialogContent sx={{ px: { xs: 2.5, sm: 4 } }}>

@@ -1,6 +1,7 @@
 'use server'
 
 import { z } from 'zod'
+import { unstable_cache } from 'next/cache'
 import { guardAdmin, getAuthenticatedUserId } from '@/app/actions/auth'
 import { requireEntitlement } from '@/app/actions/entitlements'
 import { serviceClient } from '@/app/lib/supabase'
@@ -65,7 +66,9 @@ async function revalidateChapterAudio(chapterId: string): Promise<void> {
   revalidatePath(`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`)
 }
 
-export async function fetchPublishedAudioForBook(bookId: string): Promise<ChapterAudioSummary[]> {
+/* Read paths are cached with the books-public tag: admin audio mutations
+   revalidate those pages, and the TTL is a backstop. */
+export const fetchPublishedAudioForBook = unstable_cache(async (bookId: string): Promise<ChapterAudioSummary[]> => {
   const { data: chapters, error: chapterError } = await serviceClient.from('chapters').select('id').eq('book_id', bookId)
   if (isMissingDatabaseFeature(chapterError)) return []
   if (chapterError) throw new Error('Unable to load audiobook availability.')
@@ -75,10 +78,10 @@ export async function fetchPublishedAudioForBook(bookId: string): Promise<Chapte
   if (isMissingDatabaseFeature(error)) return []
   if (error) throw new Error('Unable to load audiobook availability.')
   return ((data ?? []) as Record<string, unknown>[]).map(summary)
-}
+}, ['audiobooks', 'published', 'book', 'v1'], { revalidate: 60, tags: ['books-public'] })
 
 /* Library-level "has audiobook" flags for the books catalogue. */
-export async function fetchBookIdsWithPublishedAudio(bookIds: string[]): Promise<string[]> {
+export const fetchBookIdsWithPublishedAudio = unstable_cache(async (bookIds: string[]): Promise<string[]> => {
   if (bookIds.length === 0) return []
   const { data: chapters, error } = await serviceClient.from('chapters').select('id, book_id').in('book_id', bookIds)
   if (isMissingDatabaseFeature(error) || error) return []
@@ -89,7 +92,7 @@ export async function fetchBookIdsWithPublishedAudio(bookIds: string[]): Promise
   return Array.from(new Set(
     (chapters ?? []).filter((chapter) => audioChapters.has(String(chapter.id))).map((chapter) => String(chapter.book_id))
   ))
-}
+}, ['audiobooks', 'published', 'library', 'v1'], { revalidate: 60, tags: ['books-public'] })
 
 /* One query for both languages — the chapter page probes 'ar' and 'en'
    together on every visit. */

@@ -154,7 +154,12 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
       showSnackbar('error', error.message)
       return
     }
-    if (data) resetAndClose('success', 'Signed in successfully. Welcome back!')
+    if (data) {
+      /* The dialog owns the supabase client for this flow; AuthContext skips
+         it on anonymous mounts, so tell it to wire the new session up. */
+      window.dispatchEvent(new CustomEvent('awm-session-established'))
+      resetAndClose('success', 'Signed in successfully. Welcome back!')
+    }
   }
 
   const handleForgotPassword = async () => {

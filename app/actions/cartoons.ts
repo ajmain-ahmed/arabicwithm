@@ -1,6 +1,7 @@
 "use server"
 
 import { unstable_cache } from "next/cache"
+import { createHash } from "node:crypto"
 import { serviceClient, hasServiceClientConfig } from "@/app/lib/supabase"
 import {
   type ShowMeta,
@@ -26,9 +27,10 @@ import { guardAdmin } from "@/app/actions/auth"
 import { stripDiacritics } from "@/app/lib/arabic"
 
 /* Production catalogue data is refreshed only via updateTag/revalidatePath
-   from the admin CMS. In dev, re-fetch every minute so content added through
-   the live admin (or direct DB edits) surfaces without clearing .next. */
-const publicRevalidate = process.env.NODE_ENV === "development" ? 60 : false
+   from the admin CMS. In dev, re-fetch every few minutes so content added
+   through the live admin (or direct DB edits) surfaces without clearing .next,
+   while routine reads stay warm during long editing sessions. */
+const publicRevalidate = process.env.NODE_ENV === "development" ? 300 : false
 
 function uniqueTags(values: Array<string | null | undefined>): string[] {
   const tags = new Map<string, string>()
@@ -294,19 +296,13 @@ export const fetchEpisodeForPublic = unstable_cache(
         : []
     }
 
-    const wordMap: Record<string, CartoonWordEntry> = {}
-    const diacritizedMap: Record<string, CartoonWordEntry> = {}
-    /* ── Intern entries by plain form so repeated words share one object;
-         the RSC payload dedupes shared references, and wordMap already
-         treats the first-seen entry per plain form as canonical. ── */
-    const wordPool = new Map<string, CartoonWordEntry>()
-
+    /* ── Entries are per-occurrence: unstable_cache serializes its values,
+       which dissolves shared references, so pooling identical words would
+       not shrink the payload. Lookup maps (wordMap/diacritizedMap) are pure
+       derivations of these words and are rebuilt client-side. ── */
     const enrichWord = (w: Record<string, unknown>): CartoonWordEntry => {
       const arabic = String(w.arabic ?? '')
       const plain = String(w.plain ?? stripDiacritics(arabic))
-      const poolKey = plain || arabic
-      const pooled = wordPool.get(poolKey)
-      if (pooled) return pooled
       const lemma = typeof w.lemma === 'string' ? w.lemma.trim() : ''
       const headword = typeof w.headword === 'string' ? w.headword.trim() : ''
       const entryType: CartoonWordEntry['entry_type'] = w.entry_type === 'phrase' ? 'phrase' : 'word'
@@ -323,7 +319,6 @@ export const fetchEpisodeForPublic = unstable_cache(
       }
       const cefrRaw = typeof w.cefr === 'string' ? w.cefr.trim() : typeof w.CEFR === 'string' ? w.CEFR.trim() : ''
       if (cefrRaw) entry.cefr = cefrRaw.toLowerCase()
-      wordPool.set(poolKey, entry)
       return entry
     }
 
@@ -341,10 +336,7 @@ export const fetchEpisodeForPublic = unstable_cache(
       const words = b.words
       if (Array.isArray(words)) {
         for (const w of words) {
-          const enriched = enrichWord(w as Record<string, unknown>)
-          enrichedWords.push(enriched)
-          if (enriched.plain) wordMap[enriched.plain] = enriched
-          if (enriched.arabic) diacritizedMap[enriched.arabic] = enriched
+          enrichedWords.push(enrichWord(w as Record<string, unknown>))
         }
       }
 
@@ -383,8 +375,6 @@ export const fetchEpisodeForPublic = unstable_cache(
       vocabList: enrichedVocabList,
       grammarPoints: grammarPoints.map(enrichGrammarPoint),
       transcriptFormat: isNew ? 'new' : 'legacy',
-      wordMap,
-      diacritizedMap,
     }
   },
   ["cartoons", "episode"],
@@ -505,31 +495,41 @@ export const fetchExploreEpisodeByIdPublic = unstable_cache(
 )
 
 /** Batch variant for the explore feed: two queries for many episodes, and no
-    transcript column — the feed UI never reads transcriptLines. */
+    transcript column — the feed UI never reads transcriptLines. Cached by the
+    ID set: every visit plans a fresh order but hydrates the same episodes. */
+const fetchExploreEpisodesByIdsPublicCached = unstable_cache(
+  async (idsKey: string, uniqueIds: string[]): Promise<Map<string, ExploreEpisode>> => {
+    const episodes = new Map<string, ExploreEpisode>()
+    if (!hasServiceClientConfig() || uniqueIds.length === 0) return episodes
+    const { data: rows, error } = await serviceClient
+      .from("episodes")
+      .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
+      .in("id", uniqueIds)
+    if (error) throw new Error(error.message)
+    if (!rows?.length) return episodes
+    const showIds = Array.from(new Set(rows.map((row) => String(row.show_id))))
+    const { data: shows } = await serviceClient.from("shows").select("id, slug, title").in("id", showIds)
+    const showById = new Map((shows ?? []).map((show) => [String(show.id), show]))
+    for (const row of rows) {
+      const show = showById.get(String(row.show_id))
+      if (!show) continue
+      episodes.set(String(row.id), {
+        ...mapEpisodeRow(row as Record<string, unknown>),
+        showSlug: String(show.slug),
+        showTitle: String(show.title),
+        transcriptLines: [],
+      })
+    }
+    return episodes
+  },
+  ["cartoons", "explore", "episodes-by-ids", "storage-covers-v2"],
+  { revalidate: publicRevalidate, tags: ["cartoons-public"] }
+)
+
 export async function fetchExploreEpisodesByIdsPublic(episodeIds: string[]): Promise<Map<string, ExploreEpisode>> {
   const uniqueIds = Array.from(new Set(episodeIds))
-  const episodes = new Map<string, ExploreEpisode>()
-  if (!hasServiceClientConfig() || uniqueIds.length === 0) return episodes
-  const { data: rows, error } = await serviceClient
-    .from("episodes")
-    .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
-    .in("id", uniqueIds)
-  if (error) throw new Error(error.message)
-  if (!rows?.length) return episodes
-  const showIds = Array.from(new Set(rows.map((row) => String(row.show_id))))
-  const { data: shows } = await serviceClient.from("shows").select("id, slug, title").in("id", showIds)
-  const showById = new Map((shows ?? []).map((show) => [String(show.id), show]))
-  for (const row of rows) {
-    const show = showById.get(String(row.show_id))
-    if (!show) continue
-    episodes.set(String(row.id), {
-      ...mapEpisodeRow(row as Record<string, unknown>),
-      showSlug: String(show.slug),
-      showTitle: String(show.title),
-      transcriptLines: [],
-    })
-  }
-  return episodes
+  const idsKey = createHash("sha256").update([...uniqueIds].sort().join(",")).digest("hex").slice(0, 32)
+  return fetchExploreEpisodesByIdsPublicCached(idsKey, uniqueIds)
 }
 
 function mapEpisodeRow(

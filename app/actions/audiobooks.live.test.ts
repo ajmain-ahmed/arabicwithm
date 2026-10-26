@@ -11,7 +11,7 @@ import { createClient } from '@supabase/supabase-js'
 // authorization remains covered separately by the server-boundary tests.
 vi.mock('@/app/actions/auth', () => ({ guardAdmin: async () => {}, getAuthenticatedUserId: async () => 'test' }))
 vi.mock('@/app/actions/entitlements', () => ({ requireEntitlement: async () => {} }))
-vi.mock('next/cache', () => ({ revalidatePath: () => {} }))
+vi.mock('next/cache', () => ({ revalidatePath: () => {}, unstable_cache: (fn: unknown) => fn }))
 import { serviceClient } from '@/app/lib/supabase'
 import { verifyAudioObject } from '@/app/lib/verifyAudioObject'
 import { audioUploadBody } from '@/app/lib/audioUpload'

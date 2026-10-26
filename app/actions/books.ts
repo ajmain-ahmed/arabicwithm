@@ -3,6 +3,7 @@
 import { getAuthenticatedUserId } from "@/app/actions/auth"
 import { canAccessBookChapter } from "@/app/lib/entitlements"
 import { unstable_cache } from "next/cache"
+import { createHash } from "node:crypto"
 import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
 import { extractChapterTeaser } from "@/app/lib/bookChapterTeaser"
 import { stripDiacritics } from "@/app/lib/arabic"
@@ -11,8 +12,10 @@ import type { CartoonWordEntry } from "@/app/lib/cartoons"
 import { normalizeThumbnailCrop, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 
 /* Keep admin invalidation fast, while also picking up authoritative Supabase
-   changes made outside this process instead of caching them indefinitely. */
-const publicRevalidate = 60
+   changes made outside this process instead of caching them indefinitely.
+   Development gets a longer TTL so routine catalogue reads stay warm while
+   editing unrelated code. */
+const publicRevalidate = process.env.NODE_ENV === "development" ? 300 : 60
 
 export interface PublicBook {
   id: string
@@ -302,8 +305,11 @@ const fetchChapterContent = unstable_cache(
             transliteration: typeof token.transliteration === "string" ? token.transliteration : undefined,
             pos: typeof token.pos === "string" ? token.pos : undefined,
             cefr: typeof token.cefr === "string" ? token.cefr : undefined,
-            syntactic_role: isGrammarLabel(token.syntactic_role) ? token.syntactic_role : null,
-            grammatical_case: isGrammarLabel(token.grammatical_case) ? token.grammatical_case : null,
+            /* Legacy rows store these as explicit nulls on every token; omitting
+               the key keeps the reader payload (already ~150KB per chapter)
+               that much lighter with no behavior change. */
+            syntactic_role: isGrammarLabel(token.syntactic_role) ? token.syntactic_role : undefined,
+            grammatical_case: isGrammarLabel(token.grammatical_case) ? token.grammatical_case : undefined,
             entryType: (token.entry_type === "phrase" ? "phrase" : "word") as PublicBookToken["entryType"],
           }
         }).filter((token) => token.arabic),
@@ -324,21 +330,12 @@ const fetchChapterContent = unstable_cache(
 )
 
 export async function fetchChapterForPublic(bookId: string, chapterSlug: string): Promise<PublicChapterWithContent | null> {
-  const [book, chapterResult] = await Promise.all([
-    fetchBooksForPublic().then((books) => books.find((book) => book.id === bookId) ?? null),
-    hasServiceClientConfig()
-      ? serviceClient
-          .from("chapters")
-          .select("id, chapter_number")
-          .eq("book_id", bookId)
-          .eq("slug", chapterSlug)
-          .maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-  ])
-  if (!book || !chapterResult.data) return null
-  const chapterNumber = Number(chapterResult.data.chapter_number)
-  if (!canAccessBookChapter(Boolean(await getAuthenticatedUserId()), chapterNumber)) return null
-  return fetchChapterContent(bookId, chapterSlug)
+  /* One query serves both the entitlement gate and the payload: chapter_number
+     travels with the content, so there is no separate metadata round trip. */
+  const chapter = await fetchChapterContent(bookId, chapterSlug)
+  if (!chapter) return null
+  if (!canAccessBookChapter(Boolean(await getAuthenticatedUserId()), chapter.chapterNumber)) return null
+  return chapter
 }
 
 const EXPLORE_BLOCKS_PER_PAGE = 5
@@ -411,12 +408,9 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
-function buildExploreBookPages(
-  chapter: Record<string, unknown>,
-  book: { slug: string; title: string; cover?: string; level: string },
-): ExploreBookPage[] {
-  const rawBlocks = Array.isArray(chapter.content) ? chapter.content : []
-  const blocks: ExploreBookBlock[] = rawBlocks.flatMap((rawBlock) => {
+function parseExploreBlocks(rawContent: unknown): ExploreBookBlock[] {
+  const rawBlocks = Array.isArray(rawContent) ? rawContent : []
+  return rawBlocks.flatMap((rawBlock) => {
     const block = rawBlock && typeof rawBlock === "object" && !Array.isArray(rawBlock)
       ? rawBlock as Record<string, unknown>
       : null
@@ -457,6 +451,20 @@ function buildExploreBookPages(
         : undefined,
     }]
   })
+}
+
+/* Pages slice the same blocks buildExploreBookPages paginates, so a count is
+   ceil(blocks / per-page) — derivable without materializing any pages. */
+function countExplorePages(rawContent: unknown): number {
+  const blockCount = parseExploreBlocks(rawContent).length
+  return blockCount === 0 ? 0 : Math.ceil(blockCount / EXPLORE_BLOCKS_PER_PAGE)
+}
+
+function buildExploreBookPages(
+  chapter: Record<string, unknown>,
+  book: { slug: string; title: string; cover?: string; level: string },
+): ExploreBookPage[] {
+  const blocks = parseExploreBlocks(chapter.content)
 
   const pages: ExploreBookPage[] = []
   for (let start = 0; start < blocks.length; start += EXPLORE_BLOCKS_PER_PAGE) {
@@ -508,46 +516,62 @@ export async function fetchExploreBookChapterPages(chapterId: string): Promise<E
   return fetchExploreBookChapterPagesCached(chapterId)
 }
 
-/** Batch variant for the explore feed: one query for many chapters' pages. */
+/* Pages are cached by chapter ID set — feed batches reorder every visit but
+   hydrate the same chapters. The entitlement gate stays OUTSIDE the cache:
+   only signed-in users may read chapter pages at all. */
+const fetchExploreBookChapterPagesByChapterIdsCached = unstable_cache(
+  async (idsKey: string, uniqueIds: string[]): Promise<Map<string, ExploreBookPage[]>> => {
+    const pagesByChapter = new Map<string, ExploreBookPage[]>()
+    if (!hasServiceClientConfig() || uniqueIds.length === 0) return pagesByChapter
+    const { data: chapters, error } = await serviceClient
+      .from("chapters")
+      .select("id, book_id, slug, title, chapter_number, content")
+      .in("id", uniqueIds)
+    if (error) throw new Error(error.message)
+    if (!chapters?.length) return pagesByChapter
+    const books = await fetchBooksForPublic()
+    const bookById = new Map(books.map((book) => [book.id, book]))
+    for (const chapter of chapters) {
+      const book = bookById.get(String(chapter.book_id))
+      if (!book) continue
+      pagesByChapter.set(String(chapter.id), buildExploreBookPages(chapter as Record<string, unknown>, {
+        slug: book.slug,
+        title: book.title,
+        cover: book.cover,
+        level: book.level,
+      }))
+    }
+    return pagesByChapter
+  },
+  ["books", "public", "explore-chapter-pages-by-ids", "v1"],
+  { revalidate: publicRevalidate, tags: ["books-public"] }
+)
+
 export async function fetchExploreBookChapterPagesByChapterIds(chapterIds: string[]): Promise<Map<string, ExploreBookPage[]>> {
-  const pagesByChapter = new Map<string, ExploreBookPage[]>()
   const uniqueIds = Array.from(new Set(chapterIds))
-  if (!hasServiceClientConfig() || uniqueIds.length === 0) return pagesByChapter
-  if (!await getAuthenticatedUserId()) return pagesByChapter
-  const { data: chapters, error } = await serviceClient
-    .from("chapters")
-    .select("id, book_id, slug, title, chapter_number, content")
-    .in("id", uniqueIds)
-  if (error) throw new Error(error.message)
-  if (!chapters?.length) return pagesByChapter
-  const books = await fetchBooksForPublic()
-  const bookById = new Map(books.map((book) => [book.id, book]))
-  for (const chapter of chapters) {
-    const book = bookById.get(String(chapter.book_id))
-    if (!book) continue
-    pagesByChapter.set(String(chapter.id), buildExploreBookPages(chapter as Record<string, unknown>, {
-      slug: book.slug,
-      title: book.title,
-      cover: book.cover,
-      level: book.level,
-    }))
-  }
-  return pagesByChapter
+  if (uniqueIds.length === 0) return new Map<string, ExploreBookPage[]>()
+  if (!await getAuthenticatedUserId()) return new Map<string, ExploreBookPage[]>()
+  const idsKey = createHash("sha256").update([...uniqueIds].sort().join(",")).digest("hex").slice(0, 32)
+  return fetchExploreBookChapterPagesByChapterIdsCached(idsKey, uniqueIds)
 }
 
-/* ── Page counts per chapter. Only the counts are cached; deriving
-   them reads chapter content once per cold cache, after which batch
-   planning costs bytes, not megabytes. ── */
+/* ── Page counts per chapter. Only the counts are cached; cold caches pay
+   one batched content query for every explore chapter at once, not one query
+   per chapter. ── */
 export const fetchExploreBookChapterPageCounts = unstable_cache(
   async (): Promise<Record<string, number>> => {
     const metas = await fetchExploreBookChapterMetasForPublic()
-    const entries = await Promise.all(
-      metas.map(async (meta) => {
-        const pages = await fetchExploreBookChapterPagesCached(meta.chapterId)
-        return [meta.chapterId, pages.length] as const
-      })
-    )
-    return Object.fromEntries(entries)
+    if (metas.length === 0 || !hasServiceClientConfig()) return {}
+    const { data: chapters, error } = await serviceClient
+      .from("chapters")
+      .select("id, content")
+      .in("id", metas.map((meta) => meta.chapterId))
+    if (error) throw new Error(error.message)
+    const counts: Record<string, number> = Object.fromEntries(metas.map((meta) => [meta.chapterId, 0]))
+    for (const chapter of chapters ?? []) {
+      counts[String(chapter.id)] = countExplorePages((chapter as Record<string, unknown>).content)
+    }
+    return counts
   },
   ["books", "public", "explore-chapter-page-counts", "v1"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
