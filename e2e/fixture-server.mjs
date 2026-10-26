@@ -6,6 +6,8 @@ import { spawn, spawnSync } from 'node:child_process'
 import { mkdirSync, readFileSync, rmSync } from 'node:fs'
 import path from 'node:path'
 
+let allowanceBudget = 900000
+const allowanceReports = new Map()
 const webPort = Number(process.env.AWM_TEST_WEB_PORT ?? 3000)
 const backendPort = Number(process.env.AWM_TEST_BACKEND_PORT ?? 4310)
 const webUrl = `http://127.0.0.1:${webPort}`
@@ -140,6 +142,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if(req.method==='PUT')metadata.set(id,{...metadata.get(id),...body.user_metadata})
     return json(res, { user: account(id) })
   }
+  if(url.pathname==='/fixture/for-you-allowance'){if(req.method==='POST'){allowanceBudget=body.remainingMs??900000;allowanceReports.clear()}return json(res,{remainingMs:Math.max(0,allowanceBudget-Math.max(0,...allowanceReports.values()))})}
   if (url.pathname === '/auth/v1/user') {
     if (req.method === 'PUT' && userId) metadata.set(userId, { ...metadata.get(userId), ...body.data })
     return userId ? json(res, account(userId)) : json(res, { message: 'Auth session missing!' }, 401)
@@ -271,6 +274,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       accessAudit.push({enabled:body.p_premium,reason:body.p_notes,changed_at:new Date().toISOString()})
       return json(res,{role:body.p_role,manual:body.p_premium,premium:effective(body.p_target)})
     }
+    if(rpc==='website_for_you_usage'){const unlimited=effective(body.p_user_id);if(!unlimited)allowanceReports.set(body.p_lease,Math.max(allowanceReports.get(body.p_lease)??0,body.p_total_ms));return json(res,{unlimited,remainingMs:unlimited?null:Math.max(0,allowanceBudget-[...allowanceReports.values()].reduce((a,b)=>a+b,0)),busy:false,day:'2026-10-26'})}
     if(rpc==='account_has_premium')return json(res,effective(body.p_user_id))
     if(rpc==='admin_set_manual_premium'){
       if(body.p_actor!==ids.admin)return json(res,{message:'Forbidden'},403)

@@ -232,9 +232,21 @@ it('free users finish the whole first session, then see an upgrade on another st
  expect(host.textContent).toContain('Deck complete');await click('Practise again')
  expect(mocks.begin).toHaveBeenCalledTimes(1);expect(host.textContent).toContain('Upgrade for unlimited Memory sessions')
 })
+<<<<<<< HEAD
 it('a completed saved recap is available after the daily free session is used',async()=>{
  const state={sessionId:crypto.randomUUID(),cards,index:cards.length,completed:cards.length,direction:'arabic',completionIds:cards.map(()=>crypto.randomUUID())}
  mocks.progress.mockResolvedValue({ok:true,data:{used:1,premium:false}});mocks.saved.mockResolvedValue({ok:true,data:state})
  await mount();await click('View saved recap - 2 completed')
  expect(host.textContent).toContain('Deck complete');expect(mocks.begin).not.toHaveBeenCalled();expect(mocks.resume).toHaveBeenCalledOnce()
+=======
+it('does not load or restore an unfinished prior queue and preserves Save and Exit',async()=>{
+ mocks.saved.mockResolvedValue({ok:true,data:{cards,index:1,completed:1}})
+ await mount()
+ expect(mocks.saved).not.toHaveBeenCalled();expect(mocks.resume).not.toHaveBeenCalled()
+ expect(host.textContent).not.toContain('Resume saved session')
+ await click('Start')
+ await click('Save and Exit')
+ expect(mocks.push).toHaveBeenCalledWith('/')
+ expect(mocks.save).not.toHaveBeenCalled()
+>>>>>>> 599bb95 (changes)
 })

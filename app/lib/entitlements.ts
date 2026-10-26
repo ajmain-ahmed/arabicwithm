@@ -3,6 +3,7 @@ export const PREMIUM = { monthlyPence: 499, currency: 'gbp', label: '£4.99/mont
 export const PREMIUM_BENEFITS = [
   { id: 'offline-books', label: 'Offline books', appOnly: false },
   { id: 'audiobooks', label: 'Audiobooks', appOnly: false },
+  { id: 'for-you', label: 'Unlimited For You viewing', appOnly: false },
   { id: 'memory', label: 'Unlimited Memory Practice', appOnly: false },
   { id: 'flashcards', label: 'Unlimited flashcards', appOnly: true },
 ] as const
@@ -25,6 +26,7 @@ export interface Entitlements {
   canDownloadBooks: boolean
   canUseAudiobooks: boolean
   memoryDailyLimit: number | null
+  forYouDailyMs: number | null
 }
 
 export function resolveEntitlements(signedIn: boolean, premium: boolean, role: 'user' | 'editor' | 'admin' = 'user'): Entitlements {
@@ -46,6 +48,7 @@ export function resolveEntitlements(signedIn: boolean, premium: boolean, role: '
     canReadBooks: signedIn,
     canDownloadBooks: paid,
     canUseAudiobooks: paid,
+    forYouDailyMs: paid ? null : 15 * 60 * 1000,
     memoryDailyLimit: paid ? null : MEMORY.dailyFreeSessions,
   }
 }

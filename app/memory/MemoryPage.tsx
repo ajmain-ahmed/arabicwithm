@@ -18,7 +18,7 @@ import {
 import { Alert, Autocomplete, Box, Button, Container, LinearProgress, Paper, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import PremiumPrompt from "@/app/components/PremiumPrompt"
 import { MEMORY } from "@/app/lib/entitlements"
-import { resumeMemorySession, beginMemorySession, loadMemoryProgress, loadSavedMemorySession, persistMemorySession, type SavedMemorySession, submitMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
+import { beginMemorySession, loadMemoryProgress, type SavedMemorySession, submitMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
 import { useAuth } from '@/app/AuthContext'
 import type { MemoryDirection, MemoryRating } from '@/app/lib/memory'
 
@@ -64,13 +64,11 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const activePractice = practice.phase === 'practice'
   const reducedMotion = useReducedMotion()
   const [navigating, startNavigation] = useTransition()
-  const [saved, setSaved] = useState<SavedMemorySession | null>(null)
   const [used, setUsed] = useState(0)
   const [premium, setPremium] = useState(false)
   const [progressReady, setReady] = useState(false)
   const ready = (!user && !loading) || progressReady
   const [progressError, setProgressError] = useState('')
-  const [sessionError, setSessionError] = useState('')
   const [progressLoading, setProgressLoading] = useState(Boolean(user))
   const [loadAttempt, setLoadAttempt] = useState(0)
   const [saving, setSaving] = useState(false)
@@ -99,7 +97,6 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
       }).finally(() => { if (active) setProgressLoading(false) })
     }
     load()
-    if (!started) void loadSavedMemorySession().then(result => { if (!result.ok) throw new Error(result.error); const session = result.data; if (active) { setSaved(session); setSessionError('') } }).catch(error => { if (active) setSessionError(error instanceof Error ? error.message : 'Unable to load your saved session.') })
     /* Recheck current access while visible, including before a new session. */
     const refresh = () => { if (document.visibilityState === 'visible') load() }
     const timer = window.setInterval(refresh, 60000)
@@ -107,7 +104,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     window.addEventListener('account-access-changed', refresh)
     return () => { active = false; window.clearInterval(timer); window.removeEventListener('focus', refresh); window.removeEventListener('account-access-changed', refresh) }
   }, [loading, user, loadAttempt, started])
-  const retryProgress = () => { setProgressLoading(true); setProgressError(''); setSessionError(''); setLoadAttempt(value => value + 1) }
+  const retryProgress = () => { setProgressLoading(true); setProgressError(''); setLoadAttempt(value => value + 1) }
   const card = cards[index]
 
   const chooseDirection = (next: MemoryDirection) => {
@@ -134,8 +131,11 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
     finally { reviewVersion.current += 1; busyRef.current = false; if (mounted.current) setSaving(false) }
   }, [card, cards, completed, completionIds, direction, index, limited, sessionId, revealed, user, ready, loading, navigating])
 
+  // Each completed card is committed before navigation is enabled. Exit does
+  // not save an unfinished queue for restoration on a later visit.
   const saveAndExit = async () => {
     if (busyRef.current || navigating) return
+<<<<<<< HEAD
     if (!user) { router.push('/'); return }
     busyRef.current = true; setSaving(true); setSaveError('')
     try {
@@ -145,6 +145,9 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
       router.push('/')
     } catch { if (mounted.current) setSaveError('Unable to save your session. Please try again.') }
     finally { busyRef.current = false; if (mounted.current) setSaving(false) }
+=======
+    router.push('/')
+>>>>>>> 599bb95 (changes)
   }
 
   useEffect(() => {
@@ -191,20 +194,9 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         setUsed(result.used)
         Object.assign(state,result.state)
       }
-      pendingStart.current=null; submitted.current.clear(); dispatch({type:'begin',session:state}); setSaved(null)
+      pendingStart.current=null; submitted.current.clear(); dispatch({type:'begin',session:state})
     } catch { if (mounted.current) setSaveError('Unable to start your session. Please try again.') }
     finally { busyRef.current = false; if (mounted.current) setSaving(false) }
-  }
-  const resume = async () => {
-    if (!saved || busyRef.current || !ready || navigating) return
-    busyRef.current=true;setSaving(true);setSaveError('')
-    try{
-      const result=await resumeMemorySession(saved)
-      if(!mounted.current)return
-      if(result.status==='upgrade'){setUpgrade(true);return}
-      dispatch({type:'begin',session:result.state}); chooseDirection(result.state.direction); setSaved(null)
-    }catch(e){if(mounted.current)setSaveError(e instanceof Error?e.message:'Unable to resume session.')}
-    finally{busyRef.current=false;if(mounted.current)setSaving(false)}
   }
   const requestNewCards = () => {
     if (busyRef.current || navigating || loading) return
@@ -275,11 +267,9 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         <PremiumPrompt open={upgrade} onClose={() => setUpgrade(false)} reason={`You've used today's free Memory session. Upgrade to AWM+ for unlimited Memory sessions.`} />
         {progressLoading && <Box role="status" sx={{ mt: 2 }}><Typography>Loading Memory progress...</Typography><LinearProgress /></Box>}
         {progressError && <Alert severity="error" sx={{ mt: 2 }} action={<Button onClick={retryProgress} disabled={progressLoading}>Retry</Button>}>{progressError}</Alert>}
-        {!progressError && sessionError && <Alert severity="warning" sx={{ mt: 2 }} action={<Button onClick={retryProgress}>Retry</Button>}>{sessionError} Your completed-card statistics are still available.</Alert>}
 
         {saveError && <Alert severity="error" sx={{ mt: 2 }}>{saveError}</Alert>}
         {limited && <Paper role="status" variant="outlined" sx={{ mt: 2, mx: 'auto', maxWidth: 480, p: {xs: 2, sm: 3}, textAlign: 'center', borderRadius: 3 }}><InfoOutlined sx={{ color: 'var(--awm-gold)', mb: 1 }} /><Typography>You&apos;ve used today&apos;s free Memory session.</Typography><Typography sx={{ mt: 1, color: 'text.secondary' }}>Unlock unlimited Memory sessions. You can still resume your saved session or view its recap.</Typography><Button fullWidth variant="contained" onClick={() => setUpgrade(true)} sx={{ mt: 2, minHeight: 48, textTransform: 'none', fontSize: {xs: 13, sm: 15} }}>Upgrade to Arabic with M</Button></Paper>}
-        {saved && !started && <Button onClick={()=>void resume()} disabled={!ready || saving}>{saved.index===saved.cards.length?'View saved recap':'Resume saved session'} - {saved.completed} completed</Button>}
         {loadError && <Alert severity="error" sx={{ mt: 2.5 }}>{loadError}</Alert>}
         {library.missingScope && <Alert severity="warning" sx={{ mt: 2.5 }}>That source is no longer available. Choose a show or switch to Random practice.</Alert>}
 

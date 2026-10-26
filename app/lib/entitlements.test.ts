@@ -43,3 +43,10 @@ it('resolves independent editorial and Premium capabilities, with Admin inherita
  expect(resolveEntitlements(true,false,'admin')).toMatchObject({isEditor:true,isAdmin:true,isPremium:true,memoryDailyLimit:null})
  expect(resolveEntitlements(false,true,'admin')).toMatchObject({isEditor:false,isAdmin:false,isPremium:false})
 })
+
+it('keeps paid product access separate from Editor and Admin roles',()=>{
+ expect(resolveEntitlements(true,false,'user')).toMatchObject({canReadBooks:true,canWatchVideos:true,canUseAudiobooks:false,memoryDailyLimit:1,forYouDailyMs:900000,isEditor:false,isAdmin:false})
+ expect(resolveEntitlements(true,true,'user')).toMatchObject({canUseAudiobooks:true,memoryDailyLimit:null,forYouDailyMs:null,isEditor:false,isAdmin:false})
+ expect(resolveEntitlements(true,false,'editor')).toMatchObject({canEditContent:true,canAdminister:false,canReadBooks:true,canUseAudiobooks:false,forYouDailyMs:900000})
+ expect(resolveEntitlements(true,false,'admin')).toMatchObject({canUseAudiobooks:true,memoryDailyLimit:null,forYouDailyMs:null,canAdminister:true})
+})

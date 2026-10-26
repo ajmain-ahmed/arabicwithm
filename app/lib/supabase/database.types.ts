@@ -331,6 +331,8 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      website_for_you_usage: { Args: {p_user_id:string;p_lease?:string|null;p_total_ms?:number;p_active?:boolean}; Returns: Json }
+
       website_begin_manual_import: {Args:Database['public']['Functions']['admin_begin_manual_import']['Args']&{p_explore_published:boolean};Returns:Json}
       website_finish_manual_import: {Args:{p_actor:string;p_import:string};Returns:Json}
       website_save_manual_source: {Args:Database['public']['Functions']['admin_save_manual_source']['Args']&{p_explore_published:boolean};Returns:Json}

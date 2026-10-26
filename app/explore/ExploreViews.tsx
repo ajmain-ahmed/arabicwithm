@@ -6,6 +6,7 @@ import { Close, ExploreOutlined, PersonOutlineRounded } from '@mui/icons-materia
 import ExploreFeed from './ExploreFeed'
 import {setExploreSoundPreference} from '@/app/lib/explore'
 import { useAuth } from '@/app/AuthContext'
+import ForYouAllowance from './ForYouAllowance'
 import ForYouFeed from './ForYouFeed'
 
 type ExploreView = 'explore' | 'foryou'
@@ -48,6 +49,6 @@ export default function ExploreViews() {
   const rail = <ViewSwitch view={view} onChange={setView} hint={hintFor === view} onDismiss={dismiss} />
   return <Box sx={{ position: 'relative', '--awm-explore-switch-height': '0px' }}>
     <Box data-mobile-explore-switch sx={{ display: { xs: view === 'explore' ? 'flex' : 'none', md: 'none' }, position: 'absolute', top: 12, left: 'max(12px, env(safe-area-inset-left))', zIndex: 10 }}><ViewSwitch mobile view={view} onChange={setView} hint={false} onDismiss={dismiss} /></Box>
-    {view === 'explore' ? <ExploreFeed railTop={<Box sx={{ display: { xs: 'none', md: 'block' } }}>{rail}</Box>} /> : !user ? <Box sx={{minHeight:'calc(100dvh - var(--awm-navbar-height))',display:'grid',placeItems:'center',p:3}}><Box sx={{textAlign:'center'}}><Typography variant="h4">For You</Typography><Typography sx={{my:2}}>{loading?'Checking your account?':'Sign in to watch your For You feed.'}</Typography>{!loading&&<Button variant="contained" onClick={()=>window.dispatchEvent(new CustomEvent('open-auth-dialog',{detail:{mode:'signin'}}))}>Sign in</Button>}<Button onClick={()=>setView('explore')} sx={{display:'block',mx:'auto',mt:2}}>Back to Explore</Button></Box></Box> : <ForYouFeed mobileSwitcher={<ViewSwitch mobile view={view} onChange={setView} hint={false} onDismiss={dismiss} />} desktopControls={settings => <ViewSwitch view={view} onChange={setView} hint={hintFor === view} onDismiss={dismiss} trailing={settings} />} />}
+    {view === 'explore' ? <ExploreFeed railTop={<Box sx={{ display: { xs: 'none', md: 'block' } }}>{rail}</Box>} /> : !user ? <Box sx={{minHeight:'calc(100dvh - var(--awm-navbar-height))',display:'grid',placeItems:'center',p:3}}><Box sx={{textAlign:'center'}}><Typography variant="h4">For You</Typography><Typography sx={{my:2}}>{loading?'Checking your account?':'Sign in to watch your For You feed.'}</Typography>{!loading&&<Button variant="contained" onClick={()=>window.dispatchEvent(new CustomEvent('open-auth-dialog',{detail:{mode:'signin'}}))}>Sign in</Button>}<Button onClick={()=>setView('explore')} sx={{display:'block',mx:'auto',mt:2}}>Back to Explore</Button></Box></Box> : <ForYouAllowance key={user.id} onExplore={()=>setView('explore')}><ForYouFeed mobileSwitcher={<ViewSwitch mobile view={view} onChange={setView} hint={false} onDismiss={dismiss} />} desktopControls={settings => <ViewSwitch view={view} onChange={setView} hint={hintFor === view} onDismiss={dismiss} trailing={settings} />} /></ForYouAllowance>}
   </Box>
 }

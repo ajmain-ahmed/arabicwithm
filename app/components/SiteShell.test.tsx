@@ -4,7 +4,7 @@ import {beforeEach,afterEach,expect,it,vi} from 'vitest'
 const mocks=vi.hoisted(()=>({path:'/reviewer'}))
 vi.mock('next/navigation',()=>({usePathname:()=>mocks.path}))
 vi.mock('./navbar/index',()=>({default:()=>null}))
-vi.mock('./footer',()=>({default:()=>null}))
+vi.mock('./footer',()=>({default:()=> <footer>Footer</footer>}))
 vi.mock('./MobileBottomNav',()=>({default:()=>null}))
 vi.mock('./LazyFloatingVideoPlayer',()=>({default:()=>null}))
 vi.mock('./LearningActivityTracker',()=>({default:()=>null}))
@@ -17,4 +17,10 @@ it('recovers from a prior page error after client navigation instead of keeping 
  await act(async()=>root.render(<SiteShell><Broken/></SiteShell>));expect(host.textContent).toContain('Something went wrong');expect(console.error).toHaveBeenCalled()
  mocks.path='/profile';await act(async()=>root.render(<SiteShell><p>New profile content</p></SiteShell>))
  expect(host.textContent).toContain('New profile content');expect(host.textContent).not.toContain('Something went wrong')
+})
+
+it.each(['/','/learn','/memory','/grammar','/word-search','/books','/books/story/chapter','/cartoons','/explore','/profile','/support','/feedback','/admin/shows','/learn/activity'])('renders the footer only on exact landing routes: %s',async(path)=>{
+ mocks.path=path
+ await act(async()=>root.render(<SiteShell><p>Page</p></SiteShell>))
+ expect(Boolean(host.querySelector('footer'))).toBe(path==='/'||path==='/learn')
 })

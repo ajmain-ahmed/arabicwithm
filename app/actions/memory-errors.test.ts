@@ -10,7 +10,7 @@ vi.mock('@/app/lib/supabase', () => ({ hasServiceClientConfig: () => true, servi
     return query
   },
 } }))
-import { loadMemoryProgress, loadSavedMemorySession } from './memory'
+import { loadMemoryProgress } from './memory'
 beforeEach(() => { vi.clearAllMocks(); mocks.auth.mockResolvedValue('verified-user'); mocks.result.error = null; mocks.result.data = null; mocks.rpc.mockResolvedValue({ data: null, error: null }); vi.spyOn(console, 'error').mockImplementation(() => {}) })
 afterEach(() => { vi.restoreAllMocks() })
 it('returns a serializable setup error instead of throwing a redacted production exception', async () => {
@@ -19,16 +19,20 @@ it('returns a serializable setup error instead of throwing a redacted production
   const result = await loadMemoryProgress()
   expect(result.ok).toBe(false)
   if (!result.ok) expect(result.error).toContain('storage')
-  expect((await loadSavedMemorySession()).ok).toBe(false)
   expect(console.error).toHaveBeenCalled()
 })
 it('handles absent aggregate data and an absent saved session', async () => {
+<<<<<<< HEAD
   expect(await loadMemoryProgress()).toMatchObject({ ok: true, data: { used: 0, total: 0 } })
   expect(await loadSavedMemorySession()).toEqual({ ok: true, data: null })
+=======
+  expect(await loadMemoryProgress()).toMatchObject({ ok: true, data: { totalXp: 0, total: 0 } })
+>>>>>>> 599bb95 (changes)
 })
 it('handles signed-out progress without a rejected action', async () => {
   mocks.auth.mockResolvedValue(null)
   expect((await loadMemoryProgress()).ok).toBe(false)
+<<<<<<< HEAD
   expect(await loadSavedMemorySession()).toEqual({ ok: true, data: null })
 })
 
@@ -37,4 +41,6 @@ it('restores a completed snapshot as a recap without starting another session',a
  mocks.result.data={state}
  await expect(loadSavedMemorySession()).resolves.toEqual({ok:true,data:state})
  expect(mocks.rpc).not.toHaveBeenCalled()
+=======
+>>>>>>> 599bb95 (changes)
 })

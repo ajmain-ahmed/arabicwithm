@@ -13,6 +13,7 @@ import { getExploreSoundPreference, subscribeToExploreSoundPreference, setExplor
 
 import { blockedForYouSources, excludeForYouSource } from '@/app/lib/forYouPlayback'
 import TextSizeControl, { safeTextSize, TEXT_SCALES } from '@/app/components/settings-controls/TextSizeControl'
+import {useForYouMeter} from './ForYouMeterContext'
 import MobileClipNavigator from './MobileClipNavigator'
 import ShortFullSwitch from './ShortFullSwitch'
 import DesktopPlayerResize from './DesktopPlayerResize'
@@ -48,6 +49,7 @@ export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tok
 }
 
 export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl }: { full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
+  const samplePlayback=useForYouMeter()
   const isPhone = useMediaQuery('(max-width:899.95px)')
   const playerSizeRef=useRef<HTMLDivElement>(null)
   const [playerWidth,setPlayerWidth]=useState<number|null>(null)
@@ -82,6 +84,8 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
     document.addEventListener('pointerdown', enable)
     return () => document.removeEventListener('pointerdown', enable)
   }, [isPhone, isReady, soundEnabled, isMuted, playWithSound])
+  useEffect(()=>{samplePlayback?.({time,playing:isReady&&isPlaying,rate:playbackRate??1,pause:pauseVideo})},[time,isReady,isPlaying,playbackRate,pauseVideo,samplePlayback])
+  useEffect(()=>()=>{samplePlayback?.({time:0,playing:false,rate:1,pause:pauseVideo})},[samplePlayback,pauseVideo])
   const visibleClip = full ? {...clip,clip_start_ms:0,clip_end_ms:Math.max(...segments.map(s=>s.end_seconds),clip.clip_end_ms/1000)*1000} : clip
   const active = full || (time>=clip.clip_start_ms/1000 && time<clip.clip_end_ms/1000) ? segmentAtTime(segments,time) : undefined
   const rates=getPlaybackRates?.()??[1],rate=playbackRate??1

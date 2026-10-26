@@ -258,23 +258,6 @@ export async function fetchMemoryProgress() {
   return { used: daily.data ?? 0, total: all.cards, weekCards: weekly.cards, premium: entitlement.premium }
 }
 
-export async function saveMemorySession(input: SavedMemorySession) {
-  const userId = await getAuthenticatedUserId()
-  if (!userId) throw new Error('Sign in to save your session.')
-  const state = sessionSchema.parse(input)
-  const { error } = await serviceClient.rpc('website_save_memory_session',{p_user_id:userId,p_state:state})
-  if (error) throw new Error('Unable to save session. Please try again.')
-}
-export async function fetchSavedMemorySession(): Promise<SavedMemorySession | null> {
-  const userId = await getAuthenticatedUserId()
-  if (!userId) return null
-  const { data, error } = await serviceClient.from('memory_sessions').select('state').eq('user_id', userId).maybeSingle()
-  if (isMissingDatabaseFeature(error)) throw new Error(LEARNING_SETUP_MESSAGE)
-  if (error) throw new Error('Unable to load saved session.')
-  const parsed = sessionSchema.safeParse(data?.state)
-  return parsed.success && parsed.data.cards.length > 0 ? parsed.data : null
-}
-
 // Expected storage errors must cross the production Server Action boundary as
 // data: thrown errors are intentionally redacted by Next.js.
 export async function loadMemoryProgress() {
@@ -284,21 +267,9 @@ export async function loadMemoryProgress() {
     return { ok: false as const, error: error instanceof Error && error.message === LEARNING_SETUP_MESSAGE ? LEARNING_SETUP_MESSAGE : 'Unable to load Memory progress. Please sign in and try again.' }
   }
 }
-export async function loadSavedMemorySession() {
-  try { return { ok: true as const, data: await fetchSavedMemorySession() } }
-  catch (error) {
-    console.error('[memory session]', error)
-    return { ok: false as const, error: error instanceof Error && error.message === LEARNING_SETUP_MESSAGE ? LEARNING_SETUP_MESSAGE : 'Unable to load your saved session. Please try again.' }
-  }
-}
-
 export async function submitMemoryReview(cardId:string,rating:MemoryRating,completionId:string,state:SavedMemorySession) {
   return actionResult('memory review',()=>recordMemoryReview(cardId,rating,completionId,state),'Unable to save this card. Your place is unchanged; please retry. If the source was removed, choose New cards.')
 }
-export async function persistMemorySession(state:SavedMemorySession) {
-  return actionResult('memory save',()=>saveMemorySession(state),'Unable to save your session. Please try again.')
-}
-
 /** Atomic start reservation, idempotent by client-generated session ID. */
 export async function beginMemorySession(input: SavedMemorySession): Promise<{status:'ready';state:SavedMemorySession;used:number}|{status:'upgrade'}> {
  const userId=await getAuthenticatedUserId()
@@ -312,6 +283,7 @@ export async function beginMemorySession(input: SavedMemorySession): Promise<{st
  if(!result.state)throw new Error('Unable to restore session.')
  return {status:'ready',state:result.state,used:result.used}
 }
+<<<<<<< HEAD
 
 export async function resumeMemorySession(input:SavedMemorySession):Promise<{status:'ready';state:SavedMemorySession}|{status:'upgrade'}> {
  const userId=await getAuthenticatedUserId()
@@ -328,3 +300,5 @@ export async function resumeMemorySession(input:SavedMemorySession):Promise<{sta
  if(error)throw new Error('Unable to resume this session. Please retry.')
  return {status:'ready',state:sessionSchema.parse(data)}
 }
+=======
+>>>>>>> 599bb95 (changes)

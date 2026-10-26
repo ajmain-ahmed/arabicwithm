@@ -40,7 +40,6 @@ import {
   fetchMemoryLibrary,
   recordMemoryReview,
   submitMemoryReview,
-  fetchSavedMemorySession,
 } from "./memory";
 const user = "11111111-1111-4111-8111-111111111111",
   completion = "22222222-2222-4222-8222-222222222222";
@@ -129,12 +128,7 @@ it("does not cache transport failures as deleted content", async () => {
   ).toBe(false);
   expect(mocks.cookieRpc).not.toHaveBeenCalled();
 });
-it("rejects corrupt restored sessions and missing identities", async () => {
-  mocks.source.mockResolvedValueOnce({
-    data: { state: { ...session, index: 5 } },
-    error: null,
-  });
-  expect(await fetchSavedMemorySession()).toBeNull();
+it("rejects missing identities", async () => {
   mocks.user.mockResolvedValue(null);
   expect(
     (await submitMemoryReview(card.id, "known", completion, session)).ok,

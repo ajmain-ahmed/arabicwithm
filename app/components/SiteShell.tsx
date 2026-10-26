@@ -13,13 +13,13 @@ import LearningActivityTracker from './LearningActivityTracker'
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const isAdminRoute = pathname?.startsWith('/admin') ?? false
+  const showFooter = pathname === '/' || pathname === '/learn'
   const isExploreRoute = pathname === '/explore'
 
   if (isAdminRoute) {
     return (
       <ErrorBoundary key={pathname}>
         <Box className="awm-site-pages">{children}</Box>
-        <Footer />
       </ErrorBoundary>
     )
   }
@@ -35,7 +35,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           pt: 'var(--awm-navbar-height)',
           flex: '1 0 auto',
           minHeight: '100dvh',
-          pb: 0,
+          pb: isExploreRoute || pathname?.startsWith('/books/') || pathname === '/word-search' ? 0 : { xs: 'var(--awm-mobile-bottom-clearance)', md: 0 },
           minWidth: 0,
           overflowX: isExploreRoute ? 'hidden' : undefined,
           '& :target': {
@@ -47,7 +47,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           <GlobalDataInit>{children}</GlobalDataInit>
         </ErrorBoundary>
       </Box>
-      {!isExploreRoute && <Footer />}
+      {showFooter && <Footer />}
       <MobileBottomNav />
       {!isExploreRoute && <LazyFloatingVideoPlayer />}
     </Box>
