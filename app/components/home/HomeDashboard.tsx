@@ -302,7 +302,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
           },
         }}
       >
-        <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 430, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+        <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 360, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
           {/* Responsive AVIF set encoded from the pristine source: the browser
               picks the width per viewport/DPR, so retina screens are never
               served an upscale (plain <img>, not next/image — a custom loader
