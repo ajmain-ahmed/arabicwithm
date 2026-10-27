@@ -18,6 +18,12 @@ export default async function HomePage() {
       fetchNewOnEpisodes().catch(() => []),
     ])
     const availableEpisodes = await fetchHomeEpisodes(shows).catch(() => [])
+    const dbzEntries = availableEpisodes
+      .filter((entry) => entry.show.slug === 'dbz')
+      .sort((left, right) => (right.episode.createdAt ?? '').localeCompare(left.episode.createdAt ?? ''))
+    const featured = dbzEntries.length > 0
+      ? { show: dbzEntries[0].show, episode: dbzEntries[0].episode, episodeCount: dbzEntries.length }
+      : null
     const chapterEntries = books.map(book => [book.slug, chapterNavigation[book.id] ?? []] as const)
     const rotationDate = new Date()
     const featuredEpisodeIndex = dailyRotationIndex(availableEpisodes.length, rotationDate)
@@ -33,6 +39,7 @@ export default async function HomePage() {
         chaptersByBook={Object.fromEntries(chapterEntries)}
         newShows={newShows}
         newEpisodes={newEpisodes}
+        featured={featured}
       />
     )
   })

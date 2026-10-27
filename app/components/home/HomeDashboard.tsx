@@ -29,6 +29,7 @@ import { continueReading } from './continueReading'
 import { fetchMyList } from '@/app/actions/myList'
 import { useMyListCache } from '@/store/myListStore'
 import MemberActions from '@/app/components/navbar/MemberActions'
+import FeaturedHero from './FeaturedHero'
 import { fetchMyDisplayName } from '@/app/actions/profiles'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
@@ -193,7 +194,7 @@ export function UpgradeSection() {
   )
 }
 
-export default function HomeDashboard({ books, newShows, newEpisodes, chaptersByBook }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[] }) {
+export default function HomeDashboard({ books, newShows, newEpisodes, chaptersByBook, featured }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; featured?: import('./FeaturedHero').FeaturedShow | null }) {
   const { mode } = useColorMode()
   const { user } = useAuth()
   const isMobile=useMediaQuery('(max-width:899.95px)')
@@ -318,6 +319,9 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
           },
         }}
       >
+        {user && featured ? (
+          <FeaturedHero show={featured.show} episode={featured.episode} episodeCount={featured.episodeCount} />
+        ) : (
         <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 360, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
           {/* Responsive AVIF set encoded from the pristine source: the browser
               picks the width per viewport/DPR, so retina screens are never
@@ -358,6 +362,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
             </Box>
           </Container>
         </Box>
+        )}
 
         <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 4, md: 5 } }}>
           {user && myListRowItems.length > 0 && (
