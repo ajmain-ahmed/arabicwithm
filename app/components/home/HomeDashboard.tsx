@@ -372,16 +372,16 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
         )}
 
         <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 4, md: 5 } }}>
-          {user && continueReadingRowItems.length > 0 && (
-            <Container maxWidth={false}>
-              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Continue Reading</Typography>
-              <NewOnRow items={continueReadingRowItems} ariaLabel="Continue Reading" compact />
-            </Container>
-          )}
           {user && myListRowItems.length > 0 && (
             <Container maxWidth={false}>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
               <NewOnRow items={myListRowItems} ariaLabel="My List" autoScroll compact />
+            </Container>
+          )}
+          {user && continueReadingRowItems.length > 0 && (
+            <Container maxWidth={false} sx={{ mt: user && myListRowItems.length > 0 ? { xs: 2.5, md: 3.25 } : 0 }}>
+              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Continue Reading</Typography>
+              <NewOnRow items={continueReadingRowItems} ariaLabel="Continue Reading" compact />
             </Container>
           )}
           {user && myListLoading && myListRowItems.length === 0 && (
