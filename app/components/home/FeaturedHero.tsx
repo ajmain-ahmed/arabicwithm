@@ -20,7 +20,7 @@ export default function FeaturedHero({ show, episode }: FeaturedShow) {
     <Box
       data-featured-hero
       sx={{
-        pt: 'calc(var(--awm-navbar-height) + 6px)',
+        pt: 'calc(var(--awm-navbar-height) + 2px)',
         pb: { xs: 1.5, md: 2.5 },
         px: { xs: 2, md: 4 },
       }}
@@ -140,7 +140,7 @@ export default function FeaturedHero({ show, episode }: FeaturedShow) {
                 '&:hover': { bgcolor: 'rgba(109,109,110,0.4)' },
               }}
             >
-              More Episodes
+              Episodes
             </Button>
           </Box>
         </Box>
