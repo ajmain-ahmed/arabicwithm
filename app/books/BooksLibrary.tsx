@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import LibraryBookCard, { LIBRARY_GRID_SX } from '@/app/books/LibraryBookCard'
-import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Typography, ToggleButton, ToggleButtonGroup } from '@mui/material'
-import { Close, Tune } from '@mui/icons-material'
+import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, TextField, Typography, ToggleButton, ToggleButtonGroup } from '@mui/material'
+import { Close, Search, Tune } from '@mui/icons-material'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
@@ -56,6 +56,7 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
   const [level, setLevel] = useState('')
   const [categories, setCategories] = useState<string[]>([])
   const [audioOnly, setAudioOnly] = useState(false)
+  const [query, setQuery] = useState('')
   const audioIds = useMemo(() => new Set(audioBookIds), [audioBookIds])
 
   /* Genre = the book's category; deduped case-insensitively ("Young Adult"
@@ -77,6 +78,10 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
     if (categories.length > 0 && !book.category) return false
     if (categories.length > 0 && !categories.some((c) => c.toLowerCase() === book.category!.toLowerCase())) return false
     if ((audioOnly || mode === 'listen') && !audioIds.has(book.id)) return false
+    if (query.trim()) {
+      const needle = query.trim().toLowerCase()
+      if (!book.title.toLowerCase().includes(needle) && !(book.author ?? '').toLowerCase().includes(needle)) return false
+    }
     return true
   })
 
@@ -121,7 +126,41 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
         <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 36 }, fontWeight: 600, color: 'var(--awm-bark)' }}>
           Library
         </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}>
+        <TextField
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search books"
+          size="small"
+          sx={{
+            width: { xs: '100%', sm: 210 },
+            '& .MuiOutlinedInput-root': {
+              minHeight: 40,
+              borderRadius: '8px',
+              bgcolor: 'var(--awm-white)',
+              fontFamily: 'var(--font-sans), sans-serif',
+              fontSize: 13.5,
+              '& fieldset': { borderColor: 'rgba(44,26,14,0.1)' },
+              '&:hover fieldset': { borderColor: 'rgba(184,134,11,0.4)' },
+              '&.Mui-focused fieldset': { borderColor: 'var(--awm-gold)', borderWidth: '1px' },
+            },
+          }}
+          slotProps={{
+            htmlInput: { 'aria-label': 'Search books' },
+            input: {
+              startAdornment: (
+                <InputAdornment position="start"><Search sx={{ fontSize: 17, color: 'var(--awm-muted)' }} /></InputAdornment>
+              ),
+              endAdornment: query ? (
+                <InputAdornment position="end">
+                  <IconButton aria-label="Clear search" onClick={() => setQuery('')} sx={{ width: 26, height: 26, color: 'var(--awm-muted)' }}>
+                    <Close sx={{ fontSize: 15 }} />
+                  </IconButton>
+                </InputAdornment>
+              ) : undefined,
+            },
+          }}
+        />
         <ToggleButtonGroup exclusive value={mode} onChange={(_, value) => { if (value) setMode(value) }} aria-label="Library mode" sx={{ bgcolor: 'var(--awm-white)', borderRadius: '999px', p: .5, '& .MuiToggleButton-root': { border: 0, borderRadius: '999px !important', px: { xs: 2.25, sm: 3 }, minHeight: 44, textTransform: 'none', color: 'var(--awm-muted)' }, '& .Mui-selected': { bgcolor: 'var(--awm-forest) !important', color: 'var(--awm-white) !important' } }}>
           <ToggleButton value="read">Read</ToggleButton><ToggleButton value="listen">Listen</ToggleButton>
         </ToggleButtonGroup>
@@ -270,11 +309,11 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
             {section.books.map(book => <LibraryBookCard key={book.id} book={book} compact />)}
           </Box>
         </Box>)}
-        {!visible.length && <Typography>No books match these filters.</Typography>}
+        {!visible.length && <Typography>{query.trim() ? `No books match "${query.trim()}".` : 'No books match these filters.'}</Typography>}
       </Box>}
       <Box component="section" aria-label={mode === 'listen' ? 'Audiobook library' : 'Book library'} sx={{ ...LIBRARY_GRID_SX, ...(mode === 'read' ? { display: { xs: 'none', sm: 'grid' } } : {}) }}>
         {visible.map(book => <LibraryBookCard key={book.id} book={book} listen={mode === 'listen'} />)}
-        {!visible.length && <Typography>{mode === 'listen' ? 'No audiobooks match these filters.' : 'No books match these filters.'}</Typography>}
+        {!visible.length && <Typography>{query.trim() ? `No books match "${query.trim()}".` : mode === 'listen' ? 'No audiobooks match these filters.' : 'No books match these filters.'}</Typography>}
       </Box>
     </Box>
   )

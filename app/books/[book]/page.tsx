@@ -42,18 +42,18 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
           </Box>
         </Link>
 
-        <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', mb: 3 }}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: book.cover ? '240px minmax(0, 1fr)' : '1fr' }, gap: { xs: 3, md: 5 }, alignItems: 'start' }}>
-            {book.cover && (
-              <Box sx={{ width: '100%', maxWidth: { sm: 240 }, mx: { xs: 'auto', sm: 0 } }}>
-                {/* The page's lead image: eager and preloaded. */}
-                <Box sx={{ position: 'relative', width: '100%', aspectRatio: '2 / 3', borderRadius: '10px', overflow: 'hidden', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}>
-                  <Image src={book.cover} alt={`${book.title} cover`} fill preload sizes="(max-width: 600px) 90vw, 240px" style={{ objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} />
-                </Box>
-                <BookMyListToggle bookSlug={book.slug} />
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'minmax(220px, 320px) minmax(0, 1fr)' }, gap: { xs: 3, md: 5 }, alignItems: 'start' }}>
+          {book.cover && (
+            <Box sx={{ width: '100%', maxWidth: { xs: 230, sm: 'none' }, mx: { xs: 'auto', sm: 0 } }}>
+              {/* The full cover, uncropped, beside the detail column. */}
+              <Box sx={{ position: 'relative', width: '100%', aspectRatio: '2 / 3', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(44,26,14,0.08)', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}>
+                <Image src={book.cover} alt={`${book.title} cover`} fill preload sizes="(max-width: 600px) 230px, 320px" style={{ objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} />
               </Box>
-            )}
-            <Box sx={{ minWidth: 0 }}>
+              <BookMyListToggle bookSlug={book.slug} />
+            </Box>
+          )}
+          <Box sx={{ minWidth: 0 }}>
+            <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', mb: 3 }}>
               <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 36, md: 48 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.1 }}>
                 {book.title}
               </Typography>
@@ -92,41 +92,41 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
               <Box sx={{ mt: 3 }}>
                 <BookReadingCta bookId={book.id} bookSlug={book.slug} chapters={chapters} />
               </Box>
+            </Paper>
+
+            <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 25, sm: 30 }, fontWeight: 600, color: 'var(--awm-bark)', mb: 2 }}>
+              Chapters
+            </Typography>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.25,
+              }}
+            >
+              {chapters.map((chapter) => (
+                <Box key={chapter.id}>
+                  <ChapterLink
+                    href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`}
+                    chapterNumber={chapter.chapterNumber}
+                  >
+                    <Paper elevation={0} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, p: { xs: 1.5, sm: 2 }, textAlign: 'left', borderRadius: '10px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', transition: 'border-color 0.15s ease, transform 0.15s ease', '&:hover': { borderColor: 'rgba(184,134,11,0.45)', transform: { sm: 'translateX(3px)' } } }}>
+                      <Box sx={{ width: { xs: 34, sm: 38 }, height: { xs: 34, sm: 38 }, borderRadius: '50%', display: 'grid', placeItems: 'center', bgcolor: 'rgba(184,134,11,0.1)', color: '#b8860b', fontWeight: 700, flexShrink: 0 }}>
+                        {chapter.chapterNumber}
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}>{chapter.title}</Typography>
+                        {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
+                      </Box>
+                      <ChapterAccessLock chapterNumber={chapter.chapterNumber} />
+                      {audioChapterIds.has(chapter.id) && <HeadphonesRounded aria-label="Audiobook available" sx={{ color: 'var(--awm-gold)', fontSize: 20 }} />}
+                      <ChevronRight sx={{ color: 'var(--awm-muted-light)' }} />
+                    </Paper>
+                  </ChapterLink>
+                </Box>
+              ))}
             </Box>
           </Box>
-        </Paper>
-
-        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 25, sm: 30 }, fontWeight: 600, color: 'var(--awm-bark)', mb: 2 }}>
-          Chapters
-        </Typography>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1.25,
-          }}
-        >
-          {chapters.map((chapter) => (
-            <Box key={chapter.id}>
-              <ChapterLink
-                href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`}
-                chapterNumber={chapter.chapterNumber}
-              >
-                <Paper elevation={0} sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2, p: { xs: 1.5, sm: 2 }, textAlign: 'left', borderRadius: '10px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', transition: 'border-color 0.15s ease, transform 0.15s ease', '&:hover': { borderColor: 'rgba(184,134,11,0.45)', transform: { sm: 'translateX(3px)' } } }}>
-                  <Box sx={{ width: { xs: 34, sm: 38 }, height: { xs: 34, sm: 38 }, borderRadius: '50%', display: 'grid', placeItems: 'center', bgcolor: 'rgba(184,134,11,0.1)', color: '#b8860b', fontWeight: 700, flexShrink: 0 }}>
-                    {chapter.chapterNumber}
-                  </Box>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, sm: 16 }, lineHeight: 1.3, fontWeight: 600, color: 'var(--awm-bark)' }}>{chapter.title}</Typography>
-                    {chapter.teaser && <Typography sx={{ mt: 0.35, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chapter.teaser}</Typography>}
-                  </Box>
-                  <ChapterAccessLock chapterNumber={chapter.chapterNumber} />
-                  {audioChapterIds.has(chapter.id) && <HeadphonesRounded aria-label="Audiobook available" sx={{ color: 'var(--awm-gold)', fontSize: 20 }} />}
-                  <ChevronRight sx={{ color: 'var(--awm-muted-light)' }} />
-                </Paper>
-              </ChapterLink>
-            </Box>
-          ))}
         </Box>
       </Container>
     </Box>
