@@ -17,6 +17,10 @@ function firstParam(value: string | string[] | undefined): string {
   return (Array.isArray(value) ? value[0] : value)?.trim() ?? ''
 }
 
+function matchesQuery(value: string, query: string): boolean {
+  return value.toLowerCase().includes(query.toLowerCase())
+}
+
 function sanitizeParam(value: string, allowed: string[]): string {
   return allowed.includes(value) ? value : ''
 }
@@ -80,13 +84,22 @@ async function Catalogue({ searchParams }: { searchParams: Promise<SearchParams>
     return [{ episode, show, showCategory: showCategories[show.slug] }]
   }).sort((left, right) => (right.episode.createdAt ?? '').localeCompare(left.episode.createdAt ?? ''))
 
-  const filteredEpisodes = episodeRows.filter(({ episode, showCategory }) => {
+  /* Search filters the already-cached catalogue in memory — no DB cost. */
+  const query = firstParam(sp.q).slice(0, 80)
+  const searchedEpisodes = query
+    ? episodeRows.filter(({ episode, show }) => matchesQuery(episode.title, query) || matchesQuery(show.title, query))
+    : episodeRows
+  const searchedShows = query
+    ? shows.filter((show) => matchesQuery(show.title, query))
+    : shows
+
+  const filteredEpisodes = searchedEpisodes.filter(({ episode, showCategory }) => {
     if (filters.category && showCategory !== filters.category) return false
     if (filters.level && episode.level !== filters.level) return false
     return true
   })
 
-  const filteredShows = shows.filter((show) => {
+  const filteredShows = searchedShows.filter((show) => {
     if (filters.category && showCategories[show.slug] !== filters.category) return false
     if (filters.level && show.level !== filters.level) return false
     return true
@@ -126,6 +139,7 @@ async function Catalogue({ searchParams }: { searchParams: Promise<SearchParams>
         showTitle: show.title,
         showCategory,
       }))}
+      query={query}
       showAdditionalTags={Object.fromEntries(slice(filteredShows).map((show) => [show.slug, showAdditionalTags[show.slug] ?? []]))}
       episodeCounts={Object.fromEntries(slice(filteredShows).map((show) => [show.slug, episodesByShow.get(show.id)?.length ?? 0]))}
       availableCategories={availableCategories}

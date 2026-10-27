@@ -16,6 +16,7 @@ const MUTED = 'var(--awm-muted)'
 export interface CatalogueLayoutProps {
   breadcrumbs: ReactNode
   headerStart?: ReactNode
+  headerSearch?: ReactNode
   activeFilterCount: number
   onClearFilters: () => void
   filtersPanel: ReactNode
@@ -27,6 +28,7 @@ export interface CatalogueLayoutProps {
 export default function CatalogueLayout({
   breadcrumbs,
   headerStart,
+  headerSearch,
   activeFilterCount,
   onClearFilters,
   filtersPanel,
@@ -54,7 +56,8 @@ export default function CatalogueLayout({
             {headerStart}
           </Box>
 
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            {headerSearch}
             <Button startIcon={<Tune />} onClick={() => setFilterDrawerOpen(true)} sx={{ display: { xs: 'inline-flex', md: 'none' }, minHeight: 42, px: 2, borderRadius: '8px', color: BARK, border: '1px solid rgba(44,26,14,.15)', textTransform: 'none' }}>
               Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
             </Button>

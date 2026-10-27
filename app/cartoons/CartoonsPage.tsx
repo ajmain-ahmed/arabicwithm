@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   Box,
@@ -8,19 +8,23 @@ import {
   Button,
   Container,
   IconButton,
+  InputAdornment,
   Pagination,
   Skeleton,
+  TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
 import {
+  Clear,
   Delete,
   Edit,
   Movie,
   NavigateNext,
   PlayArrow,
   School,
+  Search,
   VideoLibrary,
 } from '@mui/icons-material'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
@@ -106,6 +110,7 @@ export default function CartoonsPage({
   showPageCount,
   totalEpisodes,
   totalShows,
+  query = '',
 }: {
   shows: ShowMeta[]
   episodes: WatchEpisode[]
@@ -120,6 +125,7 @@ export default function CartoonsPage({
   showPageCount: number
   totalEpisodes: number
   totalShows: number
+  query?: string
 }) {
   const isAdmin = useIsAdmin()
   const router = useRouter()
@@ -129,6 +135,30 @@ export default function CartoonsPage({
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingShow, setEditingShow] = useState<ShowMeta | undefined>()
   const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  /* Search: local state edits freely; the URL (and server filter) follows
+     debounced, and external navigations (back/forward, cleared filters)
+     flow back into the field. */
+  const urlQuery = searchParams.get('q') ?? ''
+  const [searchInput, setSearchInput] = useState(urlQuery)
+  const [lastUrlQuery, setLastUrlQuery] = useState(urlQuery)
+  if (urlQuery !== lastUrlQuery) {
+    setLastUrlQuery(urlQuery)
+    setSearchInput(urlQuery)
+  }
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const applySearch = (value: string) => {
+    if (searchTimer.current) clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      const trimmed = value.trim()
+      if (trimmed) params.set('q', trimmed)
+      else params.delete('q')
+      params.delete('page')
+      const query = params.toString()
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    }, 250)
+  }
 
   const activeCategory = filters.category || 'All Categories'
   const activeLevel = filters.level
@@ -199,6 +229,7 @@ export default function CartoonsPage({
         </Breadcrumbs>
       )}
       headerStart={(
+        <>
           <ToggleButtonGroup
             exclusive
             value={view}
@@ -242,6 +273,47 @@ export default function CartoonsPage({
               <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>All Shows</Box>
             </ToggleButton>
           </ToggleButtonGroup>
+        </>
+      )}
+      headerSearch={(
+        <TextField
+          value={searchInput}
+          onChange={(event) => { setSearchInput(event.target.value); applySearch(event.target.value) }}
+          placeholder="Search episodes or shows"
+          size="small"
+          sx={{
+            width: { xs: '100%', sm: 230, md: 260 },
+            '& .MuiOutlinedInput-root': {
+              minHeight: 42,
+              borderRadius: '8px',
+              bgcolor: 'var(--awm-white)',
+              fontFamily: 'var(--font-sans), sans-serif',
+              fontSize: 14,
+              '& fieldset': { borderColor: 'color-mix(in srgb, var(--awm-bark) 14%, transparent)' },
+              '&:hover fieldset': { borderColor: 'color-mix(in srgb, var(--awm-gold) 40%, transparent)' },
+              '&.Mui-focused fieldset': { borderColor: 'var(--awm-gold)', borderWidth: '1px' },
+            },
+          }}
+          slotProps={{
+            htmlInput: { 'aria-label': 'Search episodes or shows' },
+            input: {
+              startAdornment: (
+                <InputAdornment position="start"><Search sx={{ fontSize: 18, color: MUTED }} /></InputAdornment>
+              ),
+              endAdornment: searchInput ? (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="Clear search"
+                    onClick={() => { setSearchInput(''); applySearch('') }}
+                    sx={{ width: 28, height: 28, color: MUTED }}
+                  >
+                    <Clear sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </InputAdornment>
+              ) : undefined,
+            },
+          }}
+        />
       )}
       activeFilterCount={activeFilterCount}
       onClearFilters={resetFilters}
@@ -252,7 +324,7 @@ export default function CartoonsPage({
 
       {visibleItems.length === 0 ? (
         <Box sx={{ py: 10, textAlign: 'center' }}>
-          <Typography sx={{ color: BARK, fontFamily: 'var(--font-heading)', fontSize: 22 }}>No {view} match your filters</Typography>
+          <Typography sx={{ color: BARK, fontFamily: 'var(--font-heading)', fontSize: 22 }}>{query ? `No ${view} match "${query}"` : `No ${view} match your filters`}</Typography>
           <Button onClick={resetFilters} sx={{ mt: 1.5, color: GOLD, textTransform: 'none' }}>Reset filters</Button>
         </Box>
       ) : view === 'episodes' ? (
