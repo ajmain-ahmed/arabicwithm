@@ -71,19 +71,17 @@ export default function FeaturedHero({ show, episode }: FeaturedShow) {
           <Typography sx={{ color: 'var(--awm-gold-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', mb: 1, textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
             Featured
           </Typography>
-          <Typography
-            component="h1"
+          <Box
+            component="img"
+            src="/homepage/dbz-logo.png"
+            alt={show.title}
             sx={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: { xs: '2.4rem', sm: '3.4rem', md: '4.2rem' },
-              fontWeight: 600,
-              lineHeight: 1.02,
-              color: '#fff',
-              textShadow: '0 2px 14px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.8)',
+              width: { xs: 210, md: 330 },
+              height: 'auto',
+              display: 'block',
+              filter: 'drop-shadow(0 3px 10px rgba(0,0,0,0.55))',
             }}
-          >
-            {show.title}
-          </Typography>
+          />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap', mt: { xs: 1.75, md: 2.25 } }}>
             <Button
               component={Link}
