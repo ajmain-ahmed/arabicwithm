@@ -359,10 +359,6 @@ export default function NewOnRow({
 
   return (
     <Box sx={{ position: 'relative', width: '100%', maxWidth: '100%', minWidth: 0 }}>
-      {/* edge fades hint at more content when the row overflows */}
-      <Box aria-hidden="true" sx={{ pointerEvents: 'none', position: 'absolute', zIndex: 2, top: 0, bottom: 8, left: 0, width: { xs: 24, md: 48 }, background: 'linear-gradient(90deg, var(--awm-row-edge, var(--awm-cream-light)), transparent)' }} />
-      <Box aria-hidden="true" sx={{ pointerEvents: 'none', position: 'absolute', zIndex: 2, top: 0, bottom: 8, right: 0, width: { xs: 24, md: 48 }, background: 'linear-gradient(270deg, var(--awm-row-edge, var(--awm-cream-light)), transparent)' }} />
-
       <IconButton
         className="awm-row-arrow"
         data-active={canScrollLeft ? 'true' : 'false'}
