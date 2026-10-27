@@ -210,6 +210,7 @@ export default function CartoonsPage({
             sx={{
               width: { xs: '100%', sm: 'auto' },
               alignSelf: { xs: 'stretch', sm: 'flex-start' },
+              ml: { sm: -2 },
               borderRadius: '9999px',
               overflow: 'hidden',
               bgcolor: 'var(--awm-white)',
