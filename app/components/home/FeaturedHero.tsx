@@ -52,6 +52,24 @@ export default function FeaturedHero({ show, episode }: FeaturedShow) {
         {/* Legibility: weighted to the left where the text sits. */}
         <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(78deg, rgba(5,9,8,0.85) 0%, rgba(5,9,8,0.5) 36%, transparent 62%)' }} />
         <Box aria-hidden="true" sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '52%', background: 'linear-gradient(0deg, rgba(5,9,8,0.78) 0%, rgba(5,9,8,0.35) 40%, transparent 100%)' }} />
+        <Box
+          sx={{
+            position: 'absolute',
+            top: { xs: 12, md: 16 },
+            left: { xs: 12, md: 16 },
+            zIndex: 2,
+            px: 1.4,
+            py: 0.45,
+            borderRadius: '9999px',
+            bgcolor: 'rgba(5,9,8,0.55)',
+            border: '1px solid rgba(255,255,255,0.14)',
+            backdropFilter: 'blur(6px)',
+          }}
+        >
+          <Typography sx={{ color: 'var(--awm-gold-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10.5, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', lineHeight: 1 }}>
+            Featured
+          </Typography>
+        </Box>
 
         <Box
           sx={{
@@ -69,9 +87,6 @@ export default function FeaturedHero({ show, episode }: FeaturedShow) {
             pb: { xs: 2.25, md: 3.5 },
           }}
         >
-          <Typography sx={{ color: 'var(--awm-gold-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', mb: 1, textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
-            Featured
-          </Typography>
           <Box
             component="img"
             src="/homepage/dbz-logo.png"
