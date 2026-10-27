@@ -10,6 +10,7 @@ vi.mock('@mui/icons-material', () => {
 })
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => mocks.auth }))
 vi.mock('@/app/actions/profiles', () => ({ fetchMyDisplayName: vi.fn(() => Promise.resolve(null)) }))
+vi.mock('@/app/actions/premium', () => ({ fetchPremiumStatus: vi.fn(() => Promise.resolve({ premium: false, manageable: false })), managePremium: vi.fn(), startPremiumCheckout: vi.fn() }))
 vi.mock('@/app/lib/useAccountAccess', () => ({ useAccountAccess: () => ({ isAdmin: mocks.role === 'admin', isReviewer: ['admin','editor'].includes(mocks.role) }) }))
 vi.mock('@/app/components/ThemeProvider', () => ({ useColorMode: () => ({ mode: 'light', toggleColorMode: vi.fn() }) }))
 vi.mock('@/app/components/AuthDialog', () => ({ default: () => null }))
@@ -129,7 +130,7 @@ it('routes every normal mobile entry once and closes without permission UI',asyn
  for(const [label,href] of entries){
   await act(async()=> (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
   const items=[...document.querySelectorAll('.mobile-list-btn')]
-  expect(items.map(item=>item.textContent)).toEqual(entries.map(([name])=>name))
+  expect(items.map(item=>item.textContent)).toEqual([...entries.map(([name])=>name),'Settings','Sign Out'])
   expect(document.body.textContent).not.toMatch(/Checking permissions|Verifying permissions|Contact|Reviewer/)
   const item=items.find(item=>item.textContent===label) as HTMLElement
   mocks.push.mockClear();await act(async()=>item.click())
@@ -142,8 +143,8 @@ it.each(['user', 'premium'])('groups the normal %s mobile menu with dividers aft
   mocks.mobile = true; mocks.role = role
   await act(async () => root.render(<Navbar />))
   await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
-  expect([...document.querySelectorAll('.mobile-list-btn')].map(node => node.textContent)).toEqual(['My Profile','Home','Explore','Watch','Read','Learn','Give Feedback','Support Us'])
+  expect([...document.querySelectorAll('.mobile-list-btn')].map(node => node.textContent)).toEqual(['My Profile','Home','Explore','Watch','Read','Learn','Give Feedback','Support Us','Settings','Sign Out'])
   const dividers = [...document.querySelectorAll('[data-nav-divider]')]
-  expect(dividers.map(node => node.getAttribute('data-nav-divider'))).toEqual(['My Profile','Learn'])
-  expect(dividers.map(node => node.previousElementSibling?.textContent)).toEqual(['My Profile','Learn'])
+  expect(dividers.map(node => node.getAttribute('data-nav-divider'))).toEqual(['My Profile','Learn','Support Us'])
+  expect(dividers.map(node => node.previousElementSibling?.textContent)).toEqual(['My Profile','Learn','Support Us'])
 })

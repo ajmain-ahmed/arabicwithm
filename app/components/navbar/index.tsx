@@ -138,6 +138,10 @@ export default function Navbar() {
                 isAdmin={isAdmin}
                 isReviewer={isReviewer}
                 onAuthOpen={openSignIn}
+                onLogout={() => {
+                    setDrawerOpen(false)
+                    handleLogout()
+                }}
                 navigate={safePush}
             />}
 
@@ -201,28 +205,9 @@ export default function Navbar() {
                                     <IconButton onClick={toggleColorMode} sx={{ width: 44, height: 44, p: 0.65, color: navColor, transition: 'color .25s ease' }} aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}>
                                         {mode === 'dark' ? <LightModeOutlined sx={{ fontSize: 20 }} /> : <DarkModeOutlined sx={{ fontSize: 20 }} />}
                                     </IconButton>
-                                    {isLoggedIn ? (
-                                        <IconButton
-                                            onClick={(e) => setUserMenuAnchor(e.currentTarget)}
-                                            size="small"
-                                            sx={{ position: 'relative', width: 44, height: 44 }}
-                                            aria-label="Open user menu"
-                                        >
-                                            <Avatar
-                                                sx={{
-                                                    width: 28,
-                                                    height: 28,
-                                                    background: 'linear-gradient(135deg, var(--awm-gold), var(--awm-gold-light))',
-                                                    color: '#fff',
-                                                    fontFamily: 'var(--font-sans)',
-                                                    fontWeight: 700,
-                                                    fontSize: '0.85rem',
-                                                }}
-                                            >
-                                                {userInitial}
-                                            </Avatar>
-                                        </IconButton>
-                                    ) : (
+                                    {/* Signed-in mobile users reach profile/settings/logout
+                                        from the drawer; the bar keeps only the theme toggle. */}
+                                    {!isLoggedIn && (
                                         <IconButton onClick={openSignIn} sx={{ width: 44, height: 44, p: 0.75, color: navColor, transition: 'color .25s ease' }} aria-label="Sign in">
                                             <Person sx={{ fontSize: 21 }} />
                                         </IconButton>

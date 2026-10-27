@@ -1,6 +1,6 @@
 'use client'
 
-import { AccountTreeOutlined, AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, GridOnRounded, HomeOutlined, Movie, Person, PsychologyOutlined, RateReviewOutlined, SchoolOutlined, VolunteerActivismRounded } from '@mui/icons-material'
+import { AccountTreeOutlined, AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, GridOnRounded, HomeOutlined, LogoutSharp, Movie, Person, PsychologyOutlined, RateReviewOutlined, SchoolOutlined, SettingsOutlined, VolunteerActivismRounded } from '@mui/icons-material'
 import {
     Avatar,
     Box,
@@ -17,6 +17,7 @@ import {
 import { Fragment } from 'react'
 import { User } from '@supabase/supabase-js'
 import GoldLine from './GoldLine'
+import MemberActions from './MemberActions'
 import { LEARN_ITEMS, NAV_ROUTES, profileRoute, type NavigateFn } from './constants'
 
 const primaryIcons = { Home: HomeOutlined, Explore: ExploreOutlined, Watch: Movie, Read: BookOutlined, Learn: SchoolOutlined }
@@ -30,6 +31,7 @@ interface MobileDrawerProps {
     isAdmin: boolean
     isReviewer: boolean
     onAuthOpen: () => void
+    onLogout: () => void
     navigate: NavigateFn
 }
 
@@ -41,9 +43,11 @@ export default function MobileDrawer({
     isAdmin,
     isReviewer,
     onAuthOpen,
+    onLogout,
     navigate,
 }: MobileDrawerProps) {
     const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M'
+    const displayName = String(user?.user_metadata?.full_name ?? user?.email?.split('@')[0] ?? '')
 
     const pushAndClose = (url: string) => {
         navigate(url)
@@ -71,45 +75,52 @@ export default function MobileDrawer({
                         px: 3,
                         py: 3,
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: 2,
+                        flexDirection: 'column',
+                        gap: 1.5,
                         background: 'color-mix(in srgb, var(--awm-forest) 3%, transparent)',
                         borderBottom: '1px solid color-mix(in srgb, var(--awm-gold) 15%, transparent)',
                     }}
                 >
-                    <Avatar
-                        sx={{
-                            width: 44,
-                            height: 44,
-                            background: 'linear-gradient(135deg, var(--awm-gold), var(--awm-gold-light))',
-                            color: '#fff',
-                            fontFamily: 'var(--font-sans)',
-                            fontWeight: 700,
-                            fontSize: '1rem',
-                            flexShrink: 0,
-                        }}
-                    >
-                        {userInitial}
-                    </Avatar>
-                    <Box sx={{ overflow: 'hidden', minWidth: 0 }}>
-                        <Typography
-                            variant="body1"
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar
                             sx={{
+                                width: 44,
+                                height: 44,
+                                background: 'linear-gradient(135deg, var(--awm-gold), var(--awm-gold-light))',
+                                color: '#fff',
+                                fontFamily: 'var(--font-sans)',
                                 fontWeight: 700,
-                                lineHeight: 1.2,
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
+                                fontSize: '1rem',
+                                flexShrink: 0,
                             }}
                         >
-                            {user?.email?.split('@')[0]}
-                        </Typography>
-                        <Typography
-                            variant="caption"
-                            sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-                        >
-                            {user?.email}
-                        </Typography>
+                            {userInitial}
+                        </Avatar>
+                        <Box sx={{ overflow: 'hidden', minWidth: 0 }}>
+                            <Typography
+                                variant="body1"
+                                sx={{
+                                    fontWeight: 700,
+                                    lineHeight: 1.2,
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                }}
+                            >
+                                {displayName}
+                            </Typography>
+                            <Typography
+                                variant="caption"
+                                sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}
+                            >
+                                {user?.email}
+                            </Typography>
+                        </Box>
+                    </Box>
+                    {/* Streak + AWM+ live here on mobile (the navbar is reserved
+                        for navigation); the pair sizes itself to the drawer. */}
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                        <MemberActions />
                     </Box>
                 </Box>
             ) : (
@@ -190,6 +201,31 @@ export default function MobileDrawer({
                     {isLoggedIn && !isAdmin && !isReviewer && (item.label === 'My Profile' || item.label === 'Learn') && <Divider component="li" role="separator" data-nav-divider={item.label} sx={{ mx: 3, my: 1, borderColor: 'color-mix(in srgb, var(--awm-gold) 30%, transparent)' }} />}
                     </Fragment>
                 ))}
+                {isLoggedIn && user && (
+                    <Fragment>
+                        <Divider component="li" role="separator" data-nav-divider="Support Us" sx={{ mx: 3, my: 1, borderColor: 'color-mix(in srgb, var(--awm-gold) 30%, transparent)' }} />
+                        <ListItem disablePadding>
+                            <ListItemButton
+                                className="mobile-list-btn"
+                                onClick={() => pushAndClose(`${profileRoute(user.id)}?tab=settings`)}
+                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
+                            >
+                                <ListItemIcon sx={{ color: 'var(--awm-gold)' }}><SettingsOutlined sx={{ fontSize: 18 }} /></ListItemIcon>
+                                <ListItemText primary={<Typography variant="body2" sx={{ fontWeight: 500, color: 'var(--awm-bark)' }}>Settings</Typography>} />
+                            </ListItemButton>
+                        </ListItem>
+                        <ListItem disablePadding>
+                            <ListItemButton
+                                className="mobile-list-btn"
+                                onClick={() => { onClose(); onLogout() }}
+                                sx={{ py: 1.4, px: 3, '& .MuiListItemIcon-root': { minWidth: 36 } }}
+                            >
+                                <ListItemIcon sx={{ color: 'var(--awm-error)' }}><LogoutSharp sx={{ fontSize: 18 }} /></ListItemIcon>
+                                <ListItemText primary={<Typography variant="body2" sx={{ fontWeight: 500, color: 'var(--awm-error)' }}>Sign Out</Typography>} />
+                            </ListItemButton>
+                        </ListItem>
+                    </Fragment>
+                )}
 
 
             </List>
