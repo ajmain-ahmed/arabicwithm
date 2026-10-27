@@ -23,7 +23,7 @@ interface ReadingProgressState {
   flush: () => Promise<void>
 }
 
-function parseStoredPositions(metadata: Record<string, unknown>): Record<string, ReadingPosition> {
+export function parseStoredPositions(metadata: Record<string, unknown>): Record<string, ReadingPosition> {
   const raw = metadata.book_progress
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {}
   const result: Record<string, ReadingPosition> = {}

@@ -25,7 +25,8 @@ import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
-import { continueReading } from './continueReading'
+import { buildContinueReadingItems, metadataReadingPositions } from './continueReadingItems'
+import { useReadingProgressStore } from '@/store/readingProgressStore'
 import { fetchMyList } from '@/app/actions/myList'
 import { useMyListCache } from '@/store/myListStore'
 import MemberActions from '@/app/components/navbar/MemberActions'
@@ -198,7 +199,6 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
   const { mode } = useColorMode()
   const { user } = useAuth()
   const isMobile=useMediaQuery('(max-width:899.95px)')
-  const resume=user?continueReading(books,chaptersByBook,user.user_metadata):null
   /* My List is fetched once per session and cached in the store; show-page
      add/remove keeps the cache in sync. Saved books share the row; they are
      stored in user metadata (like reading progress), so merge them in. */
@@ -244,6 +244,13 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
     return () => { cancelled = true }
   }, [user?.id, myListCacheItems, setMyListCache])
 
+  /* Continue Reading row: metadata seeds the first paint synchronously; the
+     session store refines it with live page positions. */
+  const trackedPositions = useReadingProgressStore((state) => state.positions)
+  const continueReadingRowItems: CatalogueRowItem[] = useMemo(() => {
+    if (!user) return []
+    return buildContinueReadingItems(books, chaptersByBook, metadataReadingPositions(user.user_metadata), trackedPositions)
+  }, [user, books, chaptersByBook, trackedPositions])
   const displayNameFallback = user ? String(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'learner') : ''
   /* The saved profile name wins over metadata/email — same source the profile
      page shows. */
@@ -365,6 +372,12 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
         )}
 
         <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 4, md: 5 } }}>
+          {user && continueReadingRowItems.length > 0 && (
+            <Container maxWidth={false}>
+              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Continue Reading</Typography>
+              <NewOnRow items={continueReadingRowItems} ariaLabel="Continue Reading" compact />
+            </Container>
+          )}
           {user && myListRowItems.length > 0 && (
             <Container maxWidth={false}>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
@@ -441,8 +454,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
           {/* Mobile-only section: the Quick Actions grid and the mobile Continue
               Reading card have no desktop presentation. */}
           <Container maxWidth={false} sx={{ display: { xs: 'block', md: 'none' }, mt: 3 }}>
-            {user&&isMobile&&resume&&<Box data-mobile-continue-reading sx={{mb:3}}><Typography component="h2" sx={{fontFamily:'var(--font-heading)',fontSize:22,fontWeight:600,color:'var(--awm-bark)',mb:1.5}}>Continue Reading</Typography><Paper component={Link} href={resume.href} elevation={0} sx={{display:'flex',alignItems:'center',gap:2,p:2,maxWidth:680,borderRadius:'10px',textDecoration:'none',color:'var(--awm-bark)',bgcolor:'var(--awm-white)',border:'1px solid color-mix(in srgb,var(--awm-gold) 25%,transparent)','&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}>{resume.book.cover?<Box component="img" src={resume.book.cover} alt="" sx={{width:64,aspectRatio:'2 / 3',objectFit:'cover',borderRadius:1}}/>:<MenuBook sx={{fontSize:40,color:'var(--awm-gold)'}}/>}<Box sx={{minWidth:0}}><Typography sx={{fontWeight:600,fontSize:18}}>{resume.book.title}</Typography><Typography sx={{color:'var(--awm-muted)',mt:.5}}>{resume.chapter.title}</Typography><Typography sx={{color:'var(--awm-gold)',mt:1,fontSize:13}}>Continue Reading</Typography></Box><ArrowForward sx={{ml:'auto',color:'var(--awm-gold)'}}/></Paper></Box>}
-            {user&&isMobile&&!resume&&<Box sx={{mb:3}}><Button component={Link} href="/books" variant="outlined" sx={{minHeight:44,textTransform:'none',borderRadius:'999px'}}>Start Reading</Button></Box>}
+            {user&&isMobile&&continueReadingRowItems.length===0&&<Box sx={{mb:3}}><Button component={Link} href="/books" variant="outlined" sx={{minHeight:44,textTransform:'none',borderRadius:'999px'}}>Start Reading</Button></Box>}
             <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 600, color: 'var(--awm-bark)' }}>Quick Actions</Typography>
             <Box component="nav" aria-label="Quick Actions" data-mobile-home-actions sx={{ display: 'grid', gridTemplateColumns:'repeat(2,minmax(0,1fr))',gridAutoRows:'1fr',gap:1.5,mt:1.5 }}>
               {[
