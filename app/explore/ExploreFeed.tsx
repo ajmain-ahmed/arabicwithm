@@ -217,6 +217,11 @@ function ExploreVideo({
      or change volume with YouTube's own controls, which fire onVolumeChange. */
   const phoneMuted = isPhone && isMuted
   const soundMuted = isReady ? isMuted : !soundEnabled
+  /* onStarted arrives as an inline arrow from the feed — keep it in a ref so
+     the autoplay effect below only re-fires on real state transitions, not on
+     every parent re-render (which would silently resume a paused video). */
+  const onStartedRef = useRef(onStarted)
+  useEffect(() => { onStartedRef.current = onStarted }, [onStarted])
 
   useEffect(() => {
     if (!active) return
@@ -235,8 +240,8 @@ function ExploreVideo({
     if (soundEnabled && !soundBlockedRef.current) playWithSound()
     else mute()
     playVideo()
-    onStarted?.()
-  }, [active, autoplayBlocked, phoneMuted, isReady, mute, pauseVideo, playVideo, soundEnabled, playWithSound, onStarted])
+    onStartedRef.current?.()
+  }, [active, autoplayBlocked, phoneMuted, isReady, mute, pauseVideo, playVideo, soundEnabled, playWithSound])
 
   useEffect(() => {
     const requestSound = () => {
