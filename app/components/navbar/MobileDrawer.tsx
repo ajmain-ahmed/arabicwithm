@@ -2,7 +2,6 @@
 
 import { AccountTreeOutlined, AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, GridOnRounded, HomeOutlined, LogoutSharp, Movie, Person, PsychologyOutlined, RateReviewOutlined, SchoolOutlined, SettingsOutlined, VolunteerActivismRounded } from '@mui/icons-material'
 import {
-    Avatar,
     Box,
     Button,
     Drawer,
@@ -46,7 +45,6 @@ export default function MobileDrawer({
     onLogout,
     navigate,
 }: MobileDrawerProps) {
-    const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M'
 
     const pushAndClose = (url: string) => {
         navigate(url)
@@ -80,22 +78,6 @@ export default function MobileDrawer({
                         borderBottom: '1px solid color-mix(in srgb, var(--awm-gold) 15%, transparent)',
                     }}
                 >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar
-                            sx={{
-                                width: 44,
-                                height: 44,
-                                background: 'linear-gradient(135deg, var(--awm-gold), var(--awm-gold-light))',
-                                color: '#fff',
-                                fontFamily: 'var(--font-sans)',
-                                fontWeight: 700,
-                                fontSize: '1rem',
-                                flexShrink: 0,
-                            }}
-                        >
-                            {userInitial}
-                        </Avatar>
-                    </Box>
                     {/* Streak + AWM+ live here on mobile (the navbar is reserved
                         for navigation); the pair sizes itself to the drawer. */}
                     <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
