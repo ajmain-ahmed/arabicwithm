@@ -140,7 +140,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
 
         {/* Desktop: the cover stretches to the full height of the info box plus
             the chapters list; both sit to its right. */}
-        <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: book.cover ? 'minmax(340px, 440px) minmax(0, 1fr)' : 'minmax(0, 1fr)', gap: 4, alignItems: 'stretch' }}>
+        <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: book.cover ? 'minmax(420px, 600px) minmax(0, 1fr)' : 'minmax(0, 1fr)', gap: 4, alignItems: 'stretch' }}>
           {book.cover && (
             <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               <Box sx={{ position: 'relative', flex: 1, minHeight: 340, borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(44,26,14,0.08)', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}>
