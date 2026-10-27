@@ -35,12 +35,10 @@ export function bookReaderHref(
   bookSlug: string,
   chapterSlug: string,
   language: BookReaderLanguage,
-  blockIndex?: number,
+  page?: number,
 ): string {
-  const hash = Number.isSafeInteger(blockIndex) && (blockIndex ?? -1) >= 0
-    ? `#sentence-${blockIndex}`
-    : ''
-  return `/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(chapterSlug)}?lang=${language}${hash}`
+  const pageQuery = typeof page === 'number' && page >= 2 ? `&page=${page}` : ''
+  return `/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(chapterSlug)}?lang=${language}${pageQuery}`
 }
 
 export const BOOK_LANGUAGE_STOP_EVENT = 'awm-book-language-stop'

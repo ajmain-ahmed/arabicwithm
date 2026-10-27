@@ -54,8 +54,9 @@ describe('bookReaderHref', () => {
     expect(bookReaderHref('book one', 'chapter/one', 'en')).toBe('/books/book%20one/chapter%2Fone?lang=en')
   })
 
-  it('preserves a valid saved sentence position', () => {
-    expect(bookReaderHref('book', 'chapter', 'en', 4)).toBe('/books/book/chapter?lang=en#sentence-4')
+  it('deep-links pages past page one and ignores early pages', () => {
+    expect(bookReaderHref('book', 'chapter', 'en', 4)).toBe('/books/book/chapter?lang=en&page=4')
     expect(bookReaderHref('book', 'chapter', 'ar', -1)).toBe('/books/book/chapter?lang=ar')
+    expect(bookReaderHref('book', 'chapter', 'ar', 1)).toBe('/books/book/chapter?lang=ar')
   })
 })

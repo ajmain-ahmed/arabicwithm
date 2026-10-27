@@ -7,7 +7,6 @@ import {
   fetchChapterForPublic,
   fetchChaptersForBookPublic,
 } from '@/app/actions/books'
-import ReadingProgress from './ReadingProgress'
 import ChapterReader from './ChapterReader'
 import { normalizeBookReaderLanguage } from '@/app/lib/bookReaderSettings'
 import SignInRequired from '@/app/components/SignInRequired'
@@ -29,12 +28,16 @@ export default async function ChapterPage({
   searchParams,
 }: {
   params: Promise<{ book: string; chapter: string }>
-  searchParams: Promise<{ lang?: string | string[] }>
+  searchParams: Promise<{ lang?: string | string[]; page?: string | string[] }>
 }) {
   const { book: bookSlug, chapter: chapterSlug } = await params
-  const rawLanguage = (await searchParams).lang
+  const rawParams = await searchParams
+  const rawLanguage = rawParams.lang
   const languageValue = Array.isArray(rawLanguage) ? rawLanguage[0] : rawLanguage
   const initialLanguage = languageValue ? normalizeBookReaderLanguage(languageValue) : undefined
+  const rawPage = Array.isArray(rawParams.page) ? rawParams.page[0] : rawParams.page
+  const parsedPage = Number(rawPage)
+  const initialPage = Number.isInteger(parsedPage) && parsedPage >= 1 && parsedPage <= 500 ? parsedPage : undefined
   const book = await fetchBookBySlugPublic(bookSlug)
   if (!book) notFound()
 
@@ -100,7 +103,6 @@ export default async function ChapterPage({
 
   return (
     <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 2.5, md: 5 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 5 } }}>
-      <ReadingProgress bookSlug={book.slug} chapterSlug={chapter.slug} />
       <Container maxWidth="xl">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>
           <Link href={`/books/${encodeURIComponent(book.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>
@@ -113,7 +115,7 @@ export default async function ChapterPage({
           </Typography>
         </Box>
 
-        <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
+        <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} initialPage={initialPage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
 
         <Box component="nav" aria-label="Chapter navigation" sx={{ display: 'grid', gridTemplateColumns: nextChapter ? 'repeat(2,minmax(0,1fr))' : 'minmax(0,280px)', justifyContent: 'center', alignItems: 'stretch', gap: { xs: 1, sm: 1.5 }, mt: 3, '& .MuiButton-root': { minHeight: 48, px: {xs: 1, sm: 2}, fontSize: {xs: 13, sm: 15} } }}>
           <Button href={`/books/${encodeURIComponent(book.slug)}`} startIcon={<FormatListBulleted />} variant="outlined" sx={{ color: 'var(--awm-muted)', borderColor: 'rgba(122,110,101,0.3)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>

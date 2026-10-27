@@ -1,21 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { Box, Button, ButtonGroup, Divider, IconButton, Paper, Snackbar, Typography, Menu, MenuItem, useMediaQuery } from '@mui/material'
-import { Bookmark, BookmarkBorder, MenuBook, Settings, ViewAgenda } from '@mui/icons-material'
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { Box, Button, ButtonGroup, Divider, Paper, Typography, useMediaQuery } from '@mui/material'
+import { ChevronLeft, ChevronRight, MenuBook, Settings, ViewAgenda } from '@mui/icons-material'
 import { HtmlTooltip, MobileDefinitionPopover, WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
 import type { PublicBookBlock, PublicBookToken } from '@/app/actions/books'
 import { groupChapterBlocks } from '@/app/lib/bookParagraphs'
 import { useAuth } from '@/app/AuthContext'
 import { dispatchWordLookup } from '@/app/lib/activity'
-import { syncBookBookmark } from '@/app/lib/bookBookmarkSync'
-import {
-  BOOK_SENTENCE_BOOKMARK_EVENT,
-  BOOK_SENTENCE_BOOKMARK_STORAGE_KEY,
-  latestBookSentenceBookmark,
-  parseBookSentenceBookmark,
-  type BookSentenceBookmark,
-} from '@/app/lib/bookSentenceBookmark'
+import { paginateParagraphs } from '@/app/lib/readingPagination'
+import { useReadingProgressStore } from '@/store/readingProgressStore'
 import {
   DEFAULT_BOOK_READER_FONT,
   DEFAULT_BOOK_READER_LANGUAGE,
@@ -249,6 +243,7 @@ export default function ChapterReader({
   chapterSlug,
   content,
   initialLanguage,
+  initialPage,
   audio = [],
 }: {
   bookSlug: string
@@ -257,6 +252,7 @@ export default function ChapterReader({
   chapterSlug: string
   content: PublicBookBlock[]
   initialLanguage?: BookReaderLanguage
+  initialPage?: number
   audio?: ChapterAudioSummary[]
 }) {
   const { user } = useAuth()
@@ -281,29 +277,57 @@ export default function ChapterReader({
     try { window.localStorage.setItem('awm-book-word-help', String(enabled)) } catch { /* Keep the preference for this session. */ }
     window.dispatchEvent(new Event('awm-book-word-help-change'))
   }
-  const [bookmarkMenu, setBookmarkMenu] = useState<{ block: PublicBookBlock; index: number; anchor: HTMLElement } | null>(null)
-  const longPressHandled = useRef(false)
-  const press = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null)
-  const cancelPress = () => { if (press.current) clearTimeout(press.current.timer); press.current = null }
-  useEffect(() => () => { if (press.current) clearTimeout(press.current.timer) }, [])
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [bookmark, setBookmark] = useState<BookSentenceBookmark | null>(null)
-  const [bookmarkNotice, setBookmarkNotice] = useState('')
-  const bookmarkRequest = useRef(0)
-  useEffect(() => () => { bookmarkRequest.current += 1 }, [])
-  const syncBookmark = (value: BookSentenceBookmark | null) => {
-    if (!user) return
-    const request = ++bookmarkRequest.current
-    void syncBookBookmark(user.id, value).then(ok => {
-      if (!ok && request === bookmarkRequest.current) setBookmarkNotice('Reading position updated on this device. Account sync failed; try again when connected.')
-    })
-  }
   const view = useSyncExternalStore(subscribeToReaderView, getReaderViewSnapshot, () => 'lines')
   const textScale = useSyncExternalStore(subscribeToTextScale, getTextScaleSnapshot, () => DEFAULT_BOOK_TEXT_SCALE)
   const readerFont = useSyncExternalStore(subscribeToReaderFont, getReaderFontSnapshot, () => DEFAULT_BOOK_READER_FONT)
   const language = useSyncExternalStore(subscribeToReaderLanguage, getReaderLanguageSnapshot, () => initialLanguage ?? DEFAULT_BOOK_READER_LANGUAGE)
-  const paragraphs = groupChapterBlocks(chapterSlug, content)
-  const blockIndexByBlock = new Map(content.map((block, index) => [block, index]))
+  const paragraphs = useMemo(() => groupChapterBlocks(chapterSlug, content), [chapterSlug, content])
+  const blockIndexByBlock = useMemo(() => new Map(content.map((block, index) => [block, index])), [content])
+
+  /* ── Soft pagination: line-by-line view renders one page at a time ── */
+  const pages = useMemo(() => paginateParagraphs(paragraphs), [paragraphs])
+  const totalPages = pages.length
+  const clampPage = (value: number) => Math.min(Math.max(1, Math.trunc(value) || 1), totalPages)
+  const [page, setPage] = useState(() => clampPage(initialPage ?? 1))
+  const [lastInitialPage, setLastInitialPage] = useState(initialPage)
+  if (initialPage !== lastInitialPage) {
+    // Server navigation (resume links): adopt the new initial page during render.
+    setLastInitialPage(initialPage)
+    setPage(clampPage(initialPage ?? 1))
+  }
+  const trackProgress = useReadingProgressStore((state) => state.track)
+  useEffect(() => {
+    if (user) useReadingProgressStore.getState().hydrateFromMetadata(user.user_metadata)
+  }, [user])
+  useEffect(() => {
+    if (view !== 'lines') return
+    trackProgress(bookSlug, chapterSlug, page, totalPages)
+  }, [view, bookSlug, chapterSlug, page, totalPages, trackProgress])
+
+  const goToPage = useCallback((next: number) => {
+    const clamped = Math.min(Math.max(1, Math.trunc(next) || 1), totalPages)
+    setPage(clamped)
+    try {
+      const url = new URL(window.location.href)
+      if (clamped >= 2) url.searchParams.set('page', String(clamped))
+      else url.searchParams.delete('page')
+      window.history.replaceState(null, '', url)
+    } catch { /* The address bar is cosmetic; reading position lives in the store. */ }
+    document.getElementById('reader-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [totalPages])
+
+  useEffect(() => {
+    if (view !== 'lines') return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+      const target = event.target as HTMLElement | null
+      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
+      goToPage(page + (event.key === 'ArrowRight' ? 1 : -1))
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [view, page, goToPage])
 
   useEffect(() => {
     if (!initialLanguage) return
@@ -316,30 +340,11 @@ export default function ChapterReader({
   }, [initialLanguage])
 
   useEffect(() => {
-    let localBookmark: BookSentenceBookmark | null = null
-    try {
-      localBookmark = parseBookSentenceBookmark(window.localStorage.getItem(BOOK_SENTENCE_BOOKMARK_STORAGE_KEY))
-    } catch {
-      // Account metadata can still supply a bookmark when browser storage is unavailable.
-    }
-
-    const accountBookmark = parseBookSentenceBookmark(user?.user_metadata?.book_sentence_bookmark)
-    const newestBookmark = latestBookSentenceBookmark(localBookmark, accountBookmark)
-    const frame = window.requestAnimationFrame(() => setBookmark(newestBookmark))
-
-    if (newestBookmark) {
-      try {
-        window.localStorage.setItem(BOOK_SENTENCE_BOOKMARK_STORAGE_KEY, JSON.stringify(newestBookmark))
-      } catch {
-        // The bookmark remains available in memory for this visit.
-      }
-    }
-    return () => window.cancelAnimationFrame(frame)
-  }, [user])
-
-  useEffect(() => {
     const sentenceHash = window.location.hash.match(/^#sentence-(\d+)$/)
     if (!sentenceHash) return
+    const blockIndex = Number(sentenceHash[1])
+    const pageIndex = pages.findIndex(pageBlocks => pageBlocks.some(paragraph => paragraph.some(block => (blockIndexByBlock.get(block) ?? -1) === blockIndex)))
+    if (pageIndex < 0) return
 
     if (view !== 'lines') {
       try {
@@ -352,56 +357,14 @@ export default function ChapterReader({
     }
 
     const frame = window.requestAnimationFrame(() => {
-      document.getElementById(sentenceHash[0].slice(1))?.scrollIntoView({ block: 'center' })
+      setPage(pageIndex + 1)
+      // The target sentence renders on the next commit; scroll after it lands.
+      window.setTimeout(() => {
+        document.getElementById(sentenceHash[0].slice(1))?.scrollIntoView({ block: 'center' })
+      }, 80)
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [view, content])
-
-  const toggleBookmark = (block: PublicBookBlock, blockIndex: number) => {
-    const removing = bookmark?.bookSlug === bookSlug
-      && bookmark.chapterSlug === chapterSlug
-      && bookmark.blockIndex === blockIndex
-
-    if (removing) {
-      setBookmark(null)
-      setBookmarkNotice('Reading position removed')
-      try {
-        window.localStorage.removeItem(BOOK_SENTENCE_BOOKMARK_STORAGE_KEY)
-        window.dispatchEvent(new CustomEvent(BOOK_SENTENCE_BOOKMARK_EVENT, { detail: null }))
-      } catch {
-        // The in-memory state still updates for this visit.
-      }
-      syncBookmark(null)
-      return
-    }
-
-    const arabic = `${block.tokens.map((token) => `${token.prefix ?? ''}${token.arabic}${token.suffix ?? ''}`).join(' ')}${block.punctuation ?? ''}`
-    const nextBookmark: BookSentenceBookmark = {
-      bookSlug,
-      bookTitle,
-      chapterSlug,
-      chapterTitle,
-      blockIndex,
-      arabic,
-      translation: block.translation,
-      savedAt: new Date().toISOString(),
-    }
-
-    setBookmark(nextBookmark)
-    setBookmarkNotice('Saved as your reading position')
-    try {
-      window.localStorage.setItem(BOOK_SENTENCE_BOOKMARK_STORAGE_KEY, JSON.stringify(nextBookmark))
-      window.dispatchEvent(new CustomEvent(BOOK_SENTENCE_BOOKMARK_EVENT, { detail: nextBookmark }))
-    } catch {
-      // The bookmark remains available in memory for this visit.
-    }
-
-    syncBookmark(nextBookmark)
-  }
-
-  const isBookmarkedSentence = (blockIndex: number) => bookmark?.bookSlug === bookSlug
-    && bookmark.chapterSlug === chapterSlug
-    && bookmark.blockIndex === blockIndex
+  }, [view, pages, blockIndexByBlock])
 
   const selectView = (nextView: ReaderView) => {
     try {
@@ -518,47 +481,18 @@ export default function ChapterReader({
 
       {player}
       {view === 'lines' ? (
-        <Box sx={{ px: { xs: 2.5, md: 6 }, py: { xs: 3, md: 5 } }}>
-          {paragraphs.map((paragraph, paragraphIndex) => (
+        <Box id="reader-content" sx={{ px: { xs: 2.5, md: 6 }, py: { xs: 3, md: 5 }, scrollMarginTop: '80px' }}>
+          {(pages[page - 1] ?? []).map((paragraph, paragraphIndex) => (
             <Box key={paragraphIndex} sx={{ '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
               {paragraph.map((block, blockIndex) => {
                 const sentenceIndex = blockIndexByBlock.get(block) ?? blockIndex
-                const sentenceBookmarked = isBookmarkedSentence(sentenceIndex)
                 return (
                 <Box
                   key={sentenceIndex}
                   id={`sentence-${sentenceIndex}`}
-                  tabIndex={0}
-                  aria-label={`Sentence ${sentenceIndex + 1}${sentenceBookmarked ? ', bookmarked' : ''}. Press Shift F10 for bookmark options.`}
-                  onPointerDown={event => {
-                    if (event.pointerType === 'mouse') return
-                    longPressHandled.current = false
-                    cancelPress()
-                    const anchor = event.currentTarget
-                    press.current = { x: event.clientX, y: event.clientY, timer: setTimeout(() => { longPressHandled.current = true; setBookmarkMenu({ block, index: sentenceIndex, anchor }); press.current = null }, 600) }
-                  }}
-                  onPointerMove={event => { if (press.current && Math.hypot(event.clientX - press.current.x, event.clientY - press.current.y) > 10) cancelPress() }}
-                  onClickCapture={event => { if (longPressHandled.current) { event.preventDefault(); event.stopPropagation(); longPressHandled.current = false } }}
-                  onPointerUp={cancelPress} onPointerCancel={cancelPress} onPointerLeave={cancelPress}
-                  onContextMenu={event => { event.preventDefault(); cancelPress(); setBookmarkMenu({ block, index: sentenceIndex, anchor: event.currentTarget }) }}
-                  onKeyDown={event => { if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) { event.preventDefault(); setBookmarkMenu({ block, index: sentenceIndex, anchor: event.currentTarget }) } }}
-                  sx={{
-                    position: 'relative',
-                    py: 2.5,
-                    scrollMarginTop: '96px',
-                    '&:hover .sentence-bookmark, &:focus-within .sentence-bookmark': { opacity: 1, pointerEvents: 'auto' },
-                  }}
+                  sx={{ position: 'relative', py: 2.5, scrollMarginTop: '96px' }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                    <IconButton
-                      className="sentence-bookmark"
-                      onClick={() => toggleBookmark(block, sentenceIndex)}
-                      aria-label={sentenceBookmarked ? 'Remove reading bookmark' : 'Save this reading position'}
-                      title={sentenceBookmarked ? 'Remove reading bookmark' : 'Save this reading position'}
-                      sx={{ display: { xs: 'none', md: 'inline-flex' }, mt: 0.5, flexShrink: 0, opacity: { xs: 1, md: sentenceBookmarked ? 1 : 0 }, pointerEvents: { xs: 'auto', md: sentenceBookmarked ? 'auto' : 'none' }, transition: 'opacity 150ms ease, transform 150ms ease', transform: sentenceBookmarked ? 'scale(1.08)' : 'scale(1)', color: sentenceBookmarked ? 'var(--awm-gold)' : 'var(--awm-muted-light)', bgcolor: sentenceBookmarked ? 'color-mix(in srgb, var(--awm-gold) 12%, transparent)' : 'transparent', '&:hover': { color: 'var(--awm-gold)', bgcolor: 'color-mix(in srgb, var(--awm-gold) 12%, transparent)' } }}
-                    >
-                      {sentenceBookmarked ? <Bookmark /> : <BookmarkBorder />}
-                    </IconButton>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       {language === 'ar' ? (
                         <>
@@ -581,6 +515,31 @@ export default function ChapterReader({
               })}
             </Box>
           ))}
+          {totalPages > 1 && (
+            <Box component="nav" aria-label="Chapter pages" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, sm: 2 }, mt: { xs: 3, md: 4 } }}>
+              <Button
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1}
+                startIcon={<ChevronLeft />}
+                variant="outlined"
+                sx={{ minHeight: 44, px: { xs: 1.5, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, borderColor: 'rgba(44,26,14,0.15)', color: 'var(--awm-bark)', '&:hover': { borderColor: 'var(--awm-gold)', background: 'color-mix(in srgb, var(--awm-gold) 6%, transparent)' } }}
+              >
+                Prev
+              </Button>
+              <Typography aria-live="polite" sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 13.5 }, fontWeight: 600, color: 'var(--awm-muted)', minWidth: 84, textAlign: 'center' }}>
+                Page {page} of {totalPages}
+              </Typography>
+              <Button
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages}
+                endIcon={<ChevronRight />}
+                variant="contained"
+                sx={{ minHeight: 44, px: { xs: 1.5, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, bgcolor: '#b8860b', color: '#fff', boxShadow: 'none', '&:hover': { bgcolor: '#946c08', boxShadow: 'none' }, '&:disabled': { bgcolor: 'rgba(44,26,14,0.12)', color: 'rgba(44,26,14,0.3)' } }}
+              >
+                Next
+              </Button>
+            </Box>
+          )}
         </Box>
       ) : (
         <Box sx={{ px: { xs: 2.5, md: 7 }, py: { xs: 4, md: 7 }, background: 'var(--awm-white)' }}>
@@ -600,22 +559,11 @@ export default function ChapterReader({
         </Box>
       )}
       </Paper>
-      <Menu open={Boolean(bookmarkMenu)} anchorEl={bookmarkMenu?.anchor} onClose={() => setBookmarkMenu(null)}>
-        <MenuItem onClick={() => { if (bookmarkMenu) void toggleBookmark(bookmarkMenu.block, bookmarkMenu.index); setBookmarkMenu(null) }}>{bookmarkMenu && isBookmarkedSentence(bookmarkMenu.index) ? 'Remove bookmark' : 'Add bookmark'}</MenuItem>
-      </Menu>
       <MobileDefinitionPopover
         anchor={mobileWordPopup ? selectedDefinition?.anchor ?? null : null}
         entry={selectedDefinition?.entry ?? null}
         onClose={closeDefinition}
         textScale={textScale}
-      />
-      <Snackbar
-        open={Boolean(bookmarkNotice)}
-        autoHideDuration={1800}
-        onClose={() => setBookmarkNotice('')}
-        message={bookmarkNotice}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        slotProps={{ content: { sx: { minWidth: 0, bgcolor: '#0e2e1f', color: '#fff', borderRadius: '9999px', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 } } }}
       />
     </>
   )

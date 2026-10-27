@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState, type MouseEvent } from 'react'
+import { useEffect, type MouseEvent } from 'react'
 import { Box, Button, Typography } from '@mui/material'
 import { AutoStories, Translate } from '@mui/icons-material'
 import { useAuth } from '@/app/AuthContext'
@@ -9,17 +9,11 @@ import type { PublicChapter } from '@/app/actions/books'
 import PdfDownloadButton from '@/app/components/PdfDownloadButton'
 import BookReviewButton from './BookReviewButton'
 import { bookReaderHref } from '@/app/lib/bookReaderSettings'
-import {
-  BOOK_SENTENCE_BOOKMARK_EVENT,
-  BOOK_SENTENCE_BOOKMARK_STORAGE_KEY,
-  latestBookSentenceBookmark,
-  parseBookSentenceBookmark,
-  type BookSentenceBookmark,
-} from '@/app/lib/bookSentenceBookmark'
+import { useReadingProgressStore } from '@/store/readingProgressStore'
 
 interface BookProgressEntry {
   chapterSlug?: string
-  updatedAt?: string
+  page?: number
 }
 
 function progressForBook(metadata: Record<string, unknown>, bookSlug: string): BookProgressEntry | null {
@@ -31,35 +25,21 @@ function progressForBook(metadata: Record<string, unknown>, bookSlug: string): B
 
 export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlug: string; bookId: string; chapters: PublicChapter[] }) {
   const { user, loading } = useAuth()
-  const [localBookmark, setLocalBookmark] = useState<BookSentenceBookmark | null>(null)
-
+  /* The session store updates as the reader tracks pages; metadata is the
+     fallback from the last synced session. */
+  const trackedPosition = useReadingProgressStore((state) => state.positions[bookSlug])
   useEffect(() => {
-    const readBookmark = () => {
-      setLocalBookmark(parseBookSentenceBookmark(window.localStorage.getItem(BOOK_SENTENCE_BOOKMARK_STORAGE_KEY)))
-    }
-    readBookmark()
-    window.addEventListener('storage', readBookmark)
-    window.addEventListener(BOOK_SENTENCE_BOOKMARK_EVENT, readBookmark)
-    return () => {
-      window.removeEventListener('storage', readBookmark)
-      window.removeEventListener(BOOK_SENTENCE_BOOKMARK_EVENT, readBookmark)
-    }
-  }, [])
+    if (user) useReadingProgressStore.getState().hydrateFromMetadata(user.user_metadata)
+  }, [user])
 
   const savedProgress = user ? progressForBook(user.user_metadata, bookSlug) : null
-  const accountBookmark = parseBookSentenceBookmark(user?.user_metadata?.book_sentence_bookmark)
-  const bookmark = latestBookSentenceBookmark(localBookmark, accountBookmark)
-  const bookmarkedChapter = bookmark?.bookSlug === bookSlug && chapters.some((chapter) => chapter.slug === bookmark.chapterSlug)
-    ? bookmark.chapterSlug
+  const savedChapterSlug = trackedPosition?.chapterSlug ?? savedProgress?.chapterSlug
+  const savedPage = trackedPosition?.page ?? savedProgress?.page
+  const savedChapter = savedChapterSlug && chapters.some((chapter) => chapter.slug === savedChapterSlug)
+    ? savedChapterSlug
     : null
-  const savedChapter = bookmarkedChapter ?? (savedProgress?.chapterSlug && chapters.some((chapter) => chapter.slug === savedProgress.chapterSlug)
-    ? savedProgress.chapterSlug
-    : null)
   const destination = savedChapter ?? chapters[0]?.slug
   const currentChapter = savedChapter ? chapters.find((chapter) => chapter.slug === savedChapter) : null
-  const savedBlockIndex = bookmark?.bookSlug === bookSlug && bookmark.chapterSlug === destination
-    ? bookmark.blockIndex
-    : undefined
 
   if (!destination) return null
   const requireSignIn = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -84,8 +64,8 @@ export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlu
       )}
 
       <Box sx={{ display: 'inline-grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, maxWidth: '100%' }}>
-        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'ar', savedBlockIndex)} variant="contained" startIcon={<AutoStories />} sx={{ minHeight: 44, bgcolor: '#b8860b', color: '#fff', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#946c08' } }}>Read in Arabic</Button>
-        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'en', savedBlockIndex)} variant="contained" startIcon={<Translate />} sx={{ minHeight: 44, bgcolor: 'var(--awm-cream)', color: 'var(--awm-bark)', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: 'var(--awm-cream-light)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 55%, transparent)', outlineOffset: 2 } }}>Read in English</Button>
+        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'ar', savedPage)} variant="contained" startIcon={<AutoStories />} sx={{ minHeight: 44, bgcolor: '#b8860b', color: '#fff', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#946c08' } }}>Read in Arabic</Button>
+        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'en', savedPage)} variant="contained" startIcon={<Translate />} sx={{ minHeight: 44, bgcolor: 'var(--awm-cream)', color: 'var(--awm-bark)', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: 'var(--awm-cream-light)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 55%, transparent)', outlineOffset: 2 } }}>Read in English</Button>
       <Box sx={{ gridColumn: '1 / -1', mt: 0.25, display:'grid', gridTemplateColumns:{xs:'1fr',sm:'repeat(2,minmax(0,1fr))'},gap:1,alignItems:'start' }}>
         <PdfDownloadButton bookSlug={bookSlug} language="ar" label="Download PDF" small fullWidth />
         <BookReviewButton bookId={bookId} />
