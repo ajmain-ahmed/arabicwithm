@@ -22,21 +22,23 @@ export default function FeaturedHero({ show, episode }: FeaturedShow) {
       sx={{
         pt: 'calc(var(--awm-navbar-height) + 14px)',
         pb: { xs: 1.5, md: 2.5 },
-        px: { xs: 2, md: 0 },
+        px: { xs: 2, md: 4 },
       }}
     >
       <Box
         sx={{
           position: 'relative',
-          /* Tall on mobile: cover-scaling a wide artwork to a tall card shows
-             its full height (only the sides crop). */
-          height: { xs: 'clamp(430px, 56dvh, 560px)', md: 460 },
+          /* Desktop: aspect-locked to the artwork (2560×1080) so the whole
+             image fits with zero crop. Mobile: a tall card so cover-scaling
+             shows the artwork's full height (only the sides crop). */
+          height: { xs: 'clamp(430px, 56dvh, 560px)', md: 'auto' },
+          aspectRatio: { md: '2560 / 1080' },
           mx: 'auto',
-          borderRadius: { xs: '14px', md: 0 },
+          borderRadius: { xs: '14px', md: '18px' },
           overflow: 'hidden',
           bgcolor: '#0a0f0d',
-          border: { xs: '1px solid color-mix(in srgb, var(--awm-bark) 10%, transparent)', md: 'none' },
-          boxShadow: { xs: '0 18px 50px color-mix(in srgb, var(--awm-bark) 16%, transparent)', md: 'none' },
+          border: '1px solid color-mix(in srgb, var(--awm-bark) 10%, transparent)',
+          boxShadow: '0 18px 50px color-mix(in srgb, var(--awm-bark) 16%, transparent)',
         }}
       >
         <Box
@@ -45,7 +47,7 @@ export default function FeaturedHero({ show, episode }: FeaturedShow) {
           alt=""
           fetchPriority="high"
           decoding="async"
-          sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%' }}
+          sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
         />
         {/* Legibility: weighted to the left where the text sits. */}
         <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(78deg, rgba(5,9,8,0.85) 0%, rgba(5,9,8,0.5) 36%, transparent 62%)' }} />
