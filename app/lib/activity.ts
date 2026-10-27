@@ -96,6 +96,19 @@ export function emptyLearningActivity(): LearningActivity {
   return { totalSeconds: 0, activeDates: [], daily: [], weeklyGoalSeconds: null }
 }
 
+/* Latest server-fresh activity, kept module-side so components that mount
+   after the tracker has already published (e.g. the mobile drawer) still see
+   the up-to-date snapshot instead of stale user metadata. */
+let latestActivitySnapshot: { userId: string; activity: LearningActivity } | null = null
+
+export function publishLearningActivitySnapshot(snapshot: { userId: string; activity: LearningActivity }): void {
+  latestActivitySnapshot = snapshot
+}
+
+export function getLearningActivitySnapshot(userId: string): LearningActivity | null {
+  return latestActivitySnapshot?.userId === userId ? latestActivitySnapshot.activity : null
+}
+
 export function calculateLearningStreak(dateValues: Array<string | undefined>, now = new Date()): number {
   const dates = new Set(dateValues.map((value) => value ? localDateKey(value) : '').filter(Boolean))
   const cursor = new Date(now.getFullYear(), now.getMonth(), now.getDate())

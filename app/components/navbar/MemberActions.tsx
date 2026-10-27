@@ -7,6 +7,7 @@ import { DiamondOutlined, LocalFireDepartmentRounded } from '@mui/icons-material
 import { useAuth } from '@/app/AuthContext'
 import {
   LEARNING_ACTIVITY_EVENT,
+  getLearningActivitySnapshot,
   parseLearningActivity,
   type LearningActivity,
 } from '@/app/lib/activity'
@@ -24,7 +25,14 @@ const PILL_HEIGHT = 34
 
 export default function MemberActions() {
   const { user } = useAuth()
-  const [activityUpdate, setActivityUpdate] = useState<{ userId: string; activity: LearningActivity } | null>(null)
+  /* Seed from the tracker's latest snapshot when this component mounts after
+     the publish (mobile drawer); metadata is the fallback for never-synced
+     data. */
+  const [activityUpdate, setActivityUpdate] = useState<{ userId: string; activity: LearningActivity } | null>(() => {
+    if (!user?.id) return null
+    const activity = getLearningActivitySnapshot(user.id)
+    return activity ? { userId: user.id, activity } : null
+  })
   const [premiumOpen, setPremiumOpen] = useState(false)
 
   useEffect(() => {

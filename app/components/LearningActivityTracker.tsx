@@ -8,6 +8,7 @@ import {
   LEARNING_ACTIVITY_EVENT,
   WORD_LOOKUP_EVENT,
   activityKindForPath,
+  publishLearningActivitySnapshot,
   shouldCountActiveTime,
 } from '@/app/lib/activity'
 import { usePlayerStore } from '@/store/playerStore'
@@ -47,6 +48,7 @@ export default function LearningActivityTracker() {
   useEffect(() => { videoPlayingRef.current = videoPlaying }, [videoPlaying])
 
   const publish = useCallback((userId: string, activity: Awaited<ReturnType<typeof fetchLearningActivity>>) => {
+    if (activity) publishLearningActivitySnapshot({ userId, activity })
     window.dispatchEvent(new CustomEvent(LEARNING_ACTIVITY_EVENT, { detail: { userId, activity } }))
   }, [])
 

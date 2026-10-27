@@ -80,7 +80,7 @@ export default function MobileDrawer({
                 >
                     {/* Streak + AWM+ live here on mobile (the navbar is reserved
                         for navigation); the pair sizes itself to the drawer. */}
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', alignSelf: 'center', width: '100%' }}>
                         <MemberActions />
                     </Box>
                 </Box>
