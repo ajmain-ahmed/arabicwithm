@@ -51,7 +51,7 @@ export default function BookMyListToggle({ bookSlug }: { bookSlug: string }) {
       startIcon={inList ? <BookmarkOutlined /> : <BookmarkAddOutlined />}
       variant="contained"
       sx={{
-        mt: 1.5,
+
         width: '100%',
         bgcolor: inList ? '#14532d' : 'transparent',
         color: inList ? '#fff' : 'var(--awm-bark)',

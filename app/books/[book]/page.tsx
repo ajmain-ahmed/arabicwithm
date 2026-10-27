@@ -4,7 +4,6 @@ import { Box, Chip, Container, Paper, Typography } from '@mui/material'
 import { AccessTimeRounded, ArrowBack, ChevronRight, HeadphonesRounded } from '@mui/icons-material'
 import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChapterCardsForBookPublic } from '@/app/actions/books'
 import BookReadingCta from './BookReadingCta'
-import BookMyListToggle from './BookMyListToggle'
 import ChapterAccessLock, { ChapterLink } from './ChapterAccessLock'
 import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
@@ -129,7 +128,6 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
               {book.cover && (
                 <Box sx={{ width: '100%', maxWidth: { sm: 240 }, mx: 'auto' }}>
                   <Box sx={{ borderRadius: '10px' }}>{coverImage}</Box>
-                  <BookMyListToggle bookSlug={book.slug} />
                 </Box>
               )}
               <Box sx={{ minWidth: 0 }}>{infoFields}</Box>
@@ -146,7 +144,6 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
               <Box sx={{ position: 'relative', flex: 1, minHeight: 340, borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(44,26,14,0.08)', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}>
                 <Box component="img" src={book.cover} alt={`${book.title} cover`} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} />
               </Box>
-              <BookMyListToggle bookSlug={book.slug} />
             </Box>
           )}
           <Box sx={{ minWidth: 0 }}>

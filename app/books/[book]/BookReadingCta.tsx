@@ -8,6 +8,7 @@ import { useAuth } from '@/app/AuthContext'
 import type { PublicChapter } from '@/app/actions/books'
 import PdfDownloadButton from '@/app/components/PdfDownloadButton'
 import BookReviewButton from './BookReviewButton'
+import BookMyListToggle from './BookMyListToggle'
 import { bookReaderHref } from '@/app/lib/bookReaderSettings'
 import { useReadingProgressStore } from '@/store/readingProgressStore'
 
@@ -63,7 +64,7 @@ export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlu
         <Typography sx={{ mb: 2, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 13 }}>Choose a language to begin reading.</Typography>
       )}
 
-      <Box sx={{ display: 'inline-grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, maxWidth: '100%' }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, width: '100%' }}>
         {user && savedChapter && (
           <Button
             component={Link}
@@ -88,12 +89,14 @@ export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlu
             Continue
           </Button>
         )}
-        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'ar', savedPage)} variant="contained" startIcon={<AutoStories />} sx={{ minHeight: 44, bgcolor: '#b8860b', color: '#fff', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#946c08' } }}>Read in Arabic</Button>
-        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'en', savedPage)} variant="contained" startIcon={<Translate />} sx={{ minHeight: 44, bgcolor: 'var(--awm-cream)', color: 'var(--awm-bark)', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: 'var(--awm-cream-light)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 55%, transparent)', outlineOffset: 2 } }}>Read in English</Button>
-      <Box sx={{ gridColumn: '1 / -1', mt: 0.25, display:'grid', gridTemplateColumns:{xs:'1fr',sm:'repeat(2,minmax(0,1fr))'},gap:1,alignItems:'start' }}>
+        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'ar', savedPage)} variant="contained" startIcon={<AutoStories />} sx={{ minHeight: 52, fontSize: 15, bgcolor: '#b8860b', color: '#fff', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#946c08' } }}>Read in Arabic</Button>
+        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'en', savedPage)} variant="contained" startIcon={<Translate />} sx={{ minHeight: 52, fontSize: 15, bgcolor: 'var(--awm-cream)', color: 'var(--awm-bark)', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: 'var(--awm-cream-light)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 55%, transparent)', outlineOffset: 2 } }}>Read in English</Button>
+      </Box>
+      {/* Secondary actions share a row so the wide desktop box breathes. */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' }, gap: 1, mt: 1.25, width: '100%', alignItems: 'stretch' }}>
+        <BookMyListToggle bookSlug={bookSlug} />
         <PdfDownloadButton bookSlug={bookSlug} language="ar" label="Download PDF" small fullWidth />
         <BookReviewButton bookId={bookId} />
-      </Box>
       </Box>
     </>
   )
