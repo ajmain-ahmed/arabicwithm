@@ -20,7 +20,7 @@ export default function FeaturedHero({ show, episode }: FeaturedShow) {
     <Box
       data-featured-hero
       sx={{
-        pt: 0,
+        pt: '20px',
         pb: { xs: 1.5, md: 2.5 },
         px: { xs: 2, md: 4 },
       }}
