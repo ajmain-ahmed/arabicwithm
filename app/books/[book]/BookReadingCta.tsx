@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useEffect, type MouseEvent } from 'react'
 import { Box, Button, Typography } from '@mui/material'
-import { AutoStories, Translate } from '@mui/icons-material'
+import { AutoStories, PlayArrow, Translate } from '@mui/icons-material'
 import { useAuth } from '@/app/AuthContext'
 import type { PublicChapter } from '@/app/actions/books'
 import PdfDownloadButton from '@/app/components/PdfDownloadButton'
@@ -64,6 +64,30 @@ export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlu
       )}
 
       <Box sx={{ display: 'inline-grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, maxWidth: '100%' }}>
+        {user && savedChapter && (
+          <Button
+            component={Link}
+            disabled={loading}
+            prefetch={!loading}
+            onClick={requireSignIn}
+            href={`/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(savedChapter)}${savedPage && savedPage >= 2 ? `?page=${savedPage}` : ''}`}
+            variant="contained"
+            startIcon={<PlayArrow />}
+            sx={{
+              gridColumn: '1 / -1',
+              minHeight: 48,
+              bgcolor: '#0e2e1f',
+              color: '#fff',
+              borderRadius: '9px',
+              px: 2.25,
+              textTransform: 'none',
+              fontWeight: 800,
+              '&:hover': { bgcolor: '#174832' },
+            }}
+          >
+            Continue
+          </Button>
+        )}
         <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'ar', savedPage)} variant="contained" startIcon={<AutoStories />} sx={{ minHeight: 44, bgcolor: '#b8860b', color: '#fff', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#946c08' } }}>Read in Arabic</Button>
         <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'en', savedPage)} variant="contained" startIcon={<Translate />} sx={{ minHeight: 44, bgcolor: 'var(--awm-cream)', color: 'var(--awm-bark)', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: 'var(--awm-cream-light)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 55%, transparent)', outlineOffset: 2 } }}>Read in English</Button>
       <Box sx={{ gridColumn: '1 / -1', mt: 0.25, display:'grid', gridTemplateColumns:{xs:'1fr',sm:'repeat(2,minmax(0,1fr))'},gap:1,alignItems:'start' }}>
