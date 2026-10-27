@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { Box, Chip, Container, Paper, Typography } from '@mui/material'
 import { AccessTimeRounded, ArrowBack, ChevronRight, HeadphonesRounded } from '@mui/icons-material'
@@ -78,7 +77,8 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
 
   const coverImage = (
     <Box sx={{ position: 'relative', width: '100%', aspectRatio: '2 / 3', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(44,26,14,0.08)', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}>
-      <Image src={book.cover!} alt={`${book.title} cover`} fill preload sizes="(max-width: 600px) 240px, 360px" style={{ objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} />
+      {/* Plain img: the original cover bytes, no optimizer re-encode. */}
+      <Box component="img" src={book.cover!} alt={`${book.title} cover`} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} />
     </Box>
   )
 
@@ -115,7 +115,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
 
   return (
     <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 3, md: 6 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 6 } }}>
-      <Container maxWidth="lg">
+      <Container maxWidth="xl">
         <Link href="/books" style={{ color: 'inherit', textDecoration: 'none' }}>
           <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', mb: 3, '&:hover': { color: '#b8860b' } }}>
             <ArrowBack sx={{ fontSize: 18 }} /> Back to books
@@ -140,11 +140,11 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
 
         {/* Desktop: the cover stretches to the full height of the info box plus
             the chapters list; both sit to its right. */}
-        <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: book.cover ? 'minmax(300px, 360px) minmax(0, 1fr)' : 'minmax(0, 1fr)', gap: 4, alignItems: 'stretch' }}>
+        <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: book.cover ? 'minmax(340px, 440px) minmax(0, 1fr)' : 'minmax(0, 1fr)', gap: 4, alignItems: 'stretch' }}>
           {book.cover && (
             <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               <Box sx={{ position: 'relative', flex: 1, minHeight: 340, borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(44,26,14,0.08)', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}>
-                <Image src={book.cover} alt={`${book.title} cover`} fill preload sizes="360px" style={{ objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} />
+                <Box component="img" src={book.cover} alt={`${book.title} cover`} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} />
               </Box>
               <BookMyListToggle bookSlug={book.slug} />
             </Box>
