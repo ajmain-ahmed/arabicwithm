@@ -20,7 +20,7 @@ export default function FeaturedHero({ show, episode }: FeaturedShow) {
     <Box
       data-featured-hero
       sx={{
-        pt: 'calc(var(--awm-navbar-height) + 2px)',
+        pt: 0,
         pb: { xs: 1.5, md: 2.5 },
         px: { xs: 2, md: 4 },
       }}
@@ -38,7 +38,7 @@ export default function FeaturedHero({ show, episode }: FeaturedShow) {
           overflow: 'hidden',
           bgcolor: '#0a0f0d',
           border: '1px solid color-mix(in srgb, var(--awm-bark) 10%, transparent)',
-          boxShadow: '0 18px 50px color-mix(in srgb, var(--awm-bark) 16%, transparent)',
+          boxShadow: 'none',
         }}
       >
         <Box
