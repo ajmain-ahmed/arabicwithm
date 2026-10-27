@@ -48,19 +48,19 @@ it('shows the streak count from user metadata and the AWM+ button', async () => 
   mocks.user = { id: 'user-id', user_metadata: { learning_activity: { activeDates, daily: activeDates.map(date => ({ date, activeSeconds: 60 })), totalSeconds: 240 } } }
   await act(async () => root.render(<MemberActions />))
   const pill = host.querySelector('[aria-label="4 day streak"]')
-  expect(pill?.textContent).toBe('4')
+  expect(pill?.textContent).toBe('Streak')
   expect([...host.querySelectorAll('button')].some(button => button.textContent === 'AWM+')).toBe(true)
 })
 
 it('updates the streak when a learning-activity event arrives', async () => {
   await act(async () => root.render(<MemberActions />))
-  expect(host.querySelector('[aria-label="0 day streak"]')?.textContent).toBe('0')
+  expect(host.querySelector('[aria-label="0 day streak"]')?.textContent).toBe('Streak')
   const today = localDateKey(new Date())
   const activity = { activeDates: [today], daily: [{ date: today, activeSeconds: 90 }], totalSeconds: 90 }
   await act(async () => {
     window.dispatchEvent(new CustomEvent(LEARNING_ACTIVITY_EVENT, { detail: { userId: 'user-id', activity } }))
   })
-  expect(host.querySelector('[aria-label="1 day streak"]')?.textContent).toBe('1')
+  expect(host.querySelector('[aria-label="1 day streak"]')?.textContent).toBe('Streak')
 })
 
 it('opens the premium prompt from the AWM+ button', async () => {

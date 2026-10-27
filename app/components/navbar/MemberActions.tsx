@@ -96,7 +96,7 @@ export default function MemberActions() {
           }}
         >
           <LocalFireDepartmentRounded sx={{ fontSize: 15 }} />
-          {streak}
+          Streak
         </Box>
       </Tooltip>
       {premiumOpen && <PremiumPromptLazy open onClose={() => setPremiumOpen(false)} />}

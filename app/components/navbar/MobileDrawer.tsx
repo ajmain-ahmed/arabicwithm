@@ -47,7 +47,6 @@ export default function MobileDrawer({
     navigate,
 }: MobileDrawerProps) {
     const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? 'M'
-    const displayName = String(user?.user_metadata?.full_name ?? user?.email?.split('@')[0] ?? '')
 
     const pushAndClose = (url: string) => {
         navigate(url)
@@ -96,26 +95,6 @@ export default function MobileDrawer({
                         >
                             {userInitial}
                         </Avatar>
-                        <Box sx={{ overflow: 'hidden', minWidth: 0 }}>
-                            <Typography
-                                variant="body1"
-                                sx={{
-                                    fontWeight: 700,
-                                    lineHeight: 1.2,
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                }}
-                            >
-                                {displayName}
-                            </Typography>
-                            <Typography
-                                variant="caption"
-                                sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'block' }}
-                            >
-                                {user?.email}
-                            </Typography>
-                        </Box>
                     </Box>
                     {/* Streak + AWM+ live here on mobile (the navbar is reserved
                         for navigation); the pair sizes itself to the drawer. */}
