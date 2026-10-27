@@ -13,51 +13,60 @@ export interface FeaturedShow {
   episodeCount: number
 }
 
-/* Netflix-style featured banner for signed-in visitors: artwork fills the
-   frame, content sits bottom-left, and a theme-aware gradient blends the
-   artwork into the page below. Deliberately shorter than a streaming
-   billboard so the content rows stay close to the fold. */
+/* Netflix-style featured banner for signed-in visitors: the artwork sits in a
+   rounded card that floats on the page background (navbar above, rows below),
+   with content overlaid bottom-left inside the card. Deliberately shorter
+   than a streaming billboard so the content rows stay close to the fold. */
 export default function FeaturedHero({ show, episode, episodeCount }: FeaturedShow) {
   return (
     <Box
       data-featured-hero
       sx={{
-        position: 'relative',
-        mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' },
-        height: { xs: 300, md: 440 },
-        overflow: 'hidden',
-        bgcolor: '#0a0f0d',
+        pt: 'calc(var(--awm-navbar-height) + 14px)',
+        pb: { xs: 1.5, md: 2.5 },
+        px: { xs: 2, sm: 3, md: 4 },
       }}
     >
       <Box
-        component="img"
-        src="/homepage/dbz-feature.avif"
-        alt=""
-        fetchPriority="high"
-        decoding="async"
-        sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 28%' }}
-      />
-      {/* Legibility: weighted to the left where the text sits. */}
-      <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(78deg, rgba(5,9,8,0.85) 0%, rgba(5,9,8,0.5) 36%, transparent 62%)' }} />
-      {/* Blend the artwork into the page background below. */}
-      <Box aria-hidden="true" sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '48%', background: 'linear-gradient(0deg, color-mix(in srgb, var(--awm-cream-light) 97%, transparent) 0%, color-mix(in srgb, var(--awm-cream-light) 55%, transparent) 36%, transparent 100%)' }} />
-
-      <Box
         sx={{
           position: 'relative',
-          zIndex: 1,
-          height: '100%',
-          width: '100%',
-          maxWidth: 1280,
+          height: { xs: 300, md: 440 },
+          maxWidth: 1440,
           mx: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start',
-          justifyContent: 'flex-end',
-          px: { xs: 2, sm: 4, md: 6 },
-          pb: { xs: 2.5, md: 4 },
+          borderRadius: { xs: '14px', md: '18px' },
+          overflow: 'hidden',
+          bgcolor: '#0a0f0d',
+          border: '1px solid color-mix(in srgb, var(--awm-bark) 10%, transparent)',
+          boxShadow: '0 18px 50px color-mix(in srgb, var(--awm-bark) 16%, transparent)',
         }}
       >
+        <Box
+          component="img"
+          src="/homepage/dbz-feature.avif"
+          alt=""
+          fetchPriority="high"
+          decoding="async"
+          sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 28%' }}
+        />
+        {/* Legibility: weighted to the left where the text sits. */}
+        <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(78deg, rgba(5,9,8,0.85) 0%, rgba(5,9,8,0.5) 36%, transparent 62%)' }} />
+        <Box aria-hidden="true" sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '52%', background: 'linear-gradient(0deg, rgba(5,9,8,0.78) 0%, rgba(5,9,8,0.35) 40%, transparent 100%)' }} />
+
+        <Box
+          sx={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            justifyContent: 'flex-end',
+            px: { xs: 2.5, sm: 4, md: 5 },
+            pb: { xs: 2.25, md: 3.5 },
+          }}
+        >
         <Typography sx={{ color: 'var(--awm-gold-light)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', mb: 1, textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
           Featured
         </Typography>
@@ -128,6 +137,7 @@ export default function FeaturedHero({ show, episode, episodeCount }: FeaturedSh
         {/* Desktop surfaces streak/AWM+ in the navbar; on mobile the hero is their home. */}
         <Box sx={{ display: { xs: 'flex', md: 'none' }, mt: 2 }}>
           <MemberActions />
+        </Box>
         </Box>
       </Box>
     </Box>
