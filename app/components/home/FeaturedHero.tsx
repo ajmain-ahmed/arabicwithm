@@ -7,7 +7,8 @@ import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
 
 export interface FeaturedShow {
   show: ShowMeta
-  episode: EpisodeMeta
+  episode?: EpisodeMeta
+  featuredImage?: string
   episodeCount: number
 }
 
@@ -15,7 +16,7 @@ export interface FeaturedShow {
    content bottom-left inside it. Desktop runs full-bleed; mobile is a tall
    card so the whole height of the artwork is visible. Deliberately shorter
    than a streaming billboard so the rows stay near the fold. */
-export default function FeaturedHero({ show, episode }: FeaturedShow) {
+export default function FeaturedHero({ show, episode, featuredImage }: FeaturedShow) {
   return (
     <Box
       data-featured-hero
@@ -43,12 +44,14 @@ export default function FeaturedHero({ show, episode }: FeaturedShow) {
       >
         <Box
           component="img"
-          src="/homepage/dbz-feature.avif"
-          alt=""
+          src={featuredImage ?? "/homepage/dbz-feature.avif"}
+          alt={show.title}
           fetchPriority="high"
           decoding="async"
+          onError={event=>{const image=event.currentTarget;if(!image.dataset.fallback){image.dataset.fallback='true';image.src=show.cover}else image.style.visibility='hidden'}}
           sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
         />
+        <Box component={Link} href={`/cartoons/${encodeURIComponent(show.slug)}`} aria-label={`View ${show.title}`} sx={{position:'absolute',inset:0,zIndex:1}} />
         {/* Legibility: weighted to the left where the text sits. */}
         <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(78deg, rgba(5,9,8,0.85) 0%, rgba(5,9,8,0.5) 36%, transparent 62%)' }} />
         <Box aria-hidden="true" sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '52%', background: 'linear-gradient(0deg, rgba(5,9,8,0.78) 0%, rgba(5,9,8,0.35) 40%, transparent 100%)' }} />
@@ -77,31 +80,22 @@ export default function FeaturedHero({ show, episode }: FeaturedShow) {
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 1,
+            zIndex: 2,
             display: 'flex',
             flexDirection: 'column',
             alignItems: { xs: 'center', md: 'flex-start' },
             justifyContent: 'flex-end',
             textAlign: { xs: 'center', md: 'left' },
             px: { xs: 2.5, sm: 4, md: 6 },
+            pointerEvents:'none', '& a':{pointerEvents:'auto'},
             pb: { xs: 2.25, md: 3.5 },
           }}
         >
-          <Box
-            component="img"
-            src="/homepage/dbz-logo.png"
-            alt={show.title}
-            sx={{
-              width: { xs: 250, md: 500 },
-              height: 'auto',
-              display: 'block',
-              filter: 'drop-shadow(0 3px 10px rgba(0,0,0,0.55))',
-            }}
-          />
+          {show.slug.toLowerCase()==='dbz'?<Box component="img" src="/homepage/dbz-logo.png" alt={show.title} sx={{width:{xs:250,md:500},height:'auto',display:'block',filter:'drop-shadow(0 3px 10px rgba(0,0,0,.55))'}}/>:<Typography component="h2" sx={{color:'#fff',fontFamily:'var(--font-heading)',fontWeight:700,fontSize:{xs:44,md:76},lineHeight:1.05,textShadow:'0 3px 10px rgba(0,0,0,.55)'}}>{show.title}</Typography>}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'nowrap', width: { xs: '100%', md: 'auto' }, mt: { xs: 2, md: 2.75 } }}>
             <Button
               component={Link}
-              href={`/cartoons/${encodeURIComponent(show.slug)}/${encodeURIComponent(episode.slug)}`}
+              href={episode?`/cartoons/${encodeURIComponent(show.slug)}/${encodeURIComponent(episode.slug)}`:`/cartoons/${encodeURIComponent(show.slug)}`}
               variant="contained"
               startIcon={<PlayArrow sx={{ fontSize: { xs: 22, md: 26 } }} />}
               sx={{

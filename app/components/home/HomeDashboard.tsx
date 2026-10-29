@@ -20,7 +20,7 @@ import {
   SearchOutlined,
   PsychologyOutlined,
 } from '@mui/icons-material'
-import { Box, Button, Container, Paper, Skeleton, Typography, useMediaQuery } from '@mui/material'
+import { Box, Button, Container, Paper, Skeleton, Typography } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
@@ -198,7 +198,6 @@ export function UpgradeSection() {
 export default function HomeDashboard({ books, newShows, newEpisodes, chaptersByBook, featured }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; featured?: import('./FeaturedHero').FeaturedShow | null }) {
   const { mode } = useColorMode()
   const { user } = useAuth()
-  const isMobile=useMediaQuery('(max-width:899.95px)')
   /* My List is fetched once per session and cached in the store; show-page
      add/remove keeps the cache in sync. Saved books share the row; they are
      stored in user metadata (like reading progress), so merge them in. */
@@ -327,7 +326,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
         }}
       >
         {user && featured ? (
-          <FeaturedHero show={featured.show} episode={featured.episode} episodeCount={featured.episodeCount} />
+          <FeaturedHero {...featured} />
         ) : (
         <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 360, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
           {/* Responsive AVIF set encoded from the pristine source: the browser
@@ -454,7 +453,6 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
           {/* Mobile-only section: the Quick Actions grid and the mobile Continue
               Reading card have no desktop presentation. */}
           <Container maxWidth={false} sx={{ display: { xs: 'block', md: 'none' }, mt: 3 }}>
-            {user&&isMobile&&continueReadingRowItems.length===0&&<Box sx={{mb:3}}><Button component={Link} href="/books" variant="outlined" sx={{minHeight:44,textTransform:'none',borderRadius:'999px'}}>Start Reading</Button></Box>}
             <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 600, color: 'var(--awm-bark)' }}>Quick Actions</Typography>
             <Box component="nav" aria-label="Quick Actions" data-mobile-home-actions sx={{ display: 'grid', gridTemplateColumns:'repeat(2,minmax(0,1fr))',gridAutoRows:'1fr',gap:1.5,mt:1.5 }}>
               {[

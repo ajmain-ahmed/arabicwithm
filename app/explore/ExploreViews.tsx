@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Box, Button, Fade, IconButton, Typography, useMediaQuery } from '@mui/material'
+import { Box, Button, Fade, IconButton, Typography } from '@mui/material'
 import { Close, ExploreOutlined, PersonOutlineRounded } from '@mui/icons-material'
 import ExploreFeed from './ExploreFeed'
-import {setExploreSoundPreference, type ExploreFeedBatch} from '@/app/lib/explore'
+import {type ExploreFeedBatch} from '@/app/lib/explore'
 import { useAuth } from '@/app/AuthContext'
 import ForYouAllowance from './ForYouAllowance'
 import ForYouFeed from './ForYouFeed'
@@ -31,8 +31,6 @@ function ViewSwitch({ view, onChange, hint, onDismiss, mobile = false, horizonta
 
 export default function ExploreViews({ initialSeed, initialBatch }: { initialSeed: string; initialBatch: ExploreFeedBatch | null }) {
   const { user, loading } = useAuth()
-  const isPhone=useMediaQuery('(max-width:899.95px)')
-  useEffect(()=>{if(isPhone)setExploreSoundPreference(true)},[isPhone])
   const [view, setView] = useState<ExploreView>('explore')
   const [hintFor, setHintFor] = useState<ExploreView | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)

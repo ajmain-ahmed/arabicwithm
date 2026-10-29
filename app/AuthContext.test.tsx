@@ -1,7 +1,8 @@
 import { act } from 'react'
 import { createRoot,type Root } from 'react-dom/client'
 import { beforeEach,afterEach,expect,it,vi } from 'vitest'
-const mocks=vi.hoisted(()=>({session:vi.fn(),set:vi.fn(),access:vi.fn(),refresh:vi.fn(),callback:null as null|((event:string,session:unknown)=>void),unsubscribe:vi.fn()}))
+const mocks=vi.hoisted(()=>({session:vi.fn(),set:vi.fn(),access:vi.fn(),refresh:vi.fn(),home:vi.fn(),callback:null as null|((event:string,session:unknown)=>void),unsubscribe:vi.fn()}))
+vi.mock('@/app/lib/publicHome',()=>({returnToPublicHome:mocks.home}))
 vi.mock('next/navigation',()=>{const router={refresh:mocks.refresh};return {useRouter:()=>router}})
 vi.mock('@/app/lib/supabase/client',()=>({supabase:{auth:{getSession:mocks.session,setSession:mocks.set,onAuthStateChange:(callback:typeof mocks.callback)=>{mocks.callback=callback;return{data:{subscription:{unsubscribe:mocks.unsubscribe}}}}}}}))
 vi.mock('@/app/actions/auth',()=>({getAuthenticatedAccess:mocks.access}))
@@ -25,7 +26,7 @@ it('restores auth, keeps Admin through profile updates, and does not refresh rou
  await act(async()=>mocks.callback!('SIGNED_IN',adminSession))
  await act(async()=>mocks.callback!('USER_UPDATED',{...adminSession,user:{...adminSession.user,user_metadata:{name:'New name'}}}))
  expect(host.textContent).toContain('"isAdmin":true');expect(mocks.access).toHaveBeenCalledTimes(1);expect(mocks.refresh).toHaveBeenCalledTimes(1)
- await act(async()=>mocks.callback!('SIGNED_OUT',null));expect(host.textContent).toContain('"isAdmin":false');expect(mocks.refresh).toHaveBeenCalledTimes(2)
+ await act(async()=>mocks.callback!('SIGNED_OUT',null));expect(host.textContent).toContain('"isAdmin":false');expect(mocks.refresh).toHaveBeenCalledTimes(1);expect(mocks.home).toHaveBeenCalledOnce()
 })
 it('does not restore an old session after a newer sign-out event or after unmount',async()=>{
  seedSessionCookie()
@@ -45,7 +46,7 @@ it('does not refresh over navigation when the first event restores an existing s
   expect(host.textContent).toContain('"user":"admin"')
   expect(mocks.refresh).not.toHaveBeenCalled()
   await act(async () => mocks.callback!('SIGNED_OUT', null))
-  expect(mocks.refresh).toHaveBeenCalledOnce()
+  expect(mocks.refresh).not.toHaveBeenCalled();expect(mocks.home).toHaveBeenCalledOnce()
 })
 it('skips the client entirely for anonymous visitors without a stored session', async () => {
   await act(async () => root.render(<AuthProvider><Probe/></AuthProvider>))

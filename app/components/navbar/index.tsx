@@ -1,5 +1,6 @@
 'use client'
 
+import { returnToPublicHome } from '@/app/lib/publicHome'
 import { AdminPanelSettings, DarkModeOutlined, LightModeOutlined, MenuOutlined, Person } from '@mui/icons-material'
 import { AppBar, Avatar, Box, Button, Container, IconButton, Toolbar, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
@@ -16,7 +17,6 @@ import { fetchMyDisplayName } from '@/app/actions/profiles'
 // mounted on first open for the same reason — it pulls supabase-js too.
 import ClientStyles from '@/app/components/ClientStyles'
 import BrandLogo from './BrandLogo'
-import { setExploreSoundPreference } from '@/app/lib/explore'
 import UserMenu from './UserMenu'
 import MemberActions from './MemberActions'
 import { NAV_ITEMS, NAV_ROUTES } from './constants'
@@ -86,12 +86,11 @@ export default function Navbar() {
     const handleLogout = async () => {
         // Interaction-time only: keep supabase-js out of the initial bundle.
         const { supabase } = await import('@/app/lib/supabase/client')
-        await supabase.auth.signOut()
-        window.location.href = '/'
+        await supabase.auth.signOut({ scope: 'local' })
+        returnToPublicHome()
     }
 
     const safePush = (url: string) => {
-        if (url === NAV_ROUTES.Explore) setExploreSoundPreference(true)
         router.push(url)
     }
 
@@ -218,7 +217,7 @@ export default function Navbar() {
                             <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', width: '100%', alignItems: 'center' }}>
                                 <Box component="nav" aria-label="Primary navigation" sx={{ display: 'flex', alignItems: 'center', gap: { md: 2.5, lg: 4 } }}>
                                     {NAV_ITEMS.map((item) => (
-                                        <Link key={item} href={NAV_ROUTES[item]} onNavigate={() => { if (item === 'Explore') setExploreSoundPreference(true) }} style={{ color: 'inherit', textDecoration: 'none' }}>
+                                        <Link key={item} href={NAV_ROUTES[item]} style={{ color: 'inherit', textDecoration: 'none' }}>
                                             <Typography
                                                 className="nav-link"
                                                 variant="body2"

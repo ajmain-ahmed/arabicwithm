@@ -4,6 +4,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 const catalogue = vi.hoisted(() => ({ books: vi.fn(), chapters: vi.fn(), shows: vi.fn(), episodes: vi.fn(), newShows: vi.fn(), newEpisodes: vi.fn() }))
 vi.mock('@/app/actions/books', () => ({ fetchBooksForPublic: catalogue.books, fetchChapterNavigationForPublic: catalogue.chapters }))
 vi.mock('@/app/actions/cartoons', () => ({ fetchShowsForPublic: catalogue.shows }))
+vi.mock('@/app/lib/homeFeatured',()=>({fetchHomeFeatured:vi.fn(async()=>null)}))
 vi.mock('@/app/lib/homeCatalogue', () => ({ fetchHomeEpisodes: catalogue.episodes }))
 vi.mock('@/app/components/home/catalogueRows', () => ({ fetchNewOnShows: catalogue.newShows, fetchNewOnEpisodes: catalogue.newEpisodes }))
 vi.mock('@/app/components/home/HomeDashboard', () => ({ default: () => null }))

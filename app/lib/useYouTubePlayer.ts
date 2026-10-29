@@ -382,6 +382,8 @@ export default function useYouTubePlayer(
     setIsMuted(options.verifySoundState ? readEffectiveMuted(playerRef.current, true) : false)
   }, [options.verifySoundState])
 
+  const getSoundMuted = useCallback(() => readEffectiveMuted(playerRef.current, mutedRef.current), [])
+
   const getCurrentTime = useCallback(() => {
     return playerRef.current?.getCurrentTime?.() ?? 0
   }, [])
@@ -412,7 +414,7 @@ export default function useYouTubePlayer(
     unMute,
     playWithSound,
     getCurrentTime,
-    getSoundMuted: () => readEffectiveMuted(playerRef.current, mutedRef.current),
+    getSoundMuted,
     getDuration,
     getPlaybackRates,
     playbackRate,

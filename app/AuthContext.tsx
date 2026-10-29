@@ -1,5 +1,6 @@
 'use client'
 
+import { returnToPublicHome } from '@/app/lib/publicHome'
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Session, User } from '@supabase/supabase-js'
@@ -126,7 +127,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
-        if (shouldRefresh && (_event === 'SIGNED_IN' || _event === 'SIGNED_OUT')) router.refresh()
+        if (_event === 'SIGNED_OUT') {
+          // Never refresh a private profile after its session has disappeared.
+          // A full replacement also clears cached authenticated route payloads.
+          returnToPublicHome()
+        } else if (shouldRefresh && _event === 'SIGNED_IN') router.refresh()
       }).data.subscription
     }).catch((error: unknown) => {
       console.error('Unable to load the auth client:', error)

@@ -190,7 +190,6 @@ function ExploreVideo({
   onNext?: () => void
   onStarted?: () => void
 }) {
-  const isPhone = useMediaQuery('(max-width:899.95px)')
   const sources = useMemo(() => getEpisodeVideoSources(episode), [episode])
   const [selectedProvider, setSelectedProvider] = useState<VideoProvider | undefined>(sources[0]?.provider)
   const soundBlockedRef = useRef(false)
@@ -205,17 +204,17 @@ function ExploreVideo({
     pauseVideo,
     mute,
     playWithSound,
+    getSoundMuted,
     autoplayBlocked,
     errorCode,
   } = useYouTubePlayer(
     active && isYouTube ? source.id : undefined,
     undefined,
     undefined,
-    { autoplay: true, muted: isPhone ? false : !soundEnabled, verifySoundState: true, mutedAutoplayFallback: true, onEnded }
+    { autoplay: true, muted: !soundEnabled, verifySoundState: true, mutedAutoplayFallback: true, onEnded }
   )
   /* The player is the source of truth once ready: the user can also unmute
      or change volume with YouTube's own controls, which fire onVolumeChange. */
-  const phoneMuted = isPhone && isMuted
   const soundMuted = isReady ? isMuted : !soundEnabled
   /* onStarted arrives as an inline arrow from the feed — keep it in a ref so
      the autoplay effect below only re-fires on real state transitions, not on
@@ -236,25 +235,25 @@ function ExploreVideo({
     }
     // One policy rejection enables a muted fallback for this player. Starting
     // that fallback must not trigger another automatic unmute/play loop.
-    if (autoplayBlocked || (phoneMuted && soundEnabled)) soundBlockedRef.current = true
+    if (autoplayBlocked || (soundEnabled && getSoundMuted())) soundBlockedRef.current = true
     if (soundEnabled && !soundBlockedRef.current) playWithSound()
     else mute()
     playVideo()
     onStartedRef.current?.()
-  }, [active, autoplayBlocked, phoneMuted, isReady, mute, pauseVideo, playVideo, soundEnabled, playWithSound])
+  }, [active, autoplayBlocked, isReady, mute, pauseVideo, playVideo, soundEnabled, playWithSound, getSoundMuted])
 
   useEffect(() => {
     const requestSound = () => {
-      if (!active || !isReady || !soundEnabled || !soundBlockedRef.current) return
+      if (!active || !isReady || !soundEnabled || (!getSoundMuted() && !soundBlockedRef.current)) return
       soundBlockedRef.current = false
       playWithSound()
     }
     window.addEventListener('awm-explore-gesture', requestSound)
     return () => window.removeEventListener('awm-explore-gesture', requestSound)
-  }, [active, isReady, playWithSound, soundEnabled])
+  }, [active, isReady, playWithSound, soundEnabled, getSoundMuted])
 
   const toggleSound = () => {
-    if (soundMuted) {
+    if (getSoundMuted() || soundBlockedRef.current) {
       soundBlockedRef.current = false
       setExploreSoundPreference(true)
       playWithSound()
@@ -421,7 +420,7 @@ function ExploreVideo({
           {railTop}
           {/* A native fallback uses YouTube's controls without API commands. */}
           {(!isYouTube || isReady) && <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
-            <Box sx={{ display: {xs:'none',md:'flex'}, flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
               <IconButton
                 onClick={toggleSound}
                 aria-label={soundMuted ? 'Turn Explore sound on' : 'Mute Explore video'}
@@ -817,7 +816,7 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
       <Box
         id="explore-feed"
         ref={feedRef}
-        onPointerDownCapture={() => window.dispatchEvent(new Event('awm-explore-gesture'))}
+        onPointerDownCapture={event => { if(event.target instanceof Element && event.target.closest('button, a, input, select, textarea, [role=slider]'))return; window.dispatchEvent(new Event('awm-explore-gesture')) }}
       component="div"
       sx={{
         height: '100%',

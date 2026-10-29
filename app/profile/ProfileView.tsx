@@ -1,5 +1,6 @@
 'use client'
 
+import { returnToPublicHome } from '@/app/lib/publicHome'
 import { useEffect, useState } from 'react'
 import {
   ArrowForwardIos, CalendarMonthOutlined, CheckCircleOutlined,
@@ -305,8 +306,9 @@ function SettingsSection() {
     setSigningOut(true)
     try {
       const { supabase } = await import('@/app/lib/supabase/client')
-      await supabase.auth.signOut()
-    } finally { window.location.href = '/' }
+      const { error } = await supabase.auth.signOut({ scope: 'local' })
+        if (error) throw error
+    } finally { returnToPublicHome() }
   }
 
   return (
