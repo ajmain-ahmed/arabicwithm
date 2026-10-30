@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({ pathname: '/', mobile: false, role: 'admin', p
 // Navigation tests exercise destinations rather than decorative icon rendering.
 vi.mock('@mui/icons-material', () => {
   const Icon = () => <svg aria-hidden="true" />
-  return { AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, DiamondOutlined: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon, SchoolOutlined: Icon }
+  return { ImageOutlined: Icon, AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, DiamondOutlined: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon, SchoolOutlined: Icon }
 })
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => mocks.auth }))
 vi.mock('@/app/actions/profiles', () => ({ fetchMyDisplayName: vi.fn(() => Promise.resolve(null)) }))
@@ -153,7 +153,7 @@ it.each(['admin','editor'])('groups existing %s tools after browsing without cha
  mocks.mobile=true;mocks.role=role
  await act(async()=>root.render(<Navbar/>))
  await act(async()=>(host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
- const management=[...(role==='admin'?['Admin']:[]),'Reviewer','Memory','Grammar','Word Search']
+ const management=[...(role==='admin'?['Admin','Featured']:[]),'Reviewer','Memory','Grammar','Word Search']
  expect([...document.querySelectorAll('.mobile-list-btn')].map(node=>node.textContent)).toEqual([
   'My Profile','Home','Explore','Watch','Read','Learn',...management,'Give Feedback','Support Us','Settings','Sign Out',
  ])

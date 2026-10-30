@@ -12,6 +12,7 @@ import {
   ListItemIcon,
 } from "@mui/material"
 import {
+  ImageOutlined,
   DarkMode,
   SmartDisplay,
   MenuBook,
@@ -32,6 +33,7 @@ const navItems = [
   { label: "Shows", href: "/admin/shows", icon: <SmartDisplay /> },
   { label: "Transcripts", href: "/admin/transcripts", icon: <FormatQuote /> },
   { label: "Books", href: "/admin/books", icon: <Book /> },
+  { label: "Featured", href: "/admin/featured", icon: <ImageOutlined /> },
   { label: "Hans Wehr", href: "/admin/hans-wehr", icon: <MenuBook /> },
   { label: "Phrases", href: "/admin/phrases", icon: <FormatQuote /> },
 ]

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import {FEATURED_DESKTOP_RATIO,FEATURED_MOBILE_HEIGHT,featuredObjectPosition,type FeaturedPosition} from '@/app/lib/featuredFraming'
 import { Box, Button, Typography } from '@mui/material'
 import { FormatListBulleted, PlayArrow } from '@mui/icons-material'
 import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
@@ -9,6 +10,7 @@ export interface FeaturedShow {
   show: ShowMeta
   episode?: EpisodeMeta
   featuredImage?: string
+  featuredPosition?: FeaturedPosition
   episodeCount: number
 }
 
@@ -16,7 +18,7 @@ export interface FeaturedShow {
    content bottom-left inside it. Desktop runs full-bleed; mobile is a tall
    card so the whole height of the artwork is visible. Deliberately shorter
    than a streaming billboard so the rows stay near the fold. */
-export default function FeaturedHero({ show, episode, featuredImage }: FeaturedShow) {
+export default function FeaturedHero({ show, episode, featuredImage, featuredPosition }: FeaturedShow) {
   return (
     <Box
       data-featured-hero
@@ -32,8 +34,8 @@ export default function FeaturedHero({ show, episode, featuredImage }: FeaturedS
           /* Desktop: aspect-locked to the artwork (2560×1080) so the whole
              image fits with zero crop. Mobile: a tall card so cover-scaling
              shows the artwork's full height (only the sides crop). */
-          height: { xs: 'clamp(430px, 56dvh, 560px)', md: 'auto' },
-          aspectRatio: { md: '2560 / 1080' },
+          height: { xs: FEATURED_MOBILE_HEIGHT, md: 'auto' },
+          aspectRatio: { md: FEATURED_DESKTOP_RATIO },
           mx: 'auto',
           borderRadius: { xs: '14px', md: '18px' },
           overflow: 'hidden',
@@ -49,7 +51,7 @@ export default function FeaturedHero({ show, episode, featuredImage }: FeaturedS
           fetchPriority="high"
           decoding="async"
           onError={event=>{const image=event.currentTarget;if(!image.dataset.fallback){image.dataset.fallback='true';image.src=show.cover}else image.style.visibility='hidden'}}
-          sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+          sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: featuredObjectPosition(featuredPosition) }}
         />
         <Box component={Link} href={`/cartoons/${encodeURIComponent(show.slug)}`} aria-label={`View ${show.title}`} sx={{position:'absolute',inset:0,zIndex:1}} />
         {/* Legibility: weighted to the left where the text sits. */}

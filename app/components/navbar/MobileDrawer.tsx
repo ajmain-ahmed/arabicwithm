@@ -1,6 +1,6 @@
 'use client'
 
-import { AccountTreeOutlined, AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, GridOnRounded, HomeOutlined, LogoutSharp, Movie, Person, PsychologyOutlined, RateReviewOutlined, SchoolOutlined, SettingsOutlined, VolunteerActivismRounded } from '@mui/icons-material'
+import { ImageOutlined, AccountTreeOutlined, AdminPanelSettings, BookOutlined, EmailSharp, ExploreOutlined, GridOnRounded, HomeOutlined, LogoutSharp, Movie, Person, PsychologyOutlined, RateReviewOutlined, SchoolOutlined, SettingsOutlined, VolunteerActivismRounded } from '@mui/icons-material'
 import {
     Box,
     Button,
@@ -54,7 +54,7 @@ export default function MobileDrawer({
     // Keep the existing capability checks and destinations together. The
     // learning shortcuts are also currently shown only to these accounts.
     const managementItems = [
-        ...(isLoggedIn && isAdmin ? [{ label: 'Admin', icon: <AdminPanelSettings sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/admin/users') }] : []),
+        ...(isLoggedIn && isAdmin ? [{ label: 'Admin', icon: <AdminPanelSettings sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/admin/users') }, { label: 'Featured', icon: <ImageOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/admin/featured') }] : []),
         ...(isLoggedIn && isReviewer ? [{ label: 'Reviewer', icon: <RateReviewOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/reviewer') }] : []),
         ...(isAdmin || isReviewer ? LEARN_ITEMS.map(({ label, route }) => {
             const Icon = learningIcons[label]

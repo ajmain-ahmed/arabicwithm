@@ -16,8 +16,11 @@ const fixtureBuild = path.resolve('.next-browser')
 if (!fixtureBuild.startsWith(`${process.cwd()}${path.sep}`)) throw new Error('Fixture cache must stay in the workspace.')
 rmSync(fixtureBuild, { recursive: true, force: true })
 mkdirSync(fixtureBuild, { recursive: true })
-const certificate = path.join(fixtureBuild, 'fixture-cert.pem')
-const privateKey = path.join(fixtureBuild, 'fixture-key.pem')
+// Production builds clean distDir, so keep fixture TLS outside that directory.
+const certificateDir = path.resolve('supabase/.temp', `fixture-tls-${backendPort}`)
+mkdirSync(certificateDir, { recursive: true })
+const certificate = path.join(certificateDir, 'fixture-cert.pem')
+const privateKey = path.join(certificateDir, 'fixture-key.pem')
 const openssl = process.env.OPENSSL_PATH ?? (process.platform === 'win32' ? 'C:/Program Files/Git/usr/bin/openssl.exe' : 'openssl')
 const generated = spawnSync(openssl, ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1', '-keyout', privateKey, '-out', certificate, '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1'], { stdio: 'ignore' })
 if (generated.status !== 0) throw new Error('OpenSSL is required for the local HTTPS media fixture.')
@@ -49,7 +52,9 @@ const content = Array.from({ length: 30 }, (_, i) => ({ paragraph: i + 1, tokens
 let failImportAfter=null
 const formDrafts=new Map()
 const importJobs=new Map()
+const featuredObjects=new Map()
 const tables = {
+  featured_show_config: [],
   email_preferences: [],
   book_audio_progress: [],
   youtube_transcripts: [],
@@ -88,6 +93,12 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   const chunks = []; for await (const chunk of req) chunks.push(chunk)
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
+  if(url.pathname==='/fixture/featured'){
+    featuredObjects.clear();tables.featured_show_config=[]
+    featuredObjects.set('featured/test-show.webp',{bytes:cover,type:'image/webp',updated_at:'2026-01-01T00:00:00Z'})
+    featuredObjects.set('featured/ORPHAN.webp',{bytes:cover,type:'image/webp',updated_at:'2026-01-01T00:00:00Z'})
+    return json(res,{})
+  }
   if(url.pathname==='/fixture/reader-pagination'){tables.chapters[0].content=Array.from({length:body.blocks??120},(_,i)=>({paragraph:i+1,tokens:[{arabic:'\u0627\u0644\u0643\u062a\u0627\u0628',english:'book',pos:'noun',cefr:'a1'}],translation:`Reader block ${i+1}.`}));return json(res,{})}
   if(url.pathname==='/fixture/website-update') {
     const second='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
@@ -326,6 +337,10 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     const table = url.pathname.split('/').at(-1)
     tableLog.push(table)
     if (req.method !== 'GET' && req.method !== 'HEAD') {
+      if(table==='featured_show_config'){
+        if(req.method==='DELETE')tables.featured_show_config=tables.featured_show_config.filter(row=>row.storage_path!==url.searchParams.get('storage_path')?.slice(3))
+        else {const index=tables.featured_show_config.findIndex(row=>row.show_id===body.show_id);if(index<0)tables.featured_show_config.push(body);else tables.featured_show_config[index]=body}
+      }
       if(table==='email_preferences') {
         const index=tables.email_preferences.findIndex(row=>row.email===body.email&&row.purpose===body.purpose)
         if(index<0)tables.email_preferences.push(body);else if(!(req.headers.prefer??'').includes('ignore-duplicates'))tables.email_preferences[index]=body
@@ -349,6 +364,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     const owner = (url.searchParams.get('user_id') ?? '').replace(/^eq\./, '')
     let rows = tables[table] ?? []
+    if(table==='account_roles')rows=[{user_id:owner,role:roleFor(owner)}]
     if(table==='memory_sessions')rows=memorySnapshots.has(owner)?[{user_id:owner,state:memorySnapshots.get(owner)}]:[]
     if(table==='book_reviews')rows=[...ownReviews.values()]
     if (table === 'subscriptions') rows = owner === ids.premium ? [{ user_id: owner, status: 'active', current_period_end: '2099-01-01T00:00:00Z', customer_id: 'fixture' }] : []
@@ -363,6 +379,23 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     res.setHeader('Content-Range', `0-${Math.max(0, rows.length - 1)}/${rows.length}`)
     if (req.method === 'HEAD') { res.writeHead(200); res.end(); return }
     return json(res, (req.headers.accept ?? '').includes('application/vnd.pgrst.object+json') ? rows[0] ?? null : rows)
+  }
+  if(url.pathname==='/storage/v1/object/list/covers')return json(res,[...featuredObjects].filter(([name])=>name.startsWith(body.prefix+'/')).map(([name,value])=>({id:name,name:name.split('/').at(-1),updated_at:value.updated_at})).slice(body.offset??0,(body.offset??0)+(body.limit??100)))
+  if(url.pathname==='/storage/v1/object/covers'&&req.method==='DELETE'){for(const name of body.prefixes??[])featuredObjects.delete(name);return json(res,[])}
+  if(url.pathname.startsWith('/storage/v1/object/covers/featured/')&&req.method==='POST'){
+    const name=decodeURIComponent(url.pathname.slice('/storage/v1/object/covers/'.length))
+    let bytes=Buffer.concat(chunks),type=req.headers['content-type']
+    if(type?.startsWith('multipart/form-data')){
+      const form=await new Response(bytes,{headers:{'content-type':type}}).formData()
+      const file=[...form.values()].find(value=>value instanceof Blob)
+      if(file){bytes=Buffer.from(await file.arrayBuffer());type=file.type}
+    }
+    featuredObjects.set(name,{bytes,type,updated_at:new Date().toISOString()});return json(res,{Key:'covers/'+name,Id:name})
+  }
+  if(url.pathname.startsWith('/storage/v1/object/public/covers/featured/')){
+    const value=featuredObjects.get(decodeURIComponent(url.pathname.slice('/storage/v1/object/public/covers/'.length)))
+    if(!value)return json(res,{message:'Not found'},404)
+    res.writeHead(200,{'Content-Type':value.type});res.end(value.bytes);return
   }
   if(url.pathname.startsWith('/storage/v1/object/profile-media/')&&req.method==='POST'){
     const path=url.pathname.slice('/storage/v1/object/profile-media/'.length)
@@ -409,11 +442,18 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   json(res, { message: 'Unknown fixture endpoint' }, 404)
 })
 backend.listen(backendPort, '127.0.0.1', () => {
-  const next = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'dev', ...(process.env.AWM_TEST_WEBPACK === '1' ? ['--webpack'] : []), '--hostname', '127.0.0.1', '--port', String(webPort)], {
-    stdio: 'inherit',
-    env: { ...process.env, AWM_BROWSER_TEST: '1', SUPABASE_URL: backendUrl, NEXT_PUBLIC_SUPABASE_URL: backendUrl, SUPABASE_SERVICE_KEY: 'fixture-service-key', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'fixture-public-key', NEXT_PUBLIC_SITE_URL: webUrl, NODE_EXTRA_CA_CERTS: certificate },
-  })
+  const env={ ...process.env, AWM_BROWSER_TEST: '1', SUPABASE_URL: backendUrl, NEXT_PUBLIC_SUPABASE_URL: backendUrl, SUPABASE_SERVICE_KEY: 'fixture-service-key', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'fixture-public-key', NEXT_PUBLIC_SITE_URL: webUrl, NODE_EXTRA_CA_CERTS: certificate }
+  let next
+  const finish=code=>{backend.close();process.exit(code??0)}
+  const serve=()=>{
+    const args=process.env.AWM_TEST_PRODUCTION==='1'?['start']:['dev',...(process.env.AWM_TEST_WEBPACK==='1'?['--webpack']:[])]
+    next=spawn(process.execPath,['node_modules/next/dist/bin/next',...args,'--hostname','127.0.0.1','--port',String(webPort)],{stdio:'inherit',env})
+    next.on('exit',finish)
+  }
+  if(process.env.AWM_TEST_PRODUCTION==='1'){
+    next=spawn(process.execPath,['node_modules/next/dist/bin/next','build'],{stdio:'inherit',env})
+    next.on('exit',code=>{if(code===0)serve();else finish(code)})
+  }else serve()
   const stop = () => { next.kill(); backend.close(); setTimeout(() => process.exit(), 500).unref() }
   process.on('SIGINT', stop); process.on('SIGTERM', stop)
-  next.on('exit', code => { backend.close(); process.exit(code ?? 0) })
 })

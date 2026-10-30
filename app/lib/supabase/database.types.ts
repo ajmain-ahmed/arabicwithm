@@ -15,6 +15,7 @@ type Table<Row> = { Row: { [K in keyof Row]: Row[K] }; Insert: { [K in keyof Row
 export interface Database {
   public: {
     Tables: {
+      featured_show_config: Table<{show_id:string;storage_path:string;position_x:number;position_y:number;updated_at:string}>
       admin_manual_transcripts: Table<{transcript_id:string;group_id:string|null;created_at:string}>
       youtube_transcripts: Table<import('@/app/actions/transcripts').TranscriptRow & {raw_transcript:Json|null}>
       transcript_segments: Table<import('@/app/actions/transcripts').TranscriptSegment & {transcript_id:string}>

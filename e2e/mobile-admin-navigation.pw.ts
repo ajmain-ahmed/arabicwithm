@@ -12,7 +12,7 @@ for(const width of [320,390])for(const role of ['user','premium','editor','admin
  const drawer=page.getByRole('dialog',{name:'Site navigation',exact:true})
  await expect(drawer).toBeVisible()
  const privileged=role==='admin'||role==='editor'
- const management=privileged?[...(role==='admin'?['Admin']:[]),'Reviewer','Memory','Grammar','Word Search']:[]
+ const management=privileged?[...(role==='admin'?['Admin','Featured']:[]),'Reviewer','Memory','Grammar','Word Search']:[]
  await expect(drawer.locator('.mobile-list-btn')).toHaveText(['My Profile','Home','Explore','Watch','Read','Learn',...management,'Give Feedback','Support Us','Settings','Sign Out'])
  const separators=drawer.locator('[data-nav-divider]')
  expect(await separators.evaluateAll(nodes=>nodes.map(node=>node.previousElementSibling?.textContent))).toEqual(['My Profile','Learn',...(privileged?['Word Search']:[]),'Support Us'])

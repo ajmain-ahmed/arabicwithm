@@ -27,3 +27,9 @@ it('stays stable for three London days, advances, wraps, and handles an empty po
  expect(selectFeaturedShow(pairs,now(21))).toBe(first)
  expect(selectFeaturedShow([],now(0))).toBeNull()
 })
+
+it('carries saved framing with the same Show/image and excludes ambiguous slugs',()=>{
+ const result=featuredPool(shows,[{name:'ARC.webp',url:'arc',position:{x:45,y:22}},{name:'BB.webp',url:'bb',eligible:false}])
+ expect(result.pairs).toHaveLength(1);expect(result.pairs[0]).toMatchObject({show:{slug:'arc'},featuredImage:'arc',featuredPosition:{x:45,y:22}})
+ expect(featuredPool([...shows,{...shows[0],id:'other',slug:'ARC'}],images).pairs.some(pair=>pair.show.slug==='arc')).toBe(false)
+})
