@@ -302,7 +302,7 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
         </DialogActions>
       </Dialog>
 
-      {mode === 'read' && <Box component="section" aria-labelledby="all-books-title" sx={{ mb: 3 }}>
+      {mode === 'read' && <Box component="section" aria-labelledby="all-books-title" sx={{ mb: 3, display: { xs: 'block', md: 'none' } }}>
         <Typography id="all-books-title" component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 23, color: 'var(--awm-bark)', mb: 1 }}>All Books</Typography>
         <Box data-all-books-row role="group" aria-label="Scroll All Books" tabIndex={0} sx={{
           display: 'grid', gridAutoFlow: 'column', gridAutoColumns: { xs: 'calc((100% - 20px) / 3)', sm: '175px', md: '200px' },
@@ -323,7 +323,7 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
         </Box>)}
         {!visible.length && <Typography>{query.trim() ? `No books match "${query.trim()}".` : 'No books match these filters.'}</Typography>}
       </Box>}
-      <Box component="section" aria-label={mode === 'listen' ? 'Audiobook library' : 'Book library'} sx={{ ...LIBRARY_GRID_SX, ...(mode === 'read' ? { display: { xs: 'none', sm: 'grid' } } : {}) }}>
+      <Box component="section" aria-label={mode === 'listen' ? 'Audiobook library' : 'All Books'} sx={{ ...LIBRARY_GRID_SX, ...(mode === 'read' ? { display: { xs: 'none', sm: 'grid' } } : {}) }}>
         {visible.map(book => <LibraryBookCard key={book.id} book={book} listen={mode === 'listen'} />)}
         {!visible.length && <Typography>{query.trim() ? `No books match "${query.trim()}".` : mode === 'listen' ? 'No audiobooks match these filters.' : 'No books match these filters.'}</Typography>}
       </Box>

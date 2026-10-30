@@ -9,6 +9,7 @@ import { groupChapterBlocks } from '@/app/lib/bookParagraphs'
 import { useAuth } from '@/app/AuthContext'
 import { dispatchWordLookup } from '@/app/lib/activity'
 import { paginateParagraphs,readerPageForBlock,READER_BLOCKS_PER_PAGE,DESKTOP_READER_BLOCKS_PER_PAGE } from '@/app/lib/readingPagination'
+import { setBookInMyList } from '@/app/lib/bookMyList'
 import { useReadingProgressStore } from '@/store/readingProgressStore'
 import {
   DEFAULT_BOOK_READER_FONT,
@@ -262,6 +263,9 @@ export default function ChapterReader({
   audio?: ChapterAudioSummary[]
 }) {
   const { user } = useAuth()
+  useEffect(() => {
+    if (user?.id) void setBookInMyList(user.id, bookSlug, true).catch(error => console.error('Unable to save started book:', error))
+  }, [user?.id, bookSlug])
   const mobileWordPopup = useMediaQuery('(max-width:899.95px)')
   const [selectedDefinition, setSelectedDefinition] = useState<{ entry: VocabEntry; anchor: HTMLElement } | null>(null)
   const closeDefinition = useCallback(() => setSelectedDefinition(null), [])
@@ -308,12 +312,13 @@ export default function ChapterReader({
     if (user) useReadingProgressStore.getState().hydrateFromMetadata(user.user_metadata)
   }, [user])
   useEffect(()=>{
-    trackProgress(bookSlug,chapterSlug,page,totalPages,position.block)
+    trackProgress(bookSlug,chapterSlug,page,totalPages,position.block,language)
     const url=new URL(window.location.href)
     if(page>=2)url.searchParams.set('page',String(page));else url.searchParams.delete('page')
     url.searchParams.set('block',String(position.block))
     window.history.replaceState(window.history.state,'',url)
-  },[bookSlug,chapterSlug,page,totalPages,position.block,trackProgress])
+  },[bookSlug,chapterSlug,page,totalPages,position.block,language,trackProgress])
+  useEffect(() => () => { void useReadingProgressStore.getState().flush() }, [bookSlug, chapterSlug])
   const goToPage=useCallback((next:number)=>{
     const target=Math.min(Math.max(1,Math.trunc(next)||1),totalPages)
     setPosition({incoming,block:pageStarts[target-1]??0})

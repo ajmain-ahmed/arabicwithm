@@ -4,13 +4,7 @@ import { useState } from 'react'
 import { Button } from '@mui/material'
 import { BookmarkAddOutlined, BookmarkOutlined } from '@mui/icons-material'
 import { useAuth } from '@/app/AuthContext'
-import { supabase } from '@/app/lib/supabase/client'
-
-function savedBookSlugs(metadata: Record<string, unknown> | undefined): string[] {
-  const value = metadata?.my_list_books
-  if (!Array.isArray(value)) return []
-  return value.filter((slug): slug is string => typeof slug === 'string')
-}
+import { savedBookSlugs, setBookInMyList } from '@/app/lib/bookMyList'
 
 /* Books share the homepage "My List" row with shows. Unlike shows (backed by
    the my_list table), saved books live in user metadata — the same place as
@@ -30,12 +24,7 @@ export default function BookMyListToggle({ bookSlug }: { bookSlug: string }) {
     setOptimistic(next)
     setBusy(true)
     try {
-      const { data: current, error: lookupError } = await supabase.auth.getUser()
-      if (lookupError || !current.user || current.user.id !== user.id) throw new Error('Sign in again')
-      const slugs = savedBookSlugs(current.user.user_metadata)
-      const updated = next ? [...slugs.filter(slug => slug !== bookSlug), bookSlug] : slugs.filter(slug => slug !== bookSlug)
-      const { error } = await supabase.auth.updateUser({ data: { my_list_books: updated } })
-      if (error) throw error
+      await setBookInMyList(user.id, bookSlug, next)
     } catch {
       setOptimistic(!next)
       window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } }))

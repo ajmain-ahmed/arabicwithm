@@ -110,11 +110,11 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
 
         <Box sx={{
           display: 'grid',
-          gridTemplateColumns: book.cover ? { xs: 'minmax(0, 1fr)', sm: 'minmax(180px, min(30%, 300px)) minmax(0, 1fr)' } : 'minmax(0, 1fr)',
-          gridTemplateAreas: book.cover ? { xs: '"cover" "info" "chapters"', sm: '"cover info" ". chapters"' } : '"info" "chapters"',
+          gridTemplateColumns: book.cover ? { xs: 'minmax(0, 1fr)', sm: 'minmax(180px, min(30%, 300px)) minmax(0, 1fr)', md: 'minmax(320px, 38%) minmax(0, 1fr)' } : 'minmax(0, 1fr)',
+          gridTemplateAreas: book.cover ? { xs: '"cover" "info" "chapters"', sm: '"cover info" ". chapters"', md: '"cover info" "cover chapters"' } : '"info" "chapters"',
           columnGap: 4, rowGap: 3, alignItems: 'start',
         }}>
-          {book.cover && <Box sx={{ gridArea: 'cover', width: '100%', maxWidth: { xs: 220, sm: 300 }, justifySelf: { xs: 'center', sm: 'start' } }}>{coverImage}</Box>}
+          {book.cover && <Box sx={{ gridArea: 'cover', width: '100%', maxWidth: { xs: 220, sm: 300, md: 520 }, justifySelf: { xs: 'center', sm: 'start' } }}>{coverImage}</Box>}
           <Paper elevation={0} sx={{ gridArea: 'info', minWidth: 0, p: { xs: 3, md: 5 }, borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', minHeight: book.cover ? { md: 450 } : undefined }}>
             {infoFields}
           </Paper>

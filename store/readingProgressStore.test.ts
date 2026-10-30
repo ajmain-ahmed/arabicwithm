@@ -15,3 +15,11 @@ it('syncs stable content offsets through the existing debounced progress model',
  await useReadingProgressStore.getState().flush()
  expect(mocks.updateUser).toHaveBeenCalledWith({data:{book_progress:{book:expect.objectContaining({chapterSlug:'one',page:3,totalPages:10,blockIndex:24})}}})
 })
+
+it('persists opening pages and the chosen language through the existing tracker',async()=>{
+ const {useReadingProgressStore,parseStoredPositions}=await import('./readingProgressStore')
+ useReadingProgressStore.getState().track('book','two',1,10,0,'en')
+ await useReadingProgressStore.getState().flush()
+ const saved=mocks.updateUser.mock.calls[0][0].data
+ expect(parseStoredPositions(saved).book).toMatchObject({chapterSlug:'two',page:1,blockIndex:0,language:'en'})
+})

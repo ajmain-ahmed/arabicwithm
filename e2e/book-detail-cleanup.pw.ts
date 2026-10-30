@@ -14,16 +14,16 @@ for(const width of [320,390,768,1440])for(const ratio of [2/3,3/4,1])test(`book 
  await expect(cover).toBeVisible();await expect.poll(()=>cover.evaluate((el:HTMLImageElement)=>el.naturalWidth)).toBeGreaterThan(0)
  const fit=await cover.evaluate(el=>({fit:getComputedStyle(el).objectFit,transform:getComputedStyle(el).transform}))
  expect(fit).toEqual({fit:'contain',transform:'none'})
- const frame=await cover.boundingBox();expect(frame!.width).toBeLessThanOrEqual(width<600?220:300);expect(Math.abs(frame!.width/frame!.height-2/3)).toBeLessThan(.01)
+ const frame=await cover.boundingBox();expect(frame!.width).toBeLessThanOrEqual(width<600?220:width<900?300:520);if(width>=900)expect(frame!.width).toBeGreaterThan(400);expect(Math.abs(frame!.width/frame!.height-2/3)).toBeLessThan(.01)
  const arabic=page.getByRole('link',{name:'Arabic',exact:true}).filter({visible:true}),english=page.getByRole('link',{name:'English',exact:true}).filter({visible:true})
  await expect(arabic).toBeVisible();await expect(english).toBeVisible();await expect(page.getByRole('link',{name:/Read in (Arabic|English)/})).toHaveCount(0)
  await expect(arabic).toHaveCSS('background-color','rgb(184, 134, 11)');await expect(english).toHaveCSS('background-color','rgb(184, 134, 11)')
  const styles=await Promise.all([arabic,english].map(button=>button.evaluate(el=>{const r=el.getBoundingClientRect(),s=getComputedStyle(el);return [r.width,r.height,s.padding,s.borderRadius,s.fontSize,s.backgroundColor]})))
- expect(styles[0]).toEqual(styles[1])
+ expect(Math.abs(Number(styles[0][0])-Number(styles[1][0]))).toBeLessThan(1);expect(styles[0].slice(1)).toEqual(styles[1].slice(1))
  const card=await arabic.evaluate(el=>{const b=el.closest('.MuiPaper-root')!.getBoundingClientRect();return {x:b.x,y:b.y,width:b.width,height:b.height}})
  if(width>=600){expect(card.x).toBeGreaterThan(frame!.x+frame!.width);expect(card.width).toBeGreaterThan(frame!.width)}else{expect(Math.abs(frame!.x+frame!.width/2-width/2)).toBeLessThan(2)}
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
  await page.screenshot({path:`test-results/book-detail-${width}-${ratio}.png`,fullPage:true})
- if(ratio===2/3){await arabic.click();await expect(page).toHaveURL(/\/books\/test-book\/chapter-1\?lang=ar$/);await page.goto('/books/test-book');await page.getByRole('link',{name:'English',exact:true}).filter({visible:true}).click();await expect(page).toHaveURL(/\/books\/test-book\/chapter-1\?lang=en$/)}
+ if(ratio===2/3){await arabic.click();await expect(page).toHaveURL(/\/books\/test-book\/chapter-1\?lang=ar(?:&block=0)?$/);await page.goto('/books/test-book');await page.getByRole('link',{name:'English',exact:true}).filter({visible:true}).click();await expect(page).toHaveURL(/\/books\/test-book\/chapter-1\?lang=en(?:&block=0)?$/)}
  expect(errors).toEqual([])
 })

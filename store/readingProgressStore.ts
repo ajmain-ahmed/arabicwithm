@@ -1,13 +1,13 @@
 import { create } from 'zustand'
 import { supabase } from '@/app/lib/supabase/client'
 
-/* Session store for reading positions. Positions update in memory on every
-   page turn; account sync is debounced and only ever carries entries past
-   the first page — a book is "being read" once the reader passes page one,
-   so flicking through page 1 never touches the network. */
+/* One canonical account-backed reading position per book. Every reader page
+   is resumable, including the opening page; mobile discovery can still use
+   READING_TRACK_MIN_PAGE to decide when to show Continue Reading. */
 
 export interface ReadingPosition {
   chapterSlug: string
+  language?: 'ar' | 'en'
   page: number
   blockIndex?: number
   totalPages: number
@@ -20,7 +20,7 @@ const SYNC_DEBOUNCE_MS = 20_000
 interface ReadingProgressState {
   positions: Record<string, ReadingPosition>
   hydrateFromMetadata: (metadata: Record<string, unknown>) => void
-  track: (bookSlug: string, chapterSlug: string, page: number, totalPages: number, blockIndex?: number) => void
+  track: (bookSlug: string, chapterSlug: string, page: number, totalPages: number, blockIndex?: number, language?: 'ar' | 'en') => void
   flush: () => Promise<void>
 }
 
@@ -34,6 +34,7 @@ export function parseStoredPositions(metadata: Record<string, unknown>): Record<
     if (typeof record.chapterSlug !== 'string') continue
     result[bookSlug] = {
       chapterSlug: record.chapterSlug,
+      ...(record.language === 'ar' || record.language === 'en' ? { language: record.language } : {}),
       page: typeof record.page === 'number' && Number.isFinite(record.page) ? Math.max(1, Math.trunc(record.page)) : 1,
       totalPages: typeof record.totalPages === 'number' && Number.isFinite(record.totalPages) ? Math.max(1, Math.trunc(record.totalPages)) : 1,
       ...(typeof record.blockIndex==='number'&&Number.isInteger(record.blockIndex)&&record.blockIndex>=0?{blockIndex:record.blockIndex}:{}),
@@ -59,23 +60,19 @@ export const useReadingProgressStore = create<ReadingProgressState>((set, get) =
     }
     set({ positions: merged })
   },
-  track: (bookSlug, chapterSlug, page, totalPages, blockIndex) => {
+  track: (bookSlug, chapterSlug, page, totalPages, blockIndex, language) => {
     const position: ReadingPosition = {
       chapterSlug,
+      ...(language ? { language } : {}),
       page: Math.max(1, Math.trunc(page)),
       totalPages: Math.max(1, Math.trunc(totalPages)),
       ...(typeof blockIndex==='number'&&Number.isInteger(blockIndex)&&blockIndex>=0?{blockIndex}:{}),
       updatedAt: new Date().toISOString(),
     }
     set(state => ({ positions: { ...state.positions, [bookSlug]: position } }))
-    if (position.page >= READING_TRACK_MIN_PAGE) {
-      dirtyBooks.add(bookSlug)
-      if (!syncTimer) {
-        syncTimer = setTimeout(() => { syncTimer = null; void get().flush() }, SYNC_DEBOUNCE_MS)
-      }
-    } else {
-      // Back on page 1: nothing worth persisting; cancel any pending write.
-      dirtyBooks.delete(bookSlug)
+    dirtyBooks.add(bookSlug)
+    if (!syncTimer) {
+      syncTimer = setTimeout(() => { syncTimer = null; void get().flush() }, SYNC_DEBOUNCE_MS)
     }
   },
   flush: async () => {
@@ -90,11 +87,13 @@ export const useReadingProgressStore = create<ReadingProgressState>((set, get) =
       const next = { ...stored }
       for (const bookSlug of pending) {
         const position = positions[bookSlug]
-        if (position && position.page >= READING_TRACK_MIN_PAGE) next[bookSlug] = position
+        if (position) next[bookSlug] = position
       }
       const { error: writeError } = await supabase.auth.updateUser({ data: { book_progress: next } })
       if (writeError) return
-      for (const bookSlug of pending) dirtyBooks.delete(bookSlug)
+      for (const bookSlug of pending) {
+        if (get().positions[bookSlug] === positions[bookSlug]) dirtyBooks.delete(bookSlug)
+      }
     } catch {
       // Leave entries dirty — the next track or flush retries.
     } finally {

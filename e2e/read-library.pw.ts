@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test'
 
-for(const width of [320,390,768,1440])test(`Read catalogue heading and complete horizontal row at ${width}`,async({page})=>{
+for(const width of [320,390,768])test(`Read catalogue heading and complete horizontal row at ${width}`,async({page})=>{
  await page.setViewportSize({width,height:900})
  await page.goto('/books')
  const heading=page.getByRole('heading',{name:'Library',exact:true})
@@ -10,7 +10,7 @@ for(const width of [320,390,768,1440])test(`Read catalogue heading and complete 
   const nav=await page.locator('#main-navbar').boundingBox()
   expect(search!.y-(nav!.y+nav!.height)).toBeLessThan(48)
  }else await expect(heading).toBeVisible()
- const section=page.getByRole('region',{name:'All Books',exact:true}),row=section.getByRole('group',{name:'Scroll All Books'})
+ const section=page.locator('section[aria-labelledby=all-books-title]'),row=section.getByRole('group',{name:'Scroll All Books'})
  await expect(section).toBeVisible()
  expect(await page.locator('main section').first().getAttribute('aria-labelledby')).toBe('all-books-title')
  const links=row.getByRole('link')
@@ -35,7 +35,7 @@ for(const width of [320,390,768,1440])test(`Read catalogue heading and complete 
   expect(await genre.getByRole('link').first().getAttribute('href')).toBe(hrefs[0])
   await row.hover();await page.mouse.wheel(0,500)
   await expect.poll(()=>page.evaluate(()=>window.scrollY)).toBeGreaterThan(0)
- }else await expect(page.getByRole('region',{name:'Book library',exact:true})).toBeVisible()
+ }else await expect(page.locator('section[aria-label="All Books"]')).toBeVisible()
  await page.getByRole('textbox',{name:'Search books'}).fill('Book 2')
  await expect(links).toHaveCount(1)
  await page.getByRole('button',{name:'Clear search'}).click();await expect(links).toHaveCount(6)
@@ -45,4 +45,17 @@ for(const width of [320,390,768,1440])test(`Read catalogue heading and complete 
  await page.getByRole('button',{name:'Read',exact:true}).click();await expect(links).toHaveCount(6)
  await row.getByRole('link').filter({hasText:'Test Book'}).click()
  await expect(page).toHaveURL('/books/test-book')
+})
+
+for(const width of [1024,1440])test(`desktop single complete vertical catalogue at ${width}`,async({page})=>{
+ await page.setViewportSize({width,height:900});await page.goto('/books')
+ const grid=page.getByRole('region',{name:'All Books',exact:true}),links=grid.getByRole('link')
+ await expect(links).toHaveCount(6)
+ await expect(page.getByRole('group',{name:'Scroll All Books'})).toBeHidden()
+ expect(await page.locator('main a[href^="/books/"]:visible').count()).toBe(6)
+ const bounds=await links.evaluateAll(nodes=>nodes.map(el=>el.getBoundingClientRect().y))
+ if(width===1024)expect(new Set(bounds.map(Math.round)).size).toBeGreaterThan(1)
+ expect(await grid.evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true)
+ await page.getByRole('textbox',{name:'Search books'}).fill('Book 2');await expect(links).toHaveCount(1)
+ await page.getByRole('button',{name:'Clear search'}).click();await expect(links).toHaveCount(6)
 })

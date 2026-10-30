@@ -32,6 +32,6 @@ export default function LibraryBookCard({ book, listen = false, compact = false 
       </Box>
     )
       : <Box sx={{ aspectRatio: '2 / 3', display: 'grid', placeItems: 'center', borderRadius: '10px', bgcolor: 'var(--awm-forest)', color: 'var(--awm-white)' }}><AutoStories sx={{ fontSize: 44 }} /></Box>}
-    <Typography sx={{ textAlign: compact ? 'center' : undefined, mt: .65, px: .25, fontFamily: 'var(--font-sans)', fontSize: { xs: 13, sm: 14 }, lineHeight: 1.35, fontWeight: 500, color: 'var(--awm-bark)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{book.title}</Typography>
+    <Typography sx={{ textAlign: !listen || compact ? 'center' : undefined, mt: .65, px: .25, fontFamily: 'var(--font-sans)', fontSize: { xs: 13, sm: 14 }, lineHeight: 1.35, fontWeight: 500, color: 'var(--awm-bark)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{book.title}</Typography>
   </Box>
 }
