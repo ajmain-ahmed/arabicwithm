@@ -9,6 +9,7 @@ import { supabase } from '@/app/lib/supabase/client'
 export interface ReadingPosition {
   chapterSlug: string
   page: number
+  blockIndex?: number
   totalPages: number
   updatedAt: string
 }
@@ -19,7 +20,7 @@ const SYNC_DEBOUNCE_MS = 20_000
 interface ReadingProgressState {
   positions: Record<string, ReadingPosition>
   hydrateFromMetadata: (metadata: Record<string, unknown>) => void
-  track: (bookSlug: string, chapterSlug: string, page: number, totalPages: number) => void
+  track: (bookSlug: string, chapterSlug: string, page: number, totalPages: number, blockIndex?: number) => void
   flush: () => Promise<void>
 }
 
@@ -35,6 +36,7 @@ export function parseStoredPositions(metadata: Record<string, unknown>): Record<
       chapterSlug: record.chapterSlug,
       page: typeof record.page === 'number' && Number.isFinite(record.page) ? Math.max(1, Math.trunc(record.page)) : 1,
       totalPages: typeof record.totalPages === 'number' && Number.isFinite(record.totalPages) ? Math.max(1, Math.trunc(record.totalPages)) : 1,
+      ...(typeof record.blockIndex==='number'&&Number.isInteger(record.blockIndex)&&record.blockIndex>=0?{blockIndex:record.blockIndex}:{}),
       updatedAt: typeof record.updatedAt === 'string' ? record.updatedAt : '',
     }
   }
@@ -57,11 +59,12 @@ export const useReadingProgressStore = create<ReadingProgressState>((set, get) =
     }
     set({ positions: merged })
   },
-  track: (bookSlug, chapterSlug, page, totalPages) => {
+  track: (bookSlug, chapterSlug, page, totalPages, blockIndex) => {
     const position: ReadingPosition = {
       chapterSlug,
       page: Math.max(1, Math.trunc(page)),
       totalPages: Math.max(1, Math.trunc(totalPages)),
+      ...(typeof blockIndex==='number'&&Number.isInteger(blockIndex)&&blockIndex>=0?{blockIndex}:{}),
       updatedAt: new Date().toISOString(),
     }
     set(state => ({ positions: { ...state.positions, [bookSlug]: position } }))

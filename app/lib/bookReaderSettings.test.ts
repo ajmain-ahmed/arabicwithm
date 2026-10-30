@@ -60,3 +60,7 @@ describe('bookReaderHref', () => {
     expect(bookReaderHref('book', 'chapter', 'ar', 1)).toBe('/books/book/chapter?lang=ar')
   })
 })
+
+it('includes stable source offsets in resume links without changing legacy routes',()=>{
+ expect(bookReaderHref('book','one','en',3,24)).toBe('/books/book/one?lang=en&page=3&block=24')
+})

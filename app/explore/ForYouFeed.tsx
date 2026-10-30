@@ -5,7 +5,7 @@ import { Alert, Box, Button, CircularProgress, IconButton, Skeleton, Typography,
 import { KeyboardArrowDown, KeyboardArrowUp, SettingsOutlined, VolumeOff, VolumeUp } from '@mui/icons-material'
 import { fetchForYouClips, fetchForYouTranscript } from '@/app/actions/forYou'
 import { displayArabic } from '@/app/lib/displayArabic'
-import { hourlySeed, segmentAtTime } from '@/app/lib/forYou'
+import { segmentAtTime } from '@/app/lib/forYou'
 import type { ForYouClip, ForYouToken, ForYouSegment } from '@/app/lib/forYou'
 import { useForYouCache } from '@/store/forYouStore'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
@@ -13,7 +13,7 @@ import { getExploreSoundPreference, subscribeToExploreSoundPreference, setExplor
 
 import { blockedForYouSources, excludeForYouSource } from '@/app/lib/forYouPlayback'
 import TextSizeControl, { safeTextSize, TEXT_SCALES } from '@/app/components/settings-controls/TextSizeControl'
-import {useForYouMeter} from './ForYouMeterContext'
+import {useForYouAdvance,useForYouMeter} from './ForYouMeterContext'
 import MobileClipNavigator from './MobileClipNavigator'
 import ShortFullSwitch from './ShortFullSwitch'
 import DesktopPlayerResize from './DesktopPlayerResize'
@@ -21,6 +21,7 @@ import MobileForYouPanel from './MobileForYouPanel'
 import ForYouGroupFilter from './ForYouGroupFilter'
 
 const sourceTranscripts = new Map<string, Promise<ForYouSegment[]>>()
+export function clearForYouTranscripts(){sourceTranscripts.clear()}
 const MAX_RETAINED_CLIPS = 60
 // Match the reference's wide player while leaving space for transcript cards.
 const MOBILE_PLAYER_HEIGHT = 'max(96px, min(56.25vw, 44dvh, calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px) - 230px)))'
@@ -48,8 +49,10 @@ export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tok
   </Box>
 }
 
-export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl }: { full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
+export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl, onComplete }: { onComplete?:()=>void; full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
   const samplePlayback=useForYouMeter()
+  const canAdvance=useForYouAdvance()
+  const completed=useRef(false)
   const isPhone = useMediaQuery('(max-width:899.95px)')
   const playerSizeRef=useRef<HTMLDivElement>(null)
   const [playerWidth,setPlayerWidth]=useState<number|null>(null)
@@ -61,17 +64,27 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
   const [transcriptError,setTranscriptError]=useState('')
   useEffect(()=>{
     let active=true
-    if(suppliedSegments)return
+    if(suppliedSegments||!full)return
     void prepareTranscript(clip.video.id).then(rows=>{if(active&&rows.length)setSegments(rows)}).catch(()=>{if(active)setTranscriptError('Unable to load the full transcript. Reload this source to retry.')})
     return()=>{active=false}
-  },[clip.video.id,suppliedSegments])
+  },[clip.video.id,suppliedSegments,full])
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
+  if(modeStart.full!==full)setModeStart({full,start:full?time:Math.min(Math.max(time,clip.clip_start_ms/1000),clip.clip_end_ms/1000-.1)})
+  const { wrapRef, isReady, isMuted, isPlaying, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates, getSoundMuted } = useYouTubePlayer(clip.video.youtube_id, updateTime, modeStart.start, { verifySoundState: isPhone, autoplay: true, muted: !soundEnabled, mutedAutoplayFallback: true, endAt: full ? undefined : clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>{if(full)setEnded(true);else finishShort()}, onError:code=>onUnavailable(clip.video.youtube_id,code) })
   function updateTime(seconds:number){
     setTime(seconds)
+    // Charge the final playback sample before deciding whether another clip may start.
+    samplePlayback?.({time:seconds,playing:isReady&&isPlaying,rate:playbackRate??1,pause:pauseVideo})
+    if(!full && seconds>=clip.clip_end_ms/1000-.025)finishShort()
     if(seconds>=clip.clip_start_ms/1000 && seconds<clip.clip_end_ms/1000)setEnded(false)
   }
-  if(modeStart.full!==full)setModeStart({full,start:full?time:Math.min(Math.max(time,clip.clip_start_ms/1000),clip.clip_end_ms/1000-.1)})
-  const { wrapRef, isReady, isMuted, isPlaying, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates, getSoundMuted } = useYouTubePlayer(clip.video.youtube_id, updateTime, modeStart.start, { verifySoundState: isPhone, autoplay: true, muted: !soundEnabled, mutedAutoplayFallback: true, endAt: full ? undefined : clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>setEnded(true), onError:code=>onUnavailable(clip.video.youtube_id,code) })
+  function finishShort(){
+    if(full||!onComplete){setEnded(true);return}
+    if(completed.current||canAdvance?.()===false)return
+    completed.current=true
+    pauseVideo()
+    onComplete()
+  }
   useEffect(() => { if (!soundEnabled) mute() }, [soundEnabled, mute])
   useEffect(() => {
     if (!isPhone || !isReady) return
@@ -174,7 +187,8 @@ function ForYouLoading({ progress, leftControls, rightControls, mobileControls }
   </Box>
 }
 
-export function Feed({ previewSegments, initialClips, railSwitcher, desktopControls, mobileSwitcher, filterControl, groups = [], freshMobile = false }: { previewSegments?: ForYouSegment[]; freshMobile?: boolean; mobileSwitcher?: ReactNode; filterControl?: ReactNode; groups?: string[]; initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode; desktopControls?: (settings: ReactNode) => ReactNode }) {
+export function Feed({ previewSegments, initialClips, railSwitcher, desktopControls, mobileSwitcher, filterControl, groups = [] }: { previewSegments?: ForYouSegment[]; mobileSwitcher?: ReactNode; filterControl?: ReactNode; groups?: string[]; initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode; desktopControls?: (settings: ReactNode) => ReactNode }) {
+  const canAdvance=useForYouAdvance()
   const [full,setFull]=useState(false)
   const modeControl=()=> <ShortFullSwitch full={full} onChange={setFull}/>
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
@@ -196,18 +210,20 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
   const cachedIndex = useForYouCache((state) => state.index)
   const cachedExcluded = useForYouCache((state) => state.excluded)
   const setCache = useForYouCache((state) => state.setAll)
-  const [clips, setClips] = useState<ForYouClip[]>(()=> (initialClips ?? (freshMobile ? [] : cachedClips)).filter(clip=>!blockedForYouSources().has(clip.video.youtube_id)))
-  const [loadStarted, setLoadStarted] = useState(()=> (initialClips??(freshMobile ? [] : cachedClips)).some(clip=>!blockedForYouSources().has(clip.video.youtube_id)))
-  const [index, setIndex] = useState(()=>Math.min(freshMobile ? 0 : cachedIndex,Math.max(0,(initialClips??(freshMobile ? [] : cachedClips)).filter(clip=>!blockedForYouSources().has(clip.video.youtube_id)).length-1))), [error, setError] = useState(''), [busy, setBusy] = useState(false)
-  const [excluded, setExcluded] = useState<number[]>(freshMobile ? [] : cachedExcluded)
+  const [clips, setClips] = useState<ForYouClip[]>(()=> (initialClips ?? cachedClips).filter(clip=>!blockedForYouSources().has(clip.video.youtube_id)))
+  const [loadStarted, setLoadStarted] = useState(()=> (initialClips??cachedClips).some(clip=>!blockedForYouSources().has(clip.video.youtube_id)))
+  const [index, setIndex] = useState(()=>Math.min(cachedIndex,Math.max(0,(initialClips??cachedClips).filter(clip=>!blockedForYouSources().has(clip.video.youtube_id)).length-1))), [error, setError] = useState(''), [busy, setBusy] = useState(false)
+  const [excluded, setExcluded] = useState<number[]>(()=>[...new Set([...cachedExcluded,...clips.flatMap(clip=>clip.segments.map(segment=>segment.id))])])
   const [progress, setProgress] = useState(0)
   const [hasMore, setHasMore] = useState(true)
+  const seenSources=useRef(new Set([...useForYouCache.getState().seenSources,...clips.map(clip=>clip.video.id)]))
+  const seed=useRef(useForYouCache.getState().seed||crypto.randomUUID())
   const feedRef = useRef({ clips, index })
   useEffect(() => { feedRef.current = { clips, index } }, [clips, index])
   const advanceAfterLoad = useRef(false)
 
   useEffect(() => {
-    if(!previewSegments)setCache(clips, index, excluded)
+    if(!previewSegments){setCache(clips, index, excluded);useForYouCache.setState({seed:seed.current,seenSources:[...seenSources.current]})}
   }, [clips, index, excluded, setCache,previewSegments])
   // Clips are fetched lazily: the explore feed is the default view, so this
   // data is only requested the first time someone opens the For You view.
@@ -235,10 +251,8 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
     loadingRef.current=true
     setBusy(true); setError('')
     if (clips.length === 0) setProgress(0)
-    const seen = new Set([...excluded, ...clips.flatMap((clip) => clip.segments.map((segment) => segment.id))])
-    // First load of the session shares an hourly seed so the data cache can
-    // serve every visitor in that window; later loads are unique.
-    const seed = !freshMobile && clips.length === 0 && excluded.length === 0 ? hourlySeed() : crypto.randomUUID()
+    const seen = new Set(excluded)
+    let recycling=false
     try {
       // Fetch five results, excluding every buffered clip as well as history.
       const blocked=blockedForYouSources()
@@ -246,23 +260,33 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
       // A cached first batch may contain only blocked sources. Exclude those
       // segment IDs and ask for another batch, with a finite retry budget.
       for(let attempt=0;attempt<8;attempt++){
-        const batch=await fetchForYouClips(seed,[...seen].slice(-10000),[...new Set([...(freshMobile ? recentMobileSources : []),...clips.map(clip=>clip.video.id)])].slice(-100),groups)
+        let batch=await fetchForYouClips(seed.current,[...seen].slice(-10000),[...seenSources.current].reverse().slice(0,10000),groups)
+        // Exhaustion starts another cycle. Keep the latest item/source least preferred.
+        if(!batch.length&&seen.size){
+          recycling=true;seed.current=crypto.randomUUID()
+          seen.clear()
+          const latest=feedRef.current.clips[feedRef.current.index]
+          latest?.segments.forEach(segment=>seen.add(segment.id))
+          seenSources.current=new Set(latest?[latest.video.id]:[])
+          batch=await fetchForYouClips(seed.current,[...seen],[...seenSources.current],groups)
+          if(!batch.length)batch=await fetchForYouClips(seed.current,[],[...seenSources.current],groups)
+        }
         next=batch.filter(clip=>!blocked.has(clip.video.youtube_id))
-        if(freshMobile)next=randomMobileBatch(next)
         if(next.length||!batch.length)break
         const before=seen.size
         batch.forEach(clip=>clip.segments.forEach(segment=>seen.add(segment.id)))
         if(seen.size===before)break
       }
-      setExcluded([...seen].slice(freshMobile ? -200 : -10000))
       // Navigation can continue while this request is in flight. Preserve the
       // latest active clip, rather than jumping to the newly appended batch.
       const latest = feedRef.current
       const activeClip = latest.clips[latest.index]
       const usable=latest.clips.filter(clip=>!blockedForYouSources().has(clip.video.youtube_id))
-      next = next.filter(clip => !blockedForYouSources().has(clip.video.youtube_id) && !usable.some(existing => existing.video.id === clip.video.id && existing.clip_start_ms === clip.clip_start_ms))
+      next = next.filter(clip => !blockedForYouSources().has(clip.video.youtube_id) && (recycling || !usable.some(existing => existing.video.id === clip.video.id && existing.clip_start_ms === clip.clip_start_ms)))
       setHasMore(next.length > 0)
       if (next.length) {
+        next.forEach(clip=>seenSources.current.add(clip.video.id))
+        next.forEach(clip=>clip.segments.forEach(segment=>seen.add(segment.id)))
         const merged = [...usable, ...next]
         const activeIndex = Math.max(0, usable.indexOf(activeClip))
         const target = advanceAfterLoad.current ? Math.min(activeIndex + 1, merged.length - 1) : activeIndex
@@ -270,6 +294,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
         setClips(merged.slice(trim))
         setIndex(target - trim)
       }
+      setExcluded([...seen].slice(-10000))
       setProgress(100)
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load clips.') } finally { advanceAfterLoad.current=false; loadingRef.current=false; setBusy(false) }
   }
@@ -280,14 +305,13 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, clips.length, hasMore])
 
-  const activeSource = clips[index]?.video.id
-  useEffect(()=>{if(freshMobile && activeSource){recentMobileSources=[...recentMobileSources.filter(id=>id!==activeSource),activeSource].slice(-60)}},[freshMobile,activeSource])
   const nextSource = clips[index + 1]?.video.id
   useEffect(() => {
-    if (nextSource && !previewSegments) void prepareTranscript(nextSource).catch(() => {})
-  }, [nextSource,previewSegments])
+    if (full && nextSource && !previewSegments) void prepareTranscript(nextSource).catch(() => {})
+  }, [nextSource,previewSegments,full])
 
   function step(offset: 1 | -1) {
+    if(canAdvance?.()===false)return
     setFull(false)
     if (offset === -1) {
       advanceAfterLoad.current = false
@@ -334,8 +358,8 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
           : clips[index]
             ? <Box sx={{ minWidth: 0, width: { xs: '100%', md: 'min(100%, 1800px)' }, mx: { md: 'auto' }, height: { xs: '100%', md: 'auto' }, position: 'relative', left:0 }}>
                 <MobileClipNavigator clipKey={`${clips[index].video.id}:${clips[index].clip_start_ms}`} disabled={full || !!previewSegments} canPrevious={index>0} busy={busy && index >= clips.length - 1} step={step}><ClipPlayer
-                  key={`${clips[index].video.id}:${clips[index].clip_start_ms}`}
-                  full={full} suppliedSegments={previewSegments} modeControl={modeControl()} mobileModeControl={<Button data-mobile-mode onClick={()=>setFull(!full)} sx={{color:'inherit',bgcolor:'var(--awm-gold)',borderRadius:'999px',textTransform:'none',fontWeight:600}}>{full?'Full':'Short'}</Button>} clip={clips[index]}
+                  key={`${index}:${clips[index].video.id}:${clips[index].clip_start_ms}`}
+                  onComplete={previewSegments?undefined:()=>step(1)} full={full} suppliedSegments={previewSegments} modeControl={modeControl()} mobileModeControl={<Button data-mobile-mode onClick={()=>setFull(!full)} sx={{color:'inherit',bgcolor:'var(--awm-gold)',borderRadius:'999px',textTransform:'none',fontWeight:600}}>{full?'Full':'Short'}</Button>} clip={clips[index]}
                   onUnavailable={unavailable}
                   settings={settings}
                   navigation={previewSegments ? undefined : {previous:()=>step(-1),next:()=>step(1),previousDisabled:index===0,nextDisabled:busy&&index>=clips.length-1}}
@@ -353,16 +377,8 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
   </Box>
 }
 
-let recentMobileSources: string[] = []
-function randomMobileBatch(batch: ForYouClip[]) {
- const unique=batch.filter((clip,index)=>batch.findIndex(other=>other.video.youtube_id===clip.video.youtube_id)===index)
- for(let i=unique.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[unique[i],unique[j]]=[unique[j],unique[i]]}
- return unique
-}
-let sessionGroups: string[] = []
 export default function ForYouFeed(props: React.ComponentProps<typeof Feed>) {
- const isPhone=useMediaQuery('(max-width:899.95px)')
- const [groups,setGroups]=useState<string[]>(sessionGroups)
+ const [groups,setGroups]=useState<string[]>(()=>useForYouCache.getState().groups)
  const [version,setVersion]=useState(0)
- return <Feed {...props} key={`${version}:${isPhone}`} freshMobile={isPhone} groups={groups} filterControl={<ForYouGroupFilter value={groups} onApply={value=>{useForYouCache.setState({clips:[],index:0,excluded:[]});sessionGroups=value;setGroups(value);setVersion(v=>v+1)}}/>}/>
+ return <Feed {...props} key={version} groups={groups} filterControl={<ForYouGroupFilter value={groups} onApply={value=>{useForYouCache.setState({clips:[],index:0,excluded:[],seenSources:[],seed:'',groups:value});setGroups(value);setVersion(v=>v+1)}}/>}/>
 }

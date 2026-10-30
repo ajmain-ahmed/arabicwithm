@@ -36,9 +36,11 @@ export function bookReaderHref(
   chapterSlug: string,
   language: BookReaderLanguage,
   page?: number,
+  blockIndex?: number,
 ): string {
   const pageQuery = typeof page === 'number' && page >= 2 ? `&page=${page}` : ''
-  return `/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(chapterSlug)}?lang=${language}${pageQuery}`
+  const blockQuery=typeof blockIndex==='number'&&Number.isInteger(blockIndex)&&blockIndex>=0?`&block=${blockIndex}`:''
+  return `/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(chapterSlug)}?lang=${language}${pageQuery}${blockQuery}`
 }
 
 export const BOOK_LANGUAGE_STOP_EVENT = 'awm-book-language-stop'

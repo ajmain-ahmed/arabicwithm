@@ -19,10 +19,10 @@ function OwnReview({bookId,signedIn,authLoading}:{bookId:string;signedIn:boolean
   setBusy(true);setError('');setNotice('')
   try{if(remove){await deleteOwnBookReview(bookId);setText('');setSaved(false);setNotice('Review deleted.')}else{await saveOwnBookReview(bookId,rating,text);setSaved(true);setNotice('Review saved.')}}catch(e){setError(e instanceof Error?e.message:'Unable to save review.')}finally{setBusy(false)}
  }
- return <Box sx={{width:'100%'}}>
-  <Button fullWidth variant="outlined" startIcon={<RateReviewOutlined/>} disabled={busy||authLoading} onClick={show} sx={{minHeight:44,px:2.25,borderRadius:'9px',textTransform:'none',fontWeight:700}}>Leave a Review</Button>
-  {error&&<Alert severity="error" sx={{mt:1}}>{error}</Alert>}
-  {open&&<Paper component="section" aria-label="Your book review" variant="outlined" sx={{p:2,mt:2}}><Stack spacing={2}>
+ return <Box sx={{display:'contents'}}>
+  <Button className="book-detail-action" fullWidth variant="outlined" startIcon={<RateReviewOutlined/>} disabled={busy||authLoading} onClick={show} sx={{minHeight:44,px:2.25,borderRadius:'9px',textTransform:'none',fontWeight:700}}>Review</Button>
+  {error&&<Alert severity="error" sx={{mt:1,gridColumn:'1 / -1',order:1}}>{error}</Alert>}
+  {open&&<Paper component="section" aria-label="Your book review" variant="outlined" sx={{p:2,mt:2,gridColumn:'1 / -1',order:2}}><Stack spacing={2}>
    <Typography component="h2" variant="h6">Your review</Typography>
    <TextField select label="Your rating" value={rating} onChange={e=>setRating(Number(e.target.value))} disabled={busy}>{[1,2,3,4,5].map(value=><MenuItem key={value} value={value}>{value} / 5</MenuItem>)}</TextField>
    <TextField label="Your review" value={text} onChange={e=>setText(e.target.value)} multiline minRows={3} disabled={busy} slotProps={{htmlInput:{maxLength:2000}}}/>

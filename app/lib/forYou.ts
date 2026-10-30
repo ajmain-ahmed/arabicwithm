@@ -8,12 +8,6 @@ export interface ForYouClip {
  clip_start_ms:number;clip_end_ms:number;segments:ForYouSegment[]
 }
 
-/** Hourly seed for the very first For You batch: every visitor in the same
-    hour gets the same opening clips, so the initial fetch is shared via the
-    data cache instead of hitting the RPC once per visitor. */
-export function hourlySeed(): string {
-  return `hour-${new Date().toISOString().slice(0, 13)}`
-}
 const record=(value:unknown):value is Record<string,unknown>=>Boolean(value&&typeof value==='object'&&!Array.isArray(value))
 const firstText=(...values:unknown[]):string=>values.find((v):v is string=>typeof v==='string'&&Boolean(v.trim()))?.trim()??''
 

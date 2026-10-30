@@ -7,7 +7,8 @@ import ExploreFeed from './ExploreFeed'
 import {type ExploreFeedBatch} from '@/app/lib/explore'
 import { useAuth } from '@/app/AuthContext'
 import ForYouAllowance from './ForYouAllowance'
-import ForYouFeed from './ForYouFeed'
+import ForYouFeed, {clearForYouTranscripts} from './ForYouFeed'
+import {useForYouCache} from '@/store/forYouStore'
 
 type ExploreView = 'explore' | 'foryou'
 
@@ -32,6 +33,14 @@ function ViewSwitch({ view, onChange, hint, onDismiss, mobile = false, horizonta
 export default function ExploreViews({ initialSeed, initialBatch }: { initialSeed: string; initialBatch: ExploreFeedBatch | null }) {
   const { user, loading } = useAuth()
   const [view, setView] = useState<ExploreView>('explore')
+  useEffect(()=>{
+    // One route visit, including switches between Explore and For You. A fresh
+    // server visit/refresh gets a new seed and cannot restore an old sequence.
+    if(useForYouCache.getState().sessionId!==initialSeed){
+      clearForYouTranscripts()
+      useForYouCache.setState({sessionId:initialSeed,seed:'',clips:[],index:0,excluded:[],seenSources:[],groups:[]})
+    }
+  },[initialSeed])
   const [hintFor, setHintFor] = useState<ExploreView | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {

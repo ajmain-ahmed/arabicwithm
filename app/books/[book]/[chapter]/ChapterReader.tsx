@@ -8,7 +8,7 @@ import type { PublicBookBlock, PublicBookToken } from '@/app/actions/books'
 import { groupChapterBlocks } from '@/app/lib/bookParagraphs'
 import { useAuth } from '@/app/AuthContext'
 import { dispatchWordLookup } from '@/app/lib/activity'
-import { paginateParagraphs } from '@/app/lib/readingPagination'
+import { paginateParagraphs,readerPageForBlock,READER_BLOCKS_PER_PAGE,DESKTOP_READER_BLOCKS_PER_PAGE } from '@/app/lib/readingPagination'
 import { useReadingProgressStore } from '@/store/readingProgressStore'
 import {
   DEFAULT_BOOK_READER_FONT,
@@ -20,6 +20,8 @@ import {
   type BookReaderFont,
   type BookReaderLanguage,
 } from '@/app/lib/bookReaderSettings'
+import {useContentPageTop} from '@/app/lib/useContentPageTop'
+import ChapterNavigation from './ChapterNavigation'
 import BookReaderSettingsDialog from './BookReaderSettingsDialog'
 import ChapterAudioPlayer from './ChapterAudioPlayer'
 import { BOOK_LANGUAGE_STOP_EVENT } from '@/app/lib/bookReaderSettings'
@@ -244,6 +246,8 @@ export default function ChapterReader({
   content,
   initialLanguage,
   initialPage,
+  initialBlock,
+  nextChapterSlug,
   audio = [],
 }: {
   bookSlug: string
@@ -253,6 +257,8 @@ export default function ChapterReader({
   content: PublicBookBlock[]
   initialLanguage?: BookReaderLanguage
   initialPage?: number
+  initialBlock?: number
+  nextChapterSlug?: string
   audio?: ChapterAudioSummary[]
 }) {
   const { user } = useAuth()
@@ -285,49 +291,45 @@ export default function ChapterReader({
   const paragraphs = useMemo(() => groupChapterBlocks(chapterSlug, content), [chapterSlug, content])
   const blockIndexByBlock = useMemo(() => new Map(content.map((block, index) => [block, index])), [content])
 
-  /* ── Soft pagination: line-by-line view renders one page at a time ── */
-  const pages = useMemo(() => paginateParagraphs(paragraphs), [paragraphs])
-  const totalPages = pages.length
-  const clampPage = (value: number) => Math.min(Math.max(1, Math.trunc(value) || 1), totalPages)
-  const [page, setPage] = useState(() => clampPage(initialPage ?? 1))
-  const [lastInitialPage, setLastInitialPage] = useState(initialPage)
-  if (initialPage !== lastInitialPage) {
-    // Server navigation (resume links): adopt the new initial page during render.
-    setLastInitialPage(initialPage)
-    setPage(clampPage(initialPage ?? 1))
-  }
+  /* Shared, responsive pagination for both reader presentations. */
+  const desktopPages=useMediaQuery('(min-width:900px)')
+  const pages=useMemo(()=>paginateParagraphs(paragraphs,desktopPages?DESKTOP_READER_BLOCKS_PER_PAGE:READER_BLOCKS_PER_PAGE),[paragraphs,desktopPages])
+  const totalPages=pages.length
+  const pageStarts=useMemo(()=>pages.map(items=>blockIndexByBlock.get(items[0]?.[0])??0),[pages,blockIndexByBlock])
+  const incoming=`${chapterSlug}:${initialPage}:${initialBlock}`
+  const initialOffset=()=>Math.min(Math.max(0,initialBlock??pageStarts[Math.min(Math.max(1,initialPage??1),totalPages)-1]??0),Math.max(0,content.length-1))
+  const [position,setPosition]=useState(()=>({incoming,block:initialOffset()}))
+  if(position.incoming!==incoming)setPosition({incoming,block:initialOffset()})
+  const page=readerPageForBlock(pageStarts,position.block)
+  const visibleParagraphs=pages[page-1]??[]
+  const {ref:contentRef,requestScroll}=useContentPageTop(`${chapterSlug}:${page}`,true)
   const trackProgress = useReadingProgressStore((state) => state.track)
   useEffect(() => {
     if (user) useReadingProgressStore.getState().hydrateFromMetadata(user.user_metadata)
   }, [user])
-  useEffect(() => {
-    if (view !== 'lines') return
-    trackProgress(bookSlug, chapterSlug, page, totalPages)
-  }, [view, bookSlug, chapterSlug, page, totalPages, trackProgress])
-
-  const goToPage = useCallback((next: number) => {
-    const clamped = Math.min(Math.max(1, Math.trunc(next) || 1), totalPages)
-    setPage(clamped)
-    try {
-      const url = new URL(window.location.href)
-      if (clamped >= 2) url.searchParams.set('page', String(clamped))
-      else url.searchParams.delete('page')
-      window.history.replaceState(null, '', url)
-    } catch { /* The address bar is cosmetic; reading position lives in the store. */ }
-    document.getElementById('reader-content')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [totalPages])
-
-  useEffect(() => {
-    if (view !== 'lines') return
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
-      const target = event.target as HTMLElement | null
-      if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
-      goToPage(page + (event.key === 'ArrowRight' ? 1 : -1))
+  useEffect(()=>{
+    trackProgress(bookSlug,chapterSlug,page,totalPages,position.block)
+    const url=new URL(window.location.href)
+    if(page>=2)url.searchParams.set('page',String(page));else url.searchParams.delete('page')
+    url.searchParams.set('block',String(position.block))
+    window.history.replaceState(window.history.state,'',url)
+  },[bookSlug,chapterSlug,page,totalPages,position.block,trackProgress])
+  const goToPage=useCallback((next:number)=>{
+    const target=Math.min(Math.max(1,Math.trunc(next)||1),totalPages)
+    setPosition({incoming,block:pageStarts[target-1]??0})
+    const url=new URL(window.location.href)
+    if(/^#sentence-/.test(url.hash)){url.hash='';window.history.replaceState(window.history.state,'',url)}
+    closeDefinition();requestScroll()
+  },[totalPages,pageStarts,incoming,requestScroll,closeDefinition])
+  useEffect(()=>{
+    const onKeyDown=(event:KeyboardEvent)=>{
+      if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return
+      if((event.target as HTMLElement|null)?.closest('button,a,input,textarea,select,[role=dialog],[contenteditable="true"]'))return
+      event.preventDefault();goToPage(page+(event.key==='ArrowRight'?1:-1))
     }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [view, page, goToPage])
+    window.addEventListener('keydown',onKeyDown)
+    return()=>window.removeEventListener('keydown',onKeyDown)
+  },[page,goToPage])
 
   useEffect(() => {
     if (!initialLanguage) return
@@ -339,32 +341,16 @@ export default function ChapterReader({
     }
   }, [initialLanguage])
 
-  useEffect(() => {
-    const sentenceHash = window.location.hash.match(/^#sentence-(\d+)$/)
-    if (!sentenceHash) return
-    const blockIndex = Number(sentenceHash[1])
-    const pageIndex = pages.findIndex(pageBlocks => pageBlocks.some(paragraph => paragraph.some(block => (blockIndexByBlock.get(block) ?? -1) === blockIndex)))
-    if (pageIndex < 0) return
-
-    if (view !== 'lines') {
-      try {
-        window.localStorage.setItem(READER_VIEW_STORAGE_KEY, 'lines')
-        window.dispatchEvent(new Event(READER_VIEW_CHANGE_EVENT))
-      } catch {
-        // The reader can still be switched manually when storage is unavailable.
-      }
-      return
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      setPage(pageIndex + 1)
-      // The target sentence renders on the next commit; scroll after it lands.
-      window.setTimeout(() => {
-        document.getElementById(sentenceHash[0].slice(1))?.scrollIntoView({ block: 'center' })
-      }, 80)
+  useEffect(()=>{
+    const match=window.location.hash.match(/^#sentence-(\d+)$/)
+    if(!match&&initialBlock===undefined)return
+    const block=Math.min(match?Number(match[1]):initialBlock!,Math.max(0,content.length-1))
+    const frame=window.requestAnimationFrame(()=>{
+      setPosition({incoming,block})
+      window.requestAnimationFrame(()=>document.getElementById(`sentence-${block}`)?.scrollIntoView({block:'center',behavior:'instant'}))
     })
-    return () => window.cancelAnimationFrame(frame)
-  }, [view, pages, blockIndexByBlock])
+    return()=>window.cancelAnimationFrame(frame)
+  },[incoming,content.length,initialBlock])
 
   const selectView = (nextView: ReaderView) => {
     try {
@@ -397,6 +383,7 @@ export default function ChapterReader({
 
   const selectLanguage = (nextLanguage: BookReaderLanguage) => {
     if(nextLanguage!==language) window.dispatchEvent(new Event(BOOK_LANGUAGE_STOP_EVENT))
+    const url=new URL(window.location.href);url.searchParams.set('lang',nextLanguage);window.history.replaceState(window.history.state,'',url)
     try {
       window.localStorage.setItem(READER_LANGUAGE_STORAGE_KEY, nextLanguage)
       window.dispatchEvent(new Event(READER_LANGUAGE_CHANGE_EVENT))
@@ -481,8 +468,8 @@ export default function ChapterReader({
 
       {player}
       {view === 'lines' ? (
-        <Box id="reader-content" sx={{ px: { xs: 2.5, md: 6 }, py: { xs: 3, md: 5 }, scrollMarginTop: '80px' }}>
-          {(pages[page - 1] ?? []).map((paragraph, paragraphIndex) => (
+        <Box ref={contentRef} id="reader-content" data-reader-mode="lines" sx={{ px: { xs: 2.5, md: 6 }, py: { xs: 3, md: 5 }, scrollMarginTop: '80px' }}>
+          {visibleParagraphs.map((paragraph, paragraphIndex) => (
             <Box key={paragraphIndex} sx={{ '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
               {paragraph.map((block, blockIndex) => {
                 const sentenceIndex = blockIndexByBlock.get(block) ?? blockIndex
@@ -490,6 +477,7 @@ export default function ChapterReader({
                 <Box
                   key={sentenceIndex}
                   id={`sentence-${sentenceIndex}`}
+                  data-reader-block={sentenceIndex}
                   sx={{ position: 'relative', py: 2.5, scrollMarginTop: '96px' }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
@@ -515,21 +503,42 @@ export default function ChapterReader({
               })}
             </Box>
           ))}
-          {totalPages > 1 && (
+
+        </Box>
+      ) : (
+        <Box ref={contentRef} id="reader-content" data-reader-mode="book" sx={{ scrollMarginTop:'80px', px: { xs: 2.5, md: 7 }, py: { xs: 4, md: 7 }, background: 'var(--awm-white)' }}>
+          <ButtonGroup size="small" aria-label="Book view language" sx={{ display: 'flex', width: 'fit-content', mx: 'auto', mb: 3, '& .MuiButton-root': { minWidth: 82, textTransform: 'none', fontSize: 12 } }}>
+            <Button onClick={() => selectLanguage('en')} aria-pressed={language === 'en'} variant={language === 'en' ? 'contained' : 'outlined'} sx={{ bgcolor: language === 'en' ? '#0e2e1f' : 'transparent', color: language === 'en' ? '#fff' : 'var(--awm-bark)' }}>English</Button>
+            <Button onClick={() => selectLanguage('ar')} aria-pressed={language === 'ar'} variant={language === 'ar' ? 'contained' : 'outlined'} sx={{ bgcolor: language === 'ar' ? '#0e2e1f' : 'transparent', color: language === 'ar' ? '#fff' : 'var(--awm-bark)' }}>Arabic</Button>
+          </ButtonGroup>
+          <Box lang={language} dir={language === 'ar' ? 'rtl' : 'ltr'} sx={{ maxWidth: 1120, mx: 'auto', fontFamily: language === 'ar' ? READER_FONT_FAMILIES[readerFont] : 'var(--font-sans), sans-serif', fontSize: { xs: (language === 'ar' ? 23 : 18) * textScale, md: (language === 'ar' ? 28 : 20) * textScale }, fontWeight: language === 'ar' ? 500 : 400, lineHeight: language === 'ar' ? 2.05 : 1.9, color: 'var(--awm-bark)', textAlign: language === 'ar' ? 'justify' : 'left', textAlignLast: language === 'ar' ? 'right' : 'auto', textJustify: 'inter-word' }}>
+            {visibleParagraphs.map((paragraph, paragraphIndex) => (
+              <Box component="p" key={paragraphIndex} sx={{ m: 0, '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
+                {language === 'ar'
+                  ? paragraph.map((block, blockIndex) => <span key={blockIndex} id={`sentence-${blockIndexByBlock.get(block)}`} data-reader-block={blockIndexByBlock.get(block)}>{blockIndex > 0 ? ' ' : ''}<ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} mobile={mobileWordPopup} onMobileOpen={openDefinition} /></span>)
+                  : paragraph.map((block,index)=><span key={index} id={`sentence-${blockIndexByBlock.get(block)}`} data-reader-block={blockIndexByBlock.get(block)}>{index>0?' ':''}{block.translation}</span>)}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      )}
+      <Box sx={{px:{xs:2,md:4},pb:3}}>          {totalPages > 1 && (
             <Box component="nav" aria-label="Chapter pages" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 1, sm: 2 }, mt: { xs: 3, md: 4 } }}>
               <Button
+                aria-label="Previous Page"
                 onClick={() => goToPage(page - 1)}
                 disabled={page <= 1}
                 startIcon={<ChevronLeft />}
                 variant="outlined"
                 sx={{ minHeight: 44, px: { xs: 1.5, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, borderColor: 'rgba(44,26,14,0.15)', color: 'var(--awm-bark)', '&:hover': { borderColor: 'var(--awm-gold)', background: 'color-mix(in srgb, var(--awm-gold) 6%, transparent)' } }}
               >
-                Prev
+                Previous
               </Button>
               <Typography aria-live="polite" sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 13.5 }, fontWeight: 600, color: 'var(--awm-muted)', minWidth: 84, textAlign: 'center' }}>
                 Page {page} of {totalPages}
               </Typography>
-              <Button
+              {page<totalPages&&<Button
+                aria-label="Next Page"
                 onClick={() => goToPage(page + 1)}
                 disabled={page >= totalPages}
                 endIcon={<ChevronRight />}
@@ -537,28 +546,11 @@ export default function ChapterReader({
                 sx={{ minHeight: 44, px: { xs: 1.5, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, bgcolor: '#b8860b', color: '#fff', boxShadow: 'none', '&:hover': { bgcolor: '#946c08', boxShadow: 'none' }, '&:disabled': { bgcolor: 'rgba(44,26,14,0.12)', color: 'rgba(44,26,14,0.3)' } }}
               >
                 Next
-              </Button>
+              </Button>}
             </Box>
-          )}
-        </Box>
-      ) : (
-        <Box sx={{ px: { xs: 2.5, md: 7 }, py: { xs: 4, md: 7 }, background: 'var(--awm-white)' }}>
-          <ButtonGroup size="small" aria-label="Book view language" sx={{ display: 'flex', width: 'fit-content', mx: 'auto', mb: 3, '& .MuiButton-root': { minWidth: 82, textTransform: 'none', fontSize: 12 } }}>
-            <Button onClick={() => selectLanguage('en')} aria-pressed={language === 'en'} variant={language === 'en' ? 'contained' : 'outlined'} sx={{ bgcolor: language === 'en' ? '#0e2e1f' : 'transparent', color: language === 'en' ? '#fff' : 'var(--awm-bark)' }}>English</Button>
-            <Button onClick={() => selectLanguage('ar')} aria-pressed={language === 'ar'} variant={language === 'ar' ? 'contained' : 'outlined'} sx={{ bgcolor: language === 'ar' ? '#0e2e1f' : 'transparent', color: language === 'ar' ? '#fff' : 'var(--awm-bark)' }}>Arabic</Button>
-          </ButtonGroup>
-          <Box lang={language} dir={language === 'ar' ? 'rtl' : 'ltr'} sx={{ maxWidth: 1120, mx: 'auto', fontFamily: language === 'ar' ? READER_FONT_FAMILIES[readerFont] : 'var(--font-sans), sans-serif', fontSize: { xs: (language === 'ar' ? 23 : 18) * textScale, md: (language === 'ar' ? 28 : 20) * textScale }, fontWeight: language === 'ar' ? 500 : 400, lineHeight: language === 'ar' ? 2.05 : 1.9, color: 'var(--awm-bark)', textAlign: language === 'ar' ? 'justify' : 'left', textAlignLast: language === 'ar' ? 'right' : 'auto', textJustify: 'inter-word' }}>
-            {paragraphs.map((paragraph, paragraphIndex) => (
-              <Box component="p" key={paragraphIndex} sx={{ m: 0, '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
-                {language === 'ar'
-                  ? paragraph.map((block, blockIndex) => <span key={blockIndex}>{blockIndex > 0 ? ' ' : ''}<ArabicTokens wordHelp={wordHelp} tokens={block.tokens} punctuation={block.punctuation} mobile={mobileWordPopup} onMobileOpen={openDefinition} /></span>)
-                  : paragraph.map((block) => block.translation).filter(Boolean).join(' ')}
-              </Box>
-            ))}
-          </Box>
-        </Box>
-      )}
+          )}</Box>
       </Paper>
+      {page===totalPages&&<ChapterNavigation bookSlug={bookSlug} nextChapterSlug={nextChapterSlug}/>}
       <MobileDefinitionPopover
         anchor={mobileWordPopup ? selectedDefinition?.anchor ?? null : null}
         entry={selectedDefinition?.entry ?? null}

@@ -1,18 +1,17 @@
 'use server'
 
-import { getAuthenticatedUserId } from '@/app/actions/auth'
+import { getAuthenticatedUserId, guardAdmin } from '@/app/actions/auth'
 
 async function requireForYouUser() {
  if (!(await getAuthenticatedUserId())) throw new Error('Sign in to use For You.')
 }
 
 import { z } from 'zod'
-import { unstable_cache } from 'next/cache'
 import { serviceClient } from '@/app/lib/supabase'
-import { forYouTokens, hourlySeed, type ForYouClip, type ForYouSegment } from '@/app/lib/forYou'
+import { forYouTokens, type ForYouClip, type ForYouSegment } from '@/app/lib/forYou'
 
 async function loadForYouClips(seed: string, excluded: number[], recent: string[], groups: string[] = []): Promise<ForYouClip[]> {
- const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(100)}).parse({seed,excluded,recent})
+ const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(10000)}).parse({seed,excluded,recent})
  const {data,error}=await serviceClient.rpc('transcript_for_you_groups',{p_seed:input.seed,p_excluded:input.excluded,p_recent:input.recent,p_limit:5,p_group_ids:groups})
  if(error)throw new Error('Unable to load For You clips. Please retry.')
  const clips=(data??[]) as unknown as ForYouClip[]
@@ -22,24 +21,14 @@ async function loadForYouClips(seed: string, excluded: number[], recent: string[
  return clips.map(clip=>({...clip,segments:clip.segments.map(segment=>({...segment,tokens:forYouTokens(segment.canonical_paragraph,Array.isArray(segment.source_tokens)?{tokens:segment.source_tokens}:undefined)}))}))
 }
 
-const fetchInitialForYouClips = unstable_cache(
-  async (seed: string) => loadForYouClips(seed, [], []),
-  ['for-you-initial'],
-  { revalidate: 180 },
-)
-
-/** No persisted clip rows: every batch checks current publication (via the
-    5-minute candidate cache inside the RPC). */
+/** Every batch reads the transactionally maintained live candidate index. */
 export async function fetchForYouClips(seed:string,excluded:number[]=[],recent:string[]=[],groups:string[]=[]):Promise<ForYouClip[]> {
  await requireForYouUser()
- const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(100)}).safeParse({seed,excluded,recent})
+ const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(10000)}).safeParse({seed,excluded,recent})
  if(!input.success) throw new Error('Unable to load For You clips. Please retry.')
  z.array(z.string().uuid()).max(100).parse(groups)
- if(groups.length===0&&input.data.excluded.length===0&&input.data.recent.length===0) return fetchInitialForYouClips(input.data.seed)
  return loadForYouClips(input.data.seed,input.data.excluded,input.data.recent,groups)
 }
-
-export { hourlySeed }
 
 /** Load a source once on opening a clip, never on time updates or seeks.
  * For You publication is independent of searchable-library publication. */
@@ -68,4 +57,16 @@ export async function fetchForYouGroups(): Promise<{id:string;name:string}[]> {
  const {data,error}=await serviceClient.from('transcript_groups').select('id,name').order('name')
  if(error)throw new Error('Unable to load content groups.')
  return data ?? []
+}
+
+export interface ForYouDiagnostics {
+ totalTranscripts:number; adminTranscripts:number; publishedTranscripts:number;
+ eligibleTranscripts:number; eligibleSegments:number; uniqueVideos:number;
+ sources:{id:string;title:string;youtubeId:string;published:boolean;eligibleSegments:number;excludedSegments:number;invalidSegments:number;errorCode:string|null;reasons:string[]}[]
+}
+export async function fetchForYouDiagnostics():Promise<ForYouDiagnostics>{
+ await guardAdmin()
+ const {data,error}=await serviceClient.rpc('website_for_you_diagnostics')
+ if(error)throw new Error('Unable to load For You diagnostics. Check the live feed migration.')
+ return data as unknown as ForYouDiagnostics
 }

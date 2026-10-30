@@ -584,7 +584,9 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
   /* Session cache: returning visitors restore the feed instantly and only a
      fresh batch is fetched; first-time visitors get their first batch from
      the server-rendered page (initialBatch) and skip the client fetch. */
-  const cachedItems = useExploreFeedCache((state) => state.items)
+  const storedItems = useExploreFeedCache((state) => state.items)
+  const storedSession = useExploreFeedCache((state) => state.sessionId)
+  const [cachedItems] = useState(()=>storedSession===initialSeed?storedItems:[])
   const setCachedItems = useExploreFeedCache((state) => state.setItems)
   const [items, setItems] = useState<ExploreFeedItem[]>(()=>cachedItems.length > 0 ? cachedItems.filter(item=>!videosOnly||item.kind==='video') : (initialBatch?.items ?? []).filter(item=>!videosOnly||item.kind==='video'))
   useEffect(()=>{if(videosOnly)setItems(current=>current.filter(item=>item.kind==='video'))},[videosOnly])
@@ -623,8 +625,8 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
      playing, so transient scroll events can't inflate the cache. */
   const [watchedCount, setWatchedCount] = useState(cachedItems.length > 0 ? cachedItems.length : 1)
   useEffect(() => {
-    setCachedItems(items.slice(0, watchedCount))
-  }, [items, watchedCount, setCachedItems])
+    setCachedItems(items.slice(0, watchedCount),initialSeed)
+  }, [items, watchedCount, setCachedItems,initialSeed])
 
   useEffect(() => {
     if (!hydrated || initialLoadStartedRef.current) return

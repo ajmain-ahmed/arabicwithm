@@ -520,15 +520,15 @@ export async function fetchExploreBookChapterPages(chapterId: string): Promise<E
    hydrate the same chapters. The entitlement gate stays OUTSIDE the cache:
    only signed-in users may read chapter pages at all. */
 const fetchExploreBookChapterPagesByChapterIdsCached = unstable_cache(
-  async (idsKey: string, uniqueIds: string[]): Promise<Map<string, ExploreBookPage[]>> => {
+  async (idsKey: string, uniqueIds: string[]): Promise<[string, ExploreBookPage[]][]> => {
     const pagesByChapter = new Map<string, ExploreBookPage[]>()
-    if (!hasServiceClientConfig() || uniqueIds.length === 0) return pagesByChapter
+    if (!hasServiceClientConfig() || uniqueIds.length === 0) return [...pagesByChapter.entries()]
     const { data: chapters, error } = await serviceClient
       .from("chapters")
       .select("id, book_id, slug, title, chapter_number, content")
       .in("id", uniqueIds)
     if (error) throw new Error(error.message)
-    if (!chapters?.length) return pagesByChapter
+    if (!chapters?.length) return [...pagesByChapter.entries()]
     const books = await fetchBooksForPublic()
     const bookById = new Map(books.map((book) => [book.id, book]))
     for (const chapter of chapters) {
@@ -541,9 +541,9 @@ const fetchExploreBookChapterPagesByChapterIdsCached = unstable_cache(
         level: book.level,
       }))
     }
-    return pagesByChapter
+    return [...pagesByChapter.entries()]
   },
-  ["books", "public", "explore-chapter-pages-by-ids", "v1"],
+  ["books", "public", "explore-chapter-pages-by-ids", "serializable-v2"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
@@ -552,7 +552,7 @@ export async function fetchExploreBookChapterPagesByChapterIds(chapterIds: strin
   if (uniqueIds.length === 0) return new Map<string, ExploreBookPage[]>()
   if (!await getAuthenticatedUserId()) return new Map<string, ExploreBookPage[]>()
   const idsKey = createHash("sha256").update([...uniqueIds].sort().join(",")).digest("hex").slice(0, 32)
-  return fetchExploreBookChapterPagesByChapterIdsCached(idsKey, uniqueIds)
+  return new Map(await fetchExploreBookChapterPagesByChapterIdsCached(idsKey, uniqueIds))
 }
 
 /* ── Page counts per chapter. Only the counts are cached; cold caches pay

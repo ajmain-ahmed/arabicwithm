@@ -6,13 +6,14 @@ import {syncForYouUsage} from '@/app/actions/forYouUsage'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import {elapsedViewingMs,type PlaybackSample} from '@/app/lib/forYouMeter'
 
-import {MeterContext,type PlayerSample} from './ForYouMeterContext'
+import {AdvanceContext,MeterContext,type PlayerSample} from './ForYouMeterContext'
 
 /** One account lease and clock across clips and Short/Full. No visible timer. */
 export default function ForYouAllowance({children,onExplore}:{children:ReactNode;onExplore:()=>void}){
  const [admitted,setAdmitted]=useState(false)
  const [ready,setReady]=useState(false),[limited,setLimited]=useState(false),[error,setError]=useState(''),[upgrade,setUpgrade]=useState(false)
  const meter=useRef({lease:'',total:0,remaining:Infinity,unlimited:false,previous:null as PlaybackSample|null,pause:null as (()=>void)|null,blocked:true,busy:false})
+ const canAdvance=useCallback(()=>!meter.current.blocked,[])
  const sample=useCallback(({time,playing,rate,pause}:PlayerSample)=>{
   const m=meter.current;m.pause=pause
   if(m.blocked){if(playing)pause();m.previous=null;return}
@@ -55,7 +56,7 @@ export default function ForYouAllowance({children,onExplore}:{children:ReactNode
   window.addEventListener('pagehide',release)
   return()=>{alive=false;window.clearInterval(timer);window.removeEventListener('account-access-changed',refresh);window.removeEventListener('pagehide',release);release()}
  },[])
- return <MeterContext.Provider value={sample}>
+ return <AdvanceContext.Provider value={canAdvance}><MeterContext.Provider value={sample}>
   <Box sx={{position:'relative',minHeight:'calc(100dvh - var(--awm-navbar-height))'}}>
    {!ready?<Box sx={{minHeight:'60dvh',display:'grid',placeItems:'center'}}><CircularProgress aria-label="Loading For You"/></Box>:admitted?children:null}
    {error&&<Box sx={{position:'absolute',inset:0,zIndex:20,bgcolor:'background.default',p:3}}><Alert severity="info">{error}</Alert><Button onClick={()=>window.dispatchEvent(new Event('account-access-changed'))}>Retry</Button><Button onClick={onExplore}>Continue on Explore</Button></Box>}
@@ -66,5 +67,5 @@ export default function ForYouAllowance({children,onExplore}:{children:ReactNode
    <DialogActions sx={{flexDirection:'column',gap:1,p:3,'& > :not(style) ~ :not(style)':{ml:0}}}><Button fullWidth variant="contained" onClick={()=>setUpgrade(true)}>Upgrade to AWM Plus</Button><Button fullWidth onClick={onExplore}>Continue on Explore</Button></DialogActions>
   </Dialog>
   <PremiumPrompt open={upgrade} onClose={()=>setUpgrade(false)}/>
- </MeterContext.Provider>
+ </MeterContext.Provider></AdvanceContext.Provider>
 }

@@ -498,15 +498,15 @@ export const fetchExploreEpisodeByIdPublic = unstable_cache(
     transcript column — the feed UI never reads transcriptLines. Cached by the
     ID set: every visit plans a fresh order but hydrates the same episodes. */
 const fetchExploreEpisodesByIdsPublicCached = unstable_cache(
-  async (idsKey: string, uniqueIds: string[]): Promise<Map<string, ExploreEpisode>> => {
+  async (idsKey: string, uniqueIds: string[]): Promise<[string, ExploreEpisode][]> => {
     const episodes = new Map<string, ExploreEpisode>()
-    if (!hasServiceClientConfig() || uniqueIds.length === 0) return episodes
+    if (!hasServiceClientConfig() || uniqueIds.length === 0) return [...episodes.entries()]
     const { data: rows, error } = await serviceClient
       .from("episodes")
       .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
       .in("id", uniqueIds)
     if (error) throw new Error(error.message)
-    if (!rows?.length) return episodes
+    if (!rows?.length) return [...episodes.entries()]
     const showIds = Array.from(new Set(rows.map((row) => String(row.show_id))))
     const { data: shows } = await serviceClient.from("shows").select("id, slug, title").in("id", showIds)
     const showById = new Map((shows ?? []).map((show) => [String(show.id), show]))
@@ -520,16 +520,16 @@ const fetchExploreEpisodesByIdsPublicCached = unstable_cache(
         transcriptLines: [],
       })
     }
-    return episodes
+    return [...episodes.entries()]
   },
-  ["cartoons", "explore", "episodes-by-ids", "storage-covers-v2"],
+  ["cartoons", "explore", "episodes-by-ids", "serializable-v3"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
 export async function fetchExploreEpisodesByIdsPublic(episodeIds: string[]): Promise<Map<string, ExploreEpisode>> {
   const uniqueIds = Array.from(new Set(episodeIds))
   const idsKey = createHash("sha256").update([...uniqueIds].sort().join(",")).digest("hex").slice(0, 32)
-  return fetchExploreEpisodesByIdsPublicCached(idsKey, uniqueIds)
+  return new Map(await fetchExploreEpisodesByIdsPublicCached(idsKey, uniqueIds))
 }
 
 function mapEpisodeRow(

@@ -20,7 +20,7 @@ export function buildContinueReadingItems(
       if (!book || !chapter) return []
       const item: CatalogueRowItem = {
         key: book.id,
-        href: `/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(position.chapterSlug)}?page=${position.page}`,
+        href: `/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(position.chapterSlug)}?page=${position.page}${position.blockIndex!==undefined?`&block=${position.blockIndex}`:''}`,
         title: book.title,
         meta: `Page ${position.page} of ${position.totalPages}`,
         level: book.level,

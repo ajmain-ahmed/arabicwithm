@@ -12,9 +12,17 @@ import BookMyListToggle from './BookMyListToggle'
 import { bookReaderHref } from '@/app/lib/bookReaderSettings'
 import { useReadingProgressStore } from '@/store/readingProgressStore'
 
+const languageButtonSx = {
+  minHeight: 52, fontSize: 15, bgcolor: '#b8860b', color: '#fff',
+  borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700,
+  '&:hover': { bgcolor: '#946c08' },
+  '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 55%, transparent)', outlineOffset: 2 },
+} as const
+
 interface BookProgressEntry {
   chapterSlug?: string
   page?: number
+  blockIndex?: number
 }
 
 function progressForBook(metadata: Record<string, unknown>, bookSlug: string): BookProgressEntry | null {
@@ -35,10 +43,15 @@ export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlu
 
   const savedProgress = user ? progressForBook(user.user_metadata, bookSlug) : null
   const savedChapterSlug = trackedPosition?.chapterSlug ?? savedProgress?.chapterSlug
+  const savedBlock=trackedPosition?.blockIndex??savedProgress?.blockIndex
   const savedPage = trackedPosition?.page ?? savedProgress?.page
   const savedChapter = savedChapterSlug && chapters.some((chapter) => chapter.slug === savedChapterSlug)
     ? savedChapterSlug
     : null
+  const resumeParams=new URLSearchParams()
+  if(savedPage&&savedPage>=2)resumeParams.set('page',String(savedPage))
+  if(typeof savedBlock==='number'&&Number.isInteger(savedBlock)&&savedBlock>=0)resumeParams.set('block',String(savedBlock))
+  const resumeQuery=resumeParams.toString()
   const destination = savedChapter ?? chapters[0]?.slug
   const currentChapter = savedChapter ? chapters.find((chapter) => chapter.slug === savedChapter) : null
 
@@ -71,7 +84,7 @@ export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlu
             disabled={loading}
             prefetch={!loading}
             onClick={requireSignIn}
-            href={`/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(savedChapter)}${savedPage && savedPage >= 2 ? `?page=${savedPage}` : ''}`}
+            href={`/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(savedChapter)}${resumeQuery?`?${resumeQuery}`:''}`}
             variant="contained"
             startIcon={<PlayArrow />}
             sx={{
@@ -89,13 +102,16 @@ export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlu
             Continue
           </Button>
         )}
-        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'ar', savedPage)} variant="contained" startIcon={<AutoStories />} sx={{ minHeight: 52, fontSize: 15, bgcolor: '#b8860b', color: '#fff', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#946c08' } }}>Read in Arabic</Button>
-        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'en', savedPage)} variant="contained" startIcon={<Translate />} sx={{ minHeight: 52, fontSize: 15, bgcolor: 'var(--awm-cream)', color: 'var(--awm-bark)', borderRadius: '9px', px: 2.25, textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: 'var(--awm-cream-light)' }, '&:focus-visible': { outline: '3px solid color-mix(in srgb, var(--awm-gold) 55%, transparent)', outlineOffset: 2 } }}>Read in English</Button>
+        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'ar', savedPage,savedBlock)} variant="contained" startIcon={<AutoStories />} sx={languageButtonSx}>Arabic</Button>
+        <Button component={Link} disabled={loading} prefetch={Boolean(user) && !loading} onClick={requireSignIn} href={bookReaderHref(bookSlug, destination, 'en', savedPage,savedBlock)} variant="contained" startIcon={<Translate />} sx={languageButtonSx}>English</Button>
       </Box>
       {/* Secondary actions share a row so the wide desktop box breathes. */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, minmax(0, 1fr))' }, gap: 1, mt: 1.25, width: '100%', alignItems: 'stretch' }}>
+      <Box role="group" aria-label="Book actions" sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1, mt: 1.25, width: '100%', alignItems: 'start',
+        '& .book-detail-action': { width:'100%',minWidth:0,height:48,minHeight:48,px:1,py:1,borderRadius:'9px',border:'1px solid color-mix(in srgb, var(--awm-gold) 45%, transparent)',bgcolor:'transparent',color:'var(--awm-bark)',boxShadow:'none',fontFamily:'var(--font-sans), sans-serif',fontSize:13,fontWeight:600,textTransform:'none',whiteSpace:'nowrap','& .MuiButton-startIcon':{mr:.5,ml:0},'& .MuiSvgIcon-root':{fontSize:18},'&:hover':{bgcolor:'color-mix(in srgb, var(--awm-gold) 8%, transparent)',boxShadow:'none'},'&:active':{bgcolor:'color-mix(in srgb, var(--awm-gold) 16%, transparent)'},'&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2} },
+        '& .book-detail-action[aria-pressed="true"]':{bgcolor:'var(--awm-forest)',color:'var(--awm-white)','&:hover':{bgcolor:'var(--awm-forest)'}},
+      }}>
         <BookMyListToggle bookSlug={bookSlug} />
-        <PdfDownloadButton bookSlug={bookSlug} language="ar" label="Download PDF" small fullWidth />
+        <PdfDownloadButton bookSlug={bookSlug} language="ar" label="PDF" className="book-detail-action" small fullWidth />
         <BookReviewButton bookId={bookId} />
       </Box>
     </>

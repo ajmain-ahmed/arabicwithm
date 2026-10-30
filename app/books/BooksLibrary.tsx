@@ -123,7 +123,7 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
     <Box>
       {/* Header row: title + filters, aligned */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: { xs: 2, sm: 3 } }}>
-        <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 36 }, fontWeight: 600, color: 'var(--awm-bark)' }}>
+        <Typography component="h1" sx={{ display: { xs: 'none', md: 'block' }, fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 36 }, fontWeight: 600, color: 'var(--awm-bark)' }}>
           Library
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, width: { xs: '100%', sm: 'auto' }, flexWrap: 'wrap' }}>
@@ -302,6 +302,18 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
         </DialogActions>
       </Dialog>
 
+      {mode === 'read' && <Box component="section" aria-labelledby="all-books-title" sx={{ mb: 3 }}>
+        <Typography id="all-books-title" component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 23, color: 'var(--awm-bark)', mb: 1 }}>All Books</Typography>
+        <Box data-all-books-row role="group" aria-label="Scroll All Books" tabIndex={0} sx={{
+          display: 'grid', gridAutoFlow: 'column', gridAutoColumns: { xs: 'calc((100% - 20px) / 3)', sm: '175px', md: '200px' },
+          gap: 1.25, overflowX: 'auto', overflowY: 'hidden', py: 1,
+          scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' },
+          '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 },
+          '@media (max-width: 299px)': { gridAutoColumns: 'calc((100% - 10px) / 2)' },
+        }}>
+          {visible.map(book => <LibraryBookCard key={book.id} book={book} compact />)}
+        </Box>
+      </Box>}
       {mode === 'read' && <Box data-mobile-read-sections sx={{ display: { xs: 'block', sm: 'none' } }}>
         {[...discoverySections.entries()].map(([key, section]) => <Box component="section" aria-label={section.title} key={key} sx={{ mb: 3 }}>
           <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 23, color: 'var(--awm-bark)', mb: 1 }}>{section.title}</Typography>

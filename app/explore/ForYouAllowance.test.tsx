@@ -5,9 +5,9 @@ const mocks=vi.hoisted(()=>({sync:vi.fn(),explore:vi.fn(),pause:vi.fn(),mounted:
 vi.mock('@/app/actions/forYouUsage',()=>({syncForYouUsage:mocks.sync}))
 vi.mock('@/app/components/PremiumPrompt',()=>({default:({open}:{open:boolean})=>open?<aside>Canonical upgrade popup</aside>:null}))
 import ForYouAllowance from './ForYouAllowance'
-import {useForYouMeter,type PlayerSample} from './ForYouMeterContext'
-let send:((s:PlayerSample)=>void)|null=null,root:Root,host:HTMLDivElement,clock=0,budget=8000,unlimited=false
-function Player(){const meter=useForYouMeter();useEffect(()=>{send=meter;return()=>{send=null}},[meter]);useEffect(()=>{mocks.mounted()},[]);return <p>Player and transcript</p>}
+import {useForYouAdvance,useForYouMeter,type PlayerSample} from './ForYouMeterContext'
+let send:((s:PlayerSample)=>void)|null=null,allowed:(()=>boolean)|null=null,root:Root,host:HTMLDivElement,clock=0,budget=8000,unlimited=false
+function Player(){const meter=useForYouMeter(),advance=useForYouAdvance();useEffect(()=>{send=meter;allowed=advance;return()=>{send=null;allowed=null}},[meter,advance]);useEffect(()=>{mocks.mounted()},[]);return <p>Player and transcript</p>}
 async function mount(){await act(async()=>root.render(<ForYouAllowance onExplore={mocks.explore}><Player/></ForYouAllowance>))}
 async function sample(time:number,playing=true){await act(async()=>{send?.({time,playing,rate:1,pause:mocks.pause})})}
 async function tick(time:number,playing=true){clock+=200;await act(async()=>{await vi.advanceTimersByTimeAsync(200);send?.({time,playing,rate:1,pause:mocks.pause})})}
@@ -50,4 +50,11 @@ it('does not charge paused or stalled samples or source jumps',async()=>{
  const sent=mocks.sync.mock.calls.map(([input])=>input.totalMs)
  expect(Math.max(...sent)).toBeLessThanOrEqual(200)
  expect(document.body.textContent).not.toContain('Unlock unlimited For You')
+})
+it('keeps one cumulative allowance across clip changes and blocks advancement at the cap',async()=>{
+ budget=800;await mount();await sample(0);await tick(.2);await tick(.4)
+ await sample(0,false);await sample(0);await tick(.2);await tick(.4)
+ expect(document.body.textContent).toContain('Unlock unlimited For You')
+ expect(allowed?.()).toBe(false)
+ await sample(0);expect(allowed?.()).toBe(false)
 })

@@ -26,8 +26,8 @@ export default function LibraryBookCard({ book, listen = false, compact = false 
           src={book.cover}
           alt={`${book.title} cover`}
           fill
-          sizes="(max-width: 600px) 50vw, (max-width: 1200px) 200px, 240px"
-          style={{ objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }}
+          sizes={compact ? '(max-width: 600px) 33vw, 200px' : '(max-width: 600px) 50vw, (max-width: 1200px) 200px, 240px'}
+          style={{ objectFit: listen ? 'cover' : 'contain', ...(listen ? thumbnailCropCss(book.coverCrop) : {}) }}
         />
       </Box>
     )

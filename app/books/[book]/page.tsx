@@ -1,13 +1,11 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Box, Chip, Container, Paper, Typography } from '@mui/material'
-import { AccessTimeRounded, ArrowBack, ChevronRight, HeadphonesRounded } from '@mui/icons-material'
+import { Box, Container, Paper, Typography } from '@mui/material'
+import { ArrowBack, ChevronRight, HeadphonesRounded } from '@mui/icons-material'
 import { fetchBookBySlugPublic, fetchBooksForPublic, fetchChapterCardsForBookPublic } from '@/app/actions/books'
 import BookReadingCta from './BookReadingCta'
 import ChapterAccessLock, { ChapterLink } from './ChapterAccessLock'
-import CefrChip from '@/app/components/CefrChip'
-import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
-import { formatReadingTime } from '@/app/lib/readingTime'
+import BookDetailMetadata from './BookDetailMetadata'
 import { fetchPublishedAudioForBook } from '@/app/actions/audiobooks'
 
 export const revalidate = 60
@@ -43,7 +41,8 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
           sx={{
             mt: 1.25,
             maxWidth: 600,
-            fontFamily: '"EB Garamond", Georgia, serif',
+            fontFamily: 'var(--font-sans), sans-serif',
+            fontWeight: 400,
             fontSize: { xs: 17, md: 19 },
             lineHeight: 1.5,
             color: '#b8860b',
@@ -55,19 +54,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
           {book.description}
         </Typography>
       )}
-      <Box sx={{ display: 'flex', gap: 1, mt: 2.5, flexWrap: 'wrap' }}>
-        {book.level && <CefrChip level={book.level} size="small" />}
-        {book.readingTimeMinutes && (
-          <Chip
-            icon={<AccessTimeRounded />}
-            label={formatReadingTime(book.readingTimeMinutes)}
-            size="small"
-            sx={{ bgcolor: 'rgba(14,46,31,0.08)', color: 'var(--awm-forest)', '& .MuiChip-icon': { color: 'inherit' } }}
-          />
-        )}
-        {book.tags.slice(0, 2).map((tag) => <Chip key={tag} label={tag} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508' }} />)}
-        {audioChapterIds.size > 0 && <Chip icon={<HeadphonesRounded />} label={`Audiobook · ${audioChapterIds.size} ${audioChapterIds.size === 1 ? 'chapter' : 'chapters'}`} size="small" sx={{ bgcolor: 'rgba(184,134,11,0.1)', color: '#8b6508', '& .MuiChip-icon': { color: 'inherit' } }} />}
-      </Box>
+      <BookDetailMetadata level={book.level} readingTimeMinutes={book.readingTimeMinutes} tags={book.tags} audioChapterCount={audioChapterIds.size}/>
       <Box sx={{ mt: 3 }}>
         <BookReadingCta bookId={book.id} bookSlug={book.slug} chapters={chapters} />
       </Box>
@@ -77,7 +64,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
   const coverImage = (
     <Box sx={{ position: 'relative', width: '100%', aspectRatio: '2 / 3', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(44,26,14,0.08)', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}>
       {/* Plain img: the original cover bytes, no optimizer re-encode. */}
-      <Box component="img" src={book.cover!} alt={`${book.title} cover`} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} />
+      <Box component="img" src={book.cover!} alt={`${book.title} cover`} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
     </Box>
   )
 
@@ -121,37 +108,17 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
           </Box>
         </Link>
 
-        {/* Mobile: cover sits inside the detail card, chapters span full width below. */}
-        <Box sx={{ display: { sm: 'none' } }}>
-          <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', mb: 3 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: book.cover ? '240px minmax(0, 1fr)' : '1fr' }, gap: { xs: 3, md: 5 }, alignItems: 'start' }}>
-              {book.cover && (
-                <Box sx={{ width: '100%', maxWidth: { sm: 240 }, mx: 'auto' }}>
-                  <Box sx={{ borderRadius: '10px' }}>{coverImage}</Box>
-                </Box>
-              )}
-              <Box sx={{ minWidth: 0 }}>{infoFields}</Box>
-            </Box>
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: book.cover ? { xs: 'minmax(0, 1fr)', sm: 'minmax(180px, min(30%, 300px)) minmax(0, 1fr)' } : 'minmax(0, 1fr)',
+          gridTemplateAreas: book.cover ? { xs: '"cover" "info" "chapters"', sm: '"cover info" ". chapters"' } : '"info" "chapters"',
+          columnGap: 4, rowGap: 3, alignItems: 'start',
+        }}>
+          {book.cover && <Box sx={{ gridArea: 'cover', width: '100%', maxWidth: { xs: 220, sm: 300 }, justifySelf: { xs: 'center', sm: 'start' } }}>{coverImage}</Box>}
+          <Paper elevation={0} sx={{ gridArea: 'info', minWidth: 0, p: { xs: 3, md: 5 }, borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', minHeight: book.cover ? { md: 450 } : undefined }}>
+            {infoFields}
           </Paper>
-          {chaptersList}
-        </Box>
-
-        {/* Desktop: the cover stretches to the full height of the info box plus
-            the chapters list; both sit to its right. */}
-        <Box sx={{ display: { xs: 'none', sm: 'grid' }, gridTemplateColumns: book.cover ? 'minmax(420px, 600px) minmax(0, 1fr)' : 'minmax(0, 1fr)', gap: 4, alignItems: 'stretch' }}>
-          {book.cover && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-              <Box sx={{ position: 'relative', flex: 1, minHeight: 340, borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(44,26,14,0.08)', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}>
-                <Box component="img" src={book.cover} alt={`${book.title} cover`} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} />
-              </Box>
-            </Box>
-          )}
-          <Box sx={{ minWidth: 0 }}>
-            <Paper elevation={0} sx={{ p: { xs: 3, md: 5 }, borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', mb: 3 }}>
-              {infoFields}
-            </Paper>
-            {chaptersList}
-          </Box>
+          <Box sx={{ gridArea: 'chapters', minWidth: 0 }}>{chaptersList}</Box>
         </Box>
       </Container>
     </Box>

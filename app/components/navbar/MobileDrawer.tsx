@@ -51,6 +51,18 @@ export default function MobileDrawer({
         onClose()
     }
 
+    // Keep the existing capability checks and destinations together. The
+    // learning shortcuts are also currently shown only to these accounts.
+    const managementItems = [
+        ...(isLoggedIn && isAdmin ? [{ label: 'Admin', icon: <AdminPanelSettings sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/admin/users') }] : []),
+        ...(isLoggedIn && isReviewer ? [{ label: 'Reviewer', icon: <RateReviewOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/reviewer') }] : []),
+        ...(isAdmin || isReviewer ? LEARN_ITEMS.map(({ label, route }) => {
+            const Icon = learningIcons[label]
+            return { label, icon: <Icon sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(route) }
+        }) : []),
+    ]
+    const managementEnd = managementItems.at(-1)?.label
+
     return (
         <Drawer
             open={open}
@@ -81,7 +93,7 @@ export default function MobileDrawer({
                     {/* Streak + AWM+ live here on mobile (the navbar is reserved
                         for navigation); the pair sizes itself to the drawer. */}
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignSelf: 'center', width: '100%' }}>
-                        <MemberActions />
+                        <MemberActions onProfileNavigate={onClose} />
                     </Box>
                 </Box>
             ) : (
@@ -129,16 +141,11 @@ export default function MobileDrawer({
 
                 {[
                     ...(isLoggedIn && user ? [{ label: 'My Profile', icon: <Person sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(profileRoute(user!.id)) }] : []),
-                    ...(isLoggedIn && isAdmin ? [{ label: 'Admin', icon: <AdminPanelSettings sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/admin/users') }] : []),
-                    ...(isLoggedIn && isReviewer ? [{ label: 'Reviewer', icon: <RateReviewOutlined sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/reviewer') }] : []),
                     ...(['Home', 'Explore', 'Watch', 'Read', 'Learn'] as const).map(label => {
                         const Icon = primaryIcons[label]
                         return { label, icon: <Icon sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(NAV_ROUTES[label]) }
                     }),
-                    ...(isAdmin || isReviewer ? LEARN_ITEMS.map(({ label, route }) => {
-                        const Icon = learningIcons[label]
-                        return { label, icon: <Icon sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(route) }
-                    }) : []),
+                    ...managementItems,
                     { label: 'Give Feedback', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/feedback') },
                     { label: 'Support Us', icon: <VolunteerActivismRounded sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/support') },
                 ].map((item) => (
@@ -159,7 +166,7 @@ export default function MobileDrawer({
                             />
                         </ListItemButton>
                     </ListItem>
-                    {isLoggedIn && !isAdmin && !isReviewer && (item.label === 'My Profile' || item.label === 'Learn') && <Divider component="li" role="separator" data-nav-divider={item.label} sx={{ mx: 3, my: 1, borderColor: 'color-mix(in srgb, var(--awm-gold) 30%, transparent)' }} />}
+                    {isLoggedIn && (item.label === 'My Profile' || item.label === 'Learn' || item.label === managementEnd) && <Divider component="li" role="separator" data-nav-divider={item.label} sx={{ mx: 3, my: 1, borderColor: 'color-mix(in srgb, var(--awm-gold) 30%, transparent)' }} />}
                     </Fragment>
                 ))}
                 {isLoggedIn && user && (

@@ -7,10 +7,12 @@ import type { ExploreFeedItem } from '@/app/lib/explore'
 
 interface ExploreFeedCacheState {
   items: ExploreFeedItem[]
-  setItems: (items: ExploreFeedItem[]) => void
+  sessionId: string
+  setItems: (items: ExploreFeedItem[], sessionId?:string) => void
 }
 
 export const useExploreFeedCache = create<ExploreFeedCacheState>((set) => ({
   items: [],
-  setItems: (items) => set({ items }),
+  sessionId: '',
+  setItems: (items, sessionId) => set(state=>({ items, sessionId:sessionId??state.sessionId })),
 }))

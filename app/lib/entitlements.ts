@@ -1,5 +1,7 @@
 /** Shared product policy. Entitlements themselves are always read on the server. */
-export const PREMIUM = { monthlyPence: 499, currency: 'gbp', label: '£4.99/month' } as const
+const PREMIUM_MONTHLY_PENCE = 499
+const PREMIUM_MONTHLY_PRICE = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(PREMIUM_MONTHLY_PENCE / 100)
+export const PREMIUM = { monthlyPence: PREMIUM_MONTHLY_PENCE, currency: 'gbp', price: PREMIUM_MONTHLY_PRICE, label: `${PREMIUM_MONTHLY_PRICE}/month` } as const
 export const PREMIUM_BENEFITS = [
   { id: 'offline-books', label: 'Offline books', appOnly: false },
   { id: 'audiobooks', label: 'Audiobooks', appOnly: false },

@@ -148,3 +148,18 @@ it.each(['user', 'premium'])('groups the normal %s mobile menu with dividers aft
   expect(dividers.map(node => node.getAttribute('data-nav-divider'))).toEqual(['My Profile','Learn','Support Us'])
   expect(dividers.map(node => node.previousElementSibling?.textContent)).toEqual(['My Profile','Learn','Support Us'])
 })
+
+it.each(['admin','editor'])('groups existing %s tools after browsing without changing destinations',async role=>{
+ mocks.mobile=true;mocks.role=role
+ await act(async()=>root.render(<Navbar/>))
+ await act(async()=>(host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
+ const management=[...(role==='admin'?['Admin']:[]),'Reviewer','Memory','Grammar','Word Search']
+ expect([...document.querySelectorAll('.mobile-list-btn')].map(node=>node.textContent)).toEqual([
+  'My Profile','Home','Explore','Watch','Read','Learn',...management,'Give Feedback','Support Us','Settings','Sign Out',
+ ])
+ const dividers=[...document.querySelectorAll('[data-nav-divider]')]
+ expect(dividers.map(node=>node.getAttribute('data-nav-divider'))).toEqual(['My Profile','Learn','Word Search','Support Us'])
+ expect(dividers.map(node=>node.previousElementSibling?.textContent)).toEqual(['My Profile','Learn','Word Search','Support Us'])
+ const reviewer=[...document.querySelectorAll('.mobile-list-btn')].find(node=>node.textContent==='Reviewer') as HTMLElement
+ await act(async()=>reviewer.click());expect(mocks.push).toHaveBeenCalledWith('/reviewer')
+})

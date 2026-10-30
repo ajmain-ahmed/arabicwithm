@@ -1,7 +1,7 @@
 // Isolated HTTP contract fixture. Production authorization runs unchanged;
 // only this child Next process points at these synthetic accounts and records.
 import https from 'node:https'
-import {randomUUID} from 'node:crypto'
+import {randomUUID,createHash} from 'node:crypto'
 import { spawn, spawnSync } from 'node:child_process'
 import { mkdirSync, readFileSync, rmSync } from 'node:fs'
 import path from 'node:path'
@@ -34,9 +34,10 @@ const showId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 const metadata = new Map()
 const handles=new Map(),profiles=new Map(),roles=new Map(),accessAudit=[]
 const roleFor=id=>roles.get(id)??(id===ids.admin?'admin':id===ids.reviewer?'editor':'user')
-const rpcLog=[];let failSearch=false
+const rpcLog=[],tableLog=[];let failSearch=false
 let failAudioSave = false
 let forYouPlayback=false
+let discoveryClips=[]
 const manualPremium=new Map(), memoryStarts=new Map(), memorySnapshots=new Map(), memoryReviews=new Map(), ownReviews=new Map(), earned=new Set(), wordTotals=new Map()
 const effective=id=>id===ids.premium||roleFor(id)==='admin'||manualPremium.get(id)===true
 const usage=id=>[...memoryStarts.values()].filter(row=>row.userId===id).length
@@ -55,7 +56,7 @@ const tables = {
   transcript_groups: [],
   admin_manual_transcripts: [],
   transcript_segments: [],
-  books: [{ id: bookId, slug: 'test-book', title: 'Test Book', title_ar: 'كتاب', author: 'Fixture Author', level: 'A1', tags: [], premium_exempt: false, free_chapter_count: 5 }],
+  books: [{ id: bookId, slug: 'test-book', title: 'Test Book', title_ar: 'كتاب', author: 'Fixture Author', description:'A clear book description.', level: 'A1', tags: [], premium_exempt: false, free_chapter_count: 5 }],
   chapters: [{ id: chapterId, book_id: bookId, slug: 'chapter-1', title: 'First Chapter', chapter_number: 1, content }],
   shows: [{ id: showId, slug: 'test-show', title: 'Test Show', title_ar: 'كتاب', level: 'A1', tags: [] }],
   episodes: Array.from({ length: 4 }, (_, i) => ({ id: `dddddddd-dddd-4ddd-8ddd-ddddddddddd${i}`, show_id: showId, slug: `clip-${i}`, title: `Clip ${i}`, youtube_id: ['abcdefghij0', 'abcdefghij1', 'abcdefghij2', 'abcdefghij3'][i], level: 'A1', tags: [], transcript: [{ timestamp: '0:00', tokens: [{ arabic: '\u0647\u0630\u0627', english: 'this', pos: 'pronoun', cefr: 'a1' }, { arabic: ['\u0643\u062a\u0627\u0628','\u0642\u0644\u0645','\u0628\u064a\u062a','\u0645\u0627\u0621'][i], english: ['book','pen','house','water'][i], pos: 'noun', cefr: 'a1' }], translation: ['This is a book.','This is a pen.','This is a house.','This is water.'][i] }], created_at: '2026-01-01T00:00:00Z' })),
@@ -87,13 +88,14 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   const chunks = []; for await (const chunk of req) chunks.push(chunk)
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
+  if(url.pathname==='/fixture/reader-pagination'){tables.chapters[0].content=Array.from({length:body.blocks??120},(_,i)=>({paragraph:i+1,tokens:[{arabic:'\u0627\u0644\u0643\u062a\u0627\u0628',english:'book',pos:'noun',cefr:'a1'}],translation:`Reader block ${i+1}.`}));return json(res,{})}
   if(url.pathname==='/fixture/website-update') {
     const second='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
     for(const language of ['ar','en']) if(!tables.book_chapter_audio.some(row=>row.chapter_id===second&&row.language===language)) tables.book_chapter_audio.push({...tables.book_chapter_audio.find(row=>row.language===language),chapter_id:second})
     return json(res,{})
   }
   if(url.pathname==='/fixture/launch-preferences') return json(res,tables.email_preferences)
-  if(url.pathname==='/fixture/request-log')return json(res,{rpc:rpcLog})
+  if(url.pathname==='/fixture/request-log')return json(res,{rpc:rpcLog,tables:tableLog})
   if(url.pathname==='/fixture/search-failure'){failSearch=body.fail;return json(res,{})}
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
   if(url.pathname==='/fixture/import-failure'){failImportAfter=body.after??null;return json(res,{})}
@@ -114,7 +116,12 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     return json(res,{})
   }
+  if(url.pathname==='/fixture/for-you-discovery'){
+    discoveryClips=Array.from({length:25},(_,i)=>({video:{id:`88888888-8888-4888-8888-${String(i).padStart(12,'0')}`,youtube_id:`discovery${String(i).padStart(2,'0')}`,title:`Discovery ${i}`,channel:'Fixture'},clip_start_ms:0,clip_end_ms:12000,segments:[{id:10000+i,position:0,start_seconds:0,end_seconds:12,original_text:'\u0647\u0630\u0627 \u0643\u062a\u0627\u0628 \u062c\u062f\u064a\u062f \u0645\u0641\u064a\u062f \u062c\u062f\u0627',english_text:`Discovery sentence ${i}`,source_tokens:['\u0647\u0630\u0627','\u0643\u062a\u0627\u0628','\u062c\u062f\u064a\u062f','\u0645\u0641\u064a\u062f','\u062c\u062f\u0627'].map(arabic=>({arabic,english:'word'}))}]}))
+    return json(res,{})
+  }
   if(url.pathname==='/fixture/for-you-playback'){
+    discoveryClips=[]
     forYouPlayback=true
     tables.transcript_groups=[{id:'77777777-7777-4777-8777-777777777770',name:'Fixture A'},{id:'77777777-7777-4777-8777-777777777771',name:'Fixture B'}]
     for(let i=0;i<7;i++){
@@ -159,6 +166,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     const rpc = url.pathname.split('/').at(-1)
     rpcLog.push(rpc)
     const learning = JSON.parse(readFileSync('e2e/learning-data.json','utf8'))
+    if(rpc==='transcript_for_you_groups'&&discoveryClips.length)return json(res,discoveryClips.filter(c=>!body.p_excluded?.includes(c.segments[0].id)).sort((a,b)=>Number(body.p_recent?.includes(a.video.id))-Number(body.p_recent?.includes(b.video.id))||createHash('md5').update(a.video.id+body.p_seed).digest('hex').localeCompare(createHash('md5').update(b.video.id+body.p_seed).digest('hex'))).slice(0,5))
     if(rpc==='transcript_for_you_groups'&&forYouPlayback)return json(res,[0,1,2,3,4,5,6].filter(i=>!body.p_excluded?.includes(801+i*10)).filter(i=>!body.p_group_ids?.length||body.p_group_ids.includes(`77777777-7777-4777-8777-77777777777${i%2}`)).slice(0,5).map(i=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Playback fixture',channel:'Fixture'},clip_start_ms:495000,clip_end_ms:522000,segments:tables.transcript_segments.filter(row=>row.transcript_id===`99999999-9999-4999-8999-99999999999${i}`&&row.start_seconds>=495).map(row=>({...row,source_tokens:row.tokens}))})))
     if(rpc==='transcript_for_you_groups')return json(res,[0,1].map(i=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Test For You',channel:'Fixture'},clip_start_ms:0,clip_end_ms:60000,segments:[{id:42+i,position:0,start_seconds:0,end_seconds:60,original_text:'\u0643\u0650\u062a\u064e\u0627\u0628\u064c',english_text:'A book.',source_tokens:[{arabic:'\u0643\u0650\u062a\u064e\u0627\u0628\u064c',english:'book'}]}]})))
     if(rpc==='website_search_content_v1') {
@@ -316,6 +324,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   }
   if (url.pathname.startsWith('/rest/v1/')) {
     const table = url.pathname.split('/').at(-1)
+    tableLog.push(table)
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       if(table==='email_preferences') {
         const index=tables.email_preferences.findIndex(row=>row.email===body.email&&row.purpose===body.purpose)

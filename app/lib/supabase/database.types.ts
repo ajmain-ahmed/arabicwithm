@@ -337,6 +337,7 @@ export interface Database {
       website_finish_manual_import: {Args:{p_actor:string;p_import:string};Returns:Json}
       website_save_manual_source: {Args:Database['public']['Functions']['admin_save_manual_source']['Args']&{p_explore_published:boolean};Returns:Json}
       transcript_for_you_groups: {Args:{p_seed:string;p_excluded:number[];p_recent:string[];p_limit:number;p_group_ids:string[]};Returns:Json}
+      website_for_you_diagnostics: {Args:Record<string,never>;Returns:Json}
       account_has_premium: { Args: { p_user_id: string }; Returns: boolean }
       admin_set_manual_premium: { Args: {p_actor:string;p_target:string;p_enabled:boolean;p_reason:string}; Returns:boolean }
       admin_set_account_access: { Args: {p_actor:string;p_target:string;p_role:string;p_premium:boolean;p_notes:string}; Returns:Json }

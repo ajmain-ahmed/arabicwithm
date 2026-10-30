@@ -1,2 +1,3 @@
 import AdminTranscripts from './AdminTranscripts'
-export default function TranscriptsPage(){return <AdminTranscripts/>}
+import ForYouDiagnostics from './ForYouDiagnostics'
+export default function TranscriptsPage(){return <><ForYouDiagnostics/><AdminTranscripts/></>}

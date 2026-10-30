@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Box, Button, Container, Typography } from '@mui/material'
-import { ArrowBack, ArrowForward, FormatListBulleted } from '@mui/icons-material'
+import { ArrowBack } from '@mui/icons-material'
 import {
   fetchBookBySlugPublic,
   fetchChapterForPublic,
@@ -28,7 +28,7 @@ export default async function ChapterPage({
   searchParams,
 }: {
   params: Promise<{ book: string; chapter: string }>
-  searchParams: Promise<{ lang?: string | string[]; page?: string | string[] }>
+  searchParams: Promise<{ lang?: string | string[]; page?: string | string[]; block?: string | string[] }>
 }) {
   const { book: bookSlug, chapter: chapterSlug } = await params
   const rawParams = await searchParams
@@ -38,6 +38,9 @@ export default async function ChapterPage({
   const rawPage = Array.isArray(rawParams.page) ? rawParams.page[0] : rawParams.page
   const parsedPage = Number(rawPage)
   const initialPage = Number.isInteger(parsedPage) && parsedPage >= 1 && parsedPage <= 500 ? parsedPage : undefined
+  const rawBlock=Array.isArray(rawParams.block)?rawParams.block[0]:rawParams.block
+  const parsedBlock=rawBlock===undefined?NaN:Number(rawBlock)
+  const initialBlock=Number.isInteger(parsedBlock)&&parsedBlock>=0?parsedBlock:undefined
   const book = await fetchBookBySlugPublic(bookSlug)
   if (!book) notFound()
 
@@ -115,18 +118,9 @@ export default async function ChapterPage({
           </Typography>
         </Box>
 
-        <ChapterReader bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} initialPage={initialPage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
+        <ChapterReader key={chapter.id} initialBlock={initialBlock} nextChapterSlug={nextChapter?.slug} bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} initialPage={initialPage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
 
-        <Box component="nav" aria-label="Chapter navigation" sx={{ display: 'grid', gridTemplateColumns: nextChapter ? 'repeat(2,minmax(0,1fr))' : 'minmax(0,280px)', justifyContent: 'center', alignItems: 'stretch', gap: { xs: 1, sm: 1.5 }, mt: 3, '& .MuiButton-root': { minHeight: 48, px: {xs: 1, sm: 2}, fontSize: {xs: 13, sm: 15} } }}>
-          <Button href={`/books/${encodeURIComponent(book.slug)}`} startIcon={<FormatListBulleted />} variant="outlined" sx={{ color: 'var(--awm-muted)', borderColor: 'rgba(122,110,101,0.3)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
-              All Chapters
-          </Button>
-          {nextChapter && (
-            <Button href={`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(nextChapter.slug)}`} endIcon={<ArrowForward />} variant="contained" sx={{ maxWidth: '100%', bgcolor: '#b8860b', color: '#fff', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { bgcolor: '#946c08' } }}>
-              Next Chapter
-            </Button>
-          )}
-        </Box>
+
       </Container>
     </Box>
   )

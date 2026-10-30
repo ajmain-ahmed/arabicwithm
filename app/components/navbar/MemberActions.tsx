@@ -23,7 +23,7 @@ const PremiumPromptLazy = dynamic(loadPremiumPrompt, { ssr: false })
    desktop navbar (the theme icon and avatar around them are ~34-40px). */
 const PILL_HEIGHT = 34
 
-export default function MemberActions() {
+export default function MemberActions({onProfileNavigate}:{onProfileNavigate?:()=>void}={}) {
   const { user } = useAuth()
   /* Seed from the tracker's latest snapshot when this component mounts after
      the publish (mobile drawer); metadata is the fallback for never-synced
@@ -56,7 +56,7 @@ export default function MemberActions() {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-      <Tooltip title="Upgrade to AWM+">
+      <Tooltip title="AWM Plus">
         <Button
           onClick={() => setPremiumOpen(true)}
           onMouseEnter={() => void loadPremiumPrompt()}
@@ -107,7 +107,7 @@ export default function MemberActions() {
           {streak} Streak
         </Box>
       </Tooltip>
-      {premiumOpen && <PremiumPromptLazy open onClose={() => setPremiumOpen(false)} />}
+      {premiumOpen && <PremiumPromptLazy open membershipSummary onProfileNavigate={onProfileNavigate} onClose={() => setPremiumOpen(false)} />}
     </Box>
   )
 }

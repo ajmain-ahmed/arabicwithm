@@ -46,10 +46,12 @@ export default function BookMyListToggle({ bookSlug }: { bookSlug: string }) {
 
   return (
     <Button
+      className="book-detail-action"
+      aria-pressed={inList}
       onClick={() => { if (!user) { window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } })); return } void toggle() }}
       disabled={busy}
       startIcon={inList ? <BookmarkOutlined /> : <BookmarkAddOutlined />}
-      variant="contained"
+      variant="outlined"
       sx={{
 
         width: '100%',
@@ -64,7 +66,7 @@ export default function BookMyListToggle({ bookSlug }: { bookSlug: string }) {
         '&:hover': { bgcolor: inList ? '#1a6b3a' : 'color-mix(in srgb, var(--awm-gold) 8%, transparent)', boxShadow: 'none' },
       }}
     >
-      {inList ? 'In My List' : 'Add to My List'}
+      My List
     </Button>
   )
 }
