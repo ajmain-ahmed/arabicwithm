@@ -11,7 +11,7 @@ vi.mock('@/app/lib/supabase',()=>{let state={importId:'99999999-9999-4999-8999-9
  },from:mocks.from}}})
 vi.mock('@/app/lib/youtubeVideoDuration',()=>({getYouTubeVideoDuration:mocks.duration}))
 vi.mock('next/cache',()=>({revalidatePath:mocks.revalidate}))
-import {previewAdminTranscript,addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson,saveAdminTranscriptJson,moveAdminTranscriptGroup,saveAdminManualDraft,loadAdminManualDraft,deleteAdminManualDraft} from './transcripts'
+import {retryAdminGeminiEnrichment,previewAdminTranscript,addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson,saveAdminTranscriptJson,moveAdminTranscriptGroup,saveAdminManualDraft,loadAdminManualDraft,deleteAdminManualDraft} from './transcripts'
 beforeEach(()=>{vi.resetAllMocks();mocks.duration.mockResolvedValue(null);mocks.guard.mockResolvedValue(undefined);mocks.access.mockResolvedValue({admin:true,userId:'11111111-1111-4111-8111-111111111111'})})
 
 describe('manual form drafts',()=>{
@@ -271,5 +271,26 @@ describe('canonical app imports in normal Admin management',()=>{
   expect(result.total).toBe(35);expect(result.rows[0].id).toBe(id)
   expect(mocks.rpc).toHaveBeenCalledWith('admin_list_manual_transcripts',expect.objectContaining({p_page:1,p_group:group}))
   expect(result.groups).toContainEqual(expect.objectContaining({id:group,system_key:'app_imports'}))
+ })
+})
+
+describe('controlled Gemini enrichment recovery',()=>{
+ const id='77777777-7777-4777-8777-777777777777',version='2026-11-02T09:00:00Z'
+ it('requires Admin and an explicit charge acknowledgement before RPC access',async()=>{
+  expect(await retryAdminGeminiEnrichment(id,version,false)).toMatchObject({ok:false})
+  mocks.access.mockResolvedValue({admin:false,userId:'other'})
+  expect(await retryAdminGeminiEnrichment(id,version,true)).toMatchObject({ok:false})
+  expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+ it('queues only enrichment with trusted actor and expected version',async()=>{
+  mocks.rpc.mockResolvedValue({data:null,error:null})
+  expect(await retryAdminGeminiEnrichment(id,version,true)).toEqual({ok:true})
+  expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith('admin_retry_gemini_enrichment',{p_actor:'11111111-1111-4111-8111-111111111111',p_id:id,p_version:version,p_acknowledge_cost:true})
+  expect(mocks.from).not.toHaveBeenCalled()
+ })
+ it('does not retry the RPC when the snapshot conflicts',async()=>{
+  mocks.rpc.mockResolvedValue({data:null,error:{message:'transcript_conflict'}})
+  expect(await retryAdminGeminiEnrichment(id,version,true)).toMatchObject({ok:false,error:expect.stringContaining('Refresh')})
+  expect(mocks.rpc).toHaveBeenCalledTimes(1)
  })
 })

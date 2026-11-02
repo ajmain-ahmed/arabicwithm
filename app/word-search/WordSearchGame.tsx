@@ -208,11 +208,9 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
     if (!match) {
       flashInvalidSelection(selection)
       if (selection.length > 1) setMistakes((current) => current + 1)
-      setMessage(selection.length > 1 ? 'That line is not one of the words. Try again.' : 'Drag across a complete word.')
-    } else if (found.has(match.id)) setMessage('You already found that word.')
+    } else if (found.has(match.id)) return
     else {
       setFound((current) => new Set(current).add(match.id))
-      setMessage(`Found: ${match.english}`)
     }
   }
 
@@ -221,7 +219,6 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
     event.preventDefault()
     if (invalidTimerRef.current !== null) window.clearTimeout(invalidTimerRef.current)
     setInvalidCells(new Set())
-    setMessage('')
     setDrag({ pointerId: event.pointerId, start: cell, cells: [cell] })
     gridRef.current?.setPointerCapture(event.pointerId)
   }
@@ -307,7 +304,7 @@ export default function WordSearchGame({ initialSource, initialPuzzle }: { initi
                 const isInvalid = invalidCells.has(key)
                 const isFound = foundCells.has(key)
                 return (
-                  <Box component="button" type="button" role="gridcell" key={key} data-word-search-cell="true" data-row={rowIndex} data-col={colIndex} onPointerDown={(event) => beginDrag(event, { row: rowIndex, col: colIndex })} aria-label={`Arabic letter ${letter}, row ${rowIndex + 1}, column ${colIndex + 1}`} lang="ar" dir="rtl"
+                  <Box component="button" type="button" role="gridcell" key={key} data-word-search-cell="true" data-row={rowIndex} data-col={colIndex} data-selection-state={isInvalid?'incorrect':isFound?'found':isDragging?'selecting':'idle'} onPointerDown={(event) => beginDrag(event, { row: rowIndex, col: colIndex })} aria-label={`Arabic letter ${letter}, row ${rowIndex + 1}, column ${colIndex + 1}`} lang="ar" dir="rtl"
                     sx={(theme) => {
                       const dark = theme.palette.mode === 'dark'
                       const borderColor = isInvalid ? theme.palette.error.main : isDragging ? theme.palette.primary.main : isFound ? theme.palette.success.main : theme.palette.divider

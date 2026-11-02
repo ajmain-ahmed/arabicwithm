@@ -8,11 +8,12 @@ import { loadGrammar } from '@/app/actions/grammar';
 import curriculum from './mobile-curriculum.json';
 import WebsiteActivity from './WebsiteActivity';
 import BankActivity from './BankActivity';
-import { Arabic, English, Instruction, GrammarProvider, GrammarSettings, Feedback, useGrammarDisplay } from './GrammarUI';
+import { Arabic, English, Instruction, GrammarProvider, GrammarSettings, AnswerArea, AutoNextControl, useGrammarDisplay } from './GrammarUI';
 import { ruleLevels } from './ruleLevels';
 import useCorrectAutoAdvance from './useCorrectAutoAdvance';
 import TenFormsRevision from './TenFormsRevision';
-import { balancedVerbs, catalogue, categories, eligible, prepareNahw, formLabel, reviewed, roman, sourceValid, title, validVerb, type Mode, type NahwRow, type PreparedRow, type Target, type Verb } from './models';
+import PreparedActivity from './PreparedActivity';
+import { balancedVerbs, catalogue, categories, eligible, prepareNahw, formLabel, reviewed, roman, title, type Mode, type NahwRow, type Target, type Verb } from './models';
 type Rule = {
     title: string;
     arabic?: string | null;
@@ -24,7 +25,7 @@ type Rule = {
         translation?: string | null;
     }[];
 };
-const cardStyle = { p: { xs: 2, sm: 3 }, borderRadius: 3, mb: 2, textAlign:'center' as const, '& .MuiTypography-root:not([lang=ar]):not(h2)':{fontSize:'var(--grammar-english-size)'}, '& [lang=ar], & [dir=rtl]':{fontSize:'var(--grammar-arabic-size)'}, '& .MuiButton-root':{fontSize:'var(--grammar-english-size)'} };
+const cardStyle = { p: { xs: 2, sm: 3 }, borderRadius: 3, mb: 2, textAlign:'center' as const, '& .MuiTypography-root:not([lang=ar]):not(h2):not(h3)':{fontSize:'var(--grammar-english-size)'}, '& [lang=ar], & [dir=rtl]':{fontSize:'var(--grammar-arabic-size)'}, '& .MuiButton-root':{fontSize:'var(--grammar-english-size)'} };
 const arabicStyle = { fontFamily: 'var(--font-serif)', fontSize: 'var(--grammar-arabic-size)', lineHeight: 1.9, textAlign: 'center' as const, direction: 'rtl' as const };
 export default function GrammarPage() { return <GrammarProvider><GrammarContent /></GrammarProvider>; }
 function GrammarContent() {
@@ -37,6 +38,7 @@ function GrammarContent() {
     return <Container maxWidth="xl" sx={{ pt: { xs: 3, md: 5 }, pb: 6 }}>
     {activity && <Button startIcon={<ArrowBack />} onClick={() => { setActivity(''); setBranch(null); }}>Back to Grammar</Button>}
     <Box sx={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><Typography component="h1" sx={{ mb: 3, fontFamily: 'var(--font-heading)', fontSize: { xs: 32, md: 42 }, fontWeight: 600 }}>Grammar</Typography><GrammarSettings /></Box>
+    {activity&&!['rules','ten','weak'].includes(activity)&&<AutoNextControl/>}
     {!activity ? <Box sx={{ display: 'grid', gap: 4 }}>{(['nahw', 'sarf'] as const).map(section => <Box component="section" key={section} aria-label={section === 'nahw' ? 'Na\u1e25w' : '\u1e62arf'}>
       <Typography component="h2" sx={{ mb: 2, fontFamily: 'var(--font-heading)', fontSize: 28 }}>{section === 'nahw' ? 'Na\u1e25w' : '\u1e62arf'}</Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>{catalogue[section].map(item => <Button key={item.id} variant="outlined" sx={{ minHeight: 64, fontSize: 16, textTransform: 'none', borderRadius: '12px', color: 'var(--awm-bark)', borderColor: 'color-mix(in srgb, var(--awm-forest) 25%, transparent)' }} onClick={() => { setBranch(section); setActivity(item.id); }}>{item.title}</Button>)}</Box>
@@ -130,7 +132,7 @@ function SarfActivity({ activity, show }: {
     if (activity === 'weak')
         return <><Select size="small" value={weakMode} onChange={e => setWeakMode(e.target.value)} sx={{ mb: 2 }}><MenuItem value="identify">Identify weak type</MenuItem><MenuItem value="recall">Conjugation recall</MenuItem></Select><WeakCards key={weakMode} mode={weakMode}/></>;
     if (activity === 'context' || activity === 'patterns')
-        return <PreparedActivity activity={activity} show={show}/>;
+        return <PreparedActivity activity={activity}/>;
     return <><Select size="small" value={root} onChange={e => setRoot(Number(e.target.value))} sx={{ mb: 2 }}><MenuItem value={0}>All Root Types</MenuItem><MenuItem value={3}>Three-Letter Roots</MenuItem><MenuItem value={4}>Four-Letter Roots</MenuItem></Select><Typography sx={{ mb: 2 }}>Unlevelled Hans Wehr practice</Typography><VerbSession key={root} pool={(curriculum.hans as Verb[]).filter(v => !root || (v.quadriliteral_pattern ? 4 : 3) === root)} show={show}/></>;
 }
 function VerbSession({ pool, show }: {
@@ -145,60 +147,23 @@ function VerbSession({ pool, show }: {
     const choices = verb.quadriliteral_pattern ? Object.entries(curriculum.quadriliteral).map(([id, f]) => ({ id, label: f.label })) : roman.map((r, i) => ({ id: String(i + 1), label: `Form ${r}` }));
     return <Paper sx={cardStyle} variant="outlined"><Typography>{index + 1} / {cards.length}</Typography><Arabic>{verb.arabic}</Arabic><English>{verb.meaning}</English><Arabic>{verb.root}</Arabic><Typography>Which form or pattern is this?</Typography><Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 1, my: 2 }}>{choices.map(c => <Button key={c.id} variant="outlined" disabled={correct} sx={{ minHeight: 48 }} onClick={() => { const ok = c.id === (verb.quadriliteral_pattern ?? String(verb.form)); setCorrect(ok); setFeedback(ok ? 'Correct \u2713' : 'Try again. Compare the stem with its root.'); }}>{c.label}</Button>)}</Box><Typography role="status">{feedback}</Typography><Button startIcon={<InfoOutlined />} onClick={() => { const info = verb.form ? curriculum.forms[verb.form - 1] : (curriculum.quadriliteral as Record<string, Omit<typeof curriculum.forms[number], "example">>)[verb.quadriliteral_pattern!]; show({ title: formLabel(verb), sections: [{ heading: 'Pattern', arabic: info.past }, { heading: 'Present', arabic: info.present }, { heading: 'Verbal noun', arabic: info.masdar }, { heading: 'Meaning tendency', text: info.tendency }, ...(verb.form_i ? [{ heading: 'Attested Form I reading', arabic: [verb.form_i.past, verb.form_i.present].filter(Boolean).join(' / '), text: verb.form_i.masdars.join(' / ') }] : [])] }); }}>Form information</Button><Typography variant="caption" sx={{ display: "block" }}>{verb.source}</Typography><Button fullWidth variant="contained" sx={{ mt: 2, minHeight: 48 }} disabled={!correct} onClick={() => { setIndex(i => i + 1); setCorrect(false); setFeedback(''); }}>Next Verb</Button></Paper>;
 }
-function WeakCards({ mode }: {
-    mode: string;
-}) {
-    const text=useGrammarDisplay();
-    const [cards, setCards] = useState(() => { const remaining = [...curriculum.weakCards].sort(() => Math.random() - .5), counts = new Map<string, number>(), result: typeof remaining = []; while (remaining.length && result.length < 10) {
-        remaining.sort((a, b) => (counts.get(a.type) ?? 0) - (counts.get(b.type) ?? 0));
-        const c = remaining.shift()!;
-        result.push(c);
-        counts.set(c.type, (counts.get(c.type) ?? 0) + 1);
-    } return result; }), [index, setIndex] = useState(0), [revealed, setRevealed] = useState(false), [feedback, setFeedback] = useState(''), [reinforcements, setReinforcements] = useState(0);
-    useCorrectAutoAdvance(mode === 'identify' && revealed, () => { setIndex(i => i + 1); setRevealed(false); setFeedback(''); });
-    const card = cards[index];
-    if (!card)
-        return <Alert severity="success">Weak Verbs activity completed.</Alert>;
-    const types = [...new Map(curriculum.weakCards.map(c => [c.type, c])).values()];
-    function advance(again: boolean) { if (again && reinforcements < 5) {
-        const comparable = curriculum.weakCards.find(c => c.type === card.type && c.root !== card.root && c.tense === card.tense && c.person === card.person) ?? card;
-        setCards(old => { const copy = [...old]; copy.splice(Math.min(index + 4, copy.length), 0, comparable); return copy; });
-        setReinforcements(n => n + 1);
-    } setIndex(i => i + 1); setRevealed(false); setFeedback(''); }
-    return <Paper variant="outlined" sx={cardStyle}><Typography>{index + 1} / {cards.length}</Typography><Arabic>{card.base}</Arabic><English>{card.meaning}</English><Arabic>{card.root}</Arabic><Instruction>{mode === 'identify' ? 'Which weak verb type is this?' : 'Recall the requested conjugation.'}</Instruction>{mode === 'identify' ? <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent:'center',mt:4,mb:2 }}>{types.map(t => <Button disabled={revealed || !!feedback} key={t.type} variant="outlined" sx={{ minHeight: 48 }} onClick={() => { const ok = t.type === card.type; setRevealed(ok); setFeedback(ok ? 'Correct \u2713' : `Incorrect. Correct answer: ${card.typeLabel}. ${card.description}`); }}>{t.typeLabel} · <Box component="span" lang="ar" sx={{fontFamily:"var(--font-serif)",fontSize:"var(--grammar-arabic-size)",ml:1}}>{text(t.typeArabic)}</Box></Button>)}</Box> : <><Typography>{card.tense}</Typography><Arabic>{card.pronoun}</Arabic>{!revealed && <Button fullWidth variant="contained" onClick={() => setRevealed(true)}>Reveal answer</Button>}</>}<>{feedback && <Feedback correct={revealed} onContinue={()=>advance(false)}>{text(revealed ? card.description : feedback)}{!revealed && <Arabic>{card.typeArabic}</Arabic>}</Feedback>}</>{revealed && <><Typography>{card.typeLabel} · {card.description}</Typography>{mode !== 'identify' && <><Arabic>{card.answer}</Arabic><Typography>{text(card.explanation)}</Typography></>}{mode !== 'identify' && <Box sx={{ display: 'flex', gap: 1, mt: 3 }}><Button fullWidth variant="outlined" onClick={() => advance(true)}>Again</Button><Button fullWidth variant="contained" onClick={() => advance(false)}>Got it</Button></Box>}</>}</Paper>;
-}
-function PreparedActivity({ activity, show }: {
-    activity: string;
-    show: (r: Rule) => void;
-}) {
-    const text=useGrammarDisplay();
-    const [rows, setRows] = useState<PreparedRow[]>([]), [busy, setBusy] = useState(true), [error, setError] = useState(''), [offset, setOffset] = useState(0), [index, setIndex] = useState(0), [targetIndex, setTargetIndex] = useState(0), [correct, setCorrect] = useState(false), [feedback, setFeedback] = useState(''), [seed] = useState(() => crypto.randomUUID());
-    const load = useCallback(() => { setBusy(true); setError(''); loadGrammar(activity === 'context' ? 'sarf' : 'word_pattern', 'sentence_role', seed, offset).then(data => { setRows(data.prepared.filter(r => sourceValid(r) && typeof r.payload?.arabic === 'string' && typeof r.payload.english === 'string' && Array.isArray(r.payload.targets) && r.payload.targets.length > 0 && r.payload.targets.length <= 3 && r.payload.targets.every(t => Number.isInteger(t.token_index) && t.token_index >= 0 && typeof t.surface === 'string' && (activity === 'context' ? validVerb(t.verb) : Number.isInteger(t.pattern_index) && !!curriculum.patterns[t.pattern_index!] && curriculum.patterns[t.pattern_index!].dictionaryEntryId === t.dictionary_entry_id)))); setIndex(0); setTargetIndex(0); setCorrect(false); }).catch(() => setError('Unable to load sentences. Please try again.')).finally(() => setBusy(false)); }, [activity, seed, offset]);
-    useEffect(() => { const timer = window.setTimeout(load, 0); return () => window.clearTimeout(timer); }, [load]);
-    useCorrectAutoAdvance(correct, () => {
-      const current = rows[index];
-      if (!current) return;
-      if (targetIndex + 1 < current.payload.targets.length) setTargetIndex(i => i + 1);
-      else { setTargetIndex(0); setIndex(i => i + 1); }
-      setCorrect(false); setFeedback('');
-    });
-    if (busy)
-        return <LinearProgress />;
-    if (error)
-        return <Alert action={<Button onClick={load}>Try again</Button>}>{error}</Alert>;
-    const row = rows[index];
-    if (!row)
-        return <Alert severity="info" action={<Button onClick={() => setOffset(n => n + 5)}>More sentences</Button>}>No more reviewed sentences in this batch.</Alert>;
-    const target = row.payload.targets[targetIndex], pattern = curriculum.patterns[target.pattern_index ?? 0];
-    return <Paper data-word-pattern-workspace={activity === 'patterns' ? true : undefined} sx={{...cardStyle,textAlign:'center',...(activity === 'patterns' ? {resize:{xs:'none',md:'both'},overflow:'auto',width:{xs:'100%',md:'80%'},mx:'auto',minWidth:{md:500},minHeight:420,maxWidth:'100%',maxHeight:{md:'85dvh'}} : {})}} variant="outlined"><Box dir="rtl" sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 1 }}>{row.payload.arabic.split(/\s+/).map((word, i) => <Typography key={i} lang="ar" dir="rtl" sx={{ ...arabicStyle, bgcolor: i === target.token_index ? 'color-mix(in srgb,var(--awm-gold) 20%,transparent)' : undefined, borderRadius: 1 }}>{text(word)}</Typography>)}</Box><English>{row.payload.english}</English><Typography variant="caption">{row.source_label}</Typography>{activity === 'context' ? <Arabic>{target.verb?.root ?? ''}</Arabic> : null}<Instruction>{activity === 'context' ? 'Which verb form is highlighted?' : 'Which word pattern is highlighted?'}</Instruction><Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 1 }}>{(activity === 'context' ? (target.verb?.quadriliteral_pattern ? Object.entries(curriculum.quadriliteral).map(([id, p]) => ({ id, label: p.label })) : roman.map((r, i) => ({ id: String(i + 1), label: `Form ${r}` }))) : curriculum.patterns.map((p, i) => ({ id: String(i), label: p.pattern }))).map(choice => <Button key={choice.id} variant="outlined" disabled={!!feedback} sx={{ minHeight: 52, fontFamily:activity === 'patterns' ? 'var(--font-serif)' : undefined, '&&':{fontSize:activity === 'patterns' ? 'var(--grammar-arabic-size)' : 'var(--grammar-english-size)'} }} onClick={() => { const answer = activity === 'context' ? (target.verb!.quadriliteral_pattern ?? String(target.verb!.form)) : String(target.pattern_index); const ok = choice.id === answer; setCorrect(ok); setFeedback(ok ? 'Correct \u2713' : `Incorrect. Correct answer: ${activity === 'context' ? formLabel(target.verb!) : pattern.pattern}.`); }}>{text(choice.label)}</Button>)}</Box><>{feedback && <Feedback correct={correct}>{text(correct ? (activity === 'patterns' ? pattern.tendency : target.meaning ?? '') : feedback)}</Feedback>}</>{activity === 'patterns' && <Button startIcon={<InfoOutlined />} onClick={() => { if (activity === 'patterns')
-        show({ title: 'Word pattern', sections: [{ heading: 'Pattern', arabic: pattern.pattern }, { heading: 'Meaning tendency', text: pattern.tendency }, { heading: 'Attested example', arabic: pattern.example, translation: pattern.meaning }] });
-    else {
-        const v = target.verb!, f = v.form ? curriculum.forms[v.form - 1] : (curriculum.quadriliteral as Record<string, Omit<typeof curriculum.forms[number], "example">>)[v.quadriliteral_pattern!];
-        show({ title: formLabel(v), sections: [{ heading: 'Pattern', arabic: f.past }, { heading: 'Present', arabic: f.present }, { heading: 'Verbal noun', arabic: f.masdar }, { heading: 'Meaning tendency', text: f.tendency }, { heading: 'Meaning in context', text: target.meaning }] });
-    } }}>Information</Button>}<Button fullWidth variant="contained" disabled={!feedback} onClick={() => { if (targetIndex + 1 < row.payload.targets.length)
-        setTargetIndex(i => i + 1);
-    else {
-        setTargetIndex(0);
-        setIndex(i => i + 1);
-    } setCorrect(false); setFeedback(''); }}>{correct ? 'Next' : 'Continue'}</Button></Paper>;
+function WeakCards({ mode }: {mode:string}) {
+ const text=useGrammarDisplay()
+ const [cards,setCards]=useState(()=>{const remaining=[...curriculum.weakCards].sort(()=>Math.random()-.5),counts=new Map<string,number>(),result:typeof remaining=[];while(remaining.length&&result.length<10){remaining.sort((a,b)=>(counts.get(a.type)??0)-(counts.get(b.type)??0));const card=remaining.shift()!;result.push(card);counts.set(card.type,(counts.get(card.type)??0)+1)}return result})
+ const [index,setIndex]=useState(0),[revealed,setRevealed]=useState(false),[result,setResult]=useState<boolean|null>(null),[reinforcements,setReinforcements]=useState(0)
+ const card=cards[index],types=[...new Map(curriculum.weakCards.map(c=>[c.type,c])).values()]
+ function advance(again=false){
+  if(again&&reinforcements<5){const comparable=curriculum.weakCards.find(c=>c.type===card.type&&c.root!==card.root&&c.tense===card.tense&&c.person===card.person)??card;setCards(old=>{const copy=[...old];copy.splice(Math.min(index+4,copy.length),0,comparable);return copy});setReinforcements(n=>n+1)}
+  setIndex(i=>i+1);setRevealed(false);setResult(null)
+ }
+ const explanation=card?.description.split(/(?<=[.!?])\s+/)[0]??''
+ useCorrectAutoAdvance(mode==='identify'&&result===true,()=>advance(),explanation)
+ if(!card)return <Alert severity="success">Weak Verbs activity completed.</Alert>
+ return <>{mode==='identify'&&<AutoNextControl/>}<Paper variant="outlined" sx={cardStyle}>
+  <Typography>{index+1} / {cards.length}</Typography><Arabic>{card.base}</Arabic><English>{card.meaning}</English><Arabic>{card.root}</Arabic>
+  <Instruction>{mode==='identify'?'Which weak verb type is this?':'Recall the requested conjugation.'}</Instruction>
+  {mode==='identify'?<AnswerArea result={result===null?undefined:{correct:result,answer:<>{card.typeLabel} · <span lang="ar" dir="rtl">{text(card.typeArabic)}</span></>,explanation:text(explanation),next:()=>advance()}}>
+   <Box data-grammar-answers sx={{display:'flex',flexWrap:'wrap',gap:1,justifyContent:'center'}}>{types.map(t=><Button key={t.type} variant="outlined" disabled={result!==null} sx={{minHeight:48}} onClick={()=>setResult(t.type===card.type)}>{t.typeLabel} · <Box component="span" lang="ar" sx={{fontFamily:'var(--font-serif)',fontSize:'var(--grammar-arabic-size)',ml:1}}>{text(t.typeArabic)}</Box></Button>)}</Box>
+  </AnswerArea>:<><Typography>{card.tense}</Typography><Arabic>{card.pronoun}</Arabic>{!revealed?<Button fullWidth variant="contained" onClick={()=>setRevealed(true)}>Reveal answer</Button>:<><Typography>{card.typeLabel} · {text(card.description)}</Typography><Arabic>{card.answer}</Arabic><Typography>{text(card.explanation)}</Typography><Box sx={{display:'flex',gap:1,mt:3}}><Button fullWidth variant="outlined" onClick={()=>advance(true)}>Again</Button><Button fullWidth variant="contained" onClick={()=>advance()}>Got it</Button></Box></>}</>}
+ </Paper></>
 }

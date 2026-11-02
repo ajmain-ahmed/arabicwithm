@@ -14,7 +14,7 @@ import { MAX_TRANSCRIPT_BYTES, normaliseManualTranscriptJson, serialiseTranscrip
 import {transcriptDatabaseError} from '@/app/lib/transcriptDatabaseError'
 import { MissingTranscriptDuration, parseVideoDuration } from '@/app/lib/transcriptTiming'
 
-export interface TranscriptRow {id:string;youtube_id:string;canonical_url:string;title:string;channel:string|null;thumbnail:string;duration_seconds:number|null;provider:string;status:string;translation_status:string;searchable:boolean;explore_published?:boolean;created_at:string;updated_at:string;error_code:string|null;website_generation?:boolean;group_id?:string|null;draft_id?:string;draft_version?:string;source_origin?:string;has_saved_transcript?:boolean;can_edit?:boolean}
+export interface TranscriptRow {id:string;youtube_id:string;canonical_url:string;title:string;channel:string|null;thumbnail:string;duration_seconds:number|null;provider:string;status:string;translation_status:string;searchable:boolean;explore_published?:boolean;created_at:string;updated_at:string;error_code:string|null;website_generation?:boolean;group_id?:string|null;draft_id?:string;draft_version?:string;source_origin?:string;has_saved_transcript?:boolean;can_edit?:boolean;enrichment_retry_kind?:'legacy'|'terminal'|null}
 export interface TranscriptSegment {id:number;position:number;original_text:string;english_text:string|null;start_seconds:number;end_seconds:number|null;start_ms?:number;end_ms?:number|null;canonical_paragraph?:Json|null}
 export interface TranscriptHit {segment_id:number;transcript_id:string;youtube_id:string;title:string;channel:string|null;thumbnail:string;start_seconds:number;end_seconds:number|null;original_text:string;english_text:string|null;matched_surfaces:string[];match_type:string;match_rank:number;previous_text:string|null;next_text:string|null}
 const columns='id,youtube_id,canonical_url,title,channel,thumbnail,duration_seconds,provider,status,translation_status,searchable,explore_published,created_at,updated_at,error_code'
@@ -358,4 +358,17 @@ export async function previewAdminTranscript(input:{url:string;title:string;chan
  const short=previewClipWindow(segments)
  if(!short.length)throw new Error('Preview unavailable: no continuous Arabic clip with valid timings. Check gaps and segment lengths (maximum 60 seconds).')
  return {segments,clip:{video:{id:crypto.randomUUID(),youtube_id:youtubeId,title:value.title,channel:value.channel},clip_start_ms:short[0].start_seconds*1000,clip_end_ms:Math.max(...short.map(line=>line.end_seconds))*1000,segments:short}}
+}
+
+/** Explicit paid enrichment recovery; never restarts acquisition. */
+export async function retryAdminGeminiEnrichment(id:string,updatedAt:string,acknowledgeCost:boolean):Promise<{ok:true}|{ok:false;error:string}>{
+ try{
+  const actor=await adminIdentity()
+  z.string().uuid().parse(id);z.string().datetime({offset:true}).parse(updatedAt)
+  if(acknowledgeCost!==true)throw new Error('Confirm the possible new Gemini enrichment charge before retrying.')
+  const {error}=await serviceClient.rpc('admin_retry_gemini_enrichment',{p_actor:actor,p_id:id,p_version:updatedAt,p_acknowledge_cost:true})
+  if(error)throw new Error(/transcript_conflict/.test(error.message)?'This transcript changed. Refresh before retrying.':/enrichment_retry_not_allowed|transcript_busy/.test(error.message)?'Enrichment cannot be retried in its current state. Refresh to check its status.':'Unable to queue enrichment. Refresh before trying again.')
+  revalidatePath('/admin/transcripts')
+  return {ok:true}
+ }catch(error){return {ok:false,error:error instanceof Error?error.message:'Unable to queue enrichment.'}}
 }

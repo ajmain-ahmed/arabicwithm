@@ -9,6 +9,7 @@ import TranscriptGeneration from './TranscriptGeneration'
 import TranscriptDurationField from './TranscriptDurationField'
 import {GroupSelector,GroupBrowser,GroupManager,GroupEditDialog} from './TranscriptGroups'
 import EnrichmentDetails from './EnrichmentDetails'
+import GeminiEnrichmentRetry from './GeminiEnrichmentRetry'
 import TranscriptJsonField from '@/app/(admin)/admin/components/TranscriptJsonField'
 import {isAppImport,isAppImportsGroup,hasDownloadableTranscript,canEditTranscript} from '@/app/lib/appImportTranscripts'
 import {transcriptGenerationStatus,transcriptGenerationPending} from '@/app/lib/transcriptStatus'
@@ -95,7 +96,7 @@ export default function AdminTranscripts(){
     <Typography role={transcriptGenerationPending(row)?'status':undefined} variant="body2">{row.draft_id?'Saved draft - not imported or published':transcriptGenerationStatus(row)}</Typography>
     <Typography variant="body2">Processing: {row.status} | English: {row.translation_status} | {row.searchable?'Search enabled':'Unpublished / search disabled'}</Typography>
     <Typography variant="caption">Created {new Date(row.created_at).toLocaleString('en-GB')} | Updated {new Date(row.updated_at).toLocaleString('en-GB')}</Typography>{row.error_code&&<Alert severity="warning">{transcriptGenerationStatus(row)}</Alert>}
-   </Box><Stack>{row.draft_id?<Button onClick={()=>void openDraft(row)}>Open draft</Button>:row.provider==='manual'&&row.status==='indexing'?<Button disabled={busy} onClick={()=>void resume(row)}>Resume import</Button>:<Button disabled={!canEditTranscript(row)} onClick={()=>start(row)}>Edit / Publish</Button>}{isAppImport(row)&&<Button disabled={downloadBusy||!hasDownloadableTranscript(row)} onClick={()=>void download(row)}>Download JSON</Button>}{row.status==='ready'&&<Button component={Link} href={`/transcripts/${row.id}?from=admin`}>View transcript</Button>}<Button color="error" onClick={()=>{setDeleting(row);setDeleteError('')}}>Delete</Button></Stack>
+   </Box><Stack>{row.draft_id?<Button onClick={()=>void openDraft(row)}>Open draft</Button>:row.provider==='manual'&&row.status==='indexing'?<Button disabled={busy} onClick={()=>void resume(row)}>Resume import</Button>:<Button disabled={!canEditTranscript(row)} onClick={()=>start(row)}>Edit / Publish</Button>}{isAppImport(row)&&<Button disabled={downloadBusy||!hasDownloadableTranscript(row)} onClick={()=>void download(row)}>Download JSON</Button>}{row.status==='ready'&&<Button component={Link} href={`/transcripts/${row.id}?from=admin`}>View transcript</Button>}<GeminiEnrichmentRetry row={row} onQueued={reload}/><Button color="error" onClick={()=>{setDeleting(row);setDeleteError('')}}>Delete</Button></Stack>
   </Stack></CardContent></Card>)}
   <Stack direction="row" spacing={2}><Button disabled={page===0||loading} onClick={()=>setPage(p=>p-1)}>Previous</Button><Typography>Page {page+1} | {total} transcripts</Typography><Button disabled={(page+1)*30>=total||loading} onClick={()=>setPage(p=>p+1)}>Next</Button></Stack>
  </Stack>

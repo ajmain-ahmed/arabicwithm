@@ -1,18 +1,18 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { Alert, Box, Button, FormControlLabel, IconButton, Popover, Switch, Typography } from '@mui/material'
-import { SettingsOutlined } from '@mui/icons-material'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Box, Button, FormControlLabel, IconButton, Popover, Switch, Typography } from '@mui/material'
+import { CheckRounded, CloseRounded, SettingsOutlined } from '@mui/icons-material'
 import { displayArabic } from '@/app/lib/displayArabic'
 import TextSizeControl, { safeTextSize, TEXT_SCALES } from '@/app/components/settings-controls/TextSizeControl'
 
-const defaults = { arabicSize: 2, englishSize: 2, tashkeel: true }
+const defaults = { arabicSize: 2, englishSize: 2, tashkeel: true, autoNext: true }
 type Preferences = typeof defaults
 const Context = createContext<{preferences: Preferences; update: (patch: Partial<Preferences>) => void}>({ preferences: defaults, update: () => {} })
 export function GrammarProvider({ children }: { children: ReactNode }) {
   const [preferences, setPreferences] = useState(defaults)
   useEffect(() => {
-    const frame=requestAnimationFrame(()=>{try { const saved = JSON.parse(localStorage.getItem('awm-grammar-settings') ?? '{}'); setPreferences({ arabicSize: safeTextSize(saved.arabicSize), englishSize: safeTextSize(saved.englishSize), tashkeel: typeof saved.tashkeel === 'boolean' ? saved.tashkeel : true }) } catch {}})
+    const frame=requestAnimationFrame(()=>{try { const saved = JSON.parse(localStorage.getItem('awm-grammar-settings') ?? '{}'); setPreferences({ arabicSize: safeTextSize(saved.arabicSize), englishSize: safeTextSize(saved.englishSize), tashkeel: typeof saved.tashkeel === 'boolean' ? saved.tashkeel : true, autoNext: typeof saved.autoNext === 'boolean' ? saved.autoNext : true }) } catch {}})
     return ()=>cancelAnimationFrame(frame)
   }, [])
   function update(patch: Partial<Preferences>) {
@@ -23,6 +23,15 @@ export function GrammarProvider({ children }: { children: ReactNode }) {
 export function useGrammarDisplay() {
   const { preferences } = useContext(Context)
   return (value: string) => displayArabic(value, preferences.tashkeel)
+}
+export function useGrammarPreferences(){return useContext(Context)}
+export function AutoNextControl(){
+ const {preferences,update}=useGrammarPreferences()
+ return <Box sx={{display:'flex',justifyContent:'center',mb:1}}><FormControlLabel label="Auto Next" control={<Switch size="small" checked={preferences.autoNext} onChange={(_,autoNext)=>update({autoNext})}/>}/></Box>
+}
+export function TashkeelControl(){
+ const {preferences,update}=useGrammarPreferences()
+ return <FormControlLabel label="Show Tashkīl" control={<Switch size="small" checked={preferences.tashkeel} onChange={(_,tashkeel)=>update({tashkeel})}/>}/>
 }
 export function GrammarSettings() {
   const { preferences, update } = useContext(Context)
@@ -41,6 +50,29 @@ export function Arabic({ children }: { children: string }) {
 }
 export function English({ children }: { children: ReactNode }) { const {preferences}=useContext(Context);return <Typography lang="en" data-grammar-english sx={{ fontSize: `var(--grammar-english-size, ${16*TEXT_SCALES[preferences.englishSize]}px)`, textAlign: 'center', mb: 1.5 }}>{children}</Typography> }
 export function Instruction({ children }: { children: ReactNode }) { return <Typography component="h2" sx={{ textAlign: 'center', fontSize: 'calc(var(--grammar-english-size, 16px) * 1.2)', fontWeight: 600, mt: 3, mb: 2 }}>{children}</Typography> }
-export function Feedback({ correct, children, onContinue }: { correct: boolean; children: ReactNode; onContinue?: () => void }) {
-  return <Alert role="status" severity={correct ? 'success' : 'error'} sx={{ mt: 2, textAlign: 'center', '& .MuiAlert-message': { flex: 1 } }}><Typography sx={{fontWeight:600}}>{correct ? 'Correct ✓' : 'Incorrect'}</Typography><Box sx={{ fontSize: 'var(--grammar-english-size, 16px)' }}>{children}</Box>{!correct && onContinue && <Button onClick={onContinue}>Continue</Button>}</Alert>
+export function Feedback({ correct, children, answer, onContinue }: { correct: boolean; children: ReactNode; answer?:ReactNode; onContinue?: () => void }) {
+  const {preferences}=useGrammarPreferences(),ref=useRef<HTMLDivElement>(null)
+  useEffect(()=>{ref.current?.focus({preventScroll:true})},[])
+  const Icon=correct?CheckRounded:CloseRounded
+  return <Box ref={ref} tabIndex={-1} role="status" aria-live="polite" aria-atomic="true" data-grammar-feedback={correct?'correct':'incorrect'} sx={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'100%',gap:1.25,p:2,width:'100%',maxWidth:'46ch',mx:'auto',textAlign:'center',overflowWrap:'anywhere',outline:'none'}}>
+   <Icon aria-hidden sx={{fontSize:64,color:correct?'success.main':'error.main'}}/>
+   <Typography component="h3" sx={{fontWeight:700,fontSize:24}}>{correct?'Correct':'Incorrect'}</Typography>
+   {answer&&<Box sx={{fontWeight:600,fontSize:'var(--grammar-english-size,16px)','& [lang=ar]':{fontFamily:'var(--font-serif)',fontSize:'var(--grammar-arabic-size,32px)',lineHeight:1.7}}}>{!correct&&'Correct answer: '}{answer}</Box>}
+   <Box sx={{maxWidth:'40ch',fontSize:'var(--grammar-english-size,16px)',lineHeight:1.5}}>{children}</Box>
+   {onContinue&&(!correct||!preferences.autoNext)&&<Button variant="contained" onClick={onContinue}>Next</Button>}
+  </Box>
+}
+export type GrammarResult={correct:boolean;answer?:ReactNode;explanation:ReactNode;next:()=>void}
+/** Hidden options keep their grid footprint while leaving the accessibility tree. */
+export function AnswerArea({children,result,minHeight=360}:{children:ReactNode;result?:GrammarResult;minHeight?:number}){
+ const options=useRef<HTMLDivElement>(null),[height,setHeight]=useState(minHeight)
+ useEffect(()=>{
+  if(!options.current||typeof ResizeObserver==='undefined')return
+  const observer=new ResizeObserver(([entry])=>setHeight(Math.max(minHeight,Math.ceil(entry.contentRect.height))))
+  observer.observe(options.current);return()=>observer.disconnect()
+ },[minHeight])
+ return <Box data-grammar-answer-area sx={{display:'grid',height,alignItems:'center',my:2,minWidth:0}}>
+  <Box ref={options} data-grammar-options aria-hidden={!!result} inert={!!result} sx={{gridArea:'1 / 1',visibility:result?'hidden':'visible',pointerEvents:result?'none':undefined,minWidth:0}}>{children}</Box>
+  {result&&<Box sx={{gridArea:'1 / 1',height:'100%',overflowY:'auto',minWidth:0}}><Feedback correct={result.correct} answer={result.answer} onContinue={result.next}>{result.explanation}</Feedback></Box>}
+ </Box>
 }

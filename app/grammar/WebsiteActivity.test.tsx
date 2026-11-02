@@ -15,10 +15,12 @@ beforeEach(()=>{host=document.createElement('div');document.body.append(host);ro
 afterEach(async()=>{await act(async()=>root.unmount());host.remove()})
 async function click(text:string){const b=[...host.querySelectorAll('button')].find(b=>b.textContent===text)!;await act(async()=>b.click())}
 async function type(value:string){const input=host.querySelector('input')!;await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}))})}
-it('shows a correction after an incorrect answer and allows a deliberate retry',async()=>{
+it('shows a correction in the answer area and requires manual progression',async()=>{
  await act(async()=>root.render(<WebsiteActivity activity="conjugation"/>));expect(host.textContent).not.toContain('The sound perfect stem')
  await type('قالت');await click('Check Answer');expect(host.querySelector('[role=status]')!.textContent).toContain('Incorrect');expect(host.querySelector('[role=status]')!.textContent).toContain('كَتَبْتُ')
- await click('Retry')
+ expect([...host.querySelectorAll('button')].some(b=>b.textContent==='Retry')).toBe(false)
+ await click('Next')
+ await act(async()=>root.render(<WebsiteActivity key="new-attempt" activity="conjugation"/>))
  await type('كتبت');await click('Check Answer');expect(host.querySelector('[role=status]')!.textContent).toContain('Correct');expect(host.textContent).toContain('first-person singular')
 })
 it('submits single-word selection immediately and locks the answer while feedback is visible',async()=>{await act(async()=>root.render(<WebsiteActivity activity="roles"/>));const word=host.querySelector<HTMLButtonElement>('[aria-label="Select الطَّالِبُ"]')!;await act(async()=>word.click());expect(word.getAttribute('aria-pressed')).toBe('true');expect(word.disabled).toBe(true);expect(host.querySelector('[role=status]')!.textContent).toContain('Correct');expect([...host.querySelectorAll('button')].some(b=>b.textContent==='Check Answer')).toBe(false)})

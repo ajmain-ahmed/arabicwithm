@@ -16,5 +16,19 @@ describe('metadata question adapter', () => {
     row.payload.facts[0].token_index=1;row.payload.facts[0].english='guessed role';expect(bankQuestions([row],'sentence_role')).toEqual([])
   })
   it('has usable curated fallbacks for all three supported modes', () => {for(const mode of ['word_type','sentence_role','grammatical_case'] as const)expect(curatedQuestions(mode).length).toBeGreaterThan(2)})
+  it('explains case using only the same-token stored role',()=>{
+    const row=source(1,'reason')
+    row.payload.facts.push({token_index:1,mode:'grammatical_case',key:'nominative',english:'Nominative',arabic:'مَرْفُوعٌ'})
+    expect(bankQuestions([row],'grammatical_case')[0].explanation).toBe('The doer of the verb is nominative.')
+    row.payload.facts[0].token_index=0
+    expect(bankQuestions([row],'grammatical_case')[0].explanation).not.toContain('doer')
+    expect(bankQuestions([row],'grammatical_case')[0].answer).toBe('Nominative')
+  })
+  it('gives concise role and word-class reasons without changing choices',()=>{
+    expect(bankQuestions([source(1,'role')],'sentence_role')[0].explanation).toContain('performs the verb')
+    const row=source(1,'word');row.payload.facts=[{token_index:0,mode:'word_type',key:'verb',english:'Verb',arabic:'فِعْلٌ'}]
+    const question=bankQuestions([row],'word_type')[0]
+    expect(question.explanation).toContain('action or state with a tense');expect(question.answer).toBe('Verb');expect(question.choices).toContain('Verb')
+  })
   it('assigns each actual rule once in maintained CEFR configuration', () => {expect(Object.keys(ruleLevels).sort()).toEqual(Object.keys(curriculum.rules).sort());expect(new Set(Object.values(ruleLevels)).size).toBe(6)})
 })

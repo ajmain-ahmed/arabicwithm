@@ -11,7 +11,7 @@ begin
   select id into actor from auth.users where public.account_role(id)='admin' limit 1;
   assert actor is not null;
   select id into strict imports from public.transcript_groups where system_key='app_imports' and name='Imports';
-  assert exists(select 1 from public.transcript_groups where system_key='imported'), 'Prior Imported group removed';
+  assert not exists(select 1 from public.transcript_groups where system_key='imported'), 'Duplicate Imported group remains';
   assert not has_function_privilege('authenticated','public.admin_list_manual_transcripts(uuid,integer,text,uuid,boolean)','execute');
   assert not has_function_privilege('anon','public.admin_list_manual_transcripts(uuid,integer,text,uuid,boolean)','execute');
   insert into auth.users(id) values(owner_id);

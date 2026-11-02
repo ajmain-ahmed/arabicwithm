@@ -352,6 +352,7 @@ export interface Database {
       admin_review_generated_transcript: {Args:{p_actor:string;p_id:string;p_raw:Json;p_title:string;p_searchable:boolean;p_updated_at:string};Returns:string}
       admin_generate_youtube_transcript: { Args:{p_actor:string;p_youtube_id:string};Returns:Json }
       admin_delete_youtube_transcript: { Args:{p_actor:string;p_id:string};Returns:boolean }
+      admin_retry_gemini_enrichment: {Args:{p_actor:string;p_id:string;p_version:string;p_acknowledge_cost:boolean};Returns:undefined}
       admin_list_manual_transcripts: {Args:{p_actor:string;p_page:number;p_search:string;p_group:string|null;p_ungrouped:boolean};Returns:Json}
       admin_manage_transcript_group: {Args:{p_actor:string;p_name:string|null;p_parent:string|null;p_id:string|null;p_delete:boolean};Returns:string}
       admin_manual_enrichment: {Args:{p_actor:string;p_id:string};Returns:Json}

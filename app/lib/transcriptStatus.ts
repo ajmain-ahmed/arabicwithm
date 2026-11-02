@@ -1,5 +1,7 @@
 import type { TranscriptRow } from '@/app/actions/transcripts'
 export function transcriptGenerationStatus(row: TranscriptRow): string {
+  if(row.enrichment_retry_kind==='legacy')return 'The raw transcript is saved. Enrichment needs an Admin retry.'
+  if(row.provider==='gemini'&&row.status==='indexing')return 'Preparing transcript'
   if (row.error_code) return transcriptGenerationError(row.error_code,row.provider)
   if (row.status === 'failed') return 'Generation failed. The transcript has not been published.'
   if (row.status === 'queued') return 'Preparing video'
@@ -18,13 +20,17 @@ export function transcriptGenerationPending(row: TranscriptRow): boolean {
 export function transcriptGenerationError(code: string,provider?:string): string {
   if(provider==='gemini'){
     const messages:Record<string,string>={
-      request_uncertain:'Gemini did not confirm a generation step. Operator reconciliation is required before retrying to avoid duplicate charges.',
+      request_uncertain:'This Gemini import needs to be checked before retrying. The saved transcript is retained.',
       provider_not_configured:'Gemini is not configured on the transcript worker.',
       provider_auth:'Gemini rejected the configured credentials.',
       provider_timeout:'Gemini timed out. Saved work is retained.',
       provider_rate_limit:'Gemini rate limit reached. Saved work is retained.',
       provider_unavailable:'Gemini is temporarily unavailable. Saved work is retained.',
       provider_generation_transient:'Gemini generation temporarily failed. Saved work is retained.',
+      enrichment_generation_failed:'Enrichment ended before completion. The raw transcript is safe. Review the diagnostic before retrying.',
+      enrichment_continuation_required:'Enrichment needs review before a paid continuation. The saved transcript is retained.',
+      enrichment_action_required:'Enrichment needs Admin attention. The saved transcript is retained.',
+      enrichment_batch_mismatch:'The saved enrichment batch no longer matches its source. Review it before retrying.',
       gemini_generation_failed:'Gemini generation failed. Review its diagnostic before retrying.',
       transcript_too_large:'The transcript exceeded the automatic generation output limit.',
       provider_content_blocked:'Gemini could not transcribe this content because of a provider restriction.',

@@ -154,6 +154,12 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     tables.transcript_segments.push({id:1,transcript_id:id,position:0,start_seconds:1.234,end_seconds:6.234,original_text:'مرحبا',english_text:'Hello'})
     return json(res,{})
   }
+  if(url.pathname==='/fixture/gemini-enrichment-legacy'){
+    const row=tables.youtube_transcripts.find(row=>row.error_code==='request_uncertain')
+    row.raw_transcript={lang:'ar',content:[{text:'fixture',english:'Hello',offset:0,duration:1000}]}
+    row.provider_job_id='saved-acquisition';row.enrichment_retry_kind='legacy'
+    return json(res,{id:row.id})
+  }
   if(url.pathname==='/fixture/app-imports'){
     const groupId='77777777-7777-4777-8777-777777777779'
     if(!tables.transcript_groups.some(row=>row.id===groupId)){
@@ -211,7 +217,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
         {tokens:[{arabic:'قَرَأَ'},{arabic:'عَلِيٌّ'},{arabic:'الْكِتَابَ'}],translation:'Ali read the book.',target:2,role:'Direct object',key:'object'},
         {tokens:[{arabic:'الْمُعَلِّمُ'},{arabic:'فِي'},{arabic:'الْمَدْرَسَةِ'}],translation:'The teacher is in the school.',target:0,role:'Topic',key:'topic'},
       ]
-      const rows=examples.map((p,i)=>({id:i+1,sentence_hash:String(i+1).repeat(32),chapter_id:i%2?null:chapterId,paragraph_index:i%2?null:i,segment_id:i%2?44:null,cefr_rank:i+1,payload:{tokens:p.tokens,translation:p.translation,facts:[{token_index:p.target,mode:body.p_mode,key:body.p_mode==='sentence_role'?p.key:body.p_mode==='word_type'?'noun':i===1?'accusative':'nominative',english:body.p_mode==='sentence_role'?p.role:body.p_mode==='word_type'?'Noun':i===1?'Accusative':'Nominative',arabic:body.p_mode==='sentence_role'?'فَاعِلٌ':body.p_mode==='word_type'?'اِسْمٌ':i===1?'مَنْصُوبٌ':'مَرْفُوعٌ'}]}}))
+      const rows=examples.map((p,i)=>({id:i+1,sentence_hash:String(i+1).repeat(32),chapter_id:i%2?null:chapterId,paragraph_index:i%2?null:i,segment_id:i%2?44:null,cefr_rank:i+1,payload:{tokens:p.tokens,translation:p.translation,facts:[{token_index:p.target,mode:'sentence_role',key:p.key,english:p.role,arabic:['فَاعِلٌ','مَفْعُولٌ بِهِ','مُبْتَدَأٌ'][i]},{token_index:p.target,mode:'word_type',key:'noun',english:'Noun',arabic:'اِسْمٌ'},{token_index:p.target,mode:'grammatical_case',key:i===1?'accusative':'nominative',english:i===1?'Accusative':'Nominative',arabic:i===1?'مَنْصُوبٌ':'مَرْفُوعٌ'}]}}))
       return json(res,rows.filter(r=>!(body.p_recent??[]).includes(r.sentence_hash)&&(!body.p_cefr||r.cefr_rank<=body.p_cefr)))
     }
     if(rpc==='prepared_practice_candidates') return json(res,body.p_offset ? [] : body.p_kind==='sarf'?learning.sarf:learning.patterns)
@@ -232,6 +238,15 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       if(previous&&previous.updatedAt!==body.p_version)return json(res,{message:'draft_conflict'},409)
       const updatedAt=new Date().toISOString(),draft={id:body.p_id,actor:body.p_actor,payload:structuredClone(body.p_payload),updatedAt,createdAt:previous?.createdAt??updatedAt}
       formDrafts.set(body.p_id,draft);return json(res,{id:draft.id,updatedAt})
+    }
+    if(rpc==='admin_retry_gemini_enrichment'){
+      if(roleFor(body.p_actor)!=='admin')return json(res,{message:'Forbidden'},403)
+      const row=tables.youtube_transcripts.find(row=>row.id===body.p_id)
+      if(!body.p_acknowledge_cost)return json(res,{message:'cost_acknowledgement_required'},400)
+      if(row.updated_at!==body.p_version)return json(res,{message:'transcript_conflict'},409)
+      if(row.enrichment_retry_kind!=='legacy')return json(res,{message:'enrichment_retry_not_allowed'},400)
+      row.status='indexing';row.error_code=null;row.enrichment_retry_kind=null;row.updated_at=new Date().toISOString()
+      return json(res,null)
     }
     if(rpc==='website_for_you_diagnostics')return json(res,{totalTranscripts:tables.youtube_transcripts.length,adminTranscripts:tables.admin_manual_transcripts.length,publishedTranscripts:0,eligibleTranscripts:0,eligibleSegments:0,uniqueVideos:0,sources:[]})
     if(rpc==='admin_list_manual_transcripts'){
