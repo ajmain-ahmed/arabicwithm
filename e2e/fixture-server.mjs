@@ -154,6 +154,22 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     tables.transcript_segments.push({id:1,transcript_id:id,position:0,start_seconds:1.234,end_seconds:6.234,original_text:'مرحبا',english_text:'Hello'})
     return json(res,{})
   }
+  if(url.pathname==='/fixture/app-imports'){
+    const groupId='77777777-7777-4777-8777-777777777779'
+    if(!tables.transcript_groups.some(row=>row.id===groupId)){
+      tables.transcript_groups.push({id:'77777777-7777-4777-8777-777777777778',name:'Imported',parent_id:null,system_key:'imported'})
+      tables.transcript_groups.push({id:groupId,name:'Imports',parent_id:null,system_key:'app_imports'})
+    }
+    const existing=tables.youtube_transcripts.filter(row=>row.source_origin==='user_import'&&row.status==='ready').length
+    const canonical=[{tokens:[{pos:'interjection',arabic:'\u0645\u064e\u0631\u0652\u062d\u064e\u0628\u064b\u0627',english:'hello',headword:null,entry_type:'word',transliteration:'marhaban'}],timestamp:'00:01',translation:'Hello',paragraph:1}]
+    for(let i=existing+1;i<=existing+(body.count??35);i++){
+      const id=`99999999-9999-4999-8999-${String(i).padStart(12,'0')}`,youtube_id=`IMPT${String(i).padStart(7,'0')}`
+      tables.youtube_transcripts.push({id,youtube_id,canonical_url:`https://www.youtube.com/watch?v=${youtube_id}`,title:`App import ${String(i).padStart(2,'0')}`,channel:'Arabic fixture',thumbnail:`${backendUrl}/storage/v1/object/public/covers/test.webp`,provider:'gemini',source_origin:'user_import',status:'ready',translation_status:'ready',canonical_transcript:canonical,raw_transcript:{lang:'ar',content:[{text:canonical[0].tokens[0].arabic,offset:1000,duration:2000,english:'Hello'}]},duration_seconds:null,searchable:false,explore_published:false,created_at:new Date(Date.parse('2026-11-02T00:00:00Z')+i*1000).toISOString(),updated_at:'2026-11-02T00:00:00Z'})
+      tables.admin_manual_transcripts.push({transcript_id:id,group_id:groupId})
+    }
+    if(!existing){const id='99999999-9999-4999-8999-999999999998';tables.youtube_transcripts.push({id,youtube_id:'IMPTFAIL001',canonical_url:'https://www.youtube.com/watch?v=IMPTFAIL001',title:'Failed app import',provider:'gemini',source_origin:'user_import',status:'failed',error_code:'request_uncertain',canonical_transcript:null,raw_transcript:null,searchable:false,explore_published:false,created_at:'2026-11-01T00:00:00Z',updated_at:'2026-11-01T00:00:00Z'});tables.admin_manual_transcripts.push({transcript_id:id,group_id:groupId})}
+    return json(res,{groupId,canonical})
+  }
   if(url.pathname==='/fixture/earned'){earned.add(body.userId);wordTotals.set(body.userId,body.words??100);return json(res,{})}
   if (url.pathname.startsWith('/auth/v1/admin/users/')) {
     const id=url.pathname.split('/').at(-1)
@@ -217,8 +233,9 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       const updatedAt=new Date().toISOString(),draft={id:body.p_id,actor:body.p_actor,payload:structuredClone(body.p_payload),updatedAt,createdAt:previous?.createdAt??updatedAt}
       formDrafts.set(body.p_id,draft);return json(res,{id:draft.id,updatedAt})
     }
+    if(rpc==='website_for_you_diagnostics')return json(res,{totalTranscripts:tables.youtube_transcripts.length,adminTranscripts:tables.admin_manual_transcripts.length,publishedTranscripts:0,eligibleTranscripts:0,eligibleSegments:0,uniqueVideos:0,sources:[]})
     if(rpc==='admin_list_manual_transcripts'){
-      const eligible=tables.youtube_transcripts.filter(row=>row.provider==='manual'&&row.source_origin==='website_admin_transcript'&&!row.episode_id&&!tables.episodes.some(episode=>episode.youtube_id===row.youtube_id)).map(row=>({...row,group_id:tables.admin_manual_transcripts.find(m=>m.transcript_id===row.id)?.group_id??null}))
+      const eligible=tables.youtube_transcripts.filter(row=>row.source_origin==='user_import'||(row.provider==='manual'&&row.source_origin==='website_admin_transcript'&&!row.episode_id&&!tables.episodes.some(episode=>episode.youtube_id===row.youtube_id))).map(row=>({...row,has_saved_transcript:row.status==='ready'&&Array.isArray(row.canonical_transcript)&&row.canonical_transcript.length>0,can_edit:!row.episode_id,group_id:tables.admin_manual_transcripts.find(m=>m.transcript_id===row.id)?.group_id??null})).sort((a,b)=>String(b.created_at??'').localeCompare(String(a.created_at??''))||b.id.localeCompare(a.id))
       const filtered=eligible.filter(row=>(!body.p_ungrouped||!row.group_id)&&(!body.p_group||body.p_group===row.group_id)&&(!body.p_search||row.title.toLowerCase().includes(body.p_search.toLowerCase())))
       return json(res,{rows:filtered.slice(body.p_page*30,body.p_page*30+30),total:filtered.length,ungrouped:eligible.filter(row=>!row.group_id).length,groups:tables.transcript_groups.map(group=>({...group,direct_count:eligible.filter(row=>row.group_id===group.id).length,transcript_count:eligible.filter(row=>row.group_id===group.id).length}))})
     }

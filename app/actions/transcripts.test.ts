@@ -225,3 +225,51 @@ it('previews unsaved data without any import, publication or cache mutation',asy
  expect(result.clip.video.youtube_id).toBe('abcdefghij0');expect(result.clip.clip_start_ms).toBe(10000);expect(result.segments[0].tokens[0].english).toBe('book')
  expect(mocks.rpc).not.toHaveBeenCalled();expect(mocks.revalidate).not.toHaveBeenCalled()
 })
+
+
+describe('canonical app imports in normal Admin management',()=>{
+ const id='99999999-9999-4999-8999-999999999991',group='99999999-9999-4999-8999-999999999990',version='2026-11-02T00:00:00Z'
+ const canonical=[{tokens:[{pos:'interjection',arabic:'\u0645\u0631\u062d\u0628\u0627',english:'hello',headword:null,entry_type:'word',transliteration:'marhaban'}],timestamp:'00:01',translation:'Hello',paragraph:1}]
+ const saved={id,title:'App import',channel:'Arabic',youtube_id:'Dgj9fQYbCZY',status:'ready',source_origin:'user_import',provider:'gemini',canonical_transcript:canonical,raw_transcript:{lang:'ar',content:[{text:'\u0645\u0631\u062d\u0628\u0627',offset:1000,duration:2000,english:'Hello'}]},updated_at:version,duration_seconds:null,searchable:false,explore_published:false}
+ function useSaved(row:Record<string,unknown>=saved,currentVersion=version){
+  const query={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),single:vi.fn().mockResolvedValue({data:row,error:null}),maybeSingle:vi.fn().mockResolvedValueOnce({data:row,error:null}).mockResolvedValueOnce({data:{id,updated_at:currentVersion},error:null})}
+  mocks.from.mockImplementation(table=>{if(table==='youtube_transcripts')return query;if(table==='admin_manual_transcripts')return {select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:{group_id:group},error:null})};throw new Error('App canonical export must not reconstruct segment pages')})
+  return query
+ }
+ it('downloads the exact saved AWM array through the existing action without RPC/generation',async()=>{
+  const query=useSaved();const result=await downloadAdminTranscriptJson(id)
+  expect(JSON.parse(result.json)).toEqual(canonical)
+  expect(result).toMatchObject({filename:'App_import_transcript.json',youtubeId:saved.youtube_id,groupId:group,searchable:false,explorePublished:false})
+  expect(query.select.mock.calls.flat().join(' ')).not.toMatch(/created_by|user_id/)
+  expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+ it.each(['queued','processing','indexing','failed'])('does not export unfinished %s imports even if a partial array exists',async status=>{
+  useSaved({...saved,status});await expect(downloadAdminTranscriptJson(id)).rejects.toThrow('completed saved transcript')
+  expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+ it.each([null,[]])('does not export missing canonical JSON: %s',async canonical_transcript=>{
+  useSaved({...saved,canonical_transcript});await expect(downloadAdminTranscriptJson(id)).rejects.toThrow('completed saved transcript')
+ })
+ it('rejects a concurrent edit rather than downloading stale canonical data',async()=>{
+  useSaved(saved,'2026-11-02T01:00:00Z');await expect(downloadAdminTranscriptJson(id)).rejects.toThrow('changed while loading')
+ })
+ it('previews unchanged app JSON using its saved exact timings without fetching a duration',async()=>{
+  useSaved();const result=await previewAdminTranscript({id,updatedAt:version,url:saved.youtube_id,title:saved.title,channel:saved.channel,json:JSON.stringify(canonical),duration:'',durationFormat:'clock'})
+  expect(result.clip.video.youtube_id).toBe(saved.youtube_id)
+  expect(result.clip.clip_start_ms).toBe(1000);expect(result.clip.clip_end_ms).toBe(3000)
+  expect(mocks.duration).not.toHaveBeenCalled();expect(mocks.rpc).not.toHaveBeenCalled()
+ })
+ it('denies app preview and download to ordinary users before any database read',async()=>{
+  mocks.access.mockResolvedValue({admin:false,userId:'other'});mocks.guard.mockRejectedValue(new Error('Forbidden'))
+  await expect(downloadAdminTranscriptJson(id)).rejects.toThrow('Forbidden')
+  await expect(previewAdminTranscript({id,updatedAt:version,url:saved.youtube_id,title:saved.title,channel:saved.channel,json:JSON.stringify(canonical),duration:'',durationFormat:'clock'})).rejects.toThrow('Forbidden')
+  expect(mocks.from).not.toHaveBeenCalled()
+ })
+ it('passes the actual group and page to the established Admin RPC',async()=>{
+  mocks.rpc.mockResolvedValueOnce({data:{rows:[{...saved,group_id:group,has_saved_transcript:true}],total:35,groups:[{id:group,name:'Imports',system_key:'app_imports'}],ungrouped:0},error:null}).mockResolvedValueOnce({data:{rows:[],total:0,count:0},error:null})
+  const result=await listAdminTranscripts(1,'',group)
+  expect(result.total).toBe(35);expect(result.rows[0].id).toBe(id)
+  expect(mocks.rpc).toHaveBeenCalledWith('admin_list_manual_transcripts',expect.objectContaining({p_page:1,p_group:group}))
+  expect(result.groups).toContainEqual(expect.objectContaining({id:group,system_key:'app_imports'}))
+ })
+})

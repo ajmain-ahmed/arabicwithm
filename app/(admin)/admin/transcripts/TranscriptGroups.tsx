@@ -1,12 +1,13 @@
 'use client'
 import {useRef,useState,type ReactNode} from 'react'
 import {Alert,Accordion,AccordionSummary,AccordionDetails,Box,Button,Dialog,DialogActions,DialogContent,DialogTitle,Stack,TextField,Typography} from '@mui/material'
+import {isAppImportsGroup} from '@/app/lib/appImportTranscripts'
 import {manageAdminTranscriptGroup,type TranscriptGroup} from '@/app/actions/transcripts'
 
 export function GroupSelector({groups,value,onChange,disabled=false,label='Group (optional)',all=false}:{groups:TranscriptGroup[];value:string;onChange:(value:string)=>void;disabled?:boolean;label?:string;all?:boolean}){
  return <TextField select fullWidth label={label} value={value} onChange={event=>onChange(event.target.value)} disabled={disabled} slotProps={{inputLabel:{shrink:true},input:{notched:true},select:{native:true}}} sx={{minWidth:0,'& select':{textOverflow:'ellipsis',overflow:'hidden',whiteSpace:'nowrap'}}}>
   {all&&<option value="">All groups</option>}<option value={all?'ungrouped':''}>Ungrouped</option>
-  {groups.map(group=><option key={group.id} value={group.id}>{group.name}</option>)}
+  {groups.filter(group=>all||group.id===value||!isAppImportsGroup(group)).map(group=><option key={group.id} value={group.id}>{group.name}</option>)}
  </TextField>
 }
 
@@ -14,7 +15,7 @@ export function GroupBrowser({groups,ungrouped,filter,onFilter,results,onAdd,onE
  const [collapsed,setCollapsed]=useState<string|null>(null)
  return <Box>{[{id:'ungrouped',name:'Ungrouped',transcript_count:ungrouped},...groups].map(group=><Accordion key={group.id} expanded={filter===group.id&&collapsed!==group.id} onChange={(_,expanded)=>{setCollapsed(expanded?null:group.id);if(expanded)onFilter(group.id)}}>
   <AccordionSummary expandIcon={<span aria-hidden>⌄</span>}><Typography dir="auto" sx={{minWidth:0,overflowWrap:'anywhere'}}>{group.name} <Typography component="span" color="text.secondary">({group.transcript_count})</Typography></Typography></AccordionSummary>
-  <AccordionDetails><Stack spacing={2}>{filter===group.id&&results}<Stack direction={{xs:'column',sm:'row'}} spacing={1} sx={{alignSelf:{xs:'stretch',sm:'flex-start'}}}><Button variant="outlined" onClick={()=>onAdd(group.id==='ungrouped'?null:group.id)}>Add Transcript</Button>{group.id!=='ungrouped'&&group.id!=='drafts'&&<Button variant="outlined" onClick={()=>{const selected=groups.find(item=>item.id===group.id);if(selected)onEdit(selected)}}>Edit Group</Button>}</Stack></Stack></AccordionDetails>
+  <AccordionDetails><Stack spacing={2}>{filter===group.id&&results}<Stack direction={{xs:'column',sm:'row'}} spacing={1} sx={{alignSelf:{xs:'stretch',sm:'flex-start'}}}>{isAppImportsGroup(group)?<Typography variant="body2" color="text.secondary">App imports are added automatically.</Typography>:<Button variant="outlined" onClick={()=>onAdd(group.id==='ungrouped'?null:group.id)}>Add Transcript</Button>}{group.id!=='ungrouped'&&group.id!=='drafts'&&!isAppImportsGroup(group)&&<Button variant="outlined" onClick={()=>{const selected=groups.find(item=>item.id===group.id);if(selected)onEdit(selected)}}>Edit Group</Button>}</Stack></Stack></AccordionDetails>
  </Accordion>)}</Box>
 }
 
@@ -50,7 +51,7 @@ export function GroupManager({open,onClose,groups,onSaved}:{open:boolean;onClose
   {error&&<Alert severity="error">{error}</Alert>}
   <TextField label="Group name" value={name} onChange={event=>setName(event.target.value)} disabled={busy} slotProps={{htmlInput:{maxLength:150}}}/>
   <Stack direction="row" spacing={1}><Button variant="contained" disabled={busy||!name.trim()} onClick={()=>void save()}>{editing?'Save name':'Create group'}</Button>{editing&&<Button disabled={busy} onClick={()=>{setEditing('');setName('')}}>New group</Button>}</Stack>
-  {groups.map(group=><Stack key={group.id} direction="row" spacing={1} sx={{alignItems:'center',minWidth:0}}><Typography dir="auto" sx={{flex:1}}>{group.name} ({group.transcript_count})</Typography><Button disabled={busy} onClick={()=>{setEditing(group.id);setName(group.name);setError('')}}>Rename</Button><Button color="error" disabled={busy||group.transcript_count>0||groups.some(child=>child.parent_id===group.id)} onClick={()=>void save(true,group.id)}>Delete empty group</Button></Stack>)}
+  {groups.map(group=><Stack key={group.id} direction="row" spacing={1} sx={{alignItems:'center',minWidth:0}}><Typography dir="auto" sx={{flex:1}}>{group.name} ({group.transcript_count})</Typography><Button disabled={busy||isAppImportsGroup(group)} onClick={()=>{setEditing(group.id);setName(group.name);setError('')}}>Rename</Button><Button color="error" disabled={busy||isAppImportsGroup(group)||group.transcript_count>0||groups.some(child=>child.parent_id===group.id)} onClick={()=>void save(true,group.id)}>Delete empty group</Button></Stack>)}
   {!groups.length&&<Typography>No groups yet. Create a group to get started.</Typography>}
  </Stack></DialogContent><DialogActions><Button disabled={busy} onClick={onClose}>Done</Button></DialogActions></Dialog>
 }

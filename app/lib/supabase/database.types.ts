@@ -17,7 +17,7 @@ export interface Database {
     Tables: {
       featured_show_config: Table<{show_id:string;storage_path:string;position_x:number;position_y:number;updated_at:string}>
       admin_manual_transcripts: Table<{transcript_id:string;group_id:string|null;created_at:string}>
-      youtube_transcripts: Table<import('@/app/actions/transcripts').TranscriptRow & {raw_transcript:Json|null}>
+      youtube_transcripts: Table<import('@/app/actions/transcripts').TranscriptRow & {raw_transcript:Json|null;canonical_transcript:Json|null}>
       transcript_segments: Table<import('@/app/actions/transcripts').TranscriptSegment & {transcript_id:string}>
       account_roles: Table<{ user_id: string; role: 'user' | 'editor' | 'admin'; updated_at: string }>
       access_change_audit: Table<import('@/app/lib/reviews').AccessChange>

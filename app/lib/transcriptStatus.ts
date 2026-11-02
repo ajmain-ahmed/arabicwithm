@@ -1,6 +1,6 @@
 import type { TranscriptRow } from '@/app/actions/transcripts'
 export function transcriptGenerationStatus(row: TranscriptRow): string {
-  if (row.error_code) return transcriptGenerationError(row.error_code)
+  if (row.error_code) return transcriptGenerationError(row.error_code,row.provider)
   if (row.status === 'failed') return 'Generation failed. The transcript has not been published.'
   if (row.status === 'queued') return 'Preparing video'
   if (row.status === 'processing') return 'Transcribing Arabic'
@@ -15,7 +15,22 @@ export function transcriptGenerationPending(row: TranscriptRow): boolean {
   return ['queued', 'processing', 'indexing'].includes(row.status)
     || Boolean(row.website_generation && ['queued', 'processing'].includes(row.translation_status))
 }
-export function transcriptGenerationError(code: string): string {
+export function transcriptGenerationError(code: string,provider?:string): string {
+  if(provider==='gemini'){
+    const messages:Record<string,string>={
+      request_uncertain:'Gemini did not confirm a generation step. Operator reconciliation is required before retrying to avoid duplicate charges.',
+      provider_not_configured:'Gemini is not configured on the transcript worker.',
+      provider_auth:'Gemini rejected the configured credentials.',
+      provider_timeout:'Gemini timed out. Saved work is retained.',
+      provider_rate_limit:'Gemini rate limit reached. Saved work is retained.',
+      provider_unavailable:'Gemini is temporarily unavailable. Saved work is retained.',
+      provider_generation_transient:'Gemini generation temporarily failed. Saved work is retained.',
+      gemini_generation_failed:'Gemini generation failed. Review its diagnostic before retrying.',
+      transcript_too_large:'The transcript exceeded the automatic generation output limit.',
+      provider_content_blocked:'Gemini could not transcribe this content because of a provider restriction.',
+    }
+    if(messages[code])return messages[code]
+  }
   const errors: Record<string, string> = {
     enrichment_not_configured: 'Arabic text is saved, but word-level enrichment needs OPENAI_API_KEY on the Supabase transcript worker. You can review the available JSON.',
     enrichment_auth: 'The enrichment provider rejected OPENAI_API_KEY. Check the Supabase worker secret.',

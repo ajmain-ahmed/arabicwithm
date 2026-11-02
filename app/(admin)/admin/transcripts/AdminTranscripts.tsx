@@ -10,13 +10,14 @@ import TranscriptDurationField from './TranscriptDurationField'
 import {GroupSelector,GroupBrowser,GroupManager,GroupEditDialog} from './TranscriptGroups'
 import EnrichmentDetails from './EnrichmentDetails'
 import TranscriptJsonField from '@/app/(admin)/admin/components/TranscriptJsonField'
+import {isAppImport,isAppImportsGroup,hasDownloadableTranscript,canEditTranscript} from '@/app/lib/appImportTranscripts'
 import {transcriptGenerationStatus,transcriptGenerationPending} from '@/app/lib/transcriptStatus'
 import {runManualImport,type ManualImportProgress} from '@/app/lib/manualImportRunner'
 import {parseVideoDuration} from '@/app/lib/transcriptTiming'
 
 export default function AdminTranscripts(){
  const [preview,setPreview]=useState<Awaited<ReturnType<typeof previewAdminTranscript>>|null>(null),[previewBusy,setPreviewBusy]=useState(false)
- async function showPreview(){setPreviewBusy(true);setFormError('');try{setPreview(await previewAdminTranscript({url,title,channel,json:transcriptJson,duration,durationFormat}))}catch(e){setFormError(e instanceof Error?e.message:'Preview unavailable. Check video and transcript JSON.')}finally{setPreviewBusy(false)}}
+ async function showPreview(){setPreviewBusy(true);setFormError('');try{setPreview(await previewAdminTranscript({url,title,channel,json:transcriptJson,duration,durationFormat,...(isAppImport(edit)?{id:edit!.id,updatedAt:editVersion}:{})}))}catch(e){setFormError(e instanceof Error?e.message:'Preview unavailable. Check video and transcript JSON.')}finally{setPreviewBusy(false)}}
  const cache=useAdminListCache()
  const [searchInput,setSearchInput]=useState(''),[titleSearch,setTitleSearch]=useState('')
  const [groups,setGroups]=useState<TranscriptGroup[]>([]),[ungrouped,setUngrouped]=useState(0),[groupFilter,setGroupFilter]=useState('ungrouped'),[groupId,setGroupId]=useState(''),[manageGroups,setManageGroups]=useState(false)
@@ -47,7 +48,7 @@ export default function AdminTranscripts(){
  const reload=useCallback(()=>{cache.invalidate("transcripts:");setRefresh(v=>v+1)},[cache])
  useEffect(()=>{if(searchInput.trim()===titleSearch)return;const timer=setTimeout(()=>{setTitleSearch(searchInput.trim());if(groupFilter!=='drafts')setGroupFilter('');setPage(0)},350);return()=>clearTimeout(timer)},[searchInput,titleSearch,groupFilter])
  useEffect(()=>{let current=true;const key=`transcripts:manual:${page}:${titleSearch}:${groupFilter}`;setLoading(true);setError('');cache.load(key,()=>listAdminTranscripts(page,titleSearch,groupFilter),true).then(result=>{if(current){setRows(result.rows);setTotal(result.total);setGroups(result.groups??[]);setUngrouped(result.ungrouped??0);if(page>0&&page*30>=result.total)setPage(Math.max(0,Math.ceil(result.total/30)-1))}}).catch(e=>{if(current)setError(e.message)}).finally(()=>{if(current)setLoading(false)});return()=>{current=false}},[page,titleSearch,groupFilter,refresh,cache])
- useEffect(()=>{if(!rows.some(transcriptGenerationPending))return;const timer=setInterval(()=>{if(document.visibilityState==='visible')reload()},5000);return()=>clearInterval(timer)},[rows,reload])
+ useEffect(()=>{if(!rows.some(transcriptGenerationPending)&&!groups.some(group=>group.id===groupFilter&&isAppImportsGroup(group)))return;const timer=setInterval(()=>{if(document.visibilityState==='visible')reload()},5000);return()=>clearInterval(timer)},[rows,groups,groupFilter,reload])
  async function save(){if(durationError||saving.current||busy||editLoading||draftLoading||edit&&!editVersion||!edit&&!ready)return;saving.current=true;setBusy(true);setFormError('');try{
   if(edit){
    const previous=baseline.current
@@ -80,7 +81,7 @@ export default function AdminTranscripts(){
   }catch(error){if(request===editRequest.current)setFormError(error instanceof Error?error.message:'Unable to load draft.')}finally{if(request===editRequest.current)setDraftLoading(false)}
  }
  function formatJson(){try{setTranscriptJson(JSON.stringify(JSON.parse(transcriptJson),null,2));setFormError('')}catch(error){setFormError(error instanceof Error?`Invalid JSON: ${error.message}`:'Invalid JSON.')}}
- async function download(){if(!edit||downloadBusy)return;setDownloadBusy(true);setFormError('');try{const result=await downloadAdminTranscriptJson(edit.id);const href=URL.createObjectURL(new Blob([result.json],{type:'application/json;charset=utf-8'}));const anchor=document.createElement('a');anchor.href=href;anchor.download=result.filename;document.body.appendChild(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(href),1000)}catch(error){setFormError(error instanceof Error?error.message:'Could not download transcript.')}finally{setDownloadBusy(false)}}
+ async function download(row:TranscriptRow|null=edit){if(!row||downloadBusy)return;setDownloadBusy(true);setFormError('');try{const result=await downloadAdminTranscriptJson(row.id);const href=URL.createObjectURL(new Blob([result.json],{type:'application/json;charset=utf-8'}));const anchor=document.createElement('a');anchor.href=href;anchor.download=result.filename;document.body.appendChild(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(href),1000)}catch(error){(open?setFormError:setError)(error instanceof Error?error.message:'Could not download transcript.')}finally{setDownloadBusy(false)}}
  async function remove(){if(!deleting)return;setDeleteBusy(true);setDeleteError('');try{
   const result=deleting.draft_id?await deleteAdminManualDraft(deleting.draft_id,deleting.draft_version??''):await deleteAdminTranscript(deleting.id)
   if(!result.ok){setDeleteError(result.error);return}
@@ -94,7 +95,7 @@ export default function AdminTranscripts(){
     <Typography role={transcriptGenerationPending(row)?'status':undefined} variant="body2">{row.draft_id?'Saved draft - not imported or published':transcriptGenerationStatus(row)}</Typography>
     <Typography variant="body2">Processing: {row.status} | English: {row.translation_status} | {row.searchable?'Search enabled':'Unpublished / search disabled'}</Typography>
     <Typography variant="caption">Created {new Date(row.created_at).toLocaleString('en-GB')} | Updated {new Date(row.updated_at).toLocaleString('en-GB')}</Typography>{row.error_code&&<Alert severity="warning">{transcriptGenerationStatus(row)}</Alert>}
-   </Box><Stack>{row.draft_id?<Button onClick={()=>void openDraft(row)}>Open draft</Button>:row.provider==='manual'&&row.status==='indexing'?<Button disabled={busy} onClick={()=>void resume(row)}>Resume import</Button>:<Button onClick={()=>start(row)}>Edit / Publish</Button>}{row.status==='ready'&&<Button component={Link} href={`/transcripts/${row.id}?from=admin`}>View transcript</Button>}<Button color="error" onClick={()=>{setDeleting(row);setDeleteError('')}}>Delete</Button></Stack>
+   </Box><Stack>{row.draft_id?<Button onClick={()=>void openDraft(row)}>Open draft</Button>:row.provider==='manual'&&row.status==='indexing'?<Button disabled={busy} onClick={()=>void resume(row)}>Resume import</Button>:<Button disabled={!canEditTranscript(row)} onClick={()=>start(row)}>Edit / Publish</Button>}{isAppImport(row)&&<Button disabled={downloadBusy||!hasDownloadableTranscript(row)} onClick={()=>void download(row)}>Download JSON</Button>}{row.status==='ready'&&<Button component={Link} href={`/transcripts/${row.id}?from=admin`}>View transcript</Button>}<Button color="error" onClick={()=>{setDeleting(row);setDeleteError('')}}>Delete</Button></Stack>
   </Stack></CardContent></Card>)}
   <Stack direction="row" spacing={2}><Button disabled={page===0||loading} onClick={()=>setPage(p=>p-1)}>Previous</Button><Typography>Page {page+1} | {total} transcripts</Typography><Button disabled={(page+1)*30>=total||loading} onClick={()=>setPage(p=>p+1)}>Next</Button></Stack>
  </Stack>
@@ -114,7 +115,7 @@ export default function AdminTranscripts(){
    <Box sx={{display:'grid',gridTemplateColumns:{xs:'1fr',sm:'1fr 1fr'},gap:2}}>
     <TextField label="Video Title" value={title} onChange={e=>{setTitle(e.target.value);setSaved(false)}} disabled={busy||draftLoading} required slotProps={{htmlInput:{dir:'auto'}}}/>
     <TextField label="YouTube URL or video ID" placeholder="https://youtu.be/... or ZBynl03Vp-w" value={url} onChange={e=>{setUrl(e.target.value);setSaved(false)}} required disabled={busy||draftLoading}/>
-    <Stack spacing={1}><GroupSelector groups={realGroups} value={groupId} onChange={value=>{setGroupId(value);setSaved(false)}} disabled={busy||editLoading||draftLoading}/><Button disabled={busy||draftLoading} onClick={()=>setManageGroups(true)}>Create a group</Button></Stack>
+    <Stack spacing={1}><GroupSelector groups={realGroups} value={groupId} onChange={value=>{setGroupId(value);setSaved(false)}} disabled={busy||editLoading||draftLoading||isAppImport(edit)}/><Button disabled={busy||draftLoading} onClick={()=>setManageGroups(true)}>Create a group</Button></Stack>
     <TranscriptDurationField value={duration} onChange={value=>{setDuration(value);setSaved(false)}} format={durationFormat} onFormat={value=>{setDurationFormat(value);setSaved(false)}} required={checked?.ok===false&&checked.needsDuration} error={durationError} disabled={busy||draftLoading}/>
 
    </Box>

@@ -262,3 +262,27 @@ it('uses the latest null assignment from Edit rather than an older list assignme
  expect(mocks.move).toHaveBeenCalledWith(editRow.id,{groupId:parentGroup.id,previousGroupId:null,updatedAt:editRow.updated_at})
  expect(mocks.save).not.toHaveBeenCalled()
 })
+
+
+const automaticImports={id:'99999999-9999-4999-8999-999999999990',name:'Imports',parent_id:null,transcript_count:2,direct_count:2,system_key:'app_imports'}
+it('shows automatic Imports with normal cards, a read-only origin group and guarded download',async()=>{
+ const ready={...editRow,status:'ready',source_origin:'user_import',provider:'gemini',has_saved_transcript:true,can_edit:true,group_id:automaticImports.id,searchable:false,explore_published:false}
+ const failed={...ready,id:'99999999-9999-4999-8999-999999999992',status:'failed',has_saved_transcript:false,error_code:'request_uncertain'}
+ mocks.list.mockResolvedValue({rows:[ready,failed],total:2,groups:[automaticImports],ungrouped:0})
+ mocks.download.mockResolvedValue({json:savedJson,updatedAt:editRow.updated_at,groupId:automaticImports.id,durationSeconds:10,searchable:false,explorePublished:false})
+ await act(async()=>root.render(<AdminTranscripts/>))
+ await select('Filter by group',automaticImports.id)
+ const cards=[...host.querySelectorAll('.MuiCard-root')].filter(card=>card.querySelector('h6')?.textContent===editRow.title)
+ expect((cards[0].querySelectorAll('button')[0] as HTMLButtonElement).disabled).toBe(false)
+ const failedDownload=[...cards[1].querySelectorAll('button')].find(button=>button.textContent==='Download JSON')!
+ expect(failedDownload.disabled).toBe(true)
+ expect([...cards[1].querySelectorAll('button')].find(button=>button.textContent==='Edit / Publish')!.disabled).toBe(true)
+ expect(cards[1].textContent).toContain('Gemini')
+ const accordion=[...host.querySelectorAll('.MuiAccordion-root')].find(el=>el.querySelector('.MuiAccordionSummary-content')?.textContent?.startsWith('Imports'))!
+ expect(accordion.textContent).toContain('App imports are added automatically.')
+ expect([...accordion.querySelectorAll('button')].some(button=>button.textContent==='Add Transcript'||button.textContent==='Edit Group')).toBe(false)
+ await act(async()=>[...cards[0].querySelectorAll('button')].find(button=>button.textContent==='Edit / Publish')!.click())
+ const groupSelect=document.querySelector('select[disabled]') as HTMLSelectElement
+ expect(groupSelect.value).toBe(automaticImports.id)
+ expect([...document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')].map(input=>input.checked)).toEqual([false,false])
+})
