@@ -1,7 +1,8 @@
 'use client'
 
 import React from 'react'
-import { Box, Typography, Button, Divider } from '@mui/material'
+import { Box, Typography, Button, Divider, OutlinedInput, InputAdornment } from '@mui/material'
+import { Search } from '@mui/icons-material'
 
 /* ── Palette ── */
 const BARK = 'var(--awm-bark)'
@@ -25,6 +26,11 @@ export interface FilterSidebarProps {
   setActiveGenre?: (g: string) => void
   activeLanguage?: string
   setActiveLanguage?: (lang: string) => void
+  /* Optional client-side text filter. Only rendered when onSearchChange is
+     provided, so pages without search are unaffected. */
+  searchQuery?: string
+  onSearchChange?: (q: string) => void
+  searchPlaceholder?: string
   disabledCategories?: string[]
   disabledLevels?: string[]
   onMobileClose?: () => void
@@ -123,18 +129,22 @@ export default function FilterSidebar({
   setActiveGenre,
   activeLanguage,
   setActiveLanguage,
+  searchQuery,
+  onSearchChange,
+  searchPlaceholder,
   disabledCategories,
   disabledLevels,
   onMobileClose,
   hideTitle,
 }: FilterSidebarProps) {
-  const hasFilters = Boolean((activeCategory && activeCategory !== categories[0]) || activeLevel || activeGenre || activeLanguage)
+  const hasFilters = Boolean((activeCategory && activeCategory !== categories[0]) || activeLevel || activeGenre || activeLanguage || searchQuery)
   const clearAll = () => {
     /* Route through the setters: on /cartoons they navigate (clearing the
        URL params server-side); on client-filtered pages they update state.
        Raw history.replaceState rewrites the URL without re-rendering. */
     setActiveCategory(categories[0] ?? '')
     setActiveLevel(''); setActiveGenre?.(''); setActiveLanguage?.('')
+    onSearchChange?.('')
     onMobileClose?.()
   }
   return (
@@ -154,6 +164,35 @@ export default function FilterSidebar({
           </Typography>
           <Divider sx={{ borderColor: 'rgba(184,134,11,0.2)', mb: 2.5 }} />
         </>
+      )}
+
+      {/* ── Search ── */}
+      {onSearchChange && (
+        <FilterSection label="Search">
+          <OutlinedInput
+            fullWidth
+            type="search"
+            value={searchQuery ?? ''}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder={searchPlaceholder ?? 'Search'}
+            aria-label={searchPlaceholder ?? 'Search'}
+            startAdornment={
+              <InputAdornment position="start">
+                <Search sx={{ fontSize: 18, color: MUTED }} />
+              </InputAdornment>
+            }
+            sx={{
+              height: 40,
+              fontSize: 13,
+              fontFamily: 'var(--font-sans), system-ui, sans-serif',
+              borderRadius: '6px',
+              backgroundColor: WARM_WHITE,
+              '& fieldset': { borderColor: 'rgba(44,26,14,0.1)' },
+              '&:hover fieldset': { borderColor: 'rgba(44,26,14,0.2)' },
+              '&.Mui-focused fieldset': { borderColor: GOLD },
+            }}
+          />
+        </FilterSection>
       )}
 
       {/* ── Category ── */}

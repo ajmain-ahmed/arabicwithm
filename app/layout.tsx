@@ -13,6 +13,7 @@ import "./globals.css"
 import ThemeProvider from "./components/ThemeProvider"
 import { AuthProvider } from "./AuthContext"
 import SiteShell from "./components/SiteShell"
+import ScrollReset from "./components/ScrollReset"
 
 export const metadata: Metadata = {
   title: "ArabicWithM — Learn Arabic with Cartoons",
@@ -38,6 +39,7 @@ export default function RootLayout({
         <AppRouterCacheProvider options={{ key: 'css', enableCssLayer: true }}>
           <AuthProvider>
             <ThemeProvider>
+              <ScrollReset />
               <SiteShell>{children}</SiteShell>
             </ThemeProvider>
           </AuthProvider>

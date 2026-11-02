@@ -14,10 +14,11 @@ export interface FeaturedShow {
   episodeCount: number
 }
 
-/* Netflix-style featured banner for signed-in visitors: artwork in a card,
-   content bottom-left inside it. Desktop runs full-bleed; mobile is a tall
-   card so the whole height of the artwork is visible. Deliberately shorter
-   than a streaming billboard so the rows stay near the fold. */
+/* Netflix-style featured banner for every homepage visitor, signed in or
+   not: artwork in a card, content bottom-left inside it. Desktop runs
+   full-bleed; mobile is a tall card so the whole height of the artwork is
+   visible. Deliberately shorter than a streaming billboard so the rows stay
+   near the fold. */
 export default function FeaturedHero({ show, episode, featuredImage, featuredPosition }: FeaturedShow) {
   return (
     <Box

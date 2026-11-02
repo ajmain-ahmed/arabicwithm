@@ -11,6 +11,7 @@ vi.mock('@/app/components/ThemeProvider', () => ({ useColorMode: () => ({ mode: 
 vi.mock('@/app/actions/activity', () => ({ fetchLearningActivity: vi.fn() }))
 vi.mock('@/app/actions/profiles', () => ({ fetchMyDisplayName: vi.fn(() => Promise.resolve(null)) }))
 vi.mock('@/app/components/PremiumPrompt', () => ({ default: () => null }))
+vi.mock('@/app/lib/premiumStatusCache', () => ({ getPremiumStatus: () => Promise.resolve(null) }))
 vi.mock('./LearningStats', () => ({
   default: () => {
     home.statsRendered = true
@@ -46,5 +47,13 @@ describe('homepage hero', () => {
     expect(html).toContain('Start Watching')
     expect(html).toContain('Start Reading')
     expect(home.statsRendered).toBe(false)
+  })
+
+  it('shows the Featured banner to guests when featured content exists', () => {
+    home.user = null
+    const html = renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]} featured={{ show: { id: 'dbz', slug: 'dbz', title: 'DBZ', cover: '/cover.webp', level: 'B1', episodeCount: 3 }, episodeCount: 3 }} />)
+    expect(html).toContain('data-featured-hero')
+    expect(html).not.toContain('data-home-hero')
+    expect(html).not.toContain('Learn Arabic through cartoons and books')
   })
 })

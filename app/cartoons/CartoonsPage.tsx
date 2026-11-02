@@ -66,7 +66,7 @@ export function CartoonsPageSkeleton() {
         pb: { xs: 2, md: 8 },
       }}
     >
-      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
+      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 3, md: 4 } }}>
         <Box sx={{ display: { xs: 'none', md: 'block' }, mb: 2 }}>
           <Skeleton width={140} />
         </Box>

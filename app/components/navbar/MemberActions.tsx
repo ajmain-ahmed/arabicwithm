@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Box, Button, Tooltip } from '@mui/material'
 import { DiamondOutlined, LocalFireDepartmentRounded } from '@mui/icons-material'
 import { useAuth } from '@/app/AuthContext'
+import { getPremiumStatus } from '@/app/lib/premiumStatusCache'
 import {
   LEARNING_ACTIVITY_EVENT,
   getLearningActivitySnapshot,
@@ -15,7 +16,8 @@ import { summarizeLearningDashboard } from '@/app/lib/learningDashboard'
 
 /* Loaded on first open, mirroring the AuthDialog pattern: the prompt pulls
    the entitlements stack, which should not join the initial navbar chunk.
-   Hover/focus warms the import so the first click finds it already fetched. */
+   MemberActions warms the chunk and primes the status snapshot after first
+   paint so the first tap opens instantly — touch devices get no hover. */
 const loadPremiumPrompt = () => import('@/app/components/PremiumPrompt')
 const PremiumPromptLazy = dynamic(loadPremiumPrompt, { ssr: false })
 
@@ -42,6 +44,23 @@ export default function MemberActions({onProfileNavigate}:{onProfileNavigate?:()
     window.addEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
     return () => window.removeEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
   }, [])
+
+  /* Warm the lazy prompt chunk and prime the entitlement snapshot once the
+     browser is idle; the first AWM+ tap then opens with content already
+     available instead of waiting on a chunk fetch plus a server round trip. */
+  useEffect(() => {
+    if (!user?.id) return
+    const warm = () => {
+      void loadPremiumPrompt()
+      void getPremiumStatus(user.id).catch(() => {})
+    }
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(warm)
+      return () => window.cancelIdleCallback(id)
+    }
+    const timer = window.setTimeout(warm, 1500)
+    return () => window.clearTimeout(timer)
+  }, [user?.id])
 
   const streak = useMemo(() => {
     const activity = user

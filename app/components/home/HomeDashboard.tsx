@@ -43,6 +43,11 @@ export interface FeaturedEpisode {
   episode: EpisodeMeta
 }
 
+/* Catalogue rows paint at most this many cards. The shows/episodes queries
+   already limit to 12; books are sliced here to match so the homepage's
+   image count stays flat as the catalogue grows. */
+const HOME_ROW_LIMIT = 12
+
 const QUICK_LINKS = [
   { title: 'Search', label: 'Search shows, episodes and books', href: '/search', icon: SearchOutlined },
   { title: 'Grammar', label: 'Naḥw and Ṣarf activities', href: '/grammar', icon: AccountTreeOutlined },
@@ -223,8 +228,8 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
   const myListLoading = Boolean(user) && (myListCacheItems === null || myListBooks === null)
   const { newShowItems, newEpisodeItems } = useMemo(() => {
     return {
-      newShowItems: showRowItems(newShows),
-      newEpisodeItems: episodeRowItems(newEpisodes),
+      newShowItems: showRowItems(newShows).slice(0, HOME_ROW_LIMIT),
+      newEpisodeItems: episodeRowItems(newEpisodes).slice(0, HOME_ROW_LIMIT),
     }
   }, [newEpisodes, newShows])
 
@@ -290,7 +295,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
       imageCrop: book.coverCrop,
     })),
   ], [myListCacheItems, myListBooks, trackedPositions, user, chaptersByBook])
-  const bookRowItems: CatalogueRowItem[] = useMemo(() => books.map((book) => ({
+  const bookRowItems: CatalogueRowItem[] = useMemo(() => books.slice(0, HOME_ROW_LIMIT).map((book) => ({
     key: book.id,
     href: `/books/${encodeURIComponent(book.slug)}`,
     title: book.title,
@@ -330,7 +335,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
           },
         }}
       >
-        {user && featured ? (
+        {featured ? (
           <FeaturedHero {...featured} />
         ) : (
         <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 360, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
@@ -379,13 +384,13 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
           {user && myListRowItems.length > 0 && (
             <Container maxWidth={false}>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
-              <NewOnRow items={myListRowItems} ariaLabel="My List" autoScroll compact />
+              <NewOnRow items={myListRowItems} ariaLabel="My List" compact viewAllHref="/cartoons?view=shows" />
             </Container>
           )}
           {user && continueReadingRowItems.length > 0 && (
             <Container maxWidth={false} sx={{ display: { xs: 'block', md: 'none' }, mt: user && myListRowItems.length > 0 ? { xs: 2.5, md: 3.25 } : 0 }}>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Continue Reading</Typography>
-              <NewOnRow items={continueReadingRowItems} ariaLabel="Continue Reading" compact />
+              <NewOnRow items={continueReadingRowItems} ariaLabel="Continue Reading" compact viewAllHref="/books" />
             </Container>
           )}
           {user && myListLoading && myListRowItems.length === 0 && (
@@ -439,18 +444,18 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
           <Container maxWidth={false} sx={user ? { mt: { xs: 2.5, md: 3.25 } } : undefined}>
             {newShowItems.length > 0 && <>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Shows</Typography>
-              <NewOnRow items={newShowItems} ariaLabel="Shows" autoScroll compact />
+              <NewOnRow items={newShowItems} ariaLabel="Shows" compact viewAllHref="/cartoons?view=shows" />
             </>}
             {newEpisodeItems.length > 0 && <>
               <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Latest Episodes</Typography>
               <DeferredSection placeholder={<DeferredRowPlaceholder />}>
-                <DeferredNewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" autoScroll compact />
+                <DeferredNewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" compact viewAllHref="/cartoons" />
               </DeferredSection>
             </>}
             {bookRowItems.length > 0 && <>
               <Typography component="h2" sx={{ mt: { xs: 2.5, md: 3.25 }, fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Books</Typography>
               <DeferredSection placeholder={<DeferredRowPlaceholder />}>
-                <DeferredNewOnRow items={bookRowItems} ariaLabel="Books" autoScroll compact />
+                <DeferredNewOnRow items={bookRowItems} ariaLabel="Books" compact viewAllHref="/books" />
               </DeferredSection>
             </>}
           </Container>

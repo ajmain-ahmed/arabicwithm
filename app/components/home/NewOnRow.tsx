@@ -1,16 +1,12 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import { Box, IconButton, Skeleton, Typography, useMediaQuery } from '@mui/material'
-import { ChevronLeft, ChevronRight } from '@mui/icons-material'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Box, Skeleton, Typography } from '@mui/material'
+import { ChevronRight } from '@mui/icons-material'
 import CefrChip from '@/app/components/CefrChip'
 import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 
-/** Pixels per second. Shared by every slowly moving homepage showcase row. */
-export const AUTO_SCROLL_SPEED = 26
-const AUTO_RESUME_DELAY_MS = 1_600
 const DRAG_ACTIVATION_DISTANCE_PX = 6
 
 export interface CatalogueRowItem {
@@ -27,27 +23,26 @@ export interface CatalogueRowItem {
 export const COMPACT_HOME_CARD_WIDTH = { xs: 'clamp(150px, 46vw, 182px)', sm: 198, md: 222, lg: 238 } as const
 export const HOME_CAROUSEL_CARD_ASPECT_RATIO = '4 / 5'
 
-const ARROW_SX = {
-  /* Touch layouts use native swiping; desktop gets explicit paging controls. */
+const SEE_ALL_SX = {
+  /* Touch layouts swipe through the row; desktop gets the page link. */
   display: { xs: 'none', md: 'flex' },
+  alignItems: 'center',
+  justifyContent: 'center',
   position: 'absolute',
   zIndex: 4,
   top: '50%',
   transform: 'translateY(-50%)',
+  right: 4,
   width: 40,
   height: 40,
   borderRadius: '50%',
   bgcolor: 'rgba(5,23,15,0.6)',
   color: '#fff',
   boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
-  opacity: 0.95,
-  transition: 'opacity 0.2s ease, background-color 0.2s ease, transform 0.2s ease',
+  transition: 'background-color 0.2s ease, transform 0.2s ease',
   '&:hover': { bgcolor: 'rgba(5,23,15,0.85)', transform: 'translateY(-50%) scale(1.08)' },
 } as const
 
-/** Slots the carousel actually paints, per breakpoint — feeds next/image sizes. */
-const COMPACT_SIZES = '(max-width: 600px) 46vw, (max-width: 900px) 198px, (max-width: 1200px) 222px, 238px'
-const FEATURED_SIZES = '(max-width: 600px) 62vw, (max-width: 900px) 260px, 300px'
 /* Native lazy-loading still pulls images during initial parse on slow
    connections (Chrome's lookahead margin). Gating the <img> on an
    IntersectionObserver defers every below-the-fold cover until after
@@ -80,14 +75,10 @@ function RowTile({
   item,
   mobileWidth,
   compact,
-  isClone = false,
-  loopStart = false,
 }: {
   item: CatalogueRowItem
   mobileWidth: string | number
   compact: boolean
-  isClone?: boolean
-  loopStart?: boolean
 }) {
   const [loaded, setLoaded] = useState(false)
   const { ref: nearRef, near } = useNearViewport<HTMLAnchorElement>()
@@ -105,10 +96,7 @@ function RowTile({
       ref={nearRef}
       href={item.href}
       draggable={false}
-      aria-label={isClone ? undefined : item.title}
-      aria-hidden={isClone || undefined}
-      tabIndex={isClone ? -1 : undefined}
-      data-loop-start={loopStart ? 'true' : undefined}
+      aria-label={item.title}
       sx={{
         position: 'relative',
         flex: '0 0 auto',
@@ -138,12 +126,14 @@ function RowTile({
         />
       )}
       {near && (
-      <Image
+      /* Plain <img>, not next/image: the covers API already serves
+         storage-resolution WebP, so the optimizer would only add metered
+         transformations without saving bytes. */
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
         ref={imgRef}
         src={item.imageSrc}
         alt=""
-        fill
-        sizes={compact ? COMPACT_SIZES : FEATURED_SIZES}
         decoding="async"
         draggable={false}
         onLoad={() => setLoaded(true)}
@@ -153,6 +143,10 @@ function RowTile({
           e.currentTarget.style.display = 'none'
         }}
         style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
           opacity: loaded ? 1 : 0,
           transition: 'opacity 0.3s ease',
           ...imageStyle,
@@ -183,231 +177,49 @@ function RowTile({
   )
 }
 
-/* Horizontally scrolling row of portrait tiles. Subtle circular
-   hover arrows appear at the edges when there is more content to scroll to. */
+/* Horizontally scrolling row of portrait tiles. The chevron at the row's
+   right edge is a link to the row's full listing page (when viewAllHref is
+   given), not a scroller — the row itself swipes/drags. */
 export default function NewOnRow({
   items,
   ariaLabel = 'Content carousel',
   mobileCardWidth,
-  autoScroll = false,
   compact = false,
+  viewAllHref,
 }: {
   items: CatalogueRowItem[]
   ariaLabel?: string
   mobileCardWidth?: string | number
-  autoScroll?: boolean
   compact?: boolean
+  viewAllHref?: string
 }) {
-  const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
-  /* Auto-moving rows fight the user's own touch swipe on phones/tablets, so
-     the marquee loop is a desktop-only behavior. */
-  const isMobile = useMediaQuery('(max-width:899.95px)')
   const scrollerRef = useRef<HTMLDivElement | null>(null)
-  const frameRef = useRef<number | null>(null)
-  const autoFrameRef = useRef<number | null>(null)
-  const autoPositionRef = useRef(0)
-  const lastAutoWriteRef = useRef(0)
-  const resumeAfterRef = useRef(0)
-  const pointerActiveRef = useRef(false)
-  const hoverActiveRef = useRef(false)
-  const focusActiveRef = useRef(false)
-  const visibleRef = useRef(true)
   const dragStartXRef = useRef<number | null>(null)
   const dragStartYRef = useRef<number | null>(null)
   const dragStartScrollRef = useRef(0)
   const activePointerIdRef = useRef<number | null>(null)
   const pointerTypeRef = useRef<string | null>(null)
   const draggedRef = useRef(false)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
-  /* The marquee only makes sense when one full set of tiles overflows the
-     viewport; short rows (e.g. two My List items) stay still so clicks land
-     exactly where the user points. */
-  const [canLoop, setCanLoop] = useState(false)
-  useEffect(() => {
-    const element = scrollerRef.current
-    if (!element) return
-    const measure = () => {
-      const loopStart = element.querySelector<HTMLElement>('[data-loop-start="true"]')
-      const first = element.firstElementChild as HTMLElement | null
-      const setWidth = loopStart && first ? loopStart.offsetLeft - first.offsetLeft : element.scrollWidth
-      setCanLoop(setWidth > element.clientWidth + 8)
-    }
-    measure()
-    window.addEventListener('resize', measure)
-    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
-    observer?.observe(element)
-    return () => {
-      window.removeEventListener('resize', measure)
-      observer?.disconnect()
-    }
-  }, [items])
-  /* The seamless-loop clones duplicate every tile's <img> in the initial HTML;
-     render them only after mount so first load requests one image per cover. */
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  )
-  const shouldLoop = autoScroll && !isMobile && !reduceMotion && items.length > 1 && canLoop
-
-  const showAutoState = useCallback((moving: boolean) => {
-    const element = scrollerRef.current
-    if (element) {
-      element.dataset.autoScrolling = moving ? 'true' : 'false'
-      if (moving) element.dataset.manualScrolling = 'false'
-    }
-  }, [])
-
-  const setManualSnap = useCallback((active: boolean) => {
-    const element = scrollerRef.current
-    if (element) element.dataset.manualScrolling = active ? 'true' : 'false'
-  }, [])
-
-  const pauseFor = useCallback((delay = AUTO_RESUME_DELAY_MS) => {
-    resumeAfterRef.current = Math.max(resumeAfterRef.current, performance.now() + delay)
-    showAutoState(false)
-  }, [showAutoState])
-
-  const releaseInteraction = useCallback(() => {
-    resumeAfterRef.current = performance.now() + AUTO_RESUME_DELAY_MS
-    showAutoState(false)
-  }, [showAutoState])
-
-  /* rAF-throttled: scroll fires every animation frame during a slide; React
-     state updates there are what made the motion stutter. */
-  const updateArrows = useCallback(() => {
-    if (frameRef.current !== null) return
-    frameRef.current = requestAnimationFrame(() => {
-      frameRef.current = null
-      const el = scrollerRef.current
-      if (!el) return
-      setCanScrollLeft(el.scrollLeft > 4)
-      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4)
-    })
-  }, [])
-
-  useEffect(() => {
-    updateArrows()
-    window.addEventListener('resize', updateArrows)
-    return () => {
-      window.removeEventListener('resize', updateArrows)
-      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current)
-    }
-  }, [items, updateArrows])
-
-  useEffect(() => {
-    const element = scrollerRef.current
-    if (!element || !shouldLoop) {
-      showAutoState(false)
-      return
-    }
-
-    const observer = typeof IntersectionObserver === 'undefined'
-      ? null
-      : new IntersectionObserver(([entry]) => {
-          visibleRef.current = entry?.isIntersecting ?? true
-        }, { rootMargin: '160px 0px' })
-    observer?.observe(element)
-    autoPositionRef.current = element.scrollLeft
-
-    let previousTime = performance.now()
-    const tick = (now: number) => {
-      const interacting = pointerActiveRef.current || hoverActiveRef.current || focusActiveRef.current
-      const moving = visibleRef.current && !document.hidden && !interacting && now >= resumeAfterRef.current
-      showAutoState(moving)
-
-      if (moving) {
-        const loopStart = element.querySelector<HTMLElement>('[data-loop-start="true"]')
-        const firstItem = element.firstElementChild as HTMLElement | null
-        const loopWidth = loopStart && firstItem ? loopStart.offsetLeft - firstItem.offsetLeft : 0
-        const elapsedSeconds = Math.min(now - previousTime, 50) / 1_000
-        autoPositionRef.current += AUTO_SCROLL_SPEED * elapsedSeconds
-        if (loopWidth > 0 && autoPositionRef.current >= loopWidth) autoPositionRef.current -= loopWidth
-        lastAutoWriteRef.current = now
-        element.scrollLeft = autoPositionRef.current
-      }
-
-      previousTime = now
-      autoFrameRef.current = requestAnimationFrame(tick)
-    }
-    autoFrameRef.current = requestAnimationFrame(tick)
-
-    return () => {
-      observer?.disconnect()
-      if (autoFrameRef.current !== null) cancelAnimationFrame(autoFrameRef.current)
-      autoFrameRef.current = null
-      showAutoState(false)
-    }
-  }, [items, shouldLoop, showAutoState])
-
-  /* Covers lazy-load on approach (next/image), so no eager warm-up is needed:
-     forcing every src at mount fetched all rows at t=0 regardless of viewport. */
-
-  const scrollByPage = (direction: 1 | -1) => {
-    const el = scrollerRef.current
-    if (!el) return
-    setManualSnap(true)
-    pauseFor(2_000)
-    el.scrollBy({
-      left: direction * el.clientWidth * 0.85,
-      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-    })
-  }
 
   if (items.length === 0) return null
 
   return (
     <Box sx={{ position: 'relative', width: '100%', maxWidth: '100%', minWidth: 0 }}>
-      <IconButton
-        className="awm-row-arrow"
-        data-active={canScrollLeft ? 'true' : 'false'}
-        aria-label="Scroll back"
-        aria-hidden={!canScrollLeft}
-        tabIndex={canScrollLeft ? 0 : -1}
-        onClick={() => scrollByPage(-1)}
-        sx={{ ...ARROW_SX, left: 4, opacity: canScrollLeft ? 0.95 : 0, pointerEvents: canScrollLeft ? 'auto' : 'none' }}
-      >
-        <ChevronLeft sx={{ fontSize: 26 }} />
-      </IconButton>
-      <IconButton
-        className="awm-row-arrow"
-        data-active={canScrollRight ? 'true' : 'false'}
-        aria-label="Scroll forward"
-        aria-hidden={!canScrollRight}
-        tabIndex={canScrollRight ? 0 : -1}
-        onClick={() => scrollByPage(1)}
-        sx={{ ...ARROW_SX, right: 4, opacity: canScrollRight ? 0.95 : 0, pointerEvents: canScrollRight ? 'auto' : 'none' }}
-      >
-        <ChevronRight sx={{ fontSize: 26 }} />
-      </IconButton>
+      {viewAllHref && (
+        <Box
+          component={Link}
+          href={viewAllHref}
+          aria-label={`See all: ${ariaLabel}`}
+          sx={SEE_ALL_SX}
+        >
+          <ChevronRight sx={{ fontSize: 26 }} />
+        </Box>
+      )}
 
       <Box
         ref={scrollerRef}
-        onScroll={() => {
-          updateArrows()
-          if (performance.now() - lastAutoWriteRef.current > 100) {
-            autoPositionRef.current = scrollerRef.current?.scrollLeft ?? 0
-            setManualSnap(true)
-            pauseFor(1_200)
-          }
-        }}
-        onPointerEnter={(event) => {
-          if (event.pointerType !== 'mouse') return
-          hoverActiveRef.current = true
-          setManualSnap(false)
-          showAutoState(false)
-        }}
-        onPointerLeave={(event) => {
-          if (event.pointerType !== 'mouse') return
-          hoverActiveRef.current = false
-          releaseInteraction()
-        }}
         onPointerDown={(event) => {
           if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return
-          pointerActiveRef.current = true
-          setManualSnap(true)
-          showAutoState(false)
           activePointerIdRef.current = event.pointerId
           pointerTypeRef.current = event.pointerType
           dragStartXRef.current = event.clientX
@@ -433,42 +245,24 @@ export default function NewOnRow({
           }
         }}
         onPointerUp={(event) => {
-          pointerActiveRef.current = false
           dragStartXRef.current = null
           dragStartYRef.current = null
           activePointerIdRef.current = null
           pointerTypeRef.current = null
           if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
-          releaseInteraction()
         }}
         onPointerCancel={() => {
-          pointerActiveRef.current = false
           dragStartXRef.current = null
           dragStartYRef.current = null
           activePointerIdRef.current = null
           pointerTypeRef.current = null
           draggedRef.current = false
-          releaseInteraction()
         }}
         onClickCapture={(event) => {
           if (!draggedRef.current || event.detail === 0) return
           event.preventDefault()
           event.stopPropagation()
           draggedRef.current = false
-        }}
-        onWheel={() => {
-          setManualSnap(true)
-          pauseFor()
-        }}
-        onFocusCapture={() => {
-          focusActiveRef.current = true
-          setManualSnap(false)
-          showAutoState(false)
-        }}
-        onBlurCapture={(event) => {
-          if (event.currentTarget.contains(event.relatedTarget as Node | null)) return
-          focusActiveRef.current = false
-          releaseInteraction()
         }}
         role="region"
         aria-label={ariaLabel}
@@ -481,7 +275,7 @@ export default function NewOnRow({
           overflowY: 'hidden',
           py: compact ? 0.75 : 1,
           pr: 0.5,
-          scrollSnapType: shouldLoop ? 'none' : 'x mandatory',
+          scrollSnapType: 'x mandatory',
           scrollBehavior: 'smooth',
           overscrollBehaviorX: 'contain',
           WebkitOverflowScrolling: 'touch',
@@ -496,16 +290,11 @@ export default function NewOnRow({
           userSelect: 'none',
           scrollbarWidth: 'none',
           '&::-webkit-scrollbar': { display: 'none' },
-          '&[data-manual-scrolling="true"]': { scrollSnapType: 'x mandatory' },
-          '&[data-auto-scrolling="true"]': { scrollSnapType: 'none', scrollBehavior: 'auto' },
           '@media (prefers-reduced-motion: reduce)': { scrollBehavior: 'auto' },
         }}
       >
         {items.map((item) => (
           <RowTile key={item.key} item={item} mobileWidth={mobileCardWidth ?? (compact ? COMPACT_HOME_CARD_WIDTH.xs : '62vw')} compact={compact} />
-        ))}
-        {shouldLoop && mounted && items.map((item, index) => (
-          <RowTile key={`loop-${item.key}`} item={item} mobileWidth={mobileCardWidth ?? (compact ? COMPACT_HOME_CARD_WIDTH.xs : '62vw')} compact={compact} isClone loopStart={index === 0} />
         ))}
       </Box>
     </Box>

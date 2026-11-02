@@ -2,8 +2,9 @@
 import { useEffect, useState } from 'react'
 import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
 import { AutoAwesome, CheckCircleRounded } from '@mui/icons-material'
-import { fetchPremiumStatus, managePremium, startPremiumCheckout } from '@/app/actions/premium'
+import { managePremium, startPremiumCheckout } from '@/app/actions/premium'
 import type { PremiumStatus } from '@/app/actions/premium'
+import { getPremiumStatus, readPremiumStatus, refreshPremiumStatus } from '@/app/lib/premiumStatusCache'
 import { useAuth } from '@/app/AuthContext'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import { useRouter } from 'next/navigation'
@@ -17,7 +18,10 @@ export default function PremiumPrompt(props:PremiumPromptProps){
 }
 function PremiumPromptContent({ open, onClose, reason, membershipSummary=false,onProfileNavigate }:PremiumPromptProps) {
   const { user } = useAuth()
-  const [status, setStatus] = useState<PremiumStatus|null>(null)
+  const statusKey = user?.id ?? 'signed-out'
+  /* A fresh snapshot renders immediately; the effect below still re-verifies
+     entitlements against the server on every opening. */
+  const [status, setStatus] = useState<PremiumStatus|null>(() => readPremiumStatus(statusKey))
   const [attempt,setAttempt]=useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -25,11 +29,11 @@ function PremiumPromptContent({ open, onClose, reason, membershipSummary=false,o
     let active=true,settled=false
     const fail=()=>{if(active&&!settled){settled=true;setError('Unable to check AWM+ status. Please try again.')}}
     const timer=window.setTimeout(fail,10000)
-    void fetchPremiumStatus().then(value=>{
+    void refreshPremiumStatus(statusKey).then(value=>{
       if(active&&!settled){settled=true;setStatus(value);window.clearTimeout(timer)}
     }).catch(()=>{window.clearTimeout(timer);fail()})
     return()=>{active=false;window.clearTimeout(timer)}
-  },[attempt])
+  },[attempt,statusKey])
   const retry=()=>{setError('');setAttempt(value=>value+1)}
   const premium = status?.premium ?? false
   async function purchase() {
@@ -80,8 +84,9 @@ export function PremiumSection() {
 function PremiumAccountSection() {
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
-  const [status, setStatus] = useState<PremiumStatus | null>(null)
-  useEffect(() => { let active = true; const refresh=()=>{void fetchPremiumStatus().then(s => { if (active) setStatus(s) }).catch(() => {})}; refresh(); const timer=window.setInterval(()=>{if(document.visibilityState==='visible')refresh()},60000);window.addEventListener('account-access-changed',refresh); window.addEventListener('focus',refresh); return () => { active = false;window.clearInterval(timer);window.removeEventListener('account-access-changed',refresh);window.removeEventListener('focus',refresh) } }, [user?.id])
+  const statusKey = user?.id ?? 'signed-out'
+  const [status, setStatus] = useState<PremiumStatus | null>(() => readPremiumStatus(statusKey))
+  useEffect(() => { let active = true; const refresh=(force:boolean)=>{void (force?refreshPremiumStatus(statusKey):getPremiumStatus(statusKey)).then(s => { if (active) setStatus(s) }).catch(() => {})}; refresh(false); const timer=window.setInterval(()=>{if(document.visibilityState==='visible')refresh(true)},60000);const changed=()=>refresh(true);window.addEventListener('account-access-changed',changed); window.addEventListener('focus',changed); return () => { active = false;window.clearInterval(timer);window.removeEventListener('account-access-changed',changed);window.removeEventListener('focus',changed) } }, [statusKey])
   if (!status || status.admin) return null
   const premium = status?.premium ?? false
   return <Box component="section" aria-label="AWM+" sx={{ width: '100%', px: { xs: 2, md: 5 }, py: { xs: 4, md: 6 }, display: 'flex', justifyContent: 'center' }}>

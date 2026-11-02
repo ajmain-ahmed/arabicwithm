@@ -16,9 +16,11 @@ export interface PremiumStatusData {
 /* Resolve premium status for an already server-verified user. `admin` must
    come from getAuthenticatedAccess(), never from client input. */
 export async function premiumStatusForUser(userId: string, admin: boolean): Promise<PremiumStatusData> {
-  const premium = await accountHasPremium(userId)
-  if (admin) return { premium, signedIn: true, manageable: false, admin: true }
-  const { data, error } = await serviceClient.from('subscriptions').select('status, current_period_end, customer_id').eq('user_id', userId).maybeSingle()
+  if (admin) return { premium: await accountHasPremium(userId), signedIn: true, manageable: false, admin: true }
+  const [premium, { data, error }] = await Promise.all([
+    accountHasPremium(userId),
+    serviceClient.from('subscriptions').select('status, current_period_end, customer_id').eq('user_id', userId).maybeSingle(),
+  ])
   if (isMissingDatabaseFeature(error)) return { premium, signedIn: true, manageable: false, admin: false }
   if (error) throw new Error('Unable to verify AWM+ access.')
   return { premium, signedIn: true, manageable: Boolean(data?.customer_id), admin: false }

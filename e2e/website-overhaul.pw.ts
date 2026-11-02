@@ -9,9 +9,10 @@ async function signIn(context:BrowserContext,kind:keyof typeof ids){
  await context.addCookies([{name:'sb-localhost-auth-token',value:`base64-${encode({access_token,refresh_token:'fixture-refresh',expires_at:expires,expires_in:3600,token_type:'bearer',user})}`,domain:'127.0.0.1',path:'/',sameSite:'Lax'}])
 }
 async function playAudio(page:Page){
- await page.getByRole('button',{name:'Play Audio',exact:true}).click()
+ await page.getByRole('button',{name:'Audio',exact:true}).click()
+ await page.getByRole('button',{name:'Play audio',exact:true}).click()
  try { await expect.poll(()=>page.locator('audio').evaluate((el:HTMLAudioElement)=>el.readyState)).toBeGreaterThan(0) } catch (error) { console.info('Media diagnostic',await page.locator('audio').evaluate((el:HTMLAudioElement)=>({src:el.src,currentSrc:el.currentSrc,error:el.error?.code,networkState:el.networkState,readyState:el.readyState})));throw error }
- if(await page.locator('audio').evaluate((el:HTMLAudioElement)=>el.paused))await page.getByRole('button',{name:'Play Audio',exact:true}).click()
+ if(await page.locator('audio').evaluate((el:HTMLAudioElement)=>el.paused))await page.getByRole('button',{name:'Play audio',exact:true}).click()
  await expect.poll(()=>page.locator('audio').evaluate((el:HTMLAudioElement)=>el.paused)).toBe(false)
 }
 test.beforeEach(async({request})=>{await request.post(`${backendUrl}/fixture/reset-overhaul`)})
@@ -28,22 +29,26 @@ test('Support has two deliberate lines, a shared hero and no mobile clipping',as
  }
 })
 test('guests sign in for books, free readers read and get an audio upgrade',async({page,context})=>{
- await page.goto('/books/test-book/chapter-1');await expect(page.getByRole('button',{name:'Sign in',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Play Audio',exact:true})).toHaveCount(0)
+ await page.goto('/books/test-book/chapter-1');await expect(page.getByRole('button',{name:'Sign in',exact:true})).toBeVisible();await expect(page.getByRole('button',{name:'Audio',exact:true})).toHaveCount(0)
  await signIn(context,'free');await page.reload();await expect(page.getByRole('heading',{name:'First Chapter',exact:true})).toBeVisible()
- await page.getByRole('button',{name:'Play Audio',exact:true}).click();await expect(page.getByRole('dialog').getByText('Upgrade to AWM+', {exact:true})).toBeVisible();await expect(page.locator('audio')).toHaveCount(0)
+ await page.getByRole('button',{name:'Audio',exact:true}).click();await page.getByRole('button',{name:'Play audio',exact:true}).click();await expect(page.getByRole('dialog').getByText('Upgrade to AWM+', {exact:true})).toBeVisible();await expect(page.locator('audio')).toHaveCount(0)
 })
 test('actual audio stops both ways and never starts the other language automatically',async({page,context})=>{
  await signIn(context,'premium');await page.setViewportSize({width:375,height:812});await page.goto('/books/test-book/chapter-1?lang=en')
- await page.getByRole('button',{name:'Book view',exact:true}).click();await page.getByRole('button',{name:'English',exact:true}).click()
+ await page.getByRole('button',{name:'Settings',exact:true}).click()
+ await page.getByRole('dialog').getByRole('button',{name:'Book view',exact:true}).click()
+ await page.getByRole('button',{name:'Close reading settings',exact:true}).click()
+ await page.getByRole('button',{name:'English',exact:true}).click()
  for(const language of ['Arabic','English']){
-  await page.getByRole('button',{name:'Play Audio',exact:true}).click()
+  await page.getByRole('button',{name:'Audio',exact:true}).click()
+  await page.getByRole('button',{name:'Play audio',exact:true}).click()
   await expect.poll(()=>page.locator('audio').evaluate((el:HTMLAudioElement)=>el.paused)).toBe(false)
   await page.evaluate(()=>Object.assign(window,{__previousAudio:document.querySelector('audio')}))
   await page.getByRole('button',{name:language,exact:true}).click()
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {__previousAudio:HTMLAudioElement}).__previousAudio.paused)).toBe(true)
-  await expect(page.locator('audio')).toHaveCount(0);await expect(page.getByRole('button',{name:'Play Audio',exact:true})).toBeVisible()
+  await expect(page.locator('audio')).toHaveCount(0);await expect(page.getByRole('button',{name:'Audio',exact:true})).toBeVisible()
  }
- await expect(page.getByRole('group',{name:'Reading view',exact:true})).toHaveCSS('background-color','rgba(0, 0, 0, 0)')
+ await expect(page.getByRole('group',{name:'Reader controls',exact:true})).toHaveCSS('background-color','rgba(0, 0, 0, 0)')
  await page.getByRole('navigation',{name:'Chapter navigation'}).scrollIntoViewIfNeeded()
  const controls=page.getByRole('navigation',{name:'Chapter navigation'})
  const bottom=await controls.evaluate(el=>el.getBoundingClientRect().bottom)
@@ -67,7 +72,7 @@ test('manual Premium persists and grants actual audio; revocation restores free 
  const learner=await browser.newContext({ignoreHTTPSErrors:true});await signIn(learner,'free');const read=await learner.newPage();await read.goto(`${webUrl}/books/test-book/chapter-1`);await read.bringToFront();await playAudio(read)
  await read.goto(`${webUrl}/profile`);await read.getByText('AWM+ active',{exact:true}).scrollIntoViewIfNeeded();await read.getByRole('button',{name:'AWM+ active',exact:true}).click();await expect(read.getByRole('dialog').getByRole('button',{name:'Continue learning',exact:true})).toBeVisible();await read.getByRole('dialog').getByRole('button',{name:'Continue learning',exact:true}).click();await expect(read.getByRole('dialog')).toHaveCount(0);await read.goto(`${webUrl}/books/test-book/chapter-1`)
  await page.getByRole('checkbox',{name:'Premium',exact:true}).uncheck();await page.getByRole('button',{name:'Save access',exact:true}).click();await expect(page.getByText('Access saved.')).toBeVisible()
- await read.reload();await read.getByRole('button',{name:'Play Audio',exact:true}).click();await expect(read.getByRole('dialog')).toBeVisible();await expect(read.locator('audio')).toHaveCount(0);await learner.close()
+ await read.reload();await read.getByRole('button',{name:'Audio',exact:true}).click();await read.getByRole('button',{name:'Play audio',exact:true}).click();await expect(read.getByRole('dialog')).toBeVisible();await expect(read.locator('audio')).toHaveCount(0);await learner.close()
 })
 test('book review writes the existing personal record and restores after refresh',async({page,context})=>{
  await signIn(context,'free');await page.goto('/books/test-book');await page.getByRole('button',{name:'Leave a Review',exact:true}).click();await page.getByLabel('Your review',{exact:true}).fill('A helpful story.');await page.getByRole('button',{name:'Save review',exact:true}).click();await expect(page.getByText('Review saved.')).toBeVisible()

@@ -59,6 +59,7 @@ export default async function Page({
 
   const showTitle = showData?.title ?? show
   const showSlugById = new Map(shows.map((item) => [item.id, item.slug]))
+  const showTitleById = new Map(shows.map((item) => [item.id, item.title]))
   const currentTags = new Set(ep.tags.map((tag) => tag.toLowerCase()))
   const related = allEpisodes
     .filter((item) => item.slug !== ep.slug)
@@ -71,7 +72,7 @@ export default async function Page({
     })
     .sort((left, right) => right.score - left.score)
     .slice(0, 12)
-    .map(({ item }) => ({ ...item, showSlug: showSlugById.get(item.showId) ?? show }))
+    .map(({ item }) => ({ ...item, showSlug: showSlugById.get(item.showId) ?? show, showTitle: showTitleById.get(item.showId) ?? showTitle }))
 
   return <EpisodePage episode={ep} showTitle={showTitle} initialStart={initialStart} related={related} />
 }

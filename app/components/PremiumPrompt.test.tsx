@@ -6,11 +6,12 @@ vi.mock('@/app/actions/premium',()=>({fetchPremiumStatus:mocks.status,startPremi
 vi.mock('@/app/AuthContext',()=>({useAuth:()=>({user:mocks.user})}))
 vi.mock('next/navigation',()=>({useRouter:()=>({push:mocks.push})}))
 import PremiumPrompt from './PremiumPrompt'
+import { resetPremiumStatusCache } from '@/app/lib/premiumStatusCache'
 import {PREMIUM} from '@/app/lib/entitlements'
 let root:Root,host:HTMLDivElement
 const active={premium:true,signedIn:true,manageable:true,admin:false}
 beforeEach(()=>{
- Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.clearAllMocks();mocks.user={id:'member'};mocks.status.mockResolvedValue(active)
+ Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.clearAllMocks();resetPremiumStatusCache();mocks.user={id:'member'};mocks.status.mockResolvedValue(active)
  host=document.createElement('div');document.body.append(host);root=createRoot(host)
 })
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();vi.useRealTimers()})
@@ -30,6 +31,16 @@ it('verifies again on each reopening and never reuses another identity’s statu
  await render();await render(false);await render();expect(mocks.status).toHaveBeenCalledTimes(2)
  mocks.user={id:'ordinary'};mocks.status.mockResolvedValue({premium:false,signedIn:true,manageable:false,admin:false});await render()
  expect(document.body.textContent).toContain('Upgrade to AWM+');expect(button('Go to Profile')).toBeUndefined()
+})
+it('reopens instantly from the cached snapshot while still re-verifying in the background',async()=>{
+ await render()
+ let finish!:(value:typeof active)=>void
+ mocks.status.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
+ await render(false);await render()
+ expect(document.body.textContent).toContain('Your AWM Plus membership is active.')
+ expect(mocks.status).toHaveBeenCalledTimes(2)
+ await act(async()=>finish({...active,premium:false}))
+ expect(document.body.textContent).toContain('Upgrade to AWM+')
 })
 it('shows errors instead of a spinner and can retry successfully',async()=>{
  mocks.status.mockRejectedValueOnce(new Error('network'));await render()

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Box, Button, ButtonGroup, Divider, Paper, Typography, useMediaQuery } from '@mui/material'
-import { ChevronLeft, ChevronRight, MenuBook, Settings, ViewAgenda } from '@mui/icons-material'
+import { ChevronLeft, ChevronRight, Settings } from '@mui/icons-material'
 import { HtmlTooltip, MobileDefinitionPopover, WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
 import type { PublicBookBlock, PublicBookToken } from '@/app/actions/books'
 import { groupChapterBlocks } from '@/app/lib/bookParagraphs'
@@ -288,7 +288,7 @@ export default function ChapterReader({
     window.dispatchEvent(new Event('awm-book-word-help-change'))
   }
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const view = useSyncExternalStore(subscribeToReaderView, getReaderViewSnapshot, () => 'lines')
+  const view = useSyncExternalStore(subscribeToReaderView, getReaderViewSnapshot, () => 'lines' as ReaderView)
   const textScale = useSyncExternalStore(subscribeToTextScale, getTextScaleSnapshot, () => DEFAULT_BOOK_TEXT_SCALE)
   const readerFont = useSyncExternalStore(subscribeToReaderFont, getReaderFontSnapshot, () => DEFAULT_BOOK_READER_FONT)
   const language = useSyncExternalStore(subscribeToReaderLanguage, getReaderLanguageSnapshot, () => initialLanguage ?? DEFAULT_BOOK_READER_LANGUAGE)
@@ -397,11 +397,9 @@ export default function ChapterReader({
     }
   }
 
-  const mobileAudioLayout = mobileWordPopup
   const selectedAudio = audio.find(item => item.language === language)
   const renderReader = ({ button, player }: { button: ReactNode; player: ReactNode }) => (
     <>
-      {mobileAudioLayout && button && <Box data-reader-mobile-audio sx={{ mb: 1.5 }}>{button}</Box>}
       <BookReaderSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -411,10 +409,8 @@ export default function ChapterReader({
         onReaderFontChange={selectReaderFont}
         textScale={textScale}
         onTextScaleChange={setReaderTextScale}
-        bookSlug={bookSlug}
-        chapterSlug={chapterSlug}
-        language={language}
-        languageLabel={language === 'ar' ? 'Arabic' : 'English'}
+        view={view}
+        onViewChange={selectView}
       />
       <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', overflow: 'hidden' }}>
       <Box data-reader-heading sx={{ px: { xs: 2, md: 4 }, py: { xs: 2.25, md: 2.75 }, bgcolor: '#0e2e1f' }}>
@@ -427,44 +423,30 @@ export default function ChapterReader({
             <Typography component="h1" sx={{ color: '#fff', fontFamily: 'var(--font-heading)', fontSize: { xs: 24, md: 31 }, lineHeight: 1.15, fontWeight: 600 }}>
               {chapterTitle}
             </Typography>
-            {!mobileAudioLayout && button}
             </Box>
           </Box>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 1 }}>
+            {/* Audio + Settings joined as one pill; the reading-view toggle
+               lives in the settings dialog. */}
             <ButtonGroup
-              aria-label="Reading view"
+              aria-label="Reader controls"
               sx={{
-                bgcolor: 'transparent',
-                borderRadius: '8px',
-                width: '100%', maxWidth: 430,
-                '& .MuiButton-root': { whiteSpace: 'nowrap', minWidth: 'auto', px: { xs: 0.75, md: 1.6 }, fontSize: { xs: 11, md: 13 }, minHeight: 44, flex: 1, '& .MuiButton-startIcon': { mr: 0.5, ml: 0 } },
+                borderRadius: '9999px',
+                width: 'min(100%, 280px)',
+                maxWidth: '100%',
+                '& .MuiButton-root': { flex: '1 1 0%', minWidth: 0, minHeight: 44, px: 2, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, whiteSpace: 'nowrap', '& .MuiButton-startIcon': { mr: 0.5, ml: 0 } },
               }}
             >
+              {button}
               <Button
-                onClick={() => selectView('lines')}
-                startIcon={<ViewAgenda sx={{ fontSize: 17 }} />}
-                aria-pressed={view === 'lines'}
-                sx={{ color: view === 'lines' ? '#0e2e1f' : '#fff', bgcolor: view === 'lines' ? '#d4a843' : 'transparent', borderColor: 'rgba(255,255,255,0.25)!important', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { bgcolor: view === 'lines' ? '#d4a843' : 'rgba(255,255,255,0.1)' } }}
+                onClick={() => setSettingsOpen(true)}
+                startIcon={<Settings sx={{ fontSize: 17 }} />}
+                aria-expanded={settingsOpen}
+                sx={{ color: { xs: 'var(--awm-bark)', md: '#fff' }, bgcolor: { xs: 'var(--awm-white)', md: 'transparent' }, borderColor: { xs: 'var(--awm-gold)', md: 'rgba(255,255,255,.25)' }, '&:hover': { bgcolor: { xs: 'var(--awm-white)', md: 'rgba(255,255,255,0.1)' } } }}
               >
-                Line by line
+                Settings
               </Button>
-              <Button
-                onClick={() => selectView('book')}
-                startIcon={<MenuBook sx={{ fontSize: 17 }} />}
-                aria-pressed={view === 'book'}
-                sx={{ color: view === 'book' ? '#0e2e1f' : '#fff', bgcolor: view === 'book' ? '#d4a843' : 'transparent', borderColor: 'rgba(255,255,255,0.25)!important', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { bgcolor: view === 'book' ? '#d4a843' : 'rgba(255,255,255,0.1)' } }}
-              >
-                Book view
-              </Button>
-            <Button
-              onClick={() => setSettingsOpen(true)}
-              startIcon={<Settings sx={{ fontSize: 17 }} />}
-              aria-expanded={settingsOpen}
-              sx={{ color: '#fff', bgcolor: 'transparent', borderColor: 'rgba(255,255,255,0.25)!important', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
-            >
-              Settings
-            </Button>
             </ButtonGroup>
 
           </Box>
@@ -533,9 +515,9 @@ export default function ChapterReader({
                 aria-label="Previous Page"
                 onClick={() => goToPage(page - 1)}
                 disabled={page <= 1}
-                startIcon={<ChevronLeft />}
+                startIcon={<ChevronLeft sx={{ display: { xs: 'none', md: 'inline-flex' } }} />}
                 variant="outlined"
-                sx={{ minHeight: 44, px: { xs: 1.5, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, borderColor: 'rgba(44,26,14,0.15)', color: 'var(--awm-bark)', '&:hover': { borderColor: 'var(--awm-gold)', background: 'color-mix(in srgb, var(--awm-gold) 6%, transparent)' } }}
+                sx={{ minHeight: 44, px: { xs: 1.5, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, borderColor: 'rgba(44,26,14,0.15)', color: 'var(--awm-bark)', '&:hover': { borderColor: 'var(--awm-gold)', background: 'color-mix(in srgb, var(--awm-gold) 6%, transparent)' }, '&.Mui-disabled': { color: 'var(--awm-muted-light)', borderColor: 'color-mix(in srgb, var(--awm-muted) 40%, transparent)' } }}
               >
                 Previous
               </Button>
@@ -546,9 +528,9 @@ export default function ChapterReader({
                 aria-label="Next Page"
                 onClick={() => goToPage(page + 1)}
                 disabled={page >= totalPages}
-                endIcon={<ChevronRight />}
+                endIcon={<ChevronRight sx={{ display: { xs: 'none', md: 'inline-flex' } }} />}
                 variant="contained"
-                sx={{ minHeight: 44, px: { xs: 1.5, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, bgcolor: '#b8860b', color: '#fff', boxShadow: 'none', '&:hover': { bgcolor: '#946c08', boxShadow: 'none' }, '&:disabled': { bgcolor: 'rgba(44,26,14,0.12)', color: 'rgba(44,26,14,0.3)' } }}
+                sx={{ minHeight: 44, px: { xs: 1.5, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, bgcolor: '#b8860b', color: '#fff', boxShadow: 'none', '&:hover': { bgcolor: '#946c08', boxShadow: 'none' }, '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--awm-muted) 28%, transparent)', color: 'var(--awm-muted-light)' } }}
               >
                 Next
               </Button>}
@@ -565,6 +547,14 @@ export default function ChapterReader({
     </>
   )
   return selectedAudio
-    ? <ChapterAudioPlayer key={`${selectedAudio.chapterId}/${selectedAudio.language}`} audio={selectedAudio} chapterTitle={chapterTitle} label={selectedAudio.language === language ? 'Play Audio' : `Play Audio (${selectedAudio.language === 'en' ? 'English' : 'Arabic'})`} render={renderReader} />
+    ? <ChapterAudioPlayer
+        key={`${selectedAudio.chapterId}/${selectedAudio.language}`}
+        audio={selectedAudio}
+        chapterTitle={chapterTitle}
+        audioLanguages={audio.map(item => item.language)}
+        language={language}
+        onLanguageChange={selectLanguage}
+        render={renderReader}
+      />
     : renderReader({ button: null, player: null })
 }

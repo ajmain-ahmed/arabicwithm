@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
 }))
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => ({ user: mocks.user, session: null, loading: false }) }))
 vi.mock('@/app/components/PremiumPrompt', () => ({ default: ({ open }: { open: boolean }) => { mocks.promptOpen = open; return open ? <div data-premium-prompt /> : null } }))
+vi.mock('@/app/lib/premiumStatusCache', () => ({ getPremiumStatus: () => Promise.resolve(null) }))
 vi.mock('next/dynamic', () => ({
   default: (loader: () => Promise<{ default: React.ComponentType<Record<string, unknown>> }>) => {
     const Lazy = (props: Record<string, unknown>) => {

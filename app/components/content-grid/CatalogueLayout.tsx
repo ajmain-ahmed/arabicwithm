@@ -48,7 +48,7 @@ export default function CatalogueLayout({
         pb: { xs: 2, md: 8 },
       }}
     >
-      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
+      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 3, md: 4 } }}>
         {breadcrumbs}
 
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1.5, mb: { xs: 1.5, md: 3 } }}>

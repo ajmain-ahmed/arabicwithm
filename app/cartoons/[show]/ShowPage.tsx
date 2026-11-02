@@ -49,6 +49,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
   const router = useRouter()
   const { user } = useAuth()
   const [activeLevel, setActiveLevel] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingEpisode, setEditingEpisode] = useState<EpisodeMeta | undefined>(undefined)
@@ -105,11 +106,42 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
   const LEVELS = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
   const filteredEpisodes = useMemo(() => {
-    if (!activeLevel) return episodes
-    return episodes.filter((e) => e.level === activeLevel)
-  }, [episodes, activeLevel])
+    const query = searchQuery.trim().toLowerCase()
+    return episodes.filter((e) => {
+      if (activeLevel && e.level !== activeLevel) return false
+      if (query && !e.title.toLowerCase().includes(query)) return false
+      return true
+    })
+  }, [episodes, activeLevel, searchQuery])
 
-  const activeFilterCount = activeLevel ? 1 : 0
+  const activeFilterCount = (activeLevel ? 1 : 0) + (searchQuery.trim() ? 1 : 0)
+
+  /* Compact pill sized for the filter row (mobile) and the result row
+     (desktop), where the episode count used to sit. */
+  const myListButton = (
+    <Button
+      onClick={() => void toggleMyList()}
+      startIcon={inMyList
+        ? <BookmarkOutlined sx={{ fontSize: 17 }} />
+        : <BookmarkAddOutlined sx={{ fontSize: 17 }} />}
+      variant="contained"
+      sx={{
+        flexShrink: 0,
+        height: 36,
+        px: 1.75,
+        borderRadius: '9999px',
+        fontSize: 12.5,
+        fontWeight: 700,
+        textTransform: 'none',
+        bgcolor: '#14532d',
+        color: '#fff',
+        border: '1px solid rgba(155,213,181,0.25)',
+        '&:hover': { bgcolor: '#1a6b3a' },
+      }}
+    >
+      {inMyList ? 'In My List' : 'Add to List'}
+    </Button>
+  )
 
   return (
     <Box
@@ -135,7 +167,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
         }}
       >
         {/* ── Content Area ── */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 3 }, pt: { xs: 3, md: 4 } }}>
           <Box
             sx={{
               display: 'flex',
@@ -149,9 +181,6 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
               <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 27, md: 38 }, fontWeight: 600, color: BARK, lineHeight: 1.12 }}>{show.title}</Typography>
               {show.description && <Typography sx={{ display: { xs: 'none', sm: '-webkit-box' }, mt: 0.5, maxWidth: 720, color: MUTED, fontFamily: 'var(--font-sans), sans-serif', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{show.description}</Typography>}
             </Box>
-            {user && (
-              <Button onClick={() => void toggleMyList()} startIcon={inMyList ? <BookmarkOutlined /> : <BookmarkAddOutlined />} variant="contained" sx={{ flexShrink: 0, alignSelf: { xs: 'flex-start', sm: 'auto' }, bgcolor: '#14532d', color: '#fff', borderRadius: '9999px', px: { xs: 1.5, sm: 2.25 }, textTransform: 'none', fontWeight: 700, border: '1px solid rgba(155,213,181,0.25)', '&:hover': { bgcolor: '#1a6b3a' }, '@media (max-width: 359.95px)': { width: '100%', alignSelf: 'stretch' } }}>{inMyList ? 'In My List' : 'Add to My List'}</Button>
-            )}
           </Box>
           {/* Breadcrumbs */}
           <Breadcrumbs
@@ -220,9 +249,11 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
               </Box>
             )}
           </Button>
-          <Typography sx={{ fontSize: 13, color: MUTED }}>
-            {filteredEpisodes.length} {filteredEpisodes.length === 1 ? 'episode' : 'episodes'}
-          </Typography>
+          {user ? myListButton : (
+            <Typography sx={{ fontSize: 13, color: MUTED }}>
+              {filteredEpisodes.length} {filteredEpisodes.length === 1 ? 'episode' : 'episodes'}
+            </Typography>
+          )}
         </Box>
 
         {filteredEpisodes.length === 0 ? (
@@ -231,7 +262,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
               {episodes.length === 0 ? 'No episodes yet' : 'No episodes match your filters'}
             </Typography>
             <Typography sx={{ fontSize: { xs: 13, md: 14 }, color: MUTED, mb: 2 }}>
-              {episodes.length === 0 ? 'Check back soon for new episodes.' : 'Try adjusting your level selection.'}
+              {episodes.length === 0 ? 'Check back soon for new episodes.' : 'Try adjusting your filters or search.'}
             </Typography>
           </Box>
         ) : (
@@ -253,17 +284,22 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                   setActiveCategory={() => {}}
                   activeLevel={activeLevel}
                   setActiveLevel={setActiveLevel}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  searchPlaceholder="Search episodes"
                 />
               </Box>
             </Box>
 
             {/* Episode Grid */}
             <Box sx={{ flex: 1, minWidth: 0 }}>
-              {/* Desktop result count */}
-              <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-end', mb: 2 }}>
-                <Typography sx={{ fontSize: 13, color: MUTED }}>
-                  {filteredEpisodes.length} {filteredEpisodes.length === 1 ? 'episode' : 'episodes'}
-                </Typography>
+              {/* Desktop result row: My List toggle (signed in) or count (guests) */}
+              <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'flex-end', alignItems: 'center', mb: 2 }}>
+                {user ? myListButton : (
+                  <Typography sx={{ fontSize: 13, color: MUTED }}>
+                    {filteredEpisodes.length} {filteredEpisodes.length === 1 ? 'episode' : 'episodes'}
+                  </Typography>
+                )}
               </Box>
 
               <EpisodeEditDialog
@@ -402,6 +438,9 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
           setActiveCategory={() => {}}
           activeLevel={activeLevel}
           setActiveLevel={setActiveLevel}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          searchPlaceholder="Search episodes"
           onMobileClose={() => setFilterDrawerOpen(false)}
           hideTitle
         />

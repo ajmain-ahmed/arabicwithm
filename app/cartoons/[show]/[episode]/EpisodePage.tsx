@@ -21,12 +21,12 @@ import {
   Divider,
   useMediaQuery,
   Chip,
-  IconButton,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, Fullscreen, KeyboardArrowLeft, KeyboardArrowRight, PlayArrow, PsychologyOutlined, Refresh, Settings as SettingsIcon, SpaceBar } from '@mui/icons-material'
+import { ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, KeyboardArrowLeft, KeyboardArrowRight, PlayArrow, PsychologyOutlined, Refresh, Settings as SettingsIcon, SpaceBar } from '@mui/icons-material'
 import { ContentCard } from '@/app/components/content-grid'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { stripDiacritics } from '@/app/lib/arabic'
@@ -41,7 +41,6 @@ import {
 import { type ShowRow } from '@/app/actions/admin'
 import { fetchShowsForEpisodeEdit } from '@/app/actions/cartoons'
 import { HtmlTooltip, MobileDefinitionSheet, WordTooltip } from '@/app/components/vocab-tooltip'
-import CefrChip from '@/app/components/CefrChip'
 import { SettingsDialog } from '@/app/components/settings-controls'
 import { useIsAdmin } from '@/app/lib/useIsAdmin'
 import { usePlayerStore } from '@/store/playerStore'
@@ -672,7 +671,7 @@ const ScriptBlockView = React.memo(function ScriptBlockView({
 /* ─────────────────────────────────────────────
    RelatedRail — YouTube-style "Up next" list (desktop)
 ───────────────────────────────────────────── */
-type RelatedEpisode = EpisodeMeta & { showSlug: string }
+type RelatedEpisode = EpisodeMeta & { showSlug: string; showTitle?: string }
 
 function RelatedRail({ related, currentSlug, variant }: { related: RelatedEpisode[]; currentSlug: string; variant: 'rail' | 'strip' }) {
   const isStrip = variant === 'strip'
@@ -782,6 +781,91 @@ function RelatedRail({ related, currentSlug, variant }: { related: RelatedEpisod
 }
 
 /* ─────────────────────────────────────────────
+   UpNextList — compact mobile "More" tab: the Up
+   next queue as playlist rows (small thumbnail,
+   episode title, show title), YouTube-style.
+───────────────────────────────────────────── */
+function UpNextList({ related }: { related: RelatedEpisode[] }) {
+  if (related.length === 0) {
+    return (
+      <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(245,237,224,0.6)', px: 0.5 }}>
+        No other episodes in this show yet.
+      </Typography>
+    )
+  }
+  return (
+    <Box component="section" aria-label="Up next" sx={{ display: 'flex', flexDirection: 'column' }}>
+      {related.map((item) => (
+        <Box
+          key={item.id}
+          component={Link}
+          href={`/cartoons/${item.showSlug}/${encodeURIComponent(item.slug)}`}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.25,
+            px: 0.75,
+            py: 1,
+            borderRadius: '8px',
+            textDecoration: 'none',
+            color: 'inherit',
+            transition: 'background 0.15s',
+            '&:hover': { background: 'rgba(44,26,14,0.05)' },
+            '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 1 },
+          }}
+        >
+          <Box
+            component="img"
+            src={item.cover ?? ''}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            onError={(event) => { event.currentTarget.style.visibility = 'hidden' }}
+            sx={{
+              width: 138,
+              aspectRatio: '16 / 9',
+              flexShrink: 0,
+              objectFit: 'cover',
+              borderRadius: '6px',
+              bgcolor: 'rgba(44,26,14,0.12)',
+            }}
+          />
+          <Box sx={{ minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.25 }}>
+            <Typography
+              sx={{
+                fontFamily: 'var(--font-sans), sans-serif',
+                fontSize: 13.5,
+                fontWeight: 600,
+                lineHeight: 1.3,
+                color: 'var(--awm-bark)',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+              }}
+            >
+              {item.title}
+            </Typography>
+            <Typography
+              sx={{
+                fontFamily: 'var(--font-sans), sans-serif',
+                fontSize: 12,
+                color: 'var(--awm-muted)',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
+              {item.showTitle}
+            </Typography>
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  )
+}
+
+/* ─────────────────────────────────────────────
    Main Component
 ───────────────────────────────────────────── */
 export default function EpisodePage({
@@ -791,7 +875,7 @@ export default function EpisodePage({
   episode: EpisodeFull
   showTitle: string
   initialStart?: number
-  related?: Array<EpisodeMeta & { showSlug: string }>
+  related?: Array<EpisodeMeta & { showSlug: string; showTitle?: string }>
 }) {
   const router = useRouter()
   const isAdmin = useIsAdmin()
@@ -849,8 +933,6 @@ export default function EpisodePage({
     window.addEventListener('resize', measure);
     return () => window.removeEventListener('resize', measure);
   }, []);
-
-  const mobileVideoContainerRef = useRef<HTMLDivElement | null>(null)
 
   const activeBlockRef = useRef<HTMLDivElement | null>(null)
   const skipInitialScroll = useRef(true)
@@ -1020,11 +1102,6 @@ export default function EpisodePage({
       return next
     })
   }, [])
-  const openMobileVideoFullscreen = useCallback(() => {
-    const container = mobileVideoContainerRef.current
-    if (!container?.requestFullscreen) return
-    void container.requestFullscreen().catch(() => undefined)
-  }, [])
 
   return (
     <>
@@ -1172,17 +1249,14 @@ export default function EpisodePage({
             {isMobile && (
               <Box sx={{ position: 'sticky', top: `${navbarHeight}px`, zIndex: 22, mb: 1.25, mx: -2.5, width: 'calc(100% + 40px)', bgcolor: '#000', boxShadow: '0 8px 24px color-mix(in srgb, var(--awm-bark) 20%, transparent)' }}>
                 <Box
-                  ref={mobileVideoContainerRef}
                   sx={{
                     width: '100%',
                     height: 'clamp(200px, 36dvh, 340px)',
                     overflow: 'hidden',
                     bgcolor: '#000',
                     position: 'relative',
-                    '&:fullscreen': { width: '100vw', height: '100vh', minHeight: '100vh' },
                   }}
                 >
-                  <IconButton onClick={openMobileVideoFullscreen} aria-label="Open video full screen" sx={{ position: 'absolute', zIndex: 4, top: 8, right: 8, width: 38, height: 38, bgcolor: 'rgba(0,0,0,.56)', color: '#fff', border: '1px solid rgba(255,255,255,.25)', '&:hover': { bgcolor: 'rgba(0,0,0,.76)' } }}><Fullscreen /></IconButton>
                   {videoSources.length > 1 && <Box sx={{ position: 'absolute', zIndex: 4, left: 8, bottom: 8, right: 54, display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>{videoSources.map((source) => <Chip key={source.provider} label={source.label} clickable size="small" onClick={() => setSelectedProvider(source.provider)} sx={{ height: 25, bgcolor: source.provider === selectedSource?.provider ? 'var(--awm-gold-light)' : 'rgba(0,0,0,.62)', color: source.provider === selectedSource?.provider ? '#0e2e1f' : '#fff', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }} />)}</Box>}
                   {selectedSource?.provider !== 'youtube' && selectedSource ? (
                     <SocialVideoEmbed source={selectedSource} title={episode.title} />
@@ -1253,7 +1327,7 @@ export default function EpisodePage({
                 }}
               >
                 <Tab label="Script" />
-                <Tab label={isMobileViewport ? 'Vocab' : 'Vocabulary List'} />
+                <Tab label="More" />
                 {isMobileViewport && <Tab label="Settings" />}
                 {isMobileViewport && <Tab label="Memory" />}
               </Tabs>
@@ -1340,92 +1414,9 @@ export default function EpisodePage({
                 </Box>
               )}
 
-              {/* ── Vocabulary List Tab (mobile only) ── */}
+              {/* ── More Tab: compact Up next queue (mobile only) ── */}
               {isMobileViewport && tab === 1 && (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 1 } }}>
-                  {episode.vocabList.length === 0 ? (
-                    <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No vocabulary list found.</Typography>
-                  ) : (
-                    episode.vocabList.map((row) => (
-                      <Box
-                        key={row.number}
-                        sx={{
-                          display: 'flex',
-                          flexDirection: { xs: 'column', md: 'row' },
-                          alignItems: { xs: 'flex-start', md: 'center' },
-                          flexWrap: 'wrap',
-                          gap: { xs: 1, sm: 2 },
-                          py: { xs: 2, sm: 1.25 },
-                          px: { xs: 2, sm: 2 },
-                          borderRadius: { xs: '12px', sm: '10px' },
-                          border: '1px solid rgba(44,26,14,0.08)',
-                          background: 'var(--awm-white)',
-                          boxShadow: { xs: '0 2px 8px rgba(44,26,14,0.04)', sm: 'none' },
-                          transition: 'background 0.15s',
-                          '&:hover': { background: 'color-mix(in srgb, var(--awm-gold) 8%, var(--awm-white))' },
-                        }}
-                      >
-                        {/* CEFR chip */}
-                        {row.cefr && (
-                          <CefrChip
-                            level={row.cefr}
-                            size="small"
-                            sx={{
-                              fontWeight: 600,
-                              fontSize: `calc(0.65rem * ${textScale})`,
-                              minWidth: 40,
-                              flexShrink: 0,
-                            }}
-                          />
-                        )}
-
-                        {/* Arabic */}
-                        <Typography
-                          sx={{
-                            fontFamily: textFontFamily,
-                            fontSize: `calc(1.25rem * ${textScale})`,
-                            fontWeight: 700,
-                            color: 'var(--awm-bark)',
-                            flex: { md: '0 0 auto' },
-                            minWidth: { md: 100 },
-                            textAlign: 'right',
-                            direction: 'rtl',
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          {showDiacritics ? row.arabic : stripDiacritics(row.arabic)}
-                        </Typography>
-
-                        {/* Transliteration */}
-                        <Typography
-                          sx={{
-                            fontFamily: 'var(--font-sans), sans-serif',
-                            fontSize: `calc(0.82rem * ${textScale})`,
-                            color: 'var(--muted)',
-                            flex: { md: '0 0 auto' },
-                            minWidth: { md: 70 },
-                          }}
-                        >
-                          {row.transliteration}
-                        </Typography>
-
-                        {/* English */}
-                        <Typography
-                          sx={{
-                            fontFamily: 'var(--font-sans), sans-serif',
-                            fontSize: `calc(0.9rem * ${textScale})`,
-                            color: 'var(--bark)',
-                            flex: 1,
-                            minWidth: { xs: '100%', md: 0 },
-                            textAlign: { xs: 'right', md: 'left' },
-                          }}
-                        >
-                          {row.english}
-                        </Typography>
-                      </Box>
-                    ))
-                  )}
-                </Box>
+                <UpNextList related={related} />
               )}
 
               {/* ── Grammar Points Tab (mobile only) ── */}
