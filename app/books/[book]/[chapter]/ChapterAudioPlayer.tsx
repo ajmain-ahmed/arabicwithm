@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
 import { Alert, Box, Button, ButtonGroup, CircularProgress, Collapse, IconButton, Paper, Slider, Typography } from '@mui/material'
-import { ExpandLess, Forward10Rounded, PauseRounded, PlayArrowRounded, RefreshRounded, Replay10Rounded, VolumeUp } from '@mui/icons-material'
+import { Forward10Rounded, PauseRounded, PlayArrowRounded, RefreshRounded, Replay10Rounded, VolumeUp } from '@mui/icons-material'
 import { requestChapterAudioResult, saveAudioProgress, type ChapterAudioPlayback, type ChapterAudioSummary } from '@/app/actions/audiobooks'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import { useAuth } from '@/app/AuthContext'
@@ -47,12 +47,12 @@ interface Props {
 }
 
 const CONTROL_BUTTON_SX = {
-  width: 36,
-  height: 36,
+  width: { xs: 28, md: 36 },
+  height: { xs: 28, md: 36 },
   flex: '0 0 auto',
   color: 'inherit',
   border: '1px solid',
-  borderColor: { xs: 'rgba(184,134,11,0.5)', md: 'rgba(255,255,255,0.3)' },
+  borderColor: 'rgba(184,134,11,0.5)',
   '&.Mui-disabled': { color: 'inherit', opacity: 0.45 },
 } as const
 
@@ -60,10 +60,16 @@ const CONTROL_BUTTON_SX = {
 export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play Audio', render, dedicated, audioLanguages, language, onLanguageChange }: Props) {
   const { user, loading: authLoading } = useAuth()
   const authKey = user?.id ?? 'signed-out'
-  return <AudioSession key={`${authKey}:${audio.chapterId}:${audio.language}`} audio={audio} chapterTitle={chapterTitle} label={label} render={render} dedicated={dedicated} audioLanguages={audioLanguages} language={language} onLanguageChange={onLanguageChange} authKey={authKey} signedIn={Boolean(user)} authLoading={Boolean(authLoading)} />
+  /* Expanded lives here, above the AudioSession remount boundary. The session
+     key intentionally excludes the narration language: a language switch
+     resets playback via BOOK_LANGUAGE_STOP_EVENT, and remounting here would
+     tear down (and visibly replay) the whole reader chrome, settings dialog
+     included. */
+  const [expanded, setExpanded] = useState(false)
+  return <AudioSession key={`${authKey}:${audio.chapterId}`} audio={audio} chapterTitle={chapterTitle} label={label} render={render} dedicated={dedicated} audioLanguages={audioLanguages} language={language} onLanguageChange={onLanguageChange} expanded={expanded} onExpandedChange={setExpanded} authKey={authKey} signedIn={Boolean(user)} authLoading={Boolean(authLoading)} />
 }
 
-function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLanguages, language, onLanguageChange, authKey, signedIn, authLoading }: Props & { authKey: string; signedIn: boolean; authLoading: boolean }) {
+function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLanguages, language, onLanguageChange, expanded, onExpandedChange, authKey, signedIn, authLoading }: Props & { expanded: boolean; onExpandedChange: (next: boolean) => void; authKey: string; signedIn: boolean; authLoading: boolean }) {
   const [source, setSource] = useState<{ authKey: string; playback: ChapterAudioPlayback; expiresAt: number | null } | null>(null)
   const playback = source?.authKey === authKey ? source.playback : null
   const [position, setPosition] = useState(0)
@@ -72,7 +78,6 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
   const [playing, setPlaying] = useState(false)
   const [error, setError] = useState('')
   const [upgrade, setUpgrade] = useState(false)
-  const [expanded, setExpanded] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const videoRef = useRef<VideoControls | null>(null)
   const lastSavedRef = useRef(0)
@@ -80,6 +85,10 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
   const playRequestedRef = useRef(false)
   const requestRef = useRef({ revision: 0 })
   const busyRef = useRef(false)
+
+  /* Without a per-language remount, the duration initializer can't re-run —
+     follow the audio summary instead until playback loads real metadata. */
+  useEffect(() => { setDuration(audio.durationSeconds ?? 0) }, [audio.language, audio.durationSeconds])
 
   useEffect(() => {
     const request = requestRef.current
@@ -156,6 +165,12 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
     element.currentTime = Number.isFinite(element.duration) ? Math.min(Math.max(0, target), element.duration) : Math.max(0, target)
   }
 
+  function seekTo(seconds: number) {
+    if (audioRef.current) audioRef.current.currentTime = seconds
+    videoRef.current?.seek(seconds)
+    setPosition(seconds)
+  }
+
   useEffect(() => {
     if (!playback || !('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return
     const metadata = new MediaMetadata({ title: chapterTitle, artist: audio.narrator ?? 'ArabicWithM', album: 'ArabicWithM Audiobooks' })
@@ -177,9 +192,17 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
         sx={{ minHeight: 44, width: '100%', px: 2, color: 'var(--awm-white)', bgcolor: 'var(--awm-forest)', textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
         {authLoading ? 'Checking account…' : loading ? 'Preparing audio…' : playing ? 'Pause Audio' : label}
       </Button>
-    : <Button data-reader-audio-trigger aria-expanded={expanded} aria-controls="reader-audio-panel" disabled={loading || authLoading} onClick={() => setExpanded(value => !value)}
+    : <Button data-reader-audio-trigger aria-expanded={expanded} aria-controls="reader-audio-panel" disabled={loading || authLoading} onClick={() => onExpandedChange(!expanded)}
         startIcon={<VolumeUp />}
-        sx={{ minHeight: 44, px: 2, color: { xs: 'var(--awm-bark)', md: '#fff' }, bgcolor: { xs: 'var(--awm-white)', md: 'rgba(255,255,255,.08)' }, border: '1px solid', borderColor: { xs: 'var(--awm-gold)', md: 'rgba(255,255,255,.25)' }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif' }}>
+        sx={{
+          minHeight: 44, px: 2,
+          /* Gold highlight while the control panel is open. */
+          color: expanded ? '#fff' : { xs: 'var(--awm-bark)', md: '#fff' },
+          bgcolor: expanded ? '#b8860b' : { xs: 'var(--awm-white)', md: 'rgba(255,255,255,.08)' },
+          border: '1px solid',
+          borderColor: expanded ? '#b8860b' : { xs: 'var(--awm-gold)', md: 'rgba(255,255,255,.25)' },
+          textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif',
+        }}>
         {authLoading ? 'Checking account…' : 'Audio'}
       </Button>
 
@@ -223,31 +246,48 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
         {error && <Alert severity="info" action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}>Retry audio</Button>}>{error}</Alert>}
       </Paper> : null
     : <Collapse in={expanded} timeout={260} unmountOnExit={false}>
-        {/* Pill panel that unfolds under the reader controls; the media
-           elements live inside the collapse too, so playback survives the
-           panel closing (Collapse keeps its children mounted). */}
+        {/* Compact control bar under the reader controls. Mobile: two tidy
+           rows (transport + slider, then skip/time/language); desktop: one
+           translucent pill. Media lives inside the collapse so playback
+           survives the panel closing (Collapse keeps children mounted). */}
         <Box
           id="reader-audio-panel"
           component="section"
           aria-label="Chapter audio"
           sx={{
-            mt: 1.5, mb: 0.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1,
-            px: 1.25, py: 1, borderRadius: '9999px',
-            color: { xs: 'var(--awm-bark)', md: '#fff' },
-            bgcolor: { xs: 'var(--awm-white)', md: 'rgba(255,255,255,.08)' },
-            border: '1px solid', borderColor: { xs: 'var(--awm-gold)', md: 'rgba(255,255,255,.25)' },
+            mt: 1.5, mb: 0.5, mx: { md: 1.5 }, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { xs: 0.75, md: 1.25 },
+            rowGap: { xs: 1.5, md: 1.25 },
+            justifyContent: { xs: 'space-between', md: 'flex-start' },
+            px: { xs: 1.5, md: 1.25 }, py: { xs: 2, md: 1 }, borderRadius: { xs: '10px', md: '9999px' },
+            color: 'var(--awm-bark)',
+            bgcolor: 'var(--awm-white)',
+            border: '1px solid', borderColor: 'var(--awm-gold)',
           }}
         >
-          <IconButton aria-label={playing ? 'Pause audio' : 'Play audio'} onClick={togglePlayback} disabled={loading || authLoading} sx={CONTROL_BUTTON_SX}>
-            {loading ? <CircularProgress size={18} sx={{ color: 'currentColor' }} /> : playing ? <PauseRounded /> : <PlayArrowRounded />}
-          </IconButton>
-          <IconButton aria-label="Back 10 seconds" onClick={() => skipBy(-10)} disabled={!playback} sx={CONTROL_BUTTON_SX}><Replay10Rounded /></IconButton>
-          <IconButton aria-label="Forward 10 seconds" onClick={() => skipBy(10)} disabled={!playback} sx={CONTROL_BUTTON_SX}><Forward10Rounded /></IconButton>
-          <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, fontWeight: 600, minWidth: 84, textAlign: 'center' }}>
+          {/* Transport trio grouped as one control on mobile (contents on
+              desktop so each button joins the single pill row). */}
+          <Box sx={{ order: { xs: 4, md: 0 }, display: { xs: 'inline-flex', md: 'contents' }, gap: { xs: 1.5, md: 0 }, alignItems: 'center' }}>
+            <IconButton aria-label={playing ? 'Pause audio' : 'Play audio'} onClick={togglePlayback} disabled={loading || authLoading} sx={{ ...CONTROL_BUTTON_SX, order: { xs: 4, md: 1 } }}>
+              {loading ? <CircularProgress size={16} sx={{ color: 'currentColor' }} /> : playing ? <PauseRounded /> : <PlayArrowRounded />}
+            </IconButton>
+            <IconButton aria-label="Back 10 seconds" onClick={() => skipBy(-10)} disabled={!playback} sx={{ ...CONTROL_BUTTON_SX, order: { xs: 5, md: 2 } }}><Replay10Rounded /></IconButton>
+            <IconButton aria-label="Forward 10 seconds" onClick={() => skipBy(10)} disabled={!playback} sx={{ ...CONTROL_BUTTON_SX, order: { xs: 6, md: 3 } }}><Forward10Rounded /></IconButton>
+          </Box>
+          <Slider
+            aria-label="Audio position"
+            min={0}
+            max={duration || 1}
+            step={1}
+            value={Math.min(position, duration || 1)}
+            disabled={!playback || !duration}
+            onChange={(_, value) => seekTo(value as number)}
+            sx={{ order: { xs: 3, md: 4 }, mx: { xs: 1, md: 0 }, ml: { md: 2 }, flex: { xs: '1 1 100%', md: '1 1 210px' }, color: '#b8860b', py: { xs: 0.25, md: 0.5 }, '& .MuiSlider-thumb': { width: 14, height: 14 }, '& .MuiSlider-track, & .MuiSlider-rail': { height: 4 } }}
+          />
+          <Typography sx={{ order: { xs: 7, md: 5 }, ml: { xs: 'auto', md: 0 }, fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 11.5, md: 13 }, fontWeight: 600, minWidth: { xs: 68, md: 84 }, textAlign: 'center' }}>
             {formatTime(position)} / {formatTime(duration)}
           </Typography>
           {audioLanguages && audioLanguages.length > 1 && onLanguageChange && (
-            <ButtonGroup size="small" aria-label="Audio language" sx={{ ml: 'auto', width: 150, '& .MuiButton-root': { flex: '1 1 0%', minWidth: 0, px: 1, py: 0.75, fontSize: 12, lineHeight: 1.2, textTransform: 'none', textAlign: 'center', justifyContent: 'center' } }}>
+            <ButtonGroup size="small" aria-label="Audio language" sx={{ order: { xs: 1, md: 6 }, ml: 'auto', '& .MuiButton-root': { minWidth: 0, px: { xs: 1, md: 1.75 }, py: { xs: 0.3, md: 0.75 }, fontSize: { xs: 11, md: 13.5 }, lineHeight: 1.2, textTransform: 'none', whiteSpace: 'nowrap' } }}>
               {audioLanguages.map(value => (
                 <Button
                   key={value}
@@ -255,16 +295,13 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
                   aria-pressed={language === value}
                   aria-label={value === 'ar' ? 'Arabic audio' : 'English audio'}
                   variant={language === value ? 'contained' : 'outlined'}
-                  sx={{ color: language === value ? '#fff' : 'inherit', bgcolor: language === value ? '#b8860b' : 'transparent', borderColor: { xs: 'rgba(184,134,11,0.5)', md: 'rgba(255,255,255,0.35)' } }}
+                  sx={{ color: language === value ? '#fff' : 'inherit', bgcolor: language === value ? '#b8860b' : 'transparent', borderColor: 'rgba(184,134,11,0.5)' }}
                 >
                   {value === 'ar' ? 'العربية' : 'English'}
                 </Button>
               ))}
             </ButtonGroup>
           )}
-          <IconButton aria-label="Collapse audio controls" onClick={() => setExpanded(false)} sx={{ ...CONTROL_BUTTON_SX, ml: audioLanguages && audioLanguages.length > 1 ? 0 : 'auto' }}>
-            <ExpandLess />
-          </IconButton>
           {error && (
             <Box sx={{ flexBasis: '100%', minWidth: 0 }}>
               <Alert severity="info" sx={{ py: 0, alignItems: 'center' }} action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}>Retry audio</Button>}>{error}</Alert>

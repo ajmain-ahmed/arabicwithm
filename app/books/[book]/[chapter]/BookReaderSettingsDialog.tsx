@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Button, FormControlLabel, Switch, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Slider, Typography } from '@mui/material'
+import { Box, Button, Collapse, FormControlLabel, Switch, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Slider, Typography } from '@mui/material'
 import { Close, MenuBook, ViewAgenda } from '@mui/icons-material'
 import type { BookReaderFont } from '@/app/lib/bookReaderSettings'
 import {
@@ -26,6 +26,8 @@ export default function BookReaderSettingsDialog({
   onTextScaleChange,
   view,
   onViewChange,
+  language,
+  onLanguageChange,
 }: {
   open: boolean
   onClose: () => void
@@ -37,6 +39,8 @@ export default function BookReaderSettingsDialog({
   onTextScaleChange: (scale: number) => void
   view: 'lines' | 'book'
   onViewChange: (view: 'lines' | 'book') => void
+  language: 'ar' | 'en'
+  onLanguageChange: (language: 'ar' | 'en') => void
 }) {
   return (
     <Dialog
@@ -75,10 +79,29 @@ export default function BookReaderSettingsDialog({
               Book view
             </Button>
           </Box>
+          <Collapse in={view === 'book'} timeout={260}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, mt: 1 }}>
+              <Button
+                onClick={() => onLanguageChange('en')}
+                variant={language === 'en' ? 'contained' : 'outlined'}
+                aria-pressed={language === 'en'}
+                sx={{ minWidth: 0, color: language === 'en' ? '#fff' : 'var(--awm-bark)', bgcolor: language === 'en' ? '#b8860b' : 'transparent', borderColor: 'rgba(184,134,11,0.4)', borderRadius: '8px', textTransform: 'none', '&:hover': { bgcolor: language === 'en' ? '#966d09' : 'rgba(184,134,11,0.08)' } }}
+              >
+                English
+              </Button>
+              <Button
+                onClick={() => onLanguageChange('ar')}
+                variant={language === 'ar' ? 'contained' : 'outlined'}
+                aria-pressed={language === 'ar'}
+                sx={{ minWidth: 0, color: language === 'ar' ? '#fff' : 'var(--awm-bark)', bgcolor: language === 'ar' ? '#b8860b' : 'transparent', borderColor: 'rgba(184,134,11,0.4)', borderRadius: '8px', textTransform: 'none', '&:hover': { bgcolor: language === 'ar' ? '#966d09' : 'rgba(184,134,11,0.08)' } }}
+              >
+                Arabic
+              </Button>
+            </Box>
+          </Collapse>
         </Box>
         <Box>
           <FormControlLabel control={<Switch checked={wordHelp} onChange={(_, checked) => onWordHelpChange(checked)} />} label="Word hover help" />
-          <Typography variant="body2" color="text.secondary">Show word definitions and dotted underlines. Turn off for uninterrupted reading.</Typography>
         </Box>
         <Box sx={{ p: 2, border: '1px solid rgba(122,110,101,0.18)', borderRadius: '12px', bgcolor: 'rgba(122,110,101,0.04)' }}>
           <Typography sx={{ mb: 1.25, color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Box, Button, ButtonGroup, Divider, Paper, Typography, useMediaQuery } from '@mui/material'
 import { ChevronLeft, ChevronRight, Settings } from '@mui/icons-material'
-import { HtmlTooltip, MobileDefinitionPopover, WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
+import { HtmlTooltip, MobileDefinitionSheet, WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
 import type { PublicBookBlock, PublicBookToken } from '@/app/actions/books'
 import { groupChapterBlocks } from '@/app/lib/bookParagraphs'
 import { useAuth } from '@/app/AuthContext'
@@ -268,10 +268,13 @@ export default function ChapterReader({
   }, [user?.id, bookSlug])
   const mobileWordPopup = useMediaQuery('(max-width:899.95px)')
   const [selectedDefinition, setSelectedDefinition] = useState<{ entry: VocabEntry; anchor: HTMLElement } | null>(null)
-  const closeDefinition = useCallback(() => setSelectedDefinition(null), [])
+  const [definitionOpen, setDefinitionOpen] = useState(false)
+  const closeDefinition = useCallback(() => setDefinitionOpen(false), [])
+  const clearDefinition = useCallback(() => setSelectedDefinition(null), [])
   const openDefinition = useCallback((entry: VocabEntry, anchor: HTMLElement) => {
     dispatchWordLookup()
     setSelectedDefinition({ entry, anchor })
+    setDefinitionOpen(true)
   }, [])
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width:899.95px)')
@@ -411,9 +414,11 @@ export default function ChapterReader({
         onTextScaleChange={setReaderTextScale}
         view={view}
         onViewChange={selectView}
+        language={language}
+        onLanguageChange={selectLanguage}
       />
       <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', overflow: 'hidden' }}>
-      <Box data-reader-heading sx={{ px: { xs: 2, md: 4 }, py: { xs: 2.25, md: 2.75 }, bgcolor: '#0e2e1f' }}>
+      <Box data-reader-heading sx={{ px: { xs: 2, md: 4 }, py: { xs: 2.25, md: 2.75 }, bgcolor: '#0e2e1f', backgroundImage: `url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z' fill='%23d4a843' fill-opacity='.08'/%3E%3C/svg%3E")` }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
           <Box sx={{ textAlign: 'center', minWidth: 0 }}>
             <Typography sx={{ color: '#d4a843', fontFamily: 'var(--font-sans), sans-serif', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', mb: 0.45 }}>
@@ -494,10 +499,6 @@ export default function ChapterReader({
         </Box>
       ) : (
         <Box ref={contentRef} id="reader-content" data-reader-mode="book" sx={{ scrollMarginTop:'80px', px: { xs: 2.5, md: 7 }, py: { xs: 4, md: 7 }, background: 'var(--awm-white)' }}>
-          <ButtonGroup size="small" aria-label="Book view language" sx={{ display: 'flex', width: 'fit-content', mx: 'auto', mb: 3, '& .MuiButton-root': { minWidth: 82, textTransform: 'none', fontSize: 12 } }}>
-            <Button onClick={() => selectLanguage('en')} aria-pressed={language === 'en'} variant={language === 'en' ? 'contained' : 'outlined'} sx={{ bgcolor: language === 'en' ? '#0e2e1f' : 'transparent', color: language === 'en' ? '#fff' : 'var(--awm-bark)' }}>English</Button>
-            <Button onClick={() => selectLanguage('ar')} aria-pressed={language === 'ar'} variant={language === 'ar' ? 'contained' : 'outlined'} sx={{ bgcolor: language === 'ar' ? '#0e2e1f' : 'transparent', color: language === 'ar' ? '#fff' : 'var(--awm-bark)' }}>Arabic</Button>
-          </ButtonGroup>
           <Box lang={language} dir={language === 'ar' ? 'rtl' : 'ltr'} sx={{ maxWidth: 1120, mx: 'auto', fontFamily: language === 'ar' ? READER_FONT_FAMILIES[readerFont] : 'var(--font-sans), sans-serif', fontSize: { xs: (language === 'ar' ? 23 : 18) * textScale, md: (language === 'ar' ? 28 : 20) * textScale }, fontWeight: language === 'ar' ? 500 : 400, lineHeight: language === 'ar' ? 2.05 : 1.9, color: 'var(--awm-bark)', textAlign: language === 'ar' ? 'justify' : 'left', textAlignLast: language === 'ar' ? 'right' : 'auto', textJustify: 'inter-word' }}>
             {visibleParagraphs.map((paragraph, paragraphIndex) => (
               <Box component="p" key={paragraphIndex} sx={{ m: 0, '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
@@ -519,7 +520,7 @@ export default function ChapterReader({
                 variant="outlined"
                 sx={{ minHeight: 44, px: { xs: 1.5, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600, borderColor: 'rgba(44,26,14,0.15)', color: 'var(--awm-bark)', '&:hover': { borderColor: 'var(--awm-gold)', background: 'color-mix(in srgb, var(--awm-gold) 6%, transparent)' }, '&.Mui-disabled': { color: 'var(--awm-muted-light)', borderColor: 'color-mix(in srgb, var(--awm-muted) 40%, transparent)' } }}
               >
-                Previous
+                Prev
               </Button>
               <Typography aria-live="polite" sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 13.5 }, fontWeight: 600, color: 'var(--awm-muted)', minWidth: 84, textAlign: 'center' }}>
                 Page {page} of {totalPages}
@@ -538,17 +539,20 @@ export default function ChapterReader({
           )}</Box>
       </Paper>
       {page===totalPages&&<ChapterNavigation bookSlug={bookSlug} nextChapterSlug={nextChapterSlug}/>}
-      <MobileDefinitionPopover
-        anchor={mobileWordPopup ? selectedDefinition?.anchor ?? null : null}
+      <MobileDefinitionSheet
+        open={mobileWordPopup && definitionOpen}
         entry={selectedDefinition?.entry ?? null}
         onClose={closeDefinition}
+        onExited={clearDefinition}
         textScale={textScale}
       />
     </>
   )
   return selectedAudio
     ? <ChapterAudioPlayer
-        key={`${selectedAudio.chapterId}/${selectedAudio.language}`}
+        /* Keyed by chapter only: the narration-language switch happens inside
+           the panel, and the expanded Audio control must survive it. */
+        key={selectedAudio.chapterId}
         audio={selectedAudio}
         chapterTitle={chapterTitle}
         audioLanguages={audio.map(item => item.language)}

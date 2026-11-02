@@ -37,14 +37,16 @@ test('actual audio stops both ways and never starts the other language automatic
  await signIn(context,'premium');await page.setViewportSize({width:375,height:812});await page.goto('/books/test-book/chapter-1?lang=en')
  await page.getByRole('button',{name:'Settings',exact:true}).click()
  await page.getByRole('dialog').getByRole('button',{name:'Book view',exact:true}).click()
+ await page.getByRole('dialog').getByRole('button',{name:'English',exact:true}).click()
  await page.getByRole('button',{name:'Close reading settings',exact:true}).click()
- await page.getByRole('button',{name:'English',exact:true}).click()
  for(const language of ['Arabic','English']){
   await page.getByRole('button',{name:'Audio',exact:true}).click()
   await page.getByRole('button',{name:'Play audio',exact:true}).click()
   await expect.poll(()=>page.locator('audio').evaluate((el:HTMLAudioElement)=>el.paused)).toBe(false)
   await page.evaluate(()=>Object.assign(window,{__previousAudio:document.querySelector('audio')}))
-  await page.getByRole('button',{name:language,exact:true}).click()
+  await page.getByRole('button',{name:'Settings',exact:true}).click()
+  await page.getByRole('dialog').getByRole('button',{name:language,exact:true}).click()
+  await page.getByRole('button',{name:'Close reading settings',exact:true}).click()
   await expect.poll(()=>page.evaluate(()=>(window as unknown as {__previousAudio:HTMLAudioElement}).__previousAudio.paused)).toBe(true)
   await expect(page.locator('audio')).toHaveCount(0);await expect(page.getByRole('button',{name:'Audio',exact:true})).toBeVisible()
  }
