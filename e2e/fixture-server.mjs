@@ -101,6 +101,16 @@ function configureAudiobookAudit(format){
 }
 if(process.env.AWM_TEST_AUDIO_AUDIT==='1')configureAudiobookAudit()
 const cover = Buffer.from('UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA', 'base64')
+let failProfilePresets=false
+const presetImage=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGPY0cYNAANDAUoYZ+SRAAAAAElFTkSuQmCC','base64')
+const profilePresetObjects=new Map()
+function resetProfilePresets(){
+ profilePresetObjects.clear()
+ for(const name of ['fox','owl','tea','boat','scroll','lantern','oasis','cat','flower','bird'])profilePresetObjects.set(`profile-pictures/${name}.png`,{bytes:presetImage,type:'image/png'})
+ profilePresetObjects.set('profile-pictures/birds/nested.png',{bytes:presetImage,type:'image/png'})
+ for(const name of ['oasis','sea'])profilePresetObjects.set(`profile-banners/${name}.png`,{bytes:presetImage,type:'image/png'})
+}
+resetProfilePresets()
 const backend = https.createServer({ key: readFileSync(privateKey), cert: readFileSync(certificate) }, async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', webUrl)
   res.setHeader('Access-Control-Allow-Headers', 'authorization, apikey, x-client-info, content-type, content-profile, accept-profile, range, prefer, accept, x-supabase-api-version, x-upsert')
@@ -110,6 +120,13 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   const chunks = []; for await (const chunk of req) chunks.push(chunk)
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
+  if(url.pathname==='/fixture/profile-presets'){
+    if(body.reset){resetProfilePresets();failProfilePresets=false}
+    if(body.fail!==undefined)failProfilePresets=body.fail
+    if(body.emptyBanners)for(const key of profilePresetObjects.keys())if(key.startsWith('profile-banners/'))profilePresetObjects.delete(key)
+    if(body.add)profilePresetObjects.set(body.add,{bytes:presetImage,type:'image/png'})
+    return json(res,{})
+  }
   if(url.pathname==='/fixture/featured'){
     featuredObjects.clear();tables.featured_show_config=[]
     featuredObjects.set('featured/test-show.webp',{bytes:cover,type:'image/webp',updated_at:'2026-01-01T00:00:00Z'})
@@ -429,6 +446,31 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     res.setHeader('Content-Range', `0-${Math.max(0, rows.length - 1)}/${rows.length}`)
     if (req.method === 'HEAD') { res.writeHead(200); res.end(); return }
     return json(res, (req.headers.accept ?? '').includes('application/vnd.pgrst.object+json') ? rows[0] ?? null : rows)
+  }
+  const presetList=url.pathname.match(/^\/storage\/v1\/object\/list\/(profile-pictures|profile-banners)$/)
+  if(presetList){
+    if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+    if(failProfilePresets)return json(res,{message:'PRIVATE_STORAGE_DETAIL'},500)
+    const bucket=presetList[1],prefix=body.prefix?body.prefix+'/':'',rows=[],folders=new Set()
+    for(const [key,value] of profilePresetObjects){if(!key.startsWith(bucket+'/'+prefix))continue;const name=key.slice(bucket.length+1+prefix.length)
+      if(name.includes('/')){folders.add(name.split('/')[0]);continue}
+      rows.push({id:key,name,metadata:{size:value.bytes.length,mimetype:value.type}})
+    }
+    for(const name of folders)rows.push({id:null,name,metadata:null})
+    if(!prefix)rows.push({id:'bad',name:'not-an-image.txt',metadata:{size:20,mimetype:'text/plain'}})
+    rows.sort((a,b)=>a.name.localeCompare(b.name));return json(res,rows.slice(body.offset??0,(body.offset??0)+(body.limit??100)))
+  }
+  const presetInfo=url.pathname.match(/^\/storage\/v1\/object\/info\/(profile-pictures|profile-banners)\/(.+)$/)
+  if(presetInfo){
+    if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+    const key=presetInfo[1]+'/'+decodeURIComponent(presetInfo[2]),item=profilePresetObjects.get(key)
+    return item?json(res,{id:key,name:presetInfo[2],size:item.bytes.length,content_type:item.type}):json(res,{message:'Missing preset'},404)
+  }
+  const presetDownload=url.pathname.match(/^\/storage\/v1\/object\/(profile-pictures|profile-banners)\/(.+)$/)
+  if(presetDownload){
+    if(req.headers.authorization!=='Bearer fixture-service-key'||req.method!=='GET')return json(res,{message:'Forbidden'},403)
+    const item=profilePresetObjects.get(presetDownload[1]+'/'+decodeURIComponent(presetDownload[2]));if(!item)return json(res,{message:'Missing preset'},404)
+    res.writeHead(200,{'Content-Type':item.type});res.end(item.bytes);return
   }
   if(url.pathname==='/storage/v1/object/list/covers')return json(res,[...featuredObjects].filter(([name])=>name.startsWith(body.prefix+'/')).map(([name,value])=>({id:name,name:name.split('/').at(-1),updated_at:value.updated_at})).slice(body.offset??0,(body.offset??0)+(body.limit??100)))
   if(url.pathname==='/storage/v1/object/covers'&&req.method==='DELETE'){for(const name of body.prefixes??[])featuredObjects.delete(name);return json(res,[])}

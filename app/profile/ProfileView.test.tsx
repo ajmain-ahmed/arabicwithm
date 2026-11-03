@@ -2,8 +2,9 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import type { PublicProfile } from '@/app/actions/profiles'
-const mocks = vi.hoisted(() => ({ update: vi.fn(), getUser: vi.fn(), metadata: { book_progress: { story: { chapterSlug: 'one', updatedAt: '2026-10-01' }, other: { chapterSlug: 'two' } }, book_sentence_bookmark: { bookSlug: 'story' } } }))
-vi.mock('@/app/actions/profiles', () => ({ updateProfile: vi.fn(), checkUsernameAvailability: vi.fn() }))
+const mocks = vi.hoisted(() => ({ update: vi.fn(), getUser: vi.fn(), saveProfile:vi.fn(),listPresets:vi.fn(), metadata: { book_progress: { story: { chapterSlug: 'one', updatedAt: '2026-10-01' }, other: { chapterSlug: 'two' } }, book_sentence_bookmark: { bookSlug: 'story' } } }))
+vi.mock('@/app/actions/profilePresets',()=>({listProfilePresets:mocks.listPresets}))
+vi.mock('@/app/actions/profiles', () => ({ updateProfile:mocks.saveProfile, checkUsernameAvailability: vi.fn() }))
 vi.mock('@/app/actions/premium', () => ({ fetchPremiumStatus: vi.fn(() => Promise.resolve({ premium: false, manageable: false })), managePremium: vi.fn(), startPremiumCheckout: vi.fn() }))
 vi.mock('@/app/actions/feedback', () => ({ submitFeedback: vi.fn() }))
 vi.mock('@/app/actions/support', () => ({ startSupportCheckout: vi.fn() }))
@@ -14,11 +15,12 @@ import ProfileView from './ProfileView'
 import HomeQuickActions from '@/app/components/home/HomeQuickActions'
 let host: HTMLDivElement, root: Root
 function profile(premium = false): PublicProfile {
-  return { id: 'user', own: true, displayName: 'Learner', username: null, isPublic: false, shareReading: false, joined: '2026-10-01', avatar: null, avatarCrop: { x: 50, y: 50, zoom: 1 }, premium, summary: { streak: 0 }, shelf: [] }
+  return { id: 'user', own: true, displayName: 'Learner', username: null, isPublic: false, shareReading: false, joined: '2026-10-01', avatar: null, banner:null, avatarCrop: { x: 50, y: 50, zoom: 1 }, premium, summary: { streak: 0 }, shelf: [] }
 }
 beforeEach(() => {
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
+  mocks.saveProfile.mockResolvedValue(undefined);mocks.listPresets.mockImplementation(async(bucket:string)=>[{ref:`${bucket}/fox.avif`,url:`/api/profile-presets/${bucket}/fox.avif`,label:'fox'}]);
   mocks.update.mockResolvedValue({ error: null }); mocks.getUser.mockResolvedValue({ data: { user: { id: 'user', user_metadata: mocks.metadata } }, error: null })
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.clearAllMocks() })
@@ -26,7 +28,7 @@ it('renders genuine new-account empty states and only shows AWM Plus for eligibl
   await act(async () => root.render(<ProfileView profile={profile()} />))
   expect(host.querySelector('[aria-label="AWM Plus"]')).toBeNull()
   expect(host.textContent).toContain('0 day streak')
-  expect(host.querySelector('button[aria-label="Change profile photo"]')).not.toBeNull()
+  expect(host.querySelector('button[aria-label="Change profile photo"]')).toBeNull();expect(host.querySelector('input[type=file]')).toBeNull()
   await act(async () => root.render(<ProfileView profile={profile(true)} />))
   expect(host.querySelector('[aria-label="AWM Plus"]')).not.toBeNull()
 })
@@ -56,4 +58,38 @@ it('never shows an upgrade button on the profile page', async () => {
   expect([...host.querySelectorAll('button')].some(b => b.textContent === 'Upgrade to AWM+')).toBe(false)
   await act(async () => root.render(<ProfileView profile={{ ...profile(false), own: false }} />))
   expect([...host.querySelectorAll('button')].some(b => b.textContent === 'Upgrade to AWM+')).toBe(false)
+})
+
+async function clickText(text:string){await act(async()=>{[...(document.querySelector('[role=dialog]')??host).querySelectorAll('button')].find(b=>b.textContent===text)!.click()})}
+async function clickLabel(label:string){await act(async()=>document.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!.click())}
+it('previews both presets, rolls back chooser Cancel and discards all unsaved images on editor Cancel',async()=>{
+ const value={...profile(),avatar:'https://example.com/legacy.webp',banner:'https://example.com/legacy-banner.webp'}
+ await act(async()=>root.render(<ProfileView profile={value}/>));await clickText('Edit')
+ await clickLabel('Choose Profile Picture');await clickLabel('Select fox')
+ expect(host.querySelector('[data-profile-avatar] img')?.getAttribute('src')).toContain('/profile-pictures/fox.avif')
+ expect(document.querySelector('[aria-label="Select fox"]')?.getAttribute('aria-pressed')).toBe('true')
+ await clickText('Cancel')
+ expect(host.querySelector('[data-profile-avatar] img')?.getAttribute('src')).toBe(value.avatar)
+ await clickLabel('Choose Profile Picture');await clickLabel('Select fox');await clickText('Done')
+ await clickLabel('Choose Profile Banner');await clickLabel('Select fox');await clickText('Done')
+ expect(host.querySelector('[alt="Profile banner"]')?.getAttribute('src')).toContain('/profile-banners/fox.avif')
+ expect(mocks.saveProfile).not.toHaveBeenCalled();await clickText('Cancel')
+ expect(host.querySelector('[data-profile-avatar] img')?.getAttribute('src')).toBe(value.avatar)
+ expect(host.querySelector('[alt="Profile banner"]')?.getAttribute('src')).toBe(value.banner)
+ expect(host.querySelector('[aria-label="Choose Profile Picture"]')).toBeNull()
+})
+it('persists selected canonical references through the existing Save flow only',async()=>{
+ await act(async()=>root.render(<ProfileView profile={profile()}/>));await clickText('Edit')
+ await clickLabel('Choose Profile Picture');await clickLabel('Select fox');await clickText('Done')
+ await clickLabel('Choose Profile Banner');await clickLabel('Select fox');await clickText('Done')
+ expect(mocks.saveProfile).not.toHaveBeenCalled();await clickText('Save Changes')
+ expect(mocks.saveProfile).toHaveBeenCalledWith({displayName:'Learner',isPublic:false,shareReading:false,avatarPreset:'profile-pictures/fox.avif',bannerPreset:'profile-banners/fox.avif'})
+ expect(host.textContent).toContain('Profile saved.')
+})
+it('shows a safe picker failure and supports retry without exposing backend errors',async()=>{
+ mocks.listPresets.mockRejectedValueOnce(new Error('private Storage detail'))
+ await act(async()=>root.render(<ProfileView profile={profile()}/>));await clickText('Edit');await clickLabel('Choose Profile Picture')
+ expect(document.querySelector('[role=dialog]')?.textContent).toContain('Profile pictures could not be loaded')
+ expect(document.body.textContent).not.toContain('private Storage detail');await clickText('Try again')
+ expect(document.querySelector('[aria-label="Select fox"]')).not.toBeNull()
 })

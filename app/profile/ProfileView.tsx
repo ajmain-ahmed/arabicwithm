@@ -17,7 +17,9 @@ import { fetchPremiumStatus, managePremium, startPremiumCheckout, type PremiumSt
 import { submitFeedback } from '@/app/actions/feedback'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import SupportForm from '@/app/support/SupportForm'
-import ProfileAvatar from '@/app/profile/ProfileAvatar'
+import ProfileHeader from '@/app/profile/ProfileHeader'
+import ProfilePresetPicker from '@/app/profile/ProfilePresetPicker'
+import {presetRefFromUrl,type ProfilePresetBucket} from '@/app/lib/profilePresets'
 import { useAuth } from '@/app/AuthContext'
 import { usernameSchema } from '@/app/lib/username'
 
@@ -96,6 +98,14 @@ function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved:
   const [savedUsername, setSavedUsername] = useState(profile.username)
   const [username, setUsername] = useState(profile.username ?? '')
   const [availability, setAvailability] = useState<{ value: string; message: string; available: boolean } | null>(null)
+  const [savedMedia,setSavedMedia]=useState({avatar:profile.avatar,banner:profile.banner??null,crop:profile.avatarCrop})
+  const [draftMedia,setDraftMedia]=useState(savedMedia)
+  const [presetRefs,setPresetRefs]=useState<{avatarPreset?:string;bannerPreset?:string}>({})
+  const [picker,setPicker]=useState<{bucket:ProfilePresetBucket;media:typeof draftMedia;refs:typeof presetRefs}|null>(null)
+  function openPicker(bucket:ProfilePresetBucket){setPicker({bucket,media:draftMedia,refs:presetRefs})}
+  function cancelPicker(){if(picker){setDraftMedia(picker.media);setPresetRefs(picker.refs)}setPicker(null)}
+  function cancelEdit(){setEditing(false);setMessage('');setName(profile.displayName);setUsername(savedUsername??'');setDraftMedia(savedMedia);setPresetRefs({});setPicker(null)}
+
 
   useEffect(() => {
     if (!profile.own || !username.trim()) return
@@ -118,8 +128,8 @@ function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved:
     setSaving(true); setMessage('')
     try {
       // Privacy flags keep their stored values; they are not editable here.
-      await updateProfile({ displayName: name, isPublic: profile.isPublic, shareReading: profile.shareReading, ...(username.trim() ? { username } : {}) })
-      setEditing(false)
+      await updateProfile({ displayName: name, isPublic: profile.isPublic, shareReading: profile.shareReading, ...presetRefs, ...(username.trim() ? { username } : {}) })
+      setEditing(false);setSavedMedia(draftMedia);setPresetRefs({})
       const trimmed = name.trim()
       onSaved(trimmed)
       if (username.trim()) { const value = usernameSchema.parse(username); setUsername(value); setSavedUsername(value) }
@@ -144,16 +154,11 @@ function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved:
         )}
       </Box>
 
-      {/* avatar + name — stacked on phones so the 100%-width avatar slot and
-         the text column each get a full row. */}
-      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'center', sm: 'center' }, textAlign: { xs: 'center', sm: 'left' }, gap: 2, mb: 4, p: { xs: 2, sm: 3 }, background: 'linear-gradient(135deg,rgba(14,46,31,0.04),rgba(184,134,11,0.03))', border: '1px solid rgba(184,134,11,0.18)', borderRadius: '4px' }}>
-        <ProfileAvatar id={profile.id} name={profile.displayName} src={profile.avatar} crop={profile.avatarCrop} editable={profile.own} />
-        <Box sx={{ minWidth: 0 }}>
-          <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: '1.2rem', sm: '1.5rem' }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>{profile.displayName}</Typography>
-          {savedUsername && <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: 'var(--awm-muted)', mt: 0.3 }}>@{savedUsername}</Typography>}
-          <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: 'var(--awm-muted)', mt: 0.3 }}>Learning since {profile.joined}</Typography>
-        </Box>
-      </Box>
+      <ProfileHeader name={editing?name:profile.displayName} username={savedUsername} joined={profile.joined} avatar={draftMedia.avatar} banner={draftMedia.banner} avatarCrop={draftMedia.crop} editing={profile.own&&editing&&!saving} onAvatar={()=>openPicker('profile-pictures')} onBanner={()=>openPicker('profile-banners')}/>
+      {picker&&<ProfilePresetPicker key={picker.bucket} bucket={picker.bucket} selected={presetRefFromUrl(picker.bucket==='profile-pictures'?draftMedia.avatar:draftMedia.banner)} onSelect={preset=>{
+        if(picker.bucket==='profile-pictures'){setDraftMedia(old=>({...old,avatar:preset.url,crop:{x:50,y:50,zoom:1}}));setPresetRefs(old=>({...old,avatarPreset:preset.ref}))}
+        else{setDraftMedia(old=>({...old,banner:preset.url}));setPresetRefs(old=>({...old,bannerPreset:preset.ref}))}
+      }} onDone={()=>setPicker(null)} onCancel={cancelPicker}/>}
 
       <div className="pv-gold-shimmer" style={{ marginBottom: 24 }} />
 
@@ -214,7 +219,7 @@ function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved:
           <Button onClick={() => void save()} disabled={saving || !name.trim() || Boolean(usernameError) || Boolean(usernameStatus && !usernameStatus.available)} variant="contained" sx={{ ...GOLD_BUTTON, px: 3 }}>
             {saving ? 'Saving…' : 'Save Changes'}
           </Button>
-          <Button onClick={() => { setEditing(false); setMessage('') }} disabled={saving} variant="outlined"
+          <Button onClick={cancelEdit} disabled={saving} variant="outlined"
             sx={{ borderColor: 'rgba(184,134,11,0.18)', color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 500, textTransform: 'none', borderRadius: '2px', px: 3, '&:hover': { borderColor: 'var(--awm-gold)', color: 'var(--awm-gold)' } }}>
             Cancel
           </Button>

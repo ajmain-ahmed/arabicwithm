@@ -12,12 +12,16 @@ import { serviceClient } from '@/app/lib/supabase'
 import { usernameSchema } from '@/app/lib/username'
 import { revalidatePath } from 'next/cache'
 import { getAuthClient } from '@/app/lib/supabase/server'
+import {existingProfileImage} from '@/app/lib/profilePresets'
+import {verifyProfilePreset} from '@/app/lib/profilePresetStorage'
 
 const profileInputSchema = z.object({
   displayName: z.string().trim().min(1).max(60),
   isPublic: z.boolean(),
   shareReading: z.boolean(),
   username: usernameSchema.optional(),
+  avatarPreset: z.string().max(550).optional(),
+  bannerPreset: z.string().max(550).optional(),
 })
 
 export async function updateProfile(input: z.infer<typeof profileInputSchema>) {
@@ -25,6 +29,11 @@ export async function updateProfile(input: z.infer<typeof profileInputSchema>) {
   if (!userId) throw new Error('Sign in to edit your profile.')
 
   const value = profileInputSchema.parse(input)
+  // Validate every submitted reference before any profile/handle mutation.
+  const [avatar,banner]=await Promise.all([
+    value.avatarPreset===undefined?undefined:verifyProfilePreset(value.avatarPreset,'profile-pictures'),
+    value.bannerPreset===undefined?undefined:verifyProfilePreset(value.bannerPreset,'profile-banners'),
+  ])
   if (value.username !== undefined) {
     const client = await getAuthClient()
     const { error } = await client.rpc('set_public_handle', { p_handle: value.username })
@@ -37,7 +46,16 @@ export async function updateProfile(input: z.infer<typeof profileInputSchema>) {
     share_reading: value.shareReading,
   })
   if (error) throw new Error(error.code === '23505' ? 'That username is already taken.' : 'Unable to save profile.')
+  if(avatar||banner){
+    const client=await getAuthClient()
+    const {error:mediaError}=await client.auth.updateUser({data:{
+      ...(avatar?{avatar_url:avatar.url,avatar_crop:{x:50,y:50,zoom:1}}:{}),
+      ...(banner?{banner_url:banner.url}:{}),
+    }})
+    if(mediaError)throw new Error('Unable to save profile images. Please try again.')
+  }
   revalidatePath('/profile')
+  revalidatePath(`/profile/${userId}`)
 }
 
 /* Lightweight name lookup for chrome that should reflect the saved profile
@@ -93,7 +111,8 @@ export async function fetchPublicProfile(identifier: string) {
   const { streak } = summarizeLearningDashboard(learning)
   const progress = parseReadingList(user.user_metadata.book_progress)
   const premium = await accountHasPremium(id)
-  const avatar = typeof user.user_metadata.avatar_url === 'string' && /^https?:\/\//.test(user.user_metadata.avatar_url) ? user.user_metadata.avatar_url : null
+  const avatar = existingProfileImage(user.user_metadata.avatar_url)
+  const banner = existingProfileImage(user.user_metadata.banner_url)
   const books = own || profile?.share_reading ? await fetchBooksForPublic() : []
   const shelf = await Promise.all(
     books
@@ -126,6 +145,7 @@ export async function fetchPublicProfile(identifier: string) {
     shareReading: profile?.share_reading ?? false,
     joined: user.created_at.slice(0, 10),
     avatar,
+    banner,
     avatarCrop: normalizeThumbnailCrop(user.user_metadata.avatar_crop),
     premium,
     summary: { streak },
