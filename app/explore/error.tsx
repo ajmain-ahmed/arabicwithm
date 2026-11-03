@@ -1,3 +1,3 @@
 'use client'
 import {Box,Button,Container,Typography} from '@mui/material'
-export default function ExploreError({reset}:{reset:()=>void}){return <Container sx={{pt:14,pb:12}}><Box role="alert"><Typography variant="h4">Explore is temporarily unavailable</Typography><Typography>Please try again when the connection is restored.</Typography><Button variant="contained" onClick={reset} sx={{mt:2}}>Try again</Button></Box></Container>}
+export default function ExploreError(){return <Container sx={{pt:14,pb:12}}><Box role="alert"><Typography variant="h4">Explore / For You couldn’t load</Typography><Typography>Please try again.</Typography><Button variant="contained" onClick={()=>window.location.reload()} sx={{mt:2}}>Retry</Button></Box></Container>}

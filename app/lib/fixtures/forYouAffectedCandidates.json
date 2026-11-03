@@ -1,0 +1,628 @@
+[
+  {
+    "transcript_id": "39700c96-4e46-4d54-98a5-af8b9fa13852",
+    "title": "Spongebob 1",
+    "youtube_id": "HVz7xtXi9Bk",
+    "id": 43461,
+    "position": 30,
+    "original_text": "اَهَهْ لَا يَا سَخِيفُ إِنَّهُ مَكَانُ مُؤْتَمَرُ صَيْدِ",
+    "english_text": "Oh, no, you fool! It's the jellyfishing convention...",
+    "start_seconds": 264,
+    "end_seconds": 268,
+    "canonical_paragraph": null,
+    "source_tokens": [
+      {
+        "pos": "interjection",
+        "arabic": "اَهَهْ",
+        "english": "[unclear exclamation]",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": null
+      },
+      {
+        "pos": "particle",
+        "arabic": "لَا",
+        "english": "no; not",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "lā"
+      },
+      {
+        "pos": "particle",
+        "arabic": "يَا",
+        "english": "O (vocative)",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "yā"
+      },
+      {
+        "pos": "adjective",
+        "arabic": "سَخِيفُ",
+        "english": "silly; foolish",
+        "headword": "سخيف",
+        "entry_type": "word",
+        "transliteration": "sakhīfu"
+      },
+      {
+        "pos": "particle",
+        "arabic": "إِنَّهُ",
+        "english": "it is",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "innahu"
+      },
+      {
+        "pos": "noun",
+        "arabic": "مَكَانُ",
+        "english": "place",
+        "headword": "مكان",
+        "entry_type": "word",
+        "transliteration": "makānu"
+      },
+      {
+        "pos": "noun",
+        "arabic": "مُؤْتَمَرُ",
+        "english": "convention",
+        "headword": "مؤتمر",
+        "entry_type": "word",
+        "transliteration": "muʾtamaru"
+      },
+      {
+        "pos": "noun",
+        "arabic": "صَيْدِ",
+        "english": "catching; fishing",
+        "headword": "صيد",
+        "entry_type": "word",
+        "transliteration": "ṣaydi"
+      }
+    ]
+  },
+  {
+    "transcript_id": "39f0f272-9019-459d-b2d5-4ed2c2fa8991",
+    "title": "علي بابا والأربعون لصا",
+    "youtube_id": "-xeTpWYoFWc",
+    "id": 44186,
+    "position": 149,
+    "original_text": "ا",
+    "english_text": "Ah.",
+    "start_seconds": 1267,
+    "end_seconds": 1268,
+    "canonical_paragraph": null,
+    "source_tokens": [
+      {
+        "pos": "interjection",
+        "arabic": "ا",
+        "english": "ah",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": null
+      }
+    ]
+  },
+  {
+    "transcript_id": "3b31c3c1-fc02-402b-8fbb-38aad0ce122e",
+    "title": "Gumball 2",
+    "youtube_id": "WihbCAXMVhI",
+    "id": 44024,
+    "position": 65,
+    "original_text": "وَلَكِن اِرْجِع كُنْت سَاُخْبِرُك اِنَّهَا اَفْضَل مِهْنَه فِي الْعَالَم لِاَنَّك تُرَبِّي الْاَجْيَال يَعْنِي لَا شُكْرًا بَاي ‏Ha.",
+    "english_text": "But come back! I was going to tell you it's the best profession in the world because you raise generations. Well, no thanks. Bye! Ha.",
+    "start_seconds": 650,
+    "end_seconds": 660,
+    "canonical_paragraph": null,
+    "source_tokens": [
+      {
+        "pos": "conjunction",
+        "arabic": "وَلَكِن",
+        "english": "but",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "walakin"
+      },
+      {
+        "pos": "verb",
+        "arabic": "اِرْجِع",
+        "english": "come back",
+        "headword": "رجع",
+        "entry_type": "word",
+        "transliteration": "airjiʿ"
+      },
+      {
+        "pos": "verb",
+        "arabic": "كُنْت",
+        "english": "I was",
+        "headword": "كان",
+        "entry_type": "word",
+        "transliteration": "kunt"
+      },
+      {
+        "pos": "verb",
+        "arabic": "سَاُخْبِرُك",
+        "english": "I'll tell you",
+        "headword": "أخبر",
+        "entry_type": "word",
+        "transliteration": "saaukhbiruk"
+      },
+      {
+        "pos": "particle",
+        "arabic": "اِنَّهَا",
+        "english": "it is",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "ainnahā"
+      },
+      {
+        "pos": "noun",
+        "arabic": "اَفْضَل",
+        "english": "best",
+        "headword": "أفضل",
+        "entry_type": "word",
+        "transliteration": "aafḍal"
+      },
+      {
+        "pos": "noun",
+        "arabic": "مِهْنَه",
+        "english": "profession",
+        "headword": "مهنة",
+        "entry_type": "word",
+        "transliteration": "mihnah"
+      },
+      {
+        "pos": "preposition",
+        "arabic": "فِي",
+        "english": "in",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "fī"
+      },
+      {
+        "pos": "noun",
+        "arabic": "الْعَالَم",
+        "english": "world",
+        "headword": "عالم",
+        "entry_type": "word",
+        "transliteration": "alʿālam"
+      },
+      {
+        "pos": "conjunction",
+        "arabic": "لِاَنَّك",
+        "english": "because you",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "liaannak"
+      },
+      {
+        "pos": "verb",
+        "arabic": "تُرَبِّي",
+        "english": "you raise",
+        "headword": "ربى",
+        "entry_type": "word",
+        "transliteration": "turabbī"
+      },
+      {
+        "pos": "noun",
+        "arabic": "الْاَجْيَال",
+        "english": "generations",
+        "headword": "جيل",
+        "entry_type": "word",
+        "transliteration": "alaajyāl"
+      },
+      {
+        "pos": "noun",
+        "arabic": "يَعْنِي",
+        "english": "I mean",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "yaʿnī"
+      },
+      {
+        "pos": "interjection",
+        "arabic": "لَا",
+        "english": "no",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "lā"
+      },
+      {
+        "pos": "interjection",
+        "arabic": "شُكْرًا",
+        "english": "thanks",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "shukrana"
+      },
+      {
+        "pos": "interjection",
+        "arabic": "بَاي",
+        "english": "bye",
+        "headword": "باي",
+        "entry_type": "word",
+        "transliteration": "bāy"
+      },
+      {
+        "pos": "noun",
+        "arabic": "‏Ha.",
+        "english": "ha",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": null
+      }
+    ]
+  },
+  {
+    "transcript_id": "4b5b362e-74b4-422d-aad1-36f121cbfb12",
+    "title": "3 Little Pigs",
+    "youtube_id": "w_HYaryiFNk",
+    "id": 44435,
+    "position": 113,
+    "original_text": "وَرَجَاحَةِ ه",
+    "english_text": "and sound judgement. [Unclear final sound.]",
+    "start_seconds": 1197,
+    "end_seconds": 1204,
+    "canonical_paragraph": null,
+    "source_tokens": [
+      {
+        "pos": "noun",
+        "arabic": "وَرَجَاحَةِ",
+        "english": "and soundness",
+        "headword": "ورجاحة",
+        "entry_type": "word",
+        "transliteration": "warajāḥaai"
+      },
+      {
+        "pos": "interjection",
+        "arabic": "ه",
+        "english": "ah",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": null
+      }
+    ]
+  },
+  {
+    "transcript_id": "7e7ef427-95db-4601-b1f0-ad1555b8b2bb",
+    "title": "Aladdin",
+    "youtube_id": "NdwzweioteE",
+    "id": 44297,
+    "position": 110,
+    "original_text": "تَطْلُبَهُ مُسْتَحِيلٌ عَلَيَّ فِعْلَ يَا سَيِّدِي لِاَنَّ قُوَّهَ مَارِدُ الْمِصْبَاحَ تَفُوقُ قُوَّتِي 120 ضِعْفًا اَسْتَطِيعُ",
+    "english_text": "...you ask is impossible for me, master, because the lamp genie's power is 120 times greater than mine. I can...",
+    "start_seconds": 1047,
+    "end_seconds": 1054,
+    "canonical_paragraph": null,
+    "source_tokens": [
+      {
+        "pos": "verb",
+        "arabic": "تَطْلُبَهُ",
+        "english": "asks",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "taṭlubahu"
+      },
+      {
+        "pos": "adjective",
+        "arabic": "مُسْتَحِيلٌ",
+        "english": "impossible",
+        "headword": "مستحيل",
+        "entry_type": "word",
+        "transliteration": "mustaḥīlun"
+      },
+      {
+        "pos": "preposition",
+        "arabic": "عَلَيَّ",
+        "english": "me",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "ʿalayya"
+      },
+      {
+        "pos": "noun",
+        "arabic": "فِعْلَ",
+        "english": "action",
+        "headword": "فعل",
+        "entry_type": "word",
+        "transliteration": "fiʿla"
+      },
+      {
+        "pos": "interjection",
+        "arabic": "يَا",
+        "english": "O",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "yā"
+      },
+      {
+        "pos": "noun",
+        "arabic": "سَيِّدِي",
+        "english": "master",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "sayyidī"
+      },
+      {
+        "pos": "noun",
+        "arabic": "لِاَنَّ",
+        "english": "because",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "liāanna"
+      },
+      {
+        "pos": "noun",
+        "arabic": "قُوَّهَ",
+        "english": "power",
+        "headword": "قوة",
+        "entry_type": "word",
+        "transliteration": "quwwaha"
+      },
+      {
+        "pos": "noun",
+        "arabic": "مَارِدُ",
+        "english": "genie",
+        "headword": "مارد",
+        "entry_type": "word",
+        "transliteration": "māridu"
+      },
+      {
+        "pos": "noun",
+        "arabic": "الْمِصْبَاحَ",
+        "english": "lamp",
+        "headword": "مصباح",
+        "entry_type": "word",
+        "transliteration": "al-miṣbāḥa"
+      },
+      {
+        "pos": "verb",
+        "arabic": "تَفُوقُ",
+        "english": "stronger",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "tafūqu"
+      },
+      {
+        "pos": "noun",
+        "arabic": "قُوَّتِي",
+        "english": "strength",
+        "headword": "قوة",
+        "entry_type": "word",
+        "transliteration": "quwwatī"
+      },
+      {
+        "pos": "numeral",
+        "arabic": "120",
+        "english": "120",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": null
+      },
+      {
+        "pos": "noun",
+        "arabic": "ضِعْفًا",
+        "english": "times",
+        "headword": "ضعفا",
+        "entry_type": "word",
+        "transliteration": "ḍiʿfan"
+      },
+      {
+        "pos": "verb",
+        "arabic": "اَسْتَطِيعُ",
+        "english": "can",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "astaṭīʿu"
+      }
+    ]
+  },
+  {
+    "transcript_id": "96e8b8ae-728f-4e3f-b4c4-b855d2c7e2d7",
+    "title": "Classic Cartoon",
+    "youtube_id": "yKdkTfeCNf8",
+    "id": 44530,
+    "position": 94,
+    "original_text": "مُهِمًّا اِشْتَدَّتْ الْعَوَاصِفُ وَاشْتَدَّتْ الرِّيَاحُ وَاشْتَدَّتْ الرُّعُودُ وَالْاَمْطَارِ اَيْضًا سِنْدِي بَادْ سَيَبْقَى يُسَافِرُ فِي الْبَحْرِ مُهِمًّا",
+    "english_text": "No matter how fierce the storms, winds, thunder and rain become, Sinbad will keep sailing the seas, however...",
+    "start_seconds": 1201,
+    "end_seconds": 1209,
+    "canonical_paragraph": null,
+    "source_tokens": [
+      {
+        "pos": "adjective",
+        "arabic": "مُهِمًّا",
+        "english": "important",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "muhimman"
+      },
+      {
+        "pos": "verb",
+        "arabic": "اِشْتَدَّتْ",
+        "english": "intensified",
+        "headword": "اشتد",
+        "entry_type": "word",
+        "transliteration": "ishtaddat"
+      },
+      {
+        "pos": "noun",
+        "arabic": "الْعَوَاصِفُ",
+        "english": "storms",
+        "headword": "عاصفة",
+        "entry_type": "word",
+        "transliteration": "al-ʿawāṣifu"
+      },
+      {
+        "pos": "verb",
+        "arabic": "وَاشْتَدَّتْ",
+        "english": "and intensified",
+        "headword": "اشتد",
+        "entry_type": "word",
+        "transliteration": "wāshtaddat"
+      },
+      {
+        "pos": "noun",
+        "arabic": "الرِّيَاحُ",
+        "english": "winds",
+        "headword": "ريح",
+        "entry_type": "word",
+        "transliteration": "ar-riyāḥu"
+      },
+      {
+        "pos": "verb",
+        "arabic": "وَاشْتَدَّتْ",
+        "english": "and intensified",
+        "headword": "اشتد",
+        "entry_type": "word",
+        "transliteration": "wāshtaddat"
+      },
+      {
+        "pos": "noun",
+        "arabic": "الرُّعُودُ",
+        "english": "thunder",
+        "headword": "رعد",
+        "entry_type": "word",
+        "transliteration": "ar-ruʿūdu"
+      },
+      {
+        "pos": "noun",
+        "arabic": "وَالْاَمْطَارِ",
+        "english": "and rain",
+        "headword": "مطر",
+        "entry_type": "word",
+        "transliteration": "wal-amṭāri"
+      },
+      {
+        "pos": "adverb",
+        "arabic": "اَيْضًا",
+        "english": "also",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "ayḍan"
+      },
+      {
+        "pos": "proper_noun",
+        "arabic": "سِنْدِي",
+        "english": "Sindi",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": null
+      },
+      {
+        "pos": "proper_noun",
+        "arabic": "بَادْ",
+        "english": "Bad",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": null
+      },
+      {
+        "pos": "verb",
+        "arabic": "سَيَبْقَى",
+        "english": "will remain",
+        "headword": "بقي",
+        "entry_type": "word",
+        "transliteration": "sayabqā"
+      },
+      {
+        "pos": "verb",
+        "arabic": "يُسَافِرُ",
+        "english": "travel",
+        "headword": "سافر",
+        "entry_type": "word",
+        "transliteration": "yusāfiru"
+      },
+      {
+        "pos": "preposition",
+        "arabic": "فِي",
+        "english": "in",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "fī"
+      },
+      {
+        "pos": "noun",
+        "arabic": "الْبَحْرِ",
+        "english": "sea",
+        "headword": "بحر",
+        "entry_type": "word",
+        "transliteration": "al-baḥri"
+      },
+      {
+        "pos": "adjective",
+        "arabic": "مُهِمًّا",
+        "english": "important",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "muhimman"
+      }
+    ]
+  },
+  {
+    "transcript_id": "c92e6a8a-09c4-4ea8-a0d0-d94062d53c61",
+    "title": "SPONGEBOB 3",
+    "youtube_id": "oGKDARy5nxE",
+    "id": 43609,
+    "position": 56,
+    "original_text": "بِهِ خانك مُهِمَّه خَضْرَهْ لَكِنْ حَلُّهَا بَسِيطٌ",
+    "english_text": "...of him. [Unclear words] but the solution is simple!",
+    "start_seconds": 564,
+    "end_seconds": 571,
+    "canonical_paragraph": null,
+    "source_tokens": [
+      {
+        "pos": "preposition",
+        "arabic": "بِهِ",
+        "english": "with it; through him",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "bihi"
+      },
+      {
+        "pos": "unknown",
+        "arabic": "خانك",
+        "english": "unclear fragment",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": null
+      },
+      {
+        "pos": "noun",
+        "arabic": "مُهِمَّه",
+        "english": "a task; mission",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "muhimmah"
+      },
+      {
+        "pos": "adjective",
+        "arabic": "خَضْرَهْ",
+        "english": "green",
+        "headword": "أخضر",
+        "entry_type": "word",
+        "transliteration": "khaḍrah"
+      },
+      {
+        "pos": "conjunction",
+        "arabic": "لَكِنْ",
+        "english": "but",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "lakin"
+      },
+      {
+        "pos": "noun",
+        "arabic": "حَلُّهَا",
+        "english": "its solution",
+        "headword": "حل",
+        "entry_type": "word",
+        "transliteration": "ḥalluhā"
+      },
+      {
+        "pos": "adjective",
+        "arabic": "بَسِيطٌ",
+        "english": "simple",
+        "headword": null,
+        "entry_type": "word",
+        "transliteration": "basīṭun"
+      }
+    ]
+  }
+]

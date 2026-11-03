@@ -48,3 +48,23 @@ it('rejects guests before querying clips, transcripts, or groups',async()=>{
  expect(mocks.rpc).not.toHaveBeenCalled()
  expect(mocks.from).not.toHaveBeenCalled()
 })
+it('rejects a malformed clip and fills its slot with the next eligible source',async()=>{
+ const good=(suffix:string,segmentId:number)=>({video:{id:`99999999-9999-4999-8999-99999999999${suffix}`,youtube_id:`abcdefghij${suffix}`,title:null},clip_start_ms:0,clip_end_ms:10000,segments:[{id:segmentId,position:0,start_seconds:0,end_seconds:10,original_text:'كتاب',canonical_paragraph:{tokens:[{arabic:'كتاب',english:'book'}]}}]})
+ mocks.rpc.mockResolvedValueOnce({data:[{...good('1',100),segments:[{id:100}]},good('2',101)],error:null}).mockResolvedValueOnce({data:[good('3',102)],error:null})
+ const result=await fetchForYouClips('seed')
+ expect(result.map(clip=>clip.video.id)).toEqual([good('2',101).video.id,good('3',102).video.id])
+ expect(mocks.rpc.mock.calls[1][1].p_excluded).toEqual([100,101])
+})
+it('loads stored raw tokens if an older RPC omits source tokens',async()=>{
+ mocks.rpc.mockResolvedValue({data:[{video:{id,youtube_id:'abcdefghij0'},clip_start_ms:495000,clip_end_ms:500000,segments:[{id:1,position:0,original_text:'كتاب',english_text:null,start_seconds:495,end_seconds:500,canonical_paragraph:null}]}],error:null})
+ expect((await fetchForYouClips('seed'))[0].segments[0].tokens[0].english).toBe('book')
+})
+it('bounds recent sources to the live RPC limit without losing the selected seed',async()=>{
+ mocks.rpc.mockResolvedValue({data:[],error:null})
+ await fetchForYouClips('fixed',[],Array.from({length:120},()=>id))
+ expect(mocks.rpc.mock.calls[0][1].p_recent).toHaveLength(100)
+})
+it('skips null or malformed full-transcript rows without failing the source',async()=>{
+ mocks.segments.mockResolvedValue({data:[null,{id:4}, {id:1,position:0,original_text:'كتاب',english_text:null,start_seconds:495,end_seconds:500,canonical_paragraph:null}],error:null})
+ expect(await fetchForYouTranscript(id)).toHaveLength(1)
+})

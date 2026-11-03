@@ -294,7 +294,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
       }
       setExcluded([...seen].slice(-10000))
       setProgress(100)
-    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to load clips.') } finally { advanceAfterLoad.current=false; loadingRef.current=false; setBusy(false) }
+    } catch { setError('For You couldn’t load. Please try again.') } finally { advanceAfterLoad.current=false; loadingRef.current=false; setBusy(false) }
   }
 
   useEffect(() => {
@@ -346,7 +346,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
         <Button onClick={()=>setSettingsAnchor(null)}>Done</Button>
       </Popover>
       <Box sx={{ mt: { xs: 0, md: .5 }, height: { xs: '100%', md: 'auto' } }}>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {error && <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" disabled={busy} onClick={()=>{seed.current=crypto.randomUUID();setHasMore(true);void loadMore()}}>Retry</Button>}>{error}</Alert>}
         {initialLoading
           ? <ForYouLoading
               progress={progress}

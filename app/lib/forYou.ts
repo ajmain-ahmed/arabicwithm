@@ -1,4 +1,4 @@
-export interface ForYouToken { arabic:string; english:string; start_seconds?:number; end_seconds?:number }
+export interface ForYouToken { arabic:string; english:string; pos?:string|null; headword?:string|null; entry_type?:string|null; transliteration?:string|null; start_seconds?:number; end_seconds?:number }
 export interface ForYouSegment {
  id:number; position:number; original_text:string; english_text:string|null;
  start_seconds:number; end_seconds:number; canonical_paragraph?:unknown; source_tokens?:unknown; tokens:ForYouToken[]
@@ -16,18 +16,22 @@ const firstText=(...values:unknown[]):string=>values.find((v):v is string=>typeo
 export function forYouTokens(canonical:unknown,source:unknown):ForYouToken[] {
  const canonicalTokens=record(canonical)&&Array.isArray(canonical.tokens)?canonical.tokens:[]
  const sourceTokens=record(source)&&Array.isArray(source.tokens)?source.tokens:[]
- const tokens=sourceTokens.length?sourceTokens:canonicalTokens
- return tokens.flatMap((value,index)=>{
+ const parse=(tokens:unknown[])=>tokens.flatMap((value,index)=>{
   const token=typeof value==='string'?{arabic:value}:value
   if(!record(token))return []
   const arabic=firstText(token.arabic,token.ar,token.surface)
   if(!arabic)return []
-  const enriched=canonicalTokens[index]
+  const enriched=sourceTokens[index]
   const matching=record(enriched)&&firstText(enriched.arabic,enriched.ar,enriched.surface)===arabic?enriched:{}
   const start = typeof token.start_seconds === 'number' ? token.start_seconds : typeof token.start_ms === 'number' ? token.start_ms / 1000 : typeof token.start === 'number' ? token.start : undefined
   const end = typeof token.end_seconds === 'number' ? token.end_seconds : typeof token.end_ms === 'number' ? token.end_ms / 1000 : typeof token.end === 'number' ? token.end : undefined
-  return [{arabic,english:firstText(token.english,token.gloss,token.translation,matching.english,matching.gloss,matching.translation), ...(start !== undefined && end !== undefined && end > start ? {start_seconds:start,end_seconds:end}: {})}]
+  const timingStart=start??(typeof matching.start_ms==='number'?matching.start_ms/1000:matching.start_seconds)
+  const timingEnd=end??(typeof matching.end_ms==='number'?matching.end_ms/1000:matching.end_seconds)
+  const nullable=Object.fromEntries(['pos','headword','entry_type','transliteration'].filter(key=>key in token).map(key=>[key,typeof token[key]==='string'?token[key]:null]))
+  return [{arabic,english:firstText(token.english,token.gloss,token.translation,matching.english,matching.gloss,matching.translation),...nullable, ...(typeof timingStart==='number'&&Number.isFinite(timingStart)&&typeof timingEnd==='number'&&Number.isFinite(timingEnd)&&timingEnd>timingStart&&timingStart>=0 ? {start_seconds:timingStart,end_seconds:timingEnd}: {})}]
  })
+ const preferred=parse(canonicalTokens)
+ return preferred.length?preferred:parse(sourceTokens)
 }
 
 /** Gaps must not fall back to an unrelated first sentence. */
