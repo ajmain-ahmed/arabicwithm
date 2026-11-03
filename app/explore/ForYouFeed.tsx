@@ -70,7 +70,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
   },[clip.video.id,suppliedSegments,full])
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
   if(modeStart.full!==full)setModeStart({full,start:full?time:Math.min(Math.max(time,clip.clip_start_ms/1000),clip.clip_end_ms/1000-.1)})
-  const { wrapRef, isReady, isMuted, isPlaying, autoplayBlocked, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates, getSoundMuted } = useYouTubePlayer(clip.video.youtube_id, updateTime, modeStart.start, { verifySoundState: isPhone, autoplay: true, muted: !soundEnabled, audibleAutoplay: true, mutedAutoplayFallback: false, endAt: full ? undefined : clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>{if(full)setEnded(true);else finishShort()}, onError:code=>onUnavailable(clip.video.youtube_id,code) })
+  const { wrapRef, isReady, isMuted, isPlaying, autoplayBlocked, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates, getSoundMuted } = useYouTubePlayer(clip.video.youtube_id, updateTime, modeStart.start, { verifySoundState: isPhone, autoplay: true, muted: !soundEnabled, audibleAutoplay: true, mutedAutoplayFallback: true, endAt: full ? undefined : clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>{if(full)setEnded(true);else finishShort()}, onError:code=>onUnavailable(clip.video.youtube_id,code) })
   function updateTime(seconds:number){
     setTime(seconds)
     // Charge the final playback sample before deciding whether another clip may start.
@@ -86,11 +86,8 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
     onComplete()
   }
   useEffect(() => { if (!soundEnabled) mute() }, [soundEnabled, mute])
-  useEffect(() => {
-    if (!isPhone || !isReady) return
-    if (soundEnabled) playWithSound()
-    else mute()
-  }, [isPhone, isReady, soundEnabled, playWithSound, mute])
+  // The player owns initial autoplay and its muted fallback. Retrying sound
+  // here on mobile would immediately undo a successful muted autoplay.
   useEffect(() => {
     if (!isPhone || !isReady || !soundEnabled || !autoplayBlocked) return
     const enable = (event: Event) => { if(event.target instanceof Element && event.target.closest('[aria-label=\"Mute clip\"], [aria-label=\"Unmute clip\"]')) return; playWithSound() }
