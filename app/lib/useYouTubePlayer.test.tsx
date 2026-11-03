@@ -28,8 +28,8 @@ const calls: string[] = []
 const destroy = vi.fn()
 const pause = vi.fn()
 const seek = vi.fn((seconds:number)=>{playerTime=seconds})
-function Harness({ id, start, end, muted = true, fallback = false, synced=false, verify=false }: { id?: string; start?: number; end?:number; muted?: boolean; fallback?: boolean; synced?:boolean; verify?:boolean }) {
-  const player = useYouTubePlayer(id, updateTime, start, { verifySoundState:verify, autoplay: true, muted, endAt:end, mutedAutoplayFallback: fallback, requireTimeUpdates:synced, onEnded:ended, onError:failed })
+function Harness({ id, start, end, muted = true, fallback = false, synced=false, verify=false, audible=false }: { id?: string; start?: number; end?:number; muted?: boolean; fallback?: boolean; synced?:boolean; verify?:boolean; audible?:boolean }) {
+  const player = useYouTubePlayer(id, updateTime, start, { verifySoundState:verify, autoplay: true, muted, endAt:end, mutedAutoplayFallback: fallback, audibleAutoplay:audible, requireTimeUpdates:synced, onEnded:ended, onError:failed })
   useEffect(() => { controls = player })
   const { wrapRef } = player
   return <div ref={wrapRef} />
@@ -62,6 +62,18 @@ beforeEach(() => {
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers() })
 describe('YouTube player lifecycle', () => {
+  it('requests audible autoplay without converting a rejection to mute or claiming playback',async()=>{
+    playerVolume=0
+    await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" muted={false} audible/>))
+    await act(async()=>{await vi.advanceTimersByTimeAsync(60);options.events.onReady()})
+    expect(calls).toEqual(['unmute','setVolume','play'])
+    await act(async()=>options.events.onAutoplayBlocked())
+    expect(calls).not.toContain('mute');expect(controls.autoplayBlocked).toBe(true);expect(controls.isPlaying).toBe(false)
+    await act(async()=>controls.playWithSound())
+    expect(controls.autoplayBlocked).toBe(true)
+    await act(async()=>options.events.onStateChange({data:1}))
+    expect(controls.autoplayBlocked).toBe(false);expect(controls.isPlaying).toBe(true)
+  })
   it('continues reporting actual seeks while paused and immediately reports programmatic seeks',async()=>{
     await act(async()=>root.render(<Harness id="dQw4w9WgXcQ"/>))
     await act(async()=>{await vi.advanceTimersByTimeAsync(60);options.events.onReady();options.events.onStateChange({data:2})})

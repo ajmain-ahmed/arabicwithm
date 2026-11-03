@@ -1,7 +1,9 @@
 import {test,expect} from '@playwright/test'
+import {signInFixture} from './helpers/account'
 import {installYouTubeFixture} from './helpers/youtube'
 const backend=`https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4310}`
-for(const width of [320,360,390,430,900,1440])test(`dynamic Full transcript and shared controls at ${width}`,async({page,request})=>{
+for(const width of [320,360,390,430,900,1440])test(`dynamic Full transcript and shared controls at ${width}`,async({page,context,request})=>{
+ await signInFixture(context)
  await request.post(`${backend}/fixture/for-you-playback`);await request.post(`${backend}/fixture/dynamic-for-you`)
  await installYouTubeFixture(page);await page.setViewportSize({width,height:1000});await page.goto('/explore');await page.getByRole('button',{name:'For You feed',exact:true}).click()
  const source=page.locator('[data-for-you-source]'),panel=page.locator(width<900?'[data-mobile-clip-transcript]':'[data-desktop-clip-transcript]')

@@ -29,10 +29,10 @@ for(const width of [390,1440]){
  test(`Grammar feedback, timing, manual corrections and shared preferences at ${width}`,async({page,context})=>{
   await signIn(context);await page.setViewportSize({width,height:1000});await page.goto('/grammar');await page.getByRole('button',{name:'Sentence Role',exact:true}).click()
   const question=page.locator('[data-grammar-question]'),options=page.locator('[data-grammar-options]'),feedback=page.locator('[data-grammar-feedback]')
-  const firstId=await question.getAttribute('data-grammar-question'),before=await question.boundingBox()
+  const firstId=await question.getAttribute('data-grammar-question')
   const correct=options.getByRole('button',{name:'Doer / subject of the verb',exact:true});await correct.focus();await page.keyboard.press('Enter')
   await expect(feedback).toHaveAttribute('data-grammar-feedback','correct');await expect(feedback).toBeFocused();await expect(options).toBeHidden()
-  expect((await question.boundingBox())!.height).toBeCloseTo(before!.height,0)
+  expect((await options.boundingBox())).toBeNull();expect((await question.boundingBox())!.height).toBeGreaterThan(0)
   const icon=feedback.locator('svg'),heading=feedback.getByRole('heading',{name:'Correct',exact:true});expect((await icon.boundingBox())!.width).toBeGreaterThan(48)
   expect((await icon.boundingBox())!.y).toBeLessThan((await heading.boundingBox())!.y)
   await expect(question).not.toHaveAttribute('data-grammar-question',firstId!,{timeout:4500})

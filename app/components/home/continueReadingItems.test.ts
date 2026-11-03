@@ -42,3 +42,8 @@ it('live session positions win over the metadata snapshot', () => {
   })
   expect(items[0].href).toBe('/books/alpha/one?page=7')
 })
+
+it('preserves the stored language and logical block when directly resuming',()=>{
+ const items=buildContinueReadingItems(books,chapters,{}, {alpha:{...position(3,'2026-11-03T10:00:00Z'),language:'en',blockIndex:28}})
+ expect(items[0].href).toBe('/books/alpha/one?lang=en&page=3&block=28')
+})

@@ -8,7 +8,7 @@ import { loadGrammar } from '@/app/actions/grammar';
 import curriculum from './mobile-curriculum.json';
 import WebsiteActivity from './WebsiteActivity';
 import BankActivity from './BankActivity';
-import { Arabic, English, Instruction, GrammarProvider, GrammarSettings, AnswerArea, AutoNextControl, useGrammarDisplay } from './GrammarUI';
+import { Arabic, English, Instruction, GrammarProvider, GrammarSettings, AnswerArea, ActivityControls, AutoNextControl, useGrammarDisplay } from './GrammarUI';
 import { ruleLevels } from './ruleLevels';
 import useCorrectAutoAdvance from './useCorrectAutoAdvance';
 import TenFormsRevision from './TenFormsRevision';
@@ -38,7 +38,7 @@ function GrammarContent() {
     return <Container maxWidth="xl" sx={{ pt: { xs: 3, md: 5 }, pb: 6 }}>
     {activity && <Button startIcon={<ArrowBack />} onClick={() => { setActivity(''); setBranch(null); }}>Back to Grammar</Button>}
     <Box sx={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><Typography component="h1" sx={{ mb: 3, fontFamily: 'var(--font-heading)', fontSize: { xs: 32, md: 42 }, fontWeight: 600 }}>Grammar</Typography><GrammarSettings /></Box>
-    {activity&&!['rules','ten','weak'].includes(activity)&&<AutoNextControl/>}
+    {activity&&!['rules','ten','weak','word_type','sentence_role','grammatical_case'].includes(activity)&&<ActivityControls><AutoNextControl/></ActivityControls>}
     {!activity ? <Box sx={{ display: 'grid', gap: 4 }}>{(['nahw', 'sarf'] as const).map(section => <Box component="section" key={section} aria-label={section === 'nahw' ? 'Na\u1e25w' : '\u1e62arf'}>
       <Typography component="h2" sx={{ mb: 2, fontFamily: 'var(--font-heading)', fontSize: 28 }}>{section === 'nahw' ? 'Na\u1e25w' : '\u1e62arf'}</Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>{catalogue[section].map(item => <Button key={item.id} variant="outlined" sx={{ minHeight: 64, fontSize: 16, textTransform: 'none', borderRadius: '12px', color: 'var(--awm-bark)', borderColor: 'color-mix(in srgb, var(--awm-forest) 25%, transparent)' }} onClick={() => { setBranch(section); setActivity(item.id); }}>{item.title}</Button>)}</Box>
@@ -130,7 +130,7 @@ function SarfActivity({ activity, show }: {
     if (activity === 'roots') return <><Select size="small" value={root} inputProps={{ 'aria-label': 'Root types' }} onChange={e => setRoot(Number(e.target.value))} sx={{ mb: 2 }}><MenuItem value={0}>All Root Types</MenuItem><MenuItem value={3}>Three-Letter Roots</MenuItem><MenuItem value={4}>Four-Letter Roots</MenuItem></Select><WebsiteActivity key={root} activity="roots" rootLength={root}/></>;
     if (['conjugation','morphology'].includes(activity)) return <WebsiteActivity activity={activity}/>;
     if (activity === 'weak')
-        return <><Select size="small" value={weakMode} onChange={e => setWeakMode(e.target.value)} sx={{ mb: 2 }}><MenuItem value="identify">Identify weak type</MenuItem><MenuItem value="recall">Conjugation recall</MenuItem></Select><WeakCards key={weakMode} mode={weakMode}/></>;
+        return <><ActivityControls><Select size="small" value={weakMode} onChange={e => setWeakMode(e.target.value)}><MenuItem value="identify">Identify weak type</MenuItem><MenuItem value="recall">Conjugation recall</MenuItem></Select>{weakMode==='identify'&&<AutoNextControl/>}</ActivityControls><WeakCards key={weakMode} mode={weakMode}/></>;
     if (activity === 'context' || activity === 'patterns')
         return <PreparedActivity activity={activity}/>;
     return <><Select size="small" value={root} onChange={e => setRoot(Number(e.target.value))} sx={{ mb: 2 }}><MenuItem value={0}>All Root Types</MenuItem><MenuItem value={3}>Three-Letter Roots</MenuItem><MenuItem value={4}>Four-Letter Roots</MenuItem></Select><Typography sx={{ mb: 2 }}>Unlevelled Hans Wehr practice</Typography><VerbSession key={root} pool={(curriculum.hans as Verb[]).filter(v => !root || (v.quadriliteral_pattern ? 4 : 3) === root)} show={show}/></>;
@@ -159,11 +159,11 @@ function WeakCards({ mode }: {mode:string}) {
  const explanation=card?.description.split(/(?<=[.!?])\s+/)[0]??''
  useCorrectAutoAdvance(mode==='identify'&&result===true,()=>advance(),explanation)
  if(!card)return <Alert severity="success">Weak Verbs activity completed.</Alert>
- return <>{mode==='identify'&&<AutoNextControl/>}<Paper variant="outlined" sx={cardStyle}>
+ return <Paper variant="outlined" sx={cardStyle}>
   <Typography>{index+1} / {cards.length}</Typography><Arabic>{card.base}</Arabic><English>{card.meaning}</English><Arabic>{card.root}</Arabic>
   <Instruction>{mode==='identify'?'Which weak verb type is this?':'Recall the requested conjugation.'}</Instruction>
   {mode==='identify'?<AnswerArea result={result===null?undefined:{correct:result,answer:<>{card.typeLabel} · <span lang="ar" dir="rtl">{text(card.typeArabic)}</span></>,explanation:text(explanation),next:()=>advance()}}>
    <Box data-grammar-answers sx={{display:'flex',flexWrap:'wrap',gap:1,justifyContent:'center'}}>{types.map(t=><Button key={t.type} variant="outlined" disabled={result!==null} sx={{minHeight:48}} onClick={()=>setResult(t.type===card.type)}>{t.typeLabel} · <Box component="span" lang="ar" sx={{fontFamily:'var(--font-serif)',fontSize:'var(--grammar-arabic-size)',ml:1}}>{text(t.typeArabic)}</Box></Button>)}</Box>
   </AnswerArea>:<><Typography>{card.tense}</Typography><Arabic>{card.pronoun}</Arabic>{!revealed?<Button fullWidth variant="contained" onClick={()=>setRevealed(true)}>Reveal answer</Button>:<><Typography>{card.typeLabel} · {text(card.description)}</Typography><Arabic>{card.answer}</Arabic><Typography>{text(card.explanation)}</Typography><Box sx={{display:'flex',gap:1,mt:3}}><Button fullWidth variant="outlined" onClick={()=>advance(true)}>Again</Button><Button fullWidth variant="contained" onClick={()=>advance()}>Got it</Button></Box></>}</>}
- </Paper></>
+ </Paper>
 }

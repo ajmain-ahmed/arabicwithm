@@ -30,13 +30,13 @@ export default function PreparedActivity({activity}:{activity:'patterns'|'contex
  if(!question)return <Paper sx={{p:3,textAlign:'center'}}><Typography>Activity completed</Typography><Button onClick={restart}>More practice</Button></Paper>
  return <>
  {warning&&<Alert severity="info" sx={{mb:2}}>{warning}</Alert>}
- <Paper data-prepared-question={question.id} data-word-pattern-workspace={activity==='patterns'?true:undefined} variant="outlined" sx={{p:{xs:2,sm:3},borderRadius:3,textAlign:'center',maxWidth:'100%',mx:'auto',...(activity==='patterns'?{resize:{xs:'none',md:'both'},overflow:'auto',width:{xs:'100%',md:'80%'},minWidth:{md:500},minHeight:420,maxHeight:{md:'85dvh'}}:{})}}>
+ <Paper data-prepared-question={question.id} data-word-pattern-workspace={activity==='patterns'?true:undefined} variant="outlined" sx={{p:{xs:2,sm:3},borderRadius:3,textAlign:'center',maxWidth:'100%',mx:'auto',...(activity==='patterns'?{resize:{xs:'none',md:'both'},overflow:'auto',width:{xs:'100%',md:'80%'},minWidth:{md:500}}:{})}}>
   <Typography sx={{fontSize:13,mb:1}}>{index+1} / {questions.length} · {question.sourceLabel}</Typography>
   {question.targetIndex===undefined?<Arabic>{question.arabic}</Arabic>:<Box dir="rtl" sx={{display:'flex',flexWrap:'wrap',justifyContent:'center',gap:1}}>{question.arabic.split(/\s+/).map((word,i)=><Typography key={i} lang="ar" dir="rtl" data-grammar-arabic sx={{fontFamily:'var(--font-serif)',fontSize:'var(--grammar-arabic-size)',lineHeight:1.9,bgcolor:i===question.targetIndex?'color-mix(in srgb,var(--awm-gold) 20%,transparent)':undefined,borderRadius:1}}>{text(word)}</Typography>)}</Box>}
   <English>{question.english}</English>
   {question.verb&&<Arabic>{question.verb.root}</Arabic>}
   <Instruction>{activity==='context'?'Which verb form is highlighted?':question.targetIndex===undefined?'Which word pattern is this?':'Which word pattern is highlighted?'}</Instruction>
-  <AnswerArea minHeight={activity==='patterns'?420:360} result={result===null?undefined:{correct:result,answer:activity==='patterns'?<span lang="ar" dir="rtl">{text(question.answerLabel)}</span>:question.answerLabel,explanation:text(question.note),next}}>
+  <AnswerArea result={result===null?undefined:{correct:result,answer:activity==='patterns'?<span lang="ar" dir="rtl">{text(question.answerLabel)}</span>:question.answerLabel,explanation:text(question.note),next}}>
    <Box data-grammar-answers sx={{display:'grid',gridTemplateColumns:'repeat(2,minmax(0,1fr))',gap:1}}>{question.choices.map(choice=><Button key={choice.id} variant="outlined" disabled={result!==null} sx={{minHeight:52,minWidth:0,overflowWrap:'anywhere',fontFamily:activity==='patterns'?'var(--font-serif)':undefined,'&&':{fontSize:activity==='patterns'?'var(--grammar-arabic-size)':'var(--grammar-english-size)'}}} onClick={()=>setResult(choice.id===question.answer)}>{text(choice.label)}</Button>)}</Box>
   </AnswerArea>
  </Paper>

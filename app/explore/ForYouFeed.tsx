@@ -70,7 +70,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
   },[clip.video.id,suppliedSegments,full])
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
   if(modeStart.full!==full)setModeStart({full,start:full?time:Math.min(Math.max(time,clip.clip_start_ms/1000),clip.clip_end_ms/1000-.1)})
-  const { wrapRef, isReady, isMuted, isPlaying, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates, getSoundMuted } = useYouTubePlayer(clip.video.youtube_id, updateTime, modeStart.start, { verifySoundState: isPhone, autoplay: true, muted: !soundEnabled, mutedAutoplayFallback: true, endAt: full ? undefined : clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>{if(full)setEnded(true);else finishShort()}, onError:code=>onUnavailable(clip.video.youtube_id,code) })
+  const { wrapRef, isReady, isMuted, isPlaying, autoplayBlocked, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates, getSoundMuted } = useYouTubePlayer(clip.video.youtube_id, updateTime, modeStart.start, { verifySoundState: isPhone, autoplay: true, muted: !soundEnabled, audibleAutoplay: true, mutedAutoplayFallback: false, endAt: full ? undefined : clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>{if(full)setEnded(true);else finishShort()}, onError:code=>onUnavailable(clip.video.youtube_id,code) })
   function updateTime(seconds:number){
     setTime(seconds)
     // Charge the final playback sample before deciding whether another clip may start.
@@ -92,11 +92,12 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
     else mute()
   }, [isPhone, isReady, soundEnabled, playWithSound, mute])
   useEffect(() => {
-    if (!isPhone || !isReady || !soundEnabled || !isMuted) return
-    const enable = (event: Event) => { if(event.target instanceof Element && event.target.closest('button, a, input, select, [role=slider]')) return; playWithSound() }
+    if (!isPhone || !isReady || !soundEnabled || !autoplayBlocked) return
+    const enable = (event: Event) => { if(event.target instanceof Element && event.target.closest('[aria-label=\"Mute clip\"], [aria-label=\"Unmute clip\"]')) return; playWithSound() }
     document.addEventListener('pointerdown', enable)
-    return () => document.removeEventListener('pointerdown', enable)
-  }, [isPhone, isReady, soundEnabled, isMuted, playWithSound])
+    document.addEventListener('keydown', enable)
+    return () => {document.removeEventListener('pointerdown', enable);document.removeEventListener('keydown', enable)}
+  }, [isPhone, isReady, soundEnabled, autoplayBlocked, playWithSound])
   useEffect(()=>{samplePlayback?.({time,playing:isReady&&isPlaying,rate:playbackRate??1,pause:pauseVideo})},[time,isReady,isPlaying,playbackRate,pauseVideo,samplePlayback])
   useEffect(()=>()=>{samplePlayback?.({time:0,playing:false,rate:1,pause:pauseVideo})},[samplePlayback,pauseVideo])
   const visibleClip = full ? {...clip,clip_start_ms:0,clip_end_ms:Math.max(...segments.map(s=>s.end_seconds),clip.clip_end_ms/1000)*1000} : clip
@@ -112,11 +113,11 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
       <Box sx={{ position: 'relative', width: '100%', height: '100%', bgcolor: '#000', borderRadius: { xs: 0, md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
         <Box ref={wrapRef} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
       </Box>
-      {/* Leave the lower 40% (at least 80px) uncovered for native player controls. */}
-      <Box data-feed-gesture-zone aria-hidden="true" onClick={()=>{if(isPlaying)pauseVideo();else playVideo()}} sx={{display:{xs:'block',md:'none'},position:'absolute',inset:'0 0 max(80px, 40%)',zIndex:2,touchAction:'pan-x'}} />
+      {/* The entire iframe owns touches, including top controls and its timeline. */}
       {leftControls}
       {rightControls}
     </Box>
+    {isPhone&&autoplayBlocked&&soundEnabled&&<Typography role="status" sx={{color:"inherit",px:2,py:1,fontSize:13}}>Tap the video to play with sound.</Typography>}
     {ended && <Box sx={{display:{xs:'none',md:'flex'},justifyContent:'center',mt:1}}><Button onClick={()=>{setEnded(false);seekTo(clip.clip_start_ms/1000)}} sx={{color:{md:'var(--awm-gold-light)'}}}>Replay clip</Button></Box>}
     <Box data-desktop-for-you-toolbar sx={{display:{xs:'none',md:'flex'},alignItems:'center',justifyContent:'space-between',gap:1.25,py:2,color:'#fff','& .MuiIconButton-root':{color:'#fff',width:44,height:44},'& .MuiButton-root':{color:'#fff'}}}>
       {navigation&&<IconButton aria-label="Previous video" disabled={navigation.previousDisabled} onClick={navigation.previous}><KeyboardArrowUp/></IconButton>}

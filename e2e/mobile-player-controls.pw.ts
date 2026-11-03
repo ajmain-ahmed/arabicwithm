@@ -1,11 +1,20 @@
 import {test,expect} from '@playwright/test'
+import {signInFixture} from './helpers/account'
 import {installYouTubeFixture} from './helpers/youtube'
 const backend=`https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4310}`
-for(const width of [320,360,390,430])test(`mobile native timeline ownership at ${width}`,async({page,request})=>{
+for(const width of [320,360,390,430])test(`mobile native timeline ownership at ${width}`,async({page,context,request})=>{
+ await signInFixture(context)
  await request.post(`${backend}/fixture/for-you-playback`);await request.post(`${backend}/fixture/dynamic-for-you`)
  await installYouTubeFixture(page);await page.setViewportSize({width,height:900});await page.goto('/explore');await page.getByRole('button',{name:'For You feed',exact:true}).click()
- const source=page.locator('[data-for-you-source]'),toolbar=page.locator('[data-mobile-for-you-toolbar]'),zone=page.locator('[data-feed-gesture-zone]'),panel=page.locator('[data-mobile-clip-transcript]')
+ const source=page.locator('[data-for-you-source]'),toolbar=page.locator('[data-mobile-for-you-toolbar]'),panel=page.locator('[data-mobile-clip-transcript]')
  await expect(source.locator('iframe')).toBeVisible()
+ const shortTimeline=page.frameLocator('iframe[title="YouTube video player"]').getByRole('slider',{name:'Native timeline fixture'})
+ await expect(shortTimeline).toBeVisible();await shortTimeline.focus()
+ for(let i=0;i<20;i++)await page.keyboard.press('ArrowRight')
+ await expect(panel.locator('[data-active-segment=true]')).toContainText('Later sentence')
+ for(let i=0;i<15;i++)await page.keyboard.press('ArrowLeft')
+ await expect(panel.locator('[data-active-segment=true]')).toContainText('Opening sentence')
+ await expect(source).toHaveAttribute('data-for-you-source','abcdefghij0')
  await toolbar.getByRole('button',{name:'Short',exact:true}).click();await expect(toolbar.getByRole('button',{name:'Full',exact:true})).toBeVisible()
  const timeline=page.frameLocator('iframe[title="YouTube video player"]').getByRole('slider',{name:'Native timeline fixture'})
  await expect(timeline).toBeVisible();await page.waitForTimeout(300)
@@ -35,15 +44,15 @@ for(const width of [320,360,390,430])test(`mobile native timeline ownership at $
  }
  expect(await page.evaluate(()=>(window as unknown as {__ytPlayers:unknown[]}).__ytPlayers.length)).toBe(count)
  const playing=()=>page.evaluate(()=>(window as unknown as {__ytPlayers:{playing:boolean}[]}).__ytPlayers.at(-1)!.playing)
- const before=await playing();await zone.click();await expect.poll(playing).toBe(!before);await zone.click();await expect.poll(playing).toBe(before)
- await page.frameLocator('iframe[title="YouTube video player"]').getByRole('button',{name:'Native play/pause fixture'}).click();await expect.poll(playing).toBe(!before)
- const geometry=await page.locator('[data-for-you-player]').boundingBox(),overlay=await zone.boundingBox();expect(geometry!.height-overlay!.height).toBeGreaterThanOrEqual(Math.max(79,geometry!.height*.4-1))
+ const before=await playing()
+ await expect(page.locator('[data-feed-gesture-zone]')).toHaveCount(0)
+ const native=page.frameLocator('iframe[title="YouTube video player"]')
+ for(const name of ['Volume','CC','Settings']){const button=native.getByRole('button',{name,exact:true});await button.click();await expect(button).toHaveAttribute('aria-pressed','true');await expect(source).toHaveAttribute('data-for-you-source',id!)}
+ await native.getByRole('button',{name:'Native play/pause fixture'}).click();await expect.poll(playing).toBe(!before)
  await toolbar.dispatchEvent('wheel',{deltaY:140});await panel.dispatchEvent('wheel',{deltaY:140});await expect(source).toHaveAttribute('data-for-you-source',id!)
  await toolbar.getByRole('button',{name:'Full',exact:true}).click();await page.waitForTimeout(800)
- const z=(await zone.boundingBox())!,x=z.x+z.width/2,y=z.y+z.height-5
- await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});await page.waitForTimeout(60)
- for(let i=1;i<=6;i++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y-i*15}]});await page.waitForTimeout(20)}
- await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]})
+ const feed=page.locator('[data-mobile-clip-feed]');const z=(await feed.boundingBox())!,x=z.x+z.width/2,y=z.y+z.height-5
+ await feed.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:x,clientY:y}]});await feed.dispatchEvent('touchend',{changedTouches:[{identifier:1,clientX:x,clientY:y-100}]})
  await expect(source).not.toHaveAttribute('data-for-you-source',id!)
  await toolbar.getByRole('button',{name:'Previous video',exact:true}).click();await expect(source).toHaveAttribute('data-for-you-source',id!)
 })

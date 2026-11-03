@@ -46,6 +46,7 @@ interface YouTubePlayerOptions {
   autoplay?: boolean
   muted?: boolean
   mutedAutoplayFallback?: boolean
+  audibleAutoplay?: boolean
   onEnded?: () => void
   reloadKey?: string | number
   endAt?: number
@@ -215,7 +216,7 @@ export default function useYouTubePlayer(
               setErrorCode(null)
               setAutoplayBlocked(false)
               if (mutedRef.current) playerRef.current?.mute?.()
-              else if (options.mutedAutoplayFallback) {
+              else if (options.mutedAutoplayFallback || options.audibleAutoplay) {
                 playerRef.current?.unMute?.()
                 if ((playerRef.current?.getVolume?.() ?? 100) === 0) playerRef.current?.setVolume?.(100)
               }
@@ -224,7 +225,9 @@ export default function useYouTubePlayer(
               if (autoplay) playerRef.current?.playVideo?.()
               setIsReady(true)
               reportTime()
-              intervalRef.current = setInterval(reportTime, 200)
+              // The API has no seek event. State changes plus polling while
+              // paused keep native timeline seeks tied to actual player time.
+              intervalRef.current = setInterval(reportTime, options.requireTimeUpdates ? 100 : 200)
             },
             onStateChange: (event: { data: number }) => {
               if (cancelled) return
@@ -237,7 +240,7 @@ export default function useYouTubePlayer(
                 setIsPlaying(true)
                 setAutoplayBlocked(false)
                 if (!intervalRef.current)
-                  intervalRef.current = setInterval(reportTime, 200)
+                  intervalRef.current = setInterval(reportTime, options.requireTimeUpdates ? 100 : 200)
               } else {
                 setIsPlaying(false)
                 if (event.data === window.YT.PlayerState.ENDED) {
@@ -312,7 +315,7 @@ export default function useYouTubePlayer(
       setIsReady(false)
       setIsPlaying(false)
     }
-  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, options.mutedAutoplayFallback, options.requireTimeUpdates, options.verifySoundState, retryNonce])
+  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, options.mutedAutoplayFallback, options.audibleAutoplay, options.requireTimeUpdates, options.verifySoundState, retryNonce])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {
@@ -378,7 +381,6 @@ export default function useYouTubePlayer(
     // actually means sound.
     if ((player?.getVolume?.() ?? 100) === 0) player?.setVolume?.(100)
     player?.playVideo?.()
-    setAutoplayBlocked(false)
     setIsMuted(options.verifySoundState ? readEffectiveMuted(playerRef.current, true) : false)
   }, [options.verifySoundState])
 

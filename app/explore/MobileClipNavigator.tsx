@@ -25,9 +25,8 @@ export default function MobileClipNavigator({ disabled = false, clipKey, canPrev
     const mobile = () => !disabled && window.matchMedia('(max-width:899.95px)').matches
     function innerScroll(target: EventTarget | null) {
       let child = target instanceof Element ? target : null
-      // Only the upper video gesture zone participates in Short feed navigation.
-      // The uncovered iframe and the entire toolbar/transcript own their gestures.
-      if (child?.closest('[data-for-you-player]') && !child.closest('[data-feed-gesture-zone]')) return true
+      // Native controls, the entire video, toolbar and transcript own their gestures.
+      if (child?.closest('[data-for-you-player]')) return true
       while (child && child !== node) {
         if (child.matches('[data-feed-transcript], [data-mobile-for-you-toolbar], iframe, button, a, input, select, textarea, [role="dialog"], [role="slider"]')) return true
         const overflow = getComputedStyle(child).overflowY

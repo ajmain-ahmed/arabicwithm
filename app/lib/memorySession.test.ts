@@ -71,6 +71,13 @@ it("advances once after reveal, rejects duplicate reviews, completes and restart
     revealed: false,
   });
 });
+it('exits only the local unfinished queue while keeping available cards and direction',()=>{
+ const active=practiceReducer(initialPractice(cards),{type:'begin',session:state})
+ const next=practiceReducer(active,{type:'exit'})
+ expect(next.phase).toBe('selection');expect(next.completionIds).toEqual([]);expect(next.sessionId).toBeUndefined()
+ expect(next.cards).toEqual(cards);expect(next.direction).toBe(active.direction)
+ expect(active.sessionId).toBe(state.sessionId)
+})
 it("ignores empty starts, final-card events and stale repeated skips", () => {
   const empty = initialPractice([]);
   expect(practiceReducer(empty, { type: "reveal" })).toBe(empty);

@@ -26,7 +26,6 @@ import { useColorMode } from '@/app/components/ThemeProvider'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
 import { buildContinueReadingItems, metadataReadingPositions } from './continueReadingItems'
-import { bookReaderHref } from '@/app/lib/bookReaderSettings'
 import { useReadingProgressStore } from '@/store/readingProgressStore'
 import { fetchMyList } from '@/app/actions/myList'
 import { useMyListCache } from '@/store/myListStore'
@@ -283,18 +282,15 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
     })),
     ...(myListBooks ?? []).map((book) => ({
       key: book.id,
-      href: (() => {
-        const position = trackedPositions[book.slug] ?? metadataReadingPositions(user?.user_metadata ?? {})[book.slug]
-        if (!position || !chaptersByBook[book.slug]?.some(chapter => chapter.slug === position.chapterSlug)) return `/books/${encodeURIComponent(book.slug)}`
-        return bookReaderHref(book.slug, position.chapterSlug, position.language ?? 'ar', position.page, position.blockIndex)
-      })(),
+      href: `/books/${encodeURIComponent(book.slug)}`,
+      book,
       title: book.title,
       meta: book.author,
       level: book.level,
       imageSrc: `/api/covers/books/${book.id}`,
       imageCrop: book.coverCrop,
     })),
-  ], [myListCacheItems, myListBooks, trackedPositions, user, chaptersByBook])
+  ], [myListCacheItems, myListBooks])
   const bookRowItems: CatalogueRowItem[] = useMemo(() => books.slice(0, HOME_ROW_LIMIT).map((book) => ({
     key: book.id,
     href: `/books/${encodeURIComponent(book.slug)}`,
@@ -388,7 +384,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
             </Container>
           )}
           {user && continueReadingRowItems.length > 0 && (
-            <Container maxWidth={false} sx={{ display: { xs: 'block', md: 'none' }, mt: user && myListRowItems.length > 0 ? { xs: 2.5, md: 3.25 } : 0 }}>
+            <Container maxWidth={false} sx={{ mt: user && myListRowItems.length > 0 ? { xs: 2.5, md: 3.25 } : 0 }}>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Continue Reading</Typography>
               <NewOnRow items={continueReadingRowItems} ariaLabel="Continue Reading" compact viewAllHref="/books" />
             </Container>

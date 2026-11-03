@@ -133,9 +133,10 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
 
   // Each completed card is committed before navigation is enabled. Exit does
   // not save an unfinished queue for restoration on a later visit.
-  const saveAndExit = async () => {
+  const exitPractice = async () => {
     if (busyRef.current || navigating) return
-    router.push('/')
+    pendingStart.current=null
+    dispatch({type:'exit'})
   }
 
   useEffect(() => {
@@ -257,7 +258,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         {progressError && <Alert severity="error" sx={{ mt: 2 }} action={<Button onClick={retryProgress} disabled={progressLoading}>Retry</Button>}>{progressError}</Alert>}
 
         {saveError && <Alert severity="error" sx={{ mt: 2 }}>{saveError}</Alert>}
-        {limited && <Paper role="status" variant="outlined" sx={{ mt: 2, mx: 'auto', maxWidth: 480, p: {xs: 2, sm: 3}, textAlign: 'center', borderRadius: 3 }}><InfoOutlined sx={{ color: 'var(--awm-gold)', mb: 1 }} /><Typography>You&apos;ve used today&apos;s free Memory session.</Typography><Typography sx={{ mt: 1, color: 'text.secondary' }}>Unlock unlimited Memory sessions. You can still resume your saved session or view its recap.</Typography><Button fullWidth variant="contained" onClick={() => setUpgrade(true)} sx={{ mt: 2, minHeight: 48, textTransform: 'none', fontSize: {xs: 13, sm: 15} }}>Upgrade to Arabic with M</Button></Paper>}
+        {limited && <Paper role="status" variant="outlined" sx={{ mt: 2, mx: 'auto', maxWidth: 480, p: {xs: 2, sm: 3}, textAlign: 'center', borderRadius: 3 }}><InfoOutlined sx={{ color: 'var(--awm-gold)', mb: 1 }} /><Typography>You&apos;ve used today&apos;s free Memory session.</Typography><Typography sx={{ mt: 1, color: 'text.secondary' }}>Unlock unlimited Memory sessions. Your completed reviews and learning progress are preserved.</Typography><Button fullWidth variant="contained" onClick={() => setUpgrade(true)} sx={{ mt: 2, minHeight: 48, textTransform: 'none', fontSize: {xs: 13, sm: 15} }}>Upgrade to Arabic with M</Button></Paper>}
         {loadError && <Alert severity="error" sx={{ mt: 2.5 }}>{loadError}</Alert>}
         {library.missingScope && <Alert severity="warning" sx={{ mt: 2.5 }}>That source is no longer available. Choose a show or switch to Random practice.</Alert>}
 
@@ -275,7 +276,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
           </Paper>
         ) : complete ? (
           <Paper elevation={0} sx={{ mt: 3, p: { xs: 4, md: 6 }, textAlign: 'center', borderRadius: '18px', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 28%, transparent)' }}>
-            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif' }}>{completed} cards completed</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving || navigating} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button><Button disabled={saving} onClick={()=>void saveAndExit()}>{user ? 'Save and Exit' : 'Exit practice'}</Button></Box>
+            <CheckCircleOutlined sx={{ color: 'var(--awm-gold)', fontSize: 58 }} /><Typography sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: 34, fontWeight: 600, color: 'var(--awm-bark)' }}>Deck complete</Typography><Typography sx={{ mt: 0.75, color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif' }}>{completed} cards completed</Typography><Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 1.25, flexWrap: 'wrap' }}><Button disabled={loading || (Boolean(user) && (!ready || saving))} onClick={() => void restart()} startIcon={<Refresh />} variant="contained" sx={{ bgcolor: 'var(--awm-forest)', color: '#fff', borderRadius: '9999px', textTransform: 'none', '&:hover': { bgcolor: '#174832' } }}>Practise again</Button><Button onClick={requestNewCards} disabled={loading || saving || navigating} variant="outlined" sx={{ borderColor: 'var(--awm-gold)', color: 'var(--awm-bark)', borderRadius: '9999px', textTransform: 'none' }}>New</Button><Button disabled={saving} onClick={()=>void exitPractice()}>Exit Practice</Button></Box>
           </Paper>
         ) : card && (
           <Box sx={{ mt: 1.5 }}>
@@ -310,7 +311,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
             <Box data-memory-actions sx={{display:'flex',justifyContent:'center',alignItems:'center',gap:1,mt:1.5,'& > button':{minHeight:44,textTransform:'none'}}}>
               <Button disabled={(Boolean(user) && !ready) || saving || navigating || limited} onClick={skip}>Skip</Button>
               <Button onClick={requestNewCards} disabled={loading || saving || navigating}>New</Button>
-              <Button disabled={saving} onClick={()=>void saveAndExit()}>{user ? 'Save and Exit' : 'Exit practice'}</Button>
+              <Button disabled={saving} onClick={()=>void exitPractice()}>Exit Practice</Button>
             </Box>
             <LinearProgress variant="determinate" value={(index / cards.length) * 100} sx={{ mb: 1.5, height: 6, borderRadius: 99, bgcolor: 'color-mix(in srgb, var(--awm-bark) 8%, transparent)', '& .MuiLinearProgress-bar': { bgcolor: 'var(--awm-gold)', borderRadius: 99 } }} />
             <Box data-memory-progress sx={{ flexWrap:'wrap', mt: 1.25, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2 }}><Typography sx={{ color: 'var(--awm-muted)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 12 }}>Card {index + 1} of {cards.length}</Typography></Box>

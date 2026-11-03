@@ -27,11 +27,14 @@ export function useGrammarDisplay() {
 export function useGrammarPreferences(){return useContext(Context)}
 export function AutoNextControl(){
  const {preferences,update}=useGrammarPreferences()
- return <Box sx={{display:'flex',justifyContent:'center',mb:1}}><FormControlLabel label="Auto Next" control={<Switch size="small" checked={preferences.autoNext} onChange={(_,autoNext)=>update({autoNext})}/>}/></Box>
+ return <FormControlLabel sx={{m:0,whiteSpace:'nowrap'}} label="Auto Next" control={<Switch size="small" checked={preferences.autoNext} onChange={(_,autoNext)=>update({autoNext})}/>}/>
+}
+export function ActivityControls({children}:{children:ReactNode}){
+ return <Box data-grammar-controls sx={{display:'flex',alignItems:'center',justifyContent:'center',flexWrap:'wrap',columnGap:3,rowGap:2,mb:2}}>{children}</Box>
 }
 export function TashkeelControl(){
  const {preferences,update}=useGrammarPreferences()
- return <FormControlLabel label="Show Tashkīl" control={<Switch size="small" checked={preferences.tashkeel} onChange={(_,tashkeel)=>update({tashkeel})}/>}/>
+ return <FormControlLabel sx={{m:0,whiteSpace:'nowrap'}} label="Show Tashkīl" control={<Switch size="small" checked={preferences.tashkeel} onChange={(_,tashkeel)=>update({tashkeel})}/>}/>
 }
 export function GrammarSettings() {
   const { preferences, update } = useContext(Context)
@@ -63,16 +66,10 @@ export function Feedback({ correct, children, answer, onContinue }: { correct: b
   </Box>
 }
 export type GrammarResult={correct:boolean;answer?:ReactNode;explanation:ReactNode;next:()=>void}
-/** Hidden options keep their grid footprint while leaving the accessibility tree. */
-export function AnswerArea({children,result,minHeight=360}:{children:ReactNode;result?:GrammarResult;minHeight?:number}){
- const options=useRef<HTMLDivElement>(null),[height,setHeight]=useState(minHeight)
- useEffect(()=>{
-  if(!options.current||typeof ResizeObserver==='undefined')return
-  const observer=new ResizeObserver(([entry])=>setHeight(Math.max(minHeight,Math.ceil(entry.contentRect.height))))
-  observer.observe(options.current);return()=>observer.disconnect()
- },[minHeight])
- return <Box data-grammar-answer-area sx={{display:'grid',height,alignItems:'center',my:2,minWidth:0}}>
-  <Box ref={options} data-grammar-options aria-hidden={!!result} inert={!!result} sx={{gridArea:'1 / 1',visibility:result?'hidden':'visible',pointerEvents:result?'none':undefined,minWidth:0}}>{children}</Box>
-  {result&&<Box sx={{gridArea:'1 / 1',height:'100%',overflowY:'auto',minWidth:0}}><Feedback correct={result.correct} answer={result.answer} onContinue={result.next}>{result.explanation}</Feedback></Box>}
+/** Each state owns its natural height; no space is reserved for future feedback. */
+export function AnswerArea({children,result}:{children:ReactNode;result?:GrammarResult}){
+ return <Box data-grammar-answer-area sx={{my:2,minWidth:0,overflowWrap:'anywhere'}}>
+  <Box data-grammar-options hidden={!!result} aria-hidden={!!result} inert={!!result} sx={{display:result?'none':undefined,minWidth:0}}>{children}</Box>
+  {result&&<Feedback correct={result.correct} answer={result.answer} onContinue={result.next}>{result.explanation}</Feedback>}
  </Box>
 }

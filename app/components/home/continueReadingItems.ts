@@ -1,3 +1,4 @@
+import {bookReaderHref} from '@/app/lib/bookReaderSettings'
 import type { PublicBook, PublicChapter } from '@/app/actions/books'
 import { READING_TRACK_MIN_PAGE, parseStoredPositions, type ReadingPosition } from '@/store/readingProgressStore'
 import type { CatalogueRowItem } from './NewOnRow'
@@ -20,7 +21,7 @@ export function buildContinueReadingItems(
       if (!book || !chapter) return []
       const item: CatalogueRowItem = {
         key: book.id,
-        href: `/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(position.chapterSlug)}?page=${position.page}${position.blockIndex!==undefined?`&block=${position.blockIndex}`:''}`,
+        href: position.language ? bookReaderHref(bookSlug,position.chapterSlug,position.language,position.page,position.blockIndex) : `/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(position.chapterSlug)}?page=${position.page}${position.blockIndex!==undefined?`&block=${position.blockIndex}`:''}`,
         title: book.title,
         meta: `Page ${position.page} of ${position.totalPages}`,
         level: book.level,

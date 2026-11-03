@@ -1,12 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Box, Button, LinearProgress, MenuItem, Select, Typography } from '@mui/material'
+import { Alert, Box, Button, FormControl, InputLabel, LinearProgress, MenuItem, Select } from '@mui/material'
 import { loadGrammarBank } from '@/app/actions/grammar'
 import type { Mode } from './models'
 import { practiceBatch, type BankQuestion } from './questionBank'
 import WebsiteActivity from './WebsiteActivity'
-import {TashkeelControl} from './GrammarUI'
+import {ActivityControls,AutoNextControl,TashkeelControl} from './GrammarUI'
 
 export default function BankActivity({ mode }: { mode: Mode }) {
   const [questions, setQuestions] = useState<BankQuestion[]>([]), [busy, setBusy] = useState(true), [warning, setWarning] = useState(''), [level, setLevel] = useState(0), [round, setRound] = useState(0)
@@ -25,7 +25,7 @@ export default function BankActivity({ mode }: { mode: Mode }) {
     if (!q.sentenceHash) return
     recent.current = [...recent.current.filter(id => id !== q.sentenceHash), q.sentenceHash].slice(-200)
   }
-  return <Box><Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap:'wrap', gap: 1, mb: 2 }}><Typography>Practice level</Typography><Select size="small" value={level} inputProps={{ 'aria-label': 'Practice level' }} onChange={e => { setBusy(true); setLevel(Number(e.target.value)) }}><MenuItem value={0}>Mixed levels</MenuItem>{['A1','A2','B1','B2','C1','C2'].map((label,i)=><MenuItem key={label} value={i+1}>Through {label}</MenuItem>)}</Select>{mode==='grammatical_case'&&<TashkeelControl/>}</Box>
+  return <Box><ActivityControls><FormControl data-practice-level size="small" sx={{minWidth:145}}><InputLabel id={`${mode}-level`}>Practice level</InputLabel><Select labelId={`${mode}-level`} label="Practice level" value={level} inputProps={{ 'aria-label': 'Practice level' }} onChange={e => { setBusy(true); setLevel(Number(e.target.value)) }}><MenuItem value={0}>Mixed levels</MenuItem>{['A1','A2','B1','B2','C1','C2'].map((label,i)=><MenuItem key={label} value={i+1}>Through {label}</MenuItem>)}</Select></FormControl><AutoNextControl/>{mode==='grammatical_case'&&<TashkeelControl/>}</ActivityControls>
     {warning && <Alert severity="info" sx={{ mb: 2 }}>{warning}<Button onClick={restart}>Retry uploaded sentences</Button></Alert>}
     {busy ? <LinearProgress /> : <WebsiteActivity key={`${mode}-${level}-${round}`} activity={mode} suppliedQuestions={questions} onUsed={markUsed} onRestart={restart} />}
   </Box>

@@ -45,6 +45,7 @@ export interface PracticeState extends SavedMemorySession {
   revealed: boolean;
 }
 export type PracticeEvent =
+  | { type: "exit" }
   | { type: "begin"; session: SavedMemorySession }
   | { type: "reveal" }
   | { type: "advance"; completionId: string }
@@ -68,6 +69,7 @@ export function practiceReducer(
   state: PracticeState,
   event: PracticeEvent,
 ): PracticeState {
+  if (event.type === "exit") return initialPractice(state.cards, state.direction);
   if (event.type === "begin") {
     const parsed = memorySessionSchema.safeParse(event.session);
     if (!parsed.success || !parsed.data.cards.length) return state;

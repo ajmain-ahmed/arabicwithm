@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Box, Skeleton, Typography } from '@mui/material'
 import { ChevronRight } from '@mui/icons-material'
 import CefrChip from '@/app/components/CefrChip'
+import LibraryBookCard from '@/app/books/LibraryBookCard'
+import type { LibraryBook } from '@/app/books/BooksLibrary'
 import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 
 const DRAG_ACTIVATION_DISTANCE_PX = 6
@@ -18,6 +20,7 @@ export interface CatalogueRowItem {
   level?: string
   imageSrc: string
   imageCrop?: ThumbnailCrop
+  book?: LibraryBook
 }
 
 export const COMPACT_HOME_CARD_WIDTH = { xs: 'clamp(150px, 46vw, 182px)', sm: 198, md: 222, lg: 238 } as const
@@ -71,7 +74,13 @@ function useNearViewport<T extends HTMLElement>(rootMargin = '160px') {
   return { ref, near }
 }
 
-function RowTile({
+function RowTile(props: React.ComponentProps<typeof ArtworkTile>){
+ const {item,mobileWidth,compact,isClone,loopStart}=props
+ if(!item.book)return <ArtworkTile {...props}/>
+ return <Box aria-hidden={isClone||undefined} inert={isClone||undefined} data-loop-start={loopStart?'true':undefined} sx={{flex:'0 0 auto',width:compact?{...COMPACT_HOME_CARD_WIDTH,xs:mobileWidth}:{xs:mobileWidth,sm:260,md:300},maxWidth:{xs:compact?152:310,sm:'100%'},scrollSnapAlign:'start'}}><LibraryBookCard book={item.book} compact={compact}/></Box>
+}
+
+function ArtworkTile({
   item,
   mobileWidth,
   compact,

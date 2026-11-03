@@ -83,6 +83,23 @@ const wave = Buffer.alloc(44 + sampleCount * 2)
 wave.write('RIFF'); wave.writeUInt32LE(wave.length - 8, 4); wave.write('WAVEfmt ', 8); wave.writeUInt32LE(16, 16); wave.writeUInt16LE(1, 20); wave.writeUInt16LE(1, 22); wave.writeUInt32LE(rate, 24); wave.writeUInt32LE(rate * 2, 28); wave.writeUInt16LE(2, 32); wave.writeUInt16LE(16, 34); wave.write('data', 36); wave.writeUInt32LE(sampleCount * 2, 40)
 for (let i = 0; i < sampleCount; i++) wave.writeInt16LE(Math.round(Math.sin(i * Math.PI * 2 * 220 / rate) * 150), 44 + i * 2)
 const audioObjects = new Map(['ar', 'en'].map(language => [`audiobooks/fixture/${language}/chapter.wav`, wave]))
+function configureAudiobookAudit(format){
+    const second='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
+    for(const [chapter,index] of [[chapterId,1],[second,2]])for(const language of ['ar','en']){
+      const path=`fixture/${language}/chapter-${index}.wav`
+      const bytes=Buffer.from(wave.subarray(0,44+rate*(index===1?60:45)*2))
+      bytes.writeUInt32LE(bytes.length-8,4);bytes.writeUInt32LE(bytes.length-44,40)
+      audioObjects.set(`audiobooks/${path}`,bytes)
+      const row={chapter_id:chapter,language,is_published:true,source_type:'supabase_storage',storage_bucket:'audiobooks',storage_path:path,duration_seconds:index===1?60:45,narrator:'Fixture Narrator',external_url:null,external_video_id:null}
+      if(format==='bucket')row.storage_path=`audiobooks/${path}`
+      if(format==='full')row.storage_path=`${backendUrl}/storage/v1/object/public/audiobooks/${path}`
+      if(format==='external'){row.source_type='external_url';row.storage_path=null;row.external_url=`https://127.0.0.1:${backendPort}/fixture-media/audiobooks/${path}`}
+      if(format==='youtube'){row.source_type='youtube';row.storage_path=null;row.external_video_id=language==='ar'?'abcdefghij0':'abcdefghij1'}
+      tables.book_chapter_audio=tables.book_chapter_audio.filter(r=>r.chapter_id!==chapter||r.language!==language);tables.book_chapter_audio.push(row)
+    }
+    tables.book_audio_progress=[]
+}
+if(process.env.AWM_TEST_AUDIO_AUDIT==='1')configureAudiobookAudit()
 const cover = Buffer.from('UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA', 'base64')
 const backend = https.createServer({ key: readFileSync(privateKey), cert: readFileSync(certificate) }, async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', webUrl)
@@ -100,6 +117,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     return json(res,{})
   }
   if(url.pathname==='/fixture/reader-pagination'){tables.chapters[0].content=Array.from({length:body.blocks??120},(_,i)=>({paragraph:i+1,tokens:[{arabic:'\u0627\u0644\u0643\u062a\u0627\u0628',english:'book',pos:'noun',cefr:'a1'}],translation:`Reader block ${i+1}.`}));return json(res,{})}
+  if(url.pathname==='/fixture/audiobook-audit'){configureAudiobookAudit(body.format);return json(res,{})}
   if(url.pathname==='/fixture/website-update') {
     const second='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'
     for(const language of ['ar','en']) if(!tables.book_chapter_audio.some(row=>row.chapter_id===second&&row.language===language)) tables.book_chapter_audio.push({...tables.book_chapter_audio.find(row=>row.language===language),chapter_id:second})
@@ -462,8 +480,8 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   }
   if (url.pathname === '/storage/v1/bucket/audiobooks') return json(res, { id: 'audiobooks', name: 'audiobooks', public: false })
   if (url.pathname.startsWith('/storage/v1/object/sign/') && req.method === 'POST') return json(res, { signedURL: `${url.pathname.replace('/storage/v1', '')}?token=fixture-only` })
-  if (url.pathname.startsWith('/storage/v1/object/sign/')) {
-    const bytes = audioObjects.get(decodeURIComponent(url.pathname.split('/object/sign/')[1]))
+  if (url.pathname.startsWith('/storage/v1/object/sign/') || url.pathname.startsWith('/fixture-media/')) {
+    const bytes = audioObjects.get(decodeURIComponent(url.pathname.startsWith('/fixture-media/')?url.pathname.slice('/fixture-media/'.length):url.pathname.split('/object/sign/')[1]))
     if (!bytes) return json(res, { message: 'Object not found' }, 404)
     const match = req.headers.range?.match(/bytes=(\d+)-(\d*)/)
     const start = match ? Number(match[1]) : 0, end = match?.[2] ? Math.min(Number(match[2]), bytes.length - 1) : bytes.length - 1
