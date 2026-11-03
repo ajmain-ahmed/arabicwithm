@@ -21,10 +21,11 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { supabase } from '../lib/supabase/client'
 import { createClient } from '@supabase/supabase-js'
 import ClientStyles from '@/app/components/ClientStyles'
+import Turnstile, { type TurnstileHandle } from '@/app/components/Turnstile'
 
 /* Email confirmation/reset links follow the flow type of the client that
    initiates them. @supabase/ssr forces PKCE, whose links only complete on the
@@ -112,12 +113,23 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [snackbar, setSnackbar] = useState<SnackbarMessage | null>(null)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const turnstileRef = useRef<TurnstileHandle>(null)
+  const turnstileEnabled = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
   const showSnackbar = (severity: SnackbarMessage['severity'], text: string) =>
     setSnackbar({ severity, text })
 
+  /* Turnstile tokens are single-use and short-lived: clear and re-solve
+     after every attempt so the next one never reuses a spent token. */
+  const resetCaptcha = () => {
+    setCaptchaToken(null)
+    turnstileRef.current?.reset()
+  }
+
   const resetAndClose = (severity: SnackbarMessage['severity'], message: string) => {
     setLoading(false)
+    resetCaptcha()
     setFormData({ email: '', password: '' })
     setForgotPassword(false)
     onClose()
@@ -133,10 +145,12 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
         /* Land on a real page: the implicit-flow link returns the session in
            the URL hash, which only client-side JS can read. */
         emailRedirectTo: `${window.location.origin}/`,
+        captchaToken: captchaToken ?? undefined,
       },
     })
     if (error) {
       setLoading(false)
+      resetCaptcha()
       showSnackbar('error', error.message)
       return
     }
@@ -148,9 +162,11 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
     const { data, error } = await supabase.auth.signInWithPassword({
       email: formData.email,
       password: formData.password,
+      options: { captchaToken: captchaToken ?? undefined },
     })
     if (error) {
       setLoading(false)
+      resetCaptcha()
       showSnackbar('error', error.message)
       return
     }
@@ -166,9 +182,11 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
     setLoading(true)
     const { error } = await getEmailLinkClient().auth.resetPasswordForEmail(formData.email, {
       redirectTo: `${window.location.origin}/reset-password`,
+      captchaToken: captchaToken ?? undefined,
     })
     if (error) {
       setLoading(false)
+      resetCaptcha()
       showSnackbar('error', error.message)
       return
     }
@@ -201,12 +219,14 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
     if (loading || googleLoading) return
     if (!formData.email) { showSnackbar('warning', 'Please enter your email.'); return }
     if (!forgotPassword && !formData.password) { showSnackbar('warning', 'Please enter your password.'); return }
+    if (turnstileEnabled && !captchaToken) { showSnackbar('warning', 'Please complete the security check.'); return }
     if (forgotPassword) handleForgotPassword()
     else if (authMode === 'register') handleSignUp()
     else handleSignIn()
   }
 
   const handleClose = () => {
+    resetCaptcha()
     setFormData({ email: '', password: '' })
     setForgotPassword(false)
     onClose()
@@ -394,12 +414,27 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
               />
             )}
 
+            {/* Bot check (renders only when Turnstile is configured) */}
+            {turnstileEnabled && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', minHeight: 65 }}>
+                <Turnstile
+                  ref={turnstileRef}
+                  onToken={setCaptchaToken}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={() => {
+                    setCaptchaToken(null)
+                    turnstileRef.current?.reset()
+                  }}
+                />
+              </Box>
+            )}
+
             {/* CTA */}
             <Button
               onClick={handleSubmit}
               variant="contained"
               fullWidth
-              disabled={loading}
+              disabled={loading || (turnstileEnabled && !captchaToken)}
               endIcon={<ArrowForward />}
               sx={{
                 background: 'linear-gradient(135deg, #b8860b, #d4a843)',

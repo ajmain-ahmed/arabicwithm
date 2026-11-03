@@ -56,6 +56,7 @@ Key features:
 │   ├── components/               # Shared components
 │   │   ├── navbar/               # Active top nav (index.tsx + MegaMenuGrid, MobileDrawer, UserMenu, etc.)
 │   │   ├── AuthDialog.tsx        # Sign-in / register / forgot-password modal
+│   │   ├── Turnstile.tsx         # Cloudflare Turnstile bot-check widget for auth forms
 │   │   ├── footer.tsx            # Site footer
 │   │   ├── MobileBottomNav.tsx   # Mobile bottom navigation bar
 │   │   ├── FloatingVideoPlayer.tsx # Global picture-in-picture video player
@@ -145,6 +146,9 @@ SUPABASE_SERVICE_KEY=<service-role-key>
 # Site URL (used in auth emails)
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
+# Cloudflare Turnstile (optional — bot protection on auth forms; leave unset to disable the widget)
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=<turnstile-site-key>
+
 # Admin user IDs for CMS editing privileges (optional)
 ADMIN=<supabase-user-uuid>
 ADMIN2=<supabase-user-uuid>
@@ -175,7 +179,7 @@ ADMIN2=<supabase-user-uuid>
 
 ## Authentication Flow
 
-1. **Sign up / Sign in**: `AuthDialog.tsx` uses `supabase.auth.signUp/signInWithPassword` or `signInWithOAuth({ provider: 'google' })`.
+1. **Sign up / Sign in**: `AuthDialog.tsx` uses `supabase.auth.signUp/signInWithPassword` or `signInWithOAuth({ provider: 'google' })`. The email/password and password-reset flows pass a Cloudflare Turnstile token (`captchaToken`) when `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is set; `app/components/Turnstile.tsx` renders the widget (nothing when the key is absent). Supabase Auth verifies the token server-side — enable it in Authentication → Captcha.
 2. **OAuth callback**: After Google/email sign-in, Supabase redirects to `/auth/callback`. The callback page (`app/auth/callback/page.tsx`) calls `supabase.auth.getSession()` and then redirects to `/`.
 3. **Password reset**: Users request a reset link in `AuthDialog`. The link redirects to `/reset-password`, which calls `supabase.auth.updateUser({ password })`.
 4. **Auth context**: `AuthContext.tsx` wraps the app, listens to `onAuthStateChange`, and provides `{ user, session, loading }` via `useAuth()`.
@@ -235,11 +239,12 @@ The project uses **Vitest** with `jsdom` and `@vitejs/plugin-react`.
 
 - `reactStrictMode` is **disabled** in `next.config.ts`.
 - Security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy) are set in `next.config.ts`.
-- The CSP allows YouTube iframe embeds and the Supabase API domain.
+- The CSP allows YouTube iframe embeds, the Supabase API domain, and the Cloudflare Turnstile challenge (`challenges.cloudflare.com` in script/frame/connect-src).
 - All DB mutations validate the authenticated user ID server-side.
 - `cartoons.ts` and `fs.ts` use `isPathContained()` path-traversal guards to ensure filesystem reads stay inside their content directories.
 - `rateLimit.ts` provides simple per-key rate limiting for Server Actions. It is in-memory only and therefore suitable for single-instance deployments (e.g. Vercel hobby plan).
 - Admin actions are gated by `isAdminUser()` which compares the authenticated user's UUID against the `ADMIN` / `ADMIN2` environment variables.
+- Auth endpoints (sign-up, sign-in, password reset) are additionally protected by Cloudflare Turnstile when `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is set: the widget renders in `AuthDialog` and Supabase Auth verifies the token server-side. These endpoints bypass the app-level rate limiter (browser → Supabase directly), so Turnstile is the primary bot defense for auth.
 
 ## Deployment
 
