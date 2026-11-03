@@ -4,7 +4,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Box, Typography } from '@mui/material'
 import { AutoStories } from '@mui/icons-material'
-import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 import type { LibraryBook } from '@/app/books/BooksLibrary'
 
 export const LIBRARY_GRID_SX = {
@@ -27,7 +26,7 @@ export default function LibraryBookCard({ book, listen = false, compact = false 
           alt={`${book.title} cover`}
           fill
           sizes={compact ? '(max-width: 600px) 33vw, 200px' : '(max-width: 600px) 50vw, (max-width: 1200px) 200px, 240px'}
-          style={{ objectFit: listen ? 'cover' : 'contain', ...(listen ? thumbnailCropCss(book.coverCrop) : {}) }}
+          style={{ objectFit: 'contain' }}
         />
       </Box>
     )

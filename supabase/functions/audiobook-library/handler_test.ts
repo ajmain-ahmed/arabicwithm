@@ -3,11 +3,12 @@ function assert(value: unknown): asserts value {
   if (!value) throw new Error("Assertion failed");
 }
 const chapterId = "11111111-1111-4111-8111-111111111111";
-function fixture(user: string | null, premium: boolean) {
+function fixture(user: string | null, premium: boolean, released = true) {
   const calls: string[] = [];
   const store: AudioStore = {
     authenticate: () => Promise.resolve(user),
     premium: () => Promise.resolve(premium),
+    released: () => Promise.resolve(released),
     availability: () => {
       calls.push("availability");
       return Promise.resolve([{
@@ -41,6 +42,13 @@ function fixture(user: string | null, premium: boolean) {
     );
   return { calls, request };
 }
+Deno.test('unreleased books expose no audio availability, playback or progress writes', async () => {
+  for (const action of ['availability', 'play', 'progress']) {
+    const f = fixture('premium', true, false);
+    assert((await f.request({ action, chapterId, language: 'ar', positionSeconds: 0, completed: false })).status === 404);
+    assert(f.calls.length === 0);
+  }
+});
 Deno.test("rejects invalid authentication before private access", async () => {
   const f = fixture(null, true);
   assert(

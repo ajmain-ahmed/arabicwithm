@@ -18,7 +18,7 @@ export function buildContinueReadingItems(
     .flatMap(([bookSlug, position]) => {
       const book = books.find((candidate) => candidate.slug === bookSlug)
       const chapter = chaptersByBook[bookSlug]?.find((candidate) => candidate.slug === position.chapterSlug)
-      if (!book || !chapter) return []
+      if (!book || book.isCompleted === false || !chapter) return []
       const item: CatalogueRowItem = {
         key: book.id,
         href: position.language ? bookReaderHref(bookSlug,position.chapterSlug,position.language,position.page,position.blockIndex) : `/books/${encodeURIComponent(bookSlug)}/${encodeURIComponent(position.chapterSlug)}?page=${position.page}${position.blockIndex!==undefined?`&block=${position.blockIndex}`:''}`,

@@ -7,6 +7,8 @@ import BookReadingCta from './BookReadingCta'
 import ChapterAccessLock, { ChapterLink } from './ChapterAccessLock'
 import BookDetailMetadata from './BookDetailMetadata'
 import { fetchPublishedAudioForBook } from '@/app/actions/audiobooks'
+import BookInProgress from './BookInProgress'
+import { isBookReleased } from '@/app/lib/bookRelease'
 
 export const revalidate = 60
 
@@ -25,8 +27,9 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
   const { book: slug } = await params
   const book = await fetchBookBySlugPublic(slug)
   if (!book) notFound()
+  const completed = await isBookReleased(book.id)
 
-  const [chapters, audioChapters] = await Promise.all([fetchChapterCardsForBookPublic(book.id), fetchPublishedAudioForBook(book.id)])
+  const [chapters, audioChapters] = completed ? await Promise.all([fetchChapterCardsForBookPublic(book.id), fetchPublishedAudioForBook(book.id)]) : [[], []]
   const audioChapterIds = new Set(audioChapters.map((audio) => audio.chapterId))
 
   const infoFields = (
@@ -35,6 +38,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
         {book.title}
       </Typography>
       <Typography color="text.secondary" sx={{ mt: 1 }}>By {book.author}</Typography>
+      {!completed && book.category && <Typography sx={{ mt: .5, fontSize: 13, color: 'var(--awm-muted)' }}>{book.category}</Typography>}
       {book.description && (
         <Typography
           dir="ltr"
@@ -56,7 +60,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
       )}
       <BookDetailMetadata level={book.level} readingTimeMinutes={book.readingTimeMinutes} tags={book.tags} audioChapterCount={audioChapterIds.size}/>
       <Box sx={{ mt: 3 }}>
-        <BookReadingCta bookId={book.id} bookSlug={book.slug} chapters={chapters} />
+        {completed ? <BookReadingCta bookId={book.id} bookSlug={book.slug} chapters={chapters} /> : <BookInProgress bookId={book.id} bookSlug={book.slug} />}
       </Box>
     </>
   )
@@ -118,7 +122,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
           <Paper elevation={0} sx={{ gridArea: 'info', minWidth: 0, p: { xs: 3, md: 5 }, borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', minHeight: book.cover ? { md: 450 } : undefined }}>
             {infoFields}
           </Paper>
-          <Box sx={{ gridArea: 'chapters', minWidth: 0 }}>{chaptersList}</Box>
+          {completed && <Box sx={{ gridArea: 'chapters', minWidth: 0 }}>{chaptersList}</Box>}
         </Box>
       </Container>
     </Box>

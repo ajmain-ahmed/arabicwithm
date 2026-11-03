@@ -10,6 +10,7 @@ import { stripDiacritics } from "@/app/lib/arabic"
 import { isGrammarLabel, type BookTokenGrammar } from '@/app/lib/bookTokenGrammar'
 import type { CartoonWordEntry } from "@/app/lib/cartoons"
 import { normalizeThumbnailCrop, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
+import { isBookReleased, isChapterReleased, releasedChapterIds } from '@/app/lib/bookRelease'
 
 /* Keep admin invalidation fast, while also picking up authoritative Supabase
    changes made outside this process instead of caching them indefinitely.
@@ -21,6 +22,7 @@ export interface PublicBook {
   id: string
   slug: string
   title: string
+  isCompleted?: boolean
   titleAr?: string
   description?: string
   cover?: string
@@ -98,6 +100,7 @@ function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook
     id: String(row.id),
     slug,
     title: String(row.title),
+    isCompleted: row.is_completed !== false,
     titleAr: row.title_ar ? String(row.title_ar) : undefined,
     description: row.description ? String(row.description) : undefined,
     cover: `/api/covers/books/${row.id}${coverVersion ? `?v=${encodeURIComponent(String(coverVersion))}` : ''}`,
@@ -105,7 +108,7 @@ function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook
     level: String(row.level ?? ""),
     category: row.category ? String(row.category) : undefined,
     tags: Array.isArray(row.tags) ? row.tags.map((tag) => String(tag)).filter(Boolean) : [],
-    chapterCount,
+    chapterCount: row.is_completed === false ? 0 : chapterCount,
     author: typeof row.author === "string" && row.author.trim() ? row.author : "Author not listed",
     readingTimeMinutes: typeof row.reading_time_minutes === "number" && row.reading_time_minutes > 0
       ? Math.round(row.reading_time_minutes)
@@ -152,7 +155,7 @@ export const fetchBooksForPublic = unstable_cache(
       mapBook(book, chapterCounts.get(String(book.id)) ?? 0)
     )
   },
-  ["books", "public", "book-catalogue-storage-v6"],
+  ["books", "public", "book-catalogue-storage-v7-completion"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
@@ -167,6 +170,7 @@ export const fetchBookBySlugPublic = unstable_cache(
       .single()
 
     if (error || !book) return null
+    if (book.is_completed === false) return mapBook(book as Record<string, unknown>, 0)
 
     const { count, error: countError } = await serviceClient
       .from("chapters")
@@ -176,7 +180,7 @@ export const fetchBookBySlugPublic = unstable_cache(
     if (countError) throw new Error(countError.message)
     return mapBook(book as Record<string, unknown>, count ?? 0)
   },
-  ["books", "public", "detail", "book-catalogue-storage-v6"],
+  ["books", "public", "detail", "book-catalogue-storage-v7-completion"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
@@ -191,7 +195,7 @@ const fetchChapterListExtrasForBookPublic = unstable_cache(
     if (!hasServiceClientConfig()) return extras
 
     const book = (await fetchBooksForPublic()).find((book) => book.id === bookId)
-    if (!book) return extras
+    if (!book || book.isCompleted === false) return extras
 
     let query = serviceClient
       .from("chapters")
@@ -215,7 +219,7 @@ const fetchChapterListExtrasForBookPublic = unstable_cache(
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
-export const fetchChaptersForBookPublic = unstable_cache(
+const fetchChaptersForBookPublicCached = unstable_cache(
   async (bookId: string): Promise<PublicChapter[]> => {
     if (!hasServiceClientConfig()) return []
 
@@ -241,6 +245,10 @@ export const fetchChaptersForBookPublic = unstable_cache(
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
+export async function fetchChaptersForBookPublic(bookId: string): Promise<PublicChapter[]> {
+  if (!await isBookReleased(bookId)) return []
+  return fetchChaptersForBookPublicCached(bookId)
+}
 
 export async function fetchChapterCardsForBookPublic(bookId: string): Promise<PublicChapter[]> {
   const chapters = await fetchChaptersForBookPublic(bookId)
@@ -255,7 +263,9 @@ export async function fetchChapterCardsForBookPublic(bookId: string): Promise<Pu
 
 export const fetchChapterNavigationForPublic = unstable_cache(async (): Promise<Record<string, PublicChapter[]>> => {
   if (!hasServiceClientConfig()) return {}
-  const {data,error} = await serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number').order('chapter_number')
+  const ids = (await fetchBooksForPublic()).filter(book => book.isCompleted !== false).map(book => book.id)
+  if (!ids.length) return {}
+  const {data,error} = await serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number').in('book_id', ids).order('chapter_number')
   if(error) throw new Error(error.message)
   const result: Record<string, PublicChapter[]> = {}
   for(const row of data ?? []) (result[row.book_id] ??= []).push({id:row.id,slug:row.slug,title:row.title,chapterNumber:row.chapter_number,blockCount:0})
@@ -330,6 +340,7 @@ const fetchChapterContent = unstable_cache(
 )
 
 export async function fetchChapterForPublic(bookId: string, chapterSlug: string): Promise<PublicChapterWithContent | null> {
+  if (!await isBookReleased(bookId)) return null
   /* One query serves both the entitlement gate and the payload: chapter_number
      travels with the content, so there is no separate metadata round trip. */
   const chapter = await fetchChapterContent(bookId, chapterSlug)
@@ -368,7 +379,7 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
     if (chaptersError) throw new Error(chaptersError.message)
 
     const booksById = new Map(
-      ((books ?? []) as Record<string, unknown>[]).map((book) => {
+      ((books ?? []) as Record<string, unknown>[]).filter(book => book.is_completed !== false).map((book) => {
         const slug = String(book.slug)
         return [
           String(book.id),
@@ -499,7 +510,7 @@ const fetchExploreBookChapterPagesCached = unstable_cache(
     if (!chapter) return []
 
     const book = (await fetchBooksForPublic()).find((book) => book.id === String(chapter.book_id))
-    if (!book) return []
+    if (!book || book.isCompleted === false) return []
     return buildExploreBookPages(chapter as Record<string, unknown>, {
       slug: book.slug,
       title: book.title,
@@ -513,6 +524,7 @@ const fetchExploreBookChapterPagesCached = unstable_cache(
 
 export async function fetchExploreBookChapterPages(chapterId: string): Promise<ExploreBookPage[]> {
   if (!await getAuthenticatedUserId()) return []
+  if (!await isChapterReleased(chapterId)) return []
   return fetchExploreBookChapterPagesCached(chapterId)
 }
 
@@ -533,7 +545,7 @@ const fetchExploreBookChapterPagesByChapterIdsCached = unstable_cache(
     const bookById = new Map(books.map((book) => [book.id, book]))
     for (const chapter of chapters) {
       const book = bookById.get(String(chapter.book_id))
-      if (!book) continue
+      if (!book || book.isCompleted === false) continue
       pagesByChapter.set(String(chapter.id), buildExploreBookPages(chapter as Record<string, unknown>, {
         slug: book.slug,
         title: book.title,
@@ -548,9 +560,9 @@ const fetchExploreBookChapterPagesByChapterIdsCached = unstable_cache(
 )
 
 export async function fetchExploreBookChapterPagesByChapterIds(chapterIds: string[]): Promise<Map<string, ExploreBookPage[]>> {
-  const uniqueIds = Array.from(new Set(chapterIds))
-  if (uniqueIds.length === 0) return new Map<string, ExploreBookPage[]>()
   if (!await getAuthenticatedUserId()) return new Map<string, ExploreBookPage[]>()
+  const uniqueIds = await releasedChapterIds(Array.from(new Set(chapterIds)))
+  if (uniqueIds.length === 0) return new Map<string, ExploreBookPage[]>()
   const idsKey = createHash("sha256").update([...uniqueIds].sort().join(",")).digest("hex").slice(0, 32)
   return new Map(await fetchExploreBookChapterPagesByChapterIdsCached(idsKey, uniqueIds))
 }

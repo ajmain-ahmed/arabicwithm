@@ -15,6 +15,7 @@ type Table<Row> = { Row: { [K in keyof Row]: Row[K] }; Insert: { [K in keyof Row
 export interface Database {
   public: {
     Tables: {
+      book_release_reminders: Table<{ user_id: string; book_id: string; created_at: string; fulfilled_at: string | null }>
       featured_show_config: Table<{show_id:string;storage_path:string;position_x:number;position_y:number;updated_at:string}>
       admin_manual_transcripts: Table<{transcript_id:string;group_id:string|null;created_at:string}>
       youtube_transcripts: Table<import('@/app/actions/transcripts').TranscriptRow & {raw_transcript:Json|null;canonical_transcript:Json|null}>
@@ -127,6 +128,7 @@ export interface Database {
       }
       books: {
         Row: {
+          is_completed: boolean
           id: string
           slug: string
           title: string
@@ -145,6 +147,7 @@ export interface Database {
           updated_at: string | null
         }
         Insert: {
+          is_completed?: boolean
           id?: string
           slug: string
           title: string
@@ -163,6 +166,7 @@ export interface Database {
           updated_at?: string | null
         }
         Update: {
+          is_completed?: boolean
           id?: string
           slug?: string
           title?: string
@@ -332,6 +336,7 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      set_book_release_reminder: { Args: { p_book_id: string; p_subscribe: boolean }; Returns: boolean }
       website_for_you_usage: { Args: {p_user_id:string;p_lease?:string|null;p_total_ms?:number;p_active?:boolean}; Returns: Json }
 
       website_begin_manual_import: {Args:Database['public']['Functions']['admin_begin_manual_import']['Args']&{p_explore_published:boolean};Returns:Json}

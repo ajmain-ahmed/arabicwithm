@@ -13,6 +13,10 @@ const chapters: Record<string, PublicChapter[]> = {
 }
 const position = (page: number, updatedAt: string): ReadingPosition => ({ chapterSlug: 'one', page, totalPages: 9, updatedAt })
 
+it('excludes an unreleased book even when legacy progress and chapter navigation still exist', () => {
+  expect(buildContinueReadingItems([{ ...books[0], isCompleted: false }], chapters, { alpha: position(4, '2026-11-03T10:00:00Z') }, {})).toEqual([])
+})
+
 it('includes only books past the first page, newest first, deep-linked to the page', () => {
   const items = buildContinueReadingItems(books, chapters, {
     alpha: position(4, '2026-10-20T10:00:00Z'),

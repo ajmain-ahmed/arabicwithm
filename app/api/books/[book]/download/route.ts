@@ -7,6 +7,7 @@ import {
   type PublicBookBlock,
 } from '@/app/actions/books'
 import { groupChapterBlocks } from '@/app/lib/bookParagraphs'
+import { isBookReleased } from '@/app/lib/bookRelease'
 
 export const runtime = 'nodejs'
 
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ boo
   const requestedChapter = request.nextUrl.searchParams.get('chapter')
   const book = await fetchBookBySlugPublic(bookSlug)
   if (!book) return Response.json({ error: 'Book not found' }, { status: 404 })
+  if (!await isBookReleased(book.id)) return Response.json({ error: 'This book is still in progress.' }, { status: 403, headers: { 'Cache-Control': 'private, no-store' } })
 
   const chapterList = await fetchChaptersForBookPublic(book.id)
   const selectedChapters = requestedChapter

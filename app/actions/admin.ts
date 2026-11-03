@@ -595,6 +595,7 @@ export type BookRow = {
   id: string
   slug: string
   title: string
+  is_completed: boolean
   author: string | null
   reading_time_minutes: number | null
   title_ar: string | null
@@ -607,14 +608,14 @@ export type BookRow = {
   updated_at: string | null
 }
 
-export type BookInput = Omit<BookRow, "id" | "created_at" | "updated_at">
+export type BookInput = Omit<BookRow, "id" | "created_at" | "updated_at" | "is_completed"> & { is_completed?: boolean }
 
 export async function fetchBooksForAdmin(): Promise<BookRow[]> {
   await guardAdmin()
 
   const { data, error } = await serviceClient
     .from("books")
-    .select("id,slug,title,author,reading_time_minutes,title_ar,description,cover,cover_crop,level,category,created_at,updated_at")
+    .select("id,slug,title,is_completed,author,reading_time_minutes,title_ar,description,cover,cover_crop,level,category,created_at,updated_at")
     .order("title", { ascending: true })
 
   if (error) {
@@ -1112,6 +1113,7 @@ function mapBookRow(row: Record<string, unknown>): BookRow {
     id: String(row.id),
     slug: String(row.slug),
     title: String(row.title),
+    is_completed: row.is_completed !== false,
     author: toStringOrNull(row.author),
     reading_time_minutes: typeof row.reading_time_minutes === "number" && row.reading_time_minutes > 0
       ? Math.round(row.reading_time_minutes)
@@ -1160,7 +1162,7 @@ export interface ShowsAdminIndex { shows: ShowRow[]; episodes: EpisodeRow[] }
 export async function fetchBooksIndexForAdmin(): Promise<BooksAdminIndex> {
   await guardAdmin()
   const [books, chapters] = await Promise.all([
-    serviceClient.from('books').select('id,slug,title,author,reading_time_minutes,title_ar,description,cover,cover_crop,level,category,created_at,updated_at').order('title').limit(1000),
+    serviceClient.from('books').select('id,slug,title,is_completed,author,reading_time_minutes,title_ar,description,cover,cover_crop,level,category,created_at,updated_at').order('title').limit(1000),
     serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number,created_at,updated_at').order('chapter_number').limit(1000),
   ])
   if (books.error || chapters.error) throw new Error('Unable to load the book catalogue.')

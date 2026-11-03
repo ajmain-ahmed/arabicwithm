@@ -11,6 +11,8 @@ import {
   IconButton,
   Box,
   Typography,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material"
 import { Close, Save, Delete } from "@mui/icons-material"
 import AdminTextField from "./AdminTextField"
@@ -60,6 +62,7 @@ export default function BookEditDialog({
   const [description, setDescription] = useState("")
   const [level, setLevel] = useState("")
   const [category, setCategory] = useState("")
+  const [completed, setCompleted] = useState(false)
   const [coverCrop, setCoverCrop] = useState<ThumbnailCrop>({ ...DEFAULT_THUMBNAIL_CROP })
 
   const isNew = bookId === null
@@ -82,6 +85,7 @@ export default function BookEditDialog({
       setDescription("")
       setLevel("")
       setCategory("")
+      setCompleted(false)
       setCoverCrop({ ...DEFAULT_THUMBNAIL_CROP })
       return
     }
@@ -104,6 +108,7 @@ export default function BookEditDialog({
         setDescription(row.description ?? "")
         setLevel(row.level)
         setCategory(row.category ?? "")
+        setCompleted(row.is_completed !== false)
         setCoverCrop(row.cover_crop)
       })
       .catch((e: unknown) => { if (active) setError(errorMessage(e) ?? "Failed to load book") })
@@ -119,6 +124,7 @@ export default function BookEditDialog({
     try {
       if (description.trim().length < 20) throw new Error("Add a meaningful description of at least 20 characters.")
       const input: BookInput = {
+        is_completed: completed,
         slug,
         title,
         author: author.trim() || null,
@@ -254,6 +260,10 @@ export default function BookEditDialog({
                 fullWidth
                 size="small"
               />
+            </Box>
+            <Box>
+              <FormControlLabel control={<Checkbox checked={completed} disabled={saving} onChange={event => setCompleted(event.target.checked)} />} label="Completed" />
+              <Typography sx={{ fontSize: 12, color: '#7a6e65' }}>Completed books can be opened and read. Leave unticked while the book is still being prepared.</Typography>
             </Box>
           </Box>
         )}

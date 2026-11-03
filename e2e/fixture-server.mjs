@@ -54,6 +54,8 @@ const formDrafts=new Map()
 const importJobs=new Map()
 const featuredObjects=new Map()
 const tables = {
+  book_release_reminders: [],
+  app_notifications: [],
   featured_show_config: [],
   email_preferences: [],
   book_audio_progress: [],
@@ -120,6 +122,31 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   const chunks = []; for await (const chunk of req) chunks.push(chunk)
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
+  if(url.pathname==='/fixture/listen-discovery'){
+    tables.book_chapter_audio=[]
+    tables.book_audio_progress=[]
+    return json(res,{})
+  }
+  if(url.pathname==='/fixture/book-release'){
+    if(body.reset){
+      tables.books=tables.books.filter(book=>book.slug==='test-book'||book.slug.startsWith('layout-book-')).map(book=>({...book,is_completed:true}))
+      tables.chapters=tables.chapters.filter(chapter=>tables.books.some(book=>book.id===chapter.book_id))
+      tables.book_chapter_audio=tables.book_chapter_audio.filter(audio=>tables.chapters.some(chapter=>chapter.id===audio.chapter_id))
+      tables.book_release_reminders=[];tables.app_notifications=[]
+      metadata.set(ids.free,{my_list_books:['test-book'],book_progress:{'test-book':{chapterSlug:'chapter-1',page:3,totalPages:10,updatedAt:'2026-11-03T12:00:00Z'}}})
+    }
+    if(body.seedBookSlug){
+      const book=tables.books.find(book=>book.slug===body.seedBookSlug)
+      if(!book)return json(res,{message:'Book not found'},404)
+      for(const number of [1,2]){
+        const id=randomUUID()
+        tables.chapters.push({id,book_id:book.id,slug:`private-chapter-${number}`,title:`Private Chapter ${number}`,chapter_number:number,content})
+        for(const language of number===1?['ar','en']:['ar'])tables.book_chapter_audio.push({chapter_id:id,language,is_published:true,source_type:'supabase_storage',storage_bucket:'audiobooks',storage_path:`fixture/${language}/chapter.wav`,duration_seconds:60,narrator:'Fixture Narrator'})
+      }
+      metadata.set(ids.free,{my_list_books:[book.slug],book_progress:{[book.slug]:{chapterSlug:'private-chapter-1',page:3,totalPages:10,updatedAt:'2026-11-03T12:00:00Z'}}})
+    }
+    return json(res,{reminders:tables.book_release_reminders,notifications:tables.app_notifications,books:tables.books})
+  }
   if(url.pathname==='/fixture/profile-presets'){
     if(body.reset){resetProfilePresets();failProfilePresets=false}
     if(body.fail!==undefined)failProfilePresets=body.fail
@@ -231,6 +258,15 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   }
   if (url.pathname === '/auth/v1/logout') return json(res, {})
   if (url.pathname.startsWith('/rest/v1/rpc/')) {
+    if(url.pathname.endsWith('/set_book_release_reminder')){
+      if(!userId)return json(res,{message:'Sign in'},401)
+      const book=tables.books.find(row=>row.id===body.p_book_id)
+      if(!book)return json(res,{message:'Book not found'},400)
+      const reminder=tables.book_release_reminders.find(row=>row.book_id===book.id&&row.user_id===userId)
+      if(body.p_subscribe&&!book.is_completed&&!reminder)tables.book_release_reminders.push({user_id:userId,book_id:book.id,created_at:new Date().toISOString(),fulfilled_at:null})
+      if(!body.p_subscribe&&reminder&&!reminder.fulfilled_at)tables.book_release_reminders=tables.book_release_reminders.filter(row=>row!==reminder)
+      return json(res,tables.book_release_reminders.some(row=>row.book_id===book.id&&row.user_id===userId&&!row.fulfilled_at))
+    }
     const rpc = url.pathname.split('/').at(-1)
     rpcLog.push(rpc)
     const learning = JSON.parse(readFileSync('e2e/learning-data.json','utf8'))
@@ -404,6 +440,25 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     const table = url.pathname.split('/').at(-1)
     tableLog.push(table)
     if (req.method !== 'GET' && req.method !== 'HEAD') {
+      if(table==='books'){
+        if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+        let book
+        if(req.method==='POST'){
+          book={...body,id:body.id??randomUUID(),is_completed:body.is_completed??false,created_at:new Date().toISOString(),tags:body.tags??[]}
+          tables.books.push(book)
+          if(book.is_completed)tables.app_notifications.push({id:randomUUID(),user_id:null,kind:'book',source_id:book.id,title:'New Book',message:book.title,route:`/read/book/${book.id}`})
+        }else if(req.method==='PATCH'){
+          book=tables.books.find(row=>row.id===url.searchParams.get('id')?.slice(3))
+          if(!book)return json(res,null)
+          const before=book.is_completed??true
+          Object.assign(book,body)
+          if(before===false&&book.is_completed===true)for(const reminder of tables.book_release_reminders.filter(row=>row.book_id===book.id&&!row.fulfilled_at)){
+            if(!tables.app_notifications.some(row=>row.user_id===reminder.user_id&&row.kind==='book'&&row.source_id===book.id))tables.app_notifications.push({id:randomUUID(),user_id:reminder.user_id,kind:'book',source_id:book.id,title:`${book.title} is now available`,message:'The book you asked us to remind you about has been released.',route:`/read/book/${book.id}`,created_at:new Date().toISOString()})
+            reminder.fulfilled_at=new Date().toISOString()
+          }
+        }
+        return json(res,(req.headers.accept??'').includes('application/vnd.pgrst.object+json')?book??null:book?[book]:[])
+      }
       if(table==='featured_show_config'){
         if(req.method==='DELETE')tables.featured_show_config=tables.featured_show_config.filter(row=>row.storage_path!==url.searchParams.get('storage_path')?.slice(3))
         else {const index=tables.featured_show_config.findIndex(row=>row.show_id===body.show_id);if(index<0)tables.featured_show_config.push(body);else tables.featured_show_config[index]=body}
@@ -418,6 +473,10 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       }
       if (table === 'book_chapter_audio') {
         if (failAudioSave) return json(res, { message: 'Simulated database save failure', code: 'XX000' }, 500)
+        if(req.method==='DELETE'){
+          tables[table]=tables[table].filter(row=>!(row.chapter_id===url.searchParams.get('chapter_id')?.slice(3)&&row.language===url.searchParams.get('language')?.slice(3)))
+          return json(res,null)
+        }
         const index = tables[table].findIndex(row => row.chapter_id === body.chapter_id && row.language === body.language)
         if (index < 0) tables[table].push(body); else tables[table][index] = { ...tables[table][index], ...body }
       }
@@ -431,6 +490,11 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     const owner = (url.searchParams.get('user_id') ?? '').replace(/^eq\./, '')
     let rows = tables[table] ?? []
+    if(req.headers.authorization!=='Bearer fixture-service-key'){
+      if(table==='book_release_reminders')rows=rows.filter(row=>row.user_id===userId)
+      if(table==='app_notifications')rows=rows.filter(row=>row.user_id===null||row.user_id===userId)
+      if(table==='chapters')rows=rows.filter(row=>tables.books.find(book=>book.id===row.book_id)?.is_completed!==false)
+    }
     if(table==='account_roles')rows=[{user_id:owner,role:roleFor(owner)}]
     if(table==='memory_sessions')rows=memorySnapshots.has(owner)?[{user_id:owner,state:memorySnapshots.get(owner)}]:[]
     if(table==='book_reviews')rows=[...ownReviews.values()]
@@ -445,6 +509,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     res.setHeader('Content-Range', `0-${Math.max(0, rows.length - 1)}/${rows.length}`)
     if (req.method === 'HEAD') { res.writeHead(200); res.end(); return }
+    if(url.searchParams.has('offset')||url.searchParams.has('limit'))rows=rows.slice(Number(url.searchParams.get('offset')??0),Number(url.searchParams.get('offset')??0)+Number(url.searchParams.get('limit')??rows.length))
     return json(res, (req.headers.accept ?? '').includes('application/vnd.pgrst.object+json') ? rows[0] ?? null : rows)
   }
   const presetList=url.pathname.match(/^\/storage\/v1\/object\/list\/(profile-pictures|profile-banners)$/)

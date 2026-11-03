@@ -259,19 +259,20 @@ export default function BooksAdminPage() {
                   <TableSortLabel {...sortProps("level")}>Level</TableSortLabel>
                 </TableCell>
                 <TableCell>Category</TableCell>
+                <TableCell>Status</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4, fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 4, fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
                     Loading books…
                   </TableCell>
                 </TableRow>
               ) : filteredBooks.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4, fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 4, fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65" }}>
                     No books match your search.
                   </TableCell>
                 </TableRow>
@@ -314,6 +315,7 @@ export default function BooksAdminPage() {
                         <TableCell sx={{ color: "#7a6e65" }}>{book.slug}</TableCell>
                         <TableCell>{book.level ? <CefrChip level={book.level} size="small" /> : "—"}</TableCell>
                         <TableCell>{book.category}</TableCell>
+                        <TableCell sx={{ fontSize: 12, color: '#7a6e65', whiteSpace: 'nowrap' }}>{book.is_completed !== false ? 'Completed' : 'In Progress'}</TableCell>
                         <TableCell align="right">
                           <IconButton
                             size="small"
@@ -329,7 +331,7 @@ export default function BooksAdminPage() {
                       </TableRow>
 
                       <TableRow>
-                        <TableCell colSpan={7} sx={{ p: 0, borderBottom: "none" }}>
+                        <TableCell colSpan={8} sx={{ p: 0, borderBottom: "none" }}>
                           <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                             <Box sx={{ px: 2, pb: 2, backgroundColor: "rgba(245,237,224,0.35)" }}>
                               <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>

@@ -6,11 +6,12 @@ import { guardAdmin, getAuthenticatedUserId } from '@/app/actions/auth'
 import { requireEntitlement } from '@/app/actions/entitlements'
 import { serviceClient } from '@/app/lib/supabase'
 import { isMissingDatabaseFeature } from '@/app/lib/databaseErrors'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { type AudioLanguage } from '@/app/lib/audioUpload'
 import { verifyAudioObject } from '@/app/lib/verifyAudioObject'
 import { getAudiobookPlaybackUrl, normalizeAudiobookSource, sourceFromAudioRecord } from '@/app/lib/audiobookSource'
 import { normalizeYouTubeId } from '@/app/lib/cartoons'
+import { isChapterReleased, releasedBookIds } from '@/app/lib/bookRelease'
 
 export type AudioSourceType = 'supabase_storage' | 'youtube' | 'external_url'
 export interface ChapterAudioSummary {
@@ -58,50 +59,84 @@ function summary(row: Record<string, unknown>): ChapterAudioSummary {
 }
 
 async function revalidateChapterAudio(chapterId: string): Promise<void> {
+  updateTag('books-public')
+  revalidatePath('/books')
   const { data: chapter } = await serviceClient.from('chapters').select('slug, book_id').eq('id', chapterId).maybeSingle()
   if (!chapter) return
   const { data: book } = await serviceClient.from('books').select('slug').eq('id', chapter.book_id).maybeSingle()
   if (!book) return
+  revalidatePath(`/listen/${encodeURIComponent(book.slug)}`)
   revalidatePath(`/books/${encodeURIComponent(book.slug)}`)
   revalidatePath(`/books/${encodeURIComponent(book.slug)}/${encodeURIComponent(chapter.slug)}`)
 }
 
-/* Read paths are cached with the books-public tag: admin audio mutations
-   revalidate those pages, and the TTL is a backstop. */
+/* Validate availability with the same source normalizer as playback. Admin
+   saves already verify Storage objects; discovery never signs private media. */
+function hasPlayableSource(row: Record<string, unknown>): boolean {
+  if (row.is_published !== true || !['ar', 'en'].includes(String(row.language ?? 'ar'))) return false
+  if (row.source_type === 'youtube') return Boolean(normalizeYouTubeId(String(row.external_video_id ?? '')))
+  if (row.source_type !== 'supabase_storage' && row.source_type !== 'external_url') return false
+  try {
+    sourceFromAudioRecord(row, process.env.SUPABASE_URL!)
+    return true
+  } catch { return false }
+}
+
+/* Page and batch the canonical tables so catalogue growth cannot silently
+   hide audio after PostgREST's row limit or exceed a URL's ID-filter limit. */
+async function readAudioForBooks(bookIds: string[]): Promise<{ chapters: Array<{ id: string; book_id: string }>; audio: Record<string, unknown>[] }> {
+  bookIds = await releasedBookIds(bookIds)
+  const chapters: Array<{ id: string; book_id: string }> = []
+  const audio: Record<string, unknown>[] = []
+  const batchSize = 100, pageSize = 500
+  for (let batch = 0; batch < bookIds.length; batch += batchSize) {
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await serviceClient.from('chapters').select('id, book_id').in('book_id', bookIds.slice(batch, batch + batchSize)).order('id').range(offset, offset + pageSize - 1)
+      if (isMissingDatabaseFeature(error)) return { chapters: [], audio: [] }
+      if (error) throw new Error('Unable to load audiobook availability.')
+      chapters.push(...(data ?? []))
+      if ((data?.length ?? 0) < pageSize) break
+    }
+  }
+  for (let batch = 0; batch < chapters.length; batch += batchSize) {
+    const ids = chapters.slice(batch, batch + batchSize).map(chapter => chapter.id)
+    for (let offset = 0; ; offset += pageSize) {
+      const { data, error } = await serviceClient.from('book_chapter_audio').select('*').eq('is_published', true).in('chapter_id', ids).order('id').range(offset, offset + pageSize - 1)
+      if (isMissingDatabaseFeature(error)) return { chapters, audio: [] }
+      if (error) throw new Error('Unable to load audiobook availability.')
+      audio.push(...((data ?? []) as Record<string, unknown>[]).filter(hasPlayableSource))
+      if ((data?.length ?? 0) < pageSize) break
+    }
+  }
+  return { chapters, audio }
+}
+
+/* Admin audio mutations expire books-public immediately; TTL also picks up
+   authoritative edits made outside the website. */
 export const fetchPublishedAudioForBook = unstable_cache(async (bookId: string): Promise<ChapterAudioSummary[]> => {
-  const { data: chapters, error: chapterError } = await serviceClient.from('chapters').select('id').eq('book_id', bookId)
-  if (isMissingDatabaseFeature(chapterError)) return []
-  if (chapterError) throw new Error('Unable to load audiobook availability.')
-  const ids = (chapters ?? []).map((chapter) => chapter.id)
-  if (ids.length === 0) return []
-  const { data, error } = await serviceClient.from('book_chapter_audio').select('*').eq('is_published', true).in('chapter_id', ids)
-  if (isMissingDatabaseFeature(error)) return []
-  if (error) throw new Error('Unable to load audiobook availability.')
-  return ((data ?? []) as Record<string, unknown>[]).map(summary)
-}, ['audiobooks', 'published', 'book', 'v1'], { revalidate: 60, tags: ['books-public'] })
+  const { audio } = await readAudioForBooks([bookId])
+  return audio.map(summary)
+}, ['audiobooks', 'published', 'book', 'v2'], { revalidate: 60, tags: ['books-public'] })
 
 /* Library-level "has audiobook" flags for the books catalogue. */
 export const fetchBookIdsWithPublishedAudio = unstable_cache(async (bookIds: string[]): Promise<string[]> => {
   if (bookIds.length === 0) return []
-  const { data: chapters, error } = await serviceClient.from('chapters').select('id, book_id').in('book_id', bookIds)
-  if (isMissingDatabaseFeature(error) || error) return []
-  const chapterIds = (chapters ?? []).map((chapter) => String(chapter.id))
-  if (chapterIds.length === 0) return []
-  const { data: audio } = await serviceClient.from('book_chapter_audio').select('chapter_id').eq('is_published', true).in('chapter_id', chapterIds)
-  const audioChapters = new Set(((audio ?? []) as Array<{ chapter_id: string }>).map((row) => String(row.chapter_id)))
+  const { chapters, audio } = await readAudioForBooks(bookIds)
+  const audioChapters = new Set(audio.map((row) => String(row.chapter_id)))
   return Array.from(new Set(
     (chapters ?? []).filter((chapter) => audioChapters.has(String(chapter.id))).map((chapter) => String(chapter.book_id))
   ))
-}, ['audiobooks', 'published', 'library', 'v1'], { revalidate: 60, tags: ['books-public'] })
+}, ['audiobooks', 'published', 'library', 'v2'], { revalidate: 60, tags: ['books-public'] })
 
 /* One query for both languages — the chapter page probes 'ar' and 'en'
    together on every visit. */
 export async function fetchPublishedChapterAudioForChapter(chapterId: string): Promise<Record<AudioLanguage, ChapterAudioSummary | null>> {
+  if (!await isChapterReleased(chapterId)) return { ar: null, en: null }
   // Read legacy rows during deployment before the language migration is applied.
   const { data, error } = await serviceClient.from('book_chapter_audio').select('*').eq('chapter_id', chapterId).eq('is_published', true)
   if (isMissingDatabaseFeature(error)) return { ar: null, en: null }
   if (error) throw new Error('Unable to load audiobook availability.')
-  const rows = (data ?? []) as Record<string, unknown>[]
+  const rows = ((data ?? []) as Record<string, unknown>[]).filter(hasPlayableSource)
   const pick = (language: AudioLanguage) => {
     const row = rows.find((candidate) => (candidate.language ?? 'ar') === language)
     return row ? summary(row) : null
@@ -119,6 +154,7 @@ export async function requestChapterAudio(chapterId: string, language: AudioLang
   await requireEntitlement('audiobooks')
   const userId = await getAuthenticatedUserId()
   if (!userId) throw new Error('Sign in to listen.')
+  if (!await isChapterReleased(chapterId)) throw new Error('This book is not released yet.')
   const [{ data: sources, error }, { data: positions }] = await Promise.all([
     serviceClient.from('book_chapter_audio').select('*').eq('chapter_id', chapterId).eq('is_published', true),
     serviceClient.from('book_audio_progress').select('*').eq('user_id', userId).eq('chapter_id', chapterId),

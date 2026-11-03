@@ -38,6 +38,7 @@ beforeAll(async () => {
   await db.exec(
     `create table books(id uuid primary key default gen_random_uuid(),slug text not null unique,title text not null,author text,title_ar text,description text check(description is not null and length(btrim(description))>=20),cover text,cover_crop jsonb not null default '{"x":50,"y":50,"zoom":1}',reading_time_minutes integer check(reading_time_minutes is null or reading_time_minutes>0),level text,category text,created_at timestamptz default now(),updated_at timestamptz default now());`,
   );
+  await db.exec('alter table books add column is_completed boolean not null default false');
 }, 30000);
 afterAll(async () => {
   await db?.close();

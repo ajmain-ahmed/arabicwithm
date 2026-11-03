@@ -13,6 +13,7 @@ export type Playback = {
 export interface AudioStore {
   authenticate(token: string): Promise<string | null>;
   premium(userId: string): Promise<boolean>;
+  released(chapterId: string): Promise<boolean>;
   availability(chapterId: string): Promise<AudioSummary[]>;
   play(
     chapterId: string,
@@ -64,6 +65,7 @@ export function audiobookHandler(store: AudioStore) {
           input.chapterId,
         )
       ) return json({ error: "Invalid chapter." }, 400);
+      if (!await store.released(input.chapterId)) return json({ error: 'This book is not released yet.' }, 404);
       if (input.action === "availability") {
         return json({ audio: await store.availability(input.chapterId) });
       }

@@ -1,0 +1,121 @@
+import { test, expect, type BrowserContext, type Page } from '@playwright/test'
+const backend = `https://localhost:${process.env.AWM_TEST_BACKEND_PORT ?? 4310}`
+const baseURL = `http://127.0.0.1:${process.env.AWM_TEST_WEB_PORT ?? 3000}`
+const users = { admin: '44444444-4444-4444-8444-444444444444', free: '11111111-1111-4111-8111-111111111111', premium: '22222222-2222-4222-8222-222222222222' }
+async function signIn(context: BrowserContext, kind: keyof typeof users, metadata: Record<string, unknown> = {}) {
+  const id = users[kind], expires = Math.floor(Date.now() / 1000) + 3600
+  const encode = (value: unknown) => Buffer.from(JSON.stringify(value)).toString('base64url')
+  const access_token = `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ sub: id, aud: 'authenticated', exp: expires, role: 'authenticated' })}.fixture-signature`
+  const user = { id, aud: 'authenticated', role: 'authenticated', email: `${kind}@fixture.example`, app_metadata: { provider: 'email' }, user_metadata: metadata }
+  await context.addCookies([{ name: 'sb-localhost-auth-token', value: `base64-${encode({ access_token, refresh_token: 'fixture-refresh', expires_at: expires, expires_in: 3600, token_type: 'bearer', user })}`, domain: '127.0.0.1', path: '/', sameSite: 'Lax' }])
+}
+async function openEditor(page: Page, title: string) {
+  await page.goto('/admin/books')
+  await page.getByRole('row').filter({ has: page.getByRole('cell', { name: title, exact: true }) }).getByRole('button').last().click()
+  await expect(page.getByRole('checkbox', { name: 'Completed', exact: true })).toBeVisible()
+}
+async function saveCompleted(page: Page, title: string, completed: boolean) {
+  await openEditor(page, title)
+  await page.getByRole('checkbox', { name: 'Completed', exact: true }).setChecked(completed)
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+}
+async function refreshUntil(page: Page, assertion: () => Promise<void>) {
+  await page.bringToFront()
+  const focus = () => page.evaluate(() => window.dispatchEvent(new Event('focus')))
+  await focus()
+  const timer = setInterval(() => { void focus().catch(() => {}) }, 1000)
+  try { await expect(assertion).toPass({ timeout: 25_000 }) }
+  finally { clearInterval(timer) }
+}
+
+for (const width of [320, 768, 1440]) test(`prepared books, reminder, protected access and one release at ${width}`, async ({ page: editor, context, browser, request }) => {
+  test.setTimeout(150_000)
+  await request.post(`${backend}/fixture/book-release`, { data: { reset: true } })
+  await signIn(context, 'admin')
+  await editor.goto('/admin/books')
+  await editor.getByRole('button', { name: 'New book', exact: true }).click()
+  await expect(editor.getByRole('checkbox', { name: 'Completed', exact: true })).not.toBeChecked()
+  const slug = `prepared-book-${width}`, title = `Prepared Book ${width}`
+  await editor.getByLabel('Slug', { exact: false }).fill(slug)
+  await editor.getByLabel('Title', { exact: true }).fill(title)
+  await editor.getByLabel('Description', { exact: false }).fill('A carefully prepared Arabic story with clear explanations.')
+  await editor.getByLabel('Author', { exact: true }).fill('Release Author')
+  await editor.getByLabel('Level', { exact: true }).fill('B1')
+  await editor.getByLabel('Category', { exact: true }).fill('Mystery')
+  await editor.getByLabel('Reading Time', { exact: true }).fill('12')
+  await editor.getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(editor.getByRole('dialog')).toHaveCount(0)
+  await expect(editor.getByRole('row').filter({ has: editor.getByRole('cell', { name: title, exact: true }) })).toContainText('In Progress')
+  const seeded = await (await request.post(`${backend}/fixture/book-release`, { data: { seedBookSlug: slug } })).json()
+  const book = seeded.books.find((book: { slug: string }) => book.slug === slug)
+  const memberContext = await browser.newContext({ baseURL, ignoreHTTPSErrors: true, viewport: { width, height: 1000 } })
+  const plusContext = await browser.newContext({ baseURL, ignoreHTTPSErrors: true })
+  const member = await memberContext.newPage(), plus = await plusContext.newPage()
+  await signIn(memberContext, 'free', { my_list_books: [slug], book_progress: { [slug]: { chapterSlug: 'private-chapter-1', page: 3, totalPages: 10, updatedAt: '2026-11-03T12:00:00Z' } } })
+  await signIn(plusContext, 'premium')
+  try {
+    await member.goto('/books')
+    await member.getByRole('textbox', { name: 'Search books' }).fill(title)
+    const card = member.getByRole('link', { name: `${title} cover ${title}` }).first()
+    await expect(card).toBeVisible(); await card.click()
+    await expect(member.getByText('This book is in progress', { exact: true })).toBeVisible()
+    await expect(member.getByText('By Release Author', { exact: true })).toBeVisible()
+    await expect(member.getByText('Mystery', { exact: true })).toBeVisible()
+    await expect(member.getByText('B1', { exact: true })).toBeVisible()
+    await expect(member.getByText('12 min', { exact: false })).toBeVisible()
+    await expect(member.getByRole('heading', { name: 'Chapters', exact: true })).toHaveCount(0)
+    await expect(member.getByText('Private Chapter 1', { exact: true })).toHaveCount(0)
+    await expect(member.getByRole('link', { name: 'Arabic', exact: true })).toHaveCount(0)
+    await expect(member.getByRole('button', { name: 'PDF', exact: true })).toHaveCount(0)
+    const reminder = member.getByRole('region', { name: 'Book release reminder' })
+    await reminder.getByRole('button', { name: 'Remind Me', exact: true }).click()
+    await expect(reminder.getByRole('status')).toContainText('Reminder set')
+    await reminder.getByRole('button', { name: 'Cancel Reminder' }).click()
+    await expect(reminder.getByRole('button', { name: 'Remind Me', exact: true })).toBeVisible()
+    await reminder.getByRole('button', { name: 'Remind Me', exact: true }).click()
+    await expect(reminder.getByRole('status')).toContainText('Reminder set')
+    expect(await member.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+    await member.screenshot({ path: `test-results/book-in-progress-${width}.png`, fullPage: true })
+    await member.reload(); await expect(reminder.getByRole('status')).toContainText('Reminder set')
+    await member.goto(`/books/${slug}/private-chapter-1`)
+    await expect(member).toHaveURL(`${baseURL}/books/${slug}`)
+    await expect(member.locator('[data-book-reader]')).toHaveCount(0)
+    const denied = await plusContext.request.get(`/api/books/${slug}/download?lang=ar`)
+    expect(denied.status()).toBe(403)
+    await plus.goto(`/listen/${slug}`)
+    await expect(plus).toHaveURL(`${baseURL}/books/${slug}`)
+    await member.goto('/books?mode=listen')
+    await expect(member.locator(`a[href="/listen/${slug}"]`)).toHaveCount(0)
+    await member.goto('/')
+    await expect(member.locator(`a[href="/books/${slug}"]`).first()).toBeVisible()
+    await expect(member.locator(`a[href^="/books/${slug}/"]`)).toHaveCount(0)
+    await member.goto(`/books/${slug}`)
+    await expect(member.getByText('This book is in progress', { exact: true })).toBeVisible()
+    await saveCompleted(editor, title, true)
+    await refreshUntil(member, () => expect(member.getByRole('heading', { name: 'Chapters', exact: true })).toBeVisible())
+    await expect(member.getByRole('link', { name: 'Arabic', exact: true })).toBeVisible()
+    await expect(member.getByText('Private Chapter 1', { exact: true })).toBeVisible()
+    expect((await plusContext.request.get(`/api/books/${slug}/download?lang=ar`)).status()).toBe(200)
+    await plus.goto(`/listen/${slug}`)
+    const player = plus.getByRole('region', { name: 'Audiobook player' })
+    await expect(player).toBeVisible()
+    await player.getByRole('button', { name: 'Play Audio', exact: true }).click()
+    await expect.poll(() => player.locator('audio').evaluate((el: HTMLAudioElement) => !el.paused && el.currentTime > 0)).toBe(true)
+    await member.goto('/books?mode=listen')
+    await expect(member.locator(`a[href="/listen/${slug}"]`)).toBeVisible()
+    await member.goto(`/books/${slug}/private-chapter-1`)
+    await expect(member).toHaveURL(new RegExp(`/books/${slug}/private-chapter-1`))
+    await expect(member.getByText('Private Chapter 1', { exact: true }).first()).toBeVisible()
+    for (const completed of [true, false, true]) await saveCompleted(editor, title, completed)
+    const state = await (await request.get(`${backend}/fixture/book-release`)).json()
+    const reminders = state.reminders.filter((row: { book_id: string }) => row.book_id === book.id)
+    expect(reminders).toHaveLength(1); expect(reminders[0].fulfilled_at).toBeTruthy()
+    const notices = state.notifications.filter((row: { source_id: string }) => row.source_id === book.id)
+    expect(notices).toHaveLength(1)
+    expect(notices[0]).toMatchObject({ user_id: users.free, kind: 'book', title: `${title} is now available`, route: `/read/book/${book.id}` })
+  } finally {
+    await memberContext.close(); await plusContext.close()
+    await request.post(`${backend}/fixture/book-release`, { data: { reset: true } })
+  }
+})

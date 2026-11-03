@@ -10,10 +10,13 @@ import { type ChapterAudioSummary } from '@/app/actions/audiobooks'
 import ChapterAudioPlayer from '@/app/books/[book]/[chapter]/ChapterAudioPlayer'
 import { bookReaderHref } from '@/app/lib/bookReaderSettings'
 import type { LibraryBook } from '@/app/books/BooksLibrary'
-import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
+import useBookCatalogueRefresh from '@/app/books/useBookCatalogueRefresh'
 
 export default function AudiobookPlayer({ book, chapters, audio }: { book: LibraryBook; chapters: PublicChapter[]; audio: ChapterAudioSummary[] }) {
-  const [language, setLanguage] = useState<'ar' | 'en'>(audio.some(item => item.language === 'ar') ? 'ar' : 'en')
+  useBookCatalogueRefresh()
+  const [selectedLanguage, setLanguage] = useState<'ar' | 'en'>(audio.some(item => item.language === 'ar') ? 'ar' : 'en')
+  // A refresh may remove the selected language while another remains playable.
+  const language = audio.some(item => item.language === selectedLanguage) ? selectedLanguage : audio[0]?.language ?? 'ar'
   const [chapterId, setChapterId] = useState<string | null>(null)
   const available = chapters.filter(chapter => audio.some(item => item.chapterId === chapter.id && item.language === language))
   const chapter = available.find(item => item.id === chapterId) ?? available[0]
@@ -25,7 +28,7 @@ export default function AudiobookPlayer({ book, chapters, audio }: { book: Libra
     {book.cover && (
       /* The page's only artwork — eager and preloaded. */
       <Box sx={{ position: 'relative', width: { xs: 'min(64vw, 240px)', md: '240px' }, aspectRatio: '2 / 3', mx: 'auto', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 12px 30px #0002' }}>
-        <Image src={book.cover} alt={`${book.title} cover`} fill preload sizes="(max-width: 900px) 64vw, 240px" style={{ objectFit: 'cover', ...thumbnailCropCss(book.coverCrop) }} />
+        <Image src={book.cover} alt={`${book.title} cover`} fill preload sizes="(max-width: 900px) 64vw, 240px" style={{ objectFit: 'contain' }} />
       </Box>
     )}
     <Typography component="h1" sx={{ mt: 2, fontFamily: 'var(--font-heading)', fontSize: { xs: 25, md: 32 }, color: 'var(--awm-bark)' }}>{book.title}</Typography>

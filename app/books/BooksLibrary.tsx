@@ -1,11 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import LibraryBookCard, { LIBRARY_GRID_SX } from '@/app/books/LibraryBookCard'
 import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, TextField, Typography, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { Close, Search, Tune } from '@mui/icons-material'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
+import useBookCatalogueRefresh from '@/app/books/useBookCatalogueRefresh'
 
 const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
 
@@ -48,10 +49,12 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBook[]; audioBookIds: string[] }) {
+  const [changingMode, startModeTransition] = useTransition()
+  useBookCatalogueRefresh(!changingMode)
   const searchParams = useSearchParams()
   const router = useRouter()
   const mode = searchParams.get('mode') === 'listen' ? 'listen' : 'read'
-  const setMode = (value: string) => { const query = new URLSearchParams(searchParams.toString()); if (value === 'listen') query.set('mode', value); else query.delete('mode'); router.replace(`/books${query.size ? `?${query}` : ''}`, { scroll: false }) }
+  const setMode = (value: string) => { const query = new URLSearchParams(searchParams.toString()); if (value === 'listen') query.set('mode', value); else query.delete('mode'); startModeTransition(() => router.replace(`/books${query.size ? `?${query}` : ''}`, { scroll: false })) }
   const [dialogOpen, setDialogOpen] = useState(false)
   const [level, setLevel] = useState('')
   const [categories, setCategories] = useState<string[]>([])

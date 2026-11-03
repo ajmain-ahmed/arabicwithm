@@ -17,6 +17,14 @@ const store: AudioStore = {
     if(error)throw error;
     return data===true;
   },
+  async released(chapterId) {
+    const { data: chapter, error } = await client.from('chapters').select('book_id').eq('id', chapterId).maybeSingle();
+    if (error) throw error;
+    if (!chapter) return false;
+    const { data: book, error: bookError } = await client.from('books').select('is_completed').eq('id', chapter.book_id).maybeSingle();
+    if (bookError) throw bookError;
+    return book?.is_completed === true;
+  },
   async availability(chapterId) {
     const { data, error } = await client.from("book_chapter_audio").select(
       "chapter_id,language,narrator,duration_seconds",

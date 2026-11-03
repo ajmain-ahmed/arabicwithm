@@ -2,6 +2,7 @@ import { z } from "zod";
 import { normalizeThumbnailCrop } from "@/app/lib/thumbnailCrop";
 const optionalText = z.string().trim().max(2000).nullable();
 export const bookInputSchema = z.object({
+  is_completed: z.boolean().default(false),
   slug: z
     .string()
     .trim()

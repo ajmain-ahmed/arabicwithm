@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { Box, Button, Container, Typography } from '@mui/material'
 import { ArrowBack } from '@mui/icons-material'
 import {
@@ -12,6 +12,7 @@ import { normalizeBookReaderLanguage } from '@/app/lib/bookReaderSettings'
 import SignInRequired from '@/app/components/SignInRequired'
 import { fetchPublishedChapterAudioForChapter, type ChapterAudioSummary } from '@/app/actions/audiobooks'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
+import { isBookReleased } from '@/app/lib/bookRelease'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,6 +44,7 @@ export default async function ChapterPage({
   const initialBlock=Number.isInteger(parsedBlock)&&parsedBlock>=0?parsedBlock:undefined
   const book = await fetchBookBySlugPublic(bookSlug)
   if (!book) notFound()
+  if (!await isBookReleased(book.id)) redirect(`/books/${encodeURIComponent(book.slug)}`)
 
   let chapter: Awaited<ReturnType<typeof fetchChapterForPublic>>
   let chapters: Awaited<ReturnType<typeof fetchChaptersForBookPublic>>
