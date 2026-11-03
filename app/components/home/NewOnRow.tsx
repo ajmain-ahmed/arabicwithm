@@ -75,9 +75,9 @@ function useNearViewport<T extends HTMLElement>(rootMargin = '160px') {
 }
 
 function RowTile(props: React.ComponentProps<typeof ArtworkTile>){
- const {item,mobileWidth,compact,isClone,loopStart}=props
+ const {item,mobileWidth,compact}=props
  if(!item.book)return <ArtworkTile {...props}/>
- return <Box aria-hidden={isClone||undefined} inert={isClone||undefined} data-loop-start={loopStart?'true':undefined} sx={{flex:'0 0 auto',width:compact?{...COMPACT_HOME_CARD_WIDTH,xs:mobileWidth}:{xs:mobileWidth,sm:260,md:300},maxWidth:{xs:compact?152:310,sm:'100%'},scrollSnapAlign:'start'}}><LibraryBookCard book={item.book} compact={compact}/></Box>
+ return <Box sx={{flex:'0 0 auto',width:compact?{...COMPACT_HOME_CARD_WIDTH,xs:mobileWidth}:{xs:mobileWidth,sm:260,md:300},maxWidth:{xs:compact?152:310,sm:'100%'},scrollSnapAlign:'start'}}><LibraryBookCard book={item.book} compact={compact}/></Box>
 }
 
 function ArtworkTile({

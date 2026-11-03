@@ -28,7 +28,7 @@ for(const width of [320,390,1440])test(`audiobook actual playback, languages, se
  await page.waitForTimeout(250);expect(await audio.evaluate((el:HTMLAudioElement)=>el.currentTime)).toBeCloseTo(paused,1)
  await play(player);await expect(audio).toHaveAttribute('data-owned-media','one');expect(await audio.evaluate((el:HTMLAudioElement)=>el.currentTime)).toBeGreaterThanOrEqual(paused)
  await player.getByRole('button',{name:'Pause Audio',exact:true}).click()
- const slider=player.getByRole('slider',{name:'Audiobook position'}),box=(await player.locator('.MuiSlider-root').boundingBox())!
+ const box=(await player.locator('.MuiSlider-root').boundingBox())!
  const point=(fraction:number)=>({x:box.x+box.width*fraction,y:box.y+box.height/2})
  for(const fraction of [.7,.2]){const p=point(fraction);await page.mouse.click(p.x,p.y);await expect.poll(()=>audio.evaluate((el:HTMLAudioElement)=>el.currentTime)).toBeGreaterThan(5);expect(Math.abs((await audio.evaluate((el:HTMLAudioElement)=>el.currentTime))-60*fraction)).toBeLessThan(3)}
  const cdp=await context.newCDPSession(page),from=point(.2),to=point(.55)
@@ -41,7 +41,7 @@ for(const width of [320,390,1440])test(`audiobook actual playback, languages, se
  await play(player);await expect(audio).toHaveAttribute('src',/\/en\/chapter-1.wav/)
  const english=await audio.elementHandle();await player.getByRole('button',{name:'Next chapter',exact:true}).click()
  await expect(player).toContainText('Chapter 6 · Sixth Chapter');expect(await english!.evaluate((el:HTMLAudioElement)=>el.paused)).toBe(true)
- await expect(slider).toHaveValue('0');await play(player);await expect(audio).toHaveAttribute('src',/\/en\/chapter-2.wav/);await expect.poll(()=>audio.evaluate((el:HTMLAudioElement)=>el.duration)).toBe(45)
+ await expect(audio).toHaveCount(0);await play(player);expect(await audio.evaluate((el:HTMLAudioElement)=>el.currentTime)).toBeLessThan(3);await expect(audio).toHaveAttribute('src',/\/en\/chapter-2.wav/);await expect.poll(()=>audio.evaluate((el:HTMLAudioElement)=>el.duration)).toBe(45)
  const second=await audio.elementHandle();await player.getByRole('button',{name:'Previous chapter',exact:true}).click();expect(await second!.evaluate((el:HTMLAudioElement)=>el.paused)).toBe(true)
  await expect(player).toContainText('Chapter 1 · First Chapter');await choose(page,'Chapter','6. Sixth Chapter');await expect(player).toContainText('Chapter 6 · Sixth Chapter')
  await play(player);await audio.evaluate(el=>el.setAttribute('data-return-media','same'))

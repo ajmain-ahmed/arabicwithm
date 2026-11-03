@@ -60,13 +60,14 @@ const CONTROL_BUTTON_SX = {
 export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play Audio', render, dedicated, audioLanguages, language, onLanguageChange }: Props) {
   const { user, loading: authLoading } = useAuth()
   const authKey = user?.id ?? 'signed-out'
-  /* Expanded lives here, above the AudioSession remount boundary. The session
+  /* Expanded lives here, above the AudioSession remount boundary. The inline
      key intentionally excludes the narration language: a language switch
      resets playback via BOOK_LANGUAGE_STOP_EVENT, and remounting here would
      tear down (and visibly replay) the whole reader chrome, settings dialog
-     included. */
+     included. Dedicated Listen controls do not emit that reader event, so
+     their session key also includes language to replace the old source. */
   const [expanded, setExpanded] = useState(false)
-  return <AudioSession key={`${authKey}:${audio.chapterId}`} audio={audio} chapterTitle={chapterTitle} label={label} render={render} dedicated={dedicated} audioLanguages={audioLanguages} language={language} onLanguageChange={onLanguageChange} expanded={expanded} onExpandedChange={setExpanded} authKey={authKey} signedIn={Boolean(user)} authLoading={Boolean(authLoading)} />
+  return <AudioSession key={`${authKey}:${audio.chapterId}${dedicated ? `:${audio.language}` : ''}`} audio={audio} chapterTitle={chapterTitle} label={label} render={render} dedicated={dedicated} audioLanguages={audioLanguages} language={language} onLanguageChange={onLanguageChange} expanded={expanded} onExpandedChange={setExpanded} authKey={authKey} signedIn={Boolean(user)} authLoading={Boolean(authLoading)} />
 }
 
 function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLanguages, language, onLanguageChange, expanded, onExpandedChange, authKey, signedIn, authLoading }: Props & { expanded: boolean; onExpandedChange: (next: boolean) => void; authKey: string; signedIn: boolean; authLoading: boolean }) {

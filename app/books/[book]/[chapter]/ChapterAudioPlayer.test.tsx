@@ -132,3 +132,14 @@ it('reuses the same DOM when the narration language changes',async()=>{
  expect(host.querySelector('[data-reader-audio-trigger]')!.parentElement).toBe(stable)
  expect(host.textContent).toContain('0:00 / 0:20')
 })
+
+it('replaces a dedicated Listen source on language changes without requiring the reader event',async()=>{
+ await act(async()=>root.render(<ChapterAudioPlayer audio={audio} chapterTitle="Chapter" dedicated/>))
+ await act(async()=>host.querySelector<HTMLButtonElement>('[data-reader-audio-trigger]')!.click())
+ const old=host.querySelector('audio')!;expect(old).not.toBeNull()
+ await act(async()=>root.render(<ChapterAudioPlayer audio={{...audio,language:'ar'}} chapterTitle="Chapter" dedicated/>))
+ expect(host.querySelector('audio')).toBeNull();expect(old.isConnected).toBe(false)
+ expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled()
+ await act(async()=>host.querySelector<HTMLButtonElement>('[data-reader-audio-trigger]')!.click())
+ expect(mocks.request).toHaveBeenLastCalledWith(audio.chapterId,'ar')
+})
