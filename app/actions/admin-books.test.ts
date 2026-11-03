@@ -18,6 +18,7 @@ import {
   createBook,
   fetchBookForAdmin,
   fetchBooksForAdmin,
+  updateBook,
   type BookInput,
 } from "./admin";
 let db: PGlite;
@@ -49,7 +50,7 @@ beforeEach(async () => {
   vi.spyOn(console, "error").mockImplementation(() => {});
   await db.exec("delete from books");
   mocks.from.mockImplementation(() => {
-    let payload: Record<string, unknown> | undefined, id: string | undefined;
+    let payload: Record<string, unknown> | undefined, id: string | undefined, updating = false;
     const run = async () => {
       try {
         if (payload) {
@@ -60,8 +61,8 @@ beforeEach(async () => {
           return {
             data: (
               await db.query(
-                `insert into books(${columns.join(",")}) values(${columns.map((_, i) => "$" + (i + 1)).join(",")}) returning *`,
-                values,
+                updating ? `update books set ${columns.map((column,i)=>`${column}=$${i+1}`).join(',')} where id=$${values.length+1} returning *` : `insert into books(${columns.join(",")}) values(${columns.map((_, i) => "$" + (i + 1)).join(",")}) returning *`,
+                updating ? [...values,id] : values,
               )
             ).rows[0],
             error: null,
@@ -83,6 +84,7 @@ beforeEach(async () => {
         payload = value;
         return q;
       },
+      update: (value: Record<string, unknown>) => { payload = value; updating = true; return q; },
       select: () => q,
       eq: (_key: string, value: string) => {
         id = value;
@@ -96,6 +98,15 @@ beforeEach(async () => {
     return q;
   });
 });
+it('defaults new books to incomplete, persists completion and preserves it on unrelated edits', async () => {
+  const created = await createBook(input)
+  if (!created.ok) throw new Error(created.error)
+  expect((await fetchBookForAdmin(created.data))?.is_completed).toBe(false)
+  expect((await updateBook(created.data,{is_completed:true})).ok).toBe(true)
+  expect((await fetchBookForAdmin(created.data))?.is_completed).toBe(true)
+  expect((await updateBook(created.data,{title:'Updated metadata'})).ok).toBe(true)
+  expect((await fetchBookForAdmin(created.data))?.is_completed).toBe(true)
+})
 it("valid input persists in PostgreSQL and can be retrieved/rendered in Admin lists", async () => {
   const result = await createBook({
     ...input,

@@ -74,7 +74,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
 
   const chaptersList = (
     <>
-      <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 25, sm: 30 }, fontWeight: 600, color: 'var(--awm-bark)', mb: 2 }}>
+      <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 25, sm: 30 }, fontWeight: 600, color: 'var(--awm-bark)', mb: 2 }}>
         Chapters
       </Typography>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>

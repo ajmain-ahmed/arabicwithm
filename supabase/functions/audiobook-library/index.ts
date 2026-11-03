@@ -1,6 +1,7 @@
 import { getAudiobookPlaybackUrl, sourceFromAudioRecord } from "../_shared/audiobookSource.ts";
 import { createClient } from "@supabase/supabase-js";
 import { audiobookHandler, type AudioStore } from "./handler.ts";
+import { canAccessBookMedia } from '../_shared/bookAccess.ts';
 
 const client = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -12,18 +13,25 @@ const store: AudioStore = {
     const { data, error } = await client.auth.getUser(token);
     return error ? null : data.user?.id ?? null;
   },
-  async premium(userId) {
+  async canListen(userId, chapterId) {
+    const { data: chapter, error: chapterError } = await client.from('chapters').select('book_id').eq('id', chapterId).maybeSingle();
+    if (chapterError) throw chapterError;
+    if (!chapter) return false;
+    const { data: book, error: bookError } = await client.from('books').select('*').eq('id', chapter.book_id).maybeSingle();
+    if (bookError) throw bookError;
+    if (!book || book.is_completed === false) return false;
+    if (book.premium_exempt === true) return canAccessBookMedia(true, false, true);
     const {data,error}=await client.rpc('account_has_premium',{p_user_id:userId});
     if(error)throw error;
-    return data===true;
+    return canAccessBookMedia(true, data === true, false);
   },
   async released(chapterId) {
     const { data: chapter, error } = await client.from('chapters').select('book_id').eq('id', chapterId).maybeSingle();
     if (error) throw error;
     if (!chapter) return false;
-    const { data: book, error: bookError } = await client.from('books').select('is_completed').eq('id', chapter.book_id).maybeSingle();
+    const { data: book, error: bookError } = await client.from('books').select('*').eq('id', chapter.book_id).maybeSingle();
     if (bookError) throw bookError;
-    return book?.is_completed === true;
+    return Boolean(book && book.is_completed !== false);
   },
   async availability(chapterId) {
     const { data, error } = await client.from("book_chapter_audio").select(

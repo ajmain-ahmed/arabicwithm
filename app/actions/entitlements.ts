@@ -1,16 +1,21 @@
 'use server'
 
 import { fetchPremiumStatus } from '@/app/actions/premium'
-import { resolveEntitlements, type Entitlements } from '@/app/lib/entitlements'
+import { resolveEntitlements, resolveBookEntitlements, type Entitlements } from '@/app/lib/entitlements'
+import { serviceClient } from '@/app/lib/supabase'
 import { getAuthenticatedAccess } from '@/app/actions/auth'
 
-export async function fetchEntitlements(): Promise<Entitlements> {
+export async function fetchEntitlements(bookId?: string): Promise<Entitlements> {
   const [status, access] = await Promise.all([fetchPremiumStatus(), getAuthenticatedAccess()])
-  return resolveEntitlements(status.signedIn, status.premium, access?.role)
+  const entitlements = resolveEntitlements(status.signedIn, status.premium, access?.role)
+  if (!bookId) return entitlements
+  const { data: book, error } = await serviceClient.from('books').select('*').eq('id', bookId).maybeSingle()
+  if (error) throw new Error('Unable to verify book access.')
+  return resolveBookEntitlements(entitlements, book)
 }
 
-export async function requireEntitlement(feature: 'readBooks' | 'downloadBooks' | 'audiobooks'): Promise<Entitlements> {
-  const entitlements = await fetchEntitlements()
+export async function requireEntitlement(feature: 'readBooks' | 'downloadBooks' | 'audiobooks', bookId?: string): Promise<Entitlements> {
+  const entitlements = await fetchEntitlements(bookId)
   const allowed = feature === 'readBooks'
     ? entitlements.canReadBooks
     : feature === 'downloadBooks'

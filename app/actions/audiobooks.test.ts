@@ -71,7 +71,7 @@ describe('existing chapter audio persistence and permissions',()=>{
  })
  it('direct file deletion refuses a saved chapter reference',async()=>{row={chapter_id:chapter,source_type:'supabase_storage',storage_path:chapter+'/audio.mp3',is_published:true};await expect(removeAudiobookAudio(chapter+'/audio.mp3')).rejects.toThrow('reference');expect(mocks.remove).not.toHaveBeenCalled()})
  it('returns no player availability for chapters without audio',async()=>{expect(await fetchPublishedChapterAudio(chapter)).toBeNull()})
- it('requires audiobook entitlement before generating a playback URL',async()=>{mocks.entitlement.mockRejectedValue(new Error('AWM+ required'));await expect(requestChapterAudio(chapter)).rejects.toThrow('AWM+ required');expect(mocks.from).not.toHaveBeenCalled();expect(mocks.sign).not.toHaveBeenCalled()})
+ it('requires the parent-book entitlement before reading audio sources or generating a playback URL',async()=>{mocks.entitlement.mockRejectedValue(new Error('AWM+ required'));await expect(requestChapterAudio(chapter)).rejects.toThrow('AWM+ required');expect(mocks.from.mock.calls.every(([table])=>table==='chapters'||table==='books')).toBe(true);expect(mocks.entitlement).toHaveBeenCalledWith('audiobooks','book');expect(mocks.sign).not.toHaveBeenCalled()})
  it('does not confuse an English source with Arabic playback',async()=>{row={chapter_id:chapter,language:'en',source_type:'supabase_storage',storage_path:chapter+'/en/11111111-1111-4111-8111-111111111111.mp3',is_published:true};await expect(requestChapterAudio(chapter,'ar')).rejects.toThrow('not available');expect(mocks.sign).not.toHaveBeenCalled();expect(await requestChapterAudio(chapter,'en')).toEqual(expect.objectContaining({sourceType:'supabase_storage'}));expect(mocks.sign).toHaveBeenCalledWith(row.storage_path,7200)})
  it('normalizes signed URLs on save and resolves external URLs through the same player',async()=>{
   await saveChapterAudioForAdmin({chapterId:chapter,sourceType:'supabase_storage',storagePath:'https://example.supabase.co/storage/v1/object/sign/audiobooks/arabic/book/audio?token=temporary',isPublished:true})
@@ -86,7 +86,7 @@ describe('existing chapter audio persistence and permissions',()=>{
 it.each(['AWM+ is required for this feature.','Sign in to continue.'])('returns an upgrade offering for expected restriction: %s',async(message)=>{
  mocks.entitlement.mockRejectedValue(new Error(message))
  expect(await requestChapterAudioResult(chapter,'en')).toEqual({status:'upgrade'})
- expect(mocks.sign).not.toHaveBeenCalled();expect(mocks.from).not.toHaveBeenCalled()
+ expect(mocks.sign).not.toHaveBeenCalled();expect(mocks.from.mock.calls.every(([table])=>table==='chapters'||table==='books')).toBe(true)
 })
 it('does not write the previous listener position to a newly signed-in account',async()=>{
  mocks.user.mockResolvedValue('new-listener')

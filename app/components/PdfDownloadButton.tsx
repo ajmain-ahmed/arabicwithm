@@ -5,8 +5,8 @@ import { Download } from '@mui/icons-material'
 import { downloadBookPdf, type BookPdfPayload } from '@/app/lib/bookPdf'
 import { fetchEntitlements } from '@/app/actions/entitlements'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
-export default function PdfDownloadButton({ bookSlug, chapterSlug, small = false, fullWidth = false,label='Download PDF',className }: {
-  bookSlug: string; chapterSlug?: string; language?: 'ar' | 'en'; label?: string; className?:string; small?: boolean; fullWidth?: boolean
+export default function PdfDownloadButton({ bookId, bookSlug, chapterSlug, small = false, fullWidth = false,label='Download PDF',className }: {
+  bookId: string; bookSlug: string; chapterSlug?: string; language?: 'ar' | 'en'; label?: string; className?:string; small?: boolean; fullWidth?: boolean
 }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -16,11 +16,15 @@ export default function PdfDownloadButton({ bookSlug, chapterSlug, small = false
   async function choose() {
     setBusy(true); setError('')
     try {
-      if (!(await fetchEntitlements()).canDownloadBooks) { setUpgrade(true); return }
+      const access = await fetchEntitlements(bookId)
+      if (!access.signedIn) { window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } })); return }
+      if (!access.canReadBooks) throw new Error('This book is not available to read yet.')
+      if (!access.canDownloadBooks) { setUpgrade(true); return }
       const results = await Promise.all((['ar', 'en'] as const).map(async language => {
         const query = new URLSearchParams({ lang: language })
         if (chapterSlug) query.set('chapter', chapterSlug)
         const response = await fetch(`/api/books/${encodeURIComponent(bookSlug)}/download?${query}`, { cache: 'no-store' })
+        if (response.status === 401) { window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } })); throw new Error('Sign in to download this book.') }
         if (response.status === 404) return null
         if (!response.ok) throw new Error('Unable to prepare this download.')
         return await response.json() as BookPdfPayload

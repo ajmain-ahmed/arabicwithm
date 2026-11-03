@@ -11,7 +11,7 @@ import { type AudioLanguage } from '@/app/lib/audioUpload'
 import { verifyAudioObject } from '@/app/lib/verifyAudioObject'
 import { getAudiobookPlaybackUrl, normalizeAudiobookSource, sourceFromAudioRecord } from '@/app/lib/audiobookSource'
 import { normalizeYouTubeId } from '@/app/lib/cartoons'
-import { isChapterReleased, releasedBookIds } from '@/app/lib/bookRelease'
+import { isBookReleased, isChapterReleased, releasedBookIds } from '@/app/lib/bookRelease'
 
 export type AudioSourceType = 'supabase_storage' | 'youtube' | 'external_url'
 export interface ChapterAudioSummary {
@@ -151,10 +151,9 @@ export async function fetchPublishedChapterAudio(chapterId: string, language: Au
 
 export async function requestChapterAudio(chapterId: string, language: AudioLanguage = 'ar'): Promise<ChapterAudioPlayback> {
   z.enum(['ar', 'en']).parse(language)
-  await requireEntitlement('audiobooks')
   const userId = await getAuthenticatedUserId()
   if (!userId) throw new Error('Sign in to listen.')
-  if (!await isChapterReleased(chapterId)) throw new Error('This book is not released yet.')
+  await requireChapterAudioAccess(chapterId)
   const [{ data: sources, error }, { data: positions }] = await Promise.all([
     serviceClient.from('book_chapter_audio').select('*').eq('chapter_id', chapterId).eq('is_published', true),
     serviceClient.from('book_audio_progress').select('*').eq('user_id', userId).eq('chapter_id', chapterId),
@@ -166,6 +165,14 @@ export async function requestChapterAudio(chapterId: string, language: AudioLang
   if (data.source_type === 'youtube' && data.external_video_id) return { sourceType: 'youtube', videoId: data.external_video_id, positionSeconds }
   const playback = await getAudiobookPlaybackUrl(sourceFromAudioRecord(data, process.env.SUPABASE_URL!), serviceClient.storage)
   return { sourceType: 'supabase_storage', ...playback, positionSeconds }
+}
+
+async function requireChapterAudioAccess(chapterId: string): Promise<void> {
+  const { data: chapter, error } = await serviceClient.from('chapters').select('book_id').eq('id', chapterId).maybeSingle()
+  if (error || !chapter) throw new Error('This audiobook chapter is not available.')
+  const bookId = String(chapter.book_id)
+  if (!await isBookReleased(bookId)) throw new Error('This book is not released yet.')
+  await requireEntitlement('audiobooks', bookId)
 }
 
 /** Expected subscription restrictions must survive Server Action error redaction. */
@@ -185,7 +192,7 @@ export async function saveAudioProgress(chapterId: string, positionSeconds: numb
   const userId = await getAuthenticatedUserId()
   // Ignore cleanup from a previous account after its browser session changed.
   if (!userId || (expectedUserId && userId !== expectedUserId)) return
-  await requireEntitlement('audiobooks')
+  await requireChapterAudioAccess(chapterId)
   if (!z.string().uuid().safeParse(chapterId).success) throw new Error('Invalid playback progress.')
   const position = Math.max(0, Math.min(Math.trunc(positionSeconds), 86400))
   const { error } = await serviceClient.from('book_audio_progress').upsert({ user_id: userId, chapter_id: chapterId, language, position_seconds: position, completed, updated_at: new Date().toISOString() }, { onConflict: 'user_id,chapter_id,language' })

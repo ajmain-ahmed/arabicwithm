@@ -1,4 +1,6 @@
 /** Shared product policy. Entitlements themselves are always read on the server. */
+import { canAccessBookMedia } from '@/supabase/functions/_shared/bookAccess'
+export { canAccessBookMedia } from '@/supabase/functions/_shared/bookAccess'
 const PREMIUM_MONTHLY_PENCE = 499
 const PREMIUM_MONTHLY_PRICE = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(PREMIUM_MONTHLY_PENCE / 100)
 export const PREMIUM = { monthlyPence: PREMIUM_MONTHLY_PENCE, currency: 'gbp', price: PREMIUM_MONTHLY_PRICE, label: `${PREMIUM_MONTHLY_PRICE}/month` } as const
@@ -57,6 +59,14 @@ export function resolveEntitlements(signedIn: boolean, premium: boolean, role: '
 
 export function canAccessBookChapter(signedIn: boolean, chapter: number): boolean {
   return signedIn && Number.isInteger(chapter) && chapter >= 1
+}
+
+/** Exemption is scoped to this canonical book, never to the user's global
+ * Premium status. Existing signed-in reading rules remain unchanged. */
+export function resolveBookEntitlements(access: Entitlements, book: { premium_exempt?: boolean; is_completed?: boolean } | null): Entitlements {
+  const released = Boolean(book && book.is_completed !== false)
+  const media = canAccessBookMedia(access.signedIn, access.premium, book?.premium_exempt === true, released)
+  return { ...access, canReadBooks: access.canReadBooks && released, canDownloadBooks: media, canUseAudiobooks: media }
 }
 export function hasPremium(subscription: { status: string; current_period_end: string } | null, now = new Date()): boolean {
   return Boolean(subscription && ['active', 'trialing'].includes(subscription.status) && Date.parse(subscription.current_period_end) > now.getTime())

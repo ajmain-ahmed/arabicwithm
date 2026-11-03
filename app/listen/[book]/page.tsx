@@ -5,6 +5,8 @@ import { fetchBookBySlugPublic, fetchChaptersForBookPublic } from '@/app/actions
 import { fetchPublishedAudioForBook } from '@/app/actions/audiobooks'
 import AudiobookPlayer from '@/app/books/AudiobookPlayer'
 import { isBookReleased } from '@/app/lib/bookRelease'
+import { getAuthenticatedUserId } from '@/app/actions/auth'
+import SignInRequired from '@/app/components/SignInRequired'
 
 export const metadata = { title: 'Listen | ArabicWithM' }
 
@@ -13,6 +15,7 @@ export default async function ListenPage({ params }: { params: Promise<{ book: s
   const book = await fetchBookBySlugPublic(slug)
   if (!book) notFound()
   if (!await isBookReleased(book.id)) redirect(`/books/${encodeURIComponent(book.slug)}`)
+  if (!await getAuthenticatedUserId()) return <SignInRequired title="Sign in to listen to this book" />
   const [chapters, audio] = await Promise.all([fetchChaptersForBookPublic(book.id), fetchPublishedAudioForBook(book.id)])
   if (!audio.length) notFound()
   return <Container maxWidth="sm" sx={{ py: { xs: 2, md: 4 }, pb: 10 }}>

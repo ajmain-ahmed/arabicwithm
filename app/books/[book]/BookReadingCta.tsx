@@ -111,7 +111,7 @@ export default function BookReadingCta({ bookSlug, bookId, chapters }: { bookSlu
         '& .book-detail-action[aria-pressed="true"]':{bgcolor:'var(--awm-forest)',color:'var(--awm-white)','&:hover':{bgcolor:'var(--awm-forest)'}},
       }}>
         <BookMyListToggle bookSlug={bookSlug} />
-        <PdfDownloadButton bookSlug={bookSlug} language="ar" label="PDF" className="book-detail-action" small fullWidth />
+        <PdfDownloadButton bookId={bookId} bookSlug={bookSlug} language="ar" label="PDF" className="book-detail-action" small fullWidth />
         <BookReviewButton bookId={bookId} />
       </Box>
     </>

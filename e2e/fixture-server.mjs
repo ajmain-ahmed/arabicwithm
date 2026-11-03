@@ -147,6 +147,27 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     return json(res,{reminders:tables.book_release_reminders,notifications:tables.app_notifications,books:tables.books})
   }
+  if(url.pathname==='/fixture/book-exempt'){
+    const targets=[['ad76c3ab-177b-4180-99ce-bfd7facabb10','bos3','Bolder Deeds'],['e4ba3b2a-1a62-45ad-a2bb-1eff8a36fed7','bos1','Lord of The Boy'],['f3b08eae-fdfc-4746-81b9-7b7d5088ff69','bos2','The Fragrant Scent'],['6fb6426f-2d56-44e0-88f6-86c39e3d1f18','bpd','Between People & Days']]
+    if(body.reset){
+      tables.books=tables.books.filter(book=>!targets.some(([id])=>id===book.id)).map(book=>({...book,premium_exempt:false}))
+      tables.chapters=tables.chapters.filter(chapter=>tables.books.some(book=>book.id===chapter.book_id))
+      tables.book_chapter_audio=tables.book_chapter_audio.filter(audio=>tables.chapters.some(chapter=>chapter.id===audio.chapter_id))
+      metadata.delete(ids.free)
+    }
+    if(body.seed){
+      const existing=tables.books.find(book=>book.slug==='layout-book-1');existing.premium_exempt=true
+      for(const [id,slug,title] of [...targets,[existing.id,existing.slug,existing.title]]){
+        if(!tables.books.some(book=>book.id===id))tables.books.push({...tables.books[0],id,slug,title,description:'A meaningful description for this canonical fixture book.',premium_exempt:true,is_completed:true})
+        let chapter=tables.chapters.find(chapter=>chapter.book_id===id)
+        if(!chapter){chapter={id:randomUUID(),book_id:id,slug:'chapter-99',title:'Late Chapter',chapter_number:99,content};tables.chapters.push(chapter)}
+        for(const language of ['ar','en'])if(!tables.book_chapter_audio.some(audio=>audio.chapter_id===chapter.id&&audio.language===language))tables.book_chapter_audio.push({chapter_id:chapter.id,language,is_published:true,source_type:'supabase_storage',storage_bucket:'audiobooks',storage_path:`fixture/${language}/chapter.wav`,duration_seconds:60,narrator:'Fixture Narrator'})
+      }
+      metadata.set(ids.free,{my_list_books:targets.map(([,slug])=>slug),book_progress:{bos1:{chapterSlug:'chapter-99',page:3,totalPages:10,language:'ar',updatedAt:'2026-11-03T12:00:00Z'}}})
+    }
+    if(body.normalExempt!==undefined)tables.books.find(book=>book.slug==='test-book').premium_exempt=body.normalExempt
+    return json(res,{positions:tables.book_audio_progress})
+  }
   if(url.pathname==='/fixture/profile-presets'){
     if(body.reset){resetProfilePresets();failProfilePresets=false}
     if(body.fail!==undefined)failProfilePresets=body.fail
@@ -493,7 +514,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if(req.headers.authorization!=='Bearer fixture-service-key'){
       if(table==='book_release_reminders')rows=rows.filter(row=>row.user_id===userId)
       if(table==='app_notifications')rows=rows.filter(row=>row.user_id===null||row.user_id===userId)
-      if(table==='chapters')rows=rows.filter(row=>tables.books.find(book=>book.id===row.book_id)?.is_completed!==false)
+      if(table==='chapters')rows=userId?rows.filter(row=>tables.books.find(book=>book.id===row.book_id)?.is_completed!==false):[]
     }
     if(table==='account_roles')rows=[{user_id:owner,role:roleFor(owner)}]
     if(table==='memory_sessions')rows=memorySnapshots.has(owner)?[{user_id:owner,state:memorySnapshots.get(owner)}]:[]

@@ -43,7 +43,7 @@ describe('canonical book completion and release reminders', () => {
     // Exact read-only snapshots of the canonical shared functions, not rewritten
     // versions: verify the migration changes their release predicates safely.
     for (const source of sources) await db.exec(source.definition)
-    await db.exec(readFileSync('supabase/migrations/20261103162705_book_completion_release_reminders.sql', 'utf8'))
+    await db.exec(readFileSync('supabase/migrations/20261103192129_book_completion_release_reminders.sql', 'utf8'))
     await db.exec('set check_function_bodies=on')
     await db.query('insert into books(id,slug,title) values($1,$2,$3)', [book, 'prepared-book', 'Prepared Book'])
     await db.query('insert into chapters values($1,$2,$3,$4,1,$5)', [chapter, book, 'private-chapter', 'Unreleased Chapter', JSON.stringify([{ tokens: [{ arabic: 'كتاب', headword: 'كتاب', english: 'book', cefr: 'A1' }], translation: 'Unreleased content' }])])

@@ -2,7 +2,7 @@
 
 import { returnToPublicHome } from '@/app/lib/publicHome'
 import { AdminPanelSettings, DarkModeOutlined, LightModeOutlined, MenuOutlined, Person } from '@mui/icons-material'
-import { AppBar, Avatar, Box, Button, Container, IconButton, Toolbar, Tooltip, Typography, useMediaQuery } from '@mui/material'
+import { AppBar, Box, Button, Container, IconButton, Toolbar, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
@@ -18,6 +18,7 @@ import { fetchMyDisplayName } from '@/app/actions/profiles'
 import ClientStyles from '@/app/components/ClientStyles'
 import BrandLogo from './BrandLogo'
 import UserMenu from './UserMenu'
+import UserAvatar from './UserAvatar'
 import MemberActions from './MemberActions'
 import { NAV_ITEMS, NAV_ROUTES } from './constants'
 import { NAV_CSS } from './styles'
@@ -115,7 +116,6 @@ export default function Navbar() {
         return () => { active = false }
     }, [user?.id])
     const resolvedName = savedName ?? (user?.user_metadata?.full_name ? String(user.user_metadata.full_name) : undefined) ?? user?.email?.split('@')[0] ?? ''
-    const userInitial = resolvedName.charAt(0)?.toUpperCase() ?? 'M'
 
     const handleBrandClick = () => {
         safePush('/')
@@ -253,19 +253,7 @@ export default function Navbar() {
                                             size="small"
                                             aria-label="Open user menu"
                                         >
-                                            <Avatar
-                                                sx={{
-                                                    width: 32,
-                                                    height: 32,
-                                                    background: 'linear-gradient(135deg, var(--awm-gold), var(--awm-gold-light))',
-                                                    color: '#fff',
-                                                    fontFamily: 'var(--font-sans)',
-                                                    fontWeight: 700,
-                                                    fontSize: '0.85rem',
-                                                }}
-                                            >
-                                                {userInitial}
-                                            </Avatar>
+                                            <UserAvatar name={resolvedName} metadata={user?.user_metadata} />
                                         </IconButton>
                                     ) : (
                                         <Button

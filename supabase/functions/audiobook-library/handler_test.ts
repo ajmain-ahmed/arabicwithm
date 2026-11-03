@@ -1,13 +1,14 @@
 import { audiobookHandler, type AudioStore } from "./handler.ts";
+import { canAccessBookMedia } from '../_shared/bookAccess.ts';
 function assert(value: unknown): asserts value {
   if (!value) throw new Error("Assertion failed");
 }
 const chapterId = "11111111-1111-4111-8111-111111111111";
-function fixture(user: string | null, premium: boolean, released = true) {
+function fixture(user: string | null, premium: boolean, released = true, exempt = false) {
   const calls: string[] = [];
   const store: AudioStore = {
     authenticate: () => Promise.resolve(user),
-    premium: () => Promise.resolve(premium),
+    canListen: () => Promise.resolve(canAccessBookMedia(user !== null, premium, exempt, released)),
     released: () => Promise.resolve(released),
     availability: () => {
       calls.push("availability");
@@ -48,6 +49,12 @@ Deno.test('unreleased books expose no audio availability, playback or progress w
     assert((await f.request({ action, chapterId, language: 'ar', positionSeconds: 0, completed: false })).status === 404);
     assert(f.calls.length === 0);
   }
+});
+Deno.test('signed-in exempt listeners can play and save progress without Plus', async () => {
+  const f = fixture('free-listener', false, true, true);
+  assert((await f.request({ action: 'play', chapterId, language: 'en' })).status === 200);
+  assert((await f.request({ action: 'progress', chapterId, language: 'en', positionSeconds: 28, completed: false })).status === 200);
+  assert(f.calls.includes('free-listener/en') && f.calls.includes('progress'));
 });
 Deno.test("rejects invalid authentication before private access", async () => {
   const f = fixture(null, true);

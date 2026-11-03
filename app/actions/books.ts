@@ -252,6 +252,7 @@ export async function fetchChaptersForBookPublic(bookId: string): Promise<Public
 
 export async function fetchChapterCardsForBookPublic(bookId: string): Promise<PublicChapter[]> {
   const chapters = await fetchChaptersForBookPublic(bookId)
+  if (!await getAuthenticatedUserId()) return chapters
   try {
     const extras = await fetchChapterListExtrasForBookPublic(bookId)
     return chapters.map(ch => ({...ch, ...extras[ch.id]}))
@@ -340,12 +341,13 @@ const fetchChapterContent = unstable_cache(
 )
 
 export async function fetchChapterForPublic(bookId: string, chapterSlug: string): Promise<PublicChapterWithContent | null> {
+  if (!await getAuthenticatedUserId()) return null
   if (!await isBookReleased(bookId)) return null
   /* One query serves both the entitlement gate and the payload: chapter_number
      travels with the content, so there is no separate metadata round trip. */
   const chapter = await fetchChapterContent(bookId, chapterSlug)
   if (!chapter) return null
-  if (!canAccessBookChapter(Boolean(await getAuthenticatedUserId()), chapter.chapterNumber)) return null
+  if (!canAccessBookChapter(true, chapter.chapterNumber)) return null
   return chapter
 }
 

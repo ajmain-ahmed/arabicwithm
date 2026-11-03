@@ -29,13 +29,15 @@ function filenamePart(value: string): string {
 }
 
 export async function GET(request: NextRequest, context: { params: Promise<{ book: string }> }) {
-  if (!(await fetchEntitlements()).canDownloadBooks) return Response.json({ error: "PDF downloads are available with AWM+." }, { status: 403, headers: { "Cache-Control": "private, no-store" } })
   const { book: bookSlug } = await context.params
   const language = request.nextUrl.searchParams.get('lang') === 'en' ? 'en' : 'ar'
   const requestedChapter = request.nextUrl.searchParams.get('chapter')
   const book = await fetchBookBySlugPublic(bookSlug)
   if (!book) return Response.json({ error: 'Book not found' }, { status: 404 })
   if (!await isBookReleased(book.id)) return Response.json({ error: 'This book is still in progress.' }, { status: 403, headers: { 'Cache-Control': 'private, no-store' } })
+  const access = await fetchEntitlements(book.id)
+  if (!access.signedIn) return Response.json({ error: 'Sign in to download this book.' }, { status: 401, headers: { 'Cache-Control': 'private, no-store' } })
+  if (!access.canDownloadBooks) return Response.json({ error: 'PDF downloads are available with AWM+ for this book.' }, { status: 403, headers: { 'Cache-Control': 'private, no-store' } })
 
   const chapterList = await fetchChaptersForBookPublic(book.id)
   const selectedChapters = requestedChapter

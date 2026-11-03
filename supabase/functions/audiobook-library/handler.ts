@@ -12,7 +12,7 @@ export type Playback = {
 } | { sourceType: "youtube"; videoId: string; positionSeconds: number };
 export interface AudioStore {
   authenticate(token: string): Promise<string | null>;
-  premium(userId: string): Promise<boolean>;
+  canListen(userId: string, chapterId: string): Promise<boolean>;
   released(chapterId: string): Promise<boolean>;
   availability(chapterId: string): Promise<AudioSummary[]>;
   play(
@@ -74,7 +74,7 @@ export function audiobookHandler(store: AudioStore) {
         !["ar", "en"].includes(String(input.language))
       ) return json({ error: "Invalid audio action or language." }, 400);
       const language = input.language as "ar" | "en";
-      if (!await store.premium(userId)) {
+      if (!await store.canListen(userId, input.chapterId)) {
         return json({ error: "AWM+ is required for audiobook playback." }, 403);
       }
       if (input.action === "progress") {
