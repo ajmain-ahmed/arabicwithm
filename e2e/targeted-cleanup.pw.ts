@@ -3,20 +3,6 @@ import {installYouTubeFixture} from './helpers/youtube'
 test.beforeEach(async({page})=>{await installYouTubeFixture(page)})
 
 
-for (const width of [320, 390, 768, 1440, 1920]) {
-  test(`restored QR app CTA at ${width}`, async ({ page }) => {
-    await page.setViewportSize({ width, height: 1000 })
-    await page.goto('/')
-    const section = page.locator('#download-app')
-    await expect(section.getByLabel('Email address')).toHaveCount(0)
-    await expect(section.getByRole('img', {name:'QR code placeholder'})).toBeVisible()
-    await expect(section.getByRole('link', {name:/App Store/})).toBeVisible()
-    await expect(section.getByRole('link', {name:/Google Play/})).toBeVisible()
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
-    await section.screenshot({ path: `test-results/cleanup-app-${width}.png` })
-  })
-}
-
 for (const width of [390, 1440]) {
   test(`transcript settings remain functional in the responsive control group at ${width}`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 })

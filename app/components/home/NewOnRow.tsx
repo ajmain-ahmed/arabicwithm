@@ -5,8 +5,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Box, Skeleton, Typography } from '@mui/material'
 import { ChevronRight } from '@mui/icons-material'
 import CefrChip from '@/app/components/CefrChip'
-import LibraryBookCard from '@/app/books/LibraryBookCard'
-import type { LibraryBook } from '@/app/books/BooksLibrary'
 import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 
 const DRAG_ACTIVATION_DISTANCE_PX = 6
@@ -20,7 +18,6 @@ export interface CatalogueRowItem {
   level?: string
   imageSrc: string
   imageCrop?: ThumbnailCrop
-  book?: LibraryBook
 }
 
 export const COMPACT_HOME_CARD_WIDTH = { xs: 'clamp(150px, 46vw, 182px)', sm: 198, md: 222, lg: 238 } as const
@@ -72,12 +69,6 @@ function useNearViewport<T extends HTMLElement>(rootMargin = '160px') {
     return () => observer.disconnect()
   }, [near, rootMargin])
   return { ref, near }
-}
-
-function RowTile(props: React.ComponentProps<typeof ArtworkTile>){
- const {item,mobileWidth,compact}=props
- if(!item.book)return <ArtworkTile {...props}/>
- return <Box sx={{flex:'0 0 auto',width:compact?{...COMPACT_HOME_CARD_WIDTH,xs:mobileWidth}:{xs:mobileWidth,sm:260,md:300},maxWidth:{xs:compact?152:310,sm:'100%'},scrollSnapAlign:'start'}}><LibraryBookCard book={item.book} compact={compact}/></Box>
 }
 
 function ArtworkTile({
@@ -195,12 +186,17 @@ export default function NewOnRow({
   mobileCardWidth,
   compact = false,
   viewAllHref,
+  scrollHint = false,
 }: {
   items: CatalogueRowItem[]
   ariaLabel?: string
   mobileCardWidth?: string | number
   compact?: boolean
   viewAllHref?: string
+  /* Rows without a destination page (My List): the chevron
+     scrolls the row instead of navigating, and only renders while content
+     overflows the viewport. */
+  scrollHint?: boolean
 }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null)
   const dragStartXRef = useRef<number | null>(null)
@@ -209,8 +205,30 @@ export default function NewOnRow({
   const activePointerIdRef = useRef<number | null>(null)
   const pointerTypeRef = useRef<string | null>(null)
   const draggedRef = useRef(false)
+  const [overflows, setOverflows] = useState(false)
+
+  /* The chevron only makes sense when there is more content than the
+     viewport shows. Card widths are fixed, so item count + container size
+     fully determine overflow (image loads never change scrollWidth). */
+  useEffect(() => {
+    if (!scrollHint) return
+    const scroller = scrollerRef.current
+    if (!scroller) return
+    const update = () => setOverflows(scroller.scrollWidth > scroller.clientWidth + 4)
+    update()
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(update)
+    observer?.observe(scroller)
+    return () => observer?.disconnect()
+  }, [scrollHint, items.length])
 
   if (items.length === 0) return null
+
+  const scrollForward = () => {
+    const scroller = scrollerRef.current
+    if (!scroller) return
+    const atEnd = scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 8
+    scroller.scrollTo({ left: atEnd ? 0 : scroller.scrollLeft + scroller.clientWidth, behavior: 'smooth' })
+  }
 
   return (
     <Box sx={{ position: 'relative', width: '100%', maxWidth: '100%', minWidth: 0 }}>
@@ -220,6 +238,17 @@ export default function NewOnRow({
           href={viewAllHref}
           aria-label={`See all: ${ariaLabel}`}
           sx={SEE_ALL_SX}
+        >
+          <ChevronRight sx={{ fontSize: 26 }} />
+        </Box>
+      )}
+      {!viewAllHref && scrollHint && overflows && (
+        <Box
+          component="button"
+          type="button"
+          onClick={scrollForward}
+          aria-label={`Scroll ${ariaLabel}`}
+          sx={{ ...SEE_ALL_SX, border: 0, p: 0, cursor: 'pointer' }}
         >
           <ChevronRight sx={{ fontSize: 26 }} />
         </Box>
@@ -303,7 +332,7 @@ export default function NewOnRow({
         }}
       >
         {items.map((item) => (
-          <RowTile key={item.key} item={item} mobileWidth={mobileCardWidth ?? (compact ? COMPACT_HOME_CARD_WIDTH.xs : '62vw')} compact={compact} />
+          <ArtworkTile key={item.key} item={item} mobileWidth={mobileCardWidth ?? (compact ? COMPACT_HOME_CARD_WIDTH.xs : '62vw')} compact={compact} />
         ))}
       </Box>
     </Box>

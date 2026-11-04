@@ -4,82 +4,32 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  AdminPanelSettings,
-  AutoStories,
-  CheckCircleRounded,
   ExploreOutlined,
   GridOnRounded,
-  Headphones,
   MenuBook,
   OndemandVideo,
-  AccountCircleOutlined,
   ArrowForward,
-  SettingsOutlined,
-  VolunteerActivismRounded,
   AccountTreeOutlined,
-  SearchOutlined,
   PsychologyOutlined,
 } from '@mui/icons-material'
 import { Box, Button, Container, Paper, Skeleton, Typography } from '@mui/material'
 import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
-import PremiumPrompt from '@/app/components/PremiumPrompt'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
-import { buildContinueReadingItems, metadataReadingPositions } from './continueReadingItems'
-import { useReadingProgressStore } from '@/store/readingProgressStore'
+import { READING_TRACK_MIN_PAGE, parseStoredPositions, useReadingProgressStore } from '@/store/readingProgressStore'
 import { fetchMyList } from '@/app/actions/myList'
 import { useMyListCache } from '@/store/myListStore'
 import MemberActions from '@/app/components/navbar/MemberActions'
 import FeaturedHero from './FeaturedHero'
 import { fetchMyDisplayName } from '@/app/actions/profiles'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
-import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
-import type { PublicBook, PublicChapter } from '@/app/actions/books'
+import type { PublicBook } from '@/app/actions/books'
 import { fetchBooksForPublic } from '@/app/actions/books'
-import type { EpisodeMeta, ShowMeta } from '@/app/lib/cartoons'
-export interface FeaturedEpisode {
-  show: ShowMeta
-  episode: EpisodeMeta
-}
 
 /* Catalogue rows paint at most this many cards. The shows/episodes queries
    already limit to 12; books are sliced here to match so the homepage's
    image count stays flat as the catalogue grows. */
 const HOME_ROW_LIMIT = 12
-
-const QUICK_LINKS = [
-  { title: 'Search', label: 'Search shows, episodes and books', href: '/search', icon: SearchOutlined },
-  { title: 'Grammar', label: 'Naḥw and Ṣarf activities', href: '/grammar', icon: AccountTreeOutlined },
-  { title: 'Word Search', label: 'Find Arabic words from real transcripts', href: '/word-search', icon: GridOnRounded },
-  { title: 'Explore', label: 'Browse AWM videos and reading', href: '/explore', icon: ExploreOutlined },
-  { title: 'Read', label: 'Open graded books', href: '/books', icon: AutoStories },
-  { title: 'Watch', label: 'Browse full episodes', href: '/cartoons', icon: Headphones },
-  { title: 'Settings', label: 'Manage your learning profile', href: (userId: string) => `/profile/${userId}#profile-settings`, icon: SettingsOutlined },
-  { title: 'My Profile', label: 'View your progress', href: (userId: string) => `/profile/${userId}`, icon: AccountCircleOutlined },
-  { title: 'Support Us', label: 'Help us create more learning resources', href: '/support', icon: VolunteerActivismRounded },
-]
-
-export function QuickLinks({ userId, isAdmin = false }: { userId?: string; isAdmin?: boolean }) {
-  const links = [
-    ...QUICK_LINKS.filter(item => userId || typeof item.href === 'string'),
-    ...(userId && isAdmin ? [{ title: 'Admin', label: 'Manage users and content', href: '/admin/users', icon: AdminPanelSettings }] : []),
-  ]
-  return (
-    <Box component="nav" aria-label="Quick Actions" sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,minmax(0,1fr))', sm: 'repeat(3,minmax(0,1fr))', lg: 'repeat(4,minmax(0,1fr))' }, gap: 1.5, alignItems: 'stretch' }}>
-      {links.map((item) => {
-        const Icon = item.icon
-        const href = typeof item.href === 'function' ? item.href(userId!) : item.href
-        return (
-          <Paper key={item.title} component={Link} href={href} elevation={0} sx={{ minWidth: 0, minHeight: 154, height: '100%', boxSizing: 'border-box', p: { xs: 2, md: 2.5 }, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textDecoration: 'none', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '12px', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', '&:hover': { borderColor: 'color-mix(in srgb, var(--awm-gold) 55%, transparent)' } }}>
-            <Icon sx={{ color: '#b8860b', fontSize: { xs: 19, md: 24 } }} />
-            <Typography sx={{ mt: 1, fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700 }}>{item.title}</Typography>
-            <Typography sx={{ mt: 0.25, fontFamily: 'var(--font-sans), sans-serif', color: 'var(--awm-muted)', fontSize: 12 }}>{item.label}</Typography>
-          </Paper>
-        )
-      })}
-    </Box>
-  )
-}
 
 export function showRowItems(shows: NewOnShow[]): CatalogueRowItem[] {
   return shows.map((show) => ({
@@ -104,17 +54,13 @@ export function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
   }))
 }
 
-/* Below-the-fold sections mount only when scrolled near (and then via a
+/* Below-the-fold rows mount only when scrolled near (and then via a
    client-side dynamic import), so their chunks, render work and image fetches
-   stay out of the LCP window entirely. The placeholders reserve each
-   section's shape to keep layout stable. */
+   stay out of the LCP window entirely. The placeholder reserves the row's
+   shape to keep layout stable. */
 const DeferredNewOnRow = dynamic(() => import('./NewOnRow'), {
   ssr: false,
   loading: () => <DeferredRowPlaceholder />,
-})
-const DeferredAppDownloadSection = dynamic(() => import('./AppDownloadSection'), {
-  ssr: false,
-  loading: () => <DeferredAppPlaceholder />,
 })
 
 function useSectionNear(rootMargin = '500px') {
@@ -157,73 +103,48 @@ function DeferredRowPlaceholder() {
   )
 }
 
-function DeferredAppPlaceholder() {
-  return (
-    <Box
-      role="status"
-      aria-label="Loading app section"
-      sx={{
-        minHeight: { xs: 720, md: 520 },
-        borderRadius: { xs: '18px', md: '28px' },
-        bgcolor: '#0e2e1f',
-        border: '1px solid rgba(212,168,67,0.22)',
-      }}
-    />
-  )
-}
-
-export function UpgradeSection() {
-  const [open, setOpen] = useState(false)
-  return (
-    <Box component="section" aria-labelledby="upgrade-heading" sx={{ px: { xs: 2, sm: 3 }, py: { xs: 3.5, md: 6 } }}>
-      <Container maxWidth="md" disableGutters>
-        <Paper elevation={0} sx={{ px: { xs: 2.5, sm: 5, md: 7 }, py: { xs: 3.5, sm: 4.5, md: 5.5 }, textAlign: 'center', border: '1px solid color-mix(in srgb, var(--awm-bark) 10%, transparent)', borderRadius: { xs: '16px', md: '20px' }, bgcolor: 'var(--awm-white)' }}>
-          <Typography id="upgrade-heading" component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 38 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.15 }}>Upgrade to AWM+</Typography>
-          <Typography sx={{ mt: 1.25, mx: 'auto', maxWidth: 520, fontFamily: 'var(--font-sans), sans-serif', color: 'var(--awm-muted)', fontSize: { xs: 14, sm: 15 }, lineHeight: 1.6 }}>Take your Arabic further, wherever you like to learn.</Typography>
-
-          <Box component="ul" sx={{ m: 0, mt: { xs: 2.5, sm: 3.5 }, p: 0, listStyle: 'none', display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: { xs: 1.25, sm: 1.5 }, textAlign: 'left' }}>
-            {PREMIUM_BENEFITS.map((benefit) => (
-              <Box component="li" key={benefit.id} sx={{ minHeight: 48, px: 1.75, py: 1.25, display: 'flex', alignItems: 'center', gap: 1.1, borderRadius: '10px', bgcolor: 'var(--awm-cream-light)' }}>
-                <CheckCircleRounded aria-hidden="true" sx={{ flex: '0 0 auto', color: 'var(--awm-gold)', fontSize: 21 }} />
-                <Typography sx={{ minWidth: 0, flex: 1, fontFamily: 'var(--font-sans), sans-serif', color: 'var(--awm-bark)', fontSize: { xs: 13.5, sm: 14.5 }, fontWeight: 600 }}>{benefit.label}</Typography>
-                {benefit.appOnly && <Box component="span" sx={{ flex: '0 0 auto', px: 0.8, py: 0.35, borderRadius: '9999px', bgcolor: 'color-mix(in srgb, var(--awm-forest) 9%, transparent)', color: 'var(--awm-forest)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap' }}>📱 App only</Box>}
-              </Box>
-            ))}
-          </Box>
-
-          <Button variant="contained" startIcon={<AutoStories />} onClick={() => setOpen(true)} sx={{ mt: { xs: 3, sm: 4 }, width: '100%', maxWidth: 440, minHeight: { xs: 58, sm: 64 }, px: 4, borderRadius: '16px', position: 'relative', overflow: 'hidden', color: 'primary.contrastText', background: 'linear-gradient(135deg, var(--awm-gold-light), var(--awm-gold))', border: '1px solid color-mix(in srgb, var(--awm-gold-light) 75%, transparent)', fontSize: { xs: 16, sm: 18 }, fontWeight: 700, boxShadow: 'inset 0 1px 0 rgba(255,255,255,.45), 0 10px 28px color-mix(in srgb, var(--awm-gold) 22%, transparent)', transition: 'transform .18s ease, box-shadow .18s ease', '&::before': { content: '\"\"', position: 'absolute', inset: 0, background: 'linear-gradient(115deg, transparent 20%, rgba(255,255,255,.24) 46%, transparent 68%)', transform: 'translateX(-65%)', transition: 'transform .65s ease', pointerEvents: 'none' }, '&:hover': { background: 'linear-gradient(135deg, var(--awm-gold-light), var(--awm-gold))', transform: 'translateY(-2px)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.45), 0 14px 32px color-mix(in srgb, var(--awm-gold) 30%, transparent)', '&::before': { transform: 'translateX(60%)' } }, '&:active': { transform: 'translateY(1px)', boxShadow: 'inset 0 2px 5px rgba(0,0,0,.12)' }, '&:focus-visible': { outline: '3px solid', outlineColor: 'text.primary', outlineOffset: 4 }, '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&::before': { transition: 'none' }, '&:hover, &:active': { transform: 'none' } } }}>Upgrade to AWM+</Button>
-          <Typography sx={{ mt: 1.25, fontFamily: 'var(--font-sans), sans-serif', color: 'var(--awm-muted-light)', fontSize: 12 }}>{PREMIUM.label} · Cancel anytime</Typography>
-        </Paper>
-        <PremiumPrompt open={open} onClose={() => setOpen(false)} />
-      </Container>
-    </Box>
-  )
-}
-
-export default function HomeDashboard({ books, newShows, newEpisodes, chaptersByBook, featured }: { books: PublicBook[]; featuredBook: PublicBook | null; featuredEpisode: FeaturedEpisode | null; chaptersByBook: Record<string, PublicChapter[]>; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; featured?: import('./FeaturedHero').FeaturedShow | null }) {
+export default function HomeDashboard({ books, newShows, newEpisodes, featured }: { books: PublicBook[]; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; featured?: import('./FeaturedHero').FeaturedShow | null }) {
   const { mode } = useColorMode()
   const { user } = useAuth()
   /* My List is fetched once per session and cached in the store; show-page
-     add/remove keeps the cache in sync. Saved books share the row; they are
-     stored in user metadata (like reading progress), so merge them in. */
+     add/remove keeps the cache in sync. The book half of the row is every
+     book saved in metadata PLUS any book read past page 1 — reading progress
+     alone surfaces it here. Session positions merge over synced metadata so
+     an in-progress read shows immediately. */
   const myListCacheItems = useMyListCache((state) => state.items)
   const setMyListCache = useMyListCache((state) => state.set)
+  const trackedPositions = useReadingProgressStore((state) => state.positions)
   const myListBookSlugs = useMemo(() => {
     const value = user?.user_metadata?.my_list_books
-    return Array.isArray(value) ? value.filter((slug): slug is string => typeof slug === 'string') : []
-  }, [user])
+    const slugs = new Set(Array.isArray(value) ? value.filter((slug): slug is string => typeof slug === 'string') : [])
+    const positions = { ...parseStoredPositions(user?.user_metadata ?? {}), ...trackedPositions }
+    for (const [slug, position] of Object.entries(positions)) {
+      if (position.page >= READING_TRACK_MIN_PAGE) slugs.add(slug)
+    }
+    return [...slugs].sort()
+  }, [user, trackedPositions])
+  const myListBookSlugsKey = myListBookSlugs.join('|')
+  const fetchedBookSlugsRef = useRef('')
   const [myListBooks, setMyListBooks] = useState<PublicBook[] | null>(null)
   useEffect(() => {
     let cancelled = false
     if (!user?.id || myListBookSlugs.length === 0) {
+      fetchedBookSlugsRef.current = ''
       queueMicrotask(() => { if (!cancelled) setMyListBooks([]) })
       return () => { cancelled = true }
     }
+    /* Positions update on every page turn; only refetch when the slug set
+       actually changes. */
+    if (fetchedBookSlugsRef.current === myListBookSlugsKey) return () => { cancelled = true }
     void fetchBooksForPublic()
-      .then((all) => { if (!cancelled) setMyListBooks(all.filter((book) => myListBookSlugs.includes(book.slug))) })
+      .then((all) => {
+        if (cancelled) return
+        fetchedBookSlugsRef.current = myListBookSlugsKey
+        setMyListBooks(all.filter((book) => myListBookSlugs.includes(book.slug)))
+      })
       .catch(() => { if (!cancelled) setMyListBooks([]) })
     return () => { cancelled = true }
-  }, [user, myListBookSlugs])
+  }, [user, myListBookSlugs, myListBookSlugsKey])
   const myListLoading = Boolean(user) && (myListCacheItems === null || myListBooks === null)
   const { newShowItems, newEpisodeItems } = useMemo(() => {
     return {
@@ -248,13 +169,6 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
     return () => { cancelled = true }
   }, [user?.id, myListCacheItems, setMyListCache])
 
-  /* Continue Reading row: metadata seeds the first paint synchronously; the
-     session store refines it with live page positions. */
-  const trackedPositions = useReadingProgressStore((state) => state.positions)
-  const continueReadingRowItems: CatalogueRowItem[] = useMemo(() => {
-    if (!user) return []
-    return buildContinueReadingItems(books, chaptersByBook, metadataReadingPositions(user.user_metadata), trackedPositions)
-  }, [user, books, chaptersByBook, trackedPositions])
   const displayNameFallback = user ? String(user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'learner') : ''
   /* The saved profile name wins over metadata/email — same source the profile
      page shows. */
@@ -283,7 +197,6 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
     ...(myListBooks ?? []).map((book) => ({
       key: book.id,
       href: `/books/${encodeURIComponent(book.slug)}`,
-      book,
       title: book.title,
       meta: book.author,
       level: book.level,
@@ -310,25 +223,6 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
         sx={{
           position: 'relative',
           bgcolor: 'var(--awm-cream-light)',
-          /* Faint brand-mark pattern across the whole homepage. CSS-masked so
-             the fill follows the theme; sits above the page background but
-             below every content section. */
-          '& > *': { position: 'relative', zIndex: 1 },
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            inset: 0,
-            zIndex: 0,
-            pointerEvents: 'none',
-            bgcolor: 'var(--awm-bark)',
-            opacity: { xs: 0.022, md: 0.028 },
-            maskImage: 'url(/homepage/arabicwithm-notext.svg)',
-            maskSize: { xs: '230px', md: '330px' },
-            maskRepeat: 'repeat',
-            WebkitMaskImage: 'url(/homepage/arabicwithm-notext.svg)',
-            WebkitMaskSize: { xs: '230px', md: '330px' },
-            WebkitMaskRepeat: 'repeat',
-          },
         }}
       >
         {featured ? (
@@ -380,13 +274,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
           {user && myListRowItems.length > 0 && (
             <Container maxWidth={false}>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
-              <NewOnRow items={myListRowItems} ariaLabel="My List" compact viewAllHref="/cartoons?view=shows" />
-            </Container>
-          )}
-          {user && continueReadingRowItems.length > 0 && (
-            <Container maxWidth={false} sx={{ mt: user && myListRowItems.length > 0 ? { xs: 2.5, md: 3.25 } : 0 }}>
-              <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Continue Reading</Typography>
-              <NewOnRow items={continueReadingRowItems} ariaLabel="Continue Reading" compact viewAllHref="/books" />
+              <NewOnRow items={myListRowItems} ariaLabel="My List" compact scrollHint />
             </Container>
           )}
           {user && myListLoading && myListRowItems.length === 0 && (
@@ -468,12 +356,6 @@ export default function HomeDashboard({ books, newShows, newEpisodes, chaptersBy
                 { title: 'Explore', href: '/explore', Icon: ExploreOutlined },
               ].map(({ title, href, Icon }) => <Paper key={href} component={Link} href={href} elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minHeight: 76, p: 2, borderRadius: '10px', textDecoration: 'none', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><Icon sx={{ color: 'var(--awm-gold)' }} /><Typography sx={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14 }}>{title}</Typography></Paper>)}
             </Box>
-          </Container>
-
-          <Container maxWidth="lg" sx={{ mt: { xs: 5, md: 7 }, mb: { xs: 5, md: 7 } }}>
-            <DeferredSection placeholder={<DeferredAppPlaceholder />}>
-              <DeferredAppDownloadSection />
-            </DeferredSection>
           </Container>
         </Box>
       </Box>

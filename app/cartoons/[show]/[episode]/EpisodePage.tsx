@@ -918,7 +918,6 @@ export default function EpisodePage({
   }, [isAdmin])
 
   const theme = useTheme()
-  const isMobileViewport = useMediaQuery(theme.breakpoints.down('md'))
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [navbarHeight, setNavbarHeight] = useState(NAVBAR_HEIGHT);
 
@@ -1087,10 +1086,13 @@ export default function EpisodePage({
     }
   }, [activeIndex, isMobile])
 
-  const blocksWithNotes = episode.scriptBlocks
-    .map((block, i) => ({ hasNotes: block.notes.length > 0, index: i }))
-    .filter((b) => b.hasNotes)
-    .map((b) => b.index)
+  const blocksWithNotes = useMemo(
+    () => episode.scriptBlocks
+      .map((block, i) => ({ hasNotes: block.notes.length > 0, index: i }))
+      .filter((b) => b.hasNotes)
+      .map((b) => b.index),
+    [episode.scriptBlocks],
+  )
   const allNotesExpanded = blocksWithNotes.length > 0 && blocksWithNotes.every((i) => expandedNotes.has(i))
 
   const openSettings = useCallback(() => setSettingsOpen(true), [])
@@ -1278,7 +1280,7 @@ export default function EpisodePage({
             )}
 
             {/* Desktop: the old tab-bar strip now hosts Memory + Settings. */}
-            {!isMobileViewport && (
+            {!isMobile && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, flexShrink: 0, minHeight: { md: 34 } }}>
                 <Button
                   onClick={() => router.push(`/memory?episode=${encodeURIComponent(episode.id)}`)}
@@ -1318,7 +1320,7 @@ export default function EpisodePage({
                   if (v === 3) { router.push(`/memory?episode=${encodeURIComponent(episode.id)}`); return }
                   setTab(v)
                 }}
-                variant={isMobileViewport ? 'fullWidth' : 'standard'}
+                variant={isMobile ? 'fullWidth' : 'standard'}
                 sx={{
                   flex: 1,
                   '& .MuiTab-root': { fontFamily: 'var(--font-sans)', fontSize: { xs: '0.74rem', sm: '0.82rem' }, fontWeight: 500, textTransform: 'none', letterSpacing: '0.03em', color: 'var(--muted)', minWidth: 0, px: { xs: 1, sm: 2 }, py: 1.5 },
@@ -1328,8 +1330,8 @@ export default function EpisodePage({
               >
                 <Tab label="Script" />
                 <Tab label="More" />
-                {isMobileViewport && <Tab label="Settings" />}
-                {isMobileViewport && <Tab label="Memory" />}
+                {isMobile && <Tab label="Settings" />}
+                {isMobile && <Tab label="Memory" />}
               </Tabs>
 
             </Box>
@@ -1378,7 +1380,7 @@ export default function EpisodePage({
               )}
 
               {/* ── Script Tab ── */}
-              {(!isMobileViewport || tab === 0) && (
+              {(!isMobile || tab === 0) && (
                 <Box
                   sx={{
                     display: { xs: 'block', md: 'flex' },
@@ -1415,12 +1417,12 @@ export default function EpisodePage({
               )}
 
               {/* ── More Tab: compact Up next queue (mobile only) ── */}
-              {isMobileViewport && tab === 1 && (
+              {isMobile && tab === 1 && (
                 <UpNextList related={related} />
               )}
 
               {/* ── Grammar Points Tab (mobile only) ── */}
-              {!isMobileViewport && tab === 2 && (
+              {!isMobile && tab === 2 && (
                 <Box>
                   {episode.grammarPoints.length === 0 ? (
                     <Typography sx={{ fontFamily: 'var(--font-sans)', color: 'var(--muted)', fontSize: '0.9rem' }}>No grammar points found.</Typography>

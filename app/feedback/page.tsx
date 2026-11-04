@@ -14,7 +14,7 @@ export default function FeedbackPage() {
   const [sent, setSent] = useState(false)
   const [submissionId, setSubmissionId] = useState('')
   return <Container maxWidth="sm" sx={{ py: 6 }}>
-    <Typography variant="h3" gutterBottom>Give Feedback</Typography>
+    <Typography component="h1" variant="h3" gutterBottom>Give Feedback</Typography>
     {!loading && !user && <Alert severity="info" sx={{ mb: 3 }} action={<Button onClick={() => window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } }))}>Sign in</Button>}>Sign in to submit feedback.</Alert>}
     {sent ? <Alert severity="success">Thank you! Your feedback has been saved.</Alert> : <Box component="form" onSubmit={async event => {
       event.preventDefault()

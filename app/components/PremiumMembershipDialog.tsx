@@ -14,7 +14,7 @@ export default function PremiumMembershipDialog({onClose,userId,includedAccess,o
    <Typography sx={{fontWeight:700,mb:2}}>{includedAccess?'Your AWM Plus access is active.':'Your AWM Plus membership is active.'}</Typography>
    {includedAccess&&<Typography color="text.secondary" sx={{mb:2}}>AWM Plus is included with your account access.</Typography>}
    <Box component="ul" sx={{m:0,p:0,listStyle:'none',display:'grid',gap:1}}>
-    {PREMIUM_BENEFITS.filter(benefit=>!benefit.appOnly).map(benefit=><Box component="li" key={benefit.id} sx={{display:'flex',alignItems:'center',gap:1.1,p:1.25,borderRadius:'10px',bgcolor:'background.default'}}>
+    {PREMIUM_BENEFITS.map(benefit=><Box component="li" key={benefit.id} sx={{display:'flex',alignItems:'center',gap:1.1,p:1.25,borderRadius:'10px',bgcolor:'background.default'}}>
      <CheckCircleRounded aria-hidden="true" sx={{flexShrink:0,color:'primary.main',fontSize:21}}/>
      <Typography sx={{minWidth:0,fontWeight:600}}>{benefit.label}</Typography>
     </Box>)}

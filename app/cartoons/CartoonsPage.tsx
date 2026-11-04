@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   Box,
@@ -131,7 +131,18 @@ export default function CartoonsPage({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [view, setView] = useState<WatchView>(searchParams.get('view') === 'shows' ? 'shows' : 'episodes')
+  /* The view is owned by the URL (?view=shows) so external links and
+     back/forward navigation always agree with what is on screen; the toggle
+     just writes the param (replacing, so tab flips don't stack history). */
+  const view: WatchView = searchParams.get('view') === 'shows' ? 'shows' : 'episodes'
+  const setView = (next: WatchView) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (next === 'shows') params.set('view', 'shows')
+    else params.delete('view')
+    params.delete('page')
+    const query = params.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingShow, setEditingShow] = useState<ShowMeta | undefined>()
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -146,11 +157,19 @@ export default function CartoonsPage({
     setLastUrlQuery(urlQuery)
     setSearchInput(urlQuery)
   }
+  /* The debounced search fires into a timeout; read the freshest params there
+     (via a ref updated every render) so a filter click in the same window is
+     never clobbered by the pending replace. */
+  const searchParamsRef = useRef(searchParams.toString())
+  searchParamsRef.current = searchParams.toString()
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => {
+    if (searchTimer.current) clearTimeout(searchTimer.current)
+  }, [])
   const applySearch = (value: string) => {
     if (searchTimer.current) clearTimeout(searchTimer.current)
     searchTimer.current = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString())
+      const params = new URLSearchParams(searchParamsRef.current)
       const trimmed = value.trim()
       if (trimmed) params.set('q', trimmed)
       else params.delete('q')

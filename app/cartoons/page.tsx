@@ -125,8 +125,12 @@ async function Catalogue({ searchParams }: { searchParams: Promise<SearchParams>
 
   const episodePageCount = Math.max(1, Math.ceil(filteredEpisodes.length / PAGE_SIZE))
   const showPageCount = Math.max(1, Math.ceil(filteredShows.length / PAGE_SIZE))
+  /* Clamp against the page count of the view actually being displayed, so a
+     deep page link into the other view never renders a misleading empty grid. */
   const requestedPage = Number.parseInt(firstParam(sp.page), 10)
-  const page = Math.min(Math.max(1, Number.isFinite(requestedPage) ? requestedPage : 1), Math.max(episodePageCount, showPageCount))
+  const activeView = firstParam(sp.view) === 'shows' ? 'shows' : 'episodes'
+  const basePage = Math.max(1, Number.isFinite(requestedPage) ? requestedPage : 1)
+  const page = Math.min(basePage, activeView === 'shows' ? showPageCount : episodePageCount)
   const slice = <T,>(list: T[]) => list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   return (

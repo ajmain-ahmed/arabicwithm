@@ -26,6 +26,7 @@ import { supabase } from '../lib/supabase/client'
 import { createClient } from '@supabase/supabase-js'
 import ClientStyles from '@/app/components/ClientStyles'
 import Turnstile, { type TurnstileHandle } from '@/app/components/Turnstile'
+import { verifyTurnstileToken } from '@/app/actions/turnstile'
 
 /* Email confirmation/reset links follow the flow type of the client that
    initiates them. @supabase/ssr forces PKCE, whose links only complete on the
@@ -127,6 +128,21 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
     turnstileRef.current?.reset()
   }
 
+  /* App-side bot gate: our server validates the widget token with Cloudflare
+     siteverify before any auth call. The spent token is intentionally NOT
+     forwarded to Supabase — Supabase's own Captcha setting would re-validate
+     it and reject real users. Keep Supabase Captcha disabled. */
+  const verifyCaptcha = async (): Promise<boolean> => {
+    if (!turnstileEnabled) return true
+    const ok = await verifyTurnstileToken(captchaToken ?? '')
+    if (!ok) {
+      setLoading(false)
+      resetCaptcha()
+      showSnackbar('error', 'Security check failed. Please try again.')
+    }
+    return ok
+  }
+
   const resetAndClose = (severity: SnackbarMessage['severity'], message: string) => {
     setLoading(false)
     resetCaptcha()
@@ -138,6 +154,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
 
   const handleSignUp = async () => {
     setLoading(true)
+    if (!(await verifyCaptcha())) return
     const { data, error } = await getEmailLinkClient().auth.signUp({
       email: formData.email,
       password: formData.password,
@@ -145,7 +162,6 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
         /* Land on a real page: the implicit-flow link returns the session in
            the URL hash, which only client-side JS can read. */
         emailRedirectTo: `${window.location.origin}/`,
-        captchaToken: captchaToken ?? undefined,
       },
     })
     if (error) {
@@ -159,10 +175,10 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
 
   const handleSignIn = async () => {
     setLoading(true)
+    if (!(await verifyCaptcha())) return
     const { data, error } = await supabase.auth.signInWithPassword({
       email: formData.email,
       password: formData.password,
-      options: { captchaToken: captchaToken ?? undefined },
     })
     if (error) {
       setLoading(false)
@@ -180,9 +196,9 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
 
   const handleForgotPassword = async () => {
     setLoading(true)
+    if (!(await verifyCaptcha())) return
     const { error } = await getEmailLinkClient().auth.resetPasswordForEmail(formData.email, {
       redirectTo: `${window.location.origin}/reset-password`,
-      captchaToken: captchaToken ?? undefined,
     })
     if (error) {
       setLoading(false)

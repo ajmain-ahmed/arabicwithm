@@ -11,6 +11,9 @@ import { useRouter } from 'next/navigation'
 import PremiumMembershipDialog from '@/app/components/PremiumMembershipDialog'
 
 interface PremiumPromptProps { open:boolean; onClose:()=>void; reason?:string; membershipSummary?:boolean; onProfileNavigate?:()=>void }
+/* Signed-out visitors cannot be premium, so the dialog renders the pitch
+   without spending a round trip establishing that. */
+const SIGNED_OUT_STATUS: PremiumStatus = { premium: false, signedIn: false, manageable: false, admin: false }
 export default function PremiumPrompt(props:PremiumPromptProps){
   const {user}=useAuth()
   // Re-openings and identity changes must verify current server entitlements.
@@ -27,13 +30,17 @@ function PremiumPromptContent({ open, onClose, reason, membershipSummary=false,o
   const [error, setError] = useState('')
   useEffect(() => {
     let active=true,settled=false
+    if (!user) {
+      queueMicrotask(() => { if (active) setStatus(SIGNED_OUT_STATUS) })
+      return () => { active = false }
+    }
     const fail=()=>{if(active&&!settled){settled=true;setError('Unable to check AWM+ status. Please try again.')}}
     const timer=window.setTimeout(fail,10000)
     void refreshPremiumStatus(statusKey).then(value=>{
       if(active&&!settled){settled=true;setStatus(value);window.clearTimeout(timer)}
     }).catch(()=>{window.clearTimeout(timer);fail()})
     return()=>{active=false;window.clearTimeout(timer)}
-  },[attempt,statusKey])
+  },[attempt,statusKey,user])
   const retry=()=>{setError('');setAttempt(value=>value+1)}
   const premium = status?.premium ?? false
   async function purchase() {
@@ -67,7 +74,6 @@ function PremiumPromptContent({ open, onClose, reason, membershipSummary=false,o
         {PREMIUM_BENEFITS.map((benefit) => <Box component="li" key={benefit.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.1, px: 1.5, py: 1.25, borderRadius: '10px', bgcolor: 'background.default', textAlign: 'left' }}>
           <CheckCircleRounded aria-hidden="true" sx={{ flex: '0 0 auto', color: 'primary.main', fontSize: 21 }} />
           <Typography sx={{ minWidth: 0, flex: 1, fontWeight: 700 }}>{benefit.label}</Typography>
-          {benefit.appOnly && <Box component="span" sx={{ flex: '0 0 auto', px: 0.8, py: 0.35, borderRadius: '9999px', bgcolor: 'color-mix(in srgb, var(--awm-forest) 9%, transparent)', color: 'var(--awm-forest)', fontFamily: 'var(--font-sans), sans-serif', fontSize: 10, fontWeight: 700, whiteSpace: 'nowrap' }}>📱 App only</Box>}
         </Box>)}
       </Box>
       <Typography sx={{ mt: 2 }} color="text.secondary">New books and features as they arrive.</Typography>

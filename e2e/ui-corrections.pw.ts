@@ -10,16 +10,12 @@ async function premium(context:BrowserContext){
 
 async function time(page:Page,seconds:number,state=2){await page.evaluate(({seconds,state})=>(window as unknown as {__ytTime:(seconds:number,state:number)=>void}).__ytTime(seconds,state),{seconds,state})}
 for(const width of [390,1440]){
- test(`restores historical hero and QR app section at ${width}`,async({page})=>{
+ test(`restores historical hero at ${width}`,async({page})=>{
   await page.setViewportSize({width,height:1000});await page.goto('/')
   const hero=page.locator('[data-home-hero]');expect((await hero.boundingBox())!.height).toBeGreaterThanOrEqual(width>=900?610:520)
   expect(await hero.evaluate(el=>getComputedStyle(el).backgroundPosition)).toBe('50% 50%')
-  const app=page.locator('#download-app');await expect(app.getByRole('img',{name:'QR code placeholder'})).toBeVisible()
-  await expect(app.getByRole('img',{name:'ArabicWithM mobile app home screen'})).toBeVisible()
-  await expect(app.getByLabel('Email address')).toHaveCount(0)
-  await expect(app.getByRole('link',{name:/App Store/})).toBeVisible();await expect(app.getByRole('link',{name:/Google Play/})).toBeVisible()
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true)
-  await hero.screenshot({path:`test-results/restored-hero-${width}.png`});await app.screenshot({path:`test-results/restored-app-${width}.png`})
+  await hero.screenshot({path:`test-results/restored-hero-${width}.png`})
  })
  test(`playback, seeking, replay and compact Settings at ${width}`,async({page,request})=>{
   await request.post(`${backend}/fixture/for-you-playback`);await youtube(page);await page.setViewportSize({width,height:1000});await page.goto('/explore')

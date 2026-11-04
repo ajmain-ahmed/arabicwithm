@@ -31,7 +31,7 @@ describe('homepage hero', () => {
   it('shows a time-based greeting for signed-in users', () => {
     home.user = { id: 'user-id', user_metadata: { full_name: 'Test User' } }
     home.statsRendered = false
-    const html = renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]} />)
+    const html = renderToStaticMarkup(<HomeDashboard books={[]} newShows={[]} newEpisodes={[]} />)
     expect(html).toContain(`Good ${daypart(new Date())}, Test!`)
     expect(html).not.toContain('Learn Arabic through cartoons and books')
     expect(html).not.toContain('Start Watching')
@@ -42,7 +42,7 @@ describe('homepage hero', () => {
   it('keeps the public heading and hides stats for guests', () => {
     home.user = null
     home.statsRendered = false
-    const html = renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]} />)
+    const html = renderToStaticMarkup(<HomeDashboard books={[]} newShows={[]} newEpisodes={[]} />)
     expect(html).toContain('Learn Arabic through cartoons and books')
     expect(html).toContain('Start Watching')
     expect(html).toContain('Start Reading')
@@ -51,7 +51,7 @@ describe('homepage hero', () => {
 
   it('shows the Featured banner to guests when featured content exists', () => {
     home.user = null
-    const html = renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]} featured={{ show: { id: 'dbz', slug: 'dbz', title: 'DBZ', cover: '/cover.webp', level: 'B1', episodeCount: 3 }, episodeCount: 3 }} />)
+    const html = renderToStaticMarkup(<HomeDashboard books={[]} newShows={[]} newEpisodes={[]} featured={{ show: { id: 'dbz', slug: 'dbz', title: 'DBZ', cover: '/cover.webp', level: 'B1', episodeCount: 3 }, episodeCount: 3 }} />)
     expect(html).toContain('data-featured-hero')
     expect(html).not.toContain('data-home-hero')
     expect(html).not.toContain('Learn Arabic through cartoons and books')

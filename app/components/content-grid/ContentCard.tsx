@@ -140,7 +140,6 @@ export default function ContentCard({
         transform: denseMobileTile ? { xs: 'none', sm: hovered ? 'translateY(-3px)' : 'none' } : hovered ? 'translateY(-3px)' : 'none',
         transition: 'all 0.2s ease',
         cursor: 'pointer',
-        minHeight: undefined,
       }}
     >
       {/* Thumbnail */}
@@ -154,7 +153,6 @@ export default function ContentCard({
             : compactMobileRow
             ? { xs: aspectRatio, sm: imageFit === 'natural' ? 'auto' : aspectRatio }
             : imageFit === 'natural' ? 'auto' : aspectRatio,
-          minHeight: undefined,
           overflow: 'hidden',
           borderRadius: denseMobileTile ? { xs: '4px', sm: 0 } : 0,
           backgroundColor: denseMobileTile
@@ -183,7 +181,7 @@ export default function ContentCard({
             fill
             sizes={imageSizes}
             unoptimized={eager}
-            loading={eager ? 'lazy' : undefined}
+            loading={eager ? 'eager' : 'lazy'}
             fetchPriority={lead ? 'high' : undefined}
             decoding="async"
             onLoad={() => setImgLoading(false)}

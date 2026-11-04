@@ -18,13 +18,13 @@ vi.mock('@/app/actions/profiles',()=>({fetchMyDisplayName:vi.fn(()=>Promise.reso
 vi.mock('@/app/components/PremiumPrompt',()=>({default:()=>null}))
 vi.mock('@/app/components/CheckoutFeedback',()=>({default:()=>null}))
 import HomeQuickActions from './HomeQuickActions'
-import HomeDashboard, { QuickLinks } from './HomeDashboard'
+import HomeDashboard from './HomeDashboard'
 it('keeps the public homepage visible during session recovery', () => {
   const previousUser = home.user
   home.user = null
   home.loading = true
   try {
-    const html = renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]}/>)
+    const html = renderToStaticMarkup(<HomeDashboard books={[]} newShows={[]} newEpisodes={[]}/>)
     expect(html).toContain('Learn Arabic through cartoons and books')
     expect(html).toContain('Start Watching')
     expect(html).toContain('Start Reading')
@@ -35,25 +35,10 @@ it('keeps the public homepage visible during session recovery', () => {
 })
 function links(html:string){const host=document.createElement('div');host.innerHTML=html;return Array.from(host.querySelectorAll('a'))}
 describe('website Home shortcuts',()=>{
-  it('offers Word Search for guests and signed-in users without a duplicate Admin card',()=>{
-    for(const userId of [undefined,'user-id']){
-      const actions=links(renderToStaticMarkup(<QuickLinks userId={userId}/>))
-      expect(actions.filter(link=>link.getAttribute('href')==='/word-search')).toHaveLength(1)
-      expect(actions.filter(link=>link.getAttribute('href')==='/grammar')).toHaveLength(1)
-      expect(actions.filter(link=>link.getAttribute('href')==='/search')).toHaveLength(1)
-      expect(actions.some(link=>link.getAttribute('href')?.startsWith('/admin'))).toBe(false)
-      expect(actions.every(link=>link.className===actions[0].className)).toBe(true)
-    }
-  })
-  it('places Admin once under Quick Actions and never in the learning shortcuts',()=>{
-    for (const isAdmin of [false, true]) {
-      const quick = links(renderToStaticMarkup(<QuickLinks userId="admin-user" isAdmin={isAdmin}/>))
-      expect(quick.filter(link=>link.getAttribute('href')==='/admin/users')).toHaveLength(isAdmin ? 1 : 0)
-      const learning = links(renderToStaticMarkup(<HomeQuickActions bookmarkHref="/books/book/chapter" bookmarkLabel="Continue reading"/>))
-      expect(learning.map(link=>link.getAttribute('href'))).toEqual(['/books/book/chapter','/profile'])
-      expect(learning.every(link=>link.className===learning[0].className)).toBe(true)
-    }
-    expect(links(renderToStaticMarkup(<QuickLinks isAdmin/>)).some(link=>link.getAttribute('href')==='/admin/users')).toBe(false)
+  it('keeps learning shortcuts to the bookmark and profile only',()=>{
+    const learning = links(renderToStaticMarkup(<HomeQuickActions bookmarkHref="/books/book/chapter" bookmarkLabel="Continue reading"/>))
+    expect(learning.map(link=>link.getAttribute('href'))).toEqual(['/books/book/chapter','/profile'])
+    expect(learning.every(link=>link.className===learning[0].className)).toBe(true)
   })
 })
 
@@ -61,7 +46,7 @@ it('renders only the four mobile Quick Actions and no Admin entry on the homepag
   for(const isAdmin of [true,false]){
     home.isAdmin=isAdmin
     const host=document.createElement('div')
-    host.innerHTML=renderToStaticMarkup(<HomeDashboard books={[]} featuredBook={null} featuredEpisode={null} chaptersByBook={{}} newShows={[]} newEpisodes={[]}/>)
+    host.innerHTML=renderToStaticMarkup(<HomeDashboard books={[]} newShows={[]} newEpisodes={[]}/>)
     expect(host.querySelectorAll('nav[aria-label="Quick Actions"]')).toHaveLength(1)
     expect(Array.from(host.querySelectorAll('[data-mobile-home-actions] a')).map(link=>link.textContent)).toEqual(['Memory','Grammar','Word Search','Explore'])
     expect(Array.from(host.querySelectorAll('[data-mobile-home-actions] a')).map(link=>link.getAttribute('href'))).toEqual(['/memory','/grammar','/word-search','/explore'])

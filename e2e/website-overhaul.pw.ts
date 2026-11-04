@@ -76,23 +76,10 @@ test('manual Premium persists and grants actual audio; revocation restores free 
  await page.getByRole('checkbox',{name:'Premium',exact:true}).uncheck();await page.getByRole('button',{name:'Save access',exact:true}).click();await expect(page.getByText('Access saved.')).toBeVisible()
  await read.reload();await read.getByRole('button',{name:'Audio',exact:true}).click();await read.getByRole('button',{name:'Play audio',exact:true}).click();await expect(read.getByRole('dialog')).toBeVisible();await expect(read.locator('audio')).toHaveCount(0);await learner.close()
 })
-test('book review writes the existing personal record and restores after refresh',async({page,context})=>{
- await signIn(context,'free');await page.goto('/books/test-book');await page.getByRole('button',{name:'Leave a Review',exact:true}).click();await page.getByLabel('Your review',{exact:true}).fill('A helpful story.');await page.getByRole('button',{name:'Save review',exact:true}).click();await expect(page.getByText('Review saved.')).toBeVisible()
- await page.reload();await page.getByRole('button',{name:'Leave a Review',exact:true}).click();await expect(page.getByLabel('Your review',{exact:true})).toHaveValue('A helpful story.');await expect(page.getByRole('heading',{name:/average|reviews/i})).toHaveCount(0)
-})
-
 test('free readers can open later chapters and Explore omits transcript search',async({page,context})=>{
  await page.goto('/explore');await expect(page.getByRole('link',{name:/Search transcripts/i})).toHaveCount(0)
  await signIn(context,'free');await page.goto('/books/test-book/chapter-6');await expect(page.getByRole('heading',{name:'Sixth Chapter',exact:true})).toBeVisible();await expect(page.getByRole('dialog')).toHaveCount(0)
 })
-test('mobile PDF and review controls match and clear the fixed navigation',async({page,context})=>{
- await signIn(context,'free');await page.setViewportSize({width:375,height:812});await page.goto('/books/test-book')
- const pdf=page.getByRole('button',{name:/Download PDF/i}),review=page.getByRole('button',{name:'Leave a Review',exact:true})
- await page.getByText('Download PDF',{exact:true}).scrollIntoViewIfNeeded();await expect(pdf).toBeVisible();await expect(review).toBeVisible()
- const a=await pdf.boundingBox(),b=await review.boundingBox();expect(a).not.toBeNull();expect(b).not.toBeNull();expect(Math.abs(a!.height-b!.height)).toBeLessThan(2)
- await review.scrollIntoViewIfNeeded();await expect(review).toBeVisible();await page.screenshot({path:'docs/validation/website/book-actions-mobile.png'});await review.click();await expect(page.getByRole('region',{name:'Your book review'})).toBeVisible()
-})
-
 test('learning activity shows streak and weekly tiles without level or XP surfaces',async({page,context})=>{
  await signIn(context,'free');await page.goto('/');await expect(page.getByRole('button',{name:/^Current level:/})).toHaveCount(0);await expect(page.getByText(/XP/)).toHaveCount(0)
  await page.goto('/profile');await expect(page.getByText(/Level \d/)).toHaveCount(0);await expect(page.getByText(/XP/)).toHaveCount(0)

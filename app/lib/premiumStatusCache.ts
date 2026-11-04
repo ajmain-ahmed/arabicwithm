@@ -10,14 +10,18 @@ const TTL_MS = 60_000
 let cached: { key: string; status: PremiumStatus; at: number } | null = null
 let inflight: Promise<PremiumStatus> | null = null
 
+/* Reads return the latest snapshot for this identity whenever one exists, of
+   any age: surfaces render stale-while-revalidate and the background fetch
+   swaps in fresh state. The TTL below is only the re-verification horizon
+   for getPremiumStatus, never a display cutoff. Server actions remain the
+   source of truth for checkout/management decisions. */
 export function readPremiumStatus(key: string): PremiumStatus | null {
-  return cached && cached.key === key && Date.now() - cached.at < TTL_MS ? cached.status : null
+  return cached && cached.key === key ? cached.status : null
 }
 
 function request(key: string, force: boolean): Promise<PremiumStatus> {
-  if (!force) {
-    const fresh = readPremiumStatus(key)
-    if (fresh) return Promise.resolve(fresh)
+  if (!force && cached && cached.key === key) {
+    if (Date.now() - cached.at < TTL_MS) return Promise.resolve(cached.status)
     if (inflight) return inflight
   }
   const promise = fetchPremiumStatus()

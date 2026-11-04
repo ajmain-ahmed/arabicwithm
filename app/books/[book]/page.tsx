@@ -34,7 +34,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
 
   const infoFields = (
     <>
-      <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 36, md: 48 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.1 }}>
+      <Typography component="h1" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 36, md: 48 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.1 }}>
         {book.title}
       </Typography>
       <Typography color="text.secondary" sx={{ mt: 1 }}>By {book.author}</Typography>

@@ -9,7 +9,7 @@ async function signIn(context:BrowserContext,role:keyof typeof ids){
 for(const width of [320,390,1440])test(`matching book actions, blurb and existing flows at ${width}`,async({page,context})=>{
  await signIn(context,'premium');await page.setViewportSize({width,height:1000});await page.goto('/books/test-book')
  const actions=page.getByRole('group',{name:'Book actions',exact:true}),buttons=actions.locator('.book-detail-action')
- await expect(buttons).toHaveText(['My List','PDF','Review'])
+ await expect(buttons).toHaveText(['My List','PDF'])
  const styles=await buttons.evaluateAll(nodes=>nodes.map(el=>{const b=el.getBoundingClientRect(),s=getComputedStyle(el);return {x:b.x,y:b.y,width:b.width,height:b.height,radius:s.borderRadius,font:s.fontFamily,size:s.fontSize,padding:s.padding,border:s.border,background:s.backgroundColor,color:s.color,overflow:el.scrollWidth>el.clientWidth}}))
  for(const style of styles){expect(style.y).toBe(styles[0].y);expect(Math.abs(style.width-styles[0].width)).toBeLessThan(1);expect({...style,x:0,width:0}).toEqual({...styles[0],x:0,width:0});expect(style.overflow).toBe(false)}
  const blurb=page.getByText('A clear book description.',{exact:true})
@@ -23,12 +23,5 @@ for(const width of [320,390,1440])test(`matching book actions, blurb and existin
  const downloaded=page.waitForEvent('download');await pdf.getByRole('button',{name:'English PDF',exact:true}).click()
  expect((await downloaded).suggestedFilename()).toMatch(/complete-book-en\.pdf$/)
  await pdf.getByRole('button',{name:'Close',exact:true}).click()
- await actions.getByRole('button',{name:'Review',exact:true}).click()
- const editor=page.getByRole('region',{name:'Your book review',exact:true});await expect(editor).toBeVisible()
- expect((await editor.boundingBox())!.width).toBeGreaterThan((await buttons.first().boundingBox())!.width*2)
- await editor.getByRole('textbox',{name:'Your review',exact:true}).fill('Useful reading.')
- await editor.getByRole('button',{name:'Save review',exact:true}).click();await expect(editor).toContainText('Review saved.')
- await editor.getByRole('button',{name:'Close',exact:true}).click();await actions.getByRole('button',{name:'Review',exact:true}).click();await expect(editor.getByRole('textbox',{name:'Your review',exact:true})).toHaveValue('Useful reading.')
- await editor.getByRole('button',{name:'Delete your review',exact:true}).click();await expect(editor).toContainText('Review deleted.')
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
 })

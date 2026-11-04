@@ -58,7 +58,6 @@ const tables = {
   book_release_reminders: [],
   app_notifications: [],
   featured_show_config: [],
-  email_preferences: [],
   book_audio_progress: [],
   youtube_transcripts: [],
   transcript_groups: [],
@@ -189,7 +188,6 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     for(const language of ['ar','en']) if(!tables.book_chapter_audio.some(row=>row.chapter_id===second&&row.language===language)) tables.book_chapter_audio.push({...tables.book_chapter_audio.find(row=>row.language===language),chapter_id:second})
     return json(res,{})
   }
-  if(url.pathname==='/fixture/launch-preferences') return json(res,tables.email_preferences)
   if(url.pathname==='/fixture/request-log')return json(res,{rpc:rpcLog,tables:tableLog})
   if(url.pathname==='/fixture/search-failure'){failSearch=body.fail;return json(res,{})}
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
@@ -498,10 +496,6 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       if(table==='featured_show_config'){
         if(req.method==='DELETE')tables.featured_show_config=tables.featured_show_config.filter(row=>row.storage_path!==url.searchParams.get('storage_path')?.slice(3))
         else {const index=tables.featured_show_config.findIndex(row=>row.show_id===body.show_id);if(index<0)tables.featured_show_config.push(body);else tables.featured_show_config[index]=body}
-      }
-      if(table==='email_preferences') {
-        const index=tables.email_preferences.findIndex(row=>row.email===body.email&&row.purpose===body.purpose)
-        if(index<0)tables.email_preferences.push(body);else if(!(req.headers.prefer??'').includes('ignore-duplicates'))tables.email_preferences[index]=body
       }
       if(table==='book_audio_progress') {
         const index=tables.book_audio_progress.findIndex(row=>row.user_id===body.user_id&&row.chapter_id===body.chapter_id&&row.language===body.language)

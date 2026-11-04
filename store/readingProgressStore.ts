@@ -2,8 +2,8 @@ import { create } from 'zustand'
 import { supabase } from '@/app/lib/supabase/client'
 
 /* One canonical account-backed reading position per book. Every reader page
-   is resumable, including the opening page; mobile discovery can still use
-   READING_TRACK_MIN_PAGE to decide when to show Continue Reading. */
+   is resumable, including the opening page; READING_TRACK_MIN_PAGE marks a
+   book as "being read" so it surfaces in My List. */
 
 export interface ReadingPosition {
   chapterSlug: string

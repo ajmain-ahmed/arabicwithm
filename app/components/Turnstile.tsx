@@ -3,8 +3,10 @@
 /* Cloudflare Turnstile widget for bot protection on auth flows.
    Renders nothing when NEXT_PUBLIC_TURNSTILE_SITE_KEY is unset, so local
    dev and e2e fixtures keep working without a key. The site key is public
-   by design (it ships to the browser); enforcement happens in Supabase
-   Auth using the matching secret key. */
+   by design (it ships to the browser). The token is verified app-side by
+   verifyTurnstileToken (server → Cloudflare siteverify) before auth calls;
+   keep Supabase Auth → Captcha disabled — widget tokens are single-use and
+   cannot be validated twice. */
 
 import { useEffect, useImperativeHandle, useRef, type Ref } from 'react'
 

@@ -17,18 +17,10 @@ async function noOverflow(page: Page) {
 }
 
 for (const width of [320, 390, 768, 1440, 1920]) {
-  test(`app CTA and dedicated player at ${width}px`, async ({ page, context, request }) => {
+  test(`dedicated player at ${width}px`, async ({ page, context, request }) => {
     await page.setViewportSize({ width, height: 1000 })
     await page.goto('/')
-    const cta = page.locator('#download-app')
-    await cta.scrollIntoViewIfNeeded()
-    const badges = await cta.locator('img').evaluateAll(elements => elements.filter((element): element is HTMLImageElement => element instanceof HTMLImageElement && element.src.includes('store-badges')).map(image => ({ width: image.parentElement!.getBoundingClientRect().width, height: image.parentElement!.getBoundingClientRect().height, loaded: image.complete && image.naturalWidth > 0 })))
-    expect(badges).toHaveLength(2); expect(badges[0]).toEqual(badges[1]); expect(badges[0].loaded).toBe(true)
-    const visualHeights = await cta.locator('img[src*="store-badges"]').evaluateAll(elements => elements.map(element => element.getBoundingClientRect().height * (element.getAttribute('src')!.endsWith('.png') ? 166 / 250 : 1)))
-    expect(Math.abs(visualHeights[0] - visualHeights[1])).toBeLessThan(1)
-    await expect(cta.getByRole('img',{name:'QR code placeholder'})).toBeVisible()
     await noOverflow(page)
-    await cta.screenshot({ path: `test-results/app-cta-${width}.png` })
     await signIn(context, 'premium')
     await request.post('https://localhost:4310/fixture/website-update', { ignoreHTTPSErrors: true })
     await page.goto('/books')
@@ -85,16 +77,6 @@ for (const width of [320, 390, 768, 1440, 1920]) {
     expect(await departingAudio!.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true)
   })
 }
-
-test('restored app section has QR/store controls without email signup for guests and accounts',async({page,context})=>{
- await page.goto('/')
- const cta=page.locator('#download-app')
- await expect(cta.getByLabel('Email address')).toHaveCount(0)
- await expect(cta.getByRole('img',{name:'QR code placeholder'})).toBeVisible()
- await signIn(context,'free');await page.reload()
- await expect(cta.getByLabel('Email address')).toHaveCount(0)
- await expect(cta.getByRole('img',{name:'QR code placeholder'})).toBeVisible()
-})
 
 test('free account is gated by the existing Premium prompt in Listen', async ({ page, context }) => {
   await signIn(context, 'free'); await page.goto('/books?mode=listen')

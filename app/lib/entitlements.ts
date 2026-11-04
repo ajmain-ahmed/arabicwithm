@@ -5,11 +5,10 @@ const PREMIUM_MONTHLY_PENCE = 499
 const PREMIUM_MONTHLY_PRICE = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(PREMIUM_MONTHLY_PENCE / 100)
 export const PREMIUM = { monthlyPence: PREMIUM_MONTHLY_PENCE, currency: 'gbp', price: PREMIUM_MONTHLY_PRICE, label: `${PREMIUM_MONTHLY_PRICE}/month` } as const
 export const PREMIUM_BENEFITS = [
-  { id: 'offline-books', label: 'Offline books', appOnly: false },
-  { id: 'audiobooks', label: 'Audiobooks', appOnly: false },
-  { id: 'for-you', label: 'Unlimited For You viewing', appOnly: false },
-  { id: 'memory', label: 'Unlimited Memory Practice', appOnly: false },
-  { id: 'flashcards', label: 'Unlimited flashcards', appOnly: true },
+  { id: 'offline-books', label: 'Offline books' },
+  { id: 'audiobooks', label: 'Audiobooks' },
+  { id: 'for-you', label: 'Unlimited For You viewing' },
+  { id: 'memory', label: 'Unlimited Memory Practice' },
 ] as const
 export const MEMORY = { dailyFreeCards: 30, dailyFreeSessions: 1, sessionCards: 50, xpPerCard: 1, timeZone: 'Europe/London' } as const
 

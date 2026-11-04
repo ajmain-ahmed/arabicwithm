@@ -756,6 +756,29 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
 
   useEffect(() => () => setGlobalVideoPlaying(false), [setGlobalVideoPlaying])
 
+  /* itemsRef mirrors state for effects that must not re-run on every batch
+     append (the book auto-advance clock below, keyboard navigation). */
+  const itemsRef = useRef(items)
+  useEffect(() => { itemsRef.current = items }, [items])
+
+  /* Desktop keyboard navigation for the snap feed: arrows and PageUp/Down
+     move between slides with the same scroll bookkeeping as the chevrons.
+     Skipped while a definition is open or focus is in a form control. */
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLElement && event.target.closest('input, textarea, select, [contenteditable="true"]')) return
+      if (selectedDefinition) return
+      const step = event.key === 'ArrowDown' || event.key === 'ArrowRight' || event.key === 'PageDown' ? 1
+        : event.key === 'ArrowUp' || event.key === 'ArrowLeft' || event.key === 'PageUp' ? -1
+        : 0
+      if (!step) return
+      event.preventDefault()
+      goToIndex(activeIndexRef.current + step)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [goToIndex, selectedDefinition])
+
   /* Tab visibility only gates book auto-advance. Videos deliberately keep
      playing while the tab is hidden so returning users resume mid-video
      instead of restarting it. */
@@ -766,19 +789,23 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
     return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [])
 
+  /* Auto-advance book slides after a reading dwell. The clock is anchored to
+     when the slide became active (not effect lifetime), so background batch
+     appends don't restart the reading time. Paused while a definition is
+     peeked for this page. */
+  const bookStartedAtRef = useRef(0)
   useEffect(() => {
-    if (!pageVisible || items[activeIndex]?.kind !== 'book') return
+    if (!pageVisible || itemsRef.current[activeIndex]?.kind !== 'book') return
     if (selectedDefinition?.itemIndex === activeIndex) return
-    const startedAt = Date.now()
+    bookStartedAtRef.current = Date.now()
     const timer = window.setInterval(() => {
-      // Paused while a definition is peeked for this page.
       if (peekItemIndexRef.current === activeIndex) return
-      if (Date.now() - startedAt < EXPLORE_READING_DURATION_MS) return
+      if (Date.now() - bookStartedAtRef.current < EXPLORE_READING_DURATION_MS) return
       window.clearInterval(timer)
       advanceOnce(activeIndex)
     }, 250)
     return () => window.clearInterval(timer)
-  }, [activeIndex, advanceOnce, items, pageVisible, selectedDefinition?.itemIndex])
+  }, [activeIndex, advanceOnce, pageVisible, selectedDefinition?.itemIndex])
 
   useEffect(() => {
     const root = feedRef.current

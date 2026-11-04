@@ -76,7 +76,7 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
   const toggleCategory = (category: string) =>
     setCategories((current) => (current.some((c) => c.toLowerCase() === category.toLowerCase()) ? current.filter((c) => c.toLowerCase() !== category.toLowerCase()) : [...current, category]))
 
-  const visible = books.filter((book) => {
+  const visible = useMemo(() => books.filter((book) => {
     if (level && book.level !== level) return false
     if (categories.length > 0 && !book.category) return false
     if (categories.length > 0 && !categories.some((c) => c.toLowerCase() === book.category!.toLowerCase())) return false
@@ -86,22 +86,25 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
       if (!book.title.toLowerCase().includes(needle) && !(book.author ?? '').toLowerCase().includes(needle)) return false
     }
     return true
-  })
+  }), [books, level, categories, audioOnly, mode, query, audioIds])
 
   const activeFilterCount = (level ? 1 : 0) + categories.length + (audioOnly ? 1 : 0)
 
   // Use canonical categories and tags already supplied by the library.
   // Books without either remain discoverable in their own fallback section.
-  const discoverySections = new Map<string, { title: string; books: LibraryBook[] }>()
-  for (const book of visible) {
-    const labels = [...new Set([book.category, ...book.tags].map(value => value?.trim()).filter((value): value is string => Boolean(value)))]
-    for (const label of labels.length ? labels : ['More books']) {
-      const key = label.toLocaleLowerCase()
-      const section = discoverySections.get(key) ?? { title: label, books: [] }
-      if (!section.books.some(existing => existing.id === book.id)) section.books.push(book)
-      discoverySections.set(key, section)
+  const discoverySections = useMemo(() => {
+    const sections = new Map<string, { title: string; books: LibraryBook[] }>()
+    for (const book of visible) {
+      const labels = [...new Set([book.category, ...book.tags].map(value => value?.trim()).filter((value): value is string => Boolean(value)))]
+      for (const label of labels.length ? labels : ['More books']) {
+        const key = label.toLocaleLowerCase()
+        const section = sections.get(key) ?? { title: label, books: [] }
+        if (!section.books.some(existing => existing.id === book.id)) section.books.push(book)
+        sections.set(key, section)
+      }
     }
-  }
+    return sections
+  }, [visible])
 
   /* Grey out options that would produce zero results (given the other
      active filters), so the empty state is unreachable through the UI. */
@@ -305,7 +308,7 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
         </DialogActions>
       </Dialog>
 
-      {mode === 'read' && <Box component="section" aria-labelledby="all-books-title" sx={{ mb: 3, display: { xs: 'block', md: 'none' } }}>
+      {mode === 'read' && <Box component="section" aria-labelledby="all-books-title" sx={{ mb: 3, display: { xs: 'block', sm: 'none' } }}>
         <Typography id="all-books-title" component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 23, color: 'var(--awm-bark)', mb: 1 }}>All Books</Typography>
         <Box data-all-books-row role="group" aria-label="Scroll All Books" tabIndex={0} sx={{
           display: 'grid', gridAutoFlow: 'column', gridAutoColumns: { xs: 'calc((100% - 20px) / 3)', sm: '175px', md: '200px' },

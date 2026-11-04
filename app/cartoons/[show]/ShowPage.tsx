@@ -11,7 +11,7 @@ import {
   Breadcrumbs,
 } from '@mui/material'
 import { useRouter } from 'next/navigation'
-import { ShowMeta, EpisodeMeta } from '../../lib/cartoons'
+import { ShowMeta, EpisodeMeta, WATCH_LEVELS } from '../../lib/cartoons'
 import { FilterSidebar, ContentCard } from '@/app/components/content-grid'
 import EpisodeEditDialog from '../components/EpisodeEditDialog'
 import { deleteEpisode } from '@/app/actions/admin'
@@ -102,8 +102,6 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
       setDeletingId(null)
     }
   }
-
-  const LEVELS = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
   const filteredEpisodes = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -279,7 +277,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
               <Box sx={{ position: 'sticky', top: 100, alignSelf: 'flex-start' }}>
                 <FilterSidebar
                   categories={[]}
-                  levels={LEVELS}
+                  levels={WATCH_LEVELS}
                   activeCategory=""
                   setActiveCategory={() => {}}
                   activeLevel={activeLevel}
@@ -380,7 +378,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
                         aspectRatio="4 / 5"
                         imageFit="cover"
                         imageCrop={ep.coverCrop}
-                        eager={index < 8}
+                        eager={index < 4}
                         lead={index === 0}
                         denseMobileTile
                         mobileAspectRatio="4 / 5"
@@ -433,7 +431,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
         </Box>
         <FilterSidebar
           categories={[]}
-          levels={LEVELS}
+          levels={WATCH_LEVELS}
           activeCategory=""
           setActiveCategory={() => {}}
           activeLevel={activeLevel}

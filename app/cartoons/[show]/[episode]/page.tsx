@@ -61,11 +61,13 @@ export default async function Page({
   const showSlugById = new Map(shows.map((item) => [item.id, item.slug]))
   const showTitleById = new Map(shows.map((item) => [item.id, item.title]))
   const currentTags = new Set(ep.tags.map((tag) => tag.toLowerCase()))
+  /* fetchEpisodeForPublic does not select show_id; showData is the same show. */
+  const currentShowId = showData?.id ?? null
   const related = allEpisodes
     .filter((item) => item.slug !== ep.slug)
     .map((item) => {
       let score = 0
-      if (item.showId === ep.show_id) score += 4
+      if (currentShowId && item.showId === currentShowId) score += 4
       if (item.level === ep.level) score += 2
       for (const tag of item.tags) if (currentTags.has(tag.toLowerCase())) score += 1.5
       return { item, score }
