@@ -1,0 +1,12 @@
+{
+  "$schema": "https://developers.cloudflare.com/workers/wrangler/configuration/schema.json",
+  "name": "arabicwithm",
+  "compatibility_date": "2026-11-04",
+  "compatibility_flags": ["nodejs_compat"],
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "arabicwithm"
+    }
+  ]
+}
