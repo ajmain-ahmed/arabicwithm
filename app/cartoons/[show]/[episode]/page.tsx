@@ -92,5 +92,9 @@ async function renderEpisodePage({
     .slice(0, 12)
     .map(({ item }) => ({ ...item, showSlug: showSlugById.get(item.showId) ?? show, showTitle: showTitleById.get(item.showId) ?? showTitle }))
 
+  if ((await searchParams).debug === '1') {
+    return <div style={{ padding: 24 }}>EPISODE {ep.title} — blocks {ep.scriptBlocks.length}, words {ep.scriptBlocks.reduce((n, b) => n + b.words.length, 0)}, related {related.length}</div>
+  }
+
   return <EpisodePage episode={ep} showTitle={showTitle} initialStart={initialStart} related={related} />
 }
