@@ -1,5 +1,5 @@
 // app/cartoons/[show]/[episode]/page.tsx
-import { notFound, isNotFound } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import {
   fetchEpisodeForPublic,
   fetchShowBySlugPublic,
@@ -46,7 +46,7 @@ export default async function Page(props: EpisodeRouteProps) {
   try {
     return await renderEpisodePage(props)
   } catch (error) {
-    if (isNotFound(error)) throw error
+    if (typeof error === 'object' && error !== null && (error as { digest?: string }).digest === 'NEXT_NOT_FOUND') throw error
     const detail = error instanceof Error ? `${error.name}: ${error.message}\n${error.stack ?? ''}` : String(error)
     return (
       <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', padding: 24, fontSize: 13, color: '#2c1a0e' }}>
