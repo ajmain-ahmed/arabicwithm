@@ -4,22 +4,30 @@ import {
   fetchEpisodeForPublic,
   fetchShowBySlugPublic,
   fetchShowsForPublic,
+  fetchEpisodesForShowPublic,
   fetchAllEpisodesForPublic,
 } from '@/app/actions/cartoons'
 import EpisodePage from './EpisodePage'
 
-/* Explicitly dynamic: the OpenNext/Workers runtime mishandles this nested
-   route's SSG fallback (revalidate=false + generateStaticParams) without
-   incremental-cache storage bound, 500ing every render. On-demand rendering
-   is the correct mode here anyway — the catalogue fetches are cached. */
-export const dynamic = 'force-dynamic'
+export const revalidate = false
 
-type EpisodeRouteProps = {
-  params: Promise<{ show: string; episode: string }>
-  searchParams: Promise<{ t?: string; debug?: string }>
+export async function generateStaticParams() {
+  const shows = await fetchShowsForPublic()
+  const params: { show: string; episode: string }[] = []
+  for (const show of shows) {
+    const episodes = await fetchEpisodesForShowPublic(show.slug)
+    for (const ep of episodes) {
+      params.push({ show: show.slug, episode: ep.slug })
+    }
+  }
+  return params
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ show: string; episode: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ show: string; episode: string }>
+}) {
   const { show, episode } = await params
   const ep = await fetchEpisodeForPublic(show, episode)
   if (!ep) return { title: 'Not Found' }
@@ -29,27 +37,12 @@ export async function generateMetadata({ params }: { params: Promise<{ show: str
   }
 }
 
-/* TEMPORARY diagnostic: episode pages 500 only on the Cloudflare worker
-   runtime (fine on Vercel) and production builds redact the message. Render
-   the error as page content so it can be read from the response, find the
-   cause, then revert this wrapper. */
-export default async function Page(props: EpisodeRouteProps) {
-  try {
-    return await renderEpisodePage(props)
-  } catch (error) {
-    if (typeof error === 'object' && error !== null && (error as { digest?: string }).digest === 'NEXT_NOT_FOUND') throw error
-    const detail = error instanceof Error ? `${error.name}: ${error.message}\n${error.stack ?? ''}` : String(error)
-    return (
-      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', padding: 24, fontSize: 13, color: '#2c1a0e' }}>
-        {detail}
-      </pre>
-    )
-  }
-}
-
-async function renderEpisodePage({
+export default async function Page({
   params, searchParams,
-}: EpisodeRouteProps) {
+}: {
+  params: Promise<{ show: string; episode: string }>
+  searchParams: Promise<{t?:string}>
+}) {
   const { show, episode } = await params
   const raw = Number((await searchParams).t ?? 0)
   const initialStart = Number.isFinite(raw) && raw >= 0 && raw <= 86400 ? raw : 0
@@ -82,10 +75,6 @@ async function renderEpisodePage({
     .sort((left, right) => right.score - left.score)
     .slice(0, 12)
     .map(({ item }) => ({ ...item, showSlug: showSlugById.get(item.showId) ?? show, showTitle: showTitleById.get(item.showId) ?? showTitle }))
-
-  if ((await searchParams).debug === '1') {
-    return <div style={{ padding: 24 }}>EPISODE {ep.title} — blocks {ep.scriptBlocks.length}, words {ep.scriptBlocks.reduce((n, b) => n + b.words.length, 0)}, related {related.length}</div>
-  }
 
   return <EpisodePage episode={ep} showTitle={showTitle} initialStart={initialStart} related={related} />
 }
