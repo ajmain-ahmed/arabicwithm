@@ -28,7 +28,7 @@ it('logs loudly when the site key is set without the secret', async () => {
   error.mockRestore()
 })
 it('posts the secret and token to siteverify and accepts a successful verdict', async () => {
-  expect(await verifyTurnstileToken('valid-token')).toBe(true)
+  expect((await verifyTurnstileToken('valid-token')).ok).toBe(true)
   expect(fetchMock).toHaveBeenCalledOnce()
   const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
   expect(url).toBe('https://challenges.cloudflare.com/turnstile/v0/siteverify')
@@ -38,7 +38,7 @@ it('posts the secret and token to siteverify and accepts a successful verdict', 
 })
 it('rejects failed verdicts, bad token shapes, and unreachable siteverify', async () => {
   fetchMock.mockResolvedValue({ ok: true, json: async () => ({ success: false, 'error-codes': ['timeout-or-duplicate'] }) })
-  expect(await verifyTurnstileToken('spent-token')).toBe(false)
+  expect((await verifyTurnstileToken('spent-token')).ok).toBe(false)
   fetchMock.mockResolvedValue({ ok: true, json: async () => ({ success: true }) })
   expect((await verifyTurnstileToken('')).ok).toBe(false)
   expect(fetchMock).toHaveBeenCalledTimes(1)
