@@ -13,7 +13,7 @@ export const revalidate = false
 
 type EpisodeRouteProps = {
   params: Promise<{ show: string; episode: string }>
-  searchParams: Promise<{ t?: string }>
+  searchParams: Promise<{ t?: string; debug?: string }>
 }
 
 export async function generateStaticParams() {
