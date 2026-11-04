@@ -1,5 +1,5 @@
 // app/cartoons/[show]/[episode]/page.tsx
-import { notFound } from 'next/navigation'
+import { notFound, isNotFound } from 'next/navigation'
 import {
   fetchEpisodeForPublic,
   fetchShowBySlugPublic,
@@ -10,6 +10,11 @@ import {
 import EpisodePage from './EpisodePage'
 
 export const revalidate = false
+
+type EpisodeRouteProps = {
+  params: Promise<{ show: string; episode: string }>
+  searchParams: Promise<{ t?: string }>
+}
 
 export async function generateStaticParams() {
   const shows = await fetchShowsForPublic()
@@ -23,11 +28,7 @@ export async function generateStaticParams() {
   return params
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ show: string; episode: string }>
-}) {
+export async function generateMetadata({ params }: { params: Promise<{ show: string; episode: string }> }) {
   const { show, episode } = await params
   const ep = await fetchEpisodeForPublic(show, episode)
   if (!ep) return { title: 'Not Found' }
@@ -37,12 +38,27 @@ export async function generateMetadata({
   }
 }
 
-export default async function Page({
+/* TEMPORARY diagnostic: episode pages 500 only on the Cloudflare worker
+   runtime (fine on Vercel) and production builds redact the message. Render
+   the error as page content so it can be read from the response, find the
+   cause, then revert this wrapper. */
+export default async function Page(props: EpisodeRouteProps) {
+  try {
+    return await renderEpisodePage(props)
+  } catch (error) {
+    if (isNotFound(error)) throw error
+    const detail = error instanceof Error ? `${error.name}: ${error.message}\n${error.stack ?? ''}` : String(error)
+    return (
+      <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', padding: 24, fontSize: 13, color: '#2c1a0e' }}>
+        {detail}
+      </pre>
+    )
+  }
+}
+
+async function renderEpisodePage({
   params, searchParams,
-}: {
-  params: Promise<{ show: string; episode: string }>
-  searchParams: Promise<{t?:string}>
-}) {
+}: EpisodeRouteProps) {
   const { show, episode } = await params
   const raw = Number((await searchParams).t ?? 0)
   const initialStart = Number.isFinite(raw) && raw >= 0 && raw <= 86400 ? raw : 0
