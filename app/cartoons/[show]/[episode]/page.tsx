@@ -4,28 +4,19 @@ import {
   fetchEpisodeForPublic,
   fetchShowBySlugPublic,
   fetchShowsForPublic,
-  fetchEpisodesForShowPublic,
   fetchAllEpisodesForPublic,
 } from '@/app/actions/cartoons'
 import EpisodePage from './EpisodePage'
 
-export const revalidate = false
+/* Explicitly dynamic: the OpenNext/Workers runtime mishandles this nested
+   route's SSG fallback (revalidate=false + generateStaticParams) without
+   incremental-cache storage bound, 500ing every render. On-demand rendering
+   is the correct mode here anyway — the catalogue fetches are cached. */
+export const dynamic = 'force-dynamic'
 
 type EpisodeRouteProps = {
   params: Promise<{ show: string; episode: string }>
   searchParams: Promise<{ t?: string; debug?: string }>
-}
-
-export async function generateStaticParams() {
-  const shows = await fetchShowsForPublic()
-  const params: { show: string; episode: string }[] = []
-  for (const show of shows) {
-    const episodes = await fetchEpisodesForShowPublic(show.slug)
-    for (const ep of episodes) {
-      params.push({ show: show.slug, episode: ep.slug })
-    }
-  }
-  return params
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ show: string; episode: string }> }) {
