@@ -43,5 +43,5 @@ it('rejects failed verdicts, bad token shapes, and unreachable siteverify', asyn
   expect((await verifyTurnstileToken('')).ok).toBe(false)
   expect(fetchMock).toHaveBeenCalledTimes(1)
   fetchMock.mockRejectedValue(new Error('network down'))
-  expect(await verifyTurnstileToken('valid-token')).toBe(false)
+  expect((await verifyTurnstileToken('valid-token')).ok).toBe(false)
 })
