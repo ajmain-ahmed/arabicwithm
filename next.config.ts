@@ -14,10 +14,6 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: { '/api/reviewer/export': ['./public/fonts/review/*.ttf'] },
   staticPageGenerationTimeout: 180,
   images: {
-    /* The Workers runtime (OpenNext) has no next/image optimizer — requests
-       to /_next/image 404 there. Covers are pre-sized WebP served by our own
-       /api/covers proxy, so the optimizer adds little; serve URLs directly. */
-    unoptimized: true,
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,
     /* Fewer generated widths: slots on the site are ~100-800px, so a short
@@ -79,7 +75,7 @@ const nextConfig: NextConfig = {
               `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval' " : ''}https://www.youtube.com https://s.ytimg.com https://www.youtube.com/iframe_api https://challenges.cloudflare.com`,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              `img-src 'self' data: blob: https://i.ytimg.com https://*.tiktokcdn.com https://*.cdninstagram.com https://*.fbcdn.net https://images.unsplash.com https://ichef.bbci.co.uk https://s.france24.com https://cnn-arabic-images.cnn.io https://images.skynewsarabia.com https://www.akhbarona.com ${supabaseUrl ?? "https://whbxgwucsoguqzpnpzjd.supabase.co"}`,
+              `img-src 'self' data: blob: https://i.ytimg.com https://*.tiktokcdn.com https://*.cdninstagram.com https://*.fbcdn.net https://images.unsplash.com https://ichef.bbci.co.uk https://s.france24.com https://cnn-arabic-images.cnn.io https://images.skynewsarabia.com https://www.akhbarona.com${supabaseUrl ? ` ${supabaseUrl}` : ''}`,
               `connect-src 'self' ${supabaseUrl ?? "https://whbxgwucsoguqzpnpzjd.supabase.co"} https://challenges.cloudflare.com`,
               "media-src 'self' blob: https:",
               "frame-src https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://youtube-nocookie.com https://www.instagram.com https://instagram.com https://www.tiktok.com https://www.facebook.com https://web.facebook.com https://challenges.cloudflare.com",
