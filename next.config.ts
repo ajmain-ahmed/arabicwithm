@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: { '/api/reviewer/export': ['./public/fonts/review/*.ttf'] },
   staticPageGenerationTimeout: 180,
   images: {
+    /* The Workers runtime (OpenNext) has no next/image optimizer — requests
+       to /_next/image 404 there. Covers are pre-sized WebP served by our own
+       /api/covers proxy, so the optimizer adds little; serve URLs directly. */
+    unoptimized: true,
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,
     /* Fewer generated widths: slots on the site are ~100-800px, so a short
