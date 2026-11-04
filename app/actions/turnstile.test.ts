@@ -34,7 +34,10 @@ it('posts the secret and token to siteverify and accepts a successful verdict', 
   expect(url).toBe('https://challenges.cloudflare.com/turnstile/v0/siteverify')
   expect(init.method).toBe('POST')
   const body = JSON.parse(String(init.body))
-  expect(body).toMatchObject({ secret: SECRET, token: 'valid-token' })
+  expect(body).toMatchObject({ secret: SECRET, response: 'valid-token' })
+  /* siteverify's token parameter is named `response`; a `token` key is
+     silently ignored by Cloudflare (missing-input-response). */
+  expect(body).not.toHaveProperty('token')
 })
 it('rejects failed verdicts, bad token shapes, and unreachable siteverify', async () => {
   fetchMock.mockResolvedValue({ ok: true, json: async () => ({ success: false, 'error-codes': ['timeout-or-duplicate'] }) })

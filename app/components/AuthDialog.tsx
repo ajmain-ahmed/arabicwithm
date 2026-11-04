@@ -138,9 +138,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
     if (!verdict.ok) {
       setLoading(false)
       resetCaptcha()
-      /* TEMP: surface siteverify error codes while diagnosing the live
-         failure — remove the codes from this message once fixed. */
-      showSnackbar('error', `Security check failed. Please try again. (${(verdict.codes ?? []).join(', ')})`)
+      showSnackbar('error', 'Security check failed. Please try again.')
     }
     return verdict.ok
   }
