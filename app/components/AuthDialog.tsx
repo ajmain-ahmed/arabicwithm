@@ -134,13 +134,15 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
      it and reject real users. Keep Supabase Captcha disabled. */
   const verifyCaptcha = async (): Promise<boolean> => {
     if (!turnstileEnabled) return true
-    const ok = await verifyTurnstileToken(captchaToken ?? '')
-    if (!ok) {
+    const verdict = await verifyTurnstileToken(captchaToken ?? '')
+    if (!verdict.ok) {
       setLoading(false)
       resetCaptcha()
-      showSnackbar('error', 'Security check failed. Please try again.')
+      /* TEMP: surface siteverify error codes while diagnosing the live
+         failure — remove the codes from this message once fixed. */
+      showSnackbar('error', `Security check failed. Please try again. (${(verdict.codes ?? []).join(', ')})`)
     }
-    return ok
+    return verdict.ok
   }
 
   const resetAndClose = (severity: SnackbarMessage['severity'], message: string) => {
