@@ -22,7 +22,7 @@ export async function verifyTurnstileToken(token: string): Promise<{ ok: boolean
     return { ok: true }
   }
   if (typeof token !== 'string' || token.length === 0 || token.length > 4096) {
-    return { ok: false, codes: ['invalid-input-response'] }
+    return { ok: false, codes: ['invalid-input-response', `len:${typeof token === 'string' ? token.length : 'nonstr'}`] }
   }
   const requestHeaders = await headers()
   const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null
@@ -43,7 +43,7 @@ export async function verifyTurnstileToken(token: string): Promise<{ ok: boolean
     const result = (await response.json()) as { success?: boolean; 'error-codes'?: string[] }
     if (result.success !== true) {
       console.error('[turnstile] siteverify rejected token:', result['error-codes']?.join(',') ?? 'unknown')
-      return { ok: false, codes: result['error-codes'] ?? ['unknown'] }
+      return { ok: false, codes: [...(result['error-codes'] ?? ['unknown']), `len:${token.length}`] }
     }
     return { ok: true }
   } catch (error) {
