@@ -33,6 +33,23 @@ function ViewSwitch({ view, onChange, hint, onDismiss, mobile = false, horizonta
 export default function ExploreViews({ initialSeed, initialBatch }: { initialSeed: string; initialBatch: ExploreFeedBatch | null }) {
   const { user, loading } = useAuth()
   const [view, setView] = useState<ExploreView>('explore')
+  /* Signed-out visitors asking for For You get the auth dialog immediately;
+     the view stays gated until they sign in rather than swapping to an
+     inline prompt screen. */
+  const requestView = (next: ExploreView) => {
+    if (next === 'foryou' && !user) {
+      if (!loading) window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } }))
+      return
+    }
+    setView(next)
+  }
+  /* Session expired (or revoked) while sitting on For You: prompt to sign
+     in again instead of leaving the inline wall as the only path. */
+  useEffect(() => {
+    if (view === 'foryou' && !loading && !user) {
+      window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } }))
+    }
+  }, [view, loading, user])
   useEffect(()=>{
     // One route visit, including switches between Explore and For You. A fresh
     // server visit/refresh gets a new seed and cannot restore an old sequence.
@@ -53,9 +70,9 @@ export default function ExploreViews({ initialSeed, initialBatch }: { initialSee
     return () => { cancelAnimationFrame(frame); if (timer.current) clearTimeout(timer.current) }
   }, [view])
   const dismiss = () => { setHintFor(null); if (timer.current) clearTimeout(timer.current) }
-  const rail = <ViewSwitch view={view} onChange={setView} hint={hintFor === view} onDismiss={dismiss} />
+  const rail = <ViewSwitch view={view} onChange={requestView} hint={hintFor === view} onDismiss={dismiss} />
   return <Box sx={{ position: 'relative', '--awm-explore-switch-height': '0px' }}>
-    <Box data-mobile-explore-switch sx={{ display: { xs: view === 'explore' ? 'flex' : 'none', md: 'none' }, position: 'absolute', top: 12, left: 'max(12px, env(safe-area-inset-left))', zIndex: 10 }}><ViewSwitch mobile view={view} onChange={setView} hint={false} onDismiss={dismiss} /></Box>
-    {view === 'explore' ? <ExploreFeed railTop={<Box sx={{ display: { xs: 'none', md: 'block' } }}>{rail}</Box>} initialSeed={initialSeed} initialBatch={initialBatch} /> : !user ? <Box sx={{minHeight:'calc(100dvh - var(--awm-navbar-height))',display:'grid',placeItems:'center',p:3}}><Box sx={{textAlign:'center'}}><Typography variant="h4">For You</Typography><Typography sx={{my:2}}>{loading?'Checking your account…':'Sign in to watch your For You feed.'}</Typography>{!loading&&<Button variant="contained" onClick={()=>window.dispatchEvent(new CustomEvent('open-auth-dialog',{detail:{mode:'signin'}}))}>Sign in</Button>}<Button onClick={()=>setView('explore')} sx={{display:'block',mx:'auto',mt:2}}>Back to Explore</Button></Box></Box> : <ForYouAllowance key={user.id} onExplore={()=>setView('explore')}><ForYouFeed mobileSwitcher={<ViewSwitch mobile view={view} onChange={setView} hint={false} onDismiss={dismiss} />} desktopControls={settings => <ViewSwitch view={view} onChange={setView} hint={hintFor === view} onDismiss={dismiss} trailing={settings} />} /></ForYouAllowance>}
+    <Box data-mobile-explore-switch sx={{ display: { xs: view === 'explore' ? 'flex' : 'none', md: 'none' }, position: 'absolute', top: 12, left: 'max(12px, env(safe-area-inset-left))', zIndex: 10 }}><ViewSwitch mobile view={view} onChange={requestView} hint={false} onDismiss={dismiss} /></Box>
+    {view === 'explore' ? <ExploreFeed railTop={<Box sx={{ display: { xs: 'none', md: 'block' } }}>{rail}</Box>} initialSeed={initialSeed} initialBatch={initialBatch} /> : !user ? <Box sx={{minHeight:'calc(100dvh - var(--awm-navbar-height))',display:'grid',placeItems:'center',p:3}}><Box sx={{textAlign:'center'}}><Typography variant="h4">For You</Typography><Typography sx={{my:2}}>{loading?'Checking your account…':'Sign in to watch your For You feed.'}</Typography>{!loading&&<Button variant="contained" onClick={()=>window.dispatchEvent(new CustomEvent('open-auth-dialog',{detail:{mode:'signin'}}))}>Sign in</Button>}<Button onClick={()=>setView('explore')} sx={{display:'block',mx:'auto',mt:2}}>Back to Explore</Button></Box></Box> : <ForYouAllowance key={user.id} onExplore={()=>setView('explore')}><ForYouFeed mobileSwitcher={<ViewSwitch mobile view={view} onChange={requestView} hint={false} onDismiss={dismiss} />} desktopControls={settings => <ViewSwitch view={view} onChange={requestView} hint={hintFor === view} onDismiss={dismiss} trailing={settings} />} /></ForYouAllowance>}
   </Box>
 }

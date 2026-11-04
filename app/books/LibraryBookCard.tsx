@@ -2,8 +2,10 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import type { MouseEvent } from 'react'
 import { Box, Typography } from '@mui/material'
 import { AutoStories } from '@mui/icons-material'
+import { useAuth } from '@/app/AuthContext'
 import type { LibraryBook } from '@/app/books/BooksLibrary'
 
 export const LIBRARY_GRID_SX = {
@@ -16,7 +18,14 @@ export default function LibraryBookCard({ book, listen = false, compact = false 
   // Enter audio-first pages with a fresh document so in-flight shell actions
   // cannot restore the library tree while a private playback URL is resolving.
   // The Read/Listen mode switch itself remains an App Router transition.
-  return <Box component={listen ? 'a' : Link} href={`/${listen ? 'listen' : 'books'}/${encodeURIComponent(book.slug)}`} sx={{ display: 'block', color: 'inherit', textDecoration: 'none', minWidth: 0, borderRadius: '10px', position: 'relative', '&:focus-visible': { boxShadow: '0 0 24px 5px color-mix(in srgb, var(--awm-forest) 20%, transparent)', outline: '2px solid var(--awm-forest)', outlineOffset: 4 } }}>
+  const { user, loading } = useAuth()
+  /* Guests tapping a Listen card get the auth dialog instead of a wall page. */
+  const requireSignIn = (event: MouseEvent) => {
+    if (!listen || user) return
+    event.preventDefault()
+    if (!loading) window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } }))
+  }
+  return <Box component={listen ? 'a' : Link} href={`/${listen ? 'listen' : 'books'}/${encodeURIComponent(book.slug)}`} onClick={requireSignIn} sx={{ display: 'block', color: 'inherit', textDecoration: 'none', minWidth: 0, borderRadius: '10px', position: 'relative', '&:focus-visible': { boxShadow: '0 0 24px 5px color-mix(in srgb, var(--awm-forest) 20%, transparent)', outline: '2px solid var(--awm-forest)', outlineOffset: 4 } }}>
     {book.cover ? (
       /* The aspect-ratio box sizes the slot; the image lazy-loads on
          approach via next/image's native lazy + the optimizer. */
