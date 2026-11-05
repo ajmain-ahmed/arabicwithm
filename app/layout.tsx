@@ -16,9 +16,30 @@ import { AuthProvider } from "./AuthContext"
 import SiteShell from "./components/SiteShell"
 import ScrollReset from "./components/ScrollReset"
 
+const socialImage = {
+  url: 'https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/social/arabicwithm-cinematic-collage-e1491ee6591b.png',
+  width: 1731,
+  height: 909,
+  alt: 'ArabicWithM — Watch, Read, Learn: cinematic character collage surrounding the ArabicWithM logo.',
+}
+
 export const metadata: Metadata = {
+  metadataBase: new URL('https://arabicwithm.vercel.app'),
   title: "ArabicWithM — Learn Arabic with Cartoons",
   description: "Master Arabic through immersive cartoons with interactive subtitles.",
+  openGraph: {
+    title: "ArabicWithM — Learn Arabic with Cartoons",
+    description: "Master Arabic through immersive cartoons with interactive subtitles.",
+    siteName: "ArabicWithM",
+    type: "website",
+    images: [socialImage],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ArabicWithM — Learn Arabic with Cartoons",
+    description: "Master Arabic through immersive cartoons with interactive subtitles.",
+    images: [{ url: socialImage.url, alt: socialImage.alt }],
+  },
 }
 
 export const viewport = {
