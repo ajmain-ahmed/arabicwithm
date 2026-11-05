@@ -238,10 +238,25 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
   useEffect(() => {
     if (!profile.own) return
     let active = true
-    void fetchPremiumStatus()
-      .then(value => { if (active) setStatus(value) })
-      .catch(() => { if (active) setStatus(null) })
-    return () => { active = false }
+    const refresh = () => {
+      void fetchPremiumStatus()
+        .then(value => { if (active) setStatus(value) })
+        .catch(() => { if (active) setStatus(null) })
+    }
+    /* Mirror the navbar's stale-while-revalidate pattern: the profile tab is
+       exactly where users land after portal actions, so it must self-heal —
+       re-verify on focus, on account changes, and periodically while visible,
+       instead of showing mount-time state until a manual refresh. */
+    refresh()
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') refresh() }, 60_000)
+    window.addEventListener('focus', refresh)
+    window.addEventListener('account-access-changed', refresh)
+    return () => {
+      active = false
+      window.clearInterval(timer)
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener('account-access-changed', refresh)
+    }
   }, [profile.own])
 
   const cta = async () => {
