@@ -54,13 +54,14 @@ for (const subscription of newestByCustomer.values()) {
     created += 1
   }
   const item = subscription.items.data.find((entry) => entry.price.id === priceId)
+  const cancelScheduled = subscription.cancel_at_period_end || subscription.cancel_at !== null
   const { error } = await db.rpc('apply_subscription_event', {
     p_user_id: userId,
     p_event_created: now,
     p_subscription_id: subscription.id,
     p_status: item ? subscription.status : 'expired',
     p_period_end: new Date((item?.current_period_end ?? 0) * 1000).toISOString(),
-    p_cancel_at_period_end: subscription.cancel_at_period_end,
+    p_cancel_at_period_end: cancelScheduled,
   })
   if (error) { console.error(`Unable to sync ${subscription.id}: ${error.message}`); failed += 1; continue }
   synced += 1

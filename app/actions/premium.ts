@@ -101,7 +101,14 @@ export async function setPremiumRenewal(renew: boolean): Promise<PremiumStatus> 
   const { data: account, error } = await serviceClient.from('subscriptions').select('customer_id, subscription_id').eq('user_id', userId).maybeSingle()
   if (error || !account?.customer_id || !account.subscription_id) throw new Error('No billing account found.')
   try {
-    await stripeClient().subscriptions.update(account.subscription_id, { cancel_at_period_end: !renew })
+    if (renew) {
+      /* Resuming must clear BOTH signals: flipping cancel_at_period_end back
+         does not clear a cancel_at timestamp written by newer Stripe flows —
+         the subscription would still cancel at that time. */
+      await stripeClient().subscriptions.update(account.subscription_id, { cancel_at_period_end: false, cancel_at: '' as unknown as number })
+    } else {
+      await stripeClient().subscriptions.update(account.subscription_id, { cancel_at_period_end: true })
+    }
   } catch (cause) {
     if ((cause as { code?: string }).code === 'resource_missing') throw new Error('Your subscription is no longer active.')
     throw new Error('Unable to update your subscription. Please try again.')

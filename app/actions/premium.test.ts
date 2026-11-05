@@ -107,10 +107,10 @@ describe('setPremiumRenewal', () => {
     expect(status).toMatchObject({ premium: true, cancelAtPeriodEnd: false, paymentIssue: false })
   })
 
-  it('turns auto-renew back on via cancel_at_period_end=false', async () => {
+  it('turns auto-renew back on by clearing BOTH cancellation signals', async () => {
     mocks.maybeSingle.mockResolvedValue({ data: { customer_id: 'cus-x', subscription_id: 'sub-x', status: 'active', cancel_at_period_end: true, current_period_end: '2999-01-01T00:00:00.000Z' }, error: null })
     const status = await setPremiumRenewal(true)
-    expect(mocks.update).toHaveBeenCalledWith('sub-x', { cancel_at_period_end: false })
+    expect(mocks.update).toHaveBeenCalledWith('sub-x', { cancel_at_period_end: false, cancel_at: '' })
     expect(status).toMatchObject({ premium: true, cancelAtPeriodEnd: true })
   })
 
