@@ -9,7 +9,7 @@ async function checkMobile(page:Page,safeArea=0){
   const logo=document.querySelector('footer img')!.getBoundingClientRect()
   return {boundary:footer.top-quick.bottom,content:logo.top-quick.bottom}
  })
- expect(gap.boundary).toBeCloseTo(16,0);expect(gap.content).toBeCloseTo(33,0)
+ expect(gap.boundary).toBeCloseTo(24,0);expect(gap.content).toBeCloseTo(41,0)
  expect(await footer.evaluate(el=>parseFloat(getComputedStyle(el).paddingBottom))).toBe(72+safeArea)
  await page.evaluate(()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'instant'}))
  const legal=footer.getByRole('button',{name:'Terms of Service',exact:true}),nav=page.getByRole('button',{name:'Open navigation',exact:true})
@@ -25,9 +25,9 @@ async function checkMobile(page:Page,safeArea=0){
 for(const width of [320,375,390,430])test(`mobile homepage footer spacing at ${width}`,async({page})=>{
  await page.setViewportSize({width,height:900});await page.goto('/')
  await checkMobile(page)
- await page.screenshot({path:`docs/validation/app-reminder/footer-${width}.png`})
+ await page.screenshot({path:`docs/validation/mobile-cushion/footer-${width}.png`})
  await page.locator('[data-mobile-home-actions]').scrollIntoViewIfNeeded()
- await page.screenshot({path:`docs/validation/app-reminder/quick-actions-${width}.png`})
+ await page.screenshot({path:`docs/validation/mobile-cushion/quick-actions-${width}.png`})
 })
 
 test('safe-area clearance is included once on the mobile homepage',async({page,context})=>{
