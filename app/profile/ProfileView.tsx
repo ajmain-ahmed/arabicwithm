@@ -331,7 +331,7 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
                 Your last payment didn&rsquo;t go through — update your payment method. Access continues until {formatMembershipDate(status?.periodEnd)}.
               </Alert>
             ) : premium && manageable && status?.cancelAtPeriodEnd && formatMembershipDate(status.periodEnd) ? (
-              <Alert severity="warning" sx={{ mt: 2, py: 0 }}>
+              <Alert severity="warning" icon={false} sx={{ mt: 2, py: 0 }}>
                 Cancellation scheduled — your access ends on {formatMembershipDate(status.periodEnd)}. You won&rsquo;t be charged again.
               </Alert>
             ) : premium && manageable && formatMembershipDate(status?.periodEnd) ? (
