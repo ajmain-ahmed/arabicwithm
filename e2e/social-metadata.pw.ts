@@ -1,10 +1,10 @@
 import {test,expect} from '@playwright/test'
 import {createHash} from 'node:crypto'
-const image='https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/social/arabicwithm-cinematic-collage-e1491ee6591b.png'
+const image='https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/social/arabicwithm-cinematic-collage-0e25039c3908.jpg'
 const title='ArabicWithM — Learn Arabic with Cartoons'
 const description='Master Arabic through immersive cartoons with interactive subtitles.'
 const routes=['/','/cartoons','/cartoons?view=shows','/explore','/books','/books?mode=listen','/books/test-book','/cartoons/test-show','/cartoons/test-show/clip-0','/learn','/memory','/grammar','/word-search','/privacy','/terms']
-for(const bot of ['facebookexternalhit/1.1','Twitterbot/1.0'])test(`server-rendered social tags inherit without duplicates for ${bot}`,async({page,request})=>{
+for(const bot of ['WhatsApp/2.24.6.77 A','facebookexternalhit/1.1','Twitterbot/1.0'])test(`server-rendered social tags inherit without duplicates for ${bot}`,async({page,request})=>{
  for(const path of routes){
   const response=await request.get(path,{headers:{'user-agent':bot}})
   expect(response.ok(),path).toBe(true)
@@ -12,16 +12,17 @@ for(const bot of ['facebookexternalhit/1.1','Twitterbot/1.0'])test(`server-rende
    const doc=new DOMParser().parseFromString(html,'text/html')
    return [...doc.querySelectorAll('meta[property^="og:"],meta[name^="twitter:"]')].map(el=>({name:el.getAttribute('property')??el.getAttribute('name'),value:el.getAttribute('content'),head:!!el.closest('head')}))
   },await response.text())
-  const expected:Record<string,string>={'og:title':title,'og:description':description,'og:image':image,'og:image:width':'1731','og:image:height':'909','og:image:alt':'ArabicWithM — Watch, Read, Learn: cinematic character collage surrounding the ArabicWithM logo.','og:type':'website','twitter:card':'summary_large_image','twitter:title':title,'twitter:description':description,'twitter:image':image}
+  const expected:Record<string,string>={'og:title':title,'og:description':description,'og:image':image,'og:image:width':'1200','og:image:height':'630','og:image:alt':'ArabicWithM — Watch, Read, Learn: cinematic character collage surrounding the ArabicWithM logo.','og:type':'website','twitter:card':'summary_large_image','twitter:title':title,'twitter:description':description,'twitter:image':image}
+  if(path==='/')expected['og:url']='https://arabicwithm.vercel.app'
   for(const [name,value] of Object.entries(expected))expect(tags.filter(t=>t.name===name),`${path} ${name}`).toEqual([{name,value,head:true}])
  }
 })
-test('public social PNG needs no authentication and matches the supplied image',async({request})=>{
+test('public social JPEG needs no authentication and meets the WhatsApp size budget',async({request})=>{
  const response=await request.get(image)
- expect(response.status()).toBe(200);expect(response.headers()['content-type']).toContain('image/png')
+ expect(response.status()).toBe(200);expect(response.headers()['content-type']).toContain('image/jpeg')
  const body=await response.body()
- expect(body.readUInt32BE(16)).toBe(1731);expect(body.readUInt32BE(20)).toBe(909)
- expect(createHash('sha256').update(body).digest('hex')).toBe('e1491ee6591b01f698ccea9351dd4a1b044e32f6640656b1f9628c13d136811a')
+ expect(body.length).toBeLessThan(600000)
+ expect(createHash('sha256').update(body).digest('hex')).toBe('0e25039c390817d7ab16a4c1dfd73053143a7f3baf00888bf620cdadcffe9432')
 })
 test('nested page titles remain specific and metadata works without JavaScript',async({browser})=>{
  const context=await browser.newContext({javaScriptEnabled:false,userAgent:'facebookexternalhit/1.1'})

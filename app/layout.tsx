@@ -17,9 +17,9 @@ import SiteShell from "./components/SiteShell"
 import ScrollReset from "./components/ScrollReset"
 
 const socialImage = {
-  url: 'https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/social/arabicwithm-cinematic-collage-e1491ee6591b.png',
-  width: 1731,
-  height: 909,
+  url: 'https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/social/arabicwithm-cinematic-collage-0e25039c3908.jpg',
+  width: 1200,
+  height: 630,
   alt: 'ArabicWithM — Watch, Read, Learn: cinematic character collage surrounding the ArabicWithM logo.',
 }
 

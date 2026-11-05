@@ -1,3 +1,4 @@
+import type { Metadata, ResolvingMetadata } from 'next'
 import { fetchBooksForPublic } from '@/app/actions/books'
 import { fetchShowsForPublic } from '@/app/actions/cartoons'
 import {fetchHomeFeatured} from '@/app/lib/homeFeatured'
@@ -7,6 +8,14 @@ import { fetchHomeEpisodes } from '@/app/lib/homeCatalogue'
 import { withDataDeadline } from '@/app/lib/boundedFetch'
 
 export const revalidate = 60
+
+// Preserve the root social image while giving the homepage its canonical identity.
+export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
+  const inherited = await parent
+  return {
+    openGraph: { ...inherited.openGraph, url: 'https://arabicwithm.vercel.app/' },
+  }
+}
 
 export default async function HomePage() {
   return withDataDeadline(8000, async () => {
