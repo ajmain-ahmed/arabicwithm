@@ -28,7 +28,7 @@ export default function AudiobookPlayer({ book, chapters, audio }: { book: Libra
     {book.cover && (
       /* The page's only artwork — eager and preloaded. */
       <Box sx={{ position: 'relative', width: { xs: 'min(64vw, 240px)', md: '240px' }, aspectRatio: '2 / 3', mx: 'auto', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 12px 30px #0002' }}>
-        <Image src={book.cover} alt={`${book.title} cover`} fill preload sizes="(max-width: 900px) 64vw, 240px" style={{ objectFit: 'contain' }} />
+        <Image unoptimized src={book.cover} alt={`${book.title} cover`} fill preload sizes="(max-width: 900px) 64vw, 240px" style={{ objectFit: 'contain' }} />
       </Box>
     )}
     <Typography component="h1" sx={{ mt: 2, fontFamily: 'var(--font-heading)', fontSize: { xs: 25, md: 32 }, color: 'var(--awm-bark)' }}>{book.title}</Typography>

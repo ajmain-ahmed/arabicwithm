@@ -28,9 +28,11 @@ export default function LibraryBookCard({ book, listen = false, compact = false 
   return <Box component={listen ? 'a' : Link} href={`/${listen ? 'listen' : 'books'}/${encodeURIComponent(book.slug)}`} onClick={requireSignIn} sx={{ display: 'block', color: 'inherit', textDecoration: 'none', minWidth: 0, borderRadius: '10px', position: 'relative', '&:focus-visible': { boxShadow: '0 0 24px 5px color-mix(in srgb, var(--awm-forest) 20%, transparent)', outline: '2px solid var(--awm-forest)', outlineOffset: 4 } }}>
     {book.cover ? (
       /* The aspect-ratio box sizes the slot; the image lazy-loads on
-         approach via next/image's native lazy + the optimizer. */
+         approach via native lazy loading. Covers are already WebP; serve the
+         cached cover endpoint directly rather than metered transformations. */
       <Box sx={{ position: 'relative', width: '100%', aspectRatio: '2 / 3', borderRadius: '10px', overflow: 'hidden' }}>
         <Image
+          unoptimized
           src={book.cover}
           alt={`${book.title} cover`}
           fill
