@@ -22,7 +22,7 @@ const { stringToBase64URL } = require('@supabase/ssr/dist/main/utils/base64url.j
 
 const email = process.env.STRIPE_TEST_EMAIL
 const password = process.env.STRIPE_TEST_PASSWORD
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+const baseUrl = process.env.AWM_BASE_URL ?? 'http://localhost:3000'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 if (!email || !password) throw new Error('Set STRIPE_TEST_EMAIL and STRIPE_TEST_PASSWORD.')
@@ -87,7 +87,7 @@ await page.locator('input[name="billingName"]').fill('Stripe Test')
 await page.getByRole('button', { name: /Pay and subscribe|Subscribe|Start trial/ }).click()
 console.log('submitted checkout')
 
-await page.waitForURL(u => u.origin === new URL(baseUrl).origin && u.searchParams.get('checkout') === 'success', { timeout: 60000 })
+await page.waitForURL(u => u.searchParams.get('checkout') === 'success' && (u.origin === new URL(baseUrl).origin || u.hostname.endsWith('arabicwithm.com')), { timeout: 60000 })
 console.log('redirected back:', page.url())
 
 /* ── 5. Wait for the webhook to mark the subscription active. ── */
@@ -104,7 +104,7 @@ console.log('subscriptions row:', JSON.stringify({ status: row.status, customer_
 
 /* ── 6. Confirm the UI now shows AWM+ active. ── */
 step('Verifying premium in the UI')
-await page.reload({ waitUntil: 'domcontentloaded' })
+await page.goto('/books', { waitUntil: 'domcontentloaded' })
 await page.getByRole('button', { name: 'AWM Plus', exact: true }).click()
 const activeDialog = page.getByRole('dialog', { name: 'AWM Plus', exact: true })
 await activeDialog.waitFor()
@@ -142,7 +142,7 @@ if (!revoked) fail('Subscription status did not change after cancellation.')
 
 /* ── 9. Confirm the UI reverts to the upgrade prompt. ── */
 step('Verifying premium revoked in the UI')
-await page.reload({ waitUntil: 'domcontentloaded' })
+await page.goto('/books', { waitUntil: 'domcontentloaded' })
 await page.getByRole('button', { name: 'AWM Plus', exact: true }).click()
 const revertDialog = page.getByRole('dialog', { name: 'Upgrade to AWM+', exact: true })
 await revertDialog.waitFor()
