@@ -106,6 +106,13 @@ function configureAudiobookAudit(format){
     tables.book_audio_progress=[]
 }
 if(process.env.AWM_TEST_AUDIO_AUDIT==='1')configureAudiobookAudit()
+// Optional larger catalogue exercises viewport-gated covers and pagination.
+if(process.env.AWM_TEST_WATCH_THUMBNAILS==='1'){
+ const original=tables.shows[0]
+ for(let i=1;i<12;i++)tables.shows.push({...original,id:`watch-show-${i}`,slug:`watch-show-${i}`,title:`Watch Show ${i}`,cover:`cartoons/watch-show-${i}.webp`})
+ const episode=tables.episodes[0]
+ for(let i=4;i<36;i++)tables.episodes.push({...episode,id:`watch-episode-${i}`,slug:`watch-episode-${i}`,title:`Watch Episode ${i}`,cover:`episodes/watch-episode-${i}.webp`})
+}
 const cover = Buffer.from('UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA', 'base64')
 let failProfilePresets=false
 const presetImage=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGPY0cYNAANDAUoYZ+SRAAAAAElFTkSuQmCC','base64')

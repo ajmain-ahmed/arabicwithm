@@ -66,7 +66,8 @@ export interface ContentCardProps {
   /* Skip the viewport gate: the cover renders in the initial HTML and relies
      on next/image's native lazy loading (first-row cards whose image is part
      of the first paint). Served unoptimized so the lead paint never waits
-     behind a cold optimizer encode; below-fold cards get full optimization. */
+     behind a cold optimizer encode. Cached catalogue WebP covers always
+     bypass the metered optimizer, independently of loading priority. */
   eager?: boolean
   /* Boost the single lead card's fetch priority (one per page). */
   lead?: boolean
@@ -180,7 +181,7 @@ export default function ContentCard({
             alt={title}
             fill
             sizes={imageSizes}
-            unoptimized={eager}
+            unoptimized={eager || cover.startsWith('/api/covers/')}
             loading={eager ? 'eager' : 'lazy'}
             fetchPriority={lead ? 'high' : undefined}
             decoding="async"

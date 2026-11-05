@@ -340,6 +340,7 @@ function ExploreVideo({
         {!active && (episode.cover || getYouTubeThumbnailUrl(episode.youtubeId)) && (
           /* The stage poster is this page's lead image: eager, high priority. */
           <Image
+            unoptimized={episode.cover?.startsWith('/api/covers/')}
             src={episode.cover ?? getYouTubeThumbnailUrl(episode.youtubeId) ?? ''}
             alt=""
             fill
