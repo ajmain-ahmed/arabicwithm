@@ -16,6 +16,7 @@ import { checkUsernameAvailability, updateProfile, type PublicProfile } from '@/
 import { fetchPremiumStatus, managePremium, startPremiumCheckout, type PremiumStatus } from '@/app/actions/premium'
 import { submitFeedback } from '@/app/actions/feedback'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
+import { formatMembershipDate } from '@/app/lib/display'
 import SupportForm from '@/app/support/SupportForm'
 import ProfileHeader from '@/app/profile/ProfileHeader'
 import ProfilePresetPicker from '@/app/profile/ProfilePresetPicker'
@@ -281,9 +282,20 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
             <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: '#2e7d32' }}>Your AWM+ subscription is active.</Typography>
           </Box>
         ) : (
-          <Button onClick={() => void cta()} disabled={busy} variant="contained" sx={{ ...GOLD_BUTTON, px: 3 }}>
-            {busy ? 'Opening…' : premium ? 'Manage AWM+' : `Subscribe — ${PREMIUM.label}`}
-          </Button>
+          <>
+            <Button onClick={() => void cta()} disabled={busy} variant="contained" sx={{ ...GOLD_BUTTON, px: 3 }}>
+              {busy ? 'Opening…' : premium ? 'Manage AWM+' : `Subscribe — ${PREMIUM.label}`}
+            </Button>
+            {premium && manageable && status?.cancelAtPeriodEnd && formatMembershipDate(status.periodEnd) ? (
+              <Alert severity="warning" sx={{ mt: 2, py: 0 }}>
+                Cancellation scheduled — your access ends on {formatMembershipDate(status.periodEnd)}. You won&rsquo;t be charged again.
+              </Alert>
+            ) : premium && manageable && formatMembershipDate(status?.periodEnd) ? (
+              <Typography sx={{ mt: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.8rem', color: 'var(--awm-muted)' }}>
+                Renews on {formatMembershipDate(status?.periodEnd)}.
+              </Typography>
+            ) : null}
+          </>
         )}
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
       </Box>

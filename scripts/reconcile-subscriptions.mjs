@@ -26,11 +26,24 @@ let created = 0
 let failed = 0
 const unmatched = []
 const seenCustomers = new Set()
+/* A customer can hold historical subscriptions; replaying every one would
+   leave the oldest event as the final state. Keep only the newest
+   subscription per customer (by current_period_end) and sync that. */
+const newestByCustomer = new Map()
 
 for await (const subscription of stripe.subscriptions.list({ status: 'all', expand: ['data.customer'], limit: 100 })) {
   const customer = subscription.customer
   const customerId = typeof customer === 'string' ? customer : customer.id
   seenCustomers.add(customerId)
+  const candidateEnd = subscription.items.data[0]?.current_period_end ?? 0
+  const existing = newestByCustomer.get(customerId)
+  const existingEnd = existing?.items.data[0]?.current_period_end ?? 0
+  if (!existing || candidateEnd >= existingEnd) newestByCustomer.set(customerId, subscription)
+}
+
+for (const subscription of newestByCustomer.values()) {
+  const customer = subscription.customer
+  const customerId = typeof customer === 'string' ? customer : customer.id
   const { data: account } = await db.from('subscriptions').select('user_id').eq('customer_id', customerId).maybeSingle()
   let userId = account?.user_id ?? null
   if (!userId) {

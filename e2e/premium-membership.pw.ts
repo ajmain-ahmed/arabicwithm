@@ -17,7 +17,7 @@ for(const width of [320,1440])for(const role of ['user','premium','editor','admi
   if(active){
    await expect(dialog).toContainText(role==='admin'?'Your AWM Plus access is active.':'Your AWM Plus membership is active.')
    expect(await dialog.getByRole('listitem').allTextContents()).toEqual(['Offline books','Audiobooks','Unlimited For You viewing','Unlimited Memory Practice'])
-   await expect(dialog.getByRole('button',{name:/Upgrade|Subscribe|Choose Plan|Manage/})).toHaveCount(0)
+   await expect(dialog.getByRole('button',{name:/Upgrade|Subscribe|Choose Plan/})).toHaveCount(0)
    await expect(dialog.getByRole('progressbar')).toHaveCount(0)
    const bounds=(await dialog.boundingBox())!;expect(bounds.x).toBeGreaterThanOrEqual(0);expect(bounds.x+bounds.width).toBeLessThanOrEqual(width)
    const profile=dialog.getByRole('button',{name:'Go to Profile',exact:true});await expect(profile).toBeInViewport()

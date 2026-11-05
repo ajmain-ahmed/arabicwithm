@@ -10,11 +10,12 @@ import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import { useRouter } from 'next/navigation'
 import PremiumMembershipDialog from '@/app/components/PremiumMembershipDialog'
 import UpgradeButton from '@/app/components/UpgradeButton'
+import { formatMembershipDate } from '@/app/lib/display'
 
 interface PremiumPromptProps { open:boolean; onClose:()=>void; reason?:string; membershipSummary?:boolean; onProfileNavigate?:()=>void }
 /* Signed-out visitors cannot be premium, so the dialog renders the pitch
    without spending a round trip establishing that. */
-const SIGNED_OUT_STATUS: PremiumStatus = { premium: false, signedIn: false, manageable: false, admin: false }
+const SIGNED_OUT_STATUS: PremiumStatus = { premium: false, signedIn: false, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null }
 export default function PremiumPrompt(props:PremiumPromptProps){
   const {user}=useAuth()
   // Re-openings and identity changes must verify current server entitlements.
@@ -54,7 +55,7 @@ function PremiumPromptContent({ open, onClose, reason, membershipSummary=false,o
   /* Show the shell immediately on click; only the billing state waits for the
      status round trip. Without this the click appears dead until both the
      lazy chunk and fetchPremiumStatus resolve. */
-  if(status?.premium&&membershipSummary&&user)return <PremiumMembershipDialog onClose={onClose} userId={user.id} includedAccess={status.admin} onProfileNavigate={onProfileNavigate}/>
+  if(status?.premium&&membershipSummary&&user)return <PremiumMembershipDialog onClose={onClose} userId={user.id} includedAccess={status.admin} onProfileNavigate={onProfileNavigate} periodEnd={status.periodEnd} cancelAtPeriodEnd={status.cancelAtPeriodEnd}/>
   if (status?.admin) return null
   if (!status) return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth aria-labelledby="premium-title" slotProps={{ paper: { sx: { bgcolor: 'background.paper', borderRadius: '24px', m: 2, width: 'calc(100% - 32px)', textAlign: 'center', border: '1px solid', borderColor: 'divider' } } }}>
@@ -78,7 +79,12 @@ function PremiumPromptContent({ open, onClose, reason, membershipSummary=false,o
         </Box>)}
       </Box>
       <Typography sx={{ mt: 2 }} color="text.secondary">New books and features as they arrive.</Typography>
-      {!premium ? <Typography variant="body2" sx={{ mt: 2 }}>{PREMIUM.price} GBP, billed monthly as a recurring subscription. Cancel through Manage AWM+; access continues until the end of your paid period.</Typography> : <Typography variant="body2" sx={{mt:2}}>Your account has AWM+ access.</Typography>}
+      {!premium ? <Typography variant="body2" sx={{ mt: 2 }}>{PREMIUM.price} GBP, billed monthly as a recurring subscription. Cancel through Manage AWM+; access continues until the end of your paid period.</Typography> : (
+        <>
+          <Typography variant="body2" sx={{mt:2}}>{status.cancelAtPeriodEnd && status.periodEnd ? `Cancellation scheduled — you have AWM+ access until ${formatMembershipDate(status.periodEnd)}.` : 'Your account has AWM+ access.'}</Typography>
+          {!status.cancelAtPeriodEnd && status.periodEnd ? <Typography variant="body2" sx={{mt:.5,color:'text.secondary'}}>Renews on {formatMembershipDate(status.periodEnd)}.</Typography> : null}
+        </>
+      )}
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
     </DialogContent>
     <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}>{premium?<Button fullWidth sx={{minHeight:52,borderRadius:'12px'}} variant="contained" disabled={busy} onClick={()=>void purchase()}>{status.manageable?'Manage AWM+':'Continue learning'}</Button>:<UpgradeButton disabled={busy} onClick={()=>void purchase()}/>}</DialogActions>
