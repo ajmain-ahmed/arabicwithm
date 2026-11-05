@@ -20,3 +20,19 @@ it('refuses a changed account and recovers after a failed write', async () => {
  await expect(setBookInMyList('u','a',true)).rejects.toThrow('offline')
  await setBookInMyList('u','a',true);expect(metadata.my_list_books).toEqual(['curated','a'])
 })
+it('updates the shared cache before a request resolves and rolls back a failed removal',async()=>{
+ const {setBookInMyList}=await import('./bookMyList')
+ const {useMyListCache}=await import('@/store/myListStore')
+ useMyListCache.setState({bookUserId:'u',bookSlugs:['curated'],bookOperations:{}})
+ let reject!:(error:Error)=>void
+ auth.updateUser.mockReturnValueOnce(new Promise((_,fail)=>{reject=fail}))
+ const removal=setBookInMyList('u','curated',false)
+ expect(useMyListCache.getState().bookSlugs).toEqual([])
+ await vi.waitFor(()=>expect(auth.updateUser).toHaveBeenCalled())
+ reject(new Error('offline'));await expect(removal).rejects.toThrow('offline')
+ expect(useMyListCache.getState().bookSlugs).toEqual(['curated'])
+ const addition=setBookInMyList('u','new-book',true)
+ expect(useMyListCache.getState().bookSlugs).toEqual(['curated','new-book'])
+ await addition
+ expect(metadata.my_list_books).toEqual(['curated','new-book'])
+})

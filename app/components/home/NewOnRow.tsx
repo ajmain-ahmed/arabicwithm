@@ -5,11 +5,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Box, Skeleton, Typography } from '@mui/material'
 import { ChevronRight } from '@mui/icons-material'
 import CefrChip from '@/app/components/CefrChip'
+import LibraryBookCard from '@/app/books/LibraryBookCard'
+import type { LibraryBook } from '@/app/books/BooksLibrary'
 import { thumbnailCropCss, type ThumbnailCrop } from '@/app/lib/thumbnailCrop'
 
 const DRAG_ACTIVATION_DISTANCE_PX = 6
 
 export interface CatalogueRowItem {
+  book?: LibraryBook
   key: string
   href: string
   title: string
@@ -90,6 +93,7 @@ function ArtworkTile({
   const imageStyle = compact
     ? { objectFit: 'cover' as const, objectPosition: `${item.imageCrop?.x ?? 50}% ${item.imageCrop?.y ?? 50}%`, transform: 'none' }
     : { objectFit: 'cover' as const, ...thumbnailCropCss(item.imageCrop) }
+  if(item.book)return <Box sx={{flex:'0 0 auto',width:compact?{...COMPACT_HOME_CARD_WIDTH,xs:mobileWidth}:{xs:mobileWidth,sm:260,md:300},maxWidth:{xs:compact?152:310,sm:'100%'},scrollSnapAlign:'start'}}><LibraryBookCard book={item.book}/></Box>
   return (
     <Box
       component={Link}

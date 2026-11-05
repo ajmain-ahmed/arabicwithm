@@ -38,7 +38,9 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           pt: 'var(--awm-navbar-height)',
           flex: '1 0 auto',
           minHeight: '100dvh',
-          pb: isExploreRoute || pathname?.startsWith('/books/') || pathname === '/word-search' ? 0 : { xs: 'var(--awm-mobile-bottom-clearance)', md: 0 },
+          // On Home the footer owns the floating-nav clearance; adding it to
+          // this wrapper too creates an empty band above the footer.
+          pb: pathname === '/' || isExploreRoute || pathname?.startsWith('/books/') || pathname === '/word-search' ? 0 : { xs: 'var(--awm-mobile-bottom-clearance)', md: 0 },
           minWidth: 0,
           overflowX: isExploreRoute ? 'hidden' : undefined,
           '& :target': {
@@ -50,7 +52,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           <GlobalDataInit>{children}</GlobalDataInit>
         </ErrorBoundary>
       </Box>
-      {showFooter && <Footer />}
+      {showFooter && <Footer homeMobileSpacing={pathname==='/'}/>}
       {!isProfileRoute && <MobileBottomNav />}
       {!isExploreRoute && <LazyFloatingVideoPlayer />}
     </Box>

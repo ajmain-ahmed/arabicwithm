@@ -1,7 +1,7 @@
 'use client'
 
 import { returnToPublicHome } from '@/app/lib/publicHome'
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Session, User } from '@supabase/supabase-js'
 import { AccountAccessProvider } from '@/app/AccountAccessContext'
@@ -28,12 +28,14 @@ function hasStoredSessionCookie(): boolean {
 }
 
 interface AuthContextValue {
+  establishSession: (session: Session) => Promise<void>
   user: User | null
   session: Session | null
   loading: boolean
 }
 
 const AuthContext = createContext<AuthContextValue>({
+  establishSession: async () => { throw new Error('Authentication is not ready. Please try again.') },
   user: null,
   session: null,
   loading: true,
@@ -48,6 +50,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
      sign-in (owned by the dialog) then has no listener here. This flag flips
      when that happens so the effect re-runs and wires the session up. */
   const [sessionEstablished, setSessionEstablished] = useState(false)
+  const refreshedToken=useRef<string|null>(null)
+  const establishSession=useCallback(async (incoming:Session)=>{
+    if(!incoming?.access_token||!incoming.refresh_token)throw new Error('No authenticated session was returned. Please sign in again.')
+    const {supabase}=await import('@/app/lib/supabase/client')
+    // setSession resolves after @supabase/ssr persists the browser cookies.
+    // It also transfers sessions returned by the non-persistent email client.
+    const {data,error}=await supabase.auth.setSession({access_token:incoming.access_token,refresh_token:incoming.refresh_token})
+    if(error||!data.session)throw new Error('Your session could not be established. Please sign in again.')
+    const verified=await supabase.auth.getUser()
+    if(verified.error||!verified.data.user||verified.data.user.id!==data.session.user.id)throw new Error('Your session could not be verified. Please sign in again.')
+    const [{useMyListCache},{useReadingProgressStore},{resetPremiumStatusCache}]=await Promise.all([import('@/store/myListStore'),import('@/store/readingProgressStore'),import('@/app/lib/premiumStatusCache')])
+    useMyListCache.setState({items:null,bookUserId:null,bookSlugs:null,bookMetadata:undefined,bookOperations:{}})
+    useReadingProgressStore.setState({positions:{}})
+    resetPremiumStatusCache()
+    setSession({...data.session,user:verified.data.user});setUser(verified.data.user);setLoading(false)
+    setSessionEstablished(true)
+    window.dispatchEvent(new Event('account-access-changed'))
+    if(refreshedToken.current!==data.session.access_token){refreshedToken.current=data.session.access_token;router.refresh()}
+  },[router])
 
   useEffect(() => {
     let active = true
@@ -131,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Never refresh a private profile after its session has disappeared.
           // A full replacement also clears cached authenticated route payloads.
           returnToPublicHome()
-        } else if (shouldRefresh && _event === 'SIGNED_IN') router.refresh()
+        } else if (shouldRefresh && _event === 'SIGNED_IN'&&refreshedToken.current!==session?.access_token){refreshedToken.current=session?.access_token??null;router.refresh()}
       }).data.subscription
     }).catch((error: unknown) => {
       console.error('Unable to load the auth client:', error)
@@ -141,7 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => { active = false; subscription?.unsubscribe() }
   }, [router, sessionEstablished])
 
-  const value = useMemo(() => ({ user, session, loading }), [user, session, loading])
+  const value = useMemo(() => ({ user, session, loading, establishSession }), [user, session, loading, establishSession])
 
   return (
     <AuthContext.Provider value={value}>

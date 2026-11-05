@@ -15,6 +15,7 @@ type Table<Row> = { Row: { [K in keyof Row]: Row[K] }; Insert: { [K in keyof Row
 export interface Database {
   public: {
     Tables: {
+      email_preferences: Table<{ email: string; purpose: string; subscribed: boolean; user_id: string | null; consent_version: string; consented_at: string }>
       book_release_reminders: Table<{ user_id: string; book_id: string; created_at: string; fulfilled_at: string | null }>
       featured_show_config: Table<{show_id:string;storage_path:string;position_x:number;position_y:number;updated_at:string}>
       admin_manual_transcripts: Table<{transcript_id:string;group_id:string|null;created_at:string}>

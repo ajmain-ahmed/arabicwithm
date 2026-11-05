@@ -68,11 +68,18 @@ it('retains the separate existing billing-management prompt',async()=>{
  await render(true,false);expect(button('Manage AWM+')).toBeTruthy()
  expect(button('Go to Profile')).toBeUndefined()
 })
-it('uses the canonical GBP amount for the headline, recurring-price copy and upgrade button',async()=>{
+it('keeps canonical pricing in the content and uses the exact price-free CTA',async()=>{
  mocks.status.mockResolvedValue({premium:false,signedIn:true,manageable:false,admin:false});await render()
  const dialog=document.querySelector('[role="dialog"]')!
  expect(PREMIUM.monthlyPence).toBe(499);expect(PREMIUM.price).toBe('\u00a34.99')
- expect(dialog.textContent?.split(PREMIUM.price)).toHaveLength(4)
+ expect(dialog.textContent?.split(PREMIUM.price)).toHaveLength(3)
  expect(dialog.textContent).not.toContain('3.99')
- expect(button(`Upgrade to AWM+ \u2014 ${PREMIUM.label}`)).toBeTruthy()
+ expect(button('Upgrade to AWM+')).toBeTruthy()
+ expect(button('Upgrade to AWM+').textContent).not.toMatch(/4\.99|month|GBP/)
+})
+it('keeps the existing purchase handler on the price-free CTA',async()=>{
+ mocks.status.mockResolvedValue({premium:false,signedIn:true,manageable:false,admin:false})
+ mocks.purchase.mockRejectedValue(new Error('Checkout fixture reached'))
+ await render();await act(async()=>button('Upgrade to AWM+').click())
+ expect(mocks.purchase).toHaveBeenCalledOnce();expect(document.body.textContent).toContain('Checkout fixture reached')
 })

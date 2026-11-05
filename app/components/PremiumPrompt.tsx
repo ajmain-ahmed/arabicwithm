@@ -9,6 +9,7 @@ import { useAuth } from '@/app/AuthContext'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import { useRouter } from 'next/navigation'
 import PremiumMembershipDialog from '@/app/components/PremiumMembershipDialog'
+import UpgradeButton from '@/app/components/UpgradeButton'
 
 interface PremiumPromptProps { open:boolean; onClose:()=>void; reason?:string; membershipSummary?:boolean; onProfileNavigate?:()=>void }
 /* Signed-out visitors cannot be premium, so the dialog renders the pitch
@@ -80,7 +81,7 @@ function PremiumPromptContent({ open, onClose, reason, membershipSummary=false,o
       {!premium ? <Typography variant="body2" sx={{ mt: 2 }}>{PREMIUM.price} GBP, billed monthly as a recurring subscription. Cancel through Manage AWM+; access continues until the end of your paid period.</Typography> : <Typography variant="body2" sx={{mt:2}}>Your account has AWM+ access.</Typography>}
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
     </DialogContent>
-    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}><Button fullWidth sx={{ minHeight: 52, borderRadius: "12px" }} variant="contained" disabled={busy} onClick={() => void purchase()}>{premium ? status.manageable ? 'Manage AWM+' : 'Continue learning' : `Upgrade to AWM+ — ${PREMIUM.label}`}</Button></DialogActions>
+    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}>{premium?<Button fullWidth sx={{minHeight:52,borderRadius:'12px'}} variant="contained" disabled={busy} onClick={()=>void purchase()}>{status.manageable?'Manage AWM+':'Continue learning'}</Button>:<UpgradeButton disabled={busy} onClick={()=>void purchase()}/>}</DialogActions>
   </Dialog>
 }
 export function PremiumSection() {

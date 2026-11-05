@@ -89,12 +89,15 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
   // The player owns initial autoplay and its muted fallback. Retrying sound
   // here on mobile would immediately undo a successful muted autoplay.
   useEffect(() => {
-    if (!isPhone || !isReady || !soundEnabled || !autoplayBlocked) return
-    const enable = (event: Event) => { if(event.target instanceof Element && event.target.closest('[aria-label=\"Mute clip\"], [aria-label=\"Unmute clip\"]')) return; playWithSound() }
+    if (!isPhone || !isReady || !soundEnabled || (!autoplayBlocked&&!isMuted)) return
+    const enable = (event: Event) => { if(!event.isTrusted||!getExploreSoundPreference()||(event.target instanceof Element && event.target.closest('button, a, input, [role="slider"], [data-feed-transcript]'))) return; playWithSound() }
     document.addEventListener('pointerdown', enable)
     document.addEventListener('keydown', enable)
     return () => {document.removeEventListener('pointerdown', enable);document.removeEventListener('keydown', enable)}
-  }, [isPhone, isReady, soundEnabled, autoplayBlocked, playWithSound])
+  }, [isPhone, isReady, soundEnabled, autoplayBlocked, isMuted, playWithSound])
+  const transcriptAudio=()=>{
+    if(isPhone&&isReady&&getExploreSoundPreference()&&(autoplayBlocked||(getSoundMuted?.()??isMuted)))playWithSound()
+  }
   useEffect(()=>{samplePlayback?.({time,playing:isReady&&isPlaying,rate:playbackRate??1,pause:pauseVideo})},[time,isReady,isPlaying,playbackRate,pauseVideo,samplePlayback])
   useEffect(()=>()=>{samplePlayback?.({time:0,playing:false,rate:1,pause:pauseVideo})},[samplePlayback,pauseVideo])
   const visibleClip = full ? {...clip,clip_start_ms:0,clip_end_ms:Math.max(...segments.map(s=>s.end_seconds),clip.clip_end_ms/1000)*1000} : clip
@@ -125,7 +128,7 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
       {!isPhone&&<DesktopPlayerResize playerRef={playerSizeRef} onResize={setPlayerWidth}/>}
       {navigation&&<IconButton aria-label="Next video" disabled={navigation.nextDisabled} onClick={navigation.next}><KeyboardArrowDown/></IconButton>}
     </Box>
-    <MobileForYouPanel activeOnly={full} activeSegment={active} modeControl={mobileModeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
+    <MobileForYouPanel onTranscriptInteraction={transcriptAudio} activeOnly={full} activeSegment={active} modeControl={mobileModeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
     <Box data-desktop-clip-transcript data-feed-transcript sx={{display:{xs:'none',md:'block'},color:'#f5ede0',mt:2,minHeight:124,overscrollBehavior:'contain'}}>
       {(active ? [active] : []).map(line=><Box key={line.id} data-clip-line={line.id} data-active-segment={active?.id===line.id} sx={{p:1.5,mb:1,borderRadius:2,bgcolor:'rgba(212,168,67,.14)'}}>
         {line.tokens.length?<ForYouWords tokens={line.tokens} settings={settings} time={time}/>:<Typography lang="ar" dir="rtl" sx={{color:'inherit',textAlign:'center',fontFamily:'var(--font-serif)',fontSize:`${2.2 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem`}}>{displayArabic(line.original_text,settings.tashkeel)}</Typography>}

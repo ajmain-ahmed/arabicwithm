@@ -37,6 +37,7 @@ describe('homepage hero', () => {
     expect(html).not.toContain('Start Watching')
     expect(html).not.toContain('Start Reading')
     expect(home.statsRendered).toBe(false)
+    expect(html).not.toContain('App Coming Soon')
   })
 
   it('keeps the public heading and hides stats for guests', () => {
@@ -46,6 +47,9 @@ describe('homepage hero', () => {
     expect(html).toContain('Learn Arabic through cartoons and books')
     expect(html).toContain('Start Watching')
     expect(html).toContain('Start Reading')
+    expect(html).toContain('App Coming Soon')
+    expect(html).toContain('Email address')
+    expect(html).toContain('Remind Me')
     expect(home.statsRendered).toBe(false)
   })
 

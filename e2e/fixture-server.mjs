@@ -35,6 +35,8 @@ const bookId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
 const chapterId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
 const showId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 const metadata = new Map()
+const registrations=new Map()
+let confirmationRequired=true,profileDelay=0
 const handles=new Map(),profiles=new Map(),roles=new Map(),accessAudit=[]
 const roleFor=id=>roles.get(id)??(id===ids.admin?'admin':id===ids.reviewer?'editor':'user')
 const rpcLog=[],tableLog=[];let failSearch=false
@@ -47,14 +49,16 @@ const effective=id=>id===ids.premium||roleFor(id)==='admin'||manualPremium.get(i
 const usage=id=>[...memoryStarts.values()].filter(row=>row.userId===id).length
 function account(id) {
   const kind = Object.keys(ids).find(key => ids[key] === id) ?? 'free'
-  return { id, aud: 'authenticated', role: 'authenticated', email: `${kind}@fixture.example`, email_confirmed_at: '2026-01-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', app_metadata: { provider: 'email', providers: ['email'] }, user_metadata: { full_name: `${kind} learner`, ...metadata.get(id) }, identities: [] }
+  return { id, aud: 'authenticated', role: 'authenticated', email: registrations.get(id)?.email??`${kind}@fixture.example`, email_confirmed_at: registrations.get(id)?.confirmed===false?null:'2026-01-01T00:00:00Z', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', app_metadata: { provider: 'email', providers: ['email'] }, user_metadata: { full_name: `${kind} learner`, ...metadata.get(id) }, identities: [] }
 }
+function authSession(id){const expires=Math.floor(Date.now()/1000)+3600,encode=value=>Buffer.from(JSON.stringify(value)).toString('base64url');return {access_token:`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:id,aud:'authenticated',exp:expires,role:'authenticated'})}.${Buffer.from('fixture-signature').toString('base64url')}`,refresh_token:'fixture-refresh',expires_in:3600,expires_at:expires,token_type:'bearer',user:account(id)}}
 const content = Array.from({ length: 30 }, (_, i) => ({ paragraph: i + 1, tokens: [{ arabic: 'كِتَابٌ', headword: 'كِتَاب', english: 'book', pos: 'noun', cefr: 'a1' }], translation: `A book. Paragraph ${i + 1}.` }))
 let failImportAfter=null
 const formDrafts=new Map()
 const importJobs=new Map()
 const featuredObjects=new Map()
 const tables = {
+  email_preferences: [],
   book_release_reminders: [],
   app_notifications: [],
   featured_show_config: [],
@@ -278,16 +282,27 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     return json(res, { user: account(id) })
   }
   if(url.pathname==='/fixture/for-you-allowance'){if(req.method==='POST'){allowanceBudget=body.remainingMs??900000;allowanceReports.clear()}return json(res,{remainingMs:Math.max(0,allowanceBudget-Math.max(0,...allowanceReports.values()))})}
+  if(url.pathname==='/fixture/registration'){
+    if(typeof body.confirmationRequired==='boolean')confirmationRequired=body.confirmationRequired
+    if(typeof body.profileDelay==='number')profileDelay=body.profileDelay
+    if(body.confirmEmail)for(const row of registrations.values())if(row.email===body.confirmEmail)row.confirmed=true
+    return json(res,{ok:true})
+  }
+  if(url.pathname==='/auth/v1/signup'){
+    const id=randomUUID();registrations.set(id,{email:body.email,password:body.password,confirmed:!confirmationRequired})
+    return json(res,confirmationRequired?{user:account(id)}:authSession(id))
+  }
   if (url.pathname === '/auth/v1/user') {
     if (req.method === 'PUT' && userId) metadata.set(userId, { ...metadata.get(userId), ...body.data })
     return userId ? json(res, account(userId)) : json(res, { message: 'Auth session missing!' }, 401)
   }
   if (url.pathname === '/auth/v1/token' && req.method === 'POST') {
-    const id = Object.values(ids).find(id => account(id).email === body.email)
+    const id = [...Object.values(ids),...registrations.keys()].find(id => account(id).email === body.email)
     if (!id) return json(res,{message:'Invalid credentials'},400)
-    const expires = Math.floor(Date.now()/1000)+3600
-    const encode = value => Buffer.from(JSON.stringify(value)).toString('base64url')
-    return json(res,{access_token:`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:id,aud:'authenticated',exp:expires,role:'authenticated'})}.fixture-signature`,refresh_token:'fixture-refresh',expires_in:3600,expires_at:expires,token_type:'bearer',user:account(id)})
+    const registration=registrations.get(id)
+    if(registration&&!registration.confirmed)return json(res,{message:'Email not confirmed',error_code:'email_not_confirmed'},400)
+    if(registration&&registration.password!==body.password)return json(res,{message:'Invalid credentials'},400)
+    return json(res,authSession(id))
   }
   if (url.pathname === '/auth/v1/logout') return json(res, {})
   if (url.pathname.startsWith('/rest/v1/rpc/')) {
@@ -472,8 +487,16 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   }
   if (url.pathname.startsWith('/rest/v1/')) {
     const table = url.pathname.split('/').at(-1)
+    if(table==='public_profiles'&&profileDelay)await new Promise(resolve=>setTimeout(resolve,profileDelay))
     tableLog.push(table)
     if (req.method !== 'GET' && req.method !== 'HEAD') {
+      if(table==='email_preferences'){
+        if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+        const existing=tables.email_preferences.find(row=>row.email===body.email&&row.purpose===body.purpose)
+        if(!existing)tables.email_preferences.push(body)
+        else if(!(req.headers.prefer??'').includes('ignore-duplicates'))Object.assign(existing,body)
+        return json(res,[])
+      }
       if(table==='books'){
         if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
         let book

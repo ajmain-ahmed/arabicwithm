@@ -17,6 +17,7 @@ import {
 } from '@mui/icons-material'
 import { Alert, Autocomplete, Box, Button, Container, LinearProgress, Paper, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import PremiumPrompt from "@/app/components/PremiumPrompt"
+import UpgradeButton from '@/app/components/UpgradeButton'
 import { MEMORY } from "@/app/lib/entitlements"
 import { beginMemorySession, loadMemoryProgress, type SavedMemorySession, submitMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
 import { useAuth } from '@/app/AuthContext'
@@ -258,7 +259,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
         {progressError && <Alert severity="error" sx={{ mt: 2 }} action={<Button onClick={retryProgress} disabled={progressLoading}>Retry</Button>}>{progressError}</Alert>}
 
         {saveError && <Alert severity="error" sx={{ mt: 2 }}>{saveError}</Alert>}
-        {limited && <Paper role="status" variant="outlined" sx={{ mt: 2, mx: 'auto', maxWidth: 480, p: {xs: 2, sm: 3}, textAlign: 'center', borderRadius: 3 }}><InfoOutlined sx={{ color: 'var(--awm-gold)', mb: 1 }} /><Typography>You&apos;ve used today&apos;s free Memory session.</Typography><Typography sx={{ mt: 1, color: 'text.secondary' }}>Unlock unlimited Memory sessions. Your completed reviews and learning progress are preserved.</Typography><Button fullWidth variant="contained" onClick={() => setUpgrade(true)} sx={{ mt: 2, minHeight: 48, textTransform: 'none', fontSize: {xs: 13, sm: 15} }}>Upgrade to Arabic with M</Button></Paper>}
+        {limited && <Paper role="status" variant="outlined" sx={{ mt: 2, mx: 'auto', maxWidth: 480, p: {xs: 2, sm: 3}, textAlign: 'center', borderRadius: 3 }}><InfoOutlined sx={{ color: 'var(--awm-gold)', mb: 1 }} /><Typography>You&apos;ve used today&apos;s free Memory session.</Typography><Typography sx={{ mt: 1, color: 'text.secondary' }}>Unlock unlimited Memory sessions. Your completed reviews and learning progress are preserved.</Typography><UpgradeButton onClick={() => setUpgrade(true)} sx={{ mt: 2, minHeight: 48, fontSize: {xs: 13, sm: 15} }}/></Paper>}
         {loadError && <Alert severity="error" sx={{ mt: 2.5 }}>{loadError}</Alert>}
         {library.missingScope && <Alert severity="warning" sx={{ mt: 2.5 }}>That source is no longer available. Choose a show or switch to Random practice.</Alert>}
 

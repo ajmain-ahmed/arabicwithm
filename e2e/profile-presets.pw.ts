@@ -23,7 +23,14 @@ for(const width of [320,390,768,1440])test(`left-overlap profile presets save, r
  await page.getByRole('button',{name:'Edit',exact:true}).click();await page.getByRole('button',{name:'Choose Profile Picture',exact:true}).click()
  const dialog=page.getByRole('dialog');await expect(dialog.getByRole('heading',{name:'Choose Profile Picture'})).toBeVisible()
  await expect(dialog.locator('[aria-label^="Select "]')).toHaveCount(11);await expect(dialog.getByRole('button',{name:'Select not an image'})).toHaveCount(0)
+ const options=dialog.locator('[data-profile-preset-grid] button')
+ for(const option of await options.all()){
+  const bounds=(await option.boundingBox())!;expect(bounds.width).toBe(72);expect(bounds.height).toBe(72)
+  expect(await option.evaluate(el=>getComputedStyle(el).borderTopWidth)).toBe('0px')
+  expect(await option.locator('img').evaluate(el=>getComputedStyle(el).objectFit)).toBe('cover')
+ }
  const select=dialog.getByRole('button',{name:'Select fox',exact:true});await select.focus();await page.keyboard.press('Enter');await expect(select).toHaveAttribute('aria-pressed','true')
+ expect(await select.evaluate(el=>getComputedStyle(el).outlineWidth)).toBe('3px')
  await expect(avatar.locator('img')).toHaveAttribute('src','/api/profile-presets/profile-pictures/fox.png')
  await expect.poll(()=>avatar.locator('img').evaluate((el:HTMLImageElement)=>el.naturalWidth)).toBeGreaterThan(0)
  await page.screenshot({path:`test-results/profile-avatar-picker-${width}.png`,fullPage:true,animations:'disabled'});await dialog.getByRole('button',{name:'Done',exact:true}).click()

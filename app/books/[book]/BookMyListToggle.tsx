@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@mui/material'
+import { Alert, Box, Button } from '@mui/material'
 import { BookmarkAddOutlined, BookmarkOutlined } from '@mui/icons-material'
 import { useAuth } from '@/app/AuthContext'
-import { savedBookSlugs, setBookInMyList } from '@/app/lib/bookMyList'
+import { useBookMyList, setBookInMyList } from '@/app/lib/bookMyList'
 
 /* Books share the homepage "My List" row with shows. Unlike shows (backed by
    the my_list table), saved books live in user metadata — the same place as
@@ -12,29 +12,29 @@ import { savedBookSlugs, setBookInMyList } from '@/app/lib/bookMyList'
    offline-tolerant like the cartoon one. */
 export default function BookMyListToggle({ bookSlug }: { bookSlug: string }) {
   const { user, loading } = useAuth()
-  const [optimistic, setOptimistic] = useState<boolean | null>(null)
+  const slugs=useBookMyList(user)
+  const [error,setError]=useState('')
   const [busy, setBusy] = useState(false)
-  const inList = optimistic ?? savedBookSlugs(user?.user_metadata).includes(bookSlug)
+  const inList = slugs.includes(bookSlug)
 
   if (loading) return null
 
   const toggle = async () => {
     if (!user || busy) return
     const next = !inList
-    setOptimistic(next)
+    setError('')
     setBusy(true)
     try {
       await setBookInMyList(user.id, bookSlug, next)
     } catch {
-      setOptimistic(!next)
-      window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } }))
+      setError('Could not update My List. Please try again.')
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <Button
+    <Box sx={{width:'100%'}}><Button
       className="book-detail-action"
       aria-pressed={inList}
       onClick={() => { if (!user) { window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } })); return } void toggle() }}
@@ -56,6 +56,6 @@ export default function BookMyListToggle({ bookSlug }: { bookSlug: string }) {
       }}
     >
       My List
-    </Button>
+    </Button>{error&&<Alert severity="error" sx={{mt:1}}>{error}</Alert>}</Box>
   )
 }

@@ -8,7 +8,7 @@ async function signIn(context:BrowserContext){
  return access_token
 }
 
-test('reader saves to canonical My List; My List opens details and Continue Reading resumes on desktop and mobile',async({page,context,request})=>{
+test('reader saves to canonical My List; removal survives progress and intentional reading restarts membership',async({page,context,request})=>{
  await request.post(`${backend}/fixture/reader-pagination`,{data:{blocks:120}})
  const token=await signIn(context),headers={Authorization:`Bearer ${token}`}
  await request.put(`${backend}/auth/v1/user`,{headers,data:{data:{my_list_books:['layout-book-1'],book_progress:{}}}})
@@ -27,13 +27,18 @@ test('reader saves to canonical My List; My List opens details and Continue Read
  const started=list.getByRole('link',{name:'Test Book cover Test Book',exact:true})
  await expect(started).toHaveAttribute('href','/books/test-book')
  await expect(list.getByRole('link',{name:'Book 2 cover Book 2',exact:true})).toHaveAttribute('href','/books/layout-book-1')
- await expect(page.getByRole('heading',{name:'Continue Reading',exact:true})).toBeVisible()
+ await expect(page.getByRole('heading',{name:'Continue Reading',exact:true})).toHaveCount(0)
  await started.click();await expect(page).toHaveURL(/\/books\/test-book$/);await expect(page.locator('#reader-content:visible')).toHaveCount(0)
- await page.goto('/');const resume=page.getByRole('region',{name:'Continue Reading',exact:true}).getByRole('link',{name:'Test Book',exact:true});await expect(resume).toHaveAttribute('href','/books/test-book/chapter-1?lang=en&page=3&block=28');await resume.click();await expect(page.locator('#reader-content:visible [data-reader-block]').first()).toHaveAttribute('data-reader-block','28')
  await page.goto('/books/test-book');const toggle=page.getByRole('button',{name:'My List',exact:true})
  await expect(toggle).toHaveAttribute('aria-pressed','true');await toggle.click();await expect(toggle).toHaveAttribute('aria-pressed','false')
+ await expect.poll(async()=>(await account()).user_metadata.my_list_books).toEqual(['layout-book-1'])
  await page.goto('/');await expect(list.getByRole('link',{name:'Test Book cover Test Book',exact:true})).toHaveCount(0)
  expect((await account()).user_metadata.my_list_books).toEqual(['layout-book-1'])
+ expect((await account()).user_metadata.book_progress['test-book'].page).toBe(3)
+ await page.reload();await expect(list.getByRole('link',{name:'Test Book cover Test Book',exact:true})).toHaveCount(0)
+ await page.goto('/books/test-book/chapter-1?lang=en');await expect(page.locator('#reader-content:visible')).toBeVisible()
+ await expect.poll(async()=>(await account()).user_metadata.my_list_books).toContain('test-book')
+ await page.goto('/')
  await page.setViewportSize({width:390,height:900})
- await expect(page.getByRole('heading',{name:'Continue Reading',exact:true})).toBeVisible()
+ await expect(page.getByRole('heading',{name:'Continue Reading',exact:true})).toHaveCount(0)
 })

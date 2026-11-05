@@ -16,7 +16,8 @@ import { Box, Button, Container, Paper, Skeleton, Typography } from '@mui/materi
 import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
-import { READING_TRACK_MIN_PAGE, parseStoredPositions, useReadingProgressStore } from '@/store/readingProgressStore'
+import { useBookMyList } from '@/app/lib/bookMyList'
+import AppDownloadSection from './AppDownloadSection'
 import { fetchMyList } from '@/app/actions/myList'
 import { useMyListCache } from '@/store/myListStore'
 import MemberActions from '@/app/components/navbar/MemberActions'
@@ -24,7 +25,7 @@ import FeaturedHero from './FeaturedHero'
 import { fetchMyDisplayName } from '@/app/actions/profiles'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import type { PublicBook } from '@/app/actions/books'
-import { fetchBooksForPublic } from '@/app/actions/books'
+
 
 /* Catalogue rows paint at most this many cards. The shows/episodes queries
    already limit to 12; books are sliced here to match so the homepage's
@@ -105,47 +106,13 @@ function DeferredRowPlaceholder() {
 
 export default function HomeDashboard({ books, newShows, newEpisodes, featured }: { books: PublicBook[]; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; featured?: import('./FeaturedHero').FeaturedShow | null }) {
   const { mode } = useColorMode()
-  const { user } = useAuth()
-  /* My List is fetched once per session and cached in the store; show-page
-     add/remove keeps the cache in sync. The book half of the row is every
-     book saved in metadata PLUS any book read past page 1 — reading progress
-     alone surfaces it here. Session positions merge over synced metadata so
-     an in-progress read shows immediately. */
+  const { user, loading: authLoading } = useAuth()
+  // Membership alone defines active reading. Positions remain resume history.
   const myListCacheItems = useMyListCache((state) => state.items)
   const setMyListCache = useMyListCache((state) => state.set)
-  const trackedPositions = useReadingProgressStore((state) => state.positions)
-  const myListBookSlugs = useMemo(() => {
-    const value = user?.user_metadata?.my_list_books
-    const slugs = new Set(Array.isArray(value) ? value.filter((slug): slug is string => typeof slug === 'string') : [])
-    const positions = { ...parseStoredPositions(user?.user_metadata ?? {}), ...trackedPositions }
-    for (const [slug, position] of Object.entries(positions)) {
-      if (position.page >= READING_TRACK_MIN_PAGE) slugs.add(slug)
-    }
-    return [...slugs].sort()
-  }, [user, trackedPositions])
-  const myListBookSlugsKey = myListBookSlugs.join('|')
-  const fetchedBookSlugsRef = useRef('')
-  const [myListBooks, setMyListBooks] = useState<PublicBook[] | null>(null)
-  useEffect(() => {
-    let cancelled = false
-    if (!user?.id || myListBookSlugs.length === 0) {
-      fetchedBookSlugsRef.current = ''
-      queueMicrotask(() => { if (!cancelled) setMyListBooks([]) })
-      return () => { cancelled = true }
-    }
-    /* Positions update on every page turn; only refetch when the slug set
-       actually changes. */
-    if (fetchedBookSlugsRef.current === myListBookSlugsKey) return () => { cancelled = true }
-    void fetchBooksForPublic()
-      .then((all) => {
-        if (cancelled) return
-        fetchedBookSlugsRef.current = myListBookSlugsKey
-        setMyListBooks(all.filter((book) => myListBookSlugs.includes(book.slug)))
-      })
-      .catch(() => { if (!cancelled) setMyListBooks([]) })
-    return () => { cancelled = true }
-  }, [user, myListBookSlugs, myListBookSlugsKey])
-  const myListLoading = Boolean(user) && (myListCacheItems === null || myListBooks === null)
+  const myListBookSlugs = useBookMyList(user)
+  const myListBooks = books.filter(book => myListBookSlugs.includes(book.slug))
+  const myListLoading = Boolean(user) && myListCacheItems === null
   const { newShowItems, newEpisodeItems } = useMemo(() => {
     return {
       newShowItems: showRowItems(newShows).slice(0, HOME_ROW_LIMIT),
@@ -196,6 +163,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured }
     })),
     ...(myListBooks ?? []).map((book) => ({
       key: book.id,
+      book,
       href: `/books/${encodeURIComponent(book.slug)}`,
       title: book.title,
       meta: book.author,
@@ -206,6 +174,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured }
   ], [myListCacheItems, myListBooks])
   const bookRowItems: CatalogueRowItem[] = useMemo(() => books.slice(0, HOME_ROW_LIMIT).map((book) => ({
     key: book.id,
+    book,
     href: `/books/${encodeURIComponent(book.slug)}`,
     title: book.title,
     meta: book.titleAr ?? undefined,
@@ -270,7 +239,9 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured }
         </Box>
         )}
 
-        <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 4, md: 5 } }}>
+        {!authLoading && !user && <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}><AppDownloadSection /></Container>}
+
+        <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 2, md: 5 } }}>
           {user && myListRowItems.length > 0 && (
             <Container maxWidth={false}>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
@@ -344,8 +315,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured }
             </>}
           </Container>
 
-          {/* Mobile-only section: the Quick Actions grid and the mobile Continue
-              Reading card have no desktop presentation. */}
+          {/* Mobile-only Quick Actions. */}
           <Container maxWidth={false} sx={{ display: { xs: 'block', md: 'none' }, mt: 3 }}>
             <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 600, color: 'var(--awm-bark)' }}>Quick Actions</Typography>
             <Box component="nav" aria-label="Quick Actions" data-mobile-home-actions sx={{ display: 'grid', gridTemplateColumns:'repeat(2,minmax(0,1fr))',gridAutoRows:'1fr',gap:1.5,mt:1.5 }}>

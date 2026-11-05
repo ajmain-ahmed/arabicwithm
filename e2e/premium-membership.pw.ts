@@ -25,8 +25,21 @@ for(const width of [320,1440])for(const role of ['user','premium','editor','admi
    else {await profile.click();await expect(page).toHaveURL(`/profile/${ids[role]}`);await expect(dialog).not.toBeVisible();if(width<900)await expect(page.getByRole('dialog',{name:'Site navigation',exact:true})).not.toBeVisible()}
   }else{
    await expect(dialog).not.toContainText('3.99')
-   expect((await dialog.textContent())?.match(/\u00a34\.99/g)).toHaveLength(3)
-   await expect(dialog.getByRole('button',{name:/Upgrade to AWM/})).toBeVisible()
+   expect((await dialog.textContent())?.match(/\u00a34\.99/g)).toHaveLength(2)
+   const upgrade=dialog.getByRole('button',{name:'Upgrade to AWM+',exact:true})
+   await expect(upgrade).toBeVisible();await expect(upgrade).toHaveText('Upgrade to AWM+')
+   await upgrade.scrollIntoViewIfNeeded()
+   const bounds=(await upgrade.boundingBox())!
+   expect(bounds.x).toBeGreaterThanOrEqual(0);expect(bounds.x+bounds.width).toBeLessThanOrEqual(width)
+   expect(await upgrade.evaluate(el=>getComputedStyle(el,'::before').animationDuration)).toBe('3.6s')
+   expect(await upgrade.evaluate(el=>getComputedStyle(el,'::after').animationName)).toBe('awmUpgradeSparkle')
+   await upgrade.evaluate(el=>{for(const animation of el.getAnimations({subtree:true}))animation.currentTime=2600})
+   expect((await upgrade.boundingBox())!.width).toBe(bounds.width)
+   await expect(upgrade).toHaveText('Upgrade to AWM+')
+   await page.emulateMedia({reducedMotion:'reduce'})
+   expect(await upgrade.evaluate(el=>getComputedStyle(el,'::before').animationName)).toBe('none')
+   expect(await upgrade.evaluate(el=>getComputedStyle(el,'::after').animationName)).toBe('none')
+   await expect(upgrade).toBeVisible()
    await expect(dialog.getByRole('button',{name:'Go to Profile',exact:true})).toHaveCount(0)
    await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible()
   }

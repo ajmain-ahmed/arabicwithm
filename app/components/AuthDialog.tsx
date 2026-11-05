@@ -27,6 +27,7 @@ import { createClient } from '@supabase/supabase-js'
 import ClientStyles from '@/app/components/ClientStyles'
 import Turnstile, { type TurnstileHandle } from '@/app/components/Turnstile'
 import { verifyTurnstileToken } from '@/app/actions/turnstile'
+import {useAuth} from '@/app/AuthContext'
 
 /* Email confirmation/reset links follow the flow type of the client that
    initiates them. @supabase/ssr forces PKCE, whose links only complete on the
@@ -42,7 +43,7 @@ function getEmailLinkClient() {
   /* Never persistSession: if Supabase ever returns a session from these
      calls, a copy would sit in localStorage under the default key, unread and
      never cleared by the cookie-based ssr client. */
-  if (!emailLinkClient) emailLinkClient = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } })
+  if (!emailLinkClient) emailLinkClient = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false, storageKey:'awm-email-links', detectSessionInUrl:false, flowType:'implicit' } })
   return emailLinkClient
 }
 
@@ -108,12 +109,14 @@ function GoldDivider() {
 
 // ─── component ───────────────────────────────────────────────────────────────
 export default function AuthDialog({ open, onClose, purpose, initialMode = 'signin' }: AuthDialogProps) {
+  const {establishSession}=useAuth()
   const [authMode, setAuthMode] = useState<'register' | 'signin'>(initialMode)
   const [forgotPassword, setForgotPassword] = useState(false)
   const [formData, setFormData] = useState<FormData>({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [snackbar, setSnackbar] = useState<SnackbarMessage | null>(null)
+  const [confirmationNotice,setConfirmationNotice]=useState(false)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const turnstileRef = useRef<TurnstileHandle>(null)
   const turnstileEnabled = !!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
@@ -170,7 +173,15 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
       showSnackbar('error', error.message)
       return
     }
-    if (data) resetAndClose('success', 'Check your inbox — a verification email is on its way.')
+    if(data.session){
+      try{await establishSession(data.session);resetAndClose('success','Welcome to ArabicWithM!')}
+      catch{setLoading(false);resetCaptcha();showSnackbar('error','Your session could not be established. Please try signing in.')}
+    }else{
+      // Keep verification guidance mounted: closing this dialog also unmounts
+      // its Snackbar in the navbar, making the previous message disappear.
+      setLoading(false);resetCaptcha();setConfirmationNotice(true);setAuthMode('signin')
+      setFormData(previous=>({...previous,password:''}))
+    }
   }
 
   const handleSignIn = async () => {
@@ -186,12 +197,9 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
       showSnackbar('error', error.message)
       return
     }
-    if (data) {
-      /* The dialog owns the supabase client for this flow; AuthContext skips
-         it on anonymous mounts, so tell it to wire the new session up. */
-      window.dispatchEvent(new CustomEvent('awm-session-established'))
-      resetAndClose('success', 'Signed in successfully. Welcome back!')
-    }
+    if(!data.session||!data.user){setLoading(false);resetCaptcha();showSnackbar('error','No authenticated session was returned. Please try again.');return}
+    try{await establishSession(data.session);resetAndClose('success','Signed in successfully. Welcome back!')}
+    catch{setLoading(false);resetCaptcha();showSnackbar('error','Your session could not be established. Please try again.')}
   }
 
   const handleForgotPassword = async () => {
@@ -346,6 +354,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
 
         {/* ── Body ── */}
         <DialogContent sx={{ px: { xs: 2.5, sm: 4 }, pt: 3, pb: 4 }}>
+          {confirmationNotice&&<Alert severity="info" sx={{mb:2}}>Check your inbox — verify your email before signing in.</Alert>}
 
           {/* Mode toggle (only when not in forgot-password flow) */}
           {!forgotPassword && (

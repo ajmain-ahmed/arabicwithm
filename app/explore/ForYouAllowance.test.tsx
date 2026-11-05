@@ -34,7 +34,7 @@ it('shows no allowance UI until the last elapsed sample, pauses, preserves conte
  expect(mocks.pause).toHaveBeenCalled();expect(document.body.textContent).toContain('Unlock unlimited For You')
  expect(host.textContent).toContain('Player and transcript');expect(mocks.mounted).toHaveBeenCalledOnce()
  await sample(128.2);expect(mocks.pause).toHaveBeenCalled()
- const upgrade=[...document.querySelectorAll('button')].find(b=>b.textContent==='Upgrade to AWM Plus')!
+ const upgrade=[...document.querySelectorAll('button')].find(b=>b.textContent==='Upgrade to AWM+')!
  await act(async()=>upgrade.click());expect(document.body.textContent).toContain('Canonical upgrade popup')
 })
 it('never sends metering heartbeats for unlimited accounts',async()=>{

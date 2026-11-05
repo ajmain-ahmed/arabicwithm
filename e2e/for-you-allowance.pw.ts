@@ -15,7 +15,7 @@ test('the final playback seconds pause For You, retain the feed, and permit free
  await page.getByRole('button',{name:'For You feed',exact:true}).click();await expect(page.locator('[data-for-you-source] iframe')).toBeVisible()
  const source=await page.locator('[data-for-you-source]').getAttribute('data-for-you-source')
  await expect(page.getByText('Unlock unlimited For You',{exact:true})).toHaveCount(0)
- await page.evaluate(()=>{const w=window as unknown as {__ytPlayers:{time:number;playing:boolean}[];__ytTime:(t:number,state:number)=>void};window.setInterval(()=>{const p=w.__ytPlayers.at(-1);if(p?.playing)w.__ytTime(p.time+.2,1)},200)})
+ await page.evaluate(()=>{(window as unknown as {__ytAdvanceClock:boolean}).__ytAdvanceClock=true})
  await expect(page.getByRole('dialog',{name:'Unlock unlimited For You'})).toBeVisible()
  expect(await page.evaluate(()=>(window as unknown as {__ytPlayers:{playing:boolean}[]}).__ytPlayers.at(-1)!.playing)).toBe(false)
  await expect(page.locator('[data-for-you-source]')).toHaveAttribute('data-for-you-source',source!)

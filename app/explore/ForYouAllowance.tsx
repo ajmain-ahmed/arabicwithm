@@ -4,6 +4,7 @@ import {useCallback,useEffect,useRef,useState,type ReactNode} from 'react'
 import {Alert,Box,Button,CircularProgress,Dialog,DialogActions,DialogContent,DialogTitle,Typography} from '@mui/material'
 import {syncForYouUsage} from '@/app/actions/forYouUsage'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
+import UpgradeButton from '@/app/components/UpgradeButton'
 import {elapsedViewingMs,type PlaybackSample} from '@/app/lib/forYouMeter'
 
 import {AdvanceContext,MeterContext,type PlayerSample} from './ForYouMeterContext'
@@ -72,7 +73,7 @@ export default function ForYouAllowance({children,onExplore}:{children:ReactNode
   <Dialog open={limited&&!upgrade} aria-labelledby="for-you-limit-title" maxWidth="xs" fullWidth>
    <DialogTitle id="for-you-limit-title">Unlock unlimited For You</DialogTitle>
    <DialogContent><Typography>Upgrade to AWM Plus for unlimited For You viewing.</Typography></DialogContent>
-   <DialogActions sx={{flexDirection:'column',gap:1,p:3,'& > :not(style) ~ :not(style)':{ml:0}}}><Button fullWidth variant="contained" onClick={()=>setUpgrade(true)}>Upgrade to AWM Plus</Button><Button fullWidth onClick={onExplore}>Continue on Explore</Button></DialogActions>
+   <DialogActions sx={{flexDirection:'column',gap:1,p:3,'& > :not(style) ~ :not(style)':{ml:0}}}><UpgradeButton onClick={()=>setUpgrade(true)}/><Button fullWidth onClick={onExplore}>Continue on Explore</Button></DialogActions>
   </Dialog>
   <PremiumPrompt open={upgrade} onClose={()=>setUpgrade(false)}/>
  </MeterContext.Provider></AdvanceContext.Provider>

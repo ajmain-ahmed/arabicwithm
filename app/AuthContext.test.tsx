@@ -1,17 +1,19 @@
-import { act } from 'react'
+import { act,useEffect } from 'react'
 import { createRoot,type Root } from 'react-dom/client'
 import { beforeEach,afterEach,expect,it,vi } from 'vitest'
-const mocks=vi.hoisted(()=>({session:vi.fn(),set:vi.fn(),access:vi.fn(),refresh:vi.fn(),home:vi.fn(),callback:null as null|((event:string,session:unknown)=>void),unsubscribe:vi.fn()}))
+const mocks=vi.hoisted(()=>({session:vi.fn(),set:vi.fn(),user:vi.fn(),access:vi.fn(),refresh:vi.fn(),home:vi.fn(),callback:null as null|((event:string,session:unknown)=>void),unsubscribe:vi.fn()}))
 vi.mock('@/app/lib/publicHome',()=>({returnToPublicHome:mocks.home}))
 vi.mock('next/navigation',()=>{const router={refresh:mocks.refresh};return {useRouter:()=>router}})
-vi.mock('@/app/lib/supabase/client',()=>({supabase:{auth:{getSession:mocks.session,setSession:mocks.set,onAuthStateChange:(callback:typeof mocks.callback)=>{mocks.callback=callback;return{data:{subscription:{unsubscribe:mocks.unsubscribe}}}}}}}))
+vi.mock('@/app/lib/supabase/client',()=>({supabase:{auth:{getSession:mocks.session,getUser:mocks.user,setSession:mocks.set,onAuthStateChange:(callback:typeof mocks.callback)=>{mocks.callback=callback;return{data:{subscription:{unsubscribe:mocks.unsubscribe}}}}}}}))
 vi.mock('@/app/actions/auth',()=>({getAuthenticatedAccess:mocks.access}))
+vi.mock('@/app/actions/premium',()=>({fetchPremiumStatus:vi.fn()}))
 import { AuthProvider,useAuth } from './AuthContext'
 import { useAccountAccess } from './lib/useAccountAccess'
 let host:HTMLDivElement,root:Root
 const adminSession={user:{id:'admin',user_metadata:{}},access_token:'token'}
 const SESSION_COOKIE='sb-testref-auth-token=encoded'
-function Probe(){const auth=useAuth(),access=useAccountAccess('nav');return <div>{JSON.stringify({user:auth.user?.id,loading:auth.loading,...access})}</div>}
+let complete:ReturnType<typeof useAuth>['establishSession']
+function Probe(){const auth=useAuth(),access=useAccountAccess('nav');useEffect(()=>{complete=auth.establishSession},[auth.establishSession]);return <div>{JSON.stringify({user:auth.user?.id,loading:auth.loading,...access})}</div>}
 /* The provider only initialises supabase-js when a stored session cookie (or
    URL-hash tokens) exists, so every test below seeds the cookie first. */
 function seedSessionCookie(){document.cookie=`${SESSION_COOKIE}; path=/`}
@@ -55,4 +57,20 @@ it('skips the client entirely for anonymous visitors without a stored session', 
   expect(host.textContent).not.toContain('"user":"admin"')
   expect(mocks.session).not.toHaveBeenCalled()
   expect(mocks.callback).toBeNull()
+})
+it('establishes a verified session from an anonymous mount before refreshing the server route',async()=>{
+ await act(async()=>root.render(<AuthProvider><Probe/></AuthProvider>))
+ const session={...adminSession,refresh_token:'refresh'} as Parameters<typeof complete>[0]
+ mocks.set.mockResolvedValue({data:{session},error:null});mocks.user.mockResolvedValue({data:{user:session.user},error:null})
+ mocks.session.mockResolvedValue({data:{session}})
+ await act(async()=>complete(session))
+ expect(host.textContent).toContain('"user":"admin"')
+ expect(mocks.set).toHaveBeenCalledWith({access_token:'token',refresh_token:'refresh'})
+ expect(mocks.user).toHaveBeenCalledOnce();expect(mocks.refresh).toHaveBeenCalledOnce()
+})
+it('does not complete a session hand-off when Supabase rejects persistence',async()=>{
+ await act(async()=>root.render(<AuthProvider><Probe/></AuthProvider>))
+ mocks.set.mockResolvedValue({data:{session:null},error:new Error('expired')})
+ await act(async()=>{await expect(complete({...adminSession,refresh_token:'bad'} as Parameters<typeof complete>[0])).rejects.toThrow('could not be established')})
+ expect(host.textContent).not.toContain('"user":"admin"');expect(mocks.refresh).not.toHaveBeenCalled()
 })

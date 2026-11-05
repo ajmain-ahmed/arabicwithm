@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Script from 'next/script'
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v16-appRouter"
 import {
   bookAmiriFont,
@@ -33,6 +34,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script id="awm-gtm-init" strategy="beforeInteractive">{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
+        `}</Script>
+        <Script id="awm-gtm-container" strategy="beforeInteractive" async src="https://www.googletagmanager.com/gtm.js?id=GTM-WLD4QMF2" />
+      </head>
       <body
         className={`${ebGaramond.variable} ${jost.variable} ${brandFont.variable} ${headingFont.variable} ${bookNaskhFont.variable} ${bookSansFont.variable} ${bookAmiriFont.variable}`}
       >

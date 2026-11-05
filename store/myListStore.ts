@@ -6,6 +6,10 @@ import type { MyListItem } from '@/app/actions/myList'
    "not loaded yet". */
 
 interface MyListCacheState {
+  bookUserId: string | null
+  bookMetadata: Record<string,unknown> | undefined
+  bookSlugs: string[] | null
+  bookOperations: Record<string,{included:boolean;revision:number}>
   items: MyListItem[] | null
   set: (items: MyListItem[]) => void
   add: (item: MyListItem) => void
@@ -13,6 +17,10 @@ interface MyListCacheState {
 }
 
 export const useMyListCache = create<MyListCacheState>((set) => ({
+  bookUserId: null,
+  bookMetadata: undefined,
+  bookSlugs: null,
+  bookOperations: {},
   items: null,
   set: (items) => set({ items }),
   add: (item) => set((state) => ({ items: state.items ? [item, ...state.items] : [item] })),

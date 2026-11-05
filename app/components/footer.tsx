@@ -11,6 +11,7 @@ import ClientStyles from '@/app/components/ClientStyles'
 ───────────────────────────────────────────── */
 interface FooterProps {
   onContactClick?: () => void
+  homeMobileSpacing?: boolean
 }
 
 const FOOTER_SECTIONS = (onContactClick?: () => void) => [
@@ -133,15 +134,15 @@ const FOOTER_CSS = `
 /* ─────────────────────────────────────────────
    Component
 ───────────────────────────────────────────── */
-export default function Footer({ onContactClick }: FooterProps) {
+export default function Footer({ onContactClick, homeMobileSpacing=false }: FooterProps) {
   const router   = useRouter()
   const sections = FOOTER_SECTIONS(onContactClick)
   return (
-    <Box component="footer" sx={{ display: 'block', pb: { xs: 'calc(76px + env(safe-area-inset-bottom, 0px))', md: 0 }, background: 'var(--awm-white)', borderTop: '1px solid color-mix(in srgb, var(--awm-gold) 18%, transparent)' }}>
+    <Box component="footer" sx={{ display: 'block', pb: { xs: `calc(${homeMobileSpacing?72:76}px + env(safe-area-inset-bottom, 0px))`, md: 0 }, background: 'var(--awm-white)', borderTop: '1px solid color-mix(in srgb, var(--awm-gold) 18%, transparent)' }}>
       <ClientStyles id="awm-footer-styles" css={FOOTER_CSS} />
 
       {/* ── main columns ── */}
-      <Container maxWidth="xl" sx={{ py: { xs: 7, md: 9 } }}>
+      <Container maxWidth="xl" sx={{ pt: { xs: homeMobileSpacing?2:7, md: 9 }, pb: { xs: 7, md: 9 } }}>
         <Grid container columnSpacing={{ xs: 2, sm: 4 }} rowSpacing={{ xs: 5, md: 4 }} sx={{ alignItems: 'flex-start' }}>
 
           {/* Brand column */}
@@ -246,7 +247,8 @@ export default function Footer({ onContactClick }: FooterProps) {
         <div className="awm-footer-gold-line" />
         <Container maxWidth="xl">
           <Box sx={{
-            py: 3,
+            pt: 3,
+            pb: {xs:homeMobileSpacing?1:3,md:3},
             display: 'flex',
             flexDirection: { xs: 'column', md: 'row' },
             alignItems: 'center',
