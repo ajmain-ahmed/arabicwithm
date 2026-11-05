@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import {
   ArrowForwardIos, CalendarMonthOutlined, CheckCircleOutlined,
   ChevronRight, Close, DiamondOutlined, EmailOutlined, FavoriteRounded,
+  AutorenewRounded, CreditCardOutlined,
   FeedbackOutlined, LocalFireDepartmentRounded,
   LockOutlined, LogoutOutlined, PersonOutlined,
   SettingsOutlined, ShieldOutlined, SupportOutlined,
@@ -313,14 +314,14 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
           </Box>
         ) : (
           <>
-            {/* Manage + resume share one line on every viewport: both flex
-               equally and never wrap, so mobile shows them side by side. */}
-            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'nowrap', alignItems: 'center', width: '100%' }}>
-              <Button onClick={() => void cta()} disabled={busy} variant="contained" sx={{ ...GOLD_BUTTON, flex: '1 1 0', minWidth: 0, px: { xs: 1, sm: 2.5 }, fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap' }}>
+            {/* Stacked (full-width, equal size) on mobile; side by side on
+               desktop. Both carry icons for scannability. */}
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, width: '100%' }}>
+              <Button onClick={() => void cta()} disabled={busy} variant="contained" startIcon={<CreditCardOutlined sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ ...GOLD_BUTTON, width: '100%', flex: { sm: '1 1 0' }, minWidth: 0, minHeight: { xs: 46, sm: 42 }, px: { xs: 1, sm: 2.5 }, fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap' }}>
                 {busy ? 'Opening…' : premium ? 'Manage AWM+' : `Subscribe — ${PREMIUM.label}`}
               </Button>
               {premium && manageable && status?.cancelAtPeriodEnd && (
-                <Button onClick={() => void setRenewal(true)} disabled={renewalBusy} variant="outlined" sx={{ flex: '1 1 0', minWidth: 0, px: { xs: 1, sm: 2.5 }, py: { xs: 1.05, sm: 1.1 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap', borderColor: 'rgba(184,134,11,0.5)', color: 'var(--awm-bark)' }}>
+                <Button onClick={() => void setRenewal(true)} disabled={renewalBusy} variant="outlined" startIcon={<AutorenewRounded sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ width: '100%', flex: { sm: '1 1 0' }, minWidth: 0, minHeight: { xs: 46, sm: 42 }, px: { xs: 1, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap', borderColor: 'rgba(184,134,11,0.5)', color: 'var(--awm-bark)' }}>
                   {renewalBusy ? 'Updating…' : 'Turn auto-renew back on'}
                 </Button>
               )}
