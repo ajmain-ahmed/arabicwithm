@@ -104,8 +104,10 @@ export async function setPremiumRenewal(renew: boolean): Promise<PremiumStatus> 
     if (renew) {
       /* Resuming must clear BOTH signals: flipping cancel_at_period_end back
          does not clear a cancel_at timestamp written by newer Stripe flows —
-         the subscription would still cancel at that time. */
-      await stripeClient().subscriptions.update(account.subscription_id, { cancel_at_period_end: false, cancel_at: '' as unknown as number })
+         the subscription would still cancel at that time. Stripe rejects both
+         params in one update, so clear them sequentially. */
+      await stripeClient().subscriptions.update(account.subscription_id, { cancel_at_period_end: false })
+      await stripeClient().subscriptions.update(account.subscription_id, { cancel_at: '' as unknown as number })
     } else {
       await stripeClient().subscriptions.update(account.subscription_id, { cancel_at_period_end: true })
     }
