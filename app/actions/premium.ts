@@ -36,7 +36,7 @@ async function ensureStripeCustomer(stripe: StripeClient, userId: string, existi
 
 export async function fetchPremiumStatus(): Promise<PremiumStatus> {
   const access = await getAuthenticatedAccess()
-  if (!access) return { premium: false, signedIn: false, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null }
+  if (!access) return { premium: false, signedIn: false, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null, paymentIssue: false }
   return premiumStatusForUser(access.userId, access.admin)
 }
 export async function startPremiumCheckout(): Promise<string> {

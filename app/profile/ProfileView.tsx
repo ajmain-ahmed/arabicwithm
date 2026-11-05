@@ -286,7 +286,11 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
             <Button onClick={() => void cta()} disabled={busy} variant="contained" sx={{ ...GOLD_BUTTON, px: 3 }}>
               {busy ? 'Opening…' : premium ? 'Manage AWM+' : `Subscribe — ${PREMIUM.label}`}
             </Button>
-            {premium && manageable && status?.cancelAtPeriodEnd && formatMembershipDate(status.periodEnd) ? (
+            {premium && manageable && status?.paymentIssue && formatMembershipDate(status?.periodEnd) ? (
+              <Alert severity="error" sx={{ mt: 2, py: 0 }}>
+                Your last payment didn&rsquo;t go through — update your payment method. Access continues until {formatMembershipDate(status?.periodEnd)}.
+              </Alert>
+            ) : premium && manageable && status?.cancelAtPeriodEnd && formatMembershipDate(status.periodEnd) ? (
               <Alert severity="warning" sx={{ mt: 2, py: 0 }}>
                 Cancellation scheduled — your access ends on {formatMembershipDate(status.periodEnd)}. You won&rsquo;t be charged again.
               </Alert>

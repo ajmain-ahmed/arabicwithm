@@ -37,20 +37,20 @@ describe('fetchPremiumStatus', () => {
 
   it('keeps signed-out users restricted', async () => {
     mocks.access.mockResolvedValue(null)
-    await expect(fetchPremiumStatus()).resolves.toEqual({ premium: false, signedIn: false, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null })
+    await expect(fetchPremiumStatus()).resolves.toEqual({ premium: false, signedIn: false, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null, paymentIssue: false })
     expect(mocks.from).not.toHaveBeenCalled()
   })
 
   it('grants admins premium without querying a subscription', async () => {
     mocks.access.mockResolvedValue({ userId: 'admin-id', admin: true })
     mocks.premium.mockResolvedValue(true)
-    await expect(fetchPremiumStatus()).resolves.toEqual({ premium: true, signedIn: true, manageable: false, admin: true, cancelAtPeriodEnd: false, periodEnd: null })
+    await expect(fetchPremiumStatus()).resolves.toEqual({ premium: true, signedIn: true, manageable: false, admin: true, cancelAtPeriodEnd: false, periodEnd: null, paymentIssue: false })
     expect(mocks.from).not.toHaveBeenCalled()
   })
 
   it('keeps a normal free user restricted', async () => {
     mocks.access.mockResolvedValue({ userId: 'free-id', admin: false })
-    await expect(fetchPremiumStatus()).resolves.toEqual({ premium: false, signedIn: true, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null })
+    await expect(fetchPremiumStatus()).resolves.toEqual({ premium: false, signedIn: true, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null, paymentIssue: false })
   })
 
   it('keeps active subscribers premium', async () => {
@@ -60,7 +60,17 @@ describe('fetchPremiumStatus', () => {
       data: { status: 'active', current_period_end: '2999-01-01T00:00:00.000Z', customer_id: 'customer-id' },
       error: null,
     })
-    await expect(fetchPremiumStatus()).resolves.toEqual({ premium: true, signedIn: true, manageable: true, admin: false, cancelAtPeriodEnd: false, periodEnd: '2999-01-01T00:00:00.000Z' })
+    await expect(fetchPremiumStatus()).resolves.toEqual({ premium: true, signedIn: true, manageable: true, admin: false, cancelAtPeriodEnd: false, periodEnd: '2999-01-01T00:00:00.000Z', paymentIssue: false })
+  })
+
+  it('surfaces a failed renewal as a payment issue while access continues', async () => {
+    mocks.access.mockResolvedValue({ userId: 'pastdue-id', admin: false })
+    mocks.premium.mockResolvedValue(true)
+    mocks.maybeSingle.mockResolvedValue({
+      data: { status: 'past_due', current_period_end: '2999-01-01T00:00:00.000Z', customer_id: 'customer-id' },
+      error: null,
+    })
+    await expect(fetchPremiumStatus()).resolves.toEqual({ premium: true, signedIn: true, manageable: true, admin: false, cancelAtPeriodEnd: false, periodEnd: '2999-01-01T00:00:00.000Z', paymentIssue: true })
   })
 
   it('surfaces a scheduled cancellation with its end date', async () => {
@@ -70,7 +80,7 @@ describe('fetchPremiumStatus', () => {
       data: { status: 'active', current_period_end: '2999-01-01T00:00:00.000Z', cancel_at_period_end: true, customer_id: 'customer-id' },
       error: null,
     })
-    await expect(fetchPremiumStatus()).resolves.toEqual({ premium: true, signedIn: true, manageable: true, admin: false, cancelAtPeriodEnd: true, periodEnd: '2999-01-01T00:00:00.000Z' })
+    await expect(fetchPremiumStatus()).resolves.toEqual({ premium: true, signedIn: true, manageable: true, admin: false, cancelAtPeriodEnd: true, periodEnd: '2999-01-01T00:00:00.000Z', paymentIssue: false })
   })
 })
 

@@ -68,7 +68,10 @@ export function resolveBookEntitlements(access: Entitlements, book: { premium_ex
   return { ...access, canReadBooks: access.canReadBooks && released, canDownloadBooks: media, canUseAudiobooks: media }
 }
 export function hasPremium(subscription: { status: string; current_period_end: string } | null, now = new Date()): boolean {
-  return Boolean(subscription && ['active', 'trialing'].includes(subscription.status) && Date.parse(subscription.current_period_end) > now.getTime())
+  /* Grace period: past_due/unpaid subscriptions (failed renewal, Stripe still
+     retrying) keep access until the paid period ends. Entitlement stops at
+     period end unless the webhook reports recovery (active/trialing). */
+  return Boolean(subscription && ['active', 'trialing', 'past_due', 'unpaid'].includes(subscription.status) && Date.parse(subscription.current_period_end) > now.getTime())
 }
 export function hasPremiumAccess(admin: boolean, subscription: { status: string; current_period_end: string } | null, now = new Date()): boolean {
   return admin || hasPremium(subscription, now)

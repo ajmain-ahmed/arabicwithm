@@ -8,7 +8,7 @@ import {managePremium} from '@/app/actions/premium'
 import {formatMembershipDate} from '@/app/lib/display'
 import {profileRoute} from '@/app/lib/navigation'
 
-export default function PremiumMembershipDialog({onClose,userId,includedAccess,onProfileNavigate,periodEnd,cancelAtPeriodEnd}:{onClose:()=>void;userId:string;includedAccess:boolean;onProfileNavigate?:()=>void;periodEnd?:string|null;cancelAtPeriodEnd?:boolean}){
+export default function PremiumMembershipDialog({onClose,userId,includedAccess,onProfileNavigate,periodEnd,cancelAtPeriodEnd,paymentIssue}:{onClose:()=>void;userId:string;includedAccess:boolean;onProfileNavigate?:()=>void;periodEnd?:string|null;cancelAtPeriodEnd?:boolean;paymentIssue?:boolean}){
  const router=useRouter()
  const [openingPortal,setOpeningPortal]=useState(false)
  const endDate=formatMembershipDate(periodEnd)
@@ -19,7 +19,13 @@ export default function PremiumMembershipDialog({onClose,userId,includedAccess,o
   <DialogContent>
    <Typography sx={{fontWeight:700,mb:2}}>{includedAccess?'Your AWM Plus access is active.':'Your AWM Plus membership is active.'}</Typography>
    {includedAccess&&<Typography color="text.secondary" sx={{mb:2}}>AWM Plus is included with your account access.</Typography>}
-   {cancelAtPeriodEnd&&endDate?(
+   {paymentIssue&&endDate?(
+    /* A renewal payment failed: access survives until the paid period ends
+       (grace), but the member must fix payment or entitlement lapses. */
+    <Box sx={{display:'flex',alignItems:'center',gap:1,px:1.5,py:1.1,borderRadius:'10px',bgcolor:'rgba(178,34,34,0.06)',border:'1px solid rgba(178,34,34,0.3)',mb:2}}>
+     <Typography sx={{fontSize:13,color:'var(--awm-bark)','& strong':{color:'#b22222'}}}>Your last payment didn&rsquo;t go through. Update your payment method to keep AWM+ after <strong>{endDate}</strong>.</Typography>
+    </Box>
+   ):cancelAtPeriodEnd&&endDate?(
     /* A portal cancellation is already scheduled — say so plainly, with the
        exact end date, so the state is never ambiguous after Stripe emails. */
     <Box sx={{display:'flex',alignItems:'center',gap:1,px:1.5,py:1.1,borderRadius:'10px',bgcolor:'rgba(184,134,11,0.08)',border:'1px solid rgba(184,134,11,0.25)',mb:2}}>
@@ -36,7 +42,7 @@ export default function PremiumMembershipDialog({onClose,userId,includedAccess,o
    </Box>
   </DialogContent>
   <DialogActions sx={{px:3,pb:3,flexDirection:'column',gap:1}}>
-   {!includedAccess&&<Button fullWidth variant="outlined" disabled={openingPortal} onClick={()=>void openPortal()} sx={{minHeight:48,borderRadius:'12px',textTransform:'none'}}>{openingPortal?'Opening…':'Manage AWM+'}</Button>}
+   {!includedAccess&&<Button fullWidth variant="outlined" disabled={openingPortal} onClick={()=>void openPortal()} sx={{minHeight:48,borderRadius:'12px',textTransform:'none'}}>{openingPortal?'Opening…':paymentIssue?'Update payment method':'Manage AWM+'}</Button>}
    <Button fullWidth variant="contained" sx={{minHeight:48,borderRadius:'12px'}} onClick={()=>{onClose();onProfileNavigate?.();router.push(profileRoute(userId))}}>Go to Profile</Button>
   </DialogActions>
  </Dialog>

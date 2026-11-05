@@ -16,7 +16,12 @@ describe('central access policy', () => {
     const now = new Date('2026-09-09T00:00:00Z')
     expect(hasPremium({ status: 'active', current_period_end: '2026-10-01' }, now)).toBe(true)
     expect(hasPremium({ status: 'trialing', current_period_end: '2026-10-01' }, now)).toBe(true)
-    for (const status of ['past_due', 'unpaid', 'incomplete', 'canceled', 'expired']) expect(hasPremium({ status, current_period_end: '2026-10-01' }, now)).toBe(false)
+    /* Grace: a failed renewal (past_due/unpaid) keeps access until the paid
+       period ends while Stripe retries the payment. */
+    expect(hasPremium({ status: 'past_due', current_period_end: '2026-10-01' }, now)).toBe(true)
+    expect(hasPremium({ status: 'unpaid', current_period_end: '2026-10-01' }, now)).toBe(true)
+    expect(hasPremium({ status: 'past_due', current_period_end: '2026-09-08' }, now)).toBe(false)
+    for (const status of ['incomplete', 'canceled', 'expired']) expect(hasPremium({ status, current_period_end: '2026-10-01' }, now)).toBe(false)
     expect(hasPremium({ status: 'active', current_period_end: '2026-09-08' }, now)).toBe(false)
     expect(hasPremium(null, now)).toBe(false)
   })
