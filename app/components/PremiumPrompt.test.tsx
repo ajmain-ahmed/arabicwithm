@@ -78,14 +78,14 @@ it('states the scheduled-cancellation end date in the membership summary',async(
  await render()
  expect(document.body.textContent).toContain('Cancellation scheduled — you have access until 1 January 2999.')
  expect(document.body.textContent).toContain('You won’t be charged again.')
- expect(button('Manage AWM+')).toBeTruthy()
+ expect(button('Go to Profile')).toBeTruthy()
 })
 it('states a failed renewal with the keep-access-until date',async()=>{
  mocks.status.mockResolvedValue({...active,paymentIssue:true})
  await render()
  expect(document.body.textContent).toContain('Your last payment didn’t go through. Update your payment method to keep AWM+ after 1 January 2999.')
  expect(document.body.textContent).not.toContain('Renews on')
- expect(button('Update payment method')).toBeTruthy()
+ expect(button('Go to Profile')).toBeTruthy()
 })
 it('states the scheduled-cancellation end date in the billing-management prompt',async()=>{
  mocks.status.mockResolvedValue({...active,cancelAtPeriodEnd:true})

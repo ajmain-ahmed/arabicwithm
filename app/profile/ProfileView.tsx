@@ -313,26 +313,18 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
           </Box>
         ) : (
           <>
-            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
-              <Button onClick={() => void cta()} disabled={busy} variant="contained" sx={{ ...GOLD_BUTTON, px: 3 }}>
+            {/* Manage + resume share one line on every viewport: both flex
+               equally and never wrap, so mobile shows them side by side. */}
+            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'nowrap', alignItems: 'center', width: '100%' }}>
+              <Button onClick={() => void cta()} disabled={busy} variant="contained" sx={{ ...GOLD_BUTTON, flex: '1 1 0', minWidth: 0, px: { xs: 1, sm: 2.5 }, fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap' }}>
                 {busy ? 'Opening…' : premium ? 'Manage AWM+' : `Subscribe — ${PREMIUM.label}`}
               </Button>
-              {premium && manageable && !status?.cancelAtPeriodEnd && (
-                <Button onClick={() => void setRenewal(false)} disabled={renewalBusy} variant="outlined" sx={{ px: 3, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', borderColor: 'rgba(184,134,11,0.5)', color: 'var(--awm-bark)' }}>
-                  {renewalBusy ? 'Updating…' : 'Turn off auto-renew'}
-                </Button>
-              )}
               {premium && manageable && status?.cancelAtPeriodEnd && (
-                <Button onClick={() => void setRenewal(true)} disabled={renewalBusy} variant="contained" sx={{ ...GOLD_BUTTON, px: 3 }}>
+                <Button onClick={() => void setRenewal(true)} disabled={renewalBusy} variant="outlined" sx={{ flex: '1 1 0', minWidth: 0, px: { xs: 1, sm: 2.5 }, py: { xs: 1.05, sm: 1.1 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap', borderColor: 'rgba(184,134,11,0.5)', color: 'var(--awm-bark)' }}>
                   {renewalBusy ? 'Updating…' : 'Turn auto-renew back on'}
                 </Button>
               )}
             </Box>
-            {premium && manageable && !status?.cancelAtPeriodEnd && (
-              <Typography sx={{ mt: 1, fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)' }}>
-                Auto-renew is on. Turning it off keeps AWM+ until the end date — you won&rsquo;t be charged again.
-              </Typography>
-            )}
             {premium && manageable && status?.paymentIssue && formatMembershipDate(status?.periodEnd) ? (
               <Alert severity="error" sx={{ mt: 2, py: 0 }}>
                 Your last payment didn&rsquo;t go through — update your payment method. Access continues until {formatMembershipDate(status?.periodEnd)}.

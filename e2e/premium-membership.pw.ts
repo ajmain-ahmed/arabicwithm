@@ -21,7 +21,7 @@ for(const width of [320,1440])for(const role of ['user','premium','editor','admi
    await expect(dialog.getByRole('progressbar')).toHaveCount(0)
    const bounds=(await dialog.boundingBox())!;expect(bounds.x).toBeGreaterThanOrEqual(0);expect(bounds.x+bounds.width).toBeLessThanOrEqual(width)
    const profile=dialog.getByRole('button',{name:'Go to Profile',exact:true});await expect(profile).toBeInViewport()
-   if(i<2){await dialog.getByRole('button',{name:'Close AWM Plus',exact:true}).click();await expect(dialog).not.toBeVisible()}
+   if(i<2){await page.keyboard.press('Escape');await expect(dialog).not.toBeVisible()}
    else {await profile.click();await expect(page).toHaveURL(`/profile/${ids[role]}`);await expect(dialog).not.toBeVisible();if(width<900)await expect(page.getByRole('dialog',{name:'Site navigation',exact:true})).not.toBeVisible()}
   }else{
    await expect(dialog).not.toContainText('3.99')
