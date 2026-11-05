@@ -4,7 +4,7 @@ async function checkMobile(page:Page,safeArea=0){
  const quick=page.locator('[data-mobile-home-actions]'),footer=page.locator('footer')
  await quick.scrollIntoViewIfNeeded();await expect(quick).toBeVisible()
  const gap=await page.evaluate(()=>{
-  const quick=document.querySelector('[data-mobile-home-actions]')!.getBoundingClientRect()
+  const quick=document.querySelector('#download-app')!.getBoundingClientRect()
   const footer=document.querySelector('footer')!.getBoundingClientRect()
   const logo=document.querySelector('footer img')!.getBoundingClientRect()
   return {boundary:footer.top-quick.bottom,content:logo.top-quick.bottom}
@@ -25,9 +25,9 @@ async function checkMobile(page:Page,safeArea=0){
 for(const width of [320,375,390,430])test(`mobile homepage footer spacing at ${width}`,async({page})=>{
  await page.setViewportSize({width,height:900});await page.goto('/')
  await checkMobile(page)
- await page.screenshot({path:`docs/validation/mobile-home-footer/footer-${width}.png`})
+ await page.screenshot({path:`docs/validation/app-reminder/footer-${width}.png`})
  await page.locator('[data-mobile-home-actions]').scrollIntoViewIfNeeded()
- await page.screenshot({path:`docs/validation/mobile-home-footer/quick-actions-${width}.png`})
+ await page.screenshot({path:`docs/validation/app-reminder/quick-actions-${width}.png`})
 })
 
 test('safe-area clearance is included once on the mobile homepage',async({page,context})=>{

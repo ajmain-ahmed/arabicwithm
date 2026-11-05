@@ -239,8 +239,6 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured }
         </Box>
         )}
 
-        {!authLoading && !user && <Container maxWidth="lg" sx={{ py: { xs: 3, md: 5 } }}><AppDownloadSection /></Container>}
-
         <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 2, md: 5 } }}>
           {user && myListRowItems.length > 0 && (
             <Container maxWidth={false}>
@@ -327,6 +325,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured }
               ].map(({ title, href, Icon }) => <Paper key={href} component={Link} href={href} elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minHeight: 76, p: 2, borderRadius: '10px', textDecoration: 'none', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><Icon sx={{ color: 'var(--awm-gold)' }} /><Typography sx={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14 }}>{title}</Typography></Paper>)}
             </Box>
           </Container>
+          {!authLoading && !user && <Container maxWidth="lg" sx={{ mt: { xs: 3, md: 4 } }}><AppDownloadSection /></Container>}
         </Box>
       </Box>
   )
