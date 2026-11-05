@@ -85,3 +85,26 @@ export async function managePremium(): Promise<string> {
   if (error || !data.customer_id) throw new Error('No billing account found.')
   return (await stripeClient().billingPortal.sessions.create({ customer: data.customer_id, return_url: `${siteUrl()}/` })).url
 }
+
+/* In-product auto-renew toggle. The Stripe-hosted portal's cancellation flow
+   has repeatedly shown users a "canceled" confirmation without the change
+   persisting, so renewal control lives here: the same cancel_at_period_end
+   update the portal makes, applied directly and verified through our own
+   webhook-synced state. The webhook remains the source of truth for the DB. */
+export async function setPremiumRenewal(renew: boolean): Promise<PremiumStatus> {
+  const access = await getAuthenticatedAccess()
+  if (!access) throw new Error('Sign in to manage AWM+.')
+  if (access.admin) throw new Error('AWM+ is included with administrator access.')
+  const userId = access.userId
+  const limited = rateLimit(`renewal:${userId}`, 8, 10 * 60 * 1000)
+  if (!limited.ok) throw new Error('Too many attempts. Please try again later.')
+  const { data: account, error } = await serviceClient.from('subscriptions').select('customer_id, subscription_id').eq('user_id', userId).maybeSingle()
+  if (error || !account?.customer_id || !account.subscription_id) throw new Error('No billing account found.')
+  try {
+    await stripeClient().subscriptions.update(account.subscription_id, { cancel_at_period_end: !renew })
+  } catch (cause) {
+    if ((cause as { code?: string }).code === 'resource_missing') throw new Error('Your subscription is no longer active.')
+    throw new Error('Unable to update your subscription. Please try again.')
+  }
+  return premiumStatusForUser(userId, false)
+}

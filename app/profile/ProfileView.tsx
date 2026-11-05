@@ -13,7 +13,7 @@ import {
   Alert, Box, Button, Container, Dialog, DialogContent, DialogTitle, IconButton, Rating, TextField, Typography,
 } from '@mui/material'
 import { checkUsernameAvailability, updateProfile, type PublicProfile } from '@/app/actions/profiles'
-import { fetchPremiumStatus, managePremium, startPremiumCheckout, type PremiumStatus } from '@/app/actions/premium'
+import { fetchPremiumStatus, managePremium, setPremiumRenewal, startPremiumCheckout, type PremiumStatus } from '@/app/actions/premium'
 import { submitFeedback } from '@/app/actions/feedback'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import { formatMembershipDate } from '@/app/lib/display'
@@ -268,6 +268,21 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
       setBusy(false)
     }
   }
+  const [renewalBusy, setRenewalBusy] = useState(false)
+  /* In-product auto-renew toggle: applies cancel_at_period_end directly (the
+     portal flow has shown users confirmations that did not persist), then the
+     returned server state updates the UI immediately — the webhook keeps the
+     DB in sync either way. */
+  const setRenewal = async (renew: boolean) => {
+    setRenewalBusy(true); setError('')
+    try {
+      setStatus(await setPremiumRenewal(renew))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update auto-renew. Please try again.')
+    } finally {
+      setRenewalBusy(false)
+    }
+  }
 
   const premium = status?.premium ?? false
   const manageable = status?.manageable ?? false
@@ -298,9 +313,26 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
           </Box>
         ) : (
           <>
-            <Button onClick={() => void cta()} disabled={busy} variant="contained" sx={{ ...GOLD_BUTTON, px: 3 }}>
-              {busy ? 'Opening…' : premium ? 'Manage AWM+' : `Subscribe — ${PREMIUM.label}`}
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Button onClick={() => void cta()} disabled={busy} variant="contained" sx={{ ...GOLD_BUTTON, px: 3 }}>
+                {busy ? 'Opening…' : premium ? 'Manage AWM+' : `Subscribe — ${PREMIUM.label}`}
+              </Button>
+              {premium && manageable && !status?.cancelAtPeriodEnd && (
+                <Button onClick={() => void setRenewal(false)} disabled={renewalBusy} variant="outlined" sx={{ px: 3, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', borderColor: 'rgba(184,134,11,0.5)', color: 'var(--awm-bark)' }}>
+                  {renewalBusy ? 'Updating…' : 'Turn off auto-renew'}
+                </Button>
+              )}
+              {premium && manageable && status?.cancelAtPeriodEnd && (
+                <Button onClick={() => void setRenewal(true)} disabled={renewalBusy} variant="contained" sx={{ ...GOLD_BUTTON, px: 3 }}>
+                  {renewalBusy ? 'Updating…' : 'Turn auto-renew back on'}
+                </Button>
+              )}
+            </Box>
+            {premium && manageable && !status?.cancelAtPeriodEnd && (
+              <Typography sx={{ mt: 1, fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.78rem', color: 'var(--awm-muted)' }}>
+                Auto-renew is on. Turning it off keeps AWM+ until the end date — you won&rsquo;t be charged again.
+              </Typography>
+            )}
             {premium && manageable && status?.paymentIssue && formatMembershipDate(status?.periodEnd) ? (
               <Alert severity="error" sx={{ mt: 2, py: 0 }}>
                 Your last payment didn&rsquo;t go through — update your payment method. Access continues until {formatMembershipDate(status?.periodEnd)}.
