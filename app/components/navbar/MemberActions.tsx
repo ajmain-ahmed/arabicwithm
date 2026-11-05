@@ -45,22 +45,24 @@ export default function MemberActions({onProfileNavigate}:{onProfileNavigate?:()
     return () => window.removeEventListener(LEARNING_ACTIVITY_EVENT, handleActivityUpdate)
   }, [])
 
-  /* Warm the lazy prompt chunk and prime the entitlement snapshot once the
-     browser is idle; the first AWM+ tap then opens with content already
-     available instead of waiting on a chunk fetch plus a server round trip. */
+  /* Prime the entitlement snapshot as soon as the navbar mounts: the 60s TTL
+     and inflight dedupe keep repeat navigations cheap, and the first AWM+ tap
+     then renders content from the cache instead of waiting on a server round
+     trip. The prompt chunk stays on idle + hover/focus so the initial navbar
+     bundle stays lean. */
   useEffect(() => {
     if (!user?.id) return
-    const warm = () => {
-      void loadPremiumPrompt()
-      void getPremiumStatus(user.id).catch(() => {})
-    }
+    void getPremiumStatus(user.id).catch(() => {})
+  }, [user?.id])
+
+  useEffect(() => {
     if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(warm)
+      const id = window.requestIdleCallback(() => void loadPremiumPrompt())
       return () => window.cancelIdleCallback(id)
     }
-    const timer = window.setTimeout(warm, 1500)
+    const timer = window.setTimeout(() => void loadPremiumPrompt(), 1500)
     return () => window.clearTimeout(timer)
-  }, [user?.id])
+  }, [])
 
   const streak = useMemo(() => {
     const activity = user
