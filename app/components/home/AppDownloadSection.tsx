@@ -28,7 +28,7 @@ export default function AppDownloadSection() {
             Mobile App
           </Typography>
           <Typography component="h2" sx={{ mt: 1, color: '#f5ede0', fontFamily: 'var(--font-heading)', fontSize: { xs: 28, sm: 34, md: 42 }, fontWeight: 600, lineHeight: 1.12 }}>
-            Take Arabic with M with you everywhere you go.
+            ArabicwithM on the go!
           </Typography>
           <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.75)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 15.5 }, lineHeight: 1.65, maxWidth: 460, mx: { xs: 'auto', md: 0 } }}>
             Keep your streak alive on the go — episodes, books, flashcards and daily goals, all synced with your account.

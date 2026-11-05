@@ -37,7 +37,7 @@ describe('homepage hero', () => {
     expect(html).not.toContain('Start Watching')
     expect(html).not.toContain('Start Reading')
     expect(home.statsRendered).toBe(false)
-    expect(html).not.toContain('Take Arabic with M with you everywhere you go.')
+    expect(html).not.toContain('ArabicwithM on the go!')
   })
 
   it('keeps the public heading and hides stats for guests', () => {
@@ -47,7 +47,7 @@ describe('homepage hero', () => {
     expect(html).toContain('Learn Arabic through cartoons and books')
     expect(html).toContain('Start Watching')
     expect(html).toContain('Start Reading')
-    expect(html).toContain('Take Arabic with M with you everywhere you go.')
+    expect(html).toContain('ArabicwithM on the go!')
     expect(html.split('id="download-app"')).toHaveLength(2)
     expect(html.indexOf('Quick Actions')).toBeLessThan(html.indexOf('id="download-app"'))
     expect(html).toContain('Email address')

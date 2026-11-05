@@ -3,7 +3,7 @@ const backend=`https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4310}`
 for(const width of [320,375,390,430,1440])test(`guest app reminder and full book artwork at ${width}`,async({page,request})=>{
  await page.setViewportSize({width,height:1000});await page.goto('/')
  const card=page.locator('#download-app')
- await expect(card.getByRole('heading',{name:'Take Arabic with M with you everywhere you go.',exact:true})).toBeVisible()
+ await expect(card.getByRole('heading',{name:'ArabicwithM on the go!',exact:true})).toBeVisible()
  await expect(card).toHaveCount(1)
  await page.getByRole('heading',{name:'Books',exact:true}).scrollIntoViewIfNeeded()
  await expect(page.getByRole('region',{name:'Books',exact:true})).toBeVisible()
