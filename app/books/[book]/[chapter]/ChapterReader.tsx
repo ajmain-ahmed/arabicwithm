@@ -320,7 +320,12 @@ export default function ChapterReader({
     if(page>=2)url.searchParams.set('page',String(page));else url.searchParams.delete('page')
     url.searchParams.set('block',String(position.block))
     window.history.replaceState(window.history.state,'',url)
-  },[bookSlug,chapterSlug,page,totalPages,position.block,language,trackProgress])
+  /* language intentionally excluded: the visible block indexes belong to the
+     previously rendered language, so recording them against the new one would
+     be wrong — and re-running this effect on a language flip needlessly
+     rewrites the URL. The language is recorded on the next genuine
+     page/block change instead. */
+  },[bookSlug,chapterSlug,page,totalPages,position.block,trackProgress])
   useEffect(() => () => { void useReadingProgressStore.getState().flush() }, [bookSlug, chapterSlug])
   const goToPage=useCallback((next:number)=>{
     const target=Math.min(Math.max(1,Math.trunc(next)||1),totalPages)
@@ -403,20 +408,11 @@ export default function ChapterReader({
   const selectedAudio = audio.find(item => item.language === language)
   const renderReader = ({ button, player }: { button: ReactNode; player: ReactNode }) => (
     <>
-      <BookReaderSettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        wordHelp={wordHelp}
-        onWordHelpChange={toggleWordHelp}
-        readerFont={readerFont}
-        onReaderFontChange={selectReaderFont}
-        textScale={textScale}
-        onTextScaleChange={setReaderTextScale}
-        view={view}
-        onViewChange={selectView}
-        language={language}
-        onLanguageChange={selectLanguage}
-      />
+      {/* The settings dialog deliberately lives in ChapterReader's own return
+          (outside this render-prop subtree): the audio player swaps its
+          internal wrapper when the current language has no audio, and a dialog
+          mounted inside that subtree would unmount/remount (blink) on every
+          language switch. */}
       <Paper elevation={0} sx={{ borderRadius: '14px', border: '1px solid rgba(44,26,14,0.08)', bgcolor: 'var(--awm-white)', overflow: 'hidden' }}>
       <Box data-reader-heading sx={{ px: { xs: 2, md: 4 }, py: { xs: 2.25, md: 2.75 }, bgcolor: '#0e2e1f', backgroundImage: `url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z' fill='%23d4a843' fill-opacity='.08'/%3E%3C/svg%3E")` }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2 }}>
@@ -548,17 +544,37 @@ export default function ChapterReader({
       />
     </>
   )
-  return selectedAudio
-    ? <ChapterAudioPlayer
-        /* Keyed by chapter only: the narration-language switch happens inside
-           the panel, and the expanded Audio control must survive it. */
-        key={selectedAudio.chapterId}
-        audio={selectedAudio}
-        chapterTitle={chapterTitle}
-        audioLanguages={audio.map(item => item.language)}
-        language={language}
-        onLanguageChange={selectLanguage}
-        render={renderReader}
-      />
-    : renderReader({ button: null, player: null })
+  /* ChapterAudioPlayer stays mounted regardless of whether the current
+     language has audio: it owns the reader chrome via the render prop, and
+     unmounting it on a language switch would tear down (and blink) the
+     settings dialog along with the rest of the reader. The settings dialog
+     itself renders here, outside that subtree, so it survives audio wrapper
+     swaps. */
+  return <>
+    <BookReaderSettingsDialog
+      open={settingsOpen}
+      onClose={() => setSettingsOpen(false)}
+      wordHelp={wordHelp}
+      onWordHelpChange={toggleWordHelp}
+      readerFont={readerFont}
+      onReaderFontChange={selectReaderFont}
+      textScale={textScale}
+      onTextScaleChange={setReaderTextScale}
+      view={view}
+      onViewChange={selectView}
+      language={language}
+      onLanguageChange={selectLanguage}
+    />
+    <ChapterAudioPlayer
+      /* Keyed by chapter only: the narration-language switch happens inside
+         the panel, and the expanded Audio control must survive it. */
+      key={audio[0]?.chapterId ?? 'no-audio'}
+      audio={selectedAudio ?? null}
+      chapterTitle={chapterTitle}
+      audioLanguages={audio.map(item => item.language)}
+      language={language}
+      onLanguageChange={selectLanguage}
+      render={renderReader}
+    />
+  </>
 }

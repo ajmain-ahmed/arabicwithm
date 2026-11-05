@@ -37,7 +37,8 @@ export default function AppDownloadSection() {
           <AppLaunchSignup />
         </Box>
 
-        {/* phone mockup (webp, sized for its slot) */}
+        {/* phone mockup (webp, sized for its slot; static asset — keep it off
+            the image optimizer so it never spends metered transformations) */}
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0 }}>
           <Box
             sx={{
@@ -51,6 +52,7 @@ export default function AppDownloadSection() {
               src="/homepage/app-mockup.webp"
               alt="ArabicWithM mobile app home screen"
               fill
+              unoptimized
               sizes="(max-width: 900px) 58vw, 290px"
               style={{ objectFit: 'contain' }}
             />

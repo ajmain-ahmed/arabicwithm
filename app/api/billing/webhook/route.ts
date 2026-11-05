@@ -1,4 +1,4 @@
-import { stripeClient } from '@/app/lib/billing'
+import { stripeClient, premiumPriceId } from '@/app/lib/billing'
 import { serviceClient } from '@/app/lib/supabase'
 export const runtime = 'nodejs'
 export async function POST(request: Request) {
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer.id
     const { data: account, error } = await serviceClient.from('subscriptions').select('user_id').eq('customer_id', customerId).single()
     if (error || !account) throw new Error('Unknown billing customer')
-    const item = subscription.items.data.find(item => item.price.id === process.env.STRIPE_PREMIUM_PRICE_ID)
+    const item = subscription.items.data.find(item => item.price.id === premiumPriceId())
     const { error: saveError } = await serviceClient.rpc('apply_subscription_event', {
       p_user_id: account.user_id, p_event_created: event.created, p_subscription_id: subscription.id,
       p_status: item ? subscription.status : 'expired', p_period_end: new Date((item?.current_period_end ?? 0) * 1000).toISOString(),

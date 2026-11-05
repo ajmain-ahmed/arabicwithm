@@ -34,7 +34,11 @@ function YouTubeAudio({ playback, controlsRef, onPlaying, onTime, onDuration, hi
 
 interface AudioLayout { button: ReactNode; player: ReactNode }
 interface Props {
-  audio: ChapterAudioSummary
+  /* The current language's audio summary, or null when the chapter has no
+     audio in that language. The component stays mounted either way so the
+     surrounding reader chrome (settings dialog included) never remounts on a
+     language switch; the null case simply renders empty audio slots. */
+  audio: ChapterAudioSummary | null
   chapterTitle: string
   label?: string
   render?: (layout: AudioLayout) => ReactNode
@@ -67,10 +71,11 @@ export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play 
      included. Dedicated Listen controls do not emit that reader event, so
      their session key also includes language to replace the old source. */
   const [expanded, setExpanded] = useState(false)
+  if (!audio) return render ? render({ button: null, player: null }) : null
   return <AudioSession key={`${authKey}:${audio.chapterId}${dedicated ? `:${audio.language}` : ''}`} audio={audio} chapterTitle={chapterTitle} label={label} render={render} dedicated={dedicated} audioLanguages={audioLanguages} language={language} onLanguageChange={onLanguageChange} expanded={expanded} onExpandedChange={setExpanded} authKey={authKey} signedIn={Boolean(user)} authLoading={Boolean(authLoading)} />
 }
 
-function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLanguages, language, onLanguageChange, expanded, onExpandedChange, authKey, signedIn, authLoading }: Props & { expanded: boolean; onExpandedChange: (next: boolean) => void; authKey: string; signedIn: boolean; authLoading: boolean }) {
+function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLanguages, language, onLanguageChange, expanded, onExpandedChange, authKey, signedIn, authLoading }: Omit<Props, 'audio'> & { audio: ChapterAudioSummary; expanded: boolean; onExpandedChange: (next: boolean) => void; authKey: string; signedIn: boolean; authLoading: boolean }) {
   const [source, setSource] = useState<{ authKey: string; playback: ChapterAudioPlayback; expiresAt: number | null } | null>(null)
   const playback = source?.authKey === authKey ? source.playback : null
   const [position, setPosition] = useState(0)
