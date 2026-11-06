@@ -36,7 +36,7 @@ async function ensureStripeCustomer(stripe: StripeClient, userId: string, existi
 
 export async function fetchPremiumStatus(): Promise<PremiumStatus> {
   const access = await getAuthenticatedAccess()
-  if (!access) return { premium: false, signedIn: false, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null, paymentIssue: false }
+  if (!access) return { premium: false, signedIn: false, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null, paymentIssue: false, startedAt: null }
   return premiumStatusForUser(access.userId, access.admin)
 }
 export async function startPremiumCheckout(): Promise<string> {
@@ -72,18 +72,30 @@ export async function startPremiumCheckout(): Promise<string> {
     existing = (await stripe.subscriptions.list({ customer, status: 'all', limit: 100 })).data
     open = (await stripe.checkout.sessions.list({ customer, status: 'open', limit: 10 })).data
   }
-  if (existing.some(s => ['active', 'trialing', 'past_due', 'unpaid', 'incomplete'].includes(s.status))) return managePremium()
+  /* active/trialing/past_due/unpaid all have a live subscription the portal can
+     manage (past_due/unpaid mainly need a payment-method update there). An
+     incomplete subscription is an abandoned payment the portal cannot resume,
+     so it must fall through to the open checkout session or a fresh one. */
+  if (existing.some(s => ['active', 'trialing', 'past_due', 'unpaid'].includes(s.status))) return managePremium()
   if (open[0]?.url) return open[0].url
   const session = await stripe.checkout.sessions.create({ customer, mode: 'subscription', line_items: [{ price: priceId, quantity: 1 }], client_reference_id: userId, subscription_data: { metadata: { user_id: userId } }, success_url: `${siteUrl()}/?checkout=success`, cancel_url: `${siteUrl()}/?checkout=cancelled` }, { idempotencyKey: `awm-checkout-${userId}-${Math.floor(Date.now() / 1800000)}` })
   if (!session.url) throw new Error('Unable to start checkout.')
   return session.url
 }
-export async function managePremium(): Promise<string> {
+export async function managePremium(flow?: 'payment-method'): Promise<string> {
   const userId = await getAuthenticatedUserId()
   if (!userId) throw new Error('Sign in to manage AWM+.')
+  const limited = rateLimit(`manage-billing:${userId}`, 8, 10 * 60 * 1000)
+  if (!limited.ok) throw new Error('Too many attempts. Please try again later.')
   const { data, error } = await serviceClient.from('subscriptions').select('customer_id').eq('user_id', userId).single()
   if (error || !data.customer_id) throw new Error('No billing account found.')
-  return (await stripeClient().billingPortal.sessions.create({ customer: data.customer_id, return_url: `${siteUrl()}/` })).url
+  /* flow_data deep links: 'payment-method' lands on the update-card screen
+     instead of the generic portal home. */
+  return (await stripeClient().billingPortal.sessions.create({
+    customer: data.customer_id,
+    return_url: `${siteUrl()}/profile`,
+    ...(flow === 'payment-method' ? { flow_data: { type: 'payment_method_update' } } : {}),
+  })).url
 }
 
 /* In-product auto-renew toggle. The Stripe-hosted portal's cancellation flow
@@ -98,18 +110,32 @@ export async function setPremiumRenewal(renew: boolean): Promise<PremiumStatus> 
   const userId = access.userId
   const limited = rateLimit(`renewal:${userId}`, 8, 10 * 60 * 1000)
   if (!limited.ok) throw new Error('Too many attempts. Please try again later.')
-  const { data: account, error } = await serviceClient.from('subscriptions').select('customer_id, subscription_id').eq('user_id', userId).maybeSingle()
-  if (error || !account?.customer_id || !account.subscription_id) throw new Error('No billing account found.')
+  const { data: account, error } = await serviceClient.from('subscriptions').select('customer_id').eq('user_id', userId).maybeSingle()
+  if (error || !account?.customer_id) throw new Error('No billing account found.')
+  /* Resolve the live subscription from Stripe rather than trusting the row:
+     between a re-subscribe checkout and the webhook sync, the row can still
+     point at the previous (canceled) subscription. */
+  let subscriptionId: string
+  try {
+    const subs = (await stripeClient().subscriptions.list({ customer: account.customer_id, status: 'all', limit: 100 })).data
+    const live = subs.find(s => ['active', 'trialing', 'past_due', 'unpaid'].includes(s.status))
+    if (!live) throw new Error('Your subscription is no longer active.')
+    subscriptionId = live.id
+  } catch (cause) {
+    if ((cause as { code?: string }).code === 'resource_missing') throw new Error('Your subscription is no longer active.')
+    throw cause
+  }
+  const stripe = stripeClient()
   try {
     if (renew) {
       /* Resuming must clear BOTH signals: flipping cancel_at_period_end back
          does not clear a cancel_at timestamp written by newer Stripe flows —
          the subscription would still cancel at that time. Stripe rejects both
          params in one update, so clear them sequentially. */
-      await stripeClient().subscriptions.update(account.subscription_id, { cancel_at_period_end: false })
-      await stripeClient().subscriptions.update(account.subscription_id, { cancel_at: '' as unknown as number })
+      await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: false })
+      await stripe.subscriptions.update(subscriptionId, { cancel_at: '' as unknown as number })
     } else {
-      await stripeClient().subscriptions.update(account.subscription_id, { cancel_at_period_end: true })
+      await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true })
     }
   } catch (cause) {
     if ((cause as { code?: string }).code === 'resource_missing') throw new Error('Your subscription is no longer active.')

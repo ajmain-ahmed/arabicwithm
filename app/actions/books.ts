@@ -347,7 +347,7 @@ export async function fetchChapterForPublic(bookId: string, chapterSlug: string)
      travels with the content, so there is no separate metadata round trip. */
   const chapter = await fetchChapterContent(bookId, chapterSlug)
   if (!chapter) return null
-  if (!canAccessBookChapter(true, chapter.chapterNumber)) return null
+  if (!canAccessBookChapter(true)) return null
   return chapter
 }
 

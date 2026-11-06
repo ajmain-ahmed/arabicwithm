@@ -15,7 +15,7 @@ import { formatMembershipDate } from '@/app/lib/display'
 interface PremiumPromptProps { open:boolean; onClose:()=>void; reason?:string; membershipSummary?:boolean; onProfileNavigate?:()=>void }
 /* Signed-out visitors cannot be premium, so the dialog renders the pitch
    without spending a round trip establishing that. */
-const SIGNED_OUT_STATUS: PremiumStatus = { premium: false, signedIn: false, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null, paymentIssue: false }
+const SIGNED_OUT_STATUS: PremiumStatus = { premium: false, signedIn: false, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null, paymentIssue: false, startedAt: null }
 export default function PremiumPrompt(props:PremiumPromptProps){
   const {user}=useAuth()
   // Re-openings and identity changes must verify current server entitlements.

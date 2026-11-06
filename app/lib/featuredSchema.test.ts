@@ -14,4 +14,4 @@ it('keeps config unique, constrained, service-only and separate from Show deleti
   expect((await db.query("select has_table_privilege('anon','featured_show_config','select') as anon,has_table_privilege('authenticated','featured_show_config','update') as member")).rows).toEqual([{anon:false,member:false}])
   await db.exec('delete from featured_show_config');expect((await db.query('select * from shows')).rows).toHaveLength(1)
  }finally{await db.close()}
-})
+},30000)

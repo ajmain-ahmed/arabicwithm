@@ -2,10 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { canAccessBookChapter, getRemainingFreeMemoryCards, hasPremium, hasPremiumAccess, platformDate, resolveEntitlements } from './entitlements'
 describe('central access policy', () => {
   it('allows every signed-in account to read and blocks guests', () => {
-    expect(canAccessBookChapter(false, 1)).toBe(false)
-    expect(canAccessBookChapter(true, 1)).toBe(true)
-    expect(canAccessBookChapter(true, 30)).toBe(true)
-    expect(canAccessBookChapter(true, -1)).toBe(false)
+    expect(canAccessBookChapter(false)).toBe(false)
+    expect(canAccessBookChapter(true)).toBe(true)
   })
   it('defines one guest, free, and premium entitlement matrix', () => {
     expect(resolveEntitlements(false, false)).toMatchObject({ tier: 'guest', canReadBooks: false, canDownloadBooks: false, canUseAudiobooks: false, memoryDailyLimit: 1 })

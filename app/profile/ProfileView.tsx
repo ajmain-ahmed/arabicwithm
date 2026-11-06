@@ -270,6 +270,18 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
     }
   }
   const [renewalBusy, setRenewalBusy] = useState(false)
+  const [cardBusy, setCardBusy] = useState(false)
+  /* Deep link: land directly on the portal's update-payment-method screen
+     (the dunning case), not the generic portal home. */
+  const updateCard = async () => {
+    setCardBusy(true); setError('')
+    try {
+      window.location.assign(await managePremium('payment-method'))
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to open billing. Please try again.')
+      setCardBusy(false)
+    }
+  }
   /* In-product auto-renew toggle: applies cancel_at_period_end directly (the
      portal flow has shown users confirmations that did not persist), then the
      returned server state updates the UI immediately — the webhook keeps the
@@ -287,12 +299,26 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
 
   const premium = status?.premium ?? false
   const manageable = status?.manageable ?? false
+  /* Whole months since the subscription began, counting the current one. */
+  const tenureMonths = (() => {
+    if (!status?.startedAt) return 0
+    const started = new Date(status.startedAt)
+    if (Number.isNaN(started.getTime())) return 0
+    const now = new Date()
+    return Math.max(1, (now.getFullYear() - started.getFullYear()) * 12 + (now.getMonth() - started.getMonth()) + (now.getDate() >= started.getDate() ? 1 : 0))
+  })()
 
   return (
     <Box className="pv-fade-up">
       <SectionLabel>Subscription</SectionLabel>
       <SectionTitle>AWM+</SectionTitle>
       <Box sx={{ background: 'var(--awm-white)', border: '1px solid rgba(184,134,11,0.18)', borderRadius: '4px', p: { xs: 2, sm: 3 } }}>
+        {premium && manageable && formatMembershipDate(status?.startedAt) && (
+          <Typography sx={{ mb: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.82rem', color: 'var(--awm-muted)' }}>
+            Member since {formatMembershipDate(status?.startedAt)}
+            {tenureMonths > 0 ? ` · ${tenureMonths} month${tenureMonths === 1 ? '' : 's'} a subscriber` : ''}
+          </Typography>
+        )}
         <Box component="ul" sx={{ m: 0, p: 0, listStyle: 'none', display: 'grid', gap: 1, mb: 2.5 }}>
           {PREMIUM_BENEFITS.map((benefit) => (
             <Box component="li" key={benefit.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.1, px: 1.5, py: 1.1, borderRadius: '2px', bgcolor: 'var(--awm-cream-light)' }}>
@@ -327,16 +353,21 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
               )}
             </Box>
             {premium && manageable && status?.paymentIssue && formatMembershipDate(status?.periodEnd) ? (
-              <Alert severity="error" sx={{ mt: 2, py: 0 }}>
-                Your last payment didn&rsquo;t go through — update your payment method. Access continues until {formatMembershipDate(status?.periodEnd)}.
-              </Alert>
+              <>
+                <Alert severity="error" sx={{ mt: 2, py: 0 }}>
+                  Your last payment didn&rsquo;t go through — update your payment method. Access continues until {formatMembershipDate(status?.periodEnd)}.
+                </Alert>
+                <Button onClick={() => void updateCard()} disabled={cardBusy} variant="outlined" startIcon={<CreditCardOutlined sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ mt: 1.5, width: '100%', minHeight: { xs: 44, sm: 40 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 14 }, borderColor: 'rgba(184,134,11,0.5)', color: 'var(--awm-bark)' }}>
+                  {cardBusy ? 'Opening…' : 'Update payment method'}
+                </Button>
+              </>
             ) : premium && manageable && status?.cancelAtPeriodEnd && formatMembershipDate(status.periodEnd) ? (
               <Alert severity="warning" icon={false} sx={{ mt: 2, py: 0 }}>
                 Cancellation scheduled — your access ends on {formatMembershipDate(status.periodEnd)}. You won&rsquo;t be charged again.
               </Alert>
             ) : premium && manageable && formatMembershipDate(status?.periodEnd) ? (
               <Typography sx={{ mt: 1.5, fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.8rem', color: 'var(--awm-muted)' }}>
-                Renews on {formatMembershipDate(status?.periodEnd)}.
+                Renews on {formatMembershipDate(status?.periodEnd)} · {PREMIUM.price}.
               </Typography>
             ) : null}
           </>

@@ -56,8 +56,11 @@ export function resolveEntitlements(signedIn: boolean, premium: boolean, role: '
   }
 }
 
-export function canAccessBookChapter(signedIn: boolean, chapter: number): boolean {
-  return signedIn && Number.isInteger(chapter) && chapter >= 1
+/** Reading is free for signed-in users by design; AWM+ gates PDF downloads,
+ * audiobooks, For You and Memory — not prose. The numbered preview window
+ * (books.free_chapter_count) only controls catalogue teasers and Explore. */
+export function canAccessBookChapter(signedIn: boolean): boolean {
+  return signedIn
 }
 
 /** Exemption is scoped to this canonical book, never to the user's global

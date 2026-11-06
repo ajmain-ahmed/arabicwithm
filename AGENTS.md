@@ -251,13 +251,15 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 4. Legacy markdown episodes still exist in `content/cartoons/` but are not used by the public site.
 
 ### Books & Audiobooks
-1. Chapter content is gated: `isBookReleased(bookId)` (DB `is_completed`), then sign-in, then `canAccessBookChapter` (free preview prefix; AWM+ or `premium_exempt` for the rest). The download route re-checks entitlements server-side.
+1. Chapter reading is free for signed-in users: `fetchChapterForPublic` gates on `isBookReleased` + sign-in (`canAccessBookChapter`). AWM+ gates PDF downloads, audiobooks, For You and Memory — not prose; `books.free_chapter_count` only controls the catalogue teaser/Explore preview window. The download route re-checks entitlements server-side.
 2. Audiobook playback goes through the `audiobook-library` Edge Function (JWT-verified, premium-checked) or `requestChapterAudio` Server Action; files live in the private `audiobooks` bucket behind signed URLs.
 3. Reading progress is stored in user metadata (`book_progress`) plus the session store; resume links carry `?page=/&block=` (both bounds-checked).
 
 ### Billing
 1. `startPremiumCheckout` re-fetches the Stripe price and validates currency/amount before creating a Checkout session; the webhook re-retrieves subscription state so retries can't reinstate stale access.
 2. Live keys are refused unless `STRIPE_LIVE_ENABLED=true` (`app/lib/billing.ts`).
+3. Disputes and refunds (`charge.dispute.created`, `charge.refunded`) are logged loudly by the webhook but never auto-revoke access — a dispute is not a loss and the subscription usually remains owed. Review them in the Stripe dashboard and handle manually (e.g. `manual_premium_grants` or portal cancellation).
+4. Account deletion is manual (users email hello@arabicwithm.com). Deleting the auth user cascades the `subscriptions` row but does **not** stop Stripe billing — whoever processes a deletion must also cancel the Stripe subscription (or revoke access via `manual_premium_grants`) and confirm no active subscription remains on the customer.
 
 ### Admin CMS
 - `/admin` redirects to `/admin/shows`; the CMS covers shows, episodes, books, chapters (+audio), phrases, Hans Wehr, featured content, transcripts, reviews/suggestions, and user management (roles + manual premium, both audit-logged).

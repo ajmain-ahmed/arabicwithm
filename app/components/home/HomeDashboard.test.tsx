@@ -11,7 +11,15 @@ vi.mock('@/app/components/ThemeProvider', () => ({ useColorMode: () => ({ mode: 
 vi.mock('@/app/actions/activity', () => ({ fetchLearningActivity: vi.fn() }))
 vi.mock('@/app/actions/profiles', () => ({ fetchMyDisplayName: vi.fn(() => Promise.resolve(null)) }))
 vi.mock('@/app/components/PremiumPrompt', () => ({ default: () => null }))
-vi.mock('@/app/lib/premiumStatusCache', () => ({ getPremiumStatus: () => Promise.resolve(null) }))
+vi.mock('@/app/actions/premium', () => ({
+  startPremiumCheckout: vi.fn(),
+  fetchPremiumStatus: vi.fn(async () => ({ premium: false, signedIn: true, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null, paymentIssue: false })),
+}))
+vi.mock('@/app/lib/premiumStatusCache', () => ({
+  readPremiumStatus: () => null,
+  getPremiumStatus: () => Promise.resolve({ premium: false, signedIn: true, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null, paymentIssue: false }),
+  refreshPremiumStatus: () => Promise.resolve({ premium: false, signedIn: true, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null, paymentIssue: false }),
+}))
 vi.mock('./LearningStats', () => ({
   default: () => {
     home.statsRendered = true

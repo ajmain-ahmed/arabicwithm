@@ -354,7 +354,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
 
         {/* ── Body ── */}
         <DialogContent sx={{ px: { xs: 2.5, sm: 4 }, pt: 3, pb: 4 }}>
-          {confirmationNotice&&<Alert severity="info" sx={{mb:2}}>Check your inbox — verify your email before signing in.</Alert>}
+          {confirmationNotice&&<Alert severity="info" icon={false} sx={{mb:2}}>Check your inbox — verify your email before signing in.</Alert>}
 
           {/* Mode toggle (only when not in forgot-password flow) */}
           {!forgotPassword && (

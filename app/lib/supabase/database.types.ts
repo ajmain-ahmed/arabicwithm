@@ -25,7 +25,7 @@ export interface Database {
       access_change_audit: Table<import('@/app/lib/reviews').AccessChange>
       content_suggestions: Table<import('@/app/lib/reviews').ContentSuggestion>
       feedback: Table<{ id: string; user_id: string; rating: number; comment: string | null; created_at: string }>
-      subscriptions: Table<{ user_id: string; customer_id: string; subscription_id: string | null; status: string; current_period_end: string; cancel_at_period_end: boolean; event_created: number }>
+      subscriptions: Table<{ user_id: string; customer_id: string; subscription_id: string | null; status: string; current_period_end: string; cancel_at_period_end: boolean; event_created: number; started_at: string | null }>
       memory_reviews: Table<{ user_id: string; completion_id: string; card_id: string; rating: string; activity_date: string; xp: number; created_at: string }>
       memory_sessions: Table<{ user_id: string; state: Json; updated_at: string }>
       memory_legacy_progress: Table<{ user_id: string; xp: number }>
@@ -393,7 +393,7 @@ export interface Database {
       complete_memory_card: { Args: { p_user_id: string; p_completion_id: string; p_card_id: string; p_rating: string; p_xp: number; p_daily_limit: number; p_has_premium: boolean; p_session: Json }; Returns: Json }
       learning_xp_totals: { Args: { p_user_id: string; p_since?: string | null }; Returns: Json }
       complete_word_search: { Args: { p_user_id: string; p_completion_id: string; p_puzzle_id: string; p_source_type: string; p_source_id: string; p_difficulty: string; p_word_count: number; p_words_found: number; p_mistakes: number; p_hints_used: number; p_reveals_used: number; p_duration_seconds: number; p_xp: number }; Returns: Json }
-      apply_subscription_event: { Args: { p_user_id: string; p_event_created: number; p_subscription_id: string; p_status: string; p_period_end: string; p_cancel_at_period_end: boolean }; Returns: undefined }
+      apply_subscription_event: { Args: { p_user_id: string; p_event_created: number; p_subscription_id: string; p_status: string; p_period_end: string; p_cancel_at_period_end: boolean; p_started_at: string }; Returns: undefined }
 
       increment_learning_activity: {
         Args: {

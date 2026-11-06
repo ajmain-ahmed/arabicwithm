@@ -18,6 +18,8 @@ import { useColorMode } from '@/app/components/ThemeProvider'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
 import { useBookMyList } from '@/app/lib/bookMyList'
 import AppDownloadSection from './AppDownloadSection'
+import CheckoutReturnNotice from './CheckoutReturnNotice'
+import AwmPromoSection from './AwmPromoSection'
 import { fetchMyList } from '@/app/actions/myList'
 import { useMyListCache } from '@/store/myListStore'
 import MemberActions from '@/app/components/navbar/MemberActions'
@@ -240,6 +242,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured }
         )}
 
         <Box className="awm-pattern-section" sx={{ pt: { xs: 3.5, md: 4.5 }, pb: { xs: 3, md: 5 } }}>
+          {user && <CheckoutReturnNotice userId={user.id} />}
           {user && myListRowItems.length > 0 && (
             <Container maxWidth={false}>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
@@ -325,7 +328,8 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured }
               ].map(({ title, href, Icon }) => <Paper key={href} component={Link} href={href} elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minHeight: 76, p: 2, borderRadius: '10px', textDecoration: 'none', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><Icon sx={{ color: 'var(--awm-gold)' }} /><Typography sx={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14 }}>{title}</Typography></Paper>)}
             </Box>
           </Container>
-          {!authLoading && !user && <Container maxWidth="lg" sx={{ mt: { xs: 4, md: 4 } }}><AppDownloadSection /></Container>}
+          {!authLoading && !user && <Container maxWidth="lg" sx={{ mt: { xs: 6, md: 8 }, mb: { xs: 6, md: 8 } }}><AppDownloadSection /></Container>}
+          {!authLoading && user && <Container maxWidth="lg" sx={{ mt: { xs: 6, md: 8 }, mb: { xs: 6, md: 8 } }}><AwmPromoSection userId={user.id} /></Container>}
         </Box>
       </Box>
   )
