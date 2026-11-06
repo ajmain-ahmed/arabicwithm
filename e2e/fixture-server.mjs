@@ -43,7 +43,7 @@ const rpcLog=[],tableLog=[];let failSearch=false
 let failAudioSave = false
 let forYouPlayback=false
 let discoveryClips=[]
-let dataContractClips=null,failForYouRequest=false
+let dataContractClips=null,failForYouRequest=false,spotlightMode=false,spotlightEnglish=true
 const manualPremium=new Map(), memoryStarts=new Map(), memorySnapshots=new Map(), memoryReviews=new Map(), ownReviews=new Map(), earned=new Set(), wordTotals=new Map()
 const effective=id=>id===ids.premium||roleFor(id)==='admin'||manualPremium.get(id)===true
 const usage=id=>[...memoryStarts.values()].filter(row=>row.userId===id).length
@@ -64,7 +64,8 @@ const tables = {
   featured_show_config: [],
   book_audio_progress: [],
   youtube_transcripts: [],
-  transcript_groups: [],
+  transcript_groups: [{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English',parent_id:null}],
+  for_you_candidates: [],
   admin_manual_transcripts: [],
   transcript_segments: [],
   books: [{ id: bookId, slug: 'test-book', title: 'Test Book', title_ar: 'كتاب', author: 'Fixture Author', description:'A clear book description.', level: 'A1', tags: [], premium_exempt: false, free_chapter_count: 5 }],
@@ -199,6 +200,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     for(const language of ['ar','en']) if(!tables.book_chapter_audio.some(row=>row.chapter_id===second&&row.language===language)) tables.book_chapter_audio.push({...tables.book_chapter_audio.find(row=>row.language===language),chapter_id:second})
     return json(res,{})
   }
+  if(url.pathname==='/fixture/spotlight'){spotlightMode=true;tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:'5b98c563-5c35-4696-98e1-06aa000eb622'}));spotlightEnglish=body.english!==false;rpcLog.length=0;return json(res,{})}
   if(url.pathname==='/fixture/request-log')return json(res,{rpc:rpcLog,tables:tableLog})
   if(url.pathname==='/fixture/search-failure'){failSearch=body.fail;return json(res,{})}
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
@@ -229,7 +231,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     const samples=JSON.parse(readFileSync('app/lib/fixtures/forYouAffectedCandidates.json','utf8'))
     failForYouRequest=body.fail===true
     const group='77777777-7777-4777-8777-777777777770'
-    tables.transcript_groups=[{id:group,name:'Fallback sources'}]
+    tables.transcript_groups=[{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English',parent_id:null},{id:group,name:'Fallback sources'}]
     tables.youtube_transcripts=samples.map(s=>{const content=[];content[s.position]={tokens:s.source_tokens};return {id:s.transcript_id,status:'ready',explore_published:true,source_origin:'website_admin_transcript',raw_transcript:{content}}})
     tables.transcript_segments=samples.map(s=>({...s,transcript_id:s.transcript_id}))
     dataContractClips=samples.map(s=>({video:{id:s.transcript_id,youtube_id:s.youtube_id,title:s.title,channel:null},clip_start_ms:s.start_seconds*1000,clip_end_ms:s.end_seconds*1000,segments:[{...s,source_tokens:undefined}]}))
@@ -240,7 +242,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     dataContractClips=null
     discoveryClips=[]
     forYouPlayback=true
-    tables.transcript_groups=[{id:'77777777-7777-4777-8777-777777777770',name:'Fixture A'},{id:'77777777-7777-4777-8777-777777777771',name:'Fixture B'}]
+    tables.transcript_groups=[{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English',parent_id:null},{id:'77777777-7777-4777-8777-777777777770',name:'Fixture A'},{id:'77777777-7777-4777-8777-777777777771',name:'Fixture B'}]
     for(let i=0;i<7;i++){
       const id=`99999999-9999-4999-8999-99999999999${i}`
       const segments=[{id:800+i*10,position:0,start_seconds:375,end_seconds:390,original_text:'Earlier sentence',english_text:'Earlier sentence',tokens:[{arabic:'سَابِقٌ',english:'earlier'}]},
@@ -322,8 +324,14 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       if(!body.p_subscribe&&reminder&&!reminder.fulfilled_at)tables.book_release_reminders=tables.book_release_reminders.filter(row=>row!==reminder)
       return json(res,tables.book_release_reminders.some(row=>row.book_id===book.id&&row.user_id===userId&&!row.fulfilled_at))
     }
-    const rpc = url.pathname.split('/').at(-1)
+    let rpc = url.pathname.split('/').at(-1)
     rpcLog.push(rpc)
+    if(rpc==='transcript_for_you_groups'&&spotlightMode){
+        const clips=Array.from({length:8},(_,i)=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Spotlight fixture',channel:'Fixture'},clip_start_ms:0,clip_end_ms:30000,segments:[0,1].map(j=>({id:100+i*10+j,position:j,start_seconds:j*15,end_seconds:(j+1)*15,original_text:j?'Second Arabic subtitle':'First Arabic subtitle',english_text:'A subtitle.',source_tokens:[{arabic:'\u0643\u062a\u0627\u0628',english:'book'}]}))}))
+      const english=new Set(tables.admin_manual_transcripts.filter(m=>m.group_id==='5b98c563-5c35-4696-98e1-06aa000eb622').map(m=>m.transcript_id))
+      tables.for_you_candidates=clips.flatMap(c=>c.segments.map(s=>({segment_id:s.id,transcript_id:c.video.id})))
+      return json(res,clips.filter(c=>(spotlightEnglish||!english.has(c.video.id))&&(!body.p_group_ids?.length||english.has(c.video.id))&&!body.p_excluded?.includes(c.segments[0].id)).sort((a,b)=>createHash('md5').update(a.video.id+body.p_seed).digest('hex').localeCompare(createHash('md5').update(b.video.id+body.p_seed).digest('hex'))).slice(0,body.p_limit))
+    }
     const learning = JSON.parse(readFileSync('e2e/learning-data.json','utf8'))
     if(rpc==='transcript_for_you_groups'&&dataContractClips){if(failForYouRequest){failForYouRequest=false;return json(res,{code:'XX000',message:'fixture private database failure'},500)}return json(res,dataContractClips.filter(c=>!body.p_excluded?.includes(c.segments[0].id)).slice(0,body.p_limit??5))}
     if(rpc==='transcript_for_you_groups'&&discoveryClips.length)return json(res,discoveryClips.filter(c=>!body.p_excluded?.includes(c.segments[0].id)).sort((a,b)=>Number(body.p_recent?.includes(a.video.id))-Number(body.p_recent?.includes(b.video.id))||createHash('md5').update(a.video.id+body.p_seed).digest('hex').localeCompare(createHash('md5').update(b.video.id+body.p_seed).digest('hex'))).slice(0,5))

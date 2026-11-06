@@ -11,6 +11,9 @@ import ForYouFeed, {clearForYouTranscripts} from './ForYouFeed'
 import {useForYouCache} from '@/store/forYouStore'
 
 type ExploreView = 'explore' | 'foryou'
+function openForYouAuth(){window.dispatchEvent(new CustomEvent('open-auth-dialog',{detail:{mode:'signin',purpose:'Sign in to explore For You'}}))}
+
+function LanguageSwitch({value,onChange}:{value:'ar'|'en';onChange:(value:'ar'|'en')=>void}){return <Box role="group" aria-label="Source video language" sx={{display:{xs:'none',md:'flex'},border:'1px solid #ffffff55',borderRadius:'999px',p:.25}}>{(['ar','en'] as const).map(language=><Button key={language} aria-pressed={value===language} onClick={()=>onChange(language)} sx={{minWidth:40,minHeight:36,borderRadius:'999px',color:'#fff',bgcolor:value===language?'#ffffff33':'transparent'}}>{language.toUpperCase()}</Button>)}</Box>}
 
 function ViewSwitch({ view, onChange, hint, onDismiss, mobile = false, horizontal = false, trailing }: { view: ExploreView; onChange: (view: ExploreView) => void; hint: boolean; onDismiss: () => void; mobile?: boolean; horizontal?: boolean; trailing?: ReactNode }) {
   if (mobile) return <Box role="group" aria-label="Explore views" sx={{ display: 'flex', p: .25, borderRadius: '9999px', bgcolor: 'rgba(0,0,0,.3)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,.2)' }}>
@@ -30,24 +33,24 @@ function ViewSwitch({ view, onChange, hint, onDismiss, mobile = false, horizonta
   </Box>
 }
 
-export default function ExploreViews({ initialSeed, initialBatch }: { initialSeed: string; initialBatch: ExploreFeedBatch | null }) {
+export default function ExploreViews({ initialSeed, initialBatch, initialView='foryou' }: { initialView?:ExploreView; initialSeed: string; initialBatch: ExploreFeedBatch | null }) {
   const { user, loading } = useAuth()
-  const [view, setView] = useState<ExploreView>('explore')
+  const [view, setView] = useState<ExploreView>(initialView)
+  const [language,setLanguage]=useState<'ar'|'en'>(()=>useForYouCache.getState().language)
+  function selectLanguage(next:'ar'|'en'){if(next===language)return;clearForYouTranscripts();useForYouCache.setState({language:next,clips:[],index:0,excluded:[],seenSources:[],seed:''});setLanguage(next)}
+  useEffect(()=>{const restore=()=>{const q=new URLSearchParams(window.location.search);setView((q.get('view')??q.get('tab'))==='explore'?'explore':'foryou')};window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore)},[])
   /* Signed-out visitors asking for For You get the auth dialog immediately;
      the view stays gated until they sign in rather than swapping to an
      inline prompt screen. */
   const requestView = (next: ExploreView) => {
-    if (next === 'foryou' && !user) {
-      if (!loading) window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } }))
-      return
-    }
-    setView(next)
+    const url=new URL(window.location.href);url.searchParams.set('view',next);window.history.pushState(null,'',url);setView(next)
+    if(next==='foryou'&&!user&&!loading)openForYouAuth()
   }
   /* Session expired (or revoked) while sitting on For You: prompt to sign
      in again instead of leaving the inline wall as the only path. */
   useEffect(() => {
     if (view === 'foryou' && !loading && !user) {
-      window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } }))
+      openForYouAuth()
     }
   }, [view, loading, user])
   useEffect(()=>{
@@ -73,6 +76,6 @@ export default function ExploreViews({ initialSeed, initialBatch }: { initialSee
   const rail = <ViewSwitch view={view} onChange={requestView} hint={hintFor === view} onDismiss={dismiss} />
   return <Box sx={{ position: 'relative', '--awm-explore-switch-height': '0px' }}>
     <Box data-mobile-explore-switch sx={{ display: { xs: view === 'explore' ? 'flex' : 'none', md: 'none' }, position: 'absolute', top: 12, left: 'max(12px, env(safe-area-inset-left))', zIndex: 10 }}><ViewSwitch mobile view={view} onChange={requestView} hint={false} onDismiss={dismiss} /></Box>
-    {view === 'explore' ? <ExploreFeed railTop={<Box sx={{ display: { xs: 'none', md: 'block' } }}>{rail}</Box>} initialSeed={initialSeed} initialBatch={initialBatch} /> : !user ? <Box sx={{minHeight:'calc(100dvh - var(--awm-navbar-height))',display:'grid',placeItems:'center',p:3}}><Box sx={{textAlign:'center'}}><Typography variant="h4">For You</Typography><Typography sx={{my:2}}>{loading?'Checking your account…':'Sign in to watch your For You feed.'}</Typography>{!loading&&<Button variant="contained" onClick={()=>window.dispatchEvent(new CustomEvent('open-auth-dialog',{detail:{mode:'signin'}}))}>Sign in</Button>}<Button onClick={()=>setView('explore')} sx={{display:'block',mx:'auto',mt:2}}>Back to Explore</Button></Box></Box> : <ForYouAllowance key={user.id} onExplore={()=>setView('explore')}><ForYouFeed mobileSwitcher={<ViewSwitch mobile view={view} onChange={requestView} hint={false} onDismiss={dismiss} />} desktopControls={settings => <ViewSwitch view={view} onChange={requestView} hint={hintFor === view} onDismiss={dismiss} trailing={settings} />} /></ForYouAllowance>}
+    {view === 'explore' ? <ExploreFeed railTop={<Box sx={{ display: { xs: 'none', md: 'block' } }}>{rail}</Box>} initialSeed={initialSeed} initialBatch={initialBatch} /> : !user ? <Box sx={{minHeight:'calc(100dvh - var(--awm-navbar-height))',display:'grid',placeItems:'center',p:3}}><Box sx={{textAlign:'center'}}><Typography variant="h4">For You</Typography><Typography sx={{my:2}}>{loading?'Checking your account…':'Sign in or register to explore For You.'}</Typography>{!loading&&<Button variant="contained" onClick={openForYouAuth}>Sign in</Button>}<Button onClick={()=>requestView('explore')} sx={{display:'block',mx:'auto',mt:2}}>Back to Explore</Button></Box></Box> : <ForYouAllowance key={user.id} onExplore={()=>requestView('explore')}><ForYouFeed key={language} language={language} languageControl={<LanguageSwitch value={language} onChange={selectLanguage}/>} mobileSwitcher={<ViewSwitch mobile view={view} onChange={requestView} hint={false} onDismiss={dismiss} />} desktopControls={settings => <ViewSwitch view={view} onChange={requestView} hint={hintFor === view} onDismiss={dismiss} trailing={settings} />} /></ForYouAllowance>}
   </Box>
 }

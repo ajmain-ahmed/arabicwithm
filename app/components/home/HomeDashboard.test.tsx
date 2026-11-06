@@ -71,3 +71,13 @@ describe('homepage hero', () => {
     expect(html).not.toContain('Learn Arabic through cartoons and books')
   })
 })
+
+for(const signedIn of [false,true])it(`keeps Spotlight between Episodes and Shows for ${signedIn?'members':'guests'} without gating the teaser`,()=>{
+ home.user=signedIn?{id:'user-id',user_metadata:{full_name:'Test User'}}:null
+ const coverCrop={x:50,y:50,zoom:1}
+ const html=renderToStaticMarkup(<HomeDashboard books={[]} newShows={[{id:'show',slug:'show',title:'Test Show',level:'A1',category:null,coverCrop}]} newEpisodes={[{id:'episode',slug:'episode',title:'Test Episode',level:'A1',showSlug:'show',showTitle:'Test Show',coverCrop}]} />)
+ const episodes=html.indexOf('>Latest Episodes<'),spotlight=html.indexOf('>For You Spotlight<'),shows=html.indexOf('>Shows<')
+ expect(episodes).toBeGreaterThan(-1);expect(spotlight).toBeGreaterThan(episodes);expect(shows).toBeGreaterThan(spotlight)
+ expect(html).toContain('data-home-spotlight');expect(html).toContain('/explore?view=foryou')
+ if(!signedIn)expect(html).toContain('id="download-app"')
+})

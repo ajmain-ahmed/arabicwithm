@@ -5,6 +5,7 @@ import type { ForYouClip } from '@/app/lib/forYou'
    remount) restores the clips, position, and exclusions without refetching. */
 
 interface ForYouCacheState {
+  language: 'ar'|'en'
   clips: ForYouClip[]
   index: number
   excluded: number[]
@@ -16,6 +17,7 @@ interface ForYouCacheState {
 }
 
 export const useForYouCache = create<ForYouCacheState>((set) => ({
+  language: 'ar',
   clips: [],
   index: 0,
   excluded: [],

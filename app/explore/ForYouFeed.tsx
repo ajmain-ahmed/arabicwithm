@@ -49,7 +49,7 @@ export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tok
   </Box>
 }
 
-export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl, onComplete }: { onComplete?:()=>void; full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
+export function ClipPlayer({ clip, desktopLanguageControl, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl, onComplete }: { desktopLanguageControl?:ReactNode; onComplete?:()=>void; full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
   const samplePlayback=useForYouMeter()
   const canAdvance=useForYouAdvance()
   const completed=useRef(false)
@@ -119,9 +119,9 @@ export function ClipPlayer({ clip, leftControls, rightControls, mobileToolbar, m
     </Box>
     {isPhone&&autoplayBlocked&&soundEnabled&&<Typography role="status" sx={{color:"inherit",px:2,py:1,fontSize:13}}>Tap the video to play with sound.</Typography>}
     {ended && <Box sx={{display:{xs:'none',md:'flex'},justifyContent:'center',mt:1}}><Button onClick={()=>{setEnded(false);seekTo(clip.clip_start_ms/1000)}} sx={{color:{md:'var(--awm-gold-light)'}}}>Replay clip</Button></Box>}
-    <Box data-desktop-for-you-toolbar sx={{display:{xs:'none',md:'flex'},alignItems:'center',justifyContent:'space-between',gap:1.25,py:2,color:'#fff','& .MuiIconButton-root':{color:'#fff',width:44,height:44},'& .MuiButton-root':{color:'#fff'}}}>
+    <Box data-desktop-for-you-toolbar sx={{display:{xs:'none',md:'flex'},alignItems:'center',justifyContent:'space-between',gap:1.25,flexWrap:'wrap',py:2,color:'#fff','& .MuiIconButton-root':{color:'#fff',width:44,height:44},'& .MuiButton-root':{color:'#fff'}}}>
       {navigation&&<IconButton aria-label="Previous video" disabled={navigation.previousDisabled} onClick={navigation.previous}><KeyboardArrowUp/></IconButton>}
-      {mobileSwitcher}
+      {mobileSwitcher}{desktopLanguageControl}
       <IconButton aria-label={isMuted?'Unmute clip':'Mute clip'} disabled={!isReady} onClick={sound}>{isMuted?<VolumeOff/>:<VolumeUp/>}</IconButton>
       <Button aria-label="Playback speed" disabled={!isReady||rates.length<2} onClick={()=>setPlaybackRate(nextRate)} sx={{minWidth:44,height:44,textTransform:'none'}}>{rate}{'\u00d7'}</Button>
       {filterControl}{mobileToolbar}{modeControl}
@@ -188,7 +188,7 @@ function ForYouLoading({ progress, leftControls, rightControls, mobileControls }
   </Box>
 }
 
-export function Feed({ previewSegments, initialClips, railSwitcher, desktopControls, mobileSwitcher, filterControl, groups = [] }: { previewSegments?: ForYouSegment[]; mobileSwitcher?: ReactNode; filterControl?: ReactNode; groups?: string[]; initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode; desktopControls?: (settings: ReactNode) => ReactNode }) {
+export function Feed({ previewSegments, initialClips, railSwitcher, desktopControls, mobileSwitcher, filterControl, languageControl, groups = [], language = 'ar' }: { previewSegments?: ForYouSegment[]; mobileSwitcher?: ReactNode; filterControl?: ReactNode; groups?: string[]; languageControl?:ReactNode; language?:'ar'|'en'; initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode; desktopControls?: (settings: ReactNode) => ReactNode }) {
   const canAdvance=useForYouAdvance()
   const [full,setFull]=useState(false)
   const modeControl=()=> <ShortFullSwitch full={full} onChange={setFull}/>
@@ -261,7 +261,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
       // A cached first batch may contain only blocked sources. Exclude those
       // segment IDs and ask for another batch, with a finite retry budget.
       for(let attempt=0;attempt<8;attempt++){
-        let batch=await fetchForYouClips(seed.current,[...seen].slice(-10000),[...seenSources.current].reverse().slice(0,10000),groups)
+        let batch=await fetchForYouClips(seed.current,[...seen].slice(-10000),[...seenSources.current].reverse().slice(0,10000),groups,language)
         // Exhaustion starts another cycle. Keep the latest item/source least preferred.
         if(!batch.length&&seen.size){
           recycling=true;seed.current=crypto.randomUUID()
@@ -269,8 +269,8 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
           const latest=feedRef.current.clips[feedRef.current.index]
           latest?.segments.forEach(segment=>seen.add(segment.id))
           seenSources.current=new Set(latest?[latest.video.id]:[])
-          batch=await fetchForYouClips(seed.current,[...seen],[...seenSources.current],groups)
-          if(!batch.length)batch=await fetchForYouClips(seed.current,[],[...seenSources.current],groups)
+          batch=await fetchForYouClips(seed.current,[...seen],[...seenSources.current],groups,language)
+          if(!batch.length)batch=await fetchForYouClips(seed.current,[],[...seenSources.current],groups,language)
         }
         next=batch.filter(clip=>!blocked.has(clip.video.youtube_id))
         if(next.length||!batch.length)break
@@ -334,7 +334,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
   }
   const settingsButton=<Box sx={{display:'flex',flexDirection:{xs:'row',md:'column'},gap:{xs:1,md:0},alignItems:'center'}}><Tooltip title="Settings"><IconButton aria-label="Settings" aria-expanded={!!settingsAnchor} onClick={event=>setSettingsAnchor(event.currentTarget)} sx={{width:{xs:44,md:50},height:{xs:44,md:50},color:'#fff',bgcolor:settingsAnchor?{xs:'var(--awm-forest)',md:'rgba(184,134,11,.24)'}:{xs:'var(--awm-forest)',md:'rgba(255,255,255,.14)'},border:settingsAnchor?'1px solid var(--awm-gold)':'1px solid transparent','&:hover':{color:'#fff',bgcolor:{xs:'var(--awm-forest)',md:'rgba(184,134,11,.3)'}},'&:active':{color:'#fff'},'&.Mui-disabled':{color:'rgba(255,255,255,.5)'},'&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}><SettingsOutlined/></IconButton></Tooltip><Typography sx={{fontSize:{xs:13,md:11},color:{xs:'var(--awm-bark)',md:'#fff'},mt:{xs:0,md:.5}}}>Settings</Typography></Box>
   const mobileSettingsButton = <IconButton aria-label="Settings" aria-expanded={!!settingsAnchor} onClick={event => setSettingsAnchor(event.currentTarget)} sx={{ width: 40, height: 40, color: '#fff', '&:hover': { bgcolor: 'rgba(255,255,255,.1)' }, '&:focus-visible': { outline: '2px solid var(--awm-gold-light)', outlineOffset: 2 } }}><SettingsOutlined /></IconButton>
-  const desktopRail=<Box sx={{display:{xs:'none',md:'flex'},flexDirection:'column',alignItems:'center',gap:1}}>{desktopControls?.(settingsButton)??<>{railSwitcher}{settingsButton}</>}{modeControl()}</Box>
+  const desktopRail=<Box sx={{display:{xs:'none',md:'flex'},flexDirection:'column',alignItems:'center',gap:1}}>{languageControl}{desktopControls?.(settingsButton)??<>{railSwitcher}{settingsButton}</>}{modeControl()}</Box>
   const initialLoading = clips.length === 0 && busy
 
   return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: '#111d18', md: '#0a0c0b' }, pt: { xs: 0, md: 3 }, height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'auto' }, pb: { xs: 0, md: 5 } }}>
@@ -361,7 +361,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
                 <MobileClipNavigator clipKey={`${clips[index].video.id}:${clips[index].clip_start_ms}`} disabled={full || !!previewSegments} canPrevious={index>0} busy={busy && index >= clips.length - 1} step={step}><ClipPlayer
                   key={`${index}:${clips[index].video.id}:${clips[index].clip_start_ms}`}
                   onComplete={previewSegments?undefined:()=>step(1)} full={full} suppliedSegments={previewSegments} modeControl={modeControl()} mobileModeControl={<Button data-mobile-mode onClick={()=>setFull(!full)} sx={{color:'inherit',bgcolor:'var(--awm-gold)',borderRadius:'999px',textTransform:'none',fontWeight:600}}>{full?'Full':'Short'}</Button>} clip={clips[index]}
-                  onUnavailable={unavailable}
+                  desktopLanguageControl={languageControl} onUnavailable={unavailable}
                   settings={settings}
                   navigation={previewSegments ? undefined : {previous:()=>step(-1),next:()=>step(1),previousDisabled:index===0,nextDisabled:busy&&index>=clips.length-1}}
                   mobileToolbar={mobileSettingsButton}
@@ -381,5 +381,5 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
 export default function ForYouFeed(props: React.ComponentProps<typeof Feed>) {
  const [groups,setGroups]=useState<string[]>(()=>useForYouCache.getState().groups)
  const [version,setVersion]=useState(0)
- return <Feed {...props} key={version} groups={groups} filterControl={<ForYouGroupFilter value={groups} onApply={value=>{useForYouCache.setState({clips:[],index:0,excluded:[],seenSources:[],seed:'',groups:value});setGroups(value);setVersion(v=>v+1)}}/>}/>
+ return <Feed {...props} key={`${props.language??'ar'}:${version}`} groups={groups} filterControl={<ForYouGroupFilter value={groups} onApply={value=>{useForYouCache.setState({clips:[],index:0,excluded:[],seenSources:[],seed:'',groups:value});setGroups(value);setVersion(v=>v+1)}}/>}/>
 }

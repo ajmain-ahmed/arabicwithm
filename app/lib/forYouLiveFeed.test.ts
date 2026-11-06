@@ -109,3 +109,30 @@ it('does not count decorative tatweel, punctuation, empty tokens or timestamps a
  const result=await db.query<{words:number}>('select transcript_private.for_you_word_count($1,$2) words',['',JSON.stringify(tokens)])
  expect(result.rows[0].words).toBe(1)
 })
+
+it('keeps English membership subordinate to publication, with independent AR/EN randomness and live moves',async()=>{
+ const english='5b98c563-5c35-4696-98e1-06aa000eb622'
+ await db.query('insert into transcript_groups values($1,$2,null)',[english,'English'])
+ for(let i=13;i<=25;i++)await db.query('insert into admin_manual_transcripts values($1,$2)',[source(i),english])
+ await db.query('update youtube_transcripts set explore_published=false where id=$1',[source(25)])
+ async function pool(language:'ar'|'en',seed:string){
+  const excluded=language==='ar'?(await db.query<{segment_id:number}>('select c.segment_id from for_you_candidates c join admin_manual_transcripts m on m.transcript_id=c.transcript_id where m.group_id=$1',[english])).rows.map(r=>Number(r.segment_id)):[]
+  return batch(seed,excluded,[],language==='en'?[english]:[])
+ }
+ const ar=new Set<string>(),en=new Set<string>(),arOpen=new Set<string>(),enOpen=new Set<string>()
+ for(let i=0;i<30;i++){
+  const a=await pool('ar',String(i)),b=await pool('en',String(i))
+  a.forEach(c=>ar.add(c.video.id));b.forEach(c=>en.add(c.video.id));arOpen.add(a[0].video.id);enOpen.add(b[0].video.id)
+ }
+ expect(ar.has(source(1))).toBe(true);expect(en.has(source(1))).toBe(false)
+ expect(en.has(source(13))).toBe(true);expect(ar.has(source(13))).toBe(false)
+ expect(en.has(source(25))).toBe(false);expect([...ar].some(id=>en.has(id))).toBe(false)
+ expect(arOpen.size).toBeGreaterThan(1);expect(enOpen.size).toBeGreaterThan(1)
+ await db.query('insert into admin_manual_transcripts values($1,$2)',[source(1),english])
+ await db.query('delete from admin_manual_transcripts where transcript_id=$1',[source(13)])
+ await db.query('update transcript_groups set name=$1 where id=$2',['Renamed',english])
+ const nextAr=new Set<string>(),nextEn=new Set<string>()
+ for(let i=0;i<30;i++){(await pool('ar',String(i))).forEach(c=>nextAr.add(c.video.id));(await pool('en',String(i))).forEach(c=>nextEn.add(c.video.id))}
+ expect(nextAr.has(source(1))).toBe(false);expect(nextEn.has(source(1))).toBe(true)
+ expect(nextAr.has(source(13))).toBe(true);expect(nextEn.has(source(13))).toBe(false)
+})

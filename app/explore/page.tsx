@@ -14,8 +14,10 @@ export const metadata: Metadata = {
    a loading stage, while returning visitors still restore their session cache
    client-side with only a small fresh batch fetched. A failed fetch falls back
    to the client's own first load (initialBatch = null). */
-export default async function ExplorePage() {
+export default async function ExplorePage({searchParams}:{searchParams:Promise<{view?:string;tab?:string}>}) {
+  const query=await searchParams
+  const initialView=(query.view??query.tab)==='explore'?'explore':'foryou'
   const seed = getExploreSeed()
-  const initialBatch = await fetchExploreFeedPage(seed, 0).catch(() => null)
-  return <ExploreViews initialSeed={seed} initialBatch={initialBatch} />
+  const initialBatch = initialView==='explore'?await fetchExploreFeedPage(seed, 0).catch(() => null):null
+  return <ExploreViews initialView={initialView} initialSeed={seed} initialBatch={initialBatch} />
 }

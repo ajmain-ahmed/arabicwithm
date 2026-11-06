@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import type { EmailOtpType } from '@supabase/supabase-js'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const ALLOWED_DESTINATIONS = new Set(['/', '/reset-password', '/memory', '/grammar'])
+const ALLOWED_DESTINATIONS = new Set(['/', '/reset-password', '/memory', '/grammar', '/explore'])
 
 /* Email links (confirm signup, magic link, recovery, email change) carry
    token_hash + type; OAuth carries code. Both become a session below. */

@@ -9,7 +9,7 @@ async function signIn(context:BrowserContext,premium=false){
 }
 for(const width of [390,1440])test(`discovery auto-advances 20 varied sources and refreshes on reload at ${width}`,async({page,context,request})=>{
  await request.post(`${backend}/fixture/for-you-discovery`);await signIn(context,true);await installYouTubeFixture(page)
- await page.setViewportSize({width,height:950});await page.goto('/explore');await page.getByRole('button',{name:'For You feed',exact:true}).click()
+ await page.setViewportSize({width,height:950});await page.goto('/explore?view=explore');await page.getByRole('button',{name:'For You feed',exact:true}).click()
  const clip=page.locator('[data-for-you-source]')
  await expect(clip.locator('iframe')).toBeVisible()
  const history:string[]=[]

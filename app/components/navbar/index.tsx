@@ -43,6 +43,7 @@ export default function Navbar() {
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [drawerMounted, setDrawerMounted] = useState(false)
     const [authDialogOpen, setAuthDialogOpen] = useState(false)
+    const [authDialogPurpose,setAuthDialogPurpose]=useState<string|undefined>()
     const [authDialogMode, setAuthDialogMode] = useState<'register' | 'signin'>('signin')
     const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null)
     const navbarRef = useRef<HTMLElement>(null)
@@ -76,7 +77,9 @@ export default function Navbar() {
 
     useEffect(() => {
         const handler = (event: Event) => {
-            const mode = (event as CustomEvent<{ mode?: 'register' | 'signin' }>).detail?.mode
+            const detail=(event as CustomEvent<{mode?:'register'|'signin';purpose?:string}>).detail
+            const mode=detail?.mode
+            setAuthDialogPurpose(typeof detail?.purpose==='string'?detail.purpose.slice(0,120):undefined)
             setAuthDialogMode(mode === 'register' ? 'register' : 'signin')
             setAuthDialogOpen(true)
         }
@@ -96,6 +99,7 @@ export default function Navbar() {
     }
 
     const openSignIn = () => {
+        setAuthDialogPurpose(undefined)
         setAuthDialogMode('signin')
         setAuthDialogOpen(true)
     }
@@ -158,7 +162,7 @@ export default function Navbar() {
                 }}
             />
 
-            {authDialogOpen && <AuthDialog key={authDialogMode} open onClose={() => setAuthDialogOpen(false)} initialMode={authDialogMode} />}
+            {authDialogOpen && <AuthDialog key={authDialogMode} open onClose={() => setAuthDialogOpen(false)} initialMode={authDialogMode} purpose={authDialogPurpose} />}
 
             <AppBar
                 ref={navbarRef}

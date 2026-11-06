@@ -6,6 +6,10 @@ async function requireForYouUser() {
  if (!(await getAuthenticatedUserId())) throw new Error('Sign in to use For You.')
 }
 
+import { forYouGroupPool } from '@/app/lib/forYouGroups'
+import { randomUUID } from 'node:crypto'
+import { headers } from 'next/headers'
+import { rateLimit } from '@/app/lib/rateLimit'
 import { z } from 'zod'
 import { serviceClient } from '@/app/lib/supabase'
 import { type ForYouClip, type ForYouSegment } from '@/app/lib/forYou'
@@ -15,12 +19,16 @@ function diagnostic(category:string,details:Record<string,unknown>={}){
  console.warn('[for-you]',{route:'/explore',category,...details})
 }
 
-async function loadForYouClips(seed: string, excluded: number[], recent: string[], groups: string[] = []): Promise<ForYouClip[]> {
+async function loadForYouClips(seed: string, excluded: number[], recent: string[], groups: string[] = [], language:'ar'|'en'='ar', limit=5): Promise<ForYouClip[]> {
  const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(10000)}).parse({seed,excluded,recent})
  const excludedIds=new Set(input.excluded),recentIds=input.recent.slice(0,100),clips:ForYouClip[]=[]
+ const pool=await forYouGroupPool(language,groups)
+ if(pool.empty)return []
  const rawSources=new Map<string,unknown>()
- for(let attempt=0;attempt<3&&clips.length<5;attempt++){
-  const {data,error}=await serviceClient.rpc('transcript_for_you_groups',{p_seed:input.seed,p_excluded:[...excludedIds].slice(-10000),p_recent:recentIds.slice(0,100),p_limit:5-clips.length,p_group_ids:groups})
+ const deadline=Date.now()+8000
+ while(clips.length<limit){
+  if(Date.now()>deadline||excludedIds.size>10000)throw new Error('Unable to complete For You filtering. Please retry or narrow your groups.')
+  const {data,error}=await serviceClient.rpc('transcript_for_you_groups',{p_seed:input.seed,p_excluded:[...excludedIds].slice(-10000),p_recent:recentIds.slice(0,100),p_limit:limit-clips.length,p_group_ids:pool.groups})
   if(error){diagnostic('rpc_failure',{code:error.code});throw new Error('Unable to load For You clips. Please retry.')}
   if(!Array.isArray(data)){diagnostic('invalid_batch');throw new Error('Unable to load For You clips. Please retry.')}
   if(!data.length)break
@@ -28,6 +36,20 @@ async function loadForYouClips(seed: string, excluded: number[], recent: string[
   for(const value of data){
    if(!forYouRecord(value))continue
    const video=forYouRecord(value.video)?value.video:null
+   if(!video||typeof video.id!=='string')continue
+   if(!pool.accepts(video.id)){
+    // Skip every candidate of a rejected source, not just its opening clip.
+    // Existing RPC remains responsible for publication, quality and randomness.
+    for(let offset=0;;offset+=500){
+     const {data:ids,error:skipError}=await serviceClient.from('for_you_candidates').select('segment_id').eq('transcript_id',video.id).order('segment_id').range(offset,offset+499)
+     if(skipError||!ids)throw new Error('Unable to load For You clips. Please retry.')
+     for(const row of ids)if(!excludedIds.has(row.segment_id)){excludedIds.add(row.segment_id);progress=true}
+     if(ids.length<500)break
+    }
+    if(Array.isArray(value.segments))for(const segment of value.segments){const id=forYouRecord(segment)?forYouId(segment.id):null;if(id!==null&&!excludedIds.has(id)){excludedIds.add(id);progress=true}}
+    rejected=true
+    continue
+   }
    let clip=normaliseForYouClip(value)
    // Older/unfiltered RPCs may omit source_tokens. Retrieve only selected
    // sources when the shared resolver cannot produce a usable segment.
@@ -46,16 +68,17 @@ async function loadForYouClips(seed: string, excluded: number[], recent: string[
   }
   if(!rejected||!progress)break
  }
- return clips.slice(0,5)
+ return clips.slice(0,limit)
 }
 
 /** Every batch reads the transactionally maintained live candidate index. */
-export async function fetchForYouClips(seed:string,excluded:number[]=[],recent:string[]=[],groups:string[]=[]):Promise<ForYouClip[]> {
+export async function fetchForYouClips(seed:string,excluded:number[]=[],recent:string[]=[],groups:string[]=[],language:'ar'|'en'='ar'):Promise<ForYouClip[]> {
  await requireForYouUser()
  const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(10000)}).safeParse({seed,excluded,recent})
  if(!input.success) throw new Error('Unable to load For You clips. Please retry.')
  z.array(z.string().uuid()).max(100).parse(groups)
- return loadForYouClips(input.data.seed,input.data.excluded,input.data.recent,groups)
+ z.enum(['ar','en']).parse(language)
+ return loadForYouClips(input.data.seed,input.data.excluded,input.data.recent,groups,language)
 }
 
 /** Load a source once on opening a clip, never on time updates or seeks.
@@ -101,4 +124,11 @@ export async function fetchForYouDiagnostics():Promise<ForYouDiagnostics>{
  const {data,error}=await serviceClient.rpc('website_for_you_diagnostics')
  if(error)throw new Error('Unable to load For You diagnostics. Check the live feed migration.')
  return data as unknown as ForYouDiagnostics
+}
+
+/** Public promotional excerpt only: no Auth, profile, usage or progress calls. */
+export async function fetchHomeForYouSpotlight():Promise<ForYouClip|null>{
+ const ip=(await headers()).get('x-forwarded-for')?.split(',')[0]??'local'
+ if(!rateLimit(`home-spotlight:${ip}`,60,60000).ok)throw new Error('Please try the preview again shortly.')
+ return (await loadForYouClips(randomUUID(),[],[],[],'ar',1))[0]??null
 }

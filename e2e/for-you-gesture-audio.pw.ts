@@ -4,7 +4,7 @@ import {signInFixture} from './helpers/account'
 const backend=`https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4310}`
 test('trusted transcript gestures recover muted autoplay and preserve explicit mute',async({page,context,request})=>{
  await request.post(`${backend}/fixture/for-you-playback`);await signInFixture(context);await installYouTubeFixture(page)
- await page.addInitScript('window.__ytRejectAudible=true');await page.setViewportSize({width:390,height:650});await page.goto('/explore')
+ await page.addInitScript('window.__ytRejectAudible=true');await page.setViewportSize({width:390,height:650});await page.goto('/explore?view=explore')
  await page.getByRole('button',{name:'For You feed',exact:true}).click()
  const clip=page.locator('[data-for-you-source]'),pane=page.locator('[data-mobile-clip-transcript]')
  await expect(clip.locator('iframe')).toBeVisible()

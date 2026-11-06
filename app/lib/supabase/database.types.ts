@@ -18,6 +18,7 @@ export interface Database {
       email_preferences: Table<{ email: string; purpose: string; subscribed: boolean; user_id: string | null; consent_version: string; consented_at: string }>
       book_release_reminders: Table<{ user_id: string; book_id: string; created_at: string; fulfilled_at: string | null }>
       featured_show_config: Table<{show_id:string;storage_path:string;position_x:number;position_y:number;updated_at:string}>
+      for_you_candidates: Table<{segment_id:number;transcript_id:string;position:number;start_seconds:number}>
       admin_manual_transcripts: Table<{transcript_id:string;group_id:string|null;created_at:string}>
       youtube_transcripts: Table<import('@/app/actions/transcripts').TranscriptRow & {raw_transcript:Json|null;canonical_transcript:Json|null}>
       transcript_segments: Table<import('@/app/actions/transcripts').TranscriptSegment & {transcript_id:string}>

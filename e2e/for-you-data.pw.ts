@@ -11,7 +11,7 @@ for(const width of [390,1440])test(`raw fallback survives mobile feed navigation
  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message))
  await request.post(`${backend}/fixture/for-you-data`,{data:{fail:true}})
  await signIn(context,true);await installYouTubeFixture(page);await page.setViewportSize({width,height:950})
- await page.goto('/explore');await page.getByRole('button',{name:'For You feed',exact:true}).click()
+ await page.goto('/explore?view=explore');await page.getByRole('button',{name:'For You feed',exact:true}).click()
  await expect(page.getByText('For You couldn’t load. Please try again.')).toBeVisible()
  await expect(page.locator('body')).not.toContainText('Server Components render')
  await page.getByRole('button',{name:'Retry',exact:true}).click()

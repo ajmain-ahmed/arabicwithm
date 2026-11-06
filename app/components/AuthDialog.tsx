@@ -164,7 +164,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
       options: {
         /* Land on a real page: the implicit-flow link returns the session in
            the URL hash, which only client-side JS can read. */
-        emailRedirectTo: `${window.location.origin}/`,
+        emailRedirectTo: `${window.location.origin}${window.location.pathname==='/explore'&&(new URLSearchParams(window.location.search).get('view')??new URLSearchParams(window.location.search).get('tab'))!=='explore'?'/explore?view=foryou':'/'}`,
       },
     })
     if (error) {
