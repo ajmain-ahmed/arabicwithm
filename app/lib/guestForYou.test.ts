@@ -1,0 +1,35 @@
+import {beforeEach,expect,it,vi} from 'vitest'
+let guest:typeof import('./guestForYou')
+beforeEach(async()=>{localStorage.clear();vi.resetModules();guest=await import('./guestForYou')})
+const pause=vi.fn()
+it('shares exactly one persisted budget across independent Homepage/feed meters',()=>{
+ const home=guest.createGuestForYouMeter(),feed=guest.createGuestForYouMeter()
+ home.sample({time:10,playing:true,rate:1,pause},0,true);home.sample({time:10.5,playing:true,rate:1,pause},500,true)
+ feed.sample({time:200,playing:true,rate:1,pause},1000,true);feed.sample({time:200.5,playing:true,rate:1,pause},1500,true)
+ expect(guest.readGuestForYouUsage()).toBe(1000);expect(Number(localStorage.getItem(guest.GUEST_FOR_YOU_STORAGE_KEY))).toBe(1000)
+})
+it('excludes pauses, stalls, loading gaps, seeks, and hidden playback',()=>{
+ const meter=guest.createGuestForYouMeter(),sample=(clock:number,time:number,playing=true,visible=true)=>meter.sample({time,playing,rate:1,pause},clock,visible)
+ sample(0,100);sample(200,100.2);sample(400,100.2);sample(600,100.2,false);sample(20000,100.2,false)
+ sample(20200,100.2);sample(20400,900);sample(20600,900.2);sample(20800,900.4,true,false)
+ expect(guest.readGuestForYouUsage()).toBe(400)
+})
+it('counts five cumulative minutes and pauses without allowing another clip',()=>{
+ pause.mockClear();const meter=guest.createGuestForYouMeter()
+ for(let i=0;i<=1500;i++)meter.sample({time:i*.2,playing:true,rate:1,pause},i*200,true)
+ expect(guest.readGuestForYouUsage()).toBe(300000);expect(meter.canAdvance()).toBe(false);expect(pause).toHaveBeenCalled()
+ meter.sample({time:301,playing:true,rate:1,pause},300200,true);expect(guest.readGuestForYouUsage()).toBe(300000)
+})
+it('preserves usage after a module/page reload and rejects malformed stored values',async()=>{
+ guest.chargeGuestForYouPlayback(750);vi.resetModules();guest=await import('./guestForYou')
+ expect(guest.readGuestForYouUsage()).toBe(750)
+ localStorage.setItem(guest.GUEST_FOR_YOU_STORAGE_KEY,'invalid');expect(guest.readGuestForYouUsage()).toBe(750)
+ guest.chargeGuestForYouPlayback(Number.NaN);guest.chargeGuestForYouPlayback(-10);expect(guest.readGuestForYouUsage()).toBe(750)
+})
+it('honours exhaustion shared from another tab and stops a reentrant native pause safely',()=>{
+ const listener=vi.fn(),unsubscribe=guest.subscribeGuestForYou(listener)
+ localStorage.setItem(guest.GUEST_FOR_YOU_STORAGE_KEY,'300000');window.dispatchEvent(new StorageEvent('storage',{key:guest.GUEST_FOR_YOU_STORAGE_KEY}))
+ expect(listener).toHaveBeenCalled();expect(guest.guestForYouExhausted()).toBe(true)
+ const meter=guest.createGuestForYouMeter();const reentrant=vi.fn(()=>meter.sample({time:0,playing:false,rate:1,pause:reentrant},200,true))
+ meter.sample({time:0,playing:true,rate:1,pause:reentrant},100,true);expect(reentrant).toHaveBeenCalledOnce();unsubscribe()
+})

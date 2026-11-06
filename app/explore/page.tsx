@@ -16,7 +16,7 @@ export const metadata: Metadata = {
    to the client's own first load (initialBatch = null). */
 export default async function ExplorePage({searchParams}:{searchParams:Promise<{view?:string;tab?:string}>}) {
   const query=await searchParams
-  const initialView=(query.view??query.tab)==='explore'?'explore':'foryou'
+  const initialView=(query.view??query.tab)==='foryou'?'foryou':'explore'
   const seed = getExploreSeed()
   const initialBatch = initialView==='explore'?await fetchExploreFeedPage(seed, 0).catch(() => null):null
   return <ExploreViews initialView={initialView} initialSeed={seed} initialBatch={initialBatch} />

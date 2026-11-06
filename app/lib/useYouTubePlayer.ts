@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import {createPlayerSoundIntent} from './playerSoundIntent'
 import { getYouTubeEmbedUrl, normalizeYouTubeId } from './cartoons'
 
 /* ─────────────────────────────────────────────
@@ -52,6 +53,8 @@ interface YouTubePlayerOptions {
   endAt?: number
   onError?: (code: number) => void
   requireTimeUpdates?: boolean
+  replayClipOnNativePlay?: boolean
+  onNativeMuteChange?: (muted:boolean)=>void
 }
 
 let youtubeApiPromise: Promise<void> | null = null
@@ -102,6 +105,9 @@ export default function useYouTubePlayer(
   const onTimeUpdateRef = useRef(onTimeUpdate)
   const onEndedRef = useRef(options.onEnded)
   const onErrorRef = useRef(options.onError)
+  const nativeMuteRef=useRef(options.onNativeMuteChange)
+  const syncSoundRef=useRef<(()=>void)|null>(null)
+  const requestSoundRef=useRef<(()=>void)|null>(null)
   const mutedRef = useRef(options.muted === true)
   const startAtRef = useRef(startAt)
   const [isReady, setIsReady] = useState(false)
@@ -117,6 +123,7 @@ export default function useYouTubePlayer(
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
   useEffect(() => { onEndedRef.current = options.onEnded }, [options.onEnded])
   useEffect(() => { onErrorRef.current = options.onError }, [options.onError])
+  useEffect(()=>{nativeMuteRef.current=options.onNativeMuteChange},[options.onNativeMuteChange])
   useEffect(() => { mutedRef.current = options.muted === true }, [options.muted])
   useEffect(() => {
     startAtRef.current = startAt
@@ -130,10 +137,24 @@ export default function useYouTubePlayer(
     let cancelled = false
     let triedMutedFallback = false
     let clipEnded = false
+    const soundIntent=createPlayerSoundIntent()
+    requestSoundRef.current=()=>{
+      soundIntent.requestSound()
+      // A mobile recovery gesture starts a new audible attempt. If it is
+      // rejected, fall back once again without persisting an explicit mute.
+      if(nativeMuteRef.current)triedMutedFallback=false
+    }
+    const reportSound=()=>{
+      const muted=readEffectiveMuted(playerRef.current,mutedRef.current)
+      setIsMuted(muted)
+      const intent=soundIntent.observe(muted,playerRef.current?.getVolume?.()??100)
+      if(intent!==null)nativeMuteRef.current?.(intent==='muted')
+    }
+    syncSoundRef.current=reportSound
     const reportTime = () => {
       const time = playerRef.current?.getCurrentTime?.()
       if (typeof time !== 'number') return
-      setIsMuted(readEffectiveMuted(playerRef.current, mutedRef.current))
+      reportSound()
       onTimeUpdateRef.current?.(time)
       if (options.endAt != null && time >= options.endAt && !clipEnded) {
         clipEnded = true
@@ -233,7 +254,7 @@ export default function useYouTubePlayer(
               if (cancelled) return
               if (event.data === window.YT.PlayerState.PLAYING) {
                 // YouTube's native Replay may restart at video zero.
-                if (clipEnded && options.endAt != null && (playerRef.current?.getCurrentTime?.() ?? 0) < (startAtRef.current ?? 0)) {
+                if (clipEnded && options.endAt != null && ((playerRef.current?.getCurrentTime?.() ?? 0) < (startAtRef.current ?? 0) || (options.replayClipOnNativePlay && (playerRef.current?.getCurrentTime?.() ?? 0) >= options.endAt))) {
                   playerRef.current?.seekTo?.(startAtRef.current ?? 0, true)
                   clipEnded = false
                 }
@@ -269,6 +290,7 @@ export default function useYouTubePlayer(
             onAutoplayBlocked: () => {
               if (cancelled) return
               setIsPlaying(false)
+              soundIntent.autoplayBlocked()
               if (autoplay && options.mutedAutoplayFallback && !triedMutedFallback) {
                 triedMutedFallback = true
                 playerRef.current?.mute?.()
@@ -278,7 +300,7 @@ export default function useYouTubePlayer(
             },
             onVolumeChange: () => {
               if (cancelled) return
-              setIsMuted(readEffectiveMuted(playerRef.current))
+              reportSound()
             },
           },
         })
@@ -298,6 +320,8 @@ export default function useYouTubePlayer(
     }, 50)
     return () => {
       cancelled = true
+      requestSoundRef.current=null
+      syncSoundRef.current=null
       clearTimeout(timer)
       if (intervalRef.current) clearInterval(intervalRef.current)
       intervalRef.current = null
@@ -315,7 +339,7 @@ export default function useYouTubePlayer(
       setIsReady(false)
       setIsPlaying(false)
     }
-  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, options.mutedAutoplayFallback, options.audibleAutoplay, options.requireTimeUpdates, options.verifySoundState, retryNonce])
+  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, options.mutedAutoplayFallback, options.audibleAutoplay, options.requireTimeUpdates, options.verifySoundState, options.replayClipOnNativePlay, retryNonce])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {
@@ -370,11 +394,13 @@ export default function useYouTubePlayer(
   }, [options.verifySoundState])
 
   const unMute = useCallback(() => {
+    requestSoundRef.current?.()
     playerRef.current?.unMute?.()
     setIsMuted(options.verifySoundState ? readEffectiveMuted(playerRef.current, true) : false)
   }, [options.verifySoundState])
 
   const playWithSound = useCallback(() => {
+    requestSoundRef.current?.()
     const player = playerRef.current
     player?.unMute?.()
     // A volume of 0 stays silent even unmuted — bring it back so "sound on"
@@ -399,6 +425,8 @@ export default function useYouTubePlayer(
   }, [])
   const getPlaybackRates = useCallback(() => playerRef.current?.getAvailablePlaybackRates?.() ?? [1], [])
 
+  const syncSoundIntent=useCallback(()=>{syncSoundRef.current?.()},[])
+
   const retry = useCallback(() => {
     setErrorCode(null)
     setAutoplayBlocked(false)
@@ -417,6 +445,7 @@ export default function useYouTubePlayer(
     playWithSound,
     getCurrentTime,
     getSoundMuted,
+    syncSoundIntent,
     getDuration,
     getPlaybackRates,
     playbackRate,

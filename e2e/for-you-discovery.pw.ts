@@ -9,7 +9,7 @@ async function signIn(context:BrowserContext,premium=false){
 }
 for(const width of [390,1440])test(`discovery auto-advances 20 varied sources and refreshes on reload at ${width}`,async({page,context,request})=>{
  await request.post(`${backend}/fixture/for-you-discovery`);await signIn(context,true);await installYouTubeFixture(page)
- await page.setViewportSize({width,height:950});await page.goto('/explore?view=explore');await page.getByRole('button',{name:'For You feed',exact:true}).click()
+ await page.setViewportSize({width,height:950});await page.goto('/explore?view=explore');await page.getByRole('button',{name:/^(For You feed|Explore)$/}).filter({visible:true}).click()
  const clip=page.locator('[data-for-you-source]')
  await expect(clip.locator('iframe')).toBeVisible()
  const history:string[]=[]
@@ -30,7 +30,7 @@ for(const width of [390,1440])test(`discovery auto-advances 20 varied sources an
  await full.click();await page.evaluate(()=>(window as unknown as {__ytTime:(t:number,s:number)=>void}).__ytTime(13,1))
  await expect(clip).toHaveAttribute('data-for-you-source',history[18])
  await expect.poll(()=>page.evaluate(()=>(window as unknown as {__ytPlayers:{playing:boolean;destroyed:boolean}[]}).__ytPlayers.filter(p=>p.playing&&!p.destroyed).length)).toBe(1)
- await page.reload();await page.getByRole('button',{name:'For You feed',exact:true}).click();await expect(clip.locator('iframe')).toBeVisible()
+ await page.reload();await expect(clip.locator('iframe')).toBeVisible()
  const fresh:string[]=[]
  for(let i=0;i<5;i++){
   const current=(await clip.getAttribute('data-for-you-source'))!;fresh.push(current)

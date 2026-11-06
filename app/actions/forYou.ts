@@ -19,6 +19,12 @@ function diagnostic(category:string,details:Record<string,unknown>={}){
  console.warn('[for-you]',{route:'/explore',category,...details})
 }
 
+async function allowForYouRead(){
+ if(await getAuthenticatedUserId())return
+ const ip=(await headers()).get('x-forwarded-for')?.split(',')[0]??'local'
+ if(!rateLimit(`guest-for-you:${ip}`,120,60000).ok)throw new Error('Please try For You again shortly.')
+}
+
 async function loadForYouClips(seed: string, excluded: number[], recent: string[], groups: string[] = [], language:'ar'|'en'='ar', limit=5): Promise<ForYouClip[]> {
  const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(10000)}).parse({seed,excluded,recent})
  const excludedIds=new Set(input.excluded),recentIds=input.recent.slice(0,100),clips:ForYouClip[]=[]
@@ -73,7 +79,7 @@ async function loadForYouClips(seed: string, excluded: number[], recent: string[
 
 /** Every batch reads the transactionally maintained live candidate index. */
 export async function fetchForYouClips(seed:string,excluded:number[]=[],recent:string[]=[],groups:string[]=[],language:'ar'|'en'='ar'):Promise<ForYouClip[]> {
- await requireForYouUser()
+ await allowForYouRead()
  const input=z.object({seed:z.string().min(1).max(64),excluded:z.array(z.number().int().nonnegative()).max(10000),recent:z.array(z.string().uuid()).max(10000)}).safeParse({seed,excluded,recent})
  if(!input.success) throw new Error('Unable to load For You clips. Please retry.')
  z.array(z.string().uuid()).max(100).parse(groups)
@@ -84,7 +90,7 @@ export async function fetchForYouClips(seed:string,excluded:number[]=[],recent:s
 /** Load a source once on opening a clip, never on time updates or seeks.
  * For You publication is independent of searchable-library publication. */
 export async function fetchForYouTranscript(id:string):Promise<ForYouSegment[]> {
- await requireForYouUser()
+ await allowForYouRead()
  z.string().uuid().parse(id)
  const {data:video,error}=await serviceClient.from('youtube_transcripts').select('id,raw_transcript').eq('id',id).eq('status','ready').eq('explore_published',true).filter('source_origin','eq','website_admin_transcript').maybeSingle()
  if(error)throw new Error('Unable to load the source transcript.')

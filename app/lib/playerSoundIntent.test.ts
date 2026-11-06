@@ -1,0 +1,7 @@
+import {expect,it} from 'vitest'
+import {createPlayerSoundIntent} from './playerSoundIntent'
+it('keeps initial cached mute distinct from explicit user mute',()=>{const intent=createPlayerSoundIntent();expect(intent.observe(true,100)).toBeNull();expect(intent.observe(false,100)).toBe('sound');expect(intent.observe(true,100)).toBe('muted')})
+it('never persists autoplay fallback as user mute',()=>{const intent=createPlayerSoundIntent();intent.observe(false,100);intent.autoplayBlocked();expect(intent.observe(false,100)).toBeNull();expect(intent.observe(true,100)).toBeNull()})
+it('respects native mute after an autoplay-muted player is unmuted',()=>{const intent=createPlayerSoundIntent();intent.observe(false,100);intent.autoplayBlocked();intent.observe(true,100);expect(intent.observe(false,100)).toBe('sound');expect(intent.observe(true,100)).toBe('muted');expect(intent.observe(true,100)).toBeNull()})
+it('retains sound intent after a rejected gesture and can retry later',()=>{const intent=createPlayerSoundIntent();intent.observe(false,100);intent.autoplayBlocked();intent.observe(true,100);intent.requestSound();intent.observe(false,100);intent.autoplayBlocked();expect(intent.observe(true,100)).toBeNull();intent.requestSound();expect(intent.observe(false,100)).toBe('sound')})
+it('recognises native volume being explicitly moved to zero while fallback-muted',()=>{const intent=createPlayerSoundIntent();intent.autoplayBlocked();intent.observe(true,100);expect(intent.observe(true,0)).toBe('muted')})

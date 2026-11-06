@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useRef, useState, useCallback, useSyncExternalStore, type ReactNode } from 'react'
 import { Alert, Box, Button, CircularProgress, IconButton, Skeleton, Typography, Popover, FormControlLabel, Switch, Tooltip, useMediaQuery } from '@mui/material'
 import { KeyboardArrowDown, KeyboardArrowUp, SettingsOutlined, VolumeOff, VolumeUp } from '@mui/icons-material'
 import { fetchForYouClips, fetchForYouTranscript } from '@/app/actions/forYou'
@@ -49,7 +49,7 @@ export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tok
   </Box>
 }
 
-export function ClipPlayer({ clip, desktopLanguageControl, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl, onComplete }: { desktopLanguageControl?:ReactNode; onComplete?:()=>void; full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
+export function ClipPlayer({ clip, desktopLanguageControl, mobileViewControl, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl, onComplete }: { desktopLanguageControl?:ReactNode; mobileViewControl?:ReactNode; onComplete?:()=>void; full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
   const samplePlayback=useForYouMeter()
   const canAdvance=useForYouAdvance()
   const completed=useRef(false)
@@ -70,7 +70,7 @@ export function ClipPlayer({ clip, desktopLanguageControl, leftControls, rightCo
   },[clip.video.id,suppliedSegments,full])
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
   if(modeStart.full!==full)setModeStart({full,start:full?time:Math.min(Math.max(time,clip.clip_start_ms/1000),clip.clip_end_ms/1000-.1)})
-  const { wrapRef, isReady, isMuted, isPlaying, autoplayBlocked, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates, getSoundMuted } = useYouTubePlayer(clip.video.youtube_id, updateTime, modeStart.start, { verifySoundState: isPhone, autoplay: true, muted: !soundEnabled, audibleAutoplay: true, mutedAutoplayFallback: true, endAt: full ? undefined : clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>{if(full)setEnded(true);else finishShort()}, onError:code=>onUnavailable(clip.video.youtube_id,code) })
+  const { wrapRef, isReady, isMuted, isPlaying, autoplayBlocked, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates, getSoundMuted, syncSoundIntent } = useYouTubePlayer(clip.video.youtube_id, updateTime, modeStart.start, { verifySoundState: isPhone, onNativeMuteChange:isPhone?muted=>setExploreSoundPreference(!muted):undefined, autoplay: true, muted: !soundEnabled, audibleAutoplay: true, mutedAutoplayFallback: true, endAt: full ? undefined : clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>{if(full)setEnded(true);else finishShort()}, onError:code=>onUnavailable(clip.video.youtube_id,code) })
   function updateTime(seconds:number){
     setTime(seconds)
     // Charge the final playback sample before deciding whether another clip may start.
@@ -86,18 +86,24 @@ export function ClipPlayer({ clip, desktopLanguageControl, leftControls, rightCo
     onComplete()
   }
   useEffect(() => { if (!soundEnabled) mute() }, [soundEnabled, mute])
-  // The player owns initial autoplay and its muted fallback. Retrying sound
-  // here on mobile would immediately undo a successful muted autoplay.
-  useEffect(() => {
-    if (!isPhone || !isReady || !soundEnabled || (!autoplayBlocked&&!isMuted)) return
-    const enable = (event: Event) => { if(!event.isTrusted||!getExploreSoundPreference()||(event.target instanceof Element && event.target.closest('button, a, input, [role="slider"], [data-feed-transcript]'))) return; playWithSound() }
-    document.addEventListener('pointerdown', enable)
-    document.addEventListener('keydown', enable)
-    return () => {document.removeEventListener('pointerdown', enable);document.removeEventListener('keydown', enable)}
-  }, [isPhone, isReady, soundEnabled, autoplayBlocked, isMuted, playWithSound])
-  const transcriptAudio=()=>{
-    if(isPhone&&isReady&&getExploreSoundPreference()&&(autoplayBlocked||(getSoundMuted?.()??isMuted)))playWithSound()
-  }
+  const lastSoundGesture=useRef(-Infinity)
+  const transcriptAudio=useCallback(()=>{
+    if(!isPhone||!isReady)return
+    syncSoundIntent?.()
+    if(!getExploreSoundPreference()||(!autoplayBlocked&&!getSoundMuted()))return
+    const now=performance.now();if(now-lastSoundGesture.current<100)return
+    lastSoundGesture.current=now;playWithSound()
+  },[isPhone,isReady,autoplayBlocked,getSoundMuted,playWithSound,syncSoundIntent])
+  useEffect(()=>{
+    if(!isPhone)return
+    const enable=(event:Event)=>{
+      if(!event.isTrusted||(event.target instanceof Element&&event.target.closest('button,a,input,textarea,select,[role="slider"],[contenteditable="true"]')))return
+      transcriptAudio()
+    }
+    const events=['pointerdown','touchstart','touchmove','wheel','keydown'] as const
+    for(const event of events)document.addEventListener(event,enable,{passive:true})
+    return()=>{for(const event of events)document.removeEventListener(event,enable)}
+  },[isPhone,transcriptAudio])
   useEffect(()=>{samplePlayback?.({time,playing:isReady&&isPlaying,rate:playbackRate??1,pause:pauseVideo})},[time,isReady,isPlaying,playbackRate,pauseVideo,samplePlayback])
   useEffect(()=>()=>{samplePlayback?.({time:0,playing:false,rate:1,pause:pauseVideo})},[samplePlayback,pauseVideo])
   const visibleClip = full ? {...clip,clip_start_ms:0,clip_end_ms:Math.max(...segments.map(s=>s.end_seconds),clip.clip_end_ms/1000)*1000} : clip
@@ -128,7 +134,7 @@ export function ClipPlayer({ clip, desktopLanguageControl, leftControls, rightCo
       {!isPhone&&<DesktopPlayerResize playerRef={playerSizeRef} onResize={setPlayerWidth}/>}
       {navigation&&<IconButton aria-label="Next video" disabled={navigation.nextDisabled} onClick={navigation.next}><KeyboardArrowDown/></IconButton>}
     </Box>
-    <MobileForYouPanel onTranscriptInteraction={transcriptAudio} activeOnly={full} activeSegment={active} modeControl={mobileModeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
+    <MobileForYouPanel onTranscriptInteraction={transcriptAudio} activeOnly={full} activeSegment={active} modeControl={mobileModeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileViewControl??mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
     <Box data-desktop-clip-transcript data-feed-transcript sx={{display:{xs:'none',md:'block'},color:'#f5ede0',mt:2,minHeight:124,overscrollBehavior:'contain'}}>
       {(active ? [active] : []).map(line=><Box key={line.id} data-clip-line={line.id} data-active-segment={active?.id===line.id} sx={{p:1.5,mb:1,borderRadius:2,bgcolor:'rgba(212,168,67,.14)'}}>
         {line.tokens.length?<ForYouWords tokens={line.tokens} settings={settings} time={time}/>:<Typography lang="ar" dir="rtl" sx={{color:'inherit',textAlign:'center',fontFamily:'var(--font-serif)',fontSize:`${2.2 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem`}}>{displayArabic(line.original_text,settings.tashkeel)}</Typography>}
@@ -188,7 +194,7 @@ function ForYouLoading({ progress, leftControls, rightControls, mobileControls }
   </Box>
 }
 
-export function Feed({ previewSegments, initialClips, railSwitcher, desktopControls, mobileSwitcher, filterControl, languageControl, groups = [], language = 'ar' }: { previewSegments?: ForYouSegment[]; mobileSwitcher?: ReactNode; filterControl?: ReactNode; groups?: string[]; languageControl?:ReactNode; language?:'ar'|'en'; initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode; desktopControls?: (settings: ReactNode) => ReactNode }) {
+export function Feed({ previewSegments, initialClips, railSwitcher, desktopControls, mobileSwitcher, filterControl, languageControl, mobileViewControl, groups = [], language = 'ar' }: { previewSegments?: ForYouSegment[]; mobileSwitcher?: ReactNode; filterControl?: ReactNode; groups?: string[]; languageControl?:ReactNode; mobileViewControl?:ReactNode; language?:'ar'|'en'; initialClips?: ForYouClip[]; switcher?: ReactNode; railSwitcher?: ReactNode; desktopControls?: (settings: ReactNode) => ReactNode }) {
   const canAdvance=useForYouAdvance()
   const [full,setFull]=useState(false)
   const modeControl=()=> <ShortFullSwitch full={full} onChange={setFull}/>
@@ -246,7 +252,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
 
   const loadingRef=useRef(false)
   async function loadMore(advance = false) {
-    if(previewSegments)return
+    if(previewSegments||canAdvance?.()===false)return
     if (advance) advanceAfterLoad.current = true
     if (loadingRef.current) return
     loadingRef.current=true
@@ -261,7 +267,9 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
       // A cached first batch may contain only blocked sources. Exclude those
       // segment IDs and ask for another batch, with a finite retry budget.
       for(let attempt=0;attempt<8;attempt++){
+        if(canAdvance?.()===false)return
         let batch=await fetchForYouClips(seed.current,[...seen].slice(-10000),[...seenSources.current].reverse().slice(0,10000),groups,language)
+        if(canAdvance?.()===false)return
         // Exhaustion starts another cycle. Keep the latest item/source least preferred.
         if(!batch.length&&seen.size){
           recycling=true;seed.current=crypto.randomUUID()
@@ -270,6 +278,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
           latest?.segments.forEach(segment=>seen.add(segment.id))
           seenSources.current=new Set(latest?[latest.video.id]:[])
           batch=await fetchForYouClips(seed.current,[...seen],[...seenSources.current],groups,language)
+          if(canAdvance?.()===false)return
           if(!batch.length)batch=await fetchForYouClips(seed.current,[],[...seenSources.current],groups,language)
         }
         next=batch.filter(clip=>!blocked.has(clip.video.youtube_id))
@@ -278,6 +287,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
         batch.forEach(clip=>clip.segments.forEach(segment=>seen.add(segment.id)))
         if(seen.size===before)break
       }
+      if(canAdvance?.()===false)return
       // Navigation can continue while this request is in flight. Preserve the
       // latest active clip, rather than jumping to the newly appended batch.
       const latest = feedRef.current
@@ -352,6 +362,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
         {error && <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" disabled={busy} onClick={()=>{seed.current=crypto.randomUUID();setHasMore(true);void loadMore()}}>Retry</Button>}>{error}</Alert>}
         {initialLoading
           ? <ForYouLoading
+              mobileControls={mobileViewControl}
               progress={progress}
               leftControls={<ChevronNav hidden="mobile" onUp={() => undefined} onDown={() => undefined} upDisabled downDisabled sx={{ position: 'absolute', left: -66, top: '50%', transform: 'translateY(-50%)' }} />}
 
@@ -365,12 +376,12 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
                   settings={settings}
                   navigation={previewSegments ? undefined : {previous:()=>step(-1),next:()=>step(1),previousDisabled:index===0,nextDisabled:busy&&index>=clips.length-1}}
                   mobileToolbar={mobileSettingsButton}
-                  mobileSwitcher={mobileSwitcher} filterControl={filterControl}
+                  mobileSwitcher={mobileSwitcher} mobileViewControl={mobileViewControl} filterControl={filterControl}
 
 
                 /></MobileClipNavigator>
               </Box>
-            : <Box><Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography><Box sx={{display:{xs:"flex",md:"none"},justifyContent:"center",alignItems:"center",gap:1,pt:2}}>{mobileSwitcher}{filterControl}</Box></Box>}
+            : <Box><Typography sx={{ textAlign: 'center', color: 'text.secondary' }}>{busy ? 'Loading clips…' : 'No more clips available.'}</Typography><Box sx={{display:{xs:"flex",md:"none"},justifyContent:"center",alignItems:"center",gap:1,pt:2}}>{mobileViewControl??mobileSwitcher}{filterControl}</Box></Box>}
       </Box>
       {!initialLoading && !clips[index] && <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'center', mt: 2 }}>{desktopRail}</Box>}
 
@@ -378,8 +389,8 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
   </Box>
 }
 
-export default function ForYouFeed(props: React.ComponentProps<typeof Feed>) {
+export default function ForYouFeed({guest=false,...props}: React.ComponentProps<typeof Feed>&{guest?:boolean}) {
  const [groups,setGroups]=useState<string[]>(()=>useForYouCache.getState().groups)
  const [version,setVersion]=useState(0)
- return <Feed {...props} key={`${props.language??'ar'}:${version}`} groups={groups} filterControl={<ForYouGroupFilter value={groups} onApply={value=>{useForYouCache.setState({clips:[],index:0,excluded:[],seenSources:[],seed:'',groups:value});setGroups(value);setVersion(v=>v+1)}}/>}/>
+ return <Feed {...props} key={`${props.language??'ar'}:${version}`} groups={groups} filterControl={guest?undefined:<ForYouGroupFilter value={groups} onApply={value=>{useForYouCache.setState({clips:[],index:0,excluded:[],seenSources:[],seed:'',groups:value});setGroups(value);setVersion(v=>v+1)}}/>}/>
 }

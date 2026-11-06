@@ -44,13 +44,13 @@ it('loads real group names',async()=>{
  expect(await fetchForYouGroups()).toEqual([{id,name:'Actual group'}])
 })
 
-it('rejects guests before querying clips, transcripts, or groups',async()=>{
- mocks.user.mockResolvedValue(null)
- await expect(fetchForYouClips('seed')).rejects.toThrow('Sign in')
- await expect(fetchForYouTranscript(id)).rejects.toThrow('Sign in')
+it('allows guest eligible clips/transcripts but keeps Admin group names authenticated',async()=>{
+ mocks.user.mockResolvedValue(null);mocks.rpc.mockResolvedValue({data:[],error:null})
+ expect(await fetchForYouClips('seed')).toEqual([])
+ expect(await fetchForYouTranscript(id)).toHaveLength(1)
+ expect(mocks.filter).toHaveBeenCalledWith('status','ready')
+ expect(mocks.filter).toHaveBeenCalledWith('explore_published',true)
  await expect(fetchForYouGroups()).rejects.toThrow('Sign in')
- expect(mocks.rpc).not.toHaveBeenCalled()
- expect(mocks.from).not.toHaveBeenCalled()
 })
 it('rejects a malformed clip and fills its slot with the next eligible source',async()=>{
  const good=(suffix:string,segmentId:number)=>({video:{status:'ready',explore_published:true,id:`99999999-9999-4999-8999-99999999999${suffix}`,youtube_id:`abcdefghij${suffix}`,title:null},clip_start_ms:0,clip_end_ms:10000,segments:[{id:segmentId,position:0,start_seconds:0,end_seconds:10,original_text:'كتاب',canonical_paragraph:{tokens:[{arabic:'كتاب',english:'book'}]}}]})

@@ -421,7 +421,7 @@ function ExploreVideo({
           {railTop}
           {/* A native fallback uses YouTube's controls without API commands. */}
           {(!isYouTube || isReady) && <Tooltip title={soundMuted ? 'Turn sound on' : 'Mute'} placement="left">
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
               <IconButton
                 onClick={toggleSound}
                 aria-label={soundMuted ? 'Turn Explore sound on' : 'Mute Explore video'}

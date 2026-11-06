@@ -7,13 +7,20 @@ import ExploreFeed from './ExploreFeed'
 import {type ExploreFeedBatch} from '@/app/lib/explore'
 import { useAuth } from '@/app/AuthContext'
 import ForYouAllowance from './ForYouAllowance'
+import GuestForYouAllowance from './GuestForYouAllowance'
 import ForYouFeed, {clearForYouTranscripts} from './ForYouFeed'
 import {useForYouCache} from '@/store/forYouStore'
 
 type ExploreView = 'explore' | 'foryou'
-function openForYouAuth(){window.dispatchEvent(new CustomEvent('open-auth-dialog',{detail:{mode:'signin',purpose:'Sign in to explore For You'}}))}
 
 function LanguageSwitch({value,onChange}:{value:'ar'|'en';onChange:(value:'ar'|'en')=>void}){return <Box role="group" aria-label="Source video language" sx={{display:{xs:'none',md:'flex'},border:'1px solid #ffffff55',borderRadius:'999px',p:.25}}>{(['ar','en'] as const).map(language=><Button key={language} aria-pressed={value===language} onClick={()=>onChange(language)} sx={{minWidth:40,minHeight:36,borderRadius:'999px',color:'#fff',bgcolor:value===language?'#ffffff33':'transparent'}}>{language.toUpperCase()}</Button>)}</Box>}
+
+function MobileViewTools({view,onView,language,onLanguage}:{view:ExploreView;onView:(view:ExploreView)=>void;language:'ar'|'en';onLanguage:(language:'ar'|'en')=>void}){
+ return <Box data-mobile-view-tools role="toolbar" aria-label="Mobile feed views" sx={{display:'flex',alignItems:'center',gap:.75,flexShrink:0}}>
+  <Button data-mobile-view-toggle aria-label={view==='explore'?'Explore':'For You'} title={`Switch to ${view==='explore'?'For You':'Explore'}`} onClick={()=>onView(view==='explore'?'foryou':'explore')} sx={{width:72,minWidth:72,minHeight:36,px:1,fontSize:12,fontWeight:600,textTransform:'none',borderRadius:'999px',color:'#fff',bgcolor:'rgba(255,255,255,.14)',border:'1px solid #ffffff44'}}>{view==='explore'?'Explore':'For You'}</Button>
+  <Box role="group" aria-label="Source video language" sx={{display:'flex',p:.25,height:36,boxSizing:'border-box',border:'1px solid #ffffff44',borderRadius:'999px',bgcolor:'rgba(0,0,0,.25)'}}>{(['ar','en'] as const).map(value=><Button key={value} aria-pressed={language===value} onClick={()=>onLanguage(value)} sx={{minWidth:30,width:30,minHeight:0,p:0,fontSize:11,fontWeight:600,borderRadius:'999px',color:'#fff',bgcolor:language===value?'var(--awm-gold)':'transparent'}}>{value.toUpperCase()}</Button>)}</Box>
+ </Box>
+}
 
 function ViewSwitch({ view, onChange, hint, onDismiss, mobile = false, horizontal = false, trailing }: { view: ExploreView; onChange: (view: ExploreView) => void; hint: boolean; onDismiss: () => void; mobile?: boolean; horizontal?: boolean; trailing?: ReactNode }) {
   if (mobile) return <Box role="group" aria-label="Explore views" sx={{ display: 'flex', p: .25, borderRadius: '9999px', bgcolor: 'rgba(0,0,0,.3)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,.2)' }}>
@@ -33,26 +40,15 @@ function ViewSwitch({ view, onChange, hint, onDismiss, mobile = false, horizonta
   </Box>
 }
 
-export default function ExploreViews({ initialSeed, initialBatch, initialView='foryou' }: { initialView?:ExploreView; initialSeed: string; initialBatch: ExploreFeedBatch | null }) {
+export default function ExploreViews({ initialSeed, initialBatch, initialView='explore' }: { initialView?:ExploreView; initialSeed: string; initialBatch: ExploreFeedBatch | null }) {
   const { user, loading } = useAuth()
   const [view, setView] = useState<ExploreView>(initialView)
   const [language,setLanguage]=useState<'ar'|'en'>(()=>useForYouCache.getState().language)
   function selectLanguage(next:'ar'|'en'){if(next===language)return;clearForYouTranscripts();useForYouCache.setState({language:next,clips:[],index:0,excluded:[],seenSources:[],seed:''});setLanguage(next)}
-  useEffect(()=>{const restore=()=>{const q=new URLSearchParams(window.location.search);setView((q.get('view')??q.get('tab'))==='explore'?'explore':'foryou')};window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore)},[])
-  /* Signed-out visitors asking for For You get the auth dialog immediately;
-     the view stays gated until they sign in rather than swapping to an
-     inline prompt screen. */
+  useEffect(()=>{const restore=()=>{const q=new URLSearchParams(window.location.search);setView((q.get('view')??q.get('tab'))==='foryou'?'foryou':'explore')};window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore)},[])
   const requestView = (next: ExploreView) => {
     const url=new URL(window.location.href);url.searchParams.set('view',next);window.history.pushState(null,'',url);setView(next)
-    if(next==='foryou'&&!user&&!loading)openForYouAuth()
   }
-  /* Session expired (or revoked) while sitting on For You: prompt to sign
-     in again instead of leaving the inline wall as the only path. */
-  useEffect(() => {
-    if (view === 'foryou' && !loading && !user) {
-      openForYouAuth()
-    }
-  }, [view, loading, user])
   useEffect(()=>{
     // One route visit, including switches between Explore and For You. A fresh
     // server visit/refresh gets a new seed and cannot restore an old sequence.
@@ -74,8 +70,9 @@ export default function ExploreViews({ initialSeed, initialBatch, initialView='f
   }, [view])
   const dismiss = () => { setHintFor(null); if (timer.current) clearTimeout(timer.current) }
   const rail = <ViewSwitch view={view} onChange={requestView} hint={hintFor === view} onDismiss={dismiss} />
+  const feed=<ForYouFeed key={`${user?.id??'guest'}:${language}`} guest={!user} mobileViewControl={<MobileViewTools view={view} onView={requestView} language={language} onLanguage={selectLanguage}/>} language={language} languageControl={<LanguageSwitch value={language} onChange={selectLanguage}/>} mobileSwitcher={<ViewSwitch mobile view={view} onChange={requestView} hint={false} onDismiss={dismiss}/>} desktopControls={settings=><ViewSwitch view={view} onChange={requestView} hint={hintFor===view} onDismiss={dismiss} trailing={settings}/>}/>
   return <Box sx={{ position: 'relative', '--awm-explore-switch-height': '0px' }}>
-    <Box data-mobile-explore-switch sx={{ display: { xs: view === 'explore' ? 'flex' : 'none', md: 'none' }, position: 'absolute', top: 12, left: 'max(12px, env(safe-area-inset-left))', zIndex: 10 }}><ViewSwitch mobile view={view} onChange={requestView} hint={false} onDismiss={dismiss} /></Box>
-    {view === 'explore' ? <ExploreFeed railTop={<Box sx={{ display: { xs: 'none', md: 'block' } }}>{rail}</Box>} initialSeed={initialSeed} initialBatch={initialBatch} /> : !user ? <Box sx={{minHeight:'calc(100dvh - var(--awm-navbar-height))',display:'grid',placeItems:'center',p:3}}><Box sx={{textAlign:'center'}}><Typography variant="h4">For You</Typography><Typography sx={{my:2}}>{loading?'Checking your account…':'Sign in or register to explore For You.'}</Typography>{!loading&&<Button variant="contained" onClick={openForYouAuth}>Sign in</Button>}<Button onClick={()=>requestView('explore')} sx={{display:'block',mx:'auto',mt:2}}>Back to Explore</Button></Box></Box> : <ForYouAllowance key={user.id} onExplore={()=>requestView('explore')}><ForYouFeed key={language} language={language} languageControl={<LanguageSwitch value={language} onChange={selectLanguage}/>} mobileSwitcher={<ViewSwitch mobile view={view} onChange={requestView} hint={false} onDismiss={dismiss} />} desktopControls={settings => <ViewSwitch view={view} onChange={requestView} hint={hintFor === view} onDismiss={dismiss} trailing={settings} />} /></ForYouAllowance>}
+    <Box data-mobile-explore-switch sx={{ display: { xs: view === 'explore' ? 'flex' : 'none', md: 'none' }, position: 'absolute', top: 12, left: 'max(12px, env(safe-area-inset-left))', zIndex: 10 }}><MobileViewTools view={view} onView={requestView} language={language} onLanguage={selectLanguage}/></Box>
+    {view==='explore'?<ExploreFeed railTop={<Box sx={{display:{xs:'none',md:'block'}}}>{rail}</Box>} initialSeed={initialSeed} initialBatch={initialBatch}/>:loading?<Box role="status" sx={{p:4,textAlign:'center'}}>Loading For You...</Box>:user?<ForYouAllowance key={user.id} onExplore={()=>requestView('explore')}>{feed}</ForYouAllowance>:<GuestForYouAllowance>{feed}</GuestForYouAllowance>}
   </Box>
 }

@@ -23,13 +23,13 @@ let host: HTMLDivElement
 let playerMuted = true
 let playerVolume = 100
 let playerTime = 4
-const updateTime=vi.fn(), ended=vi.fn(), failed=vi.fn()
+const updateTime=vi.fn(), ended=vi.fn(), failed=vi.fn(), nativeMute=vi.fn()
 const calls: string[] = []
 const destroy = vi.fn()
 const pause = vi.fn()
 const seek = vi.fn((seconds:number)=>{playerTime=seconds})
-function Harness({ id, start, end, muted = true, fallback = false, synced=false, verify=false, audible=false }: { id?: string; start?: number; end?:number; muted?: boolean; fallback?: boolean; synced?:boolean; verify?:boolean; audible?:boolean }) {
-  const player = useYouTubePlayer(id, updateTime, start, { verifySoundState:verify, autoplay: true, muted, endAt:end, mutedAutoplayFallback: fallback, audibleAutoplay:audible, requireTimeUpdates:synced, onEnded:ended, onError:failed })
+function Harness({ id, start, end, muted = true, fallback = false, synced=false, verify=false, audible=false, nativeReplay=false }: { id?: string; start?: number; end?:number; muted?: boolean; fallback?: boolean; synced?:boolean; verify?:boolean; audible?:boolean; nativeReplay?:boolean }) {
+  const player = useYouTubePlayer(id, updateTime, start, { onNativeMuteChange:nativeMute, verifySoundState:verify, replayClipOnNativePlay:nativeReplay, autoplay: true, muted, endAt:end, mutedAutoplayFallback: fallback, audibleAutoplay:audible, requireTimeUpdates:synced, onEnded:ended, onError:failed })
   useEffect(() => { controls = player })
   const { wrapRef } = player
   return <div ref={wrapRef} />
@@ -62,6 +62,21 @@ beforeEach(() => {
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers() })
 describe('YouTube player lifecycle', () => {
+  it('distinguishes muted fallback and denied recovery from an explicit native mute',async()=>{
+    await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" muted={false} audible fallback verify synced/>))
+    await act(async()=>{await vi.advanceTimersByTimeAsync(60);options.events.onReady()})
+    nativeMute.mockClear()
+    await act(async()=>{options.events.onAutoplayBlocked();options.events.onStateChange({data:1})})
+    expect(nativeMute).not.toHaveBeenCalledWith(true)
+    await act(async()=>{controls.playWithSound();options.events.onAutoplayBlocked();playerMuted=true;controls.syncSoundIntent()})
+    expect(nativeMute).not.toHaveBeenCalledWith(true)
+    await act(async()=>{controls.playWithSound();options.events.onStateChange({data:1})})
+    expect(nativeMute).toHaveBeenLastCalledWith(false)
+    // Sync before a gesture also catches native changes when no volume event is available.
+    await act(async()=>{playerMuted=true;controls.syncSoundIntent()})
+    expect(nativeMute).toHaveBeenLastCalledWith(true)
+  })
+
   it('requests audible autoplay without converting a rejection to mute or claiming playback',async()=>{
     playerVolume=0
     await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" muted={false} audible/>))
@@ -94,6 +109,13 @@ describe('YouTube player lifecycle', () => {
     await act(async()=>options.events.onStateChange({data:1}))
     expect(seek).toHaveBeenLastCalledWith(495,true)
     expect(updateTime).toHaveBeenLastCalledWith(495)
+  })
+  it('restarts native play from a paused clip boundary instead of playing beyond it',async()=>{
+    await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" start={495} end={522} synced nativeReplay/>))
+    await act(async()=>{await vi.advanceTimersByTimeAsync(60);options.events.onReady()})
+    playerTime=522
+    await act(async()=>{await vi.advanceTimersByTimeAsync(200);options.events.onStateChange({data:1})})
+    expect(seek).toHaveBeenLastCalledWith(495,true)
   })
   it.each([100,101,150,153])('reports For You error %s without hiding it behind an unsynchronised fallback',async code=>{
     await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" synced/>))
