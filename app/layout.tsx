@@ -25,6 +25,16 @@ const socialImage = {
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://arabicwithm.vercel.app'),
+  icons: {
+    icon: [
+      { url: '/favicon.ico', type: 'image/x-icon', sizes: '16x16 32x32 48x48' },
+      { url: '/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
+      { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon-48x48.png', type: 'image/png', sizes: '48x48' },
+      { url: '/favicon.svg', type: 'image/svg+xml', sizes: 'any' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', type: 'image/png', sizes: '180x180' }],
+  },
   title: "ArabicWithM — Learn Arabic with Cartoons",
   description: "Master Arabic through immersive cartoons with interactive subtitles.",
   openGraph: {
@@ -56,6 +66,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Keep these global links present even when page metadata streams. */}
+        <link rel="manifest" href="/site.webmanifest" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#046154" />
         <Script id="awm-gtm-init" strategy="beforeInteractive">{`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
