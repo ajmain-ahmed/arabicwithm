@@ -6,6 +6,7 @@ const home = vi.hoisted(() => ({
   user: null as { id: string; user_metadata: Record<string, unknown> } | null,
   statsRendered: false,
 }))
+vi.mock('@/app/actions/forYou',()=>({fetchHomeForYouSpotlight:vi.fn()}))
 vi.mock('next/navigation',()=>({useRouter:()=>({push:vi.fn()})}))
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => ({ user: home.user, session: null, loading: false }) }))
 vi.mock('@/app/components/ThemeProvider', () => ({ useColorMode: () => ({ mode: 'light', toggleColorMode: vi.fn() }) }))
@@ -77,6 +78,6 @@ for(const signedIn of [false,true])it(`keeps Spotlight between Episodes and Show
  const html=renderToStaticMarkup(<HomeDashboard books={[]} newShows={[{id:'show',slug:'show',title:'Test Show',level:'A1',category:null,coverCrop}]} newEpisodes={[{id:'episode',slug:'episode',title:'Test Episode',level:'A1',showSlug:'show',showTitle:'Test Show',coverCrop}]} />)
  const episodes=html.indexOf('>Latest Episodes<'),spotlight=html.indexOf('>For You Spotlight<'),shows=html.indexOf('>Shows<')
  expect(episodes).toBeGreaterThan(-1);expect(spotlight).toBeGreaterThan(episodes);expect(shows).toBeGreaterThan(spotlight)
- expect(html).toContain('data-home-spotlight');expect(html).toContain('>Watch More</button>')
+ expect(html).toContain('data-home-spotlight');expect(html).toContain('>Watch More<span')
  expect(html).not.toContain('id="download-app"')
 })

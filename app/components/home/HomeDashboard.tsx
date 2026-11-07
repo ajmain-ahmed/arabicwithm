@@ -16,6 +16,7 @@ import { Box, Button, Container, Paper, Skeleton, Typography } from '@mui/materi
 import { useAuth } from '@/app/AuthContext'
 import { useColorMode } from '@/app/components/ThemeProvider'
 import HomeForYouSpotlight from './HomeForYouSpotlight'
+import type {ForYouClip} from '@/app/lib/forYou'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
 import { useBookMyList } from '@/app/lib/bookMyList'
 import CheckoutReturnNotice from './CheckoutReturnNotice'
@@ -106,7 +107,7 @@ function DeferredRowPlaceholder() {
   )
 }
 
-export default function HomeDashboard({ books, newShows, newEpisodes, featured }: { books: PublicBook[]; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; featured?: import('./FeaturedHero').FeaturedShow | import('./FeaturedHero').FeaturedShow[] | null }) {
+export default function HomeDashboard({ books, newShows, newEpisodes, featured, spotlight }: { books: PublicBook[]; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; spotlight?:{clip:ForYouClip|null;error:boolean}; featured?: import('./FeaturedHero').FeaturedShow | import('./FeaturedHero').FeaturedShow[] | null }) {
   const featuredItems=Array.isArray(featured)?featured:featured?[featured]:[]
   const { mode } = useColorMode()
   const { user, loading: authLoading } = useAuth()
@@ -305,7 +306,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured }
                 <DeferredNewOnRow items={newEpisodeItems} ariaLabel="Latest Episodes" compact viewAllHref="/cartoons" />
               </DeferredSection>
             </>}
-            <HomeForYouSpotlight />
+            <HomeForYouSpotlight initialClip={spotlight?.clip??null} initialError={spotlight?.error}/>
             {newShowItems.length > 0 && <>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>Shows</Typography>
               <NewOnRow items={newShowItems} ariaLabel="Shows" compact viewAllHref="/cartoons?view=shows" />

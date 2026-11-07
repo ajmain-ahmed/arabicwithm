@@ -15,16 +15,20 @@ test.beforeEach(async({page,request}) => {
  await request.post(`${backend}/fixture/spotlight`)
  await installYouTubeFixture(page)
 })
-for (const width of [320,390,430,768,1024,1440]) test(`Spotlight centred header, player and stacked subtitles at ${width}`, async({page}) => {
+for (const width of [320,390,430,768,1024,1440]) test(`Spotlight responsive header, player and stacked subtitles at ${width}`, async({page}) => {
  await page.setViewportSize({width,height:1000}); await page.goto('/')
  const section = sectionOf(page), video = section.locator('[data-spotlight-video]')
  await expect(video.locator('iframe')).toBeVisible()
+ const duration=await page.evaluate(()=>{const player=(window as unknown as {__ytPlayers:{options:{playerVars:{start:number;end:number}}}[]}).__ytPlayers.at(-1)!;return player.options.playerVars.end-(player.options.playerVars.start??0)});expect(duration).toBe(45)
  await page.evaluate(()=>document.fonts.ready)
  const heading = section.getByRole('heading',{name:'For You Spotlight',exact:true})
- const header = (await section.locator('[data-spotlight-header]').boundingBox())!, title = (await heading.boundingBox())!
- expect(title.x + title.width / 2).toBeCloseTo(header.x + header.width / 2, 0)
+ await expect(heading).toBeVisible()
+ const {header,title,button}=await section.locator('[data-spotlight-header]').evaluate(el=>({header:el.getBoundingClientRect().toJSON(),title:el.querySelector('h2')!.getBoundingClientRect().toJSON(),button:el.querySelector('button')!.getBoundingClientRect().toJSON()}))
+ if(width<900)expect(title.x).toBeCloseTo(header.x,0)
+ else expect(title.x + title.width / 2).toBeCloseTo(header.x + header.width / 2, 0)
  const link = section.getByRole('button',{name:'Watch More',exact:true})
  await expect(link).toHaveAttribute('type','button');await expect(link).toHaveJSProperty('tagName','BUTTON');await expect(link).toHaveCSS('background-color','rgb(4, 97, 84)')
+ if(width<900){expect(button.x).toBeGreaterThan(title.x+title.width);expect(Math.abs(button.y+button.height/2-title.y-title.height/2)).toBeLessThan(2);await expect(link).toContainText('\u2192')}
  const measured = await ratio(page)
  expect(measured).toBeCloseTo(width>=900?.5:width>=600?(65+12/37*20)/100:1,2)
  const handle = section.getByRole('slider',{name:'Resize For You player'})

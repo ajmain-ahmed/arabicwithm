@@ -35,3 +35,11 @@ it('paginates membership rather than dropping English entries after the API row 
  state.members=Array.from({length:1001},(_,i)=>({transcript_id:String(i),group_id:english}))
  expect((await forYouGroupPool('ar',[])).accepts('1000')).toBe(false)
 })
+
+it('Imports remains eligible in the ordinary AR pool; English membership still controls classification',async()=>{
+ state.groups.push({id:'imports',name:'Imports',parent_id:null});state.members.push({transcript_id:'imported',group_id:'imports'})
+ const ar=await forYouGroupPool('ar',[]);expect(ar.accepts('imported')).toBe(true);expect(ar.groups).toEqual([])
+ state.members.push({transcript_id:'imported',group_id:english})
+ expect((await forYouGroupPool('en',[])).accepts('imported')).toBe(true)
+ expect((await forYouGroupPool('ar',[])).accepts('imported')).toBe(false)
+})

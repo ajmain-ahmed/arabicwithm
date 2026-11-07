@@ -39,7 +39,7 @@ const registrations=new Map()
 let confirmationRequired=true,profileDelay=0
 const handles=new Map(),profiles=new Map(),roles=new Map(),accessAudit=[]
 const roleFor=id=>roles.get(id)??(id===ids.admin?'admin':id===ids.reviewer?'editor':'user')
-const rpcLog=[],tableLog=[];let failSearch=false
+const spotlightRequests=[];let spotlightSelection='normal';const rpcLog=[],tableLog=[];let failSearch=false
 let failAudioSave = false
 let forYouPlayback=false
 let discoveryClips=[]
@@ -213,8 +213,8 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     for(const language of ['ar','en']) if(!tables.book_chapter_audio.some(row=>row.chapter_id===second&&row.language===language)) tables.book_chapter_audio.push({...tables.book_chapter_audio.find(row=>row.language===language),chapter_id:second})
     return json(res,{})
   }
-  if(url.pathname==='/fixture/spotlight'){spotlightMode=true;tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:'5b98c563-5c35-4696-98e1-06aa000eb622'}));spotlightEnglish=body.english!==false;rpcLog.length=0;return json(res,{})}
-  if(url.pathname==='/fixture/request-log')return json(res,{rpc:rpcLog,tables:tableLog})
+  if(url.pathname==='/fixture/spotlight'){spotlightMode=true;spotlightSelection=body.selection??'normal';spotlightRequests.length=0;tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:'5b98c563-5c35-4696-98e1-06aa000eb622'}));spotlightEnglish=body.english!==false;tables.transcript_groups=[{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English'},{id:'77777777-7777-4777-8777-777777777778',name:'Imports'},{id:'77777777-7777-4777-8777-777777777779',name:'Stories'}];rpcLog.length=0;return json(res,{})}
+  if(url.pathname==='/fixture/request-log')return json(res,{rpc:rpcLog,tables:tableLog,spotlight:spotlightRequests})
   if(url.pathname==='/fixture/search-failure'){failSearch=body.fail;return json(res,{})}
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
   if(url.pathname==='/fixture/import-failure'){failImportAfter=body.after??null;return json(res,{})}
@@ -339,8 +339,15 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     let rpc = url.pathname.split('/').at(-1)
     rpcLog.push(rpc)
+    if(rpc==='home_for_you_spotlight'){
+      spotlightRequests.push(body)
+      if(spotlightSelection==='error')return json(res,{code:'XX000',message:'Synthetic selection failure'},500)
+      if(spotlightSelection==='empty'||spotlightSelection==='raw-only'&&!body.p_allow_source_tokens)return json(res,null)
+      const clips=Array.from({length:4},(_,i)=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Spotlight fixture',channel:'Fixture'},clip_start_ms:0,clip_end_ms:45000,segments:[0,1,2].map(j=>({id:100+i*10+j,position:j,start_seconds:j*15,end_seconds:(j+1)*15,original_text:j?'Second Arabic subtitle':'First Arabic subtitle',english_text:'A subtitle.',canonical_paragraph:spotlightSelection==='raw-only'?null:{tokens:[{arabic:'\u0643\u062a\u0627\u0628',english:'book'},{arabic:'\u062c\u0645\u064a\u0644',english:'beautiful'}]},source_tokens:[{arabic:'\u0643\u062a\u0627\u0628',english:'book'},{arabic:'\u062c\u0645\u064a\u0644',english:'beautiful'}]}))}))
+      return json(res,clips.sort((a,b)=>createHash('md5').update(a.video.id+body.p_seed).digest('hex').localeCompare(createHash('md5').update(b.video.id+body.p_seed).digest('hex')))[0])
+    }
     if(rpc==='transcript_for_you_groups'&&spotlightMode){
-        const clips=Array.from({length:8},(_,i)=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Spotlight fixture',channel:'Fixture'},clip_start_ms:0,clip_end_ms:30000,segments:[0,1].map(j=>({id:100+i*10+j,position:j,start_seconds:j*15,end_seconds:(j+1)*15,original_text:j?'Second Arabic subtitle':'First Arabic subtitle',english_text:'A subtitle.',source_tokens:[{arabic:'\u0643\u062a\u0627\u0628',english:'book'}]}))}))
+        const clips=Array.from({length:8},(_,i)=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Spotlight fixture',channel:'Fixture'},clip_start_ms:0,clip_end_ms:45000,segments:[0,1,2].map(j=>({id:100+i*10+j,position:j,start_seconds:j*15,end_seconds:(j+1)*15,original_text:j?'Second Arabic subtitle':'First Arabic subtitle',english_text:'A subtitle.',source_tokens:[{arabic:'\u0643\u062a\u0627\u0628',english:'book'}]}))}))
       const english=new Set(tables.admin_manual_transcripts.filter(m=>m.group_id==='5b98c563-5c35-4696-98e1-06aa000eb622').map(m=>m.transcript_id))
       tables.for_you_candidates=clips.flatMap(c=>c.segments.map(s=>({segment_id:s.id,transcript_id:c.video.id})))
       return json(res,clips.filter(c=>(spotlightEnglish||!english.has(c.video.id))&&(!body.p_group_ids?.length||english.has(c.video.id))&&!body.p_excluded?.includes(c.segments[0].id)).sort((a,b)=>createHash('md5').update(a.video.id+body.p_seed).digest('hex').localeCompare(createHash('md5').update(b.video.id+body.p_seed).digest('hex'))).slice(0,body.p_limit))

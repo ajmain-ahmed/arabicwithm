@@ -1,3 +1,5 @@
+import {connection} from 'next/server'
+import {loadHomeSpotlight} from '@/app/lib/homeSpotlight.server'
 import type { Metadata, ResolvingMetadata } from 'next'
 import { fetchBooksForPublic } from '@/app/actions/books'
 import { fetchShowsForPublic } from '@/app/actions/cartoons'
@@ -18,12 +20,14 @@ export async function generateMetadata(_props: unknown, parent: ResolvingMetadat
 }
 
 export default async function HomePage() {
+  await connection()
   return withDataDeadline(8000, async () => {
-    const [books, shows, newShows, newEpisodes] = await Promise.all([
+    const [books, shows, newShows, newEpisodes, spotlight] = await Promise.all([
       fetchBooksForPublic().catch(() => []),
       fetchShowsForPublic().catch(() => []),
       fetchNewOnShows().catch(() => []),
       fetchNewOnEpisodes().catch(() => []),
+      loadHomeSpotlight().then(clip=>({clip,error:false})).catch(()=>({clip:null,error:true})),
     ])
     const availableEpisodes = await fetchHomeEpisodes(shows).catch(() => [])
     const dbzEntries = availableEpisodes
@@ -43,6 +47,7 @@ export default async function HomePage() {
         newShows={newShows}
         newEpisodes={newEpisodes}
         featured={featured}
+        spotlight={spotlight}
       />
     )
   })

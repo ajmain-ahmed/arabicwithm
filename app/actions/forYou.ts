@@ -7,11 +7,11 @@ async function requireForYouUser() {
 }
 
 import { forYouGroupPool } from '@/app/lib/forYouGroups'
-import { randomUUID } from 'node:crypto'
 import { headers } from 'next/headers'
 import { rateLimit } from '@/app/lib/rateLimit'
 import { z } from 'zod'
 import { serviceClient } from '@/app/lib/supabase'
+import {loadHomeSpotlight} from '@/app/lib/homeSpotlight.server'
 import { type ForYouClip, type ForYouSegment } from '@/app/lib/forYou'
 import {forYouRecord,forYouId,normaliseForYouClip,normaliseForYouSegment} from '@/app/lib/forYouData'
 
@@ -136,5 +136,5 @@ export async function fetchForYouDiagnostics():Promise<ForYouDiagnostics>{
 export async function fetchHomeForYouSpotlight():Promise<ForYouClip|null>{
  const ip=(await headers()).get('x-forwarded-for')?.split(',')[0]??'local'
  if(!rateLimit(`home-spotlight:${ip}`,60,60000).ok)throw new Error('Please try the preview again shortly.')
- return (await loadForYouClips(randomUUID(),[],[],[],'ar',1))[0]??null
+ return loadHomeSpotlight()
 }

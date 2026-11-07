@@ -97,8 +97,8 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
           }}
         >
           {show.slug.toLowerCase()==='dbz'?<Box component="img" src="/homepage/dbz-logo.png" alt={show.title} sx={{width:{xs:250,md:500},height:'auto',display:'block',filter:'drop-shadow(0 3px 10px rgba(0,0,0,.55))'}}/>:<Typography component="h2" sx={{color:'#fff',fontFamily:'var(--font-heading)',fontWeight:700,fontSize:{xs:44,md:76},lineHeight:1.05,textShadow:'0 3px 10px rgba(0,0,0,.55)'}}>{show.title}</Typography>}
-          <Box data-featured-actions sx={{ display: pagination?'grid':'flex',gridTemplateColumns:'minmax(0,1fr) auto minmax(0,1fr)', alignItems: 'center', gap: {xs:pagination?.5:1.25,md:1.25}, width: { xs: '100%', md: pagination?'100%':'auto' }, mt: { xs: 2, md: 2.75 } }}>
-           <Box sx={{display:{xs:pagination?'contents':'flex',md:'flex'},gridColumn:1,gridRow:1,gap:1.25,width:'100%'}} >
+          <Box data-featured-actions sx={{ display:{xs:'grid',md:pagination?'grid':'flex'},gridTemplateColumns:'minmax(0,1fr) auto minmax(0,1fr)',gridTemplateRows:{xs:'auto auto',md:'auto'}, alignItems: 'center', gap: {xs:pagination?.5:1.25,md:1.25}, width: { xs: '100%', md: pagination?'100%':'auto' }, mt: { xs: 2, md: 2.75 } }}>
+           <Box sx={{display:{xs:'contents',md:'flex'},gridColumn:1,gridRow:1,gap:1.25,width:'100%'}} >
             <Button
               component={Link}
               href={episode?`/cartoons/${encodeURIComponent(show.slug)}/${encodeURIComponent(episode.slug)}`:`/cartoons/${encodeURIComponent(show.slug)}`}
@@ -128,7 +128,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
               startIcon={<FormatListBulleted sx={{ fontSize: { xs: pagination?18:19, md: 22 } }} />}
               sx={{
                 flex: { xs: 1, md: '0 0 auto' },
-                gridColumn:3,gridRow:1,minWidth:0,
+                gridColumn:{xs:1,md:3},gridRow:{xs:2,md:1},minWidth:0,
                 minHeight: { xs: 50, md: 58 },
                 px: { xs: pagination?.5:1, md: 3.5 },
                 borderRadius: '9999px',
@@ -145,7 +145,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
               Episodes
             </Button>
            </Box>
-           {navigation&&<Box sx={{gridColumn:2,gridRow:1,justifySelf:'center'}}>{navigation}</Box>}
+           {navigation&&<Box sx={{gridColumn:2,gridRow:{xs:2,md:1},justifySelf:'center'}}>{navigation}</Box>}
           </Box>
         </Box>
       </Box>

@@ -343,6 +343,7 @@ export interface Database {
       website_begin_manual_import: {Args:Database['public']['Functions']['admin_begin_manual_import']['Args']&{p_explore_published:boolean};Returns:Json}
       website_finish_manual_import: {Args:{p_actor:string;p_import:string};Returns:Json}
       website_save_manual_source: {Args:Database['public']['Functions']['admin_save_manual_source']['Args']&{p_explore_published:boolean};Returns:Json}
+      home_for_you_spotlight: {Args:{p_seed:string;p_allow_source_tokens?:boolean};Returns:Json}
       transcript_for_you_groups: {Args:{p_seed:string;p_excluded:number[];p_recent:string[];p_limit:number;p_group_ids:string[]};Returns:Json}
       website_for_you_diagnostics: {Args:Record<string,never>;Returns:Json}
       account_has_premium: { Args: { p_user_id: string }; Returns: boolean }

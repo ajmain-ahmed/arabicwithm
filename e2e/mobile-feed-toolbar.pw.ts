@@ -52,3 +52,19 @@ test('desktop retains existing view tabs, language and sound control',async({pag
  await expect(page.getByRole('button',{name:/^Mute clip$|^Unmute clip$/})).toBeVisible()
  await expect(page.locator('[data-mobile-view-tools]:visible')).toHaveCount(0)
 })
+
+for(const width of [320,390,430,899,900,1440])test(`Imports filter presentation ${width}`,async({page,context,request})=>{
+ await request.post(`${backend}/fixture/spotlight`);await installYouTubeFixture(page)
+ const id='22222222-2222-4222-8222-222222222222',exp=Math.floor(Date.now()/1000)+3600,encode=(value:unknown)=>Buffer.from(JSON.stringify(value)).toString('base64url')
+ const user={id,aud:'authenticated',role:'authenticated',email:'synthetic@fixture.example',app_metadata:{provider:'email'},user_metadata:{}}
+ await context.addCookies([{name:'sb-localhost-auth-token',domain:'127.0.0.1',path:'/',value:`base64-${encode({access_token:`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:id,exp,role:'authenticated'})}.fixture-signature`,refresh_token:'fixture-refresh',expires_at:exp,token_type:'bearer',user})}`}])
+ await page.setViewportSize({width,height:1000});await page.goto('/explore?view=foryou')
+ await expect(page.locator('[data-for-you-source] iframe')).toBeVisible()
+ await page.getByRole('button',{name:'Filter content',exact:true}).filter({visible:true}).click()
+ await expect(page.getByRole('checkbox',{name:'All groups',exact:true})).toBeVisible();await expect(page.getByRole('checkbox',{name:'Stories',exact:true})).toBeVisible()
+ if(width<900)await expect(page.getByRole('checkbox',{name:'Imports',exact:true})).not.toBeVisible()
+ else await expect(page.getByRole('checkbox',{name:'Imports',exact:true})).toBeVisible()
+ await page.getByRole('button',{name:'Apply',exact:true}).click();await expect(page.locator('[data-for-you-source] iframe')).toBeVisible()
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
+ if(width<900){const bar=page.locator('[data-mobile-for-you-toolbar]');await expect(bar).toHaveCSS('justify-content','space-evenly');await expect(bar).toHaveCSS('column-gap','8px')}
+})

@@ -85,3 +85,15 @@ test('genuine touch swipe stays on Home, keyboard navigation and viewport resize
  await page.setViewportSize({width:1024,height:1000});await expect(slides.nth(2)).toHaveAttribute('aria-hidden','false')
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
 })
+
+for(const width of [320,390,430,899,900,1440])test(`Featured responsive controls ${width}`,async({page})=>{
+ await installYouTubeFixture(page);await page.setViewportSize({width,height:1000});await page.goto('/');await page.evaluate(()=>document.fonts.ready)
+ const slide=page.locator('[data-featured-slide][aria-hidden=false]'),play=slide.getByRole('link',{name:'Play',exact:true}),episodes=slide.getByRole('link',{name:'Episodes',exact:true}),dots=slide.locator('[data-featured-pagination]'),image=slide.locator('img').first()
+ const p=(await play.boundingBox())!,e=(await episodes.boundingBox())!,d=(await dots.boundingBox())!,i=(await image.boundingBox())!
+ expect(d.x+d.width/2).toBeCloseTo(i.x+i.width/2,0);expect(d.y+d.height/2).toBeCloseTo(e.y+e.height/2,0)
+ if(width<900){expect(p.y+p.height).toBeLessThanOrEqual(e.y);expect(p.x).toBeCloseTo(e.x,0);expect(e.x+e.width).toBeLessThanOrEqual(d.x)}else expect(p.y).toBeCloseTo(e.y,0)
+ expect(e.x).toBeGreaterThan(i.x);expect(e.y+e.height).toBeLessThan(i.y+i.height);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
+ await expect(play).toHaveAttribute('href',/\/cartoons\/hero-fixture-/);await expect(episodes).toHaveAttribute('href',/\/cartoons\/hero-fixture-/)
+ await dots.getByRole('button',{name:/^Show Featured/}).nth(1).click();await expect(page).toHaveURL(/\/$/);await expect(page.locator('[data-featured-slide]').nth(1)).toHaveAttribute('aria-hidden','false')
+ await page.locator('[data-featured-carousel]').screenshot({path:`test-results/mobile-featured-controls-${width}.png`})
+})
