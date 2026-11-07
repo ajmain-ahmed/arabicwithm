@@ -32,9 +32,11 @@ export default async function HomePage() {
     const fallbackFeatured = dbzEntries.length > 0
       ? { show: dbzEntries[0].show, episode: dbzEntries[0].episode, episodeCount: dbzEntries.length }
       : null
-    const pair=await fetchHomeFeatured(shows)
-    const showEpisodes=pair?availableEpisodes.filter(entry=>entry.show.id===pair.show.id):[]
-    const featured=pair?{...pair,episode:showEpisodes[0]?.episode,episodeCount:showEpisodes.length}:fallbackFeatured
+    const pairs=await fetchHomeFeatured(shows)
+    const featured=pairs.length?pairs.map(pair=>{
+      const showEpisodes=availableEpisodes.filter(entry=>entry.show.id===pair.show.id)
+      return {...pair,episode:showEpisodes[0]?.episode,episodeCount:showEpisodes.length}
+    }):fallbackFeatured?[fallbackFeatured]:[]
     return (
       <HomeDashboard
         books={books}

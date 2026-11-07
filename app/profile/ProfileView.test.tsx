@@ -3,6 +3,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import type { PublicProfile } from '@/app/actions/profiles'
 const mocks = vi.hoisted(() => ({ update: vi.fn(), getUser: vi.fn(), saveProfile:vi.fn(),listPresets:vi.fn(), metadata: { book_progress: { story: { chapterSlug: 'one', updatedAt: '2026-10-01' }, other: { chapterSlug: 'two' } }, book_sentence_bookmark: { bookSlug: 'story' } } }))
+vi.mock('@/app/actions/appLaunch',()=>({appLaunchPreference:vi.fn(async()=>false),setAppLaunchPreference:vi.fn(async()=>({ok:true,message:'Saved'}))}))
 vi.mock('@/app/actions/profilePresets',()=>({listProfilePresets:mocks.listPresets}))
 vi.mock('@/app/actions/profiles', () => ({ updateProfile:mocks.saveProfile, checkUsernameAvailability: vi.fn() }))
 vi.mock('@/app/actions/premium', () => ({ fetchPremiumStatus: vi.fn(() => Promise.resolve({ premium: false, manageable: false })), managePremium: vi.fn(), startPremiumCheckout: vi.fn() }))
@@ -92,4 +93,13 @@ it('shows a safe picker failure and supports retry without exposing backend erro
  expect(document.querySelector('[role=dialog]')?.textContent).toContain('Profile pictures could not be loaded')
  expect(document.body.textContent).not.toContain('private Storage detail');await clickText('Try again')
  expect(document.querySelector('[aria-label="Select fox"]')).not.toBeNull()
+})
+
+it('shows the app reminder only on the signed-in viewer own profile',async()=>{
+ await act(async()=>root.render(<ProfileView profile={profile()}/>))
+ expect(host.querySelector('#download-app')?.textContent).toContain('ArabicwithM on the go!')
+ await act(async()=>root.render(<ProfileView profile={{...profile(),own:false}}/>))
+ expect(host.querySelector('#download-app')).toBeNull()
+ await act(async()=>root.render(<ProfileView profile={{...profile(),id:'another-user'}}/>))
+ expect(host.querySelector('#download-app')).toBeNull()
 })

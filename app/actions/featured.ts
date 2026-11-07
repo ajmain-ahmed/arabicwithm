@@ -1,5 +1,6 @@
 "use server"
 
+import {selectFeaturedShows} from '@/app/lib/featuredShows'
 import {guardAdmin} from '@/app/actions/auth'
 import {serviceClient} from '@/app/lib/supabase'
 import {FEATURED_FILE, listFeaturedFiles, loadFeaturedAssets} from '@/app/lib/featuredStorage'
@@ -9,12 +10,22 @@ export async function fetchFeaturedForAdmin() {
  await guardAdmin()
  const [assets,{data:shows,error}]=await Promise.all([loadFeaturedAssets(),serviceClient.from('shows').select('id,slug,title').order('title')])
  if(error)throw new Error('Unable to load Shows.')
- return {shows:shows??[],assets:assets.map(({configs,...asset})=>{
+ const records=assets.map(({configs,...asset})=>{
   const matches=(shows??[]).filter(show=>show.slug.toLowerCase()===asset.name.replace(/\.[^.]+$/,'').toLowerCase())
   const show=matches.length===1?matches[0]:null
   const config=configs.find(row=>row.show_id===show?.id)
-  return {...asset,show,status:matches.length>1?'Slug collision':!show?'No matching show':config&&config.storage_path!==asset.path?'Alternate image':'Featured image'}
- })}
+  return {...asset,show,status:matches.length>1?'Slug collision':!show?'No matching show':asset.configShowId&&asset.configShowId!==show.id?'Assigned to another show':config&&config.storage_path!==asset.path?'Alternate image':'Featured image'}
+ })
+ // Match the public pool's deterministic choice when old uploads contain
+ // multiple formats without a saved canonical path.
+ const canonical=new Set<string>()
+ for(const asset of [...records].sort((a,b)=>a.name.localeCompare(b.name,'en'))){
+  if(asset.status!=='Featured image'||!asset.show)continue
+  if(canonical.has(asset.show.id))asset.status='Alternate image'
+  else canonical.add(asset.show.id)
+ }
+ const selected=new Set(selectFeaturedShows(records.filter(asset=>asset.status==='Featured image'&&asset.show).map(asset=>({show:asset.show!}))).map(asset=>asset.show.id))
+ return {shows:shows??[],assets:records.map(asset=>({...asset,eligible:asset.status==='Featured image',inRotation:asset.status==='Featured image'&&Boolean(asset.show&&selected.has(asset.show.id))}))}
 }
 function invalidateFeatured() { updateTag('homepage-featured');revalidatePath('/');revalidatePath('/admin/featured') }
 async function selectedShow(id:string) {

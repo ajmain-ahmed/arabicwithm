@@ -7,7 +7,7 @@ import { appLaunchPreference, setAppLaunchPreference } from '@/app/actions/appLa
 
 export default function AppLaunchSignup() {
   const { user, loading } = useAuth()
-  return loading || user ? null : <Signup signedIn={false} />
+  return loading ? null : <Signup key={user?.id??'guest'} signedIn={Boolean(user)} accountEmail={user?.email} />
 }
 
 function Signup({ signedIn, accountEmail }: { signedIn: boolean; accountEmail?: string }) {

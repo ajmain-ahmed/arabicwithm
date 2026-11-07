@@ -2,10 +2,10 @@ import 'server-only'
 import {withDataDeadline} from '@/app/lib/boundedFetch'
 import {unstable_cache} from 'next/cache'
 import {loadFeaturedAssets} from '@/app/lib/featuredStorage'
-import {featuredPool,selectFeaturedShow} from '@/app/lib/featuredShows'
+import {featuredPool,selectFeaturedShows} from '@/app/lib/featuredShows'
 import type {ShowMeta} from '@/app/lib/cartoons'
 
-const loadFeaturedImages=unstable_cache(loadFeaturedAssets,['homepage-featured-images-v2'],{revalidate:60,tags:['homepage-featured']})
+const loadFeaturedImages=unstable_cache(loadFeaturedAssets,['homepage-featured-images-v3'],{revalidate:60,tags:['homepage-featured']})
 
 export async function fetchHomeFeatured(shows:ShowMeta[],now=new Date()){
  try{
@@ -15,6 +15,6 @@ export async function fetchHomeFeatured(shows:ShowMeta[],now=new Date()){
    return {...asset,eligible:(!config||config.storage_path===asset.path)&&(!asset.configShowId||asset.configShowId===show?.id)}
   }))
   if(orphans.length)console.warn('[featured artwork] No matching show:',orphans.join(', '))
-  return selectFeaturedShow(pairs,now)
- }catch(error){console.warn('[featured artwork] Using existing homepage fallback.',error instanceof Error?error.message:'Storage unavailable');return null}
+  return selectFeaturedShows(pairs,now)
+ }catch(error){console.warn('[featured artwork] Using existing homepage fallback.',error instanceof Error?error.message:'Storage unavailable');return []}
 }

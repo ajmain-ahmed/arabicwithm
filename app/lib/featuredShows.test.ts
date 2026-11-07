@@ -1,5 +1,5 @@
 import {expect,it} from 'vitest'
-import {featuredPool,selectFeaturedShow} from './featuredShows'
+import {featuredPool,selectFeaturedShows} from './featuredShows'
 import type {ShowMeta} from './cartoons'
 const slugs=['arc','bb','mov','cotp','dbz','hxh','misc']
 const shows=slugs.map(slug=>({id:slug,slug,title:slug.toUpperCase(),cover:'/cover',level:'B1',episodeCount:1} satisfies ShowMeta))
@@ -16,16 +16,28 @@ it('ignores unmatched images, non-images, missing files, and chooses duplicate f
  expect(featuredPool(shows,[...images].reverse()).pairs).toEqual(featuredPool(shows,images).pairs)
  expect(featuredPool(shows,images).pairs).toHaveLength(7)
 })
-it('stays stable for three London days, advances, wraps, and handles an empty pool',()=>{
+for(const count of [0,1,2,3,4,7])it(`selects at most three unique eligible Shows from ${count}`,()=>{
+ const {pairs}=featuredPool(shows.slice(0,count),images)
+ const selected=selectFeaturedShows(pairs,new Date('2026-11-06T12:00:00Z'))
+ expect(selected).toHaveLength(Math.min(count,3));expect(new Set(selected.map(p=>p.show.id)).size).toBe(selected.length)
+})
+it('stays stable for two London days across requests and input order, then can rotate',()=>{
  const {pairs}=featuredPool(shows,images)
- // 2026-10-27 is a UTC-epoch-aligned three-day boundary.
- const day=Math.floor(Date.parse('2026-10-27T00:00:00Z')/86400000),start=day-day%3
+ const day=Math.floor(Date.parse('2026-11-06T00:00:00Z')/86400000),start=day-day%2
  const now=(offset:number)=>new Date((start+offset)*86400000+12*3600000)
- const first=selectFeaturedShow(pairs,now(0))!
- for(const offset of [0,.4,1,2])expect(selectFeaturedShow(pairs,now(offset))).toBe(first)
- expect(selectFeaturedShow(pairs,now(3))).not.toBe(first)
- expect(selectFeaturedShow(pairs,now(21))).toBe(first)
- expect(selectFeaturedShow([],now(0))).toBeNull()
+ const first=selectFeaturedShows(pairs,now(0))
+ for(const offset of [0,.4,1])expect(selectFeaturedShows([...pairs].reverse(),now(offset))).toEqual(first)
+ expect(selectFeaturedShows(pairs,now(2))).not.toEqual(first)
+})
+it('uses London calendar days through the DST boundary',()=>{
+ const {pairs}=featuredPool(shows,images)
+ expect(selectFeaturedShows(pairs,new Date('2026-10-24T23:30:00Z'))).toEqual(selectFeaturedShows(pairs,new Date('2026-10-25T12:00:00Z')))
+})
+it('excludes a removed record and retains replacement artwork and framing',()=>{
+ const before=featuredPool(shows,images).pairs,selected=selectFeaturedShows(before)
+ expect(selectFeaturedShows(before.filter(p=>p.show.id!==selected[0].show.id)).some(p=>p.show.id===selected[0].show.id)).toBe(false)
+ const updated=featuredPool(shows,[{name:'arc.webp',url:'replacement?v=2',position:{x:23,y:45}}]).pairs
+ expect(selectFeaturedShows(updated)[0]).toMatchObject({featuredImage:'replacement?v=2',featuredPosition:{x:23,y:45}})
 })
 
 it('carries saved framing with the same Show/image and excludes ambiguous slugs',()=>{

@@ -18,13 +18,12 @@ import { useColorMode } from '@/app/components/ThemeProvider'
 import HomeForYouSpotlight from './HomeForYouSpotlight'
 import NewOnRow, { COMPACT_HOME_CARD_WIDTH, type CatalogueRowItem } from './NewOnRow'
 import { useBookMyList } from '@/app/lib/bookMyList'
-import AppDownloadSection from './AppDownloadSection'
 import CheckoutReturnNotice from './CheckoutReturnNotice'
 import AwmPromoSection from './AwmPromoSection'
 import { fetchMyList } from '@/app/actions/myList'
 import { useMyListCache } from '@/store/myListStore'
 import MemberActions from '@/app/components/navbar/MemberActions'
-import FeaturedHero from './FeaturedHero'
+import FeaturedCarousel from './FeaturedCarousel'
 import { fetchMyDisplayName } from '@/app/actions/profiles'
 import type { NewOnEpisode, NewOnShow } from './catalogueRows'
 import type { PublicBook } from '@/app/actions/books'
@@ -107,7 +106,8 @@ function DeferredRowPlaceholder() {
   )
 }
 
-export default function HomeDashboard({ books, newShows, newEpisodes, featured }: { books: PublicBook[]; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; featured?: import('./FeaturedHero').FeaturedShow | null }) {
+export default function HomeDashboard({ books, newShows, newEpisodes, featured }: { books: PublicBook[]; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; featured?: import('./FeaturedHero').FeaturedShow | import('./FeaturedHero').FeaturedShow[] | null }) {
+  const featuredItems=Array.isArray(featured)?featured:featured?[featured]:[]
   const { mode } = useColorMode()
   const { user, loading: authLoading } = useAuth()
   // Membership alone defines active reading. Positions remain resume history.
@@ -197,8 +197,8 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured }
           bgcolor: 'var(--awm-cream-light)',
         }}
       >
-        {featured ? (
-          <FeaturedHero {...featured} />
+        {featuredItems.length ? (
+          <FeaturedCarousel key={featuredItems.map(item=>item.show.id).join(':')} items={featuredItems} />
         ) : (
         <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 360, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
           {/* Responsive AVIF set encoded from the pristine source: the browser
@@ -330,8 +330,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured }
               ].map(({ title, href, Icon }) => <Paper key={href} component={Link} href={href} elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minHeight: 76, p: 2, borderRadius: '10px', textDecoration: 'none', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><Icon sx={{ color: 'var(--awm-gold)' }} /><Typography sx={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14 }}>{title}</Typography></Paper>)}
             </Box>
           </Container>
-          {!authLoading && !user && <Container maxWidth="lg" sx={{ mt: { xs: 6, md: 8 }, mb: { xs: 6, md: 8 } }}><AppDownloadSection /></Container>}
-          {!authLoading && user && <Container maxWidth="lg" sx={{ mt: { xs: 6, md: 8 }, mb: { xs: 6, md: 8 } }}><AwmPromoSection userId={user.id} /></Container>}
+          {!authLoading && <AwmPromoSection key={user?.id??"guest"} userId={user?.id} placement="home" />}
         </Box>
       </Box>
   )

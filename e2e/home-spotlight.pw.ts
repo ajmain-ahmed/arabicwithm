@@ -25,18 +25,18 @@ for(const width of [320,390,768,1024,1440])test(`centred native Spotlight and sh
  await native.getByRole('slider',{name:'Native timeline fixture'}).fill('16');await expect(section.locator('[data-spotlight-subtitle]')).toContainText('Second Arabic subtitle')
  const box=(await section.boundingBox())!,player=(await clip.boundingBox())!,subtitle=(await section.locator('[data-spotlight-subtitle]').boundingBox())!
  expect(player.x+player.width/2).toBeCloseTo(box.x+box.width/2,0);expect(player.width/player.height).toBeCloseTo(16/9,1)
- if(width>=1024){expect(player.width/box.width).toBeGreaterThan(.5);expect(player.width/box.width).toBeLessThan(.65);expect(subtitle.width).toBeGreaterThan(player.width)}
+ if(width>=1024){expect(player.width/box.width).toBeGreaterThan(.44);expect(player.width/box.width).toBeLessThan(.53);expect(subtitle.width).toBeGreaterThan(player.width)}
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
  await page.screenshot({path:`test-results/guest-spotlight-${width}.png`,fullPage:true})
  const log=await(await request.get(`${backend}/fixture/request-log`)).json();expect(log.rpc.filter((r:string)=>r==='website_for_you_usage')).toHaveLength(0)
- await section.getByRole('link',{name:/Go to For You/}).click();await expect(page).toHaveURL(/view=foryou/);await expect(page.locator('[data-for-you-source] iframe')).toBeVisible();await expect(page.getByRole('dialog')).toHaveCount(0)
+ await section.getByRole('button',{name:'Watch More',exact:true}).click();await expect(page).toHaveURL(/view=foryou/);await expect(page.locator('[data-for-you-source] iframe')).toBeVisible();await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 test('guest progressing playback persists across Home, feed, clips, refresh, and excludes paused/Explore time',async({page,request})=>{
  await seedGuest(page,120000);await installYouTubeFixture(page);await page.goto('/')
  const iframe=page.locator('[data-spotlight-video] iframe');await expect(iframe).toBeVisible()
  await page.evaluate(()=>{(window as unknown as {__ytAdvanceClock:boolean}).__ytAdvanceClock=true});await expect.poll(()=>used(page)).toBeGreaterThan(120500)
  await iframe.contentFrame().getByRole('button',{name:'Native play/pause fixture'}).click();const paused=await used(page);await page.waitForTimeout(700);expect(await used(page)).toBe(paused)
- await page.getByRole('link',{name:/Go to For You/}).click();await expect(page.locator('[data-for-you-source]')).toHaveCount(1)
+ await page.getByRole('button',{name:'Watch More',exact:true}).click();await expect(page.locator('[data-for-you-source]')).toHaveCount(1)
  const before=await used(page);await page.getByRole('button',{name:'Next video',exact:true}).click();expect(await used(page)).toBeGreaterThanOrEqual(before)
  await page.reload();await expect(page.locator('[data-for-you-source] iframe')).toBeVisible();expect(await used(page)).toBeGreaterThanOrEqual(before);expect(await used(page)).toBeLessThan(before+1500)
  await page.getByRole('button',{name:'Explore feed',exact:true}).filter({visible:true}).click();await expect(page.locator('[data-explore-player=active]:visible iframe')).toBeVisible()
@@ -47,7 +47,7 @@ test('exhausted Home blocks player and further feed requests across refresh/navi
  await seedGuest(page,299200,true);await installYouTubeFixture(page);await page.goto('/')
  await expect(page.locator('[data-home-spotlight] [data-guest-for-you-exhausted]')).toBeVisible();expect(await used(page)).toBe(300000);await expect(page.locator('[data-spotlight-video]')).toHaveCount(0)
  const count=async()=>((await(await request.get(`${backend}/fixture/request-log`)).json()).rpc as string[]).filter(r=>r==='transcript_for_you_groups').length
- const before=await count();await page.getByRole('link',{name:/Go to For You/}).click();await expect(page.locator('[data-guest-for-you-exhausted]')).toBeVisible();await expect(page.locator('[data-for-you-source]')).toHaveCount(0)
+ const before=await count();await page.getByRole('button',{name:'Watch More',exact:true}).click();await expect(page.locator('[data-guest-for-you-exhausted]')).toBeVisible();await expect(page.locator('[data-for-you-source]')).toHaveCount(0)
  await page.reload();await expect(page.locator('[data-guest-for-you-exhausted]')).toBeVisible();expect(await count()).toBe(before)
  await page.goto('/');await expect(page.getByText('Want more For You?',{exact:true})).toBeVisible();expect(await count()).toBe(before)
 })

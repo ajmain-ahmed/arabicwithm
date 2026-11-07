@@ -82,12 +82,12 @@ export default function FeaturedManager({initial}:{initial:Data}) {
  const remove=async()=>{if(!deleting)return;setBusy(true);setError('');try{await deleteFeaturedForAdmin(deleting.name);setData(await fetchFeaturedForAdmin());setDeleting(null);setNotice('Featured image removed.')}catch(error){setError(errorMessage(error))}finally{setBusy(false)}}
  return <Box>
   <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:2,mb:3}}><Typography component="h1" sx={{fontFamily:'var(--font-heading)',fontSize:32}}>Featured</Typography><Button variant="contained" onClick={()=>{setNotice('');setEditing(null)}}>Upload Featured Image</Button></Box>
-  <Typography sx={{mb:2,color:'var(--awm-muted)'}}>Homepage artwork - Shows rotate every three days. Save a shared focal position after checking both previews.</Typography>
+  <Typography sx={{mb:2,color:'var(--awm-muted)'}}>Homepage artwork - Up to three eligible Shows appear in one carousel. The selection and order rotate every two London calendar days. Save a shared focal position after checking both previews.</Typography>
   {notice&&<Alert severity="success" sx={{mb:2}}>{notice}</Alert>}{error&&<Alert severity="error" sx={{mb:2}}>{error}</Alert>}
   <Box sx={{display:'grid',gridTemplateColumns:{xs:'minmax(0,1fr)',sm:'repeat(2,minmax(0,1fr))',lg:'repeat(3,minmax(0,1fr))'},gap:2}}>
    {data.assets.map(asset=><Paper component="section" aria-label={asset.name} key={asset.name} variant="outlined" sx={{overflow:'hidden',borderRadius:'12px'}}>
     <Box component="img" src={asset.url} alt={asset.show?.title??asset.name} sx={{display:'block',width:'100%',aspectRatio:FEATURED_DESKTOP_RATIO,objectFit:'cover',objectPosition:featuredObjectPosition(asset.position)}}/>
-    <Box sx={{p:2}}><Typography sx={{fontWeight:600}}>{asset.show?.title??asset.name}</Typography><Typography sx={{fontSize:13,color:'var(--awm-muted)'}}>{asset.show?.slug??asset.name.replace(/\.[^.]+$/,'')} - {asset.status}</Typography>
+    <Box sx={{p:2}}><Typography sx={{fontWeight:600}}>{asset.show?.title??asset.name}</Typography><Typography sx={{fontSize:13,color:'var(--awm-muted)'}}>{asset.show?.slug??asset.name.replace(/\.[^.]+$/,'')} - {asset.status}</Typography><Typography sx={{fontSize:12,color:'var(--awm-muted)',mt:.5}}>{asset.inRotation?'In current Homepage rotation':asset.eligible?'Eligible for a future rotation':'Not eligible for the Homepage'}</Typography>
      <Box sx={{display:'flex',flexWrap:'wrap',gap:1,mt:1.5}}><Button disabled={!asset.show} onClick={()=>setEditing(asset)}>Edit / Position</Button><Button disabled={!asset.show} onClick={()=>setEditing(asset)}>Replace</Button><Button color="error" onClick={()=>{setError('');setDeleting(asset)}}>Delete</Button></Box>
     </Box>
    </Paper>)}

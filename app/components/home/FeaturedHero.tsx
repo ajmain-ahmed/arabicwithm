@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import type {ReactNode} from 'react'
 import {FEATURED_DESKTOP_RATIO,FEATURED_MOBILE_HEIGHT,featuredObjectPosition,type FeaturedPosition} from '@/app/lib/featuredFraming'
 import { Box, Button, Typography } from '@mui/material'
 import { FormatListBulleted, PlayArrow } from '@mui/icons-material'
@@ -19,7 +20,7 @@ export interface FeaturedShow {
    full-bleed; mobile is a tall card so the whole height of the artwork is
    visible. Deliberately shorter than a streaming billboard so the rows stay
    near the fold. */
-export default function FeaturedHero({ show, episode, featuredImage, featuredPosition }: FeaturedShow) {
+export default function FeaturedHero({ show, episode, featuredImage, featuredPosition, priority=true, pagination=false, navigation }: FeaturedShow & {priority?:boolean;pagination?:boolean;navigation?:ReactNode}) {
   return (
     <Box
       data-featured-hero
@@ -49,7 +50,8 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
           component="img"
           src={featuredImage ?? "/homepage/dbz-feature.avif"}
           alt={show.title}
-          fetchPriority="high"
+          fetchPriority={priority?"high":"low"}
+          loading={priority?"eager":"lazy"}
           decoding="async"
           onError={event=>{const image=event.currentTarget;if(!image.dataset.fallback){image.dataset.fallback='true';image.src=show.cover}else image.style.visibility='hidden'}}
           sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: featuredObjectPosition(featuredPosition) }}
@@ -95,22 +97,24 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
           }}
         >
           {show.slug.toLowerCase()==='dbz'?<Box component="img" src="/homepage/dbz-logo.png" alt={show.title} sx={{width:{xs:250,md:500},height:'auto',display:'block',filter:'drop-shadow(0 3px 10px rgba(0,0,0,.55))'}}/>:<Typography component="h2" sx={{color:'#fff',fontFamily:'var(--font-heading)',fontWeight:700,fontSize:{xs:44,md:76},lineHeight:1.05,textShadow:'0 3px 10px rgba(0,0,0,.55)'}}>{show.title}</Typography>}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'nowrap', width: { xs: '100%', md: 'auto' }, mt: { xs: 2, md: 2.75 } }}>
+          <Box data-featured-actions sx={{ display: pagination?'grid':'flex',gridTemplateColumns:'minmax(0,1fr) auto minmax(0,1fr)', alignItems: 'center', gap: {xs:pagination?.5:1.25,md:1.25}, width: { xs: '100%', md: pagination?'100%':'auto' }, mt: { xs: 2, md: 2.75 } }}>
+           <Box sx={{display:{xs:pagination?'contents':'flex',md:'flex'},gridColumn:1,gridRow:1,gap:1.25,width:'100%'}} >
             <Button
               component={Link}
               href={episode?`/cartoons/${encodeURIComponent(show.slug)}/${encodeURIComponent(episode.slug)}`:`/cartoons/${encodeURIComponent(show.slug)}`}
               variant="contained"
-              startIcon={<PlayArrow sx={{ fontSize: { xs: 22, md: 26 } }} />}
+              startIcon={<PlayArrow sx={{ fontSize: { xs: pagination?18:22, md: 26 } }} />}
               sx={{
                 flex: { xs: 1, md: '0 0 auto' },
+                gridColumn:1,gridRow:1,minWidth:0,
                 minHeight: { xs: 50, md: 58 },
-                px: { xs: 1, md: 4 },
+                px: { xs: pagination?.5:1, md: 4 },
                 borderRadius: '9999px',
                 bgcolor: '#0e2e1f',
                 color: '#fff',
                 fontFamily: 'var(--font-sans), sans-serif',
                 fontWeight: 800,
-                fontSize: { xs: 15, md: 17 },
+                fontSize: { xs: pagination?13:15, md: 17 },
                 textTransform: 'none',
                 boxShadow: '0 6px 18px rgba(0,0,0,0.35)',
                 '&:hover': { bgcolor: '#174832', boxShadow: '0 6px 18px rgba(0,0,0,0.35)' },
@@ -121,17 +125,18 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
             <Button
               component={Link}
               href={`/cartoons/${encodeURIComponent(show.slug)}`}
-              startIcon={<FormatListBulleted sx={{ fontSize: { xs: 19, md: 22 } }} />}
+              startIcon={<FormatListBulleted sx={{ fontSize: { xs: pagination?18:19, md: 22 } }} />}
               sx={{
                 flex: { xs: 1, md: '0 0 auto' },
+                gridColumn:3,gridRow:1,minWidth:0,
                 minHeight: { xs: 50, md: 58 },
-                px: { xs: 1, md: 3.5 },
+                px: { xs: pagination?.5:1, md: 3.5 },
                 borderRadius: '9999px',
                 bgcolor: 'rgba(109,109,110,0.55)',
                 color: '#fff',
                 fontFamily: 'var(--font-sans), sans-serif',
                 fontWeight: 700,
-                fontSize: { xs: 15, md: 17 },
+                fontSize: { xs: pagination?13:15, md: 17 },
                 textTransform: 'none',
                 backdropFilter: 'blur(6px)',
                 '&:hover': { bgcolor: 'rgba(109,109,110,0.4)' },
@@ -139,6 +144,8 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
             >
               Episodes
             </Button>
+           </Box>
+           {navigation&&<Box sx={{gridColumn:2,gridRow:1,justifySelf:'center'}}>{navigation}</Box>}
           </Box>
         </Box>
       </Box>

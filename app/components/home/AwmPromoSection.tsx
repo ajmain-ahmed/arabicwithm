@@ -6,29 +6,37 @@ import { AutorenewRounded, CheckCircleRounded, DiamondOutlined } from '@mui/icon
 import { managePremium, startPremiumCheckout, type PremiumStatus } from '@/app/actions/premium'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import { formatMembershipDate } from '@/app/lib/display'
-import { getPremiumStatus, readPremiumStatus, refreshPremiumStatus } from '@/app/lib/premiumStatusCache'
+import { refreshPremiumStatus } from '@/app/lib/premiumStatusCache'
 
-/* AWM+ card for signed-in users, in the AppDownloadSection shell: deep forest
+/* Shared AWM+ card, in the AppDownloadSection shell: deep forest
    surface, cream type, gold accents, artwork on the right. Free members see
-   the upgrade pitch + checkout CTA; subscribers see an "AWM+ Active!" state
+   the upgrade pitch + checkout CTA; subscribers see an active membership state
    with their benefits and renewal/cancellation dates; cancelled members get a
-   resume button into the billing portal. */
-export default function AwmPromoSection({ userId }: { userId: string }) {
-  const [status, setStatus] = useState<PremiumStatus | null>(() => readPremiumStatus(userId))
+   management button into the existing billing portal. */
+export default function AwmPromoSection({ userId, placement='home' }: { userId?: string; placement?:'home'|'profile' }) {
+  const [snapshot,setSnapshot]=useState<{userId:string;status:PremiumStatus}|null>(null)
   const [busy, setBusy] = useState(false)
   const [resumeBusy, setResumeBusy] = useState(false)
   const [error, setError] = useState('')
   useEffect(() => {
-    let active = true
-    void (status ? getPremiumStatus(userId) : refreshPremiumStatus(userId))
-      .then(value => { if (active) setStatus(value) })
-      .catch(() => {})
-    return () => { active = false }
-  }, [userId, status])
+    if(!userId)return
+    let current = true, revision = 0
+    const refresh=()=>{const request=++revision;void refreshPremiumStatus(userId).then(status=>{if(current&&request===revision)setSnapshot({userId,status})}).catch(()=>{if(current&&request===revision)setSnapshot(null)})}
+    refresh()
+    const visible=()=>{if(document.visibilityState==='visible')refresh()}
+    window.addEventListener('focus',refresh)
+    window.addEventListener('account-access-changed',refresh)
+    document.addEventListener('visibilitychange',visible)
+    const timer=window.setInterval(visible,60000)
+    return () => {current=false;clearInterval(timer);window.removeEventListener('focus',refresh);window.removeEventListener('account-access-changed',refresh);document.removeEventListener('visibilitychange',visible)}
+  }, [userId])
+  const status=userId?(snapshot?.userId===userId?snapshot.status:null):{premium:false,admin:false,signedIn:false,manageable:false,cancelAtPeriodEnd:false,periodEnd:null,paymentIssue:false,startedAt:null}
   if (!status) return null
   const active = status.premium || status.admin
+  if(placement==='home'?active:!active||!userId)return null
 
   async function upgrade() {
+    if(!userId){window.dispatchEvent(new CustomEvent('open-auth-dialog',{detail:{mode:'signin'}}));return}
     setBusy(true); setError('')
     try { window.location.assign(await startPremiumCheckout()) }
     catch (e) { setError(e instanceof Error ? e.message : 'Unable to open billing. Please try again.'); setBusy(false) }
@@ -60,6 +68,7 @@ export default function AwmPromoSection({ userId }: { userId: string }) {
   ) : null
 
   return (
+    <Box data-awm-plus-placement={placement} sx={{mx:'auto',maxWidth:1200,mt:{xs:6,md:8},mb:placement==='home'?{xs:6,md:8}:0,px:placement==='home'?{xs:2,sm:3}:0}}>
     <Box
       id="awm-plus-promo"
       sx={{
@@ -86,7 +95,7 @@ export default function AwmPromoSection({ userId }: { userId: string }) {
             AWM+
           </Typography>
           <Typography component="h2" sx={{ mt: 1, color: '#f5ede0', fontFamily: 'var(--font-heading)', fontSize: { xs: 28, sm: 34, md: 42 }, fontWeight: 600, lineHeight: 1.12 }}>
-            {active ? 'AWM+ Active!' : 'Upgrade to AWM+'}
+            {active ? 'AWM+' : 'Upgrade to AWM+'}
           </Typography>
           {!active && (
             <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.75)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 15.5 }, lineHeight: 1.65, maxWidth: 460, mx: { xs: 'auto', md: 0 } }}>
@@ -94,7 +103,7 @@ export default function AwmPromoSection({ userId }: { userId: string }) {
             </Typography>
           )}          {active && (
             <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.75)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 15.5 }, lineHeight: 1.65, maxWidth: 460, mx: { xs: 'auto', md: 0 } }}>
-              Thank you for supporting ArabicWithM —<br />here is everything included with your membership.
+              Your AWM+ membership is active. Thank you for supporting ArabicWithM.
             </Typography>
           )}
 
@@ -102,7 +111,7 @@ export default function AwmPromoSection({ userId }: { userId: string }) {
             {PREMIUM_BENEFITS.map(benefit => (
               <Box component="li" key={benefit.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.1, px: 1.5, py: 1.1, borderRadius: '10px', bgcolor: 'rgba(212,168,67,0.1)', border: '1px solid rgba(212,168,67,0.22)' }}>
                 <CheckCircleRounded aria-hidden="true" sx={{ flex: '0 0 auto', fontSize: 19, color: '#d4a843' }} />
-                <Typography sx={{ minWidth: 0, flex: 1, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13.5, fontWeight: 600, color: '#f5ede0', whiteSpace: 'nowrap' }}>{benefit.label}</Typography>
+                <Typography sx={{ minWidth: 0, flex: 1, fontFamily: 'var(--font-sans), sans-serif', fontSize: 13.5, fontWeight: 600, color: '#f5ede0', whiteSpace: 'normal' }}>{benefit.label}</Typography>
               </Box>
             ))}
           </Box>
@@ -110,7 +119,7 @@ export default function AwmPromoSection({ userId }: { userId: string }) {
           {active ? (
             <Box sx={{ mt: 2.25 }}>
               {statusLine}
-              {status.cancelAtPeriodEnd && endDate && (
+              {status.manageable && (
                 <Button
                   onClick={() => void resume()}
                   disabled={resumeBusy}
@@ -122,7 +131,7 @@ export default function AwmPromoSection({ userId }: { userId: string }) {
                     '&:hover': { background: 'linear-gradient(135deg, #e2b95c, #c8962a)', boxShadow: '0 12px 30px rgba(184,134,11,0.45)' },
                   }}
                 >
-                  {resumeBusy ? 'Opening…' : 'Resume AWM+'}
+                  {resumeBusy ? 'Opening…' : 'Manage membership'}
                 </Button>
               )}
             </Box>
@@ -172,6 +181,7 @@ export default function AwmPromoSection({ userId }: { userId: string }) {
           />
         </Box>
       </Box>
+    </Box>
     </Box>
   )
 }

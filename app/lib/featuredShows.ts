@@ -1,5 +1,6 @@
 import {DEFAULT_FEATURED_POSITION,type FeaturedPosition} from '@/app/lib/featuredFraming'
 import type {ShowMeta} from '@/app/lib/cartoons'
+import {seededShuffled} from '@/app/lib/explore'
 import {platformDate} from '@/app/lib/entitlements'
 
 export interface FeaturedImage {name:string;url:string;position?:FeaturedPosition;eligible?:boolean}
@@ -17,9 +18,9 @@ export function featuredPool(shows:ShowMeta[],images:FeaturedImage[]){
  }
  return {pairs:[...pairs.values()].sort((a,b)=>a.show.slug.localeCompare(b.show.slug,'en')),orphans}
 }
-/** Three London calendar days per window, independent of DST hour changes. */
-export function selectFeaturedShow(pairs:FeaturedPair[],now=new Date()):FeaturedPair|null{
- if(!pairs.length)return null
+/** Two London calendar days per epoch-aligned window, including DST changes. */
+export function selectFeaturedShows<T extends {show:{id:string;slug:string}}>(pairs:readonly T[],now=new Date()):T[]{
  const day=Math.floor(Date.parse(platformDate(now)+'T00:00:00Z')/86400000)
- return pairs[((Math.floor(day/3)%pairs.length)+pairs.length)%pairs.length]
+ const ordered=[...pairs].sort((a,b)=>a.show.id.localeCompare(b.show.id,'en'))
+ return seededShuffled(ordered,`homepage-featured:${Math.floor(day/2)}`).slice(0,3)
 }

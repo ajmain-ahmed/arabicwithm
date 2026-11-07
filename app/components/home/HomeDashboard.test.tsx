@@ -6,6 +6,7 @@ const home = vi.hoisted(() => ({
   user: null as { id: string; user_metadata: Record<string, unknown> } | null,
   statsRendered: false,
 }))
+vi.mock('next/navigation',()=>({useRouter:()=>({push:vi.fn()})}))
 vi.mock('@/app/AuthContext', () => ({ useAuth: () => ({ user: home.user, session: null, loading: false }) }))
 vi.mock('@/app/components/ThemeProvider', () => ({ useColorMode: () => ({ mode: 'light', toggleColorMode: vi.fn() }) }))
 vi.mock('@/app/actions/activity', () => ({ fetchLearningActivity: vi.fn() }))
@@ -55,11 +56,9 @@ describe('homepage hero', () => {
     expect(html).toContain('Learn Arabic through cartoons and books')
     expect(html).toContain('Start Watching')
     expect(html).toContain('Start Reading')
-    expect(html).toContain('ArabicwithM on the go!')
-    expect(html.split('id="download-app"')).toHaveLength(2)
-    expect(html.indexOf('Quick Actions')).toBeLessThan(html.indexOf('id="download-app"'))
-    expect(html).toContain('Email address')
-    expect(html).toContain('Remind Me')
+    expect(html).not.toContain('ArabicwithM on the go!')
+    expect(html).not.toContain('id="download-app"')
+    expect(html).not.toContain('Remind Me')
     expect(home.statsRendered).toBe(false)
   })
 
@@ -78,6 +77,6 @@ for(const signedIn of [false,true])it(`keeps Spotlight between Episodes and Show
  const html=renderToStaticMarkup(<HomeDashboard books={[]} newShows={[{id:'show',slug:'show',title:'Test Show',level:'A1',category:null,coverCrop}]} newEpisodes={[{id:'episode',slug:'episode',title:'Test Episode',level:'A1',showSlug:'show',showTitle:'Test Show',coverCrop}]} />)
  const episodes=html.indexOf('>Latest Episodes<'),spotlight=html.indexOf('>For You Spotlight<'),shows=html.indexOf('>Shows<')
  expect(episodes).toBeGreaterThan(-1);expect(spotlight).toBeGreaterThan(episodes);expect(shows).toBeGreaterThan(spotlight)
- expect(html).toContain('data-home-spotlight');expect(html).toContain('/explore?view=foryou')
- if(!signedIn)expect(html).toContain('id="download-app"')
+ expect(html).toContain('data-home-spotlight');expect(html).toContain('>Watch More</button>')
+ expect(html).not.toContain('id="download-app"')
 })

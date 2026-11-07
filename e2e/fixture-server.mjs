@@ -125,6 +125,18 @@ function resetProfilePresets(){
  for(const name of ['oasis','sea'])profilePresetObjects.set(`profile-banners/${name}.png`,{bytes:presetImage,type:'image/png'})
 }
 resetProfilePresets()
+function configureFeaturedCarousel(){
+    featuredObjects.clear();tables.featured_show_config=[]
+    tables.shows=tables.shows.filter(show=>!show.slug.startsWith('hero-fixture-'))
+    for(let i=0;i<5;i++){
+      const id=`77777777-7777-4777-8777-77777777777${i}`,slug=`hero-fixture-${i}`
+      tables.shows.push({id,slug,title:`Hero Fixture ${i}`,level:'A1',tags:[]})
+      featuredObjects.set(`featured/${slug}.webp`,{bytes:cover,type:'image/webp',updated_at:'2026-01-01T00:00:00Z'})
+      tables.featured_show_config.push({show_id:id,storage_path:`featured/${slug}.webp`,position_x:20+i*10,position_y:30+i*10,updated_at:'2026-01-01T00:00:00Z'})
+    }
+    profiles.set(ids.free,{is_public:true,share_reading:false})
+}
+if(process.env.AWM_FEATURED_CAROUSEL_FIXTURE==='1')configureFeaturedCarousel()
 const backend = https.createServer({ key: readFileSync(privateKey), cert: readFileSync(certificate) }, async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', webUrl)
   res.setHeader('Access-Control-Allow-Headers', 'authorization, apikey, x-client-info, content-type, content-profile, accept-profile, range, prefer, accept, x-supabase-api-version, x-upsert')
@@ -187,6 +199,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if(body.add)profilePresetObjects.set(body.add,{bytes:presetImage,type:'image/png'})
     return json(res,{})
   }
+  if(url.pathname==='/fixture/featured-carousel'){configureFeaturedCarousel();return json(res,{})}
   if(url.pathname==='/fixture/featured'){
     featuredObjects.clear();tables.featured_show_config=[]
     featuredObjects.set('featured/test-show.webp',{bytes:cover,type:'image/webp',updated_at:'2026-01-01T00:00:00Z'})

@@ -48,3 +48,16 @@ it('uploads artwork for a Show with no existing image and uses its canonical slu
  const data=form();data.set('file',new Blob([new Uint8Array([255,216,255,0])]),'photo.jpeg')
  await saveFeaturedForAdmin(data);expect(state.upload).toHaveBeenCalledWith('featured/ARC.jpg',expect.any(Blob),expect.objectContaining({contentType:'image/jpeg'}));expect(state.remove).not.toHaveBeenCalled()
 })
+
+it('reports only three current carousel records while retaining the eligible pool',async()=>{
+ state.shows=Array.from({length:5},(_,i)=>({id:`s${i}`,slug:`show-${i}`,title:`Show ${i}`}))
+ state.files=state.shows.map(show=>({id:show.id,name:`${show.slug}.webp`,updated_at:'2026-01-01'}))
+ const data=await fetchFeaturedForAdmin();expect(data.assets.filter(asset=>asset.eligible)).toHaveLength(5);expect(data.assets.filter(asset=>asset.inRotation)).toHaveLength(3)
+})
+
+it('identifies one canonical eligible file per Show even for old unsaved duplicate formats',async()=>{
+ state.files.push({id:'old',name:'ARC.jpg',updated_at:'2026-01-01'})
+ const data=await fetchFeaturedForAdmin();expect(data.assets.filter(asset=>asset.eligible)).toHaveLength(1)
+ expect(data.assets.find(asset=>asset.name==='ARC.jpg')).toMatchObject({eligible:true,status:'Featured image'})
+ expect(data.assets.find(asset=>asset.name==='ARC.webp')).toMatchObject({eligible:false,status:'Alternate image'})
+})

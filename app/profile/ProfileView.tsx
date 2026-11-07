@@ -19,6 +19,8 @@ import { submitFeedback } from '@/app/actions/feedback'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import { formatMembershipDate } from '@/app/lib/display'
 import SupportForm from '@/app/support/SupportForm'
+import AppDownloadSection from '@/app/components/home/AppDownloadSection'
+import AwmPromoSection from '@/app/components/home/AwmPromoSection'
 import ProfileHeader from '@/app/profile/ProfileHeader'
 import ProfilePresetPicker from '@/app/profile/ProfilePresetPicker'
 import {presetRefFromUrl,type ProfilePresetBucket} from '@/app/lib/profilePresets'
@@ -570,6 +572,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 }
 
 export default function ProfileView({ profile }: { profile: PublicProfile }) {
+  const {user:viewer,loading:viewerLoading}=useAuth()
   const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
     { id: 'account', label: 'Account', icon: <PersonOutlined sx={{ fontSize: 18 }} /> },
     ...(profile.own ? [{ id: 'awm' as Section, label: 'AWM+', icon: <DiamondOutlined sx={{ fontSize: 18 }} /> }] : []),
@@ -632,6 +635,8 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
               </Box>
             </Box>
           </Box>
+          {profile.own&&!viewerLoading&&viewer?.id===profile.id&&<Box sx={{mt:{xs:4,md:6}}}><AppDownloadSection/></Box>}
+          {profile.own&&<AwmPromoSection key={profile.id} userId={profile.id} placement="profile"/>}
         </Container>
       </Box>
 
