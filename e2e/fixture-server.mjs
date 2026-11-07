@@ -6,6 +6,7 @@ import { spawn, spawnSync } from 'node:child_process'
 import { mkdirSync, readFileSync, rmSync } from 'node:fs'
 import path from 'node:path'
 
+let expiredMembership=false
 let allowanceBudget = 900000
 const allowanceReports = new Map()
 const webPort = Number(process.env.AWM_TEST_WEB_PORT ?? 3000)
@@ -43,6 +44,7 @@ const spotlightRequests=[];let spotlightSelection='normal';const rpcLog=[],table
 let failAudioSave = false
 let forYouPlayback=false
 let discoveryClips=[]
+let englishTranscriptSeek=false
 let dataContractClips=null,failForYouRequest=false,englishTranscriptRawOnly=false,englishTranscriptMode=false,spotlightMode=false,spotlightEnglish=true
 const manualPremium=new Map(), memoryStarts=new Map(), memorySnapshots=new Map(), memoryReviews=new Map(), ownReviews=new Map(), earned=new Set(), wordTotals=new Map()
 const effective=id=>id===ids.premium||roleFor(id)==='admin'||manualPremium.get(id)===true
@@ -213,19 +215,20 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     for(const language of ['ar','en']) if(!tables.book_chapter_audio.some(row=>row.chapter_id===second&&row.language===language)) tables.book_chapter_audio.push({...tables.book_chapter_audio.find(row=>row.language===language),chapter_id:second})
     return json(res,{})
   }
+  if(url.pathname==='/fixture/expired-membership'){expiredMembership=Boolean(body.expired);return json(res,{})}
   if(url.pathname==='/fixture/spotlight'){englishTranscriptMode=false;spotlightMode=true;spotlightSelection=body.selection??'normal';spotlightRequests.length=0;tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:'5b98c563-5c35-4696-98e1-06aa000eb622'}));spotlightEnglish=body.english!==false;tables.transcript_groups=[{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English'},{id:'77777777-7777-4777-8777-777777777778',name:'Imports'},{id:'77777777-7777-4777-8777-777777777779',name:'Stories'}];rpcLog.length=0;return json(res,{})}
   if(url.pathname==='/fixture/english-for-you'){
-    englishTranscriptMode=true;englishTranscriptRawOnly=Boolean(body.rawTranslationOnly);spotlightMode=true;rpcLog.length=0;tableLog.length=0
+    englishTranscriptSeek=Boolean(body.seek);englishTranscriptMode=true;englishTranscriptRawOnly=Boolean(body.rawTranslationOnly);spotlightMode=true;rpcLog.length=0;tableLog.length=0
     const root='5b98c563-5c35-4696-98e1-06aa000eb622',child='77777777-7777-4777-8777-777777777775'
     tables.transcript_groups=[{id:root,name:'Renamed English',parent_id:null},{id:child,name:'Nested examples',parent_id:root}]
     tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:child}))
     const example=JSON.parse(readFileSync('e2e/english-for-you-data.json','utf8'))
     for(let i=4;i<8;i++){
       const id=`99999999-9999-4999-8999-99999999999${i}`
-      const content=Array.from({length:4},()=>example)
+      const content=Array.from({length:englishTranscriptSeek?10:4},(_,position)=>englishTranscriptSeek?{...example,translation:example.translation+' '+position,tokens:example.tokens.map((token,index)=>index?token:{...token,english:'Sentence '+position,arabic:token.arabic+' '+position})}:example)
       tables.youtube_transcripts=tables.youtube_transcripts.filter(row=>row.id!==id)
       tables.transcript_segments=tables.transcript_segments.filter(row=>row.transcript_id!==id)
-      tables.youtube_transcripts.push({id,status:'ready',explore_published:true,source_origin:'website_admin_transcript',raw_transcript:{content}})
+      tables.youtube_transcripts.push({id,status:'ready',explore_published:true,source_origin:'website_admin_transcript',raw_transcript:{source_language:'en',content}})
       tables.transcript_segments.push(...content.map((canonical,position)=>({id:100+i*10+position,transcript_id:id,position,original_text:example.translation,english_text:example.translation,start_seconds:position*15,end_seconds:(position+1)*15,canonical_paragraph:englishTranscriptRawOnly?{tokens:canonical.tokens}:canonical})))
     }
     return json(res,{})
@@ -364,7 +367,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     if(rpc==='transcript_for_you_groups'&&spotlightMode){
         const clips=Array.from({length:8},(_,i)=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Spotlight fixture',channel:'Fixture'},clip_start_ms:0,clip_end_ms:45000,segments:[0,1,2].map(j=>({id:100+i*10+j,position:j,start_seconds:j*15,end_seconds:(j+1)*15,original_text:j?'Second Arabic subtitle':'First Arabic subtitle',english_text:'A subtitle.',source_tokens:[{arabic:'\u0643\u062a\u0627\u0628',english:'book'}]}))}))
-      if(englishTranscriptMode){const example=JSON.parse(readFileSync('e2e/english-for-you-data.json','utf8'));for(const clip of clips)if(Number(clip.video.id.at(-1))>=4)clip.segments=clip.segments.map(segment=>({...segment,original_text:example.translation,english_text:example.translation,canonical_paragraph:englishTranscriptRawOnly?{tokens:example.tokens}:example}))}
+      if(englishTranscriptMode){const example=JSON.parse(readFileSync('e2e/english-for-you-data.json','utf8'));for(const clip of clips)if(Number(clip.video.id.at(-1))>=4)clip.segments=clip.segments.map(segment=>({...segment,original_text:example.translation,english_text:example.translation,canonical_paragraph:englishTranscriptRawOnly?{tokens:example.tokens}:englishTranscriptSeek?tables.transcript_segments.find(row=>row.transcript_id===clip.video.id&&row.position===segment.position)?.canonical_paragraph:example}))}
       const englishGroups=new Set(['5b98c563-5c35-4696-98e1-06aa000eb622']);for(let changed=true;changed;){changed=false;for(const g of tables.transcript_groups)if(g.parent_id&&englishGroups.has(g.parent_id)&&!englishGroups.has(g.id)){englishGroups.add(g.id);changed=true}}
       const english=new Set(tables.admin_manual_transcripts.filter(m=>englishGroups.has(m.group_id)).map(m=>m.transcript_id))
       tables.for_you_candidates=clips.flatMap(c=>c.segments.map(s=>({segment_id:s.id,transcript_id:c.video.id})))
@@ -543,6 +546,13 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if(table==='public_profiles'&&profileDelay)await new Promise(resolve=>setTimeout(resolve,profileDelay))
     tableLog.push(table)
     if (req.method !== 'GET' && req.method !== 'HEAD') {
+      if(table==='youtube_transcripts'&&req.method==='PATCH'){
+        if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+        const row=tables.youtube_transcripts.find(row=>[...url.searchParams].every(([key,value])=>!value.startsWith('eq.')||String(row[key])===value.slice(3)))
+        const valid=row&&(!url.searchParams.has('lease_id')||row.lease_id==null)
+        if(valid)Object.assign(row,body)
+        return json(res,(req.headers.accept??'').includes('application/vnd.pgrst.object+json')?(valid?row:null):(valid?[row]:[]))
+      }
       if(table==='email_preferences'){
         if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
         const existing=tables.email_preferences.find(row=>row.email===body.email&&row.purpose===body.purpose)
@@ -604,7 +614,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if(table==='account_roles')rows=[{user_id:owner,role:roleFor(owner)}]
     if(table==='memory_sessions')rows=memorySnapshots.has(owner)?[{user_id:owner,state:memorySnapshots.get(owner)}]:[]
     if(table==='book_reviews')rows=[...ownReviews.values()]
-    if (table === 'subscriptions') rows = owner === ids.premium ? [{ user_id: owner, status: 'active', current_period_end: '2099-01-01T00:00:00Z', customer_id: 'fixture' }] : []
+    if (table === 'subscriptions') rows = owner === ids.premium ? [{ user_id: owner, status: 'active', current_period_end: '2099-01-01T00:00:00Z', customer_id: 'fixture' }] : owner===ids.free&&expiredMembership?[{user_id:owner,status:'canceled',current_period_end:'2000-01-01T00:00:00Z',customer_id:'expired-fixture'}]:[]
     if (table === 'public_profiles') rows = [{ user_id: owner, display_name: `${Object.keys(ids).find(k => ids[k] === owner)} learner`, is_public: false, share_reading: false, ...profiles.get(owner) }]
     if(table==='leaderboard_public_profiles')rows=[...handles.entries()].map(([user_id,handle])=>({user_id,handle}))
     if (table === 'learning_profiles') rows = [{ user_id: owner, legacy_active_seconds: 0, tracked_active_seconds: 0, weekly_goal_seconds: null }]
@@ -613,6 +623,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       if (filter.startsWith('in.(')) { const values = filter.slice(4, -1).split(','); rows = rows.filter(row => values.includes(String(row[key]))) }
       if (filter.startsWith('lte.')) rows = rows.filter(row => Number(row[key]) <= Number(filter.slice(4)))
     }
+    if(table==='youtube_transcripts'&&url.searchParams.get('select')?.includes('source_language:raw_transcript->>source_language'))rows=rows.map(row=>({...row,source_language:row.raw_transcript?.source_language??null}))
     res.setHeader('Content-Range', `0-${Math.max(0, rows.length - 1)}/${rows.length}`)
     if (req.method === 'HEAD') { res.writeHead(200); res.end(); return }
     if(url.searchParams.has('offset')||url.searchParams.has('limit'))rows=rows.slice(Number(url.searchParams.get('offset')??0),Number(url.searchParams.get('offset')??0)+Number(url.searchParams.get('limit')??rows.length))

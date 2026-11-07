@@ -1,8 +1,9 @@
 import React, {act} from 'react'
 import {createRoot,type Root} from 'react-dom/client'
 import {beforeEach,afterEach,expect,it,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({list:vi.fn(),import:vi.fn(),remove:vi.fn(),validate:vi.fn(),download:vi.fn(),save:vi.fn(),group:vi.fn(),move:vi.fn(),saveDraft:vi.fn(),loadDraft:vi.fn(),deleteDraft:vi.fn()}))
-vi.mock('@/app/actions/transcripts',()=>({saveAdminManualDraft:mocks.saveDraft,loadAdminManualDraft:mocks.loadDraft,deleteAdminManualDraft:mocks.deleteDraft,loadAdminManualEnrichment:vi.fn().mockResolvedValue(null),retryAdminManualEnrichment:vi.fn().mockResolvedValue({ok:true,status:'unavailable'}),listAdminTranscripts:mocks.list,prepareAdminManualImport:async(input:unknown)=>{const result=await mocks.import(input);return result.ok?{ok:true,state:{importId:'99999999-9999-4999-8999-999999999999',id:result.id??'saved',expected:1,committed:0,tokens:0,completed:false,enrichment:result.enrichment??'unavailable'}}:{...result,retryable:false}},appendAdminManualImport:async()=> ({ok:true,state:{importId:'99999999-9999-4999-8999-999999999999',id:'saved',expected:1,committed:1,tokens:1,completed:false,enrichment:'unavailable'}}),finishAdminManualImport:async()=> ({ok:true,state:{importId:'99999999-9999-4999-8999-999999999999',id:'saved',expected:1,committed:1,tokens:1,completed:true,enrichment:'unavailable'}}),resumeAdminManualImport:vi.fn(),validateAdminManualTranscript:mocks.validate,generateAdminTranscript:vi.fn(),deleteAdminTranscript:mocks.remove,updateAdminTranscript:vi.fn(),downloadAdminTranscriptJson:mocks.download,saveAdminTranscriptJson:mocks.save,manageAdminTranscriptGroup:mocks.group,moveAdminTranscriptGroup:mocks.move}))
+const mocks=vi.hoisted(()=>({list:vi.fn(),import:vi.fn(),remove:vi.fn(),validate:vi.fn(),download:vi.fn(),save:vi.fn(),group:vi.fn(),move:vi.fn(),language:vi.fn(),saveDraft:vi.fn(),loadDraft:vi.fn(),deleteDraft:vi.fn()}))
+vi.mock('@/app/actions/forYou',()=>({fetchForYouGroups:async()=>[],fetchForYouClips:async()=>[],fetchForYouTranscript:async()=>[]}))
+vi.mock('@/app/actions/transcripts',()=>({saveAdminTranscriptSourceLanguage:mocks.language,saveAdminManualDraft:mocks.saveDraft,loadAdminManualDraft:mocks.loadDraft,deleteAdminManualDraft:mocks.deleteDraft,loadAdminManualEnrichment:vi.fn().mockResolvedValue(null),retryAdminManualEnrichment:vi.fn().mockResolvedValue({ok:true,status:'unavailable'}),listAdminTranscripts:mocks.list,prepareAdminManualImport:async(input:unknown)=>{const result=await mocks.import(input);return result.ok?{ok:true,state:{importId:'99999999-9999-4999-8999-999999999999',id:result.id??'saved',expected:1,committed:0,tokens:0,completed:false,enrichment:result.enrichment??'unavailable'}}:{...result,retryable:false}},appendAdminManualImport:async()=> ({ok:true,state:{importId:'99999999-9999-4999-8999-999999999999',id:'saved',expected:1,committed:1,tokens:1,completed:false,enrichment:'unavailable'}}),finishAdminManualImport:async()=> ({ok:true,state:{importId:'99999999-9999-4999-8999-999999999999',id:'saved',expected:1,committed:1,tokens:1,completed:true,enrichment:'unavailable'}}),resumeAdminManualImport:vi.fn(),validateAdminManualTranscript:mocks.validate,generateAdminTranscript:vi.fn(),deleteAdminTranscript:mocks.remove,updateAdminTranscript:vi.fn(),downloadAdminTranscriptJson:mocks.download,saveAdminTranscriptJson:mocks.save,manageAdminTranscriptGroup:mocks.group,moveAdminTranscriptGroup:mocks.move}))
 import AdminTranscripts from './AdminTranscripts'
 let host:HTMLDivElement,root:Root
 beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});vi.resetAllMocks();mocks.list.mockResolvedValue({rows:[],total:0});mocks.import.mockResolvedValue({ok:true,id:'saved'});mocks.saveDraft.mockImplementation(async(id:string)=>({ok:true,id,updatedAt:'2026-10-09T17:00:00Z'}));mocks.deleteDraft.mockResolvedValue({ok:true});mocks.validate.mockResolvedValue({ok:true,segments:1,durationSource:'transcript'});host=document.createElement('div');document.body.appendChild(host);root=createRoot(host)})
@@ -71,7 +72,7 @@ it('shows useful server validation errors without closing the JSON editor',async
 it('offers only the essential manual-import inputs',async()=>{
   await open()
   const dialog=document.querySelector('[role="dialog"]')!
-  expect([...dialog.querySelectorAll('label')].map(label=>label.textContent?.replace(/\s*\*$/, ''))).toEqual(['Video Title','YouTube URL or video ID','Group (optional)','Video duration','Transcript JSON','Publish to searchable transcript libraryAvailable in transcript search and the directory.','Publish to For YouProvides clips for Explore ? For You.'])
+  expect([...dialog.querySelectorAll('label')].map(label=>label.textContent?.replace(/\s*\*$/, ''))).toEqual(['Video Title','YouTube URL or video ID','Group (optional)','Original Audio Language','Video duration','Transcript JSON','Publish to searchable transcript libraryAvailable in transcript search and the directory.','Publish to For YouProvides clips for Explore ? For You.'])
   expect(dialog.textContent).not.toMatch(/Channel \/ source|Arabic SRT|English SRT|VTT|Import Transcript/)
   expect([...dialog.querySelectorAll('button')].map(button=>button.textContent)).toContain('Import')
 })
@@ -139,7 +140,7 @@ it('keeps invalid edits and returns from Saving on failure, then permits correct
  await fill('Transcript JSON',savedJson.replace('Hello','Corrected'))
  mocks.save.mockResolvedValueOnce({ok:true,json:savedJson,updatedAt:'2026-10-08T12:00:00Z'})
  await act(async()=>editSave().click())
- expect(mocks.save).toHaveBeenLastCalledWith(editRow.id,{json:savedJson.replace('Hello','Corrected'),title:editRow.title,channel:editRow.channel,searchable:true,explorePublished:false,updatedAt:editRow.updated_at,duration:'0:10',durationFormat:'clock',url:'',groupId:null})
+ expect(mocks.save).toHaveBeenLastCalledWith(editRow.id,{json:savedJson.replace('Hello','Corrected'),title:editRow.title,channel:editRow.channel,searchable:true,explorePublished:false,updatedAt:editRow.updated_at,duration:'0:10',durationFormat:'clock',url:'',groupId:null,sourceLanguage:'ar'})
  expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Saved')
  await fill('Transcript JSON',savedJson.replace('Hello','Welcome'))
  mocks.save.mockResolvedValueOnce({ok:true,json:savedJson,updatedAt:'2026-10-08T12:01:00Z'})
@@ -285,4 +286,14 @@ it('shows automatic Imports with normal cards, a read-only origin group and guar
  const groupSelect=document.querySelector('select[disabled]') as HTMLSelectElement
  expect(groupSelect.value).toBe(automaticImports.id)
  expect([...document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')].map(input=>input.checked)).toEqual([false,false])
+})
+
+it('defaults new imports to Arabic and persists the explicitly selected English mode',async()=>{
+ await open();expect([...document.querySelectorAll('select')].find(el=>el.parentElement?.parentElement?.textContent?.includes('Original Audio Language'))?.value).toBe('ar')
+ await select('Original Audio Language','en');await validForm();await act(async()=>importButton().click());expect(mocks.import).toHaveBeenCalledWith(expect.objectContaining({sourceLanguage:'en'}))
+})
+it('loads the stored mode and saves language only without replacing unsaved JSON',async()=>{
+ mocks.download.mockResolvedValue({json:savedJson,updatedAt:editRow.updated_at,sourceLanguage:'en',durationSeconds:10});mocks.language.mockResolvedValue({ok:true,updatedAt:'2026-11-07T12:01:00Z'})
+ await openEdit();await fill('Transcript JSON','{unfinished edit');await select('Original Audio Language','ar');await act(async()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Save audio language only')!.click())
+ expect(mocks.language).toHaveBeenCalledWith(editRow.id,'ar',editRow.updated_at);expect(mocks.save).not.toHaveBeenCalled();expect(mocks.move).not.toHaveBeenCalled();expect(document.querySelector('textarea')!.value).toBe('{unfinished edit')
 })

@@ -52,6 +52,8 @@ interface YouTubePlayerOptions {
   reloadKey?: string | number
   endAt?: number
   onError?: (code: number) => void
+  inspectNativeSeeks?: boolean
+  onSeekOutsideClip?: (outside:boolean)=>void
   requireTimeUpdates?: boolean
   replayClipOnNativePlay?: boolean
   onNativeMuteChange?: (muted:boolean)=>void
@@ -105,6 +107,7 @@ export default function useYouTubePlayer(
   const onTimeUpdateRef = useRef(onTimeUpdate)
   const onEndedRef = useRef(options.onEnded)
   const onErrorRef = useRef(options.onError)
+  const seekOutsideRef=useRef(options.onSeekOutsideClip)
   const nativeMuteRef=useRef(options.onNativeMuteChange)
   const syncSoundRef=useRef<(()=>void)|null>(null)
   const requestSoundRef=useRef<(()=>void)|null>(null)
@@ -123,6 +126,7 @@ export default function useYouTubePlayer(
   useEffect(() => { onTimeUpdateRef.current = onTimeUpdate }, [onTimeUpdate])
   useEffect(() => { onEndedRef.current = options.onEnded }, [options.onEnded])
   useEffect(() => { onErrorRef.current = options.onError }, [options.onError])
+  useEffect(()=>{seekOutsideRef.current=options.onSeekOutsideClip},[options.onSeekOutsideClip])
   useEffect(()=>{nativeMuteRef.current=options.onNativeMuteChange},[options.onNativeMuteChange])
   useEffect(() => { mutedRef.current = options.muted === true }, [options.muted])
   useEffect(() => {
@@ -137,6 +141,9 @@ export default function useYouTubePlayer(
     let cancelled = false
     let triedMutedFallback = false
     let clipEnded = false
+    let playbackRunning = false
+    let inspectingSeek = false
+    let lastSample:{time:number;at:number}|null=null
     const soundIntent=createPlayerSoundIntent()
     requestSoundRef.current=()=>{
       soundIntent.requestSound()
@@ -153,10 +160,20 @@ export default function useYouTubePlayer(
     syncSoundRef.current=reportSound
     const reportTime = () => {
       const time = playerRef.current?.getCurrentTime?.()
-      if (typeof time !== 'number') return
+      if (typeof time !== 'number'||!Number.isFinite(time)) return
+      const now=performance.now(),previous=lastSample
+      lastSample={time,at:now}
+      // A jump exceeds the time normal playback could cover between samples.
+      // Native YouTube seeks have no dedicated API event, including while paused.
+      const allowance=previous?(playbackRunning?Math.max(1,(now-previous.at)/1000*(playerRef.current?.getPlaybackRate?.()??1)+.75):.001):Infinity
+      if(options.inspectNativeSeeks&&previous&&Math.abs(time-previous.time)>allowance){
+        inspectingSeek=time<(startAtRef.current??0)||(options.endAt!=null&&time>=options.endAt)
+        seekOutsideRef.current?.(inspectingSeek)
+        clipEnded=false
+      }
       reportSound()
       onTimeUpdateRef.current?.(time)
-      if (options.endAt != null && time >= options.endAt && !clipEnded) {
+      if (options.endAt != null && !inspectingSeek && time >= options.endAt && !clipEnded) {
         clipEnded = true
         playerRef.current?.pauseVideo?.()
         onEndedRef.current?.()
@@ -228,7 +245,7 @@ export default function useYouTubePlayer(
             enablejsapi: 1,
             playsinline: 1,
             start: startAtRef.current && startAtRef.current > 0 ? Math.floor(startAtRef.current) : undefined,
-            end: options.endAt != null && Number.isFinite(options.endAt) ? Math.ceil(options.endAt) : undefined,
+            end: !options.inspectNativeSeeks && options.endAt != null && Number.isFinite(options.endAt) ? Math.ceil(options.endAt) : undefined,
             origin: typeof window !== 'undefined' ? window.location.origin : undefined,
           },
           events: {
@@ -245,6 +262,7 @@ export default function useYouTubePlayer(
               if (startAtRef.current && startAtRef.current > 0) playerRef.current?.seekTo?.(startAtRef.current, true)
               if (autoplay) playerRef.current?.playVideo?.()
               setIsReady(true)
+              if(options.inspectNativeSeeks)seekOutsideRef.current?.(false)
               reportTime()
               // The API has no seek event. State changes plus polling while
               // paused keep native timeline seeks tied to actual player time.
@@ -252,9 +270,10 @@ export default function useYouTubePlayer(
             },
             onStateChange: (event: { data: number }) => {
               if (cancelled) return
+              playbackRunning=event.data===window.YT.PlayerState.PLAYING
               if (event.data === window.YT.PlayerState.PLAYING) {
                 // YouTube's native Replay may restart at video zero.
-                if (clipEnded && options.endAt != null && ((playerRef.current?.getCurrentTime?.() ?? 0) < (startAtRef.current ?? 0) || (options.replayClipOnNativePlay && (playerRef.current?.getCurrentTime?.() ?? 0) >= options.endAt))) {
+                if (clipEnded && !inspectingSeek && options.endAt != null && ((playerRef.current?.getCurrentTime?.() ?? 0) < (startAtRef.current ?? 0) || (options.replayClipOnNativePlay && (playerRef.current?.getCurrentTime?.() ?? 0) >= options.endAt))) {
                   playerRef.current?.seekTo?.(startAtRef.current ?? 0, true)
                   clipEnded = false
                 }
@@ -339,7 +358,7 @@ export default function useYouTubePlayer(
       setIsReady(false)
       setIsPlaying(false)
     }
-  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, options.mutedAutoplayFallback, options.audibleAutoplay, options.requireTimeUpdates, options.verifySoundState, options.replayClipOnNativePlay, retryNonce])
+  }, [autoplay, normalizedVideoId, options.reloadKey, options.endAt, options.mutedAutoplayFallback, options.audibleAutoplay, options.requireTimeUpdates, options.inspectNativeSeeks, options.verifySoundState, options.replayClipOnNativePlay, retryNonce])
 
   const seekTo = useCallback((seconds: number) => {
     if (playerRef.current?.seekTo) {

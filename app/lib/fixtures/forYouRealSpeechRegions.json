@@ -1,0 +1,482 @@
+[
+  {
+    "id": 57488,
+    "position": 0,
+    "start_seconds": 0,
+    "end_seconds": 6,
+    "original_text": "\u064a\u064e\u0627 \u0623\u064e\u0628\u064e\u062a\u0650 \u0623\u064e\u0646\u064e\u0627 \u0623\u064f\u0631\u0650\u064a\u062f\u064f \u0623\u064e\u0646\u0652 \u0623\u064e\u0639\u0652\u062a\u064e\u0631\u0650\u0641\u064e",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "noun",
+          "arabic": "\u064a\u064e\u0627 \u0623\u064e\u0628\u064e\u062a\u0650",
+          "english": "Father,",
+          "headword": "\u0623\u0628",
+          "entry_type": "word",
+          "transliteration": "y\u0101 \u02beabati"
+        },
+        {
+          "pos": "pronoun",
+          "arabic": "\u0623\u064e\u0646\u064e\u0627",
+          "english": "I",
+          "headword": "\u0623\u0646\u0627",
+          "entry_type": "word",
+          "transliteration": "\u02bean\u0101"
+        },
+        {
+          "pos": "phrase",
+          "arabic": "\u0623\u064f\u0631\u0650\u064a\u062f\u064f \u0623\u064e\u0646\u0652",
+          "english": "wish to",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "\u02beur\u012bdu \u02bean"
+        },
+        {
+          "pos": "verb",
+          "arabic": "\u0623\u064e\u0639\u0652\u062a\u064e\u0631\u0650\u0641\u064e",
+          "english": "confess.",
+          "headword": "\u0627\u0639\u062a\u0631\u0641",
+          "entry_type": "word",
+          "transliteration": "\u02bea\u02bftarifa"
+        }
+      ],
+      "paragraph": 1,
+      "timestamp": "00:00",
+      "translation": "\u064a\u064e\u0627 \u0623\u064e\u0628\u064e\u062a\u0650\u060c \u0623\u064f\u0631\u0650\u064a\u062f\u064f \u0623\u064e\u0646\u0652 \u0623\u064e\u0639\u0652\u062a\u064e\u0631\u0650\u0641\u064e."
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  },
+  {
+    "id": 57489,
+    "position": 1,
+    "start_seconds": 6,
+    "end_seconds": 15,
+    "original_text": "\u0623\u064e\u0646\u064e\u0627 \u0623\u064f\u0631\u0650\u064a\u062f\u064f \u0623\u064e\u0646\u0652 \u0623\u064e\u0639\u0652\u062a\u064e\u0631\u0650\u0641\u064e",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "pronoun",
+          "arabic": "\u0623\u064e\u0646\u064e\u0627",
+          "english": "I",
+          "headword": "\u0623\u0646\u0627",
+          "entry_type": "word",
+          "transliteration": "\u02bean\u0101"
+        },
+        {
+          "pos": "phrase",
+          "arabic": "\u0623\u064f\u0631\u0650\u064a\u062f\u064f \u0623\u064e\u0646\u0652",
+          "english": "wish to",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "\u02beur\u012bdu \u02bean"
+        },
+        {
+          "pos": "verb",
+          "arabic": "\u0623\u064e\u0639\u0652\u062a\u064e\u0631\u0650\u0641\u064e",
+          "english": "confess.",
+          "headword": "\u0627\u0639\u062a\u0631\u0641",
+          "entry_type": "word",
+          "transliteration": "\u02bea\u02bftarifa"
+        }
+      ],
+      "paragraph": 2,
+      "timestamp": "00:06",
+      "translation": "\u0623\u064f\u0631\u0650\u064a\u062f\u064f \u0623\u064e\u0646\u0652 \u0623\u064e\u0639\u0652\u062a\u064e\u0631\u0650\u0641\u064e."
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  },
+  {
+    "id": 57490,
+    "position": 2,
+    "start_seconds": 6,
+    "end_seconds": 15,
+    "original_text": "\u0623\u064e\u0646\u0652\u062a\u064e \u062a\u064f\u0631\u0650\u064a\u062f\u064f \u0623\u064e\u0646\u0652 \u062a\u064e\u0639\u0652\u062a\u064e\u0631\u0650\u0641\u064e",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "pronoun",
+          "arabic": "\u0623\u064e\u0646\u0652\u062a\u064e",
+          "english": "You",
+          "headword": "\u0623\u0646\u062a",
+          "entry_type": "word",
+          "transliteration": "\u02beanta"
+        },
+        {
+          "pos": "phrase",
+          "arabic": "\u062a\u064f\u0631\u0650\u064a\u062f\u064f \u0623\u064e\u0646\u0652",
+          "english": "wish to",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "tur\u012bdu \u02bean"
+        },
+        {
+          "pos": "verb",
+          "arabic": "\u062a\u064e\u0639\u0652\u062a\u064e\u0631\u0650\u0641\u064e",
+          "english": "confess.",
+          "headword": "\u0627\u0639\u062a\u0631\u0641",
+          "entry_type": "word",
+          "transliteration": "ta\u02bftarifa"
+        }
+      ],
+      "paragraph": 3,
+      "timestamp": "00:06",
+      "translation": "\u062a\u064f\u0631\u0650\u064a\u062f\u064f \u0623\u064e\u0646\u0652 \u062a\u064e\u0639\u0652\u062a\u064e\u0631\u0650\u0641\u064e."
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  },
+  {
+    "id": 57491,
+    "position": 3,
+    "start_seconds": 15,
+    "end_seconds": 18,
+    "original_text": "\u0623\u064e\u0646\u064e\u0627 \u0623\u064e\u0646\u0652\u0642\u064e\u0630\u0652\u062a\u064f \u0625\u0650\u064a\u0651\u064e\u0627\u0643\u064f\u0645\u0652",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "pronoun",
+          "arabic": "\u0623\u064e\u0646\u064e\u0627",
+          "english": "I",
+          "headword": "\u0623\u0646\u0627",
+          "entry_type": "word",
+          "transliteration": "\u02bean\u0101"
+        },
+        {
+          "pos": "verb",
+          "arabic": "\u0623\u064e\u0646\u0652\u0642\u064e\u0630\u0652\u062a\u064f",
+          "english": "saved",
+          "headword": "\u0623\u0646\u0642\u0630",
+          "entry_type": "word",
+          "transliteration": "\u02beanqadhtu"
+        },
+        {
+          "pos": "pronoun",
+          "arabic": "\u0625\u0650\u064a\u0651\u064e\u0627\u0643\u064f\u0645\u0652",
+          "english": "you.",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "\u02beiyy\u0101kum"
+        }
+      ],
+      "paragraph": 4,
+      "timestamp": "00:15",
+      "translation": "\u0644\u064e\u0642\u064e\u062f\u0652 \u0623\u064e\u0646\u0652\u0642\u064e\u0630\u0652\u062a\u064f\u0643\u064f\u0645\u0652."
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  },
+  {
+    "id": 57492,
+    "position": 4,
+    "start_seconds": 18,
+    "end_seconds": 25,
+    "original_text": "\u0623\u064e\u0646\u064e\u0627 \u0623\u064e\u0646\u0652\u0642\u064e\u0630\u0652\u062a\u064f \u0647\u064e\u0630\u0650\u0647\u0650 \u0627\u0644\u0652\u0645\u064e\u062f\u0650\u064a\u0646\u064e\u0629\u064e \u0648\u064e \u062c\u064e\u0645\u0650\u064a\u0639\u064e \u0627\u0644\u0652\u062e\u064e\u0627\u0635\u0651\u064e\u0629\u064e \u0628\u0650\u0643\u064f\u0645\u0652 \u0627\u0644\u0652\u062d\u064e\u0642\u0650\u064a\u0631\u064e\u0629\u064e \u0623\u064e\u0631\u0652\u0648\u064e\u0627\u062d\u064e\u0643\u064f\u0645\u0652",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "pronoun",
+          "arabic": "\u0623\u064e\u0646\u064e\u0627",
+          "english": "I",
+          "headword": "\u0623\u0646\u0627",
+          "entry_type": "word",
+          "transliteration": "\u02bean\u0101"
+        },
+        {
+          "pos": "verb",
+          "arabic": "\u0623\u064e\u0646\u0652\u0642\u064e\u0630\u0652\u062a\u064f",
+          "english": "saved",
+          "headword": "\u0623\u0646\u0642\u0630",
+          "entry_type": "word",
+          "transliteration": "\u02beanqadhtu"
+        },
+        {
+          "pos": "pronoun",
+          "arabic": "\u0647\u064e\u0630\u0650\u0647\u0650",
+          "english": "this",
+          "headword": "\u0647\u0630\u0627",
+          "entry_type": "word",
+          "transliteration": "h\u0101dhihi"
+        },
+        {
+          "pos": "noun",
+          "arabic": "\u0627\u0644\u0652\u0645\u064e\u062f\u0650\u064a\u0646\u064e\u0629\u064e",
+          "english": "city",
+          "headword": "\u0645\u062f\u064a\u0646\u0629",
+          "entry_type": "word",
+          "transliteration": "al-mad\u012bnata"
+        },
+        {
+          "pos": "conjunction",
+          "arabic": "\u0648\u064e",
+          "english": "and",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "wa"
+        },
+        {
+          "pos": "adjective",
+          "arabic": "\u062c\u064e\u0645\u0650\u064a\u0639\u064e",
+          "english": "all",
+          "headword": "\u062c\u0645\u064a\u0639",
+          "entry_type": "word",
+          "transliteration": "jam\u012b\u02bfa"
+        },
+        {
+          "pos": "pronoun",
+          "arabic": "\u0627\u0644\u0652\u062e\u064e\u0627\u0635\u0651\u064e\u0629\u064e \u0628\u0650\u0643\u064f\u0645\u0652",
+          "english": "your",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "al-kh\u0101\u1e63\u1e63ata bikum"
+        },
+        {
+          "pos": "adjective",
+          "arabic": "\u0627\u0644\u0652\u062d\u064e\u0642\u0650\u064a\u0631\u064e\u0629\u064e",
+          "english": "worthless",
+          "headword": "\u062d\u0642\u064a\u0631",
+          "entry_type": "word",
+          "transliteration": "al-\u1e25aq\u012brata"
+        },
+        {
+          "pos": "noun",
+          "arabic": "\u0623\u064e\u0631\u0652\u0648\u064e\u0627\u062d\u064e\u0643\u064f\u0645\u0652",
+          "english": "lives.",
+          "headword": "\u0631\u0648\u062d",
+          "entry_type": "word",
+          "transliteration": "\u02bearw\u0101\u1e25akum"
+        }
+      ],
+      "paragraph": 5,
+      "timestamp": "00:18",
+      "translation": "\u0644\u064e\u0642\u064e\u062f\u0652 \u0623\u064e\u0646\u0652\u0642\u064e\u0630\u0652\u062a\u064f \u0647\u064e\u0630\u0650\u0647\u0650 \u0627\u0644\u0652\u0645\u064e\u062f\u0650\u064a\u0646\u064e\u0629\u064e\u060c \u0648\u064e\u0623\u064e\u0646\u0652\u0642\u064e\u0630\u0652\u062a\u064f \u0623\u064e\u0631\u0652\u0648\u064e\u0627\u062d\u064e\u0643\u064f\u0645\u064f \u0627\u0644\u0652\u062d\u064e\u0642\u0650\u064a\u0631\u064e\u0629\u064e \u062c\u064e\u0645\u0650\u064a\u0639\u064b\u0627."
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  },
+  {
+    "id": 57493,
+    "position": 5,
+    "start_seconds": 25,
+    "end_seconds": 31,
+    "original_text": "\u0643\u064e\u0627\u0646\u064e \u0639\u064e\u0644\u064e\u064a\u0651\u064e \u0623\u064e\u0646\u0652 \u0623\u064e\u062f\u064e\u0639\u064e \u0633\u0652\u062a\u064e\u0627\u0646\u0650\u0633\u064e \u064a\u064e\u0642\u0652\u062a\u064f\u0644\u064e \u062c\u064e\u0645\u0650\u064a\u0639\u064e\u0643\u064f\u0645\u0652",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "phrase",
+          "arabic": "\u0643\u064e\u0627\u0646\u064e \u0639\u064e\u0644\u064e\u064a\u0651\u064e \u0623\u064e\u0646\u0652",
+          "english": "I should have",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "k\u0101na \u02bfalayya \u02bean"
+        },
+        {
+          "pos": "verb",
+          "arabic": "\u0623\u064e\u062f\u064e\u0639\u064e",
+          "english": "let",
+          "headword": "\u0648\u062f\u0639",
+          "entry_type": "word",
+          "transliteration": "\u02beada\u02bfa"
+        },
+        {
+          "pos": "proper_noun",
+          "arabic": "\u0633\u0652\u062a\u064e\u0627\u0646\u0650\u0633\u064e",
+          "english": "Stannis",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "st\u0101nisa"
+        },
+        {
+          "pos": "verb",
+          "arabic": "\u064a\u064e\u0642\u0652\u062a\u064f\u0644\u064e",
+          "english": "kill",
+          "headword": "\u0642\u062a\u0644",
+          "entry_type": "word",
+          "transliteration": "yaqtula"
+        },
+        {
+          "pos": "phrase",
+          "arabic": "\u062c\u064e\u0645\u0650\u064a\u0639\u064e\u0643\u064f\u0645\u0652",
+          "english": "you all.",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "jam\u012b\u02bfakum"
+        }
+      ],
+      "paragraph": 6,
+      "timestamp": "00:25",
+      "translation": "\u0643\u064e\u0627\u0646\u064e \u0639\u064e\u0644\u064e\u064a\u0651\u064e \u0623\u064e\u0646\u0652 \u0623\u064e\u062f\u064e\u0639\u064e \u0633\u0652\u062a\u064e\u0627\u0646\u0650\u0633\u064e \u064a\u064e\u0642\u0652\u062a\u064f\u0644\u064f\u0643\u064f\u0645\u0652 \u062c\u064e\u0645\u0650\u064a\u0639\u064b\u0627."
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  },
+  {
+    "id": 57494,
+    "position": 6,
+    "start_seconds": 25,
+    "end_seconds": 31,
+    "original_text": "\u0647\u064e\u0627 \u0623\u064e\u0646\u064e\u0627 \u0630\u064e\u0627",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "phrase",
+          "arabic": "\u0647\u064e\u0627 \u0623\u064e\u0646\u064e\u0627 \u0630\u064e\u0627",
+          "english": "Here I am.",
+          "headword": null,
+          "entry_type": "word",
+          "transliteration": "h\u0101 \u02bean\u0101 dh\u0101"
+        }
+      ],
+      "paragraph": 7,
+      "timestamp": "00:25",
+      "translation": "\u0648\u064e\u0647\u064e\u0627 \u0623\u064e\u0646\u064e\u0627 \u0630\u064e\u0627."
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  },
+  {
+    "id": 57495,
+    "position": 7,
+    "start_seconds": 31,
+    "end_seconds": 34,
+    "original_text": "\u062a\u064e\u0635\u0652\u0641\u0650\u064a\u0642\u064c",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "noun",
+          "arabic": "\u062a\u064e\u0635\u0652\u0641\u0650\u064a\u0642\u064c",
+          "english": "[Applause]",
+          "headword": "\u062a\u0635\u0641\u064a\u0642",
+          "entry_type": "word",
+          "transliteration": "ta\u1e63f\u012bqun"
+        }
+      ],
+      "paragraph": 8,
+      "timestamp": "00:31",
+      "translation": "\u00ab\u062a\u064e\u0635\u0652\u0641\u0650\u064a\u0642\u064c\u00bb"
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  },
+  {
+    "id": 57524,
+    "position": 36,
+    "start_seconds": 133,
+    "end_seconds": 134,
+    "original_text": "\u0645\u064f\u0648\u0633\u0650\u064a\u0642\u064e\u0649",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "noun",
+          "arabic": "\u0645\u064f\u0648\u0633\u0650\u064a\u0642\u064e\u0649",
+          "english": "[Music]",
+          "headword": "\u0645\u0648\u0633\u064a\u0642\u0649",
+          "entry_type": "word",
+          "transliteration": "m\u016bs\u012bq\u0101"
+        }
+      ],
+      "paragraph": 37,
+      "timestamp": "02:13",
+      "translation": "\u00ab\u0645\u064f\u0648\u0633\u0650\u064a\u0642\u064e\u0649\u00bb"
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  },
+  {
+    "id": 57525,
+    "position": 37,
+    "start_seconds": 134,
+    "end_seconds": 138,
+    "original_text": "\u062a\u064e\u0635\u0652\u0641\u0650\u064a\u0642\u064c",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "noun",
+          "arabic": "\u062a\u064e\u0635\u0652\u0641\u0650\u064a\u0642\u064c",
+          "english": "[Applause]",
+          "headword": "\u062a\u0635\u0641\u064a\u0642",
+          "entry_type": "word",
+          "transliteration": "ta\u1e63f\u012bqun"
+        }
+      ],
+      "paragraph": 38,
+      "timestamp": "02:14",
+      "translation": "\u00ab\u062a\u064e\u0635\u0652\u0641\u0650\u064a\u0642\u064c\u00bb"
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  },
+  {
+    "id": 57526,
+    "position": 38,
+    "start_seconds": 138,
+    "end_seconds": 142,
+    "original_text": "\u0645\u064f\u0648\u0633\u0650\u064a\u0642\u064e\u0649",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "noun",
+          "arabic": "\u0645\u064f\u0648\u0633\u0650\u064a\u0642\u064e\u0649",
+          "english": "[Music]",
+          "headword": "\u0645\u0648\u0633\u064a\u0642\u0649",
+          "entry_type": "word",
+          "transliteration": "m\u016bs\u012bq\u0101"
+        }
+      ],
+      "paragraph": 39,
+      "timestamp": "02:18",
+      "translation": "\u00ab\u0645\u064f\u0648\u0633\u0650\u064a\u0642\u064e\u0649\u00bb"
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  },
+  {
+    "id": 57527,
+    "position": 39,
+    "start_seconds": 142,
+    "end_seconds": 149,
+    "original_text": "\u062d\u064e\u0631\u064e\u0627\u0631\u064e\u0629\u064c",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "noun",
+          "arabic": "\u062d\u064e\u0631\u064e\u0627\u0631\u064e\u0629\u064c",
+          "english": "Heat.",
+          "headword": "\u062d\u0631\u0627\u0631\u0629",
+          "entry_type": "word",
+          "transliteration": "\u1e25ar\u0101ratun"
+        }
+      ],
+      "paragraph": 40,
+      "timestamp": "02:22",
+      "translation": "\u062d\u064e\u0631\u064e\u0627\u0631\u064e\u0629\u064c."
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  },
+  {
+    "id": 57528,
+    "position": 40,
+    "start_seconds": 149,
+    "end_seconds": 152,
+    "original_text": "\u0645\u064f\u0648\u0633\u0650\u064a\u0642\u064e\u0649",
+    "canonical_paragraph": {
+      "tokens": [
+        {
+          "pos": "noun",
+          "arabic": "\u0645\u064f\u0648\u0633\u0650\u064a\u0642\u064e\u0649",
+          "english": "[Music]",
+          "headword": "\u0645\u0648\u0633\u064a\u0642\u0649",
+          "entry_type": "word",
+          "transliteration": "m\u016bs\u012bq\u0101"
+        }
+      ],
+      "paragraph": 41,
+      "timestamp": "02:29",
+      "translation": "\u00ab\u0645\u064f\u0648\u0633\u0650\u064a\u0642\u064e\u0649\u00bb"
+    },
+    "youtube_id": "uvX4k_3Cmvs",
+    "title": "Game of Thrones \u2014 Season 4, Episode 6"
+  }
+]

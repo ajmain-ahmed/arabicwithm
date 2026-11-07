@@ -57,6 +57,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
           sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: featuredObjectPosition(featuredPosition) }}
         />
         <Box component={Link} href={`/cartoons/${encodeURIComponent(show.slug)}`} aria-label={`View ${show.title}`} sx={{position:'absolute',inset:0,zIndex:1}} />
+        {navigation&&<Box data-featured-mobile-navigation sx={{display:{xs:'block',md:'none'},position:'absolute',top:12,right:12,zIndex:3}}>{navigation}</Box>}
         {/* Legibility: weighted to the left where the text sits. */}
         <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(78deg, rgba(5,9,8,0.85) 0%, rgba(5,9,8,0.5) 36%, transparent 62%)' }} />
         <Box aria-hidden="true" sx={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '52%', background: 'linear-gradient(0deg, rgba(5,9,8,0.78) 0%, rgba(5,9,8,0.35) 40%, transparent 100%)' }} />
@@ -97,24 +98,24 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
           }}
         >
           {show.slug.toLowerCase()==='dbz'?<Box component="img" src="/homepage/dbz-logo.png" alt={show.title} sx={{width:{xs:250,md:500},height:'auto',display:'block',filter:'drop-shadow(0 3px 10px rgba(0,0,0,.55))'}}/>:<Typography component="h2" sx={{color:'#fff',fontFamily:'var(--font-heading)',fontWeight:700,fontSize:{xs:44,md:76},lineHeight:1.05,textShadow:'0 3px 10px rgba(0,0,0,.55)'}}>{show.title}</Typography>}
-          <Box data-featured-actions sx={{ display:{xs:'grid',md:pagination?'grid':'flex'},gridTemplateColumns:'minmax(0,1fr) auto minmax(0,1fr)',gridTemplateRows:{xs:'auto auto',md:'auto'}, alignItems: 'center', gap: {xs:pagination?.5:1.25,md:1.25}, width: { xs: '100%', md: pagination?'100%':'auto' }, mt: { xs: 2, md: 2.75 } }}>
-           <Box sx={{display:{xs:'contents',md:'flex'},gridColumn:1,gridRow:1,gap:1.25,width:'100%'}} >
+          <Box data-featured-actions sx={{ display:{xs:'flex',md:pagination?'grid':'flex'},gridTemplateColumns:'minmax(0,1fr) auto minmax(0,1fr)',gridTemplateRows:{xs:'auto auto',md:'auto'}, alignItems: 'center',justifyContent:{xs:'flex-start',md:'normal'}, gap: {xs:1.25,md:1.25}, width: { xs: '100%', md: pagination?'100%':'auto' }, mt: { xs: 2, md: 2.75 } }}>
+           <Box sx={{display:'flex',gridColumn:1,gridRow:1,gap:1.25,width:{xs:'auto',md:'100%'}}} >
             <Button
               component={Link}
               href={episode?`/cartoons/${encodeURIComponent(show.slug)}/${encodeURIComponent(episode.slug)}`:`/cartoons/${encodeURIComponent(show.slug)}`}
               variant="contained"
               startIcon={<PlayArrow sx={{ fontSize: { xs: pagination?18:22, md: 26 } }} />}
               sx={{
-                flex: { xs: 1, md: '0 0 auto' },
+                flex: { xs: '0 1 auto', md: '0 0 auto' },
                 gridColumn:1,gridRow:1,minWidth:0,
                 minHeight: { xs: 50, md: 58 },
-                px: { xs: pagination?.5:1, md: 4 },
+                px: { xs: 1.5, md: 4 },
                 borderRadius: '9999px',
                 bgcolor: '#0e2e1f',
                 color: '#fff',
                 fontFamily: 'var(--font-sans), sans-serif',
                 fontWeight: 800,
-                fontSize: { xs: pagination?13:15, md: 17 },
+                fontSize: { xs: 15, md: 17 },
                 textTransform: 'none',
                 boxShadow: '0 6px 18px rgba(0,0,0,0.35)',
                 '&:hover': { bgcolor: '#174832', boxShadow: '0 6px 18px rgba(0,0,0,0.35)' },
@@ -127,16 +128,16 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
               href={`/cartoons/${encodeURIComponent(show.slug)}`}
               startIcon={<FormatListBulleted sx={{ fontSize: { xs: pagination?18:19, md: 22 } }} />}
               sx={{
-                flex: { xs: 1, md: '0 0 auto' },
+                flex: { xs: '0 1 auto', md: '0 0 auto' },
                 gridColumn:{xs:1,md:3},gridRow:{xs:2,md:1},minWidth:0,
                 minHeight: { xs: 50, md: 58 },
-                px: { xs: pagination?.5:1, md: 3.5 },
+                px: { xs: 1.5, md: 3.5 },
                 borderRadius: '9999px',
                 bgcolor: 'rgba(109,109,110,0.55)',
                 color: '#fff',
                 fontFamily: 'var(--font-sans), sans-serif',
                 fontWeight: 700,
-                fontSize: { xs: pagination?13:15, md: 17 },
+                fontSize: { xs: 15, md: 17 },
                 textTransform: 'none',
                 backdropFilter: 'blur(6px)',
                 '&:hover': { bgcolor: 'rgba(109,109,110,0.4)' },
@@ -145,7 +146,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
               Episodes
             </Button>
            </Box>
-           {navigation&&<Box sx={{gridColumn:2,gridRow:{xs:2,md:1},justifySelf:'center'}}>{navigation}</Box>}
+           {navigation&&<Box sx={{display:{xs:'none',md:'block'},gridColumn:2,gridRow:1,justifySelf:'center'}}>{navigation}</Box>}
           </Box>
         </Box>
       </Box>

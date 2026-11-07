@@ -1,8 +1,8 @@
 import React,{act} from 'react'
 import {createRoot,type Root} from 'react-dom/client'
 import {beforeEach,afterEach,it,expect,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({generate:vi.fn(),load:vi.fn(),save:vi.fn()}))
-vi.mock('@/app/actions/transcripts',()=>({generateAdminTranscript:mocks.generate,loadAdminGeneration:mocks.load,saveAdminGeneratedTranscript:mocks.save}))
+const mocks=vi.hoisted(()=>({generate:vi.fn(),load:vi.fn(),language:vi.fn(),save:vi.fn()}))
+vi.mock('@/app/actions/transcripts',()=>({saveAdminTranscriptSourceLanguage:mocks.language,generateAdminTranscript:mocks.generate,loadAdminGeneration:mocks.load,saveAdminGeneratedTranscript:mocks.save}))
 import TranscriptGeneration from './TranscriptGeneration'
 let host:HTMLDivElement,root:Root
 const id='33333333-3333-4333-8333-333333333333'
@@ -30,4 +30,10 @@ it('shows provider failures and offers downloads without changing unsaved JSON',
  await click('Generate Transcript');await fill('Transcript JSON',json.replace('Hello','Welcome'))
  const create=vi.fn(()=> 'blob:test'),revoke=vi.fn();Object.assign(URL,{createObjectURL:create,revokeObjectURL:revoke});const anchor=vi.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{})
  await click('Download generated JSON');expect(create).toHaveBeenCalledWith(expect.any(Blob));expect(host.querySelector('textarea')!.value).toContain('Welcome');anchor.mockRestore()
+})
+
+it('retains source language while saving generated JSON and supports language-only edits',async()=>{
+ mocks.load.mockResolvedValue({video:{id,title:'English source',updated_at:'2026-10-08T12:00:00Z',status:'ready',searchable:false,source_language:'en'},json});mocks.language.mockResolvedValue({ok:true,updatedAt:'2026-11-07T12:01:00Z'})
+ await generate();const select=host.querySelector('select')!;expect(select.value).toBe('en');await fill('Transcript JSON','{unfinished');await click('Save audio language only');expect(mocks.language).toHaveBeenCalledWith(id,'en','2026-10-08T12:00:00Z');expect(mocks.save).not.toHaveBeenCalled();expect(host.querySelector('textarea')!.value).toBe('{unfinished')
+ await fill('Transcript JSON',json);await click('Save reviewed JSON');expect(mocks.save).toHaveBeenCalledWith(id,expect.objectContaining({sourceLanguage:'en',updatedAt:'2026-11-07T12:01:00Z'}))
 })

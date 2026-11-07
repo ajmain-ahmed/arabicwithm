@@ -31,17 +31,18 @@ for(const width of [320,390,768,1024,1440])for(const kind of ['guest','free','pl
  if(width>=900)await carousel.getByRole('button',{name:'Next Featured Show',exact:true}).click()
  else await carousel.getByRole('button',{name:/^Show Featured/}).nth(1).click()
  await expect(slides.nth(1)).toHaveAttribute('aria-hidden','false')
+ // aria-hidden changes halfway through smooth scrolling; wait for the actual slide boundary.
+ await expect.poll(()=>viewport.evaluate(el=>Math.abs(el.scrollLeft-el.clientWidth))).toBeLessThan(1)
  if(width>=900)await carousel.getByRole('button',{name:'Previous Featured Show',exact:true}).click()
  else await carousel.getByRole('button',{name:/^Show Featured/}).nth(0).click()
  await expect(first).toHaveAttribute('aria-hidden','false')
  const promo=page.locator('[data-awm-plus-placement=home]')
  if(kind==='plus'){
-  await expect(promo).toHaveCount(0)
+  await expect(promo).toContainText('Your AWM+ membership is active.')
+  await expect(promo.getByRole('button',{name:'Manage membership',exact:true})).toBeVisible()
+  await expect(promo).not.toContainText('Upgrade to AWM+')
   await page.goto(`/profile/${ids.plus}`)
-  const member=page.locator('[data-awm-plus-placement=profile]');await expect(member).toContainText('Your AWM+ membership is active.')
-  await expect(member.getByRole('button',{name:'Manage membership',exact:true})).toBeVisible()
-  await expect(member).not.toContainText('Upgrade to AWM+');await expect(page.locator('#download-app')).toHaveCount(1)
-  expect(await member.evaluate(el=>el.previousElementSibling?.textContent?.includes('ArabicwithM on the go!'))).toBe(true)
+  await expect(page.locator('[data-awm-plus-placement]')).toHaveCount(0);await expect(page.locator('#download-app')).toHaveCount(1)
  }else{
   await expect(promo.getByRole('heading',{name:'Upgrade to AWM+',exact:true})).toBeVisible()
   if(kind==='guest'){
@@ -88,12 +89,13 @@ test('genuine touch swipe stays on Home, keyboard navigation and viewport resize
 
 for(const width of [320,390,430,899,900,1440])test(`Featured responsive controls ${width}`,async({page})=>{
  await installYouTubeFixture(page);await page.setViewportSize({width,height:1000});await page.goto('/');await page.evaluate(()=>document.fonts.ready)
- const slide=page.locator('[data-featured-slide][aria-hidden=false]'),play=slide.getByRole('link',{name:'Play',exact:true}),episodes=slide.getByRole('link',{name:'Episodes',exact:true}),dots=slide.locator('[data-featured-pagination]'),image=slide.locator('img').first()
+ const slide=page.locator('[data-featured-slide][aria-hidden=false]'),play=slide.getByRole('link',{name:'Play',exact:true}),episodes=slide.getByRole('link',{name:'Episodes',exact:true}),dots=slide.locator('[data-featured-pagination]:visible'),image=slide.locator('img').first()
  const p=(await play.boundingBox())!,e=(await episodes.boundingBox())!,d=(await dots.boundingBox())!,i=(await image.boundingBox())!
- expect(d.x+d.width/2).toBeCloseTo(i.x+i.width/2,0);expect(d.y+d.height/2).toBeCloseTo(e.y+e.height/2,0)
- if(width<900){expect(p.y+p.height).toBeLessThanOrEqual(e.y);expect(p.x).toBeCloseTo(e.x,0);expect(e.x+e.width).toBeLessThanOrEqual(d.x)}else expect(p.y).toBeCloseTo(e.y,0)
+ expect(p.y).toBeCloseTo(e.y,0)
+ if(width<900){expect(d.x+d.width).toBeCloseTo(i.x+i.width-12,0);expect(d.y).toBeCloseTo(i.y+12,0);expect(d.y+d.height).toBeLessThan(p.y);expect(p.x+p.width).toBeLessThan(e.x)}else{expect(d.x+d.width/2).toBeCloseTo(i.x+i.width/2,0);expect(d.y+d.height/2).toBeCloseTo(e.y+e.height/2,0)}
  expect(e.x).toBeGreaterThan(i.x);expect(e.y+e.height).toBeLessThan(i.y+i.height);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
  await expect(play).toHaveAttribute('href',/\/cartoons\/hero-fixture-/);await expect(episodes).toHaveAttribute('href',/\/cartoons\/hero-fixture-/)
- await dots.getByRole('button',{name:/^Show Featured/}).nth(1).click();await expect(page).toHaveURL(/\/$/);await expect(page.locator('[data-featured-slide]').nth(1)).toHaveAttribute('aria-hidden','false')
+ for(const index of [1,2,0]){await page.evaluate(()=>window.scrollTo(0,0));await dots.getByRole('button',{name:/^Show Featured/}).nth(index).click();await expect(page).toHaveURL(/\/$/);await expect(page.locator('[data-featured-slide]').nth(index)).toHaveAttribute('aria-hidden','false');await expect.poll(()=>page.locator('[aria-label="Swipe Featured Shows"]').evaluate((el,index)=>Math.abs(el.scrollLeft-index*el.clientWidth),index)).toBeLessThan(1)}
  await page.locator('[data-featured-carousel]').screenshot({path:`test-results/mobile-featured-controls-${width}.png`})
+ if(width<900){const target=await episodes.getAttribute('href');await episodes.click();await expect(page).toHaveURL(new RegExp(target+'$'));await page.goto('/');const playTarget=await play.getAttribute('href');await play.click();await expect(page).toHaveURL(new RegExp(playTarget+'$'))}
 })

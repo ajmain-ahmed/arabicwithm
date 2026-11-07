@@ -1,11 +1,12 @@
 // @vitest-environment node
 import {beforeEach,expect,it,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({rpc:vi.fn(),query:vi.fn()}))
+const mocks=vi.hoisted(()=>({rpc:vi.fn(),language:vi.fn(),query:vi.fn()}))
+vi.mock('@/app/lib/transcriptSourceLanguage.server',()=>({transcriptSourceLanguages:mocks.language}))
 vi.mock('server-only',()=>({}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{rpc:mocks.rpc}}))
 import {loadHomeSpotlight} from './homeSpotlight.server'
-const clip={video:{id:'99999999-9999-4999-8999-999999999990',youtube_id:'abcdefghij0'},clip_start_ms:0,clip_end_ms:45000,segments:[{id:1,position:0,start_seconds:0,end_seconds:45,original_text:'A thought.',source_tokens:[{arabic:'book',english:'book'}]}]}
-beforeEach(()=>{vi.clearAllMocks();mocks.rpc.mockImplementation(()=>({abortSignal:mocks.query}));mocks.query.mockResolvedValue({data:clip,error:null})})
+const clip={video:{id:'99999999-9999-4999-8999-999999999990',youtube_id:'abcdefghij0'},clip_start_ms:0,clip_end_ms:45000,segments:[{id:1,position:0,start_seconds:0,end_seconds:45,original_text:'A complete meaningful spoken thought here.',source_tokens:[{arabic:'book',english:'book'}]}]}
+beforeEach(()=>{vi.clearAllMocks();mocks.language.mockResolvedValue(new Map());mocks.rpc.mockImplementation(()=>({abortSignal:mocks.query}));mocks.query.mockResolvedValue({data:clip,error:null})})
 it('normally uses one dedicated RPC with no generic discovery or raw transcript requests',async()=>{
  expect((await loadHomeSpotlight())?.clip_end_ms).toBe(45000)
  expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith('home_for_you_spotlight',{p_seed:expect.any(String),p_allow_source_tokens:false})
@@ -33,4 +34,13 @@ it('uses a 1500ms total deadline and does not refill when it expires',async()=>{
  const controller=new AbortController(),timeout=vi.spyOn(AbortSignal,'timeout').mockReturnValue(controller.signal)
  mocks.query.mockImplementation((signal:AbortSignal)=>new Promise(resolve=>signal.addEventListener('abort',()=>resolve({data:null,error:{code:'ABORT'}}))))
  try{const pending=loadHomeSpotlight();controller.abort();await expect(pending).rejects.toThrow('could not load');expect(timeout).toHaveBeenCalledWith(1500);expect(mocks.rpc).toHaveBeenCalledOnce()}finally{timeout.mockRestore()}
+})
+
+it('attaches explicit source language using a metadata projection within the selection deadline',async()=>{
+ mocks.language.mockResolvedValue(new Map([[clip.video.id,'en']]));expect((await loadHomeSpotlight())?.video.source_language).toBe('en');expect(mocks.language).toHaveBeenCalledWith([clip.video.id],mocks.query.mock.calls[0][0])
+})
+
+it('returns no preview for an all-music selection within the existing bounded fallback',async()=>{
+ mocks.query.mockResolvedValue({data:{...clip,segments:[{...clip.segments[0],original_text:'[Music]',source_tokens:[{arabic:'[Music]',english:'[Music]'}]}]},error:null})
+ expect(await loadHomeSpotlight()).toBeNull();expect(mocks.rpc).toHaveBeenCalledTimes(2);expect(mocks.language).not.toHaveBeenCalled()
 })

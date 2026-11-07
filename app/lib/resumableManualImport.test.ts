@@ -145,3 +145,15 @@ it('keeps durable video/time exclusions across segment regeneration, without del
  expect((await db.query('select searchable,explore_published from youtube_transcripts where id=$1',[blocked.id])).rows[0]).toEqual({searchable:true,explore_published:false})
  expect((await db.query('select original_text from transcript_segments where transcript_id=$1',[blocked.id])).rows[0]).toEqual({original_text:'stored'})
 })
+
+it('persists source_language outside the untouched canonical token/segment schema',async()=>{
+ const example=JSON.parse(readFileSync('e2e/source-language-data.json','utf8')),source=JSON.stringify([example]),raw={...normaliseManualTranscriptJson(source,45),source_language:'en'}
+ let state=await begin('sourcelang1',{...raw,_source_json:source},'abcd1234'.repeat(8));state=await append(state);await finish(state)
+ const saved=(await db.query<{raw:typeof raw}>('select raw_transcript raw from youtube_transcripts where id=$1',[state.id])).rows[0].raw
+ expect(saved).toEqual(raw);expect(saved.content[0].tokens).toEqual(example.tokens)
+ expect((await db.query<{original_json:string}>('select original_json from transcript_private.manual_sources where transcript_id=$1',[state.id])).rows[0].original_json).toBe(source)
+ const before=JSON.stringify(saved.content)
+ await db.query("update youtube_transcripts set raw_transcript=jsonb_set(raw_transcript,'{source_language}','\"ar\"'::jsonb) where id=$1",[state.id])
+ const changed=(await db.query<{raw:typeof raw}>('select raw_transcript raw from youtube_transcripts where id=$1',[state.id])).rows[0].raw
+ expect(changed.source_language).toBe('ar');expect(JSON.stringify(changed.content)).toBe(before)
+})

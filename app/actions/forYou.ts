@@ -6,6 +6,8 @@ async function requireForYouUser() {
  if (!(await getAuthenticatedUserId())) throw new Error('Sign in to use For You.')
 }
 
+import {spokenForYouClip,hasSpokenContent,spokenSegment} from '@/app/lib/forYouSpeech'
+import {transcriptSourceLanguages} from '@/app/lib/transcriptSourceLanguage.server'
 import { forYouGroupPool } from '@/app/lib/forYouGroups'
 import { headers } from 'next/headers'
 import { rateLimit } from '@/app/lib/rateLimit'
@@ -68,13 +70,15 @@ async function loadForYouClips(seed: string, excluded: number[], recent: string[
     clip=normaliseForYouClip(value,rawSources.get(video.id))
    }
    if(Array.isArray(value.segments))for(const segment of value.segments){const id=forYouRecord(segment)?forYouId(segment.id):null;if(id!==null&&!excludedIds.has(id)){excludedIds.add(id);progress=true}}
+   if(clip)clip=spokenForYouClip(clip)
    if(!clip){rejected=true;diagnostic('invalid_clip',{transcript_id:typeof video?.id==='string'&&z.string().uuid().safeParse(video.id).success?video.id:undefined,segment_ids:Array.isArray(value.segments)?value.segments.flatMap(s=>forYouRecord(s)&&forYouId(s.id)!==null?[forYouId(s.id)]:[]):[]});continue}
    if(!clips.some(item=>item.video.id===clip.video.id))clips.push(clip)
    if(!recentIds.includes(clip.video.id))recentIds.unshift(clip.video.id)
   }
   if(!rejected||!progress)break
  }
- return clips.slice(0,limit)
+ const selected=clips.slice(0,limit),languages=await transcriptSourceLanguages(selected.map(clip=>clip.video.id))
+ return selected.map(clip=>({...clip,video:{...clip.video,source_language:languages.get(clip.video.id)??'ar'}}))
 }
 
 /** Every batch reads the transactionally maintained live candidate index. */
@@ -102,7 +106,7 @@ export async function fetchForYouTranscript(id:string):Promise<ForYouSegment[]> 
   if(error)throw new Error('Unable to load the source transcript.')
   if(!Array.isArray(data)){diagnostic('invalid_full_batch',{transcript_id:id});throw new Error('Unable to load the source transcript.')}
   const batch=data
-  for(const segment of batch){const safe=normaliseForYouSegment(segment,forYouRecord(segment)?raw[Number(segment.position)]:undefined);if(safe)segments.push(safe);else diagnostic('invalid_full_segment',{transcript_id:id,segment_id:forYouRecord(segment)?forYouId(segment.id):null})}
+  for(const segment of batch){const safe=normaliseForYouSegment(segment,forYouRecord(segment)?raw[Number(segment.position)]:undefined);if(safe){if(hasSpokenContent(safe))segments.push(spokenSegment(safe))}else diagnostic('invalid_full_segment',{transcript_id:id,segment_id:forYouRecord(segment)?forYouId(segment.id):null})}
   if(batch.length<500)break
   const last=batch[batch.length-1]
   const next=forYouRecord(last)?last.position:null

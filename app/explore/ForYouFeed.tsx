@@ -1,5 +1,6 @@
 'use client'
 
+import {sourceLanguage} from '@/app/lib/transcriptSourceLanguage'
 import EnglishForYouSegment from './EnglishForYouSegment'
 
 import { useEffect, useRef, useState, useCallback, useSyncExternalStore, type ReactNode } from 'react'
@@ -51,9 +52,12 @@ export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tok
   </Box>
 }
 
-export function ClipPlayer({ language='ar',clip, desktopLanguageControl, mobileViewControl, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl, onComplete }: { language?:'ar'|'en'; desktopLanguageControl?:ReactNode; mobileViewControl?:ReactNode; onComplete?:()=>void; full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
+export function ClipPlayer({ clip, desktopLanguageControl, mobileViewControl, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl, onComplete }: { desktopLanguageControl?:ReactNode; mobileViewControl?:ReactNode; onComplete?:()=>void; full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
+  const language=sourceLanguage(clip.video.source_language)
   const samplePlayback=useForYouMeter()
   const canAdvance=useForYouAdvance()
+  const inspectingSeek=useRef(false)
+  const [followingSeek,setFollowingSeek]=useState(false)
   const completed=useRef(false)
   const isPhone = useMediaQuery('(max-width:899.95px)')
   const playerSizeRef=useRef<HTMLDivElement>(null)
@@ -66,18 +70,18 @@ export function ClipPlayer({ language='ar',clip, desktopLanguageControl, mobileV
   const [transcriptError,setTranscriptError]=useState('')
   useEffect(()=>{
     let active=true
-    if(suppliedSegments||(!full&&(language!=='en'||clip.segments.every(line=>line.translation))))return
+    if(suppliedSegments||(!full&&!followingSeek&&(language!=='en'||clip.segments.every(line=>line.translation))))return
     void prepareTranscript(clip.video.id).then(rows=>{if(active&&rows.length)setSegments(rows)}).catch(()=>{if(active)setTranscriptError('Unable to load the full transcript. Reload this source to retry.')})
     return()=>{active=false}
-  },[clip.video.id,clip.segments,suppliedSegments,full,language])
+  },[clip.video.id,clip.segments,suppliedSegments,full,language,followingSeek])
   const soundEnabled = useSyncExternalStore(subscribeToExploreSoundPreference, getExploreSoundPreference, () => true)
   if(modeStart.full!==full)setModeStart({full,start:full?time:Math.min(Math.max(time,clip.clip_start_ms/1000),clip.clip_end_ms/1000-.1)})
-  const { wrapRef, isReady, isMuted, isPlaying, autoplayBlocked, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates, getSoundMuted, syncSoundIntent } = useYouTubePlayer(clip.video.youtube_id, updateTime, modeStart.start, { verifySoundState: isPhone, onNativeMuteChange:isPhone?muted=>setExploreSoundPreference(!muted):undefined, autoplay: true, muted: !soundEnabled, audibleAutoplay: true, mutedAutoplayFallback: true, endAt: full ? undefined : clip.clip_end_ms / 1000, requireTimeUpdates:true, onEnded:()=>{if(full)setEnded(true);else finishShort()}, onError:code=>onUnavailable(clip.video.youtube_id,code) })
+  const { wrapRef, isReady, isMuted, isPlaying, autoplayBlocked, playWithSound, mute, seekTo, seekToOnly, playVideo, pauseVideo, playbackRate, setPlaybackRate, getPlaybackRates, getSoundMuted, syncSoundIntent } = useYouTubePlayer(clip.video.youtube_id, updateTime, modeStart.start, { verifySoundState: isPhone, onNativeMuteChange:isPhone?muted=>setExploreSoundPreference(!muted):undefined, autoplay: true, muted: !soundEnabled, audibleAutoplay: true, mutedAutoplayFallback: true, endAt: full ? undefined : clip.clip_end_ms / 1000, requireTimeUpdates:true, inspectNativeSeeks:true, onSeekOutsideClip:outside=>{inspectingSeek.current=outside;setFollowingSeek(outside)}, onEnded:()=>{if(full)setEnded(true);else finishShort()}, onError:code=>onUnavailable(clip.video.youtube_id,code) })
   function updateTime(seconds:number){
     setTime(seconds)
     // Charge the final playback sample before deciding whether another clip may start.
     samplePlayback?.({time:seconds,playing:isReady&&isPlaying,rate:playbackRate??1,pause:pauseVideo})
-    if(!full && seconds>=clip.clip_end_ms/1000-.025)finishShort()
+    if(!full && !inspectingSeek.current && seconds>=clip.clip_end_ms/1000-.025)finishShort()
     if(seconds>=clip.clip_start_ms/1000 && seconds<clip.clip_end_ms/1000)setEnded(false)
   }
   function finishShort(){
@@ -108,14 +112,14 @@ export function ClipPlayer({ language='ar',clip, desktopLanguageControl, mobileV
   },[isPhone,transcriptAudio])
   useEffect(()=>{samplePlayback?.({time,playing:isReady&&isPlaying,rate:playbackRate??1,pause:pauseVideo})},[time,isReady,isPlaying,playbackRate,pauseVideo,samplePlayback])
   useEffect(()=>()=>{samplePlayback?.({time:0,playing:false,rate:1,pause:pauseVideo})},[samplePlayback,pauseVideo])
-  const visibleClip = full ? {...clip,clip_start_ms:0,clip_end_ms:Math.max(...segments.map(s=>s.end_seconds),clip.clip_end_ms/1000)*1000} : clip
-  const active = full || (time>=clip.clip_start_ms/1000 && time<clip.clip_end_ms/1000) ? segmentAtTime(segments,time) : undefined
+  const visibleClip = full||followingSeek ? {...clip,clip_start_ms:0,clip_end_ms:Math.max(...segments.map(s=>s.end_seconds),clip.clip_end_ms/1000)*1000} : clip
+  const active = full || followingSeek || (time>=clip.clip_start_ms/1000 && time<clip.clip_end_ms/1000) ? segmentAtTime(segments,time) : undefined
   const rates=getPlaybackRates?.()??[1],rate=playbackRate??1
   const nextRate=rates[(Math.max(0,rates.indexOf(rate))+1)%rates.length]??1
   const sound=()=>{const muted=getSoundMuted?.()??isMuted;setExploreSoundPreference(muted);if(muted)playWithSound();else mute()}
   return <Box data-for-you-source={clip.video.youtube_id} sx={{ display: { xs: 'flex', md: 'block' }, flexDirection: 'column', flex: { xs: 1, md: 'initial' }, minHeight: 0 }}>
 
-    {(full||language==='en')&&transcriptError&&<Alert severity="error">{transcriptError}</Alert>}
+    {(full||followingSeek||language==='en')&&transcriptError&&<Alert severity="error">{transcriptError}</Alert>}
     {/* Outer box = positioning context for the out-of-frame controls. */}
     <Box ref={playerSizeRef} data-for-you-player sx={{ position: 'relative',mx:'auto', width:{xs:'100%',md:playerWidth===null?'min(100%, calc(max(270px, 100dvh - var(--awm-navbar-height) - 240px) * 16 / 9))':`min(100%, ${playerWidth}px, calc(max(270px, 100dvh - var(--awm-navbar-height) - 240px) * 16 / 9))`}, aspectRatio: { xs: 'auto', md: '16 / 9' }, height: { xs: MOBILE_PLAYER_HEIGHT, md: 'auto' }, flexShrink: 0 }}>
       <Box sx={{ position: 'relative', width: '100%', height: '100%', bgcolor: '#000', borderRadius: { xs: 0, md: '16px' }, overflow: 'hidden', border: { md: '1px solid rgba(255,255,255,0.08)' }, boxShadow: { md: '0 30px 80px rgba(0,0,0,0.55)' } }}>
@@ -136,7 +140,7 @@ export function ClipPlayer({ language='ar',clip, desktopLanguageControl, mobileV
       {!isPhone&&<DesktopPlayerResize playerRef={playerSizeRef} onResize={setPlayerWidth}/>}
       {navigation&&<IconButton aria-label="Next video" disabled={navigation.nextDisabled} onClick={navigation.next}><KeyboardArrowDown/></IconButton>}
     </Box>
-    <MobileForYouPanel language={language} onTranscriptInteraction={transcriptAudio} activeOnly={full} activeSegment={active} modeControl={mobileModeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileViewControl??mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
+    <MobileForYouPanel language={language} onTranscriptInteraction={transcriptAudio} activeOnly={full||followingSeek} activeSegment={active} modeControl={mobileModeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileViewControl??mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
     <Box data-desktop-clip-transcript data-feed-transcript sx={{display:{xs:'none',md:'block'},color:'#f5ede0',mt:2,minHeight:124,overscrollBehavior:'contain'}}>
       {(active ? [active] : []).map(line=><Box key={line.id} data-clip-line={line.id} data-active-segment={active?.id===line.id} sx={{p:1.5,mb:1,borderRadius:2,bgcolor:'rgba(212,168,67,.14)'}}>
         {language==='en'?<EnglishForYouSegment line={line} settings={settings} time={time}/>:<>
@@ -374,7 +378,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
             />
           : clips[index]
             ? <Box sx={{ minWidth: 0, width: { xs: '100%', md: 'min(100%, 1800px)' }, mx: { md: 'auto' }, height: { xs: '100%', md: 'auto' }, position: 'relative', left:0 }}>
-                <MobileClipNavigator clipKey={`${clips[index].video.id}:${clips[index].clip_start_ms}`} disabled={full || !!previewSegments} canPrevious={index>0} busy={busy && index >= clips.length - 1} step={step}><ClipPlayer language={language}
+                <MobileClipNavigator clipKey={`${clips[index].video.id}:${clips[index].clip_start_ms}`} disabled={full || !!previewSegments} canPrevious={index>0} busy={busy && index >= clips.length - 1} step={step}><ClipPlayer
                   key={`${index}:${clips[index].video.id}:${clips[index].clip_start_ms}`}
                   onComplete={previewSegments?undefined:()=>step(1)} full={full} suppliedSegments={previewSegments} modeControl={modeControl()} mobileModeControl={<Button data-mobile-mode onClick={()=>setFull(!full)} sx={{color:'inherit',bgcolor:'var(--awm-gold)',borderRadius:'999px',textTransform:'none',fontWeight:600}}>{full?'Full':'Short'}</Button>} clip={clips[index]}
                   desktopLanguageControl={languageControl} onUnavailable={unavailable}

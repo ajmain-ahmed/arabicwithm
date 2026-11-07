@@ -20,7 +20,6 @@ import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import { formatMembershipDate } from '@/app/lib/display'
 import SupportForm from '@/app/support/SupportForm'
 import AppDownloadSection from '@/app/components/home/AppDownloadSection'
-import AwmPromoSection from '@/app/components/home/AwmPromoSection'
 import ProfileHeader from '@/app/profile/ProfileHeader'
 import ProfilePresetPicker from '@/app/profile/ProfilePresetPicker'
 import {presetRefFromUrl,type ProfilePresetBucket} from '@/app/lib/profilePresets'
@@ -636,7 +635,6 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
             </Box>
           </Box>
           {profile.own&&!viewerLoading&&viewer?.id===profile.id&&<Box sx={{mt:{xs:4,md:6}}}><AppDownloadSection/></Box>}
-          {profile.own&&<AwmPromoSection key={profile.id} userId={profile.id} placement="profile"/>}
         </Container>
       </Box>
 

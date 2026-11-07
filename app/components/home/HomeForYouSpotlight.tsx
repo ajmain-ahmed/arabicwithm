@@ -1,5 +1,6 @@
 'use client'
 
+import EnglishForYouSegment from '@/app/explore/EnglishForYouSegment'
 import {useState} from 'react'
 import {useRouter} from 'next/navigation'
 import {Box,Button,Paper,Typography} from '@mui/material'
@@ -18,7 +19,7 @@ function SpotlightPlayer({clip}:{clip:ForYouClip}){
  function updateTime(seconds:number){setTime(seconds);sample?.({time:seconds,playing:isReady&&isPlaying,rate:playbackRate,pause:pauseVideo})}
  const line=segmentAtTime(clip.segments,time)
  return <>
-  <SpotlightPlayerFrame videoId={clip.video.youtube_id} subtitle={<>
+  <SpotlightPlayerFrame videoId={clip.video.youtube_id} subtitle={clip.video.source_language==='en'&&line?<EnglishForYouSegment line={line} settings={{meanings:true,sentence:true}} time={time}/>:<>
    <Typography lang="ar" dir="rtl" sx={{fontFamily:'var(--font-serif)',fontSize:{xs:22,md:26},lineHeight:1.6,textAlign:'center'}}>{line?.original_text??'\u00a0'}</Typography>
    {line?.english_text&&<Typography lang="en" sx={{fontSize:13,color:'var(--awm-muted)',mt:.5,textAlign:'center'}}>{line.english_text}</Typography>}
   </>}><Box ref={wrapRef} sx={{position:'absolute',inset:0}}/></SpotlightPlayerFrame>

@@ -98,6 +98,7 @@ it('shows a safe picker failure and supports retry without exposing backend erro
 it('shows the app reminder only on the signed-in viewer own profile',async()=>{
  await act(async()=>root.render(<ProfileView profile={profile()}/>))
  expect(host.querySelector('#download-app')?.textContent).toContain('ArabicwithM on the go!')
+ expect(host.querySelector('[data-awm-plus-placement]')).toBeNull()
  await act(async()=>root.render(<ProfileView profile={{...profile(),own:false}}/>))
  expect(host.querySelector('#download-app')).toBeNull()
  await act(async()=>root.render(<ProfileView profile={{...profile(),id:'another-user'}}/>))

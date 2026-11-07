@@ -12,6 +12,8 @@ vi.mock('@mui/icons-material', () => {
   return { DiamondOutlined: Icon, AccessTimeRounded: Icon, AdminPanelSettings: Icon, DarkModeOutlined: Icon, LightModeOutlined: Icon, MenuOutlined: Icon, Person: Icon, BookOutlined: Icon, EmailSharp: Icon, ExploreOutlined: Icon, HomeOutlined: Icon, LogoutSharp: Icon, Movie: Icon, PsychologyOutlined: Icon, RateReviewOutlined: Icon, VolunteerActivismRounded: Icon, AccountCircleOutlined: Icon, Close: Icon, Home: Icon, MenuBook: Icon, Menu: Icon, ArrowForward: Icon, AutoStories: Icon, CalendarMonthRounded: Icon, CheckCircleRounded: Icon, Headphones: Icon, LocalFireDepartmentRounded: Icon, MilitaryTechRounded: Icon, SettingsOutlined: Icon, GridOnRounded: Icon, BookmarkRounded: Icon, AccountTreeOutlined: Icon, SearchOutlined: Icon, OndemandVideo: Icon, QrCodeScanner: Icon, Apple: Icon, PlayArrow: Icon }
 })
 vi.mock('next/link',()=>({default:({href,children,...props}:{href:string;children:React.ReactNode})=><a href={href} {...props}>{children}</a>}))
+// Spotlight playback is covered separately; navigation tests need no router/server actions.
+vi.mock('./HomeForYouSpotlight',()=>({default:()=>null}))
 vi.mock('@/app/actions/activity',()=>({fetchLearningActivity:vi.fn()}))
 vi.mock('@/app/actions/premium',()=>({fetchPremiumStatus:vi.fn()}))
 vi.mock('@/app/actions/profiles',()=>({fetchMyDisplayName:vi.fn(()=>Promise.resolve(null)),updateProfile:vi.fn(),checkUsernameAvailability:vi.fn()}))

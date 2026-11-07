@@ -1,0 +1,43 @@
+{
+  "tokens": [
+    {
+      "pos": "word",
+      "cefr": "A2",
+      "arabic": "أَنَا",
+      "english": "I",
+      "headword": null,
+      "entry_type": "word",
+      "transliteration": ""
+    },
+    {
+      "pos": "word",
+      "cefr": "A2",
+      "arabic": "أَلْقَيْتُ",
+      "english": "gave",
+      "headword": null,
+      "entry_type": "word",
+      "transliteration": ""
+    },
+    {
+      "pos": "phrase",
+      "cefr": "A2",
+      "arabic": "مُحَاضَرَةً عَنِ السَّلَامَةِ مِنَ الْحَرَائِقِ",
+      "english": "a fire safety talk",
+      "headword": null,
+      "entry_type": "phrase",
+      "transliteration": ""
+    },
+    {
+      "pos": "phrase",
+      "cefr": "A2",
+      "arabic": "الْأُسْبُوعَ الْمَاضِيَ",
+      "english": "last week.",
+      "headword": null,
+      "entry_type": "phrase",
+      "transliteration": ""
+    }
+  ],
+  "timestamp": "00:00",
+  "translation": "أَلْقَيْتُ مُحَاضَرَةً عَنِ السَّلَامَةِ مِنَ الْحَرَائِقِ الْأُسْبُوعَ الْمَاضِيَ.",
+  "paragraph": 1
+}

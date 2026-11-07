@@ -23,13 +23,13 @@ let host: HTMLDivElement
 let playerMuted = true
 let playerVolume = 100
 let playerTime = 4
-const updateTime=vi.fn(), ended=vi.fn(), failed=vi.fn(), nativeMute=vi.fn()
+const updateTime=vi.fn(), ended=vi.fn(), failed=vi.fn(), nativeMute=vi.fn(),outsideSeek=vi.fn()
 const calls: string[] = []
 const destroy = vi.fn()
 const pause = vi.fn()
 const seek = vi.fn((seconds:number)=>{playerTime=seconds})
-function Harness({ id, start, end, muted = true, fallback = false, synced=false, verify=false, audible=false, nativeReplay=false }: { id?: string; start?: number; end?:number; muted?: boolean; fallback?: boolean; synced?:boolean; verify?:boolean; audible?:boolean; nativeReplay?:boolean }) {
-  const player = useYouTubePlayer(id, updateTime, start, { onNativeMuteChange:nativeMute, verifySoundState:verify, replayClipOnNativePlay:nativeReplay, autoplay: true, muted, endAt:end, mutedAutoplayFallback: fallback, audibleAutoplay:audible, requireTimeUpdates:synced, onEnded:ended, onError:failed })
+function Harness({ id, start, end, muted = true, fallback = false, synced=false, verify=false, audible=false, nativeReplay=false,inspect=false }: { id?: string; start?: number; end?:number; muted?: boolean; fallback?: boolean; synced?:boolean; verify?:boolean; audible?:boolean; nativeReplay?:boolean;inspect?:boolean }) {
+  const player = useYouTubePlayer(id, updateTime, start, { inspectNativeSeeks:inspect,onSeekOutsideClip:outsideSeek,onNativeMuteChange:nativeMute, verifySoundState:verify, replayClipOnNativePlay:nativeReplay, autoplay: true, muted, endAt:end, mutedAutoplayFallback: fallback, audibleAutoplay:audible, requireTimeUpdates:synced, onEnded:ended, onError:failed })
   useEffect(() => { controls = player })
   const { wrapRef } = player
   return <div ref={wrapRef} />
@@ -242,4 +242,12 @@ it('reports the real mobile mute state when the player rejects an unmute command
  unmute.mockRestore()
  await act(async()=>controls.playWithSound())
  expect(playerMuted).toBe(false);expect(controls.isMuted).toBe(false)
+})
+
+it('detects paused and rapid native seeks using the existing poll without forcing playback or remounting',async()=>{
+ await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" start={0} end={45} synced inspect/>));await act(async()=>{await vi.advanceTimersByTimeAsync(60);options.events.onReady();options.events.onStateChange({data:2})});calls.length=0;ended.mockClear();pause.mockClear()
+ for(const time of [20,70,48,125,97]){playerTime=time;await act(async()=>{await vi.advanceTimersByTimeAsync(100)});expect(updateTime).toHaveBeenLastCalledWith(time)}
+ expect(outsideSeek).toHaveBeenLastCalledWith(true);expect(ended).not.toHaveBeenCalled();expect(pause).not.toHaveBeenCalled();expect(calls).not.toContain('play');expect(destroy).not.toHaveBeenCalled()
+ playerTime=42;await act(async()=>{await vi.advanceTimersByTimeAsync(100)});expect(outsideSeek).toHaveBeenLastCalledWith(false)
+ await act(async()=>options.events.onStateChange({data:1}));playerTime=44.9;await act(async()=>{await vi.advanceTimersByTimeAsync(100)});playerTime=45;await act(async()=>{await vi.advanceTimersByTimeAsync(100)});expect(ended).toHaveBeenCalledOnce()
 })

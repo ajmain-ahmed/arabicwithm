@@ -1,5 +1,6 @@
 'use client'
 
+import {HOME_PROMO_MAX_WIDTH} from './promoLayout'
 import { useEffect, useState } from 'react'
 import { Box, Button, Typography } from '@mui/material'
 import { AutorenewRounded, CheckCircleRounded, DiamondOutlined } from '@mui/icons-material'
@@ -33,7 +34,7 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
   const status=userId?(snapshot?.userId===userId?snapshot.status:null):{premium:false,admin:false,signedIn:false,manageable:false,cancelAtPeriodEnd:false,periodEnd:null,paymentIssue:false,startedAt:null}
   if (!status) return null
   const active = status.premium || status.admin
-  if(placement==='home'?active:!active||!userId)return null
+  if(placement!=='home')return null
 
   async function upgrade() {
     if(!userId){window.dispatchEvent(new CustomEvent('open-auth-dialog',{detail:{mode:'signin'}}));return}
@@ -68,7 +69,7 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
   ) : null
 
   return (
-    <Box data-awm-plus-placement={placement} sx={{mx:'auto',maxWidth:1200,mt:{xs:6,md:8},mb:placement==='home'?{xs:6,md:8}:0,px:placement==='home'?{xs:2,sm:3}:0}}>
+    <Box data-awm-plus-placement={placement} sx={{mx:'auto',maxWidth:HOME_PROMO_MAX_WIDTH,mt:{xs:6,md:8},mb:placement==='home'?{xs:6,md:8}:0,px:placement==='home'?{xs:2,sm:3}:0}}>
     <Box
       id="awm-plus-promo"
       sx={{
@@ -90,7 +91,7 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
       {/* Columns hug their content inside a narrower, centered card; the pair
          sits centered so the text and artwork read as one unit. */}
       <Box sx={{ position: 'relative', display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'auto auto' }, justifyContent: 'center', alignItems: 'center', gap: { xs: 3, md: 12 }, px: { xs: 5, sm: 6, md: 8 }, py: { xs: 4, md: 6 } }}>
-        <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
+        <Box sx={{ textAlign: 'center' }}>
           <Typography sx={{ color: '#d4a843', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: 11.5, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
             AWM+
           </Typography>
@@ -98,16 +99,16 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
             {active ? 'AWM+' : 'Upgrade to AWM+'}
           </Typography>
           {!active && (
-            <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.75)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 15.5 }, lineHeight: 1.65, maxWidth: 460, mx: { xs: 'auto', md: 0 } }}>
+            <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.75)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 15.5 }, lineHeight: 1.65, maxWidth: 460, mx: 'auto' }}>
               Support ArabicWithM and unlock exclusive benefits with AWM+!<br />Your support enables us to continue maintaining and expanding our library of interactive Arabic learning resources.<br />Cancel anytime with just a click in your account settings.
             </Typography>
           )}          {active && (
-            <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.75)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 15.5 }, lineHeight: 1.65, maxWidth: 460, mx: { xs: 'auto', md: 0 } }}>
+            <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.75)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 15.5 }, lineHeight: 1.65, maxWidth: 460, mx: 'auto' }}>
               Your AWM+ membership is active. Thank you for supporting ArabicWithM.
             </Typography>
           )}
 
-          <Box component="ul" sx={{ m: 0, p: 0, mt: 2.25, listStyle: 'none', display: 'grid', gap: 1, maxWidth: 460, mx: { xs: 'auto', md: 0 } }}>
+          <Box component="ul" sx={{ m: 0, p: 0, mt: 2.25, listStyle: 'none', display: 'grid', gap: 1, maxWidth: 460, mx: 'auto' }}>
             {PREMIUM_BENEFITS.map(benefit => (
               <Box component="li" key={benefit.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.1, px: 1.5, py: 1.1, borderRadius: '10px', bgcolor: 'rgba(212,168,67,0.1)', border: '1px solid rgba(212,168,67,0.22)' }}>
                 <CheckCircleRounded aria-hidden="true" sx={{ flex: '0 0 auto', fontSize: 19, color: '#d4a843' }} />
@@ -126,7 +127,7 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
                   variant="contained"
                   startIcon={<AutorenewRounded sx={{ fontSize: 18 }} />}
                   sx={{
-                    mt: 1.75, width: '100%', maxWidth: 460, mx: { xs: 'auto', md: 0 }, minHeight: 44, px: 3, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: 14,
+                    mt: 1.75, width: '100%', maxWidth: 460, mx: 'auto', minHeight: 44, px: 3, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: 14,
                     color: '#0e2e1f', background: 'linear-gradient(135deg, #d4a843, #b8860b)', borderRadius: '9999px', boxShadow: '0 10px 26px rgba(184,134,11,0.35)',
                     '&:hover': { background: 'linear-gradient(135deg, #e2b95c, #c8962a)', boxShadow: '0 12px 30px rgba(184,134,11,0.45)' },
                   }}
@@ -137,12 +138,12 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
             </Box>
           ) : (
             <>
-              <Box sx={{ mt: 2.5, display: 'flex', alignItems: 'baseline', gap: 1, justifyContent: { xs: 'center', md: 'flex-start' } }}>
+              <Box sx={{ mt: 2.5, display: 'flex', alignItems: 'baseline', gap: 1, justifyContent: 'center' }}>
                 <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 30, md: 36 }, fontWeight: 700, color: '#d4a843', lineHeight: 1 }}>{PREMIUM.price}</Typography>
                 <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(245,237,224,0.7)' }}>/ month · cancel anytime</Typography>
               </Box>
 
-              <Box sx={{ mt: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', md: 'center' }, gap: 1.25, maxWidth: 460, mx: { xs: 'auto', md: 0 } }}>
+              <Box sx={{ mt: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', md: 'center' }, gap: 1.25, maxWidth: 460, mx: 'auto' }}>
                 <Button
                   onClick={() => void upgrade()}
                   disabled={busy}

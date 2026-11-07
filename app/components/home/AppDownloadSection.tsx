@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import {HOME_PROMO_MAX_WIDTH} from './promoLayout'
 import { Box, Typography } from '@mui/material'
 import AppLaunchSignup from './AppLaunchSignup'
 
@@ -11,6 +12,9 @@ export default function AppDownloadSection() {
       id="download-app"
       sx={{
         position: 'relative',
+        mx: 'auto',
+        maxWidth: HOME_PROMO_MAX_WIDTH,
+        width: {xs:'100%',md:'fit-content'},
         overflow: 'hidden',
         borderRadius: { xs: '18px', md: '28px' },
         background: 'linear-gradient(135deg, #143a27 0%, #0e2e1f 46%, #0a2116 100%)',
@@ -22,7 +26,7 @@ export default function AppDownloadSection() {
       <Box aria-hidden="true" sx={{ position: 'absolute', top: -120, right: -80, width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(212,168,67,0.16), transparent 65%)' }} />
       <Box aria-hidden="true" sx={{ position: 'absolute', bottom: -140, left: '38%', width: 420, height: 420, borderRadius: '50%', background: 'radial-gradient(circle, rgba(212,168,67,0.1), transparent 65%)' }} />
 
-      <Box sx={{ position: 'relative', display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.15fr 1fr' }, alignItems: 'center', gap: { xs: 3, md: 5 }, px: { xs: 2.5, sm: 4, md: 6 }, py: { xs: 4, md: 6 } }}>
+      <Box sx={{ position: 'relative', display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 460px) auto' }, alignItems: 'center', gap: { xs: 2, md: 3 }, px: { xs: 2.5, sm: 3, md: 4 }, py: { xs: 3, md: 3 } }}>
         <Box sx={{ textAlign: { xs: 'center', md: 'left' } }}>
           <Typography sx={{ color: '#d4a843', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: 11.5, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
             Mobile App
@@ -43,7 +47,7 @@ export default function AppDownloadSection() {
           <Box
             sx={{
               position: 'relative',
-              width: { xs: 'min(58vw, 240px)', md: 'min(100%, 290px)' },
+              width: { xs: 'min(45vw, 180px)', md: '200px' },
               aspectRatio: '1245 / 2359',
               filter: 'drop-shadow(0 26px 40px rgba(0,0,0,0.5))',
             }}
@@ -53,7 +57,7 @@ export default function AppDownloadSection() {
               alt="ArabicWithM mobile app home screen"
               fill
               unoptimized
-              sizes="(max-width: 900px) 58vw, 290px"
+              sizes="(max-width: 900px) 45vw, 200px"
               style={{ objectFit: 'contain' }}
             />
           </Box>

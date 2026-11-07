@@ -38,3 +38,8 @@ it('shows download failures and permits retry',async()=>{
   expect(host.textContent).toContain('Unable to download the complete transcript.')
   expect([...host.querySelectorAll('button')].find(button=>button.textContent==='Download JSON')?.disabled).toBe(false)
 })
+
+it('uses explicit English metadata in public and Admin viewers and retains timestamp seeking',async()=>{
+ const example=(await import('@/e2e/source-language-data.json')).default
+ for(const origin of ['search','admin'] as const){await act(async()=>root.render(<TranscriptViewer video={{...video,source_language:'en'}} initialSegments={[{...segments[0],tokens:example.tokens,translation:example.translation}]} start={300.18} origin={origin}/>));expect([...host.querySelectorAll('[data-english-token] [lang=en]')].map(el=>el.textContent)).toEqual(example.tokens.map(t=>t.english));expect(host.querySelector('[data-sentence-translation]')?.textContent).toBe(example.translation);expect(host.textContent).not.toContain('Stored source');await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent==='05:00')!.click());expect(mocks.seek).toHaveBeenCalledWith(300.18)}
+})
