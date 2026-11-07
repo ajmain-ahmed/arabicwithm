@@ -14,7 +14,8 @@ export function normaliseForYouSegment(value:unknown,raw?:unknown):ForYouSegment
  let tokens=forYouTokens(value.canonical_paragraph,Array.isArray(value.source_tokens)?{tokens:value.source_tokens}:raw)
  if(!tokens.length)tokens=forYouTokens(null,raw)
  if(!tokens.length)return null
- return {id,position,original_text:value.original_text,english_text:typeof value.english_text==='string'?value.english_text:null,start_seconds:start,end_seconds:end,tokens}
+ const translation=[value.translation,forYouRecord(value.canonical_paragraph)?value.canonical_paragraph.translation:undefined,forYouRecord(raw)?raw.translation:undefined].find((text):text is string=>typeof text==='string'&&Boolean(text.trim()))
+ return {...(translation!==undefined?{translation}:{}),id,position,original_text:value.original_text,english_text:typeof value.english_text==='string'?value.english_text:null,start_seconds:start,end_seconds:end,tokens}
 }
 export function normaliseForYouClip(value:unknown,raw?:unknown):ForYouClip|null {
  if(!forYouRecord(value)||!forYouRecord(value.video)||!Array.isArray(value.segments)||!value.segments.length)return null

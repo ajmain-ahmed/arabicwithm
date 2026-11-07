@@ -43,7 +43,7 @@ const spotlightRequests=[];let spotlightSelection='normal';const rpcLog=[],table
 let failAudioSave = false
 let forYouPlayback=false
 let discoveryClips=[]
-let dataContractClips=null,failForYouRequest=false,spotlightMode=false,spotlightEnglish=true
+let dataContractClips=null,failForYouRequest=false,englishTranscriptRawOnly=false,englishTranscriptMode=false,spotlightMode=false,spotlightEnglish=true
 const manualPremium=new Map(), memoryStarts=new Map(), memorySnapshots=new Map(), memoryReviews=new Map(), ownReviews=new Map(), earned=new Set(), wordTotals=new Map()
 const effective=id=>id===ids.premium||roleFor(id)==='admin'||manualPremium.get(id)===true
 const usage=id=>[...memoryStarts.values()].filter(row=>row.userId===id).length
@@ -213,7 +213,23 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     for(const language of ['ar','en']) if(!tables.book_chapter_audio.some(row=>row.chapter_id===second&&row.language===language)) tables.book_chapter_audio.push({...tables.book_chapter_audio.find(row=>row.language===language),chapter_id:second})
     return json(res,{})
   }
-  if(url.pathname==='/fixture/spotlight'){spotlightMode=true;spotlightSelection=body.selection??'normal';spotlightRequests.length=0;tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:'5b98c563-5c35-4696-98e1-06aa000eb622'}));spotlightEnglish=body.english!==false;tables.transcript_groups=[{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English'},{id:'77777777-7777-4777-8777-777777777778',name:'Imports'},{id:'77777777-7777-4777-8777-777777777779',name:'Stories'}];rpcLog.length=0;return json(res,{})}
+  if(url.pathname==='/fixture/spotlight'){englishTranscriptMode=false;spotlightMode=true;spotlightSelection=body.selection??'normal';spotlightRequests.length=0;tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:'5b98c563-5c35-4696-98e1-06aa000eb622'}));spotlightEnglish=body.english!==false;tables.transcript_groups=[{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English'},{id:'77777777-7777-4777-8777-777777777778',name:'Imports'},{id:'77777777-7777-4777-8777-777777777779',name:'Stories'}];rpcLog.length=0;return json(res,{})}
+  if(url.pathname==='/fixture/english-for-you'){
+    englishTranscriptMode=true;englishTranscriptRawOnly=Boolean(body.rawTranslationOnly);spotlightMode=true;rpcLog.length=0;tableLog.length=0
+    const root='5b98c563-5c35-4696-98e1-06aa000eb622',child='77777777-7777-4777-8777-777777777775'
+    tables.transcript_groups=[{id:root,name:'Renamed English',parent_id:null},{id:child,name:'Nested examples',parent_id:root}]
+    tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:child}))
+    const example=JSON.parse(readFileSync('e2e/english-for-you-data.json','utf8'))
+    for(let i=4;i<8;i++){
+      const id=`99999999-9999-4999-8999-99999999999${i}`
+      const content=Array.from({length:4},()=>example)
+      tables.youtube_transcripts=tables.youtube_transcripts.filter(row=>row.id!==id)
+      tables.transcript_segments=tables.transcript_segments.filter(row=>row.transcript_id!==id)
+      tables.youtube_transcripts.push({id,status:'ready',explore_published:true,source_origin:'website_admin_transcript',raw_transcript:{content}})
+      tables.transcript_segments.push(...content.map((canonical,position)=>({id:100+i*10+position,transcript_id:id,position,original_text:example.translation,english_text:example.translation,start_seconds:position*15,end_seconds:(position+1)*15,canonical_paragraph:englishTranscriptRawOnly?{tokens:canonical.tokens}:canonical})))
+    }
+    return json(res,{})
+  }
   if(url.pathname==='/fixture/request-log')return json(res,{rpc:rpcLog,tables:tableLog,spotlight:spotlightRequests})
   if(url.pathname==='/fixture/search-failure'){failSearch=body.fail;return json(res,{})}
   if (url.pathname === '/fixture/audio-save-failure') { failAudioSave = Boolean(body.fail); return json(res, {}) }
@@ -348,7 +364,9 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     if(rpc==='transcript_for_you_groups'&&spotlightMode){
         const clips=Array.from({length:8},(_,i)=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Spotlight fixture',channel:'Fixture'},clip_start_ms:0,clip_end_ms:45000,segments:[0,1,2].map(j=>({id:100+i*10+j,position:j,start_seconds:j*15,end_seconds:(j+1)*15,original_text:j?'Second Arabic subtitle':'First Arabic subtitle',english_text:'A subtitle.',source_tokens:[{arabic:'\u0643\u062a\u0627\u0628',english:'book'}]}))}))
-      const english=new Set(tables.admin_manual_transcripts.filter(m=>m.group_id==='5b98c563-5c35-4696-98e1-06aa000eb622').map(m=>m.transcript_id))
+      if(englishTranscriptMode){const example=JSON.parse(readFileSync('e2e/english-for-you-data.json','utf8'));for(const clip of clips)if(Number(clip.video.id.at(-1))>=4)clip.segments=clip.segments.map(segment=>({...segment,original_text:example.translation,english_text:example.translation,canonical_paragraph:englishTranscriptRawOnly?{tokens:example.tokens}:example}))}
+      const englishGroups=new Set(['5b98c563-5c35-4696-98e1-06aa000eb622']);for(let changed=true;changed;){changed=false;for(const g of tables.transcript_groups)if(g.parent_id&&englishGroups.has(g.parent_id)&&!englishGroups.has(g.id)){englishGroups.add(g.id);changed=true}}
+      const english=new Set(tables.admin_manual_transcripts.filter(m=>englishGroups.has(m.group_id)).map(m=>m.transcript_id))
       tables.for_you_candidates=clips.flatMap(c=>c.segments.map(s=>({segment_id:s.id,transcript_id:c.video.id})))
       return json(res,clips.filter(c=>(spotlightEnglish||!english.has(c.video.id))&&(!body.p_group_ids?.length||english.has(c.video.id))&&!body.p_excluded?.includes(c.segments[0].id)).sort((a,b)=>createHash('md5').update(a.video.id+body.p_seed).digest('hex').localeCompare(createHash('md5').update(b.video.id+body.p_seed).digest('hex'))).slice(0,body.p_limit))
     }

@@ -1,5 +1,6 @@
-import {it,expect} from 'vitest'
+import {it,expect,vi} from 'vitest'
 import {renderToStaticMarkup} from 'react-dom/server'
+vi.mock('@/app/actions/forYou',()=>({fetchForYouClips:vi.fn(),fetchForYouTranscript:vi.fn(),fetchForYouGroups:vi.fn()}))
 import {ForYouWords} from './ForYouFeed'
 import {normaliseForYouSegment} from '@/app/lib/forYouData'
 import samples from '@/app/lib/fixtures/forYouAffectedCandidates.json'

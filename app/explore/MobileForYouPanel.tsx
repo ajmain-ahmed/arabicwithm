@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { Box, Button, IconButton, Typography } from '@mui/material'
 import { KeyboardDoubleArrowUp, KeyboardDoubleArrowDown } from '@mui/icons-material'
+import EnglishForYouSegment from './EnglishForYouSegment'
 import { displayArabic } from '@/app/lib/displayArabic'
 import { segmentAtTime, type ForYouClip, type ForYouSegment } from '@/app/lib/forYou'
 import { safeTextSize, TEXT_SCALES } from '@/app/components/settings-controls/TextSizeControl'
 
 interface Settings { tashkeel: boolean; meanings: boolean; sentence: boolean; arabicSize?: number; englishSize?: number }
 interface Props {
+  language?:'ar'|'en'
   activeOnly?: boolean
   activeSegment?: ForYouSegment
   modeControl?: ReactNode
@@ -39,7 +41,7 @@ function timestamp(seconds: number) {
 }
 
 /** Mobile presentation only. All controls use the existing, single live player. */
-export default function MobileForYouPanel({ activeOnly = false, activeSegment, modeControl, clip, segments, time, settings, settingsButton, navigation, switcher, filterControl, onTranscriptInteraction, ready, rates, rate, onRate }: Props) {
+export default function MobileForYouPanel({ language='ar',activeOnly = false, activeSegment, modeControl, clip, segments, time, settings, settingsButton, navigation, switcher, filterControl, onTranscriptInteraction, ready, rates, rate, onRate }: Props) {
   const start = clip.clip_start_ms / 1000, end = clip.clip_end_ms / 1000
   const lines = useMemo(() => segments.filter(line => line.start_seconds < end && line.end_seconds > start).sort((a,b) => a.start_seconds - b.start_seconds), [segments, start, end])
   const resolved = time >= start && time < end ? segmentAtTime(lines, time) : undefined
@@ -78,6 +80,7 @@ export default function MobileForYouPanel({ activeOnly = false, activeSegment, m
     </Box>
     <Box ref={scroller} data-mobile-clip-transcript data-feed-transcript onWheel={manualScroll} onTouchStart={manualScroll} onTouchEnd={manualScroll} onPointerDown={manualScroll} onPointerUp={manualScroll} sx={{ flex: 1, minHeight: 0, overflowY: activeOnly?'visible':'auto', overscrollBehavior: 'contain', scrollPaddingBlock: 1, px: 'max(12px, env(safe-area-inset-left))', pt: 1.25, pb: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}>
       {(activeOnly ? active ? [active] : [] : lines).map(line => <Box key={line.id} ref={(node: HTMLDivElement | null) => { if (node) cards.current.set(line.id,node); else cards.current.delete(line.id) }} data-clip-line={line.id} data-active-segment={active?.id === line.id ? 'true' : 'false'} aria-current={active?.id === line.id ? 'true' : undefined} sx={{ p: { xs: 1.5, sm: 2 }, mb: 1.25, borderRadius: '16px', bgcolor: '#1c2c24', border: '1px solid rgba(245,237,224,.12)', '&[data-active-segment="true"]': { borderColor: 'var(--awm-gold-light)', bgcolor: '#223b2d', boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--awm-gold-light) 25%, transparent)' } }}>
+        {language==='en'?<EnglishForYouSegment line={line} settings={settings} time={time} active={active?.id===line.id} mobile/>:<>
         {line.tokens.length ? <Box dir="rtl" data-token-glosses sx={{ display: 'flex', justifyContent: 'flex-start', direction: 'rtl', textAlign: 'right', flexWrap: 'wrap', columnGap: 2, rowGap: 1.5, py: .5 }}>
           {line.tokens.map((token,index) => <Box key={index} component="span" data-mobile-token data-active-token={active?.id === line.id && token.start_seconds !== undefined && token.end_seconds !== undefined && token.start_seconds <= time && time < token.end_seconds ? 'true' : undefined} sx={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', maxWidth: '100%', overflowWrap: 'anywhere', borderRadius: 1, '&[data-active-token="true"]': { bgcolor: 'rgba(212,168,67,.16)' } }}>
             <Typography component="span" lang="ar" sx={{ fontFamily: 'var(--font-serif)', fontSize: `${1.8 * arabicScale}rem`, color: 'inherit', lineHeight: 1.6 }}>{displayArabic(token.arabic,settings.tashkeel)}</Typography>
@@ -85,6 +88,7 @@ export default function MobileForYouPanel({ activeOnly = false, activeSegment, m
           </Box>)}
         </Box> : <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-serif)', fontSize: `${1.8 * arabicScale}rem`, textAlign: 'right', lineHeight: 1.65, overflowWrap: 'anywhere', color: 'inherit' }}>{displayArabic(line.original_text,settings.tashkeel)}</Typography>}
         {settings.sentence && line.english_text && <Typography data-sentence-translation lang="en" dir="ltr" sx={{ mt: 1.5, fontSize: `${englishScale}rem`, fontWeight: 600, lineHeight: 1.6, color: 'inherit', overflowWrap: 'anywhere' }}>{line.english_text}</Typography>}
+        </>}
         <Typography data-segment-timing component="p" dir="ltr" sx={{ mt: 1, mb: 0, fontSize: 11, color: 'inherit', opacity: .65, fontVariantNumeric: 'tabular-nums' }}>{timestamp(line.start_seconds)} – {timestamp(line.end_seconds)}</Typography>
       </Box>)}
     </Box>

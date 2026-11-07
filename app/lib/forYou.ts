@@ -1,6 +1,6 @@
 export interface ForYouToken { arabic:string; english:string; pos?:string|null; headword?:string|null; entry_type?:string|null; transliteration?:string|null; start_seconds?:number; end_seconds?:number }
 export interface ForYouSegment {
- id:number; position:number; original_text:string; english_text:string|null;
+ id:number; position:number; original_text:string; english_text:string|null; translation?:string|null;
  start_seconds:number; end_seconds:number; canonical_paragraph?:unknown; source_tokens?:unknown; tokens:ForYouToken[]
 }
 export interface ForYouClip {

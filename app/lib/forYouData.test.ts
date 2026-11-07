@@ -35,3 +35,9 @@ it('normalises 1,000 varied five-item batches across all seven affected sources'
   expect(result).not.toBeNull();expect(()=>JSON.stringify(result)).not.toThrow()
  }
 })
+
+it('preserves the existing canonical or raw translation without changing the stored JSON',()=>{
+ const row={id:1,position:0,start_seconds:0,end_seconds:45,original_text:'Source',canonical_paragraph:{tokens:[{arabic:'gloss',english:'Give'}],translation:'Complete translation'}}
+ const before=JSON.stringify(row);expect(normaliseForYouSegment(row)?.translation).toBe('Complete translation');expect(JSON.stringify(row)).toBe(before)
+ expect(normaliseForYouSegment({...row,canonical_paragraph:null},{tokens:row.canonical_paragraph.tokens,translation:'Raw translation'})?.translation).toBe('Raw translation')
+})

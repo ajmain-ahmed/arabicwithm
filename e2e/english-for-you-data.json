@@ -1,0 +1,21 @@
+{
+  "tokens": [
+    {
+      "english": "Give",
+      "arabic": "\u0623\u064e\u0639\u0652\u0637\u0650"
+    },
+    {
+      "english": "my",
+      "arabic": "\u0644\u0650\u064a"
+    },
+    {
+      "english": "creature",
+      "arabic": "\u0645\u064e\u062e\u0652\u0644\u064f\u0648\u0642\u0650\u064a"
+    },
+    {
+      "english": "life",
+      "arabic": "\u0627\u0644\u0652\u062d\u064e\u064a\u064e\u0627\u0629\u064e"
+    }
+  ],
+  "translation": "\u0623\u064e\u0639\u0652\u0637\u0650 \u0645\u064e\u062e\u0652\u0644\u064f\u0648\u0642\u0650\u064a \u0627\u0644\u0652\u062d\u064e\u064a\u064e\u0627\u0629\u064e."
+}
