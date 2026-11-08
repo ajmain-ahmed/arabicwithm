@@ -23,16 +23,16 @@ export function useColorMode(): ColorModeContextValue {
 }
 
 export default function ThemeProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<AwmColorMode>("light");
+  const [mode, setMode] = useState<AwmColorMode>("dark");
   const [preferenceLoaded, setPreferenceLoaded] = useState(false);
 
   useEffect(() => {
-    let initialMode: AwmColorMode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    let initialMode: AwmColorMode = "dark";
     try {
       const storedMode = window.localStorage.getItem("awm-color-mode");
       if (storedMode === "dark" || storedMode === "light") initialMode = storedMode;
     } catch {
-      // Use the operating-system preference when storage is unavailable.
+      // Keep the website's dark default when storage is unavailable.
     }
     const frame = window.requestAnimationFrame(() => {
       setMode(initialMode);

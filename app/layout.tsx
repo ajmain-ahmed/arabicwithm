@@ -64,7 +64,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" style={{ colorScheme: 'dark' }} suppressHydrationWarning>
       <head>
         {/* Keep these global links present even when page metadata streams. */}
         <link rel="manifest" href="/site.webmanifest" />
