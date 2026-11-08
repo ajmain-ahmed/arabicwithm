@@ -6,15 +6,15 @@ import AppLaunchSignup from './AppLaunchSignup'
 /* Shazam-inspired app banner in the ArabicWithM palette: deep forest surface
    with cream type and gold accents. Layout stacks on mobile like the mobile
    reference: copy → signup → phone. */
-export default function AppDownloadSection() {
+export default function AppDownloadSection({ fullWidth = false }: { fullWidth?: boolean }) {
   return (
     <Box
       id="download-app"
       sx={{
         position: 'relative',
         mx: 'auto',
-        maxWidth: HOME_PROMO_MAX_WIDTH,
-        width: {xs:'100%',md:'fit-content'},
+        maxWidth: fullWidth ? 'none' : HOME_PROMO_MAX_WIDTH,
+        width: fullWidth ? '100%' : {xs:'100%',md:'fit-content'},
         overflow: 'hidden',
         borderRadius: { xs: '18px', md: '28px' },
         background: 'linear-gradient(135deg, #143a27 0%, #0e2e1f 46%, #0a2116 100%)',

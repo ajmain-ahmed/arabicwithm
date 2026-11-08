@@ -725,7 +725,7 @@ backend.listen(backendPort, '127.0.0.1', () => {
     next.on('exit',finish)
   }
   if(process.env.AWM_TEST_PRODUCTION==='1'){
-    next=spawn(process.execPath,['node_modules/next/dist/bin/next','build'],{stdio:'inherit',env})
+    next=spawn(process.execPath,['node_modules/next/dist/bin/next','build',...(process.env.AWM_TEST_WEBPACK==='1'?['--webpack']:[])],{stdio:'inherit',env})
     next.on('exit',code=>{if(code===0)serve();else finish(code)})
   }else serve()
   const stop = () => { next.kill(); backend.close(); setTimeout(() => process.exit(), 500).unref() }

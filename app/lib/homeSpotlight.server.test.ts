@@ -30,17 +30,24 @@ it('surfaces RPC/missing-migration errors without using the generic feed as fall
  mocks.query.mockResolvedValue({data:null,error:{code:'PGRST202'}});await expect(loadHomeSpotlight()).rejects.toThrow('could not load');expect(mocks.rpc).toHaveBeenCalledOnce()
 })
 
-it('uses a 1500ms total deadline and does not refill when it expires',async()=>{
+it('uses a 3000ms total deadline and does not refill when it expires',async()=>{
  const controller=new AbortController(),timeout=vi.spyOn(AbortSignal,'timeout').mockReturnValue(controller.signal)
  mocks.query.mockImplementation((signal:AbortSignal)=>new Promise(resolve=>signal.addEventListener('abort',()=>resolve({data:null,error:{code:'ABORT'}}))))
- try{const pending=loadHomeSpotlight();controller.abort();await expect(pending).rejects.toThrow('could not load');expect(timeout).toHaveBeenCalledWith(1500);expect(mocks.rpc).toHaveBeenCalledOnce()}finally{timeout.mockRestore()}
+ try{const pending=loadHomeSpotlight();controller.abort();await expect(pending).rejects.toThrow('could not load');expect(timeout).toHaveBeenCalledWith(3000);expect(mocks.rpc).toHaveBeenCalledOnce()}finally{timeout.mockRestore()}
 })
 
-it('attaches explicit source language using a metadata projection within the selection deadline',async()=>{
- mocks.language.mockResolvedValue(new Map([[clip.video.id,'en']]));expect((await loadHomeSpotlight())?.video.source_language).toBe('en');expect(mocks.language).toHaveBeenCalledWith([clip.video.id],mocks.query.mock.calls[0][0])
+it('uses authoritative SQL group classification without an extra language metadata query',async()=>{
+ expect((await loadHomeSpotlight())?.video.youtube_id).toBe(clip.video.youtube_id);expect(mocks.language).not.toHaveBeenCalled()
 })
 
 it('returns no preview for an all-music selection within the existing bounded fallback',async()=>{
  mocks.query.mockResolvedValue({data:{...clip,segments:[{...clip.segments[0],original_text:'[Music]',source_tokens:[{arabic:'[Music]',english:'[Music]'}]}]},error:null})
  expect(await loadHomeSpotlight()).toBeNull();expect(mocks.rpc).toHaveBeenCalledTimes(2);expect(mocks.language).not.toHaveBeenCalled()
+})
+
+it('does not reselect a source which YouTube has just rejected, and varies the fallback seed',async()=>{
+ mocks.query.mockResolvedValueOnce({data:clip,error:null}).mockResolvedValueOnce({data:{...clip,video:{...clip.video,id:'99999999-9999-4999-8999-999999999991'}},error:null})
+ expect((await loadHomeSpotlight(clip.video.id))?.video.id).not.toBe(clip.video.id)
+ expect(mocks.rpc).toHaveBeenCalledTimes(2)
+ expect(mocks.rpc.mock.calls[0][1].p_seed).not.toBe(mocks.rpc.mock.calls[1][1].p_seed)
 })

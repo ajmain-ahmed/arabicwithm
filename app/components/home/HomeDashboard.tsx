@@ -319,8 +319,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured, 
             </>}
           </Container>
 
-          {!authLoading && <AwmPromoSection key={user?.id??"guest"} userId={user?.id} placement="home" />}
-
+          <Box sx={{display:'flex',flexDirection:'column'}}>
           {/* Mobile-only Quick Actions. */}
           <Container maxWidth={false} sx={{ display: { xs: 'block', md: 'none' }, mt: 3 }}>
             <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: 20, fontWeight: 600, color: 'var(--awm-bark)' }}>Quick Actions</Typography>
@@ -333,6 +332,10 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured, 
               ].map(({ title, href, Icon }) => <Paper key={href} component={Link} href={href} elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minHeight: 76, p: 2, borderRadius: '10px', textDecoration: 'none', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><Icon sx={{ color: 'var(--awm-gold)' }} /><Typography sx={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14 }}>{title}</Typography></Paper>)}
             </Box>
           </Container>
+          <Box sx={{order:{xs:1,md:-1}}}>
+            {!authLoading && <AwmPromoSection key={user?.id??"guest"} userId={user?.id} placement="home" />}
+          </Box>
+          </Box>
         </Box>
       </Box>
   )

@@ -15,6 +15,8 @@ interface SeekTarget {
 }
 
 interface PlayerState {
+  audiobookRate: number
+  setAudiobookRate: (rate: number) => void
   pipOpen: boolean
   videoId: string | null
   episodePath: string | null
@@ -32,6 +34,8 @@ interface PlayerState {
 }
 
 export const usePlayerStore = create<PlayerState>((set) => ({
+  audiobookRate: 1,
+  setAudiobookRate: (rate) => { if ([0.75, 1, 1.25, 1.5, 1.75, 2].includes(rate)) set({ audiobookRate: rate }) },
   pipOpen: false,
   videoId: null,
   episodePath: null,

@@ -16,9 +16,9 @@ type ExploreView = 'explore' | 'foryou'
 function LanguageSwitch({value,onChange}:{value:'ar'|'en';onChange:(value:'ar'|'en')=>void}){return <Box role="group" aria-label="Source video language" sx={{display:{xs:'none',md:'flex'},border:'1px solid #ffffff55',borderRadius:'999px',p:.25}}>{(['ar','en'] as const).map(language=><Button key={language} aria-pressed={value===language} onClick={()=>onChange(language)} sx={{minWidth:40,minHeight:36,borderRadius:'999px',color:'#fff',bgcolor:value===language?'#ffffff33':'transparent'}}>{language.toUpperCase()}</Button>)}</Box>}
 
 function MobileViewTools({view,onView,language,onLanguage}:{view:ExploreView;onView:(view:ExploreView)=>void;language:'ar'|'en';onLanguage:(language:'ar'|'en')=>void}){
- return <Box data-mobile-view-tools role="toolbar" aria-label="Mobile feed views" sx={{display:'flex',alignItems:'center',gap:view==='foryou'?2:.75,flexShrink:0}}>
-  <Button data-mobile-view-toggle aria-label={view==='explore'?'Explore':'For You'} title={`Switch to ${view==='explore'?'For You':'Explore'}`} onClick={()=>onView(view==='explore'?'foryou':'explore')} sx={{width:72,minWidth:72,minHeight:36,px:1,fontSize:12,fontWeight:600,textTransform:'none',borderRadius:'999px',color:'#fff',bgcolor:'rgba(255,255,255,.14)',border:'1px solid #ffffff44'}}>{view==='explore'?'Explore':'For You'}</Button>
-  <Box role="group" aria-label="Source video language" sx={{display:'flex',p:.25,height:36,boxSizing:'border-box',border:'1px solid #ffffff44',borderRadius:'999px',bgcolor:'rgba(0,0,0,.25)'}}>{(['ar','en'] as const).map(value=><Button key={value} aria-pressed={language===value} onClick={()=>onLanguage(value)} sx={{minWidth:30,width:30,minHeight:0,p:0,fontSize:11,fontWeight:600,borderRadius:'999px',color:'#fff',bgcolor:language===value?'var(--awm-gold)':'transparent'}}>{value.toUpperCase()}</Button>)}</Box>
+ return <Box data-mobile-view-tools sx={{display:'flex',alignItems:'center',flexWrap:'wrap',gap:1.5,minWidth:0}}>
+  <ViewSwitch mobile view={view} onChange={onView} hint={false} onDismiss={()=>{}} />
+  {view==='foryou'&&<Box role="group" aria-label="Source video language" sx={{display:'flex',p:.25,height:42,boxSizing:'border-box',border:'1px solid #ffffff44',borderRadius:'9999px',bgcolor:'rgba(0,0,0,.25)'}}>{(['ar','en'] as const).map(value=><Button key={value} aria-pressed={language===value} onClick={()=>onLanguage(value)} sx={{minWidth:38,minHeight:0,px:1,py:.5,fontSize:12,fontWeight:600,borderRadius:'9999px',color:'#fff',bgcolor:language===value?'var(--awm-gold)':'transparent'}}>{value.toUpperCase()}</Button>)}</Box>}
  </Box>
 }
 
@@ -47,7 +47,8 @@ export default function ExploreViews({ initialSeed, initialBatch, initialView='e
   function selectLanguage(next:'ar'|'en'){if(next===language)return;clearForYouTranscripts();useForYouCache.setState({language:next,clips:[],index:0,excluded:[],seenSources:[],seed:''});setLanguage(next)}
   useEffect(()=>{const restore=()=>{const q=new URLSearchParams(window.location.search);setView((q.get('view')??q.get('tab'))==='foryou'?'foryou':'explore')};window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore)},[])
   const requestView = (next: ExploreView) => {
-    const url=new URL(window.location.href);url.searchParams.set('view',next);window.history.pushState(null,'',url);setView(next)
+    if(next===view)return
+    const url=new URL(window.location.href);url.searchParams.delete('tab');if(next==='foryou')url.searchParams.set('view',next);else url.searchParams.delete('view');window.history.pushState(null,'',url);setView(next)
   }
   useEffect(()=>{
     // One route visit, including switches between Explore and For You. A fresh

@@ -137,8 +137,9 @@ export async function fetchForYouDiagnostics():Promise<ForYouDiagnostics>{
 }
 
 /** Public promotional excerpt only: no Auth, profile, usage or progress calls. */
-export async function fetchHomeForYouSpotlight():Promise<ForYouClip|null>{
+export async function fetchHomeForYouSpotlight(excludedTranscript?:string):Promise<ForYouClip|null>{
+ if(excludedTranscript!==undefined)z.string().uuid().parse(excludedTranscript)
  const ip=(await headers()).get('x-forwarded-for')?.split(',')[0]??'local'
  if(!rateLimit(`home-spotlight:${ip}`,60,60000).ok)throw new Error('Please try the preview again shortly.')
- return loadHomeSpotlight()
+ return loadHomeSpotlight(excludedTranscript)
 }

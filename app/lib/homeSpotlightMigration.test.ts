@@ -9,7 +9,7 @@ const english='5b98c563-5c35-4696-98e1-06aa000eb622'
 beforeAll(async()=>{
  db=new PGlite()
  await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create schema transcript_private;
- create table public.youtube_transcripts(id uuid primary key,youtube_id text,title text,channel text,thumbnail text,duration_seconds numeric,translation_status text,status text default 'ready',explore_published boolean default true,language text default 'ar',source_origin text default 'website_admin_transcript',episode_id uuid,source_channel_id text,raw_transcript jsonb,error_code text);
+ create table public.youtube_transcripts(id uuid primary key,youtube_id text,title text,channel text,thumbnail text,duration_seconds double precision,translation_status text,status text default 'ready',explore_published boolean default true,language text default 'ar',source_origin text default 'website_admin_transcript',episode_id uuid,source_channel_id text,raw_transcript jsonb,error_code text);
  create table public.transcript_segments(id bigint primary key,transcript_id uuid references youtube_transcripts on delete cascade,position integer,original_text text,english_text text,start_seconds numeric,end_seconds numeric,for_you_manual_excluded boolean default false,for_you_music_only boolean default false,for_you_theme_score numeric default 0,canonical_paragraph jsonb,for_you_fingerprints text[]);
  create index segments_source on transcript_segments(transcript_id);
  create table public.episodes(id uuid,youtube_id text);
@@ -21,6 +21,7 @@ beforeAll(async()=>{
  await db.exec(readFileSync('supabase/migrations/20261030002150_for_you_meaningful_clip_quality.sql','utf8'))
  await db.exec(readFileSync('supabase/migrations/20261030003020_for_you_lexical_word_count.sql','utf8'))
  await db.exec(readFileSync('supabase/migrations/20261107140000_home_for_you_spotlight.sql','utf8'))
+ await db.exec(readFileSync('supabase/migrations/20261108192634_home_spotlight_transcript_first.sql','utf8'))
  await db.exec('grant select on all tables in schema public to service_role')
 },30000)
 afterAll(async()=>{await db?.close()})
@@ -60,6 +61,17 @@ it('retains publication, episode/channel and segment quality restrictions from t
  expect(await spotlight()).not.toBeNull()
  await db.query('insert into episodes values($1,$2)',[source(99),'videoid0001']);expect(await spotlight()).toBeNull()
  await db.exec('delete from episodes');await db.query("update youtube_transcripts set channel='ArabicWithM' where id=$1",[source(1)]);expect(await spotlight()).toBeNull()
+})
+it.each(['[Music]','[Applause]','Intro music','Silence'])('rejects unflagged non-speech markers: %s',async(marker)=>{
+ await db.query('update transcript_segments set english_text=$1',[marker])
+ expect(await spotlight()).toBeNull()
+})
+it('starts at speech after introductory music and keeps the transcript-first pool bounded',async()=>{
+ await db.query("update transcript_segments set english_text='[Music]' where position=0")
+ const selected=await spotlight() as import('./forYou').ForYouClip & {diagnostics:{attempted_transcripts:number;attempted_windows:number}}
+ expect(selected.clip_start_ms).toBeGreaterThanOrEqual(20000)
+ expect(selected.diagnostics.attempted_transcripts).toBeLessThanOrEqual(8)
+ expect(selected.diagnostics.attempted_windows).toBeLessThanOrEqual(8*24)
 })
 it('rejects short, gapped and overlong windows rather than cutting captions',async()=>{
  await db.exec("update youtube_transcripts set explore_published=false where title<>'Source 1';delete from transcript_segments where position>0")

@@ -1,0 +1,117 @@
+{
+  "samples": [
+    {
+      "youtubeId": "VBd6bOlOm9o",
+      "start": 279,
+      "duration": 59,
+      "ms": 301,
+      "fallback": false,
+      "attempted_windows": 1,
+      "attempted_transcripts": 1
+    },
+    {
+      "youtubeId": "XSsfVF32yHI",
+      "start": 97,
+      "duration": 59,
+      "ms": 282,
+      "fallback": false,
+      "attempted_windows": 1,
+      "attempted_transcripts": 1
+    },
+    {
+      "youtubeId": "17qBl67La3I",
+      "start": 513,
+      "duration": 58,
+      "ms": 135,
+      "fallback": false,
+      "attempted_windows": 1,
+      "attempted_transcripts": 1
+    },
+    {
+      "youtubeId": "Rw_qbjWpqck",
+      "start": 242,
+      "duration": 35,
+      "ms": 122,
+      "fallback": false,
+      "attempted_windows": 1,
+      "attempted_transcripts": 1
+    },
+    {
+      "youtubeId": "WihbCAXMVhI",
+      "start": 246,
+      "duration": 40,
+      "ms": 181,
+      "fallback": false,
+      "attempted_windows": 1,
+      "attempted_transcripts": 1
+    },
+    {
+      "youtubeId": "yKdkTfeCNf8",
+      "start": 222,
+      "duration": 54,
+      "ms": 190,
+      "fallback": false,
+      "attempted_windows": 2,
+      "attempted_transcripts": 1
+    },
+    {
+      "youtubeId": "5zojWKOK7Sc",
+      "start": 441,
+      "duration": 59,
+      "ms": 123,
+      "fallback": false,
+      "attempted_windows": 1,
+      "attempted_transcripts": 1
+    },
+    {
+      "youtubeId": "VBd6bOlOm9o",
+      "start": 187,
+      "duration": 60,
+      "ms": 187,
+      "fallback": false,
+      "attempted_windows": 1,
+      "attempted_transcripts": 1
+    },
+    {
+      "youtubeId": "1Gy3XRQem0I",
+      "start": 459,
+      "duration": 58,
+      "ms": 203,
+      "fallback": false,
+      "attempted_windows": 1,
+      "attempted_transcripts": 1
+    },
+    {
+      "youtubeId": "1Gy3XRQem0I",
+      "start": 972,
+      "duration": 57,
+      "ms": 95,
+      "fallback": false,
+      "attempted_windows": 1,
+      "attempted_transcripts": 1
+    },
+    {
+      "youtubeId": "Rw_qbjWpqck",
+      "start": 221,
+      "duration": 56,
+      "ms": 63,
+      "fallback": false,
+      "attempted_windows": 1,
+      "attempted_transcripts": 1
+    },
+    {
+      "youtubeId": "1apHL3fuPpE",
+      "start": 405,
+      "duration": 57,
+      "ms": 128,
+      "fallback": false,
+      "attempted_windows": 1,
+      "attempted_transcripts": 1
+    }
+  ],
+  "successfulSelections": 12,
+  "failedSelections": 0,
+  "minimumMs": 63,
+  "medianMs": 158,
+  "maximumMs": 301
+}

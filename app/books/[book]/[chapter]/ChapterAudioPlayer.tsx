@@ -1,17 +1,20 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
-import { Alert, Box, Button, ButtonGroup, CircularProgress, Collapse, IconButton, Paper, Slider, Typography } from '@mui/material'
+import { Alert, Box, Button, ButtonGroup, CircularProgress, Collapse, IconButton, Menu, MenuItem, Paper, Slider, Typography } from '@mui/material'
 import { Forward10Rounded, PauseRounded, PlayArrowRounded, RefreshRounded, Replay10Rounded, VolumeUp } from '@mui/icons-material'
 import { requestChapterAudioResult, saveAudioProgress, type ChapterAudioPlayback, type ChapterAudioSummary } from '@/app/actions/audiobooks'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import { useAuth } from '@/app/AuthContext'
 import useYouTubePlayer from '@/app/lib/useYouTubePlayer'
 import { BOOK_LANGUAGE_STOP_EVENT } from '@/app/lib/bookReaderSettings'
+import { usePlayerStore } from '@/store/playerStore'
 
 type VideoControls = { play: () => void; pause: () => void; seek: (seconds: number) => void; time: () => number }
 
-function YouTubeAudio({ playback, controlsRef, onPlaying, onTime, onDuration, hideFrame = false }: {
+function YouTubeAudio({ playback, controlsRef, onPlaying, onTime, onDuration, rate, onRates, hideFrame = false }: {
+  rate: number
+  onRates: (rates: number[]) => void
   playback: Extract<ChapterAudioPlayback, { sourceType: 'youtube' }>
   controlsRef: RefObject<VideoControls | null>
   onDuration: (duration: number) => void
@@ -19,7 +22,10 @@ function YouTubeAudio({ playback, controlsRef, onPlaying, onTime, onDuration, hi
   onPlaying: (playing: boolean) => void
   hideFrame?: boolean
 }) {
-  const { wrapRef, errorCode, retry, isPlaying, playWithSound, pauseVideo, seekToOnly, getCurrentTime, getDuration } = useYouTubePlayer(playback.videoId, onTime, playback.positionSeconds, { autoplay: true })
+  const { wrapRef, errorCode, retry, isReady, isPlaying, playWithSound, pauseVideo, seekToOnly, getCurrentTime, getDuration, setPlaybackRate, getPlaybackRates } = useYouTubePlayer(playback.videoId, onTime, playback.positionSeconds, { autoplay: true })
+  useEffect(() => { if (isReady) setPlaybackRate(rate) }, [isReady, rate, setPlaybackRate])
+  useEffect(() => { if (isReady) onRates(getPlaybackRates()) }, [isReady, getPlaybackRates, onRates])
+  const unsupportedRate = isReady && !(getPlaybackRates?.() ?? [1]).includes(rate)
   useEffect(() => { controlsRef.current = { play: playWithSound, pause: pauseVideo, seek: seekToOnly, time: getCurrentTime }; return () => { controlsRef.current = null } }, [controlsRef, pauseVideo, playWithSound, seekToOnly, getCurrentTime])
   useEffect(() => { onPlaying(isPlaying) }, [isPlaying, onPlaying])
   useEffect(() => { const timer = setInterval(() => { const duration = getDuration?.() ?? 0; if (duration > 0) onDuration(duration) }, 1000); return () => clearInterval(timer) }, [getDuration, onDuration])
@@ -29,6 +35,7 @@ function YouTubeAudio({ playback, controlsRef, onPlaying, onTime, onDuration, hi
   return <>
     <Box ref={wrapRef} sx={{ display: hideFrame ? 'none' : undefined, width: '100%', maxWidth: 480, aspectRatio: '16 / 9', overflow: 'hidden', borderRadius: '10px' }} />
     {errorCode !== null && <Alert severity="warning" action={<Button onClick={retry}>Retry YouTube</Button>}>{message}</Alert>}
+    {unsupportedRate && <Alert severity="info">This YouTube source does not support {rate}× playback.</Alert>}
   </>
 }
 
@@ -76,6 +83,10 @@ export default function ChapterAudioPlayer({ audio, chapterTitle, label = 'Play 
 }
 
 function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLanguages, language, onLanguageChange, expanded, onExpandedChange, authKey, signedIn, authLoading }: Omit<Props, 'audio'> & { audio: ChapterAudioSummary; expanded: boolean; onExpandedChange: (next: boolean) => void; authKey: string; signedIn: boolean; authLoading: boolean }) {
+  const rate = usePlayerStore(state => state.audiobookRate)
+  const setRate = usePlayerStore(state => state.setAudiobookRate)
+  const [speedAnchor, setSpeedAnchor] = useState<HTMLElement | null>(null)
+  const [youtubeRates, setYoutubeRates] = useState<number[]>([1])
   const [source, setSource] = useState<{ authKey: string; playback: ChapterAudioPlayback; expiresAt: number | null } | null>(null)
   const playback = source?.authKey === authKey ? source.playback : null
   const [position, setPosition] = useState(0)
@@ -91,6 +102,17 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
   const playRequestedRef = useRef(false)
   const requestRef = useRef({ revision: 0 })
   const busyRef = useRef(false)
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = rate
+  }, [rate, playback])
+
+  const speedControl = <>
+    <Button aria-label={`Audiobook playback speed: ${rate}×`} aria-haspopup="menu" aria-expanded={Boolean(speedAnchor)} onClick={event => setSpeedAnchor(event.currentTarget)} sx={{order:8,minWidth:52,minHeight:36,px:1,borderRadius:'9999px',border:'1px solid var(--awm-gold)',color:'inherit',fontWeight:600,textTransform:'none'}}>{rate}×</Button>
+    <Menu anchorEl={speedAnchor} open={Boolean(speedAnchor)} onClose={() => setSpeedAnchor(null)} slotProps={{list:{'aria-label':'Audiobook playback speed'}}}>
+      {[0.75, 1, 1.25, 1.5, 1.75, 2].map(value => <MenuItem key={value} disabled={playback?.sourceType==='youtube'&&!youtubeRates.includes(value)} selected={rate === value} onClick={() => { setRate(value); setSpeedAnchor(null) }}>{value}×</MenuItem>)}
+    </Menu>
+  </>
 
   /* Without a per-language remount, the duration initializer can't re-run —
      follow the audio summary instead until playback loads real metadata. */
@@ -216,6 +238,7 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
     ? <audio ref={audioRef} controls={false} preload="metadata" src={playback.url}
         onLoadedMetadata={event => {
           const element = event.currentTarget
+          element.playbackRate = rate
           const position = resumeRef.current ?? playback.positionSeconds
           if (Number.isFinite(element.duration)) element.currentTime = Math.min(position, Math.max(0, element.duration - 1))
           setDuration(Number.isFinite(element.duration) ? element.duration : audio.durationSeconds ?? 0)
@@ -230,7 +253,7 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
         onError={() => { setPlaying(false); setError('Audio couldn\'t be loaded. Tap to retry.') }} style={{ display: 'none' }} />
     : null
   const mediaYouTube = playback?.sourceType === 'youtube'
-    ? <YouTubeAudio playback={playback} hideFrame={!dedicated} controlsRef={videoRef} onPlaying={setPlaying} onDuration={setDuration} onTime={time => {
+    ? <YouTubeAudio playback={playback} rate={rate} onRates={setYoutubeRates} hideFrame={!dedicated} controlsRef={videoRef} onPlaying={setPlaying} onDuration={setDuration} onTime={time => {
         setPosition(time)
         if (Math.abs(time - lastSavedRef.current) >= 10) { lastSavedRef.current = time; void saveAudioProgress(audio.chapterId, time, false, audio.language, authKey).catch(() => {}) }
       }} />
@@ -240,6 +263,7 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
     ? (playback || error) ? <Paper component="section" aria-label="Chapter audio" elevation={0} sx={{ p: 1.5, minWidth: 0, borderRadius: 0, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'var(--awm-white)' }}>
         {mediaAudio}
         {mediaYouTube}
+        {speedControl}
         {dedicated && <Box sx={{ px: 1, pt: 1 }}>
           <Slider aria-label="Audiobook position" min={0} max={duration || 1} step={1} value={Math.min(position, duration || 1)} disabled={!playback || !duration} onChange={(_, value) => {
             const seconds = value as number
@@ -308,6 +332,7 @@ function AudioSession({ audio, chapterTitle, label, render, dedicated, audioLang
               ))}
             </ButtonGroup>
           )}
+          {speedControl}
           {error && (
             <Box sx={{ flexBasis: '100%', minWidth: 0 }}>
               <Alert severity="info" sx={{ py: 0, alignItems: 'center' }} action={<Button startIcon={<RefreshRounded />} onClick={() => { playRequestedRef.current = true; void loadPlayback() }}>Retry audio</Button>}>{error}</Alert>

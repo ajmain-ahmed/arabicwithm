@@ -1,7 +1,7 @@
 'use client'
 
 import EnglishForYouSegment from '@/app/explore/EnglishForYouSegment'
-import {useState} from 'react'
+import {useCallback,useEffect,useRef,useState} from 'react'
 import {useRouter} from 'next/navigation'
 import {Box,Button,Paper,Typography} from '@mui/material'
 import {useAuth} from '@/app/AuthContext'
@@ -12,24 +12,32 @@ import GuestForYouAllowance from '@/app/explore/GuestForYouAllowance'
 import {useForYouMeter} from '@/app/explore/ForYouMeterContext'
 import SpotlightPlayerFrame from './SpotlightPlayerFrame'
 
-function SpotlightPlayer({clip}:{clip:ForYouClip}){
+function SpotlightPlayer({clip,onUnavailable}:{clip:ForYouClip;onUnavailable:(id:string)=>void}){
  const [time,setTime]=useState(clip.clip_start_ms/1000)
  const sample=useForYouMeter()
  const {wrapRef,isReady,isPlaying,playbackRate,pauseVideo,errorCode,retry}=useYouTubePlayer(clip.video.youtube_id,updateTime,clip.clip_start_ms/1000,{requireTimeUpdates:true,replayClipOnNativePlay:true,autoplay:true,muted:true,mutedAutoplayFallback:true,endAt:clip.clip_end_ms/1000})
  function updateTime(seconds:number){setTime(seconds);sample?.({time:seconds,playing:isReady&&isPlaying,rate:playbackRate,pause:pauseVideo})}
  const line=segmentAtTime(clip.segments,time)
+ useEffect(()=>{if(errorCode!==null&&[5,100,101,150,153].includes(errorCode))onUnavailable(clip.video.id)},[errorCode,clip.video.id,onUnavailable])
  return <>
   <SpotlightPlayerFrame videoId={clip.video.youtube_id} subtitle={clip.video.source_language==='en'&&line?<EnglishForYouSegment line={line} settings={{meanings:true,sentence:true}} time={time}/>:<>
    <Typography lang="ar" dir="rtl" sx={{fontFamily:'var(--font-serif)',fontSize:{xs:22,md:26},lineHeight:1.6,textAlign:'center'}}>{line?.original_text??'\u00a0'}</Typography>
    {line?.english_text&&<Typography lang="en" sx={{fontSize:13,color:'var(--awm-muted)',mt:.5,textAlign:'center'}}>{line.english_text}</Typography>}
-  </>}><Box ref={wrapRef} sx={{position:'absolute',inset:0}}/></SpotlightPlayerFrame>
+  </>}><Box ref={wrapRef} data-spotlight-ready={isReady} data-spotlight-playing={isPlaying} data-spotlight-time={time} data-spotlight-start={clip.clip_start_ms/1000} data-spotlight-end={clip.clip_end_ms/1000} sx={{position:'absolute',inset:0}}/></SpotlightPlayerFrame>
   {errorCode&&<Box role="alert" sx={{mt:2,textAlign:'center'}}><Typography>The YouTube preview could not load (error {errorCode}).</Typography><Button onClick={retry}>Retry player</Button></Box>}
  </>
 }
 function SpotlightContent({initialClip,initialError=false}:{initialClip:ForYouClip|null;initialError?:boolean}){
  const [clip,setClip]=useState(initialClip),[error,setError]=useState(initialError),[busy,setBusy]=useState(false)
+ const replaced=useRef(false)
+ const replaceUnavailable=useCallback((id:string)=>{
+  if(replaced.current)return
+  replaced.current=true
+  setBusy(true)
+  void fetchHomeForYouSpotlight(id).then(next=>{setClip(next);setError(!next)}).catch(()=>setError(true)).finally(()=>setBusy(false))
+ },[])
  async function retry(){setBusy(true);try{setClip(await fetchHomeForYouSpotlight());setError(false)}catch{setError(true)}finally{setBusy(false)}}
- return clip?<SpotlightPlayer clip={clip}/>:<Box role={error?'alert':'status'} sx={{py:2,textAlign:'center'}}>{busy?'Loading a preview\u2026':error?'The preview could not load. Please retry or explore For You.':'No eligible Arabic preview is available right now. Explore more in For You.'}{error&&<Button disabled={busy} onClick={()=>void retry()}>Retry preview</Button>}</Box>
+ return clip?<SpotlightPlayer key={`${clip.video.id}:${clip.clip_start_ms}`} clip={clip} onUnavailable={replaceUnavailable}/>:<Box role={error?'alert':'status'} sx={{py:2,textAlign:'center'}}>{busy?'Loading a preview\u2026':error?'The preview could not load. Please retry or explore For You.':'No eligible Arabic preview is available right now. Explore more in For You.'}{error&&<Button disabled={busy} onClick={()=>void retry()}>Retry preview</Button>}</Box>
 }
 export default function HomeForYouSpotlight({initialClip=null,initialError=false}:{initialClip?:ForYouClip|null;initialError?:boolean}){
  const router=useRouter()

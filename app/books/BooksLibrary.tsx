@@ -139,10 +139,11 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
           placeholder="Search books"
           size="small"
           sx={{
-            width: { xs: '100%', sm: 210 },
+            width: { xs: '100%', sm: 210, md: 300, lg: 420 },
             '& .MuiOutlinedInput-root': {
-              minHeight: 40,
-              borderRadius: '8px',
+              height: { xs: 40, md: 52 },
+              borderRadius: { xs: '8px', md: '9999px' },
+              px: { md: 2 },
               bgcolor: 'var(--awm-white)',
               fontFamily: 'var(--font-sans), sans-serif',
               fontSize: 13.5,
@@ -167,16 +168,16 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
             },
           }}
         />
-        <ToggleButtonGroup exclusive value={mode} onChange={(_, value) => { if (value) setMode(value) }} aria-label="Library mode" sx={{ bgcolor: 'var(--awm-white)', borderRadius: '999px', p: .5, '& .MuiToggleButton-root': { border: 0, borderRadius: '999px !important', px: { xs: 2.25, sm: 3 }, minHeight: 44, textTransform: 'none', color: 'var(--awm-muted)' }, '& .Mui-selected': { bgcolor: 'var(--awm-forest) !important', color: 'var(--awm-white) !important' } }}>
+        <ToggleButtonGroup exclusive value={mode} onChange={(_, value) => { if (value) setMode(value) }} aria-label="Library mode" sx={{ bgcolor: 'var(--awm-white)', border: {md:'1px solid color-mix(in srgb, var(--awm-bark) 16%, transparent)'}, boxSizing:'border-box', height:{md:52}, borderRadius: '999px', p: .5, '& .MuiToggleButton-root': { border: 0, borderRadius: '999px !important', px: { xs: 2.25, sm: 3 }, minHeight: 44, textTransform: 'none', color: 'var(--awm-muted)' }, '& .Mui-selected': { bgcolor: 'var(--awm-forest) !important', color: 'var(--awm-white) !important' } }}>
           <ToggleButton value="read">Read</ToggleButton><ToggleButton value="listen">Listen</ToggleButton>
         </ToggleButtonGroup>
         <Button
           onClick={() => setDialogOpen(true)}
           startIcon={<Tune sx={{ fontSize: 18 }} />}
           sx={{
-            minHeight: 40,
-            px: 2,
-            borderRadius: '8px',
+            minHeight: { xs: 40, md: 52 },
+            px: { xs: 2, md: 3 },
+            borderRadius: { xs: '8px', md: '9999px' },
             color: 'var(--awm-bark)',
             border: '1px solid color-mix(in srgb, var(--awm-bark) 16%, transparent)',
             backgroundColor: 'var(--awm-white)',
@@ -185,6 +186,7 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
             fontWeight: 600,
             fontSize: 13.5,
             '&:hover': { backgroundColor: 'color-mix(in srgb, var(--awm-gold) 6%, var(--awm-white))', borderColor: 'color-mix(in srgb, var(--awm-gold) 40%, transparent)' },
+            '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 },
           }}
         >
           Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}

@@ -217,6 +217,8 @@ function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved:
         </Box>
       </Box>
 
+      {profile.own && user?.id===profile.id && <Box sx={{mt:4}}><AppDownloadSection fullWidth /></Box>}
+
       {editing && (
         <Box sx={{ display: 'flex', gap: 1.5, mt: 3, flexWrap: 'wrap' }}>
           <Button onClick={() => void save()} disabled={saving || !name.trim() || Boolean(usernameError) || Boolean(usernameStatus && !usernameStatus.available)} variant="contained" sx={{ ...GOLD_BUTTON, px: 3 }}>
@@ -571,7 +573,6 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 }
 
 export default function ProfileView({ profile }: { profile: PublicProfile }) {
-  const {user:viewer,loading:viewerLoading}=useAuth()
   const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
     { id: 'account', label: 'Account', icon: <PersonOutlined sx={{ fontSize: 18 }} /> },
     ...(profile.own ? [{ id: 'awm' as Section, label: 'AWM+', icon: <DiamondOutlined sx={{ fontSize: 18 }} /> }] : []),
@@ -634,7 +635,6 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
               </Box>
             </Box>
           </Box>
-          {profile.own&&!viewerLoading&&viewer?.id===profile.id&&<Box sx={{mt:{xs:4,md:6}}}><AppDownloadSection/></Box>}
         </Container>
       </Box>
 
