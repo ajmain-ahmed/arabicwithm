@@ -1,5 +1,7 @@
 'use server'
 
+import {ENGLISH_TRANSCRIPT_GROUP_ID,isEnglishTranscriptGroup} from '@/app/lib/transcriptGroupTree'
+import {loadTranscriptGroupTree} from '@/app/lib/forYouGroups'
 import {sourceLanguage,sourceLanguageFromMetadata,type SourceLanguage} from '@/app/lib/transcriptSourceLanguage'
 
 import { z } from 'zod'
@@ -22,6 +24,14 @@ export interface TranscriptHit {segment_id:number;transcript_id:string;youtube_i
 const columns='id,youtube_id,canonical_url,title,channel,thumbnail,duration_seconds,provider,status,translation_status,searchable,explore_published,created_at,updated_at,error_code,source_language:raw_transcript->>source_language'
 function missingGenerationColumn(error:{code?:string;message:string}|null):boolean{return Boolean(error&&['42703','PGRST204'].includes(error.code??'')&&error.message.includes('website_generation'))}
 async function adminIdentity():Promise<string> {const access=await getAuthenticatedAccess();if(!access?.admin) throw new Error('Forbidden');return access.userId}
+async function englishManualGroup(groupId:string|null|undefined):Promise<boolean>{
+ if(!groupId)return false
+ if(groupId===ENGLISH_TRANSCRIPT_GROUP_ID)return true
+ return isEnglishTranscriptGroup(groupId,await loadTranscriptGroupTree())
+}
+async function manualGroupLanguage(groupId:string|null|undefined,language:SourceLanguage):Promise<SourceLanguage>{
+ return await englishManualGroup(groupId)?'en':language
+}
 async function recordAdminOrigin(actor:string,id:string):Promise<void> {
   const {error}=await serviceClient.rpc('admin_record_transcript_origin',{p_actor:actor,p_id:id})
   if(error)throw new Error('Unable to record Admin transcript provenance. Please retry the import.')
@@ -71,6 +81,7 @@ export async function saveAdminManualDraft(id:string,payload:ManualDraftInput,up
  try{const actor=await adminIdentity();z.string().uuid().parse(id);if(updatedAt!==null)z.string().min(1).max(60).parse(updatedAt)
   // Store form strings exactly; unfinished JSON, URLs and durations are valid drafts.
   const value=manualDraftInput.parse(payload)
+  value.sourceLanguage=await manualGroupLanguage(value.groupId,value.sourceLanguage)
   const {data,error}=await serviceClient.rpc('admin_save_manual_draft',{p_actor:actor,p_id:id,p_payload:value as unknown as Json,p_version:updatedAt})
   if(error)throw draftDatabaseError('Save draft',error)
   const result=z.object({id:z.string().uuid(),updatedAt:z.string()}).parse(data)
@@ -153,7 +164,7 @@ async function prepareManualImport(input:{url:string;title:string;channel?:strin
   const id=manualVideoId(value.url)
   const durationMs=parseVideoDuration(value.duration??'',value.durationFormat)
   const raw=value.json!==undefined?(await resolveManualJson(value.json,id,value.duration,value.durationSeconds,value.durationFormat)).raw:normaliseManualTranscript(value.arabic??'',value.english)
-  const parameters={p_youtube_id:id,p_title:value.title,p_channel:value.channel||'Unknown channel',p_raw:{...raw,source_language:value.sourceLanguage??'ar',...(value.json!==undefined?{_source_json:value.json}:{})} as unknown as Json,p_searchable:value.searchable,p_explore_published:value.explorePublished,p_group:value.groupId??null,p_duration:durationMs===undefined?value.durationSeconds??null:durationMs/1000}
+  const parameters={p_youtube_id:id,p_title:value.title,p_channel:value.channel||'Unknown channel',p_raw:{...raw,source_language:await manualGroupLanguage(value.groupId,value.sourceLanguage??'ar'),...(value.json!==undefined?{_source_json:value.json}:{})} as unknown as Json,p_searchable:value.searchable,p_explore_published:value.explorePublished,p_group:value.groupId??null,p_duration:durationMs===undefined?value.durationSeconds??null:durationMs/1000}
   const key=createHash('sha256').update(JSON.stringify(parameters)).digest('hex')
   const {data,error}=await serviceClient.rpc('website_begin_manual_import',{p_actor:actor,p_key:key,...parameters})
   if(error)throw importFailure(error)
@@ -296,7 +307,7 @@ export async function saveAdminTranscriptJson(id: string, input: {json:string;ti
     const youtubeId=value.url===undefined?video.youtube_id:manualVideoId(value.url)
     const durationMs=parseVideoDuration(value.duration??'',value.durationFormat)
     const {raw} = await resolveManualJson(value.json,youtubeId,value.duration,undefined,value.durationFormat,youtubeId===video.youtube_id?video.duration_seconds:null)
-    const {data,error} = await serviceClient.rpc('website_save_manual_source',{p_actor:actor,p_id:id,p_raw:{...raw,source_language:value.sourceLanguage??sourceLanguageFromMetadata(video.raw_transcript),_source_json:value.json} as unknown as Json,p_title:value.title,p_channel:value.channel,p_searchable:value.searchable,p_explore_published:value.explorePublished,p_updated_at:value.updatedAt,p_youtube_id:youtubeId,p_group:value.groupId??null,p_duration:durationMs===undefined?null:durationMs/1000})
+    const {data,error} = await serviceClient.rpc('website_save_manual_source',{p_actor:actor,p_id:id,p_raw:{...raw,source_language:await manualGroupLanguage(value.groupId,value.sourceLanguage??sourceLanguageFromMetadata(video.raw_transcript)),_source_json:value.json} as unknown as Json,p_title:value.title,p_channel:value.channel,p_searchable:value.searchable,p_explore_published:value.explorePublished,p_updated_at:value.updatedAt,p_youtube_id:youtubeId,p_group:value.groupId??null,p_duration:durationMs===undefined?null:durationMs/1000})
     if (error) throw new Error(error.code==='23503'?'The selected group no longer exists. Choose another group.':error.code==='23505'?'This YouTube video already has a transcript.':/Video duration|Only manual/.test(error.message)?error.message:/transcript_edit_conflict/.test(error.message)?'This transcript changed after you opened it. Reopen Edit before saving. Your edits are still here.':/transcript_edit_busy/.test(error.message)?'Wait for transcript processing and translation to finish before editing.':/generation_incomplete/.test(error.message)?'Published generated transcripts need English for every segment. Add the missing translations or turn publication off.':transcriptDatabaseError('Edit',error))
     for (const path of ['/admin/transcripts','/explore/search','/explore',`/transcripts/${id}`]) revalidatePath(path)
     const result=z.object({updatedAt:z.string(),enrichment:z.enum(['ready','partial','unavailable'])}).parse(data)
@@ -349,7 +360,14 @@ export async function moveAdminTranscriptGroup(id:string,input:{groupId:string|n
  try {
   const actor=await adminIdentity();z.string().uuid().parse(id)
   const value=z.object({groupId:z.string().uuid().nullable(),previousGroupId:z.string().uuid().nullable(),updatedAt:z.string().datetime({offset:true})}).parse(input)
-  const {data,error}=await serviceClient.rpc('admin_move_standalone_transcript',{p_actor:actor,p_id:id,p_group:value.groupId,p_previous_group:value.previousGroupId,p_updated_at:value.updatedAt})
+  let version=value.updatedAt
+  if(value.groupId!==value.previousGroupId&&await englishManualGroup(value.groupId)){
+   // Set metadata first: even if the move conflicts, no English member is saved with Arabic audio.
+   const result=await saveAdminTranscriptSourceLanguage(id,'en',version)
+   if(!result.ok)throw new Error(result.error)
+   version=result.updatedAt
+  }
+  const {data,error}=await serviceClient.rpc('admin_move_standalone_transcript',{p_actor:actor,p_id:id,p_group:value.groupId,p_previous_group:value.previousGroupId,p_updated_at:version})
   if(error)throw new Error(error.code==='23503'?'The selected group no longer exists. Choose another group.':/conflict/.test(error.message)?'This transcript or its group changed. Reopen Edit before saving. Your edits are still here.':'Unable to move the transcript. Please retry.')
   revalidatePath('/admin/transcripts');return {ok:true,updatedAt:z.string().parse(data)}
  }catch(error){return {ok:false,error:error instanceof Error?(error.message==='Forbidden'?'Administrators only.':error.message):'Unable to move the transcript.'}}
@@ -403,6 +421,11 @@ export async function saveAdminTranscriptSourceLanguage(id:string,language:Sourc
   if(video.updated_at!==updatedAt)throw new Error('This transcript changed. Reopen Edit before saving its language.')
   const raw=video.raw_transcript
   if(raw!==null&&(typeof raw!=='object'||Array.isArray(raw)))throw new Error('Transcript metadata needs review before changing its language.')
+  if(language!=='en'){
+   const {data:membership,error:membershipError}=await serviceClient.from('admin_manual_transcripts').select('group_id').eq('transcript_id',id).maybeSingle()
+   if(membershipError)throw new Error('Unable to verify transcript group. Please retry.')
+   if(await englishManualGroup(membership?.group_id))throw new Error('English-group transcripts require English original audio. Move the transcript to another group before changing its language.')
+  }
   const next=new Date().toISOString()
   const {data:saved,error:saveError}=await serviceClient.from('youtube_transcripts').update({raw_transcript:{...(raw??{}),source_language:language},updated_at:next}).eq('id',id).eq('updated_at',updatedAt).eq('status','ready').is('lease_id',null).select('updated_at').maybeSingle()
   if(saveError||!saved)throw new Error('Transcript changed or is being processed. Reopen Edit before saving.')

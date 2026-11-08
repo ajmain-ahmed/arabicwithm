@@ -24,6 +24,7 @@ import {
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 import { ChevronRight as BreadcrumbSep, ExpandMore, ExpandLess, KeyboardArrowLeft, KeyboardArrowRight, PlayArrow, PsychologyOutlined, Refresh, Settings as SettingsIcon, SpaceBar } from '@mui/icons-material'
+import { HOME_CAROUSEL_CARD_ASPECT_RATIO } from '@/app/components/home/NewOnRow'
 import { ContentCard } from '@/app/components/content-grid'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -786,6 +787,7 @@ function RelatedRail({ related, currentSlug, variant }: { related: RelatedEpisod
    episode title, show title), YouTube-style.
 ───────────────────────────────────────────── */
 function UpNextList({ related }: { related: RelatedEpisode[] }) {
+  const narrow = useMediaQuery('(max-width:767.95px)')
   if (related.length === 0) {
     return (
       <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, color: 'rgba(245,237,224,0.6)', px: 0.5 }}>
@@ -793,6 +795,13 @@ function UpNextList({ related }: { related: RelatedEpisode[] }) {
       </Typography>
     )
   }
+  if (narrow) return <Box component="section" aria-label="Up next" data-mobile-related sx={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:{xs:.75,sm:1},minWidth:0}}>
+    {related.filter(item=>item.slug&&item.showSlug).slice(0,3).map(item=><Box component={Link} key={item.id} href={`/cartoons/${item.showSlug}/${encodeURIComponent(item.slug)}`} aria-label={item.title} sx={{position:'relative',display:'block',aspectRatio:HOME_CAROUSEL_CARD_ASPECT_RATIO,minWidth:0,borderRadius:'10px',overflow:'hidden',bgcolor:'#0e2e1f',textDecoration:'none','&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}>
+      <Box component="img" src={item.cover??''} alt="" loading="lazy" decoding="async" onError={event=>{event.currentTarget.style.visibility='hidden'}} sx={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
+      <Box aria-hidden sx={{position:'absolute',inset:0,background:'linear-gradient(180deg, rgba(5,23,15,0) 42%, rgba(5,23,15,0.85) 100%)'}}/>
+      <Typography data-related-title sx={{position:'absolute',left:0,right:0,bottom:0,p:.9,fontFamily:'var(--font-heading)',fontSize:{xs:12,sm:14},fontWeight:600,lineHeight:1.25,color:'#fff',textShadow:'0 2px 10px rgba(0,0,0,.5)'}}><Box component="span" sx={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden',overflowWrap:'anywhere'}}>{item.title}</Box></Typography>
+    </Box>)}
+  </Box>
   return (
     <Box component="section" aria-label="Up next" sx={{ display: 'flex', flexDirection: 'column' }}>
       {related.map((item) => (
@@ -1242,6 +1251,7 @@ export default function EpisodePage({
               flexDirection: 'column',
               minWidth: 0,
               px: { xs: 2.5, md: 0 },
+              '@media (max-width:767.95px)': { px: 1 },
               mt: { xs: 0.5, md: 0 },
               justifySelf: 'start',
               width: '100%',
@@ -1249,7 +1259,7 @@ export default function EpisodePage({
             }}
           >
             {isMobile && (
-              <Box sx={{ position: 'sticky', top: `${navbarHeight}px`, zIndex: 22, mb: 1.25, mx: -2.5, width: 'calc(100% + 40px)', bgcolor: '#000', boxShadow: '0 8px 24px color-mix(in srgb, var(--awm-bark) 20%, transparent)' }}>
+              <Box sx={{ position: 'sticky', top: `${navbarHeight}px`, zIndex: 22, mb: 1.25, mx: -2.5, width: 'calc(100% + 40px)', '@media (max-width:767.95px)':{mx:-1,width:'calc(100% + 16px)'}, bgcolor: '#000', boxShadow: '0 8px 24px color-mix(in srgb, var(--awm-bark) 20%, transparent)' }}>
                 <Box
                   sx={{
                     width: '100%',
@@ -1312,7 +1322,7 @@ export default function EpisodePage({
               </Box>
             )}
 
-            <Box sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: 'var(--awm-white)', borderRadius: '12px 12px 0 0', px: { xs: 1, md: 4 }, display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
+            <Box data-watch-tabs sx={{ borderBottom: '1px solid rgba(44,26,14,0.07)', background: 'var(--awm-white)', borderRadius: '12px 12px 0 0', px: { xs: 1, md: 4 }, display: { xs: 'flex', md: 'none' }, alignItems: 'center' }}>
               <Tabs
                 value={tab}
                 onChange={(_, v) => {
@@ -1336,7 +1346,7 @@ export default function EpisodePage({
 
             </Box>
 
-            <Box sx={{ background: 'var(--awm-white)', borderRadius: { xs: '0 0 12px 12px', md: '12px' }, px: { xs: 2, md: 4 }, py: { xs: 2, md: 3 }, mt: { xs: 0, md: '2px' } }}>
+            <Box data-watch-tab-content sx={{ background: 'var(--awm-white)', borderRadius: { xs: '0 0 12px 12px', md: '12px' }, px: { xs: 2, md: 4 }, '@media (max-width:767.95px)':{px:1}, py: { xs: 2, md: 3 }, mt: { xs: 0, md: '2px' } }}>
               {tab === 0 && (
                 <Typography component="h1" sx={{ display: { xs: 'block', md: 'none' }, mb: 2, px: 1, textAlign: 'center', fontFamily: 'var(--font-heading)', fontSize: 23, fontWeight: 600, lineHeight: 1.2, color: 'var(--awm-bark)' }}>
                   {episode.title}

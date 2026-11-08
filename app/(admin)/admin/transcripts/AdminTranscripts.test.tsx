@@ -297,3 +297,40 @@ it('loads the stored mode and saves language only without replacing unsaved JSON
  await openEdit();await fill('Transcript JSON','{unfinished edit');await select('Original Audio Language','ar');await act(async()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Save audio language only')!.click())
  expect(mocks.language).toHaveBeenCalledWith(editRow.id,'ar',editRow.updated_at);expect(mocks.save).not.toHaveBeenCalled();expect(mocks.move).not.toHaveBeenCalled();expect(document.querySelector('textarea')!.value).toBe('{unfinished edit')
 })
+
+const englishGroup={id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'Renamed English root',parent_id:null,direct_count:0,transcript_count:0}
+const englishChild={...englishGroup,id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',name:'Child',parent_id:englishGroup.id}
+const otherEnglish={...englishGroup,id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',name:'English Practice'}
+const languageField=()=>[...document.querySelectorAll('select')].find(el=>[...document.querySelectorAll('label')].some(label=>label.htmlFor===el.id&&label.textContent?.startsWith('Original Audio Language')))!
+it.each([englishGroup,englishChild])('selecting $name immediately sets and submits English without changing JSON',async group=>{
+ mocks.list.mockResolvedValue({rows:[],total:0,groups:[englishGroup,englishChild,otherEnglish]})
+ await open();await validForm();const json=document.querySelector('textarea')!.value
+ await select('Group (optional)',group.id);expect(languageField().value).toBe('en');expect(languageField().disabled).toBe(true)
+ expect(document.querySelector('textarea')!.value).toBe(json)
+ await act(async()=>importButton().click());expect(mocks.import).toHaveBeenCalledWith(expect.objectContaining({groupId:group.id,sourceLanguage:'en',json}))
+})
+it('restores automatic English on leaving, preserves prior manual English and ignores English-looking names',async()=>{
+ mocks.list.mockResolvedValue({rows:[],total:0,groups:[englishGroup,englishChild,otherEnglish]});await open()
+ await select('Group (optional)',otherEnglish.id);expect(languageField().value).toBe('ar');expect(languageField().disabled).toBe(false)
+ await select('Group (optional)',englishGroup.id);await select('Group (optional)',englishChild.id);await select('Group (optional)','');expect(languageField().value).toBe('ar');expect(languageField().disabled).toBe(false)
+ await select('Original Audio Language','en');await select('Group (optional)',englishGroup.id);await select('Group (optional)',otherEnglish.id);expect(languageField().value).toBe('en')
+})
+async function editWithGroup(group:string|null,language:'ar'|'en'){
+ mocks.list.mockResolvedValue({rows:[{...editRow,group_id:group}],total:1,groups:[englishGroup,englishChild,otherEnglish]})
+ mocks.download.mockResolvedValue({json:savedJson,updatedAt:editRow.updated_at,durationSeconds:10,groupId:group,sourceLanguage:language})
+ await act(async()=>root.render(<AdminTranscripts/>));await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='Edit / Publish')!.click())
+}
+it('opening an existing English edit preserves its language and JSON without writes',async()=>{
+ await editWithGroup(englishGroup.id,'en');expect(languageField().value).toBe('en');expect(document.querySelector('textarea')!.value).toBe(savedJson)
+ expect(mocks.language).not.toHaveBeenCalled();expect(mocks.move).not.toHaveBeenCalled();expect(mocks.save).not.toHaveBeenCalled()
+})
+it('moving an existing edit into English uses the guarded move without rewriting JSON',async()=>{
+ mocks.move.mockResolvedValue({ok:true,updatedAt:'2026-11-08T22:00:00Z'})
+ await editWithGroup(null,'ar');await select('Group (optional)',englishChild.id);expect(languageField().value).toBe('en')
+ await act(async()=>editSave().click());expect(mocks.move).toHaveBeenCalledWith(editRow.id,expect.objectContaining({groupId:englishChild.id,previousGroupId:null}));expect(mocks.save).not.toHaveBeenCalled();expect(mocks.language).not.toHaveBeenCalled()
+})
+it('moves out of English before saving an explicit Arabic correction with the new version',async()=>{
+ const moved='2026-11-08T22:00:00Z';mocks.move.mockResolvedValue({ok:true,updatedAt:moved});mocks.language.mockResolvedValue({ok:true,updatedAt:'2026-11-08T22:01:00Z'})
+ await editWithGroup(englishGroup.id,'en');await select('Group (optional)',otherEnglish.id);await select('Original Audio Language','ar');await act(async()=>editSave().click())
+ expect(mocks.language).toHaveBeenCalledWith(editRow.id,'ar',moved);expect(mocks.save).not.toHaveBeenCalled()
+})

@@ -1,10 +1,9 @@
 import { serviceClient } from '@/app/lib/supabase'
 
-// Verified from the existing English group by a read-only setup query.
-// Bind to identity, never the editable display name. No classification is stored twice.
-export const ENGLISH_TRANSCRIPT_GROUP_ID = '5b98c563-5c35-4696-98e1-06aa000eb622'
+import {ENGLISH_TRANSCRIPT_GROUP_ID,transcriptGroupDescendants} from '@/app/lib/transcriptGroupTree'
+export {ENGLISH_TRANSCRIPT_GROUP_ID} from '@/app/lib/transcriptGroupTree'
 
-export async function forYouGroupPool(language:'ar'|'en', selected:string[]) {
+export async function loadTranscriptGroupTree(){
  const groups:{id:string;parent_id:string|null}[]=[]
  for(let offset=0;;offset+=500){
   const {data,error}=await serviceClient.from('transcript_groups').select('id,parent_id').order('id').range(offset,offset+499)
@@ -12,12 +11,13 @@ export async function forYouGroupPool(language:'ar'|'en', selected:string[]) {
   groups.push(...data)
   if(data.length<500)break
  }
+ return groups
+}
+
+export async function forYouGroupPool(language:'ar'|'en', selected:string[]) {
+ const groups=await loadTranscriptGroupTree()
  if(!groups.some(g=>g.id===ENGLISH_TRANSCRIPT_GROUP_ID))throw new Error('The configured English transcript group is unavailable.')
- const descendants=(roots:string[])=>{
-  const ids=new Set(roots)
-  for(let changed=true;changed;){changed=false;for(const g of groups)if(g.parent_id&&ids.has(g.parent_id)&&!ids.has(g.id)){ids.add(g.id);changed=true}}
-  return ids
- }
+ const descendants=(roots:string[])=>transcriptGroupDescendants(groups,roots)
  const english=descendants([ENGLISH_TRANSCRIPT_GROUP_ID])
  const members=new Set<string>()
  // Chunk group IDs so even a large group tree fits PostgREST request URLs.

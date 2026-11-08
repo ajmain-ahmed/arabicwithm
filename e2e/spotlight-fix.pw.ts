@@ -11,9 +11,10 @@ const noOverflow=async(page:Page)=>expect(await page.evaluate(()=>document.docum
 for(const width of [320,390,430])test(`mobile one-line views, language, filter, history and spacing ${width}`,async({page,context,request})=>{
  await request.post(`${backend}/fixture/spotlight`);await account(context);await installYouTubeFixture(page);await page.setViewportSize({width,height:1000});await page.goto('/explore')
  const tools=page.locator('[data-mobile-view-tools]:visible'),views=tools.locator('[data-mobile-view-toggle]'),language=tools.locator('[data-mobile-language-toggle]')
- await expect(views).toHaveText('Explore')
+ await expect(tools.getByRole('group',{name:'Explore views'}).getByRole('button')).toHaveText(['Explore','For You'])
  await expect(language).toHaveCount(0)
- await views.click();await expect(page).toHaveURL(/\/explore\?view=foryou$/)
+ await tools.screenshot({path:`test-results/${test.info().project.name}-restored-explore-pill-${width}.png`})
+ await tools.getByRole('button',{name:'For You feed',exact:true}).click();await expect(page).toHaveURL(/\/explore\?view=foryou$/)
  const source=page.locator('[data-for-you-source]');await expect(source.locator('iframe')).toBeVisible()
  await expect(language).toHaveText('AR');await expect(language).toHaveAccessibleName('Arabic selected \u2014 switch For You to English')
  await language.click();await expect(language).toHaveText('EN');await expect(language).toHaveAccessibleName('English selected \u2014 switch For You to Arabic')
@@ -23,7 +24,7 @@ for(const width of [320,390,430])test(`mobile one-line views, language, filter, 
  const toolbar=page.locator('[data-mobile-for-you-toolbar]');await expect(toolbar).toBeVisible();await expect(toolbar).toHaveCSS('flex-wrap','nowrap')
  const boxes=await toolbar.locator('button:visible').evaluateAll(elements=>elements.map(el=>el.getBoundingClientRect().toJSON()))
  expect(boxes).toHaveLength(9)
- for(let i=0;i<boxes.length;i++){expect(boxes[i].height).toBeGreaterThanOrEqual(33.9);expect(boxes[i].width).toBeGreaterThanOrEqual(24);expect(Math.abs(boxes[i].y+boxes[i].height/2-boxes[0].y-boxes[0].height/2)).toBeLessThan(1);expect(boxes[i].right).toBeLessThanOrEqual(width-3.9);if(i)expect(boxes[i].x).toBeGreaterThanOrEqual(boxes[i-1].right)}
+ for(let i=0;i<boxes.length;i++){expect(boxes[i].height).toBeGreaterThanOrEqual(width<390?29.9:33.9);expect(boxes[i].width).toBeGreaterThanOrEqual(24);expect(Math.abs(boxes[i].y+boxes[i].height/2-boxes[0].y-boxes[0].height/2)).toBeLessThan(1);expect(boxes[i].right).toBeLessThanOrEqual(width-3.9);if(i)expect(boxes[i].x).toBeGreaterThanOrEqual(boxes[i-1].right)}
  await toolbar.getByRole('button',{name:'Filter content',exact:true}).click();await expect(page.getByRole('checkbox',{name:'Stories',exact:true})).toBeVisible();await expect(page.getByRole('checkbox',{name:'Imports',exact:true})).not.toBeVisible();await page.getByRole('button',{name:'Apply',exact:true}).click()
  await expect(views).toHaveText('For You')
  const rate=toolbar.getByRole('button',{name:'Playback speed',exact:true})
@@ -35,8 +36,8 @@ for(const width of [320,390,430])test(`mobile one-line views, language, filter, 
  const before=await source.getAttribute('data-for-you-source');await toolbar.getByRole('button',{name:'Next video',exact:true}).click();await expect(source).not.toHaveAttribute('data-for-you-source',before!);await toolbar.getByRole('button',{name:'Previous video',exact:true}).click();await expect(source).toHaveAttribute('data-for-you-source',before!)
 
  await views.click();await expect(page).toHaveURL(/\/explore$/);await expect(language).toHaveCount(0)
- await page.goBack();await expect(language).toHaveText('EN');await page.goForward();await expect(views).toHaveText('Explore');await expect(language).toHaveCount(0)
- await views.click();await expect(language).toHaveText('EN');await expect(source.locator('iframe')).toBeVisible();await noOverflow(page)
+ await page.goBack();await expect(language).toHaveText('EN');await page.goForward();await expect(tools.getByRole('group',{name:'Explore views'}).getByRole('button')).toHaveText(['Explore','For You']);await expect(language).toHaveCount(0)
+ await tools.getByRole('button',{name:'For You feed',exact:true}).click();await expect(language).toHaveText('EN');await expect(source.locator('iframe')).toBeVisible();await noOverflow(page)
  await toolbar.screenshot({path:`test-results/${test.info().project.name}-one-line-toolbar-bar-${width}.png`})
  await page.screenshot({path:`test-results/${test.info().project.name}-one-line-toolbar-${width}.png`,fullPage:true})
 })

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Box, Button, Fade, IconButton, Typography } from '@mui/material'
+import { Box, Button, Fade, IconButton, Typography, useMediaQuery } from '@mui/material'
 import { Close, ExploreOutlined, PersonOutlineRounded } from '@mui/icons-material'
 import ExploreFeed from './ExploreFeed'
 import {type ExploreFeedBatch} from '@/app/lib/explore'
@@ -16,9 +16,11 @@ type ExploreView = 'explore' | 'foryou'
 function LanguageSwitch({value,onChange}:{value:'ar'|'en';onChange:(value:'ar'|'en')=>void}){return <Box role="group" aria-label="Source video language" sx={{display:{xs:'none',md:'flex'},border:'1px solid #ffffff55',borderRadius:'999px',p:.25}}>{(['ar','en'] as const).map(language=><Button key={language} aria-pressed={value===language} onClick={()=>onChange(language)} sx={{minWidth:40,minHeight:36,borderRadius:'999px',color:'#fff',bgcolor:value===language?'#ffffff33':'transparent'}}>{language.toUpperCase()}</Button>)}</Box>}
 
 function MobileViewTools({view,onView,language,onLanguage}:{view:ExploreView;onView:(view:ExploreView)=>void;language:'ar'|'en';onLanguage:(language:'ar'|'en')=>void}){
+ const narrow=useMediaQuery('(max-width:767.95px)')
+ if(view==='explore'&&narrow)return <Box data-mobile-view-tools><ViewSwitch mobile view={view} onChange={onView} hint={false} onDismiss={()=>{}}/></Box>
  return <Box data-mobile-view-tools sx={{display:'flex',alignItems:'center',flexWrap:'nowrap',gap:'var(--mobile-toolbar-gap, 4px)',minWidth:0,flexShrink:0}}>
-  <Button data-mobile-view-toggle aria-label={view==='foryou'?'For You selected \u2014 switch to Explore':'Explore selected \u2014 switch to For You'} onClick={()=>onView(view==='foryou'?'explore':'foryou')} sx={{width:'var(--mobile-view-width, 58px)',minWidth:0,height:36,p:0,fontSize:11,fontWeight:600,textTransform:'none',whiteSpace:'nowrap',border:'1px solid #ffffff44',borderRadius:'9999px',color:'#fff',bgcolor:'rgba(255,255,255,.14)','&:hover':{bgcolor:'rgba(255,255,255,.24)'},'&:focus-visible':{outline:'2px solid var(--awm-gold-light)',outlineOffset:2}}}>{view==='foryou'?'For You':'Explore'}</Button>
-  {view==='foryou'&&<Button data-mobile-language-toggle aria-label={language==='ar'?'Arabic selected — switch For You to English':'English selected — switch For You to Arabic'} onClick={()=>onLanguage(language==='ar'?'en':'ar')} sx={{width:'var(--mobile-language-width, 32px)',minWidth:0,height:36,flexShrink:0,px:0,py:0,fontSize:11,fontWeight:600,border:'1px solid #ffffff44',borderRadius:'9999px',color:'#fff',bgcolor:'rgba(255,255,255,.14)','&:hover':{bgcolor:'rgba(255,255,255,.24)'},'&:focus-visible':{outline:'2px solid var(--awm-gold-light)',outlineOffset:2}}}>{language.toUpperCase()}</Button>}
+  <Button data-mobile-view-toggle aria-label={view==='foryou'?'For You selected \u2014 switch to Explore':'Explore selected \u2014 switch to For You'} onClick={()=>onView(view==='foryou'?'explore':'foryou')} sx={{width:'var(--mobile-view-width, 58px)',minWidth:0,height:'var(--mobile-control-height, 36px)',p:0,fontSize:'var(--mobile-control-font, 11px)',fontWeight:600,textTransform:'none',whiteSpace:'nowrap',border:'1px solid #ffffff44',borderRadius:'9999px',color:'#fff',bgcolor:'rgba(255,255,255,.14)','&:hover':{bgcolor:'rgba(255,255,255,.24)'},'&:focus-visible':{outline:'2px solid var(--awm-gold-light)',outlineOffset:2}}}>{view==='foryou'?'For You':'Explore'}</Button>
+  {view==='foryou'&&<Button data-mobile-language-toggle aria-label={language==='ar'?'Arabic selected — switch For You to English':'English selected — switch For You to Arabic'} onClick={()=>onLanguage(language==='ar'?'en':'ar')} sx={{width:'var(--mobile-language-width, 32px)',minWidth:0,height:'var(--mobile-control-height, 36px)',flexShrink:0,px:0,py:0,fontSize:'var(--mobile-control-font, 11px)',fontWeight:600,border:'1px solid #ffffff44',borderRadius:'9999px',color:'#fff',bgcolor:'rgba(255,255,255,.14)','&:hover':{bgcolor:'rgba(255,255,255,.24)'},'&:focus-visible':{outline:'2px solid var(--awm-gold-light)',outlineOffset:2}}}>{language.toUpperCase()}</Button>}
  </Box>
 }
 

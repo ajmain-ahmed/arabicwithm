@@ -1,5 +1,6 @@
 import {beforeEach,describe,it,expect,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({guard:vi.fn(),access:vi.fn(),rpc:vi.fn(),from:vi.fn(),revalidate:vi.fn(),duration:vi.fn()}))
+const mocks=vi.hoisted(()=>({guard:vi.fn(),access:vi.fn(),rpc:vi.fn(),from:vi.fn(),revalidate:vi.fn(),duration:vi.fn(),groupTree:vi.fn()}))
+vi.mock('@/app/lib/forYouGroups',()=>({loadTranscriptGroupTree:mocks.groupTree}))
 vi.mock('@/app/actions/auth',()=>({guardAdmin:mocks.guard,getAuthenticatedAccess:mocks.access}))
 vi.mock('@/app/lib/supabase',()=>{let state={importId:'99999999-9999-4999-8999-999999999999',id:'saved',expected:1,committed:0,tokens:0,completed:false,enrichment:'unavailable'};return {serviceClient:{rpc:async(name:string,args:unknown)=>{
  const result=await mocks.rpc(name,args);if(result?.error)return result
@@ -12,7 +13,7 @@ vi.mock('@/app/lib/supabase',()=>{let state={importId:'99999999-9999-4999-8999-9
 vi.mock('@/app/lib/youtubeVideoDuration',()=>({getYouTubeVideoDuration:mocks.duration}))
 vi.mock('next/cache',()=>({revalidatePath:mocks.revalidate}))
 import {saveAdminGeneratedTranscript,saveAdminTranscriptSourceLanguage,retryAdminGeminiEnrichment,previewAdminTranscript,addAdminYouTubeTranscript,importAdminManualTranscript,importAdminManualTranscriptResult,validateAdminManualTranscript,listAdminTranscripts,searchTranscriptWord,loadPublicTranscript,generateAdminTranscript,deleteAdminTranscript,loadAdminTranscript,downloadAdminTranscriptJson,saveAdminTranscriptJson,moveAdminTranscriptGroup,saveAdminManualDraft,loadAdminManualDraft,deleteAdminManualDraft} from './transcripts'
-beforeEach(()=>{vi.resetAllMocks();mocks.duration.mockResolvedValue(null);mocks.guard.mockResolvedValue(undefined);mocks.access.mockResolvedValue({admin:true,userId:'11111111-1111-4111-8111-111111111111'})})
+beforeEach(()=>{vi.resetAllMocks();mocks.groupTree.mockResolvedValue([]);mocks.duration.mockResolvedValue(null);mocks.guard.mockResolvedValue(undefined);mocks.access.mockResolvedValue({admin:true,userId:'11111111-1111-4111-8111-111111111111'})})
 
 describe('manual form drafts',()=>{
  const id='77777777-7777-4777-8777-777777777777',updatedAt='2026-10-09T17:00:00Z'
@@ -317,4 +318,45 @@ it('persists changed language after the legacy generated-review RPC using its ne
  mocks.from.mockReturnValue(q);mocks.rpc.mockResolvedValue({data:reviewed,error:null})
  expect(await saveAdminGeneratedTranscript(id,{json:JSON.stringify([example]),title:'English',searchable:false,updatedAt:version,sourceLanguage:'en'})).toMatchObject({ok:true,updatedAt:saved})
  expect(q.eq).toHaveBeenCalledWith('updated_at',reviewed);expect(q.update).toHaveBeenCalledWith({raw_transcript:{...raw,source_language:'en'},updated_at:expect.any(String)})
+})
+
+describe('authoritative English group audio',()=>{
+ const english='5b98c563-5c35-4696-98e1-06aa000eb622',child='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',id='33333333-3333-4333-8333-333333333333',version='2026-11-08T22:00:00Z'
+ it.each([english,child])('normalizes stale Arabic input for English import %s',async groupId=>{
+  mocks.groupTree.mockResolvedValue([{id:english,parent_id:null},{id:child,parent_id:english}]);mocks.rpc.mockResolvedValue({data:'saved',error:null})
+  const example=(await import('@/e2e/source-language-data.json')).default,json=JSON.stringify([example])
+  expect(await importAdminManualTranscriptResult({url:'ZBynl03Vp-w',title:'English',json,duration:'00:45',searchable:false,sourceLanguage:'ar',groupId})).toMatchObject({ok:true})
+  expect(mocks.rpc).toHaveBeenCalledWith('website_begin_manual_import',expect.objectContaining({p_group:groupId,p_raw:expect.objectContaining({source_language:'en',_source_json:json,content:[expect.objectContaining({tokens:example.tokens})]})}))
+ })
+ it('normalizes draft language without touching unfinished JSON',async()=>{
+  mocks.rpc.mockResolvedValue({data:{id,updatedAt:version},error:null})
+  const json='  {unfinished';await saveAdminManualDraft(id,{url:'',title:'',channel:'',json,duration:'',durationFormat:'clock',searchable:false,groupId:english,sourceLanguage:'ar'})
+  expect(mocks.rpc).toHaveBeenCalledWith('admin_save_manual_draft',expect.objectContaining({p_payload:expect.objectContaining({json,sourceLanguage:'en'})}))
+ })
+ it('normalizes the edit save path and preserves the original JSON payload',async()=>{
+  const example=(await import('@/e2e/source-language-data.json')).default,json=JSON.stringify([example])
+  mocks.from.mockReturnValue({select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),single:vi.fn().mockResolvedValue({data:{youtube_id:'ZBynl03Vp-w',duration_seconds:45,raw_transcript:{}},error:null})})
+  mocks.rpc.mockResolvedValue({data:{updatedAt:version,enrichment:'unavailable'},error:null})
+  expect(await saveAdminTranscriptJson(id,{json,title:'English',channel:'',searchable:false,updatedAt:version,duration:'00:45',groupId:english,sourceLanguage:'ar'})).toMatchObject({ok:true})
+  expect(mocks.rpc).toHaveBeenCalledWith('website_save_manual_source',expect.objectContaining({p_raw:expect.objectContaining({source_language:'en',_source_json:json,content:[expect.objectContaining({tokens:example.tokens})]})}))
+ })
+ it('sets only existing language metadata before the version-checked English move',async()=>{
+  const raw={content:[{text:'stored',tokens:[{arabic:'a',english:'e'}]}],_source_json:'exact original',source_language:'ar'},next='2026-11-08T22:01:00Z'
+  const update=vi.fn(),q={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),is:vi.fn().mockReturnThis(),update,maybeSingle:vi.fn().mockResolvedValueOnce({data:{raw_transcript:raw,status:'ready',updated_at:version},error:null}).mockResolvedValueOnce({data:{updated_at:next},error:null})};update.mockReturnValue(q);mocks.from.mockReturnValue(q);mocks.rpc.mockResolvedValue({data:next,error:null})
+  expect(await moveAdminTranscriptGroup(id,{groupId:english,previousGroupId:null,updatedAt:version})).toEqual({ok:true,updatedAt:next})
+  expect(update).toHaveBeenCalledWith({raw_transcript:{...raw,source_language:'en'},updated_at:expect.any(String)})
+  expect(mocks.rpc).toHaveBeenCalledWith('admin_move_standalone_transcript',expect.objectContaining({p_updated_at:next,p_group:english}))
+  expect(raw.source_language).toBe('ar');expect(raw._source_json).toBe('exact original')
+ })
+ it('rejects a conflicting audio-only save for current English membership',async()=>{
+  const q={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:{raw_transcript:{},status:'ready',updated_at:version},error:null}),update:vi.fn()}
+  const membership={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),maybeSingle:vi.fn().mockResolvedValue({data:{group_id:english},error:null})}
+  mocks.from.mockImplementation(table=>table==='admin_manual_transcripts'?membership:q)
+  expect(await saveAdminTranscriptSourceLanguage(id,'ar',version)).toMatchObject({ok:false,error:expect.stringContaining('English-group transcripts require English')});expect(q.update).not.toHaveBeenCalled()
+ })
+ it('fails closed if subgroup classification cannot be read',async()=>{
+  mocks.groupTree.mockRejectedValue(new Error('Group lookup unavailable'))
+  const result=await saveAdminManualDraft(id,{url:'',title:'',channel:'',json:'',duration:'',durationFormat:'clock',searchable:false,groupId:child,sourceLanguage:'ar'})
+  expect(result).toMatchObject({ok:false});expect(mocks.rpc).not.toHaveBeenCalled()
+ })
 })
