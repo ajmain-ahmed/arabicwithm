@@ -1,6 +1,5 @@
 'use client'
 
-import {sourceLanguage} from '@/app/lib/transcriptSourceLanguage'
 import EnglishForYouSegment from './EnglishForYouSegment'
 
 import { useEffect, useRef, useState, useCallback, useSyncExternalStore, type ReactNode } from 'react'
@@ -52,8 +51,7 @@ export function ForYouWords({ tokens, settings = DEFAULT_SETTINGS, time }: { tok
   </Box>
 }
 
-export function ClipPlayer({ clip, desktopLanguageControl, mobileViewControl, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl, onComplete }: { desktopLanguageControl?:ReactNode; mobileViewControl?:ReactNode; onComplete?:()=>void; full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
-  const language=sourceLanguage(clip.video.source_language)
+export function ClipPlayer({ clip, language = 'ar', desktopLanguageControl, mobileViewControl, leftControls, rightControls, mobileToolbar, mobileSwitcher, filterControl, navigation, settings, onUnavailable, full = false, suppliedSegments, modeControl, mobileModeControl, onComplete }: { language?:'ar'|'en'; desktopLanguageControl?:ReactNode; mobileViewControl?:ReactNode; onComplete?:()=>void; full?: boolean; suppliedSegments?: ForYouSegment[]; modeControl?: ReactNode; mobileModeControl?: ReactNode; navigation?: React.ComponentProps<typeof MobileForYouPanel>['navigation']; mobileSwitcher?: ReactNode; filterControl?: ReactNode; mobileToolbar?: ReactNode; settings: TranscriptSettings; clip: ForYouClip; leftControls?: ReactNode; rightControls?: ReactNode; onUnavailable:(source:string,code:number)=>void }) {
   const samplePlayback=useForYouMeter()
   const canAdvance=useForYouAdvance()
   const inspectingSeek=useRef(false)
@@ -143,7 +141,7 @@ export function ClipPlayer({ clip, desktopLanguageControl, mobileViewControl, le
     <MobileForYouPanel language={language} onTranscriptInteraction={transcriptAudio} activeOnly={full||followingSeek} activeSegment={active} modeControl={mobileModeControl} clip={visibleClip} segments={segments} time={time} settings={settings} navigation={navigation} settingsButton={mobileToolbar} switcher={mobileViewControl??mobileSwitcher} filterControl={filterControl} muted={isMuted} onSound={() => { const actualMuted = getSoundMuted?.() ?? isMuted; setExploreSoundPreference(actualMuted); if(actualMuted) playWithSound(); else mute() }} ready={isReady} playing={isPlaying} onPlay={() => { if (!full && (time < clip.clip_start_ms / 1000 || time >= clip.clip_end_ms / 1000)) seekTo(clip.clip_start_ms / 1000); else playVideo() }} onPause={pauseVideo} onSeek={seekToOnly} rates={getPlaybackRates?.() ?? [1]} rate={playbackRate ?? 1} onRate={setPlaybackRate} />
     <Box data-desktop-clip-transcript data-feed-transcript sx={{display:{xs:'none',md:'block'},color:'#f5ede0',mt:2,minHeight:124,overscrollBehavior:'contain'}}>
       {(active ? [active] : []).map(line=><Box key={line.id} data-clip-line={line.id} data-active-segment={active?.id===line.id} sx={{p:1.5,mb:1,borderRadius:2,bgcolor:'rgba(212,168,67,.14)'}}>
-        {language==='en'?<EnglishForYouSegment line={line} settings={settings} time={time}/>:<>
+        {language==='en'?<EnglishForYouSegment arabicFirst line={line} settings={settings} time={time}/>:<>
         {line.tokens.length?<ForYouWords tokens={line.tokens} settings={settings} time={time}/>:<Typography lang="ar" dir="rtl" sx={{color:'inherit',textAlign:'center',fontFamily:'var(--font-serif)',fontSize:`${2.2 * TEXT_SCALES[safeTextSize(settings.arabicSize)]}rem`}}>{displayArabic(line.original_text,settings.tashkeel)}</Typography>}
         {settings.sentence&&line.english_text&&<Typography lang="en" sx={{color:'inherit',textAlign:'center',fontSize:`${TEXT_SCALES[safeTextSize(settings.englishSize)]}rem`}}>{line.english_text}</Typography>}
         </>}
@@ -381,7 +379,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
                 <MobileClipNavigator clipKey={`${clips[index].video.id}:${clips[index].clip_start_ms}`} disabled={full || !!previewSegments} canPrevious={index>0} busy={busy && index >= clips.length - 1} step={step}><ClipPlayer
                   key={`${index}:${clips[index].video.id}:${clips[index].clip_start_ms}`}
                   onComplete={previewSegments?undefined:()=>step(1)} full={full} suppliedSegments={previewSegments} modeControl={modeControl()} mobileModeControl={<Button data-mobile-mode onClick={()=>setFull(!full)} sx={{color:'inherit',bgcolor:'var(--awm-gold)',borderRadius:'999px',textTransform:'none',fontWeight:600}}>{full?'Full':'Short'}</Button>} clip={clips[index]}
-                  desktopLanguageControl={languageControl} onUnavailable={unavailable}
+                  language={language} desktopLanguageControl={languageControl} onUnavailable={unavailable}
                   settings={settings}
                   navigation={previewSegments ? undefined : {previous:()=>step(-1),next:()=>step(1),previousDisabled:index===0,nextDisabled:busy&&index>=clips.length-1}}
                   mobileToolbar={mobileSettingsButton}

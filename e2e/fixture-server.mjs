@@ -44,7 +44,7 @@ const spotlightRequests=[];let spotlightSelection='normal';const rpcLog=[],table
 let failAudioSave = false
 let forYouPlayback=false
 let discoveryClips=[]
-let englishTranscriptSeek=false
+let englishTranscriptSeek=false,englishSubtitleLayout=false
 let dataContractClips=null,failForYouRequest=false,englishTranscriptRawOnly=false,englishTranscriptMode=false,spotlightMode=false,spotlightEnglish=true
 const manualPremium=new Map(), memoryStarts=new Map(), memorySnapshots=new Map(), memoryReviews=new Map(), ownReviews=new Map(), earned=new Set(), wordTotals=new Map()
 const effective=id=>id===ids.premium||roleFor(id)==='admin'||manualPremium.get(id)===true
@@ -216,20 +216,21 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     return json(res,{})
   }
   if(url.pathname==='/fixture/expired-membership'){expiredMembership=Boolean(body.expired);return json(res,{})}
-  if(url.pathname==='/fixture/spotlight'){englishTranscriptMode=false;spotlightMode=true;spotlightSelection=body.selection??'normal';spotlightRequests.length=0;tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:'5b98c563-5c35-4696-98e1-06aa000eb622'}));spotlightEnglish=body.english!==false;tables.transcript_groups=[{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English'},{id:'77777777-7777-4777-8777-777777777778',name:'Imports'},{id:'77777777-7777-4777-8777-777777777779',name:'Stories'}];rpcLog.length=0;return json(res,{})}
+  if(url.pathname==='/fixture/spotlight'){englishTranscriptMode=false;englishSubtitleLayout=false;spotlightMode=true;spotlightSelection=body.selection??'normal';spotlightRequests.length=0;tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:'5b98c563-5c35-4696-98e1-06aa000eb622'}));spotlightEnglish=body.english!==false;tables.transcript_groups=[{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English'},{id:'77777777-7777-4777-8777-777777777778',name:'Imports'},{id:'77777777-7777-4777-8777-777777777779',name:'Stories'}];rpcLog.length=0;return json(res,{})}
   if(url.pathname==='/fixture/english-for-you'){
-    englishTranscriptSeek=Boolean(body.seek);englishTranscriptMode=true;englishTranscriptRawOnly=Boolean(body.rawTranslationOnly);spotlightMode=true;rpcLog.length=0;tableLog.length=0
+    englishTranscriptSeek=Boolean(body.seek);englishSubtitleLayout=Boolean(body.subtitleLayout);englishTranscriptMode=true;englishTranscriptRawOnly=Boolean(body.rawTranslationOnly);spotlightMode=true;rpcLog.length=0;tableLog.length=0
     const root='5b98c563-5c35-4696-98e1-06aa000eb622',child='77777777-7777-4777-8777-777777777775'
     tables.transcript_groups=[{id:root,name:'Renamed English',parent_id:null},{id:child,name:'Nested examples',parent_id:root}]
     tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:child}))
     const example=JSON.parse(readFileSync('e2e/english-for-you-data.json','utf8'))
+    const subtitleExamples=englishSubtitleLayout?JSON.parse(readFileSync('e2e/english-subtitle-data.json','utf8')).segments:null
     for(let i=4;i<8;i++){
       const id=`99999999-9999-4999-8999-99999999999${i}`
-      const content=Array.from({length:englishTranscriptSeek?10:4},(_,position)=>englishTranscriptSeek?{...example,translation:example.translation+' '+position,tokens:example.tokens.map((token,index)=>index?token:{...token,english:'Sentence '+position,arabic:token.arabic+' '+position})}:example)
+      const content=Array.from({length:englishTranscriptSeek?10:4},(_,position)=>subtitleExamples?subtitleExamples[position%subtitleExamples.length]:englishTranscriptSeek?{...example,translation:example.translation+' '+position,tokens:example.tokens.map((token,index)=>index?token:{...token,english:'Sentence '+position,arabic:token.arabic+' '+position})}:example)
       tables.youtube_transcripts=tables.youtube_transcripts.filter(row=>row.id!==id)
       tables.transcript_segments=tables.transcript_segments.filter(row=>row.transcript_id!==id)
-      tables.youtube_transcripts.push({id,status:'ready',explore_published:true,source_origin:'website_admin_transcript',raw_transcript:{source_language:'en',content}})
-      tables.transcript_segments.push(...content.map((canonical,position)=>({id:100+i*10+position,transcript_id:id,position,original_text:example.translation,english_text:example.translation,start_seconds:position*15,end_seconds:(position+1)*15,canonical_paragraph:englishTranscriptRawOnly?{tokens:canonical.tokens}:canonical})))
+      tables.youtube_transcripts.push({id,status:'ready',explore_published:true,source_origin:'website_admin_transcript',raw_transcript:englishSubtitleLayout?{content}:{source_language:'en',content}})
+      tables.transcript_segments.push(...content.map((canonical,position)=>({id:100+i*10+position,transcript_id:id,position,original_text:englishSubtitleLayout?canonical.translation:example.translation,english_text:englishSubtitleLayout?canonical.english_text:example.translation,start_seconds:position*15,end_seconds:(position+1)*15,canonical_paragraph:englishTranscriptRawOnly?{tokens:canonical.tokens}:canonical})))
     }
     return json(res,{})
   }
@@ -367,7 +368,10 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     if(rpc==='transcript_for_you_groups'&&spotlightMode){
         const clips=Array.from({length:8},(_,i)=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Spotlight fixture',channel:'Fixture'},clip_start_ms:0,clip_end_ms:45000,segments:[0,1,2].map(j=>({id:100+i*10+j,position:j,start_seconds:j*15,end_seconds:(j+1)*15,original_text:j?'Second Arabic subtitle':'First Arabic subtitle',english_text:'A subtitle.',source_tokens:[{arabic:'\u0643\u062a\u0627\u0628',english:'book'}]}))}))
-      if(englishTranscriptMode){const example=JSON.parse(readFileSync('e2e/english-for-you-data.json','utf8'));for(const clip of clips)if(Number(clip.video.id.at(-1))>=4)clip.segments=clip.segments.map(segment=>({...segment,original_text:example.translation,english_text:example.translation,canonical_paragraph:englishTranscriptRawOnly?{tokens:example.tokens}:englishTranscriptSeek?tables.transcript_segments.find(row=>row.transcript_id===clip.video.id&&row.position===segment.position)?.canonical_paragraph:example}))}
+      if(englishTranscriptMode){const example=JSON.parse(readFileSync('e2e/english-for-you-data.json','utf8'));for(const clip of clips)if(Number(clip.video.id.at(-1))>=4)clip.segments=clip.segments.map(segment=>{
+       const stored=tables.transcript_segments.find(row=>row.transcript_id===clip.video.id&&row.position===segment.position)
+       return {...segment,original_text:englishSubtitleLayout?stored.original_text:example.translation,english_text:englishSubtitleLayout?stored.english_text:example.translation,canonical_paragraph:englishSubtitleLayout?stored.canonical_paragraph:englishTranscriptRawOnly?{tokens:example.tokens}:englishTranscriptSeek?stored?.canonical_paragraph:example}
+      })}
       const englishGroups=new Set(['5b98c563-5c35-4696-98e1-06aa000eb622']);for(let changed=true;changed;){changed=false;for(const g of tables.transcript_groups)if(g.parent_id&&englishGroups.has(g.parent_id)&&!englishGroups.has(g.id)){englishGroups.add(g.id);changed=true}}
       const english=new Set(tables.admin_manual_transcripts.filter(m=>englishGroups.has(m.group_id)).map(m=>m.transcript_id))
       tables.for_you_candidates=clips.flatMap(c=>c.segments.map(s=>({segment_id:s.id,transcript_id:c.video.id})))

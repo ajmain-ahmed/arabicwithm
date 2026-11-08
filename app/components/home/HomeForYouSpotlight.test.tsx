@@ -1,11 +1,11 @@
 import {act} from 'react'
 import {createRoot,type Root} from 'react-dom/client'
 import {beforeEach,afterEach,it,expect,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({error:null as number|null,select:vi.fn()}))
+const mocks=vi.hoisted(()=>({error:null as number|null,select:vi.fn(),mute:vi.fn(),playWithSound:vi.fn(),getSoundMuted:()=>false,syncSoundIntent:vi.fn()}))
 vi.mock('@/app/AuthContext',()=>({useAuth:()=>({user:{id:'member'},loading:false})}))
 vi.mock('next/navigation',()=>({useRouter:()=>({push:vi.fn()})}))
 vi.mock('@/app/actions/forYou',()=>({fetchHomeForYouSpotlight:mocks.select}))
-vi.mock('@/app/lib/useYouTubePlayer',()=>({default:()=>({wrapRef:{current:null},isReady:true,isPlaying:true,playbackRate:1,pauseVideo:vi.fn(),errorCode:mocks.error,retry:vi.fn()})}))
+vi.mock('@/app/lib/useYouTubePlayer',()=>({default:()=>({wrapRef:{current:null},isReady:true,isPlaying:true,playbackRate:1,isMuted:false,getSoundMuted:mocks.getSoundMuted,mute:mocks.mute,playWithSound:mocks.playWithSound,syncSoundIntent:mocks.syncSoundIntent,pauseVideo:vi.fn(),errorCode:mocks.error,retry:vi.fn()})}))
 vi.mock('@/app/explore/ForYouMeterContext',()=>({useForYouMeter:()=>undefined}))
 vi.mock('./SpotlightPlayerFrame',()=>({default:({children}:{children:React.ReactNode})=><div>{children}</div>}))
 import HomeForYouSpotlight from './HomeForYouSpotlight'

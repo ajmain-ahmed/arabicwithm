@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useMemo, useRef, type ReactNode } from 'react'
-import { Box, Button, IconButton, Typography } from '@mui/material'
-import { KeyboardDoubleArrowUp, KeyboardDoubleArrowDown } from '@mui/icons-material'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Box, Button, IconButton, Popover, Typography } from '@mui/material'
+import { KeyboardDoubleArrowUp, KeyboardDoubleArrowDown, MoreHoriz } from '@mui/icons-material'
 import EnglishForYouSegment from './EnglishForYouSegment'
 import { displayArabic } from '@/app/lib/displayArabic'
 import { segmentAtTime, type ForYouClip, type ForYouSegment } from '@/app/lib/forYou'
@@ -68,19 +68,26 @@ export default function MobileForYouPanel({ language='ar',activeOnly = false, ac
     if(event.nativeEvent.isTrusted)onTranscriptInteraction?.()
   }
   const nextRate = rates[(Math.max(0, rates.indexOf(rate)) + 1) % rates.length] ?? 1
+  const [controlsAnchor,setControlsAnchor]=useState<HTMLElement|null>(null)
+  const pillSx={width:40,height:42,minWidth:40,p:.75,borderRadius:'9999px',border:'1px solid #ffffff44',color:'inherit',bgcolor:'rgba(255,255,255,.14)','&:hover':{bgcolor:'rgba(255,255,255,.24)'},'&:focus-visible':{outline:'2px solid var(--awm-gold-light)',outlineOffset:2}}
 
   return <Box sx={{ display: { xs: 'flex', md: 'none' }, flexDirection: 'column', flex: 1, minHeight: 0, bgcolor: '#111d18', color: '#f5ede0' }}>
-    <Box data-mobile-for-you-toolbar role="toolbar" aria-label="For You playback" sx={{display:'flex',flexWrap:'wrap',alignItems:'center',justifyContent:'space-evenly',columnGap:1,rowGap:1,px:1,py:1,minHeight:52,boxSizing:'border-box',flexShrink:0,borderBottom:'1px solid rgba(245,237,224,.08)','& > *':{flexShrink:0},'&& .MuiIconButton-root':{width:40,height:42,p:.75,borderRadius:'9999px',color:'inherit',bgcolor:'rgba(255,255,255,.12)'},'& .MuiSvgIcon-root':{fontSize:20},'&& > .MuiButton-root':{minWidth:44,width:44,height:42,p:0,fontSize:12,borderRadius:'9999px',bgcolor:'rgba(255,255,255,.12)'},'&& [data-mobile-mode]':{minWidth:54,width:54,height:42,p:0,fontSize:12}}}>
-      <Box sx={{flexBasis:'100%',display:'flex',justifyContent:'center',minWidth:0}}>{switcher}</Box>
-      <Button aria-label="Playback speed" title={`Change speed to ${nextRate}\u00d7`} disabled={!ready||rates.length<2} onClick={()=>onRate(nextRate)} sx={{color:'inherit',fontWeight:600}}>{rate}×</Button>
-      {filterControl&&<Box>{filterControl}</Box>}
-      <Box>{settingsButton}</Box>
-      {modeControl}
-      {navigation&&<Box sx={{display:'flex',gap:.5}}><IconButton data-feed-nav aria-label="Previous video" disabled={navigation.previousDisabled} onClick={navigation.previous}><KeyboardDoubleArrowUp/></IconButton><IconButton data-feed-nav aria-label="Next video" disabled={navigation.nextDisabled} onClick={navigation.next}><KeyboardDoubleArrowDown/></IconButton></Box>}
+    <Box data-mobile-for-you-toolbar role="toolbar" aria-label="For You playback" sx={{display:'flex',flexWrap:'nowrap',alignItems:'center',gap:.5,px:1,py:1,minHeight:58,boxSizing:'border-box',flexShrink:0,minWidth:0,borderBottom:'1px solid rgba(245,237,224,.08)','& .MuiSvgIcon-root':{fontSize:20}}}>
+      <Box sx={{display:'flex',flex:1,minWidth:0}}>{switcher}</Box>
+      {filterControl&&<Box sx={{flexShrink:0,'&& .MuiIconButton-root':pillSx}}>{filterControl}</Box>}
+      <IconButton aria-label="More For You controls" aria-haspopup="dialog" aria-expanded={Boolean(controlsAnchor)} onClick={event=>setControlsAnchor(event.currentTarget)} sx={{...pillSx,flexShrink:0}}><MoreHoriz/></IconButton>
     </Box>
+    <Popover open={Boolean(controlsAnchor)} anchorEl={controlsAnchor} onClose={()=>setControlsAnchor(null)} anchorOrigin={{vertical:'bottom',horizontal:'right'}} transformOrigin={{vertical:'top',horizontal:'right'}} slotProps={{paper:{sx:{p:1.5,width:240,maxWidth:'calc(100vw - 16px)',borderRadius:'18px',bgcolor:'#111d18',color:'#f5ede0',border:'1px solid #ffffff44','& .MuiIconButton-root':pillSx,'& [data-mobile-mode]':{height:42,px:2,borderRadius:'9999px'}}}}}>
+      <Box role="dialog" aria-label="More For You controls" sx={{display:'grid',gap:1.5}}>
+        <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:1}}><Typography sx={{fontSize:13}}>Playback speed</Typography><Button aria-label="Playback speed" title={`Change speed to ${nextRate}\u00d7`} disabled={!ready||rates.length<2} onClick={()=>onRate(nextRate)} sx={{...pillSx,fontWeight:600}}>{rate}×</Button></Box>
+        {settingsButton&&<Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><Typography sx={{fontSize:13}}>Settings</Typography>{settingsButton}</Box>}
+        {modeControl&&<Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between'}}><Typography sx={{fontSize:13}}>Video mode</Typography>{modeControl}</Box>}
+        {navigation&&<Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:1}}><Typography sx={{fontSize:13}}>Videos</Typography><Box sx={{display:'flex',gap:.5}}><IconButton data-feed-nav aria-label="Previous video" disabled={navigation.previousDisabled} onClick={navigation.previous}><KeyboardDoubleArrowUp/></IconButton><IconButton data-feed-nav aria-label="Next video" disabled={navigation.nextDisabled} onClick={navigation.next}><KeyboardDoubleArrowDown/></IconButton></Box></Box>}
+      </Box>
+    </Popover>
     <Box ref={scroller} data-mobile-clip-transcript data-feed-transcript onWheel={manualScroll} onTouchStart={manualScroll} onTouchEnd={manualScroll} onPointerDown={manualScroll} onPointerUp={manualScroll} sx={{ flex: 1, minHeight: 0, overflowY: activeOnly?'visible':'auto', overscrollBehavior: 'contain', scrollPaddingBlock: 1, px: 'max(12px, env(safe-area-inset-left))', pt: 1.25, pb: 'calc(64px + env(safe-area-inset-bottom, 0px))' }}>
       {(activeOnly ? active ? [active] : [] : lines).map(line => <Box key={line.id} ref={(node: HTMLDivElement | null) => { if (node) cards.current.set(line.id,node); else cards.current.delete(line.id) }} data-clip-line={line.id} data-active-segment={active?.id === line.id ? 'true' : 'false'} aria-current={active?.id === line.id ? 'true' : undefined} sx={{ p: { xs: 1.5, sm: 2 }, mb: 1.25, borderRadius: '16px', bgcolor: '#1c2c24', border: '1px solid rgba(245,237,224,.12)', '&[data-active-segment="true"]': { borderColor: 'var(--awm-gold-light)', bgcolor: '#223b2d', boxShadow: 'inset 0 0 0 1px color-mix(in srgb, var(--awm-gold-light) 25%, transparent)' } }}>
-        {language==='en'?<EnglishForYouSegment line={line} settings={settings} time={time} active={active?.id===line.id} mobile/>:<>
+        {language==='en'?<EnglishForYouSegment arabicFirst line={line} settings={settings} time={time} active={active?.id===line.id} mobile/>:<>
         {line.tokens.length ? <Box dir="rtl" data-token-glosses sx={{ display: 'flex', justifyContent: 'flex-start', direction: 'rtl', textAlign: 'right', flexWrap: 'wrap', columnGap: 2, rowGap: 1.5, py: .5 }}>
           {line.tokens.map((token,index) => <Box key={index} component="span" data-mobile-token data-active-token={active?.id === line.id && token.start_seconds !== undefined && token.end_seconds !== undefined && token.start_seconds <= time && time < token.end_seconds ? 'true' : undefined} sx={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'center', maxWidth: '100%', overflowWrap: 'anywhere', borderRadius: 1, '&[data-active-token="true"]': { bgcolor: 'rgba(212,168,67,.16)' } }}>
             <Typography component="span" lang="ar" sx={{ fontFamily: 'var(--font-serif)', fontSize: `${1.8 * arabicScale}rem`, color: 'inherit', lineHeight: 1.6 }}>{displayArabic(token.arabic,settings.tashkeel)}</Typography>

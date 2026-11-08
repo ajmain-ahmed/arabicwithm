@@ -1,0 +1,30 @@
+{
+  "segments": [
+    {
+      "tokens": [
+        {"arabic":"أَنْتَ","english":"Do you","start_seconds":0,"end_seconds":3},
+        {"arabic":"تُرِيدُ","english":"wish to","start_seconds":3,"end_seconds":6},
+        {"arabic":"أَنْ","english":"to","start_seconds":6,"end_seconds":9},
+        {"arabic":"تَعْتَرِفَ","english":"confess","start_seconds":9,"end_seconds":15},
+        {"arabic":"؟","english":"?"}
+      ],
+      "translation":"أَنْتَ تُرِيدُ أَنْ تَعْتَرِفَ؟",
+      "english_text":"Do you wish to confess?"
+    },
+    {
+      "tokens":[{"arabic":"سَأُخْبِرُكَ","english":"I will tell you"},{"arabic":"بِكُلِّ","english":"about all"},{"arabic":"شَيْءٍ.","english":"things"}],
+      "translation":"سَأُخْبِرُكَ بِكُلِّ شَيْءٍ.",
+      "english_text":"I will tell you everything."
+    },
+    {
+      "tokens":[{"arabic":"اِسْتَمِعْ","english":"listen"},{"arabic":"جَيِّدًا","english":"carefully"},{"arabic":"مِنْ فَضْلِكَ.","english":"please"}],
+      "translation":"اِسْتَمِعْ جَيِّدًا مِنْ فَضْلِكَ.",
+      "english_text":"Please listen carefully."
+    },
+    {
+      "tokens":[{"arabic":"يُمْكِنُنَا","english":"we can"},{"arabic":"أَنْ","english":"to"},{"arabic":"نَبْدَأَ","english":"begin"},{"arabic":"الْآنَ.","english":"now"}],
+      "translation":"يُمْكِنُنَا أَنْ نَبْدَأَ الْآنَ.",
+      "english_text":"We can begin now."
+    }
+  ]
+}
