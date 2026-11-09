@@ -1,5 +1,6 @@
 "use client"
 
+import AwmPageError from "@/app/components/AwmPageError"
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
@@ -237,7 +238,7 @@ export default function BooksAdminPage() {
       </Box>
 
       {error && (
-        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "var(--font-sans), sans-serif" }}>{error}</Typography>
+        <AwmPageError error={error}/>
       )}
 
       <Paper elevation={0} sx={{ borderRadius: "16px", border: "1px solid rgba(122,110,101,0.15)", overflow: "hidden" }}>

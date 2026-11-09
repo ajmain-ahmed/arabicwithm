@@ -1,5 +1,6 @@
 'use client'
 
+import {boundedRead} from '@/app/lib/readRecovery'
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { getAuthenticatedAccess, type AuthenticatedAccess } from '@/app/actions/auth'
 
@@ -25,7 +26,7 @@ export function AccountAccessProvider({userId,authLoading,token,children}:{userI
   setPending(true);setError('')
   const promise=(async()=>{
    try{
-    const result=await getAuthenticatedAccess()
+    const result=await boundedRead(getAuthenticatedAccess())
     if(request!==revision.current)return
     if(!result||result.userId!==userId)throw new Error('Your session permissions could not be verified. Please retry or sign in again.')
     setAccess(result)

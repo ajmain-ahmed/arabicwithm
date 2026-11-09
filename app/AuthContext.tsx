@@ -28,6 +28,7 @@ function hasStoredSessionCookie(): boolean {
 }
 
 interface AuthContextValue {
+  error: string
   establishSession: (session: Session) => Promise<void>
   user: User | null
   session: Session | null
@@ -35,6 +36,7 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue>({
+  error: '',
   establishSession: async () => { throw new Error('Authentication is not ready. Please try again.') },
   user: null,
   session: null,
@@ -45,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
+  const [error,setError]=useState('')
   const [loading, setLoading] = useState(true)
   /* Anonymous mounts skip the supabase-js download — but a fresh email/password
      sign-in (owned by the dialog) then has no listener here. This flag flips
@@ -100,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let identity: string | null = null
     let subscription: { unsubscribe: () => void } | null = null
 
+    const watchdog=window.setTimeout(()=>{if(active&&!initialized){setError('Unable to restore your session. Please reload the page.');setLoading(false)}},20000)
     import('@/app/lib/supabase/client').then(({ supabase }) => {
       if (!active) return
 
@@ -122,6 +126,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (active && !stateChanged) {
             initialized = true
             identity = session?.user.id ?? null
+            setError('')
+            window.clearTimeout(watchdog)
             setSession(session)
             setUser(session?.user ?? null)
             setLoading(false)
@@ -130,6 +136,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .catch((err: unknown) => {
           console.error('Auth session error:', err)
           if (active && !stateChanged) {
+            window.clearTimeout(watchdog)
+            setError('Unable to restore your session. Please reload the page.')
             setLoading(false)
           }
         })
@@ -145,6 +153,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         initialized = true
         identity = nextIdentity
         stateChanged = true
+        window.clearTimeout(watchdog)
+        setError('')
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
@@ -156,13 +166,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }).data.subscription
     }).catch((error: unknown) => {
       console.error('Unable to load the auth client:', error)
-      if (active) setLoading(false)
+      if(active){window.clearTimeout(watchdog);setError('Unable to load your session. Please reload the page.');setLoading(false)}
     })
 
-    return () => { active = false; subscription?.unsubscribe() }
+    return () => { active = false;window.clearTimeout(watchdog);subscription?.unsubscribe() }
   }, [router, sessionEstablished])
 
-  const value = useMemo(() => ({ user, session, loading, establishSession }), [user, session, loading, establishSession])
+  const value = useMemo(() => ({ user, session, loading, error, establishSession }), [user, session, loading, error, establishSession])
 
   return (
     <AuthContext.Provider value={value}>

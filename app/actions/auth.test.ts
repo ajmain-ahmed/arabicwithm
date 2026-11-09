@@ -35,3 +35,11 @@ it('resolves profile identity without requiring reviewer role lookup',async()=>{
  mocks.rpc.mockResolvedValue({data:null,error:{message:'Role service unavailable'}})
  expect(await getAuthenticatedUserId()).toBe(id);expect(mocks.rpc).not.toHaveBeenCalled()
 })
+it('keeps an Auth outage distinct from a signed-out session instead of redirecting Admin home',async()=>{
+ mocks.getUser.mockResolvedValue({data:{user:null},error:{status:503,message:'Backend unavailable'}})
+ await expect(getAuthenticatedAccess()).rejects.toThrow('Unable to verify your session');expect(mocks.rpc).not.toHaveBeenCalled()
+})
+it('recovers a transient role read once while genuine denial remains Forbidden',async()=>{
+ mocks.rpc.mockResolvedValueOnce({data:null,error:{code:'PGRST001'}}).mockResolvedValue({data:'admin',error:null})
+ await expect(guardAdmin()).resolves.toBeUndefined();expect(mocks.rpc).toHaveBeenCalledTimes(2)
+})

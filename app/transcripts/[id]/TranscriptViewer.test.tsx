@@ -35,7 +35,7 @@ it('shows download failures and permits retry',async()=>{
   mocks.download.mockRejectedValue(new Error('Unable to download the complete transcript.'))
   await act(async()=>root.render(<TranscriptViewer video={video} initialSegments={segments} start={0} origin="admin"/>))
   await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='Download JSON')!.click())
-  expect(host.textContent).toContain('Unable to download the complete transcript.')
+  expect(host.textContent).toContain('This page took a little detour')
   expect([...host.querySelectorAll('button')].find(button=>button.textContent==='Download JSON')?.disabled).toBe(false)
 })
 

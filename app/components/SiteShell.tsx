@@ -1,5 +1,7 @@
 'use client'
 
+import AwmPageError from './AwmPageError'
+import {useAuth} from '@/app/AuthContext'
 import { usePathname } from 'next/navigation'
 import { Box } from '@mui/material'
 import Navbar from './navbar/index'
@@ -12,11 +14,14 @@ import LearningActivityTracker from './LearningActivityTracker'
 
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const {error:authError}=useAuth()
   const isAdminRoute = pathname?.startsWith('/admin') ?? false
   const showFooter = pathname === '/' || pathname === '/learn'
   const isExploreRoute = pathname === '/explore'
   /* Profile has its own fixed bottom tab bar on mobile. */
   const isProfileRoute = pathname?.startsWith('/profile') ?? false
+
+  if(authError)return <AwmPageError message="We couldn't restore your session. Reload the page to reconnect."/>
 
   if (isAdminRoute) {
     return (

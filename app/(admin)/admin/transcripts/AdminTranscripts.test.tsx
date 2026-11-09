@@ -189,8 +189,10 @@ it('searches beyond the current page, resets group filters, and reveals matches 
  expect(host.querySelector('[aria-expanded="true"]')).toBeNull()
  await select('Filter by group',childGroup.id)
  expect(mocks.list).toHaveBeenLastCalledWith(0,'قصة إبراهيم',childGroup.id)
+ const callsBeforeClear=mocks.list.mock.calls.length
  await act(async()=>[...host.querySelectorAll('button')].find(button=>button.textContent==='Clear filter')!.click())
- expect(mocks.list).toHaveBeenLastCalledWith(0,'قصة إبراهيم','')
+ expect(mocks.list).toHaveBeenCalledTimes(callsBeforeClear)
+ expect([...host.querySelectorAll('select')].find(element=>[...host.querySelectorAll('label')].some(label=>label.htmlFor===element.id&&label.textContent==='Filter by group'))?.value).toBe('')
 })
 it('loads saved group and duration, changes assignment and keeps channel metadata out of the visible form',async()=>{
  mocks.list.mockResolvedValue({rows:[{...editRow,youtube_id:'ZBynl03Vp-w',group_id:childGroup.id}],total:1,groups:[parentGroup,childGroup],ungrouped:0})
@@ -333,4 +335,14 @@ it('moves out of English before saving an explicit Arabic correction with the ne
  const moved='2026-11-08T22:00:00Z';mocks.move.mockResolvedValue({ok:true,updatedAt:moved});mocks.language.mockResolvedValue({ok:true,updatedAt:'2026-11-08T22:01:00Z'})
  await editWithGroup(englishGroup.id,'en');await select('Group (optional)',otherEnglish.id);await select('Original Audio Language','ar');await act(async()=>editSave().click())
  expect(mocks.language).toHaveBeenCalledWith(editRow.id,'ar',moved);expect(mocks.save).not.toHaveBeenCalled()
+})
+
+it('ends a hung list load with a branded recovery state and ignores a late result',async()=>{
+ vi.useFakeTimers();const log=vi.spyOn(console,'error').mockImplementation(()=>{});let finish!:(value:unknown)=>void
+ try{
+  mocks.list.mockImplementation(()=>new Promise(resolve=>{finish=resolve}))
+  await act(async()=>root.render(<AdminTranscripts/>));expect(host.textContent).toContain('Loading transcripts...')
+  await act(async()=>vi.advanceTimersByTimeAsync(30000));expect(host.textContent).not.toContain('Loading transcripts...');expect(host.textContent).toContain('This page took a little detour')
+  await act(async()=>finish({rows:[{...editRow,title:'Late data'}],total:1}));expect(host.textContent).not.toContain('Late data')
+ }finally{vi.useRealTimers();log.mockRestore()}
 })

@@ -1,0 +1,4 @@
+Full Vitest regression run
+Test Files: 186 passed, 2 skipped (188)
+Tests: 1312 passed, 4 skipped (1316)
+Duration: 72.27 seconds

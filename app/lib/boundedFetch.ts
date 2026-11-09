@@ -1,3 +1,4 @@
+import {isTransientReadError} from './readRecovery'
 import { AsyncLocalStorage } from 'node:async_hooks'
 const deadlines = new AsyncLocalStorage<AbortSignal>()
 export function withDataDeadline<T>(milliseconds: number, operation: () => Promise<T>): Promise<T> { return deadlines.run(AbortSignal.timeout(milliseconds), operation) }
@@ -9,7 +10,13 @@ export async function boundedFetch(input: RequestInfo | URL, init?: RequestInit)
   const options = { ...init, signal }
   const method = (init?.method ?? (input instanceof Request ? input.method : 'GET')).toUpperCase()
   for (let attempt = 0; ; attempt++) {
-    const response = await fetch(input, options)
+    let response:Response
+    try{response=await fetch(input,options)}catch(error){
+      if(attempt===0&&method==='GET'&&!signal.aborted&&isTransientReadError(error)){
+        await new Promise(resolve=>setTimeout(resolve,250));signal.throwIfAborted();continue
+      }
+      throw error
+    }
     if (attempt === 0 && method === 'GET' && [502, 503, 504, 522].includes(response.status)) {
       await response.body?.cancel()
       await new Promise(resolve => setTimeout(resolve, 250))

@@ -1,0 +1,20 @@
+{
+  "unit_tests_passed": 1312,
+  "unit_tests_skipped": 4,
+  "unit_files_passed": 186,
+  "unit_files_skipped": 2,
+  "browser_scenarios_passed": 14,
+  "browsers": [
+    "Chrome",
+    "Firefox"
+  ],
+  "direct_route_loads_per_browser": 30,
+  "additional_reload_client_navigation_history_new_tab_operations_per_browser": 7,
+  "unexpected_page_errors_in_final_repeated_navigation": 0,
+  "production_search_http_status": 200,
+  "production_search_results": 21,
+  "production_search_http_elapsed_ms": 2534,
+  "production_read_only_search_select_ms": 1124.037,
+  "production_migration": "20261109144507_website_search_content_repair.sql",
+  "application_deployed": false
+}

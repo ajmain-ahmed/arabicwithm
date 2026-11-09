@@ -38,15 +38,17 @@ export async function proxy(request: NextRequest) {
     // Read only this verified user's role through the existing own_role RLS
     // policy and ordinary session client; no elevated key enters the proxy.
     if (featuredAdmin) {
+      if(error&&!['Auth session missing!'].includes(error.message)&&![400,401,403].includes(error.status??0)){console.error('[proxy] Auth verification unavailable:',error);return response}
       if (error || !data.user) return denyFeatured()
       const role = await client.from('account_roles').select('role').eq('user_id', data.user.id).maybeSingle()
-      if (role.error || role.data?.role !== 'admin') return denyFeatured()
+      if(role.error){console.error('[proxy] Role verification unavailable:',role.error);return response}
+      if(role.data?.role !== 'admin')return denyFeatured()
     }
   } catch (error) {
     // Public routes remain available during Auth outages. Protected pages and
     // actions still verify identity with their own server-side guards.
     console.error('[proxy] Unable to refresh session:', error instanceof Error ? error.message : 'Auth unavailable')
-    if (featuredAdmin) return denyFeatured()
+    // The Admin layout still verifies identity and role. Outages must reach its error boundary, not impersonate a denial.
   }
   return response
 }

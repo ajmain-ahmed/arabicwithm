@@ -49,8 +49,8 @@ it.each(['user','editor','admin'])('checks this verified user role through RLS b
  expect(auth.from).toHaveBeenCalledWith('account_roles');expect(auth.eq).toHaveBeenCalledWith('user_id','verified')
  if(role!=='admin')expect(response.headers.get('location')).toBe('http://localhost/')
 })
-it('denies anonymous Featured access and fails closed if role verification is unavailable',async()=>{
+it('denies anonymous Featured access and defers role outages to the protected Admin layout',async()=>{
  expect((await proxy(new NextRequest('http://localhost/admin/featured'))).status).toBe(307)
  auth.getUser.mockResolvedValue({data:{user:{id:'verified'}},error:null});auth.one.mockResolvedValue({data:null,error:{message:'Unavailable'}})
- expect((await proxy(requestWithAuthCookie('/admin/featured'))).status).toBe(307)
+ expect((await proxy(requestWithAuthCookie('/admin/featured'))).status).toBe(200)
 })

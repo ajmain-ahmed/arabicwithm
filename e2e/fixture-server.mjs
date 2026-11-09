@@ -6,6 +6,7 @@ import { spawn, spawnSync } from 'node:child_process'
 import { mkdirSync, readFileSync, rmSync } from 'node:fs'
 import path from 'node:path'
 
+const reliabilityRules=new Map(),reliabilityHits=[];let reliabilityEmptySearch=false
 let expiredMembership=false
 let allowanceBudget = 900000
 const allowanceReports = new Map()
@@ -145,6 +146,30 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD')
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return }
   const url = new URL(req.url, backendUrl)
+  if(url.pathname==='/fixture/reliability'){
+   const chunks=[];for await(const chunk of req)chunks.push(chunk)
+   const value=JSON.parse(Buffer.concat(chunks).toString()||'{}')
+   if(value.reset){reliabilityRules.clear();reliabilityHits.length=0;reliabilityEmptySearch=false}
+   if(value.emptySearch!==undefined)reliabilityEmptySearch=value.emptySearch
+   if(value.publicTranscript){
+    const id='abababab-abab-4bab-8bab-abababababab'
+    tables.youtube_transcripts=tables.youtube_transcripts.filter(row=>row.id!==id)
+    tables.transcript_segments=tables.transcript_segments.filter(row=>row.transcript_id!==id)
+    tables.youtube_transcripts.push({id,youtube_id:'abcdefghij0',title:'Reliability transcript',channel:'Fixture',provider:'manual',status:'ready',translation_status:'ready',searchable:true,explore_published:true,source_origin:'website_admin_transcript',raw_transcript:{source_language:'ar'},updated_at:'2026-11-09T00:00:00Z'})
+    tables.transcript_segments.push({id:500001,transcript_id:id,position:0,original_text:'Published fixture sentence',english_text:'Published fixture translation',start_seconds:0,end_seconds:20})
+   }
+   for(const rule of value.rules??[])reliabilityRules.set(rule.path,{...rule})
+   return json(res,{hits:reliabilityHits})
+  }
+  const fault=reliabilityRules.get(url.pathname)
+  if(fault)reliabilityHits.push({path:url.pathname,method:req.method,at:Date.now(),failed:fault.remaining!==0})
+  if(fault&&fault.remaining!==0){
+   if(fault.remaining>0)fault.remaining--
+   if(fault.delay)await new Promise(resolve=>setTimeout(resolve,fault.delay))
+   if(fault.hang)return
+   if(fault.status)return json(res,{code:fault.code??'PGRST001',message:'Injected backend connection failure'},fault.status)
+  }
+
   const chunks = []; for await (const chunk of req) chunks.push(chunk)
   let body = {}; try { body = JSON.parse(Buffer.concat(chunks).toString() || '{}') } catch {}
   const userId = userFromToken((req.headers.authorization ?? '').replace(/^Bearer /, ''))
@@ -383,6 +408,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if(rpc==='transcript_for_you_groups'&&forYouPlayback)return json(res,[0,1,2,3,4,5,6].filter(i=>!body.p_excluded?.includes(801+i*10)).filter(i=>!body.p_group_ids?.length||body.p_group_ids.includes(`77777777-7777-4777-8777-77777777777${i%2}`)).slice(0,5).map(i=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Playback fixture',channel:'Fixture'},clip_start_ms:495000,clip_end_ms:522000,segments:tables.transcript_segments.filter(row=>row.transcript_id===`99999999-9999-4999-8999-99999999999${i}`&&row.start_seconds>=495).map(row=>({...row,source_tokens:row.tokens}))})))
     if(rpc==='transcript_for_you_groups')return json(res,[0,1].map(i=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Test For You',channel:'Fixture'},clip_start_ms:0,clip_end_ms:60000,segments:[{id:42+i,position:0,start_seconds:0,end_seconds:60,original_text:'\u0643\u0650\u062a\u064e\u0627\u0628\u064c',english_text:'A book.',source_tokens:[{arabic:'\u0643\u0650\u062a\u064e\u0627\u0628\u064c',english:'book'}]}]})))
     if(rpc==='website_search_content_v1') {
+      if(reliabilityEmptySearch)return json(res,[])
       if(failSearch)return json(res,{code:'57014',message:'statement timeout'},500)
       const hits=[{key:'b:'+bookId,kind:'book',title:'Test Book',source:'Test Book',arabic:'',english:'A graded book.',href:'/books/test-book'},
       {key:'c:'+chapterId,kind:'chapter',title:'First Chapter',source:'Test Book',arabic:'',english:'A book. Paragraph 1.',href:'/books/test-book/chapter-1#sentence-0'},

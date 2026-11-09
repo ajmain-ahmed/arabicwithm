@@ -2,6 +2,7 @@
 
 "use server"
 
+import {recoverRead,boundedRead} from '@/app/lib/readRecovery'
 import { cache } from "react"
 import { getAuthClient } from '@/app/lib/supabase/server'
 import { unstable_rethrow } from "next/navigation"
@@ -15,18 +16,19 @@ import type { AccountRole } from '@/app/lib/reviews'
 const getAuthenticatedUser = cache(async (): Promise<User | null> => {
   try {
     const supabase = await getAuthClient()
-    const { data, error } = await supabase.auth.getUser()
+    const { data, error } = await boundedRead(supabase.auth.getUser(),20000)
     if (error) {
       if (error.message !== "Auth session missing!") {
-        console.error("[auth] getUser error:", error.message)
+        console.error("[auth] getUser error:", {name:error.name,status:error.status,code:error.code,message:error.message})
       }
-      return null
+      if(error.message==='Auth session missing!'||[400,401,403].includes(error.status??0))return null
+      throw new Error('Unable to verify your session. Please reload the page.',{cause:error})
     }
     return data.user ?? null
   } catch (e) {
     unstable_rethrow(e)
     console.error("[auth] unexpected error:", e)
-    return null
+    throw e
   }
 })
 
@@ -40,8 +42,8 @@ export interface AuthenticatedAccess {
 const accessForRequest = cache(async (): Promise<AuthenticatedAccess | null> => {
   const user = await getAuthenticatedUser()
   if (!user) return null
-  const { data, error } = await serviceClient.rpc('account_role', { p_user_id: user.id })
-  if (error) throw new Error('Unable to verify account access. Apply the user management migration.')
+  const { data, error } = await recoverRead(()=>serviceClient.rpc('account_role', { p_user_id: user.id }))
+  if(error){console.error('[auth] role lookup failed',error);throw new Error('Unable to verify account access. Please reload the page.')}
   const role: AccountRole = data === 'admin' || data === 'editor' ? data : 'user'
   return { userId: user.id, admin: role === 'admin', role }
 })

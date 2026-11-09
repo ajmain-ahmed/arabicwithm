@@ -1,3 +1,4 @@
+import {boundedRead} from './readRecovery'
 interface Entry { value?: unknown; savedAt: number; promise?: Promise<unknown> }
 
 /** Short-lived, browser-memory snapshots owned by one Admin layout. */
@@ -13,7 +14,7 @@ export class AdminListCache {
     if (current?.promise) return current.promise as Promise<T>
     if (current?.value !== undefined && Date.now() - current.savedAt < this.ttl) return current.value as T
     const entry: Entry = { value: current?.value, savedAt: current?.savedAt ?? 0 }
-    const promise = loader().then(value => {
+    const promise = boundedRead(Promise.resolve().then(loader)).then(value => {
       // A mutation can replace an in-flight read; never restore its old data.
       if (this.entries.get(key) === entry) { entry.value = value; entry.savedAt = Date.now(); entry.promise = undefined }
       return value

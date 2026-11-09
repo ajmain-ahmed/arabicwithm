@@ -34,3 +34,10 @@ it('allows retry after a failed request and invalidates every transcript page', 
   expect(cache.peek('transcripts:1')).toBeUndefined()
   expect(cache.peek('books')).toEqual(['retry'])
 })
+it('explicit refresh supersedes a pending pre-mutation read',async()=>{
+ const cache=new AdminListCache();let finish!:(value:string)=>void
+ const pending=cache.load('books',()=>new Promise<string>(resolve=>{finish=resolve}))
+ await Promise.resolve()
+ expect(await cache.load('books',async()=>'new',true)).toBe('new')
+ finish('old');await pending;expect(cache.peek('books')).toBe('new')
+})

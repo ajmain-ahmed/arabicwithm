@@ -13,7 +13,7 @@ let host:HTMLDivElement,root:Root
 const adminSession={user:{id:'admin',user_metadata:{}},access_token:'token'}
 const SESSION_COOKIE='sb-testref-auth-token=encoded'
 let complete:ReturnType<typeof useAuth>['establishSession']
-function Probe(){const auth=useAuth(),access=useAccountAccess('nav');useEffect(()=>{complete=auth.establishSession},[auth.establishSession]);return <div>{JSON.stringify({user:auth.user?.id,loading:auth.loading,...access})}</div>}
+function Probe(){const auth=useAuth(),access=useAccountAccess('nav');useEffect(()=>{complete=auth.establishSession},[auth.establishSession]);return <div>{JSON.stringify({user:auth.user?.id,loading:auth.loading,authError:auth.error,...access})}</div>}
 /* The provider only initialises supabase-js when a stored session cookie (or
    URL-hash tokens) exists, so every test below seeds the cookie first. */
 function seedSessionCookie(){document.cookie=`${SESSION_COOKIE}; path=/`}
@@ -73,4 +73,14 @@ it('does not complete a session hand-off when Supabase rejects persistence',asyn
  mocks.set.mockResolvedValue({data:{session:null},error:new Error('expired')})
  await act(async()=>{await expect(complete({...adminSession,refresh_token:'bad'} as Parameters<typeof complete>[0])).rejects.toThrow('could not be established')})
  expect(host.textContent).not.toContain('"user":"admin"');expect(mocks.refresh).not.toHaveBeenCalled()
+})
+
+it('settles a hung session restore and recovers when a genuine auth event later resolves it',async()=>{
+ vi.useFakeTimers()
+ try{
+  seedSessionCookie();mocks.session.mockImplementation(()=>new Promise(()=>{}))
+  await act(async()=>root.render(<AuthProvider><Probe/></AuthProvider>))
+  await act(async()=>vi.advanceTimersByTimeAsync(20000));expect(host.textContent).toContain('Unable to restore your session');expect(host.textContent).toContain('"loading":false')
+  await act(async()=>mocks.callback!('SIGNED_IN',adminSession));expect(host.textContent).toContain('"authError":""');expect(host.textContent).toContain('"isAdmin":true')
+ }finally{vi.useRealTimers()}
 })

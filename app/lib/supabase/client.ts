@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr'
+import {browserAuthLock} from './browserAuthLock'
 
 type SupabaseClient = ReturnType<typeof createBrowserClient>
 
@@ -12,7 +13,7 @@ function createClient(): SupabaseClient {
       'Missing required env vars: NEXT_PUBLIC_SUPABASE_URL and/or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'
     )
   }
-  return createBrowserClient(url, key)
+  return createBrowserClient(url, key, {auth:{lock:browserAuthLock}})
 }
 
 function getClient(): SupabaseClient {

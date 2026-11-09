@@ -1,5 +1,6 @@
 'use server'
 
+import {recoverRead} from '@/app/lib/readRecovery'
 import {ENGLISH_TRANSCRIPT_GROUP_ID,isEnglishTranscriptGroup} from '@/app/lib/transcriptGroupTree'
 import {loadTranscriptGroupTree} from '@/app/lib/forYouGroups'
 import {sourceLanguage,sourceLanguageFromMetadata,type SourceLanguage} from '@/app/lib/transcriptSourceLanguage'
@@ -66,10 +67,12 @@ export async function listAdminTranscripts(page=0,titleSearch='',groupFilter='')
   const search=z.string().trim().max(300).parse(titleSearch)
   const drafts=groupFilter==='drafts'
   if(groupFilter&&!['ungrouped','drafts'].includes(groupFilter))z.string().uuid().parse(groupFilter)
-  const {data,error}=await serviceClient.rpc('admin_list_manual_transcripts',{p_actor:actor,p_page:drafts?0:page,p_search:drafts?'':search,p_group:groupFilter&&!['ungrouped','drafts'].includes(groupFilter)?groupFilter:null,p_ungrouped:groupFilter==='ungrouped'})
-  if(error)throw new Error(/PGRST202|42883/.test(error.code??'')?'Transcript groups are not configured. Apply the transcript groups migration.':'Unable to load transcripts. Please retry.')
-  const {data:draftData,error:draftError}=await serviceClient.rpc('admin_list_manual_drafts',{p_actor:actor,p_page:page,p_search:search,p_rows:drafts})
-  if(draftError)throw new Error(transcriptDatabaseError('Draft list',draftError))
+  const [{data,error},{data:draftData,error:draftError}]=await Promise.all([
+   recoverRead(()=>serviceClient.rpc('admin_list_manual_transcripts',{p_actor:actor,p_page:drafts?0:page,p_search:drafts?'':search,p_group:groupFilter&&!['ungrouped','drafts'].includes(groupFilter)?groupFilter:null,p_ungrouped:groupFilter==='ungrouped'})),
+   recoverRead(()=>serviceClient.rpc('admin_list_manual_drafts',{p_actor:actor,p_page:page,p_search:search,p_rows:drafts}))
+  ])
+  if(error){console.error('[admin transcript list]',error);throw new Error('Unable to load transcripts. Please reload the page.')}
+  if(draftError){console.error('[admin transcript drafts]',draftError);throw new Error(transcriptDatabaseError('Draft list',draftError))}
   const list=data as unknown as ManualTranscriptList,draftList=draftData as unknown as {rows:TranscriptRow[];total:number;count:number}
   return {...list,...(drafts?{rows:draftList.rows,total:draftList.total}:{}),groups:[{id:'drafts',name:'Drafts',parent_id:null,direct_count:draftList.count,transcript_count:draftList.count},...(list.groups??[])]}
 }
@@ -233,27 +236,27 @@ export async function searchTranscriptWord(word:string,after=0,rank=0):Promise<T
 }
 async function loadTranscript(id:string,after=-1,seconds?:number,admin=false):Promise<{video:TranscriptRow;segments:TranscriptSegment[]}|null> {
   z.string().uuid().parse(id);z.number().int().min(-1).parse(after)
+  if(seconds!==undefined)z.number().finite().min(0).max(43200).parse(seconds)
   // Service reads always explicitly enforce the existing public corpus boundary.
   let lookup=serviceClient.from('youtube_transcripts').select(columns).eq('id',id)
   if(!admin)lookup=lookup.eq('status','ready').eq('searchable',true)
   const {data:video,error}=await lookup.maybeSingle()
-  if(error)throw new Error('Unable to load transcript.')
+  if(error){console.error('[transcript lookup]',error);throw new Error('Unable to load transcript.')}
   if(!video)return null
-  if(seconds!==undefined&&after===-1){
-    z.number().finite().min(0).max(43200).parse(seconds)
+  if(seconds!==undefined&&seconds>0&&after===-1){
     const {data:anchor,error:anchorError}=await serviceClient.from('transcript_segments').select('position').eq('transcript_id',id).lte('start_seconds',seconds).order('start_seconds',{ascending:false}).order('position',{ascending:false}).limit(1).maybeSingle()
-    if(anchorError)throw new Error('Unable to locate transcript timestamp.')
+    if(anchorError){console.error('[transcript timestamp]',anchorError);throw new Error('Unable to locate transcript timestamp.')}
     after=Math.max(0,(anchor?.position??0)-15)-1
   }
   const {data:segments,error:segmentError}=await serviceClient.from('transcript_segments').select('*').eq('transcript_id',id).gt('position',after).order('position',{ascending:true}).limit(100)
-  if(segmentError)throw new Error('Unable to load transcript segments.')
+  if(segmentError){console.error('[transcript segments]',segmentError);throw new Error('Unable to load transcript segments.')}
   const language=sourceLanguage(video.source_language)
   let rawContent:unknown[]=[]
   if(language==='en'){
    let rawQuery=serviceClient.from('youtube_transcripts').select('raw_transcript').eq('id',id)
    if(!admin)rawQuery=rawQuery.eq('status','ready').eq('searchable',true)
    const {data:source,error:rawError}=await rawQuery.maybeSingle()
-   if(rawError||!source)throw new Error('Unable to load English transcript source.')
+   if(rawError||!source){console.error('[transcript English source]',rawError);throw new Error('Unable to load English transcript source.')}
    const raw=source.raw_transcript;rawContent=raw&&typeof raw==='object'&&!Array.isArray(raw)&&Array.isArray(raw.content)?raw.content:[]
   }
   return {video:{...video,source_language:language},segments:(segments??[]).map(segment=>({...(language==='en'?{tokens:forYouTokens(segment.canonical_paragraph,rawContent[segment.position]),translation:segment.canonical_paragraph&&typeof segment.canonical_paragraph==='object'&&!Array.isArray(segment.canonical_paragraph)&&typeof segment.canonical_paragraph.translation==='string'?segment.canonical_paragraph.translation:((rawContent[segment.position] as {translation?:string;english?:string}|undefined)?.translation??(rawContent[segment.position] as {english?:string}|undefined)?.english??null)}:{}),id:segment.id,position:segment.position,original_text:segment.original_text,english_text:segment.english_text,start_seconds:segment.start_seconds,end_seconds:segment.end_seconds,start_ms:segment.start_ms??Math.round(segment.start_seconds*1000),end_ms:segment.end_seconds===null?null:segment.end_ms??Math.round(segment.end_seconds*1000)}))}

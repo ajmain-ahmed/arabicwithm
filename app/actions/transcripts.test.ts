@@ -64,7 +64,7 @@ describe('website transcript server boundaries',()=>{
  it('returns useful JSON validation without touching the database',async()=>{const result=await importAdminManualTranscriptResult({url:'https://youtu.be/Dgj9fQYbCZY',title:'Title',channel:'',json:'{',searchable:true});expect(result).toEqual({ok:false,error:expect.stringContaining('Invalid transcript JSON')});expect(mocks.rpc).not.toHaveBeenCalled()})
  it('fails closed when the manual library migration is unavailable instead of mixing Shows into the list',async()=>{
   mocks.rpc.mockResolvedValue({data:null,error:{code:'PGRST202',message:'RPC missing'}})
-  await expect(listAdminTranscripts()).rejects.toThrow('Apply the transcript groups migration')
+  await expect(listAdminTranscripts()).rejects.toThrow('Unable to load transcripts')
   expect(mocks.from).not.toHaveBeenCalled()
  })
  it('denies generation, deletion and draft viewing before database access',async()=>{mocks.access.mockResolvedValue({admin:false,userId:'other'});mocks.guard.mockRejectedValue(new Error('Forbidden'));expect(await generateAdminTranscript('https://youtu.be/Dgj9fQYbCZY')).toEqual({ok:false,error:'Administrators only.'});expect(await deleteAdminTranscript('11111111-1111-4111-8111-111111111111')).toEqual({ok:false,error:'Administrators only.'});await expect(loadAdminTranscript('11111111-1111-4111-8111-111111111111')).rejects.toThrow('Forbidden');expect(mocks.rpc).not.toHaveBeenCalled();expect(mocks.from).not.toHaveBeenCalled()})

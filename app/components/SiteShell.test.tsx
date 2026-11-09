@@ -14,9 +14,9 @@ beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});host=d
 afterEach(async()=>{await act(async()=>root.unmount());vi.restoreAllMocks()})
 function Broken(){throw new Error('Deliberate rendering failure');return null}
 it('recovers from a prior page error after client navigation instead of keeping the old error screen',async()=>{
- await act(async()=>root.render(<SiteShell><Broken/></SiteShell>));expect(host.textContent).toContain('Something went wrong');expect(console.error).toHaveBeenCalled()
+ await act(async()=>root.render(<SiteShell><Broken/></SiteShell>));expect(host.textContent).toContain('This page took a little detour');expect(console.error).toHaveBeenCalled()
  mocks.path='/profile';await act(async()=>root.render(<SiteShell><p>New profile content</p></SiteShell>))
- expect(host.textContent).toContain('New profile content');expect(host.textContent).not.toContain('Something went wrong')
+ expect(host.textContent).toContain('New profile content');expect(host.textContent).not.toContain('This page took a little detour')
 })
 
 it.each(['/','/learn','/memory','/grammar','/word-search','/books','/books/story/chapter','/cartoons','/explore','/profile','/support','/feedback','/admin/shows','/learn/activity'])('renders the footer only on exact landing routes: %s',async(path)=>{
