@@ -2,6 +2,7 @@
 import {beforeEach,expect,it,vi} from 'vitest'
 const state=vi.hoisted(()=>({guard:vi.fn(),upload:vi.fn(),remove:vi.fn(),upsert:vi.fn(),clear:vi.fn(),tag:vi.fn(),path:vi.fn(),files:[] as {id:string;name:string;updated_at:string}[],shows:[] as {id:string;slug:string;title:string}[],configs:[] as {show_id:string;storage_path:string;position_x:number;position_y:number;updated_at:string}[]}))
 vi.mock('server-only',()=>({}))
+vi.mock('@/app/lib/imageVariants',()=>({syncImageVariants:vi.fn(),removeImageVariants:vi.fn()}))
 vi.mock('@/app/actions/auth',()=>({guardAdmin:state.guard}))
 vi.mock('next/cache',()=>({updateTag:state.tag,revalidatePath:state.path}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{
@@ -22,8 +23,8 @@ it('requires Admin for listing, saving and deleting before Storage access',async
 it('discovers old files at centre and identifies orphaned images',async()=>{
  const data=await fetchFeaturedForAdmin();expect(data.assets[0]).toMatchObject({show:{title:'Arcane'},position:{x:50,y:50},status:'Featured image'});expect(data.assets[1]).toMatchObject({show:null,status:'No matching show'})
 })
-it('saves a focal position without modifying source bytes and expires the Homepage cache',async()=>{
- await saveFeaturedForAdmin(form());expect(state.upsert).toHaveBeenCalledWith(expect.objectContaining({show_id:'s',storage_path:'featured/ARC.webp',position_x:45,position_y:22}),{onConflict:'show_id'});expect(state.upload).not.toHaveBeenCalled();expect(state.tag).toHaveBeenCalledWith('homepage-featured')
+it('saves a focal position without modifying source bytes or variants and expires the Homepage cache',async()=>{
+ await saveFeaturedForAdmin(form());expect(state.upsert).toHaveBeenCalledWith(expect.objectContaining({show_id:'s',storage_path:'featured/ARC.webp',position_x:45,position_y:22}),{onConflict:'show_id'});expect(state.upload).not.toHaveBeenCalled();expect(state.remove).not.toHaveBeenCalled();expect(state.tag).toHaveBeenCalledWith('homepage-featured')
 })
 it('rejects invalid coordinates, traversal, mismatched assets and slug collisions',async()=>{
  const bad=form();bad.set('x','NaN');await expect(saveFeaturedForAdmin(bad)).rejects.toThrow('Position')
@@ -37,10 +38,11 @@ it('requires explicit replacement and validates image bytes before writing',asyn
 })
 it('replaces canonical slug path only on save and removes obsolete formats after config is saved',async()=>{
  const data=form();data.set('replace','true');data.set('file',new Blob([new Uint8Array([137,80,78,71,13,10,26,10,0])]),'new.png')
- await saveFeaturedForAdmin(data);expect(state.upload).toHaveBeenCalledWith('featured/ARC.png',expect.any(Blob),expect.objectContaining({upsert:true,contentType:'image/png'}));expect(state.remove).toHaveBeenCalledWith(['featured/ARC.webp']);expect(state.upsert.mock.invocationCallOrder[0]).toBeLessThan(state.remove.mock.invocationCallOrder[0])
+ const {featuredVariantPaths}=await import('@/app/lib/imageVariantPaths');expect(featuredVariantPaths('featured/ARC.webp')).toEqual(['variants/featured/ARC-828.avif','variants/featured/ARC-1600.avif'])
+ await saveFeaturedForAdmin(data);expect(state.upload).toHaveBeenCalledWith('featured/ARC.png',expect.any(Blob),expect.objectContaining({upsert:true,contentType:'image/png'}));expect(state.remove).toHaveBeenCalledWith(['featured/ARC.webp','variants/featured/ARC-828.avif','variants/featured/ARC-1600.avif']);expect(state.upsert.mock.invocationCallOrder[0]).toBeLessThan(state.remove.mock.invocationCallOrder[0])
 })
 it('deletes only the selected asset and its configuration, including orphans',async()=>{
- await deleteFeaturedForAdmin('ORPHAN.png');expect(state.remove).toHaveBeenCalledWith(['featured/ORPHAN.png']);expect(state.clear).toHaveBeenCalledWith('storage_path','featured/ORPHAN.png');expect(state.upsert).not.toHaveBeenCalled()
+ await deleteFeaturedForAdmin('ORPHAN.png');expect(state.remove).toHaveBeenCalledWith(['featured/ORPHAN.png','variants/featured/ORPHAN-828.avif','variants/featured/ORPHAN-1600.avif']);expect(state.clear).toHaveBeenCalledWith('storage_path','featured/ORPHAN.png');expect(state.upsert).not.toHaveBeenCalled()
 })
 
 it('uploads artwork for a Show with no existing image and uses its canonical slug',async()=>{

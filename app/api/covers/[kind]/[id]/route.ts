@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto'
 import { serviceClient } from '@/app/lib/supabase'
 import { rateLimit } from '@/app/lib/rateLimit'
 import { getYouTubeThumbnailUrl } from '@/app/lib/cartoons'
+import { coverVariantPath } from '@/app/lib/imageVariantPaths'
 
 // Covers are cached by this route's response headers (see coverResponse below):
 // Supabase's storage gateway serves every object with `cache-control: no-cache`
@@ -139,6 +140,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
     const canonical = `${kind === 'shows' ? 'cartoons' : kind}/${row.slug}.webp`
     const candidates = path ? [{ bucket, path }] : []
     if (bucket !== 'covers' || path !== canonical) candidates.push({ bucket: 'covers', path: canonical })
+    const requestedWidth = Number(new URL(request.url).searchParams.get('w') ?? 0)
+    const variant = bucket === 'covers' ? coverVariantPath(canonical, requestedWidth) : null
+    if (variant) candidates.unshift({ bucket: 'covers', path: variant })
     for (const candidate of candidates) {
       if (candidate.bucket === 'covers') {
         const cover = await fetchCoverBytes(candidate.bucket, candidate.path)

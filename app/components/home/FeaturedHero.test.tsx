@@ -20,9 +20,9 @@ it('renders saved focal coordinates on the actual Homepage image',async()=>{
 
 it('uses responsive artwork and leaves unselected carousel images unmounted',()=>{
  const show={id:'arc',slug:'arc',title:'Arcane',cover:'/cover.webp',level:'B1',episodeCount:1}
- const active=document.createElement('div');active.innerHTML=renderToStaticMarkup(<FeaturedHero show={show} featuredImage="https://storage.test/featured/arc.avif" episodeCount={1}/>)
+ const active=document.createElement('div');active.innerHTML=renderToStaticMarkup(<FeaturedHero show={show} featuredImage="https://storage.test/storage/v1/object/public/covers/featured/arc.avif" episodeCount={1}/>)
  const image=active.querySelector('img')!
- expect(image.getAttribute('srcset')).toContain('/_next/image')
+ expect(image.getAttribute('srcset')).toContain('/covers/variants/featured/arc-828.avif')
  expect(image.getAttribute('sizes')).toContain('100vw')
  const deferred=document.createElement('div');deferred.innerHTML=renderToStaticMarkup(<FeaturedHero show={show} featuredImage="https://storage.test/featured/arc.avif" loadImage={false} episodeCount={1}/>)
  expect(deferred.querySelector('img')).toBeNull()

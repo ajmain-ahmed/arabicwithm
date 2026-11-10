@@ -44,6 +44,13 @@ it.each(['episodes/upload.webp', 'covers/episodes/upload.webp', 'https://project
   expect(mocks.sign).not.toHaveBeenCalled()
 })
 
+it('uses a precomputed variant for a requested cover width', async () => {
+  mocks.single.mockResolvedValue({ data: { cover: 'episodes/upload.webp', slug: 'legacy', youtube_id: 'abcdefghijk' }, error: null })
+  const response = await GET(new Request('http://localhost/api/covers/episodes/item?w=640'), { params: Promise.resolve({ kind: 'episodes', id: 'item' }) })
+  expect(response.status).toBe(200)
+  expect(mocks.download).toHaveBeenCalledWith('variants/episodes/legacy-640.webp')
+})
+
 it('revalidates with 304 when the browser already has the bytes', async () => {
   mocks.single.mockResolvedValue({ data: { cover: '', slug: 'legacy', youtube_id: 'abcdefghijk' }, error: null })
   const response = await request({ 'If-None-Match': ETAG })

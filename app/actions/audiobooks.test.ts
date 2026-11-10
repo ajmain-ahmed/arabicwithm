@@ -6,6 +6,7 @@ vi.mock('@/app/actions/auth',()=>({guardAdmin:mocks.guard,getAuthenticatedUserId
 vi.mock('@/app/actions/entitlements',()=>({requireEntitlement:mocks.entitlement}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{from:mocks.from,storage:{getBucket:mocks.bucket,from:()=>({list:mocks.list,remove:mocks.remove,createSignedUrl:mocks.sign,upload:mocks.upload})}}}))
 vi.mock('@/app/lib/verifyAudioObject',()=>({verifyAudioObject:mocks.verify}))
+vi.mock('@/app/lib/imageVariants',()=>({syncImageVariants:vi.fn()}))
 vi.mock('next/cache',()=>({revalidatePath:mocks.revalidate,updateTag:vi.fn(),unstable_cache:(fn:unknown)=>fn}))
 import {uploadAudiobookAudio,removeAudiobookAudio} from './storage'
 import {deleteChapterAudioForAdmin,fetchChapterAudioForAdmin,fetchPublishedChapterAudio,requestChapterAudio,requestChapterAudioResult,saveAudioProgress,saveChapterAudioForAdmin} from './audiobooks'

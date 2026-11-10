@@ -5,6 +5,8 @@ import {guardAdmin} from '@/app/actions/auth'
 import {serviceClient} from '@/app/lib/supabase'
 import {FEATURED_FILE, listFeaturedFiles, loadFeaturedAssets} from '@/app/lib/featuredStorage'
 import {revalidatePath,updateTag} from 'next/cache'
+import {syncImageVariants} from '@/app/lib/imageVariants'
+import {featuredVariantPaths} from '@/app/lib/imageVariantPaths'
 
 export async function fetchFeaturedForAdmin() {
  await guardAdmin()
@@ -60,6 +62,7 @@ export async function saveFeaturedForAdmin(form:FormData) {
   path=`featured/${show.slug}.${format.extension}`
   const {error}=await serviceClient.storage.from('covers').upload(path,file,{contentType:format.type,upsert:true,cacheControl:'60'})
   if(error)throw new Error('Featured upload failed. Please try again.')
+  await syncImageVariants(file,path)
  }else{
   const name=form.get('name')
   if(typeof name!=='string'||!existing.some(file=>file.name===name))throw new Error('Featured image no longer exists. Reload and try again.')
@@ -69,7 +72,10 @@ export async function saveFeaturedForAdmin(form:FormData) {
  if(error){invalidateFeatured();throw new Error('Unable to save Featured positioning. Please try again.')}
  // The saved canonical path wins immediately; remove obsolete formats only
  // after config is durable so a failed cleanup cannot select the wrong image.
- const old=existing.map(file=>`featured/${file.name}`).filter(old=>old!==path)
+ const old=existing.flatMap(file=>{
+  const oldPath=`featured/${file.name}`
+  return oldPath===path?[]:[oldPath,...featuredVariantPaths(oldPath)]
+ })
  if(old.length){const {error:cleanup}=await serviceClient.storage.from('covers').remove(old);if(cleanup){invalidateFeatured();throw new Error('Featured image saved, but alternate files could not be removed. Reload to review.')}}
  invalidateFeatured()
 }
@@ -77,7 +83,7 @@ export async function deleteFeaturedForAdmin(name:string) {
  await guardAdmin()
  if(typeof name!=='string'||!FEATURED_FILE.test(name))throw new Error('Invalid Featured image.')
  const path=`featured/${name}`
- const {error}=await serviceClient.storage.from('covers').remove([path])
+ const {error}=await serviceClient.storage.from('covers').remove([path,...featuredVariantPaths(path)])
  if(error)throw new Error('Unable to delete Featured image.')
  const {error:configError}=await serviceClient.from('featured_show_config').delete().eq('storage_path',path)
  invalidateFeatured()

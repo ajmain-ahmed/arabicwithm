@@ -6,6 +6,7 @@ import { saveChapterAudioForAdmin, fetchChapterAudioForAdmin } from '@/app/actio
 import { guardAdmin } from "@/app/actions/auth"
 import { serviceClient } from "@/app/lib/supabase"
 import { randomUUID } from 'node:crypto'
+import { syncImageVariants } from "@/app/lib/imageVariants"
 import { AUDIO_PATH_PATTERN, AUDIO_MIME, audioUploadBody, validateAudioFile } from '@/app/lib/audioUpload'
 
 const ALLOWED_BUCKETS = new Set(["covers"])
@@ -69,6 +70,7 @@ export async function uploadCoverImage(formData: FormData): Promise<string> {
     console.error("[uploadCoverImage] error:", error.message)
     throw new Error("Cover upload failed. Please try again.")
   }
+  await syncImageVariants(file, path)
 
   const { data: urlData } = serviceClient.storage.from(bucket).getPublicUrl(data?.path ?? path)
 
