@@ -14,6 +14,9 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: { '/api/reviewer/export': ['./public/fonts/review/*.ttf'] },
   staticPageGenerationTimeout: 180,
   images: {
+    /* Vercel currently rejects optimizer requests with 402. Catalogue and
+       homepage assets are already compressed, so serve their bytes directly. */
+    unoptimized: true,
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,
     /* Fewer generated widths: slots on the site are ~100-800px, so a short
