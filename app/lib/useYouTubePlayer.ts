@@ -131,8 +131,8 @@ export default function useYouTubePlayer(
   useEffect(() => { mutedRef.current = options.muted === true }, [options.muted])
   useEffect(() => {
     startAtRef.current = startAt
-    if (isReady && typeof startAt === 'number' && Number.isFinite(startAt) && startAt >= 0) playerRef.current?.seekTo?.(startAt, true)
-  }, [startAt, isReady])
+    if (autoplay && isReady && typeof startAt === 'number' && Number.isFinite(startAt) && startAt >= 0) playerRef.current?.seekTo?.(startAt, true)
+  }, [startAt, isReady, autoplay])
 
   useEffect(() => {
     const wrap = wrapRef.current
@@ -259,7 +259,7 @@ export default function useYouTubePlayer(
                 if ((playerRef.current?.getVolume?.() ?? 100) === 0) playerRef.current?.setVolume?.(100)
               }
               setIsMuted(readEffectiveMuted(playerRef.current, mutedRef.current))
-              if (startAtRef.current && startAtRef.current > 0) playerRef.current?.seekTo?.(startAtRef.current, true)
+              if (autoplay && startAtRef.current && startAtRef.current > 0) playerRef.current?.seekTo?.(startAtRef.current, true)
               if (autoplay) playerRef.current?.playVideo?.()
               setIsReady(true)
               if(options.inspectNativeSeeks)seekOutsideRef.current?.(false)

@@ -4,21 +4,18 @@ import { returnToPublicHome } from '@/app/lib/publicHome'
 import { useEffect, useState } from 'react'
 import {
   ArrowForwardIos, CalendarMonthOutlined, CheckCircleOutlined,
-  ChevronRight, Close, DiamondOutlined, EmailOutlined, FavoriteRounded,
-  AutorenewRounded, CreditCardOutlined,
-  FeedbackOutlined, LocalFireDepartmentRounded,
+  ChevronRight, DiamondOutlined, EmailOutlined, FavoriteRounded,
+  AutorenewRounded, CreditCardOutlined, LocalFireDepartmentRounded,
   LockOutlined, LogoutOutlined, PersonOutlined,
   SettingsOutlined, ShieldOutlined, SupportOutlined,
 } from '@mui/icons-material'
-import {
-  Alert, Box, Button, Container, Dialog, DialogContent, DialogTitle, IconButton, Rating, TextField, Typography,
-} from '@mui/material'
+import { Alert, Box, Button, Container, TextField, Typography } from '@mui/material'
 import { checkUsernameAvailability, updateProfile, type PublicProfile } from '@/app/actions/profiles'
 import { fetchPremiumStatus, managePremium, setPremiumRenewal, startPremiumCheckout, type PremiumStatus } from '@/app/actions/premium'
-import { submitFeedback } from '@/app/actions/feedback'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import { formatMembershipDate } from '@/app/lib/display'
-import SupportForm from '@/app/support/SupportForm'
+import ContactDialog from '@/app/components/ContactDialog'
+import SupportDialog from '@/app/components/SupportDialog'
 import AppDownloadSection from '@/app/components/home/AppDownloadSection'
 import ProfileHeader from '@/app/profile/ProfileHeader'
 import ProfilePresetPicker from '@/app/profile/ProfilePresetPicker'
@@ -450,78 +447,9 @@ function SettingsSection() {
   )
 }
 
-const DIALOG_PAPER = { borderRadius: '12px', bgcolor: 'var(--awm-white)', backgroundImage: 'none' } as const
-
-function FeedbackDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { user, loading } = useAuth()
-  const [rating, setRating] = useState<number | null>(null)
-  const [comment, setComment] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-  const [sent, setSent] = useState(false)
-  const [submissionId, setSubmissionId] = useState('')
-  useEffect(() => {
-    if (open) { setSent(false); setError('') }
-  }, [open])
-
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    if (!rating || busy) return
-    setBusy(true); setError('')
-    const id = submissionId || crypto.randomUUID(); setSubmissionId(id)
-    try {
-      const result = await submitFeedback({ rating, comment, submissionId: id })
-      if (result.ok) setSent(true)
-      else setError(result.error ?? 'Unable to submit feedback.')
-    } catch { setError('Unable to connect. Please try again.') }
-    finally { setBusy(false) }
-  }
-
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" slotProps={{ paper: { sx: DIALOG_PAPER } }}>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'var(--font-heading)', fontWeight: 600, color: 'var(--awm-bark)', pb: 1 }}>
-        Give Feedback
-        <IconButton onClick={onClose} aria-label="Close feedback" sx={{ color: 'var(--awm-muted)' }}><Close /></IconButton>
-      </DialogTitle>
-      <DialogContent>
-        {!loading && !user && (
-          <Alert severity="info" sx={{ mb: 2 }} action={<Button onClick={() => { onClose(); window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } })) }}>Sign in</Button>}>
-            Sign in to submit feedback.
-          </Alert>
-        )}
-        {sent ? <Alert severity="success">Thank you! Your feedback has been saved.</Alert> : (
-          <Box component="form" onSubmit={event => void submit(event)} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Typography id="pv-rating-label" sx={{ fontFamily: 'var(--font-sans), sans-serif', color: 'var(--awm-bark)' }}>How is your experience? (1–5 stars)</Typography>
-            <Rating aria-labelledby="pv-rating-label" name="pv-feedback-rating" value={rating} onChange={(_, value) => setRating(value)} size="large" disabled={busy} sx={{ color: 'var(--awm-gold)', '& .MuiRating-iconEmpty': { color: 'var(--awm-muted)' } }} />
-            <TextField className="pv-field" label="Comments (optional)" multiline minRows={4} value={comment} onChange={event => setComment(event.target.value)} slotProps={{ htmlInput: { maxLength: 2000 } }} disabled={busy} />
-            {error && <Alert severity="error">{error}</Alert>}
-            <Button type="submit" variant="contained" disabled={!rating || busy || !user || loading} sx={{ ...GOLD_BUTTON }}>{busy ? 'Submitting…' : 'Submit feedback'}</Button>
-          </Box>
-        )}
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function SupportDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" slotProps={{ paper: { sx: DIALOG_PAPER } }}>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'var(--font-heading)', fontWeight: 600, color: 'var(--awm-bark)', pb: 0 }}>
-        Support the Project
-        <IconButton onClick={onClose} aria-label="Close support" sx={{ color: 'var(--awm-muted)' }}><Close /></IconButton>
-      </DialogTitle>
-      <DialogContent>
-        <Typography sx={{ mb: 2, fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.85rem', color: 'var(--awm-muted)', lineHeight: 1.6 }}>
-          Contributions help fund content production, hosting and the learning tools behind Arabic with M. Support is entirely optional.
-        </Typography>
-        <SupportForm />
-      </DialogContent>
-    </Dialog>
-  )
-}
 
 function SupportSection() {
-  const [dialog, setDialog] = useState<null | 'feedback' | 'support'>(null)
+  const [dialog, setDialog] = useState<null | 'contact' | 'support'>(null)
   const faqs = [
     { q: 'What is AWM+?', a: 'AWM+ is our subscription: unlimited Memory sessions, audiobook listening, PDF downloads and more. Manage it any time from this profile page.' },
     { q: 'How do I keep my streak going?', a: 'Spend at least a minute learning on any given day — watching, reading or looking up words all count toward your streak.' },
@@ -535,7 +463,7 @@ function SupportSection() {
       <SectionTitle>Support</SectionTitle>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2, mb: 4 }}>
         {[
-          { key: 'feedback' as const, icon: <FeedbackOutlined sx={{ fontSize: 22 }} />, title: 'Give Feedback', body: 'Tell us what is working and what we should build next.', action: 'Open feedback' },
+          { key: 'contact' as const, icon: <EmailOutlined sx={{ fontSize: 22 }} />, title: 'Contact Us', body: 'Questions, feedback or suggestions? Contact us on social media or by email.', action: 'Contact us' },
           { key: 'support' as const, icon: <FavoriteRounded sx={{ fontSize: 22 }} />, title: 'Support the Project', body: 'Help us create more Arabic learning resources.', action: 'Support us' },
         ].map(({ key, icon, title, body, action }) => (
           <Box key={key} className="pv-support-card" component="button" type="button" onClick={() => setDialog(key)}>
@@ -553,7 +481,7 @@ function SupportSection() {
         <Typography sx={{ fontFamily: 'var(--font-heading)', fontSize: '1.3rem', fontWeight: 600, color: 'var(--awm-bark)', mb: 2.5 }}>Common Questions</Typography>
         {faqs.map(({ q, a }) => <FaqItem key={q} q={q} a={a} />)}
       </Box>
-      <FeedbackDialog open={dialog === 'feedback'} onClose={close} />
+      <ContactDialog open={dialog === 'contact'} onClose={close} />
       <SupportDialog open={dialog === 'support'} onClose={close} />
     </Box>
   )

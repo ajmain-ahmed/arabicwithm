@@ -14,7 +14,7 @@ import type { ExploreBookPage } from '@/app/actions/books'
 import { dispatchWordLookup } from '@/app/lib/activity'
 import { usePlayerStore } from '@/store/playerStore'
 import { useExploreFeedCache } from '@/store/exploreFeedStore'
-import { LoadingCircle } from '@/app/components/PageLoading'
+import { ExplorePageLoading } from '@/app/components/PageLoading'
 import { fetchExploreFeedPage } from '@/app/actions/explore'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
 import {
@@ -825,13 +825,7 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
     return () => observer.disconnect()
   }, [activateIndex, items])
 
-  if (items.length === 0 && !initialLoaded) {
-    return (
-      <Box sx={{ height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' }, bgcolor: { xs: 'var(--awm-cream-light)', md: '#0a0c0b' }, display: 'grid', placeItems: 'center' }}>
-        <LoadingCircle size={62} dark />
-      </Box>
-    )
-  }
+  if (items.length === 0 && !initialLoaded) return <ExplorePageLoading />
 
   if (items.length === 0) {
     return (

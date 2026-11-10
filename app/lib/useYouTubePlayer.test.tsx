@@ -28,8 +28,8 @@ const calls: string[] = []
 const destroy = vi.fn()
 const pause = vi.fn()
 const seek = vi.fn((seconds:number)=>{playerTime=seconds})
-function Harness({ id, start, end, muted = true, fallback = false, synced=false, verify=false, audible=false, nativeReplay=false,inspect=false }: { id?: string; start?: number; end?:number; muted?: boolean; fallback?: boolean; synced?:boolean; verify?:boolean; audible?:boolean; nativeReplay?:boolean;inspect?:boolean }) {
-  const player = useYouTubePlayer(id, updateTime, start, { inspectNativeSeeks:inspect,onSeekOutsideClip:outsideSeek,onNativeMuteChange:nativeMute, verifySoundState:verify, replayClipOnNativePlay:nativeReplay, autoplay: true, muted, endAt:end, mutedAutoplayFallback: fallback, audibleAutoplay:audible, requireTimeUpdates:synced, onEnded:ended, onError:failed })
+function Harness({ id, start, end, muted = true, fallback = false, synced=false, verify=false, audible=false, nativeReplay=false,inspect=false,auto=true }: { id?: string; start?: number; end?:number; muted?: boolean; fallback?: boolean; synced?:boolean; verify?:boolean; audible?:boolean; nativeReplay?:boolean;inspect?:boolean;auto?:boolean }) {
+  const player = useYouTubePlayer(id, updateTime, start, { inspectNativeSeeks:inspect,onSeekOutsideClip:outsideSeek,onNativeMuteChange:nativeMute, verifySoundState:verify, replayClipOnNativePlay:nativeReplay, autoplay: auto, muted, endAt:end, mutedAutoplayFallback: fallback, audibleAutoplay:audible, requireTimeUpdates:synced, onEnded:ended, onError:failed })
   useEffect(() => { controls = player })
   const { wrapRef } = player
   return <div ref={wrapRef} />
@@ -62,6 +62,13 @@ beforeEach(() => {
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers() })
 describe('YouTube player lifecycle', () => {
+  it('keeps non-autoplay players paused at the native start without a startup seek',async()=>{
+   await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" start={300.18} auto={false}/>))
+   await act(async()=>{await vi.advanceTimersByTimeAsync(60);options.events.onReady()})
+   expect(options.playerVars).toMatchObject({start:300,autoplay:0})
+   expect(seek).not.toHaveBeenCalled();expect(calls).not.toContain('play');expect(controls.isPlaying).toBe(false)
+  })
+
   it('distinguishes muted fallback and denied recovery from an explicit native mute',async()=>{
     await act(async()=>root.render(<Harness id="dQw4w9WgXcQ" muted={false} audible fallback verify synced/>))
     await act(async()=>{await vi.advanceTimersByTimeAsync(60);options.events.onReady()})

@@ -1,7 +1,8 @@
 import { Suspense } from 'react'
 import { fetchShowsForPublic, fetchAllEpisodesForPublic } from '@/app/actions/cartoons'
 import { canonicalizeCartoonCategory, WATCH_LEVELS } from '@/app/lib/cartoons'
-import CartoonsPage, { CartoonsPageSkeleton } from './CartoonsPage'
+import CartoonsPage from './CartoonsPage'
+import { CataloguePageLoading } from '@/app/components/PageLoading'
 
 export const revalidate = 3600
 
@@ -27,7 +28,7 @@ function sanitizeParam(value: string, allowed: string[]): string {
 
 export default function Page({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return (
-    <Suspense fallback={<CartoonsPageSkeleton />}>
+    <Suspense fallback={<CataloguePageLoading />}>
       <Catalogue searchParams={searchParams} />
     </Suspense>
   )

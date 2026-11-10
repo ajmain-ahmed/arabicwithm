@@ -71,7 +71,7 @@ const PAGE_CSS = `
     --sand:        var(--awm-cream);
   }
 
-  html, body { background: var(--cream); margin: 0; }
+  html, body { background-color: var(--cream); margin: 0; }
 
   /* Fixed mobile header — rendered via portal directly on <body> so no
      ancestor overflow can interfere. Hidden on lg+. */
@@ -468,13 +468,13 @@ function ArabicLineText({
               )
             }
 
-            /* ── Desktop: hover word → shared tooltip anchored at the word ── */
+            /* ── Desktop: hover or click word → shared tooltip at the word ── */
             return (
               <span
                 key={i}
                 role="button" tabIndex={0} aria-label={`Define ${wordText}`}
-                onClick={e => { e.stopPropagation(); setOpen(false); handleOpenDrawer(entry, e.currentTarget) }}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(false); handleOpenDrawer(entry, e.currentTarget) } }}
+                onClick={e => { e.stopPropagation(); handleOpen(entry, e.currentTarget); onWordActivate?.() }}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleOpen(entry, e.currentTarget); onWordActivate?.() } }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(184,134,11,0.12)'
                   handleOpen(entry, e.currentTarget)
@@ -498,13 +498,13 @@ function ArabicLineText({
         </span>
       </HtmlTooltip>
 
-      <MobileDefinitionSheet
+      {isMobile && <MobileDefinitionSheet
         open={Boolean(mobileAnchor)}
         entry={mobileEntry}
         onClose={handleCloseDrawer}
         onExited={handleDrawerExited}
         textScale={textScale}
-      />
+      />}
 
     </>
   )

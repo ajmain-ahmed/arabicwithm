@@ -20,29 +20,14 @@ function SpotlightPlayer({clip,onUnavailable,onSound}:{clip:ForYouClip;onUnavail
  const [time,setTime]=useState(clip.clip_start_ms/1000)
  const sample=useForYouMeter()
  const soundEnabled=useSyncExternalStore(subscribeToExploreSoundPreference,getExploreSoundPreference,()=>true)
- const restored=useRef(false)
- const {wrapRef,isReady,isPlaying,playbackRate,pauseVideo,errorCode,retry,isMuted,getSoundMuted,mute,playWithSound,syncSoundIntent}=useYouTubePlayer(clip.video.youtube_id,updateTime,clip.clip_start_ms/1000,{requireTimeUpdates:true,replayClipOnNativePlay:true,autoplay:true,muted:!soundEnabled,verifySoundState:true,onNativeMuteChange:muted=>setExploreSoundPreference(!muted),mutedAutoplayFallback:true,endAt:clip.clip_end_ms/1000})
+ const {wrapRef,isReady,isPlaying,playbackRate,pauseVideo,errorCode,retry,isMuted,getSoundMuted,mute,playWithSound}=useYouTubePlayer(clip.video.youtube_id,updateTime,clip.clip_start_ms/1000,{requireTimeUpdates:true,replayClipOnNativePlay:true,autoplay:false,muted:!soundEnabled,verifySoundState:true,onNativeMuteChange:muted=>setExploreSoundPreference(!muted),endAt:clip.clip_end_ms/1000})
  const toggle=useCallback(()=>{
-  restored.current=true
   const muted=getSoundMuted()
   setExploreSoundPreference(muted)
   if(muted)playWithSound();else mute()
  },[getSoundMuted,playWithSound,mute])
  useEffect(()=>{onSound({muted:isMuted,ready:isReady,toggle});return()=>onSound(null)},[isMuted,isReady,toggle,onSound])
  useEffect(()=>{if(!soundEnabled)mute()},[soundEnabled,mute])
- useEffect(()=>{
-  if(!isReady)return
-  const restore=(event:Event)=>{
-   if(!event.isTrusted||restored.current||(event.target instanceof Element&&event.target.closest('[data-spotlight-sound]')))return
-   syncSoundIntent()
-   if(!getExploreSoundPreference()||!getSoundMuted())return
-   restored.current=true
-   playWithSound()
-  }
-  document.addEventListener('pointerdown',restore)
-  document.addEventListener('keydown',restore)
-  return()=>{document.removeEventListener('pointerdown',restore);document.removeEventListener('keydown',restore)}
- },[isReady,getSoundMuted,playWithSound,syncSoundIntent])
  function updateTime(seconds:number){setTime(seconds);sample?.({time:seconds,playing:isReady&&isPlaying,rate:playbackRate,pause:pauseVideo})}
  const line=segmentAtTime(clip.segments,time)
  useEffect(()=>{if(errorCode!==null&&[5,100,101,150,153].includes(errorCode))onUnavailable(clip.video.id)},[errorCode,clip.video.id,onUnavailable])

@@ -11,6 +11,7 @@ import LazyFloatingVideoPlayer from './LazyFloatingVideoPlayer'
 import GlobalDataInit from './GlobalDataInit'
 import ErrorBoundary from './ErrorBoundary'
 import LearningActivityTracker from './LearningActivityTracker'
+import SiteDialogs from './SiteDialogs'
 
 export default function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -38,7 +39,6 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
       <Box
         component="main"
         className="awm-site-pages"
-        data-no-site-texture={isProfileRoute ? 'true' : undefined}
         sx={{
           pt: 'var(--awm-navbar-height)',
           flex: '1 0 auto',
@@ -58,6 +58,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
         </ErrorBoundary>
       </Box>
       {showFooter && <Footer homeMobileSpacing={pathname==='/'}/>}
+      <SiteDialogs />
       {!isProfileRoute && <MobileBottomNav />}
       {!isExploreRoute && <LazyFloatingVideoPlayer />}
     </Box>

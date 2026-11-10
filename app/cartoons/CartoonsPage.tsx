@@ -6,11 +6,9 @@ import {
   Box,
   Breadcrumbs,
   Button,
-  Container,
   IconButton,
   InputAdornment,
   Pagination,
-  Skeleton,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -37,7 +35,6 @@ import { errorMessage } from '@/app/lib/errors'
 
 const BARK = 'var(--awm-bark)'
 const GOLD = 'var(--awm-gold)'
-const WARM_WHITE = 'var(--awm-cream-light)'
 const MUTED = 'var(--awm-muted)'
 
 export interface WatchEpisode extends EpisodeMeta {
@@ -53,47 +50,6 @@ type WatchControl = WatchView
 export interface WatchFilters {
   category: string
   level: string
-}
-
-export function CartoonsPageSkeleton() {
-  return (
-    <Box
-      component="div"
-      sx={{
-        minHeight: { xs: 'calc(100vh - 56px)', md: '100vh' },
-        '@supports (height: 100dvh)': { minHeight: { xs: 'calc(100dvh - 56px)', md: '100dvh' } },
-        bgcolor: WARM_WHITE,
-        pb: { xs: 2, md: 8 },
-      }}
-    >
-      <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 3, md: 4 } }}>
-        <Box sx={{ display: { xs: 'none', md: 'block' }, mb: 2 }}>
-          <Skeleton width={140} />
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1.5, mb: { xs: 1.5, md: 3 } }}>
-          <Skeleton variant="rounded" width={360} height={44} sx={{ borderRadius: '9999px', maxWidth: '60%' }} />
-          <Skeleton variant="rounded" width={110} height={44} sx={{ display: { xs: 'none', md: 'block' } }} />
-        </Box>
-        <Box sx={{ display: 'flex', gap: { md: 4, lg: 5 } }}>
-          <Box sx={{ width: 240, flexShrink: 0, display: { xs: 'none', md: 'block' } }}>
-            <Box sx={{ position: 'sticky', top: 100, display: 'grid', gap: 1.75, pt: 0.5 }}>
-              {Array.from({ length: 9 }).map((_, index) => (
-                <Skeleton key={index} height={32} />
-              ))}
-            </Box>
-          </Box>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Skeleton sx={{ display: { xs: 'none', md: 'block' }, mb: 2, ml: 'auto' }} width={90} />
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3,minmax(0,1fr))', sm: 'repeat(2,minmax(0,1fr))', lg: 'repeat(3,minmax(0,1fr))', xl: 'repeat(4,minmax(0,1fr))' }, gap: { xs: 0.75, sm: 1 } }}>
-              {Array.from({ length: 12 }).map((_, index) => (
-                <Skeleton key={index} variant="rectangular" sx={{ aspectRatio: '4 / 5', borderRadius: '4px', bgcolor: 'rgba(44,26,14,0.08)' }} />
-              ))}
-            </Box>
-          </Box>
-        </Box>
-      </Container>
-    </Box>
-  )
 }
 
 export default function CartoonsPage({

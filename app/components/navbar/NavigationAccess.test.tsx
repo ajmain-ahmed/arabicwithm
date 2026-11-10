@@ -123,18 +123,26 @@ it.each([false, true])('preserves authorised Home management navigation on mobil
  expect(document.body.textContent).toContain('Admin')
 })
 
-it('routes every normal mobile entry once and closes without permission UI',async()=>{
+it('routes normal mobile entries and opens dialogs for Contact Us and Support Us',async()=>{
  mocks.mobile=true;mocks.role='user';mocks.pathname='/books'
- const entries=[['My Profile','/profile/admin'],['Home','/'],['Explore','/explore'],['Watch','/cartoons'],['Read','/books'],['Learn','/learn'],['Give Feedback','/feedback'],['Support Us','/support']]
+ const entries=[['My Profile','/profile/admin'],['Home','/'],['Explore','/explore'],['Watch','/cartoons'],['Read','/books'],['Learn','/learn']]
  await act(async()=>root.render(<Navbar/>))
  for(const [label,href] of entries){
   await act(async()=> (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
   const items=[...document.querySelectorAll('.mobile-list-btn')]
-  expect(items.map(item=>item.textContent)).toEqual([...entries.map(([name])=>name),'Settings','Sign Out'])
-  expect(document.body.textContent).not.toMatch(/Checking permissions|Verifying permissions|Contact|Reviewer/)
+  expect(items.map(item=>item.textContent)).toEqual([...entries.map(([name])=>name),'Contact Us','Support Us','Settings','Sign Out'])
+  expect(document.body.textContent).not.toMatch(/Checking permissions|Verifying permissions|Reviewer/)
   const item=items.find(item=>item.textContent===label) as HTMLElement
   mocks.push.mockClear();await act(async()=>item.click())
   expect(mocks.push).toHaveBeenCalledExactlyOnceWith(href)
+ }
+ for(const [label,eventName] of [['Contact Us','open-contact-dialog'],['Support Us','open-support-dialog']]){
+  const open=vi.fn();window.addEventListener(eventName,open)
+  await act(async()=>(host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
+  const item=[...document.querySelectorAll('.mobile-list-btn')].find(item=>item.textContent===label) as HTMLElement
+  mocks.push.mockClear();await act(async()=>item.click())
+  expect(open).toHaveBeenCalledOnce();expect(mocks.push).not.toHaveBeenCalled()
+  window.removeEventListener(eventName,open)
  }
 })
 
@@ -143,7 +151,7 @@ it.each(['user', 'premium'])('groups the normal %s mobile menu with dividers aft
   mocks.mobile = true; mocks.role = role
   await act(async () => root.render(<Navbar />))
   await act(async () => (host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
-  expect([...document.querySelectorAll('.mobile-list-btn')].map(node => node.textContent)).toEqual(['My Profile','Home','Explore','Watch','Read','Learn','Give Feedback','Support Us','Settings','Sign Out'])
+  expect([...document.querySelectorAll('.mobile-list-btn')].map(node => node.textContent)).toEqual(['My Profile','Home','Explore','Watch','Read','Learn','Contact Us','Support Us','Settings','Sign Out'])
   const dividers = [...document.querySelectorAll('[data-nav-divider]')]
   expect(dividers.map(node => node.getAttribute('data-nav-divider'))).toEqual(['My Profile','Learn','Support Us'])
   expect(dividers.map(node => node.previousElementSibling?.textContent)).toEqual(['My Profile','Learn','Support Us'])
@@ -155,7 +163,7 @@ it.each(['admin','editor'])('groups existing %s tools after browsing without cha
  await act(async()=>(host.querySelector('[aria-label="Open menu"]') as HTMLElement).click())
  const management=[...(role==='admin'?['Admin','Featured']:[]),'Reviewer','Memory','Grammar','Word Search']
  expect([...document.querySelectorAll('.mobile-list-btn')].map(node=>node.textContent)).toEqual([
-  'My Profile','Home','Explore','Watch','Read','Learn',...management,'Give Feedback','Support Us','Settings','Sign Out',
+  'My Profile','Home','Explore','Watch','Read','Learn',...management,'Contact Us','Support Us','Settings','Sign Out',
  ])
  const dividers=[...document.querySelectorAll('[data-nav-divider]')]
  expect(dividers.map(node=>node.getAttribute('data-nav-divider'))).toEqual(['My Profile','Learn','Word Search','Support Us'])

@@ -18,6 +18,7 @@
   --awm-forest: #0e2e1f;
   --awm-error: #c0392b;
   --awm-white: #ffffff;
+  --awm-site-texture: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z' fill='%23b8860b' fill-opacity='.09'/%3E%3C/svg%3E");
   /* Elevated surfaces (tooltips, popovers): darker than the page in dark
      mode so floating cards stay distinct from the background. */
   --awm-elevated-bg: #ffffff;
@@ -74,6 +75,7 @@ html[data-theme='dark'] {
   --awm-forest: #9bd5b5;
   --awm-error: #ff8e82;
   --awm-white: #141416;
+  --awm-site-texture: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z' fill='%23d4a843' fill-opacity='.08'/%3E%3C/svg%3E");
   --awm-black: #f8f3ea;
   --awm-elevated-bg: #0a0a0c;
   --awm-elevated-border: rgba(244,234,219,0.14);
@@ -97,6 +99,7 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   background: var(--awm-cream-light);
+  background-image: var(--awm-site-texture);
   color: var(--awm-bark);
   font-family: var(--font-sans);
   transition: background-color 180ms ease, color 180ms ease;
@@ -225,15 +228,9 @@ h6 {
   font-style: normal;
 }
 
-/* ── Prototype: geometric pattern panel for the homepage catalogue rows ── */
 .awm-pattern-section {
   --awm-row-edge: var(--awm-cream-light);
-  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23b8860b' fill-opacity='0.09' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
-}
-
-html[data-theme='dark'] .awm-pattern-section {
-  --awm-row-edge: var(--awm-cream-light);
-  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23d4a843' fill-opacity='0.08' fill-rule='evenodd'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z'/%3E%3C/g%3E%3C/svg%3E");
+  background-image: var(--awm-site-texture);
 }
 
 /* Navbar wordmark entrance (was framer-motion; CSS keeps it out of the
@@ -257,20 +254,15 @@ html[data-theme='dark'] .awm-pattern-section {
   }
 }
 
-/* Shared homepage texture on route surfaces; cards and media keep their own fills. */
-.awm-site-pages,
-.awm-site-pages .awm-admin-shell {
+/* Route roots and the footer share the body texture; cards and media keep
+   their own fills. */
+.awm-site-pages {
   position: relative;
   isolation: isolate;
-  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z' fill='%23b8860b' fill-opacity='.09'/%3E%3C/svg%3E");
 }
-html[data-theme='dark'] .awm-site-pages,
-html[data-theme='dark'] .awm-site-pages .awm-admin-shell {
-  background-image: url("data:image/svg+xml,%3Csvg width='6' height='6' viewBox='0 0 6 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 0h1L0 6V5zM6 5v1H5z' fill='%23d4a843' fill-opacity='.08'/%3E%3C/svg%3E");
-}
-/* Some routes (e.g. the profile) render their own surfaces and opt out of
-   the shared texture entirely. */
-html .awm-site-pages[data-no-site-texture],
-html .awm-site-pages[data-no-site-texture] .awm-admin-shell {
-  background-image: none;
+.awm-site-pages,
+.awm-site-pages > div,
+.awm-site-pages .awm-admin-shell,
+.awm-site-footer {
+  background-image: var(--awm-site-texture);
 }

@@ -17,6 +17,7 @@ import {
 } from '@mui/icons-material'
 import { Alert, Autocomplete, Box, Button, Container, LinearProgress, Paper, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import PremiumPrompt from "@/app/components/PremiumPrompt"
+import { MemoryPageLoading } from '@/app/components/PageLoading'
 import UpgradeButton from '@/app/components/UpgradeButton'
 import { MEMORY } from "@/app/lib/entitlements"
 import { beginMemorySession, loadMemoryProgress, type SavedMemorySession, submitMemoryReview, type MemoryLibrary, type MemoryShowSource } from '@/app/actions/memory'
@@ -47,7 +48,7 @@ function subscribeToDirection(onChange: () => void): () => void {
 
 export default function MemoryPage(props: { library: MemoryLibrary; loadError?: string }) {
   const { user, loading } = useAuth()
-  if (loading) return <LinearProgress aria-label="Loading Memory" />
+  if (loading) return <MemoryPageLoading />
   if (!user) return <LearningSignInGate activity="Memory" />
   return <MemorySession key={`${user?.id ?? 'guest'}:${props.library.selectedShowId ?? ''}:${props.library.selectedEpisodeId ?? ''}`} {...props} />
 }

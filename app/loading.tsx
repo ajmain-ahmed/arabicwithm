@@ -1,5 +1,5 @@
-import { GenericPageLoading } from '@/app/components/PageLoading'
+import { HomePageLoading } from '@/app/components/PageLoading'
 
 export default function Loading() {
-  return <GenericPageLoading />
+  return <HomePageLoading />
 }

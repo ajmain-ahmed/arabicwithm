@@ -8,6 +8,7 @@ vi.mock('./footer',()=>({default:()=> <footer>Footer</footer>}))
 vi.mock('./MobileBottomNav',()=>({default:()=>null}))
 vi.mock('./LazyFloatingVideoPlayer',()=>({default:()=>null}))
 vi.mock('./LearningActivityTracker',()=>({default:()=>null}))
+vi.mock('./SiteDialogs',()=>({default:()=>null}))
 import SiteShell from './SiteShell'
 let host:HTMLDivElement,root:Root
 beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});host=document.createElement('div');root=createRoot(host);vi.spyOn(console,'error').mockImplementation(()=>{});mocks.path='/reviewer'})

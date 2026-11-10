@@ -9,12 +9,7 @@ import ClientStyles from '@/app/components/ClientStyles'
 /* ─────────────────────────────────────────────
    Types & data
 ───────────────────────────────────────────── */
-interface FooterProps {
-  onContactClick?: () => void
-  homeMobileSpacing?: boolean
-}
-
-const FOOTER_SECTIONS = (onContactClick?: () => void) => [
+const FOOTER_SECTIONS = () => [
   {
     title: 'Explore',
     links: [
@@ -35,9 +30,8 @@ const FOOTER_SECTIONS = (onContactClick?: () => void) => [
   {
     title: 'Support',
     links: [
-      { label: 'Contact Us', href: null, onClick: onContactClick },
-      { label: 'Give Feedback', href: '/feedback', onClick: undefined },
-      { label: 'Support Us', href: '/support', onClick: undefined },
+      { label: 'Contact Us', href: null, onClick: () => window.dispatchEvent(new CustomEvent('open-contact-dialog')) },
+      { label: 'Support Us', href: null, onClick: () => window.dispatchEvent(new CustomEvent('open-support-dialog')) },
     ],
   },
 ]
@@ -134,11 +128,11 @@ const FOOTER_CSS = `
 /* ─────────────────────────────────────────────
    Component
 ───────────────────────────────────────────── */
-export default function Footer({ onContactClick, homeMobileSpacing=false }: FooterProps) {
+export default function Footer({ homeMobileSpacing=false }: { homeMobileSpacing?: boolean }) {
   const router   = useRouter()
-  const sections = FOOTER_SECTIONS(onContactClick)
+  const sections = FOOTER_SECTIONS()
   return (
-    <Box component="footer" sx={{ display: 'block', pb: { xs: `calc(${homeMobileSpacing?72:76}px + env(safe-area-inset-bottom, 0px))`, md: 0 }, background: 'var(--awm-white)', borderTop: '1px solid color-mix(in srgb, var(--awm-gold) 18%, transparent)' }}>
+    <Box component="footer" className="awm-site-footer" sx={{ display: 'block', pb: { xs: `calc(${homeMobileSpacing?72:76}px + env(safe-area-inset-bottom, 0px))`, md: 0 }, bgcolor: 'var(--awm-white)', borderTop: '1px solid color-mix(in srgb, var(--awm-gold) 18%, transparent)' }}>
       <ClientStyles id="awm-footer-styles" css={FOOTER_CSS} />
 
       {/* ── main columns ── */}
@@ -183,8 +177,8 @@ export default function Footer({ onContactClick, homeMobileSpacing=false }: Foot
               {/* contact */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Email sx={{ fontSize: 15, color: 'rgba(184,134,11,0.7)' }} />
-                <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.83rem', color: 'var(--awm-muted)' }}>
-                  hello@arabicwithm.com
+                <Typography component="a" href="mailto:support@arabicwithm.com" sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: '0.83rem', color: 'var(--awm-muted)', textDecoration: 'none', '&:hover': { color: 'var(--awm-gold)' } }}>
+                  support@arabicwithm.com
                 </Typography>
               </Box>
 

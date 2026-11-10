@@ -146,8 +146,8 @@ export default function MobileDrawer({
                         return { label, icon: <Icon sx={{ fontSize: 18 }} />, onClick: () => pushAndClose(NAV_ROUTES[label]) }
                     }),
                     ...managementItems,
-                    { label: 'Give Feedback', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/feedback') },
-                    { label: 'Support Us', icon: <VolunteerActivismRounded sx={{ fontSize: 18 }} />, onClick: () => pushAndClose('/support') },
+                    { label: 'Contact Us', icon: <EmailSharp sx={{ fontSize: 18 }} />, onClick: () => { onClose(); window.dispatchEvent(new CustomEvent('open-contact-dialog')) } },
+                    { label: 'Support Us', icon: <VolunteerActivismRounded sx={{ fontSize: 18 }} />, onClick: () => { onClose(); window.dispatchEvent(new CustomEvent('open-support-dialog')) } },
                 ].map((item) => (
                     <Fragment key={item.label}>
                     <ListItem disablePadding>
