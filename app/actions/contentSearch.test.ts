@@ -4,7 +4,7 @@ const mocks=vi.hoisted(()=>({rpc:vi.fn(),abort:vi.fn(),auth:vi.fn()}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{rpc:mocks.rpc}}))
 vi.mock('@/app/actions/auth',()=>({getAuthenticatedUserId:mocks.auth}))
 vi.mock('next/headers',()=>({headers:async()=>new Headers()}))
-vi.mock('@/app/lib/rateLimit',()=>({rateLimit:()=>({ok:true})}))
+vi.mock('@/app/lib/durableRateLimit',()=>({durableRateLimit:async()=>({ok:true,retryAfterSeconds:1})}))
 import {searchLearningContent} from './contentSearch'
 beforeEach(()=>{mocks.rpc.mockReturnValue({abortSignal:mocks.abort});mocks.auth.mockResolvedValue(null);mocks.abort.mockResolvedValue({data:[],error:null})})
 it('searches only existing learning collections and excludes guest chapter text',async()=>{await searchLearningContent('كتاب');expect(mocks.rpc).toHaveBeenCalledWith('website_search_content_v1',expect.objectContaining({p_query:'كتاب',p_books:false,p_limit:21}));mocks.auth.mockResolvedValue('user');await searchLearningContent('book','e:123');expect(mocks.rpc).toHaveBeenLastCalledWith('website_search_content_v1',expect.objectContaining({p_books:true,p_after:'e:123'}))})

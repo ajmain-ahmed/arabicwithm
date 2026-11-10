@@ -3,7 +3,6 @@ import { beforeEach, expect, it, vi } from 'vitest'
 
 const catalogue = vi.hoisted(() => ({ books: vi.fn(), shows: vi.fn(), episodes: vi.fn(), newShows: vi.fn(), newEpisodes: vi.fn(), spotlight:vi.fn() }))
 vi.mock('@/app/actions/forYou',()=>({fetchHomeForYouSpotlight:vi.fn()}))
-vi.mock('next/server',()=>({connection:async()=>{}}))
 vi.mock('@/app/lib/homeSpotlight.server',()=>({loadHomeSpotlight:catalogue.spotlight}))
 vi.mock('@/app/actions/books', () => ({ fetchBooksForPublic: catalogue.books }))
 vi.mock('@/app/actions/cartoons', () => ({ fetchShowsForPublic: catalogue.shows }))

@@ -67,7 +67,7 @@ export default function FeaturedCarousel({items}: {items: FeaturedShow[]}) {
    onKeyDown={event=>{if(event.key==='ArrowRight'||event.key==='ArrowLeft'){event.preventDefault();navigate(index+(event.key==='ArrowRight'?1:-1))}}}
    onScroll={event=>{const next=Math.max(0,Math.min(slides.length-1,Math.round(event.currentTarget.scrollLeft/event.currentTarget.clientWidth)));active.current=next;setIndex(next)}}
    sx={{display:'flex',overflowX:'auto',overscrollBehaviorX:'contain',scrollSnapType:dragging?'none':'x mandatory',scrollbarWidth:'none','&::-webkit-scrollbar':{display:'none'},touchAction:'pan-y',userSelect:'none',cursor:slides.length>1?(dragging?'grabbing':'grab'):'auto','&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:-2}}}>
-   {slides.map((item,i)=><Box key={item.show.id} role="group" aria-roledescription="slide" aria-label={`${i+1} of ${slides.length}: ${item.show.title}`} aria-hidden={i!==index} inert={i!==index} data-featured-slide={item.show.slug} sx={{flex:'0 0 100%',minWidth:0,scrollSnapAlign:'start',scrollSnapStop:'always'}}><FeaturedHero {...item} priority={i===0} pagination={slides.length>1} navigation={navigation}/></Box>)}
+   {slides.map((item,i)=><Box key={item.show.id} role="group" aria-roledescription="slide" aria-label={`${i+1} of ${slides.length}: ${item.show.title}`} aria-hidden={i!==index} inert={i!==index} data-featured-slide={item.show.slug} sx={{flex:'0 0 100%',minWidth:0,scrollSnapAlign:'start',scrollSnapStop:'always'}}><FeaturedHero {...item} priority={i===0} loadImage={i===index} pagination={slides.length>1} navigation={navigation}/></Box>)}
   </Box>
 
  </Box>

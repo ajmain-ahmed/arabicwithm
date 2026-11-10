@@ -61,6 +61,8 @@ export const fetchNewOnEpisodes = unstable_cache(
     const { data, error } = await serviceClient
       .from("episodes")
       .select("id, slug, title, level, show_id, cover_crop")
+      .not("transcript", "is", null)
+      .not("transcript", "eq", "[]")
       .order("created_at", { ascending: false })
       .limit(12)
 

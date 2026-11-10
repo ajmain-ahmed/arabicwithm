@@ -65,6 +65,8 @@ export const fetchShowsForPublic = unstable_cache(
     const { data: episodes, error: epError } = await serviceClient
       .from("episodes")
       .select("show_id, tags")
+      .not("transcript", "is", null)
+      .not("transcript", "eq", "[]")
 
     if (epError) {
       console.error("[fetchShowsForPublic] episodes error:", epError.message)
@@ -147,6 +149,8 @@ export const fetchShowBySlugPublic = unstable_cache(
       .from("episodes")
       .select("id, tags")
       .eq("show_id", data.id)
+      .not("transcript", "is", null)
+      .not("transcript", "eq", "[]")
 
     return {
       id: String(data.id),
@@ -196,6 +200,8 @@ export const fetchEpisodesForShowPublic = unstable_cache(
       .from("episodes")
       .select("id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
       .eq("show_id", show.id)
+      .not("transcript", "is", null)
+      .not("transcript", "eq", "[]")
       .order("created_at", { ascending: false })
 
     if (error) {
@@ -221,6 +227,8 @@ export const fetchAllEpisodesForPublic = unstable_cache(
     const { data, error } = await serviceClient
       .from("episodes")
       .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
+      .not("transcript", "is", null)
+      .not("transcript", "eq", "[]")
       .order("created_at", { ascending: false })
 
     if (error) {
@@ -268,6 +276,7 @@ export const fetchEpisodeForPublic = unstable_cache(
       console.error("[fetchEpisodeForPublic] error:", error?.message)
       return null
     }
+    if (data.transcript == null || (Array.isArray(data.transcript) && data.transcript.length === 0)) return null
 
     const meta = mapEpisodeRow(data)
     const transcript = data.transcript ?? {}
@@ -396,6 +405,8 @@ export const fetchExploreEpisodeMetasForPublic = unstable_cache(
       serviceClient
         .from("episodes")
         .select("id, show_id, slug, title, level, tags, description, youtube_id, instagram_id, tiktok_id, facebook_id, cover, cover_crop, created_at")
+        .not("transcript", "is", null)
+        .not("transcript", "eq", "[]")
         .order("created_at", { ascending: true }),
     ])
 
@@ -440,6 +451,7 @@ export const fetchExploreEpisodeByIdPublic = unstable_cache(
       .maybeSingle()
     if (error) throw new Error(error.message)
     if (!row) return null
+    if (row.transcript == null || (Array.isArray(row.transcript) && row.transcript.length === 0)) return null
 
     const { data: show } = await serviceClient
       .from("shows")

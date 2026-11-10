@@ -1,16 +1,16 @@
 import {test,expect} from '@playwright/test'
 import {installYouTubeFixture} from './helpers/youtube'
-const backend='https://localhost:4347'
+const backend=`https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4310}`
 for(const width of [320,390,430,1440])test(`Spotlight real sound controls, native sync and layout ${width}`,async({page,request})=>{
  await request.post(`${backend}/fixture/spotlight`);await installYouTubeFixture(page);await page.setViewportSize({width,height:1000})
  await page.addInitScript(()=>localStorage.setItem('awm-for-you-guest-playback-v1','123000'))
- await page.goto('/')
+ await page.goto('/');await page.waitForLoadState('networkidle');await page.locator('[data-home-spotlight]').evaluate(element=>element.scrollIntoView({block:'center'}))
  const spot=page.locator('[data-home-spotlight]'),mute=spot.getByRole('button',{name:'Mute For You Spotlight',exact:true}),unmute=spot.getByRole('button',{name:'Unmute For You Spotlight',exact:true})
  await expect(mute).toBeEnabled();await expect(spot.locator('[data-spotlight-playing]')).toHaveAttribute('data-spotlight-playing','true')
  await mute.click();await expect(unmute).toBeEnabled()
  expect(await page.evaluate(()=>localStorage.getItem('awm-explore-sound-enabled-v1'))).toBe('muted')
  await page.mouse.click(5,300);await page.waitForTimeout(300);await expect(unmute).toBeEnabled()
- await page.reload();await expect(unmute).toBeEnabled()
+ await page.reload();await page.waitForLoadState('networkidle');await spot.evaluate(element=>element.scrollIntoView({block:'center'}));await expect(unmute).toBeEnabled()
  await unmute.click();await expect(mute).toBeEnabled()
  await spot.frameLocator('iframe').getByRole('button',{name:'Volume',exact:true}).click();await expect(unmute).toBeEnabled()
  await unmute.click();await expect(mute).toBeEnabled()
@@ -25,7 +25,7 @@ for(const width of [320,390,430,1440])test(`Spotlight real sound controls, nativ
 test('blocked audible autoplay falls back, restores once on activation and respects explicit mute',async({page,request})=>{
  await request.post(`${backend}/fixture/spotlight`);await installYouTubeFixture(page)
  await page.addInitScript(()=>{Object.assign(window,{__ytRejectAudible:true})})
- await page.goto('/')
+ await page.goto('/');await page.waitForLoadState('networkidle');await page.locator('[data-home-spotlight]').evaluate(element=>element.scrollIntoView({block:'center'}))
  const spot=page.locator('[data-home-spotlight]'),unmute=spot.getByRole('button',{name:'Unmute For You Spotlight',exact:true}),mute=spot.getByRole('button',{name:'Mute For You Spotlight',exact:true})
  await expect(unmute).toBeEnabled();await expect(spot.locator('[data-spotlight-playing]')).toHaveAttribute('data-spotlight-playing','true')
  expect(await page.evaluate(()=>localStorage.getItem('awm-explore-sound-enabled-v1'))).not.toBe('muted')
@@ -36,7 +36,7 @@ test('blocked audible autoplay falls back, restores once on activation and respe
 test('a rejected gesture recovery does not repeatedly retry; explicit unmute still works',async({page,request})=>{
  await request.post(`${backend}/fixture/spotlight`);await installYouTubeFixture(page)
  await page.addInitScript(()=>Object.assign(window,{__ytRejectAudible:true}))
- await page.goto('/')
+ await page.goto('/');await page.waitForLoadState('networkidle');await page.locator('[data-home-spotlight]').evaluate(element=>element.scrollIntoView({block:'center'}))
  const spot=page.locator('[data-home-spotlight]'),unmute=spot.getByRole('button',{name:'Unmute For You Spotlight',exact:true})
  await expect(unmute).toBeEnabled();await page.mouse.click(5,300);await expect(unmute).toBeEnabled()
  await page.evaluate(()=>Object.assign(window,{__ytRejectAudible:false}))

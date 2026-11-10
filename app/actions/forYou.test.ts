@@ -7,7 +7,7 @@ vi.mock('@/app/lib/homeSpotlight.server',()=>({loadHomeSpotlight:mocks.spotlight
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{from:mocks.from,rpc:mocks.rpc}}))
 vi.mock('@/app/actions/auth',()=>({getAuthenticatedUserId:mocks.user}))
 vi.mock('next/headers',()=>({headers:async()=>new Headers()}))
-vi.mock('@/app/lib/rateLimit',()=>({rateLimit:()=>({ok:true})}))
+vi.mock('@/app/lib/durableRateLimit',()=>({durableRateLimit:async()=>({ok:true,retryAfterSeconds:1})}))
 vi.mock('next/cache',()=>({unstable_cache:(fn:unknown)=>fn}))
 import {fetchHomeForYouSpotlight,fetchForYouTranscript,fetchForYouClips,fetchForYouGroups} from './forYou'
 const id='99999999-9999-4999-8999-999999999990'

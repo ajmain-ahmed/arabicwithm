@@ -16,7 +16,7 @@ export function AccountAccessProvider({userId,authLoading,token,children}:{userI
  const invalidate=useCallback(()=>{revision.current++;inFlight.current=null},[])
  useLayoutEffect(()=>{
   invalidate()
-  if(!userId){setAccess(null);setError('');setPending(false)}
+  if(!userId)queueMicrotask(()=>{setAccess(null);setError('');setPending(false)})
   return invalidate
  },[userId,authLoading,token,invalidate])
  const refresh=useCallback(async()=>{
@@ -43,7 +43,7 @@ export function AccountAccessProvider({userId,authLoading,token,children}:{userI
   void refresh()
   const visible=()=>{if(document.visibilityState==='visible')void refresh()}
   window.addEventListener('account-access-changed',refresh);window.addEventListener('focus',refresh);window.addEventListener('online',refresh);document.addEventListener('visibilitychange',visible)
-  const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void refresh()},60000)
+  const timer=window.setInterval(()=>{if(document.visibilityState==='visible')void refresh()},300000)
   return()=>{window.clearInterval(timer);window.removeEventListener('account-access-changed',refresh);window.removeEventListener('focus',refresh);window.removeEventListener('online',refresh);document.removeEventListener('visibilitychange',visible)}
  },[refresh,token])
  const current=userId&&access?.userId===userId?access:null

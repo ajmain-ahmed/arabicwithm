@@ -83,6 +83,8 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
   let sourceQuery = serviceClient
     .from('episodes')
     .select('id, show_id, slug, title, cover, youtube_id, level, created_at')
+    .not('transcript', 'is', null)
+    .not('transcript', 'eq', '[]')
     .order('created_at', { ascending: false })
   if (input.episodeId) sourceQuery = sourceQuery.eq('id', input.episodeId)
   else if (input.showId) sourceQuery = sourceQuery.eq('show_id', input.showId)

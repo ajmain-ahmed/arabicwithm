@@ -124,7 +124,7 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
                 ArabicWithM
               </Typography>
             </Box>
-            <Typography sx={{
+            <Typography component="h1" sx={{
               fontFamily: 'var(--font-heading)', fontSize: '1.75rem',
               fontWeight: 600, color: 'var(--bark)', lineHeight: 1.15, mb: 0.5,
             }}>
@@ -157,7 +157,7 @@ export default function ResetPasswordForm({ initialError }: ResetPasswordFormPro
                 input: {
                   disableUnderline: true,
                   endAdornment: (
-                    <IconButton size="small" onClick={() => setShowPw(p => !p)} sx={{ color: 'var(--muted)', mr: -0.5 }}>
+                    <IconButton size="small" aria-label={showPw ? 'Hide password' : 'Show password'} onClick={() => setShowPw(p => !p)} sx={{ color: 'var(--muted)', mr: -0.5 }}>
                       {showPw ? <VisibilityOff sx={{ fontSize: 18 }} /> : <Visibility sx={{ fontSize: 18 }} />}
                     </IconButton>
                   ),

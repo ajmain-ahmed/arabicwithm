@@ -1,4 +1,3 @@
-import {connection} from 'next/server'
 import {loadHomeSpotlight} from '@/app/lib/homeSpotlight.server'
 import type { Metadata, ResolvingMetadata } from 'next'
 import { fetchBooksForPublic } from '@/app/actions/books'
@@ -15,12 +14,11 @@ export const revalidate = 60
 export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
   const inherited = await parent
   return {
-    openGraph: { ...inherited.openGraph, url: 'https://arabicwithm.vercel.app/' },
+    openGraph: { ...inherited.openGraph, url: 'https://www.arabicwithm.com/' },
   }
 }
 
 export default async function HomePage() {
-  await connection()
   return withDataDeadline(8000, async () => {
     const [books, shows, newShows, newEpisodes, spotlight] = await Promise.all([
       fetchBooksForPublic().catch(() => []),

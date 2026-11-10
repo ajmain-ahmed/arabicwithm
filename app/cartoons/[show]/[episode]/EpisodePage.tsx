@@ -1135,7 +1135,7 @@ export default function EpisodePage({
       />
 
       <Box
-        component="main"
+        component="div"
         sx={{
           background: { xs: 'var(--cream)', md: '#0a0c0b' },
           mt: { xs: 0, md: 0 },

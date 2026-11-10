@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 vi.mock('next/headers', () => ({ headers: async () => new Headers() }))
+vi.mock('@/app/lib/durableRateLimit', () => ({ durableRateLimit: async () => ({ ok: true, retryAfterSeconds: 1 }) }))
 import { verifyTurnstileToken } from './turnstile'
 
 const SECRET = 'turnstile-test-secret'

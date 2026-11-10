@@ -27,7 +27,7 @@ export default function ContentSearch() {
   }
   return <Container maxWidth="md" sx={{ pt: 14, pb: 'calc(110px + env(safe-area-inset-bottom))' }}><Stack spacing={2}>
     <Button component={Link} href="/" sx={{ alignSelf: 'start' }}>Back to Quick Actions</Button>
-    <Typography variant="h3">Search</Typography><Typography>Find shows, episodes and books in Arabic or English.</Typography>
+    <Typography component="h1" variant="h3">Search</Typography><Typography>Find shows, episodes and books in Arabic or English.</Typography>
     {!user && <Alert severity="info">Book titles are searchable. Sign in to search book text and read chapters.</Alert>}
     <Box component="form" onSubmit={e => { e.preventDefault(); void search() }}><Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
       <TextField fullWidth label="Search learning content" value={text} onChange={e => setText(e.target.value)} slotProps={{ htmlInput: { maxLength: 120, dir: 'auto' } }} />

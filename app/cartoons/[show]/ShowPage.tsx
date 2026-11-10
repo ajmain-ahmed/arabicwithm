@@ -143,7 +143,7 @@ export default function ShowPage({ show, episodes }: ShowPageProps) {
 
   return (
     <Box
-      component="main"
+      component="div"
       sx={{
         minHeight: { xs: 'calc(100vh - 56px)', md: '100vh' },
         '@supports (height: 100dvh)': { minHeight: { xs: 'calc(100dvh - 56px)', md: '100dvh' } },

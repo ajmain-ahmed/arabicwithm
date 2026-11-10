@@ -1,7 +1,7 @@
 'use server'
 import type Stripe from 'stripe'
 import { getAuthenticatedAccess, getAuthenticatedUserId } from '@/app/actions/auth'
-import { rateLimit } from '@/app/lib/rateLimit'
+import { durableRateLimit } from '@/app/lib/durableRateLimit'
 import { serviceClient } from '@/app/lib/supabase'
 import { premiumStatusForUser, type PremiumStatusData } from '@/app/lib/premiumStatus'
 import { hasPremium, PREMIUM } from '@/app/lib/entitlements'
@@ -44,7 +44,7 @@ export async function startPremiumCheckout(): Promise<string> {
   if (!access) throw new Error('Sign in to get AWM+.')
   if (access.admin) throw new Error('AWM+ is already included with administrator access.')
   const userId = access.userId
-  const limited = rateLimit(`checkout:${userId}`, 5, 10 * 60 * 1000)
+  const limited = await durableRateLimit(`checkout:${userId}`, 5, 10 * 60 * 1000)
   if (!limited.ok) throw new Error('Too many checkout attempts. Please try again later.')
   const stripe = stripeClient()
   const priceId = premiumPriceId()
@@ -85,7 +85,7 @@ export async function startPremiumCheckout(): Promise<string> {
 export async function managePremium(flow?: 'payment-method'): Promise<string> {
   const userId = await getAuthenticatedUserId()
   if (!userId) throw new Error('Sign in to manage AWM+.')
-  const limited = rateLimit(`manage-billing:${userId}`, 8, 10 * 60 * 1000)
+  const limited = await durableRateLimit(`manage-billing:${userId}`, 8, 10 * 60 * 1000)
   if (!limited.ok) throw new Error('Too many attempts. Please try again later.')
   const { data, error } = await serviceClient.from('subscriptions').select('customer_id').eq('user_id', userId).single()
   if (error || !data.customer_id) throw new Error('No billing account found.')
@@ -108,7 +108,7 @@ export async function setPremiumRenewal(renew: boolean): Promise<PremiumStatus> 
   if (!access) throw new Error('Sign in to manage AWM+.')
   if (access.admin) throw new Error('AWM+ is included with administrator access.')
   const userId = access.userId
-  const limited = rateLimit(`renewal:${userId}`, 8, 10 * 60 * 1000)
+  const limited = await durableRateLimit(`renewal:${userId}`, 8, 10 * 60 * 1000)
   if (!limited.ok) throw new Error('Too many attempts. Please try again later.')
   const { data: account, error } = await serviceClient.from('subscriptions').select('customer_id').eq('user_id', userId).maybeSingle()
   if (error || !account?.customer_id) throw new Error('No billing account found.')

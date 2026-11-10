@@ -25,7 +25,7 @@ Key features:
 
 | Layer | Technology | Version / Notes |
 |-------|-----------|-----------------|
-| Framework | Next.js | 16.2.3 (App Router) |
+| Framework | Next.js | 16.4.6 (App Router) |
 | React | react & react-dom | 19.2.4 |
 | Language | TypeScript | 5.x (strict mode) |
 | Styling | Tailwind CSS | v4 (configured but minimally used; MUI `sx` is primary) |
@@ -106,7 +106,7 @@ Key features:
 │   │   ├── arabic.ts / cartoons.ts / thumbnailCrop.ts / slug.ts / errors.ts / jsonb.ts
 │   │   ├── useYouTubePlayer.ts   # YouTube IFrame API hook (watch + explore + PiP)
 │   │   └── ...
-│   ├── AccountAccessContext.tsx  # Client role snapshot (server-verified, 60s refresh)
+│   ├── AccountAccessContext.tsx  # Client role snapshot (server-verified, 5-minute refresh)
 │   ├── AuthContext.tsx           # Supabase auth state; skips supabase-js for anonymous visitors
 │   ├── layout.tsx / theme.ts / globals.css
 │   └── page.tsx                  # Homepage
@@ -279,9 +279,9 @@ The project uses **Vitest** with `jsdom` and `@vitejs/plugin-react`, plus **Play
 
 - `reactStrictMode` is **disabled** in `next.config.ts`.
 - Security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS) are set in `next.config.ts`.
-- The CSP allows YouTube iframe embeds, the Supabase API domain, news-image CDNs, and the Cloudflare Turnstile challenge.
+- The CSP allows YouTube iframe embeds, the Supabase API domain, news-image CDNs, Cloudflare Turnstile, and Google Tag Manager/Analytics endpoints.
 - All DB mutations validate the authenticated user ID server-side; user-scoped actions derive the ID from the verified session.
-- `rateLimit.ts` provides simple per-key rate limiting (in-memory, single-instance only) on abuse-prone endpoints (search, feedback, checkouts, guest transcript submission is capped DB-side).
+- `durableRateLimit.ts` uses the service-only, atomic `website_rate_limit` RPC for search, guest feeds, Turnstile and checkout actions, with hashed keys and a local fallback. High-volume image routes retain the in-memory `rateLimit.ts`; guest transcript submission is capped DB-side.
 - Admin/reviewer authorization is enforced by DB functions (`account_role`, `change_account_role` — admin-only, reason + confirmation required, last-admin protected, audit-logged) and re-checked by `guardAdmin()`/`guardReviewer()` in every privileged Server Action. Client role state is chrome, never the gate.
 - Auth endpoints (sign-up, sign-in, password reset) are protected by Cloudflare Turnstile when configured: the widget renders in `AuthDialog` and the token is verified app-side via `verifyTurnstileToken` (Cloudflare siteverify, `TURNSTILE_SECRET_KEY`) before any auth call. They bypass the app-level rate limiter by design.
 - Uploads are admin-only, content-sniffed (WebP magic bytes / audio validation), path-pattern restricted, and private buckets are never proxied publicly.
@@ -289,7 +289,7 @@ The project uses **Vitest** with `jsdom` and `@vitejs/plugin-react`, plus **Play
 
 ## Deployment
 
-The project is designed for deployment on **Vercel** (standard Next.js target). No custom `vercel.json` or Dockerfile is present. Ensure the Supabase and Stripe environment variables are configured in the hosting dashboard. The two Edge Functions deploy via the Supabase CLI. **Note:** the in-memory rate limiter and per-instance caches assume a single deployment instance — revisit before scaling horizontally.
+The project is designed for deployment on **Vercel** (standard Next.js target). No custom `vercel.json` or Dockerfile is present. Ensure the Supabase and Stripe environment variables are configured in the hosting dashboard. The two Edge Functions deploy via the Supabase CLI. **Note:** image-proxy limiting and per-instance caches remain local; key public/billing actions use the durable Supabase limiter.
 
 ## When Modifying Code
 

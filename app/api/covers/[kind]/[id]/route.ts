@@ -70,7 +70,7 @@ async function fetchCoverBytes(bucket: string, path: string): Promise<CoverBytes
   return value
 }
 
-const COVER_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=3600'
+const COVER_CACHE_CONTROL = 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400'
 
 function coverResponse(cover: CoverBytes, ifNoneMatch: string | null): Response {
   const etag = `"${cover.etag}"`

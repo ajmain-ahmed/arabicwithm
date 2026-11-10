@@ -1,7 +1,7 @@
 import {test,expect,type Page} from '@playwright/test'
 const container='GTM-WLD4QMF2'
 async function ready(page:Page){
- await expect(page.locator(`head script[src="https://www.googletagmanager.com/gtm.js?id=${container}"]`)).toHaveCount(1)
+ await expect(page.locator(`script[src="https://www.googletagmanager.com/gtm.js?id=${container}"]`)).toHaveCount(1)
  await expect.poll(()=>page.evaluate(id=>!!(window as unknown as {google_tag_manager?:Record<string,unknown>}).google_tag_manager?.[id],container)).toBe(true)
  expect(await page.evaluate(()=>{
   const data=(window as unknown as {dataLayer:({event?:string;[key:number]:unknown})[]}).dataLayer

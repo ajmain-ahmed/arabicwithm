@@ -2,7 +2,7 @@ import { Box, Container, Paper, Skeleton } from '@mui/material'
 
 export default function ProfileLoading() {
   return (
-    <Container component="main" maxWidth="lg" sx={{ py: { xs: 3, md: 6 } }}>
+    <Container component="div" maxWidth="lg" sx={{ py: { xs: 3, md: 6 } }}>
       <Skeleton variant="text" width={280} height={56} sx={{ fontSize: 48 }} />
       <Skeleton variant="text" width={180} height={24} />
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2,1fr)', md: 'repeat(4,1fr)' }, gap: 2, my: 3 }}>

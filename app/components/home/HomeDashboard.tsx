@@ -192,14 +192,17 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured, 
 
   return (
       <Box
-        component="main"
+        component="div"
         sx={{
           position: 'relative',
           bgcolor: 'var(--awm-cream-light)',
         }}
       >
         {featuredItems.length ? (
-          <FeaturedCarousel key={featuredItems.map(item=>item.show.id).join(':')} items={featuredItems} />
+          <>
+            <Typography component="h1" sx={{ position: 'absolute', width: '1px', height: '1px', p: 0, m: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>Learn Arabic through cartoons and books</Typography>
+            <FeaturedCarousel key={featuredItems.map(item=>item.show.id).join(':')} items={featuredItems} />
+          </>
         ) : (
         <Box data-home-hero sx={{ position: 'relative', mt: { xs: 'calc(-56px - env(safe-area-inset-top))', md: 'calc(-64px - env(safe-area-inset-top))' }, minHeight: { xs: 360, md: 610 }, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
           {/* Responsive AVIF set encoded from the pristine source: the browser

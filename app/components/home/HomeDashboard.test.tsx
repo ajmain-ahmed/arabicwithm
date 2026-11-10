@@ -68,7 +68,8 @@ describe('homepage hero', () => {
     const html = renderToStaticMarkup(<HomeDashboard books={[]} newShows={[]} newEpisodes={[]} featured={{ show: { id: 'dbz', slug: 'dbz', title: 'DBZ', cover: '/cover.webp', level: 'B1', episodeCount: 3 }, episodeCount: 3 }} />)
     expect(html).toContain('data-featured-hero')
     expect(html).not.toContain('data-home-hero')
-    expect(html).not.toContain('Learn Arabic through cartoons and books')
+    expect(html).toContain('<h1')
+    expect(html).toContain('Learn Arabic through cartoons and books')
   })
 })
 

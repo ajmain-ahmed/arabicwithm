@@ -15,6 +15,7 @@ import ThemeProvider from "./components/ThemeProvider"
 import { AuthProvider } from "./AuthContext"
 import SiteShell from "./components/SiteShell"
 import ScrollReset from "./components/ScrollReset"
+import VitalsReporter from "./components/VitalsReporter"
 
 const socialImage = {
   url: 'https://whbxgwucsoguqzpnpzjd.supabase.co/storage/v1/object/public/covers/social/arabicwithm-cinematic-collage-0e25039c3908.jpg',
@@ -24,7 +25,7 @@ const socialImage = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://arabicwithm.vercel.app'),
+  metadataBase: new URL('https://www.arabicwithm.com'),
   icons: {
     icon: [
       { url: '/favicon.ico', type: 'image/x-icon', sizes: '16x16 32x32 48x48' },
@@ -69,13 +70,13 @@ export default function RootLayout({
         {/* Keep these global links present even when page metadata streams. */}
         <link rel="manifest" href="/site.webmanifest" />
         <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#046154" />
-        <Script id="awm-gtm-init" strategy="beforeInteractive">{`
+        <Script id="awm-gtm-init" strategy="lazyOnload">{`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
           window.dataLayer.push({'gtm.start': new Date().getTime(), event: 'gtm.js'});
         `}</Script>
-        <Script id="awm-gtm-container" strategy="beforeInteractive" async src="https://www.googletagmanager.com/gtm.js?id=GTM-WLD4QMF2" />
+        <Script id="awm-gtm-container" strategy="lazyOnload" src="https://www.googletagmanager.com/gtm.js?id=GTM-WLD4QMF2" />
       </head>
       <body
         className={`${ebGaramond.variable} ${jost.variable} ${brandFont.variable} ${headingFont.variable} ${bookNaskhFont.variable} ${bookSansFont.variable} ${bookAmiriFont.variable}`}
@@ -84,6 +85,7 @@ export default function RootLayout({
           <AuthProvider>
             <ThemeProvider>
               <ScrollReset />
+              <VitalsReporter />
               <SiteShell>{children}</SiteShell>
             </ThemeProvider>
           </AuthProvider>

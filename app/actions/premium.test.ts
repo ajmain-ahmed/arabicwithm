@@ -37,7 +37,7 @@ vi.mock('@/app/actions/auth', () => ({
 }))
 vi.mock('@/app/lib/supabase', () => ({ serviceClient: { from: mocks.from } }))
 vi.mock('@/app/lib/accountPremium', () => ({ accountHasPremium: mocks.premium }))
-vi.mock('@/app/lib/rateLimit', () => ({ rateLimit: () => mocks.rateLimit() }))
+vi.mock('@/app/lib/durableRateLimit', () => ({ durableRateLimit: async () => mocks.rateLimit() }))
 vi.mock('@/app/lib/billing', () => ({
   stripeClient: vi.fn(() => ({
     subscriptions: { update: mocks.update, list: mocks.subscriptionsList },

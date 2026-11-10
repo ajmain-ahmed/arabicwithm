@@ -16,7 +16,7 @@ test.beforeEach(async({page,request}) => {
  await installYouTubeFixture(page)
 })
 for (const width of [320,390,430,768,1024,1440]) test(`Spotlight responsive header, player and stacked subtitles at ${width}`, async({page}) => {
- await page.setViewportSize({width,height:1000}); await page.goto('/')
+ await page.setViewportSize({width,height:1000}); await page.goto('/');await page.waitForLoadState('networkidle');await page.locator('[data-home-spotlight]').evaluate(element=>element.scrollIntoView({block:'center'}))
  const section = sectionOf(page), video = section.locator('[data-spotlight-video]')
  await expect(video.locator('iframe')).toBeVisible()
  const duration=await page.evaluate(()=>{const player=(window as unknown as {__ytPlayers:{options:{playerVars:{start:number;end:number}}}[]}).__ytPlayers.at(-1)!;return player.options.playerVars.end-(player.options.playerVars.start??0)});expect(duration).toBe(45)
@@ -54,7 +54,7 @@ for (const width of [320,390,430,768,1024,1440]) test(`Spotlight responsive head
  if(width===390){await link.click();await expect(page).toHaveURL(/\/explore\?view=foryou$/)}
 })
 test('drag and keyboard resize preserve the live player, position, subtitles and saved preference',async({page})=>{
- await page.setViewportSize({width:1440,height:1000});await page.goto('/')
+ await page.setViewportSize({width:1440,height:1000});await page.goto('/');await page.waitForLoadState('networkidle');await page.locator('[data-home-spotlight]').evaluate(element=>element.scrollIntoView({block:'center'}))
  const section=sectionOf(page),video=section.locator('[data-spotlight-video]'),frame=video.locator('iframe'),grip=section.getByRole('slider',{name:'Resize For You player'})
  await expect(frame).toBeVisible();await frame.evaluate(el=>el.setAttribute('data-live-instance','original'))
  const source=await video.getAttribute('data-spotlight-video')
@@ -82,12 +82,12 @@ test('drag and keyboard resize preserve the live player, position, subtitles and
  await grip.click();await expect(grip).toBeFocused();await grip.press('ArrowDown')
  await expect(grip).toHaveAttribute('aria-valuenow','73');expect((await state()).playing).toBe(false)
  await expect.poll(()=>page.evaluate(key=>Number(localStorage.getItem(key)),sizeKey)).toBe(73)
- await page.reload();await expect(video.locator('iframe')).toBeVisible();expect(await ratio(page)).toBeCloseTo(.73,2)
+ await page.reload();await page.waitForLoadState('networkidle');await section.evaluate(element=>element.scrollIntoView({block:'center'}));await expect(video.locator('iframe')).toBeVisible();expect(await ratio(page)).toBeCloseTo(.73,2)
  await expect(section.getByRole('button',{name:/^(Play|Pause|Mute|Unmute)$/})).toHaveCount(0)
 })
 test('tablet touch drag is bounded and does not recreate the player',async({page,context,browserName})=>{
  test.skip(browserName!=='chromium','CDP dispatches actual touch input in Chromium; mouse/keyboard covered in both browsers.')
- await page.setViewportSize({width:768,height:1000});await page.goto('/')
+ await page.setViewportSize({width:768,height:1000});await page.goto('/');await page.waitForLoadState('networkidle');await page.locator('[data-home-spotlight]').evaluate(element=>element.scrollIntoView({block:'center'}))
  const section=sectionOf(page),video=section.locator('[data-spotlight-video]'),grip=section.getByRole('slider',{name:'Resize For You player'})
  await expect(video.locator('iframe')).toBeVisible();await grip.scrollIntoViewIfNeeded()
  const source=await video.getAttribute('data-spotlight-video'),box=(await grip.boundingBox())!, x=box.x+box.width/2,y=box.y+box.height/2
@@ -101,11 +101,11 @@ test('tablet touch drag is bounded and does not recreate the player',async({page
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)
 })
 test('invalid stored size uses the default and out-of-range size is bounded',async({page})=>{
- await page.setViewportSize({width:1440,height:1000});await page.addInitScript(key=>localStorage.setItem(key,'invalid'),sizeKey);await page.goto('/')
+ await page.setViewportSize({width:1440,height:1000});await page.addInitScript(key=>localStorage.setItem(key,'invalid'),sizeKey);await page.goto('/');await page.waitForLoadState('networkidle');await page.locator('[data-home-spotlight]').evaluate(element=>element.scrollIntoView({block:'center'}))
  await expect(sectionOf(page).locator('iframe')).toBeVisible();expect(await ratio(page)).toBeCloseTo(.5,2)
  await page.evaluate(key=>localStorage.setItem(key,'999'),sizeKey)
  // Remove init script by opening a clean page in the same context.
- const next=await page.context().newPage();await next.setViewportSize({width:1440,height:1000});await installYouTubeFixture(next);await next.goto('/')
+ const next=await page.context().newPage();await next.setViewportSize({width:1440,height:1000});await installYouTubeFixture(next);await next.goto('/');await next.waitForLoadState('networkidle');await sectionOf(next).evaluate(element=>element.scrollIntoView({block:'center'}))
  await expect(sectionOf(next).locator('iframe')).toBeVisible();expect(await ratio(next)).toBeCloseTo(.75,2)
  await next.close()
 })

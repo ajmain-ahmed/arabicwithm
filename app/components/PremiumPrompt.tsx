@@ -99,7 +99,7 @@ function PremiumAccountSection() {
   const [open, setOpen] = useState(false)
   const statusKey = user?.id ?? 'signed-out'
   const [status, setStatus] = useState<PremiumStatus | null>(() => readPremiumStatus(statusKey))
-  useEffect(() => { let active = true; const refresh=(force:boolean)=>{void (force?refreshPremiumStatus(statusKey):getPremiumStatus(statusKey)).then(s => { if (active) setStatus(s) }).catch(() => {})}; refresh(false); const timer=window.setInterval(()=>{if(document.visibilityState==='visible')refresh(true)},60000);const changed=()=>refresh(true);window.addEventListener('account-access-changed',changed); window.addEventListener('focus',changed); return () => { active = false;window.clearInterval(timer);window.removeEventListener('account-access-changed',changed);window.removeEventListener('focus',changed) } }, [statusKey])
+  useEffect(() => { let active = true; const refresh=(force:boolean)=>{void (force?refreshPremiumStatus(statusKey):getPremiumStatus(statusKey)).then(s => { if (active) setStatus(s) }).catch(() => {})}; refresh(false);const changed=()=>refresh(true);window.addEventListener('account-access-changed',changed); window.addEventListener('focus',changed); return () => { active = false;window.removeEventListener('account-access-changed',changed);window.removeEventListener('focus',changed) } }, [statusKey])
   if (!status || status.admin) return null
   const premium = status?.premium ?? false
   return <Box component="section" aria-label="AWM+" sx={{ width: '100%', px: { xs: 2, md: 5 }, py: { xs: 4, md: 6 }, display: 'flex', justifyContent: 'center' }}>
@@ -126,7 +126,7 @@ export function LockedChapter({ bookSlug, chapterTitle }: { bookSlug: string; ch
     setOpen(false)
     router.replace(`/books/${encodeURIComponent(bookSlug)}`)
   }
-  return <Box component="main" sx={{ minHeight: '60vh', bgcolor: 'var(--awm-cream-light)' }}>
+  return <Box component="div" sx={{ minHeight: '60vh', bgcolor: 'var(--awm-cream-light)' }}>
     <PremiumPrompt open={open} onClose={close} reason={`${chapterTitle} is available with AWM+.`} />
   </Box>
 }

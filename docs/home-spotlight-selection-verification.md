@@ -36,16 +36,16 @@ A MutationObserver additionally recorded final iframe insertion at 406.9ms media
 
 An intermediate streamed server-component implementation selected quickly but deferred below-fold hydration. It was replaced by direct initial props in the existing Homepage payload. The final approach loads Spotlight in parallel with existing Homepage reads and preserves all current layout/player components. There is no additional Spotlight Suspense hydration boundary.
 
-## Final request and database architecture
+## Current request and database architecture
 
-1. Homepage awaits Next connection() so selection is request-specific, then starts the dedicated selector alongside existing catalogue reads.
+1. Homepage uses 60-second incremental static regeneration and starts the dedicated selector alongside existing catalogue reads. Visitors share the cached clip until regeneration instead of requiring a database selection on every view.
 2. home_for_you_spotlight returns one JSON clip from the canonical live for_you_candidates index. It applies publication/source quality rules and excludes English group 5b98c563-5c35-4696-98e1-06aa000eb622 and all descendants in SQL, before LIMIT 1.
-3. A fresh request UUID determines an indexed MD5 hash-ring pivot. At most two indexed ranges wrap around the ring; no full-table ORDER BY random(), huge JavaScript shuffle or persisted second catalogue. Hashing avoids bias from large numeric-ID gaps.
+3. A fresh UUID at each regeneration determines an indexed MD5 hash-ring pivot. At most two indexed ranges wrap around the ring; no full-table ORDER BY random(), huge JavaScript shuffle or persisted second catalogue. Hashing avoids bias from large numeric-ID gaps.
 4. A bounded contiguous transcript window requires canonical segment quality, usable tokens, at least five meaningful words, complete segment boundaries and 30-60 seconds. Completed thoughts at 40-60 seconds are preferred. No manual/music/theme exclusions or long gaps may be crossed.
-5. Canonical tokens are preferred. If no primary result exists, exactly one optional compatibility RPC may use selected segments' existing raw source tokens. No whole raw transcript is transferred or repeatedly loaded through application fallback logic. Both calls share one 1500ms abort deadline.
-6. The server result is normalised and passed through HomeDashboard as initial client data. Mount, theme, resize, subtitles and mute do not select again. Refresh can choose another clip; explicit Retry can make a new selection after a visible error.
+5. Canonical tokens are preferred. If no primary result exists, exactly one optional compatibility RPC may use selected segments' existing raw source tokens. No whole raw transcript is transferred or repeatedly loaded through application fallback logic. Both calls share one 3000ms abort deadline.
+6. The server result is normalised and passed through HomeDashboard as initial client data. Mount, theme, resize, subtitles and mute do not select again. Refresh within the reuse window can return the same clip; explicit Retry can make a new selection after a visible error.
 
-The existing normal feed loader, RPCs, diversity/exclusions, AR/EN classification, guest/authenticated allowances and playback hook were not modified. No source_language field, language migration, content table, hardcoded production video list or globally cached selected clip was added.
+The existing normal feed loader, RPCs, diversity/exclusions, AR/EN classification, guest/authenticated allowances and playback hook were not modified. No source_language field, language migration, content table or hardcoded production video list was added.
 
 ## Real local SQL measurements
 

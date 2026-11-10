@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,
     /* Fewer generated widths: slots on the site are ~100-800px, so a short
        ladder cuts cold-optimizer encode work after each deploy. */
-    deviceSizes: [640, 1080, 1920],
+    deviceSizes: [640, 828, 1080, 1920],
     imageSizes: [96, 192, 384],
     /* next/image may only proxy our own image endpoints: the covers API
        (book covers carry a ?v= cache-buster) and static homepage artwork. */
@@ -75,8 +75,8 @@ const nextConfig: NextConfig = {
               `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval' " : ''}https://www.googletagmanager.com https://www.youtube.com https://s.ytimg.com https://www.youtube.com/iframe_api https://challenges.cloudflare.com`,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              `img-src 'self' data: blob: https://www.googletagmanager.com https://i.ytimg.com https://*.tiktokcdn.com https://*.cdninstagram.com https://*.fbcdn.net https://images.unsplash.com https://ichef.bbci.co.uk https://s.france24.com https://cnn-arabic-images.cnn.io https://images.skynewsarabia.com https://www.akhbarona.com${supabaseUrl ? ` ${supabaseUrl}` : ''}`,
-              `connect-src 'self' ${supabaseUrl ?? "https://whbxgwucsoguqzpnpzjd.supabase.co"} https://challenges.cloudflare.com https://www.googletagmanager.com https://www.google.com`,
+              `img-src 'self' data: blob: https://www.googletagmanager.com https://*.google-analytics.com https://i.ytimg.com https://*.tiktokcdn.com https://*.cdninstagram.com https://*.fbcdn.net https://images.unsplash.com https://ichef.bbci.co.uk https://s.france24.com https://cnn-arabic-images.cnn.io https://images.skynewsarabia.com https://www.akhbarona.com${supabaseUrl ? ` ${supabaseUrl}` : ''}`,
+              `connect-src 'self' ${supabaseUrl ?? "https://whbxgwucsoguqzpnpzjd.supabase.co"} https://challenges.cloudflare.com https://www.googletagmanager.com https://www.google.com https://*.google-analytics.com`,
               "media-src 'self' blob: https:",
               "frame-src https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://youtube-nocookie.com https://www.instagram.com https://instagram.com https://www.tiktok.com https://www.facebook.com https://web.facebook.com https://challenges.cloudflare.com",
               "object-src 'none'",

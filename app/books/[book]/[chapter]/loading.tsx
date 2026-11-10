@@ -2,7 +2,7 @@ import { Box, Container, Paper, Skeleton } from '@mui/material'
 
 export default function ChapterLoading() {
   return (
-    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 2.5, md: 5 } }}>
+    <Box component="div" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 2.5, md: 5 } }}>
       <Container maxWidth="xl">
         {/* back link + chapter counter */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>

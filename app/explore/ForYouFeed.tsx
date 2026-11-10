@@ -354,7 +354,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
   const desktopRail=<Box sx={{display:{xs:'none',md:'flex'},flexDirection:'column',alignItems:'center',gap:1}}>{languageControl}{desktopControls?.(settingsButton)??<>{railSwitcher}{settingsButton}</>}{modeControl()}</Box>
   const initialLoading = clips.length === 0 && busy
 
-  return <Box component="main" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: '#111d18', md: '#0a0c0b' }, pt: { xs: 0, md: 3 }, height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'auto' }, pb: { xs: 0, md: 5 } }}>
+  return <Box component="div" sx={{ minHeight: { md: 'calc(100dvh - var(--awm-navbar-height))' }, bgcolor: { xs: '#111d18', md: '#0a0c0b' }, pt: { xs: 0, md: 3 }, height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'auto' }, pb: { xs: 0, md: 5 } }}>
     <Box sx={{ maxWidth: 2400, mx: 'auto', height: { xs: '100%', md: 'auto' }, px: { xs: 0, sm: 0, md: 3 } }}>
       <Popover open={Boolean(settingsAnchor)} anchorEl={settingsAnchor} onClose={()=>setSettingsAnchor(null)} anchorOrigin={{vertical:'bottom',horizontal:'right'}} transformOrigin={{vertical:'top',horizontal:'right'}} slotProps={{paper:{sx:{p:2,width:'max-content',maxWidth:'calc(100vw - 32px)',borderRadius:'12px'}}}}>
         <Typography component="h2" sx={{fontWeight:600,mb:1}}>Settings</Typography>

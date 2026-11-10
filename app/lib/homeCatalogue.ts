@@ -7,6 +7,8 @@ const episodes = unstable_cache(async () => {
   if (!hasServiceClientConfig()) return []
   const { data, error } = await serviceClient.from('episodes')
     .select('id,show_id,slug,title,level,tags,description,youtube_id,instagram_id,tiktok_id,facebook_id,cover_crop,created_at')
+    .not('transcript', 'is', null)
+    .not('transcript', 'eq', '[]')
     .order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
   return data ?? []

@@ -18,7 +18,7 @@ export default async function BooksPage() {
   catch(error){console.error('[books] optional audio availability failed',error);audioUnavailable=true}
 
   return (
-    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pb: { xs: 5, md: 9 } }}>
+    <Box component="div" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pb: { xs: 5, md: 9 } }}>
       <Container maxWidth={false} sx={{ pt: { xs: 2.5, md: 5 }, px: { xs: 1.5, sm: 3, xl: 6 } }}>
         {audioUnavailable&&<Alert severity="info" sx={{mb:2}}>Audio availability is temporarily unavailable. Reading is still available.</Alert>}
         <Suspense><BooksLibrary books={books} audioBookIds={audioBookIds} /></Suspense>

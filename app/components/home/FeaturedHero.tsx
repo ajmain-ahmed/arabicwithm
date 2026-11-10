@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import type {ReactNode} from 'react'
 import {FEATURED_DESKTOP_RATIO,FEATURED_MOBILE_HEIGHT,featuredObjectPosition,type FeaturedPosition} from '@/app/lib/featuredFraming'
 import { Box, Button, Typography } from '@mui/material'
@@ -20,7 +21,7 @@ export interface FeaturedShow {
    full-bleed; mobile is a tall card so the whole height of the artwork is
    visible. Deliberately shorter than a streaming billboard so the rows stay
    near the fold. */
-export default function FeaturedHero({ show, episode, featuredImage, featuredPosition, priority=true, pagination=false, navigation }: FeaturedShow & {priority?:boolean;pagination?:boolean;navigation?:ReactNode}) {
+export default function FeaturedHero({ show, episode, featuredImage, featuredPosition, priority=true, loadImage=true, pagination=false, navigation }: FeaturedShow & {priority?:boolean;loadImage?:boolean;pagination?:boolean;navigation?:ReactNode}) {
   return (
     <Box
       data-featured-hero
@@ -46,16 +47,18 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
           boxShadow: 'none',
         }}
       >
-        <Box
-          component="img"
+        {loadImage&&<Image
+          fill
           src={featuredImage ?? "/homepage/dbz-feature.avif"}
+          overrideSrc={featuredImage ?? "/homepage/dbz-feature.avif"}
+          sizes="(max-width: 899px) calc(100vw - 32px), 100vw"
           alt={show.title}
           fetchPriority={priority?"high":"low"}
           loading={priority?"eager":"lazy"}
           decoding="async"
-          onError={event=>{const image=event.currentTarget;if(!image.dataset.fallback){image.dataset.fallback='true';image.src=show.cover}else image.style.visibility='hidden'}}
-          sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: featuredObjectPosition(featuredPosition) }}
-        />
+          onError={event=>{const image=event.currentTarget;if(!image.dataset.fallback){image.dataset.fallback='true';image.srcset='';image.src=show.cover}else image.style.visibility='hidden'}}
+          style={{ objectFit: 'cover', objectPosition: featuredObjectPosition(featuredPosition) }}
+        />}
         <Box component={Link} href={`/cartoons/${encodeURIComponent(show.slug)}`} aria-label={`View ${show.title}`} sx={{position:'absolute',inset:0,zIndex:1}} />
         {navigation&&<Box data-featured-mobile-navigation sx={{display:{xs:'block',md:'none'},position:'absolute',top:12,right:12,zIndex:3}}>{navigation}</Box>}
         {/* Legibility: weighted to the left where the text sits. */}

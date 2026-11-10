@@ -206,7 +206,7 @@ function MemorySession({ library, loadError }: { library: MemoryLibrary; loadErr
   const promptIsArabic = direction === 'english'
 
   return (
-    <Box component="main" sx={{ minHeight: { xs: 'calc(100vh - 56px)', md: 'calc(100vh - 64px)' }, '@supports (height: 100dvh)': { minHeight: { xs: 'calc(100dvh - 56px)', md: 'calc(100dvh - 64px)' } }, bgcolor: 'var(--awm-cream-light)', pb: { xs: 4, md: 8 } }}>
+    <Box component="div" sx={{ minHeight: { xs: 'calc(100vh - 56px)', md: 'calc(100vh - 64px)' }, '@supports (height: 100dvh)': { minHeight: { xs: 'calc(100dvh - 56px)', md: 'calc(100dvh - 64px)' } }, bgcolor: 'var(--awm-cream-light)', pb: { xs: 4, md: 8 } }}>
       <Container maxWidth="md" sx={{ pt: activePractice ? {xs:1.5,md:2} : { xs: 2.5, md: 5 }, px: { xs: 2, sm: 3 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box sx={{ width: 44, height: 44, display: 'grid', placeItems: 'center', borderRadius: '12px', bgcolor: 'color-mix(in srgb, var(--awm-gold) 13%, transparent)', color: 'var(--awm-gold)' }}><PsychologyOutlined /></Box>

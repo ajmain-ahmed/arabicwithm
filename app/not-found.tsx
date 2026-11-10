@@ -5,7 +5,7 @@ import { Box, Button, Container, Typography } from '@mui/material'
 
 export default function NotFound() {
   return (
-    <Box component="main" sx={{ minHeight: '60vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 8, md: 12 } }}>
+    <Box component="div" sx={{ minHeight: '60vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 8, md: 12 } }}>
       <Container maxWidth="sm" sx={{ textAlign: 'center' }}>
         <Typography sx={{ fontFamily: 'var(--font-sans), sans-serif', fontSize: 13, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--awm-gold)' }}>
           404

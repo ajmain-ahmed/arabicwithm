@@ -29,7 +29,7 @@ const darkSkeleton = { bgcolor: 'rgba(255,255,255,0.08)' }
 /** Generic light-page skeleton (homepage, books, profile, ...). */
 export function GenericPageLoading() {
   return (
-    <Box component="main" sx={{ minHeight: '60vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 4, md: 6 } }}>
+    <Box component="div" sx={{ minHeight: '60vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 4, md: 6 } }}>
       <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, md: 3 }, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
         <Skeleton variant="text" width="42%" height={44} />
         <Skeleton variant="text" width="64%" height={22} />
@@ -49,7 +49,7 @@ export function GenericPageLoading() {
 /** Dark watch-page skeleton matching the 3-column theater layout. */
 export function WatchPageLoading() {
   return (
-    <Box component="main" sx={{ minHeight: 'calc(100dvh - var(--awm-navbar-height))', bgcolor: '#0a0c0b', pt: { md: 4 }, pb: { md: 4 }, px: { xs: 0, md: 2.5, lg: 4 } }}>
+    <Box component="div" sx={{ minHeight: 'calc(100dvh - var(--awm-navbar-height))', bgcolor: '#0a0c0b', pt: { md: 4 }, pb: { md: 4 }, px: { xs: 0, md: 2.5, lg: 4 } }}>
       {/* Desktop: rail | video | transcript */}
       <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', gap: 6, alignItems: 'start' }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.1, justifySelf: 'end', width: '100%', maxWidth: 784, pt: '7px' }}>
@@ -86,7 +86,7 @@ export function WatchPageLoading() {
 /** Dark immersive-stage skeleton (explore). */
 export function ExplorePageLoading() {
   return (
-    <Box component="main" sx={{ height: 'calc(100dvh - var(--awm-navbar-height))', bgcolor: '#0a0c0b', display: 'grid', placeItems: 'center' }}>
+    <Box component="div" sx={{ height: 'calc(100dvh - var(--awm-navbar-height))', bgcolor: '#0a0c0b', display: 'grid', placeItems: 'center' }}>
       <LoadingCircle size={62} dark />
     </Box>
   )
@@ -95,7 +95,7 @@ export function ExplorePageLoading() {
 /** Show page: header + filter sidebar + 4/5 episode card grid. */
 export function ShowPageLoading() {
   return (
-    <Box component="main" sx={{ minHeight: '100dvh', bgcolor: 'var(--awm-cream-light)', pb: { xs: 0, md: 8 } }}>
+    <Box component="div" sx={{ minHeight: '100dvh', bgcolor: 'var(--awm-cream-light)', pb: { xs: 0, md: 8 } }}>
       <Container maxWidth="xl" sx={{ px: { xs: 2, md: 3 }, pt: { xs: 1.5, md: 4 } }}>
         {/* Header: title + My List pill */}
         <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 2 }}>
@@ -145,7 +145,7 @@ export function ShowPageLoading() {
 /** Light grid skeleton for the cartoons catalogue pages. */
 export function CataloguePageLoading() {
   return (
-    <Box component="main" sx={{ minHeight: '60vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 3, md: 5 }, px: { xs: 2, md: 4 } }}>
+    <Box component="div" sx={{ minHeight: '60vh', bgcolor: 'var(--awm-cream-light)', py: { xs: 3, md: 5 }, px: { xs: 2, md: 4 } }}>
       <Box sx={{ maxWidth: 2200, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
           <Skeleton variant="text" width={260} height={40} />

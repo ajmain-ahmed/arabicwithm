@@ -20,7 +20,7 @@ function P({ children }: { children: React.ReactNode }) {
 
 export default function PrivacyPolicyPage() {
   return (
-    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 10, md: 14 }, pb: { xs: 8, md: 12 } }}>
+    <Box component="div" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 10, md: 14 }, pb: { xs: 8, md: 12 } }}>
       <Container maxWidth="md">
         <Typography sx={{ color: 'var(--awm-gold)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: 12, letterSpacing: '0.16em', textTransform: 'uppercase' }}>Legal</Typography>
         <Typography component="h1" sx={{ mt: 1, fontFamily: 'var(--font-heading)', fontSize: { xs: 32, md: 42 }, fontWeight: 600, color: 'var(--awm-bark)' }}>
@@ -41,15 +41,15 @@ export default function PrivacyPolicyPage() {
           <P><strong>Saved content.</strong> Practice words you save, reading positions and bookmarks are stored against your account so they follow you between devices.</P>
           <P><strong>Content you submit.</strong> Feedback you send, corrections or comments you submit for review, and messages you write to us.</P>
           <P><strong>Support payments.</strong> Donations and AWM+ subscriptions are processed by Stripe. We never see or store your card number — only your subscription status and Stripe customer reference.</P>
-          <P><strong>Technical data.</strong> We use essential cookies to keep you signed in, and your browser&rsquo;s local storage for interface preferences (such as dark mode) and offline reading position. Requests are rate-limited using your IP address, which is not retained.</P>
+          <P><strong>Technical data.</strong> We use essential cookies to keep you signed in, and your browser&rsquo;s local storage for interface preferences (such as dark mode) and offline reading position. Your IP address is processed for security and rate limiting and may appear in short-lived Vercel or Supabase operational logs.</P>
         </Section>
 
         <Section title="3. What we do not do">
-          <P>We do not show advertising, we do not use analytics or tracking pixels, and we never sell or rent personal data to anyone.</P>
+          <P>We do not show advertising, and we never sell or rent personal data to anyone.</P>
         </Section>
 
         <Section title="4. Third-party services">
-          <P>Your data is stored and processed by <strong>Supabase</strong> (database and authentication, hosted in the EU) and the site is hosted on <strong>Vercel</strong>. Cartoons are embedded from <strong>YouTube</strong>: when you press play, YouTube&rsquo;s own player and privacy policy apply, and Google may collect interaction data. If you choose &ldquo;Sign in with Google&rdquo;, Google shares your profile information with us as described above. Payments are handled by <strong>Stripe</strong> under Stripe&rsquo;s own privacy terms.</P>
+          <P>Your data is stored and processed by <strong>Supabase</strong> (database and authentication, hosted in the EU) and the site is hosted on <strong>Vercel</strong>. We use <strong>Google Tag Manager</strong> to manage optional analytics and performance tools; configured tags may receive page and interaction data. Cartoons are embedded from <strong>YouTube</strong>: when a player loads—such as when Spotlight enters the viewport or you start a video—YouTube&rsquo;s own player and privacy policy apply, and Google may collect interaction data. If you choose &ldquo;Sign in with Google&rdquo;, Google shares your profile information with us as described above. Payments are handled by <strong>Stripe</strong> under Stripe&rsquo;s own privacy terms.</P>
         </Section>
 
         <Section title="5. Your rights">

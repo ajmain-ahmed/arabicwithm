@@ -1,7 +1,7 @@
 'use server'
 
 import { headers } from 'next/headers'
-import { rateLimit } from '@/app/lib/rateLimit'
+import { durableRateLimit } from '@/app/lib/durableRateLimit'
 
 const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 
@@ -26,7 +26,7 @@ export async function verifyTurnstileToken(token: string): Promise<{ ok: boolean
   }
   const requestHeaders = await headers()
   const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null
-  if (!rateLimit(`turnstile:${ip ?? 'unknown'}`, 30, 60_000).ok) {
+  if (!(await durableRateLimit(`turnstile:${ip ?? 'unknown'}`, 30, 60_000)).ok) {
     return { ok: false, codes: ['rate-limited'] }
   }
   try {

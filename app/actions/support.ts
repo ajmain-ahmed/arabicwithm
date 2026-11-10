@@ -2,7 +2,7 @@
 
 import { headers } from 'next/headers'
 import { getAuthenticatedUserId } from '@/app/actions/auth'
-import { rateLimit } from '@/app/lib/rateLimit'
+import { durableRateLimit } from '@/app/lib/durableRateLimit'
 import { createSupportCheckout } from '@/app/lib/supportPayments'
 import { MAX_SUPPORT_PENCE } from '@/app/lib/supportAmount'
 
@@ -17,7 +17,7 @@ export async function startSupportCheckout(amountPence: number): Promise<Support
   const requestHeaders = await headers()
   const forwardedFor = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim()
   const identity = userId ?? forwardedFor ?? 'anonymous'
-  const limited = rateLimit(`support-checkout:${identity}`, 8, 10 * 60 * 1000)
+  const limited = await durableRateLimit(`support-checkout:${identity}`, 8, 10 * 60 * 1000)
   if (!limited.ok) return { ok: false, error: `Too many checkout attempts. Try again in ${limited.retryAfterSeconds} seconds.` }
 
   try {

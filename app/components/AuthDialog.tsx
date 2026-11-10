@@ -426,6 +426,7 @@ export default function AuthDialog({ open, onClose, purpose, initialMode = 'sign
                     endAdornment: (
                       <IconButton
                         size="small"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
                         onClick={() => setShowPassword(p => !p)}
                         sx={{ color: 'var(--muted)', mr: -0.5 }}
                       >

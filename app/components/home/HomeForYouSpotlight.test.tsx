@@ -25,3 +25,17 @@ it('replaces an unembeddable source only once, excluding the rejected source',as
  await act(async()=>resolve({...clip,video:{...clip.video,id:'99999999-9999-4999-8999-999999999991'}}))
  expect(mocks.select).toHaveBeenCalledOnce();expect(host.querySelector('[role=alert]')).not.toBeNull()
 })
+it('mounts the player only when the section approaches the viewport',async()=>{
+ let intersect!:()=>void
+ vi.stubGlobal('IntersectionObserver',class{
+  constructor(callback:(entries:{isIntersecting:boolean}[])=>void){intersect=()=>callback([{isIntersecting:true}])}
+  observe(){}disconnect(){}
+ })
+ await act(async()=>root.render(<HomeForYouSpotlight initialClip={clip}/>))
+ expect(host.querySelector('[data-spotlight-deferred]')).not.toBeNull()
+ expect(host.querySelector('[data-spotlight-ready]')).toBeNull()
+ await act(async()=>intersect())
+ expect(host.querySelector('[data-spotlight-deferred]')).toBeNull()
+ expect(host.querySelector('[data-spotlight-ready]')).not.toBeNull()
+ vi.unstubAllGlobals()
+})

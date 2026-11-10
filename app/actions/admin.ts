@@ -663,7 +663,7 @@ export async function updateBook(id:string,input:Partial<BookInput>):Promise<Act
   try {
     await guardAdmin()
     if (!z.string().uuid().safeParse(id).success) return {ok:false,error:'Invalid book ID.'}
-    const parsed = bookInputSchema.partial().safeParse(input)
+    const parsed = bookInputSchema.partial().extend({is_completed:z.boolean().optional()}).safeParse(input)
     if (!parsed.success) return {ok:false,error:parsed.error.issues[0].message}
     const previousSlug = await fetchBookSlugById(id)
     if (!previousSlug) return {ok:false,error:'This book is no longer available. Refresh the library.'}

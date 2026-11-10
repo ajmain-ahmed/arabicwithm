@@ -72,7 +72,7 @@ export default async function ChapterPage({
       bookId: book.id,
     })
     return (
-      <Box component="main" sx={{ minHeight: '70vh', display: 'grid', placeItems: 'center', bgcolor: 'var(--awm-cream-light)', py: 6 }}>
+      <Box component="div" sx={{ minHeight: '70vh', display: 'grid', placeItems: 'center', bgcolor: 'var(--awm-cream-light)', py: 6 }}>
         <Container maxWidth="sm">
           <Box sx={{ p: { xs: 3, sm: 5 }, textAlign: 'center', border: '1px solid color-mix(in srgb, var(--awm-bark) 12%, transparent)', borderRadius: '16px', bgcolor: 'var(--awm-white)' }}>
             <Typography component="h1" sx={{ color: 'var(--awm-bark)', fontFamily: 'var(--font-heading)', fontSize: { xs: 29, sm: 36 }, fontWeight: 600 }}>
@@ -107,7 +107,7 @@ export default async function ChapterPage({
   const nextChapter = chapterIndex >= 0 && chapterIndex < chapters.length - 1 ? chapters[chapterIndex + 1] : null
 
   return (
-    <Box component="main" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 2.5, md: 5 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 5 } }}>
+    <Box component="div" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 2.5, md: 5 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 5 } }}>
       <Container maxWidth="xl">
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2, mb: 3 }}>
           <Link href={`/books/${encodeURIComponent(book.slug)}`} style={{ color: 'inherit', textDecoration: 'none' }}>

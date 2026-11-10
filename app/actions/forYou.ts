@@ -10,7 +10,7 @@ import {spokenForYouClip,hasSpokenContent,spokenSegment} from '@/app/lib/forYouS
 import {transcriptSourceLanguages} from '@/app/lib/transcriptSourceLanguage.server'
 import { forYouGroupPool } from '@/app/lib/forYouGroups'
 import { headers } from 'next/headers'
-import { rateLimit } from '@/app/lib/rateLimit'
+import { durableRateLimit } from '@/app/lib/durableRateLimit'
 import { z } from 'zod'
 import { serviceClient } from '@/app/lib/supabase'
 import {loadHomeSpotlight} from '@/app/lib/homeSpotlight.server'
@@ -24,7 +24,7 @@ function diagnostic(category:string,details:Record<string,unknown>={}){
 async function allowForYouRead(){
  if(await getAuthenticatedUserId())return
  const ip=(await headers()).get('x-forwarded-for')?.split(',')[0]??'local'
- if(!rateLimit(`guest-for-you:${ip}`,120,60000).ok)throw new Error('Please try For You again shortly.')
+ if (!(await durableRateLimit(`guest-for-you:${ip}`,120,60000)).ok)throw new Error('Please try For You again shortly.')
 }
 
 async function loadForYouClips(seed: string, excluded: number[], recent: string[], groups: string[] = [], language:'ar'|'en'='ar', limit=5): Promise<ForYouClip[]> {
@@ -140,6 +140,6 @@ export async function fetchForYouDiagnostics():Promise<ForYouDiagnostics>{
 export async function fetchHomeForYouSpotlight(excludedTranscript?:string):Promise<ForYouClip|null>{
  if(excludedTranscript!==undefined)z.string().uuid().parse(excludedTranscript)
  const ip=(await headers()).get('x-forwarded-for')?.split(',')[0]??'local'
- if(!rateLimit(`home-spotlight:${ip}`,60,60000).ok)throw new Error('Please try the preview again shortly.')
+ if (!(await durableRateLimit(`home-spotlight:${ip}`,60,60000)).ok)throw new Error('Please try the preview again shortly.')
  return loadHomeSpotlight(excludedTranscript)
 }

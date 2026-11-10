@@ -9,7 +9,7 @@ export default function LearningSignInGate({ activity }: {
     const { user, loading } = useAuth();
     const [open, setOpen] = useState(true);
     return <Container sx={{ pt: 16, pb: 'calc(100px + env(safe-area-inset-bottom))', textAlign: 'center' }}>
-    <Typography variant="h3">{activity}</Typography>
+    <Typography component="h1" variant="h3">{activity}</Typography>
     {loading || user ? <CircularProgress aria-label={`Loading ${activity}`} sx={{ mt: 3 }}/> : <Box sx={{ mt: 3 }}>
       <Typography>Your personal {activity} activities are protected.</Typography>
       <Button variant="contained" onClick={() => setOpen(true)} sx={{ mt: 2 }}>Sign In</Button>

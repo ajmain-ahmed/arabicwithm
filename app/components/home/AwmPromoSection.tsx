@@ -28,8 +28,7 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
     window.addEventListener('focus',refresh)
     window.addEventListener('account-access-changed',refresh)
     document.addEventListener('visibilitychange',visible)
-    const timer=window.setInterval(visible,60000)
-    return () => {current=false;clearInterval(timer);window.removeEventListener('focus',refresh);window.removeEventListener('account-access-changed',refresh);document.removeEventListener('visibilitychange',visible)}
+    return () => {current=false;window.removeEventListener('focus',refresh);window.removeEventListener('account-access-changed',refresh);document.removeEventListener('visibilitychange',visible)}
   }, [userId])
   const status=userId?(snapshot?.userId===userId?snapshot.status:null):{premium:false,admin:false,signedIn:false,manageable:false,cancelAtPeriodEnd:false,periodEnd:null,paymentIssue:false,startedAt:null}
   if (!status) return null
@@ -167,7 +166,6 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
         {/* artwork: transparent cutout — natural aspect, silhouette shadow
             (static asset, plain img so nothing touches the image optimizer) */}
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <Box
             component="img"
             src="/homepage/vegeta.avif"

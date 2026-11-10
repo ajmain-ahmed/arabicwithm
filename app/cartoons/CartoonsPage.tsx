@@ -58,7 +58,7 @@ export interface WatchFilters {
 export function CartoonsPageSkeleton() {
   return (
     <Box
-      component="main"
+      component="div"
       sx={{
         minHeight: { xs: 'calc(100vh - 56px)', md: '100vh' },
         '@supports (height: 100dvh)': { minHeight: { xs: 'calc(100dvh - 56px)', md: '100dvh' } },
@@ -161,7 +161,7 @@ export default function CartoonsPage({
      (via a ref updated every render) so a filter click in the same window is
      never clobbered by the pending replace. */
   const searchParamsRef = useRef(searchParams.toString())
-  searchParamsRef.current = searchParams.toString()
+  useEffect(() => { searchParamsRef.current = searchParams.toString() }, [searchParams])
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => () => {
     if (searchTimer.current) clearTimeout(searchTimer.current)
@@ -249,6 +249,7 @@ export default function CartoonsPage({
       )}
       headerStart={(
         <>
+          <Typography component="h1" sx={{ position: 'absolute', width: '1px', height: '1px', p: 0, m: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>Arabic cartoons</Typography>
           <ToggleButtonGroup
             exclusive
             value={view}

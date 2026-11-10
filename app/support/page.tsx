@@ -24,7 +24,7 @@ export default async function SupportPage({
   if (support === 'success' && sessionId) checkoutStatus = await verifySupportCheckout(sessionId)
 
   return (
-    <Box component="main" sx={{ minHeight: '75vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 4, md: 8 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 8 } }}>
+    <Box component="div" sx={{ minHeight: '75vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 4, md: 8 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 8 } }}>
       <Container maxWidth="lg">
         {checkoutStatus === 'paid' && (
           <Alert icon={<CheckCircleRounded />} severity="success" action={<Button href="/" color="inherit" size="small" sx={{ whiteSpace: 'nowrap', textTransform: 'none' }}>Return home</Button>} sx={{ mb: 3, borderRadius: '12px' }}>
