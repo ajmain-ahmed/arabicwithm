@@ -79,7 +79,7 @@ export default function CheckoutReturnNotice({ userId }: { userId: string }) {
     stuck: {
       Icon: WarningAmberRounded, color: '#b3541e',
       title: 'Still confirming your payment',
-      body: 'Access is taking longer than expected. Try refreshing in a minute — if AWM+ still hasn’t appeared, email hello@arabicwithm.com.',
+      body: 'Access is taking longer than expected. Try refreshing in a minute — if AWM+ still hasn’t appeared, email support@arabicwithm.com.',
     },
     cancelled: {
       Icon: InfoOutlined, color: 'var(--awm-muted)',

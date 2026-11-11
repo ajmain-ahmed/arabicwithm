@@ -61,7 +61,7 @@ it('escalates when access has not synced after the polling window', async () => 
   await act(async () => { await vi.advanceTimersByTimeAsync(4000 * 8 + 1000) })
   expect(mocks.refresh).toHaveBeenCalledTimes(8)
   expect(document.body.textContent).toContain('taking longer than expected')
-  expect(document.body.textContent).toContain('hello@arabicwithm.com')
+  expect(document.body.textContent).toContain('support@arabicwithm.com')
 })
 
 it('shows the cancelled state without polling premium status', async () => {

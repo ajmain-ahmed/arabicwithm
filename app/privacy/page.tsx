@@ -27,45 +27,59 @@ export default function PrivacyPolicyPage() {
           Privacy Policy
         </Typography>
         <Typography {...BODY} sx={{ ...BODY.sx, color: 'var(--awm-muted)', mt: 1 }}>
-          Last updated: 14 October 2026 · Contact: <a href="mailto:hello@arabicwithm.com">hello@arabicwithm.com</a>
+          Last updated: 11 November 2026 · Contact: <a href="mailto:support@arabicwithm.com">support@arabicwithm.com</a>
         </Typography>
         <Divider sx={{ borderColor: 'color-mix(in srgb, var(--awm-gold) 20%, transparent)', my: 3 }} />
 
         <Section title="1. Who we are">
-          <P>ArabicWithM (&ldquo;we&rdquo;, &ldquo;us&rdquo;) is a language-learning website that helps you learn Arabic through cartoons with interactive transcripts and original graded books. This policy explains what personal data we collect when you use the service, why, and your rights over it.</P>
+          <P>ArabicWithM (&ldquo;we&rdquo;, &ldquo;us&rdquo;) is a language-learning website offering interactive cartoons, graded books, audio and learning activities. This policy explains what personal data we collect when you use the service, why we use it, and the choices and rights you have.</P>
         </Section>
 
-        <Section title="2. What we collect">
-          <P><strong>Account information.</strong> When you register, we store your email address and a password hash (handled by our authentication provider, Supabase). If you sign in with Google, we receive your name, email address and profile picture from Google. You may optionally add a display name.</P>
-          <P><strong>Learning activity.</strong> To power your progress tracking (streaks and weekly goals), we record: time spent actively watching or reading, the number of words you look up, flashcard reviews, word-search puzzle completions and grammar exercise activity. This data is tied to your account.</P>
-          <P><strong>Saved content.</strong> Practice words you save, reading positions and bookmarks are stored against your account so they follow you between devices.</P>
-          <P><strong>Content you submit.</strong> Feedback you send, corrections or comments you submit for review, and messages you write to us.</P>
-          <P><strong>Support payments.</strong> Donations and AWM+ subscriptions are processed by Stripe. We never see or store your card number — only your subscription status and Stripe customer reference.</P>
-          <P><strong>Technical data.</strong> We use essential cookies to keep you signed in, and your browser&rsquo;s local storage for interface preferences (such as dark mode) and offline reading position. Your IP address is processed for security and rate limiting and may appear in short-lived Vercel or Supabase operational logs.</P>
+        <Section title="2. Information we collect">
+          <P><strong>Account information.</strong> When you register, we store your email address and authentication credentials. Passwords are handled by our authentication provider and are not stored by us in plain text. If you sign in with a social account, we may receive your name, email address and profile picture.</P>
+          <P><strong>Profile information.</strong> You may provide a display name, username, avatar and banner image. Your profile visibility and reading-sharing preferences are also stored.</P>
+          <P><strong>Learning and saved content.</strong> We record active learning time, word lookups, flashcard reviews, grammar and puzzle activity, streaks and goals. We store your saved words, My List selections, reading positions, bookmarks and audiobook progress so they can follow you between devices.</P>
+          <P><strong>Content and communications.</strong> We retain feedback, reviews, corrections and other content you submit, as well as messages you send to us and our responses.</P>
+          <P><strong>Payment information.</strong> Our payment processor handles your card and billing details. We do not see or store your full card number. We may receive your customer reference, payment and subscription status, amounts paid, and renewal or cancellation dates.</P>
+          <P><strong>Technical and usage information.</strong> We may process your IP address, browser and device information, pages visited, interactions, diagnostic events and security logs. Essential cookies keep you signed in and protect the service. Browser storage also holds preferences, playback settings, guest usage allowances and temporary reading or feed state.</P>
         </Section>
 
-        <Section title="3. What we do not do">
-          <P>We do not show advertising, and we never sell or rent personal data to anyone.</P>
+        <Section title="3. How we use information">
+          <P>We use information to provide and personalise the service, maintain your learning history, process payments, deliver account and service messages, respond to enquiries, improve content and features, keep the service secure, prevent abuse, and meet legal or accounting obligations.</P>
+          <P>Depending on the activity and your location, our legal bases include performing our contract with you, our legitimate interests in operating and improving the service, compliance with legal obligations, and consent where the law requires it.</P>
         </Section>
 
-        <Section title="4. Third-party services">
-          <P>Your data is stored and processed by <strong>Supabase</strong> (database and authentication, hosted in the EU) and the site is hosted on <strong>Vercel</strong>. We use <strong>Google Tag Manager</strong> to manage optional analytics and performance tools; configured tags may receive page and interaction data. Cartoons are embedded from <strong>YouTube</strong>: when a player loads—such as when Spotlight enters the viewport or you start a video—YouTube&rsquo;s own player and privacy policy apply, and Google may collect interaction data. If you choose &ldquo;Sign in with Google&rdquo;, Google shares your profile information with us as described above. Payments are handled by <strong>Stripe</strong> under Stripe&rsquo;s own privacy terms.</P>
+        <Section title="4. Public profiles and sharing">
+          <P>You can control whether your learning profile is public and whether reading activity is shared. A public profile may show your display name, username, avatar, banner, learning summary and any bookshelf content you choose to share. Your email address and private learning history are not made public through this feature.</P>
+          <P>Public information can be viewed, shared or indexed by others. You can turn off public visibility or reading sharing in your profile settings.</P>
         </Section>
 
-        <Section title="5. Your rights">
-          <P>You can ask us at any time to access, correct, export or delete your personal data — including everything listed in section 2 — by emailing <a href="mailto:hello@arabicwithm.com">hello@arabicwithm.com</a>. Deleting your account removes your learning history, saved words and bookmarks. You can opt out of a public learning profile (if you have enabled one) in your settings at any time.</P>
+        <Section title="5. Service providers and external content">
+          <P>We use service providers for hosting, authentication, data storage, email delivery, payment processing, security and analytics. They receive only the information needed to perform their services for us and under their own legal obligations.</P>
+          <P>When an embedded video or other external media loads, the external platform may receive your IP address, device information and interaction data under its own privacy terms. Social sign-in is similarly governed by the provider you choose.</P>
+          <P>We do not sell or rent your personal data. We do not show third-party advertising profiles based on your learning activity.</P>
         </Section>
 
-        <Section title="6. Children">
-          <P>ArabicWithM is a general-audience educational service and is not directed at children under 13. If you believe a child has created an account, contact us and we will delete it and its associated data.</P>
+        <Section title="6. International processing">
+          <P>Some service providers may process information outside your country, including outside the United Kingdom or European Economic Area. Where required, international transfers use an appropriate legal safeguard, such as an adequacy decision or approved contractual protections.</P>
         </Section>
 
         <Section title="7. Security and retention">
-          <P>Traffic is encrypted in transit (TLS). Database access is restricted to server-side code through row-level security and a privileged key that never reaches your browser. We keep your data for as long as your account exists; if you close your account, associated learning data is deleted within 30 days.</P>
+          <P>We use encrypted connections, access controls and server-side permission checks to protect information. No online service is completely secure, so we cannot guarantee absolute security.</P>
+          <P>We generally keep account and learning information while your account is active. When you ask us to delete your account, we delete or anonymise associated profile and learning data, subject to anything we must retain for legal, accounting, fraud-prevention or security reasons. Payment records may be retained separately for those purposes. Operational logs and backups may take a limited additional period to expire.</P>
         </Section>
 
-        <Section title="8. Changes">
-          <P>If we change this policy, we will update the date above. For significant changes we will notify you by email or a notice on the site.</P>
+        <Section title="8. Your rights and choices">
+          <P>Depending on your location, you may have rights to access, correct, export, delete, restrict or object to our use of your personal data, and to withdraw consent where processing is based on consent. You can also complain to your local data-protection authority.</P>
+          <P>You can manage profile visibility and several preferences on the site. For access, export, correction or deletion requests, email <a href="mailto:support@arabicwithm.com">support@arabicwithm.com</a>. We may need to verify that the request relates to your account before acting on it.</P>
+        </Section>
+
+        <Section title="9. Children">
+          <P>ArabicWithM is a general-audience educational service and is not directed at children under 13. If you believe a child under 13 has created an account, contact us so we can review and delete the account and associated data.</P>
+        </Section>
+
+        <Section title="10. Changes and contact">
+          <P>If we change this policy, we will update the date above. For significant changes, we may notify you by email or display a notice on the site. Questions about this policy or your data can be sent to <a href="mailto:support@arabicwithm.com">support@arabicwithm.com</a>.</P>
         </Section>
       </Container>
     </Box>

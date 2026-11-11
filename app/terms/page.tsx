@@ -27,50 +27,56 @@ export default function TermsOfServicePage() {
           Terms of Service
         </Typography>
         <Typography {...BODY} sx={{ ...BODY.sx, color: 'var(--awm-muted)', mt: 1 }}>
-          Last updated: 14 October 2026 · Contact: <a href="mailto:hello@arabicwithm.com">hello@arabicwithm.com</a>
+          Last updated: 11 November 2026 · Contact: <a href="mailto:support@arabicwithm.com">support@arabicwithm.com</a>
         </Typography>
         <Divider sx={{ borderColor: 'color-mix(in srgb, var(--awm-gold) 20%, transparent)', my: 3 }} />
 
         <Section title="1. Acceptance">
-          <P>By creating an account or using ArabicWithM you agree to these terms. If you do not agree, please do not use the service.</P>
+          <P>By creating an account or using ArabicWithM, you agree to these terms. If you do not agree, please do not use the service.</P>
         </Section>
 
         <Section title="2. The service">
-          <P>ArabicWithM provides Arabic-learning tools: interactive transcripts, vocabulary aids and grammar exercises built around cartoon episodes, original graded books with audio, flashcards and word-search puzzles. Some features (such as downloads and extended practice) require a paid AWM+ subscription or administrator grant.</P>
+          <P>ArabicWithM provides Arabic-learning tools including interactive transcripts, vocabulary aids, grammar exercises, graded books, optional audio, flashcards and puzzles. Some features require an account, a paid AWM+ subscription or a complimentary access grant. Features and content may change as the service develops.</P>
         </Section>
 
-        <Section title="3. Intellectual property">
-          <P><strong>Our content.</strong> The graded books, transcripts and subtitles, translations, vocabulary lists, grammar exercises, illustrations and puzzle data on ArabicWithM are original works owned by ArabicWithM. We grant you a personal, non-exclusive, non-transferable licence to use them for your own learning. You may not copy, redistribute, republish, sell or create derivative works from them without our written permission.</P>
-          <P><strong>Cartoon videos.</strong> The cartoon episodes themselves are the property of their respective owners and licensors. They are embedded from YouTube for educational commentary and language instruction; we do not host video files and claim no ownership of, or affiliation with, the underlying shows or their rights holders. Embedding is not endorsement by the rights holder.</P>
-          <P><strong>Availability of third-party videos.</strong> Because videos stream from YouTube, an episode may become unavailable, region-locked or removed at any time by its uploader or rights holder, and we cannot guarantee continued availability of any specific episode.</P>
+        <Section title="3. Accounts and profiles">
+          <P>Keep your sign-in credentials confidential, provide an accurate email address and do not share your account. You are responsible for activity under your account and for content you choose to make public.</P>
+          <P>You can manage your public-profile and reading-sharing settings on the site. You may ask us to delete your account by contacting <a href="mailto:support@arabicwithm.com">support@arabicwithm.com</a>. Account deletion does not by itself stop future subscription payments, so cancel any active renewal in your billing settings first or contact us for assistance.</P>
         </Section>
 
         <Section title="4. Acceptable use">
-          <P>You agree not to: scrape, crawl or bulk-download the site or its data (including transcripts and word lists) by automated means; probe, disrupt or overload the service; share your account; use the service for anything unlawful; or submit feedback, corrections or comments that are unlawful, abusive or infringe someone else&rsquo;s rights. We may suspend accounts that abuse the service.</P>
+          <P>You agree not to scrape, crawl or bulk-download the site or its data (including transcripts and word lists) by automated means; bypass access controls or usage limits; probe, disrupt or overload the service; use it for anything unlawful; or submit content that is unlawful, abusive, misleading or infringes someone else&rsquo;s rights. We may restrict or suspend accounts that abuse the service or put other users at risk.</P>
         </Section>
 
-        <Section title="5. Accounts">
-          <P>Keep your sign-in credentials confidential and provide an accurate email address. You are responsible for activity under your account. You can delete your account at any time by contacting us.</P>
+        <Section title="5. Content and intellectual property">
+          <P><strong>Content we create.</strong> Our original books, transcripts, translations, vocabulary lists, grammar exercises, illustrations, branding and puzzle data are owned by ArabicWithM or used under licence. We grant you a personal, non-exclusive, non-transferable licence to use them for your own learning. You may not copy, redistribute, republish, sell or create derivative works from them without written permission.</P>
+          <P><strong>External media.</strong> Cartoon episodes and other embedded media belong to their respective owners and licensors. They are provided through external platforms for educational commentary and language instruction. We claim no ownership of, affiliation with, or endorsement by the underlying shows or rights holders.</P>
+          <P><strong>Availability.</strong> External media may become unavailable, region-locked or removed by its uploader, platform or rights holder. We cannot guarantee continued availability of any particular episode or third-party feature.</P>
         </Section>
 
-        <Section title="6. Your submissions">
-          <P>Feedback, corrections and comments you submit may be reviewed by our team and used to improve the service. You grant us a perpetual, royalty-free licence to use your submissions for that purpose. You retain ownership of your submissions, but do not submit material you have no right to share.</P>
+        <Section title="6. Your submissions and public content">
+          <P>Feedback, reviews, corrections and other content you submit may be reviewed by our team and used to improve the service. You grant us a perpetual, royalty-free licence to use submissions for that purpose. You retain ownership of your submissions, but must have the right to share them.</P>
+          <P>If you make a profile or reading activity public, you allow that information to be viewed and shared by others. Do not publish personal or confidential information that you do not want visible.</P>
         </Section>
 
-        <Section title="7. Payments and subscriptions">
-          <P>AWM+ subscriptions and support payments are processed by Stripe and are also subject to Stripe&rsquo;s terms. Subscriptions renew automatically until cancelled; you can cancel at any time and keep access until the end of the paid period. Refunds are handled case by case — contact us.</P>
+        <Section title="7. Payments, subscriptions and support contributions">
+          <P>AWM+ subscriptions and one-time support contributions are processed by our payment provider under its own terms. The price and billing interval are shown before you pay. Subscriptions renew automatically until cancelled.</P>
+          <P>You can cancel the next renewal at any time through your billing settings and keep AWM+ access until the end of the paid period. Turning renewal back on restores future billing for the same subscription. If a renewal payment fails, you may need to update your payment method; access after the paid period depends on the confirmed subscription status.</P>
+          <P>One-time support contributions are not subscriptions. Refund requests are reviewed case by case and are subject to any rights you have under applicable consumer law. Contact <a href="mailto:support@arabicwithm.com">support@arabicwithm.com</a> for billing help.</P>
         </Section>
 
         <Section title="8. Disclaimer and liability">
-          <P>The service is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo;, without warranties of any kind. We do not warrant that learning outcomes will be achieved or that any content will remain available. To the extent permitted by law, our total liability for any claim relating to the service is limited to the amount you have paid us in the 12 months before the claim, or £10 if you have paid nothing.</P>
+          <P>The service is provided &ldquo;as is&rdquo; and &ldquo;as available&rdquo;, without warranties of any kind. We do not warrant particular learning outcomes, uninterrupted operation or continued availability of any content.</P>
+          <P>To the extent permitted by law, our total liability for a claim relating to the service is limited to the amount you paid us in the 12 months before the claim, or £10 if you paid nothing. Nothing in these terms excludes liability for death or personal injury caused by negligence, fraud, or any other liability that cannot lawfully be excluded. Your statutory consumer rights are not affected.</P>
         </Section>
 
         <Section title="9. Copyright complaints">
-          <P>Rights holders who believe their work is used on ArabicWithM in a way that infringes their rights (including embedded videos) can contact <a href="mailto:hello@arabicwithm.com">hello@arabicwithm.com</a> with the details and we will review and act on valid requests promptly, including removing access to the relevant material.</P>
+          <P>Rights holders who believe their work is used on ArabicWithM in a way that infringes their rights, including through embedded media, can contact <a href="mailto:support@arabicwithm.com">support@arabicwithm.com</a> with the relevant work, location and evidence. We will review valid requests promptly and may remove or disable access to the relevant material.</P>
         </Section>
 
         <Section title="10. Changes and governing law">
-          <P>We may update these terms from time to time; the date above shows the current version. Continued use after changes means you accept the updated terms. These terms are governed by the laws of England and Wales, and disputes are subject to the jurisdiction of its courts.</P>
+          <P>We may update these terms from time to time, and the date above shows the current version. Material changes may be communicated by email or a notice on the site. Continued use after changes means you accept the updated terms.</P>
+          <P>These terms are governed by the laws of England and Wales, and disputes are subject to the jurisdiction of its courts, subject to any mandatory rights you have as a consumer in your place of residence.</P>
         </Section>
       </Container>
     </Box>

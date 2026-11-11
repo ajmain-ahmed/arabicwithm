@@ -259,7 +259,7 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 1. `startPremiumCheckout` re-fetches the Stripe price and validates currency/amount before creating a Checkout session; the webhook re-retrieves subscription state so retries can't reinstate stale access.
 2. Live keys are refused unless `STRIPE_LIVE_ENABLED=true` (`app/lib/billing.ts`).
 3. Disputes and refunds (`charge.dispute.created`, `charge.refunded`) are logged loudly by the webhook but never auto-revoke access — a dispute is not a loss and the subscription usually remains owed. Review them in the Stripe dashboard and handle manually (e.g. `manual_premium_grants` or portal cancellation).
-4. Account deletion is manual (users email hello@arabicwithm.com). Deleting the auth user cascades the `subscriptions` row but does **not** stop Stripe billing — whoever processes a deletion must also cancel the Stripe subscription (or revoke access via `manual_premium_grants`) and confirm no active subscription remains on the customer.
+4. Account deletion is manual (users email support@arabicwithm.com). Deleting the auth user cascades the `subscriptions` row but does **not** stop Stripe billing — whoever processes a deletion must also cancel the Stripe subscription (or revoke access via `manual_premium_grants`) and confirm no active subscription remains on the customer.
 
 ### Admin CMS
 - `/admin` redirects to `/admin/shows`; the CMS covers shows, episodes, books, chapters (+audio), phrases, Hans Wehr, featured content, transcripts, reviews/suggestions, and user management (roles + manual premium, both audit-logged).

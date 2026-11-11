@@ -61,7 +61,7 @@ export default function ContactDialog({ open, onClose }: ContactDialogProps) {
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                     <Box
                         component="a"
-                        href="mailto:hello@arabicwithm.com"
+                        href="mailto:support@arabicwithm.com"
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
@@ -97,7 +97,7 @@ export default function ContactDialog({ open, onClose }: ContactDialogProps) {
                                 Email Us
                             </Typography>
                             <Typography variant="caption" sx={{ color: 'var(--awm-muted)' }}>
-                                hello@arabicwithm.com
+                                support@arabicwithm.com
                             </Typography>
                         </Box>
                     </Box>
