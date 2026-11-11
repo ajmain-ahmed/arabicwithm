@@ -234,6 +234,8 @@ function AccountSection({ profile, onSaved }: { profile: PublicProfile; onSaved:
 
 function AwmSection({ profile }: { profile: PublicProfile }) {
   const [status, setStatus] = useState<PremiumStatus | null>(null)
+  const [statusLoading, setStatusLoading] = useState(true)
+  const [statusAttempt, setStatusAttempt] = useState(0)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   useEffect(() => {
@@ -241,13 +243,12 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
     let active = true
     const refresh = () => {
       void fetchPremiumStatus()
-        .then(value => { if (active) setStatus(value) })
-        .catch(() => { if (active) setStatus(null) })
+        .then(value => { if (active) { setStatus(value); setError('') } })
+        .catch(() => { if (active) setError('Unable to confirm your AWM+ status. Please try again.') })
+        .finally(() => { if (active) setStatusLoading(false) })
     }
-    /* Mirror the navbar's stale-while-revalidate pattern: the profile tab is
-       exactly where users land after portal actions, so it must self-heal —
-       re-verify on focus, on account changes, and periodically while visible,
-       instead of showing mount-time state until a manual refresh. */
+    /* Re-verify on entry, focus and account changes; the confirmed response is
+       required before showing either the active or cancellation view. */
     refresh()
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible') refresh() }, 60_000)
     window.addEventListener('focus', refresh)
@@ -258,7 +259,8 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
       window.removeEventListener('focus', refresh)
       window.removeEventListener('account-access-changed', refresh)
     }
-  }, [profile.own])
+  }, [profile.own, statusAttempt])
+  const retryStatus = () => { setStatusLoading(true); setError(''); setStatusAttempt(value => value + 1) }
 
   const cta = async () => {
     setBusy(true); setError('')
@@ -307,6 +309,26 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
     const now = new Date()
     return Math.max(1, (now.getFullYear() - started.getFullYear()) * 12 + (now.getMonth() - started.getMonth()) + (now.getDate() >= started.getDate() ? 1 : 0))
   })()
+
+  if (!status) return (
+    <Box className="pv-fade-up">
+      <SectionLabel>Subscription</SectionLabel>
+      <SectionTitle>AWM+</SectionTitle>
+      <Box sx={{ minHeight: 280, display: 'grid', placeItems: 'center', background: 'var(--awm-white)', border: '1px solid rgba(184,134,11,0.18)', borderRadius: '4px', p: { xs: 2, sm: 3 } }}>
+        {statusLoading || !error ? (
+          <Box role="status" sx={{ textAlign: 'center' }}>
+            <CircularProgress size={30} sx={{ color: 'var(--awm-gold)' }} />
+            <Typography sx={{ mt: 1.5, fontFamily: 'var(--font-sans), sans-serif', color: 'var(--awm-muted)' }}>Confirming your AWM+ status…</Typography>
+          </Box>
+        ) : (
+          <Box sx={{ width: '100%', textAlign: 'center' }}>
+            <Alert severity="error">{error}</Alert>
+            <Button onClick={retryStatus} variant="outlined" sx={{ mt: 2, textTransform: 'none' }}>Retry</Button>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  )
 
   return (
     <Box className="pv-fade-up">

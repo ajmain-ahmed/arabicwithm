@@ -122,3 +122,18 @@ it('shows a spinner while renewing and immediately renders the confirmed renewal
   expect(host.textContent).not.toContain('Cancellation scheduled')
   expect(host.textContent).not.toContain('Turn auto-renew back on')
 })
+
+it('withholds all membership states until the initial server status is confirmed', async () => {
+  let resolve!: (value: { premium: boolean; signedIn: boolean; manageable: boolean; admin: boolean; cancelAtPeriodEnd: boolean; periodEnd: string; paymentIssue: boolean; startedAt: string }) => void
+  mocks.status.mockImplementation(() => new Promise(done => { resolve = done }))
+  await act(async () => root.render(<ProfileView profile={profile(true)} />))
+  await clickText('AWM+')
+  expect(host.textContent).toContain('Confirming your AWM+ status')
+  expect(host.querySelector('.MuiCircularProgress-root')).not.toBeNull()
+  expect(host.textContent).not.toContain('Manage AWM+')
+  expect(host.textContent).not.toContain('Cancellation scheduled')
+  expect(host.textContent).not.toContain('Subscribe —')
+  await act(async () => resolve({ premium: true, signedIn: true, manageable: true, admin: false, cancelAtPeriodEnd: true, periodEnd: '2999-01-01T00:00:00.000Z', paymentIssue: false, startedAt: '2026-01-01T00:00:00.000Z' }))
+  expect(host.textContent).toContain('Cancellation scheduled')
+  expect(host.textContent).not.toContain('Confirming your AWM+ status')
+})
