@@ -13,7 +13,7 @@ const episodes = unstable_cache(async () => {
     .order('created_at', { ascending: false })
   if (error) throw new Error(error.message)
   return data ?? []
-}, ['home-episode-metadata-v1'], { revalidate: 3600, tags: ['cartoons-public'] })
+}, ['home-episode-metadata-v2-direct-covers'], { revalidate: 3600, tags: ['cartoons-public'] })
 
 export async function fetchHomeEpisodes(shows: ShowMeta[]): Promise<{ show: ShowMeta; episode: EpisodeMeta }[]> {
   const byId = new Map(shows.map(s => [s.id, s]))

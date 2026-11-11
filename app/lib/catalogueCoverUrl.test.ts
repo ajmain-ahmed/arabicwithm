@@ -18,8 +18,8 @@ it('preserves the proxy for private or external cover sources', () => {
   expect(catalogueCoverUrl({ kind: 'episodes', id: 'episode-id', slug: 'one', cover: 'https://images.example.com/cover.webp' })).toBe('/api/covers/episodes/episode-id')
 })
 
-it('keeps the show fallback when no dedicated cover is recorded', () => {
-  expect(catalogueCoverUrl({ kind: 'shows', id: 'show-id', slug: 'show', cover: null })).toBe('/api/covers/shows/show-id')
+it('uses the dedicated canonical show cover even when legacy metadata omitted it', () => {
+  expect(catalogueCoverUrl({ kind: 'shows', id: 'show-id', slug: 'show', cover: null })).toBe('https://project.supabase.co/storage/v1/object/public/covers/cartoons/show.webp')
   expect(catalogueCoverUrl({ kind: 'shows', id: 'show-id', slug: 'show', cover: 'cartoons/show.webp' })).toBe('https://project.supabase.co/storage/v1/object/public/covers/cartoons/show.webp')
 })
 

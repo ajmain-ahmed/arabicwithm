@@ -116,7 +116,7 @@ async function readAudioForBooks(bookIds: string[]): Promise<{ chapters: Array<{
 export const fetchPublishedAudioForBook = unstable_cache(async (bookId: string): Promise<ChapterAudioSummary[]> => {
   const { audio } = await readAudioForBooks([bookId])
   return audio.map(summary)
-}, ['audiobooks', 'published', 'book', 'v2'], { revalidate: 60, tags: ['books-public'] })
+}, ['audiobooks', 'published', 'book', 'v2'], { revalidate: 3600, tags: ['books-public'] })
 
 /* Library-level "has audiobook" flags for the books catalogue. */
 export const fetchBookIdsWithPublishedAudio = unstable_cache(async (bookIds: string[]): Promise<string[]> => {
@@ -126,7 +126,7 @@ export const fetchBookIdsWithPublishedAudio = unstable_cache(async (bookIds: str
   return Array.from(new Set(
     (chapters ?? []).filter((chapter) => audioChapters.has(String(chapter.id))).map((chapter) => String(chapter.book_id))
   ))
-}, ['audiobooks', 'published', 'library', 'v2'], { revalidate: 60, tags: ['books-public'] })
+}, ['audiobooks', 'published', 'library', 'v2'], { revalidate: 3600, tags: ['books-public'] })
 
 /* One query for both languages — the chapter page probes 'ar' and 'en'
    together on every visit. */

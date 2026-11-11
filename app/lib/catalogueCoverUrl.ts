@@ -12,7 +12,6 @@ export function catalogueCoverUrl({ kind, id, slug, cover, version }: {
 
   const storageKind = kind === 'shows' ? 'cartoons' : kind
   const path = `/storage/v1/object/public/covers/${storageKind}/${slug}.webp`
-  if (kind === 'shows' && (typeof cover !== 'string' || !cover.trim())) return fallback
   if (typeof cover === 'string' && cover.trim() && /^https?:\/\//i.test(cover.trim())) {
     try {
       const url = new URL(cover.trim())

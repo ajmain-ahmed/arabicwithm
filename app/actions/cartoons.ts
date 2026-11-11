@@ -100,7 +100,7 @@ export const fetchShowsForPublic = unstable_cache(
       episodeCount: counts.get(String(row.id)) ?? 0,
     }))
   },
-  ["cartoons", "shows", "public", "catalogue-storage-covers-v3"],
+  ["cartoons", "shows", "public", "catalogue-storage-covers-v4-direct"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
@@ -172,7 +172,7 @@ export const fetchShowBySlugPublic = unstable_cache(
       episodeCount: episodes?.length ?? 0,
     }
   },
-  ["cartoons", "show", "catalogue-storage-covers-v3"],
+  ["cartoons", "show", "catalogue-storage-covers-v4-direct"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
@@ -212,7 +212,7 @@ export const fetchEpisodesForShowPublic = unstable_cache(
 
     return ((data ?? []) as unknown as Record<string, unknown>[]).map((row) => mapEpisodeRow(row))
   },
-  ["cartoons", "episodes", "catalogue-storage-covers-v3"],
+  ["cartoons", "episodes", "catalogue-storage-covers-v4-direct"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
@@ -239,7 +239,7 @@ export const fetchAllEpisodesForPublic = unstable_cache(
 
     return ((data ?? []) as unknown as Record<string, unknown>[]).map((row) => ({ ...mapEpisodeRow(row), showId: String(row.show_id) }))
   },
-  ["cartoons", "all-episodes", "public", "catalogue-storage-covers-v3"],
+  ["cartoons", "all-episodes", "public", "catalogue-storage-covers-v4-direct"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
@@ -437,7 +437,7 @@ export const fetchExploreEpisodeMetasForPublic = unstable_cache(
       return [{ ...meta, showSlug: show.slug, showTitle: show.title }]
     })
   },
-  ["cartoons", "explore", "episode-metas", "storage-covers-v2"],
+  ["cartoons", "explore", "episode-metas", "storage-covers-v3-direct"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
@@ -503,7 +503,7 @@ export const fetchExploreEpisodeByIdPublic = unstable_cache(
       })),
     }
   },
-  ["cartoons", "explore", "episode", "storage-covers-v2"],
+  ["cartoons", "explore", "episode", "storage-covers-v3-direct"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
@@ -535,7 +535,7 @@ const fetchExploreEpisodesByIdsPublicCached = unstable_cache(
     }
     return [...episodes.entries()]
   },
-  ["cartoons", "explore", "episodes-by-ids", "serializable-v3"],
+  ["cartoons", "explore", "episodes-by-ids", "serializable-v4-direct-covers"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 

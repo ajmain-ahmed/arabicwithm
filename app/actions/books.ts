@@ -156,7 +156,7 @@ export const fetchBooksForPublic = unstable_cache(
       mapBook(book, chapterCounts.get(String(book.id)) ?? 0)
     )
   },
-  ["books", "public", "book-catalogue-storage-v7-completion"],
+  ["books", "public", "book-catalogue-storage-v8-direct-covers"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
@@ -181,7 +181,7 @@ export const fetchBookBySlugPublic = unstable_cache(
     if (countError) throw new Error(countError.message)
     return mapBook(book as Record<string, unknown>, count ?? 0)
   },
-  ["books", "public", "detail", "book-catalogue-storage-v7-completion"],
+  ["books", "public", "detail", "book-catalogue-storage-v8-direct-covers"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
@@ -418,7 +418,7 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
     const stride = Math.max(1, Math.ceil(allPages.length / 40))
     return allPages.filter((_, index) => index % stride === 0).slice(0, 40)
   },
-  ["books", "public", "explore-chapter-metas", "storage-covers-v2"],
+  ["books", "public", "explore-chapter-metas", "storage-covers-v3-direct"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 

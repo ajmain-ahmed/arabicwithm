@@ -55,7 +55,7 @@ export const fetchNewOnShows = unstable_cache(
       coverCrop: normalizeThumbnailCrop(row.cover_crop),
     }))
   },
-  ["prototype", "new-on-shows", "v1"],
+  ["prototype", "new-on-shows", "v2-direct-covers"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 
@@ -100,6 +100,6 @@ export const fetchNewOnEpisodes = unstable_cache(
       }
     })
   },
-  ["prototype", "new-on-episodes", "v1"],
+  ["prototype", "new-on-episodes", "v2-direct-covers"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
