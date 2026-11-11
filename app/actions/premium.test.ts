@@ -206,18 +206,20 @@ describe('setPremiumRenewal', () => {
     mocks.update.mockResolvedValue({})
   })
 
-  it('turns auto-renew off via cancel_at_period_end=true', async () => {
+  it('turns auto-renew off and immediately returns Stripe’s confirmed cancellation state', async () => {
+    mocks.update.mockResolvedValue({ cancel_at_period_end: true, cancel_at: 2999 })
     const status = await setPremiumRenewal(false)
     expect(mocks.update).toHaveBeenCalledWith('sub-x', { cancel_at_period_end: true })
-    expect(status).toMatchObject({ premium: true, cancelAtPeriodEnd: false, paymentIssue: false })
+    expect(status).toMatchObject({ premium: true, cancelAtPeriodEnd: true, paymentIssue: false })
   })
 
-  it('turns auto-renew back on by clearing BOTH cancellation signals', async () => {
+  it('turns auto-renew back on by clearing BOTH signals and immediately returns the confirmed state', async () => {
     mocks.maybeSingle.mockResolvedValue({ data: { customer_id: 'cus-x', subscription_id: 'sub-x', status: 'active', cancel_at_period_end: true, current_period_end: '2999-01-01T00:00:00.000Z' }, error: null })
+    mocks.update.mockResolvedValue({ cancel_at_period_end: false, cancel_at: null })
     const status = await setPremiumRenewal(true)
     expect(mocks.update).toHaveBeenNthCalledWith(1, 'sub-x', { cancel_at_period_end: false })
     expect(mocks.update).toHaveBeenNthCalledWith(2, 'sub-x', { cancel_at: '' })
-    expect(status).toMatchObject({ premium: true, cancelAtPeriodEnd: true })
+    expect(status).toMatchObject({ premium: true, cancelAtPeriodEnd: false })
   })
 
   it('targets the live Stripe subscription, not a stale row id', async () => {

@@ -126,6 +126,7 @@ export async function setPremiumRenewal(renew: boolean): Promise<PremiumStatus> 
     throw cause
   }
   const stripe = stripeClient()
+  let updated: Stripe.Subscription
   try {
     if (renew) {
       /* Resuming must clear BOTH signals: flipping cancel_at_period_end back
@@ -133,13 +134,14 @@ export async function setPremiumRenewal(renew: boolean): Promise<PremiumStatus> 
          the subscription would still cancel at that time. Stripe rejects both
          params in one update, so clear them sequentially. */
       await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: false })
-      await stripe.subscriptions.update(subscriptionId, { cancel_at: '' as unknown as number })
+      updated = await stripe.subscriptions.update(subscriptionId, { cancel_at: '' as unknown as number })
     } else {
-      await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true })
+      updated = await stripe.subscriptions.update(subscriptionId, { cancel_at_period_end: true })
     }
   } catch (cause) {
     if ((cause as { code?: string }).code === 'resource_missing') throw new Error('Your subscription is no longer active.')
     throw new Error('Unable to update your subscription. Please try again.')
   }
-  return premiumStatusForUser(userId, false)
+  const status = await premiumStatusForUser(userId, false)
+  return { ...status, cancelAtPeriodEnd: updated.cancel_at_period_end || typeof updated.cancel_at === 'number' }
 }

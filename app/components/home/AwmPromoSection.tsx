@@ -2,7 +2,7 @@
 
 import {HOME_PROMO_MAX_WIDTH} from './promoLayout'
 import { useEffect, useState } from 'react'
-import { Box, Button, Typography } from '@mui/material'
+import { Box, Button, CircularProgress, Typography } from '@mui/material'
 import { AutorenewRounded, CheckCircleRounded, DiamondOutlined } from '@mui/icons-material'
 import { managePremium, startPremiumCheckout, type PremiumStatus } from '@/app/actions/premium'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
@@ -123,6 +123,9 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
                 <Button
                   onClick={() => void resume()}
                   disabled={resumeBusy}
+                  loading={resumeBusy}
+                  loadingPosition="start"
+                  loadingIndicator={<CircularProgress size={16} thickness={5} sx={{ color: '#fff' }} />}
                   variant="contained"
                   startIcon={<AutorenewRounded sx={{ fontSize: 18 }} />}
                   sx={{
@@ -146,6 +149,9 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
                 <Button
                   onClick={() => void upgrade()}
                   disabled={busy}
+                  loading={busy}
+                  loadingPosition="start"
+                  loadingIndicator={<CircularProgress size={16} thickness={5} sx={{ color: '#fff' }} />}
                   variant="contained"
                   startIcon={<DiamondOutlined sx={{ fontSize: 18 }} />}
                   sx={{

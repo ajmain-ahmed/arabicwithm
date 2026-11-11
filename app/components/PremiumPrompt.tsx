@@ -87,7 +87,7 @@ function PremiumPromptContent({ open, onClose, reason, membershipSummary=false,o
       )}
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
     </DialogContent>
-    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}>{premium?<Button fullWidth sx={{minHeight:52,borderRadius:'12px'}} variant="contained" disabled={busy} onClick={()=>void purchase()}>{status.manageable?'Manage AWM+':'Continue learning'}</Button>:<UpgradeButton disabled={busy} onClick={()=>void purchase()}/>}</DialogActions>
+    <DialogActions sx={{ px: { xs: 2.5, sm: 4 }, pb: 3, flexDirection: 'column-reverse', gap: 1, '& > :not(style) ~ :not(style)': { ml: 0 }, width: '100%' }}>{premium?<Button fullWidth sx={{minHeight:52,borderRadius:'12px'}} variant="contained" disabled={busy} loading={busy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{color:'#fff'}}/>} onClick={()=>void purchase()}>{status.manageable?'Manage AWM+':'Continue learning'}</Button>:<UpgradeButton disabled={busy} loading={busy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{color:'#fff'}}/>} onClick={()=>void purchase()}/>}</DialogActions>
   </Dialog>
 }
 export function PremiumSection() {

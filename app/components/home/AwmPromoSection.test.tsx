@@ -23,15 +23,15 @@ it('shows active entitlement at Home and never renders a second member card on P
  mocks.status.mockResolvedValue(member);await render()
  expect(host.textContent).toContain('Your AWM+ membership is active.');expect(host.textContent).not.toContain('Upgrade to AWM+');expect(host.querySelector('[data-awm-plus-placement]')?.getAttribute('data-awm-plus-placement')).toBe('home')
 })
-it('delegates membership management to the existing portal action',async()=>{
+it('delegates membership management to the existing portal action with a loading spinner',async()=>{
  mocks.status.mockResolvedValue(member);mocks.manage.mockImplementation(()=>new Promise(()=>{}));await render()
  await act(async()=>{[...host.querySelectorAll('button')].find(b=>b.textContent==='Manage membership')!.click()})
- expect(mocks.manage).toHaveBeenCalledOnce();expect(mocks.upgrade).not.toHaveBeenCalled()
+ expect(mocks.manage).toHaveBeenCalledOnce();expect(mocks.upgrade).not.toHaveBeenCalled();expect(host.querySelector('button .MuiCircularProgress-root')).not.toBeNull()
 })
-it('keeps the existing free account checkout action',async()=>{
+it('keeps the existing free account checkout action with a loading spinner',async()=>{
  mocks.upgrade.mockImplementation(()=>new Promise(()=>{}));await render()
  await act(async()=>{[...host.querySelectorAll('button')].find(b=>b.textContent==='Get AWM+')!.click()})
- expect(mocks.upgrade).toHaveBeenCalledOnce();expect(mocks.manage).not.toHaveBeenCalled()
+ expect(mocks.upgrade).toHaveBeenCalledOnce();expect(mocks.manage).not.toHaveBeenCalled();expect(host.querySelector('button .MuiCircularProgress-root')).not.toBeNull()
 })
 it('keeps cancel-at-period-end access active until the canonical entitlement ends',async()=>{
  mocks.status.mockResolvedValue({...member,cancelAtPeriodEnd:true});await render();expect(host.textContent).toContain('Cancellation scheduled')

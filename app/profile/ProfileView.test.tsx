@@ -2,11 +2,11 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import type { PublicProfile } from '@/app/actions/profiles'
-const mocks = vi.hoisted(() => ({ update: vi.fn(), getUser: vi.fn(), saveProfile:vi.fn(),listPresets:vi.fn(), metadata: { book_progress: { story: { chapterSlug: 'one', updatedAt: '2026-10-01' }, other: { chapterSlug: 'two' } }, book_sentence_bookmark: { bookSlug: 'story' } } }))
+const mocks = vi.hoisted(() => ({ update: vi.fn(), getUser: vi.fn(), saveProfile:vi.fn(),listPresets:vi.fn(),status:vi.fn(),renew:vi.fn(), metadata: { book_progress: { story: { chapterSlug: 'one', updatedAt: '2026-10-01' }, other: { chapterSlug: 'two' } }, book_sentence_bookmark: { bookSlug: 'story' } } }))
 vi.mock('@/app/actions/appLaunch',()=>({appLaunchPreference:vi.fn(async()=>false),setAppLaunchPreference:vi.fn(async()=>({ok:true,message:'Saved'}))}))
 vi.mock('@/app/actions/profilePresets',()=>({listProfilePresets:mocks.listPresets}))
 vi.mock('@/app/actions/profiles', () => ({ updateProfile:mocks.saveProfile, checkUsernameAvailability: vi.fn() }))
-vi.mock('@/app/actions/premium', () => ({ fetchPremiumStatus: vi.fn(() => Promise.resolve({ premium: false, manageable: false })), managePremium: vi.fn(), startPremiumCheckout: vi.fn() }))
+vi.mock('@/app/actions/premium', () => ({ fetchPremiumStatus: mocks.status, managePremium: vi.fn(), startPremiumCheckout: vi.fn(), setPremiumRenewal: mocks.renew }))
 vi.mock('@/app/actions/feedback', () => ({ submitFeedback: vi.fn() }))
 vi.mock('@/app/actions/support', () => ({ startSupportCheckout: vi.fn() }))
 vi.mock('@/app/components/PremiumPrompt', () => ({ PremiumSection: () => null, default: ({open}:{open:boolean}) => open ? <div data-upgrade-popup>AWM+ information</div> : null }))
@@ -23,6 +23,7 @@ beforeEach(() => {
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
   mocks.saveProfile.mockResolvedValue(undefined);mocks.listPresets.mockImplementation(async(bucket:string)=>[{ref:`${bucket}/fox.avif`,url:`/api/profile-presets/${bucket}/fox.avif`,label:'fox'}]);
   mocks.update.mockResolvedValue({ error: null }); mocks.getUser.mockResolvedValue({ data: { user: { id: 'user', user_metadata: mocks.metadata } }, error: null })
+  mocks.status.mockResolvedValue({ premium: false, signedIn: true, manageable: false, admin: false, cancelAtPeriodEnd: false, periodEnd: null, paymentIssue: false, startedAt: null })
 })
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.clearAllMocks() })
 it('renders genuine new-account empty states and only shows AWM Plus for eligible users', async () => {
@@ -103,4 +104,21 @@ it('shows the app reminder only on the signed-in viewer own profile',async()=>{
  expect(host.querySelector('#download-app')).toBeNull()
  await act(async()=>root.render(<ProfileView profile={{...profile(),id:'another-user'}}/>))
  expect(host.querySelector('#download-app')).toBeNull()
+})
+
+it('shows a spinner while renewing and immediately renders the confirmed renewal state', async () => {
+  const cancelled = { premium: true, signedIn: true, manageable: true, admin: false, cancelAtPeriodEnd: true, periodEnd: '2999-01-01T00:00:00.000Z', paymentIssue: false, startedAt: '2026-01-01T00:00:00.000Z' }
+  mocks.status.mockResolvedValue(cancelled)
+  let resolve!: (value: typeof cancelled) => void
+  mocks.renew.mockImplementation(() => new Promise<typeof cancelled>(done => { resolve = done }))
+  await act(async () => root.render(<ProfileView profile={profile(true)} />))
+  await clickText('AWM+')
+  expect(host.textContent).toContain('Turn auto-renew back on')
+  await clickText('Turn auto-renew back on')
+  expect(host.textContent).toContain('Updating…')
+  expect(host.querySelector('button .MuiCircularProgress-root')).not.toBeNull()
+  await act(async () => resolve({ ...cancelled, cancelAtPeriodEnd: false }))
+  expect(host.textContent).toContain('Renews on')
+  expect(host.textContent).not.toContain('Cancellation scheduled')
+  expect(host.textContent).not.toContain('Turn auto-renew back on')
 })

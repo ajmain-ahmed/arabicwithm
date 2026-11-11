@@ -9,7 +9,7 @@ import {
   LockOutlined, LogoutOutlined, PersonOutlined,
   SettingsOutlined, ShieldOutlined, SupportOutlined,
 } from '@mui/icons-material'
-import { Alert, Box, Button, Container, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Container, TextField, Typography } from '@mui/material'
 import { checkUsernameAvailability, updateProfile, type PublicProfile } from '@/app/actions/profiles'
 import { fetchPremiumStatus, managePremium, setPremiumRenewal, startPremiumCheckout, type PremiumStatus } from '@/app/actions/premium'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
@@ -343,11 +343,11 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
             {/* Stacked (full-width, equal size) on mobile; side by side on
                desktop. Both carry icons for scannability. */}
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, width: '100%' }}>
-              <Button onClick={() => void cta()} disabled={busy} variant="contained" startIcon={<CreditCardOutlined sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ ...GOLD_BUTTON, width: '100%', flex: { sm: '1 1 0' }, minWidth: 0, minHeight: { xs: 46, sm: 42 }, px: { xs: 1, sm: 2.5 }, fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap' }}>
+              <Button onClick={() => void cta()} disabled={busy} loading={busy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{ color: '#fff' }} />} variant="contained" startIcon={<CreditCardOutlined sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ ...GOLD_BUTTON, width: '100%', flex: { sm: '1 1 0' }, minWidth: 0, minHeight: { xs: 46, sm: 42 }, px: { xs: 1, sm: 2.5 }, fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap' }}>
                 {busy ? 'Opening…' : premium ? 'Manage AWM+' : `Subscribe — ${PREMIUM.label}`}
               </Button>
               {premium && manageable && status?.cancelAtPeriodEnd && (
-                <Button onClick={() => void setRenewal(true)} disabled={renewalBusy} variant="outlined" startIcon={<AutorenewRounded sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ width: '100%', flex: { sm: '1 1 0' }, minWidth: 0, minHeight: { xs: 46, sm: 42 }, px: { xs: 1, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap', borderColor: 'rgba(184,134,11,0.5)', color: 'var(--awm-bark)' }}>
+                <Button onClick={() => void setRenewal(true)} disabled={renewalBusy} loading={renewalBusy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{ color: '#fff' }} />} variant="outlined" startIcon={<AutorenewRounded sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ width: '100%', flex: { sm: '1 1 0' }, minWidth: 0, minHeight: { xs: 46, sm: 42 }, px: { xs: 1, sm: 2.5 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 14 }, whiteSpace: 'nowrap', borderColor: 'rgba(184,134,11,0.5)', color: 'var(--awm-bark)' }}>
                   {renewalBusy ? 'Updating…' : 'Turn auto-renew back on'}
                 </Button>
               )}
@@ -357,7 +357,7 @@ function AwmSection({ profile }: { profile: PublicProfile }) {
                 <Alert severity="error" sx={{ mt: 2, py: 0 }}>
                   Your last payment didn&rsquo;t go through — update your payment method. Access continues until {formatMembershipDate(status?.periodEnd)}.
                 </Alert>
-                <Button onClick={() => void updateCard()} disabled={cardBusy} variant="outlined" startIcon={<CreditCardOutlined sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ mt: 1.5, width: '100%', minHeight: { xs: 44, sm: 40 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 14 }, borderColor: 'rgba(184,134,11,0.5)', color: 'var(--awm-bark)' }}>
+                <Button onClick={() => void updateCard()} disabled={cardBusy} loading={cardBusy} loadingPosition="start" loadingIndicator={<CircularProgress size={16} thickness={5} sx={{ color: '#fff' }} />} variant="outlined" startIcon={<CreditCardOutlined sx={{ fontSize: { xs: 17, sm: 18 } }} />} sx={{ mt: 1.5, width: '100%', minHeight: { xs: 44, sm: 40 }, textTransform: 'none', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 12.5, sm: 14 }, borderColor: 'rgba(184,134,11,0.5)', color: 'var(--awm-bark)' }}>
                   {cardBusy ? 'Opening…' : 'Update payment method'}
                 </Button>
               </>
