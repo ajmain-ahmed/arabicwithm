@@ -25,7 +25,7 @@ export default function LibraryBookCard({ book, listen = false, compact = false 
     event.preventDefault()
     if (!loading) window.dispatchEvent(new CustomEvent('open-auth-dialog', { detail: { mode: 'signin' } }))
   }
-  return <Box component={listen ? 'a' : Link} href={`/${listen ? 'listen' : 'books'}/${encodeURIComponent(book.slug)}`} onClick={requireSignIn} sx={{ display: 'block', color: 'inherit', textDecoration: 'none', minWidth: 0, borderRadius: '10px', position: 'relative', '&:focus-visible': { boxShadow: '0 0 24px 5px color-mix(in srgb, var(--awm-forest) 20%, transparent)', outline: '2px solid var(--awm-forest)', outlineOffset: 4 } }}>
+  return <Box component={listen ? 'a' : Link} href={`/${listen ? 'listen' : 'books'}/${encodeURIComponent(book.slug)}`} prefetch={listen ? undefined : false} onClick={requireSignIn} sx={{ display: 'block', color: 'inherit', textDecoration: 'none', minWidth: 0, borderRadius: '10px', position: 'relative', '&:focus-visible': { boxShadow: '0 0 24px 5px color-mix(in srgb, var(--awm-forest) 20%, transparent)', outline: '2px solid var(--awm-forest)', outlineOffset: 4 } }}>
     {book.cover ? (
       /* The aspect-ratio box sizes the slot; the image lazy-loads on
          approach via native lazy loading. Covers are already WebP; serve the

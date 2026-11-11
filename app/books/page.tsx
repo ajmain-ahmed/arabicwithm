@@ -4,7 +4,7 @@ import { fetchBooksForPublic } from '@/app/actions/books'
 import { fetchBookIdsWithPublishedAudio } from '@/app/actions/audiobooks'
 import BooksLibrary from './BooksLibrary'
 
-export const revalidate = 60
+export const revalidate = 3600
 
 export const metadata = {
   title: 'Arabic Books | ArabicWithM',

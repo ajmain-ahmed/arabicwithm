@@ -41,7 +41,7 @@ export function showRowItems(shows: NewOnShow[]): CatalogueRowItem[] {
     href: `/cartoons/${encodeURIComponent(show.slug)}`,
     title: show.title,
     level: show.level,
-    imageSrc: `/api/covers/shows/${show.id}`,
+    imageSrc: show.cover ?? `/api/covers/shows/${show.id}`,
     imageCrop: show.coverCrop,
   }))
 }
@@ -53,7 +53,7 @@ export function episodeRowItems(episodes: NewOnEpisode[]): CatalogueRowItem[] {
     title: episode.title,
     meta: episode.showTitle,
     level: episode.level,
-    imageSrc: `/api/covers/episodes/${episode.id}`,
+    imageSrc: episode.cover ?? `/api/covers/episodes/${episode.id}`,
     imageCrop: episode.coverCrop,
   }))
 }
@@ -237,8 +237,8 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured, 
               )}
               {!user && (
                 <Box sx={{ mt: 3.5, display: 'flex', gap: 1.5, flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-                  <Button component={Link} href="/cartoons" variant="contained" startIcon={<OndemandVideo />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Watching</Button>
-                  <Button component={Link} href="/books" variant="contained" startIcon={<MenuBook />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Reading</Button>
+                  <Button component={Link} prefetch={false} href="/cartoons" variant="contained" startIcon={<OndemandVideo />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Watching</Button>
+                  <Button component={Link} prefetch={false} href="/books" variant="contained" startIcon={<MenuBook />} sx={{ bgcolor: '#8b6508', color: '#fff', px: 3, py: 1.25, borderRadius: '9999px', textTransform: 'none', fontWeight: 700, '&:hover': { bgcolor: '#a07c0a' } }}>Start Reading</Button>
                 </Box>
               )}
             </Box>
@@ -268,7 +268,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured, 
             <Container maxWidth={false}>
               <Typography component="h2" sx={{ fontFamily: 'var(--font-heading)', fontSize: { xs: 20, md: 22 }, fontWeight: 600, color: 'var(--awm-bark)', lineHeight: 1.2 }}>My List</Typography>
               <Box
-                component={Link}
+                component={Link} prefetch={false}
                 href="/cartoons?view=shows"
                 /* fit-content: a block-level flex <a> would stretch to the
                    full container width and swallow clicks on the empty
@@ -332,7 +332,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured, 
                 { title: 'Grammar', href: '/grammar', Icon: AccountTreeOutlined },
                 { title: 'Word Search', href: '/word-search', Icon: GridOnRounded },
                 { title: 'Explore', href: '/explore', Icon: ExploreOutlined },
-              ].map(({ title, href, Icon }) => <Paper key={href} component={Link} href={href} elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minHeight: 76, p: 2, borderRadius: '10px', textDecoration: 'none', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><Icon sx={{ color: 'var(--awm-gold)' }} /><Typography sx={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14 }}>{title}</Typography></Paper>)}
+              ].map(({ title, href, Icon }) => <Paper key={href} component={Link} prefetch={false} href={href} elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minHeight: 76, p: 2, borderRadius: '10px', textDecoration: 'none', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><Icon sx={{ color: 'var(--awm-gold)' }} /><Typography sx={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14 }}>{title}</Typography></Paper>)}
             </Box>
           </Container>
           <Box sx={{order:{xs:1,md:-1}}}>

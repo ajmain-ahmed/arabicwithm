@@ -22,6 +22,7 @@ import {
   canonicalizeCartoonCategory,
 } from "@/app/lib/cartoons"
 import { normalizeThumbnailCrop } from "@/app/lib/thumbnailCrop"
+import { catalogueCoverUrl } from '@/app/lib/catalogueCoverUrl'
 import { type ShowRow } from "@/app/actions/admin"
 import { guardAdmin } from "@/app/actions/auth"
 import { stripDiacritics } from "@/app/lib/arabic"
@@ -88,7 +89,7 @@ export const fetchShowsForPublic = unstable_cache(
       title: String(row.title),
       titleAr: row.title_ar ? String(row.title_ar) : undefined,
       description: row.description ? String(row.description) : undefined,
-      cover: `/api/covers/shows/${row.id}`,
+      cover: catalogueCoverUrl({ kind: 'shows', id: String(row.id), slug: String(row.slug), cover: row.cover }),
       coverCrop: normalizeThumbnailCrop(row.cover_crop),
       level: String(row.level ?? ""),
       category: row.category ? String(row.category) : undefined,
@@ -158,7 +159,7 @@ export const fetchShowBySlugPublic = unstable_cache(
       title: String(data.title),
       titleAr: data.title_ar ? String(data.title_ar) : undefined,
       description: data.description ? String(data.description) : undefined,
-      cover: `/api/covers/shows/${data.id}`,
+      cover: catalogueCoverUrl({ kind: 'shows', id: String(data.id), slug: String(data.slug), cover: data.cover }),
       coverCrop: normalizeThumbnailCrop(data.cover_crop),
       level: String(data.level ?? ""),
       category: data.category ? String(data.category) : undefined,
@@ -552,7 +553,7 @@ function mapEpisodeRow(
   const instagramId = normalizeInstagramId(row.instagram_id ? String(row.instagram_id) : undefined)
   const tiktokId = normalizeTikTokId(row.tiktok_id ? String(row.tiktok_id) : undefined)
   const facebookId = normalizeFacebookId(row.facebook_id ? String(row.facebook_id) : undefined)
-  const cover = `/api/covers/episodes/${row.id}`
+  const cover = catalogueCoverUrl({ kind: 'episodes', id: String(row.id), slug: episodeSlug, cover: row.cover })
 
   return {
     id: String(row.id),

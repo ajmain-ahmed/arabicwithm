@@ -59,7 +59,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
           onError={event=>{const image=event.currentTarget;if(!image.dataset.fallback){image.dataset.fallback='true';image.srcset='';image.src=show.cover}else image.style.visibility='hidden'}}
           sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: featuredObjectPosition(featuredPosition) }}
         />}
-        <Box component={Link} href={`/cartoons/${encodeURIComponent(show.slug)}`} aria-label={`View ${show.title}`} sx={{position:'absolute',inset:0,zIndex:1}} />
+        <Box component={Link} prefetch={false} href={`/cartoons/${encodeURIComponent(show.slug)}`} aria-label={`View ${show.title}`} sx={{position:'absolute',inset:0,zIndex:1}} />
         {navigation&&<Box data-featured-mobile-navigation sx={{display:{xs:'block',md:'none'},position:'absolute',top:12,right:12,zIndex:3}}>{navigation}</Box>}
         {/* Legibility: weighted to the left where the text sits. */}
         <Box aria-hidden="true" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(78deg, rgba(5,9,8,0.85) 0%, rgba(5,9,8,0.5) 36%, transparent 62%)' }} />
@@ -104,7 +104,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
           <Box data-featured-actions sx={{ display:{xs:'flex',md:pagination?'grid':'flex'},gridTemplateColumns:'minmax(0,1fr) auto minmax(0,1fr)',gridTemplateRows:{xs:'auto auto',md:'auto'}, alignItems: 'center',justifyContent:{xs:'flex-start',md:'normal'}, gap: {xs:1.25,md:1.25}, width: { xs: '100%', md: pagination?'100%':'auto' }, mt: { xs: 2, md: 2.75 } }}>
            <Box sx={{display:'flex',gridColumn:1,gridRow:1,gap:1.25,width:{xs:'auto',md:'100%'}}} >
             <Button
-              component={Link}
+              component={Link} prefetch={false}
               href={episode?`/cartoons/${encodeURIComponent(show.slug)}/${encodeURIComponent(episode.slug)}`:`/cartoons/${encodeURIComponent(show.slug)}`}
               variant="contained"
               startIcon={<PlayArrow sx={{ fontSize: { xs: pagination?18:22, md: 26 } }} />}
@@ -127,7 +127,7 @@ export default function FeaturedHero({ show, episode, featuredImage, featuredPos
               Play
             </Button>
             <Button
-              component={Link}
+              component={Link} prefetch={false}
               href={`/cartoons/${encodeURIComponent(show.slug)}`}
               startIcon={<FormatListBulleted sx={{ fontSize: { xs: pagination?18:19, md: 22 } }} />}
               sx={{

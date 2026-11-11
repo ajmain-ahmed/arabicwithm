@@ -10,13 +10,14 @@ import { stripDiacritics } from "@/app/lib/arabic"
 import { isGrammarLabel, type BookTokenGrammar } from '@/app/lib/bookTokenGrammar'
 import type { CartoonWordEntry } from "@/app/lib/cartoons"
 import { normalizeThumbnailCrop, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
+import { catalogueCoverUrl } from '@/app/lib/catalogueCoverUrl'
 import { isBookReleased, isChapterReleased, releasedChapterIds } from '@/app/lib/bookRelease'
 
 /* Keep admin invalidation fast, while also picking up authoritative Supabase
    changes made outside this process instead of caching them indefinitely.
    Development gets a longer TTL so routine catalogue reads stay warm while
    editing unrelated code. */
-const publicRevalidate = process.env.NODE_ENV === "development" ? 300 : 60
+const publicRevalidate = process.env.NODE_ENV === "development" ? 300 : 3600
 
 export interface PublicBook {
   id: string
@@ -103,7 +104,7 @@ function mapBook(row: Record<string, unknown>, chapterCount: number): PublicBook
     isCompleted: row.is_completed !== false,
     titleAr: row.title_ar ? String(row.title_ar) : undefined,
     description: row.description ? String(row.description) : undefined,
-    cover: `/api/covers/books/${row.id}${coverVersion ? `?v=${encodeURIComponent(String(coverVersion))}` : ''}`,
+    cover: catalogueCoverUrl({ kind: 'books', id: String(row.id), slug, cover: row.cover, version: coverVersion }),
     coverCrop: normalizeThumbnailCrop(row.cover_crop),
     level: String(row.level ?? ""),
     category: row.category ? String(row.category) : undefined,
@@ -391,7 +392,7 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
             chapterCount: (chapters ?? []).filter((ch) => ch.book_id === book.id).length,
             slug,
             title: String(book.title),
-            cover: `/api/covers/books/${book.id}`,
+            cover: catalogueCoverUrl({ kind: 'books', id: String(book.id), slug, cover: book.cover }),
             level: String(book.level ?? ""),
           },
         ]

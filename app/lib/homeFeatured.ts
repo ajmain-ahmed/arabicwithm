@@ -5,7 +5,7 @@ import {loadFeaturedAssets} from '@/app/lib/featuredStorage'
 import {featuredPool,selectFeaturedShows} from '@/app/lib/featuredShows'
 import type {ShowMeta} from '@/app/lib/cartoons'
 
-const loadFeaturedImages=unstable_cache(loadFeaturedAssets,['homepage-featured-images-v3'],{revalidate:60,tags:['homepage-featured']})
+const loadFeaturedImages=unstable_cache(loadFeaturedAssets,['homepage-featured-images-v3'],{revalidate:3600,tags:['homepage-featured']})
 
 export async function fetchHomeFeatured(shows:ShowMeta[],now=new Date()){
  try{

@@ -28,7 +28,7 @@ vi.mock('./LearningStats', () => ({
     return null
   },
 }))
-vi.mock('next/link', () => ({ default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => <a href={href} {...props}>{children}</a> }))
+vi.mock('next/link', () => ({ default: ({ href, children, ...props }: { href: string; children: React.ReactNode; prefetch?: boolean }) => { delete props.prefetch; return <a href={href} {...props}>{children}</a> } }))
 
 import HomeDashboard from './HomeDashboard'
 

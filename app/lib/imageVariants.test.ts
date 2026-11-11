@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { expect, it, vi } from 'vitest'
-import { coverVariantPath, coverVariantPaths, featuredImageSrcSet, featuredVariantPaths } from './imageVariantPaths'
+import { coverImageSrcSet, coverVariantPath, coverVariantPaths, featuredImageSrcSet, featuredVariantPaths } from './imageVariantPaths'
 
 it('builds direct responsive featured URLs while preserving the version', () => {
   const source = 'https://project.supabase.co/storage/v1/object/public/covers/featured/show.avif?v=version'
@@ -24,4 +24,10 @@ it('generates real AVIF variants from an uploaded source', async () => {
   const file = new File([await image.png().toBuffer()], 'source.png', { type: 'image/png' })
   const { syncImageVariants } = await import('./imageVariants')
   await expect(syncImageVariants(file, 'featured/show.png')).resolves.toBeUndefined()
+})
+
+it('uses responsive variants for direct public cover URLs and the legacy proxy', () => {
+  const source = 'https://project.supabase.co/storage/v1/object/public/covers/books/exo.webp?v=current'
+  expect(coverImageSrcSet(source)).toBe('https://project.supabase.co/storage/v1/object/public/covers/variants/books/exo-640.webp?v=current 640w, https://project.supabase.co/storage/v1/object/public/covers/variants/books/exo-1080.webp?v=current 1080w')
+  expect(coverImageSrcSet('/api/covers/books/id?v=current')).toBe('/api/covers/books/id?v=current&w=640 640w, /api/covers/books/id?v=current&w=1080 1080w')
 })

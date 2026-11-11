@@ -99,6 +99,7 @@ function ArtworkTile({
       component={Link}
       ref={nearRef}
       href={item.href}
+      prefetch={false}
       draggable={false}
       aria-label={item.title}
       sx={{

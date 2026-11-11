@@ -245,7 +245,7 @@ All DB mutations and sensitive reads live in `app/actions/*.ts` with `"use serve
 - `normalizeTransliteration(token)` — strips Latin diacritics for loose transliteration matching.
 
 ### Cartoon Content Pipeline
-1. Show, episode, and book covers are stored in the public Supabase Storage `covers` bucket at `cartoons/{slug}.webp`, `episodes/{episodeSlug}.webp`, and `books/{slug}.webp`. The `/api/covers/*` proxy serves/cache-controls them; admins upload WebP via `app/actions/storage.ts`.
+1. Show, episode, and book covers are stored in the public Supabase Storage `covers` bucket at `cartoons/{slug}.webp`, `episodes/{episodeSlug}.webp`, and `books/{slug}.webp`. Public catalogue images use direct storage URLs (with pre-generated variants); the rate-limited `/api/covers/*` route handles private/legacy sources and missing-show-cover fallbacks. Admins upload WebP via `app/actions/storage.ts`.
 2. Episode metadata and transcripts live in the `episodes` table (see Schema above).
 3. At request time, `fetchEpisodeForPublic` normalises the transcript into `ScriptBlock` objects; lookup maps are rebuilt client-side to keep the RSC payload lean.
 4. Legacy markdown episodes still exist in `content/cartoons/` but are not used by the public site.

@@ -38,7 +38,20 @@ export function coverVariantPaths(path: string): string[] {
 }
 
 export function coverImageSrcSet(source: string): string | undefined {
-  if (!source.startsWith('/api/covers/')) return undefined
-  const separator = source.includes('?') ? '&' : '?'
-  return COVER_VARIANT_WIDTHS.map(width => `${source}${separator}w=${width} ${width}w`).join(', ')
+  if (source.startsWith('/api/covers/')) {
+    const separator = source.includes('?') ? '&' : '?'
+    return COVER_VARIANT_WIDTHS.map(width => `${source}${separator}w=${width} ${width}w`).join(', ')
+  }
+  try {
+    const url = new URL(source)
+    const match = /^\/storage\/v1\/object\/public\/covers\/(books|episodes|cartoons)\/([^/]+)\.webp$/.exec(url.pathname)
+    if (!match) return undefined
+    return COVER_VARIANT_WIDTHS.map(width => {
+      const variant = new URL(url)
+      variant.pathname = `/storage/v1/object/public/covers/variants/${match[1]}/${match[2]}-${width}.webp`
+      return `${variant.toString()} ${width}w`
+    }).join(', ')
+  } catch {
+    return undefined
+  }
 }

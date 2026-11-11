@@ -119,6 +119,7 @@ export default function ContentCard({
     <Paper
       component={Link}
       href={href}
+      prefetch={false}
       ref={nearRef}
       elevation={0}
       onMouseEnter={() => setHovered(true)}

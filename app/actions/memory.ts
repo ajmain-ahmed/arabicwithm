@@ -22,6 +22,7 @@ import {
   unseenMemoryCards,
 } from '@/app/lib/memory'
 import { hasServiceClientConfig, serviceClient } from '@/app/lib/supabase'
+import { catalogueCoverUrl } from '@/app/lib/catalogueCoverUrl'
 import { unstable_cache } from 'next/cache'
 import { rateLimit } from '@/app/lib/rateLimit'
 import { headers } from 'next/headers'
@@ -132,7 +133,7 @@ export async function fetchMemoryLibrary(input: MemoryScopeInput = {}): Promise<
         showTitle: show.title,
         episodeSlug: String(row.slug),
         episodeTitle: String(row.title),
-        cover: `/api/covers/episodes/${row.id}`,
+        cover: catalogueCoverUrl({ kind: 'episodes', id: String(row.id), slug: String(row.slug), cover: row.cover }),
         level: row.level ? String(row.level) : undefined,
         transcript: row.transcript,
       }
