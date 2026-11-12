@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import vinext from "vinext";
 import { cloudflare } from "@cloudflare/vite-plugin";
-import { kvDataAdapter } from "@vinext/cloudflare/cache/kv-data-adapter";
 import { createHash } from "node:crypto";
 import { patchCssModules } from "vite-css-modules";
 import path from "node:path";
@@ -9,9 +8,11 @@ import path from "node:path";
 export default defineConfig({
   plugins: [
     patchCssModules({ exportMode: "default" }),
-    vinext({
-      cache: { data: kvDataAdapter() },
-    }),
+    /* No cache adapter: the KV-backed cache kept serving responses across
+       deploys (stale HTML/RSC referencing replaced JS chunks), breaking
+       hydration and server actions after each release. Revisit once a
+       deploy-time invalidation story exists (e.g. version-scoped keys). */
+    vinext(),
     cloudflare({
       viteEnvironment: {
         name: "rsc",
