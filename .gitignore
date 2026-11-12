@@ -49,3 +49,6 @@ backups/
 
 # local production server logs
 .prod-server*.log
+/dist/
+.vinext/
+.cloudflare/

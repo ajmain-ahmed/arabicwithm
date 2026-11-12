@@ -289,7 +289,12 @@ The project uses **Vitest** with `jsdom` and `@vitejs/plugin-react`, plus **Play
 
 ## Deployment
 
-The project is designed for deployment on **Vercel** (standard Next.js target). No custom `vercel.json` or Dockerfile is present. Ensure the Supabase and Stripe environment variables are configured in the hosting dashboard. The two Edge Functions deploy via the Supabase CLI. **Note:** image-proxy limiting and per-instance caches remain local; key public/billing actions use the durable Supabase limiter.
+**Production runs on Cloudflare Workers** (migrated from Vercel, Nov 2026) via [vinext](https://github.com/cloudflare/vinext) — the Next.js app builds and deploys to the `arabicwithm` Worker, with `arabicwithm.com` + `www` attached as Workers Custom Domains. The Vercel project remains only as a fallback (`arabicwithm.vercel.app`).
+
+- Build/deploy: `npm run build:vinext`, then `CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... npm run deploy:vinext` (`vinext-cloudflare deploy` builds, uploads, and auto-provisions the `VINEXT_KV_CACHE` KV namespace — the shared response/data cache). Deploys authenticate with `CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` env vars (CI-style; no browser login).
+- Config: `vite.config.ts` + `cloudflare.config.ts` (Worker name, entrypoint, assets routing, KV binding). Runtime secrets (Supabase service key, Stripe keys, Turnstile secret, etc.) live as **Worker secrets** on the `arabicwithm` Worker, set via the Cloudflare API — not in the repo. `NEXT_PUBLIC_*` values are inlined at build time, so builds must run with the production env exported.
+- Local dev is unchanged (`npm run dev` still uses Next.js); `npm run dev:vinext` runs the vinext dev server for parity checks.
+- The two Supabase Edge Functions still deploy via the Supabase CLI. **Note:** image-proxy limiting and per-instance caches remain local; key public/billing actions use the durable Supabase limiter.
 
 ## When Modifying Code
 
