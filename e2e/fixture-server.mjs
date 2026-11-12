@@ -8,6 +8,7 @@ import path from 'node:path'
 
 const reliabilityRules=new Map(),reliabilityHits=[];let reliabilityEmptySearch=false
 let expiredMembership=false
+let brandMembership='active'
 let allowanceBudget = 900000
 const allowanceReports = new Map()
 const webPort = Number(process.env.AWM_TEST_WEB_PORT ?? 3000)
@@ -48,7 +49,7 @@ let discoveryClips=[]
 let englishTranscriptSeek=false,englishSubtitleLayout=false
 let dataContractClips=null,failForYouRequest=false,englishTranscriptRawOnly=false,englishTranscriptMode=false,spotlightMode=false,spotlightEnglish=true
 const manualPremium=new Map(), memoryStarts=new Map(), memorySnapshots=new Map(), memoryReviews=new Map(), ownReviews=new Map(), earned=new Set(), wordTotals=new Map()
-const effective=id=>id===ids.premium||roleFor(id)==='admin'||manualPremium.get(id)===true
+const effective=id=>(id===ids.premium&&['active','cancel-at-period-end'].includes(brandMembership))||roleFor(id)==='admin'||manualPremium.get(id)===true
 const usage=id=>[...memoryStarts.values()].filter(row=>row.userId===id).length
 function account(id) {
   const kind = Object.keys(ids).find(key => ids[key] === id) ?? 'free'
@@ -240,6 +241,8 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     for(const language of ['ar','en']) if(!tables.book_chapter_audio.some(row=>row.chapter_id===second&&row.language===language)) tables.book_chapter_audio.push({...tables.book_chapter_audio.find(row=>row.language===language),chapter_id:second})
     return json(res,{})
   }
+  if(url.pathname==='/fixture/mobile-more'){configureMobileMore();return json(res,{})}
+  if(url.pathname==='/fixture/member-branding'){brandMembership=body.state||'active';return json(res,{})}
   if(url.pathname==='/fixture/expired-membership'){expiredMembership=Boolean(body.expired);return json(res,{})}
   if(url.pathname==='/fixture/spotlight'){englishTranscriptMode=false;englishSubtitleLayout=false;spotlightMode=true;spotlightSelection=body.selection??'normal';spotlightRequests.length=0;tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:'5b98c563-5c35-4696-98e1-06aa000eb622'}));spotlightEnglish=body.english!==false;tables.transcript_groups=[{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English'},{id:'77777777-7777-4777-8777-777777777778',name:'Imports'},{id:'77777777-7777-4777-8777-777777777779',name:'Stories'}];rpcLog.length=0;return json(res,{})}
   if(url.pathname==='/fixture/english-for-you'){
@@ -644,7 +647,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if(table==='account_roles')rows=[{user_id:owner,role:roleFor(owner)}]
     if(table==='memory_sessions')rows=memorySnapshots.has(owner)?[{user_id:owner,state:memorySnapshots.get(owner)}]:[]
     if(table==='book_reviews')rows=[...ownReviews.values()]
-    if (table === 'subscriptions') rows = owner === ids.premium ? [{ user_id: owner, status: 'active', current_period_end: '2099-01-01T00:00:00Z', customer_id: 'fixture' }] : owner===ids.free&&expiredMembership?[{user_id:owner,status:'canceled',current_period_end:'2000-01-01T00:00:00Z',customer_id:'expired-fixture'}]:[]
+    if (table === 'subscriptions') rows = owner === ids.premium ? [{ user_id: owner, status: ['expired','cancelled'].includes(brandMembership)?'canceled':'active', current_period_end: ['expired','cancelled'].includes(brandMembership)?'2000-01-01T00:00:00Z':'2099-01-01T00:00:00Z', cancel_at_period_end: brandMembership==='cancel-at-period-end', customer_id: 'fixture' }] : owner===ids.free&&expiredMembership?[{user_id:owner,status:'canceled',current_period_end:'2000-01-01T00:00:00Z',customer_id:'expired-fixture'}]:[]
     if (table === 'public_profiles') rows = [{ user_id: owner, display_name: `${Object.keys(ids).find(k => ids[k] === owner)} learner`, is_public: false, share_reading: false, ...profiles.get(owner) }]
     if(table==='leaderboard_public_profiles')rows=[...handles.entries()].map(([user_id,handle])=>({user_id,handle}))
     if (table === 'learning_profiles') rows = [{ user_id: owner, legacy_active_seconds: 0, tracked_active_seconds: 0, weekly_goal_seconds: null }]
@@ -745,6 +748,20 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   console.error('Unhandled fixture endpoint:', req.method, url.pathname)
   json(res, { message: 'Unknown fixture endpoint' }, 404)
 })
+function configureMobileMore(){
+  const template=tables.episodes[0]
+  tables.episodes=Array.from({length:13},(_,i)=>({...template,id:`dddddddd-dddd-4ddd-8ddd-${String(i).padStart(12,'0')}`,slug:`clip-${i}`,title:`Clip ${i}`}))
+}
+if(process.env.AWM_TEST_MOBILE_MORE==='1')configureMobileMore()
+if(process.env.AWM_TEST_STRUCTURED_BOOKS==='1'){
+  const structured=JSON.parse(readFileSync(new URL('../test-fixtures/structured-chapter.json',import.meta.url),'utf8'))
+  const structuredId='abababab-abab-4bab-8bab-000000000001'
+  tables.chapters.push({id:structuredId,book_id:bookId,slug:'grammar-structured',title:'Structured grammar lesson',chapter_number:3,content:structured},
+    {id:'abababab-abab-4bab-8bab-000000000002',book_id:bookId,slug:'grammar-future',title:'Future grammar schema',chapter_number:4,content:{...structured,schema_version:'2.0.0'}},
+    {id:'abababab-abab-4bab-8bab-000000000003',book_id:bookId,slug:'grammar-broken',title:'Invalid grammar chapter',chapter_number:5,content:{schema_version:'1.0.0',sections:'invalid'}})
+  for(const row of tables.book_chapter_audio.filter(row=>row.chapter_id===chapterId))tables.book_chapter_audio.push({...row,chapter_id:structuredId})
+}
+
 backend.listen(backendPort, '127.0.0.1', () => {
   const env={ ...process.env, AWM_BROWSER_TEST: '1', SUPABASE_URL: backendUrl, NEXT_PUBLIC_SUPABASE_URL: backendUrl, SUPABASE_SERVICE_KEY: 'fixture-service-key', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'fixture-public-key', NEXT_PUBLIC_SITE_URL: webUrl, NODE_EXTRA_CA_CERTS: certificate }
   let next

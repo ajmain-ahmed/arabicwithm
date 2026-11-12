@@ -8,6 +8,7 @@ import {
   fetchChaptersForBookPublic,
 } from '@/app/actions/books'
 import ChapterReader from './ChapterReader'
+import { structuredChapterPages, StructuredChapterDiagnostic } from '@/app/components/books/structured/StructuredChapterRenderer'
 import { normalizeBookReaderLanguage } from '@/app/lib/bookReaderSettings'
 import SignInRequired from '@/app/components/SignInRequired'
 import { fetchPublishedChapterAudioForChapter, type ChapterAudioSummary } from '@/app/actions/audiobooks'
@@ -106,6 +107,12 @@ export default async function ChapterPage({
   }
   const nextChapter = chapterIndex >= 0 && chapterIndex < chapters.length - 1 ? chapters[chapterIndex + 1] : null
 
+  const structuredPages = chapter.structuredContent?.kind === 'structured'
+    ? structuredChapterPages(chapter.structuredContent.chapter)
+    : chapter.structuredContent?.kind === 'structured-error'
+      ? [<StructuredChapterDiagnostic key="diagnostic" message={chapter.structuredContent.message} />]
+      : undefined
+
   return (
     <Box component="div" sx={{ minHeight: '100vh', bgcolor: 'var(--awm-cream-light)', pt: { xs: 2.5, md: 5 }, pb: { xs: 'var(--awm-mobile-bottom-clearance)', md: 5 } }}>
       <Container maxWidth="xl">
@@ -120,7 +127,7 @@ export default async function ChapterPage({
           </Typography>
         </Box>
 
-        <ChapterReader key={chapter.id} initialBlock={initialBlock} nextChapterSlug={nextChapter?.slug} bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} initialPage={initialPage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
+        <ChapterReader structuredPages={structuredPages} key={chapter.id} initialBlock={initialBlock} nextChapterSlug={nextChapter?.slug} bookSlug={book.slug} bookTitle={book.title} chapterTitle={chapter.title} chapterSlug={chapter.slug} content={chapter.content} initialLanguage={initialLanguage} initialPage={initialPage} audio={audio.filter((item): item is NonNullable<typeof item> => item !== null)} />
 
 
       </Container>

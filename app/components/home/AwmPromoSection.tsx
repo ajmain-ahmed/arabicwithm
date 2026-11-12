@@ -1,13 +1,13 @@
 'use client'
 
 import {HOME_PROMO_MAX_WIDTH} from './promoLayout'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Box, Button, CircularProgress, Typography } from '@mui/material'
 import { AutorenewRounded, CheckCircleRounded, DiamondOutlined } from '@mui/icons-material'
-import { managePremium, startPremiumCheckout, type PremiumStatus } from '@/app/actions/premium'
+import { managePremium, startPremiumCheckout } from '@/app/actions/premium'
 import { PREMIUM, PREMIUM_BENEFITS } from '@/app/lib/entitlements'
 import { formatMembershipDate } from '@/app/lib/display'
-import { refreshPremiumStatus } from '@/app/lib/premiumStatusCache'
+import { usePremiumStatus } from '@/app/lib/usePremiumStatus'
 
 /* Shared AWM+ card, in the AppDownloadSection shell: deep forest
    surface, cream type, gold accents, artwork on the right. Free members see
@@ -15,22 +15,11 @@ import { refreshPremiumStatus } from '@/app/lib/premiumStatusCache'
    with their benefits and renewal/cancellation dates; cancelled members get a
    management button into the existing billing portal. */
 export default function AwmPromoSection({ userId, placement='home' }: { userId?: string; placement?:'home'|'profile' }) {
-  const [snapshot,setSnapshot]=useState<{userId:string;status:PremiumStatus}|null>(null)
+  const membership = usePremiumStatus(userId)
   const [busy, setBusy] = useState(false)
   const [resumeBusy, setResumeBusy] = useState(false)
   const [error, setError] = useState('')
-  useEffect(() => {
-    if(!userId)return
-    let current = true, revision = 0
-    const refresh=()=>{const request=++revision;void refreshPremiumStatus(userId).then(status=>{if(current&&request===revision)setSnapshot({userId,status})}).catch(()=>{if(current&&request===revision)setSnapshot(null)})}
-    refresh()
-    const visible=()=>{if(document.visibilityState==='visible')refresh()}
-    window.addEventListener('focus',refresh)
-    window.addEventListener('account-access-changed',refresh)
-    document.addEventListener('visibilitychange',visible)
-    return () => {current=false;window.removeEventListener('focus',refresh);window.removeEventListener('account-access-changed',refresh);document.removeEventListener('visibilitychange',visible)}
-  }, [userId])
-  const status=userId?(snapshot?.userId===userId?snapshot.status:null):{premium:false,admin:false,signedIn:false,manageable:false,cancelAtPeriodEnd:false,periodEnd:null,paymentIssue:false,startedAt:null}
+  const status=userId?membership:{premium:false,admin:false,signedIn:false,manageable:false,cancelAtPeriodEnd:false,periodEnd:null,paymentIssue:false,startedAt:null}
   if (!status) return null
   const active = status.premium || status.admin
   if(placement!=='home')return null
@@ -94,8 +83,8 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
           <Typography sx={{ color: '#d4a843', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 700, fontSize: 11.5, letterSpacing: '0.16em', textTransform: 'uppercase' }}>
             AWM+
           </Typography>
-          <Typography component="h2" sx={{ mt: 1, color: '#f5ede0', fontFamily: 'var(--font-heading)', fontSize: { xs: 28, sm: 34, md: 42 }, fontWeight: 600, lineHeight: 1.12 }}>
-            {active ? 'AWM+' : 'Upgrade to AWM+'}
+          <Typography component="h2" sx={{ maxWidth: 460, mx: 'auto', mt: 1, color: '#f5ede0', fontFamily: 'var(--font-heading)', fontSize: { xs: 28, sm: 34, md: 42 }, fontWeight: 600, lineHeight: 1.12 }}>
+            {active ? 'Your AWM+ subscription is active.' : 'Upgrade to AWM+'}
           </Typography>
           {!active && (
             <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.75)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 15.5 }, lineHeight: 1.65, maxWidth: 460, mx: 'auto' }}>
@@ -103,7 +92,7 @@ export default function AwmPromoSection({ userId, placement='home' }: { userId?:
             </Typography>
           )}          {active && (
             <Typography sx={{ mt: 1.5, color: 'rgba(245,237,224,0.75)', fontFamily: 'var(--font-sans), sans-serif', fontSize: { xs: 14, md: 15.5 }, lineHeight: 1.65, maxWidth: 460, mx: 'auto' }}>
-              Your AWM+ membership is active. Thank you for supporting ArabicWithM.
+              Thank you for supporting ArabicWithM.
             </Typography>
           )}
 

@@ -1,0 +1,433 @@
+{
+  "id": "structured-qa-chapter",
+  "schema_version": "1.0.0",
+  "chapter_number": 3,
+  "title_ar": "إِعْمَالُ الصِّفَةِ الْمُشَبَّهَةِ بِاسْمِ الْفَاعِلِ",
+  "title_en": "The Government of the Adjective Resembling an Active Participle",
+  "qa_note": "Synthetic compatibility fixture assembled from the request fragments. This is not the missing complete supplied grammar chapter.",
+  "sections": [
+    {
+      "id": "introduction",
+      "kind": "introduction",
+      "title_en": "Introduction",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text_en": "Compatibility lesson introduction. Text is rendered safely as prose."
+        }
+      ]
+    },
+    {
+      "id": "rule",
+      "kind": "rule",
+      "title_en": "The rule and the complete irab",
+      "blocks": [
+        {
+          "type": "highlighted-sentence",
+          "segments": [
+            {
+              "text_ar": "الْوَرْدَةُ",
+              "role_ar": "مُبْتَدَأٌ مَرْفُوعٌ",
+              "role_en": "Opening subject (mubtadaʾ)",
+              "highlight_key": "topic"
+            },
+            {
+              "text_ar": "جَمِيلٌ",
+              "role_en": "Governing adjective",
+              "highlight_key": "governor"
+            },
+            {
+              "text_ar": "لَوْنُهَا.",
+              "role_en": "Raised subject",
+              "highlight_key": "raised-subject"
+            }
+          ],
+          "explanation_en": "QA explanation supplied for renderer testing.",
+          "translation_en": "QA translation supplied for renderer testing."
+        },
+        {
+          "type": "table",
+          "caption_en": "Word / Irab / Why",
+          "columns": [
+            {
+              "id": "word",
+              "label_en": "Word"
+            },
+            {
+              "id": "irab",
+              "label_en": "Irab"
+            },
+            {
+              "id": "why",
+              "label_en": "Why"
+            }
+          ],
+          "rows": [
+            {
+              "id": "r1",
+              "cells": [
+                {
+                  "text_ar": "الْوَرْدَةُ"
+                },
+                {
+                  "text_ar": "مُبْتَدَأٌ مَرْفُوعٌ"
+                },
+                {
+                  "text_en": "QA table explanation."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mechanics",
+      "kind": "mechanics",
+      "title_en": "Mechanics",
+      "blocks": [
+        {
+          "id": "ex-1",
+          "type": "example",
+          "arabic": "زَيْدٌ حَسَنٌ وَجْهُهُ.",
+          "english": "QA example meaning.",
+          "explanation_en": "...",
+          "irab_ar": "...",
+          "analysis": [
+            {
+              "text_ar": "زَيْدٌ",
+              "role_en": "Mubtada",
+              "explanation_en": "QA analysis note."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "visuals",
+      "kind": "visuals",
+      "title_en": "Relationships",
+      "blocks": [
+        {
+          "type": "diagram",
+          "layout": "tree",
+          "direction": "top-down",
+          "caption_en": "Sentence relationships",
+          "nodes": [
+            {
+              "id": "sentence",
+              "label_en": "Sentence",
+              "label_ar": "الْوَرْدَةُ جَمِيلٌ لَوْنُهَا."
+            },
+            {
+              "id": "topic",
+              "label_en": "Mubtada"
+            },
+            {
+              "id": "governor",
+              "label_en": "Governing adjective"
+            },
+            {
+              "id": "raised",
+              "label_en": "Raised fail"
+            }
+          ],
+          "edges": [
+            {
+              "source": "sentence",
+              "target": "topic",
+              "label_en": "Opening subject"
+            },
+            {
+              "source": "sentence",
+              "target": "governor",
+              "label_en": "Governor"
+            },
+            {
+              "source": "governor",
+              "target": "raised",
+              "label_en": "Raises"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "worked",
+      "kind": "worked-examples",
+      "title_en": "Worked examples",
+      "blocks": [
+        {
+          "id": "ex-1",
+          "type": "example",
+          "arabic": "زَيْدٌ حَسَنٌ وَجْهُهُ.",
+          "english": "QA example meaning.",
+          "explanation_en": "...",
+          "irab_ar": "...",
+          "analysis": [
+            {
+              "text_ar": "زَيْدٌ",
+              "role_en": "Mubtada",
+              "explanation_en": "QA analysis note."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "practical",
+      "kind": "practical-applications",
+      "title_en": "Practical applications",
+      "blocks": [
+        {
+          "type": "collapsible",
+          "title_en": "Advanced Distinctions",
+          "default_open": false,
+          "content": [
+            {
+              "type": "paragraph",
+              "text_en": "Nested advanced explanation."
+            },
+            {
+              "type": "collapsible",
+              "title_en": "Common Mistakes",
+              "default_open": true,
+              "content": [
+                {
+                  "type": "paragraph",
+                  "text_en": "Nested common mistake explanation."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "supplementary",
+      "kind": "future-section-kind",
+      "title_en": "Supplementary",
+      "blocks": [
+        {
+          "type": "future-block-type",
+          "text_en": "Future extension."
+        },
+        {
+          "type": "paragraph",
+          "text_en": "The chapter remains readable after an unknown block."
+        }
+      ]
+    }
+  ],
+  "activities": [
+    {
+      "id": "qa-q01",
+      "type": "identify-rule",
+      "level": "Advanced",
+      "prompt_en": "QA practice prompt 1.",
+      "stimulus_ar": "الْوَرْدَةُ جَمِيلٌ لَوْنُهَا.",
+      "response_mode": "single-choice",
+      "choices": [
+        {
+          "id": "a",
+          "text_en": "Option A"
+        },
+        {
+          "id": "b",
+          "text_en": "Option B"
+        }
+      ]
+    },
+    {
+      "id": "qa-q02",
+      "type": "grammatical-analysis",
+      "level": "Advanced",
+      "prompt_en": "QA practice prompt 2.",
+      "stimulus_ar": "الْوَرْدَةُ جَمِيلٌ لَوْنُهَا.",
+      "response_mode": "annotation"
+    },
+    {
+      "id": "qa-q03",
+      "type": "correct-mistake",
+      "level": "Advanced",
+      "prompt_en": "QA practice prompt 3.",
+      "stimulus_ar": "الْوَرْدَةُ جَمِيلٌ لَوْنُهَا.",
+      "response_mode": "short-text"
+    },
+    {
+      "id": "qa-q04",
+      "type": "transform-sentence",
+      "level": "Advanced",
+      "prompt_en": "QA practice prompt 4.",
+      "stimulus_ar": "الْوَرْدَةُ جَمِيلٌ لَوْنُهَا.",
+      "response_mode": "long-text"
+    },
+    {
+      "id": "qa-q05",
+      "type": "distinguish-constructions",
+      "level": "Advanced",
+      "prompt_en": "QA practice prompt 5.",
+      "stimulus_ar": "الْوَرْدَةُ جَمِيلٌ لَوْنُهَا.",
+      "response_mode": "transformation"
+    },
+    {
+      "id": "qa-q06",
+      "type": "produce-examples",
+      "level": "Advanced",
+      "prompt_en": "QA practice prompt 6.",
+      "stimulus_ar": "الْوَرْدَةُ جَمِيلٌ لَوْنُهَا.",
+      "response_mode": "single-choice",
+      "choices": [
+        {
+          "id": "a",
+          "text_en": "Option A"
+        },
+        {
+          "id": "b",
+          "text_en": "Option B"
+        }
+      ]
+    },
+    {
+      "id": "qa-q07",
+      "type": "identify-rule",
+      "level": "Advanced",
+      "prompt_en": "QA practice prompt 7.",
+      "stimulus_ar": "الْوَرْدَةُ جَمِيلٌ لَوْنُهَا.",
+      "response_mode": "annotation"
+    },
+    {
+      "id": "qa-q08",
+      "type": "grammatical-analysis",
+      "level": "Advanced",
+      "prompt_en": "QA practice prompt 8.",
+      "stimulus_ar": "الْوَرْدَةُ جَمِيلٌ لَوْنُهَا.",
+      "response_mode": "short-text"
+    }
+  ],
+  "answers": [
+    {
+      "question_id": "qa-q01",
+      "answer_en": "QA answer 1.",
+      "explanation_en": "QA answer explanation.",
+      "acceptable_alternatives": [
+        "QA alternative."
+      ],
+      "assessment_criteria": [
+        "QA criterion."
+      ]
+    },
+    {
+      "question_id": "qa-q02",
+      "answer_en": "QA answer 2.",
+      "explanation_en": "QA answer explanation.",
+      "acceptable_alternatives": [
+        "QA alternative."
+      ],
+      "assessment_criteria": [
+        "QA criterion."
+      ]
+    },
+    {
+      "question_id": "qa-q03",
+      "answer_en": "QA answer 3.",
+      "explanation_en": "QA answer explanation.",
+      "acceptable_alternatives": [
+        "QA alternative."
+      ],
+      "assessment_criteria": [
+        "QA criterion."
+      ]
+    },
+    {
+      "question_id": "qa-q04",
+      "answer_en": "QA answer 4.",
+      "explanation_en": "QA answer explanation.",
+      "acceptable_alternatives": [
+        "QA alternative."
+      ],
+      "assessment_criteria": [
+        "QA criterion."
+      ]
+    },
+    {
+      "question_id": "qa-q05",
+      "answer_en": "QA answer 5.",
+      "explanation_en": "QA answer explanation.",
+      "acceptable_alternatives": [
+        "QA alternative."
+      ],
+      "assessment_criteria": [
+        "QA criterion."
+      ]
+    },
+    {
+      "question_id": "qa-q06",
+      "answer_en": "QA answer 6.",
+      "explanation_en": "QA answer explanation.",
+      "acceptable_alternatives": [
+        "QA alternative."
+      ],
+      "assessment_criteria": [
+        "QA criterion."
+      ]
+    },
+    {
+      "question_id": "qa-q07",
+      "answer_en": "QA answer 7.",
+      "explanation_en": "QA answer explanation.",
+      "acceptable_alternatives": [
+        "QA alternative."
+      ],
+      "assessment_criteria": [
+        "QA criterion."
+      ]
+    },
+    {
+      "question_id": "qa-q08",
+      "answer_en": "QA answer 8.",
+      "explanation_en": "QA answer explanation.",
+      "acceptable_alternatives": [
+        "QA alternative."
+      ],
+      "assessment_criteria": [
+        "QA criterion."
+      ]
+    }
+  ],
+  "references": [
+    {
+      "id": "qa-ref-1",
+      "title": "QA reference 1",
+      "url": "https://example.com/reference-1",
+      "author": "QA author",
+      "locator": "Page 1",
+      "publisher": "QA publisher",
+      "source_type": "QA book",
+      "verification_note": "Synthetic test reference, not a source citation."
+    },
+    {
+      "id": "qa-ref-2",
+      "title": "QA reference 2",
+      "url": "https://example.com/reference-2",
+      "author": "QA author",
+      "locator": "Page 2",
+      "publisher": "QA publisher",
+      "source_type": "QA book",
+      "verification_note": "Synthetic test reference, not a source citation."
+    },
+    {
+      "id": "qa-ref-3",
+      "title": "QA reference 3",
+      "url": "https://example.com/reference-3",
+      "author": "QA author",
+      "locator": "Page 3",
+      "publisher": "QA publisher",
+      "source_type": "QA book",
+      "verification_note": "Synthetic test reference, not a source citation."
+    }
+  ],
+  "unknown_extension": {
+    "preserve": true
+  }
+}

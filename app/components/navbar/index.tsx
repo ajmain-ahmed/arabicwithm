@@ -17,6 +17,7 @@ import { fetchMyDisplayName } from '@/app/actions/profiles'
 // mounted on first open for the same reason — it pulls supabase-js too.
 import ClientStyles from '@/app/components/ClientStyles'
 import BrandLogo from './BrandLogo'
+import { usePremiumStatus } from '@/app/lib/usePremiumStatus'
 import UserMenu from './UserMenu'
 import UserAvatar from './UserAvatar'
 import MemberActions from './MemberActions'
@@ -37,6 +38,8 @@ export default function Navbar() {
     const router = useRouter()
     const pathname = usePathname()
     const { user } = useAuth()
+    const membership = usePremiumStatus(user?.id)
+    const activeMember = Boolean(membership?.premium || membership?.admin)
     const { mode, toggleColorMode } = useColorMode()
     const isLoggedIn = Boolean(user)
 
@@ -201,7 +204,7 @@ export default function Navbar() {
                                 </IconButton>
 
                                 <Box sx={{ minWidth: 0, display: 'flex', justifyContent: 'center', pl: 0 }}>
-                                    <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
+                                    <BrandLogo activeMember={activeMember} isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
                                 </Box>
 
                                 <Box sx={{ display: 'flex', alignItems: 'center', justifySelf: 'end', gap: 0.25 }}>
@@ -241,7 +244,7 @@ export default function Navbar() {
                                     ))}
                                 </Box>
 
-                                <BrandLogo isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
+                                <BrandLogo activeMember={activeMember} isMobile={isMobile} onClick={handleBrandClick} shouldAnimate={!hasAnimated} overlay={isOverlay} />
 
                                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1.25 }}>
                                     {isLoggedIn && showAdminLink && <Button component={Link} href="/admin/users" startIcon={<AdminPanelSettings />} sx={{ color: navColor, textTransform: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>Admin</Button>}

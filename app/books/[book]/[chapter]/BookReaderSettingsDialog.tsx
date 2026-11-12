@@ -28,6 +28,7 @@ export default function BookReaderSettingsDialog({
   onViewChange,
   language,
   onLanguageChange,
+  structured = false,
 }: {
   open: boolean
   onClose: () => void
@@ -39,6 +40,7 @@ export default function BookReaderSettingsDialog({
   onTextScaleChange: (scale: number) => void
   view: 'lines' | 'book'
   onViewChange: (view: 'lines' | 'book') => void
+  structured?: boolean
   language: 'ar' | 'en'
   onLanguageChange: (language: 'ar' | 'en') => void
 }) {
@@ -56,6 +58,7 @@ export default function BookReaderSettingsDialog({
       </DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '8px!important' }}>
         <Box sx={{ p: 2, border: '1px solid rgba(122,110,101,0.18)', borderRadius: '12px', bgcolor: 'rgba(122,110,101,0.04)' }}>
+          {!structured && <>
           <Typography sx={{ mb: 1.25, color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}>
             Reading view
           </Typography>
@@ -79,7 +82,9 @@ export default function BookReaderSettingsDialog({
               Book view
             </Button>
           </Box>
-          <Collapse in={view === 'book'} timeout={260}>
+          </>}
+          {structured && <Typography sx={{ fontFamily: 'var(--font-sans)', fontSize: 14 }}>This lesson shows Arabic and English together. Choose the language for narration.</Typography>}
+          <Collapse in={structured || view === 'book'} timeout={260}>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1, mt: 1 }}>
               <Button
                 onClick={() => onLanguageChange('en')}
@@ -100,9 +105,9 @@ export default function BookReaderSettingsDialog({
             </Box>
           </Collapse>
         </Box>
-        <Box>
+        {!structured && <Box>
           <FormControlLabel control={<Switch checked={wordHelp} onChange={(_, checked) => onWordHelpChange(checked)} />} label="Word hover help" />
-        </Box>
+        </Box>}
         <Box sx={{ p: 2, border: '1px solid rgba(122,110,101,0.18)', borderRadius: '12px', bgcolor: 'rgba(122,110,101,0.04)' }}>
           <Typography sx={{ mb: 1.25, color: 'var(--awm-bark)', fontFamily: 'var(--font-sans), sans-serif', fontWeight: 600 }}>
             Arabic font

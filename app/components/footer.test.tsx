@@ -4,6 +4,8 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import Footer from './footer'
 
 const push = vi.fn()
+vi.mock('@/app/AuthContext', () => ({ useAuth: () => ({ user: null }) }))
+vi.mock('@/app/actions/premium', () => ({ fetchPremiumStatus: vi.fn() }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 
 let host: HTMLDivElement

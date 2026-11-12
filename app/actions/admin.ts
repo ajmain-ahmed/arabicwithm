@@ -21,6 +21,7 @@ import { z } from 'zod'
 import { unstable_rethrow } from 'next/navigation'
 import { bookInputSchema, bookSaveError } from '@/app/lib/bookInput'
 import { validateBookTokenGrammar } from '@/app/lib/bookTokenGrammar'
+import { validateAdditionalStructuredChapter } from '@/app/lib/structuredChapter'
 import type { ActionResult } from '@/app/lib/actionResult'
 
 /* ── Types ─────────────────────────────────────────────────────────── */
@@ -760,6 +761,7 @@ export async function fetchChapterForAdmin(
 export async function createChapter(input: ChapterInput): Promise<string> {
   await guardAdmin()
   validateBookTokenGrammar(input.content)
+  validateAdditionalStructuredChapter(input.content)
 
   const { data, error } = await serviceClient
     .from("chapters")
@@ -792,6 +794,7 @@ export async function updateChapter(
   await guardAdmin()
 
   validateBookTokenGrammar(input.content)
+  validateAdditionalStructuredChapter(input.content)
 
   const previousPath = await fetchChapterPathById(id)
 
@@ -849,6 +852,7 @@ export async function updateChapterContent(
   assertContentSize(content, "Chapter content")
 
   validateBookTokenGrammar(content)
+  validateAdditionalStructuredChapter(content)
 
   const path = await fetchChapterPathById(id)
 

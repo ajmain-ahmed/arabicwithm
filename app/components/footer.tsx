@@ -5,6 +5,9 @@ import { Box, Container, Grid, IconButton, Typography } from '@mui/material'
 import { Email } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import ClientStyles from '@/app/components/ClientStyles'
+import { useAuth } from '@/app/AuthContext'
+import { usePremiumStatus } from '@/app/lib/usePremiumStatus'
+import MemberBrandPlus from '@/app/components/MemberBrandPlus'
 
 /* ─────────────────────────────────────────────
    Types & data
@@ -129,6 +132,9 @@ const FOOTER_CSS = `
    Component
 ───────────────────────────────────────────── */
 export default function Footer({ homeMobileSpacing=false }: { homeMobileSpacing?: boolean }) {
+  const { user } = useAuth()
+  const membership = usePremiumStatus(user?.id)
+  const activeMember = Boolean(membership?.premium || membership?.admin)
   const router   = useRouter()
   const sections = FOOTER_SECTIONS()
   return (
@@ -151,7 +157,7 @@ export default function Footer({ homeMobileSpacing=false }: { homeMobileSpacing?
                   sx={{ height: 52, width: 'auto', display: 'block', mb: 1 }}
                 />
                 {/* wordmark */}
-                <Typography sx={{
+                <Typography role="img" aria-label={activeMember ? "ArabicWithM Plus" : "ArabicWithM"} sx={{ display: 'inline-flex', alignItems: 'baseline', whiteSpace: 'nowrap',
                   fontFamily: 'var(--font-decorative)',
                   fontSize: '1.8rem', fontWeight: 700,
                   letterSpacing: '-0.025em',
@@ -161,7 +167,7 @@ export default function Footer({ homeMobileSpacing=false }: { homeMobileSpacing?
                   'html[data-theme="dark"] &': { background: 'none', color: '#fff', WebkitTextFillColor: '#fff' },
                   lineHeight: 1, mb: 1,
                 }}>
-                  ArabicWithM
+                  ArabicWithM{activeMember && <MemberBrandPlus />}
                 </Typography>
                 <Box sx={{ height: '1px', width: 72, background: 'linear-gradient(90deg, #b8860b, transparent)' }} />
               </Box>

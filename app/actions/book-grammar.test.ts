@@ -128,3 +128,20 @@ it('keeps Admin authorization ahead of validation and storage', async () => {
   await expect(updateChapterContent('id', chapter())).rejects.toThrow('Forbidden')
   expect(mocks.from).not.toHaveBeenCalled()
 })
+
+
+it('round-trips an additional structured chapter without rewriting unknown keys or token conversion', async () => {
+  const { default: structured } = await import('@/test-fixtures/structured-chapter.json')
+  const id = await createChapter({ ...input, content: structured })
+  const admin = await fetchChapterForAdmin(id)
+  expect(admin?.content).toEqual(structured)
+  const chapter = await fetchChapterForPublic('book', 'chapter')
+  expect(chapter?.structuredContent).toEqual({kind:'structured',chapter:structured})
+  expect(chapter?.content).toEqual([])
+  await updateChapterContent(id, structured)
+  expect((await fetchChapterForAdmin(id))?.content).toEqual(structured)
+})
+it('rejects only malformed additional format metadata before database writes', async () => {
+  await expect(createChapter({...input,content:{schema_version:'2.0.0',sections:[]}})).rejects.toThrow('not supported')
+  expect((await db.query('select id from chapters')).rows).toHaveLength(0)
+})

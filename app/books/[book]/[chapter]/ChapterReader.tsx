@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore, type ReactNode, type CSSProperties } from 'react'
 import { Box, Button, ButtonGroup, Divider, Paper, Typography, useMediaQuery } from '@mui/material'
 import { ChevronLeft, ChevronRight, Settings } from '@mui/icons-material'
 import { HtmlTooltip, MobileDefinitionSheet, WordTooltip, type VocabEntry } from '@/app/components/vocab-tooltip'
@@ -245,6 +245,7 @@ export default function ChapterReader({
   chapterTitle,
   chapterSlug,
   content,
+  structuredPages,
   initialLanguage,
   initialPage,
   initialBlock,
@@ -256,6 +257,7 @@ export default function ChapterReader({
   chapterTitle: string
   chapterSlug: string
   content: PublicBookBlock[]
+  structuredPages?: ReactNode[]
   initialLanguage?: BookReaderLanguage
   initialPage?: number
   initialBlock?: number
@@ -301,10 +303,11 @@ export default function ChapterReader({
   /* Shared, responsive pagination for both reader presentations. */
   const desktopPages=useMediaQuery('(min-width:900px)')
   const pages=useMemo(()=>paginateParagraphs(paragraphs,desktopPages?DESKTOP_READER_BLOCKS_PER_PAGE:READER_BLOCKS_PER_PAGE),[paragraphs,desktopPages])
-  const totalPages=pages.length
-  const pageStarts=useMemo(()=>pages.map(items=>blockIndexByBlock.get(items[0]?.[0])??0),[pages,blockIndexByBlock])
+  const totalPages=structuredPages?.length ?? pages.length
+  const sourceLength=structuredPages?.length ?? content.length
+  const pageStarts=useMemo(()=>structuredPages ? structuredPages.map((_, index)=>index) : pages.map(items=>blockIndexByBlock.get(items[0]?.[0])??0),[structuredPages,pages,blockIndexByBlock])
   const incoming=`${chapterSlug}:${initialPage}:${initialBlock}`
-  const initialOffset=()=>Math.min(Math.max(0,initialBlock??pageStarts[Math.min(Math.max(1,initialPage??1),totalPages)-1]??0),Math.max(0,content.length-1))
+  const initialOffset=()=>Math.min(Math.max(0,initialBlock??pageStarts[Math.min(Math.max(1,initialPage??1),totalPages)-1]??0),Math.max(0,sourceLength-1))
   const [position,setPosition]=useState(()=>({incoming,block:initialOffset()}))
   if(position.incoming!==incoming)setPosition({incoming,block:initialOffset()})
   const page=readerPageForBlock(pageStarts,position.block)
@@ -337,12 +340,13 @@ export default function ChapterReader({
   useEffect(()=>{
     const onKeyDown=(event:KeyboardEvent)=>{
       if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return
+      if(structuredPages && (event.target as HTMLElement|null)?.closest('[role=region],summary'))return
       if((event.target as HTMLElement|null)?.closest('button,a,input,textarea,select,[role=dialog],[contenteditable="true"]'))return
       event.preventDefault();goToPage(page+(event.key==='ArrowRight'?1:-1))
     }
     window.addEventListener('keydown',onKeyDown)
     return()=>window.removeEventListener('keydown',onKeyDown)
-  },[page,goToPage])
+  },[page,goToPage,structuredPages])
 
   useEffect(() => {
     if (!initialLanguage) return
@@ -357,13 +361,13 @@ export default function ChapterReader({
   useEffect(()=>{
     const match=window.location.hash.match(/^#sentence-(\d+)$/)
     if(!match&&initialBlock===undefined)return
-    const block=Math.min(match?Number(match[1]):initialBlock!,Math.max(0,content.length-1))
+    const block=Math.min(match?Number(match[1]):initialBlock!,Math.max(0,sourceLength-1))
     const frame=window.requestAnimationFrame(()=>{
       setPosition({incoming,block})
       window.requestAnimationFrame(()=>document.getElementById(`sentence-${block}`)?.scrollIntoView({block:'center',behavior:'instant'}))
     })
     return()=>window.cancelAnimationFrame(frame)
-  },[incoming,content.length,initialBlock])
+  },[incoming,sourceLength,initialBlock])
 
   const selectView = (nextView: ReaderView) => {
     try {
@@ -455,7 +459,11 @@ export default function ChapterReader({
       </Box>
 
       {player}
-      {view === 'lines' ? (
+      {structuredPages ? (
+        <Box ref={contentRef} id="reader-content" data-reader-mode="structured" style={{ '--structured-scale': textScale, '--structured-arabic-font': READER_FONT_FAMILIES[readerFont] } as CSSProperties} sx={{ minWidth: 0, px: { xs: 2, md: 6 }, py: { xs: 3, md: 5 }, scrollMarginTop: '80px' }}>
+          <div id={`sentence-${position.block}`} data-reader-block={position.block}>{structuredPages[page - 1]}</div>
+        </Box>
+      ) : view === 'lines' ? (
         <Box ref={contentRef} id="reader-content" data-reader-mode="lines" sx={{ px: { xs: 2.5, md: 6 }, py: { xs: 3, md: 5 }, scrollMarginTop: '80px' }}>
           {visibleParagraphs.map((paragraph, paragraphIndex) => (
             <Box key={paragraphIndex} sx={{ '& + &': { mt: { xs: 2.5, md: 3.5 } } }}>
@@ -552,6 +560,7 @@ export default function ChapterReader({
      swaps. */
   return <>
     <BookReaderSettingsDialog
+      structured={structuredPages !== undefined}
       open={settingsOpen}
       onClose={() => setSettingsOpen(false)}
       wordHelp={wordHelp}

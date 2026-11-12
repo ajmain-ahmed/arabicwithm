@@ -1,5 +1,6 @@
 "use server"
 
+import { detectChapterFormat, structuredPageCount, type StructuredChapterResult } from '@/app/lib/structuredChapter'
 import { getAuthenticatedUserId } from "@/app/actions/auth"
 import { canAccessBookChapter } from "@/app/lib/entitlements"
 import { unstable_cache } from "next/cache"
@@ -72,6 +73,7 @@ export interface PublicBookBlock {
 
 export interface PublicChapterWithContent extends PublicChapter {
   content: PublicBookBlock[]
+  structuredContent?: Exclude<StructuredChapterResult, { kind: 'legacy' }>
 }
 
 export interface ExploreBookBlock {
@@ -287,6 +289,14 @@ const fetchChapterContent = unstable_cache(
 
     if (error || !data) return null
 
+    const format = detectChapterFormat(data.content)
+    if (format.kind !== 'legacy') return {
+      id: String(data.id), slug: String(data.slug), title: String(data.title),
+      chapterNumber: Number(data.chapter_number),
+      blockCount: format.kind === 'structured' ? structuredPageCount(format.chapter) : 1,
+      content: [], structuredContent: format,
+    }
+
     const rawContent = Array.isArray(data.content) ? data.content : []
     const content: PublicBookBlock[] = rawContent.map((rawBlock) => {
       const block = rawBlock && typeof rawBlock === "object" && !Array.isArray(rawBlock)
@@ -337,7 +347,7 @@ const fetchChapterContent = unstable_cache(
       content,
     }
   },
-  ["books", "public", "chapter", "cartoon-tooltip-v1", "book-punctuation-v1", "book-grammar-v1"],
+  ["books", "public", "chapter", "cartoon-tooltip-v1", "book-punctuation-v1", "book-grammar-v1", "structured-chapter-v1"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 

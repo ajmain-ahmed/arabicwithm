@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from 'react'
 import { Box } from '@mui/material'
+import MemberBrandPlus from '@/app/components/MemberBrandPlus'
 
 interface BrandLogoProps {
     isMobile: boolean
     onClick: () => void
     shouldAnimate: boolean
+    activeMember?: boolean
     overlay?: boolean
 }
 
-export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = false }: BrandLogoProps) {
+export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = false, activeMember = false }: BrandLogoProps) {
     /* Gate the entrance animation on post-hydration state: server and first
        client render must produce identical markup or hydration fails (which
        cascades into the image rows never revealing). */
@@ -26,7 +28,7 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = 
             component="button"
             type="button"
             onClick={onClick}
-            aria-label="ArabicWithM home"
+            aria-label={activeMember ? "ArabicWithM Plus home" : "ArabicWithM home"}
             sx={{
                 m: 0,
                 p: 0,
@@ -77,7 +79,7 @@ export default function BrandLogo({ isMobile, onClick, shouldAnimate, overlay = 
                         whiteSpace: 'nowrap',
                     }}
                 >
-                    ArabicWithM
+                    ArabicWithM{activeMember && <MemberBrandPlus />}
                 </Box>
             </Box>
         </Box>

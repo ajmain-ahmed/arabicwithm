@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import {
   Dialog,
@@ -32,6 +32,8 @@ import {
 } from "@/app/actions/admin"
 import { errorMessage } from "@/app/lib/errors"
 import { validateBookTokenGrammar } from '@/app/lib/bookTokenGrammar'
+import { detectChapterFormat, validateAdditionalStructuredChapter } from '@/app/lib/structuredChapter'
+import StructuredChapterRenderer from '@/app/components/books/structured/StructuredChapterRenderer'
 import { deleteChapterAudioForAdmin, fetchChapterAudioForAdmin, saveChapterAudioResult, resolveAudiobookForAdmin } from '@/app/actions/audiobooks'
 import { readAudioDuration } from '@/app/lib/audioMetadata'
 import { normalizeAudiobookSource } from '@/app/lib/audiobookSource'
@@ -73,6 +75,9 @@ export default function ChapterEditDialog({
   const [title, setTitle] = useState("")
   const [chapterNumber, setChapterNumber] = useState("")
   const [contentJson, setContentJson] = useState(defaultContent)
+  const structuredPreview = useMemo(() => {
+    try { return detectChapterFormat(JSON.parse(contentJson)) } catch { return null }
+  }, [contentJson])
   const [audio, setAudio] = useState<Record<AudioLanguage, AudioDraft>>({ ar: emptyAudioDraft(), en: emptyAudioDraft('en') })
   const busyRef = useRef(false)
   const savedIdRef = useRef<string | null>(chapterId)
@@ -154,6 +159,7 @@ export default function ChapterEditDialog({
         throw new Error("Chapter content JSON is invalid")
       }
       validateBookTokenGrammar(content)
+      validateAdditionalStructuredChapter(content)
 
       const chapterNum = Number(chapterNumber)
       if (Number.isNaN(chapterNum)) {
@@ -442,6 +448,7 @@ export default function ChapterEditDialog({
             )}
 
             {tab === 1 && (
+              <Box>
               <AdminTextField
                 label="Chapter content JSON"
                 value={contentJson}
@@ -463,6 +470,12 @@ export default function ChapterEditDialog({
                   },
                 }}
               />
+              {structuredPreview?.kind === 'structured' && <Box component="details" sx={{ mt: 2 }}>
+                <Box component="summary" sx={{ cursor: 'pointer', fontWeight: 600 }}>Preview structured chapter</Box>
+                <Box sx={{ mt: 2, minWidth: 0 }}><StructuredChapterRenderer chapter={structuredPreview.chapter} /></Box>
+              </Box>}
+              {structuredPreview?.kind === 'structured-error' && <Typography color="error" sx={{ mt: 1 }}>{structuredPreview.message}</Typography>}
+              </Box>
             )}
 
             {tab === 2 && (

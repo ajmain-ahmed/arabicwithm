@@ -9,6 +9,32 @@ const TTL_MS = 60_000
 
 let cached: { key: string; status: PremiumStatus; at: number } | null = null
 let inflight: Promise<PremiumStatus> | null = null
+let inflightKey: string | null = null
+const subscribers = new Map<() => void, string>()
+let stopWatching: (() => void) | null = null
+function notify() { for (const listener of subscribers.keys()) listener() }
+function revalidateSubscribers() {
+  for (const key of new Set(subscribers.values())) void refreshPremiumStatus(key).catch(() => {})
+}
+
+/** One shared refresh lifecycle for every surface observing the canonical snapshot. */
+export function subscribePremiumStatus(key: string, listener: () => void): () => void {
+  subscribers.set(listener, key)
+  if (!stopWatching) {
+    const visible = () => { if (document.visibilityState === 'visible') revalidateSubscribers() }
+    window.addEventListener('focus', revalidateSubscribers)
+    document.addEventListener('visibilitychange', visible)
+    stopWatching = () => {
+      window.removeEventListener('focus', revalidateSubscribers)
+      document.removeEventListener('visibilitychange', visible)
+    }
+  }
+  void getPremiumStatus(key).catch(() => {})
+  return () => {
+    subscribers.delete(listener)
+    if (!subscribers.size) { stopWatching?.(); stopWatching = null }
+  }
+}
 
 /* Reads return the latest snapshot for this identity whenever one exists, of
    any age: surfaces render stale-while-revalidate and the background fetch
@@ -20,19 +46,24 @@ export function readPremiumStatus(key: string): PremiumStatus | null {
 }
 
 function request(key: string, force: boolean): Promise<PremiumStatus> {
+  if (!force && inflight && inflightKey === key) return inflight
   if (!force && cached && cached.key === key) {
     if (Date.now() - cached.at < TTL_MS) return Promise.resolve(cached.status)
-    if (inflight) return inflight
   }
   const promise = fetchPremiumStatus()
     .then(status => {
       /* A newer forced request may have replaced us; only the latest write. */
-      if (inflight === promise) cached = { key, status, at: Date.now() }
+      if (inflight === promise) { cached = { key, status, at: Date.now() }; notify() }
       return status
     })
-    .finally(() => {
-      if (inflight === promise) inflight = null
+    .catch(error => {
+      if (inflight === promise && cached?.key === key) { cached = null; notify() }
+      throw error
     })
+    .finally(() => {
+      if (inflight === promise) { inflight = null; inflightKey = null }
+    })
+  inflightKey = key
   inflight = promise
   return promise
 }
@@ -49,8 +80,8 @@ export function refreshPremiumStatus(key: string): Promise<PremiumStatus> {
 
 if (typeof window !== 'undefined') {
   window.addEventListener('account-access-changed', () => {
-    cached = null
-    inflight = null
+    resetPremiumStatusCache()
+    revalidateSubscribers()
   })
 }
 
@@ -58,4 +89,6 @@ if (typeof window !== 'undefined') {
 export function resetPremiumStatusCache(): void {
   cached = null
   inflight = null
+  inflightKey = null
+  notify()
 }

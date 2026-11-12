@@ -783,10 +783,10 @@ function RelatedRail({ related, currentSlug, variant }: { related: RelatedEpisod
 
 /* ─────────────────────────────────────────────
    UpNextList — compact mobile "More" tab: the Up
-   next queue as playlist rows (small thumbnail,
-   episode title, show title), YouTube-style.
+   next queue as up to nine overlay thumbnails on phones,
+   with the existing playlist rows on wider screens.
 ───────────────────────────────────────────── */
-function UpNextList({ related }: { related: RelatedEpisode[] }) {
+export function UpNextList({ related }: { related: RelatedEpisode[] }) {
   const narrow = useMediaQuery('(max-width:767.95px)')
   if (related.length === 0) {
     return (
@@ -796,7 +796,7 @@ function UpNextList({ related }: { related: RelatedEpisode[] }) {
     )
   }
   if (narrow) return <Box component="section" aria-label="Up next" data-mobile-related sx={{display:'grid',gridTemplateColumns:'repeat(3,minmax(0,1fr))',gap:{xs:.75,sm:1},minWidth:0}}>
-    {related.filter(item=>item.slug&&item.showSlug).slice(0,3).map(item=><Box component={Link} prefetch={false} key={item.id} href={`/cartoons/${item.showSlug}/${encodeURIComponent(item.slug)}`} aria-label={item.title} sx={{position:'relative',display:'block',aspectRatio:HOME_CAROUSEL_CARD_ASPECT_RATIO,minWidth:0,borderRadius:'10px',overflow:'hidden',bgcolor:'#0e2e1f',textDecoration:'none','&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}>
+    {related.filter(item=>item.slug&&item.showSlug).slice(0,9).map(item=><Box component={Link} prefetch={false} key={item.id} href={`/cartoons/${item.showSlug}/${encodeURIComponent(item.slug)}`} aria-label={item.title} sx={{position:'relative',display:'block',aspectRatio:HOME_CAROUSEL_CARD_ASPECT_RATIO,minWidth:0,borderRadius:'10px',overflow:'hidden',bgcolor:'#0e2e1f',textDecoration:'none','&:focus-visible':{outline:'2px solid var(--awm-gold)',outlineOffset:2}}}>
       <Box component="img" src={item.cover??''} alt="" loading="lazy" decoding="async" onError={event=>{event.currentTarget.style.visibility='hidden'}} sx={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
       <Box aria-hidden sx={{position:'absolute',inset:0,background:'linear-gradient(180deg, rgba(5,23,15,0) 42%, rgba(5,23,15,0.85) 100%)'}}/>
       <Typography data-related-title sx={{position:'absolute',left:0,right:0,bottom:0,p:.9,fontFamily:'var(--font-heading)',fontSize:{xs:12,sm:14},fontWeight:600,lineHeight:1.25,color:'#fff',textShadow:'0 2px 10px rgba(0,0,0,.5)'}}><Box component="span" sx={{display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden',overflowWrap:'anywhere'}}>{item.title}</Box></Typography>

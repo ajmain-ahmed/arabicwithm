@@ -157,3 +157,13 @@ it('keeps the other language editable during an upload and suppresses duplicate 
   expect((document.querySelectorAll('fieldset input')[1] as HTMLInputElement)).toBeDefined()
   expect([...document.querySelectorAll('input')].some(input => input.value === 'audiobooks/en/retained.mp3')).toBe(true)
 })
+
+it('previews and saves the additional chapter format without converting its content',async()=>{
+ const {default:structured}=await import('@/test-fixtures/structured-chapter.json')
+ await mount();await act(async()=>(document.querySelectorAll('[role="tab"]')[1] as HTMLElement).click())
+ const input=[...document.querySelectorAll('textarea')].find(el=>el.labels?.[0]?.textContent?.includes('Chapter content JSON'))!
+ await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(input,JSON.stringify(structured));input.dispatchEvent(new Event('input',{bubbles:true}))})
+ expect(document.body.textContent).toContain('Preview structured chapter');expect(document.body.textContent).toContain(structured.title_ar)
+ await act(async()=>button('Save').click())
+ expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({content:structured}))
+})

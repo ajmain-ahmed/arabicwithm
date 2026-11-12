@@ -1,0 +1,13 @@
+{
+  "note": "SHA-256 of visible reader innerHTML captured before structured-renderer integration, using test-book/chapter-1 and the unchanged 30-block fixture. Chrome exact markup; Firefox checks semantics.",
+  "sha256": {
+    "1440-book-ar": "641080ecb89e104bc880e508b56873514ca6fcdc51ba8f883e93dac6517f8bdc",
+    "1440-book-en": "3cd6911b079609b0fc8b4bca89351877896f4b82c696b65058966af532f40816",
+    "1440-lines-ar": "61e09eff1b3cba031c90d989b6dc914f41428366a9a8d18663c9f15431319ba3",
+    "1440-lines-en": "bc9c5dbc898a2ee55976fcd44fc915e96b9f585f6213df9b3ac092e80d7c8d55",
+    "390-book-ar": "25133beefa198767bd667aa1640ce1181831f26f49f6c868126ce1888eb23ba7",
+    "390-book-en": "c21150a172ddfc4e10ae529c637570dca0b1dd468d2ba0bca484d1ed5b345e25",
+    "390-lines-ar": "053b6841bda9de7c6b0f824e808d427ac8c9614e4590dd5a4e64dbfd390ccf53",
+    "390-lines-en": "e6cc77feb0541bc28a8036316b62bdaee6bb9bcbd0a08625fbe69a06173aeed7"
+  }
+}
