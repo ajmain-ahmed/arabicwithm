@@ -45,7 +45,11 @@ This compatibility layer adds no grading/LMS engine or new answer persistence. S
 
 ## Supplied chapter and QA scope
 
-The attachment contained the specification and partial JSON examples, not the complete `ag-ch-001` JSON. The exact original section count, eight original activities/answers, and three classical-source reference records therefore could not be audited. The complete JSON is still needed for that final document-specific compatibility check.
+Correction after the user's follow-up: the user confirms that the complete `ag-ch-001` JSON was supplied earlier. The previous report incorrectly inferred that it had not been supplied from the files then inspected. That inference is withdrawn. The completed tests below used the explicitly synthetic fixture; they do not establish that the original chapter renders correctly.
+
+The original complete object has not yet been located among the inputs currently accessible to this task. A read-only search checked 228 decoded text/JSON/Markdown attachment files (including UTF-16 handling), the attachment index, the local task history, and relevant files in the workspace, Downloads, Documents, and Desktop. The only chapter-ID matches in attachment files were the implementation specification and the current QA instructions. This is a statement about the accessible copies searched, not a claim that the user never supplied the chapter.
+
+Document-specific validation is pending access to that exact original object. Original section/block counts, original activity/answer rendering, and the three original classical references have not been verified. Do not reconstruct the chapter from fragments or use the synthetic fixture as evidence of original-chapter compatibility. No production import or real book edit has been performed.
 
 `test-fixtures/structured-chapter.json` is explicitly labeled as a synthetic compatibility fixture assembled from the request fragments. It contains seven sections, eight **QA** activities and matched **QA** answers, and three **QA** references. These are not fabricated replacements for the missing original lesson content and were never imported into a real book.
 
@@ -58,7 +62,7 @@ Verified using that fixture:
 - The sentence / mubtada / governing adjective / raised fail relationship diagram renders with directional labels.
 - Advanced Distinctions is initially closed; nested Common Mistakes respects its open default.
 - All eight QA activities render with choice and text response modes. Eight QA answers match their question IDs and remain collapsed until requested.
-- Three synthetic reference records render safely. The missing original classical citations were not invented.
+- Three synthetic reference records render safely. The original classical citations have not yet been tested; no replacement citations were invented.
 - A future block and a future section kind leave later content readable. Unsupported schema versions and malformed top-level content show clear diagnostics.
 
 ## Responsive verification
@@ -117,6 +121,6 @@ Earlier mobile More and AWM+ working-tree changes were preserved and are not par
 
 **Existing books continue to use the existing renderer unchanged.**
 
-**A second structured-chapter renderer was added so the supplied advanced grammar JSON can be displayed inside the normal Books Reader.** Complete-source QA remains pending receipt of the actual chapter file, as explained above.
+**A second structured-chapter renderer was added so the supplied advanced grammar JSON can be displayed inside the normal Books Reader.** Document-specific QA remains pending access to the exact original supplied chapter, as explained above. This architectural confirmation is not a claim that the original document has passed QA.
 
 **No existing Book JSON was migrated, rewritten or converted.**
