@@ -5,6 +5,10 @@ export default defineConfig({
     name: "arabicwithm",
     entrypoint: "vinext/server/fetch-handler",
     compatibilityDate: "2026-11-12",
+    /* Keep the site off workers.dev: the *.workers.dev hostname is not on our
+       zone, so zone-level WAF/bot/rate rules do not apply there — scrapers
+       could bypass them entirely. */
+    workersDev: false,
     assets: {
       htmlHandling: "none",
       notFoundHandling: "none",
