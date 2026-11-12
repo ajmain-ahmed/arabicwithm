@@ -52,3 +52,5 @@ backups/
 /dist/
 .vinext/
 .cloudflare/
+.dev-server*.log
+.kimi-code/

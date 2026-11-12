@@ -2,8 +2,6 @@ import type { MetadataRoute } from 'next'
 import { fetchBooksForPublic } from '@/app/actions/books'
 import { fetchAllEpisodesForPublic, fetchShowsForPublic } from '@/app/actions/cartoons'
 
-export const revalidate = 3600
-
 const origin = 'https://www.arabicwithm.com'
 const staticRoutes = ['/', '/cartoons', '/books', '/explore', '/learn', '/support', '/feedback', '/privacy', '/terms', '/search']
 
