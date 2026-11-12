@@ -185,11 +185,11 @@ export default function Navbar() {
                 <Container maxWidth="xl">
                     <Toolbar disableGutters sx={{ py: { xs: 0.5, md: 1 }, minHeight: { xs: 56, md: 64 } }}>
                         {isMobile ? (
-                            <Box sx={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr) auto', alignItems: 'center', width: '100%' }}>
-                                {/* auto columns hug each side's actual content so the brand
-                                    centers between the hamburger and the icon pair — equal
-                                    flanking space reads as centered, unlike fixed 90px
-                                    columns with uneven sides. */}
+                            <Box sx={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)', alignItems: 'center', width: '100%' }}>
+                                {/* Equal 1fr flanks pin the brand to the true viewport
+                                    center: the hamburger and the icon pair have different
+                                    widths, so auto columns hugging their content shoved
+                                    the logo left of center on signed-out mobile. */}
                                 <IconButton
                                     onPointerEnter={() => void import('./MobileDrawer')}
                                     onTouchStart={() => void import('./MobileDrawer')}
