@@ -1,18 +1,23 @@
 import { defineConfig } from "vite";
 import vinext from "vinext";
 import { cloudflare } from "@cloudflare/vite-plugin";
+import { kvDataAdapter } from "@vinext/cloudflare/cache/kv-data-adapter";
 import { createHash } from "node:crypto";
 import { patchCssModules } from "vite-css-modules";
 import path from "node:path";
 
+/* Scope every deploy's cache keys to the build (commit SHA in CI, timestamp
+   locally) so a new deployment never reads entries written by a previous
+   build — stale cross-deploy cached responses broke hydration and server
+   actions. */
+const deployId = process.env.GITHUB_SHA?.slice(0, 12) ?? Date.now().toString(36);
+
 export default defineConfig({
   plugins: [
     patchCssModules({ exportMode: "default" }),
-    /* No cache adapter: the KV-backed cache kept serving responses across
-       deploys (stale HTML/RSC referencing replaced JS chunks), breaking
-       hydration and server actions after each release. Revisit once a
-       deploy-time invalidation story exists (e.g. version-scoped keys). */
-    vinext(),
+    vinext({
+      cache: { data: kvDataAdapter({ appPrefix: `awm-${deployId}` }) },
+    }),
     cloudflare({
       viteEnvironment: {
         name: "rsc",

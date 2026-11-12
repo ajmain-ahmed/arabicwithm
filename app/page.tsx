@@ -8,6 +8,8 @@ import { fetchNewOnEpisodes, fetchNewOnShows } from '@/app/components/home/catal
 import { fetchHomeEpisodes } from '@/app/lib/homeCatalogue'
 import { withDataDeadline } from '@/app/lib/boundedFetch'
 
+export const revalidate = 3600
+
 // Preserve the root social image while giving the homepage its canonical identity.
 export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
   const inherited = await parent

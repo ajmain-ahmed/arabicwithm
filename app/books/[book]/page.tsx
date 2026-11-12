@@ -11,6 +11,8 @@ import { fetchPublishedAudioForBook } from '@/app/actions/audiobooks'
 import BookInProgress from './BookInProgress'
 import { isBookReleased } from '@/app/lib/bookRelease'
 
+export const revalidate = 3600
+
 export async function generateStaticParams() {
   const books = await fetchBooksForPublic()
   return books.map((book) => ({ book: book.slug }))

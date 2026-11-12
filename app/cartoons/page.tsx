@@ -4,6 +4,8 @@ import { canonicalizeCartoonCategory, WATCH_LEVELS } from '@/app/lib/cartoons'
 import CartoonsPage from './CartoonsPage'
 import { CataloguePageLoading } from '@/app/components/PageLoading'
 
+export const revalidate = 3600
+
 export const metadata = {
   title: 'Arabic Cartoons | ArabicWithM',
   description: 'Watch your favourite cartoons with interactive Arabic transcripts.',
