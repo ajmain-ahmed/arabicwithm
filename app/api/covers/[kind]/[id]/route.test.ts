@@ -126,3 +126,17 @@ it('returns 404 for a show with no cover and no episodes', async () => {
   mocks.download.mockResolvedValue({ data: null, error: { message: 'Object not found' } })
   expect((await showRequest()).status).toBe(404)
 })
+
+it('selects the saved book asset variant instead of the old slug cover',async()=>{
+ mocks.single.mockResolvedValue({data:{cover:'books/book-id--asset-id.webp',slug:'old-slug'},error:null})
+ const response=await GET(new Request('http://localhost/api/covers/books/item?w=640'),{params:Promise.resolve({kind:'books',id:'item'})})
+ expect(response.status).toBe(200);expect(mocks.download).toHaveBeenCalledWith('variants/books/book-id--asset-id-640.webp')
+})
+
+it('revalidates unversioned book proxy URLs used by My List instead of caching the previous cover',async()=>{
+ mocks.single.mockResolvedValue({data:{cover:'books/book-id--asset-id.webp',slug:'old'},error:null})
+ const response=await GET(new Request('http://localhost/api/covers/books/item'),{params:Promise.resolve({kind:'books',id:'item'})})
+ expect(response.headers.get('cache-control')).toBe('public, no-cache, must-revalidate')
+ const versioned=await GET(new Request('http://localhost/api/covers/books/item?v=saved'),{params:Promise.resolve({kind:'books',id:'item'})})
+ expect(versioned.headers.get('cache-control')).toBe(CACHE_CONTROL)
+})

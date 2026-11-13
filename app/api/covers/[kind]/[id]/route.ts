@@ -73,14 +73,14 @@ async function fetchCoverBytes(bucket: string, path: string): Promise<CoverBytes
 
 const COVER_CACHE_CONTROL = 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400'
 
-function coverResponse(cover: CoverBytes, ifNoneMatch: string | null): Response {
+function coverResponse(cover: CoverBytes, ifNoneMatch: string | null, cacheControl = COVER_CACHE_CONTROL): Response {
   const etag = `"${cover.etag}"`
   // Cheap revalidation: the browser already has these bytes cached.
   if (ifNoneMatch?.split(',').some((tag) => tag.trim() === etag)) {
-    return new Response(null, { status: 304, headers: { ETag: etag, 'Cache-Control': COVER_CACHE_CONTROL } })
+    return new Response(null, { status: 304, headers: { ETag: etag, 'Cache-Control': cacheControl } })
   }
   return new Response(cover.bytes, {
-    headers: { 'Content-Type': 'image/webp', 'Content-Length': String(cover.bytes.byteLength), ETag: etag, 'Cache-Control': COVER_CACHE_CONTROL },
+    headers: { 'Content-Type': 'image/webp', 'Content-Length': String(cover.bytes.byteLength), ETag: etag, 'Cache-Control': cacheControl },
   })
 }
 
@@ -141,12 +141,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ kind
     const candidates = path ? [{ bucket, path }] : []
     if (bucket !== 'covers' || path !== canonical) candidates.push({ bucket: 'covers', path: canonical })
     const requestedWidth = Number(new URL(request.url).searchParams.get('w') ?? 0)
-    const variant = bucket === 'covers' ? coverVariantPath(canonical, requestedWidth) : null
+    const variant = bucket === 'covers' ? coverVariantPath(kind === 'books' && path ? path : canonical, requestedWidth) : null
     if (variant) candidates.unshift({ bucket: 'covers', path: variant })
     for (const candidate of candidates) {
       if (candidate.bucket === 'covers') {
         const cover = await fetchCoverBytes(candidate.bucket, candidate.path)
-        if (cover) return coverResponse(cover, request.headers.get('if-none-match'))
+        if (cover) return coverResponse(cover, request.headers.get('if-none-match'), kind === 'books' && !new URL(request.url).searchParams.has('v') ? 'public, no-cache, must-revalidate' : COVER_CACHE_CONTROL)
       } else {
         const { data: signed, error: signError } = await serviceClient.storage.from(candidate.bucket).createSignedUrl(candidate.path, 3600)
         if (!signError && signed?.signedUrl) return new Response(null, { status: 307, headers: { Location: signed.signedUrl, 'Cache-Control': 'no-store' } })

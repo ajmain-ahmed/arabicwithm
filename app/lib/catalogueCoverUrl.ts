@@ -10,6 +10,16 @@ export function catalogueCoverUrl({ kind, id, slug, cover, version }: {
   const base = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/+$/, '')
   if (!base) return fallback
 
+  if (kind === 'books' && typeof cover === 'string' && cover.trim()) {
+    try {
+      const source = cover.trim()
+      const path = /^https?:\/\//i.test(source)
+        ? (() => { const url = new URL(source); return url.origin === new URL(base).origin && url.pathname.startsWith('/storage/v1/object/public/covers/') ? decodeURIComponent(url.pathname.slice('/storage/v1/object/public/covers/'.length)) : '' })()
+        : source.replace(/^\/+/, '').replace(/^covers\//, '')
+      if (/^books\/[^/\\%\u0000-\u001f]+\.webp$/.test(path)) return `${base}/storage/v1/object/public/covers/${path.split('/').map(encodeURIComponent).join('/')}${suffix}`
+    } catch { /* Existing private/external sources keep the proxy below. */ }
+  }
+
   const storageKind = kind === 'shows' ? 'cartoons' : kind
   const path = `/storage/v1/object/public/covers/${storageKind}/${slug}.webp`
   if (typeof cover === 'string' && cover.trim() && /^https?:\/\//i.test(cover.trim())) {

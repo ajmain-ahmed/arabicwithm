@@ -27,3 +27,8 @@ it('falls back when the public site URL is unavailable', () => {
   vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', '')
   expect(catalogueCoverUrl({ kind: 'books', id: 'book-id', slug: 'story' })).toBe('/api/covers/books/book-id')
 })
+
+it('uses a persisted immutable book cover rather than recreating the old slug filename',()=>{
+ expect(catalogueCoverUrl({kind:'books',id:'id',slug:'story',cover:'https://project.supabase.co/storage/v1/object/public/covers/books/book-id--asset-id.webp',version:'saved'})).toBe('https://project.supabase.co/storage/v1/object/public/covers/books/book-id--asset-id.webp?v=saved')
+ expect(catalogueCoverUrl({kind:'books',id:'id',slug:'story',cover:'covers/books/book-id--asset-id.webp'})).toBe('https://project.supabase.co/storage/v1/object/public/covers/books/book-id--asset-id.webp')
+})

@@ -4,7 +4,8 @@ import React, { useState, useRef, useCallback, useEffect } from "react"
 import { Box, Button, Typography, CircularProgress } from "@mui/material"
 import { CloudUpload, Crop, DeleteOutlined, ImageOutlined } from "@mui/icons-material"
 import { uploadCoverImage } from "@/app/actions/storage"
-import { errorMessage } from "@/app/lib/errors"
+import { prepareCoverImage, COVER_UPLOAD_TIMEOUT_MS } from '@/app/lib/prepareCoverImage'
+import { COVER_VARIANT_WIDTHS } from '@/app/lib/imageVariantPaths'
 import { thumbnailCropCss, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 import ThumbnailCropper from "./EpisodeThumbnailCropper"
 
@@ -19,57 +20,7 @@ interface ImageUploadFieldProps {
   onUploaded?: (url: string) => void
   onRemove?: () => void
   onUploadingChange?: (uploading: boolean) => void
-}
-
-const MAX_CANVAS_WIDTH = 1280
-const MAX_CANVAS_HEIGHT = 1280
-const WEBP_QUALITY = 0.85
-
-async function fileToWebpBlob(file: File): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-
-      let { width, height } = img
-      if (width > MAX_CANVAS_WIDTH || height > MAX_CANVAS_HEIGHT) {
-        const scale = Math.min(MAX_CANVAS_WIDTH / width, MAX_CANVAS_HEIGHT / height)
-        width = Math.round(width * scale)
-        height = Math.round(height * scale)
-      }
-
-      const canvas = document.createElement("canvas")
-      canvas.width = width
-      canvas.height = height
-      const ctx = canvas.getContext("2d")
-      if (!ctx) {
-        reject(new Error("Could not create canvas context"))
-        return
-      }
-
-      ctx.drawImage(img, 0, 0, width, height)
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            reject(new Error("WebP conversion failed"))
-            return
-          }
-          resolve(blob)
-        },
-        "image/webp",
-        WEBP_QUALITY
-      )
-    }
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url)
-      reject(new Error("Failed to load image for conversion"))
-    }
-
-    img.src = url
-  })
+  disabled?: boolean
 }
 
 export default function ImageUploadField({
@@ -83,7 +34,11 @@ export default function ImageUploadField({
   onUploaded,
   onRemove,
   onUploadingChange,
+  disabled = false,
 }: ImageUploadFieldProps) {
+  const [failedPreview, setFailedPreview] = useState<string | null>(null)
+  const [status, setStatus] = useState('')
+  const controller = useRef<AbortController | null>(null)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [localPreview, setLocalPreview] = useState<string | null>(null)
@@ -95,13 +50,14 @@ export default function ImageUploadField({
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    controller.current?.abort(); setStatus(''); setError(null)
     generation.current += 1; uploadBusy.current = false; setUploading(false); uploadChange.current?.(false)
     setLocalPreview((current) => {
       if (current?.startsWith("blob:")) URL.revokeObjectURL(current)
       return null
     })
     setCropOpen(false)
-    return () => { generation.current += 1; uploadBusy.current = false; uploadChange.current?.(false) }
+    return () => { controller.current?.abort(); generation.current += 1; uploadBusy.current = false; uploadChange.current?.(false) }
   }, [path])
 
   useEffect(() => () => {
@@ -111,45 +67,56 @@ export default function ImageUploadField({
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
-      if (!file || uploadBusy.current || !path) return
-      const version = generation.current
+      if (!file || uploadBusy.current || disabled) return
+      if (!path) { setError('The cover upload is not ready yet. Please try again.'); return }
+      const version = generation.current, attempt = new AbortController()
+      controller.current = attempt
       uploadBusy.current = true; uploadChange.current?.(true)
-      setUploading(true)
-      setError(null)
-
+      setUploading(true); setError(null); setStatus(`Selected: ${file.name}`)
+      let timer: ReturnType<typeof setTimeout> | undefined
+      let prepared = false
       try {
-        const objectUrl = URL.createObjectURL(file)
-        setLocalPreview(objectUrl)
-
-        const webpBlob = await fileToWebpBlob(file)
-        if (version !== generation.current) return
-        const formData = new FormData()
-        formData.append("bucket", bucket)
-        formData.append("path", path)
-        formData.append("file", webpBlob, "cover.webp")
-
-        const publicUrl = await uploadCoverImage(formData)
-        if (version !== generation.current) return
+        const result = await Promise.race([
+          (async () => {
+            const image = await prepareCoverImage(file, attempt.signal, path.startsWith('books/'))
+            prepared = true
+            if (version !== generation.current || attempt.signal.aborted) return null
+            const objectUrl = URL.createObjectURL(image.original)
+            setLocalPreview(objectUrl)
+            const formData = new FormData()
+            formData.append('bucket', bucket); formData.append('path', path)
+            formData.append('file', image.original, 'cover.webp')
+            image.variants.forEach((blob, index) => formData.append(`variant${COVER_VARIANT_WIDTHS[index]}`, blob, `cover-${COVER_VARIANT_WIDTHS[index]}.webp`))
+            return uploadCoverImage(formData)
+          })(),
+          new Promise<never>((_, reject) => { timer = setTimeout(() => { attempt.abort(); reject(new Error('Cover upload timed out. Please try again.')) }, COVER_UPLOAD_TIMEOUT_MS) }),
+        ])
+        if (version !== generation.current || attempt.signal.aborted || !result) return
+        if (typeof result !== 'string' && !result.ok) { setError(result.error); setStatus(''); setLocalPreview(null); return }
+        const publicUrl = typeof result === 'string' ? result : result.data
         onUploaded?.(publicUrl)
+        setLocalPreview(null)
+        setStatus(path.startsWith('books/') ? 'Cover uploaded. Save this book to keep the change.' : 'Cover uploaded. Save to keep the change.')
         if (onCropChange) setCropOpen(true)
       } catch (err: unknown) {
         if (version !== generation.current) return
-        setError(errorMessage(err) ?? "Upload failed")
-        setLocalPreview(null)
+        const message = err instanceof Error ? err.message : ''
+        if (process.env.NODE_ENV === 'development') console.error('[cover upload]', err)
+        setError(attempt.signal.aborted ? 'Cover upload timed out. Please try again.' : !prepared && message ? message : "We couldn't upload this cover. Please try again.")
+        setStatus(''); setLocalPreview(null)
       } finally {
+        clearTimeout(timer)
         if (version === generation.current) {
-        uploadBusy.current = false; uploadChange.current?.(false)
-        setUploading(false)
-        if (inputRef.current) {
-          inputRef.current.value = ""
-        }
+          uploadBusy.current = false; uploadChange.current?.(false); setUploading(false)
+          if (inputRef.current) inputRef.current.value = ''
         }
       }
     },
-    [bucket, path, onCropChange, onUploaded]
+    [bucket, path, disabled, onCropChange, onUploaded]
   )
 
   const activePreview = localPreview ?? previewUrl
+  const previewFailed = activePreview !== null && failedPreview === activePreview
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -186,28 +153,29 @@ export default function ImageUploadField({
             flexShrink: 0,
           }}
         >
-          {activePreview ? (
+          {activePreview && !previewFailed ? (
             <Box
               component="img"
               src={activePreview}
               alt={label}
+              onError={() => { setFailedPreview(activePreview); if (process.env.NODE_ENV === 'development') console.warn('[cover preview] Unable to display the selected cover.') }}
               sx={{
                 width: "100%",
                 height: "100%",
-                objectFit: "cover",
+                objectFit: path.startsWith("books/") ? "contain" : "cover",
                 ...thumbnailCropCss(previewCrop),
               }}
             />
           ) : (
-            <ImageOutlined sx={{ fontSize: 40, color: "rgba(122,110,101,0.4)" }} />
+            <Box role="img" aria-label={previewFailed ? "Cover preview unavailable" : "No cover selected"}><ImageOutlined sx={{ fontSize: 40, color: "rgba(122,110,101,0.4)" }} /></Box>
           )}
         </Box>
 
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 200 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0, flex: "1 1 200px", maxWidth: "100%" }}>
           <Button
             variant="outlined"
             component="label"
-            disabled={uploading}
+            disabled={uploading || disabled || !path}
             startIcon={uploading ? <CircularProgress size={16} /> : <CloudUpload />}
             sx={{
               textTransform: "none",
@@ -219,11 +187,12 @@ export default function ImageUploadField({
               "&:hover": { borderColor: "#b8860b", backgroundColor: "rgba(184,134,11,0.06)" },
             }}
           >
-            {uploading ? "Uploading…" : "Upload cover"}
+            {uploading ? "Uploading cover…" : "Upload cover"}
             <input
               ref={inputRef}
               type="file"
               accept="image/*"
+              disabled={uploading || disabled || !path}
               hidden
               onChange={handleFileChange}
             />
@@ -231,7 +200,9 @@ export default function ImageUploadField({
 
           {activePreview && onRemove && (
             <Button
+              disabled={uploading || disabled}
               onClick={() => {
+                setStatus(''); setError(null)
                 setLocalPreview(null)
                 onRemove()
               }}
@@ -246,6 +217,7 @@ export default function ImageUploadField({
 
           {activePreview && previewCrop && onCropChange && (
             <Button
+              disabled={uploading || disabled}
               onClick={() => setCropOpen(true)}
               startIcon={<Crop />}
               size="small"
@@ -263,11 +235,12 @@ export default function ImageUploadField({
             </Button>
           )}
 
-          {path && (
+          {path && !path.startsWith("books/") && (
             <Typography
               sx={{
                 fontFamily: "var(--font-sans), sans-serif",
                 fontSize: "0.75rem",
+                overflowWrap: "anywhere",
                 color: "#9e8a7a",
               }}
             >
@@ -277,9 +250,13 @@ export default function ImageUploadField({
         </Box>
       </Box>
 
+      {previewFailed && <Typography role="alert" sx={{ color: "var(--awm-muted)", fontSize: 13 }}>Cover preview unavailable. Please check the image or try uploading again.</Typography>}
+      {status && <Typography role="status" sx={{ fontFamily: "var(--font-sans)", fontSize: 13, color: "var(--awm-muted)", overflowWrap: "anywhere" }}>{status}</Typography>}
       {error && (
         <Typography
+          role="alert"
           sx={{
+            overflowWrap: "anywhere",
             fontFamily: "var(--font-sans), sans-serif",
             fontSize: "0.8rem",
             color: "#c0392b",

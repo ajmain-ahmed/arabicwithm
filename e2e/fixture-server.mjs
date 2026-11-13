@@ -61,6 +61,7 @@ let failImportAfter=null
 const formDrafts=new Map()
 const importJobs=new Map()
 const featuredObjects=new Map()
+const bookCoverObjects=new Map(),bookCoverWrites=[],bookCoverAttempts=[];let bookCoverFailure='none',bookCoverSaveFailure=false
 const tables = {
   email_preferences: [],
   book_release_reminders: [],
@@ -242,6 +243,11 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     return json(res,{})
   }
   if(url.pathname==='/fixture/mobile-more'){configureMobileMore();return json(res,{})}
+  if(url.pathname==='/fixture/book-cover-state'){
+    if(body.failure!==undefined)bookCoverFailure=body.failure
+    if(body.failSave!==undefined)bookCoverSaveFailure=body.failSave
+    return json(res,{attempts:bookCoverAttempts,contentDigest:createHash('sha256').update(JSON.stringify({chapters:tables.chapters,audio:tables.book_chapter_audio})).digest('hex'),writes:bookCoverWrites,objects:[...bookCoverObjects].map(([name,value])=>({name,hash:createHash('sha256').update(value.bytes).digest('hex')})),books:tables.books.map(({id,slug,cover,is_completed,title,description})=>({id,slug,cover,is_completed,title,description}))})
+  }
   if(url.pathname==='/fixture/member-branding'){brandMembership=body.state||'active';return json(res,{})}
   if(url.pathname==='/fixture/expired-membership'){expiredMembership=Boolean(body.expired);return json(res,{})}
   if(url.pathname==='/fixture/spotlight'){englishTranscriptMode=false;englishSubtitleLayout=false;spotlightMode=true;spotlightSelection=body.selection??'normal';spotlightRequests.length=0;tables.admin_manual_transcripts=Array.from({length:4},(_,i)=>({transcript_id:`99999999-9999-4999-8999-99999999999${i+4}`,group_id:'5b98c563-5c35-4696-98e1-06aa000eb622'}));spotlightEnglish=body.english!==false;tables.transcript_groups=[{id:'5b98c563-5c35-4696-98e1-06aa000eb622',name:'English'},{id:'77777777-7777-4777-8777-777777777778',name:'Imports'},{id:'77777777-7777-4777-8777-777777777779',name:'Stories'}];rpcLog.length=0;return json(res,{})}
@@ -594,6 +600,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
         return json(res,[])
       }
       if(table==='books'){
+        if(process.env.AWM_TEST_BOOK_COVERS==='1'&&bookCoverSaveFailure)return json(res,{message:'Synthetic book save failure'},500)
         if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
         let book
         if(req.method==='POST'){
@@ -605,6 +612,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
           if(!book)return json(res,null)
           const before=book.is_completed??true
           Object.assign(book,body)
+          if(process.env.AWM_TEST_BOOK_COVERS==='1')book.updated_at=new Date().toISOString()
           if(before===false&&book.is_completed===true)for(const reminder of tables.book_release_reminders.filter(row=>row.book_id===book.id&&!row.fulfilled_at)){
             if(!tables.app_notifications.some(row=>row.user_id===reminder.user_id&&row.kind==='book'&&row.source_id===book.id))tables.app_notifications.push({id:randomUUID(),user_id:reminder.user_id,kind:'book',source_id:book.id,title:`${book.title} is now available`,message:'The book you asked us to remind you about has been released.',route:`/read/book/${book.id}`,created_at:new Date().toISOString()})
             reminder.fulfilled_at=new Date().toISOString()
@@ -687,6 +695,23 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     const item=profilePresetObjects.get(presetDownload[1]+'/'+decodeURIComponent(presetDownload[2]));if(!item)return json(res,{message:'Missing preset'},404)
     res.writeHead(200,{'Content-Type':item.type});res.end(item.bytes);return
   }
+  if(process.env.AWM_TEST_BOOK_COVERS==='1'&&/^\/storage\/v1\/object\/(?:public\/)?covers\/(?:books|variants\/books)\//.test(url.pathname)){
+    const name=decodeURIComponent(url.pathname.replace(/^\/storage\/v1\/object\/(?:public\/)?covers\//,''))
+    if(req.method==='POST'){
+      if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+      bookCoverAttempts.push(name)
+      if(bookCoverFailure==='hang')return
+      if(bookCoverFailure==='primary'||bookCoverFailure==='variant'&&name.startsWith('variants/'))return json(res,{message:'Synthetic storage failure'},500)
+      const raw=Buffer.concat(chunks),boundary=req.headers['content-type']?.match(/boundary=(?:"([^"]+)"|([^;]+))/)
+      let bytes=raw
+      if(boundary){const marker=Buffer.from(`--${boundary[1]??boundary[2]}`);let offset=raw.indexOf(marker);while(offset>=0){const next=raw.indexOf(marker,offset+marker.length),headerEnd=raw.indexOf('\r\n\r\n',offset);if(next<0)break;if(raw.subarray(offset,headerEnd).toString().includes('filename=')){bytes=raw.subarray(headerEnd+4,next-2);break}offset=next}}
+      bookCoverObjects.set(name,{bytes});bookCoverWrites.push(name);return json(res,{Key:'covers/'+name,Id:name})
+    }
+    const stored=bookCoverObjects.get(name)
+    if(stored){res.writeHead(200,{'Content-Type':'image/webp'});res.end(stored.bytes);return}
+    if(name==='books/test-book.webp'){res.writeHead(200,{'Content-Type':'image/webp'});res.end(cover);return}
+    return json(res,{message:'Not found'},404)
+  }
   if(url.pathname==='/storage/v1/object/list/covers')return json(res,[...featuredObjects].filter(([name])=>name.startsWith(body.prefix+'/')).map(([name,value])=>({id:name,name:name.split('/').at(-1),updated_at:value.updated_at})).slice(body.offset??0,(body.offset??0)+(body.limit??100)))
   if(url.pathname==='/storage/v1/object/covers'&&req.method==='DELETE'){for(const name of body.prefixes??[])featuredObjects.delete(name);return json(res,[])}
   if(url.pathname.startsWith('/storage/v1/object/covers/featured/')&&req.method==='POST'){
@@ -753,6 +778,7 @@ function configureMobileMore(){
   tables.episodes=Array.from({length:13},(_,i)=>({...template,id:`dddddddd-dddd-4ddd-8ddd-${String(i).padStart(12,'0')}`,slug:`clip-${i}`,title:`Clip ${i}`}))
 }
 if(process.env.AWM_TEST_MOBILE_MORE==='1')configureMobileMore()
+if(process.env.AWM_TEST_BOOK_COVERS==='1')for(const book of tables.books)book.is_completed??=true
 if(process.env.AWM_TEST_STRUCTURED_BOOKS==='1'){
   const structured=JSON.parse(readFileSync(new URL('../test-fixtures/structured-chapter.json',import.meta.url),'utf8'))
   const structuredId='abababab-abab-4bab-8bab-000000000001'

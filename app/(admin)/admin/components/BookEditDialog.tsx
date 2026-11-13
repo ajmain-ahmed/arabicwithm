@@ -48,6 +48,7 @@ export default function BookEditDialog({
   const mounted = useRef(true)
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   const [loading, setLoading] = useState(false)
+  const [draftCoverId, setDraftCoverId] = useState('')
   const [coverUploading, setCoverUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -74,6 +75,7 @@ export default function BookEditDialog({
     let active = true
 
     if (isNew) {
+      setDraftCoverId(crypto.randomUUID())
       setLoading(false)
       setLoaded(true)
       setCover(null)
@@ -232,9 +234,10 @@ export default function BookEditDialog({
               onUploadingChange={setCoverUploading}
               label="Cover image"
               bucket="covers"
-              path={slug ? `books/${slug}.webp` : ""}
+              path={bookId || draftCoverId ? `books/${bookId ?? draftCoverId}.webp` : ""}
+              disabled={saving || loading}
               previewUrl={isNew ? cover : (bookId ? cover ?? `/api/covers/books/${bookId}` : null)}
-              previewAspectRatio="2 / 3"
+              previewAspectRatio="4 / 5"
               previewCrop={coverCrop}
               onCropChange={setCoverCrop}
               onUploaded={(url) => {

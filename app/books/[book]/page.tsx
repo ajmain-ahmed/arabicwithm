@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import {coverImageSrcSet} from '@/app/lib/imageVariantPaths'
+import BookCoverImage from '@/app/books/BookCoverImage'
 import { notFound } from 'next/navigation'
 import { Box, Container, Paper, Typography } from '@mui/material'
 import { ArrowBack, ChevronRight, HeadphonesRounded } from '@mui/icons-material'
@@ -68,7 +68,7 @@ export default async function BookPage({ params }: { params: Promise<{ book: str
 
   const coverImage = (
     <Box sx={{ position: 'relative', width: '100%', aspectRatio: '2 / 3', borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(44,26,14,0.08)', boxShadow: '0 12px 30px rgba(44,26,14,0.16)' }}>
-      <Box component="img" src={book.cover!} srcSet={coverImageSrcSet(book.cover!)} sizes="(max-width: 600px) 220px, (max-width: 900px) 300px, 520px" alt={`${book.title} cover`} loading="eager" fetchPriority="high" sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }} />
+      <BookCoverImage src={book.cover!} title={book.title} />
     </Box>
   )
 

@@ -6,7 +6,9 @@ import { saveChapterAudioForAdmin, fetchChapterAudioForAdmin } from '@/app/actio
 import { guardAdmin } from "@/app/actions/auth"
 import { serviceClient } from "@/app/lib/supabase"
 import { randomUUID } from 'node:crypto'
-import { syncImageVariants } from "@/app/lib/imageVariants"
+import { actionResult, type ActionResult } from '@/app/lib/actionResult'
+import { bookCoverUploadPath } from '@/app/lib/bookCoverUpload'
+import { COVER_VARIANT_WIDTHS, coverVariantPaths } from '@/app/lib/imageVariantPaths'
 import { AUDIO_PATH_PATTERN, AUDIO_MIME, audioUploadBody, validateAudioFile } from '@/app/lib/audioUpload'
 
 const ALLOWED_BUCKETS = new Set(["covers"])
@@ -29,7 +31,7 @@ function isWebPHeader(header: Uint8Array): boolean {
   )
 }
 
-export async function uploadCoverImage(formData: FormData): Promise<string> {
+export async function uploadCoverImage(formData: FormData): Promise<string | ActionResult<string>> {
   await guardAdmin()
 
   const bucket = formData.get("bucket")
@@ -54,6 +56,27 @@ export async function uploadCoverImage(formData: FormData): Promise<string> {
     throw new Error("Cover image must be a WebP file")
   }
 
+  if (path.startsWith('books/')) {
+    // Encoding stays in the browser: the deployed Worker cannot load native Sharp.
+    // Every object is new, so failures and unsaved drafts never alter an old cover.
+    const variants = COVER_VARIANT_WIDTHS.map(width => formData.get(`variant${width}`))
+    for (const variant of variants) {
+      if (!(variant instanceof Blob) || !variant.size || variant.size > MAX_FILE_BYTES || !isWebPHeader(new Uint8Array(await variant.slice(0, 12).arrayBuffer()))) {
+        return { ok: false, error: 'Please refresh Admin and upload the cover again. The image previews could not be prepared.' }
+      }
+    }
+    return actionResult('book cover upload', async () => {
+      const destination = bookCoverUploadPath(path)
+      const paths = coverVariantPaths(destination)
+      const uploads = [...variants.map((body, index) => ({ path: paths[index], body: body as Blob })), { path: destination, body: file }]
+      for (const item of uploads) {
+        const { error } = await serviceClient.storage.from(bucket).upload(item.path, item.body, { contentType: 'image/webp', cacheControl: '31536000', upsert: false })
+        if (error) throw new Error(`Unable to store book cover asset ${item.path}: ${error.message}`)
+      }
+      return serviceClient.storage.from(bucket).getPublicUrl(destination).data.publicUrl
+    }, "We couldn't upload this cover. Please try again.")
+  }
+
   const { data, error } = await serviceClient.storage
     .from(bucket)
     .upload(path, file, {
@@ -70,6 +93,7 @@ export async function uploadCoverImage(formData: FormData): Promise<string> {
     console.error("[uploadCoverImage] error:", error.message)
     throw new Error("Cover upload failed. Please try again.")
   }
+  const { syncImageVariants } = await import('@/app/lib/imageVariants')
   await syncImageVariants(file, path)
 
   const { data: urlData } = serviceClient.storage.from(bucket).getPublicUrl(data?.path ?? path)
