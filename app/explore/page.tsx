@@ -18,6 +18,6 @@ export default async function ExplorePage({searchParams}:{searchParams:Promise<{
   const query=await searchParams
   const initialView=(query.view??query.tab)==='foryou'?'foryou':'explore'
   const seed = getExploreSeed()
-  const initialBatch = initialView==='explore'?await fetchExploreFeedPage(seed, 0).catch(() => null):null
+  const initialBatch = initialView==='explore'?await fetchExploreFeedPage(seed, 0).catch(error => { console.error('[explore] server batch failed', error); return null }):null
   return <ExploreViews initialView={initialView} initialSeed={seed} initialBatch={initialBatch} />
 }

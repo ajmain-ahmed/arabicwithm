@@ -14,6 +14,8 @@ import type { ExploreBookPage } from '@/app/actions/books'
 import { dispatchWordLookup } from '@/app/lib/activity'
 import { usePlayerStore } from '@/store/playerStore'
 import { useExploreFeedCache } from '@/store/exploreFeedStore'
+import AwmPageError from '@/app/components/AwmPageError'
+import { boundedRead } from '@/app/lib/readRecovery'
 import { ExplorePageLoading } from '@/app/components/PageLoading'
 import { fetchExploreFeedPage } from '@/app/actions/explore'
 import { thumbnailCropCss } from '@/app/lib/thumbnailCrop'
@@ -594,6 +596,7 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
   const [hasMore, setHasMore] = useState(initialBatch ? initialBatch.hasMore : cachedItems.length > 0)
   const [initialLoaded, setInitialLoaded] = useState(cachedItems.length > 0 || initialBatch != null)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const [selectedDefinition, setSelectedDefinition] = useState<SelectedDefinition | null>(null)
   /* Peek state is kept in a ref on purpose: every hover/leave writes it, and a
@@ -642,7 +645,7 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
     }
     setItems((current) => (restore ? current : []))
     setLoadingMore(true)
-    void fetchExploreFeedPage(seedRef.current, 0, videosOnly)
+    void boundedRead(fetchExploreFeedPage(seedRef.current, 0, videosOnly))
       .then((batch) => {
         const fresh = batch.items.filter(item=>!videosOnly||item.kind==='video').filter((item) => {
           const key = feedItemKey(item)
@@ -657,7 +660,7 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
           startAtRef.current = restoreCountRef.current
         }
       })
-      .catch(() => undefined)
+      .catch(error => { console.error('[explore] initial batch failed', error); setLoadError(true) })
       .finally(() => {
         setLoadingMore(false)
         setInitialLoaded(true)
@@ -669,7 +672,8 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
     loadingBatchRef.current = true
     setLoadingMore(true)
     try {
-      const batch = await fetchExploreFeedPage(seedRef.current, nextPageRef.current, videosOnly)
+      const batch = await boundedRead(fetchExploreFeedPage(seedRef.current, nextPageRef.current, videosOnly))
+      setLoadError(false)
       nextPageRef.current += 1
       const fresh = batch.items.filter(item=>!videosOnly||item.kind==='video').filter((item) => {
         const key = feedItemKey(item)
@@ -679,8 +683,9 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
       })
       if (fresh.length > 0) setItems((current) => [...current, ...fresh])
       setHasMore(batch.hasMore)
-    } catch {
-      // Leave hasMore set so a later approach retries the same page.
+    } catch (error) {
+      console.error('[explore] next batch failed', error)
+      setLoadError(true)
     } finally {
       loadingBatchRef.current = false
       setLoadingMore(false)
@@ -825,6 +830,8 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
     return () => observer.disconnect()
   }, [activateIndex, items])
 
+  if (items.length === 0 && loadError) return <AwmPageError message="Explore could not load. Reload to try again." />
+
   if (items.length === 0 && !initialLoaded) return <ExplorePageLoading />
 
   if (items.length === 0) {
@@ -837,6 +844,7 @@ export default function ExploreFeed({ railTop, initialSeed, initialBatch }: { ra
 
   return (
       <Box sx={{ position: 'relative', height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' }, '@supports (height: 100dvh)': { height: { xs: 'calc(100dvh - var(--awm-navbar-height) - env(safe-area-inset-bottom, 0px))', md: 'calc(100dvh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' } }, minHeight: { xs: 0, md: 'calc(100vh - var(--awm-navbar-height) - var(--awm-explore-switch-height, 0px))' } }}>
+      {loadError && <Box role="alert" sx={{position:'absolute',top:8,left:8,right:8,zIndex:20,bgcolor:'var(--awm-white)',color:'var(--awm-bark)',p:1.5,borderRadius:'10px'}}>More content could not load. <Button onClick={()=>void loadNextBatch()}>Retry</Button></Box>}
       <Box
         id="explore-feed"
         ref={feedRef}

@@ -1,3 +1,4 @@
+import { readChapterPublication, chapterPublished } from '@/app/lib/chapterPublicationRead'
 import { serviceClient } from '@/app/lib/supabase'
 
 /** Uncached content boundary: an already-open route or cached payload must not
@@ -9,9 +10,9 @@ export async function isBookReleased(bookId: string): Promise<boolean> {
 }
 
 export async function isChapterReleased(chapterId: string): Promise<boolean> {
-  const { data, error } = await serviceClient.from('chapters').select('book_id,is_published').eq('id', chapterId).maybeSingle()
+  const { data, error } = await readChapterPublication(published => serviceClient.from('chapters').select(published ? 'book_id,is_published' : 'book_id').eq('id', chapterId).maybeSingle())
   if (error) throw new Error('Unable to check book availability.')
-  return Boolean(data && data.is_published === true && await isBookReleased(String(data.book_id)))
+  return Boolean(data && chapterPublished(data) && await isBookReleased(String((data as unknown as { book_id: string }).book_id)))
 }
 
 export async function releasedBookIds(bookIds: string[]): Promise<string[]> {
@@ -26,12 +27,12 @@ export async function releasedBookIds(bookIds: string[]): Promise<string[]> {
 
 export async function releasedChapterIds(chapterIds: string[]): Promise<string[]> {
   if (!chapterIds.length) return []
-  const chapters: {id:string;book_id:string;is_published:boolean}[]=[]
+  const chapters: {id:string;book_id:string;is_published?:boolean}[]=[]
   for(let start=0;start<chapterIds.length;start+=100){
-    const {data,error}=await serviceClient.from('chapters').select('id,book_id,is_published').in('id',chapterIds.slice(start,start+100))
+    const {data,error}=await readChapterPublication(published => serviceClient.from('chapters').select(published ? 'id,book_id,is_published' : 'id,book_id').in('id',chapterIds.slice(start,start+100)))
     if(error)throw new Error('Unable to check book availability.')
-    chapters.push(...data ?? [])
+    chapters.push(...(data ?? []) as unknown as typeof chapters)
   }
   const books = new Set(await releasedBookIds([...new Set(chapters.map(chapter => String(chapter.book_id)))]))
-  return chapters.filter(chapter => chapter.is_published === true && books.has(String(chapter.book_id))).map(chapter => String(chapter.id))
+  return chapters.filter(chapter => chapterPublished(chapter) && books.has(String(chapter.book_id))).map(chapter => String(chapter.id))
 }

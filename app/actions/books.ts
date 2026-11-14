@@ -1,5 +1,7 @@
 "use server"
 
+import { readChapterPublication, chapterPublished } from '@/app/lib/chapterPublicationRead'
+
 import { detectChapterFormat, structuredPageCount, type StructuredChapterResult } from '@/app/lib/structuredChapter'
 import { getAuthenticatedUserId } from "@/app/actions/auth"
 import { canAccessBookChapter } from "@/app/lib/entitlements"
@@ -142,7 +144,7 @@ export const fetchBooksForPublic = unstable_cache(
 
     const [{ data: books, error: booksError }, { data: chapters, error: chaptersError }] = await Promise.all([
       serviceClient.from("books").select("*").order("title"),
-      serviceClient.from("chapters").select("book_id").eq("is_published", true),
+      readChapterPublication(published => { const query = serviceClient.from("chapters").select("book_id"); return published ? query.eq("is_published", true) : query }),
     ])
 
     if (booksError) throw new Error(booksError.message)
@@ -158,7 +160,7 @@ export const fetchBooksForPublic = unstable_cache(
       mapBook(book, chapterCounts.get(String(book.id)) ?? 0)
     )
   },
-  ["books", "public", "book-catalogue-storage-v8-direct-covers"],
+  ["books", "public", "book-catalogue-storage-v9-publication-compatible"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
@@ -175,15 +177,15 @@ export const fetchBookBySlugPublic = unstable_cache(
     if (error || !book) return null
     if (book.is_completed === false) return mapBook(book as Record<string, unknown>, 0)
 
-    const { count, error: countError } = await serviceClient
-      .from("chapters")
-      .select("id", { count: "exact", head: true }).eq("is_published", true)
-      .eq("book_id", book.id)
+    const { count, error: countError } = await readChapterPublication(published => {
+      const query = serviceClient.from("chapters").select("id", { count: "exact" }).eq("book_id", book.id).limit(1)
+      return published ? query.eq("is_published", true) : query
+    })
 
     if (countError) throw new Error(countError.message)
     return mapBook(book as Record<string, unknown>, count ?? 0)
   },
-  ["books", "public", "detail", "book-catalogue-storage-v8-direct-covers"],
+  ["books", "public", "detail", "book-catalogue-storage-v9-publication-compatible"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
@@ -200,14 +202,12 @@ const fetchChapterListExtrasForBookPublic = unstable_cache(
     const book = (await fetchBooksForPublic()).find((book) => book.id === bookId)
     if (!book || book.isCompleted === false) return extras
 
-    let query = serviceClient
-      .from("chapters")
-      .select("id, content").eq("is_published",true)
-      .eq("book_id", bookId)
-    const wholeBookFree = book.premiumExempt || book.chapterCount <= book.freeChapterCount
-    if (!wholeBookFree) query = query.lte("chapter_number", book.freeChapterCount)
-
-    const { data, error } = await query
+    const { data, error } = await readChapterPublication(published => {
+      let query = serviceClient.from("chapters").select("id, content").eq("book_id", bookId)
+      const wholeBookFree = book.premiumExempt || book.chapterCount <= book.freeChapterCount
+      if (!wholeBookFree) query = query.lte("chapter_number", book.freeChapterCount)
+      return published ? query.eq("is_published", true) : query
+    })
     if (error) throw new Error(error.message)
 
     for (const chapter of data ?? []) {
@@ -261,7 +261,7 @@ export const fetchChapterNavigationForPublic = unstable_cache(async (): Promise<
   if (!hasServiceClientConfig()) return {}
   const ids = (await fetchBooksForPublic()).filter(book => book.isCompleted !== false).map(book => book.id)
   if (!ids.length) return {}
-  const {data,error} = await serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number').eq('is_published',true).in('book_id', ids).order('chapter_number')
+  const {data,error} = await readChapterPublication(published => { const query = serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number').in('book_id', ids).order('chapter_number'); return published ? query.eq('is_published',true) : query })
   if(error) throw new Error(error.message)
   const result: Record<string, PublicChapter[]> = {}
   for(const row of data ?? []) (result[row.book_id] ??= []).push({id:row.id,slug:row.slug,title:row.title,chapterNumber:row.chapter_number,blockCount:0})
@@ -348,9 +348,9 @@ export async function fetchChapterForPublic(bookId: string, chapterSlug: string)
   if (!await isBookReleased(bookId)) return null
   /* One query serves both the entitlement gate and the payload: chapter_number
      travels with the content, so there is no separate metadata round trip. */
-  const {data: published, error: publicationError} = await serviceClient.from("chapters").select("is_published").eq("book_id",bookId).eq("slug",chapterSlug).maybeSingle()
+  const {data: published, error: publicationError} = await readChapterPublication(hasPublication => serviceClient.from("chapters").select(hasPublication ? "id,is_published" : "id").eq("book_id",bookId).eq("slug",chapterSlug).maybeSingle())
   if (publicationError) throw new Error("Unable to check chapter availability.")
-  if (published?.is_published !== true) return null
+  if (!published || !chapterPublished(published)) return null
   const chapter = await fetchChapterContent(bookId, chapterSlug)
   if (!chapter) return null
   if (!canAccessBookChapter(true)) return null
@@ -380,7 +380,7 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
 
     const [{ data: books, error: booksError }, { data: chapters, error: chaptersError }] = await Promise.all([
       serviceClient.from("books").select("*"),
-      serviceClient.from("chapters").select("id, book_id, slug, title, chapter_number").eq("is_published",true),
+      readChapterPublication(published => { const query = serviceClient.from("chapters").select("id, book_id, slug, title, chapter_number"); return published ? query.eq("is_published",true) : query }),
     ])
 
     if (booksError) throw new Error(booksError.message)

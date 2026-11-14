@@ -643,6 +643,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   }
   if (url.pathname.startsWith('/rest/v1/')) {
     const table = url.pathname.split('/').at(-1)
+    if(process.env.AWM_TEST_PUBLIC_VISIBILITY==='1'&&table==='chapters'&&(url.searchParams.has('is_published')||(url.searchParams.get('select')??'').includes('is_published')))return json(res,{code:'42703',message:'column chapters.is_published does not exist'},400)
     if(table==='public_profiles'&&profileDelay)await new Promise(resolve=>setTimeout(resolve,profileDelay))
     tableLog.push(table)
     if (req.method !== 'GET' && req.method !== 'HEAD') {

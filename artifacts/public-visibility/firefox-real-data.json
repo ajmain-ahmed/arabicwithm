@@ -1,0 +1,164 @@
+[
+  {
+    "browser": "firefox",
+    "width": 320,
+    "route": "/books",
+    "books": 21,
+    "explore": 0,
+    "forYou": 0,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 320,
+    "route": "/explore",
+    "books": 0,
+    "explore": 12,
+    "forYou": 0,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 320,
+    "route": "/explore?view=foryou",
+    "books": 0,
+    "explore": 0,
+    "forYou": 1,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 390,
+    "route": "/books",
+    "books": 21,
+    "explore": 0,
+    "forYou": 0,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 390,
+    "route": "/explore",
+    "books": 0,
+    "explore": 12,
+    "forYou": 0,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 390,
+    "route": "/explore?view=foryou",
+    "books": 0,
+    "explore": 0,
+    "forYou": 1,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 430,
+    "route": "/books",
+    "books": 21,
+    "explore": 0,
+    "forYou": 0,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 430,
+    "route": "/explore",
+    "books": 0,
+    "explore": 12,
+    "forYou": 0,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 430,
+    "route": "/explore?view=foryou",
+    "books": 0,
+    "explore": 0,
+    "forYou": 1,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 768,
+    "route": "/books",
+    "books": 21,
+    "explore": 0,
+    "forYou": 0,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 768,
+    "route": "/explore",
+    "books": 0,
+    "explore": 12,
+    "forYou": 0,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 768,
+    "route": "/explore?view=foryou",
+    "books": 0,
+    "explore": 0,
+    "forYou": 1,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 1024,
+    "route": "/books",
+    "books": 21,
+    "explore": 0,
+    "forYou": 0,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 1024,
+    "route": "/explore",
+    "books": 0,
+    "explore": 12,
+    "forYou": 0,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 1024,
+    "route": "/explore?view=foryou",
+    "books": 0,
+    "explore": 0,
+    "forYou": 1,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 1440,
+    "route": "/books",
+    "books": 21,
+    "explore": 0,
+    "forYou": 0,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 1440,
+    "route": "/explore",
+    "books": 0,
+    "explore": 12,
+    "forYou": 0,
+    "errors": 0
+  },
+  {
+    "browser": "firefox",
+    "width": 1440,
+    "route": "/explore?view=foryou",
+    "books": 0,
+    "explore": 0,
+    "forYou": 1,
+    "errors": 0
+  }
+]

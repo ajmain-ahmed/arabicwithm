@@ -32,7 +32,7 @@ beforeEach(() => {
       select: () => query, order: () => query, range: () => query,
       eq: (key: string, value: unknown) => { filters.push(row => row[key] === value); return query },
       in: (key: string, values: unknown[]) => { filters.push(row => values.includes(row[key])); return query },
-      lte: () => query,
+      lte: () => query, limit: () => query,
       maybeSingle: async () => ({ data: read().data[0] ?? null, error: null }), single: async () => ({ data: read().data[0] ?? null, error: null }),
       upsert: async (row: Record<string, unknown>) => { state.positions = state.positions.filter(old => old.chapter_id !== row.chapter_id || old.language !== row.language); state.positions.push(row); return { error: null } },
       then: (resolve: (value: unknown) => unknown) => Promise.resolve(read()).then(resolve),

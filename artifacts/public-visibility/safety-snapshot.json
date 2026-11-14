@@ -1,0 +1,36 @@
+{
+  "before": {
+    "books": 21,
+    "chapters": 134,
+    "shows": 24,
+    "episodes": 127,
+    "transcripts": 181,
+    "phrases": 6,
+    "groups": 9,
+    "grammar_notes": 0,
+    "completed_books": 18,
+    "ready_transcripts": 179,
+    "public_transcripts": 178,
+    "explore_published": 68
+  },
+  "after": {
+    "books": 21,
+    "shows": 24,
+    "groups": 9,
+    "hashes": {
+      "books": "a9248a8bb382f2a91360cb39edd57b5a",
+      "shows": "fb3905d1f98656ccba937cabc580ae0e",
+      "phrases": "c776863954410ea24fac49f392791b69",
+      "chapters": "6def81611736f0a2e41581464a0e30a6",
+      "episodes": "da25b1bd8207ba7d33fc60a5c1989616",
+      "transcripts": "49433fec5336b9160696d79e9aaa0e2d"
+    },
+    "phrases": 6,
+    "chapters": 134,
+    "episodes": 127,
+    "transcripts": 181,
+    "grammar_notes": 0
+  },
+  "directProductionSql": "read-only",
+  "productionContentWrites": false
+}

@@ -1,0 +1,56 @@
+[
+  {
+    "name": "chrome",
+    "route": "/books",
+    "status": 200,
+    "bookLinks": 0,
+    "errors": [],
+    "brandedFailure": true,
+    "containsArabic": false
+  },
+  {
+    "name": "chrome",
+    "route": "/explore",
+    "status": 200,
+    "bookLinks": 0,
+    "errors": [],
+    "brandedFailure": false,
+    "containsArabic": false
+  },
+  {
+    "name": "chrome",
+    "route": "/explore?view=foryou",
+    "status": 200,
+    "bookLinks": 0,
+    "errors": [],
+    "brandedFailure": false,
+    "containsArabic": true
+  },
+  {
+    "name": "firefox",
+    "route": "/books",
+    "status": 200,
+    "bookLinks": 0,
+    "errors": [],
+    "brandedFailure": true,
+    "containsArabic": false
+  },
+  {
+    "name": "firefox",
+    "route": "/explore",
+    "status": 200,
+    "bookLinks": 0,
+    "errors": [],
+    "brandedFailure": false,
+    "containsArabic": false
+  },
+  {
+    "name": "firefox",
+    "route": "/explore?view=foryou",
+    "status": 200,
+    "bookLinks": 0,
+    "errors": [],
+    "brandedFailure": false,
+    "containsArabic": true
+  }
+]
