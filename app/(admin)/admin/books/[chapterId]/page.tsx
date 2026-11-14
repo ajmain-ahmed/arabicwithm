@@ -1,5 +1,8 @@
 "use client"
 
+import { boundedRead } from '@/app/lib/readRecovery'
+
+import AwmPageError from '@/app/components/AwmPageError'
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import {
@@ -65,7 +68,7 @@ export default function ChapterHeadwordsPage() {
     setError(null)
 
     try {
-      const ch = await fetchChapterForAdmin(chapterId)
+      const ch = await boundedRead(fetchChapterForAdmin(chapterId))
       if (request !== loadRevision.current) return
       if (!ch) {
         setError("Chapter not found")
@@ -76,7 +79,7 @@ export default function ChapterHeadwordsPage() {
 
       const tokens = extractHeadwordTokens(ch.content)
       const headwords = Array.from(new Set(tokens.map((t) => t.headword).filter(Boolean)))
-      const entries = headwords.length > 0 ? await fetchHansWehrEntries(headwords) : []
+      const entries = headwords.length > 0 ? await boundedRead(fetchHansWehrEntries(headwords)) : []
 
       if (request !== loadRevision.current) return
 
@@ -300,10 +303,10 @@ export default function ChapterHeadwordsPage() {
       </Box>
 
       {error && (
-        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "var(--font-sans), sans-serif" }}>{error}</Typography>
+        error === 'Chapter not found' ? <Typography role="status">Chapter not found</Typography> : <AwmPageError error={error}/>
       )}
 
-      {loading ? (
+      {error ? null : loading ? (
         <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
           Loading chapter and headwords…
         </Typography>

@@ -1,4 +1,7 @@
 'use client'
+
+import { boundedRead } from '@/app/lib/readRecovery'
+import AwmPageError from '@/app/components/AwmPageError'
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Box, Button, Card, CardContent, Chip, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
 import { editSuggestion, listSuggestions, reviewCatalogue, reviewSuggestion } from '@/app/actions/reviews'
@@ -25,9 +28,9 @@ export default function SuggestionsList({admin,scopeRequired=false,canCopyBookCo
  const key=JSON.stringify([admin,status,type,authorFilter,parent,target,since,until,page,revision])
  const contentTop=useContentPageTop(key,loadedKey===key&&!loadFailure&&!needsScope)
  const actionInFlight=useRef(false)
- useEffect(()=>{let active=true;if(needsScope)return;listSuggestions(admin,{status,type:type||undefined,author:authorFilter||undefined,parent:parent||undefined,target:target||undefined,since:since?new Date(`${since}T00:00:00Z`).toISOString():undefined,until:until?new Date(`${until}T23:59:59.999Z`).toISOString():undefined},page).then(x=>{if(active){setRows(x.suggestions);setTotal(x.total);setLoadFailure(false);setLoadedKey(key);setError('')}}).catch(e=>{if(active){setRows([]);setTotal(0);setLoadFailure(true);setError(e.message);setLoadedKey(key)}});return()=>{active=false}},[admin,status,type,authorFilter,parent,target,since,until,page,revision,key,needsScope])
- useEffect(()=>{let active=true;if(type)reviewCatalogue(type).then(x=>{if(active)setParents(x)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[type])
- useEffect(()=>{let active=true;if(type&&parent)reviewCatalogue(type,parent).then(x=>{if(active)setTargets(x)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[type,parent])
+ useEffect(()=>{let active=true;if(needsScope)return;boundedRead(listSuggestions(admin,{status,type:type||undefined,author:authorFilter||undefined,parent:parent||undefined,target:target||undefined,since:since?new Date(`${since}T00:00:00Z`).toISOString():undefined,until:until?new Date(`${until}T23:59:59.999Z`).toISOString():undefined},page)).then(x=>{if(active){setRows(x.suggestions);setTotal(x.total);setLoadFailure(false);setLoadedKey(key);setError('')}}).catch(e=>{if(active){setRows([]);setTotal(0);setLoadFailure(true);setError(e.message);setLoadedKey(key)}});return()=>{active=false}},[admin,status,type,authorFilter,parent,target,since,until,page,revision,key,needsScope])
+ useEffect(()=>{let active=true;if(type)boundedRead(reviewCatalogue(type)).then(x=>{if(active)setParents(x)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[type])
+ useEffect(()=>{let active=true;if(type&&parent)boundedRead(reviewCatalogue(type,parent)).then(x=>{if(active)setTargets(x)}).catch(e=>{if(active)setError(e.message)});return()=>{active=false}},[type,parent])
  const open=(s:ContentSuggestion)=>{setSelected(s);setInput({arabic:s.suggested_arabic??'',english:s.suggested_english??'',comment:s.comment,reason:s.reason});setResponse(s.admin_response??'');setTokens(JSON.stringify((s.original_block as {tokens?:Json})?.tokens??[],null,2));setConflict(undefined);setError('');setNotice('')}
  const exportFile=async(format:'csv'|'pdf'|'json')=>{
   if(!type||!parent)return
@@ -73,7 +76,7 @@ export default function SuggestionsList({admin,scopeRequired=false,canCopyBookCo
     {download&&<Typography role="status">Preparing {download.toUpperCase()}…</Typography>}
    </Stack></CardContent></Card>}
   </Stack>}
-  {error&&<Alert severity="error" action={<Button onClick={()=>setRevision(x=>x+1)}>Retry</Button>}>{error}</Alert>}{notice&&<Alert severity="success">{notice}</Alert>}
+  {error&&(admin&&loadFailure?<AwmPageError error={error}/>:<Alert severity="error" action={<Button onClick={()=>setRevision(x=>x+1)}>{admin?'Reload':'Retry'}</Button>}>{error}</Alert>)}{notice&&<Alert severity="success">{notice}</Alert>}
   <Box ref={contentTop.ref}><Typography>{needsScope?'Choose a book or show to manage its suggestions.':loadedKey!==key?'Loading suggestions…':loadFailure?'Suggestions could not be loaded.':`${total} suggestions`}</Typography></Box>
   {!needsScope&&loadedKey===key&&rows.map(s=><Card key={s.id} variant="outlined"><CardContent><Stack spacing={1}>
    <Typography sx={{fontWeight:700}}>{s.location}{s.unit_label?` · ${s.unit_label}`:''} · Line {s.line_index+1}</Typography><Chip label={s.status} size="small" sx={{alignSelf:'start'}}/>

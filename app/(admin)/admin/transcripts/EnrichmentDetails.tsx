@@ -1,4 +1,5 @@
 'use client'
+import {boundedRead} from '@/app/lib/readRecovery'
 
 import {useRef,useState} from 'react'
 import {Alert,Box,Button,Stack,Typography} from '@mui/material'
@@ -13,7 +14,7 @@ export default function EnrichmentDetails({id}:{id:string}){
  async function load(){
   if(loaded.current||working.current)return
   working.current=true;setLoading(true);setError('')
-  try{setDetails(await loadAdminManualEnrichment(id));loaded.current=true}
+  try{setDetails(await boundedRead(loadAdminManualEnrichment(id)));loaded.current=true}
   catch{setError('Could not load enrichment details. Please try again.')}
   finally{working.current=false;setLoading(false)}
  }
@@ -25,7 +26,7 @@ export default function EnrichmentDetails({id}:{id:string}){
    if(!result.ok){setError(result.error);return}
    setDetails(current=>current?{...current,status:result.status}:current)
    setMessage(result.status==='ready'?'Enrichment completed.':`Retry completed; optional enrichment remains ${result.status}. Imported transcript content is retained.`)
-   try{setDetails(await loadAdminManualEnrichment(id));loaded.current=true}
+   try{setDetails(await boundedRead(loadAdminManualEnrichment(id)));loaded.current=true}
    catch{setError('Retry completed, but details could not refresh. Reopen this transcript to reload them.')}
   }catch{setError('Enrichment retry failed. Please try again.')}
   finally{working.current=false;setRetrying(false)}

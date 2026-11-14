@@ -62,3 +62,10 @@ it.each(['__proto__','constructor','toString'])('uses the neutral labeled treatm
  const host=render(<StructuredChapterBlockRenderer value={{type:'highlighted-sentence',segments:[{text_ar:'Test segment',highlight_key}]}}/>);
  expect(host.textContent).toContain('Sentence segment')
 })
+
+it.each(['rtl','ltr'])('preserves source-to-target morphology order in a %s presentation',direction=>{
+ const host=render(<StructuredChapterBlockRenderer value={{type:'diagram',layout:'morphology',direction,nodes:[{id:'actual',label_en:'Actual word'},{id:'root',label_en:'Root'},{id:'pattern',label_en:'Reconstructed pattern'}],edges:[{source:'root',target:'pattern'},{source:'pattern',target:'actual',label_en:'Letter change'}]}}/>);
+ expect(host.querySelector('[role=region]')?.getAttribute('dir')).toBe(direction)
+ expect([...host.querySelectorAll('[data-node-id]')].map(node=>node.getAttribute('data-node-id'))).toEqual(['root','pattern','actual'])
+ expect(host.textContent).toContain('Letter change')
+})

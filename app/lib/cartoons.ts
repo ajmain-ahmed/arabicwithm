@@ -1,3 +1,4 @@
+import { readGrammaticalCase, type GrammaticalCase } from '@/app/lib/bookTokenGrammar'
 // app/lib/cartoons.ts — shared types and transcript helpers for cartoon episodes.
 
 import { stripDiacritics } from './arabic'
@@ -245,6 +246,7 @@ export function canonicalizeCartoonCategory(value?: string | null): string | nul
 
 /* ── New inline word entry (parsed from markdown tables) ── */
 export interface CartoonWordEntry {
+  grammatical_case?: GrammaticalCase | null
   arabic: string        // diacritized form from markdown
   plain: string         // stripped diacritics
   transliteration: string
@@ -284,6 +286,7 @@ export interface GrammarPoint {
 
 /* ── New block-based transcript format stored in Supabase ── */
 export interface NewTranscriptToken {
+  grammatical_case?: GrammaticalCase | null
   cefr?: string
   CEFR?: string
   pos: string
@@ -501,6 +504,7 @@ export function normalizeNewTranscript(
         lemma: token.lemma?.trim() || diacritic,
         headword: token.headword?.trim() || undefined,
         entry_type: token.entry_type,
+        grammatical_case: readGrammaticalCase(token.grammatical_case),
         pos: token.pos?.trim() || 'unknown',
       }
       if (tokenCefr) wordEntry.cefr = tokenCefr

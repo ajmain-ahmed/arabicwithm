@@ -1,4 +1,5 @@
 'use client'
+import {boundedRead} from '@/app/lib/readRecovery'
 import {useEffect,useRef,useState} from 'react'
 import Link from 'next/link'
 import {Alert,Button,Card,CardContent,Checkbox,FormControlLabel,Stack,TextField,Typography} from '@mui/material'
@@ -14,8 +15,8 @@ export default function TranscriptGeneration(){
  const request=useRef(0),saving=useRef(false)
  useEffect(()=>{
   if(!id)return
-  let active=true,timer:ReturnType<typeof setTimeout>|undefined
-  async function poll(){try{const result=await loadAdminGeneration(id);if(!active)return;setVideo(result.video);setAudioLanguage(sourceLanguage(result.video.source_language));if(result.video.error_code)setError(transcriptGenerationError(result.video.error_code));if(result.json!==null){setJson(result.json);setTitle(result.video.title);setPublish(result.video.searchable);setMessage('JSON ready to review. Saving applies your edits and publication choice.')}else if(result.video.error_code){setError(transcriptGenerationError(result.video.error_code))}if(result.json===null&&result.video.status!=='failed')timer=setTimeout(()=>void poll(),5000)}catch(error){if(active)setError(error instanceof Error?error.message:'Unable to load generation status.')}}
+  let active=true,timer:ReturnType<typeof setTimeout>|undefined,attempts=0
+  async function poll(){if(++attempts>60){setError('Generation is taking longer than expected. Reopen this video to check its status.');return}try{const result=await boundedRead(loadAdminGeneration(id));if(!active)return;setVideo(result.video);setAudioLanguage(sourceLanguage(result.video.source_language));if(result.video.error_code)setError(transcriptGenerationError(result.video.error_code));if(result.json!==null){setJson(result.json);setTitle(result.video.title);setPublish(result.video.searchable);setMessage('JSON ready to review. Saving applies your edits and publication choice.')}else if(result.video.error_code){setError(transcriptGenerationError(result.video.error_code))}if(result.json===null&&result.video.status!=='failed')timer=setTimeout(()=>void poll(),5000)}catch(error){if(active)setError(error instanceof Error?error.message:'Unable to load generation status.')}}
   void poll();return()=>{active=false;clearTimeout(timer)}
  },[id,run])
  async function generate(){const current=++request.current;setBusy(true);setError('');setMessage('');try{const result=await generateAdminTranscript(input);if(current!==request.current)return;if(!result.ok){setError(result.error);return}setJson('');setVideo(null);setId(result.id);setRun(value=>value+1);setMessage(result.duplicate?'Reusing this video’s saved transcript. No new provider request was submitted.':'Generation queued. The draft stays unpublished until you review and save it.')}catch{setError('Unable to contact transcript generation. Please retry.')}finally{setBusy(false)}}

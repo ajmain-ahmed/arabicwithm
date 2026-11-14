@@ -1,6 +1,6 @@
 import {test,expect,type BrowserContext,type Page} from '@playwright/test'
 import {installYouTubeFixture} from './helpers/youtube'
-const backend='https://localhost:4347'
+const backend=`https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4347}`
 async function account(context:BrowserContext,id='44444444-4444-4444-8444-444444444444'){
  const expires=Math.floor(Date.now()/1000)+3600,encode=(v:unknown)=>Buffer.from(JSON.stringify(v)).toString('base64url'),user={id,aud:'authenticated',role:'authenticated',email:'reliability@fixture.example',created_at:'2026-01-01',app_metadata:{provider:'email'},user_metadata:{}}
  const token=`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:id,aud:'authenticated',exp:expires,role:'authenticated'})}.fixture-signature`

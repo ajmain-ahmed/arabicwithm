@@ -91,7 +91,7 @@ async function readAudioForBooks(bookIds: string[]): Promise<{ chapters: Array<{
   const batchSize = 100, pageSize = 500
   for (let batch = 0; batch < bookIds.length; batch += batchSize) {
     for (let offset = 0; ; offset += pageSize) {
-      const { data, error } = await serviceClient.from('chapters').select('id, book_id').in('book_id', bookIds.slice(batch, batch + batchSize)).order('id').range(offset, offset + pageSize - 1)
+      const { data, error } = await serviceClient.from('chapters').select('id, book_id').eq('is_published',true).in('book_id', bookIds.slice(batch, batch + batchSize)).order('id').range(offset, offset + pageSize - 1)
       if (isMissingDatabaseFeature(error)) return { chapters: [], audio: [] }
       if (error) throw new Error('Unable to load audiobook availability.')
       chapters.push(...(data ?? []))
@@ -168,10 +168,10 @@ export async function requestChapterAudio(chapterId: string, language: AudioLang
 }
 
 async function requireChapterAudioAccess(chapterId: string): Promise<void> {
-  const { data: chapter, error } = await serviceClient.from('chapters').select('book_id').eq('id', chapterId).maybeSingle()
+  const { data: chapter, error } = await serviceClient.from('chapters').select('book_id,is_published').eq('id', chapterId).maybeSingle()
   if (error || !chapter) throw new Error('This audiobook chapter is not available.')
   const bookId = String(chapter.book_id)
-  if (!await isBookReleased(bookId)) throw new Error('This book is not released yet.')
+  if (chapter.is_published !== true || !await isBookReleased(bookId)) throw new Error('This book is not released yet.')
   await requireEntitlement('audiobooks', bookId)
 }
 

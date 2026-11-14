@@ -17,7 +17,7 @@ it('keeps existing grammar rejection and accepted nullable/legacy fields unchang
  validateAdditionalStructuredChapter(invalid)
  expect(()=>validateBookTokenGrammar([{tokens:[{syntactic_role:null,grammatical_case:{arabic:'label',english:'label'}}]}])).not.toThrow()
 })
-it.each(['1.0.0','1.2.9','1.99.999','1.2.3-beta.1'])('accepts compatible versions %s', schema_version => expect(detectChapterFormat({...fixture,schema_version}).kind).toBe('structured'))
+it.each(['1.0.0','1.1.0','1.1.9','1.2.9','1.99.999','1.2.3-beta.1'])('accepts compatible versions %s', schema_version => expect(detectChapterFormat({...fixture,schema_version}).kind).toBe('structured'))
 it.each([{...fixture,schema_version:'2.0.0'},{...fixture,schema_version:'broken'},{...fixture,sections:{}},{...fixture,answers:{}},{...fixture,sections:[{tokens:[]}]}])('provides a diagnostic instead of reinterpreting malformed structured content', value => {
  expect(detectChapterFormat(value).kind).toBe('structured-error');expect(()=>validateAdditionalStructuredChapter(value)).toThrow()
 })

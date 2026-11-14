@@ -304,6 +304,8 @@ export default function BooksAdminPage() {
                               e.stopPropagation()
                               toggleExpand(book.id)
                             }}
+                            aria-label={`${isExpanded ? "Collapse" : "Expand"} chapters for ${book.title}`}
+                            aria-expanded={isExpanded}
                             sx={{ color: "#7a6e65", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.2s" }}
                           >
                             <ExpandMore sx={{ fontSize: "1.1rem" }} />
@@ -383,11 +385,14 @@ export default function BooksAdminPage() {
                                               >
                                                 {chapter.title}
                                               </Link>
+                                              <Typography variant="caption" sx={{display:"block"}}>{chapter.is_published ? "Published" : "Unpublished"}{book.is_completed === false ? " · Book unreleased" : ""}{chapter.productionStatus ? ` · Content: ${chapter.productionStatus}` : ""}</Typography>
                                             </TableCell>
                                             <TableCell sx={{ color: "#7a6e65" }}>{chapter.slug}</TableCell>
                                             <TableCell align="right">
+                                              <Button component={Link} href={`/admin/books/preview/${chapter.id}`} onClick={event=>event.stopPropagation()}>Preview</Button>
                                               <IconButton
                                                 size="small"
+                                                aria-label={`Edit chapter ${chapter.title}`}
                                                 onClick={() => openEditChapter(chapter.id, book.id)}
                                                 sx={{ color: "#b8860b" }}
                                               >

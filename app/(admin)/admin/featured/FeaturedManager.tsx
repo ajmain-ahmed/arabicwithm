@@ -1,9 +1,13 @@
 "use client"
 
+import { boundedRead } from '@/app/lib/readRecovery'
+
 import {useEffect,useRef,useState} from 'react'
 import {Alert,Box,Button,Dialog,DialogActions,DialogContent,DialogTitle,MenuItem,Paper,Slider,TextField,Typography} from '@mui/material'
 import {fetchFeaturedForAdmin,saveFeaturedForAdmin,deleteFeaturedForAdmin} from '@/app/actions/featured'
 import {DEFAULT_FEATURED_POSITION,FEATURED_DESKTOP_RATIO,FEATURED_MOBILE_PREVIEW_WIDTH,FEATURED_MOBILE_PREVIEW_HEIGHT,dragFeaturedPosition,featuredObjectPosition,clampPosition,type FeaturedPosition} from '@/app/lib/featuredFraming'
+import {prepareFeaturedImage} from '@/app/lib/prepareFeaturedImage'
+import {FEATURED_VARIANT_WIDTHS} from '@/app/lib/imageVariantPaths'
 import {errorMessage} from '@/app/lib/errors'
 
 type Data=Awaited<ReturnType<typeof fetchFeaturedForAdmin>>
@@ -26,7 +30,22 @@ function PositionEditor({shows,assets,asset,onClose,onSaved}:{shows:Show[];asset
   try{
    const form=new FormData();form.set('showId',showId);form.set('x',String(position.x));form.set('y',String(position.y))
    if(file){form.set('file',file);form.set('replace',String(Boolean(active)))}else form.set('name',asset?.show?.id===showId?asset.name:active?.name??'')
-   await saveFeaturedForAdmin(form);await onSaved();onClose()
+   const controller = new AbortController()
+   let timer: ReturnType<typeof setTimeout> | undefined
+   try {
+    await Promise.race([
+     (async () => {
+      if(file) {
+       const variants = await prepareFeaturedImage(file, controller.signal)
+       variants.forEach((variant,index) => form.set(`variant${FEATURED_VARIANT_WIDTHS[index]}`,variant))
+      }
+      const result = await saveFeaturedForAdmin(form)
+      if(!result.ok)throw new Error(result.error)
+     })(),
+     new Promise<never>((_,reject) => { timer=setTimeout(()=>{controller.abort();reject(new Error('Saving took too long. Reload to check the saved state before trying again.'))},45000) })
+    ])
+   } finally { if(timer)clearTimeout(timer) }
+   await onSaved();onClose()
   }catch(error){setError(errorMessage(error))}finally{setBusy(false)}
  }
  return <Dialog open onClose={()=>{if(!busy)onClose()}} fullWidth maxWidth="lg" slotProps={{paper:{sx:{borderRadius:'14px',m:{xs:1,sm:3},width:{xs:'calc(100% - 16px)',sm:'100%'}}}}}>
@@ -78,11 +97,11 @@ function PositionEditor({shows,assets,asset,onClose,onSaved}:{shows:Show[];asset
 export default function FeaturedManager({initial}:{initial:Data}) {
  const [data,setData]=useState(initial),[editing,setEditing]=useState<Asset|null|undefined>(undefined)
  const [deleting,setDeleting]=useState<Asset|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('')
- const reload=async()=>{setData(await fetchFeaturedForAdmin());setNotice('Featured settings saved.')}
- const remove=async()=>{if(!deleting)return;setBusy(true);setError('');try{await deleteFeaturedForAdmin(deleting.name);setData(await fetchFeaturedForAdmin());setDeleting(null);setNotice('Featured image removed.')}catch(error){setError(errorMessage(error))}finally{setBusy(false)}}
+ const reload=async()=>{setData(await boundedRead(fetchFeaturedForAdmin()));setNotice('Featured settings saved.')}
+ const remove=async()=>{if(!deleting)return;setBusy(true);setError('');try{await deleteFeaturedForAdmin(deleting.name);setData(await boundedRead(fetchFeaturedForAdmin()));setDeleting(null);setNotice('Featured image removed.')}catch(error){setError(errorMessage(error))}finally{setBusy(false)}}
  return <Box>
   <Box sx={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:2,mb:3}}><Typography component="h1" sx={{fontFamily:'var(--font-heading)',fontSize:32}}>Featured</Typography><Button variant="contained" onClick={()=>{setNotice('');setEditing(null)}}>Upload Featured Image</Button></Box>
-  <Typography sx={{mb:2,color:'var(--awm-muted)'}}>Homepage artwork - Up to three eligible Shows appear in one carousel. The selection and order rotate every two London calendar days. Save a shared focal position after checking both previews.</Typography>
+  <Typography sx={{mb:2,color:'var(--awm-muted)'}}>Homepage artwork - Up to three eligible Shows appear in one carousel. The selection and order rotate every three London calendar days. Save a shared focal position after checking both previews.</Typography>
   {notice&&<Alert severity="success" sx={{mb:2}}>{notice}</Alert>}{error&&<Alert severity="error" sx={{mb:2}}>{error}</Alert>}
   <Box sx={{display:'grid',gridTemplateColumns:{xs:'minmax(0,1fr)',sm:'repeat(2,minmax(0,1fr))',lg:'repeat(3,minmax(0,1fr))'},gap:2}}>
    {data.assets.map(asset=><Paper component="section" aria-label={asset.name} key={asset.name} variant="outlined" sx={{overflow:'hidden',borderRadius:'12px'}}>

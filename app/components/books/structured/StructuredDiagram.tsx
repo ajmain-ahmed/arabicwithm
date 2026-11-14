@@ -1,6 +1,7 @@
 import { items, record, text, structuredWarning, type StructuredRecord } from '@/app/lib/structuredChapter'
 import { Label, Notice, TextPair } from './StructuredText'
 import styles from './StructuredChapter.module.css'
+import { Fragment } from 'react'
 
 /** Bounded topological layers; cycles and dangling edges cannot trap rendering. */
 export default function StructuredDiagram({ block }: { block: StructuredRecord }) {
@@ -38,6 +39,12 @@ export default function StructuredDiagram({ block }: { block: StructuredRecord }
     layer = next
   }
   if (remaining.size) { structuredWarning('Diagram has a cycle; displaying its remaining nodes together.'); levels.push([...remaining.values()]) }
+  const sequence=levels.flat()
+  const linear=edges.length===nodes.length-1&&sequence.slice(1).every((node,index)=>edges.some(edge=>edge.source===sequence[index].id&&edge.target===node.id))
+  if (block.layout === 'morphology' && block.direction !== 'top-down' && linear) return <figure className={styles.diagram} style={{margin:0}} aria-label={text(block.caption_en) || 'Morphology transformation'}>
+    <div className={styles.flow} role="region" aria-label="Morphology transformation steps" dir={block.direction === 'rtl' ? 'rtl' : 'ltr'} tabIndex={0}>{sequence.map((node,index) => <Fragment key={node.id}>{index>0&&<div className={styles.flowArrow}><span aria-label="leads to">{block.direction === 'rtl' ? '←' : '→'}</span><div className={styles.edgeLabel}><Label value={edges.find(edge=>edge.source===sequence[index-1].id&&edge.target===node.id)} /></div></div>}<div className={styles.node} data-node-id={node.id}><Label value={node} /></div></Fragment>)}</div>
+    <figcaption className={styles.caption}><TextPair value={block} arabic="caption_ar" english="caption_en" /></figcaption>
+  </figure>
   return <figure className={styles.diagram} style={{ margin: 0 }} aria-label={text(block.caption_en) || 'Lesson relationship diagram'}>
     <div className={styles.levels}>{levels.map((level, index) => <div key={index}>
       {index > 0 && <div aria-hidden="true" style={{ textAlign: 'center', color: 'var(--awm-gold)', fontSize: '1.5em' }}>↓</div>}

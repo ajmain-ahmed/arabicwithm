@@ -16,7 +16,7 @@ let db: PGlite
 const token = { pos: 'noun', cefr: 'A1', arabic: 'كِتَابًا', english: 'a book', headword: 'كتاب', entry_type: 'word', transliteration: 'kitāban' }
 const role = { arabic: 'مَفْعُولٌ بِهِ', english: 'Direct object' }
 const grammaticalCase = { arabic: 'مَنْصُوبٌ', english: 'Accusative' }
-const input = { book_id: 'book', slug: 'chapter', title: 'Chapter', chapter_number: 1 }
+const input = { is_published:true, book_id: 'book', slug: 'chapter', title: 'Chapter', chapter_number: 1 }
 const chapter = (grammar: Record<string, unknown> = {}) => [{
   tokens: [{ ...token, ...grammar }], translation: 'A book.', timestamp: '', paragraph: 2,
   paragraph_start: true, paragraph_end: false, paragraph_break_after: true,
@@ -26,7 +26,7 @@ beforeAll(async () => {
   db = new PGlite()
   await db.exec(`create table books(id text primary key, slug text, title text);
     insert into books values('book','book','Book');
-    create table chapters(id uuid primary key default gen_random_uuid(), book_id text references books(id), slug text, title text, chapter_number integer, content jsonb);`)
+    create table chapters(id uuid primary key default gen_random_uuid(), book_id text references books(id), slug text, title text, chapter_number integer, is_published boolean not null default false, content jsonb);`)
 }, 30000)
 afterAll(async () => { await db?.close() })
 beforeEach(async () => {

@@ -1,8 +1,13 @@
 "use client"
 
+import { boundedRead } from '@/app/lib/readRecovery'
+
 import React, { useEffect, useMemo, useRef, useState } from "react"
 import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import {
+  Alert,
+  FormControlLabel,
+  Switch,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -73,11 +78,13 @@ export default function ChapterEditDialog({
   const [bookId, setBookId] = useState("")
   const [slug, setSlug] = useState("")
   const [title, setTitle] = useState("")
+  const [published, setPublished] = useState(false)
   const [chapterNumber, setChapterNumber] = useState("")
   const [contentJson, setContentJson] = useState(defaultContent)
   const structuredPreview = useMemo(() => {
     try { return detectChapterFormat(JSON.parse(contentJson)) } catch { return null }
   }, [contentJson])
+  const [audioUnavailable, setAudioUnavailable] = useState(false)
   const [audio, setAudio] = useState<Record<AudioLanguage, AudioDraft>>({ ar: emptyAudioDraft(), en: emptyAudioDraft('en') })
   const busyRef = useRef(false)
   const savedIdRef = useRef<string | null>(chapterId)
@@ -120,6 +127,7 @@ export default function ChapterEditDialog({
     setOperations({ ar: { phase: 'idle', percent: 0 }, en: { phase: 'idle', percent: 0 } })
 
     if (isNew) {
+      setPublished(false)
       setSlug("")
       setTitle("")
       setChapterNumber("")
@@ -129,16 +137,21 @@ export default function ChapterEditDialog({
 
     let active = true
     setLoading(true)
-    Promise.all([fetchChapterForAdmin(chapterId!), fetchChapterAudioForAdmin(chapterId!, 'ar'), fetchChapterAudioForAdmin(chapterId!, 'en')])
-      .then(([row, arabic, english]) => {
+    setAudioUnavailable(false)
+    Promise.all([boundedRead(fetchChapterForAdmin(chapterId!)), Promise.allSettled([boundedRead(fetchChapterAudioForAdmin(chapterId!, 'ar')), boundedRead(fetchChapterAudioForAdmin(chapterId!, 'en'))])])
+      .then(([row, audioResults]) => {
+        const arabic = audioResults[0].status === 'fulfilled' ? audioResults[0].value : null
+        const english = audioResults[1].status === 'fulfilled' ? audioResults[1].value : null
         if (!active) return
         if (!row) { setError("Chapter not found"); return }
+        setPublished(row.is_published === true)
         setBookId(row.book_id); setSlug(row.slug); setTitle(row.title)
         setChapterNumber(String(row.chapter_number)); setContentJson(JSON.stringify(row.content ?? [], null, 2))
         const loaded = { ar: audioDraft(arabic, 'ar'), en: audioDraft(english, 'en') }
+        setAudioUnavailable(audioResults.some(result => result.status === 'rejected'))
         setAudio(loaded)
         audioBaseline.current = { ar: fingerprint(loaded.ar), en: fingerprint(loaded.en) }
-        chapterBaseline.current = JSON.stringify([row.book_id, row.slug, row.title, String(row.chapter_number), JSON.stringify(row.content ?? [], null, 2)])
+        chapterBaseline.current = JSON.stringify([row.book_id, row.slug, row.title, String(row.chapter_number), JSON.stringify(row.content ?? [], null, 2), row.is_published === true])
       })
       .catch((e: unknown) => { if (active) setError(errorMessage(e) ?? "Failed to load chapter and audio") })
       .finally(() => { if (active) setLoading(false) })
@@ -171,6 +184,7 @@ export default function ChapterEditDialog({
         slug,
         title,
         chapter_number: chapterNum,
+        is_published: published,
         content: content as Record<string, unknown>,
       }
 
@@ -181,7 +195,7 @@ export default function ChapterEditDialog({
         if (draft.file) await validateAudioFile(draft.file, draft.file.name)
         if (draft.source === 'youtube' && draft.youtubeId && !normalizeYouTubeId(draft.youtubeId)) throw new Error(`${language === 'ar' ? 'Arabic' : 'English'} YouTube URL or video ID is invalid.`)
       }
-      const detailsChanged = chapterBaseline.current !== JSON.stringify([bookId, slug, title, chapterNumber, contentJson])
+      const detailsChanged = chapterBaseline.current !== JSON.stringify([bookId, slug, title, chapterNumber, contentJson, published])
       if (!savedIdRef.current) savedIdRef.current = await createChapter(input)
       else if (detailsChanged) await updateChapter(savedIdRef.current, input)
       for (const language of ['ar', 'en'] as const) {
@@ -386,6 +400,7 @@ export default function ChapterEditDialog({
       </DialogTitle>
 
       <DialogContent sx={{ px: 2.5, pt: 1, pb: 2 }}>
+        {audioUnavailable && <Alert severity="warning">Chapter details loaded. Audio settings could not be loaded. Reload before editing audio.</Alert>}
         {error && (
           <Typography
             sx={{
@@ -436,6 +451,7 @@ export default function ChapterEditDialog({
                   <AdminTextField label="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} fullWidth size="small" />
                   <AdminTextField label="Title" value={title} onChange={(e) => setTitle(e.target.value)} fullWidth size="small" />
                 </Box>
+                <FormControlLabel control={<Switch checked={published} onChange={event=>setPublished(event.target.checked)} disabled={saving || loading} />} label="Publish chapter (Book must also be released)" />
                 <AdminTextField
                   label="Chapter number"
                   value={chapterNumber}
@@ -480,7 +496,7 @@ export default function ChapterEditDialog({
 
             {tab === 2 && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {(['ar', 'en'] as const).map(language => <ChapterAudioFields key={language} language={language} value={audio[language]} disabled={saving || laneBusy.current[language] || loading} operation={operations[language]} onCancel={() => controllers.current[language]?.abort()} onRetry={() => void handleAudioLink(language)} onPreview={() => void handlePreview(language)}
+                {(['ar', 'en'] as const).map(language => <ChapterAudioFields key={language} language={language} value={audio[language]} disabled={saving || laneBusy.current[language] || loading || audioUnavailable} operation={operations[language]} onCancel={() => controllers.current[language]?.abort()} onRetry={() => void handleAudioLink(language)} onPreview={() => void handlePreview(language)}
                   onChange={value => { setOperation(language, { phase: 'idle', percent: 0 }); setAudio(current => ({ ...current, [language]: value })) }}
                   onLink={() => void handleAudioLink(language)} onFile={file => void handleAudioSelection(language, file)} onRemove={() => void handleRemoveAudio(language)} />)}
               </Box>

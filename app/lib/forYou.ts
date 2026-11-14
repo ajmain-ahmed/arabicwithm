@@ -1,4 +1,5 @@
-export interface ForYouToken { arabic:string; english:string; cefr?:string|null; pos?:string|null; headword?:string|null; entry_type?:string|null; transliteration?:string|null; start_seconds?:number; end_seconds?:number }
+import { readGrammaticalCase, type GrammaticalCase } from '@/app/lib/bookTokenGrammar'
+export interface ForYouToken { grammatical_case?:GrammaticalCase|null; arabic:string; english:string; cefr?:string|null; pos?:string|null; headword?:string|null; entry_type?:string|null; transliteration?:string|null; start_seconds?:number; end_seconds?:number }
 export interface ForYouSegment {
  id:number; position:number; original_text:string; english_text:string|null; translation?:string|null;
  start_seconds:number; end_seconds:number; canonical_paragraph?:unknown; source_tokens?:unknown; tokens:ForYouToken[]
@@ -28,7 +29,7 @@ export function forYouTokens(canonical:unknown,source:unknown):ForYouToken[] {
   const timingStart=start??(typeof matching.start_ms==='number'?matching.start_ms/1000:matching.start_seconds)
   const timingEnd=end??(typeof matching.end_ms==='number'?matching.end_ms/1000:matching.end_seconds)
   const nullable=Object.fromEntries(['pos','headword','entry_type','transliteration','cefr'].filter(key=>key in token).map(key=>[key,typeof token[key]==='string'?token[key]:null]))
-  return [{arabic,english:firstText(token.english,token.gloss,token.translation,matching.english,matching.gloss,matching.translation),...nullable, ...(typeof timingStart==='number'&&Number.isFinite(timingStart)&&typeof timingEnd==='number'&&Number.isFinite(timingEnd)&&timingEnd>timingStart&&timingStart>=0 ? {start_seconds:timingStart,end_seconds:timingEnd}: {})}]
+  return [{arabic,english:firstText(token.english,token.gloss,token.translation,matching.english,matching.gloss,matching.translation),...nullable, grammatical_case:readGrammaticalCase(token.grammatical_case ?? matching.grammatical_case), ...(typeof timingStart==='number'&&Number.isFinite(timingStart)&&typeof timingEnd==='number'&&Number.isFinite(timingEnd)&&timingEnd>timingStart&&timingStart>=0 ? {start_seconds:timingStart,end_seconds:timingEnd}: {})}]
  })
  const preferred=parse(canonicalTokens)
  return preferred.length?preferred:parse(sourceTokens)

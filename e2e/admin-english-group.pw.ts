@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test'
-import example from './source-language-data.json'
-const backend='https://localhost:4347',english='5b98c563-5c35-4696-98e1-06aa000eb622',child='77777777-7777-4777-8777-777777777775'
+import {readFileSync} from 'node:fs'
+const example=JSON.parse(readFileSync(new URL('./source-language-data.json',import.meta.url),'utf8'))
+const backend=`https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4347}`,english='5b98c563-5c35-4696-98e1-06aa000eb622',child='77777777-7777-4777-8777-777777777775'
 for(const group of [english,child])test(`English-group auto language persists through import and edit ${group}`,async({page,context,request})=>{
  await request.post(`${backend}/fixture/reset-overhaul`);await request.post(`${backend}/fixture/english-for-you`)
  const id='44444444-4444-4444-8444-444444444444',expires=Math.floor(Date.now()/1000)+3600,encode=(value:unknown)=>Buffer.from(JSON.stringify(value)).toString('base64url')

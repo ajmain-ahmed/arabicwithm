@@ -1,5 +1,7 @@
 "use client"
 
+import { boundedRead } from '@/app/lib/readRecovery'
+
 import React, { useEffect, useState } from "react"
 import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import {
@@ -45,6 +47,7 @@ export default function ShowEditDialog({
 }: ShowEditDialogProps) {
   const cache = useAdminListCache()
   const [loading, setLoading] = useState(false)
+  const [coverUploading, setCoverUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -63,6 +66,7 @@ export default function ShowEditDialog({
     setError(null)
 
     if (isNew) {
+      setLoading(false)
       setSlug("")
       setTitle("")
       setTitleAr("")
@@ -73,9 +77,11 @@ export default function ShowEditDialog({
       return
     }
 
+    let active = true
     setLoading(true)
-    fetchShowForAdmin(showId!)
+    boundedRead(fetchShowForAdmin(showId!))
       .then((row: ShowRow | null) => {
+        if (!active) return
         if (!row) {
           setError("Show not found")
           return
@@ -88,11 +94,13 @@ export default function ShowEditDialog({
         setCategory(row.category ?? "")
         setCoverCrop(row.cover_crop)
       })
-      .catch((e: unknown) => setError(errorMessage(e) ?? "Failed to load show"))
-      .finally(() => setLoading(false))
+      .catch((e: unknown) => { if (active) setError("Unable to load show details. Close this dialog and reload the page.") })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
   }, [open, showId, isNew])
 
   const handleSave = async () => {
+    if (saving || coverUploading || loading) return
     setSaving(true)
     setError(null)
     try {
@@ -138,7 +146,7 @@ export default function ShowEditDialog({
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => { if (!saving && !coverUploading) onClose() }}
       maxWidth="sm"
       fullWidth
       slotProps={{
@@ -197,6 +205,8 @@ export default function ShowEditDialog({
             <AdminTextField label="Title Arabic" value={titleAr} onChange={(e) => setTitleAr(e.target.value)} fullWidth size="small" />
             <AdminTextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" />
             <ImageUploadField
+              disabled={saving || loading || coverUploading}
+              onUploadingChange={setCoverUploading}
               label="Cover image"
               bucket="covers"
               path={slug ? `cartoons/${slug}.webp` : ""}
@@ -230,7 +240,7 @@ export default function ShowEditDialog({
         <Button
           variant="outlined"
           onClick={onClose}
-          disabled={saving}
+          disabled={saving || coverUploading}
           sx={{ fontFamily: "var(--font-sans), sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", borderColor: "rgba(122,110,101,0.3)", color: "#7a6e65", width: { xs: "100%", sm: "auto" } }}
         >
           Cancel
@@ -238,7 +248,7 @@ export default function ShowEditDialog({
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={saving || loading}
+          disabled={saving || loading || coverUploading}
           startIcon={<Save sx={{ fontSize: "1rem" }} />}
           sx={{ background: "#2c1a0e", color: "#f5ede0", fontFamily: "var(--font-sans), sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", width: { xs: "100%", sm: "auto" }, "&:hover": { background: "#1a0f08" } }}
         >

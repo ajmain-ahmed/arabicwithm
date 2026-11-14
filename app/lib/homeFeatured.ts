@@ -1,3 +1,4 @@
+import { featuredFileSlug } from '@/app/lib/featuredFile'
 import 'server-only'
 import {withDataDeadline} from '@/app/lib/boundedFetch'
 import {unstable_cache} from 'next/cache'
@@ -10,7 +11,7 @@ const loadFeaturedImages=unstable_cache(loadFeaturedAssets,['homepage-featured-i
 export async function fetchHomeFeatured(shows:ShowMeta[],now=new Date()){
  try{
   const {pairs,orphans}=featuredPool(shows,(await withDataDeadline(1200,loadFeaturedImages)).map(asset=>{
-   const show=shows.find(show=>show.slug.toLowerCase()===asset.name.replace(/\.[^.]+$/,'').toLowerCase())
+   const show=shows.find(show=>show.slug.toLowerCase()===featuredFileSlug(asset.name).toLowerCase())
    const config=asset.configs.find(row=>row.show_id===show?.id)
    return {...asset,eligible:(!config||config.storage_path===asset.path)&&(!asset.configShowId||asset.configShowId===show?.id)}
   }))

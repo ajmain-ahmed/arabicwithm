@@ -18,7 +18,7 @@ it('returns a safe fallback signal on storage failure',async()=>{
  expect(await fetchHomeFeatured([show])).toEqual([]);vi.restoreAllMocks()
 })
 
-it('uses the saved canonical image, crop, stable version, and two-day rotation together',async()=>{
+it('uses the saved canonical image, crop, stable version, and three-day rotation together',async()=>{
  mocks.list.mockResolvedValue({data:[{id:'a',name:'ARC.jpg'},{id:'b',name:'ARC.webp'},{id:'o',name:'ORPHAN.png'}],error:null})
  mocks.select.mockResolvedValue({data:[{show_id:'arc',storage_path:'featured/ARC.webp',position_x:45,position_y:22,updated_at:'version-2'}],error:null})
  const warn=vi.spyOn(console,'warn').mockImplementation(()=>{})

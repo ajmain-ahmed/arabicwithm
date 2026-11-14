@@ -37,3 +37,10 @@ it.each(['editor','user','guest'])('preserves Admin-only upload authorization fo
 it.each(['books/../escape.webp','books/a/b.webp','private/book.webp'])('rejects unsafe paths %s',async path=>{
  await expect(uploadCoverImage(form(path))).rejects.toThrow('Cover path');expect(mocks.upload).not.toHaveBeenCalled()
 })
+
+it.each(['cartoons/show-id.webp','episodes/episode-id.webp'])('uploads %s without native processing and keeps the existing canonical path',async path=>{
+ const result=await uploadCoverImage(form(path))
+ expect(result).toMatchObject({ok:true})
+ expect(mocks.upload.mock.calls.at(-1)?.[0]).toBe(path)
+ expect(mocks.upload.mock.calls.at(-1)?.[2]).toMatchObject({upsert:true})
+})

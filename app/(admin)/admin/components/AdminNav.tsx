@@ -36,6 +36,7 @@ const navItems = [
   { label: "Featured", href: "/admin/featured", icon: <ImageOutlined /> },
   { label: "Hans Wehr", href: "/admin/hans-wehr", icon: <MenuBook /> },
   { label: "Phrases", href: "/admin/phrases", icon: <FormatQuote /> },
+  { label: "Grammar Notes", href: "/admin/grammar-notes", icon: <MenuBook /> },
 ]
 
 export default function AdminNav() {

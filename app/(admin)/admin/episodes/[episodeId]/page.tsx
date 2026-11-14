@@ -1,5 +1,8 @@
 "use client"
 
+import { boundedRead } from '@/app/lib/readRecovery'
+
+import AwmPageError from '@/app/components/AwmPageError'
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
 import dynamic from "next/dynamic"
@@ -74,7 +77,7 @@ export default function EpisodeHeadwordsPage() {
     setError(null)
 
     try {
-      const ep = await fetchEpisodeForAdmin(episodeId)
+      const ep = await boundedRead(fetchEpisodeForAdmin(episodeId))
       if (request !== loadRevision.current) return
       if (!ep) {
         setError("Episode not found")
@@ -95,8 +98,8 @@ export default function EpisodeHeadwordsPage() {
         .filter((id) => !Number.isNaN(id))
 
       const [hansEntries, phraseRows] = await Promise.all([
-        wordHeadwords.length > 0 ? fetchHansWehrEntries(wordHeadwords) : [],
-        phraseIds.length > 0 ? fetchPhrases(phraseIds) : [],
+        wordHeadwords.length > 0 ? boundedRead(fetchHansWehrEntries(wordHeadwords)) : [],
+        phraseIds.length > 0 ? boundedRead(fetchPhrases(phraseIds)) : [],
       ])
 
       if (request !== loadRevision.current) return
@@ -147,7 +150,7 @@ export default function EpisodeHeadwordsPage() {
     setEpisodeEditOpen(true)
     if (shows.length > 0) return
     try {
-      const loadedShows = await fetchShowsForEpisodeEdit()
+      const loadedShows = await boundedRead(fetchShowsForEpisodeEdit())
       if (activeTarget.current === episodeId) setShows(loadedShows)
     } catch (e: unknown) {
       if (activeTarget.current !== episodeId) return
@@ -373,10 +376,10 @@ export default function EpisodeHeadwordsPage() {
       </Box>
 
       {error && (
-        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "var(--font-sans), sans-serif" }}>{error}</Typography>
+        error === 'Episode not found' ? <Typography role="status">Episode not found</Typography> : <AwmPageError error={error}/>
       )}
 
-      {loading ? (
+      {error ? null : loading ? (
         <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
           Loading episode and headwords…
         </Typography>

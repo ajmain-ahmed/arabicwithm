@@ -1,7 +1,8 @@
+import { boundedRead } from '@/app/lib/readRecovery'
 import {fetchForYouDiagnostics} from '@/app/actions/forYou'
 
 export default async function ForYouDiagnostics(){
- const diagnostics=await fetchForYouDiagnostics()
+ const diagnostics=await boundedRead(fetchForYouDiagnostics())
  return <details style={{margin:'16px 0',padding:16,border:'1px solid #d4a843',borderRadius:10}}>
   <summary>For You eligibility diagnostics</summary>
   <p>{diagnostics.totalTranscripts} transcripts · {diagnostics.adminTranscripts} Admin sources · {diagnostics.publishedTranscripts} published · {diagnostics.eligibleTranscripts} eligible sources · {diagnostics.eligibleSegments} eligible clip anchors · {diagnostics.uniqueVideos} unique videos</p>

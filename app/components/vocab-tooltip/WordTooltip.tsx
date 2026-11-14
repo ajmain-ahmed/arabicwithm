@@ -5,6 +5,7 @@ import { Box, Typography, Chip } from '@mui/material'
 import CefrChip from '@/app/components/CefrChip'
 import { formatPos } from '@/app/lib/display'
 import { CEFR_LEVELS, CEFR_PALETTE } from '@/app/lib/cefr'
+import { readGrammaticalCase } from '@/app/lib/bookTokenGrammar'
 import type { VocabEntry } from './index'
 
 export const LEVEL_COLORS: Record<string, string> = Object.fromEntries(
@@ -21,6 +22,7 @@ export default function WordTooltip({
   entry: VocabEntry
   textScale?: number
 }) {
+  const grammaticalCase = readGrammaticalCase(entry.grammatical_case)
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, minWidth: 200, position: 'relative', pt: 0.5 }}>
       <Box sx={{ textAlign: 'center' }}>
@@ -72,6 +74,14 @@ export default function WordTooltip({
           />
         )}
       </Box>
+
+      {grammaticalCase && (
+        <Box aria-label="Grammatical case" sx={{ textAlign: 'center', overflowWrap: 'anywhere', minWidth: 0 }}>
+          <Typography sx={{ fontFamily: 'var(--font-sans)', fontSize: '0.7rem', color: 'var(--awm-muted)' }}>Case</Typography>
+          {grammaticalCase.arabic && <Typography lang="ar" dir="rtl" sx={{ fontFamily: 'var(--font-serif)', fontSize: `calc(1.1rem * ${textScale})` }}>{grammaticalCase.arabic}</Typography>}
+          {grammaticalCase.english && <Typography lang="en" dir="ltr" sx={{ fontFamily: 'var(--font-sans)', fontSize: `calc(0.8rem * ${textScale})` }}>{grammaticalCase.english}</Typography>}
+        </Box>
+      )}
 
       <Typography
         sx={{

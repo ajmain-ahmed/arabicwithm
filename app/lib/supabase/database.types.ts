@@ -196,6 +196,7 @@ export interface Database {
           chapter_number: number
           created_at: string | null
           updated_at: string | null
+          is_published: boolean
           content: Json | null
         }
         Insert: {
@@ -206,6 +207,7 @@ export interface Database {
           chapter_number?: number
           created_at?: string | null
           updated_at?: string | null
+          is_published?: boolean
           content?: Json | null
         }
         Update: {
@@ -216,6 +218,7 @@ export interface Database {
           chapter_number?: number
           created_at?: string | null
           updated_at?: string | null
+          is_published?: boolean
           content?: Json | null
         }
         Relationships: []

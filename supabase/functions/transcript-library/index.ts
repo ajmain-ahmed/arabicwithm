@@ -15,6 +15,8 @@ import {
 
 import { guestToken, isGuestBearer, privateHash, statusIds } from "./guest.ts";
 
+declare const EdgeRuntime: { waitUntil(task: Promise<unknown>): void };
+
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -70,6 +72,17 @@ Deno.serve(async (request) => {
       );
       if (error || allowed !== true) {
         return json({ error: "unauthorised" }, 401);
+      }
+      const enrichmentUrl = Deno.env.get("AWM_ENRICHMENT_WORKER_URL");
+      if (enrichmentUrl?.startsWith("https://")) {
+        EdgeRuntime.waitUntil(fetch(enrichmentUrl, {
+          method: "POST",
+          headers: { "x-transcript-worker": token },
+          signal: AbortSignal.timeout(60000),
+          redirect: "error",
+        }).then(response => {
+          if (!response.ok) console.warn("Content enrichment dispatch failed", response.status);
+        }).catch(() => console.warn("Content enrichment dispatch unavailable")));
       }
       const { data, error: claimError } = await admin.rpc(
         "claim_transcript_work",

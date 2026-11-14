@@ -9,9 +9,9 @@ export async function isBookReleased(bookId: string): Promise<boolean> {
 }
 
 export async function isChapterReleased(chapterId: string): Promise<boolean> {
-  const { data, error } = await serviceClient.from('chapters').select('book_id').eq('id', chapterId).maybeSingle()
+  const { data, error } = await serviceClient.from('chapters').select('book_id,is_published').eq('id', chapterId).maybeSingle()
   if (error) throw new Error('Unable to check book availability.')
-  return Boolean(data && await isBookReleased(String(data.book_id)))
+  return Boolean(data && data.is_published === true && await isBookReleased(String(data.book_id)))
 }
 
 export async function releasedBookIds(bookIds: string[]): Promise<string[]> {
@@ -26,8 +26,12 @@ export async function releasedBookIds(bookIds: string[]): Promise<string[]> {
 
 export async function releasedChapterIds(chapterIds: string[]): Promise<string[]> {
   if (!chapterIds.length) return []
-  const { data, error } = await serviceClient.from('chapters').select('id,book_id').in('id', chapterIds)
-  if (error) throw new Error('Unable to check book availability.')
-  const books = new Set(await releasedBookIds([...new Set((data ?? []).map(chapter => String(chapter.book_id)))]))
-  return (data ?? []).filter(chapter => books.has(String(chapter.book_id))).map(chapter => String(chapter.id))
+  const chapters: {id:string;book_id:string;is_published:boolean}[]=[]
+  for(let start=0;start<chapterIds.length;start+=100){
+    const {data,error}=await serviceClient.from('chapters').select('id,book_id,is_published').in('id',chapterIds.slice(start,start+100))
+    if(error)throw new Error('Unable to check book availability.')
+    chapters.push(...data ?? [])
+  }
+  const books = new Set(await releasedBookIds([...new Set(chapters.map(chapter => String(chapter.book_id)))]))
+  return chapters.filter(chapter => chapter.is_published === true && books.has(String(chapter.book_id))).map(chapter => String(chapter.id))
 }

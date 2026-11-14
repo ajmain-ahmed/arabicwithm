@@ -42,6 +42,7 @@ export default function ImageUploadField({
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [localPreview, setLocalPreview] = useState<string | null>(null)
+  const [uploadedPreview, setUploadedPreview] = useState<string | null>(null)
   const [cropOpen, setCropOpen] = useState(false)
   const generation = useRef(0)
   const uploadBusy = useRef(false)
@@ -57,6 +58,7 @@ export default function ImageUploadField({
       return null
     })
     setCropOpen(false)
+    setUploadedPreview(null)
     return () => { controller.current?.abort(); generation.current += 1; uploadBusy.current = false; uploadChange.current?.(false) }
   }, [path])
 
@@ -78,7 +80,7 @@ export default function ImageUploadField({
       try {
         const result = await Promise.race([
           (async () => {
-            const image = await prepareCoverImage(file, attempt.signal, path.startsWith('books/'))
+            const image = await prepareCoverImage(file, attempt.signal, true)
             prepared = true
             if (version !== generation.current || attempt.signal.aborted) return null
             const objectUrl = URL.createObjectURL(image.original)
@@ -94,6 +96,7 @@ export default function ImageUploadField({
         if (version !== generation.current || attempt.signal.aborted || !result) return
         if (typeof result !== 'string' && !result.ok) { setError(result.error); setStatus(''); setLocalPreview(null); return }
         const publicUrl = typeof result === 'string' ? result : result.data
+        setUploadedPreview(`${publicUrl}${publicUrl.includes('?') ? '&' : '?'}v=${Date.now()}`)
         onUploaded?.(publicUrl)
         setLocalPreview(null)
         setStatus(path.startsWith('books/') ? 'Cover uploaded. Save this book to keep the change.' : 'Cover uploaded. Save to keep the change.')
@@ -115,7 +118,7 @@ export default function ImageUploadField({
     [bucket, path, disabled, onCropChange, onUploaded]
   )
 
-  const activePreview = localPreview ?? previewUrl
+  const activePreview = localPreview ?? uploadedPreview ?? previewUrl
   const previewFailed = activePreview !== null && failedPreview === activePreview
 
   return (
@@ -204,6 +207,7 @@ export default function ImageUploadField({
               onClick={() => {
                 setStatus(''); setError(null)
                 setLocalPreview(null)
+                setUploadedPreview(null)
                 onRemove()
               }}
               startIcon={<DeleteOutlined />}

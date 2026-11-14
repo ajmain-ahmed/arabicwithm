@@ -1,9 +1,20 @@
 /** Optional book-only labels; no grammatical information is inferred. */
 export type GrammarLabel = { arabic: string; english: string }
 
+export type GrammaticalCase = { arabic?: string | null; english?: string | null }
+
+/** Read authored labels independently, including partial metadata from older content. */
+export function readGrammaticalCase(value: unknown): GrammaticalCase | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  const label = value as Record<string, unknown>
+  const arabic = typeof label.arabic === 'string' ? label.arabic.trim() : ''
+  const english = typeof label.english === 'string' ? label.english.trim() : ''
+  return arabic || english ? { arabic: arabic || undefined, english: english || undefined } : undefined
+}
+
 export type BookTokenGrammar = {
   syntactic_role?: GrammarLabel | null
-  grammatical_case?: GrammarLabel | null
+  grammatical_case?: GrammaticalCase | null
 }
 
 export function isGrammarLabel(value: unknown): value is GrammarLabel {

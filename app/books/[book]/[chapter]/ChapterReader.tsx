@@ -150,6 +150,7 @@ function dictionaryEntry(token: PublicBookToken): VocabEntry {
     english: token.english ?? '',
     cefr: token.cefr,
     pos: token.pos,
+    grammatical_case: token.grammatical_case,
     entry_type: token.entryType,
   }
 }
@@ -250,6 +251,7 @@ export default function ChapterReader({
   initialPage,
   initialBlock,
   nextChapterSlug,
+  adminPreview = false,
   audio = [],
 }: {
   bookSlug: string
@@ -262,12 +264,13 @@ export default function ChapterReader({
   initialPage?: number
   initialBlock?: number
   nextChapterSlug?: string
+  adminPreview?: boolean
   audio?: ChapterAudioSummary[]
 }) {
   const { user } = useAuth()
   useEffect(() => {
-    if (user?.id) void setBookInMyList(user.id, bookSlug, true).catch(error => console.error('Unable to save started book:', error))
-  }, [user?.id, bookSlug])
+    if (!adminPreview && user?.id) void setBookInMyList(user.id, bookSlug, true).catch(error => console.error('Unable to save started book:', error))
+  }, [user?.id, bookSlug, adminPreview])
   const mobileWordPopup = useMediaQuery('(max-width:899.95px)')
   const [selectedDefinition, setSelectedDefinition] = useState<{ entry: VocabEntry; anchor: HTMLElement } | null>(null)
   const [definitionOpen, setDefinitionOpen] = useState(false)
@@ -318,7 +321,7 @@ export default function ChapterReader({
     if (user) useReadingProgressStore.getState().hydrateFromMetadata(user.user_metadata)
   }, [user])
   useEffect(()=>{
-    trackProgress(bookSlug,chapterSlug,page,totalPages,position.block,language)
+    if (!adminPreview) trackProgress(bookSlug,chapterSlug,page,totalPages,position.block,language)
     const url=new URL(window.location.href)
     if(page>=2)url.searchParams.set('page',String(page));else url.searchParams.delete('page')
     url.searchParams.set('block',String(position.block))
@@ -328,8 +331,8 @@ export default function ChapterReader({
      be wrong — and re-running this effect on a language flip needlessly
      rewrites the URL. The language is recorded on the next genuine
      page/block change instead. */
-  },[bookSlug,chapterSlug,page,totalPages,position.block,trackProgress])
-  useEffect(() => () => { void useReadingProgressStore.getState().flush() }, [bookSlug, chapterSlug])
+  },[bookSlug,chapterSlug,page,totalPages,position.block,trackProgress,adminPreview])
+  useEffect(() => () => { if (!adminPreview) void useReadingProgressStore.getState().flush() }, [bookSlug, chapterSlug, adminPreview])
   const goToPage=useCallback((next:number)=>{
     const target=Math.min(Math.max(1,Math.trunc(next)||1),totalPages)
     setPosition({incoming,block:pageStarts[target-1]??0})
@@ -542,7 +545,7 @@ export default function ChapterReader({
             </Box>
           )}</Box>
       </Paper>
-      {page===totalPages&&<ChapterNavigation bookSlug={bookSlug} nextChapterSlug={nextChapterSlug}/>}
+      {!adminPreview&&page===totalPages&&<ChapterNavigation bookSlug={bookSlug} nextChapterSlug={nextChapterSlug}/>}
       <MobileDefinitionSheet
         open={mobileWordPopup && definitionOpen}
         entry={selectedDefinition?.entry ?? null}

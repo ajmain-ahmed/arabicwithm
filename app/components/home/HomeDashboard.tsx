@@ -1,5 +1,7 @@
 'use client'
 
+import PhraseOfTheDay from './PhraseOfTheDay'
+import type { DailyPhrase } from '@/app/lib/dailyPhrase'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -107,7 +109,7 @@ function DeferredRowPlaceholder() {
   )
 }
 
-export default function HomeDashboard({ books, newShows, newEpisodes, featured, spotlight }: { books: PublicBook[]; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; spotlight?:{clip:ForYouClip|null;error:boolean}; featured?: import('./FeaturedHero').FeaturedShow | import('./FeaturedHero').FeaturedShow[] | null }) {
+export default function HomeDashboard({ books, homepageBooks = books, newShows, newEpisodes, featured, spotlight, dailyPhrase = null }: { dailyPhrase?: DailyPhrase | null; books: PublicBook[]; homepageBooks?: PublicBook[]; newShows: NewOnShow[]; newEpisodes: NewOnEpisode[]; spotlight?:{clip:ForYouClip|null;error:boolean}; featured?: import('./FeaturedHero').FeaturedShow | import('./FeaturedHero').FeaturedShow[] | null }) {
   const featuredItems=Array.isArray(featured)?featured:featured?[featured]:[]
   const { mode } = useColorMode()
   const { user, loading: authLoading } = useAuth()
@@ -176,7 +178,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured, 
       imageCrop: book.coverCrop,
     })),
   ], [myListCacheItems, myListBooks])
-  const bookRowItems: CatalogueRowItem[] = useMemo(() => books.slice(0, HOME_ROW_LIMIT).map((book) => ({
+  const bookRowItems: CatalogueRowItem[] = useMemo(() => homepageBooks.slice(0, HOME_ROW_LIMIT).map((book) => ({
     key: book.id,
     book,
     href: `/books/${encodeURIComponent(book.slug)}`,
@@ -185,7 +187,7 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured, 
     level: book.level,
     imageSrc: book.cover || `/api/covers/books/${book.id}`,
     imageCrop: book.coverCrop,
-  })), [books])
+  })), [homepageBooks])
   const hour = new Date().getHours()
   const daypart = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening'
   const greeting = `Good ${daypart}, ${displayName}!`
@@ -334,6 +336,9 @@ export default function HomeDashboard({ books, newShows, newEpisodes, featured, 
                 { title: 'Explore', href: '/explore', Icon: ExploreOutlined },
               ].map(({ title, href, Icon }) => <Paper key={href} component={Link} prefetch={false} href={href} elevation={0} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minHeight: 76, p: 2, borderRadius: '10px', textDecoration: 'none', color: 'var(--awm-bark)', bgcolor: 'var(--awm-white)', border: '1px solid color-mix(in srgb, var(--awm-gold) 25%, transparent)', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }}><Icon sx={{ color: 'var(--awm-gold)' }} /><Typography sx={{ fontFamily: 'var(--font-sans)', fontWeight: 600, fontSize: 14 }}>{title}</Typography></Paper>)}
             </Box>
+          </Container>
+          <Container maxWidth={false} sx={{ display: { xs: 'block', sm: 'none' } }}>
+            <PhraseOfTheDay phrase={dailyPhrase} />
           </Container>
           <Box sx={{order:{xs:1,md:-1}}}>
             {!authLoading && <AwmPromoSection key={user?.id??"guest"} userId={user?.id} placement="home" />}

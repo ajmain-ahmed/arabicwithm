@@ -1,5 +1,8 @@
 "use client"
 
+import { boundedRead } from '@/app/lib/readRecovery'
+
+import AwmPageError from '@/app/components/AwmPageError'
 import React, { useState } from "react"
 import {
   Box,
@@ -43,14 +46,14 @@ export default function HansWehrAdminPage() {
     setExpandedRows(new Set())
 
     try {
-      const data = await searchHansWehr({
+      const data = await boundedRead(searchHansWehr({
         id: idQuery,
         word: wordQuery,
         definition: definitionQuery,
         idExact,
         wordExact,
         definitionExact,
-      })
+      }))
       setResults(data)
     } catch (e: unknown) {
       setError(errorMessage(e) ?? "Search failed")
@@ -195,7 +198,7 @@ export default function HansWehrAdminPage() {
       </Paper>
 
       {error && (
-        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "var(--font-sans), sans-serif" }}>{error}</Typography>
+        <AwmPageError error={error}/>
       )}
 
       {hasSearched && !loading && (

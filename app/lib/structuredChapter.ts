@@ -35,6 +35,11 @@ export function validateAdditionalStructuredChapter(value: unknown): void {
 }
 
 export function structuredPageCount(chapter: StructuredChapter): number {
+  const path = record(chapter.learning_path), stages = items(path?.stages).map(record).filter(Boolean)
+  if (path?.mode === 'sequential-mastery' && stages.length) {
+    const assigned = new Set(stages.flatMap(stage => [...items(stage?.activity_ids), ...items(stage?.mastery_activity_ids)]))
+    return 1 + stages.length + items(chapter.activities).filter(a => !assigned.has(record(a)?.id) && !stages.some(s => s?.id === record(a)?.stage_id)).length + (items(chapter.references).length ? 1 : 0)
+  }
   return Math.max(1, chapter.sections.length) + ['activities', 'answers', 'references'].filter(key => items(chapter[key]).length > 0).length
 }
 

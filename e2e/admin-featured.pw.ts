@@ -39,11 +39,11 @@ test('Admin manages existing artwork, uploads, previews, saves, cancels, replace
  for(const axis of ['Horizontal','Vertical']){const slider=dialog.getByRole('slider',{name:new RegExp(axis)});await slider.focus();await slider.press('Home');await slider.press('ArrowRight')}
  await expect(image).toHaveCSS('object-position','1% 1%')
  await dialog.getByRole('button',{name:'Save',exact:true}).click();await expect(dialog).toHaveCount(0)
- const canonical=page.getByRole('region',{name:'test-show.png',exact:true});await expect(canonical).toBeVisible();await expect(section).toHaveCount(0)
+ const canonical=page.getByRole('region',{name:/^test-show--[a-f0-9-]+\.png$/});await expect(canonical).toBeVisible();await expect(section).toHaveCount(0)
  await page.reload();await canonical.getByRole('button',{name:'Edit / Position'}).click();await expect(image).toHaveCSS('object-position','1% 1%')
  await dialog.getByRole('button',{name:'Reset',exact:true}).click();await expect(image).toHaveCSS('object-position','50% 50%');await dialog.getByRole('button',{name:'Cancel',exact:true}).click()
  await page.goto('/');const hero=page.locator('[data-featured-hero]');await expect(hero.locator('img').first()).toHaveCSS('object-position','1% 1%');await expect(hero.getByRole('link',{name:'View Test Show'})).toHaveAttribute('href','/cartoons/test-show')
- const old=await hero.locator('img').first().getAttribute('src');expect(old).toContain('test-show.png?v=')
+ const old=await hero.locator('img').first().getAttribute('src');expect(old).toMatch(/test-show--[a-f0-9-]+\.png\?v=/)
  await page.goto('/admin/featured');await canonical.getByRole('button',{name:'Replace',exact:true}).click();await dialog.locator('input[type=file]').setInputFiles({name:'replacement.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});await expect(image).toHaveCSS('object-position','50% 50%');await dialog.getByRole('button',{name:'Save',exact:true}).click();await expect(dialog).toHaveCount(0)
  await page.goto('/');await expect(hero.locator('img').first()).toHaveCSS('object-position','50% 50%');expect(await hero.locator('img').first().getAttribute('src')).not.toBe(old)
  await page.goto('/admin/featured');await canonical.getByRole('button',{name:'Delete',exact:true}).click();await page.getByRole('button',{name:'Cancel',exact:true}).click();await expect(canonical).toBeVisible()

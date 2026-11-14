@@ -1,5 +1,7 @@
 "use client"
 
+import { boundedRead } from '@/app/lib/readRecovery'
+
 import React, { useEffect, useRef, useState } from "react"
 import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import {
@@ -93,7 +95,7 @@ export default function BookEditDialog({
     }
 
     setLoading(true)
-    fetchBookForAdmin(bookId!)
+    boundedRead(fetchBookForAdmin(bookId!))
       .then((row: BookRow | null) => {
         if (!active) return
         if (!row) {
@@ -113,7 +115,7 @@ export default function BookEditDialog({
         setCompleted(row.is_completed !== false)
         setCoverCrop(row.cover_crop)
       })
-      .catch((e: unknown) => { if (active) setError(errorMessage(e) ?? "Failed to load book") })
+      .catch((e: unknown) => { if (active) setError("Unable to load book details. Close this dialog and reload the page.") })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [open, bookId, isNew])

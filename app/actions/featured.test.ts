@@ -2,7 +2,7 @@
 import {beforeEach,expect,it,vi} from 'vitest'
 const state=vi.hoisted(()=>({guard:vi.fn(),upload:vi.fn(),remove:vi.fn(),upsert:vi.fn(),clear:vi.fn(),tag:vi.fn(),path:vi.fn(),files:[] as {id:string;name:string;updated_at:string}[],shows:[] as {id:string;slug:string;title:string}[],configs:[] as {show_id:string;storage_path:string;position_x:number;position_y:number;updated_at:string}[]}))
 vi.mock('server-only',()=>({}))
-vi.mock('@/app/lib/imageVariants',()=>({syncImageVariants:vi.fn(),removeImageVariants:vi.fn()}))
+vi.mock('@/app/lib/imageVariants',()=>{throw new Error('Native image processing is unavailable')})
 vi.mock('@/app/actions/auth',()=>({guardAdmin:state.guard}))
 vi.mock('next/cache',()=>({updateTag:state.tag,revalidatePath:state.path}))
 vi.mock('@/app/lib/supabase',()=>({serviceClient:{
@@ -10,6 +10,7 @@ vi.mock('@/app/lib/supabase',()=>({serviceClient:{
  from:(table:string)=>({select:()=>({order:async()=>({data:state.shows}),then:(resolve:(result:unknown)=>unknown)=>Promise.resolve({data:table==='shows'?state.shows:state.configs,error:null}).then(resolve)}),upsert:state.upsert,delete:()=>({eq:state.clear})})
 }}))
 import {fetchFeaturedForAdmin,saveFeaturedForAdmin,deleteFeaturedForAdmin} from './featured'
+const variants=(data:FormData)=>{for(const width of [828,1600])data.set(`variant${width}`,new Blob([new Uint8Array([82,73,70,70,0,0,0,0,87,69,66,80])],{type:'image/webp'}));return data}
 const form=()=>{const data=new FormData();data.set('showId','s');data.set('name','ARC.webp');data.set('x','45');data.set('y','22');return data}
 beforeEach(()=>{
  vi.clearAllMocks();state.guard.mockResolvedValue(undefined);state.upload.mockResolvedValue({error:null});state.remove.mockResolvedValue({error:null});state.upsert.mockResolvedValue({error:null});state.clear.mockResolvedValue({error:null})
@@ -27,19 +28,19 @@ it('saves a focal position without modifying source bytes or variants and expire
  await saveFeaturedForAdmin(form());expect(state.upsert).toHaveBeenCalledWith(expect.objectContaining({show_id:'s',storage_path:'featured/ARC.webp',position_x:45,position_y:22}),{onConflict:'show_id'});expect(state.upload).not.toHaveBeenCalled();expect(state.remove).not.toHaveBeenCalled();expect(state.tag).toHaveBeenCalledWith('homepage-featured')
 })
 it('rejects invalid coordinates, traversal, mismatched assets and slug collisions',async()=>{
- const bad=form();bad.set('x','NaN');await expect(saveFeaturedForAdmin(bad)).rejects.toThrow('Position')
+ const bad=form();bad.set('x','NaN');expect(await saveFeaturedForAdmin(bad)).toMatchObject({ok:false})
  await expect(deleteFeaturedForAdmin('../ARC.webp')).rejects.toThrow('Invalid')
- const wrong=form();wrong.set('name','ORPHAN.png');await expect(saveFeaturedForAdmin(wrong)).rejects.toThrow('no longer exists')
- state.shows.push({id:'other',slug:'arc',title:'Other'});await expect(saveFeaturedForAdmin(form())).rejects.toThrow('collision');expect(state.upsert).not.toHaveBeenCalled()
+ const wrong=form();wrong.set('name','ORPHAN.png');expect(await saveFeaturedForAdmin(wrong)).toMatchObject({ok:false})
+ state.shows.push({id:'other',slug:'arc',title:'Other'});expect(await saveFeaturedForAdmin(form())).toMatchObject({ok:false});expect(state.upsert).not.toHaveBeenCalled()
 })
 it('requires explicit replacement and validates image bytes before writing',async()=>{
  const data=form();data.set('file',new Blob(['invalid'],{type:'image/png'}),'test.png')
- await expect(saveFeaturedForAdmin(data)).rejects.toThrow('Replace');data.set('replace','true');await expect(saveFeaturedForAdmin(data)).rejects.toThrow('Use a WebP');expect(state.upload).not.toHaveBeenCalled()
+ expect(await saveFeaturedForAdmin(data)).toMatchObject({ok:false});data.set('replace','true');expect(await saveFeaturedForAdmin(data)).toMatchObject({ok:false});expect(state.upload).not.toHaveBeenCalled()
 })
 it('replaces canonical slug path only on save and removes obsolete formats after config is saved',async()=>{
  const data=form();data.set('replace','true');data.set('file',new Blob([new Uint8Array([137,80,78,71,13,10,26,10,0])]),'new.png')
  const {featuredVariantPaths}=await import('@/app/lib/imageVariantPaths');expect(featuredVariantPaths('featured/ARC.webp')).toEqual(['variants/featured/ARC-828.avif','variants/featured/ARC-1600.avif'])
- await saveFeaturedForAdmin(data);expect(state.upload).toHaveBeenCalledWith('featured/ARC.png',expect.any(Blob),expect.objectContaining({upsert:true,contentType:'image/png'}));expect(state.remove).toHaveBeenCalledWith(['featured/ARC.webp','variants/featured/ARC-828.avif','variants/featured/ARC-1600.avif']);expect(state.upsert.mock.invocationCallOrder[0]).toBeLessThan(state.remove.mock.invocationCallOrder[0])
+ expect(await saveFeaturedForAdmin(variants(data))).toMatchObject({ok:true});expect(state.upload).toHaveBeenCalledWith(expect.stringMatching(/^featured\/ARC--[a-f0-9-]+\.png$/),expect.any(Blob),expect.objectContaining({upsert:false,contentType:'image/png'}));expect(state.remove).toHaveBeenCalledWith(['featured/ARC.webp','variants/featured/ARC-828.avif','variants/featured/ARC-1600.avif']);expect(state.upsert.mock.invocationCallOrder[0]).toBeLessThan(state.remove.mock.invocationCallOrder[0])
 })
 it('deletes only the selected asset and its configuration, including orphans',async()=>{
  await deleteFeaturedForAdmin('ORPHAN.png');expect(state.remove).toHaveBeenCalledWith(['featured/ORPHAN.png','variants/featured/ORPHAN-828.avif','variants/featured/ORPHAN-1600.avif']);expect(state.clear).toHaveBeenCalledWith('storage_path','featured/ORPHAN.png');expect(state.upsert).not.toHaveBeenCalled()
@@ -48,7 +49,7 @@ it('deletes only the selected asset and its configuration, including orphans',as
 it('uploads artwork for a Show with no existing image and uses its canonical slug',async()=>{
  state.files=state.files.filter(file=>file.name!=='ARC.webp')
  const data=form();data.set('file',new Blob([new Uint8Array([255,216,255,0])]),'photo.jpeg')
- await saveFeaturedForAdmin(data);expect(state.upload).toHaveBeenCalledWith('featured/ARC.jpg',expect.any(Blob),expect.objectContaining({contentType:'image/jpeg'}));expect(state.remove).not.toHaveBeenCalled()
+ expect(await saveFeaturedForAdmin(variants(data))).toMatchObject({ok:true});expect(state.upload).toHaveBeenCalledWith(expect.stringMatching(/^featured\/ARC--[a-f0-9-]+\.jpg$/),expect.any(Blob),expect.objectContaining({contentType:'image/jpeg'}));expect(state.remove).not.toHaveBeenCalled()
 })
 
 it('reports only three current carousel records while retaining the eligible pool',async()=>{
@@ -62,4 +63,11 @@ it('identifies one canonical eligible file per Show even for old unsaved duplica
  const data=await fetchFeaturedForAdmin();expect(data.assets.filter(asset=>asset.eligible)).toHaveLength(1)
  expect(data.assets.find(asset=>asset.name==='ARC.jpg')).toMatchObject({eligible:true,status:'Featured image'})
  expect(data.assets.find(asset=>asset.name==='ARC.webp')).toMatchObject({eligible:false,status:'Alternate image'})
+})
+
+it('keeps old artwork and config untouched if a responsive upload fails',async()=>{
+ state.upload.mockResolvedValue({error:{message:'Storage unavailable'}})
+ const data=variants(form());data.set('replace','true');data.set('file',new Blob([new Uint8Array([255,216,255,0])]),'photo.jpg')
+ expect(await saveFeaturedForAdmin(data)).toMatchObject({ok:false,error:expect.stringContaining('Please try again')})
+ expect(state.remove).not.toHaveBeenCalled();expect(state.upsert).not.toHaveBeenCalled()
 })

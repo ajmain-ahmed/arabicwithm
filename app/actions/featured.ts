@@ -5,7 +5,10 @@ import {guardAdmin} from '@/app/actions/auth'
 import {serviceClient} from '@/app/lib/supabase'
 import {FEATURED_FILE, listFeaturedFiles, loadFeaturedAssets} from '@/app/lib/featuredStorage'
 import {revalidatePath,updateTag} from 'next/cache'
-import {syncImageVariants} from '@/app/lib/imageVariants'
+import {randomUUID} from 'node:crypto'
+import {featuredFileSlug} from '@/app/lib/featuredFile'
+import {FEATURED_VARIANT_WIDTHS} from '@/app/lib/imageVariantPaths'
+import {actionResult} from '@/app/lib/actionResult'
 import {featuredVariantPaths} from '@/app/lib/imageVariantPaths'
 
 export async function fetchFeaturedForAdmin() {
@@ -13,7 +16,7 @@ export async function fetchFeaturedForAdmin() {
  const [assets,{data:shows,error}]=await Promise.all([loadFeaturedAssets(),serviceClient.from('shows').select('id,slug,title').order('title')])
  if(error)throw new Error('Unable to load Shows.')
  const records=assets.map(({configs,...asset})=>{
-  const matches=(shows??[]).filter(show=>show.slug.toLowerCase()===asset.name.replace(/\.[^.]+$/,'').toLowerCase())
+  const matches=(shows??[]).filter(show=>show.slug.toLowerCase()===featuredFileSlug(asset.name).toLowerCase())
   const show=matches.length===1?matches[0]:null
   const config=configs.find(row=>row.show_id===show?.id)
   return {...asset,show,status:matches.length>1?'Slug collision':!show?'No matching show':asset.configShowId&&asset.configShowId!==show.id?'Assigned to another show':config&&config.storage_path!==asset.path?'Alternate image':'Featured image'}
@@ -49,20 +52,27 @@ async function imageFormat(file:Blob) {
 }
 export async function saveFeaturedForAdmin(form:FormData) {
  await guardAdmin()
+ return actionResult('save Featured', async () => {
  const id=form.get('showId'),rawX=form.get('x'),rawY=form.get('y')
  if(typeof id!=='string'||typeof rawX!=='string'||typeof rawY!=='string'||!rawX.trim()||!rawY.trim())throw new Error('Invalid Featured settings.')
  const x=Number(rawX),y=Number(rawY)
  if(!Number.isFinite(x)||!Number.isFinite(y)||x<0||x>100||y<0||y>100)throw new Error('Position must be between 0 and 100.')
  const show=await selectedShow(id),files=await listFeaturedFiles(),file=form.get('file')
- const existing=files.filter(file=>FEATURED_FILE.exec(file.name)?.[1].toLowerCase()===show.slug.toLowerCase())
+ const existing=files.filter(file=>featuredFileSlug(file.name).toLowerCase()===show.slug.toLowerCase())
  let path:string
  if(file instanceof Blob){
   if(existing.length&&form.get('replace')!=='true')throw new Error('Use Replace for an existing Featured image.')
   const format=await imageFormat(file)
-  path=`featured/${show.slug}.${format.extension}`
-  const {error}=await serviceClient.storage.from('covers').upload(path,file,{contentType:format.type,upsert:true,cacheControl:'60'})
+  path=`featured/${show.slug}--${randomUUID()}.${format.extension}`
+  const variants = FEATURED_VARIANT_WIDTHS.map(width => form.get(`variant${width}`))
+  for (let index = 0; index < variants.length; index++) {
+   const variant = variants[index]
+   if (!(variant instanceof Blob) || (await imageFormat(variant)).extension !== 'webp') throw new Error('Unable to prepare artwork previews.')
+   const {error} = await serviceClient.storage.from('covers').upload(featuredVariantPaths(path)[index], variant, {contentType:'image/webp',upsert:false,cacheControl:'31536000'})
+   if (error) throw new Error('Unable to upload artwork previews.')
+  }
+  const {error}=await serviceClient.storage.from('covers').upload(path,file,{contentType:format.type,upsert:false,cacheControl:'31536000'})
   if(error)throw new Error('Featured upload failed. Please try again.')
-  await syncImageVariants(file,path)
  }else{
   const name=form.get('name')
   if(typeof name!=='string'||!existing.some(file=>file.name===name))throw new Error('Featured image no longer exists. Reload and try again.')
@@ -78,6 +88,7 @@ export async function saveFeaturedForAdmin(form:FormData) {
  })
  if(old.length){const {error:cleanup}=await serviceClient.storage.from('covers').remove(old);if(cleanup){invalidateFeatured();throw new Error('Featured image saved, but alternate files could not be removed. Reload to review.')}}
  invalidateFeatured()
+ }, 'We couldn?t save Featured. Please try again.')
 }
 export async function deleteFeaturedForAdmin(name:string) {
  await guardAdmin()

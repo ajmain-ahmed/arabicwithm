@@ -1,5 +1,8 @@
 "use client"
 
+import { boundedRead } from '@/app/lib/readRecovery'
+
+import AwmPageError from '@/app/components/AwmPageError'
 import React, { useEffect, useState, useCallback } from "react"
 import {
   Box,
@@ -49,7 +52,7 @@ export default function PhrasesAdminPage() {
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchAllPhrasesForAdmin()
+      const data = await boundedRead(fetchAllPhrasesForAdmin())
       setPhrases(data)
     } catch (e: unknown) {
       setError(errorMessage(e) ?? "Failed to load phrases")
@@ -168,10 +171,10 @@ export default function PhrasesAdminPage() {
       </Box>
 
       {error && (
-        <Typography sx={{ color: "#c0392b", mb: 2, fontFamily: "var(--font-sans), sans-serif" }}>{error}</Typography>
+        <AwmPageError error={error}/>
       )}
 
-      {loading ? (
+      {error ? null : loading ? (
         <Typography sx={{ fontFamily: "var(--font-sans), sans-serif", color: "#7a6e65", fontSize: "1rem" }}>
           Loading phrases…
         </Typography>

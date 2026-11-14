@@ -3,7 +3,7 @@
 import https from 'node:https'
 import {randomUUID,createHash} from 'node:crypto'
 import { spawn, spawnSync } from 'node:child_process'
-import { mkdirSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs'
 import path from 'node:path'
 
 const reliabilityRules=new Map(),reliabilityHits=[];let reliabilityEmptySearch=false
@@ -35,6 +35,13 @@ const ids = {
   admin: '44444444-4444-4444-8444-444444444444',
 }
 const bookId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+const grammarNotes=[
+ {id:'12345678-1234-4123-8123-123456789001',rule_key:'adjective-government',title_en:'A governing adjective',title_ar:'إِعْمَالُ الصِّفَةِ الْمُشَبَّهَةِ',rule_cefr:'C1',category:'nahw',explanation:'جَمِيلٌ governs لَوْنُهَا, its raised subject (فَاعِلٌ). The colour is masculine, so the adjective is masculine here.',detail:'Compare the flower with its colour.',confidence:0.95,status:'candidate',example_count:1},
+ {id:'12345678-1234-4123-8123-123456789002',rule_key:'ishtighal',title_en:'A fronted noun resumed by a pronoun',title_ar:'الِاشْتِغَالُ',rule_cefr:'C2',category:'nahw',explanation:'The fronted noun is resumed by the pronoun attached to the verb. This is الِاشْتِغَالُ. Trace the pronoun to identify the relationship.',detail:'',confidence:0.8,status:'candidate',example_count:1},
+ {id:'12345678-1234-4123-8123-123456789003',rule_key:'agreement',title_en:'Adjective agreement',title_ar:'مُطَابَقَةُ النَّعْتِ',rule_cefr:'A1',category:'nahw',explanation:'An adjective follows the noun it describes in gender and number. Here both words are feminine singular.',detail:'',confidence:0.99,status:'approved',example_count:1},
+]
+const grammarExamples=grammarNotes.map((note,index)=>({id:`abcdefab-abcd-4abc-8abc-${String(index).padStart(12,'0')}`,grammar_note_id:note.id,arabic:index===0?'الْوَرْدَةُ جَمِيلٌ لَوْنُهَا.':index===1?'زَيْدًا أَكْرَمْتُهُ.':'الْوَرْدَةُ جَمِيلَةٌ.',english:index===0?'The flower has a beautiful colour.':index===1?'Zayd, I honoured him.':'The flower is beautiful.',explanation:note.explanation,highlight:index===0?'جَمِيلٌ لَوْنُهَا':index===1?'زَيْدًا أَكْرَمْتُهُ':'الْوَرْدَةُ جَمِيلَةٌ',source_kind:'chapter',source_id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',source_title:'First Chapter',parent_title:'Test Book',source_url:'/admin/books/preview/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',original_url:null,source_timestamp:null,example_cefr:'B2',review_status:note.status==='approved'?'approved':'candidate'}))
+const enrichmentJobs=[{id:'87654321-4321-4432-8432-123456789001',source_kind:'chapter',source_id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',source_title:'First Chapter',analyser:'grammar',status:'warnings',cursor:12,error_code:'analysis_provider_not_configured'}]
 const chapterId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
 const showId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc'
 const metadata = new Map()
@@ -57,6 +64,10 @@ function account(id) {
 }
 function authSession(id){const expires=Math.floor(Date.now()/1000)+3600,encode=value=>Buffer.from(JSON.stringify(value)).toString('base64url');return {access_token:`${encode({alg:'HS256',typ:'JWT'})}.${encode({sub:id,aud:'authenticated',exp:expires,role:'authenticated'})}.${Buffer.from('fixture-signature').toString('base64url')}`,refresh_token:'fixture-refresh',expires_in:3600,expires_at:expires,token_type:'bearer',user:account(id)}}
 const content = Array.from({ length: 30 }, (_, i) => ({ paragraph: i + 1, tokens: [{ arabic: 'كِتَابٌ', headword: 'كِتَاب', english: 'book', pos: 'noun', cefr: 'a1' }], translation: `A book. Paragraph ${i + 1}.` }))
+if (process.env.AWM_TEST_TOKEN_CASE === '1') {
+  content[0].tokens[0] = { ...content[0].tokens[0], arabic: '?????????', english: 'chapter', grammatical_case: { arabic: '?????????', english: 'Nominative' } }
+}
+
 let failImportAfter=null
 const formDrafts=new Map()
 const importJobs=new Map()
@@ -229,12 +240,20 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     return json(res,{})
   }
   if(url.pathname==='/fixture/featured-carousel'){configureFeaturedCarousel();return json(res,{})}
+  if(url.pathname==='/fixture/admin-audit'){
+    for (const chapter of tables.chapters) if(Array.isArray(chapter.content)) for(const block of chapter.content) for(const token of block.tokens??[]) token.entry_type??='word'
+    tables.phrases=[{id:1,phrase_ar_di:'?????????',phrase_tr:'marhaban',english:'Hello',cefr:'a1',notes:'Audit phrase'}]
+    tables.hanswehr_dictionary=[{id:1,word:'??????',definition:'book'}]
+    tables.content_suggestions=[{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',author_id:ids.reviewer,content_type:'book',parent_id:bookId,target_id:chapterId,line_index:0,location:'Test Book / First Chapter',original_block:content[0],original_arabic:'???????',original_english:'A book.',suggested_arabic:null,suggested_english:'A volume.',comment:'Audit suggestion',reason:'Clarification',status:'pending',created_at:'2026-11-01T00:00:00Z',updated_at:'2026-11-01T00:00:00Z'}]
+    return json(res,{})
+  }
   if(url.pathname==='/fixture/featured'){
     featuredObjects.clear();tables.featured_show_config=[]
     featuredObjects.set('featured/test-show.webp',{bytes:cover,type:'image/webp',updated_at:'2026-01-01T00:00:00Z'})
     featuredObjects.set('featured/ORPHAN.webp',{bytes:cover,type:'image/webp',updated_at:'2026-01-01T00:00:00Z'})
     return json(res,{})
   }
+  if(url.pathname==='/fixture/publication'&&process.env.AWM_TEST_CHAPTER_PUBLICATION==='1'){const chapter=tables.chapters.find(row=>row.slug===body.slug);if(chapter&&typeof body.published==='boolean')chapter.is_published=body.published;return json(res,{chapters:tables.chapters.map(({id,slug,is_published})=>({id,slug,is_published})),contentDigest:createHash('sha256').update(JSON.stringify(tables.chapters.map(c=>c.content))).digest('hex')})}
   if(url.pathname==='/fixture/reader-pagination'){tables.chapters[0].content=Array.from({length:body.blocks??120},(_,i)=>({paragraph:i+1,tokens:[{arabic:'\u0627\u0644\u0643\u062a\u0627\u0628',english:'book',pos:'noun',cefr:'a1'}],translation:`Reader block ${i+1}.`}));return json(res,{})}
   if(url.pathname==='/fixture/audiobook-audit'){configureAudiobookAudit(body.format);return json(res,{})}
   if(url.pathname==='/fixture/website-update') {
@@ -393,6 +412,41 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     let rpc = url.pathname.split('/').at(-1)
     rpcLog.push(rpc)
+    if(process.env.AWM_TEST_CONTENT_ENRICHMENT==='1'&&['website_edit_canonical_grammar','website_grammar_related','website_edit_grammar_example'].includes(rpc)){
+      if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+      const note=grammarNotes.find(value=>value.id===body.p_id)
+      if(rpc==='website_grammar_related')return json(res,note.related_ids??[])
+      if(rpc==='website_edit_canonical_grammar'){
+        Object.assign(note,body.p_fields)
+        if(body.p_fields.status==='approved')for(const example of grammarExamples)if(example.grammar_note_id===note.id&&body.p_fields.reviewed_examples?.includes(example.id))example.review_status='approved'
+        return json(res,{ok:true})
+      }
+      const example=grammarExamples.find(value=>value.id===body.p_id)
+      if(!example.arabic.includes(body.p_fields.highlight))return json(res,{message:'Invalid exact highlight'},400)
+      Object.assign(example,body.p_fields,{review_status:'candidate'})
+      return json(res,{ok:true})
+    }
+    if(process.env.AWM_TEST_CONTENT_ENRICHMENT==='1'&&rpc.startsWith('website_')&&['website_admin_grammar','website_scan_enrichment','website_claim_enrichment'].includes(rpc)){
+      if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+      if(rpc==='website_scan_enrichment')return json(res,{scanned:4,queued:8,after:'vocabulary:1',done:true})
+      if(rpc==='website_claim_enrichment')return json(res,[])
+      const filter=body.p_filter??{},note=grammarNotes.find(value=>value.id===body.p_id)
+      if(body.p_action==='list')return json(res,{notes:grammarNotes.filter(value=>!value.merged_into&&(!filter.status||value.status===filter.status||(filter.status==='candidate'&&value.status==='approved'&&grammarExamples.some(example=>example.grammar_note_id===value.id&&example.review_status==='candidate')))&&(!filter.cefr||value.rule_cefr===filter.cefr)&&(!filter.category||value.category===filter.category)&&(!filter.search||`${value.title_en} ${value.title_ar} ${value.explanation}`.toLowerCase().includes(filter.search.toLowerCase()))),jobs:enrichmentJobs,distribution:Object.fromEntries(['A1','A2','B1','B2','C1','C2'].map(level=>[level,grammarNotes.filter(value=>value.rule_cefr===level&&value.status==='candidate'&&!value.merged_into).length])),job_counts:{warnings:enrichmentJobs.filter(value=>value.status==='warnings').length,queued:enrichmentJobs.filter(value=>value.status==='queued').length}})
+      if(body.p_action==='examples')return json(res,grammarExamples.filter(value=>value.grammar_note_id===body.p_id).slice((filter.page??0)*25,(filter.page??0)*25+25))
+      if(body.p_action==='edit'){Object.assign(note,body.p_fields);if(body.p_fields.status==='approved')for(const example of grammarExamples)if(example.grammar_note_id===note.id&&body.p_fields.reviewed_examples?.includes(example.id))example.review_status='approved';return json(res,{ok:true})}
+      if(body.p_action==='example_status'){const example=grammarExamples.find(value=>value.id===body.p_id);example.review_status=body.p_fields.status;return json(res,{ok:true})}
+      if(body.p_action==='retry'){const job=enrichmentJobs.find(value=>value.id===body.p_id);job.status='queued';job.error_code=null;return json(res,{ok:true})}
+      if(body.p_action==='merge'){note.merged_into=body.p_fields.target;note.status='rejected';for(const example of grammarExamples)if(example.grammar_note_id===note.id)example.grammar_note_id=note.merged_into;return json(res,{ok:true})}
+    }
+    if(rpc==='website_phrase_of_day'){
+      if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+      return json(res,tables.phrases?.[0]??null)
+    }
+    if(rpc==='website_write_phrase'){
+      if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+      const phrase=tables.phrases.find(value=>value.id===body.p_id);if(!phrase)return json(res,{message:'Missing phrase'},400)
+      Object.assign(phrase,body.p_fields);return json(res,phrase.id)
+    }
     if(rpc==='home_for_you_spotlight'){
       spotlightRequests.push(body)
       if(spotlightSelection==='error')return json(res,{code:'XX000',message:'Synthetic selection failure'},500)
@@ -525,6 +579,13 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       return json(res,{updatedAt:row.updated_at,enrichment:'unavailable'})
     }
     if(rpc==='admin_manual_enrichment'||rpc==='admin_retry_manual_enrichment'){const row=tables.youtube_transcripts.find(row=>row.id===body.p_id);return json(res,row?{status:row.enrichment_status??'unavailable',diagnostics:[],originalJson:row.original_json??null}:null)}
+    if(rpc==='review_content_suggestion'&&process.env.AWM_TEST_ADMIN_AUDIT==='1'){
+      if(roleFor(body.p_actor)!=='admin')return json(res,{message:'Forbidden'},403)
+      const row=tables.content_suggestions.find(row=>row.id===body.p_id)
+      if(!row)return json(res,{ok:false,message:'Not found'})
+      row.admin_response=body.p_response;row.status=body.p_action==='reject'?'rejected':body.p_action==='accept'?'accepted':row.status
+      return json(res,{ok:true})
+    }
     if (rpc === 'account_role') {
       await new Promise(resolve => setTimeout(resolve, 350))
       return json(res, roleFor(body.p_user_id))
@@ -599,6 +660,17 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
         else if(!(req.headers.prefer??'').includes('ignore-duplicates'))Object.assign(existing,body)
         return json(res,[])
       }
+      if(process.env.AWM_TEST_ADMIN_AUDIT==='1'&&['shows','episodes','chapters','phrases','hanswehr_dictionary'].includes(table)){
+        if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+        if(req.method==='POST'){
+          const row={...(table==='chapters'?{is_published:false}:{}),...body,id:body.id??randomUUID(),created_at:new Date().toISOString()};tables[table]??=[];tables[table].push(row)
+          return json(res,row,201)
+        }
+        const selected=(tables[table]??[]).filter(row=>[...url.searchParams].filter(([,value])=>value.startsWith('eq.')).every(([key,value])=>String(row[key])===value.slice(3)))
+        if(req.method==='DELETE')tables[table]=tables[table].filter(row=>!selected.includes(row))
+        else for(const row of selected)Object.assign(row,body)
+        return json(res,selected[0]??null)
+      }
       if(table==='books'){
         if(process.env.AWM_TEST_BOOK_COVERS==='1'&&bookCoverSaveFailure)return json(res,{message:'Synthetic book save failure'},500)
         if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
@@ -650,7 +722,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     if(req.headers.authorization!=='Bearer fixture-service-key'){
       if(table==='book_release_reminders')rows=rows.filter(row=>row.user_id===userId)
       if(table==='app_notifications')rows=rows.filter(row=>row.user_id===null||row.user_id===userId)
-      if(table==='chapters')rows=userId?rows.filter(row=>tables.books.find(book=>book.id===row.book_id)?.is_completed!==false):[]
+      if(table==='chapters')rows=userId?rows.filter(row=>row.is_published===true&&tables.books.find(book=>book.id===row.book_id)?.is_completed!==false):[]
     }
     if(table==='account_roles')rows=[{user_id:owner,role:roleFor(owner)}]
     if(table==='memory_sessions')rows=memorySnapshots.has(owner)?[{user_id:owner,state:memorySnapshots.get(owner)}]:[]
@@ -662,6 +734,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     for (const [key, filter] of url.searchParams) {
       if (filter.startsWith('eq.')) rows = rows.filter(row => String(row[key]) === filter.slice(3))
       if (filter.startsWith('in.(')) { const values = filter.slice(4, -1).split(','); rows = rows.filter(row => values.includes(String(row[key]))) }
+      if (filter.startsWith('gt.')) rows = rows.filter(row => Number(row[key]) > Number(filter.slice(3)))
       if (filter.startsWith('lte.')) rows = rows.filter(row => Number(row[key]) <= Number(filter.slice(4)))
     }
     if(table==='youtube_transcripts'&&url.searchParams.get('select')?.includes('source_language:raw_transcript->>source_language'))rows=rows.map(row=>({...row,source_language:row.raw_transcript?.source_language??null}))
@@ -695,7 +768,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     const item=profilePresetObjects.get(presetDownload[1]+'/'+decodeURIComponent(presetDownload[2]));if(!item)return json(res,{message:'Missing preset'},404)
     res.writeHead(200,{'Content-Type':item.type});res.end(item.bytes);return
   }
-  if(process.env.AWM_TEST_BOOK_COVERS==='1'&&/^\/storage\/v1\/object\/(?:public\/)?covers\/(?:books|variants\/books)\//.test(url.pathname)){
+  if(process.env.AWM_TEST_BOOK_COVERS==='1'&&/^\/storage\/v1\/object\/(?:public\/)?covers\/(?:books|cartoons|episodes|variants\/(?:books|cartoons|episodes))\//.test(url.pathname)){
     const name=decodeURIComponent(url.pathname.replace(/^\/storage\/v1\/object\/(?:public\/)?covers\//,''))
     if(req.method==='POST'){
       if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
@@ -714,7 +787,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
   }
   if(url.pathname==='/storage/v1/object/list/covers')return json(res,[...featuredObjects].filter(([name])=>name.startsWith(body.prefix+'/')).map(([name,value])=>({id:name,name:name.split('/').at(-1),updated_at:value.updated_at})).slice(body.offset??0,(body.offset??0)+(body.limit??100)))
   if(url.pathname==='/storage/v1/object/covers'&&req.method==='DELETE'){for(const name of body.prefixes??[])featuredObjects.delete(name);return json(res,[])}
-  if(url.pathname.startsWith('/storage/v1/object/covers/featured/')&&req.method==='POST'){
+  if((/^\/storage\/v1\/object\/covers\/(?:featured|variants\/featured)\//.test(url.pathname))&&req.method==='POST'){
     const name=decodeURIComponent(url.pathname.slice('/storage/v1/object/covers/'.length))
     let bytes=Buffer.concat(chunks),type=req.headers['content-type']
     if(type?.startsWith('multipart/form-data')){
@@ -724,7 +797,7 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     featuredObjects.set(name,{bytes,type,updated_at:new Date().toISOString()});return json(res,{Key:'covers/'+name,Id:name})
   }
-  if(url.pathname.startsWith('/storage/v1/object/public/covers/featured/')){
+  if((/^\/storage\/v1\/object\/public\/covers\/(?:featured|variants\/featured)\//.test(url.pathname))){
     const value=featuredObjects.get(decodeURIComponent(url.pathname.slice('/storage/v1/object/public/covers/'.length)))
     if(!value)return json(res,{message:'Not found'},404)
     res.writeHead(200,{'Content-Type':value.type});res.end(value.bytes);return
@@ -788,6 +861,21 @@ if(process.env.AWM_TEST_STRUCTURED_BOOKS==='1'){
   for(const row of tables.book_chapter_audio.filter(row=>row.chapter_id===chapterId))tables.book_chapter_audio.push({...row,chapter_id:structuredId})
 }
 
+for(const chapter of tables.chapters)chapter.is_published??=true
+if(process.env.AWM_TEST_CONTENT_ENRICHMENT==='1')tables.phrases=[{id:1,phrase_ar_di:'فِي الْوَاقِعِ',phrase_tr:'fī l-wāqiʿ',english:'In fact',cefr:'B1',notes:'Curated note'}]
+if(process.env.AWM_TEST_CHAPTER_PUBLICATION==='1'){
+ const structured=JSON.parse(readFileSync('test-fixtures/structured-chapter.json','utf8'))
+ tables.chapters.push(
+ {id:'abababab-abab-4bab-8bab-000000000010',book_id:bookId,slug:'draft-token',title:'Unpublished token chapter',chapter_number:10,content,is_published:false},
+ {id:'abababab-abab-4bab-8bab-000000000011',book_id:bookId,slug:'draft-incomplete',title:'Incomplete chapter',chapter_number:11,content:{schema_version:'1.1.0'},is_published:false},
+ {id:'abababab-abab-4bab-8bab-000000000012',book_id:bookId,slug:'draft-structured',title:'Unpublished structured chapter',chapter_number:12,content:structured,is_published:false})
+ if(existsSync('test-fixtures/ag-ch-002.json'))tables.chapters.push({id:'abababab-abab-4bab-8bab-000000000013',book_id:bookId,slug:'ag-ch-002',title:'Actual ag-ch-002',chapter_number:13,content:JSON.parse(readFileSync('test-fixtures/ag-ch-002.json','utf8')),is_published:false})
+ const hiddenBookId='aaaaaaaa-aaaa-4aaa-8aaa-000000000002'
+ tables.books.push({id:hiddenBookId,slug:'unreleased-book',title:'Unreleased Book',is_completed:false})
+ tables.chapters.push({id:'abababab-abab-4bab-8bab-000000000014',book_id:hiddenBookId,slug:'hidden-parent',title:'Published chapter in unreleased Book',chapter_number:1,content,is_published:true})
+}
+
+
 backend.listen(backendPort, '127.0.0.1', () => {
   const env={ ...process.env, AWM_BROWSER_TEST: '1', SUPABASE_URL: backendUrl, NEXT_PUBLIC_SUPABASE_URL: backendUrl, SUPABASE_SERVICE_KEY: 'fixture-service-key', NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'fixture-public-key', NEXT_PUBLIC_SITE_URL: webUrl, NODE_EXTRA_CA_CERTS: certificate }
   let next
@@ -804,3 +892,5 @@ backend.listen(backendPort, '127.0.0.1', () => {
   const stop = () => { next.kill(); backend.close(); setTimeout(() => process.exit(), 500).unref() }
   process.on('SIGINT', stop); process.on('SIGTERM', stop)
 })
+
+if(process.env.AWM_TEST_DAILY_PHRASE==='1')tables.phrases=[{id:71,phrase_ar_di:'إِنَّا لِلَّهِ وَإِنَّا إِلَيْهِ رَاجِعُونَ',english:'We belong to God and to Him we return.',word_glosses:[{arabic:'إِنَّا',english:'indeed we'},{arabic:'لِلَّهِ',english:'belong to God'},{arabic:'وَإِنَّا',english:'and indeed we'},{arabic:'إِلَيْهِ',english:'to Him'},{arabic:'رَاجِعُونَ',english:'return'}]}]

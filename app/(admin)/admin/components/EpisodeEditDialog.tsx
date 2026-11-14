@@ -1,5 +1,7 @@
 "use client"
 
+import { boundedRead } from '@/app/lib/readRecovery'
+
 import React, { useEffect, useState } from "react"
 import { useAdminListCache } from "@/app/(admin)/admin/components/AdminListCacheProvider"
 import {
@@ -62,6 +64,7 @@ export default function EpisodeEditDialog({
 }: EpisodeEditDialogProps) {
   const cache = useAdminListCache()
   const [loading, setLoading] = useState(false)
+  const [coverUploading, setCoverUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState(0)
@@ -91,6 +94,7 @@ export default function EpisodeEditDialog({
     setShowId(initialShowId ?? "")
 
     if (isNew) {
+      setLoading(false)
       setSlug("")
       setTitle("")
       setLevel("")
@@ -106,9 +110,11 @@ export default function EpisodeEditDialog({
       return
     }
 
+    let active = true
     setLoading(true)
-    fetchEpisodeForAdmin(episodeId!)
+    boundedRead(fetchEpisodeForAdmin(episodeId!))
       .then((row: EpisodeWithTranscript | null) => {
+        if (!active) return
         if (!row) {
           setError("Episode not found")
           return
@@ -127,11 +133,13 @@ export default function EpisodeEditDialog({
         setCoverCrop(row.cover_crop)
         setTranscriptJson(JSON.stringify(row.transcript ?? [], null, 2))
       })
-      .catch((e: unknown) => setError(errorMessage(e) ?? "Failed to load episode"))
-      .finally(() => setLoading(false))
+      .catch((e: unknown) => { if (active) setError("Unable to load episode details. Close this dialog and reload the page.") })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
   }, [open, episodeId, isNew, initialShowId])
 
   const handleSave = async () => {
+    if (saving || coverUploading || loading) return
     setSaving(true)
     setError(null)
 
@@ -195,7 +203,7 @@ export default function EpisodeEditDialog({
     <>
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => { if (!saving && !coverUploading) onClose() }}
       fullScreen={isMobile}
       maxWidth="xl"
       fullWidth={!isMobile}
@@ -283,6 +291,8 @@ export default function EpisodeEditDialog({
                 <AdminTextField label="Tags (comma separated)" value={tags} onChange={(e) => setTags(e.target.value)} fullWidth size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
                 <AdminTextField label="Description" value={description} onChange={(e) => setDescription(e.target.value)} fullWidth multiline rows={3} size="small" sx={{ "& .MuiInputBase-root": { fontSize: "1rem" }, "& .MuiInputLabel-root": { fontSize: "0.95rem" } }} />
                 <ImageUploadField
+              disabled={saving || loading || coverUploading}
+              onUploadingChange={setCoverUploading}
                   label="Episode cover"
                   bucket="covers"
                   path={`episodes/${slug || "episode-draft"}.webp`}
@@ -357,7 +367,7 @@ export default function EpisodeEditDialog({
         <Button
           variant="outlined"
           onClick={onClose}
-          disabled={saving}
+          disabled={saving || coverUploading}
           sx={{ fontFamily: "var(--font-sans), sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", borderColor: "rgba(122,110,101,0.3)", color: "#7a6e65", width: { xs: "100%", sm: "auto" } }}
         >
           Cancel
@@ -365,7 +375,7 @@ export default function EpisodeEditDialog({
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={saving || loading}
+          disabled={saving || loading || coverUploading}
           startIcon={<Save sx={{ fontSize: "1rem" }} />}
           sx={{ background: "#2c1a0e", color: "#f5ede0", fontFamily: "var(--font-sans), sans-serif", fontWeight: 600, fontSize: "0.9rem", textTransform: "none", borderRadius: "10px", width: { xs: "100%", sm: "auto" }, "&:hover": { background: "#1a0f08" } }}
         >

@@ -1,3 +1,4 @@
+import { usesWebpFeaturedVariants } from '@/app/lib/featuredFile'
 export const FEATURED_VARIANT_WIDTHS = [828, 1600] as const
 export const COVER_VARIANT_WIDTHS = [640, 1080] as const
 
@@ -6,7 +7,7 @@ export function featuredVariantUrl(source: string, width: number): string | null
   try {
     const url = new URL(source)
     if (!/\/storage\/v1\/object\/public\/covers\/featured\/[^/]+\.[^/]+$/.test(url.pathname)) return null
-    url.pathname = url.pathname.replace('/covers/featured/', '/covers/variants/featured/').replace(/\.[^/.]+$/, `-${width}.avif`)
+    url.pathname = url.pathname.replace('/covers/featured/', '/covers/variants/featured/').replace(/\.[^/.]+$/, `-${width}.${usesWebpFeaturedVariants(url.pathname) ? 'webp' : 'avif'}`)
     return url.toString()
   } catch {
     return null
@@ -21,7 +22,7 @@ export function featuredImageSrcSet(source: string): string | undefined {
 export function featuredVariantPaths(path: string): string[] {
   const match = /^featured\/([^/]+)\.[^/]+$/.exec(path)
   if (!match) return []
-  return FEATURED_VARIANT_WIDTHS.map(width => `variants/featured/${match[1]}-${width}.avif`)
+  return FEATURED_VARIANT_WIDTHS.map(width => `variants/featured/${match[1]}-${width}.${usesWebpFeaturedVariants(path) ? 'webp' : 'avif'}`)
 }
 
 export function coverVariantPath(path: string, width: number): string | null {

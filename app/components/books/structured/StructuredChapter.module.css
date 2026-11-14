@@ -35,3 +35,12 @@
 .references { padding-inline-start:1.4rem; } .references li + li { margin-top:1.25rem; }
 .notice { padding:1rem; border-inline-start:3px solid var(--awm-gold); color:var(--awm-muted); background:color-mix(in srgb,var(--awm-gold) 6%,var(--awm-white)); }
 @media(max-width:600px) { .card,.diagram { padding:.8rem; } .segment { flex-basis:100%; } .node { flex-basis:100%; } .table th,.table td { padding:.55rem; } }
+
+.chapter button,.chapter select,.chapter input:not([type=radio]):not([type=checkbox]) { max-width:100%; font:inherit; color:var(--awm-bark); background:var(--awm-white); border:1px solid var(--awm-gold); border-radius:8px; padding:.45rem .65rem; }
+.chapter button { cursor:pointer; margin:.5rem .5rem .5rem 0; } .chapter button:disabled { opacity:.55; cursor:default; }
+.chapter button:focus-visible,.chapter select:focus-visible { outline:2px solid var(--awm-gold); outline-offset:3px; }
+.phase { margin-top:2rem; } .feedback { margin-top:1rem; padding:.8rem; border-inline-start:3px solid var(--awm-gold); }
+.assignment { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:center; gap:.65rem; margin-block:.8rem; }
+.assignment select { width:100%; } .blanks { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; } .blanks input { width:10rem; }
+.ordering { padding-inline-start:1.5rem; } .ordering li { padding:.5rem; border-bottom:1px solid var(--awm-muted); } .ordering li>div { display:inline-flex; }
+.flow { display:flex; align-items:center; gap:.7rem; overflow-x:auto; max-width:100%; padding:.5rem; } .flow>.node { flex:0 0 150px; } .flow>.flowArrow { flex:0 0 auto; max-width:130px; text-align:center; }

@@ -8,7 +8,7 @@ import { createHash } from "node:crypto"
 import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
 import { extractChapterTeaser } from "@/app/lib/bookChapterTeaser"
 import { stripDiacritics } from "@/app/lib/arabic"
-import { isGrammarLabel, type BookTokenGrammar } from '@/app/lib/bookTokenGrammar'
+import { isGrammarLabel, readGrammaticalCase, type BookTokenGrammar } from '@/app/lib/bookTokenGrammar'
 import type { CartoonWordEntry } from "@/app/lib/cartoons"
 import { normalizeThumbnailCrop, type ThumbnailCrop } from "@/app/lib/thumbnailCrop"
 import { catalogueCoverUrl } from '@/app/lib/catalogueCoverUrl'
@@ -142,7 +142,7 @@ export const fetchBooksForPublic = unstable_cache(
 
     const [{ data: books, error: booksError }, { data: chapters, error: chaptersError }] = await Promise.all([
       serviceClient.from("books").select("*").order("title"),
-      serviceClient.from("chapters").select("book_id"),
+      serviceClient.from("chapters").select("book_id").eq("is_published", true),
     ])
 
     if (booksError) throw new Error(booksError.message)
@@ -177,7 +177,7 @@ export const fetchBookBySlugPublic = unstable_cache(
 
     const { count, error: countError } = await serviceClient
       .from("chapters")
-      .select("id", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true }).eq("is_published", true)
       .eq("book_id", book.id)
 
     if (countError) throw new Error(countError.message)
@@ -202,7 +202,7 @@ const fetchChapterListExtrasForBookPublic = unstable_cache(
 
     let query = serviceClient
       .from("chapters")
-      .select("id, content")
+      .select("id, content").eq("is_published",true)
       .eq("book_id", bookId)
     const wholeBookFree = book.premiumExempt || book.chapterCount <= book.freeChapterCount
     if (!wholeBookFree) query = query.lte("chapter_number", book.freeChapterCount)
@@ -226,23 +226,13 @@ const fetchChaptersForBookPublicCached = unstable_cache(
   async (bookId: string): Promise<PublicChapter[]> => {
     if (!hasServiceClientConfig()) return []
 
-    const { data, error } = await serviceClient
-      .from("chapters")
-      .select("id, slug, title, chapter_number")
-      .eq("book_id", bookId)
-      .order("chapter_number")
-
-    if (error) throw new Error(error.message)
-
-
-    return (data ?? []).map((chapter) => ({
-      id: String(chapter.id),
-      slug: String(chapter.slug),
-      title: String(chapter.title),
-      chapterNumber: Number(chapter.chapter_number),
-
-      blockCount: 0,
-    }))
+    const chapters: PublicChapter[] = []
+    for (let offset=0; ; offset+=500) {
+      const {data,error}=await serviceClient.from('chapters').select('id,slug,title,chapter_number').eq('book_id',bookId).order('chapter_number').order('id').range(offset,offset+499)
+      if(error)throw new Error(error.message)
+      chapters.push(...(data ?? []).map(chapter=>({id:String(chapter.id),slug:String(chapter.slug),title:String(chapter.title),chapterNumber:Number(chapter.chapter_number),blockCount:0})))
+      if((data?.length ?? 0)<500)return chapters
+    }
   },
   ["books", "public", "chapters", "chapter-teasers-v3"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
@@ -250,7 +240,9 @@ const fetchChaptersForBookPublicCached = unstable_cache(
 
 export async function fetchChaptersForBookPublic(bookId: string): Promise<PublicChapter[]> {
   if (!await isBookReleased(bookId)) return []
-  return fetchChaptersForBookPublicCached(bookId)
+  const chapters = await fetchChaptersForBookPublicCached(bookId)
+  const published = new Set(await releasedChapterIds(chapters.map(chapter=>chapter.id)))
+  return chapters.filter(chapter=>published.has(chapter.id))
 }
 
 export async function fetchChapterCardsForBookPublic(bookId: string): Promise<PublicChapter[]> {
@@ -269,7 +261,7 @@ export const fetchChapterNavigationForPublic = unstable_cache(async (): Promise<
   if (!hasServiceClientConfig()) return {}
   const ids = (await fetchBooksForPublic()).filter(book => book.isCompleted !== false).map(book => book.id)
   if (!ids.length) return {}
-  const {data,error} = await serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number').in('book_id', ids).order('chapter_number')
+  const {data,error} = await serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number').eq('is_published',true).in('book_id', ids).order('chapter_number')
   if(error) throw new Error(error.message)
   const result: Record<string, PublicChapter[]> = {}
   for(const row of data ?? []) (result[row.book_id] ??= []).push({id:row.id,slug:row.slug,title:row.title,chapterNumber:row.chapter_number,blockCount:0})
@@ -331,7 +323,7 @@ const fetchChapterContent = unstable_cache(
                the key keeps the reader payload (already ~150KB per chapter)
                that much lighter with no behavior change. */
             syntactic_role: isGrammarLabel(token.syntactic_role) ? token.syntactic_role : undefined,
-            grammatical_case: isGrammarLabel(token.grammatical_case) ? token.grammatical_case : undefined,
+            grammatical_case: readGrammaticalCase(token.grammatical_case),
             entryType: (token.entry_type === "phrase" ? "phrase" : "word") as PublicBookToken["entryType"],
           }
         }).filter((token) => token.arabic),
@@ -347,7 +339,7 @@ const fetchChapterContent = unstable_cache(
       content,
     }
   },
-  ["books", "public", "chapter", "cartoon-tooltip-v1", "book-punctuation-v1", "book-grammar-v1", "structured-chapter-v1"],
+  ["books", "public", "chapter", "cartoon-tooltip-v1", "book-punctuation-v1", "book-grammar-v1", "structured-chapter-v11"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
 
@@ -356,6 +348,9 @@ export async function fetchChapterForPublic(bookId: string, chapterSlug: string)
   if (!await isBookReleased(bookId)) return null
   /* One query serves both the entitlement gate and the payload: chapter_number
      travels with the content, so there is no separate metadata round trip. */
+  const {data: published, error: publicationError} = await serviceClient.from("chapters").select("is_published").eq("book_id",bookId).eq("slug",chapterSlug).maybeSingle()
+  if (publicationError) throw new Error("Unable to check chapter availability.")
+  if (published?.is_published !== true) return null
   const chapter = await fetchChapterContent(bookId, chapterSlug)
   if (!chapter) return null
   if (!canAccessBookChapter(true)) return null
@@ -385,7 +380,7 @@ export const fetchExploreBookChapterMetasForPublic = unstable_cache(
 
     const [{ data: books, error: booksError }, { data: chapters, error: chaptersError }] = await Promise.all([
       serviceClient.from("books").select("*"),
-      serviceClient.from("chapters").select("id, book_id, slug, title, chapter_number"),
+      serviceClient.from("chapters").select("id, book_id, slug, title, chapter_number").eq("is_published",true),
     ])
 
     if (booksError) throw new Error(booksError.message)
@@ -457,6 +452,7 @@ function parseExploreBlocks(rawContent: unknown): ExploreBookBlock[] {
         english: typeof token.english === "string" ? token.english : "",
         cefr: typeof token.cefr === "string" ? token.cefr.toLowerCase() : undefined,
         pos: typeof token.pos === "string" ? token.pos : undefined,
+        grammatical_case: readGrammaticalCase(token.grammatical_case),
         lemma: lemma || undefined,
         headword: headword || undefined,
         root: typeof token.root === "string" ? token.root.trim() || undefined : undefined,
@@ -601,3 +597,24 @@ export const fetchExploreBookChapterPageCounts = unstable_cache(
   ["books", "public", "explore-chapter-page-counts", "v1"],
   { revalidate: publicRevalidate, tags: ["books-public"] }
 )
+
+
+/** Admin-only access to the existing reader representation and full navigation. */
+export async function fetchChapterForAdminPreview(chapterId: string) {
+  const { guardAdmin } = await import('@/app/actions/auth')
+  await guardAdmin()
+  const { data, error } = await serviceClient.from('chapters').select('book_id,slug,content,is_published').eq('id', chapterId).maybeSingle()
+  if (error) throw new Error('Unable to load the chapter preview.')
+  if (!data) return null
+  const [chapter, chapters, bookRead] = await Promise.all([
+    fetchChapterContent(data.book_id, data.slug),
+    fetchChaptersForBookPublicCached(data.book_id),
+    serviceClient.from('books').select('*').eq('id',data.book_id).maybeSingle(),
+  ])
+  if(bookRead.error)throw new Error('Unable to load the preview Book.')
+  const book=bookRead.data?mapBook(bookRead.data,chapters.length):null
+  const raw = data.content && typeof data.content === 'object' && !Array.isArray(data.content) ? data.content as Record<string, unknown> : null
+  const previewDiagnostic = raw && 'schema_version' in raw && !('sections' in raw)
+    ? 'This draft chapter cannot be previewed yet: its structured JSON is missing the sections list.' : null
+  return chapter && book ? { chapter, chapters, book, previewDiagnostic, isPublished:data.is_published === true } : null
+}

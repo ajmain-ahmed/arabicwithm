@@ -56,49 +56,27 @@ export async function uploadCoverImage(formData: FormData): Promise<string | Act
     throw new Error("Cover image must be a WebP file")
   }
 
-  if (path.startsWith('books/')) {
+  {
     // Encoding stays in the browser: the deployed Worker cannot load native Sharp.
-    // Every object is new, so failures and unsaved drafts never alter an old cover.
+    // Books use versioned objects. Shows and episodes retain their canonical paths.
     const variants = COVER_VARIANT_WIDTHS.map(width => formData.get(`variant${width}`))
     for (const variant of variants) {
       if (!(variant instanceof Blob) || !variant.size || variant.size > MAX_FILE_BYTES || !isWebPHeader(new Uint8Array(await variant.slice(0, 12).arrayBuffer()))) {
         return { ok: false, error: 'Please refresh Admin and upload the cover again. The image previews could not be prepared.' }
       }
     }
-    return actionResult('book cover upload', async () => {
-      const destination = bookCoverUploadPath(path)
+    return actionResult('cover upload', async () => {
+      const destination = path.startsWith('books/') ? bookCoverUploadPath(path) : path
       const paths = coverVariantPaths(destination)
       const uploads = [...variants.map((body, index) => ({ path: paths[index], body: body as Blob })), { path: destination, body: file }]
       for (const item of uploads) {
-        const { error } = await serviceClient.storage.from(bucket).upload(item.path, item.body, { contentType: 'image/webp', cacheControl: '31536000', upsert: false })
-        if (error) throw new Error(`Unable to store book cover asset ${item.path}: ${error.message}`)
+        const { error } = await serviceClient.storage.from(bucket).upload(item.path, item.body, { contentType: 'image/webp', cacheControl: path.startsWith('books/') ? '31536000' : '0', upsert: !path.startsWith('books/') })
+        if (error) throw new Error(`Unable to store cover asset ${item.path}: ${error.message}`)
       }
       return serviceClient.storage.from(bucket).getPublicUrl(destination).data.publicUrl
     }, "We couldn't upload this cover. Please try again.")
   }
 
-  const { data, error } = await serviceClient.storage
-    .from(bucket)
-    .upload(path, file, {
-      contentType: "image/webp",
-      // Note: Supabase's storage gateway currently serves objects with
-      // `cache-control: no-cache` regardless of this value — the covers API
-      // route sets its own caching headers. Record it anyway so the objects
-      // are correct if platform behavior ever changes.
-      cacheControl: "86400",
-      upsert: true,
-    })
-
-  if (error) {
-    console.error("[uploadCoverImage] error:", error.message)
-    throw new Error("Cover upload failed. Please try again.")
-  }
-  const { syncImageVariants } = await import('@/app/lib/imageVariants')
-  await syncImageVariants(file, path)
-
-  const { data: urlData } = serviceClient.storage.from(bucket).getPublicUrl(data?.path ?? path)
-
-  return urlData.publicUrl
 }
 
 export async function uploadAudiobookAudio(formData: FormData): Promise<string> {

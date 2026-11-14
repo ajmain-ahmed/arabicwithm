@@ -52,7 +52,7 @@ const save = (language: 'ar' | 'en', chapterId = chapter, isPublished = true) =>
 beforeEach(() => {
   vi.clearAllMocks(); vi.stubEnv('SUPABASE_URL', 'https://example.supabase.co')
   state.cache.clear(); state.failure = ''
-  state.tables = { books: [{ id: 'book', slug: 'book' }], chapters: [{ id: chapter, book_id: 'book', slug: 'one' }, { id: second, book_id: 'book', slug: 'two' }], book_chapter_audio: [] }
+  state.tables = { books: [{ id: 'book', slug: 'book' }], chapters: [{ id: chapter, book_id: 'book', is_published: true, slug: 'one' }, { id: second, book_id: 'book', is_published: true, slug: 'two' }], book_chapter_audio: [] }
 })
 
 it.each(['ar', 'en'] as const)('discovers the first %s audio after Admin save despite a warm empty cache', async language => {
@@ -95,7 +95,7 @@ it('does not silently turn query failures into an empty catalogue', async () => 
 })
 
 it('pages chapters past the API row limit and reuses full Storage URLs through the canonical resolver', async () => {
-  state.tables.chapters = Array.from({ length: 1001 }, (_, i) => ({ id: String(i), book_id: 'book' }))
+  state.tables.chapters = Array.from({ length: 1001 }, (_, i) => ({ id: String(i), book_id: 'book', is_published:true }))
   state.tables.book_chapter_audio = [{ chapter_id: '1000', language: 'en', source_type: 'supabase_storage', storage_path: 'https://example.supabase.co/storage/v1/object/public/audiobooks/english/book/audio.wav', is_published: true }]
   expect(await fetchBookIdsWithPublishedAudio(['book'])).toEqual(['book'])
 })

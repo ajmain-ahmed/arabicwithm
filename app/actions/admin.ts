@@ -17,6 +17,7 @@ import {
   normalizeThumbnailCrop,
   type ThumbnailCrop,
 } from "@/app/lib/thumbnailCrop"
+import { withDataDeadline } from '@/app/lib/boundedFetch'
 import { z } from 'zod'
 import { unstable_rethrow } from 'next/navigation'
 import { bookInputSchema, bookSaveError } from '@/app/lib/bookInput'
@@ -264,10 +265,11 @@ export async function fetchShowForAdmin(id: string): Promise<ShowRow | null> {
     .eq("id", id)
     .single()
 
-  if (error || !data) {
-    if (error) console.error("[fetchShowForAdmin] error:", error.message)
-    return null
+  if (error && error.code !== 'PGRST116') {
+    console.error("[fetchShowForAdmin] error:", error.message)
+    throw new Error('Unable to load this show. Please reload the page.')
   }
+  if (!data) return null
 
   return mapShowRow(data as Record<string, unknown>)
 }
@@ -380,10 +382,11 @@ export async function fetchEpisodeForAdmin(
     .eq("id", id)
     .single()
 
-  if (error || !data) {
-    if (error) console.error("[fetchEpisodeForAdmin] error:", error.message)
-    return null
+  if (error && error.code !== 'PGRST116') {
+    console.error("[fetchEpisodeForAdmin] error:", error.message)
+    throw new Error('Unable to load this episode. Please reload the page.')
   }
+  if (!data) return null
 
   return {
     ...mapEpisodeRow(data as Record<string, unknown>),
@@ -636,10 +639,11 @@ export async function fetchBookForAdmin(id: string): Promise<BookRow | null> {
     .eq("id", id)
     .single()
 
-  if (error || !data) {
-    if (error) console.error("[fetchBookForAdmin] error:", error.message)
-    return null
+  if (error && error.code !== 'PGRST116') {
+    console.error("[fetchBookForAdmin] error:", error.message)
+    throw new Error('Unable to load this book. Please reload the page.')
   }
+  if (!data) return null
 
   return mapBookRow(data as Record<string, unknown>)
 }
@@ -707,13 +711,15 @@ export type ChapterRow = {
   chapter_number: number
   created_at: string | null
   updated_at: string | null
+  productionStatus?: string | null
+  is_published?: boolean
 }
 
 export type ChapterWithContent = ChapterRow & {
   content: Record<string, unknown> | unknown[] | null
 }
 
-export type ChapterInput = Omit<ChapterRow, "id" | "created_at" | "updated_at"> & {
+export type ChapterInput = Omit<ChapterRow, "id" | "created_at" | "updated_at" | "productionStatus"> & {
   content?: Record<string, unknown> | unknown[] | null
 }
 
@@ -722,18 +728,20 @@ export async function fetchChaptersForBookAdmin(
 ): Promise<ChapterRow[]> {
   await guardAdmin()
 
-  const { data, error } = await serviceClient
-    .from("chapters")
-    .select("id,book_id,slug,title,chapter_number,created_at,updated_at")
-    .eq("book_id", bookId)
-    .order("chapter_number", { ascending: true })
+  return (await readAllAdminChapterMetadata(bookId)).map(mapChapterRow)
+}
 
-  if (error) {
-    console.error("[fetchChaptersForBookAdmin] error:", error.message)
-    throw new Error(error.message)
+/** Metadata only, without the Data API's single-response row cap. */
+async function readAllAdminChapterMetadata(bookId?: string): Promise<Record<string, unknown>[]> {
+  const rows: Record<string, unknown>[] = []
+  for (let offset=0; ; offset+=500) {
+    let query=serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number,created_at,updated_at,is_published,production_status:content->>production_status').order('chapter_number').order('id').range(offset,offset+499)
+    if (bookId) query=query.eq('book_id',bookId)
+    const {data,error}=await query
+    if(error)throw new Error('Unable to load the book chapters.')
+    rows.push(...data ?? [])
+    if((data?.length ?? 0)<500)return rows
   }
-
-  return ((data ?? []) as Record<string, unknown>[]).map((row) => mapChapterRow(row))
 }
 
 export async function fetchChapterForAdmin(
@@ -747,10 +755,11 @@ export async function fetchChapterForAdmin(
     .eq("id", id)
     .single()
 
-  if (error || !data) {
-    if (error) console.error("[fetchChapterForAdmin] error:", error.message)
-    return null
+  if (error && error.code !== 'PGRST116') {
+    console.error("[fetchChapterForAdmin] error:", error.message)
+    throw new Error('Unable to load this chapter. Please reload the page.')
   }
+  if (!data) return null
 
   return {
     ...mapChapterRow(data as Record<string, unknown>),
@@ -770,6 +779,7 @@ export async function createChapter(input: ChapterInput): Promise<string> {
       slug: input.slug,
       title: input.title,
       chapter_number: input.chapter_number,
+      is_published: input.is_published === undefined ? false : z.boolean().parse(input.is_published),
       content: (input.content ?? []) as never,
     } as never)
     .select("id")
@@ -804,6 +814,7 @@ export async function updateChapter(
   if (input.title !== undefined) payload.title = input.title
   if (input.chapter_number !== undefined) payload.chapter_number = input.chapter_number
   if (input.content !== undefined) payload.content = input.content
+  if (input.is_published !== undefined) payload.is_published = z.boolean().parse(input.is_published)
 
   const { error } = await serviceClient
     .from("chapters")
@@ -945,6 +956,7 @@ export async function searchHansWehr(
 ): Promise<HansWehrSearchResult[]> {
   await guardAdmin()
 
+  return withDataDeadline(8000, async () => {
   const idTerm = input.id?.trim()
   const wordTerm = input.word?.trim()
   const definitionTerm = input.definition?.trim()
@@ -952,50 +964,32 @@ export async function searchHansWehr(
   const hasCriteria = Boolean(idTerm || wordTerm || definitionTerm)
   if (!hasCriteria) return []
 
-  let query = serviceClient
-    .from("hanswehr_dictionary")
-    .select("id, word, definition")
-    .limit(100)
+  if (idTerm && !/^-?\d+$/.test(idTerm)) return []
+  if (idTerm && input.idExact && (!Number.isSafeInteger(Number(idTerm)) || Number(idTerm) < -2147483648 || Number(idTerm) > 2147483647)) return []
+  const batches: (number[] | null)[] = []
+  if (idTerm && !input.idExact) {
+    const { matchingHansIds } = await import('@/app/lib/hansIdIndex')
+    const ids = await matchingHansIds(idTerm)
+    for (let offset = 0; offset < ids.length; offset += 200) batches.push(ids.slice(offset, offset + 200))
+  } else batches.push(null)
 
-  if (idTerm) {
-    if (input.idExact) {
-      const idNum = Number(idTerm)
-      if (!Number.isNaN(idNum)) {
-        query = query.eq("id", idNum)
-      }
-    } else {
-      query = query.ilike("id::text", `%${idTerm}%`)
+  const results: HansWehrSearchResult[] = []
+  for (const ids of batches) {
+    let query = serviceClient.from('hanswehr_dictionary').select('id, word, definition').limit(100 - results.length)
+    if (ids) query = query.in('id', ids)
+    else if (idTerm) query = query.eq('id', Number(idTerm))
+    if (wordTerm) query = input.wordExact ? query.eq('word', wordTerm) : query.ilike('word', `%${wordTerm}%`)
+    if (definitionTerm) query = input.definitionExact ? query.eq('definition', definitionTerm) : query.ilike('definition', `%${definitionTerm}%`)
+    const { data, error } = await query.order('id', { ascending: true })
+    if (error) {
+      console.error('[searchHansWehr] error:', error.message)
+      throw new Error('Unable to search the dictionary. Please reload the page.')
     }
+    results.push(...(data ?? []).map(row => ({id: Number(row.id), word: String(row.word), definition: String(row.definition ?? '')})))
+    if (results.length >= 100) break
   }
-
-  if (wordTerm) {
-    if (input.wordExact) {
-      query = query.eq("word", wordTerm)
-    } else {
-      query = query.ilike("word", `%${wordTerm}%`)
-    }
-  }
-
-  if (definitionTerm) {
-    if (input.definitionExact) {
-      query = query.eq("definition", definitionTerm)
-    } else {
-      query = query.ilike("definition", `%${definitionTerm}%`)
-    }
-  }
-
-  const { data, error } = await query.order("id", { ascending: true })
-
-  if (error) {
-    console.error("[searchHansWehr] error:", error.message)
-    throw new Error(error.message)
-  }
-
-  return (data ?? []).map((row) => ({
-    id: Number(row.id),
-    word: String(row.word),
-    definition: String(row.definition ?? ""),
-  }))
+  return results
+  })
 }
 
 /* ── Phrases ───────────────────────────────────────────────────────── */
@@ -1012,17 +1006,13 @@ export type PhraseRow = {
 export async function fetchAllPhrasesForAdmin(): Promise<PhraseRow[]> {
   await guardAdmin()
 
-  const { data, error } = await serviceClient
-    .from("phrases")
-    .select("id, phrase_ar_di, phrase_tr, english, cefr, notes")
-    .order("id", { ascending: true })
-
-  if (error) {
-    console.error("[fetchAllPhrasesForAdmin] error:", error.message)
-    throw new Error(error.message)
+  const phrases: PhraseRow[] = []
+  for (let offset=0; ; offset+=500) {
+    const {data,error}=await serviceClient.from('phrases').select('id,phrase_ar_di,phrase_tr,english,cefr,notes').order('id').range(offset,offset+499)
+    if(error)throw new Error('Unable to load the Phrase Library.')
+    phrases.push(...(data ?? []).map(mapPhraseRow))
+    if((data?.length ?? 0)<500)return phrases
   }
-
-  return (data ?? []).map((row) => mapPhraseRow(row))
 }
 
 export async function fetchPhrases(ids: number[]): Promise<PhraseRow[]> {
@@ -1049,6 +1039,14 @@ export async function updatePhrase(
   input: Partial<Omit<PhraseRow, "id">>
 ): Promise<void> {
   await guardAdmin()
+  id = z.number().int().positive().safe().parse(id)
+  input = z.object({
+    phrase_ar_di: z.string().trim().min(1).max(1000).optional(),
+    phrase_tr: z.string().max(2000).optional(),
+    english: z.string().trim().min(1).max(10000).optional(),
+    cefr: z.string().max(20).optional(),
+    notes: z.string().max(20000).nullable().optional(),
+  }).strict().parse(input)
 
   const payload: Record<string, unknown> = {}
   if (input.phrase_ar_di !== undefined) payload.phrase_ar_di = input.phrase_ar_di
@@ -1057,15 +1055,9 @@ export async function updatePhrase(
   if (input.cefr !== undefined) payload.cefr = input.cefr
   if (input.notes !== undefined) payload.notes = input.notes
 
-  const { error } = await serviceClient
-    .from("phrases")
-    .update(payload as never)
-    .eq("id", id)
-
-  if (error) {
-    console.error("[updatePhrase] error:", error.message)
-    throw new Error(error.message)
-  }
+  const { error } = await serviceClient.rpc('website_write_phrase' as never, { p_id: id, p_fields: payload } as never)
+  if (error) throw new Error('Unable to save this phrase. Check for an existing equivalent phrase and retry.')
+  updateTag('phrases')
 }
 
 /* ── Helpers ───────────────────────────────────────────────────────── */
@@ -1143,6 +1135,8 @@ function mapChapterRow(row: Record<string, unknown>): ChapterRow {
     slug: String(row.slug),
     title: String(row.title),
     chapter_number: Number(row.chapter_number),
+    productionStatus: toStringOrNull(row.production_status),
+    is_published: row.is_published === true,
     created_at: toStringOrNull(row.created_at),
     updated_at: toStringOrNull(row.updated_at),
   }
@@ -1154,7 +1148,7 @@ function mapPhraseRow(row: Record<string, unknown>): PhraseRow {
     phrase_ar_di: String(row.phrase_ar_di),
     phrase_tr: String(row.phrase_tr),
     english: String(row.english),
-    cefr: String(row.cefr),
+    cefr: String(row.cefr ?? ''),
     notes: row.notes ? String(row.notes) : null,
   }
 }
@@ -1162,15 +1156,24 @@ function mapPhraseRow(row: Record<string, unknown>): PhraseRow {
 export interface BooksAdminIndex { books: BookRow[]; chapters: ChapterRow[] }
 export interface ShowsAdminIndex { shows: ShowRow[]; episodes: EpisodeRow[] }
 
-/** One authorization check and two bounded summary queries; no manuscripts. */
+async function readAllAdminBookMetadata(): Promise<Record<string,unknown>[]> {
+  const rows: Record<string,unknown>[]=[]
+  for(let offset=0; ; offset+=500){
+    const {data,error}=await serviceClient.from('books').select('id,slug,title,is_completed,author,reading_time_minutes,title_ar,description,cover,cover_crop,level,category,created_at,updated_at').order('title').order('id').range(offset,offset+499)
+    if(error)throw new Error('Unable to load the book catalogue.')
+    rows.push(...data ?? [])
+    if((data?.length ?? 0)<500)return rows
+  }
+}
+
+/** One authorization check; paginated metadata reads omit manuscripts. */
 export async function fetchBooksIndexForAdmin(): Promise<BooksAdminIndex> {
   await guardAdmin()
   const [books, chapters] = await Promise.all([
-    serviceClient.from('books').select('id,slug,title,is_completed,author,reading_time_minutes,title_ar,description,cover,cover_crop,level,category,created_at,updated_at').order('title').limit(1000),
-    serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number,created_at,updated_at').order('chapter_number').limit(1000),
+    readAllAdminBookMetadata(),
+    readAllAdminChapterMetadata(),
   ])
-  if (books.error || chapters.error) throw new Error('Unable to load the book catalogue.')
-  return { books: (books.data ?? []).map(row => mapBookRow(row)), chapters: (chapters.data ?? []).map(row => mapChapterRow(row)) }
+  return { books: books.map(mapBookRow), chapters: chapters.map(mapChapterRow) }
 }
 
 export async function fetchShowsIndexForAdmin(): Promise<ShowsAdminIndex> {

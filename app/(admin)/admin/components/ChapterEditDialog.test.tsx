@@ -167,3 +167,13 @@ it('previews and saves the additional chapter format without converting its cont
  await act(async()=>button('Save').click())
  expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({content:structured}))
 })
+
+it('loads chapter details during an audio outage without overwriting audio',async()=>{
+ mocks.fetch.mockResolvedValue({book_id:'book-id',slug:'chapter',title:'Chapter',chapter_number:1,content:[]})
+ mocks.audio.mockRejectedValue(new Error('Audio unavailable'))
+ await mount('existing')
+ expect(document.body.textContent).toContain('Chapter details loaded. Audio settings could not be loaded.')
+ expect(button('Save').disabled).toBe(false)
+ await act(async()=>button('Save').click())
+ expect(mocks.persist).not.toHaveBeenCalled()
+})

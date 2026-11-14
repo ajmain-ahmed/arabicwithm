@@ -31,7 +31,7 @@ test.beforeEach(async ({ context }) => { await admin(context) })
 test('both languages: relative/full paths persist after reopening and refresh, with playable private audio', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await open(page)
-  for (const [language, path] of [['Arabic', 'audiobooks/fixture/ar/chapter.wav'], ['English', 'https://localhost:4310/storage/v1/object/sign/audiobooks/fixture/en/chapter.wav?token=discard-me'], ['Arabic', 'https://localhost:4310/storage/v1/object/sign/audiobooks/fixture/ar/chapter.wav?token=discard-me'], ['English', 'fixture/en/chapter.wav']]) {
+  for (const [language, path] of [['Arabic', 'audiobooks/fixture/ar/chapter.wav'], ['English', `https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4310}/storage/v1/object/sign/audiobooks/fixture/en/chapter.wav?token=discard-me`], ['Arabic', `https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4310}/storage/v1/object/sign/audiobooks/fixture/ar/chapter.wav?token=discard-me`], ['English', 'fixture/en/chapter.wav']]) {
     await page.getByLabel(`${language} Audio path or URL`).fill(path)
     await page.getByRole('button', { name: `Save ${language} audio`, exact: true }).click()
     await expect(page.locator('fieldset').filter({ has: page.getByText(`${language} Audiobook`, { exact: true }) }).getByRole('status')).toHaveText('Audio saved')
@@ -60,9 +60,11 @@ test('direct uploads save automatically; failure/retry preserves inputs and the 
   await page.getByLabel('Arabic Audio file').setInputFiles({ name: 'chapter.wav', mimeType: 'audio/wav', buffer: bytes })
   await expect(page.getByRole('button', { name: 'Retry Arabic audio' })).toBeVisible()
   await expect(page.getByLabel('English Audio path or URL')).toHaveValue(english)
-  const cdp = await context.newCDPSession(page)
-  await cdp.send('Network.enable')
-  await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 20, downloadThroughput: 10 * 1024 * 1024, uploadThroughput: 256 * 1024 })
+  if (context.browser()?.browserType().name() === 'chromium') {
+    const cdp = await context.newCDPSession(page)
+    await cdp.send('Network.enable')
+    await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 20, downloadThroughput: 10 * 1024 * 1024, uploadThroughput: 256 * 1024 })
+  }
   await page.getByRole('button', { name: 'Retry Arabic audio' }).click()
   await expect.poll(async () => Number(await page.getByRole('progressbar', { name: 'Arabic audio upload progress' }).getAttribute('aria-valuenow'))).toBeGreaterThan(0)
   await expect(page.getByLabel('Arabic Audio path or URL')).toHaveValue(/audiobooks\/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb\/ar\/.+\.wav/)
@@ -76,12 +78,12 @@ test('direct uploads save automatically; failure/retry preserves inputs and the 
   await expect(page.getByLabel('Arabic Audio path or URL')).toHaveValue(arabic)
   const savedEnglish = await page.getByLabel('English Audio path or URL').inputValue()
   await plays(page, 'Arabic'); await plays(page, 'English')
-  await request.post('https://localhost:4310/fixture/audio-save-failure', { data: { fail: true } })
+  await request.post(`https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4310}/fixture/audio-save-failure`, { data: { fail: true } })
   await page.getByLabel('Arabic Audio path or URL').fill('audiobooks/fixture/ar/chapter.wav')
   await page.getByRole('button', { name: 'Save Arabic audio', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Retry Arabic audio' })).toBeVisible()
   await expect(page.getByLabel('Arabic Audio path or URL')).toHaveValue('audiobooks/fixture/ar/chapter.wav')
-  await request.post('https://localhost:4310/fixture/audio-save-failure', { data: { fail: false } })
+  await request.post(`https://localhost:${process.env.AWM_TEST_BACKEND_PORT??4310}/fixture/audio-save-failure`, { data: { fail: false } })
   await page.getByRole('button', { name: 'Retry Arabic audio' }).click()
   await expect(page.getByRole('group', { name: 'Arabic Audiobook', exact: true }).getByRole('status')).toHaveText('Audio saved')
   await page.getByRole('button', { name: 'Cancel', exact: true }).click()

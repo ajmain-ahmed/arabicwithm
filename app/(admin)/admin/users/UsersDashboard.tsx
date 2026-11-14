@@ -1,4 +1,7 @@
 'use client'
+
+import { boundedRead } from '@/app/lib/readRecovery'
+import AwmPageError from '@/app/components/AwmPageError'
 import { useEffect, useState } from 'react'
 import { Alert, Avatar, Box, Button, Card, CardContent, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Checkbox, FormControlLabel, Accordion, AccordionSummary, AccordionDetails, IconButton, Tooltip, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
 import { changeManagedAccess, listManagedUsers, managedUserDetails } from '@/app/actions/reviews'
@@ -20,12 +23,12 @@ export default function UsersDashboard() {
  const key = `${tab}:${search}:${page}:${revision}`
  useEffect(() => {
   let active=true
-  const timer=setTimeout(() => { listManagedUsers(tab,search,page).then(data=>{if(active){setResult(data);setLoadedKey(key);setError('')}}).catch(e=>{if(active){setError(e.message);setLoadedKey(key)}}) },250)
+  const timer=setTimeout(() => { boundedRead(listManagedUsers(tab,search,page)).then(data=>{if(active){setResult(data);setLoadedKey(key);setError('')}}).catch(e=>{if(active){setError(e.message);setResult(null);setLoadedKey(key)}}) },250)
   return ()=>{active=false;clearTimeout(timer)}
  },[tab,search,page,revision,key])
  const open = async (user: DirectoryUser) => {
   setBusy(true);setError('')
-  try { const details=await managedUserDetails(user.id);setHistory(details.history);setManual(details.manual.enabled);setPremiumHistory(details.manual.history);setNotice('');setSelected(user);setEditor(user.role==='editor');setAdmin(user.role==='admin');setNotes('');setInformation(false) } catch(e){setError(e instanceof Error?e.message:'Unable to load user')} finally{setBusy(false)}
+  try { const details=await boundedRead(managedUserDetails(user.id));setHistory(details.history);setManual(details.manual.enabled);setPremiumHistory(details.manual.history);setNotice('');setSelected(user);setEditor(user.role==='editor');setAdmin(user.role==='admin');setNotes('');setInformation(false) } catch(e){setError(e instanceof Error?e.message:'Unable to load user')} finally{setBusy(false)}
  }
  const save = async () => {
   if(!selected||busy)return
@@ -34,13 +37,13 @@ export default function UsersDashboard() {
    const saved=await changeManagedAccess(selected.id,{premium:manual,editor,admin,notes})
    setSelected({...selected,role:saved.role,premium:saved.premium,manual_premium:saved.manual})
    setManual(saved.manual);setEditor(saved.role==='editor');setAdmin(saved.role==='admin');setNotes('')
-   const details=await managedUserDetails(selected.id);setHistory(details.history);setPremiumHistory(details.manual.history)
+   const details=await boundedRead(managedUserDetails(selected.id));setHistory(details.history);setPremiumHistory(details.manual.history)
    setRevision(n=>n+1);await refreshAccess();window.dispatchEvent(new Event('account-access-changed'));setNotice('Access saved.')
   }catch(e){setError(e instanceof Error?e.message:'Unable to save access')}finally{setBusy(false)}
  }
  return <Stack spacing={2}>
   <Typography variant="h4">Users</Typography>
-  {error&&<Alert severity="error">{error}</Alert>}
+  {error&&<AwmPageError error={error}/>}
   <Tabs value={tab} variant="scrollable" onChange={(_,v)=>{setTab(v);setPage(0)}}>
    {(['all','premium','editor','admin'] as const).map(t=><Tab key={t} value={t} label={`${{all:'All Users',premium:'Premium',editor:'Editors',admin:'Admins'}[t]} (${result?.counts[t]??'…'})`} />)}
   </Tabs>

@@ -40,7 +40,6 @@ export const fetchNewOnShows = unstable_cache(
       .from("shows")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(12)
     if (error) {
       console.error("[fetchNewOnShows] error:", error)
       return []
@@ -55,7 +54,7 @@ export const fetchNewOnShows = unstable_cache(
       coverCrop: normalizeThumbnailCrop(row.cover_crop),
     }))
   },
-  ["prototype", "new-on-shows", "v2-direct-covers"],
+  ["prototype", "new-on-shows", "v3-full-pool"],
   { revalidate: publicRevalidate, tags: ["cartoons-public"] }
 )
 

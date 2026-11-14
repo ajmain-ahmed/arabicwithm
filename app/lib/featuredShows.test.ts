@@ -21,13 +21,13 @@ for(const count of [0,1,2,3,4,7])it(`selects at most three unique eligible Shows
  const selected=selectFeaturedShows(pairs,new Date('2026-11-06T12:00:00Z'))
  expect(selected).toHaveLength(Math.min(count,3));expect(new Set(selected.map(p=>p.show.id)).size).toBe(selected.length)
 })
-it('stays stable for two London days across requests and input order, then can rotate',()=>{
+it('stays stable for three London days across requests and input order, then can rotate',()=>{
  const {pairs}=featuredPool(shows,images)
- const day=Math.floor(Date.parse('2026-11-06T00:00:00Z')/86400000),start=day-day%2
+ const day=Math.floor(Date.parse('2026-11-06T00:00:00Z')/86400000),start=day-day%3
  const now=(offset:number)=>new Date((start+offset)*86400000+12*3600000)
  const first=selectFeaturedShows(pairs,now(0))
- for(const offset of [0,.4,1])expect(selectFeaturedShows([...pairs].reverse(),now(offset))).toEqual(first)
- expect(selectFeaturedShows(pairs,now(2))).not.toEqual(first)
+ for(const offset of [0,.4,1,2])expect(selectFeaturedShows([...pairs].reverse(),now(offset))).toEqual(first)
+ expect(selectFeaturedShows(pairs,now(3))).not.toEqual(first)
 })
 it('uses London calendar days through the DST boundary',()=>{
  const {pairs}=featuredPool(shows,images)
@@ -44,4 +44,16 @@ it('carries saved framing with the same Show/image and excludes ambiguous slugs'
  const result=featuredPool(shows,[{name:'ARC.webp',url:'arc',position:{x:45,y:22}},{name:'BB.webp',url:'bb',eligible:false}])
  expect(result.pairs).toHaveLength(1);expect(result.pairs[0]).toMatchObject({show:{slug:'arc'},featuredImage:'arc',featuredPosition:{x:45,y:22}})
  expect(featuredPool([...shows,{...shows[0],id:'other',slug:'ARC'}],images).pairs.some(pair=>pair.show.slug==='arc')).toBe(false)
+})
+
+it('avoids consecutive set and hero repeats whenever the eligible pool permits', () => {
+ for (const count of [2,3,4,7]) {
+  const pairs=featuredPool(shows.slice(0,count),images).pairs
+  for(let window=6900;window<6950;window++) {
+   const first=selectFeaturedShows(pairs,new Date(window*3*86400000))
+   const next=selectFeaturedShows(pairs,new Date((window+1)*3*86400000))
+   expect(first[0].show.id).not.toBe(next[0].show.id)
+   if(count>3)expect(first.map(p=>p.show.id).sort()).not.toEqual(next.map(p=>p.show.id).sort())
+  }
+ }
 })

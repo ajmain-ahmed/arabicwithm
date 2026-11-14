@@ -14,9 +14,9 @@ const store: AudioStore = {
     return error ? null : data.user?.id ?? null;
   },
   async canListen(userId, chapterId) {
-    const { data: chapter, error: chapterError } = await client.from('chapters').select('book_id').eq('id', chapterId).maybeSingle();
+    const { data: chapter, error: chapterError } = await client.from('chapters').select('book_id,is_published').eq('id', chapterId).maybeSingle();
     if (chapterError) throw chapterError;
-    if (!chapter) return false;
+    if (!chapter || chapter.is_published !== true) return false;
     const { data: book, error: bookError } = await client.from('books').select('*').eq('id', chapter.book_id).maybeSingle();
     if (bookError) throw bookError;
     if (!book || book.is_completed === false) return false;
@@ -26,9 +26,9 @@ const store: AudioStore = {
     return canAccessBookMedia(true, data === true, false);
   },
   async released(chapterId) {
-    const { data: chapter, error } = await client.from('chapters').select('book_id').eq('id', chapterId).maybeSingle();
+    const { data: chapter, error } = await client.from('chapters').select('book_id,is_published').eq('id', chapterId).maybeSingle();
     if (error) throw error;
-    if (!chapter) return false;
+    if (!chapter || chapter.is_published !== true) return false;
     const { data: book, error: bookError } = await client.from('books').select('*').eq('id', chapter.book_id).maybeSingle();
     if (bookError) throw bookError;
     return Boolean(book && book.is_completed !== false);

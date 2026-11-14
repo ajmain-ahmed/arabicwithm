@@ -1,18 +1,18 @@
 // @vitest-environment node
 import { beforeEach, expect, it, vi } from 'vitest'
-const state = vi.hoisted(() => ({ released: true, cache: new Map<string, unknown>(), sign: vi.fn() }))
+const state = vi.hoisted(() => ({ released: true, published: true, admin: true, cache: new Map<string, unknown>(), sign: vi.fn() }))
 vi.mock('next/cache', () => ({
   unstable_cache: (fn: (...args: unknown[]) => Promise<unknown>, keys: string[]) => async (...args: unknown[]) => {
     const key = JSON.stringify([keys, args]); if (!state.cache.has(key)) state.cache.set(key, await fn(...args)); return state.cache.get(key)
   }, revalidatePath: vi.fn(), updateTag: vi.fn(),
 }))
-vi.mock('@/app/actions/auth', () => ({ getAuthenticatedUserId: async () => 'plus-reader', guardAdmin: vi.fn() }))
+vi.mock('@/app/actions/auth', () => ({ getAuthenticatedUserId: async () => 'plus-reader', guardAdmin: async () => { if(!state.admin)throw new Error('Admin required') } }))
 vi.mock('@/app/actions/entitlements', () => ({ requireEntitlement: vi.fn() }))
 vi.mock('@/app/lib/supabase', () => ({ hasServiceClientConfig: () => true, serviceClient: {
   storage: { from: () => ({ createSignedUrl: state.sign }) },
   from: (table: string) => {
     const filters: Array<(row: Record<string, unknown>) => boolean> = []
-    const read = () => ({ data: (table === 'books' ? [{ id: 'book', slug: 'book', title: 'Book metadata', is_completed: state.released }] : table === 'chapters' ? [{ id: 'chapter', book_id: 'book', slug: 'one', title: 'Secret chapter', chapter_number: 1, content: [{ tokens: [{ arabic: 'كتاب', english: 'book' }], translation: 'Secret prose' }] }] : [{ chapter_id: 'chapter', language: 'ar', is_published: true, source_type: 'supabase_storage', storage_path: 'ar/book/audio.wav' }]).filter(row => filters.every(fn => fn(row))), error: null })
+    const read = () => ({ data: (table === 'books' ? [{ id: 'book', slug: 'book', title: 'Book metadata', is_completed: state.released }] : table === 'chapters' ? [{ id: 'chapter', book_id: 'book', is_published: state.published, slug: 'one', title: 'Secret chapter', chapter_number: 1, content: [{ tokens: [{ arabic: 'كتاب', english: 'book' }], translation: 'Secret prose' }] }] : [{ chapter_id: 'chapter', language: 'ar', is_published: true, source_type: 'supabase_storage', storage_path: 'ar/book/audio.wav' }]).filter(row => filters.every(fn => fn(row))), error: null })
     const query = {
       select: () => query, order: () => query, range: () => query,
       eq: (key: string, value: unknown) => { filters.push(row => row[key] === value); return query },
@@ -23,9 +23,9 @@ vi.mock('@/app/lib/supabase', () => ({ hasServiceClientConfig: () => true, servi
     return query
   },
 } }))
-import { fetchBooksForPublic, fetchChapterForPublic, fetchChaptersForBookPublic, fetchExploreBookChapterPages } from './books'
+import { fetchBooksForPublic, fetchChapterForPublic, fetchChaptersForBookPublic, fetchExploreBookChapterPages, fetchChapterForAdminPreview } from './books'
 import { fetchBookIdsWithPublishedAudio, fetchPublishedChapterAudioForChapter, requestChapterAudio } from './audiobooks'
-beforeEach(() => { state.released = true; state.cache.clear(); state.sign.mockClear(); vi.stubEnv('SUPABASE_URL', 'https://example.supabase.co') })
+beforeEach(() => { state.released = true; state.published=true; state.admin=true; state.cache.clear(); state.sign.mockClear(); vi.stubEnv('SUPABASE_URL', 'https://example.supabase.co') })
 
 it('keeps metadata discoverable but hides chapters, practice and audio when incomplete', async () => {
   state.released = false
@@ -47,4 +47,21 @@ it('denies a Plus listener before signing unreleased audio', async () => {
   state.released = false
   await expect(requestChapterAudio('chapter', 'ar')).rejects.toThrow('not released')
   expect(state.sign).not.toHaveBeenCalled()
+})
+
+it('blocks a cached chapter, navigation, feeds and audio immediately when only the chapter is unpublished',async()=>{
+ expect(await fetchChapterForPublic('book','one')).not.toBeNull()
+ state.published=false
+ expect(await fetchChapterForPublic('book','one')).toBeNull()
+ expect(await fetchChaptersForBookPublic('book')).toEqual([])
+ expect(await fetchExploreBookChapterPages('chapter')).toEqual([])
+ await expect(requestChapterAudio('chapter','ar')).rejects.toThrow('not released')
+ expect(state.sign).not.toHaveBeenCalled()
+})
+it('Admin preview bypasses both release switches, while non-Admins are denied before content access',async()=>{
+ state.released=false;state.published=false
+ const result=await fetchChapterForAdminPreview('chapter')
+ expect(result?.chapter.title).toBe('Secret chapter');expect(result?.chapters).toHaveLength(1)
+ state.admin=false
+ await expect(fetchChapterForAdminPreview('chapter')).rejects.toThrow('Admin required')
 })

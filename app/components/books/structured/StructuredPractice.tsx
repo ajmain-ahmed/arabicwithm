@@ -1,12 +1,14 @@
 import { items, record, text, safeReferenceUrl, type StructuredChapter, type StructuredRecord } from '@/app/lib/structuredChapter'
 import { TextPair, Label } from './StructuredText'
 import styles from './StructuredChapter.module.css'
+import StructuredActivity from './StructuredActivity'
 
 export function Practice({ chapter }: { chapter: StructuredChapter }) {
   return <section aria-label="Practice"><h2>Practice</h2><div className={styles.blocks}>
     {items(chapter.activities).map((value, index) => {
       const activity = record(value)
       if (!activity) return null
+      if (record(activity.interaction)) return <StructuredActivity key={text(activity.id) || index} activity={activity} answer={items(chapter.answers).map(record).find(answer => answer?.question_id === activity.id) ?? undefined} />
       const choices = items(activity.choices), id = text(activity.id) || String(index + 1)
       const inputName = `practice-${text(chapter.id)}-${id}`
       return <fieldset className={styles.activity} id={`question-${id}`} key={index}>
