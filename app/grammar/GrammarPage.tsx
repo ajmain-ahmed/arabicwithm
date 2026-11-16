@@ -1,5 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Alert, Box, Button, Container, Dialog, DialogContent, DialogTitle, IconButton, LinearProgress, Paper, Select, MenuItem, Typography } from '@mui/material';
 import { ArrowBack, Close, InfoOutlined } from '@mui/icons-material';
 import { useAuth } from '@/app/AuthContext';
@@ -30,18 +32,23 @@ const arabicStyle = { fontFamily: 'var(--font-serif)', fontSize: 'var(--grammar-
 export default function GrammarPage() { return <GrammarProvider><GrammarContent /></GrammarProvider>; }
 function GrammarContent() {
     const { user, loading } = useAuth();
-    const [branch, setBranch] = useState<'nahw' | 'sarf' | null>(null), [activity, setActivity] = useState(''), [rule, setRule] = useState<Rule | null>(null);
+    const router = useRouter(), searchParams = useSearchParams();
+    const requestedBranch = searchParams.get('branch');
+    const branch = requestedBranch === 'nahw' || requestedBranch === 'sarf' ? requestedBranch : null;
+    const requestedActivity = searchParams.get('activity') ?? '';
+    const activity = branch && catalogue[branch].some(item => item.id === requestedActivity) ? requestedActivity : '';
+    const [rule, setRule] = useState<Rule | null>(null);
     if (loading)
         return <LinearProgress />;
     if (!user)
         return <LearningSignInGate activity="Grammar"/>;
     return <Container maxWidth="xl" sx={{ pt: { xs: 3, md: 5 }, pb: 6 }}>
-    {activity && <Button startIcon={<ArrowBack />} onClick={() => { setActivity(''); setBranch(null); }}>Back to Grammar</Button>}
+    {activity && <Button component={Link} href="/grammar" startIcon={<ArrowBack />}>Back to Grammar</Button>}
     <Box sx={{display:"flex",alignItems:"center",justifyContent:"space-between"}}><Typography component="h1" sx={{ mb: 3, fontFamily: 'var(--font-heading)', fontSize: { xs: 32, md: 42 }, fontWeight: 600 }}>Grammar</Typography><GrammarSettings /></Box>
     {activity&&!['rules','ten','weak','word_type','sentence_role','grammatical_case'].includes(activity)&&<ActivityControls><AutoNextControl/></ActivityControls>}
-    {!activity ? <Box sx={{ display: 'grid', gap: 4 }}>{(['nahw', 'sarf'] as const).map(section => <Box component="section" key={section} aria-label={section === 'nahw' ? 'Na\u1e25w' : '\u1e62arf'}>
+    {!activity ? <Box sx={{ display: 'grid', gap: 4 }}><Button component={Link} href="/grammar/context" variant="outlined" sx={{ minHeight: 64 }}>Grammar in Context</Button>{(['nahw', 'sarf'] as const).map(section => <Box component="section" key={section} aria-label={section === 'nahw' ? 'Na\u1e25w' : '\u1e62arf'}>
       <Typography component="h2" sx={{ mb: 2, fontFamily: 'var(--font-heading)', fontSize: 28 }}>{section === 'nahw' ? 'Na\u1e25w' : '\u1e62arf'}</Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>{catalogue[section].map(item => <Button key={item.id} variant="outlined" sx={{ minHeight: 64, fontSize: 16, textTransform: 'none', borderRadius: '12px', color: 'var(--awm-bark)', borderColor: 'color-mix(in srgb, var(--awm-forest) 25%, transparent)' }} onClick={() => { setBranch(section); setActivity(item.id); }}>{item.title}</Button>)}</Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>{catalogue[section].map(item => <Button key={item.id} variant="outlined" sx={{ minHeight: 64, fontSize: 16, textTransform: 'none', borderRadius: '12px', color: 'var(--awm-bark)', borderColor: 'color-mix(in srgb, var(--awm-forest) 25%, transparent)' }} onClick={() => router.push(`/grammar?branch=${section}&activity=${item.id}`)}>{item.title}</Button>)}</Box>
     </Box>)}</Box> : branch === 'nahw' ? activity === 'rules' ? <RuleLibrary show={setRule}/> : ['word_type','sentence_role','grammatical_case'].includes(activity) ? <BankActivity key={activity} mode={activity as Mode}/> : <NahwActivity key={activity} activity={activity} show={setRule}/> : <SarfActivity key={activity} activity={activity} show={setRule}/>}
     <Dialog open={!!rule} onClose={() => setRule(null)} fullWidth maxWidth="sm"><DialogTitle>{rule?.title}<IconButton aria-label="Close explanation" sx={{ float: 'right' }} onClick={() => setRule(null)}><Close /></IconButton></DialogTitle><DialogContent>{rule?.arabic && <Arabic>{rule.arabic}</Arabic>}{rule?.sections.map((section, i) => <Box key={i} sx={{ my: 2 }}><Typography variant="h6">{section.heading}</Typography>{section.text && <English>{section.text}</English>}{section.detail && <Typography sx={{ mt: 1, color: 'text.secondary' }}>{section.detail}</Typography>}{section.arabic && <Arabic>{section.arabic}</Arabic>}{section.translation && <English>{section.translation}</English>}</Box>)}</DialogContent></Dialog>
   </Container>;

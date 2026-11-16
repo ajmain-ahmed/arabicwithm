@@ -19,7 +19,9 @@ function CheckoutFeedbackInner() {
   if (!message) return null
   const close = () => {
     setDismissed(true)
-    router.replace(pathname)
+    const query = new URLSearchParams(searchParams.toString())
+    query.delete('checkout')
+    router.replace(`${pathname}${query.size ? `?${query}` : ''}`)
   }
   return (
     <Snackbar open={!dismissed} autoHideDuration={6000} onClose={close} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>

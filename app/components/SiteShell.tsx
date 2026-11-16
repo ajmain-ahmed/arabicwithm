@@ -3,7 +3,7 @@
 import AwmPageError from './AwmPageError'
 import {useAuth} from '@/app/AuthContext'
 import { usePathname } from 'next/navigation'
-import { Box } from '@mui/material'
+import { Alert, Box, Button } from '@mui/material'
 import Navbar from './navbar/index'
 import Footer from './footer'
 import MobileBottomNav from './MobileBottomNav'
@@ -22,7 +22,8 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   /* Profile has its own fixed bottom tab bar on mobile. */
   const isProfileRoute = pathname?.startsWith('/profile') ?? false
 
-  if(authError)return <AwmPageError message="We couldn't restore your session. Reload the page to reconnect."/>
+  const needsSession = /^\/(?:admin|reviewer|profile|memory|practice|word-search|listen)(?:\/|$)/.test(pathname ?? '') || pathname === '/grammar' || /^\/books\/[^/]+\/[^/]+/.test(pathname ?? '')
+  if(authError && needsSession)return <AwmPageError message="We couldn't restore your session. Reload the page to reconnect."/>
 
   if (isAdminRoute) {
     return (
@@ -53,6 +54,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
           },
         }}
       >
+        {authError && <Alert severity="warning" action={<Button onClick={() => window.location.reload()}>Reload</Button>}>We couldn&apos;t restore your session. Reload to reconnect your account.</Alert>}
         <ErrorBoundary key={pathname}>
           <GlobalDataInit>{children}</GlobalDataInit>
         </ErrorBoundary>

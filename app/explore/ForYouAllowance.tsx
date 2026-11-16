@@ -3,6 +3,7 @@
 import {useCallback,useEffect,useRef,useState,type ReactNode} from 'react'
 import {Alert,Box,Button,CircularProgress,Dialog,DialogActions,DialogContent,DialogTitle,Typography} from '@mui/material'
 import {syncForYouUsage} from '@/app/actions/forYouUsage'
+import {boundedRead} from '@/app/lib/readRecovery'
 import PremiumPrompt from '@/app/components/PremiumPrompt'
 import UpgradeButton from '@/app/components/UpgradeButton'
 import {elapsedViewingMs,type PlaybackSample} from '@/app/lib/forYouMeter'
@@ -33,7 +34,7 @@ export default function ForYouAllowance({children,onExplore}:{children:ReactNode
   if(m.remaining<=0){m.blocked=true;pausePlayback();setLimited(true)}
  },[pausePlayback])
  useEffect(()=>{
-  let alive=true,inFlight=false,pendingRelease=false
+  let alive=true,inFlight=false,pendingRelease=false,failed=false
   const m=meter.current;m.lease=crypto.randomUUID()
   async function sync(acquire=false){
    if(inFlight)return
@@ -42,8 +43,9 @@ export default function ForYouAllowance({children,onExplore}:{children:ReactNode
    const totalMs=Math.floor(m.total)
    try{
     const active=acquire||(!m.blocked&&!!m.previous?.playing&&performance.now()-m.previous.clock<1000)
-    const result=await syncForYouUsage({lease:m.lease,totalMs,active})
+    const result=await boundedRead(syncForYouUsage({lease:m.lease,totalMs,active}))
     if(!alive)return
+    failed=false
     m.unlimited=result.unlimited
     m.remaining=result.unlimited?Infinity:Math.max(0,(result.remainingMs??0)-(m.total-totalMs))
     m.blocked=result.busy||m.remaining<=0
@@ -54,12 +56,13 @@ export default function ForYouAllowance({children,onExplore}:{children:ReactNode
     if(!m.blocked)setAdmitted(true)
     setReady(true)
    }catch{
+    failed=true
     if(alive){m.blocked=true;pausePlayback();setError('Unable to verify For You access. Please retry.');setReady(true)}
    }finally{inFlight=false;if(pendingRelease){pendingRelease=false;release()}}
   }
   void sync(true)
-  const timer=window.setInterval(()=>void sync(),1000)
-  const refresh=()=>void sync(true)
+  const timer=window.setInterval(()=>{if(!failed)void sync()},1000)
+  const refresh=()=>{if(failed)setError('Checking For You access...');void sync(true)}
   const release=()=>{m.previous=null;pausePlayback();if(inFlight){pendingRelease=true;return}void syncForYouUsage({lease:m.lease,totalMs:Math.floor(m.total),active:false}).catch(()=>{})}
   window.addEventListener('account-access-changed',refresh)
   window.addEventListener('pagehide',release)

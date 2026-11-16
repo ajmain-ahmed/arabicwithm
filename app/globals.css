@@ -57,6 +57,11 @@
   --sand: var(--awm-cream);
 }
 
+/* Native focus/scrollIntoView must leave controls below the fixed navbar. */
+html {
+  scroll-padding-top: calc(var(--awm-navbar-height) + 12px);
+}
+
 @media (min-width: 900px) {
   :root {
   --awm-mobile-bottom-clearance: calc(104px + env(safe-area-inset-bottom)); --awm-navbar-height: calc(65px + env(safe-area-inset-top, 0px)); }

@@ -2,6 +2,12 @@ import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { beforeEach, afterEach, expect, it, vi } from 'vitest'
 import type { PublicProfile } from '@/app/actions/profiles'
+vi.mock('next/navigation', async () => {
+  const { useSyncExternalStore } = await import('react')
+  const subscribe = (callback: () => void) => { window.addEventListener('popstate', callback); return () => window.removeEventListener('popstate', callback) }
+  const navigate = (url: string) => { window.history.pushState(null, '', url); window.dispatchEvent(new PopStateEvent('popstate')) }
+  return { useRouter: () => ({ push: navigate, replace: navigate }), usePathname: () => '/profile/user', useSearchParams: () => new URLSearchParams(useSyncExternalStore(subscribe, () => window.location.search, () => '')) }
+})
 const mocks = vi.hoisted(() => ({ update: vi.fn(), getUser: vi.fn(), saveProfile:vi.fn(),listPresets:vi.fn(),status:vi.fn(),renew:vi.fn(), metadata: { book_progress: { story: { chapterSlug: 'one', updatedAt: '2026-10-01' }, other: { chapterSlug: 'two' } }, book_sentence_bookmark: { bookSlug: 'story' } } }))
 vi.mock('@/app/actions/appLaunch',()=>({appLaunchPreference:vi.fn(async()=>false),setAppLaunchPreference:vi.fn(async()=>({ok:true,message:'Saved'}))}))
 vi.mock('@/app/actions/profilePresets',()=>({listProfilePresets:mocks.listPresets}))
@@ -19,6 +25,7 @@ function profile(premium = false): PublicProfile {
   return { id: 'user', own: true, displayName: 'Learner', username: null, isPublic: false, shareReading: false, joined: '2026-10-01', avatar: null, banner:null, avatarCrop: { x: 50, y: 50, zoom: 1 }, premium, summary: { streak: 0 }, shelf: [] }
 }
 beforeEach(() => {
+  window.history.replaceState(null, '', '/profile/user')
   Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true })
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host)
   mocks.saveProfile.mockResolvedValue(undefined);mocks.listPresets.mockImplementation(async(bucket:string)=>[{ref:`${bucket}/fox.avif`,url:`/api/profile-presets/${bucket}/fox.avif`,label:'fox'}]);

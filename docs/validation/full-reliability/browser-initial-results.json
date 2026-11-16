@@ -1,0 +1,1229 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.full-reliability.config.ts"
+    ],
+    "configFile": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\playwright.full-reliability.config.ts",
+    "rootDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/validation/full-reliability/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "node e2e/fixture-server.mjs",
+      "url": "http://127.0.0.1:3068",
+      "reuseExistingServer": false,
+      "timeout": 240000,
+      "env": {
+        "AWM_TEST_FULL_RELIABILITY": "1",
+        "AWM_TEST_PRODUCTION": "1",
+        "AWM_TEST_STRUCTURED_BOOKS": "1",
+        "AWM_TEST_WEB_PORT": "3068",
+        "AWM_TEST_BACKEND_PORT": "4368"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "full-reliability.pw.ts",
+      "file": "full-reliability.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "every public route direct and refreshed, signed out at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9994,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:15:15.438Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "route-health",
+                      "contentType": "application/json",
+                      "body": "ewogICJyb3dzIjogWwogICAgewogICAgICAicGF0aCI6ICIvIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2V4cGxvcmUiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZXhwbG9yZT92aWV3PWZvcnlvdSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucz92aWV3PXNob3dzIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2NhcnRvb25zL3Rlc3Qtc2hvdyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucy90ZXN0LXNob3cvY2xpcC0wIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzP21vZGU9bGlzdGVuIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ib29rcy90ZXN0LWJvb2svY2hhcHRlci0xIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2xpc3Rlbi90ZXN0LWJvb2siLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGVhcm4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hciIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0ExIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9BMiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQjEiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0IyIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9DMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQzIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9ub3Rlcy8xMjM0NTY3OC0xMjM0LTQxMjMtODEyMy0xMjM0NTY3ODkwMDMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbWVtb3J5IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Byb2ZpbGUiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2V4cGxvcmUvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3dvcmQtc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlL3Nlc3Npb24iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZmVlZGJhY2siLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc3VwcG9ydCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9wcml2YWN5IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Rlcm1zIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Jlc2V0LXBhc3N3b3JkIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3RyYW5zY3JpcHRzL2FiYWJhYmFiLWFiYWItNGJhYi04YmFiLWFiYWJhYmFiYWJhYiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0KICBdLAogICJlcnJvcnMiOiBbXQp9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-f521b6e1b3483413baf4",
+          "file": "full-reliability.pw.ts",
+          "line": 52,
+          "column": 33
+        },
+        {
+          "title": "every public route direct and refreshed, signed out at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9888,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:15:25.668Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "route-health",
+                      "contentType": "application/json",
+                      "body": "ewogICJyb3dzIjogWwogICAgewogICAgICAicGF0aCI6ICIvIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlP3ZpZXc9Zm9yeW91IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvY2FydG9vbnM/dmlldz1zaG93cyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvY2FydG9vbnMvdGVzdC1zaG93IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucy90ZXN0LXNob3cvY2xpcC0wIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ib29rcyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvYm9va3M/bW9kZT1saXN0ZW4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvYm9va3MvdGVzdC1ib29rL2NoYXB0ZXItMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGlzdGVuL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGVhcm4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0ExIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQTIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9CMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0IyIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQzEiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9DMiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9ub3Rlcy8xMjM0NTY3OC0xMjM0LTQxMjMtODEyMy0xMjM0NTY3ODkwMDMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL21lbW9yeSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvcHJvZmlsZSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlL3NlYXJjaCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvd29yZC1zZWFyY2giLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9wcmFjdGljZS9zZXNzaW9uIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9mZWVkYmFjayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc3VwcG9ydCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvcHJpdmFjeSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvdGVybXMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Jlc2V0LXBhc3N3b3JkIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi90cmFuc2NyaXB0cy9hYmFiYWJhYi1hYmFiLTRiYWItOGJhYi1hYmFiYWJhYmFiYWIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfQogIF0sCiAgImVycm9ycyI6IFtdCn0="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-b3d780c9c164b692ae74",
+          "file": "full-reliability.pw.ts",
+          "line": 52,
+          "column": 33
+        },
+        {
+          "title": "connected learner flows and hit testing at 320",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10602,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:15:35.566Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-05be7168556893d0ea76",
+          "file": "full-reliability.pw.ts",
+          "line": 64,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10607,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:15:46.177Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-ad6f26893e7c04a7c3c9",
+          "file": "full-reliability.pw.ts",
+          "line": 64,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 430",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10758,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:15:56.793Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-26a10b2f51fbdb8cb3e6",
+          "file": "full-reliability.pw.ts",
+          "line": 64,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 768",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9870,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:16:07.562Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-5f2d6be6a5f904f34c61",
+          "file": "full-reliability.pw.ts",
+          "line": 64,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 1024",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11252,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:16:17.442Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-3cbab933b80114398459",
+          "file": "full-reliability.pw.ts",
+          "line": 64,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10752,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:16:28.703Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-1b9786188c95d65c4419",
+          "file": "full-reliability.pw.ts",
+          "line": 64,
+          "column": 49
+        },
+        {
+          "title": "URL tabs, profile settings and membership are restored by Back and Forward for every role",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5828,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:16:39.468Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-e16276e2de9fd91e5900",
+          "file": "full-reliability.pw.ts",
+          "line": 101,
+          "column": 1
+        },
+        {
+          "title": "failed grammar reads show recovery; real empty levels and missing notes remain distinct",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8723,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:16:45.305Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-8fcd4f7e345e8fefc018",
+          "file": "full-reliability.pw.ts",
+          "line": 115,
+          "column": 1
+        },
+        {
+          "title": "all protected route entries preserve denial and Admin read access",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10948,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:16:54.039Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "protected-route-health",
+                      "contentType": "application/json",
+                      "body": "W3sicm91dGUiOiIvYWRtaW4iLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9zaG93cyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2VwaXNvZGVzIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vZXBpc29kZXMvZGRkZGRkZGQtZGRkZC00ZGRkLThkZGQtZGRkZGRkZGRkZGQwIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vYm9va3MiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9ib29rcy9iYmJiYmJiYi1iYmJiLTRiYmItOGJiYi1iYmJiYmJiYmJiYmIiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9ib29rcy9wcmV2aWV3L2JiYmJiYmJiLWJiYmItNGJiYi04YmJiLWJiYmJiYmJiYmJiYiIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2ZlYXR1cmVkIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vZ3JhbW1hci1ub3RlcyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2hhbnMtd2VociIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL3BocmFzZXMiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9yZXZpZXdzIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vdHJhbnNjcmlwdHMiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi91c2VycyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL3Jldmlld2VyIiwic3RhdHVzIjoiUEFTUyJ9XQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-c59e3fa085c383f7e467",
+          "file": "full-reliability.pw.ts",
+          "line": 122,
+          "column": 1
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 390",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 2638,
+                  "error": {
+                    "message": "Error: {\"hit\":false,\"control\":\"<button class=\\\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-1bw8vn8\\\" tabindex=\\\"0\\\" type=\\\"button\\\" data-mobile-language-toggle=\\\"true\\\" aria-label=\\\"Arabic selected — switch \",\"blocker\":\"<div class=\\\"MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-1lbe2ow\\\" aria-hidden=\\\"true\\\" style=\\\"opacity: 0; transition: opacity 195ms cubic-bezier(0.4, 0, 0.2, 1);\\\"></div>\",\"rect\":{\"x\":72.5,\"y\":286.375,\"width\":32,\"height\":36}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: {\"hit\":false,\"control\":\"<button class=\\\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-1bw8vn8\\\" tabindex=\\\"0\\\" type=\\\"button\\\" data-mobile-language-toggle=\\\"true\\\" aria-label=\\\"Arabic selected — switch \",\"blocker\":\"<div class=\\\"MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-1lbe2ow\\\" aria-hidden=\\\"true\\\" style=\\\"opacity: 0; transition: opacity 195ms cubic-bezier(0.4, 0, 0.2, 1);\\\"></div>\",\"rect\":{\"x\":72.5,\"y\":286.375,\"width\":32,\"height\":36}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at hit (C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:22:46)\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:141:16",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 46,
+                      "line": 22
+                    },
+                    "snippet": "  20 |   await expect(control).toBeVisible()\n  21 |   const result=await control.evaluate(el=>{const b=el.getBoundingClientRect(),top=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return {hit:top===el||el.contains(top),control:el.outerHTML.slice(0,220),blocker:top?.outerHTML.slice(0,400),rect:{x:b.x,y:b.y,width:b.width,height:b.height}}})\n> 22 |   expect(result.hit, JSON.stringify(result)).toBe(true)\n     |                                              ^\n  23 |   await control.click()\n  24 | }\n  25 | async function history(page: Page, first: string, second: string, third: string) {"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 46,
+                        "line": 22
+                      },
+                      "message": "Error: {\"hit\":false,\"control\":\"<button class=\\\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-1bw8vn8\\\" tabindex=\\\"0\\\" type=\\\"button\\\" data-mobile-language-toggle=\\\"true\\\" aria-label=\\\"Arabic selected — switch \",\"blocker\":\"<div class=\\\"MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-1lbe2ow\\\" aria-hidden=\\\"true\\\" style=\\\"opacity: 0; transition: opacity 195ms cubic-bezier(0.4, 0, 0.2, 1);\\\"></div>\",\"rect\":{\"x\":72.5,\"y\":286.375,\"width\":32,\"height\":36}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  20 |   await expect(control).toBeVisible()\n  21 |   const result=await control.evaluate(el=>{const b=el.getBoundingClientRect(),top=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return {hit:top===el||el.contains(top),control:el.outerHTML.slice(0,220),blocker:top?.outerHTML.slice(0,400),rect:{x:b.x,y:b.y,width:b.width,height:b.height}}})\n> 22 |   expect(result.hit, JSON.stringify(result)).toBe(true)\n     |                                              ^\n  23 |   await control.click()\n  24 | }\n  25 | async function history(page: Page, first: string, second: string, third: string) {\n    at hit (C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:22:46)\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:141:16"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:17:04.997Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-Exp-c35d1-settings-and-history-at-390-chrome\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-Exp-c35d1-settings-and-history-at-390-chrome\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-Exp-c35d1-settings-and-history-at-390-chrome\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 46,
+                    "line": 22
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-37e43c29e752c40b3039",
+          "file": "full-reliability.pw.ts",
+          "line": 132,
+          "column": 31
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 1440",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 2437,
+                  "error": {
+                    "message": "Error: {\"hit\":false,\"control\":\"<button class=\\\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-5qjapa\\\" tabindex=\\\"0\\\" type=\\\"button\\\" aria-pressed=\\\"false\\\">EN</button>\",\"blocker\":\"<div class=\\\"MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-1lbe2ow\\\" aria-hidden=\\\"true\\\" style=\\\"opacity: 0; transition: opacity 195ms cubic-bezier(0.4, 0, 0.2, 1);\\\"></div>\",\"rect\":{\"x\":440.109375,\"y\":806.984375,\"width\":40,\"height\":38.59375}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: {\"hit\":false,\"control\":\"<button class=\\\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-5qjapa\\\" tabindex=\\\"0\\\" type=\\\"button\\\" aria-pressed=\\\"false\\\">EN</button>\",\"blocker\":\"<div class=\\\"MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-1lbe2ow\\\" aria-hidden=\\\"true\\\" style=\\\"opacity: 0; transition: opacity 195ms cubic-bezier(0.4, 0, 0.2, 1);\\\"></div>\",\"rect\":{\"x\":440.109375,\"y\":806.984375,\"width\":40,\"height\":38.59375}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at hit (C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:22:46)\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:142:8",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 46,
+                      "line": 22
+                    },
+                    "snippet": "  20 |   await expect(control).toBeVisible()\n  21 |   const result=await control.evaluate(el=>{const b=el.getBoundingClientRect(),top=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return {hit:top===el||el.contains(top),control:el.outerHTML.slice(0,220),blocker:top?.outerHTML.slice(0,400),rect:{x:b.x,y:b.y,width:b.width,height:b.height}}})\n> 22 |   expect(result.hit, JSON.stringify(result)).toBe(true)\n     |                                              ^\n  23 |   await control.click()\n  24 | }\n  25 | async function history(page: Page, first: string, second: string, third: string) {"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 46,
+                        "line": 22
+                      },
+                      "message": "Error: {\"hit\":false,\"control\":\"<button class=\\\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-5qjapa\\\" tabindex=\\\"0\\\" type=\\\"button\\\" aria-pressed=\\\"false\\\">EN</button>\",\"blocker\":\"<div class=\\\"MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-1lbe2ow\\\" aria-hidden=\\\"true\\\" style=\\\"opacity: 0; transition: opacity 195ms cubic-bezier(0.4, 0, 0.2, 1);\\\"></div>\",\"rect\":{\"x\":440.109375,\"y\":806.984375,\"width\":40,\"height\":38.59375}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  20 |   await expect(control).toBeVisible()\n  21 |   const result=await control.evaluate(el=>{const b=el.getBoundingClientRect(),top=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return {hit:top===el||el.contains(top),control:el.outerHTML.slice(0,220),blocker:top?.outerHTML.slice(0,400),rect:{x:b.x,y:b.y,width:b.width,height:b.height}}})\n> 22 |   expect(result.hit, JSON.stringify(result)).toBe(true)\n     |                                              ^\n  23 |   await control.click()\n  24 | }\n  25 | async function history(page: Page, first: string, second: string, third: string) {\n    at hit (C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:22:46)\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:142:8"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:17:08.541Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-Exp-fa282-ettings-and-history-at-1440-chrome\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-Exp-fa282-ettings-and-history-at-1440-chrome\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-Exp-fa282-ettings-and-history-at-1440-chrome\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 46,
+                    "line": 22
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-2db0926d0f5cba3c1e83",
+          "file": "full-reliability.pw.ts",
+          "line": 132,
+          "column": 31
+        },
+        {
+          "title": "every public route direct and refreshed, signed out at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 17269,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:17:11.835Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "route-health",
+                      "contentType": "application/json",
+                      "body": "ewogICJyb3dzIjogWwogICAgewogICAgICAicGF0aCI6ICIvIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2V4cGxvcmUiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZXhwbG9yZT92aWV3PWZvcnlvdSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucz92aWV3PXNob3dzIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2NhcnRvb25zL3Rlc3Qtc2hvdyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucy90ZXN0LXNob3cvY2xpcC0wIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzP21vZGU9bGlzdGVuIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ib29rcy90ZXN0LWJvb2svY2hhcHRlci0xIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2xpc3Rlbi90ZXN0LWJvb2siLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGVhcm4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hciIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0ExIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9BMiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQjEiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0IyIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9DMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQzIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9ub3Rlcy8xMjM0NTY3OC0xMjM0LTQxMjMtODEyMy0xMjM0NTY3ODkwMDMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbWVtb3J5IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Byb2ZpbGUiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2V4cGxvcmUvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3dvcmQtc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlL3Nlc3Npb24iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZmVlZGJhY2siLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc3VwcG9ydCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9wcml2YWN5IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Rlcm1zIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Jlc2V0LXBhc3N3b3JkIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3RyYW5zY3JpcHRzL2FiYWJhYmFiLWFiYWItNGJhYi04YmFiLWFiYWJhYmFiYWJhYiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0KICBdLAogICJlcnJvcnMiOiBbXQp9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-e2c51d1fc4c7b12a68ce",
+          "file": "full-reliability.pw.ts",
+          "line": 52,
+          "column": 33
+        },
+        {
+          "title": "every public route direct and refreshed, signed out at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 15796,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:17:29.523Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "route-health",
+                      "contentType": "application/json",
+                      "body": "ewogICJyb3dzIjogWwogICAgewogICAgICAicGF0aCI6ICIvIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlP3ZpZXc9Zm9yeW91IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvY2FydG9vbnM/dmlldz1zaG93cyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvY2FydG9vbnMvdGVzdC1zaG93IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucy90ZXN0LXNob3cvY2xpcC0wIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ib29rcyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvYm9va3M/bW9kZT1saXN0ZW4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvYm9va3MvdGVzdC1ib29rL2NoYXB0ZXItMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGlzdGVuL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGVhcm4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0ExIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQTIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9CMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0IyIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQzEiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9DMiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9ub3Rlcy8xMjM0NTY3OC0xMjM0LTQxMjMtODEyMy0xMjM0NTY3ODkwMDMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL21lbW9yeSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvcHJvZmlsZSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlL3NlYXJjaCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvd29yZC1zZWFyY2giLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9wcmFjdGljZS9zZXNzaW9uIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9mZWVkYmFjayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc3VwcG9ydCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvcHJpdmFjeSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvdGVybXMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Jlc2V0LXBhc3N3b3JkIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi90cmFuc2NyaXB0cy9hYmFiYWJhYi1hYmFiLTRiYWItOGJhYi1hYmFiYWJhYmFiYWIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfQogIF0sCiAgImVycm9ycyI6IFtdCn0="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-4d355ed24a7ef8bdc265",
+          "file": "full-reliability.pw.ts",
+          "line": 52,
+          "column": 33
+        },
+        {
+          "title": "connected learner flows and hit testing at 320",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12853,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:17:45.328Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-5521fadd2e1aee6104f4",
+          "file": "full-reliability.pw.ts",
+          "line": 64,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13030,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:17:58.191Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-8e17b2188026f814b615",
+          "file": "full-reliability.pw.ts",
+          "line": 64,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 430",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12820,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:18:11.230Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-8fa7ad72a930d40e5e15",
+          "file": "full-reliability.pw.ts",
+          "line": 64,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 768",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12611,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:18:24.071Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-6198066f1c1fdb86bc51",
+          "file": "full-reliability.pw.ts",
+          "line": 64,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 1024",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13411,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:18:36.694Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-7f93b1f871bd72117601",
+          "file": "full-reliability.pw.ts",
+          "line": 64,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13525,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:18:50.114Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-d86bd7834870e09b2cdc",
+          "file": "full-reliability.pw.ts",
+          "line": 64,
+          "column": 49
+        },
+        {
+          "title": "URL tabs, profile settings and membership are restored by Back and Forward for every role",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6860,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:19:03.651Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-dc3341abe9f9f87ff687",
+          "file": "full-reliability.pw.ts",
+          "line": 101,
+          "column": 1
+        },
+        {
+          "title": "failed grammar reads show recovery; real empty levels and missing notes remain distinct",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9654,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:19:10.524Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-55dbe9a3862a03eaa3d9",
+          "file": "full-reliability.pw.ts",
+          "line": 115,
+          "column": 1
+        },
+        {
+          "title": "all protected route entries preserve denial and Admin read access",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 8111,
+                  "error": {
+                    "message": "Error: page.goto: NS_ERROR_FAILURE\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3068/admin/episodes/dddddddd-dddd-4ddd-8ddd-ddddddddddd0\", waiting until \"domcontentloaded\"\u001b[22m\n",
+                    "stack": "Error: page.goto: NS_ERROR_FAILURE\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3068/admin/episodes/dddddddd-dddd-4ddd-8ddd-ddddddddddd0\", waiting until \"domcontentloaded\"\u001b[22m\n\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:128:73",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 73,
+                      "line": 128
+                    },
+                    "snippet": "  126 |   const routes=['/admin','/admin/shows','/admin/episodes','/admin/episodes/dddddddd-dddd-4ddd-8ddd-ddddddddddd0','/admin/books','/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','/admin/books/preview/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','/admin/featured','/admin/grammar-notes','/admin/hans-wehr','/admin/phrases','/admin/reviews','/admin/transcripts','/admin/users']\n  127 |   for(const route of routes){await page.goto(route,{waitUntil:'domcontentloaded'});await expect(page).toHaveURL('/');await healthy(page)}\n> 128 |   await account(context,'admin')\n      |                                 ^\n  129 |   const rows=[]\n  130 |   for(const route of [...routes,'/reviewer']){const response=await page.goto(route,{waitUntil:'domcontentloaded'});expect(response!.status()).toBeLessThan(400);await expect(page.locator('[data-awm-page-error]')).toHaveCount(0);await expect(page.getByRole('heading',{name:'Page not found',exact:true})).toHaveCount(0);rows.push({route,status:'PASS'})}\n  131 |   await test.info().attach('protected-route-health',{body:JSON.stringify(rows),contentType:'application/json'})"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 73,
+                        "line": 128
+                      },
+                      "message": "Error: page.goto: NS_ERROR_FAILURE\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3068/admin/episodes/dddddddd-dddd-4ddd-8ddd-ddddddddddd0\", waiting until \"domcontentloaded\"\u001b[22m\n\n\n  126 |   const routes=['/admin','/admin/shows','/admin/episodes','/admin/episodes/dddddddd-dddd-4ddd-8ddd-ddddddddddd0','/admin/books','/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','/admin/books/preview/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','/admin/featured','/admin/grammar-notes','/admin/hans-wehr','/admin/phrases','/admin/reviews','/admin/transcripts','/admin/users']\n  127 |   for(const route of routes){await page.goto(route,{waitUntil:'domcontentloaded'});await expect(page).toHaveURL('/');await healthy(page)}\n> 128 |   await account(context,'admin')\n      |                                 ^\n  129 |   const rows=[]\n  130 |   for(const route of [...routes,'/reviewer']){const response=await page.goto(route,{waitUntil:'domcontentloaded'});expect(response!.status()).toBeLessThan(400);await expect(page.locator('[data-awm-page-error]')).toHaveCount(0);await expect(page.getByRole('heading',{name:'Page not found',exact:true})).toHaveCount(0);rows.push({route,status:'PASS'})}\n  131 |   await test.info().attach('protected-route-health',{body:JSON.stringify(rows),contentType:'application/json'})\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:128:73"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:19:20.187Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-all-62771-enial-and-Admin-read-access-firefox\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-all-62771-enial-and-Admin-read-access-firefox\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-all-62771-enial-and-Admin-read-access-firefox\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 73,
+                    "line": 128
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-aee1294ad409f9d318bc",
+          "file": "full-reliability.pw.ts",
+          "line": 122,
+          "column": 1
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 390",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 5271,
+                  "error": {
+                    "message": "Error: {\"hit\":false,\"control\":\"<button class=\\\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-1bw8vn8\\\" tabindex=\\\"0\\\" type=\\\"button\\\" data-mobile-language-toggle=\\\"true\\\" aria-label=\\\"Arabic selected — switch \",\"blocker\":\"<div class=\\\"MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-1lbe2ow\\\" style=\\\"opacity: 0; transition: opacity 195ms cubic-bezier(0.4, 0, 0.2, 1);\\\" aria-hidden=\\\"true\\\"></div>\",\"rect\":{\"x\":72.5,\"y\":286.3666687011719,\"width\":32,\"height\":36}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: {\"hit\":false,\"control\":\"<button class=\\\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-1bw8vn8\\\" tabindex=\\\"0\\\" type=\\\"button\\\" data-mobile-language-toggle=\\\"true\\\" aria-label=\\\"Arabic selected — switch \",\"blocker\":\"<div class=\\\"MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-1lbe2ow\\\" style=\\\"opacity: 0; transition: opacity 195ms cubic-bezier(0.4, 0, 0.2, 1);\\\" aria-hidden=\\\"true\\\"></div>\",\"rect\":{\"x\":72.5,\"y\":286.3666687011719,\"width\":32,\"height\":36}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at hit (C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:22:46)\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:141:16",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 46,
+                      "line": 22
+                    },
+                    "snippet": "  20 |   await expect(control).toBeVisible()\n  21 |   await expect.poll(()=>control.evaluate(el=>{const b=el.getBoundingClientRect(),top=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return top===el||el.contains(top)}),{timeout:2000,message:'The control must receive pointer events after transitions settle'}).toBe(true)\n> 22 |   await control.click()\n     |                        ^\n  23 | }\n  24 | async function history(page: Page, first: string, second: string, third: string) {\n  25 |   await page.goto(first); await healthy(page)"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 46,
+                        "line": 22
+                      },
+                      "message": "Error: {\"hit\":false,\"control\":\"<button class=\\\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-1bw8vn8\\\" tabindex=\\\"0\\\" type=\\\"button\\\" data-mobile-language-toggle=\\\"true\\\" aria-label=\\\"Arabic selected — switch \",\"blocker\":\"<div class=\\\"MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-1lbe2ow\\\" style=\\\"opacity: 0; transition: opacity 195ms cubic-bezier(0.4, 0, 0.2, 1);\\\" aria-hidden=\\\"true\\\"></div>\",\"rect\":{\"x\":72.5,\"y\":286.3666687011719,\"width\":32,\"height\":36}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  20 |   await expect(control).toBeVisible()\n  21 |   await expect.poll(()=>control.evaluate(el=>{const b=el.getBoundingClientRect(),top=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return top===el||el.contains(top)}),{timeout:2000,message:'The control must receive pointer events after transitions settle'}).toBe(true)\n> 22 |   await control.click()\n     |                        ^\n  23 | }\n  24 | async function history(page: Page, first: string, second: string, third: string) {\n  25 |   await page.goto(first); await healthy(page)\n    at hit (C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:22:46)\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:141:16"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:19:29.551Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-Exp-c35d1-settings-and-history-at-390-firefox\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-Exp-c35d1-settings-and-history-at-390-firefox\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-Exp-c35d1-settings-and-history-at-390-firefox\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 46,
+                    "line": 22
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-db93974c4577b0885753",
+          "file": "full-reliability.pw.ts",
+          "line": 132,
+          "column": 31
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 1440",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 3493,
+                  "error": {
+                    "message": "Error: {\"hit\":false,\"control\":\"<button class=\\\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-5qjapa\\\" tabindex=\\\"0\\\" type=\\\"button\\\" aria-pressed=\\\"false\\\">EN</button>\",\"blocker\":\"<div class=\\\"MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-1lbe2ow\\\" style=\\\"opacity: 0; transition: opacity 195ms cubic-bezier(0.4, 0, 0.2, 1);\\\" aria-hidden=\\\"true\\\"></div>\",\"rect\":{\"x\":440.1000061035156,\"y\":807,\"width\":40,\"height\":38.600006103515625}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m",
+                    "stack": "Error: {\"hit\":false,\"control\":\"<button class=\\\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-5qjapa\\\" tabindex=\\\"0\\\" type=\\\"button\\\" aria-pressed=\\\"false\\\">EN</button>\",\"blocker\":\"<div class=\\\"MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-1lbe2ow\\\" style=\\\"opacity: 0; transition: opacity 195ms cubic-bezier(0.4, 0, 0.2, 1);\\\" aria-hidden=\\\"true\\\"></div>\",\"rect\":{\"x\":440.1000061035156,\"y\":807,\"width\":40,\"height\":38.600006103515625}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n    at hit (C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:22:46)\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:142:8",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 46,
+                      "line": 22
+                    },
+                    "snippet": "  20 |   await expect(control).toBeVisible()\n  21 |   await expect.poll(()=>control.evaluate(el=>{const b=el.getBoundingClientRect(),top=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return top===el||el.contains(top)}),{timeout:2000,message:'The control must receive pointer events after transitions settle'}).toBe(true)\n> 22 |   await control.click()\n     |                        ^\n  23 | }\n  24 | async function history(page: Page, first: string, second: string, third: string) {\n  25 |   await page.goto(first); await healthy(page)"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 46,
+                        "line": 22
+                      },
+                      "message": "Error: {\"hit\":false,\"control\":\"<button class=\\\"MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-sizeMedium MuiButton-colorPrimary css-5qjapa\\\" tabindex=\\\"0\\\" type=\\\"button\\\" aria-pressed=\\\"false\\\">EN</button>\",\"blocker\":\"<div class=\\\"MuiBackdrop-root MuiBackdrop-invisible MuiModal-backdrop css-1lbe2ow\\\" style=\\\"opacity: 0; transition: opacity 195ms cubic-bezier(0.4, 0, 0.2, 1);\\\" aria-hidden=\\\"true\\\"></div>\",\"rect\":{\"x\":440.1000061035156,\"y\":807,\"width\":40,\"height\":38.600006103515625}}\n\n\u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32mtrue\u001b[39m\nReceived: \u001b[31mfalse\u001b[39m\n\n  20 |   await expect(control).toBeVisible()\n  21 |   await expect.poll(()=>control.evaluate(el=>{const b=el.getBoundingClientRect(),top=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return top===el||el.contains(top)}),{timeout:2000,message:'The control must receive pointer events after transitions settle'}).toBe(true)\n> 22 |   await control.click()\n     |                        ^\n  23 | }\n  24 | async function history(page: Page, first: string, second: string, third: string) {\n  25 |   await page.goto(first); await healthy(page)\n    at hit (C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:22:46)\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:142:8"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:19:36.157Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-Exp-fa282-ettings-and-history-at-1440-firefox\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-Exp-fa282-ettings-and-history-at-1440-firefox\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-Exp-fa282-ettings-and-history-at-1440-firefox\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 46,
+                    "line": 22
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-4c439a9f706dbac39a20",
+          "file": "full-reliability.pw.ts",
+          "line": 132,
+          "column": 31
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-16T11:14:46.138Z",
+    "duration": 294509.747,
+    "expected": 21,
+    "skipped": 0,
+    "unexpected": 5,
+    "flaky": 0
+  }
+}

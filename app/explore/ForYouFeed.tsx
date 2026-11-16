@@ -1,6 +1,7 @@
 'use client'
 
 import EnglishForYouSegment from './EnglishForYouSegment'
+import { boundedRead } from '@/app/lib/readRecovery'
 
 import { useEffect, useRef, useState, useCallback, useSyncExternalStore, type ReactNode } from 'react'
 import { Alert, Box, Button, CircularProgress, IconButton, Skeleton, Typography, Popover, FormControlLabel, Switch, Tooltip, useMediaQuery } from '@mui/material'
@@ -31,7 +32,7 @@ const MOBILE_PLAYER_HEIGHT = 'max(96px, min(56.25vw, 44dvh, calc(100dvh - var(--
 function prepareTranscript(source: string) {
   if (!sourceTranscripts.has(source)) {
     if (sourceTranscripts.size >= 20) sourceTranscripts.delete(sourceTranscripts.keys().next().value!)
-    sourceTranscripts.set(source, fetchForYouTranscript(source).catch(error => {
+    sourceTranscripts.set(source, boundedRead(fetchForYouTranscript(source)).catch(error => {
       sourceTranscripts.delete(source)
       throw error
     }))
@@ -208,10 +209,12 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
   const [settings, setSettings] = useState(DEFAULT_SETTINGS)
   const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement|null>(null)
   useEffect(() => {
-    try {
+    let active = true
+    queueMicrotask(() => { if (!active) return; try {
       const saved = JSON.parse(localStorage.getItem('awm-for-you-settings') ?? '{}')
       setSettings({ ...Object.fromEntries(Object.entries(DEFAULT_SETTINGS).map(([key, value]) => [key, typeof saved[key] === 'boolean' ? saved[key] : value])), arabicSize:safeTextSize(saved.arabicSize),englishSize:safeTextSize(saved.englishSize) } as unknown as TranscriptSettings)
-    } catch {}
+    } catch {} })
+    return () => { active = false }
   }, [])
   function toggleSetting(key: 'tashkeel'|'meanings'|'sentence') {
     const next = { ...settings, [key]: !settings[key] }
@@ -225,7 +228,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
   const cachedExcluded = useForYouCache((state) => state.excluded)
   const setCache = useForYouCache((state) => state.setAll)
   const [clips, setClips] = useState<ForYouClip[]>(()=> (initialClips ?? cachedClips).filter(clip=>!blockedForYouSources().has(clip.video.youtube_id)))
-  const [loadStarted, setLoadStarted] = useState(()=> (initialClips??cachedClips).some(clip=>!blockedForYouSources().has(clip.video.youtube_id)))
+  const loadStarted = useRef((initialClips??cachedClips).some(clip=>!blockedForYouSources().has(clip.video.youtube_id)))
   const [index, setIndex] = useState(()=>Math.min(cachedIndex,Math.max(0,(initialClips??cachedClips).filter(clip=>!blockedForYouSources().has(clip.video.youtube_id)).length-1))), [error, setError] = useState(''), [busy, setBusy] = useState(false)
   const [excluded, setExcluded] = useState<number[]>(()=>[...new Set([...cachedExcluded,...clips.flatMap(clip=>clip.segments.map(segment=>segment.id))])])
   const [progress, setProgress] = useState(0)
@@ -242,8 +245,8 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
   // Clips are fetched lazily: the explore feed is the default view, so this
   // data is only requested the first time someone opens the For You view.
   useEffect(() => {
-    if (loadStarted) return
-    setLoadStarted(true)
+    if (loadStarted.current) return
+    loadStarted.current = true
     void loadMore()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -275,7 +278,7 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
       // segment IDs and ask for another batch, with a finite retry budget.
       for(let attempt=0;attempt<8;attempt++){
         if(canAdvance?.()===false)return
-        let batch=await fetchForYouClips(seed.current,[...seen].slice(-10000),[...seenSources.current].reverse().slice(0,10000),groups,language)
+        let batch=await boundedRead(fetchForYouClips(seed.current,[...seen].slice(-10000),[...seenSources.current].reverse().slice(0,10000),groups,language))
         if(canAdvance?.()===false)return
         // Exhaustion starts another cycle. Keep the latest item/source least preferred.
         if(!batch.length&&seen.size){
@@ -284,9 +287,9 @@ export function Feed({ previewSegments, initialClips, railSwitcher, desktopContr
           const latest=feedRef.current.clips[feedRef.current.index]
           latest?.segments.forEach(segment=>seen.add(segment.id))
           seenSources.current=new Set(latest?[latest.video.id]:[])
-          batch=await fetchForYouClips(seed.current,[...seen],[...seenSources.current],groups,language)
+          batch=await boundedRead(fetchForYouClips(seed.current,[...seen],[...seenSources.current],groups,language))
           if(canAdvance?.()===false)return
-          if(!batch.length)batch=await fetchForYouClips(seed.current,[],[...seenSources.current],groups,language)
+          if(!batch.length)batch=await boundedRead(fetchForYouClips(seed.current,[],[...seenSources.current],groups,language))
         }
         next=batch.filter(clip=>!blocked.has(clip.video.youtube_id))
         if(next.length||!batch.length)break

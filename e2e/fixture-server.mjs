@@ -412,6 +412,13 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
     }
     let rpc = url.pathname.split('/').at(-1)
     rpcLog.push(rpc)
+    if(process.env.AWM_TEST_FULL_RELIABILITY==='1'&&rpc==='website_read_canonical_grammar'){
+      if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
+      const note=grammarNotes.find(row=>row.id===body.p_id&&row.status==='approved'&&!row.merged_into)
+      if(!note)return json(res,null)
+      const examples=tables.content_enrichment_examples.filter(e=>e.grammar_note_id===note.id&&e.active&&e.review_status==='approved'&&(!body.p_kind||e.source_kind===body.p_kind)&&(!body.p_source||e.source_id===body.p_source)&&(e.source_kind!=='chapter'||body.p_signed_in))
+      return json(res,{...note,mechanics:null,recognition_tip:null,transformations:null,examples})
+    }
     if(process.env.AWM_TEST_CONTENT_ENRICHMENT==='1'&&['website_edit_canonical_grammar','website_grammar_related','website_edit_grammar_example'].includes(rpc)){
       if(req.headers.authorization!=='Bearer fixture-service-key')return json(res,{message:'Forbidden'},403)
       const note=grammarNotes.find(value=>value.id===body.p_id)
@@ -453,6 +460,10 @@ const backend = https.createServer({ key: readFileSync(privateKey), cert: readFi
       if(spotlightSelection==='empty'||spotlightSelection==='raw-only'&&!body.p_allow_source_tokens)return json(res,null)
       const clips=Array.from({length:4},(_,i)=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Spotlight fixture',channel:'Fixture'},clip_start_ms:0,clip_end_ms:45000,segments:[0,1,2].map(j=>({id:100+i*10+j,position:j,start_seconds:j*15,end_seconds:(j+1)*15,original_text:j?'Second Arabic subtitle':'First Arabic subtitle',english_text:'A subtitle.',canonical_paragraph:spotlightSelection==='raw-only'?null:{tokens:[{arabic:'\u0643\u062a\u0627\u0628',english:'book'},{arabic:'\u062c\u0645\u064a\u0644',english:'beautiful'}]},source_tokens:[{arabic:'\u0643\u062a\u0627\u0628',english:'book'},{arabic:'\u062c\u0645\u064a\u0644',english:'beautiful'}]}))}))
       return json(res,clips.sort((a,b)=>createHash('md5').update(a.video.id+body.p_seed).digest('hex').localeCompare(createHash('md5').update(b.video.id+body.p_seed).digest('hex')))[0])
+    }
+    if(rpc==='transcript_for_you_groups'&&process.env.AWM_TEST_FULL_RELIABILITY==='1'){
+      const english=body.p_group_ids?.some(id=>['5b98c563-5c35-4696-98e1-06aa000eb622','77777777-7777-4777-8777-777777777775'].includes(id))
+      return json(res,(english?[4,5,6,7]:[0,1]).map(i=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:english?'English source':'Arabic source',channel:'Fixture'},clip_start_ms:0,clip_end_ms:60000,segments:english?tables.transcript_segments.filter(row=>row.transcript_id===`99999999-9999-4999-8999-99999999999${i}`).map(row=>({...row,source_tokens:row.canonical_paragraph.tokens})):[{id:42+i,position:0,start_seconds:0,end_seconds:60,original_text:'هذا كتاب جديد على المكتب',english_text:'This is a new book on the desk.',source_tokens:[{arabic:'هذا',english:'this'},{arabic:'كتاب',english:'book'},{arabic:'جديد',english:'new'},{arabic:'على',english:'on'},{arabic:'المكتب',english:'the desk'}]}]})).filter(clip=>!body.p_excluded?.includes(clip.segments[0].id)).slice(0,body.p_limit??5))
     }
     if(rpc==='transcript_for_you_groups'&&spotlightMode){
         const clips=Array.from({length:8},(_,i)=>({video:{id:`99999999-9999-4999-8999-99999999999${i}`,youtube_id:`abcdefghij${i}`,title:'Spotlight fixture',channel:'Fixture'},clip_start_ms:0,clip_end_ms:45000,segments:[0,1,2].map(j=>({id:100+i*10+j,position:j,start_seconds:j*15,end_seconds:(j+1)*15,original_text:j?'Second Arabic subtitle':'First Arabic subtitle',english_text:'A subtitle.',source_tokens:[{arabic:'\u0643\u062a\u0627\u0628',english:'book'}]}))}))
@@ -863,6 +874,13 @@ if(process.env.AWM_TEST_STRUCTURED_BOOKS==='1'){
 }
 
 for(const chapter of tables.chapters)chapter.is_published??=true
+if(process.env.AWM_TEST_FULL_RELIABILITY==='1'){
+  process.env.AWM_TEST_CONTENT_ENRICHMENT='1'
+  for(const book of tables.books)book.is_completed??=true
+  tables.grammar_notes=grammarNotes.map(row=>({...row,merged_into:null}))
+  tables.content_enrichment_examples=grammarExamples.map(row=>({...row,active:true}))
+  tables.content_enrichment_examples.push({...grammarExamples[2],id:randomUUID(),active:true,source_kind:'episode',source_id:tables.episodes[0].id,source_title:tables.episodes[0].title,parent_title:'Test Show'})
+}
 if(process.env.AWM_TEST_CONTENT_ENRICHMENT==='1')tables.phrases=[{id:1,phrase_ar_di:'فِي الْوَاقِعِ',phrase_tr:'fī l-wāqiʿ',english:'In fact',cefr:'B1',notes:'Curated note'}]
 if(process.env.AWM_TEST_CHAPTER_PUBLICATION==='1'){
  const structured=JSON.parse(readFileSync('test-fixtures/structured-chapter.json','utf8'))
@@ -887,6 +905,10 @@ backend.listen(backendPort, '127.0.0.1', () => {
     next.on('exit',finish)
   }
   if(process.env.AWM_TEST_PRODUCTION==='1'){
+    // vinext and Next write different generated declarations under .next/types.
+    // Restore Next's declarations before checking the isolated production build.
+    const types=spawnSync(process.execPath,['node_modules/next/dist/bin/next','typegen'],{stdio:'inherit',env:{...env,AWM_BROWSER_TEST:'0'}})
+    if(types.status!==0){finish(types.status??1);return}
     next=spawn(process.execPath,['node_modules/next/dist/bin/next','build',...(process.env.AWM_TEST_WEBPACK==='1'?['--webpack']:[])],{stdio:'inherit',env})
     next.on('exit',code=>{if(code===0)serve();else finish(code)})
   }else serve()

@@ -2,6 +2,7 @@
 import {useEffect,useRef,useState} from 'react'
 import {Alert,Box,Button,LinearProgress,Paper,Typography} from '@mui/material'
 import {loadGrammar} from '@/app/actions/grammar'
+import {boundedRead} from '@/app/lib/readRecovery'
 import {AnswerArea,Arabic,English,Instruction,useGrammarDisplay} from './GrammarUI'
 import {preparedQuestions,variedPractice,type PreparedQuestion,type RecentQuestion} from './preparedQuestions'
 import useCorrectAutoAdvance from './useCorrectAutoAdvance'
@@ -12,7 +13,7 @@ export default function PreparedActivity({activity}:{activity:'patterns'|'contex
  useEffect(()=>{
   let active=true
   const install=(questions:PreparedQuestion[])=>{setQuestions(variedPractice(questions,recent.current));setIndex(0);setResult(null);setBusy(false)}
-  void loadGrammar(activity==='context'?'sarf':'word_pattern','sentence_role',crypto.randomUUID()).then(data=>{
+  void boundedRead(loadGrammar(activity==='context'?'sarf':'word_pattern','sentence_role',crypto.randomUUID())).then(data=>{
    if(!active)return;setError('');setWarning('');install(preparedQuestions(data.prepared,activity))
   }).catch(()=>{
    if(!active)return

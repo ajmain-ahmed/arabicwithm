@@ -6,6 +6,19 @@ vi.mock('@/app/actions/forYouUsage',()=>({syncForYouUsage:mocks.sync}))
 vi.mock('@/app/components/PremiumPrompt',()=>({default:({open}:{open:boolean})=>open?<aside>Canonical upgrade popup</aside>:null}))
 import ForYouAllowance from './ForYouAllowance'
 import {useForYouAdvance,useForYouMeter,type PlayerSample} from './ForYouMeterContext'
+it('settles a stalled initial access report into recovery without admitting playback',async()=>{
+ mocks.sync.mockImplementation(()=>new Promise(()=>{}))
+ await mount();expect(document.body.textContent).not.toContain('Player and transcript')
+ await act(async()=>vi.advanceTimersByTimeAsync(30001))
+ expect(document.body.textContent).toContain('Unable to verify For You access')
+ expect(document.body.textContent).not.toContain('Player and transcript')
+ expect(document.body.textContent).toContain('Retry')
+ await act(async()=>vi.advanceTimersByTimeAsync(10000))
+ expect(mocks.sync).toHaveBeenCalledTimes(1)
+ await act(async()=>window.dispatchEvent(new Event('account-access-changed')))
+ expect(mocks.sync).toHaveBeenCalledTimes(2)
+ expect(document.body.textContent).toContain('Checking For You access')
+})
 let send:((s:PlayerSample)=>void)|null=null,allowed:(()=>boolean)|null=null,root:Root,host:HTMLDivElement,clock=0,budget=8000,unlimited=false
 function Player(){const meter=useForYouMeter(),advance=useForYouAdvance();useEffect(()=>{send=meter;allowed=advance;return()=>{send=null;allowed=null}},[meter,advance]);useEffect(()=>{mocks.mounted()},[]);return <p>Player and transcript</p>}
 async function mount(){await act(async()=>root.render(<ForYouAllowance onExplore={mocks.explore}><Player/></ForYouAllowance>))}

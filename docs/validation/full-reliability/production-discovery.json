@@ -1,0 +1,41 @@
+[
+  {
+    "browser": "chrome",
+    "width": 390,
+    "status": "BLOCKED",
+    "error": "expect(locator).toBeVisible() failed\n\nLocator: locator('[data-explore-player=\"active\"]').visible().first()\nExpected: visible\nTimeout: 20000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" locator('[data-explore-player=\"active\"]').visible().first() with timeout 20000ms\n  - waiting for locator('[data-explore-player=\"active\"]').visible().first()\n",
+    "errors": []
+  },
+  {
+    "browser": "chrome",
+    "width": 1440,
+    "status": "PASS",
+    "exploreRenderedItems": 12,
+    "arabicSource": "yFfgdyv3SjM",
+    "englishSource": "ANV6fbhTjyU",
+    "errors": []
+  },
+  {
+    "browser": "firefox",
+    "width": 390,
+    "status": "PASS",
+    "exploreRenderedItems": 12,
+    "arabicSource": "c3dAhShtQCw",
+    "englishSource": "ANV6fbhTjyU",
+    "errors": []
+  },
+  {
+    "browser": "firefox",
+    "width": 1440,
+    "status": "BLOCKED",
+    "exploreRenderedItems": 12,
+    "arabicSource": "-vn6zr1V8RA",
+    "englishSource": "ANV6fbhTjyU",
+    "errors": [
+      {
+        "message": "Permission denied to access property \"type\"",
+        "stack": "Error: Permission denied to access property \"type\"\n    at Mt (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:9:3896)\n    at jd (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:9:122507)\n    at enqueueSetState (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:9:64753)\n    at t</y.prototype.setState (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:2:1074)\n    at n.safeSetState (https://arabicwithm.com/_next/static/chunks/CDQAViSZ.js:1:2723)\n    at n.performExit/</< (https://arabicwithm.com/_next/static/chunks/CDQAViSZ.js:1:2489)\n    at n.setNextCallback/this.nextCallback (https://arabicwithm.com/_next/static/chunks/CDQAViSZ.js:1:2850)\n    at #createSandbox (resource://gre/actors/PictureInPictureChild.sys.mjs:3072:29)\n    at PictureInPictureChildVideoWrapper (resource://gre/actors/PictureInPictureChild.sys.mjs:2989:28)\n    at applyWrapper (resource://gre/actors/PictureInPictureChild.sys.mjs:146:10)\n    at updateUrlbarPipVideoEligibility (resource://gre/actors/PictureInPictureChild.sys.mjs:688:27)\n    at registerVideo (resource://gre/actors/PictureInPictureChild.sys.mjs:679:10)\n    at handleEvent (resource://gre/actors/PictureInPictureChild.sys.mjs:588:16)\n    at g.Ej (https://www.youtube.com/s/player/fad7e4e9/player_embed_es6.vflset/en_US/base.js:538:24)\n    at GX (https://www.youtube.com/s/player/fad7e4e9/player_embed_es6.vflset/en_US/base.js:4359:79)\n    at qIa (https://www.youtube.com/s/player/fad7e4e9/player_embed_es6.vflset/en_US/base.js:4348:37)\n    at  (https://www.youtube.com/s/player/fad7e4e9/player_embed_es6.vflset/en_US/base.js:6244:444)\n    at create (https://www.youtube.com/s/player/fad7e4e9/player_embed_es6.vflset/en_US/base.js:6246:121)\n    at MW/a.ea (https://www.youtube.com/s/_/ytembeds/_/js/k=ytembeds.base.en_US.z7S0CPvo2TE.2021.O/am=AAAAABAAGAM/d=1/excm=base,root/br=1/rs=AGKMywE8_bhsdqQysBOrbPdLv4Rtj57ugw/m=root,base:833:392)\n    at MW (https://www.youtube.com/s/_/ytembeds/_/js/k=ytembeds.base.en_US.z7S0CPvo2TE.2021.O/am=AAAAABAAGAM/d=1/excm=base,root/br=1/rs=AGKMywE8_bhsdqQysBOrbPdLv4Rtj57ugw/m=root,base:833:462)\n    at loadNewVideoConfig (https://www.youtube.com/s/_/ytembeds/_/js/k=ytembeds.base.en_US.z7S0CPvo2TE.2021.O/am=AAAAABAAGAM/d=1/excm=base,root/br=1/rs=AGKMywE8_bhsdqQysBOrbPdLv4Rtj57ugw/m=root,base:993:202)\n    at dxa/this.wa< (https://www.youtube.com/s/_/ytembeds/_/js/k=ytembeds.base.en_US.z7S0CPvo2TE.2021.O/am=AAAAABAAGAM/d=1/excm=base,root/br=1/rs=AGKMywE8_bhsdqQysBOrbPdLv4Rtj57ugw/m=root,base:992:473)\n    at setTimeout handler*dxa (https://www.youtube.com/s/_/ytembeds/_/js/k=ytembeds.base.en_US.z7S0CPvo2TE.2021.O/am=AAAAABAAGAM/d=1/excm=base,root/br=1/rs=AGKMywE8_bhsdqQysBOrbPdLv4Rtj57ugw/m=root,base:992:452)\n    at exa (https://www.youtube.com/s/_/ytembeds/_/js/k=ytembeds.base.en_US.z7S0CPvo2TE.2021.O/am=AAAAABAAGAM/d=1/excm=base,root/br=1/rs=AGKMywE8_bhsdqQysBOrbPdLv4Rtj57ugw/m=root,base:841:113)\n    at Rza (https://www.youtube.com/s/_/ytembeds/_/js/k=ytembeds.base.en_US.z7S0CPvo2TE.2021.O/am=AAAAABAAGAM/d=1/excm=base,root/br=1/rs=AGKMywE8_bhsdqQysBOrbPdLv4Rtj57ugw/m=root,base:968:468)\n    at  (https://www.youtube.com/embed/-vn6zr1V8RA?autoplay=0&rel=0&enablejsapi=1&playsinline=1&start=216&origin=https%3A%2F%2Farabicwithm.com&widgetid=3&forigin=https%3A%2F%2Farabicwithm.com%2Fexplore%3Fview%3Dforyou&aoriginsup=1&vf=6:11:11063)"
+      }
+    ]
+  }
+]

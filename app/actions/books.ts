@@ -6,6 +6,7 @@ import { detectChapterFormat, structuredPageCount, type StructuredChapterResult 
 import { getAuthenticatedUserId } from "@/app/actions/auth"
 import { canAccessBookChapter } from "@/app/lib/entitlements"
 import { unstable_cache } from "next/cache"
+import { assertPublicRead } from '@/app/lib/publicRead'
 import { createHash } from "node:crypto"
 import { hasServiceClientConfig, serviceClient } from "@/app/lib/supabase"
 import { extractChapterTeaser } from "@/app/lib/bookChapterTeaser"
@@ -172,9 +173,10 @@ export const fetchBookBySlugPublic = unstable_cache(
       .from("books")
       .select("*")
       .eq("slug", slug)
-      .single()
+      .maybeSingle()
 
-    if (error || !book) return null
+    assertPublicRead(error, 'book detail')
+    if (!book) return null
     if (book.is_completed === false) return mapBook(book as Record<string, unknown>, 0)
 
     const { count, error: countError } = await readChapterPublication(published => {
@@ -277,9 +279,10 @@ const fetchChapterContent = unstable_cache(
       .select("id, slug, title, chapter_number, content")
       .eq("book_id", bookId)
       .eq("slug", chapterSlug)
-      .single()
+      .maybeSingle()
 
-    if (error || !data) return null
+    assertPublicRead(error, 'chapter content')
+    if (!data) return null
 
     const format = detectChapterFormat(data.content)
     if (format.kind !== 'legacy') return {

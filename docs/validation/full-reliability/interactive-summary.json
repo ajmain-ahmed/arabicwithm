@@ -1,0 +1,7 @@
+{
+  "elements": 965,
+  "files": 150,
+  "withHandlers": 821,
+  "withHref": 77,
+  "note": "Source inventory; this does not assert runtime coverage for every control."
+}

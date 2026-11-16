@@ -1,0 +1,193 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.full-reliability-vinext.config.ts",
+      "--project",
+      "chrome",
+      "--grep",
+      "testing at 320"
+    ],
+    "configFile": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\playwright.full-reliability-vinext.config.ts",
+    "rootDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/validation/full-reliability/vinext-browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "node e2e/fixture-server.mjs",
+      "url": "http://127.0.0.1:3069",
+      "reuseExistingServer": false,
+      "timeout": 240000,
+      "env": {
+        "AWM_TEST_FULL_RELIABILITY": "1",
+        "AWM_TEST_VINEXT": "1",
+        "AWM_TEST_STRUCTURED_BOOKS": "1",
+        "AWM_TEST_WEB_PORT": "3069",
+        "AWM_TEST_BACKEND_PORT": "4369"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "full-reliability.pw.ts",
+      "file": "full-reliability.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "connected learner flows and hit testing at 320",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 16663,
+                  "error": {
+                    "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a[href=\"/grammar/context\"]').first()\u001b[22m\n",
+                    "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a[href=\"/grammar/context\"]').first()\u001b[22m\n\n    at history (C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:28:52)\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:57:3",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 52,
+                      "line": 28
+                    },
+                    "snippet": "  26 |   await page.goto(first); await healthy(page)\n  27 |   await page.locator(`a[href=\"${second}\"]`).first().click(); await expect(page).toHaveURL(second); await healthy(page)\n> 28 |   await page.locator(`a[href=\"${third}\"]`).first().click(); await expect(page).toHaveURL(third); await healthy(page)\n     |                                                    ^\n  29 |   await page.goBack(); await expect(page).toHaveURL(second); await healthy(page)\n  30 |   await page.goBack(); await expect(page).toHaveURL(first); await healthy(page)\n  31 |   await page.goForward(); await expect(page).toHaveURL(second); await healthy(page)"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 52,
+                        "line": 28
+                      },
+                      "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('a[href=\"/grammar/context\"]').first()\u001b[22m\n\n\n  26 |   await page.goto(first); await healthy(page)\n  27 |   await page.locator(`a[href=\"${second}\"]`).first().click(); await expect(page).toHaveURL(second); await healthy(page)\n> 28 |   await page.locator(`a[href=\"${third}\"]`).first().click(); await expect(page).toHaveURL(third); await healthy(page)\n     |                                                    ^\n  29 |   await page.goBack(); await expect(page).toHaveURL(second); await healthy(page)\n  30 |   await page.goBack(); await expect(page).toHaveURL(first); await healthy(page)\n  31 |   await page.goForward(); await expect(page).toHaveURL(second); await healthy(page)\n    at history (C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:28:52)\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:57:3"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:02:06.191Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-7b95e-lows-and-hit-testing-at-320-chrome\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-7b95e-lows-and-hit-testing-at-320-chrome\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-7b95e-lows-and-hit-testing-at-320-chrome\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 52,
+                    "line": 28
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-05be7168556893d0ea76",
+          "file": "full-reliability.pw.ts",
+          "line": 53,
+          "column": 49
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-16T11:01:33.411Z",
+    "duration": 50470.36,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

@@ -18,7 +18,7 @@ vi.mock('./ContactDialog', () => ({ default: () => null }))
 vi.mock('./PremiumMemberMark', () => ({ default: () => null }))
 vi.mock('./BrandLogo', () => ({ default: () => <span>Arabic With M</span> }))
 vi.mock('@/app/lib/supabase/client', () => ({ supabase: { auth: { signOut: vi.fn() } } }))
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }), usePathname: () => mocks.pathname }))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: mocks.push }), usePathname: () => mocks.pathname, useSearchParams: () => new URLSearchParams() }))
 vi.mock('@mui/material', async importOriginal => ({ ...await importOriginal<typeof import('@mui/material')>(), useMediaQuery: () => mocks.mobile }))
 import Navbar from './index'
 import MobileBottomNav from '@/app/components/MobileBottomNav'

@@ -1,0 +1,253 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.full-reliability-followup.config.ts",
+      "--grep",
+      "Explore and For You"
+    ],
+    "configFile": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\playwright.full-reliability-followup.config.ts",
+    "rootDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/validation/full-reliability/browser-discovery-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "node e2e/fixture-server.mjs",
+      "url": "http://127.0.0.1:3068",
+      "reuseExistingServer": false,
+      "timeout": 240000,
+      "env": {
+        "AWM_TEST_FULL_RELIABILITY": "1",
+        "AWM_TEST_PRODUCTION": "1",
+        "AWM_TEST_STRUCTURED_BOOKS": "1",
+        "AWM_TEST_WEB_PORT": "3068",
+        "AWM_TEST_BACKEND_PORT": "4368"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "full-reliability.pw.ts",
+      "file": "full-reliability.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4163,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:33:13.610Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-37e43c29e752c40b3039",
+          "file": "full-reliability.pw.ts",
+          "line": 134,
+          "column": 31
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3445,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:33:17.955Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-2db0926d0f5cba3c1e83",
+          "file": "full-reliability.pw.ts",
+          "line": 134,
+          "column": 31
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5437,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:33:21.916Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-db93974c4577b0885753",
+          "file": "full-reliability.pw.ts",
+          "line": 134,
+          "column": 31
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3886,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:33:27.784Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-4c439a9f706dbac39a20",
+          "file": "full-reliability.pw.ts",
+          "line": 134,
+          "column": 31
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-16T11:32:44.492Z",
+    "duration": 47625.179,
+    "expected": 4,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

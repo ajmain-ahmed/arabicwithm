@@ -54,7 +54,7 @@ export default function BooksLibrary({ books, audioBookIds }: { books: LibraryBo
   const searchParams = useSearchParams()
   const router = useRouter()
   const mode = searchParams.get('mode') === 'listen' ? 'listen' : 'read'
-  const setMode = (value: string) => { const query = new URLSearchParams(searchParams.toString()); if (value === 'listen') query.set('mode', value); else query.delete('mode'); startModeTransition(() => router.replace(`/books${query.size ? `?${query}` : ''}`, { scroll: false })) }
+  const setMode = (value: string) => { const query = new URLSearchParams(searchParams.toString()); if (value === 'listen') query.set('mode', value); else query.delete('mode'); startModeTransition(() => router.push(`/books${query.size ? `?${query}` : ''}`, { scroll: false })) }
   const [dialogOpen, setDialogOpen] = useState(false)
   const [level, setLevel] = useState('')
   const [categories, setCategories] = useState<string[]>([])

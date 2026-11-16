@@ -21,7 +21,10 @@ export async function enrichmentRpc(
   parameters: Record<string, unknown> = {},
 ): Promise<unknown> {
   const { data, error } = await serviceClient.rpc(name as never, parameters as never)
-  if (error) throw new Error('enrichment_storage_unavailable')
+  if (error) {
+    console.error('[enrichment RPC] read or write failed', { name, code: error.code, message: error.message })
+    throw new Error('enrichment_storage_unavailable')
+  }
   return data
 }
 

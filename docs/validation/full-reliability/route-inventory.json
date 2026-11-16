@@ -1,0 +1,262 @@
+[
+  {
+    "route": "/",
+    "file": "app/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin",
+    "file": "app/(admin)/admin/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/books",
+    "file": "app/(admin)/admin/books/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/books/[chapterId]",
+    "file": "app/(admin)/admin/books/[chapterId]/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/books/preview/[chapterId]",
+    "file": "app/(admin)/admin/books/preview/[chapterId]/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/episodes",
+    "file": "app/(admin)/admin/episodes/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/episodes/[episodeId]",
+    "file": "app/(admin)/admin/episodes/[episodeId]/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/featured",
+    "file": "app/(admin)/admin/featured/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/grammar-notes",
+    "file": "app/(admin)/admin/grammar-notes/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/hans-wehr",
+    "file": "app/(admin)/admin/hans-wehr/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/phrases",
+    "file": "app/(admin)/admin/phrases/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/reviews",
+    "file": "app/(admin)/admin/reviews/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/shows",
+    "file": "app/(admin)/admin/shows/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/transcripts",
+    "file": "app/(admin)/admin/transcripts/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/admin/users",
+    "file": "app/(admin)/admin/users/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/api/admin/audio-upload",
+    "file": "app/api/admin/audio-upload/route.ts",
+    "type": "handler"
+  },
+  {
+    "route": "/api/admin/content-enrichment/work",
+    "file": "app/api/admin/content-enrichment/work/route.ts",
+    "type": "handler"
+  },
+  {
+    "route": "/api/billing/webhook",
+    "file": "app/api/billing/webhook/route.ts",
+    "type": "handler"
+  },
+  {
+    "route": "/api/books/[book]/download",
+    "file": "app/api/books/[book]/download/route.ts",
+    "type": "handler"
+  },
+  {
+    "route": "/api/covers/[kind]/[id]",
+    "file": "app/api/covers/[kind]/[id]/route.ts",
+    "type": "handler"
+  },
+  {
+    "route": "/api/profile-presets/[bucket]/[...path]",
+    "file": "app/api/profile-presets/[bucket]/[...path]/route.ts",
+    "type": "handler"
+  },
+  {
+    "route": "/api/reviewer/export",
+    "file": "app/api/reviewer/export/route.ts",
+    "type": "handler"
+  },
+  {
+    "route": "/auth/callback",
+    "file": "app/auth/callback/route.ts",
+    "type": "handler"
+  },
+  {
+    "route": "/auth/confirm",
+    "file": "app/auth/confirm/route.ts",
+    "type": "handler"
+  },
+  {
+    "route": "/books",
+    "file": "app/books/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/books/[book]",
+    "file": "app/books/[book]/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/books/[book]/[chapter]",
+    "file": "app/books/[book]/[chapter]/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/cartoons",
+    "file": "app/cartoons/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/cartoons/[show]",
+    "file": "app/cartoons/[show]/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/cartoons/[show]/[episode]",
+    "file": "app/cartoons/[show]/[episode]/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/explore",
+    "file": "app/explore/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/explore/search",
+    "file": "app/explore/search/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/feedback",
+    "file": "app/feedback/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/grammar",
+    "file": "app/grammar/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/grammar/context",
+    "file": "app/grammar/context/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/grammar/context/[level]",
+    "file": "app/grammar/context/[level]/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/grammar/notes/[id]",
+    "file": "app/grammar/notes/[id]/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/learn",
+    "file": "app/learn/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/listen/[book]",
+    "file": "app/listen/[book]/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/memory",
+    "file": "app/memory/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/practice",
+    "file": "app/practice/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/practice/session",
+    "file": "app/practice/session/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/privacy",
+    "file": "app/privacy/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/profile",
+    "file": "app/profile/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/profile/[user]",
+    "file": "app/profile/[user]/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/reset-password",
+    "file": "app/reset-password/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/reviewer",
+    "file": "app/reviewer/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/search",
+    "file": "app/search/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/support",
+    "file": "app/support/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/terms",
+    "file": "app/terms/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/transcripts/[id]",
+    "file": "app/transcripts/[id]/page.tsx",
+    "type": "page"
+  },
+  {
+    "route": "/word-search",
+    "file": "app/word-search/page.tsx",
+    "type": "page"
+  }
+]

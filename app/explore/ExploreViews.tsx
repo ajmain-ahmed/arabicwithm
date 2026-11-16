@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Box, Button, Fade, IconButton, Typography, useMediaQuery } from '@mui/material'
 import { Close, ExploreOutlined, PersonOutlineRounded } from '@mui/icons-material'
 import ExploreFeed from './ExploreFeed'
@@ -42,15 +43,17 @@ function ViewSwitch({ view, onChange, hint, onDismiss, mobile = false, compact =
   </Box>
 }
 
-export default function ExploreViews({ initialSeed, initialBatch, initialView='explore' }: { initialView?:ExploreView; initialSeed: string; initialBatch: ExploreFeedBatch | null }) {
+export default function ExploreViews({ initialSeed, initialBatch }: { initialView?:ExploreView; initialSeed: string; initialBatch: ExploreFeedBatch | null }) {
   const { user, loading } = useAuth()
-  const [view, setView] = useState<ExploreView>(initialView)
+  const searchParams = useSearchParams()
+  const view: ExploreView = (searchParams.get('view') ?? searchParams.get('tab')) === 'foryou' ? 'foryou' : 'explore'
   const [language,setLanguage]=useState<'ar'|'en'>(()=>useForYouCache.getState().language)
   function selectLanguage(next:'ar'|'en'){if(next===language)return;clearForYouTranscripts();useForYouCache.setState({language:next,clips:[],index:0,excluded:[],seenSources:[],seed:''});setLanguage(next)}
-  useEffect(()=>{const restore=()=>{const q=new URLSearchParams(window.location.search);setView((q.get('view')??q.get('tab'))==='foryou'?'foryou':'explore')};window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore)},[])
   const requestView = (next: ExploreView) => {
     if(next===view)return
-    const url=new URL(window.location.href);url.searchParams.delete('tab');if(next==='foryou')url.searchParams.set('view',next);else url.searchParams.delete('view');window.history.pushState(null,'',url);setView(next)
+    // The router patches external History writes and preserves its own state.
+    // Passing its current private state back would bypass URL-hook updates.
+    const url=new URL(window.location.href);url.searchParams.delete('tab');if(next==='foryou')url.searchParams.set('view',next);else url.searchParams.delete('view');window.history.pushState(null,'',url)
   }
   useEffect(()=>{
     // One route visit, including switches between Explore and For You. A fresh

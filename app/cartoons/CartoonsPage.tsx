@@ -89,7 +89,7 @@ export default function CartoonsPage({
   const searchParams = useSearchParams()
   /* The view is owned by the URL (?view=shows) so external links and
      back/forward navigation always agree with what is on screen; the toggle
-     just writes the param (replacing, so tab flips don't stack history). */
+     creates a history entry so Back also restores the previous view. */
   const view: WatchView = searchParams.get('view') === 'shows' ? 'shows' : 'episodes'
   const setView = (next: WatchView) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -97,7 +97,7 @@ export default function CartoonsPage({
     else params.delete('view')
     params.delete('page')
     const query = params.toString()
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false })
   }
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingShow, setEditingShow] = useState<ShowMeta | undefined>()

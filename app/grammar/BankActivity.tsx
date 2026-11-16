@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Box, Button, FormControl, InputLabel, LinearProgress, MenuItem, Select } from '@mui/material'
 import { loadGrammarBank } from '@/app/actions/grammar'
+import { boundedRead } from '@/app/lib/readRecovery'
 import type { Mode } from './models'
 import { practiceBatch, type BankQuestion } from './questionBank'
 import WebsiteActivity from './WebsiteActivity'
@@ -13,7 +14,7 @@ export default function BankActivity({ mode }: { mode: Mode }) {
   const recent = useRef<string[]>([])
   useEffect(() => {
     let active = true
-    void loadGrammarBank(mode, crypto.randomUUID(), recent.current, level || null).then(rows => {
+    void boundedRead(loadGrammarBank(mode, crypto.randomUUID(), recent.current, level || null)).then(rows => {
       if (!active) return
       setQuestions(practiceBatch(rows, mode))
       setWarning(''); setBusy(false)

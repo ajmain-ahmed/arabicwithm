@@ -1,7 +1,8 @@
 import {act} from 'react'
 import {createRoot,type Root} from 'react-dom/client'
 import {beforeEach,afterEach,expect,it,vi} from 'vitest'
-const mocks=vi.hoisted(()=>({path:'/reviewer'}))
+const mocks=vi.hoisted(()=>({path:'/reviewer',authError:''}))
+vi.mock('@/app/AuthContext',()=>({useAuth:()=>({error:mocks.authError})}))
 vi.mock('next/navigation',()=>({usePathname:()=>mocks.path}))
 vi.mock('./navbar/index',()=>({default:()=>null}))
 vi.mock('./footer',()=>({default:()=> <footer>Footer</footer>}))
@@ -11,9 +12,16 @@ vi.mock('./LearningActivityTracker',()=>({default:()=>null}))
 vi.mock('./SiteDialogs',()=>({default:()=>null}))
 import SiteShell from './SiteShell'
 let host:HTMLDivElement,root:Root
-beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});host=document.createElement('div');root=createRoot(host);vi.spyOn(console,'error').mockImplementation(()=>{});mocks.path='/reviewer'})
+beforeEach(()=>{Object.assign(globalThis,{IS_REACT_ACT_ENVIRONMENT:true});host=document.createElement('div');root=createRoot(host);vi.spyOn(console,'error').mockImplementation(()=>{});mocks.path='/reviewer';mocks.authError=''})
 afterEach(async()=>{await act(async()=>root.unmount());vi.restoreAllMocks()})
 function Broken(){throw new Error('Deliberate rendering failure');return null}
+it('keeps public content available during client session failure while protected routes recover',async()=>{
+ mocks.path='/books';mocks.authError='session offline'
+ await act(async()=>root.render(<SiteShell><p>Existing public catalogue</p></SiteShell>))
+ expect(host.textContent).toContain('Existing public catalogue');expect(host.textContent).toContain('Reload to reconnect')
+ mocks.path='/memory';await act(async()=>root.render(<SiteShell><p>Protected content</p></SiteShell>))
+ expect(host.textContent).not.toContain('Protected content');expect(host.textContent).toContain('This page took a little detour')
+})
 it('recovers from a prior page error after client navigation instead of keeping the old error screen',async()=>{
  await act(async()=>root.render(<SiteShell><Broken/></SiteShell>));expect(host.textContent).toContain('This page took a little detour');expect(console.error).toHaveBeenCalled()
  mocks.path='/profile';await act(async()=>root.render(<SiteShell><p>New profile content</p></SiteShell>))

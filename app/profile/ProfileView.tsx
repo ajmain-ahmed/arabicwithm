@@ -2,6 +2,7 @@
 
 import { returnToPublicHome } from '@/app/lib/publicHome'
 import { useEffect, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowForwardIos, CalendarMonthOutlined, CheckCircleOutlined,
   ChevronRight, DiamondOutlined, EmailOutlined, FavoriteRounded,
@@ -523,27 +524,23 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 }
 
 export default function ProfileView({ profile }: { profile: PublicProfile }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const sections: { id: Section; label: string; icon: React.ReactNode }[] = [
     { id: 'account', label: 'Account', icon: <PersonOutlined sx={{ fontSize: 18 }} /> },
     ...(profile.own ? [{ id: 'awm' as Section, label: 'AWM+', icon: <DiamondOutlined sx={{ fontSize: 18 }} /> }] : []),
     ...(profile.own ? [{ id: 'settings' as Section, label: 'Settings', icon: <SettingsOutlined sx={{ fontSize: 18 }} /> }] : []),
     { id: 'support', label: 'Support', icon: <SupportOutlined sx={{ fontSize: 18 }} /> },
   ]
-  const [activeSection, setActiveSection] = useState<Section>(() => {
-    if (typeof window === 'undefined') return 'account'
-    const tab = new URLSearchParams(window.location.search).get('tab') as Section
-    const fromHash = window.location.hash === '#profile-settings' ? 'settings' : null
-    const initial = fromHash ?? tab
-    return sections.some(s => s.id === initial) ? initial : 'account'
-  })
+  const activeSection = searchParams.get('tab') as Section ?? 'account'
+  useEffect(() => {
+    if (window.location.hash === '#profile-settings') router.replace(`${pathname}?tab=settings`, { scroll: false })
+  }, [pathname, router])
   const [displayName, setDisplayName] = useState(profile.displayName)
 
   const selectSection = (id: Section) => {
-    setActiveSection(id)
-    if (typeof window !== 'undefined') {
-      const base = `${window.location.pathname}`
-      window.history.replaceState(null, '', id === 'account' ? base : `${base}?tab=${id}`)
-    }
+    if (id !== activeSection) router.push(id === 'account' ? pathname : `${pathname}?tab=${id}`, { scroll: false })
   }
 
   const active = sections.some(s => s.id === activeSection) ? activeSection : 'account'
@@ -558,7 +555,7 @@ export default function ProfileView({ profile }: { profile: PublicProfile }) {
             {/* sidebar (desktop) */}
             <Box component="nav" aria-label="Profile sections" sx={{ display: { xs: 'none', md: 'flex' }, width: 220, flexShrink: 0, position: 'sticky', top: 96, flexDirection: 'column', gap: 0.5 }}>
               {sections.map(item => (
-                <Box key={item.id} className={`pv-nav-item${active === item.id ? ' active' : ''}`} onClick={() => selectSection(item.id)}>
+                <Box key={item.id} component="button" type="button" aria-current={active === item.id ? 'page' : undefined} className={`pv-nav-item${active === item.id ? ' active' : ''}`} sx={{ width: '100%', background: 'transparent', textAlign: 'start', '&:focus-visible': { outline: '2px solid var(--awm-gold)', outlineOffset: 2 } }} onClick={() => selectSection(item.id)}>
                   <Box className="pv-nav-icon" sx={{ color: active === item.id ? 'var(--awm-gold)' : 'var(--awm-muted)', display: 'flex', transition: 'color 0.15s' }}>{item.icon}</Box>
                   {item.label}
                 </Box>

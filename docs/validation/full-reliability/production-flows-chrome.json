@@ -1,0 +1,62 @@
+[
+  {
+    "width": 320,
+    "status": "PASS",
+    "flows": [
+      "Home/Watch/Show/Episode/Settings/Back/Forward/refresh",
+      "Read/Book/Chapter sign-in/Back/Forward/refresh",
+      "For You real source/iframe"
+    ],
+    "errors": []
+  },
+  {
+    "width": 390,
+    "status": "PASS",
+    "flows": [
+      "Home/Watch/Show/Episode/Settings/Back/Forward/refresh",
+      "Read/Book/Chapter sign-in/Back/Forward/refresh",
+      "For You real source/iframe"
+    ],
+    "errors": []
+  },
+  {
+    "width": 430,
+    "status": "PASS",
+    "flows": [
+      "Home/Watch/Show/Episode/Settings/Back/Forward/refresh",
+      "Read/Book/Chapter sign-in/Back/Forward/refresh",
+      "For You real source/iframe"
+    ],
+    "errors": []
+  },
+  {
+    "width": 768,
+    "status": "PASS",
+    "flows": [
+      "Home/Watch/Show/Episode/Settings/Back/Forward/refresh",
+      "Read/Book/Chapter sign-in/Back/Forward/refresh",
+      "For You real source/iframe"
+    ],
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "status": "PASS",
+    "flows": [
+      "Home/Watch/Show/Episode/Settings/Back/Forward/refresh",
+      "Read/Book/Chapter sign-in/Back/Forward/refresh",
+      "For You real source/iframe"
+    ],
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "status": "PASS",
+    "flows": [
+      "Home/Watch/Show/Episode/Settings/Back/Forward/refresh",
+      "Read/Book/Chapter sign-in/Back/Forward/refresh",
+      "For You real source/iframe"
+    ],
+    "errors": []
+  }
+]

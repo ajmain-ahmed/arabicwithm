@@ -1,0 +1,37 @@
+{
+  "auditDate": "2026-11-16",
+  "browserFinalOutcomes": {
+    "startTime": "2026-11-16T11:14:46.138Z",
+    "duration": 387745.71499999997,
+    "expected": 26,
+    "unexpected": 0,
+    "skipped": 0,
+    "flaky": 0
+  },
+  "browserScope": "Final unique scenario outcomes across the full run and explicitly targeted follow-ups; see raw reports for every attempt.",
+  "unitTests": {
+    "passed": 1558,
+    "skipped": 6,
+    "filesPassed": 228,
+    "filesSkipped": 4
+  },
+  "finalAllowancePlaybackTests": {
+    "passed": 14,
+    "files": 2
+  },
+  "typescript": "PASS",
+  "changedTypeScriptLint": "PASS",
+  "cloudflareProductionBuild": "PASS",
+  "applicationDeployed": false,
+  "migrationRequired": false,
+  "migrationApplied": false,
+  "productionDatabaseWrites": false,
+  "limitations": [
+    "No existing canonical Grammar Notes or examples in production",
+    "No supplied live authenticated free/premium/Admin sessions",
+    "WebKit unavailable",
+    "Local vinext development parity blocked",
+    "Two extended production discovery checks remain BLOCKED; raw evidence retained",
+    "Unexercised route/control combinations marked BLOCKED"
+  ]
+}

@@ -1,6 +1,7 @@
 "use server"
 
 import { unstable_cache } from "next/cache"
+import { assertPublicRead } from '@/app/lib/publicRead'
 import { createHash } from "node:crypto"
 import { serviceClient, hasServiceClientConfig } from "@/app/lib/supabase"
 import {
@@ -142,16 +143,19 @@ export const fetchShowBySlugPublic = unstable_cache(
       .select("*")
       .eq("slug", slug)
       .limit(1)
-      .single()
+      .maybeSingle()
 
-    if (error || !data) return null
+    assertPublicRead(error, 'show detail')
+    if (!data) return null
 
-    const { data: episodes } = await serviceClient
+    const { data: episodes, error: episodesError } = await serviceClient
       .from("episodes")
       .select("id, tags")
       .eq("show_id", data.id)
       .not("transcript", "is", null)
       .not("transcript", "eq", "[]")
+
+    assertPublicRead(episodesError, 'show episodes')
 
     return {
       id: String(data.id),
@@ -190,12 +194,10 @@ export const fetchEpisodesForShowPublic = unstable_cache(
       .select("id, slug")
       .eq("slug", showSlug)
       .limit(1)
-      .single()
+      .maybeSingle()
 
-    if (showError || !show) {
-      console.error("[fetchEpisodesForShowPublic] show error:", showError?.message)
-      return []
-    }
+    assertPublicRead(showError, 'episode catalogue show')
+    if (!show) return []
 
     const { data, error } = await serviceClient
       .from("episodes")
@@ -258,12 +260,10 @@ export const fetchEpisodeForPublic = unstable_cache(
       .select("id, slug, title")
       .eq("slug", showSlug)
       .limit(1)
-      .single()
+      .maybeSingle()
 
-    if (showError || !show) {
-      console.error("[fetchEpisodeForPublic] show error:", showError?.message)
-      return null
-    }
+    assertPublicRead(showError, 'episode parent')
+    if (!show) return null
 
     const { data, error } = await serviceClient
       .from("episodes")
@@ -271,12 +271,10 @@ export const fetchEpisodeForPublic = unstable_cache(
       .eq("show_id", show.id)
       .eq("slug", episodeSlug)
       .limit(1)
-      .single()
+      .maybeSingle()
 
-    if (error || !data) {
-      console.error("[fetchEpisodeForPublic] error:", error?.message)
-      return null
-    }
+    assertPublicRead(error, 'episode detail')
+    if (!data) return null
     if (data.transcript == null || (Array.isArray(data.transcript) && data.transcript.length === 0)) return null
 
     const meta = mapEpisodeRow(data)

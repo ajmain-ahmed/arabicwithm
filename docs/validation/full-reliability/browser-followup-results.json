@@ -1,0 +1,159 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.full-reliability-followup.config.ts",
+      "--project",
+      "firefox",
+      "--grep",
+      "all protected route"
+    ],
+    "configFile": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\playwright.full-reliability-followup.config.ts",
+    "rootDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/validation/full-reliability/browser-followup-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "node e2e/fixture-server.mjs",
+      "url": "http://127.0.0.1:3068",
+      "reuseExistingServer": false,
+      "timeout": 240000,
+      "env": {
+        "AWM_TEST_FULL_RELIABILITY": "1",
+        "AWM_TEST_PRODUCTION": "1",
+        "AWM_TEST_STRUCTURED_BOOKS": "1",
+        "AWM_TEST_WEB_PORT": "3068",
+        "AWM_TEST_BACKEND_PORT": "4368"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "full-reliability.pw.ts",
+      "file": "full-reliability.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "all protected route entries preserve denial and Admin read access",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14854,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:29:08.030Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "protected-route-health",
+                      "contentType": "application/json",
+                      "body": "W3sicm91dGUiOiIvYWRtaW4iLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9zaG93cyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2VwaXNvZGVzIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vZXBpc29kZXMvZGRkZGRkZGQtZGRkZC00ZGRkLThkZGQtZGRkZGRkZGRkZGQwIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vYm9va3MiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9ib29rcy9iYmJiYmJiYi1iYmJiLTRiYmItOGJiYi1iYmJiYmJiYmJiYmIiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9ib29rcy9wcmV2aWV3L2JiYmJiYmJiLWJiYmItNGJiYi04YmJiLWJiYmJiYmJiYmJiYiIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2ZlYXR1cmVkIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vZ3JhbW1hci1ub3RlcyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2hhbnMtd2VociIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL3BocmFzZXMiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9yZXZpZXdzIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vdHJhbnNjcmlwdHMiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi91c2VycyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL3Jldmlld2VyIiwic3RhdHVzIjoiUEFTUyJ9XQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-aee1294ad409f9d318bc",
+          "file": "full-reliability.pw.ts",
+          "line": 124,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-16T11:28:38.256Z",
+    "duration": 45610.789000000004,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
