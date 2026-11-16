@@ -108,8 +108,8 @@ test('URL tabs, profile settings and membership are restored by Back and Forward
     await page.getByRole('button',{name:'AWM+',exact:true}).filter({visible:true}).click();await expect(page).toHaveURL(`${profile}?tab=awm`)
     await page.goBack();await expect(page).toHaveURL(`${profile}?tab=settings`);await expect(page.locator('#profile-settings')).toBeVisible()
     await page.goForward();await expect(page).toHaveURL(`${profile}?tab=awm`);await page.reload();await healthy(page)
-    await page.goto('/books');await page.getByRole('button',{name:'Listen',exact:true}).click();await expect(page).toHaveURL('/books?mode=listen');await page.goBack();await expect(page).toHaveURL('/books');await page.goForward();await expect(page).toHaveURL('/books?mode=listen')
-    await page.goto('/cartoons');await page.getByRole('button',{name:'Show all shows',exact:true}).click();await expect(page).toHaveURL('/cartoons?view=shows');await page.goBack();await expect(page).toHaveURL('/cartoons');await page.goForward();await expect(page).toHaveURL('/cartoons?view=shows')
+    await page.goto('/books');await expect(page.getByRole('group',{name:'Library mode',exact:true})).toBeVisible();await hit(page.getByRole('button',{name:'Listen',exact:true}));await expect(page).toHaveURL('/books?mode=listen');await page.goBack();await expect(page).toHaveURL('/books');await page.goForward();await expect(page).toHaveURL('/books?mode=listen')
+    await page.goto('/cartoons');await healthy(page);await hit(page.getByRole('button',{name:'Show all shows',exact:true}));await expect(page).toHaveURL('/cartoons?view=shows');await page.goBack();await expect(page).toHaveURL('/cartoons');await page.goForward();await expect(page).toHaveURL('/cartoons?view=shows')
    }
   }
 })

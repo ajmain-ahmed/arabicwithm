@@ -145,12 +145,16 @@ Real public production connected-flow checks passed at **768px, 1024px and 1440p
 ## 10. Browser and test verification
 
 <!-- FINAL-VERIFICATION-START -->
-**Chrome and Firefox: 26 final scenario outcomes passed, 0 remaining failures**, across the initial full run and targeted follow-ups. This is not represented as one clean uninterrupted run: the initial run passed 21/26; discovery controls were rechecked after allowing normal overlay transitions, and Firefox Admin aliases were rechecked after waiting for their canonical redirects. The final four discovery scenarios passed again after the access-retry change. All raw attempts are retained.
+**Chrome and Firefox: 26 final scenario outcomes passed**, across full runs and targeted follow-ups. The fresh full-suite recheck passed **25/26**: Firefox's role/history scenario timed out waiting for navigation before clicking Listen, although its snapshot showed the Library controls. Explicit visible-control and pointer readiness checks were added; the corrected scenario then passed **three consecutive Firefox repetitions**, each covering free/premium/Admin at 390px and 1440px. This is not a clean uninterrupted 26/26 run and does not conclusively establish the cause of the original navigation wait. Earlier full-run and targeted evidence remains retained.
+
+During this diagnosis, an intermediate test assertion incorrectly assumed the desktop Library heading existed on mobile. It failed three times and was replaced with the shared Library mode control. Those assertion failures were test defects, not application failures. No additional application change was made during this recheck.
 
 - [Combined final browser outcomes](validation/full-reliability/browser-results.json), including links to raw run filenames and per-scenario attempt history.
 - [Initial 26-scenario run](validation/full-reliability/browser-initial-results.json).
 - [Final four discovery checks](validation/full-reliability/browser-discovery-results.json).
 - [Final Firefox Admin check](validation/full-reliability/browser-followup-results.json).
+- [Fresh full-suite recheck, 25/26](validation/full-reliability/browser-recheck-results.json).
+- [Three corrected Firefox role/history repetitions](validation/full-reliability/browser-profile-recheck-results.json).
 
 Full Vitest verification: **228 files passed, 4 skipped; 1,558 tests passed, 6 skipped**. After the final access-retry adjustment, the two focused allowance/playback files passed **14 tests**. Final TypeScript checking and ESLint on all changed/new TypeScript files passed. The final **Cloudflare/vinext production build passed**; its [build log](validation/full-reliability/vinext-build.log) is retained. Installed Next route types were regenerated after that build and TypeScript passed again.
 
@@ -170,6 +174,8 @@ Shared helpers: `publicRead.ts`, `grammarNote.ts`, existing bounded-read infrast
 Tests added: public-read outage/missing distinctions; approved grammar association filtering and query failure; optional grammar-field normalization; public-shell auth recovery; stalled For You access; URL/history and pointer hit-testing across the principal learner flows. Existing Profile/navigation mocks were updated to model the now URL-owned tabs.
 
 Changed files are listed in [the engineering manifest](validation/full-reliability/changed-files.txt). Automated runners and generated evidence are retained for repeatable verification. The route matrix explicitly marks unexercised internal-navigation combinations. The 965-element source inventory is not exhaustive runtime certification, and not every mutation button was clicked.
+
+The recheck also makes the targeted browser config selectable with `AWM_AUDIT_GREP` and preserves the engineering manifest after the original repair files have been committed. The latest test/config/summary-script lint check passed.
 
 - Migrations required for these application repairs: **NO**.
 - Production migration applied: **NO**.

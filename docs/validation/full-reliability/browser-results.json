@@ -116,12 +116,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 9994,
+                  "duration": 10877,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:15:15.438Z",
+                  "startTime": "2026-11-16T11:47:58.811Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -136,6 +136,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -162,12 +166,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 9888,
+                  "duration": 10762,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:15:25.668Z",
+                  "startTime": "2026-11-16T11:48:09.927Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -182,6 +186,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -208,12 +216,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 10602,
+                  "duration": 10821,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:15:35.566Z",
+                  "startTime": "2026-11-16T11:48:20.708Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -222,6 +230,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -248,12 +260,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 10607,
+                  "duration": 10418,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:15:46.177Z",
+                  "startTime": "2026-11-16T11:48:31.539Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -262,6 +274,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -288,12 +304,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 10758,
+                  "duration": 10865,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:15:56.793Z",
+                  "startTime": "2026-11-16T11:48:41.966Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -302,6 +318,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -328,12 +348,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 9870,
+                  "duration": 10502,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:16:07.562Z",
+                  "startTime": "2026-11-16T11:48:52.840Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -342,6 +362,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -368,12 +392,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 11252,
+                  "duration": 10459,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:16:17.442Z",
+                  "startTime": "2026-11-16T11:49:03.358Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -382,6 +406,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -408,12 +436,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 10752,
+                  "duration": 11034,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:16:28.703Z",
+                  "startTime": "2026-11-16T11:49:13.825Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -422,6 +450,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -448,12 +480,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 5828,
+                  "duration": 8226,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:16:39.468Z",
+                  "startTime": "2026-11-16T11:49:24.871Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -462,6 +494,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -488,12 +524,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 8723,
+                  "duration": 8787,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:16:45.305Z",
+                  "startTime": "2026-11-16T11:49:33.112Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -502,6 +538,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -528,12 +568,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 10948,
+                  "duration": 11068,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:16:54.039Z",
+                  "startTime": "2026-11-16T11:49:41.909Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -548,6 +588,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -574,12 +618,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 4163,
+                  "duration": 4134,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:33:13.610Z",
+                  "startTime": "2026-11-16T11:49:52.989Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -592,6 +636,10 @@
                 },
                 {
                   "file": "browser-discovery-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -618,12 +666,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 3445,
+                  "duration": 3464,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:33:17.955Z",
+                  "startTime": "2026-11-16T11:49:57.134Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -636,6 +684,10 @@
                 },
                 {
                   "file": "browser-discovery-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -659,15 +711,15 @@
               "projectName": "firefox",
               "results": [
                 {
-                  "workerIndex": 2,
+                  "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 17269,
+                  "duration": 16594,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:17:11.835Z",
+                  "startTime": "2026-11-16T11:50:01.400Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -682,6 +734,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -705,15 +761,15 @@
               "projectName": "firefox",
               "results": [
                 {
-                  "workerIndex": 2,
+                  "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 15796,
+                  "duration": 16058,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:17:29.523Z",
+                  "startTime": "2026-11-16T11:50:18.840Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -728,6 +784,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -751,15 +811,15 @@
               "projectName": "firefox",
               "results": [
                 {
-                  "workerIndex": 2,
+                  "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 12853,
+                  "duration": 12267,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:17:45.328Z",
+                  "startTime": "2026-11-16T11:50:34.909Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -768,6 +828,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -791,15 +855,15 @@
               "projectName": "firefox",
               "results": [
                 {
-                  "workerIndex": 2,
+                  "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 13030,
+                  "duration": 12939,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:17:58.191Z",
+                  "startTime": "2026-11-16T11:50:47.185Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -808,6 +872,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -831,15 +899,15 @@
               "projectName": "firefox",
               "results": [
                 {
-                  "workerIndex": 2,
+                  "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 12820,
+                  "duration": 12906,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:18:11.230Z",
+                  "startTime": "2026-11-16T11:51:00.135Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -848,6 +916,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -871,15 +943,15 @@
               "projectName": "firefox",
               "results": [
                 {
-                  "workerIndex": 2,
+                  "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 12611,
+                  "duration": 12629,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:18:24.071Z",
+                  "startTime": "2026-11-16T11:51:13.051Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -888,6 +960,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -911,15 +987,15 @@
               "projectName": "firefox",
               "results": [
                 {
-                  "workerIndex": 2,
+                  "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 13411,
+                  "duration": 13564,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:18:36.694Z",
+                  "startTime": "2026-11-16T11:51:25.692Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -928,6 +1004,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -951,15 +1031,15 @@
               "projectName": "firefox",
               "results": [
                 {
-                  "workerIndex": 2,
+                  "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 13525,
+                  "duration": 13852,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:18:50.114Z",
+                  "startTime": "2026-11-16T11:51:39.266Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -968,6 +1048,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -994,12 +1078,12 @@
                   "workerIndex": 2,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 6860,
+                  "duration": 15290,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:19:03.651Z",
+                  "startTime": "2026-11-16T11:57:26.236Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1008,6 +1092,22 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
+                  "status": "failed"
+                },
+                {
+                  "file": "browser-profile-recheck-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-profile-recheck-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-profile-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -1034,12 +1134,12 @@
                   "workerIndex": 2,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 9654,
+                  "duration": 9857,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:19:10.524Z",
+                  "startTime": "2026-11-16T11:52:17.523Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1048,6 +1148,10 @@
               "auditRuns": [
                 {
                   "file": "browser-initial-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -1071,15 +1175,15 @@
               "projectName": "firefox",
               "results": [
                 {
-                  "workerIndex": 0,
+                  "workerIndex": 2,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 14854,
+                  "duration": 13909,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:29:08.030Z",
+                  "startTime": "2026-11-16T11:52:27.776Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -1098,6 +1202,10 @@
                 },
                 {
                   "file": "browser-followup-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -1121,15 +1229,15 @@
               "projectName": "firefox",
               "results": [
                 {
-                  "workerIndex": 1,
+                  "workerIndex": 2,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 5437,
+                  "duration": 4569,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:33:21.916Z",
+                  "startTime": "2026-11-16T11:52:41.698Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1142,6 +1250,10 @@
                 },
                 {
                   "file": "browser-discovery-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -1165,15 +1277,15 @@
               "projectName": "firefox",
               "results": [
                 {
-                  "workerIndex": 1,
+                  "workerIndex": 2,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 3886,
+                  "duration": 3883,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-11-16T11:33:27.784Z",
+                  "startTime": "2026-11-16T11:52:46.277Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -1186,6 +1298,10 @@
                 },
                 {
                   "file": "browser-discovery-results.json",
+                  "status": "passed"
+                },
+                {
+                  "file": "browser-recheck-results.json",
                   "status": "passed"
                 }
               ]
@@ -1202,7 +1318,7 @@
   "errors": [],
   "stats": {
     "startTime": "2026-11-16T11:14:46.138Z",
-    "duration": 387745.71499999997,
+    "duration": 789209.483,
     "expected": 26,
     "unexpected": 0,
     "skipped": 0,
@@ -1239,6 +1355,28 @@
           "startTime": "2026-11-16T11:28:38.256Z",
           "duration": 45610.789000000004,
           "expected": 1,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        }
+      },
+      {
+        "file": "browser-recheck-results.json",
+        "stats": {
+          "startTime": "2026-11-16T11:47:28.064Z",
+          "duration": 322648.951,
+          "expected": 25,
+          "skipped": 0,
+          "unexpected": 1,
+          "flaky": 0
+        }
+      },
+      {
+        "file": "browser-profile-recheck-results.json",
+        "stats": {
+          "startTime": "2026-11-16T11:56:23.633Z",
+          "duration": 78814.817,
+          "expected": 3,
           "skipped": 0,
           "unexpected": 0,
           "flaky": 0

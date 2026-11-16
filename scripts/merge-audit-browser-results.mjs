@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 const root='docs/validation/full-reliability/'
-const files=['browser-initial-results.json','browser-discovery-results.json','browser-followup-results.json']
+const files=['browser-initial-results.json','browser-discovery-results.json','browser-followup-results.json','browser-recheck-results.json','browser-profile-recheck-results.json']
 const reports=files.map(file=>JSON.parse(readFileSync(root+file,'utf8')))
 const records=new Map(),history=new Map()
 function collect(suites,file){for(const suite of suites??[]){for(const spec of suite.specs??[])for(const test of spec.tests){const key=spec.title+'|'+test.projectName;records.set(key,test);history.set(key,[...history.get(key)??[],{file,status:test.results.at(-1)?.status}])}collect(suite.suites,file)}}

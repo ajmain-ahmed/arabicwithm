@@ -53,6 +53,8 @@ Generated audit evidence
 docs/validation/full-reliability/browser-discovery-results.json
 docs/validation/full-reliability/browser-followup-results.json
 docs/validation/full-reliability/browser-initial-results.json
+docs/validation/full-reliability/browser-profile-recheck-results.json
+docs/validation/full-reliability/browser-recheck-results.json
 docs/validation/full-reliability/browser-results.json
 docs/validation/full-reliability/changed-files.txt
 docs/validation/full-reliability/chrome-1024.png

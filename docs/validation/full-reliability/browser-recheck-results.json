@@ -1,0 +1,1075 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.full-reliability.config.ts"
+    ],
+    "configFile": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\playwright.full-reliability.config.ts",
+    "rootDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/validation/full-reliability/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "node e2e/fixture-server.mjs",
+      "url": "http://127.0.0.1:3068",
+      "reuseExistingServer": false,
+      "timeout": 240000,
+      "env": {
+        "AWM_TEST_FULL_RELIABILITY": "1",
+        "AWM_TEST_PRODUCTION": "1",
+        "AWM_TEST_STRUCTURED_BOOKS": "1",
+        "AWM_TEST_WEB_PORT": "3068",
+        "AWM_TEST_BACKEND_PORT": "4368"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "full-reliability.pw.ts",
+      "file": "full-reliability.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "every public route direct and refreshed, signed out at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10877,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:47:58.811Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "route-health",
+                      "contentType": "application/json",
+                      "body": "ewogICJyb3dzIjogWwogICAgewogICAgICAicGF0aCI6ICIvIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2V4cGxvcmUiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZXhwbG9yZT92aWV3PWZvcnlvdSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucz92aWV3PXNob3dzIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2NhcnRvb25zL3Rlc3Qtc2hvdyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucy90ZXN0LXNob3cvY2xpcC0wIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzP21vZGU9bGlzdGVuIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ib29rcy90ZXN0LWJvb2svY2hhcHRlci0xIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2xpc3Rlbi90ZXN0LWJvb2siLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGVhcm4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hciIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0ExIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9BMiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQjEiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0IyIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9DMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQzIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9ub3Rlcy8xMjM0NTY3OC0xMjM0LTQxMjMtODEyMy0xMjM0NTY3ODkwMDMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbWVtb3J5IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Byb2ZpbGUiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2V4cGxvcmUvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3dvcmQtc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlL3Nlc3Npb24iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZmVlZGJhY2siLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc3VwcG9ydCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9wcml2YWN5IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Rlcm1zIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Jlc2V0LXBhc3N3b3JkIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3RyYW5zY3JpcHRzL2FiYWJhYmFiLWFiYWItNGJhYi04YmFiLWFiYWJhYmFiYWJhYiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0KICBdLAogICJlcnJvcnMiOiBbXQp9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-f521b6e1b3483413baf4",
+          "file": "full-reliability.pw.ts",
+          "line": 51,
+          "column": 33
+        },
+        {
+          "title": "every public route direct and refreshed, signed out at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10762,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:48:09.927Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "route-health",
+                      "contentType": "application/json",
+                      "body": "ewogICJyb3dzIjogWwogICAgewogICAgICAicGF0aCI6ICIvIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlP3ZpZXc9Zm9yeW91IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvY2FydG9vbnM/dmlldz1zaG93cyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvY2FydG9vbnMvdGVzdC1zaG93IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucy90ZXN0LXNob3cvY2xpcC0wIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ib29rcyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvYm9va3M/bW9kZT1saXN0ZW4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvYm9va3MvdGVzdC1ib29rL2NoYXB0ZXItMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGlzdGVuL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGVhcm4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0ExIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQTIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9CMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0IyIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQzEiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9DMiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9ub3Rlcy8xMjM0NTY3OC0xMjM0LTQxMjMtODEyMy0xMjM0NTY3ODkwMDMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL21lbW9yeSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvcHJvZmlsZSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlL3NlYXJjaCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvd29yZC1zZWFyY2giLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9wcmFjdGljZS9zZXNzaW9uIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9mZWVkYmFjayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc3VwcG9ydCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvcHJpdmFjeSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvdGVybXMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Jlc2V0LXBhc3N3b3JkIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi90cmFuc2NyaXB0cy9hYmFiYWJhYi1hYmFiLTRiYWItOGJhYi1hYmFiYWJhYmFiYWIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfQogIF0sCiAgImVycm9ycyI6IFtdCn0="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-b3d780c9c164b692ae74",
+          "file": "full-reliability.pw.ts",
+          "line": 51,
+          "column": 33
+        },
+        {
+          "title": "connected learner flows and hit testing at 320",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10821,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:48:20.708Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-05be7168556893d0ea76",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10418,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:48:31.539Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-ad6f26893e7c04a7c3c9",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 430",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10865,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:48:41.966Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-26a10b2f51fbdb8cb3e6",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 768",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10502,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:48:52.840Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-5f2d6be6a5f904f34c61",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 1024",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 10459,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:49:03.358Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-3cbab933b80114398459",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11034,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:49:13.825Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-1b9786188c95d65c4419",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "URL tabs, profile settings and membership are restored by Back and Forward for every role",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8226,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:49:24.871Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-e16276e2de9fd91e5900",
+          "file": "full-reliability.pw.ts",
+          "line": 100,
+          "column": 1
+        },
+        {
+          "title": "failed grammar reads show recovery; real empty levels and missing notes remain distinct",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 8787,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:49:33.112Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-8fcd4f7e345e8fefc018",
+          "file": "full-reliability.pw.ts",
+          "line": 117,
+          "column": 1
+        },
+        {
+          "title": "all protected route entries preserve denial and Admin read access",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11068,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:49:41.909Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "protected-route-health",
+                      "contentType": "application/json",
+                      "body": "W3sicm91dGUiOiIvYWRtaW4iLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9zaG93cyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2VwaXNvZGVzIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vZXBpc29kZXMvZGRkZGRkZGQtZGRkZC00ZGRkLThkZGQtZGRkZGRkZGRkZGQwIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vYm9va3MiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9ib29rcy9iYmJiYmJiYi1iYmJiLTRiYmItOGJiYi1iYmJiYmJiYmJiYmIiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9ib29rcy9wcmV2aWV3L2JiYmJiYmJiLWJiYmItNGJiYi04YmJiLWJiYmJiYmJiYmJiYiIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2ZlYXR1cmVkIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vZ3JhbW1hci1ub3RlcyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2hhbnMtd2VociIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL3BocmFzZXMiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9yZXZpZXdzIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vdHJhbnNjcmlwdHMiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi91c2VycyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL3Jldmlld2VyIiwic3RhdHVzIjoiUEFTUyJ9XQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-c59e3fa085c383f7e467",
+          "file": "full-reliability.pw.ts",
+          "line": 124,
+          "column": 1
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4134,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:49:52.989Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-37e43c29e752c40b3039",
+          "file": "full-reliability.pw.ts",
+          "line": 134,
+          "column": 31
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3464,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:49:57.134Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-2db0926d0f5cba3c1e83",
+          "file": "full-reliability.pw.ts",
+          "line": 134,
+          "column": 31
+        },
+        {
+          "title": "every public route direct and refreshed, signed out at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 16594,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:50:01.400Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "route-health",
+                      "contentType": "application/json",
+                      "body": "ewogICJyb3dzIjogWwogICAgewogICAgICAicGF0aCI6ICIvIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2V4cGxvcmUiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZXhwbG9yZT92aWV3PWZvcnlvdSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucz92aWV3PXNob3dzIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2NhcnRvb25zL3Rlc3Qtc2hvdyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucy90ZXN0LXNob3cvY2xpcC0wIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzP21vZGU9bGlzdGVuIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ib29rcy90ZXN0LWJvb2svY2hhcHRlci0xIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2xpc3Rlbi90ZXN0LWJvb2siLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGVhcm4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hciIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0ExIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9BMiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQjEiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0IyIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9DMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQzIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9ub3Rlcy8xMjM0NTY3OC0xMjM0LTQxMjMtODEyMy0xMjM0NTY3ODkwMDMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbWVtb3J5IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Byb2ZpbGUiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2V4cGxvcmUvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3dvcmQtc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlL3Nlc3Npb24iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZmVlZGJhY2siLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc3VwcG9ydCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9wcml2YWN5IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Rlcm1zIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Jlc2V0LXBhc3N3b3JkIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3RyYW5zY3JpcHRzL2FiYWJhYmFiLWFiYWItNGJhYi04YmFiLWFiYWJhYmFiYWJhYiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0KICBdLAogICJlcnJvcnMiOiBbXQp9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-e2c51d1fc4c7b12a68ce",
+          "file": "full-reliability.pw.ts",
+          "line": 51,
+          "column": 33
+        },
+        {
+          "title": "every public route direct and refreshed, signed out at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 16058,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:50:18.840Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "route-health",
+                      "contentType": "application/json",
+                      "body": "ewogICJyb3dzIjogWwogICAgewogICAgICAicGF0aCI6ICIvIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlP3ZpZXc9Zm9yeW91IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvY2FydG9vbnM/dmlldz1zaG93cyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvY2FydG9vbnMvdGVzdC1zaG93IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucy90ZXN0LXNob3cvY2xpcC0wIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ib29rcyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvYm9va3M/bW9kZT1saXN0ZW4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvYm9va3MvdGVzdC1ib29rL2NoYXB0ZXItMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGlzdGVuL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGVhcm4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0ExIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQTIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9CMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0IyIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQzEiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9DMiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9ub3Rlcy8xMjM0NTY3OC0xMjM0LTQxMjMtODEyMy0xMjM0NTY3ODkwMDMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL21lbW9yeSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvcHJvZmlsZSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlL3NlYXJjaCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvd29yZC1zZWFyY2giLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9wcmFjdGljZS9zZXNzaW9uIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9mZWVkYmFjayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc3VwcG9ydCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvcHJpdmFjeSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvdGVybXMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Jlc2V0LXBhc3N3b3JkIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi90cmFuc2NyaXB0cy9hYmFiYWJhYi1hYmFiLTRiYWItOGJhYi1hYmFiYWJhYmFiYWIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfQogIF0sCiAgImVycm9ycyI6IFtdCn0="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-4d355ed24a7ef8bdc265",
+          "file": "full-reliability.pw.ts",
+          "line": 51,
+          "column": 33
+        },
+        {
+          "title": "connected learner flows and hit testing at 320",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12267,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:50:34.909Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-5521fadd2e1aee6104f4",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12939,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:50:47.185Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-8e17b2188026f814b615",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 430",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12906,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:51:00.135Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-8fa7ad72a930d40e5e15",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 768",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12629,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:51:13.051Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-6198066f1c1fdb86bc51",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 1024",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13564,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:51:25.692Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-7f93b1f871bd72117601",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13852,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:51:39.266Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-d86bd7834870e09b2cdc",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "URL tabs, profile settings and membership are restored by Back and Forward for every role",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 23205,
+                  "error": {
+                    "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Listen', exact: true })\u001b[22m\n\u001b[2m    - waiting for \"http://127.0.0.1:3068/books\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://127.0.0.1:3068/books\"\u001b[22m\n\u001b[2m    - waiting for \"http://127.0.0.1:3068/books\" navigation to finish...\u001b[22m\n",
+                    "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Listen', exact: true })\u001b[22m\n\u001b[2m    - waiting for \"http://127.0.0.1:3068/books\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://127.0.0.1:3068/books\"\u001b[22m\n\u001b[2m    - waiting for \"http://127.0.0.1:3068/books\" navigation to finish...\u001b[22m\n\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:111:89",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 89,
+                      "line": 111
+                    },
+                    "snippet": "  109 |     await page.goBack();await expect(page).toHaveURL(`${profile}?tab=settings`);await expect(page.locator('#profile-settings')).toBeVisible()\n  110 |     await page.goForward();await expect(page).toHaveURL(`${profile}?tab=awm`);await page.reload();await healthy(page)\n> 111 |     await page.goto('/books');await page.getByRole('button',{name:'Listen',exact:true}).click();await expect(page).toHaveURL('/books?mode=listen');await page.goBack();await expect(page).toHaveURL('/books');await page.goForward();await expect(page).toHaveURL('/books?mode=listen')\n      |                                                                                         ^\n  112 |     await page.goto('/cartoons');await page.getByRole('button',{name:'Show all shows',exact:true}).click();await expect(page).toHaveURL('/cartoons?view=shows');await page.goBack();await expect(page).toHaveURL('/cartoons');await page.goForward();await expect(page).toHaveURL('/cartoons?view=shows')\n  113 |    }\n  114 |   }"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 89,
+                        "line": 111
+                      },
+                      "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Listen', exact: true })\u001b[22m\n\u001b[2m    - waiting for \"http://127.0.0.1:3068/books\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"http://127.0.0.1:3068/books\"\u001b[22m\n\u001b[2m    - waiting for \"http://127.0.0.1:3068/books\" navigation to finish...\u001b[22m\n\n\n  109 |     await page.goBack();await expect(page).toHaveURL(`${profile}?tab=settings`);await expect(page.locator('#profile-settings')).toBeVisible()\n  110 |     await page.goForward();await expect(page).toHaveURL(`${profile}?tab=awm`);await page.reload();await healthy(page)\n> 111 |     await page.goto('/books');await page.getByRole('button',{name:'Listen',exact:true}).click();await expect(page).toHaveURL('/books?mode=listen');await page.goBack();await expect(page).toHaveURL('/books');await page.goForward();await expect(page).toHaveURL('/books?mode=listen')\n      |                                                                                         ^\n  112 |     await page.goto('/cartoons');await page.getByRole('button',{name:'Show all shows',exact:true}).click();await expect(page).toHaveURL('/cartoons?view=shows');await page.goBack();await expect(page).toHaveURL('/cartoons');await page.goForward();await expect(page).toHaveURL('/cartoons?view=shows')\n  113 |    }\n  114 |   }\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:111:89"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:51:53.127Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-URL-5d890--and-Forward-for-every-role-firefox\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-URL-5d890--and-Forward-for-every-role-firefox\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-URL-5d890--and-Forward-for-every-role-firefox\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 89,
+                    "line": 111
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-dc3341abe9f9f87ff687",
+          "file": "full-reliability.pw.ts",
+          "line": 100,
+          "column": 1
+        },
+        {
+          "title": "failed grammar reads show recovery; real empty levels and missing notes remain distinct",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9857,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:52:17.523Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-55dbe9a3862a03eaa3d9",
+          "file": "full-reliability.pw.ts",
+          "line": 117,
+          "column": 1
+        },
+        {
+          "title": "all protected route entries preserve denial and Admin read access",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13909,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:52:27.776Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "protected-route-health",
+                      "contentType": "application/json",
+                      "body": "W3sicm91dGUiOiIvYWRtaW4iLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9zaG93cyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2VwaXNvZGVzIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vZXBpc29kZXMvZGRkZGRkZGQtZGRkZC00ZGRkLThkZGQtZGRkZGRkZGRkZGQwIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vYm9va3MiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9ib29rcy9iYmJiYmJiYi1iYmJiLTRiYmItOGJiYi1iYmJiYmJiYmJiYmIiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9ib29rcy9wcmV2aWV3L2JiYmJiYmJiLWJiYmItNGJiYi04YmJiLWJiYmJiYmJiYmJiYiIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2ZlYXR1cmVkIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vZ3JhbW1hci1ub3RlcyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2hhbnMtd2VociIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL3BocmFzZXMiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9yZXZpZXdzIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vdHJhbnNjcmlwdHMiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi91c2VycyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL3Jldmlld2VyIiwic3RhdHVzIjoiUEFTUyJ9XQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-aee1294ad409f9d318bc",
+          "file": "full-reliability.pw.ts",
+          "line": 124,
+          "column": 1
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4569,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:52:41.698Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-db93974c4577b0885753",
+          "file": "full-reliability.pw.ts",
+          "line": 134,
+          "column": 31
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3883,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-16T11:52:46.277Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-4c439a9f706dbac39a20",
+          "file": "full-reliability.pw.ts",
+          "line": 134,
+          "column": 31
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-16T11:47:28.064Z",
+    "duration": 322648.951,
+    "expected": 25,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}
