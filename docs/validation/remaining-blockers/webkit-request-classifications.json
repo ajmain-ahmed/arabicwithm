@@ -1,0 +1,3088 @@
+[
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 320",
+    "diagnostic": "/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "navigation": "http://127.0.0.1:3068/books",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795194923846
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194923769
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194923756
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795194923723
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795194923710
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194923648
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194923637
+      },
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795194924040
+      },
+      {
+        "url": "http://127.0.0.1:3068/memory?episode=dddddddd-dddd-4ddd-8ddd-ddddddddddd0",
+        "time": 1795194923572
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194924549
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1",
+        "time": 1795194924966
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194925042
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194925499
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 320",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-1?_rsc=bYhZ7gUj6K4so0XU",
+    "navigation": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194927289
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+        "time": 1795194927084
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194927480
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194926933
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194927660
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194927930
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194928087
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194928314
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194928536
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194925849
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194925499
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194929222
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929241
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 320",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "navigation": "http://127.0.0.1:3068/books/test-book",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194928314
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194928087
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194928536
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194927930
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194927660
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194927480
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194929222
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929241
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194927289
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194929325
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194929333
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929367
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929376
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929378
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929437
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+        "time": 1795194927084
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194926933
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 320",
+    "diagnostic": "/localhost:4368/auth/v1/user due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "https://localhost:4368/auth/v1/user",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929437
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929378
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929376
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929367
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194929333
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194929325
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929241
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194929222
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194928536
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194928314
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194928087
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194927930
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194927660
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194927480
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 320",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0&_rsc=7cDXAryAt8ok0nSB",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929437
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929378
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929376
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929367
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194929333
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194929325
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194929241
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194929222
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194928536
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194928314
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194928087
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194927930
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194927660
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194927480
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 375",
+    "diagnostic": "/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "navigation": "http://127.0.0.1:3068/books",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795194943214
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194943163
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194943152
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795194943129
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795194943118
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194943057
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194943045
+      },
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795194943399
+      },
+      {
+        "url": "http://127.0.0.1:3068/memory?episode=dddddddd-dddd-4ddd-8ddd-ddddddddddd0",
+        "time": 1795194942939
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194943845
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1",
+        "time": 1795194944194
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194944399
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194944744
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194945039
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 375",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-1?_rsc=bYhZ7gUj6K4so0XU",
+    "navigation": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194946443
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+        "time": 1795194946212
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194946667
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194946058
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194946833
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194947053
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194947210
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194947408
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194947623
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194945039
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194944744
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194948116
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948133
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194948208
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194948216
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948254
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948264
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948266
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948334
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 375",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "navigation": "http://127.0.0.1:3068/books/test-book",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194947408
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194947210
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194947623
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194947053
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194946833
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194948116
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948133
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194946667
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194948208
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194948216
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948254
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948264
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948266
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948334
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194946443
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+        "time": 1795194946212
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194946058
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 375",
+    "diagnostic": "/localhost:4368/auth/v1/user due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "https://localhost:4368/auth/v1/user",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948334
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948266
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948264
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948254
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194948216
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194948208
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948133
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194948116
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194947623
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194947408
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194947210
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194947053
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194946833
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194946667
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194946443
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 375",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948334
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948266
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948264
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948254
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194948216
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194948208
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194948133
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194948116
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194947623
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194947408
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194947210
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194947053
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194946833
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194946667
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194946443
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 390",
+    "diagnostic": "/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "navigation": "http://127.0.0.1:3068/books",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795194960588
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194960534
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194960514
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795194960490
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795194960477
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194960420
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194960409
+      },
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795194960799
+      },
+      {
+        "url": "http://127.0.0.1:3068/memory?episode=dddddddd-dddd-4ddd-8ddd-ddddddddddd0",
+        "time": 1795194960244
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194961299
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1",
+        "time": 1795194961779
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194961800
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194962278
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 390",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-1?_rsc=bYhZ7gUj6K4so0XU",
+    "navigation": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194963931
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+        "time": 1795194963730
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194964161
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194963584
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194964314
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194964571
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194964750
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194964953
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194965153
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194962578
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194962278
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194965612
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965630
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194965651
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194965659
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965693
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965701
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965704
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965774
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 390",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "navigation": "http://127.0.0.1:3068/books/test-book",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194964953
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194964750
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194965153
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194964571
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194964314
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194965612
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965630
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194965651
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194965659
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965693
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965701
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965704
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194964161
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965774
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194963931
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+        "time": 1795194963730
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194963584
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 390",
+    "diagnostic": "/localhost:4368/auth/v1/user due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "https://localhost:4368/auth/v1/user",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965774
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965704
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965701
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965693
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194965659
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194965651
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965630
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194965612
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194965153
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194964953
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194964750
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194964571
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194964314
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194964161
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194963931
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 390",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965774
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965704
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965701
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965693
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194965659
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194965651
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194965630
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194965612
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194965153
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194964953
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194964750
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194964571
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194964314
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194964161
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194963931
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 414",
+    "diagnostic": "/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "navigation": "http://127.0.0.1:3068/books",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795194978463
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194978407
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194978395
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795194978361
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795194978351
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194978284
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194978270
+      },
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795194978651
+      },
+      {
+        "url": "http://127.0.0.1:3068/memory?episode=dddddddd-dddd-4ddd-8ddd-ddddddddddd0",
+        "time": 1795194978115
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194979102
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1",
+        "time": 1795194979612
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194979629
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194980025
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194980329
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 414",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-1?_rsc=bYhZ7gUj6K4so0XU",
+    "navigation": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194981750
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+        "time": 1795194981517
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194981972
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194981376
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194982142
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194982373
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194982549
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194982779
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194982992
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194980329
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194980025
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194983516
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983534
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194983565
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194983574
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983612
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983621
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983623
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983711
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 414",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "navigation": "http://127.0.0.1:3068/books/test-book",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194982779
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194982992
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194982549
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194982373
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194982142
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194983516
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983534
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194983565
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194981972
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194983574
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983612
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983621
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983623
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983711
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194981750
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+        "time": 1795194981517
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194981376
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 414",
+    "diagnostic": "/localhost:4368/auth/v1/user due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "https://localhost:4368/auth/v1/user",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983711
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983623
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983621
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983612
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194983574
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194983565
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983534
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194983516
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194982992
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194982779
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194982549
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194982373
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194982142
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194981972
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194981750
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 414",
+    "diagnostic": "/localhost:4368/auth/v1/user due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "https://localhost:4368/auth/v1/user",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983711
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983623
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983621
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983612
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194983574
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194983565
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983534
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194983516
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194982992
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194982779
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194982549
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194982373
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194982142
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194981972
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194981750
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 414",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983711
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983623
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983621
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983612
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194983574
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194983565
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795194983534
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795194983516
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194982992
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194982779
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795194982549
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795194982373
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194982142
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194981972
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194981750
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 430",
+    "diagnostic": "/127.0.0.1:3068/grammar?branch=nahw&activity=rules due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/grammar",
+    "navigation": "http://127.0.0.1:3068/grammar?branch=nahw&activity=rules",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/grammar?branch=nahw&activity=rules",
+        "time": 1795194989205
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar?branch=nahw&activity=rules",
+        "time": 1795194989154
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar?branch=nahw&activity=rules",
+        "time": 1795194989408
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar",
+        "time": 1795194989628
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar",
+        "time": 1795194989634
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar?branch=nahw&activity=rules",
+        "time": 1795194989676
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar?branch=nahw&activity=rules",
+        "time": 1795194989687
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar",
+        "time": 1795194988565
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar",
+        "time": 1795194989945
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar",
+        "time": 1795194988363
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/C2",
+        "time": 1795194988242
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/C1",
+        "time": 1795194988104
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar?branch=nahw&activity=word_type",
+        "time": 1795194990376
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/B2",
+        "time": 1795194987972
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/B1",
+        "time": 1795194987843
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/A2",
+        "time": 1795194987734
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar",
+        "time": 1795194990698
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/A1",
+        "time": 1795194987661
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar?branch=sarf&activity=ten",
+        "time": 1795194991063
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/notes/12345678-1234-4123-8123-123456789003",
+        "time": 1795194987199
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/grammar?branch=nahw&activity=rules",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 430",
+    "diagnostic": "/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "navigation": "http://127.0.0.1:3068/books",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795194996278
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194996221
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194996216
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795194996170
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795194996160
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194996097
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795194996085
+      },
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795194996449
+      },
+      {
+        "url": "http://127.0.0.1:3068/memory?episode=dddddddd-dddd-4ddd-8ddd-ddddddddddd0",
+        "time": 1795194995921
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795194997051
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1",
+        "time": 1795194997407
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194997425
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194997791
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194998082
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 430",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-1?_rsc=bYhZ7gUj6K4so0XU",
+    "navigation": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194999476
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+        "time": 1795194999290
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194999737
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194999116
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194999856
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795195000151
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795195000324
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195000546
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195000783
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795194998082
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194997791
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195001265
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001279
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195001372
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195001379
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001418
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001427
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001430
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 430",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "navigation": "http://127.0.0.1:3068/books/test-book",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195000546
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795195000324
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195000783
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795195000151
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194999856
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195001265
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001279
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194999737
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195001372
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195001379
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001418
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001427
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001430
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001492
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194999476
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+        "time": 1795194999290
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795194999116
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 430",
+    "diagnostic": "/localhost:4368/auth/v1/user due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "https://localhost:4368/auth/v1/user",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001492
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001430
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001427
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001418
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195001379
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195001372
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001279
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195001265
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195000783
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195000546
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795195000324
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795195000151
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194999856
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194999737
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 430",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0&_rsc=7cDXAryAt8ok0nSB",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001492
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001430
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001427
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001418
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195001379
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195001372
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195001279
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195001265
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195000783
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195000546
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795195000324
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795195000151
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795194999856
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795194999737
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 768",
+    "diagnostic": "/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "navigation": "http://127.0.0.1:3068/books",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795195014918
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795195014860
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795195014848
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795195014823
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795195014805
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795195014746
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795195014735
+      },
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795195015119
+      },
+      {
+        "url": "http://127.0.0.1:3068/memory?episode=dddddddd-dddd-4ddd-8ddd-ddddddddddd0",
+        "time": 1795195014655
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195015612
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1",
+        "time": 1795195015998
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 768",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-1?_rsc=bYhZ7gUj6K4so0XU",
+    "navigation": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195019515
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+        "time": 1795195019314
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195019727
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795195019894
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795195019113
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795195020095
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795195020304
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195020566
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195020777
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795195018034
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195021287
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021311
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795195017658
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195021386
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195021394
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021434
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021442
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021443
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 768",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "navigation": "http://127.0.0.1:3068/books/test-book",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195020566
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195020777
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795195020304
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795195020095
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795195019894
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195021287
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021311
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195019727
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195021386
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195021394
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021434
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021442
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021443
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021530
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195019515
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=24&page=3",
+        "time": 1795195019314
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=12&page=2",
+        "time": 1795195019113
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 768",
+    "diagnostic": "/localhost:4368/auth/v1/user due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "https://localhost:4368/auth/v1/user",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021530
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021443
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021442
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021434
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195021394
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195021386
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021311
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195021287
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195020777
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195020566
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795195020304
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795195020095
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795195019894
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195019727
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 768",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021530
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021443
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021442
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021434
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195021394
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195021386
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195021311
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195021287
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195020777
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195020566
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=24&page=3",
+        "time": 1795195020304
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=12&page=2",
+        "time": 1795195020095
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795195019894
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195019727
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 1024",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-1?_rsc=bYhZ7gUj6K4so0XU",
+    "navigation": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195040492
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=28&page=3",
+        "time": 1795195040278
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195040710
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795195040881
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=14&page=2",
+        "time": 1795195040035
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=14&page=2",
+        "time": 1795195041193
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=28&page=3",
+        "time": 1795195041442
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195041714
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195041925
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795195038716
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-1?block=28&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 1024",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "navigation": "http://127.0.0.1:3068/books/test-book",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195041714
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195041925
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=28&page=3",
+        "time": 1795195041442
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=14&page=2",
+        "time": 1795195041193
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795195040881
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195042545
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042564
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195042629
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195042639
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042681
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042690
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042693
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195040710
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042773
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195040492
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=28&page=3",
+        "time": 1795195040278
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=14&page=2",
+        "time": 1795195040035
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-6?block=28&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 1024",
+    "diagnostic": "/localhost:4368/auth/v1/user due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "https://localhost:4368/auth/v1/user",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042773
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042693
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042690
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042681
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195042639
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195042629
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042564
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195042545
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195041925
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195041714
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=28&page=3",
+        "time": 1795195041442
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=14&page=2",
+        "time": 1795195041193
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795195040881
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 1024",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042773
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042693
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042690
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042681
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195042639
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195042629
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195042564
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195042545
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195041925
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195041714
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=28&page=3",
+        "time": 1795195041442
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=14&page=2",
+        "time": 1795195041193
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795195040881
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 1440",
+    "diagnostic": "/127.0.0.1:3068/grammar/context?_rsc=wnOXER2BsJLnx9-Y due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/grammar/context?_rsc=wnOXER2BsJLnx9-Y",
+    "navigation": "http://127.0.0.1:3068/grammar/context/A2",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/A2",
+        "time": 1795195046842
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/A1",
+        "time": 1795195046785
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/B1",
+        "time": 1795195046967
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/B2",
+        "time": 1795195047105
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/notes/12345678-1234-4123-8123-123456789003",
+        "time": 1795195046435
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/C1",
+        "time": 1795195047263
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/C2",
+        "time": 1795195047384
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/notes/12345678-1234-4123-8123-123456789003",
+        "time": 1795195046242
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/notes/12345678-1234-4123-8123-123456789003",
+        "time": 1795195046148
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar",
+        "time": 1795195047507
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar",
+        "time": 1795195047711
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context/A1",
+        "time": 1795195045873
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar/context",
+        "time": 1795195045637
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar?branch=nahw&activity=rules",
+        "time": 1795195048459
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar",
+        "time": 1795195045164
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar?branch=nahw&activity=rules",
+        "time": 1795195048591
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar",
+        "time": 1795195044969
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar",
+        "time": 1795195044894
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar",
+        "time": 1795195044888
+      },
+      {
+        "url": "http://127.0.0.1:3068/grammar?branch=nahw&activity=rules",
+        "time": 1795195048770
+      },
+      {
+        "url": "http://127.0.0.1:3068/learn",
+        "time": 1795195044838
+      },
+      {
+        "url": "http://127.0.0.1:3068/learn",
+        "time": 1795195044831
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/grammar/context/A1",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 1440",
+    "diagnostic": "/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "navigation": "http://127.0.0.1:3068/books",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795195056918
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795195056843
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795195056831
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795195056792
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show",
+        "time": 1795195056782
+      },
+      {
+        "url": "http://127.0.0.1:3068/books",
+        "time": 1795195057071
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795195056689
+      },
+      {
+        "url": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+        "time": 1795195056678
+      },
+      {
+        "url": "http://127.0.0.1:3068/memory?episode=dddddddd-dddd-4ddd-8ddd-ddddddddddd0",
+        "time": 1795195056497
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195057577
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1",
+        "time": 1795195058102
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/cartoons/test-show/clip-0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 1440",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-1?_rsc=bYhZ7gUj6K4so0XU",
+    "navigation": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195062234
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=28&page=3",
+        "time": 1795195062029
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195062465
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795195062641
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=14&page=2",
+        "time": 1795195061752
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=14&page=2",
+        "time": 1795195062943
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=28&page=3",
+        "time": 1795195063289
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195063543
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195063771
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=0",
+        "time": 1795195060372
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-1?block=28&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 1440",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/chapter-6",
+    "navigation": "http://127.0.0.1:3068/books/test-book",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195063543
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195063771
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=28&page=3",
+        "time": 1795195063289
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=14&page=2",
+        "time": 1795195062943
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195064423
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795195062641
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064441
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195064485
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195064493
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064528
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064538
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064540
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195062465
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064621
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6",
+        "time": 1795195062234
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=28&page=3",
+        "time": 1795195062029
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-1?block=14&page=2",
+        "time": 1795195061752
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/chapter-6?block=28&page=3",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 1440",
+    "diagnostic": "/localhost:4368/auth/v1/user due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "https://localhost:4368/auth/v1/user",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064621
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064540
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064538
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064528
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195064493
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195064485
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064441
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195064423
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195063771
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195063543
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=28&page=3",
+        "time": 1795195063289
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=14&page=2",
+        "time": 1795195062943
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795195062641
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  },
+  {
+    "browser": "webkit",
+    "scenario": "connected learner flows and hit testing at 1440",
+    "diagnostic": "/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.",
+    "classification": "expected-navigation-cancellation",
+    "request": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+    "navigation": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "adjacentNavigations": [
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064621
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064540
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064538
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064528
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195064493
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195064485
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+        "time": 1795195064441
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/grammar-structured",
+        "time": 1795195064423
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195063771
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book",
+        "time": 1795195063543
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=28&page=3",
+        "time": 1795195063289
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=14&page=2",
+        "time": 1795195062943
+      },
+      {
+        "url": "http://127.0.0.1:3068/books/test-book/chapter-6?block=0",
+        "time": 1795195062641
+      }
+    ],
+    "departure": "http://127.0.0.1:3068/books/test-book/grammar-structured?block=0",
+    "userFlowCompleted": true,
+    "productionImpact": "Old context/request abandoned; destination controls and canonical state verified. Physical Safari not certified."
+  }
+]

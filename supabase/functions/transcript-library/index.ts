@@ -14,6 +14,7 @@ import {
 } from "./translation.ts";
 
 import { guestToken, isGuestBearer, privateHash, statusIds } from "./guest.ts";
+import { handleGrammarAnalysis } from './grammar-analysis.ts';
 
 declare const EdgeRuntime: { waitUntil(task: Promise<unknown>): void };
 
@@ -40,6 +41,11 @@ async function providerKey(admin: SupabaseClient) {
 }
 
 Deno.serve(async (request) => {
+  if(new URL(request.url).pathname.endsWith('/grammar-analysis'))return handleGrammarAnalysis(request,{
+    token:Deno.env.get('CONTENT_ANALYSIS_TOKEN'),
+    openAIKey:Deno.env.get('OPENAI_API_KEY'),
+    model:Deno.env.get('CONTENT_ANALYSIS_MODEL'),
+  });
   if (request.method === "OPTIONS") {
     return new Response(null, { headers: cors });
   }

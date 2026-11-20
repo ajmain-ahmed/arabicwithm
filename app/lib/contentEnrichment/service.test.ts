@@ -165,3 +165,33 @@ it('reruns without duplicate phrases, notes or occurrences and isolates provider
   ).toBe(true)
   expect((await state.db!.query(`select content from chapters`)).rows[0]).toEqual({ content })
 })
+
+it('runs exactly one Episode, imported transcript and chapter through the real HTTP provider service and durable candidate/review pipeline',async()=>{
+ const previous=state.db,db=await enrichmentDatabase();state.db=db
+ const {handleGrammarAnalysis}=await import('@/supabase/functions/transcript-library/grammar-analysis')
+ const actual=await vi.importActual<typeof import('./provider')>('./provider')
+ vi.stubEnv('CONTENT_ANALYSIS_URL','https://analysis.fixture/grammar-analysis');vi.stubEnv('CONTENT_ANALYSIS_TOKEN','test-analysis-token')
+ const modelFetch=vi.fn().mockImplementation(async(_url:unknown,init:RequestInit)=>{
+  const input=JSON.parse(JSON.parse(String(init.body)).input)
+  return Response.json({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify({notes:input.units.filter((unit:{arabic:string})=>unit.arabic.includes('لَوْنُهَا')).map((unit:{unitKey:string})=>({unitKey:unit.unitKey,ruleKey:'adjective-government',titleEn:'A governing adjective',titleAr:'إِعْمَالُ الصِّفَةِ الْمُشَبَّهَةِ',cefr:'C1',category:'nahw',explanation:'Look at جَمِيلٌ: it governs its subject (فَاعِلٌ), لَوْنُهَا. The colour explains its masculine agreement.',mechanics:'Find the raised subject (فَاعِلٌ) after the adjective.',recognitionTip:'Look for the attached pronoun referring back to the flower.',detail:'',exampleExplanation:'The colour is what is beautiful.',transformations:[],confidence:0.95,highlight:'جَمِيلٌ لَوْنُهَا'}))})}]}]})
+ })
+ vi.stubGlobal('fetch',(url:string,init:RequestInit)=>handleGrammarAnalysis(new Request(url,init),{token:'test-analysis-token',openAIKey:'test-model-key'},modelFetch))
+ state.provider.mockImplementation((units,id)=>actual.requestGrammar(units,id))
+ try{
+  await db.query(`insert into books values($1,'Controlled Book','controlled','C1')`,[chapter]);await db.query(`insert into shows values($1,'Controlled Show','controlled','C1')`,[chapter])
+  await db.query(`insert into chapters(id,book_id,title,slug,content)values($1,$1,'Chapter','one',$2::jsonb)`,[chapter,JSON.stringify(content)])
+  await db.query(`insert into episodes(id,show_id,title,slug,transcript)values($1,$2,'Episode','one',$3::jsonb)`,[episode,chapter,JSON.stringify(content.map(block=>({...block,timestamp:'00:12'})))])
+  await db.query(`insert into youtube_transcripts(id,title,status,source_origin,raw_transcript,canonical_url)values($1,'Imported transcript','ready','website_admin_transcript',$2::jsonb,'https://www.youtube.com/watch?v=fixture1234')`,[imported,JSON.stringify({content:content.map(block=>({...block,timestamp:'00:14'}))})])
+  const before=(await db.query(`select md5(content::text) digest from chapters union all select md5(transcript::text) from episodes union all select md5(raw_transcript::text) from youtube_transcripts`)).rows
+  for(let index=0;index<6;index++)expect((await enrichArabicContent()).processed).toBe(true)
+  expect((await db.query(`select status,rule_cefr from grammar_notes`)).rows).toEqual([{status:'candidate',rule_cefr:'C1'}])
+  const examples=(await db.query<{arabic:string;source_kind:string;source_id:string;source_timestamp:string|null;review_status:string}>(`select arabic,source_kind,source_id,source_timestamp,review_status from content_enrichment_examples where grammar_note_id is not null`)).rows
+  expect(examples).toHaveLength(3);expect(new Set(examples.map(row=>row.source_kind))).toEqual(new Set(['chapter','episode','transcript']))
+  expect(examples.every(row=>row.arabic===content[1].arabic&&row.review_status==='candidate')).toBe(true)
+  expect(Object.fromEntries(examples.map(row=>[row.source_kind,row.source_timestamp]))).toEqual({chapter:null,episode:'00:12',transcript:'00:14'})
+  expect((await db.query(`select md5(content::text) digest from chapters union all select md5(transcript::text) from episodes union all select md5(raw_transcript::text) from youtube_transcripts`)).rows).toEqual(before)
+  expect(modelFetch).toHaveBeenCalledTimes(1)
+  const dashboard=(await db.query<{result:{notes:unknown[]}}>(`select website_admin_grammar('list',null,'{"status":"candidate"}'::jsonb,'{}'::jsonb) result`)).rows
+  expect(dashboard[0].result.notes).toHaveLength(1)
+ }finally{state.db=previous;await db.close();vi.unstubAllGlobals();vi.unstubAllEnvs()}
+},30000)

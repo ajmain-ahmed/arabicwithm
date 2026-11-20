@@ -136,6 +136,9 @@ export default function GrammarNotesPage() {
           for review. Job counts, failures and Retry enrichment controls are shown below.
         </Alert>
       )}
+      {data && <Typography role="status" variant="body2">
+        Provider configured: {data.providerConfigured?'YES':'NO'} · Analysis service connected: {data.analysisServiceConnected?'YES':'NO'} · Worker connected: {data.providerConfigured?'UNVERIFIED (scheduled dispatch requires a deployed worker)':'NO (analysis is not configured)'} · Pending jobs: {data.job_counts.queued??0} · Failed jobs: {data.job_counts.failed??0} · Last error: {data.jobs.find(job=>job.error_code)?.error_code??'None reported'}
+      </Typography>}
       <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
         {CEFR_LEVELS.map((level) => (
           <Chip key={level} label={`${level} · ${data?.distribution[level] ?? 0} candidates`} />

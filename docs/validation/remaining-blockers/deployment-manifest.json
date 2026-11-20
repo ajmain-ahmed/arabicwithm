@@ -1,0 +1,48 @@
+{
+  "entrypoint": "supabase/functions/transcript-library/index.ts",
+  "target": "existing transcript-library function; no new project",
+  "deployed": false,
+  "denoTypecheck": "PASS",
+  "files": [
+    {
+      "path": "supabase/functions/transcript-library/deno.json",
+      "sha256": "776a736d4a301f2e213766eedc5c0c4bd26891c2cd5920647b7fdc70f99e5fee"
+    },
+    {
+      "path": "supabase/functions/transcript-library/deno.lock",
+      "sha256": "1e508c2ee932bca0c5e56f4c3a9aec6f670775042bfed25a144cb7a19ca01be4"
+    },
+    {
+      "path": "supabase/functions/transcript-library/generation_test.ts",
+      "sha256": "83cc5c99ec48239483b58a8163efcfb342990b8bb56229bd7bbf6e434f5231f9"
+    },
+    {
+      "path": "supabase/functions/transcript-library/gladia.ts",
+      "sha256": "8ffd5e18a4bc79c17b955001ac07c8f708f71aeabaf76fff3ecbedffc763d7cd"
+    },
+    {
+      "path": "supabase/functions/transcript-library/grammar-analysis.ts",
+      "sha256": "ddf7094a1978a70c901c31835cf5f6eb547df0e548431725dcfbeaf36ea6b3ab"
+    },
+    {
+      "path": "supabase/functions/transcript-library/guest.ts",
+      "sha256": "077b0964915a82ebbbd31785f90480340b546ca750a642921e309203627072e9"
+    },
+    {
+      "path": "supabase/functions/transcript-library/index.ts",
+      "sha256": "2e276e35383b75a700e11698fc4eab8c5a87f31d5089bb54a866a463e6e20cee"
+    },
+    {
+      "path": "supabase/functions/transcript-library/provider.ts",
+      "sha256": "542b15fed7097f5e7ee3e8ae1e496f7da18f201a4a9b338eaf9e5378241d68cf"
+    },
+    {
+      "path": "supabase/functions/transcript-library/translation.ts",
+      "sha256": "fe954d05dcb99de351d52d6b3493ef8189a3292eb813dfb661dd46789c293dec"
+    },
+    {
+      "path": "supabase/functions/transcript-library/worker.ts",
+      "sha256": "5500cdf3c2ee8c0f4ecc4b11ceb0052b3bbe47d2ccc59ea3a34c95f6ced6ddd0"
+    }
+  ]
+}

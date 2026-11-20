@@ -1,0 +1,30 @@
+{
+  "scope": "Complete project runs: initial full run plus entire WebKit project rerun, not per-case cherry-picking.",
+  "allPassed": true,
+  "projects": {
+    "webkit": {
+      "source": "browser-webkit-final.json",
+      "cases": 15,
+      "passed": 15,
+      "status": "PASS"
+    },
+    "chrome": {
+      "source": "browser-initial-full.json",
+      "cases": 15,
+      "passed": 15,
+      "status": "PASS"
+    },
+    "firefox": {
+      "source": "browser-initial-full.json",
+      "cases": 15,
+      "passed": 15,
+      "status": "PASS"
+    },
+    "edge": {
+      "source": "browser-initial-full.json",
+      "cases": 15,
+      "passed": 15,
+      "status": "PASS"
+    }
+  }
+}

@@ -5,6 +5,7 @@ import { guardAdmin } from '@/app/actions/auth'
 import { enrichmentRpc, enrichArabicContent } from '@/app/lib/contentEnrichment/service'
 import { CEFR_LEVELS } from '@/app/lib/contentEnrichment/types'
 import { grammarTerminology } from '@/app/lib/grammarTerminology'
+import {analysisProviderConfigured,analysisServiceConnected} from '@/app/lib/contentEnrichment/provider'
 
 const filterSchema = z.object({
   status: z.enum(['', 'candidate', 'approved', 'rejected']).default('candidate'),
@@ -66,7 +67,7 @@ const exampleSchema = z.object({
   source_order: z.number().default(0),
 })
 export type GrammarNote = z.infer<typeof noteSchema>
-export type GrammarDashboard = z.infer<typeof dashboardSchema> & { providerConfigured: boolean }
+export type GrammarDashboard = z.infer<typeof dashboardSchema> & { providerConfigured: boolean; analysisServiceConnected?:boolean }
 export type GrammarExample = z.infer<typeof exampleSchema>
 
 export async function fetchGrammarNotes(
@@ -81,9 +82,8 @@ export async function fetchGrammarNotes(
   )
   return {
     ...dashboard,
-    providerConfigured: Boolean(
-      process.env.CONTENT_ANALYSIS_URL && process.env.CONTENT_ANALYSIS_TOKEN,
-    ),
+    providerConfigured: analysisProviderConfigured(),
+    analysisServiceConnected: await analysisServiceConnected(),
   }
 }
 export async function fetchGrammarExamples(id: string, page = 0): Promise<GrammarExample[]> {

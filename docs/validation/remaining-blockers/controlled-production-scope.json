@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-20",
+  "state": "PREPARED, NOT QUEUED OR PROCESSED",
+  "project": "whbxgwucsoguqzpnpzjd",
+  "fingerprint": "PostgreSQL md5 of source JSON text, for change detection only",
+  "sources": [
+    {"kind":"episode","id":"001b79a5-16eb-4bc3-a64d-4ea344cf9365","title":"The Boy on The Mountain","sourceHash":"22c90c24f8076b887cb25dcb016825b6"},
+    {"kind":"transcript","id":"025473ef-d3b3-460b-9d23-226b346d2277","title":"Episode 9","sourceHash":"a8acd26adaa370e7c2caf8add562c498"},
+    {"kind":"chapter","id":"00e62b11-11c2-469d-bc7b-53fc411875cf","title":"When Learning Feels Real","sourceHash":"35ebeb891b0d47a449277d9a94f4f844"}
+  ],
+  "productionWrites": false,
+  "historicalScan": false,
+  "releaseGate": "Real-model quality review and authenticated runtime configuration are still required. Recheck hashes and queue state before use."
+}

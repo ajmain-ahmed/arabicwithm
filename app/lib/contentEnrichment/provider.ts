@@ -16,6 +16,16 @@ export function analysisProviderConfigured(): boolean {
   return Boolean(process.env.CONTENT_ANALYSIS_URL && process.env.CONTENT_ANALYSIS_TOKEN)
 }
 
+export async function analysisServiceConnected():Promise<boolean>{
+  if(!analysisProviderConfigured())return false
+  try{
+    const url=new URL(process.env.CONTENT_ANALYSIS_URL!)
+    if(url.protocol!=='https:')return false
+    const response=await fetch(url,{method:'POST',redirect:'error',signal:AbortSignal.timeout(3000),headers:{'Content-Type':'application/json',Authorization:`Bearer ${process.env.CONTENT_ANALYSIS_TOKEN}`},body:JSON.stringify({task:'awm-grammar-status-v1'})})
+    return response.ok&&(await response.json()).ready===true
+  }catch{return false}
+}
+
 export async function requestGrammar(
   units: CanonicalUnit[],
   requestId: string,
@@ -28,7 +38,8 @@ export async function requestGrammar(
   const response = await fetch(url, {
     method: 'POST',
     redirect: 'error',
-    signal: AbortSignal.timeout(20000),
+    // Model service is bounded below this deadline; both fit the 90s job lease.
+    signal: AbortSignal.timeout(55000),
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,

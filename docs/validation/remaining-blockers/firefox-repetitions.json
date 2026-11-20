@@ -1,0 +1,348 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.finish-reliability.config.ts",
+      "--project",
+      "firefox",
+      "--grep",
+      "URL tabs",
+      "--repeat-each",
+      "3"
+    ],
+    "configFile": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\playwright.finish-reliability.config.ts",
+    "rootDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 3,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "edge",
+        "name": "edge",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/validation/remaining-blockers/firefox-repetitions.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "node e2e/fixture-server.mjs",
+      "url": "http://127.0.0.1:3068",
+      "reuseExistingServer": false,
+      "timeout": 240000,
+      "env": {
+        "AWM_TEST_FULL_RELIABILITY": "1",
+        "AWM_TEST_PRODUCTION": "1",
+        "AWM_TEST_STRUCTURED_BOOKS": "1",
+        "AWM_TEST_WEB_PORT": "3068",
+        "AWM_TEST_BACKEND_PORT": "4368"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "full-reliability.pw.ts",
+      "file": "full-reliability.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "URL tabs, profile settings and membership are restored by Back and Forward for every role",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 14125,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:45:51.680Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "library-commit-free-390",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6dHJ1ZX0="
+                    },
+                    {
+                      "name": "library-commit-free-1440",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImludGVyYWN0aXZlIiwibGlicmFyeSI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "library-commit-premium-390",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "library-commit-premium-1440",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "library-commit-admin-390",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "library-commit-admin-1440",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-dc3341abe9f9f87ff687",
+          "file": "full-reliability.pw.ts",
+          "line": 105,
+          "column": 1
+        },
+        {
+          "title": "URL tabs, profile settings and membership are restored by Back and Forward for every role",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13728,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:46:06.892Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "library-commit-free-390",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImludGVyYWN0aXZlIiwibGlicmFyeSI6dHJ1ZX0="
+                    },
+                    {
+                      "name": "library-commit-free-1440",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "library-commit-premium-390",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "library-commit-premium-1440",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "library-commit-admin-390",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "library-commit-admin-1440",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-53e32cd5cf6732af977f",
+          "file": "full-reliability.pw.ts",
+          "line": 105,
+          "column": 1
+        },
+        {
+          "title": "URL tabs, profile settings and membership are restored by Back and Forward for every role",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 13641,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:46:21.692Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "library-commit-free-390",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6dHJ1ZX0="
+                    },
+                    {
+                      "name": "library-commit-free-1440",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImludGVyYWN0aXZlIiwibGlicmFyeSI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "library-commit-premium-390",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "library-commit-premium-1440",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "library-commit-admin-390",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    },
+                    {
+                      "name": "library-commit-admin-1440",
+                      "contentType": "application/json",
+                      "body": "eyJ1cmwiOiIvYm9va3MiLCJyZWFkeSI6ImNvbXBsZXRlIiwibGlicmFyeSI6ZmFsc2V9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-004d6303271961ed059d",
+          "file": "full-reliability.pw.ts",
+          "line": 105,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-20T16:45:23.523Z",
+    "duration": 72713.94499999999,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

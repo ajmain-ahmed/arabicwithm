@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { beforeEach, expect, it, vi } from 'vitest'
+vi.mock('server-only',()=>({}))
 const mocks = vi.hoisted(() => ({ guard: vi.fn(), rpc: vi.fn(), process: vi.fn() }))
 vi.mock('@/app/actions/auth', () => ({ guardAdmin: mocks.guard }))
 vi.mock('@/app/lib/contentEnrichment/service', () => ({
