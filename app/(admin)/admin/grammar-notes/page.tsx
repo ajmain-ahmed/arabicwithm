@@ -130,8 +130,10 @@ export default function GrammarNotesPage() {
       {message && <Alert severity="info">{message}</Alert>}
       {data && !data.providerConfigured && (
         <Alert severity="warning">
-          Configure the server-side analysis provider to enable contextual grammar discovery across
-          A1–C2. Authored rule evidence remains available for review.
+          Context grammar analysis is not configured on this server. The server-side worker needs
+          CONTENT_ANALYSIS_URL and CONTENT_ANALYSIS_TOKEN in its runtime secrets. Contextual A1–C2
+          discovery is unavailable until both are configured. Authored rule evidence remains available
+          for review. Job counts, failures and Retry enrichment controls are shown below.
         </Alert>
       )}
       <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>

@@ -25,17 +25,17 @@ it.each(['admin', 'editor', 'user'])('uses server-verified %s role for both navi
   await act(async () => root.render(<Probe />))
   expect(JSON.parse(host.textContent!)).toMatchObject({ isAdmin: role === 'admin', isReviewer: role !== 'user',accessLoading:false,accessError:'' })
 })
-it('retains a verified Admin role during menu rechecks, reports errors, and shares one request among consumers',async()=>{
+it('hides Admin during role rechecks and failures, and shares one request among consumers',async()=>{
  await act(async()=>root.render(<AccountAccessProvider userId="admin" authLoading={false}><Value/><Value/></AccountAccessProvider>))
  expect(mocks.access).toHaveBeenCalledTimes(1)
  let finish!:(value:unknown)=>void
  mocks.access.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve}))
  await act(async()=>root.render(<AccountAccessProvider userId="admin" authLoading={false}><Value refresh="open"/><Value refresh="open"/></AccountAccessProvider>))
- expect(mocks.access).toHaveBeenCalledTimes(2);expect(host.textContent).toContain('"isAdmin":true');expect(host.textContent).toContain('"accessLoading":true')
+ expect(mocks.access).toHaveBeenCalledTimes(2);expect(host.textContent).toContain('"isAdmin":false');expect(host.textContent).toContain('"accessLoading":true')
  await act(async()=>finish({userId:'admin',role:'admin',admin:true}))
  mocks.access.mockRejectedValueOnce(new Error('Network unavailable'))
  await act(async()=>window.dispatchEvent(new Event('focus')))
- expect(host.textContent).toContain('"isAdmin":true');expect(host.textContent).toContain('Network unavailable')
+ expect(host.textContent).toContain('"isAdmin":false');expect(host.textContent).toContain('Network unavailable')
  mocks.access.mockResolvedValueOnce({userId:'admin',role:'user',admin:false})
  await act(async()=>window.dispatchEvent(new Event('focus')))
  expect(host.textContent).toContain('"isAdmin":false');expect(host.textContent).not.toContain('Network unavailable')

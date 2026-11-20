@@ -60,7 +60,7 @@ for (const width of [390,1440]) test(`every public route direct and refreshed, s
   await test.info().attach('route-health',{body:JSON.stringify({rows,errors},null,2),contentType:'application/json'});expect(errors).toEqual([])
 })
 
-for(const width of [320,390,430,768,1024,1440]) test(`connected learner flows and hit testing at ${width}`,async({page,context})=>{
+for(const width of [320,375,390,414,430,768,1024,1440]) test(`connected learner flows and hit testing at ${width}`,async({page,context})=>{
   test.setTimeout(150000)
   await account(context);await page.setViewportSize({width,height:1000});await page.emulateMedia({reducedMotion:'reduce'})
   const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message))
@@ -103,13 +103,13 @@ test('URL tabs, profile settings and membership are restored by Back and Forward
     await page.setViewportSize({width,height:1000})
     await context.clearCookies();await account(context,kind)
     const profile=`/profile/${ids[kind]}`
-    await page.goto(profile);await healthy(page)
+    await page.goto(profile,{waitUntil:'domcontentloaded'});await healthy(page)
     await page.getByRole('button',{name:'Settings',exact:true}).filter({visible:true}).click();await expect(page).toHaveURL(`${profile}?tab=settings`)
     await page.getByRole('button',{name:'AWM+',exact:true}).filter({visible:true}).click();await expect(page).toHaveURL(`${profile}?tab=awm`)
     await page.goBack();await expect(page).toHaveURL(`${profile}?tab=settings`);await expect(page.locator('#profile-settings')).toBeVisible()
-    await page.goForward();await expect(page).toHaveURL(`${profile}?tab=awm`);await page.reload();await healthy(page)
-    await page.goto('/books');await expect(page.getByRole('group',{name:'Library mode',exact:true})).toBeVisible();await hit(page.getByRole('button',{name:'Listen',exact:true}));await expect(page).toHaveURL('/books?mode=listen');await page.goBack();await expect(page).toHaveURL('/books');await page.goForward();await expect(page).toHaveURL('/books?mode=listen')
-    await page.goto('/cartoons');await healthy(page);await hit(page.getByRole('button',{name:'Show all shows',exact:true}));await expect(page).toHaveURL('/cartoons?view=shows');await page.goBack();await expect(page).toHaveURL('/cartoons');await page.goForward();await expect(page).toHaveURL('/cartoons?view=shows')
+    await page.goForward();await expect(page).toHaveURL(`${profile}?tab=awm`);await page.reload({waitUntil:'domcontentloaded'});await healthy(page)
+    await page.goto('/books',{waitUntil:'domcontentloaded'});await expect(page.getByRole('group',{name:'Library mode',exact:true})).toBeVisible();await hit(page.getByRole('button',{name:'Listen',exact:true}));await expect(page).toHaveURL('/books?mode=listen');await page.goBack();await expect(page).toHaveURL('/books');await page.goForward();await expect(page).toHaveURL('/books?mode=listen')
+    await page.goto('/cartoons',{waitUntil:'domcontentloaded'});await healthy(page);await hit(page.getByRole('button',{name:'Show all shows',exact:true}));await expect(page).toHaveURL('/cartoons?view=shows');await page.goBack();await expect(page).toHaveURL('/cartoons');await page.goForward();await expect(page).toHaveURL('/cartoons?view=shows')
    }
   }
 })
@@ -127,7 +127,7 @@ test('all protected route entries preserve denial and Admin read access',async({
   for(const route of routes){await page.goto(route,{waitUntil:'domcontentloaded'});await expect(page).toHaveURL('/');await healthy(page)}
   await account(context,'admin')
   const rows=[]
-  for(const route of [...routes,'/reviewer']){const response=await page.goto(route,{waitUntil:'domcontentloaded'});expect(response!.status()).toBeLessThan(400);await expect(page).toHaveURL(route==='/admin'||route==='/admin/episodes'?'/admin/shows':route);await expect(page.locator('[data-awm-page-error]')).toHaveCount(0);await expect(page.getByRole('heading',{name:'Page not found',exact:true})).toHaveCount(0);rows.push({route,status:'PASS'})}
+  for(const route of [...routes,'/reviewer']){const response=await page.goto(route,{waitUntil:'domcontentloaded'});expect(response!.status()).toBeLessThan(400);const destination=route==='/admin'||route==='/admin/episodes'?'/admin/shows':route;await expect(page).toHaveURL(url=>url.pathname===destination);await expect(page.locator('[data-awm-page-error]')).toHaveCount(0);await expect(page.getByRole('heading',{name:'Page not found',exact:true})).toHaveCount(0);rows.push({route,status:'PASS'})}
   await test.info().attach('protected-route-health',{body:JSON.stringify(rows),contentType:'application/json'})
 })
 

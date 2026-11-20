@@ -1,0 +1,453 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.safari-admin.config.ts"
+    ],
+    "configFile": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\playwright.safari-admin.config.ts",
+    "rootDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/safari-admin.pw.ts",
+          "**/admin-audit.pw.ts",
+          "**/book-cover-upload.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/safari-admin.pw.ts",
+          "**/admin-audit.pw.ts",
+          "**/book-cover-upload.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/safari-admin.pw.ts",
+          "**/admin-audit.pw.ts",
+          "**/book-cover-upload.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "edge",
+        "name": "edge",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/safari-admin.pw.ts",
+          "**/admin-audit.pw.ts",
+          "**/book-cover-upload.pw.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/validation/safari-admin/browser-admin-books-final.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "node e2e/fixture-server.mjs",
+      "url": "http://127.0.0.1:3057",
+      "reuseExistingServer": false,
+      "timeout": 120000,
+      "env": {
+        "AWM_TEST_ADMIN_AUDIT": "1",
+        "AWM_TEST_BOOK_COVERS": "1",
+        "AWM_TEST_PRODUCTION": "1",
+        "AWM_TEST_AUDIO_AUDIT": "1",
+        "AWM_TEST_WEB_PORT": "3057",
+        "AWM_TEST_BACKEND_PORT": "4357",
+        "AWM_TEST_CONTENT_ENRICHMENT": "1"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "safari-admin.pw.ts",
+      "file": "safari-admin.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Admin Books existing list, editor, create, chapters and history",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 23805,
+                  "error": {
+                    "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'First Chapter', exact: true })\u001b[22m\n",
+                    "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'First Chapter', exact: true })\u001b[22m\n\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts:31:65",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts",
+                      "column": 65,
+                      "line": 31
+                    },
+                    "snippet": "  29 |  await page.getByRole('link',{name:'Preview',exact:true}).first().click();await expect(page).toHaveURL(/\\/admin\\/books\\/preview\\//);await expect(page.getByRole('heading',{name:'Test Book — First Chapter',exact:true})).toBeVisible();await page.goBack();await expect(page).toHaveURL('/admin/books')\n  30 |  const expand=page.getByRole('button',{name:'Expand chapters for Test Book',exact:true});if(await expand.isVisible())await expand.click()\n> 31 |  await page.getByRole('link',{name:'First Chapter',exact:true}).click();await expect(page).toHaveURL('/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');await expect(page.locator('main')).toContainText('First Chapter')\n     |                                                                 ^\n  32 | })\n  33 | test('Admin grammar diagnostics retain authored review and show missing configuration',async({page,context})=>{\n  34 |  await account(context,'admin');await page.goto('/admin/grammar-notes')"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts",
+                        "column": 65,
+                        "line": 31
+                      },
+                      "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'First Chapter', exact: true })\u001b[22m\n\n\n  29 |  await page.getByRole('link',{name:'Preview',exact:true}).first().click();await expect(page).toHaveURL(/\\/admin\\/books\\/preview\\//);await expect(page.getByRole('heading',{name:'Test Book — First Chapter',exact:true})).toBeVisible();await page.goBack();await expect(page).toHaveURL('/admin/books')\n  30 |  const expand=page.getByRole('button',{name:'Expand chapters for Test Book',exact:true});if(await expand.isVisible())await expand.click()\n> 31 |  await page.getByRole('link',{name:'First Chapter',exact:true}).click();await expect(page).toHaveURL('/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');await expect(page.locator('main')).toContainText('First Chapter')\n     |                                                                 ^\n  32 | })\n  33 | test('Admin grammar diagnostics retain authored review and show missing configuration',async({page,context})=>{\n  34 |  await account(context,'admin');await page.goto('/admin/grammar-notes')\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts:31:65"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:20:19.945Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\safari-admin.pw.ts-Admin-B-9ab92-create-chapters-and-history-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\safari-admin.pw.ts-Admin-B-9ab92-create-chapters-and-history-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\safari-admin.pw.ts-Admin-B-9ab92-create-chapters-and-history-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts",
+                    "column": 65,
+                    "line": 31
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-8721c6b4a43a06fa4090",
+          "file": "safari-admin.pw.ts",
+          "line": 21,
+          "column": 1
+        },
+        {
+          "title": "Admin Books existing list, editor, create, chapters and history",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 20859,
+                  "error": {
+                    "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'First Chapter', exact: true })\u001b[22m\n",
+                    "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'First Chapter', exact: true })\u001b[22m\n\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts:31:65",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts",
+                      "column": 65,
+                      "line": 31
+                    },
+                    "snippet": "  29 |  await page.getByRole('link',{name:'Preview',exact:true}).first().click();await expect(page).toHaveURL(/\\/admin\\/books\\/preview\\//);await expect(page.getByRole('heading',{name:'Test Book — First Chapter',exact:true})).toBeVisible();await page.goBack();await expect(page).toHaveURL('/admin/books')\n  30 |  const expand=page.getByRole('button',{name:'Expand chapters for Test Book',exact:true});if(await expand.isVisible())await expand.click()\n> 31 |  await page.getByRole('link',{name:'First Chapter',exact:true}).click();await expect(page).toHaveURL('/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');await expect(page.locator('main')).toContainText('First Chapter')\n     |                                                                 ^\n  32 | })\n  33 | test('Admin grammar diagnostics retain authored review and show missing configuration',async({page,context})=>{\n  34 |  await account(context,'admin');await page.goto('/admin/grammar-notes')"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts",
+                        "column": 65,
+                        "line": 31
+                      },
+                      "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'First Chapter', exact: true })\u001b[22m\n\n\n  29 |  await page.getByRole('link',{name:'Preview',exact:true}).first().click();await expect(page).toHaveURL(/\\/admin\\/books\\/preview\\//);await expect(page.getByRole('heading',{name:'Test Book — First Chapter',exact:true})).toBeVisible();await page.goBack();await expect(page).toHaveURL('/admin/books')\n  30 |  const expand=page.getByRole('button',{name:'Expand chapters for Test Book',exact:true});if(await expand.isVisible())await expand.click()\n> 31 |  await page.getByRole('link',{name:'First Chapter',exact:true}).click();await expect(page).toHaveURL('/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');await expect(page.locator('main')).toContainText('First Chapter')\n     |                                                                 ^\n  32 | })\n  33 | test('Admin grammar diagnostics retain authored review and show missing configuration',async({page,context})=>{\n  34 |  await account(context,'admin');await page.goto('/admin/grammar-notes')\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts:31:65"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:20:44.348Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\safari-admin.pw.ts-Admin-B-9ab92-create-chapters-and-history-chrome\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\safari-admin.pw.ts-Admin-B-9ab92-create-chapters-and-history-chrome\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\safari-admin.pw.ts-Admin-B-9ab92-create-chapters-and-history-chrome\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts",
+                    "column": 65,
+                    "line": 31
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-8aed8a9619077b0eb46a",
+          "file": "safari-admin.pw.ts",
+          "line": 21,
+          "column": 1
+        },
+        {
+          "title": "Admin Books existing list, editor, create, chapters and history",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 22200,
+                  "error": {
+                    "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'First Chapter', exact: true })\u001b[22m\n",
+                    "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'First Chapter', exact: true })\u001b[22m\n\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts:31:65",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts",
+                      "column": 65,
+                      "line": 31
+                    },
+                    "snippet": "  29 |  await page.getByRole('link',{name:'Preview',exact:true}).first().click();await expect(page).toHaveURL(/\\/admin\\/books\\/preview\\//);await expect(page.getByRole('heading',{name:'Test Book — First Chapter',exact:true})).toBeVisible();await page.goBack();await expect(page).toHaveURL('/admin/books')\n  30 |  const expand=page.getByRole('button',{name:'Expand chapters for Test Book',exact:true});if(await expand.isVisible())await expand.click()\n> 31 |  await page.getByRole('link',{name:'First Chapter',exact:true}).click();await expect(page).toHaveURL('/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');await expect(page.locator('main')).toContainText('First Chapter')\n     |                                                                 ^\n  32 | })\n  33 | test('Admin grammar diagnostics retain authored review and show missing configuration',async({page,context})=>{\n  34 |  await account(context,'admin');await page.goto('/admin/grammar-notes')"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts",
+                        "column": 65,
+                        "line": 31
+                      },
+                      "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'First Chapter', exact: true })\u001b[22m\n\n\n  29 |  await page.getByRole('link',{name:'Preview',exact:true}).first().click();await expect(page).toHaveURL(/\\/admin\\/books\\/preview\\//);await expect(page.getByRole('heading',{name:'Test Book — First Chapter',exact:true})).toBeVisible();await page.goBack();await expect(page).toHaveURL('/admin/books')\n  30 |  const expand=page.getByRole('button',{name:'Expand chapters for Test Book',exact:true});if(await expand.isVisible())await expand.click()\n> 31 |  await page.getByRole('link',{name:'First Chapter',exact:true}).click();await expect(page).toHaveURL('/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');await expect(page.locator('main')).toContainText('First Chapter')\n     |                                                                 ^\n  32 | })\n  33 | test('Admin grammar diagnostics retain authored review and show missing configuration',async({page,context})=>{\n  34 |  await account(context,'admin');await page.goto('/admin/grammar-notes')\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts:31:65"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:21:06.046Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\safari-admin.pw.ts-Admin-B-9ab92-create-chapters-and-history-firefox\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\safari-admin.pw.ts-Admin-B-9ab92-create-chapters-and-history-firefox\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\safari-admin.pw.ts-Admin-B-9ab92-create-chapters-and-history-firefox\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts",
+                    "column": 65,
+                    "line": 31
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-bf3ac213517105782ba2",
+          "file": "safari-admin.pw.ts",
+          "line": 21,
+          "column": 1
+        },
+        {
+          "title": "Admin Books existing list, editor, create, chapters and history",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 20903,
+                  "error": {
+                    "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'First Chapter', exact: true })\u001b[22m\n",
+                    "stack": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'First Chapter', exact: true })\u001b[22m\n\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts:31:65",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts",
+                      "column": 65,
+                      "line": 31
+                    },
+                    "snippet": "  29 |  await page.getByRole('link',{name:'Preview',exact:true}).first().click();await expect(page).toHaveURL(/\\/admin\\/books\\/preview\\//);await expect(page.getByRole('heading',{name:'Test Book — First Chapter',exact:true})).toBeVisible();await page.goBack();await expect(page).toHaveURL('/admin/books')\n  30 |  const expand=page.getByRole('button',{name:'Expand chapters for Test Book',exact:true});if(await expand.isVisible())await expand.click()\n> 31 |  await page.getByRole('link',{name:'First Chapter',exact:true}).click();await expect(page).toHaveURL('/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');await expect(page.locator('main')).toContainText('First Chapter')\n     |                                                                 ^\n  32 | })\n  33 | test('Admin grammar diagnostics retain authored review and show missing configuration',async({page,context})=>{\n  34 |  await account(context,'admin');await page.goto('/admin/grammar-notes')"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts",
+                        "column": 65,
+                        "line": 31
+                      },
+                      "message": "TimeoutError: locator.click: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('link', { name: 'First Chapter', exact: true })\u001b[22m\n\n\n  29 |  await page.getByRole('link',{name:'Preview',exact:true}).first().click();await expect(page).toHaveURL(/\\/admin\\/books\\/preview\\//);await expect(page.getByRole('heading',{name:'Test Book — First Chapter',exact:true})).toBeVisible();await page.goBack();await expect(page).toHaveURL('/admin/books')\n  30 |  const expand=page.getByRole('button',{name:'Expand chapters for Test Book',exact:true});if(await expand.isVisible())await expand.click()\n> 31 |  await page.getByRole('link',{name:'First Chapter',exact:true}).click();await expect(page).toHaveURL('/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');await expect(page.locator('main')).toContainText('First Chapter')\n     |                                                                 ^\n  32 | })\n  33 | test('Admin grammar diagnostics retain authored review and show missing configuration',async({page,context})=>{\n  34 |  await account(context,'admin');await page.goto('/admin/grammar-notes')\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts:31:65"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:21:29.684Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\safari-admin.pw.ts-Admin-B-9ab92-create-chapters-and-history-edge\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\safari-admin.pw.ts-Admin-B-9ab92-create-chapters-and-history-edge\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\safari-admin.pw.ts-Admin-B-9ab92-create-chapters-and-history-edge\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\safari-admin.pw.ts",
+                    "column": 65,
+                    "line": 31
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-04b23883711e013ceaa2",
+          "file": "safari-admin.pw.ts",
+          "line": 21,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-20T16:19:45.799Z",
+    "duration": 125527.931,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 4,
+    "flaky": 0
+  }
+}

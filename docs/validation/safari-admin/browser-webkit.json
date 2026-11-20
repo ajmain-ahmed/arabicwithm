@@ -1,0 +1,799 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.safari-audit.config.ts"
+    ],
+    "configFile": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\playwright.safari-audit.config.ts",
+    "rootDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/full-reliability.pw.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/validation/safari-admin/browser-webkit.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "node e2e/fixture-server.mjs",
+      "url": "http://127.0.0.1:3068",
+      "reuseExistingServer": false,
+      "timeout": 240000,
+      "env": {
+        "AWM_TEST_FULL_RELIABILITY": "1",
+        "AWM_TEST_PRODUCTION": "1",
+        "AWM_TEST_STRUCTURED_BOOKS": "1",
+        "AWM_TEST_WEB_PORT": "3068",
+        "AWM_TEST_BACKEND_PORT": "4368"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "full-reliability.pw.ts",
+      "file": "full-reliability.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "every public route direct and refreshed, signed out at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9476,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T15:59:18.153Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "route-health",
+                      "contentType": "application/json",
+                      "body": "ewogICJyb3dzIjogWwogICAgewogICAgICAicGF0aCI6ICIvIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2V4cGxvcmUiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZXhwbG9yZT92aWV3PWZvcnlvdSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucz92aWV3PXNob3dzIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2NhcnRvb25zL3Rlc3Qtc2hvdyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucy90ZXN0LXNob3cvY2xpcC0wIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzP21vZGU9bGlzdGVuIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ib29rcy90ZXN0LWJvb2svY2hhcHRlci0xIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2xpc3Rlbi90ZXN0LWJvb2siLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGVhcm4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hciIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0ExIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9BMiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQjEiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0IyIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9DMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQzIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9ub3Rlcy8xMjM0NTY3OC0xMjM0LTQxMjMtODEyMy0xMjM0NTY3ODkwMDMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbWVtb3J5IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Byb2ZpbGUiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2V4cGxvcmUvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3dvcmQtc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlL3Nlc3Npb24iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZmVlZGJhY2siLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMzkwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc3VwcG9ydCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9wcml2YWN5IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Rlcm1zIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Jlc2V0LXBhc3N3b3JkIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDM5MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3RyYW5zY3JpcHRzL2FiYWJhYmFiLWFiYWItNGJhYi04YmFiLWFiYWJhYmFiYWJhYiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAzOTAKICAgIH0KICBdLAogICJlcnJvcnMiOiBbXQp9"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-7ab0e2a763415f7b9f40",
+          "file": "full-reliability.pw.ts",
+          "line": 51,
+          "column": 33
+        },
+        {
+          "title": "every public route direct and refreshed, signed out at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 9277,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T15:59:27.798Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "route-health",
+                      "contentType": "application/json",
+                      "body": "ewogICJyb3dzIjogWwogICAgewogICAgICAicGF0aCI6ICIvIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlP3ZpZXc9Zm9yeW91IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvY2FydG9vbnM/dmlldz1zaG93cyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvY2FydG9vbnMvdGVzdC1zaG93IiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9jYXJ0b29ucy90ZXN0LXNob3cvY2xpcC0wIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ib29rcyIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvYm9va3M/bW9kZT1saXN0ZW4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2Jvb2tzL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvYm9va3MvdGVzdC1ib29rL2NoYXB0ZXItMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGlzdGVuL3Rlc3QtYm9vayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvbGVhcm4iLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0ExIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQTIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9CMSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9jb250ZXh0L0IyIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9ncmFtbWFyL2NvbnRleHQvQzEiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL2dyYW1tYXIvY29udGV4dC9DMiIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvZ3JhbW1hci9ub3Rlcy8xMjM0NTY3OC0xMjM0LTQxMjMtODEyMy0xMjM0NTY3ODkwMDMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL21lbW9yeSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvcHJvZmlsZSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc2VhcmNoIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9leHBsb3JlL3NlYXJjaCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvd29yZC1zZWFyY2giLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3ByYWN0aWNlIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9wcmFjdGljZS9zZXNzaW9uIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi9mZWVkYmFjayIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvc3VwcG9ydCIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvcHJpdmFjeSIsCiAgICAgICJkaXJlY3QiOiAiUEFTUyIsCiAgICAgICJyZWZyZXNoIjogIlBBU1MiLAogICAgICAid2lkdGgiOiAxNDQwCiAgICB9LAogICAgewogICAgICAicGF0aCI6ICIvdGVybXMiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfSwKICAgIHsKICAgICAgInBhdGgiOiAiL3Jlc2V0LXBhc3N3b3JkIiwKICAgICAgImRpcmVjdCI6ICJQQVNTIiwKICAgICAgInJlZnJlc2giOiAiUEFTUyIsCiAgICAgICJ3aWR0aCI6IDE0NDAKICAgIH0sCiAgICB7CiAgICAgICJwYXRoIjogIi90cmFuc2NyaXB0cy9hYmFiYWJhYi1hYmFiLTRiYWItOGJhYi1hYmFiYWJhYmFiYWIiLAogICAgICAiZGlyZWN0IjogIlBBU1MiLAogICAgICAicmVmcmVzaCI6ICJQQVNTIiwKICAgICAgIndpZHRoIjogMTQ0MAogICAgfQogIF0sCiAgImVycm9ycyI6IFtdCn0="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-4049cf1fa5aa78ee2b37",
+          "file": "full-reliability.pw.ts",
+          "line": 51,
+          "column": 33
+        },
+        {
+          "title": "connected learner flows and hit testing at 320",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 18660,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 8\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context?_rsc=vnCDpUKSVGifkznO due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 8\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context?_rsc=vnCDpUKSVGifkznO due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:97:18",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 18,
+                      "line": 97
+                    },
+                    "snippet": "   95 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)\n   96 |   await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})\n>  97 |   expect(errors).toEqual([])\n      |                  ^\n   98 | })\n   99 |\n  100 | test('URL tabs, profile settings and membership are restored by Back and Forward for every role',async({page,context})=>{"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 18,
+                        "line": 97
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 8\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context?_rsc=vnCDpUKSVGifkznO due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n   95 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)\n   96 |   await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})\n>  97 |   expect(errors).toEqual([])\n      |                  ^\n   98 | })\n   99 |\n  100 | test('URL tabs, profile settings and membership are restored by Back and Forward for every role',async({page,context})=>{\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:97:18"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T15:59:37.085Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-7b95e-lows-and-hit-testing-at-320-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-7b95e-lows-and-hit-testing-at-320-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-7b95e-lows-and-hit-testing-at-320-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 18,
+                    "line": 97
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-967889b1be94d682993b",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 390",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 17923,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 8\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context/A1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context?_rsc=vnCDpUKSVGifkznO due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 8\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context/A1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context?_rsc=vnCDpUKSVGifkznO due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:97:18",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 18,
+                      "line": 97
+                    },
+                    "snippet": "   95 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)\n   96 |   await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})\n>  97 |   expect(errors).toEqual([])\n      |                  ^\n   98 | })\n   99 |\n  100 | test('URL tabs, profile settings and membership are restored by Back and Forward for every role',async({page,context})=>{"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 18,
+                        "line": 97
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 8\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context/A1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context?_rsc=vnCDpUKSVGifkznO due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n   95 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)\n   96 |   await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})\n>  97 |   expect(errors).toEqual([])\n      |                  ^\n   98 | })\n   99 |\n  100 | test('URL tabs, profile settings and membership are restored by Back and Forward for every role',async({page,context})=>{\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:97:18"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T15:59:56.413Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-89b7e-lows-and-hit-testing-at-390-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-89b7e-lows-and-hit-testing-at-390-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-89b7e-lows-and-hit-testing-at-390-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 18,
+                    "line": 97
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-ffe2543873c759b67422",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 430",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 19374,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 6\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 6\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:97:18",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 18,
+                      "line": 97
+                    },
+                    "snippet": "   95 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)\n   96 |   await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})\n>  97 |   expect(errors).toEqual([])\n      |                  ^\n   98 | })\n   99 |\n  100 | test('URL tabs, profile settings and membership are restored by Back and Forward for every role',async({page,context})=>{"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 18,
+                        "line": 97
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 6\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n   95 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)\n   96 |   await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})\n>  97 |   expect(errors).toEqual([])\n      |                  ^\n   98 | })\n   99 |\n  100 | test('URL tabs, profile settings and membership are restored by Back and Forward for every role',async({page,context})=>{\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:97:18"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:00:15.273Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-6f10f-lows-and-hit-testing-at-430-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-6f10f-lows-and-hit-testing-at-430-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-6f10f-lows-and-hit-testing-at-430-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 18,
+                    "line": 97
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-ea9a473858061bbf856a",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 768",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 20466,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 7\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 7\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:97:18",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 18,
+                      "line": 97
+                    },
+                    "snippet": "   95 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)\n   96 |   await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})\n>  97 |   expect(errors).toEqual([])\n      |                  ^\n   98 | })\n   99 |\n  100 | test('URL tabs, profile settings and membership are restored by Back and Forward for every role',async({page,context})=>{"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 18,
+                        "line": 97
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 7\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n   95 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)\n   96 |   await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})\n>  97 |   expect(errors).toEqual([])\n      |                  ^\n   98 | })\n   99 |\n  100 | test('URL tabs, profile settings and membership are restored by Back and Forward for every role',async({page,context})=>{\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:97:18"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:00:35.348Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-6a8b7-lows-and-hit-testing-at-768-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-6a8b7-lows-and-hit-testing-at-768-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-6a8b7-lows-and-hit-testing-at-768-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 18,
+                    "line": 97
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-4ab3063ffa7b0c364995",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 1024",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 21062,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 9\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context?_rsc=wnOXER2BsJLnx9-Y due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context/A1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 9\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context?_rsc=wnOXER2BsJLnx9-Y due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context/A1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:97:18",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 18,
+                      "line": 97
+                    },
+                    "snippet": "   95 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)\n   96 |   await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})\n>  97 |   expect(errors).toEqual([])\n      |                  ^\n   98 | })\n   99 |\n  100 | test('URL tabs, profile settings and membership are restored by Back and Forward for every role',async({page,context})=>{"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 18,
+                        "line": 97
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 9\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context?_rsc=wnOXER2BsJLnx9-Y due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context/A1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n   95 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)\n   96 |   await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})\n>  97 |   expect(errors).toEqual([])\n      |                  ^\n   98 | })\n   99 |\n  100 | test('URL tabs, profile settings and membership are restored by Back and Forward for every role',async({page,context})=>{\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:97:18"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:00:56.575Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-31a3b-ows-and-hit-testing-at-1024-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-31a3b-ows-and-hit-testing-at-1024-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-31a3b-ows-and-hit-testing-at-1024-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 18,
+                    "line": 97
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-ab2be445ac3a934feda7",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "connected learner flows and hit testing at 1440",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 150000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 23607,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 9\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context?_rsc=wnOXER2BsJLnx9-Y due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar?branch=nahw&activity=rules due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 9\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context?_rsc=wnOXER2BsJLnx9-Y due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar?branch=nahw&activity=rules due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:97:18",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                      "column": 18,
+                      "line": 97
+                    },
+                    "snippet": "   95 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)\n   96 |   await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})\n>  97 |   expect(errors).toEqual([])\n      |                  ^\n   98 | })\n   99 |\n  100 | test('URL tabs, profile settings and membership are restored by Back and Forward for every role',async({page,context})=>{"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                        "column": 18,
+                        "line": 97
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 9\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar/context?_rsc=wnOXER2BsJLnx9-Y due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/grammar?branch=nahw&activity=rules due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/cartoons/test-show/clip-0 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-1 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/chapter-6 due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/localhost:4368/auth/v1/user due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3068/books/test-book/grammar-structured?block=0 due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n   95 |   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)\n   96 |   await page.screenshot({path:`docs/validation/full-reliability/${test.info().project.name}-${width}.png`})\n>  97 |   expect(errors).toEqual([])\n      |                  ^\n   98 | })\n   99 |\n  100 | test('URL tabs, profile settings and membership are restored by Back and Forward for every role',async({page,context})=>{\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts:97:18"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:01:18.434Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-06796-ows-and-hit-testing-at-1440-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-06796-ows-and-hit-testing-at-1440-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\full-reliability.pw.ts-con-06796-ows-and-hit-testing-at-1440-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\full-reliability.pw.ts",
+                    "column": 18,
+                    "line": 97
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-7b5f3e1e529b72dfbcb6",
+          "file": "full-reliability.pw.ts",
+          "line": 63,
+          "column": 49
+        },
+        {
+          "title": "URL tabs, profile settings and membership are restored by Back and Forward for every role",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 61469,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:01:43.128Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-04282298193aab4deb55",
+          "file": "full-reliability.pw.ts",
+          "line": 100,
+          "column": 1
+        },
+        {
+          "title": "failed grammar reads show recovery; real empty levels and missing notes remain distinct",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 11311,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:02:44.682Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-ce1e66e68be012f6a576",
+          "file": "full-reliability.pw.ts",
+          "line": 117,
+          "column": 1
+        },
+        {
+          "title": "all protected route entries preserve denial and Admin read access",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 23895,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:02:56.016Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "protected-route-health",
+                      "contentType": "application/json",
+                      "body": "W3sicm91dGUiOiIvYWRtaW4iLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9zaG93cyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2VwaXNvZGVzIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vZXBpc29kZXMvZGRkZGRkZGQtZGRkZC00ZGRkLThkZGQtZGRkZGRkZGRkZGQwIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vYm9va3MiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9ib29rcy9iYmJiYmJiYi1iYmJiLTRiYmItOGJiYi1iYmJiYmJiYmJiYmIiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9ib29rcy9wcmV2aWV3L2JiYmJiYmJiLWJiYmItNGJiYi04YmJiLWJiYmJiYmJiYmJiYiIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2ZlYXR1cmVkIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vZ3JhbW1hci1ub3RlcyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL2hhbnMtd2VociIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL2FkbWluL3BocmFzZXMiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi9yZXZpZXdzIiwic3RhdHVzIjoiUEFTUyJ9LHsicm91dGUiOiIvYWRtaW4vdHJhbnNjcmlwdHMiLCJzdGF0dXMiOiJQQVNTIn0seyJyb3V0ZSI6Ii9hZG1pbi91c2VycyIsInN0YXR1cyI6IlBBU1MifSx7InJvdXRlIjoiL3Jldmlld2VyIiwic3RhdHVzIjoiUEFTUyJ9XQ=="
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-7096dc0b68b76b2335d8",
+          "file": "full-reliability.pw.ts",
+          "line": 124,
+          "column": 1
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 390",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7349,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:03:19.946Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-50b7250da859441f602d",
+          "file": "full-reliability.pw.ts",
+          "line": 134,
+          "column": 31
+        },
+        {
+          "title": "Explore and For You playback, languages, filters, settings and history at 1440",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6898,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:03:27.319Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7745c474f71f799a341e-e29ee0b3a53ea072f4d1",
+          "file": "full-reliability.pw.ts",
+          "line": 134,
+          "column": 31
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-20T15:58:37.746Z",
+    "duration": 296813.119,
+    "expected": 7,
+    "skipped": 0,
+    "unexpected": 6,
+    "flaky": 0
+  }
+}

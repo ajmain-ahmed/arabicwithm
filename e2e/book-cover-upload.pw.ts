@@ -25,7 +25,7 @@ for(const width of [390,1440])for(const format of ['jpeg','png','webp'] as const
  await cropDone(page);await expect(dialog).toContainText('Cover uploaded. Save this book to keep the change.')
  const preview=dialog.locator('img[alt="Cover image"]');await loaded(preview)
  const afterAssets=await state(request);for(const old of beforeAssets.objects)expect(afterAssets.objects.find((item:{name:string})=>item.name===old.name)?.hash).toBe(old.hash)
- const uploaded=await preview.getAttribute('src');expect(uploaded).toMatch(/\/books\/[a-f0-9-]+--[a-f0-9-]+\.webp$/)
+ const uploaded=(await preview.getAttribute('src'))!.split('?')[0];expect(uploaded).toMatch(/\/books\/[a-f0-9-]+--[a-f0-9-]+\.webp$/)
  await expect(preview).toHaveCSS('object-fit','contain')
  await fields(dialog,slug,title);await dialog.getByRole('checkbox',{name:'Completed',exact:true}).check();await dialog.getByRole('button',{name:'Save',exact:true}).click();await expect(dialog).toHaveCount(0)
  await page.reload();await page.getByRole('cell',{name:title,exact:true}).click()

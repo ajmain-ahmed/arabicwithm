@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-20",
+  "access": "read-only deployed function source and cron metadata",
+  "function": "transcript-library",
+  "deployedVersion": 30,
+  "deployedStatus": "ACTIVE",
+  "deployedSourceContainsEnrichmentDispatch": false,
+  "repositorySourceContainsEnrichmentDispatch": true,
+  "deployedSourceContainsOpenAIIntegration": true,
+  "providerKeyValueRead": false,
+  "cron": {"name":"youtube-transcript-worker","schedule":"* * * * *","active":true},
+  "scheduledGrammarConnection": "NO in inspected deployed source",
+  "workerInvoked": false
+}

@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-20",
+  "project": "whbxgwucsoguqzpnpzjd",
+  "access": "SELECT only",
+  "books": 21,
+  "chapters": 134,
+  "grammarNotes": 0,
+  "approvedGrammarNotes": 0,
+  "enrichmentJobs": 0,
+  "chapterPublicationColumnPresent": false,
+  "originalAdminProjection": "ERROR 42703: column is_published does not exist",
+  "compatibleAdminProjectionChapterCount": 134,
+  "productionWrites": false
+}

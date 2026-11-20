@@ -9,5 +9,5 @@ export function useAccountAccess(refreshKey?: string) {
   const {access,loading,error,refresh}=useVerifiedAccountAccess()
   useEffect(()=>{if(refreshKey!==undefined)void refresh()},[refreshKey,refresh])
   const capabilities = resolveEntitlements(Boolean(access), false, access?.role)
-  return {isAdmin:capabilities.canAdminister,isReviewer:capabilities.canEditContent,accessLoading:loading,accessError:error,refreshAccess:refresh}
+  return {isAdmin:!loading&&!error&&capabilities.canAdminister,isReviewer:!loading&&!error&&capabilities.canEditContent,accessLoading:loading,accessError:error,refreshAccess:refresh}
 }

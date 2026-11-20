@@ -1,0 +1,128 @@
+[
+  {
+    "route": "/admin",
+    "webkit": "BLOCKED",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "BLOCKED",
+    "cause": "WebKit lifecycle recorded navigation-cancelled request diagnostics; strict zero-error acceptance remains outstanding."
+  },
+  {
+    "route": "/admin/books",
+    "webkit": "BLOCKED",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "BLOCKED",
+    "cause": "Production projection selected missing chapters.is_published; application compatibility reader repaired. Dedicated Books controls have separate evidence."
+  },
+  {
+    "route": "/admin/books/[chapterId]",
+    "webkit": "BLOCKED",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "BLOCKED",
+    "cause": "Production projection selected missing chapters.is_published; application compatibility reader repaired. Dedicated Books controls have separate evidence."
+  },
+  {
+    "route": "/admin/books/preview/[chapterId]",
+    "webkit": "PASS",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "PASS",
+    "cause": "Lifecycle smoke; not exhaustive mutation certification."
+  },
+  {
+    "route": "/admin/episodes",
+    "webkit": "BLOCKED",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "BLOCKED",
+    "cause": "WebKit lifecycle recorded navigation-cancelled request diagnostics; strict zero-error acceptance remains outstanding."
+  },
+  {
+    "route": "/admin/episodes/[episodeId]",
+    "webkit": "PASS",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "PASS",
+    "cause": "Lifecycle smoke; not exhaustive mutation certification."
+  },
+  {
+    "route": "/admin/featured",
+    "webkit": "PASS",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "PASS",
+    "cause": "Lifecycle smoke; not exhaustive mutation certification."
+  },
+  {
+    "route": "/admin/grammar-notes",
+    "webkit": "BLOCKED",
+    "chrome": "BLOCKED",
+    "firefox": "BLOCKED",
+    "edge": "BLOCKED",
+    "status": "BLOCKED",
+    "cause": "Initial fixture lacked dashboard RPC data; use the final dedicated diagnostics check, not shell-only smoke."
+  },
+  {
+    "route": "/admin/hans-wehr",
+    "webkit": "BLOCKED",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "BLOCKED",
+    "cause": "WebKit lifecycle recorded navigation-cancelled request diagnostics; strict zero-error acceptance remains outstanding."
+  },
+  {
+    "route": "/admin/phrases",
+    "webkit": "BLOCKED",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "BLOCKED",
+    "cause": "WebKit lifecycle recorded navigation-cancelled request diagnostics; strict zero-error acceptance remains outstanding."
+  },
+  {
+    "route": "/admin/reviews",
+    "webkit": "PASS",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "PASS",
+    "cause": "Lifecycle smoke; not exhaustive mutation certification."
+  },
+  {
+    "route": "/admin/shows",
+    "webkit": "PASS",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "PASS",
+    "cause": "Lifecycle smoke; not exhaustive mutation certification."
+  },
+  {
+    "route": "/admin/transcripts",
+    "webkit": "PASS",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "PASS",
+    "cause": "Lifecycle smoke; not exhaustive mutation certification."
+  },
+  {
+    "route": "/admin/users",
+    "webkit": "PASS",
+    "chrome": "PASS",
+    "firefox": "PASS",
+    "edge": "PASS",
+    "status": "PASS",
+    "cause": "Lifecycle smoke; not exhaustive mutation certification."
+  }
+]

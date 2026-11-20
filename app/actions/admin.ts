@@ -4,6 +4,7 @@
 
 import { revalidatePath, updateTag } from "next/cache"
 import { serviceClient } from "@/app/lib/supabase"
+import { readChapterPublication, chapterPublished } from '@/app/lib/chapterPublicationRead'
 import { parseJsonb } from "@/app/lib/jsonb"
 import { guardAdmin } from "@/app/actions/auth"
 import {
@@ -735,11 +736,16 @@ export async function fetchChaptersForBookAdmin(
 async function readAllAdminChapterMetadata(bookId?: string): Promise<Record<string, unknown>[]> {
   const rows: Record<string, unknown>[] = []
   for (let offset=0; ; offset+=500) {
-    let query=serviceClient.from('chapters').select('id,book_id,slug,title,chapter_number,created_at,updated_at,is_published,production_status:content->>production_status').order('chapter_number').order('id').range(offset,offset+499)
-    if (bookId) query=query.eq('book_id',bookId)
-    const {data,error}=await query
+    const {data,error}=await readChapterPublication(hasPublication => {
+      const columns = hasPublication
+        ? 'id,book_id,slug,title,chapter_number,created_at,updated_at,is_published,production_status:content->>production_status'
+        : 'id,book_id,slug,title,chapter_number,created_at,updated_at,production_status:content->>production_status'
+      let query=serviceClient.from('chapters').select(columns).order('chapter_number').order('id').range(offset,offset+499)
+      if (bookId) query=query.eq('book_id',bookId)
+      return query
+    })
     if(error)throw new Error('Unable to load the book chapters.')
-    rows.push(...data ?? [])
+    rows.push(...(data ?? []) as unknown as Record<string, unknown>[])
     if((data?.length ?? 0)<500)return rows
   }
 }
@@ -1136,7 +1142,7 @@ function mapChapterRow(row: Record<string, unknown>): ChapterRow {
     title: String(row.title),
     chapter_number: Number(row.chapter_number),
     productionStatus: toStringOrNull(row.production_status),
-    is_published: row.is_published === true,
+    is_published: chapterPublished(row),
     created_at: toStringOrNull(row.created_at),
     updated_at: toStringOrNull(row.updated_at),
   }

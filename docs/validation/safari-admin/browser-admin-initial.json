@@ -1,0 +1,3428 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.safari-admin.config.ts"
+    ],
+    "configFile": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\playwright.safari-admin.config.ts",
+    "rootDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/safari-admin.pw.ts",
+          "**/admin-audit.pw.ts",
+          "**/book-cover-upload.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chrome",
+        "name": "chrome",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/safari-admin.pw.ts",
+          "**/admin-audit.pw.ts",
+          "**/book-cover-upload.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/safari-admin.pw.ts",
+          "**/admin-audit.pw.ts",
+          "**/book-cover-upload.pw.ts"
+        ],
+        "timeout": 90000
+      },
+      {
+        "outputDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "edge",
+        "name": "edge",
+        "testDir": "C:/Users/Muttaqi Ahmed/Desktop/arabicwithm/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/safari-admin.pw.ts",
+          "**/admin-audit.pw.ts",
+          "**/book-cover-upload.pw.ts"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/validation/safari-admin/browser-admin.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.63.0",
+    "workers": 1,
+    "webServer": {
+      "command": "node e2e/fixture-server.mjs",
+      "url": "http://127.0.0.1:3057",
+      "reuseExistingServer": false,
+      "timeout": 120000,
+      "env": {
+        "AWM_TEST_ADMIN_AUDIT": "1",
+        "AWM_TEST_BOOK_COVERS": "1",
+        "AWM_TEST_PRODUCTION": "1",
+        "AWM_TEST_AUDIO_AUDIT": "1",
+        "AWM_TEST_WEB_PORT": "3057",
+        "AWM_TEST_BACKEND_PORT": "4357"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "admin-audit.pw.ts",
+      "file": "admin-audit.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "route lifecycle /admin/books",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 5102,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 5\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/books due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/books due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 5\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/books due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/books due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts:32:17",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                      "column": 17,
+                      "line": 32
+                    },
+                    "snippet": "  30 |  const fresh=await context.newPage();await fresh.goto(route)\n  31 |  await expect(fresh.locator('main').getByRole('heading').first()).toBeVisible();await fresh.close()\n> 32 |  expect(errors).toEqual([])\n     |                 ^\n  33 | })\n  34 |\n  35 | test('Featured survives twenty loads and saved position readbacks',async({page,context,request})=>{"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                        "column": 17,
+                        "line": 32
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 5\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/books due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/books due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  30 |  const fresh=await context.newPage();await fresh.goto(route)\n  31 |  await expect(fresh.locator('main').getByRole('heading').first()).toBeVisible();await fresh.close()\n> 32 |  expect(errors).toEqual([])\n     |                 ^\n  33 | })\n  34 |\n  35 | test('Featured survives twenty loads and saved position readbacks',async({page,context,request})=>{\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts:32:17"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:08:29.360Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-books-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-books-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-books-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                    "column": 17,
+                    "line": 32
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-e31a1b9108f5083ad00d",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/books/preview/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5121,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:08:34.992Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-5fc24502a8472d372104",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 4738,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts:32:17",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                      "column": 17,
+                      "line": 32
+                    },
+                    "snippet": "  30 |  const fresh=await context.newPage();await fresh.goto(route)\n  31 |  await expect(fresh.locator('main').getByRole('heading').first()).toBeVisible();await fresh.close()\n> 32 |  expect(errors).toEqual([])\n     |                 ^\n  33 | })\n  34 |\n  35 | test('Featured survives twenty loads and saved position readbacks',async({page,context,request})=>{"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                        "column": 17,
+                        "line": 32
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 4\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  30 |  const fresh=await context.newPage();await fresh.goto(route)\n  31 |  await expect(fresh.locator('main').getByRole('heading').first()).toBeVisible();await fresh.close()\n> 32 |  expect(errors).toEqual([])\n     |                 ^\n  33 | })\n  34 |\n  35 | test('Featured survives twenty loads and saved position readbacks',async({page,context,request})=>{\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts:32:17"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:08:40.178Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-li-882de-bbbb-4bbb-8bbb-bbbbbbbbbbbb-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-li-882de-bbbb-4bbb-8bbb-bbbbbbbbbbbb-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-li-882de-bbbb-4bbb-8bbb-bbbbbbbbbbbb-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                    "column": 17,
+                    "line": 32
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-eac5de8352b3b1bd0c3e",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/episodes",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 9412,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 6\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 6\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts:32:17",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                      "column": 17,
+                      "line": 32
+                    },
+                    "snippet": "  30 |  const fresh=await context.newPage();await fresh.goto(route)\n  31 |  await expect(fresh.locator('main').getByRole('heading').first()).toBeVisible();await fresh.close()\n> 32 |  expect(errors).toEqual([])\n     |                 ^\n  33 | })\n  34 |\n  35 | test('Featured survives twenty loads and saved position readbacks',async({page,context,request})=>{"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                        "column": 17,
+                        "line": 32
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 6\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  30 |  const fresh=await context.newPage();await fresh.goto(route)\n  31 |  await expect(fresh.locator('main').getByRole('heading').first()).toBeVisible();await fresh.close()\n> 32 |  expect(errors).toEqual([])\n     |                 ^\n  33 | })\n  34 |\n  35 | test('Featured survives twenty loads and saved position readbacks',async({page,context,request})=>{\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts:32:17"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:08:45.318Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-episodes-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-episodes-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-episodes-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                    "column": 17,
+                    "line": 32
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-9c22608e6fde7c551874",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/episodes/dddddddd-dddd-4ddd-8ddd-ddddddddddd0",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4749,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:08:55.211Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-2ed8b894a324da08dce2",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/featured",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4713,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:00.020Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-266dcc8c9e0b624fe7ba",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/grammar-notes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4825,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:04.744Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-c300f88afb1e65c71c03",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/hans-wehr",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 2255,
+                  "error": {
+                    "message": "Error: page.goto: Navigation to \"http://127.0.0.1:3057/admin/hans-wehr\" is interrupted by another navigation to \"http://127.0.0.1:3057/admin/shows\"\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3057/admin/hans-wehr\", waiting until \"load\"\u001b[22m\n",
+                    "stack": "Error: page.goto: Navigation to \"http://127.0.0.1:3057/admin/hans-wehr\" is interrupted by another navigation to \"http://127.0.0.1:3057/admin/shows\"\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3057/admin/hans-wehr\", waiting until \"load\"\u001b[22m\n\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts:20:29",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                      "column": 29,
+                      "line": 20
+                    },
+                    "snippet": "  18 |  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message))\n  19 |  for(let cycle=0;cycle<2;cycle++) {\n> 20 |   const response=await page.goto(route)\n     |                             ^\n  21 |   expect(response!.status()).toBeLessThan(400)\n  22 |   await expect(page.locator('main')).toBeVisible()\n  23 |   await expect(page.locator('main').getByRole('heading').first()).toBeVisible()"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                        "column": 29,
+                        "line": 20
+                      },
+                      "message": "Error: page.goto: Navigation to \"http://127.0.0.1:3057/admin/hans-wehr\" is interrupted by another navigation to \"http://127.0.0.1:3057/admin/shows\"\nCall log:\n\u001b[2m  - navigating to \"http://127.0.0.1:3057/admin/hans-wehr\", waiting until \"load\"\u001b[22m\n\n\n  18 |  const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message))\n  19 |  for(let cycle=0;cycle<2;cycle++) {\n> 20 |   const response=await page.goto(route)\n     |                             ^\n  21 |   expect(response!.status()).toBeLessThan(400)\n  22 |   await expect(page.locator('main')).toBeVisible()\n  23 |   await expect(page.locator('main').getByRole('heading').first()).toBeVisible()\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts:20:29"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:09.577Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-hans-wehr-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-hans-wehr-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-hans-wehr-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                    "column": 29,
+                    "line": 20
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-7c83e7eaeec61912b783",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 4,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 5176,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 3\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 3\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts:32:17",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                      "column": 17,
+                      "line": 32
+                    },
+                    "snippet": "  30 |  const fresh=await context.newPage();await fresh.goto(route)\n  31 |  await expect(fresh.locator('main').getByRole('heading').first()).toBeVisible();await fresh.close()\n> 32 |  expect(errors).toEqual([])\n     |                 ^\n  33 | })\n  34 |\n  35 | test('Featured survives twenty loads and saved position readbacks',async({page,context,request})=>{"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                        "column": 17,
+                        "line": 32
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 3\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  30 |  const fresh=await context.newPage();await fresh.goto(route)\n  31 |  await expect(fresh.locator('main').getByRole('heading').first()).toBeVisible();await fresh.close()\n> 32 |  expect(errors).toEqual([])\n     |                 ^\n  33 | })\n  34 |\n  35 | test('Featured survives twenty loads and saved position readbacks',async({page,context,request})=>{\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts:32:17"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:12.252Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                    "column": 17,
+                    "line": 32
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-42ec58c9671c096afbb2",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/phrases",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 5,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 4755,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 5\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/phrases due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/phrases due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 5\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/phrases due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/phrases due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts:32:17",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                      "column": 17,
+                      "line": 32
+                    },
+                    "snippet": "  30 |  const fresh=await context.newPage();await fresh.goto(route)\n  31 |  await expect(fresh.locator('main').getByRole('heading').first()).toBeVisible();await fresh.close()\n> 32 |  expect(errors).toEqual([])\n     |                 ^\n  33 | })\n  34 |\n  35 | test('Featured survives twenty loads and saved position readbacks',async({page,context,request})=>{"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                        "column": 17,
+                        "line": 32
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoEqual\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // deep equality\u001b[22m\n\n\u001b[32m- Expected  - 1\u001b[39m\n\u001b[31m+ Received  + 5\u001b[39m\n\n\u001b[32m- Array []\u001b[39m\n\u001b[31m+ Array [\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/phrases due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/phrases due to access control checks.\",\u001b[39m\n\u001b[31m+   \"/127.0.0.1:3057/admin/shows due to access control checks.\",\u001b[39m\n\u001b[31m+ ]\u001b[39m\n\n  30 |  const fresh=await context.newPage();await fresh.goto(route)\n  31 |  await expect(fresh.locator('main').getByRole('heading').first()).toBeVisible();await fresh.close()\n> 32 |  expect(errors).toEqual([])\n     |                 ^\n  33 | })\n  34 |\n  35 | test('Featured survives twenty loads and saved position readbacks',async({page,context,request})=>{\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts:32:17"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:18.248Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-phrases-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-phrases-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\admin-audit.pw.ts-route-lifecycle-admin-phrases-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\admin-audit.pw.ts",
+                    "column": 17,
+                    "line": 32
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-9a3028cff3f2241e4e83",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/reviews",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4828,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:23.473Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-1ca7e1a9ade6a74c885a",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/shows",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4660,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:28.359Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-4f1179f69c1f11606da6",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/transcripts",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4807,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:33.028Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-0e2ae8b2574736129b73",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/users",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4647,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:37.844Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-5c14515565907ea4ddbf",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/books",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5163,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:10:14.866Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-1cbf16dc56bc32306734",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/books/preview/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5457,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:10:20.460Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-338e000ddfe35fdf1afd",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4932,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:10:25.928Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-219de9fc7c47b79bad65",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/episodes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6899,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:10:30.882Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-de5d458fbddfe5969ec5",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/episodes/dddddddd-dddd-4ddd-8ddd-ddddddddddd0",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4977,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:10:37.791Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-accbe02ca8ed7934be71",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/featured",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4974,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:10:42.778Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-40459091a068de5882cc",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/grammar-notes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4978,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:10:47.764Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-6075eb71e2f32bfc8585",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/hans-wehr",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5008,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:10:52.752Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-08ce8c32d3db3adedffe",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4491,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:10:57.770Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-f233430ba4300c2ff705",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/phrases",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4894,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:02.273Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-54376520d4814ec65aa9",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/reviews",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4979,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:07.178Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-82f6eea3a26dfa9d2f7a",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/shows",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4142,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:12.167Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-6fd5312a9494f067f3cc",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/transcripts",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5109,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:16.319Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-54dfef9970df85e0b102",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/users",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5009,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:21.439Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-de71c8125cf193c52076",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/books",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6031,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:47.242Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-ff1191207464c6823ab5",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/books/preview/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5787,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:54.113Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-96e08b0dcdd64f30150c",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5523,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:59.909Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-764877fcddd0db2f16b4",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/episodes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7283,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:12:05.444Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-bad94a52c884459f5999",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/episodes/dddddddd-dddd-4ddd-8ddd-ddddddddddd0",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5427,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:12:12.739Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-e67647358e3a28ece979",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/featured",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5759,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:12:18.176Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-431b3bc6f79e3c3c11c2",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/grammar-notes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5529,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:12:23.944Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-09dda09ff0910dadc2b2",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/hans-wehr",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5491,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:12:29.482Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-f4a5396a10eb749f67b9",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3816,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:12:34.982Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-f6fe643925d20279ba2b",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/phrases",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6321,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:12:38.806Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-7477683a740cafafa9db",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/reviews",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5883,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:12:45.137Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-2b34ca27515f47bdb1e7",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/shows",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3800,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:12:51.029Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-40f407cd4e56ab512538",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/transcripts",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5527,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:12:54.837Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-d4acb8b3012a4b925da8",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/users",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5328,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:00.374Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-0611abb929894f0ffe11",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/books",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5124,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:30.859Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-bf77185056c919673c74",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/books/preview/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5400,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:36.277Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-31496ab5a2567a215ba3",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/books/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4998,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:41.686Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-009eab0c35d07895a68b",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/episodes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7363,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:46.696Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-440ae69c2c6fa3f637e2",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/episodes/dddddddd-dddd-4ddd-8ddd-ddddddddddd0",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5036,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:54.072Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-2469e4c36c1d472e46d6",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/featured",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5194,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:59.116Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-b16abd59e4ea56697eb8",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/grammar-notes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5048,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:04.319Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-f854d2393e9bb964d8e2",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/hans-wehr",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5010,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:09.376Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-545f5c99e08c76ac0f8e",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4645,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:14.396Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-d74692768dffaff5bad5",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/phrases",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4961,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:19.052Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-ce1e5a1e37114c58108b",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/reviews",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5061,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:24.022Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-729f873add57debe2e02",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/shows",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4260,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:29.091Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-c0f870d5f42822bd2c8e",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/transcripts",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5149,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:33.361Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-452ae22ea3aa733a255b",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        },
+        {
+          "title": "route lifecycle /admin/users",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5029,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:38.518Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6833dcd2828487df484c-423d32534888a836a42a",
+          "file": "admin-audit.pw.ts",
+          "line": 16,
+          "column": 30
+        }
+      ]
+    },
+    {
+      "title": "book-cover-upload.pw.ts",
+      "file": "book-cover-upload.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "create with png cover before entering slug, persist and display at 390px",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 6,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 3206,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/\u001b[39m\nReceived string:  \u001b[31m\"https://localhost:4357/storage/v1/object/public/covers/books/d6ba65fc-96a4-47bf-b753-4be4658d24c9--f269576b-c116-4243-8f20-b9ea205657b8.webp?v=1795190985103\"\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/\u001b[39m\nReceived string:  \u001b[31m\"https://localhost:4357/storage/v1/object/public/covers/books/d6ba65fc-96a4-47bf-b753-4be4658d24c9--f269576b-c116-4243-8f20-b9ea205657b8.webp?v=1795190985103\"\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts:28:68",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts",
+                      "column": 68,
+                      "line": 28
+                    },
+                    "snippet": "  26 |  const preview=dialog.locator('img[alt=\"Cover image\"]');await loaded(preview)\n  27 |  const afterAssets=await state(request);for(const old of beforeAssets.objects)expect(afterAssets.objects.find((item:{name:string})=>item.name===old.name)?.hash).toBe(old.hash)\n> 28 |  const uploaded=await preview.getAttribute('src');expect(uploaded).toMatch(/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/)\n     |                                                                    ^\n  29 |  await expect(preview).toHaveCSS('object-fit','contain')\n  30 |  await fields(dialog,slug,title);await dialog.getByRole('checkbox',{name:'Completed',exact:true}).check();await dialog.getByRole('button',{name:'Save',exact:true}).click();await expect(dialog).toHaveCount(0)\n  31 |  await page.reload();await page.getByRole('cell',{name:title,exact:true}).click()"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts",
+                        "column": 68,
+                        "line": 28
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/\u001b[39m\nReceived string:  \u001b[31m\"https://localhost:4357/storage/v1/object/public/covers/books/d6ba65fc-96a4-47bf-b753-4be4658d24c9--f269576b-c116-4243-8f20-b9ea205657b8.webp?v=1795190985103\"\u001b[39m\n\n  26 |  const preview=dialog.locator('img[alt=\"Cover image\"]');await loaded(preview)\n  27 |  const afterAssets=await state(request);for(const old of beforeAssets.objects)expect(afterAssets.objects.find((item:{name:string})=>item.name===old.name)?.hash).toBe(old.hash)\n> 28 |  const uploaded=await preview.getAttribute('src');expect(uploaded).toMatch(/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/)\n     |                                                                    ^\n  29 |  await expect(preview).toHaveCSS('object-fit','contain')\n  30 |  await fields(dialog,slug,title);await dialog.getByRole('checkbox',{name:'Completed',exact:true}).check();await dialog.getByRole('button',{name:'Save',exact:true}).click();await expect(dialog).toHaveCount(0)\n  31 |  await page.reload();await page.getByRole('cell',{name:title,exact:true}).click()\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts:28:68"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:42.601Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\book-cover-upload.pw.ts-cr-d62bb-ersist-and-display-at-390px-webkit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\book-cover-upload.pw.ts-cr-d62bb-ersist-and-display-at-390px-webkit\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\book-cover-upload.pw.ts-cr-d62bb-ersist-and-display-at-390px-webkit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts",
+                    "column": 68,
+                    "line": 28
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8b0a993b80e361597736-dd8fc83c96d28b01ea7b",
+          "file": "book-cover-upload.pw.ts",
+          "line": 19,
+          "column": 82
+        },
+        {
+          "title": "create with png cover before entering slug, persist and display at 390px",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 8,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 2090,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/\u001b[39m\nReceived string:  \u001b[31m\"https://localhost:4357/storage/v1/object/public/covers/books/f9792cf8-183c-43ca-85c0-02de3c4fe4d2--b3349b0b-11c1-4157-934b-3a06bb63dcdf.webp?v=1795191088094\"\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/\u001b[39m\nReceived string:  \u001b[31m\"https://localhost:4357/storage/v1/object/public/covers/books/f9792cf8-183c-43ca-85c0-02de3c4fe4d2--b3349b0b-11c1-4157-934b-3a06bb63dcdf.webp?v=1795191088094\"\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts:28:68",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts",
+                      "column": 68,
+                      "line": 28
+                    },
+                    "snippet": "  26 |  const preview=dialog.locator('img[alt=\"Cover image\"]');await loaded(preview)\n  27 |  const afterAssets=await state(request);for(const old of beforeAssets.objects)expect(afterAssets.objects.find((item:{name:string})=>item.name===old.name)?.hash).toBe(old.hash)\n> 28 |  const uploaded=await preview.getAttribute('src');expect(uploaded).toMatch(/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/)\n     |                                                                    ^\n  29 |  await expect(preview).toHaveCSS('object-fit','contain')\n  30 |  await fields(dialog,slug,title);await dialog.getByRole('checkbox',{name:'Completed',exact:true}).check();await dialog.getByRole('button',{name:'Save',exact:true}).click();await expect(dialog).toHaveCount(0)\n  31 |  await page.reload();await page.getByRole('cell',{name:title,exact:true}).click()"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts",
+                        "column": 68,
+                        "line": 28
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/\u001b[39m\nReceived string:  \u001b[31m\"https://localhost:4357/storage/v1/object/public/covers/books/f9792cf8-183c-43ca-85c0-02de3c4fe4d2--b3349b0b-11c1-4157-934b-3a06bb63dcdf.webp?v=1795191088094\"\u001b[39m\n\n  26 |  const preview=dialog.locator('img[alt=\"Cover image\"]');await loaded(preview)\n  27 |  const afterAssets=await state(request);for(const old of beforeAssets.objects)expect(afterAssets.objects.find((item:{name:string})=>item.name===old.name)?.hash).toBe(old.hash)\n> 28 |  const uploaded=await preview.getAttribute('src');expect(uploaded).toMatch(/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/)\n     |                                                                    ^\n  29 |  await expect(preview).toHaveCSS('object-fit','contain')\n  30 |  await fields(dialog,slug,title);await dialog.getByRole('checkbox',{name:'Completed',exact:true}).check();await dialog.getByRole('button',{name:'Save',exact:true}).click();await expect(dialog).toHaveCount(0)\n  31 |  await page.reload();await page.getByRole('cell',{name:title,exact:true}).click()\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts:28:68"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:26.556Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\book-cover-upload.pw.ts-cr-d62bb-ersist-and-display-at-390px-chrome\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\book-cover-upload.pw.ts-cr-d62bb-ersist-and-display-at-390px-chrome\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\book-cover-upload.pw.ts-cr-d62bb-ersist-and-display-at-390px-chrome\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts",
+                    "column": 68,
+                    "line": 28
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8b0a993b80e361597736-547ce53efbc9a6cf2130",
+          "file": "book-cover-upload.pw.ts",
+          "line": 19,
+          "column": 82
+        },
+        {
+          "title": "create with png cover before entering slug, persist and display at 390px",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 10,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 2061,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/\u001b[39m\nReceived string:  \u001b[31m\"https://localhost:4357/storage/v1/object/public/covers/books/9e48d869-8164-4ec0-a92d-660fc0cde0b5--1b160311-5de3-4e41-9e46-435ff5cbfd18.webp?v=1795191187480\"\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/\u001b[39m\nReceived string:  \u001b[31m\"https://localhost:4357/storage/v1/object/public/covers/books/9e48d869-8164-4ec0-a92d-660fc0cde0b5--1b160311-5de3-4e41-9e46-435ff5cbfd18.webp?v=1795191187480\"\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts:28:68",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts",
+                      "column": 68,
+                      "line": 28
+                    },
+                    "snippet": "  26 |  const preview=dialog.locator('img[alt=\"Cover image\"]');await loaded(preview)\n  27 |  const afterAssets=await state(request);for(const old of beforeAssets.objects)expect(afterAssets.objects.find((item:{name:string})=>item.name===old.name)?.hash).toBe(old.hash)\n> 28 |  const uploaded=await preview.getAttribute('src');expect(uploaded).toMatch(/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/)\n     |                                                                    ^\n  29 |  await expect(preview).toHaveCSS('object-fit','contain')\n  30 |  await fields(dialog,slug,title);await dialog.getByRole('checkbox',{name:'Completed',exact:true}).check();await dialog.getByRole('button',{name:'Save',exact:true}).click();await expect(dialog).toHaveCount(0)\n  31 |  await page.reload();await page.getByRole('cell',{name:title,exact:true}).click()"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts",
+                        "column": 68,
+                        "line": 28
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/\u001b[39m\nReceived string:  \u001b[31m\"https://localhost:4357/storage/v1/object/public/covers/books/9e48d869-8164-4ec0-a92d-660fc0cde0b5--1b160311-5de3-4e41-9e46-435ff5cbfd18.webp?v=1795191187480\"\u001b[39m\n\n  26 |  const preview=dialog.locator('img[alt=\"Cover image\"]');await loaded(preview)\n  27 |  const afterAssets=await state(request);for(const old of beforeAssets.objects)expect(afterAssets.objects.find((item:{name:string})=>item.name===old.name)?.hash).toBe(old.hash)\n> 28 |  const uploaded=await preview.getAttribute('src');expect(uploaded).toMatch(/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/)\n     |                                                                    ^\n  29 |  await expect(preview).toHaveCSS('object-fit','contain')\n  30 |  await fields(dialog,slug,title);await dialog.getByRole('checkbox',{name:'Completed',exact:true}).check();await dialog.getByRole('button',{name:'Save',exact:true}).click();await expect(dialog).toHaveCount(0)\n  31 |  await page.reload();await page.getByRole('cell',{name:title,exact:true}).click()\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts:28:68"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:05.806Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\book-cover-upload.pw.ts-cr-d62bb-ersist-and-display-at-390px-firefox\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\book-cover-upload.pw.ts-cr-d62bb-ersist-and-display-at-390px-firefox\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\book-cover-upload.pw.ts-cr-d62bb-ersist-and-display-at-390px-firefox\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts",
+                    "column": 68,
+                    "line": 28
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8b0a993b80e361597736-d9da29664f6e1873d383",
+          "file": "book-cover-upload.pw.ts",
+          "line": 19,
+          "column": 82
+        },
+        {
+          "title": "create with png cover before entering slug, persist and display at 390px",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 12,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 2043,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/\u001b[39m\nReceived string:  \u001b[31m\"https://localhost:4357/storage/v1/object/public/covers/books/c2bf25be-695e-4468-b121-1663aabfac38--6024d80b-b06a-4600-ae1f-eaa28d416b32.webp?v=1795191285256\"\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/\u001b[39m\nReceived string:  \u001b[31m\"https://localhost:4357/storage/v1/object/public/covers/books/c2bf25be-695e-4468-b121-1663aabfac38--6024d80b-b06a-4600-ae1f-eaa28d416b32.webp?v=1795191285256\"\u001b[39m\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts:28:68",
+                    "location": {
+                      "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts",
+                      "column": 68,
+                      "line": 28
+                    },
+                    "snippet": "  26 |  const preview=dialog.locator('img[alt=\"Cover image\"]');await loaded(preview)\n  27 |  const afterAssets=await state(request);for(const old of beforeAssets.objects)expect(afterAssets.objects.find((item:{name:string})=>item.name===old.name)?.hash).toBe(old.hash)\n> 28 |  const uploaded=await preview.getAttribute('src');expect(uploaded).toMatch(/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/)\n     |                                                                    ^\n  29 |  await expect(preview).toHaveCSS('object-fit','contain')\n  30 |  await fields(dialog,slug,title);await dialog.getByRole('checkbox',{name:'Completed',exact:true}).check();await dialog.getByRole('button',{name:'Save',exact:true}).click();await expect(dialog).toHaveCount(0)\n  31 |  await page.reload();await page.getByRole('cell',{name:title,exact:true}).click()"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts",
+                        "column": 68,
+                        "line": 28
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoMatch\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m\n\nExpected pattern: \u001b[32m/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/\u001b[39m\nReceived string:  \u001b[31m\"https://localhost:4357/storage/v1/object/public/covers/books/c2bf25be-695e-4468-b121-1663aabfac38--6024d80b-b06a-4600-ae1f-eaa28d416b32.webp?v=1795191285256\"\u001b[39m\n\n  26 |  const preview=dialog.locator('img[alt=\"Cover image\"]');await loaded(preview)\n  27 |  const afterAssets=await state(request);for(const old of beforeAssets.objects)expect(afterAssets.objects.find((item:{name:string})=>item.name===old.name)?.hash).toBe(old.hash)\n> 28 |  const uploaded=await preview.getAttribute('src');expect(uploaded).toMatch(/\\/books\\/[a-f0-9-]+--[a-f0-9-]+\\.webp$/)\n     |                                                                    ^\n  29 |  await expect(preview).toHaveCSS('object-fit','contain')\n  30 |  await fields(dialog,slug,title);await dialog.getByRole('checkbox',{name:'Completed',exact:true}).check();await dialog.getByRole('button',{name:'Save',exact:true}).click();await expect(dialog).toHaveCount(0)\n  31 |  await page.reload();await page.getByRole('cell',{name:title,exact:true}).click()\n    at C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts:28:68"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:43.662Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\book-cover-upload.pw.ts-cr-d62bb-ersist-and-display-at-390px-edge\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\book-cover-upload.pw.ts-cr-d62bb-ersist-and-display-at-390px-edge\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\test-results\\book-cover-upload.pw.ts-cr-d62bb-ersist-and-display-at-390px-edge\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "C:\\Users\\Muttaqi Ahmed\\Desktop\\arabicwithm\\e2e\\book-cover-upload.pw.ts",
+                    "column": 68,
+                    "line": 28
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "8b0a993b80e361597736-ea68783b4a5dc5e759c0",
+          "file": "book-cover-upload.pw.ts",
+          "line": 19,
+          "column": 82
+        }
+      ]
+    },
+    {
+      "title": "safari-admin.pw.ts",
+      "file": "safari-admin.pw.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "canonical Admin visibility and direct access: anonymous",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 7,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2353,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:46.249Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-996761aaba8e30fd92fe",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: free",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 7,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4172,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:48.663Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-36952782c7c49f23f28e",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: premium",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 7,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3771,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:52.843Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-0ac2908c24f7fac8d18f",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: editor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 7,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3954,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:09:56.622Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-84fbe8a0647ecd25a313",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 7,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 7945,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:10:00.585Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-f91a89c60cfa14b3ef2d",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "Admin Books existing list, editor, create, chapters and history",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "webkit",
+              "projectName": "webkit",
+              "results": [
+                {
+                  "workerIndex": 7,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5888,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:10:08.539Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-8721c6b4a43a06fa4090",
+          "file": "safari-admin.pw.ts",
+          "line": 21,
+          "column": 1
+        },
+        {
+          "title": "canonical Admin visibility and direct access: anonymous",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 9,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1664,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:29.313Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-a2c812a3ad6871d7adbe",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: free",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 9,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2100,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:31.200Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-34dee18ebd75c89cd9e3",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: premium",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 9,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2193,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:33.316Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-42f89a7e93a04a273470",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: editor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 9,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2073,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:35.519Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-7b903a4a7ac9c2c981bd",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 9,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5514,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:37.602Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-3bc7ef85d85ea3bc4639",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "Admin Books existing list, editor, create, chapters and history",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chrome",
+              "projectName": "chrome",
+              "results": [
+                {
+                  "workerIndex": 9,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3594,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:11:43.133Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-8aed8a9619077b0eb46a",
+          "file": "safari-admin.pw.ts",
+          "line": 21,
+          "column": 1
+        },
+        {
+          "title": "canonical Admin visibility and direct access: anonymous",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 11,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3157,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:08.774Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-d60d745d625368177c78",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: free",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 11,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2746,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:12.345Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-a7ad20491aad4955a438",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: premium",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 11,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2707,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:15.104Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-b01846ad54ee9a378bde",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: editor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 11,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2717,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:17.819Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-e049ed4cfa58482c718d",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 11,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5664,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:20.545Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-b703c17291cef243e146",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "Admin Books existing list, editor, create, chapters and history",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "firefox",
+              "projectName": "firefox",
+              "results": [
+                {
+                  "workerIndex": 11,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3934,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:13:26.219Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-bf3ac213517105782ba2",
+          "file": "safari-admin.pw.ts",
+          "line": 21,
+          "column": 1
+        },
+        {
+          "title": "canonical Admin visibility and direct access: anonymous",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 13,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1587,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:46.417Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-74a531f269a16cc30221",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: free",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 13,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2158,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:48.224Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-e0a893cea70cada58cab",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: premium",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 13,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2119,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:50.392Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-cf6b6b6637a9579bc442",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: editor",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 13,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2122,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:52.523Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-c21c4ba55365b97064c6",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "canonical Admin visibility and direct access: admin",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 13,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5474,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:14:54.658Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-333f72b9357562584e14",
+          "file": "safari-admin.pw.ts",
+          "line": 9,
+          "column": 76
+        },
+        {
+          "title": "Admin Books existing list, editor, create, chapters and history",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "edge",
+              "projectName": "edge",
+              "results": [
+                {
+                  "workerIndex": 13,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3528,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-20T16:15:00.140Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7a9c5d565fc76ccb7e3a-04b23883711e013ceaa2",
+          "file": "safari-admin.pw.ts",
+          "line": 21,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-20T16:07:57.994Z",
+    "duration": 426096.55700000003,
+    "expected": 74,
+    "skipped": 0,
+    "unexpected": 10,
+    "flaky": 0
+  }
+}

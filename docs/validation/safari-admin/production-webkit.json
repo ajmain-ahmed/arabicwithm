@@ -1,0 +1,48 @@
+[
+  {
+    "width": 320,
+    "status": "PASS",
+    "errors": []
+  },
+  {
+    "width": 375,
+    "status": "PASS",
+    "errors": []
+  },
+  {
+    "width": 390,
+    "status": "PASS",
+    "errors": []
+  },
+  {
+    "width": 414,
+    "status": "PASS",
+    "errors": []
+  },
+  {
+    "width": 430,
+    "status": "BLOCKED",
+    "errors": [
+      {
+        "message": "Importing a module script failed.",
+        "stack": "TypeError: Importing a module script failed.\n    at reportError ([native code]:0:0)\n    at $i (https://arabicwithm.com/_next/static/chunks/Cmd9SU5j.js:4:100)\n    at unknown (https://arabicwithm.com/_next/static/chunks/Cmd9SU5j.js:4:427)\n    at lf (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:9:131790)\n    at rf (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:9:129743)\n    at nf (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:9:129215)\n    at Id (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:9:124731)\n    at Fd (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:9:124035)\n    at Mf (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:9:135840)\n    at Df (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:9:134404)\n    at kf (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:9:134676)\n    at unknown (https://arabicwithm.com/_next/static/chunks/1QuWOstI.js:9:135893)"
+      }
+    ]
+  },
+  {
+    "width": 768,
+    "status": "PASS",
+    "errors": []
+  },
+  {
+    "width": 1024,
+    "status": "PASS",
+    "errors": []
+  },
+  {
+    "width": 1440,
+    "status": "BLOCKED",
+    "error": "expect(locator).toBeVisible() failed\n\nLocator: locator('main')\nExpected: visible\nTimeout: 5000ms\nError: element(s) not found\n\nCall log:\n  - Expect \"toBeVisible\" locator('main') with timeout 5000ms\n  - waiting for locator('main')\n",
+    "errors": []
+  }
+]

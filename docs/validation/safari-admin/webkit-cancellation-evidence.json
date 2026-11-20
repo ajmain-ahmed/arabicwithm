@@ -1,0 +1,12 @@
+{
+  "date": "2026-11-20",
+  "source": "Inspected Playwright trace for route lifecycle /admin/books in initial four-browser run",
+  "reportedPageErrorsInclude": ["/127.0.0.1:3057/admin/books due to access control checks."],
+  "observedNetworkFailures": [
+    {"method":"GET","url":"http://127.0.0.1:3057/admin/books","resourceType":"document","failure":"Load request cancelled"},
+    {"method":"POST","url":"http://127.0.0.1:3057/admin/books","resourceType":"fetch","mode":"cors","site":"same-origin","accept":"text/x-component","failure":"Load request cancelled"}
+  ],
+  "interpretation": "Navigation interrupts pending documents and Server Action reads. These observations support cancellation as the cause of some WebKit diagnostics; they do not establish that every reported error is harmless.",
+  "errorsSuppressed": false,
+  "strictWebKitAcceptance": "BLOCKED"
+}

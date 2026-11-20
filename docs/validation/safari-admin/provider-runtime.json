@@ -1,0 +1,11 @@
+{
+  "date": "2026-11-20",
+  "localPresence": {
+    "CONTENT_ANALYSIS_URL": false,
+    "CONTENT_ANALYSIS_TOKEN": false,
+    "CLOUDFLARE_API_TOKEN": false,
+    "CLOUDFLARE_ACCOUNT_ID": false,
+    "OPENAI_API_KEY": false
+  },
+  "deployed": "UNVERIFIED"
+}
